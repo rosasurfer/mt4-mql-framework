@@ -1,9 +1,9 @@
 /**
- * Brackets
+ * Bracket indicator
  *
- * Marks configurable breakout ranges as they develop and displays range details.
+ * Marks configurable breakout ranges and displays range details.
  *
- * TODDO: input TimeWindow must support timezone ids: FXT for US session, SRV for EU session
+ * TODDO: input TimeWindow must support timezone ids (09:00-09:30 NY, 09:15-09:30 FF)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -13,6 +13,7 @@ int __DeinitFlags[];
 
 extern string TimeWindow       = "09:00-10:00";          // server timezone
 extern int    NumberOfBrackets = 1;                      // -1: process all available data
+extern color  BracketsColor    = Magenta;                //
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -21,7 +22,6 @@ extern int    NumberOfBrackets = 1;                      // -1: process all avai
 #include <rsfLib.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
-//#include <functions/iChangedBars.mqh>
 #include <functions/iCopyRates.mqh>
 #include <functions/ParseDateTime.mqh>
 
@@ -67,6 +67,12 @@ int onInit() {
    if (iValue < -1)                                                        return(catch("onInit(3)  invalid input parameter NumberOfBrackets: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
    NumberOfBrackets = iValue;
    maxBrackets = ifInt(iValue==-1, INT_MAX, iValue);
+
+   // BracketsColor
+   if (BracketsColor == 0xFF000000) BracketsColor = CLR_NONE;              // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (AutoConfiguration) {
+      BracketsColor = GetConfigColor(indicator, "BracketsColor", BracketsColor);
+   }
 
    SetIndexLabel(0, NULL);                                                 // disable "Data" window display
    return(catch("onInit(4)"));
@@ -147,30 +153,30 @@ bool UpdateBrackets() {
          chartEnd   = Min(rangeEnd-1, Tick.time);
 
          // high
-         label = "Bracket high "+ TimeWindow +": "+ NumberToStr(high, PriceFormat) +" ["+ pid +"]["+ i +"]";
+         label = "Bracket high "+ TimeWindow +" "+ NumberToStr(high, PriceFormat) +" ["+ i +"]["+ pid +"]";
          if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
-         ObjectSet(label, OBJPROP_TIME1,  chartStart );
-         ObjectSet(label, OBJPROP_PRICE1, high       );
-         ObjectSet(label, OBJPROP_TIME2,  chartEnd   );
-         ObjectSet(label, OBJPROP_PRICE2, high       );
+         ObjectSet(label, OBJPROP_TIME1,  chartStart);
+         ObjectSet(label, OBJPROP_PRICE1, high);
+         ObjectSet(label, OBJPROP_TIME2,  chartEnd);
+         ObjectSet(label, OBJPROP_PRICE2, high);
          ObjectSet(label, OBJPROP_STYLE,  STYLE_SOLID);
-         ObjectSet(label, OBJPROP_WIDTH,  3          );
-         ObjectSet(label, OBJPROP_COLOR,  Magenta    );
-         ObjectSet(label, OBJPROP_RAY,    false      );
-         ObjectSet(label, OBJPROP_BACK,   false      );
+         ObjectSet(label, OBJPROP_WIDTH,  3);
+         ObjectSet(label, OBJPROP_COLOR,  BracketsColor);
+         ObjectSet(label, OBJPROP_RAY,    false);
+         ObjectSet(label, OBJPROP_BACK,   false);
 
          // low
-         label = "Bracket low "+ TimeWindow +": "+ NumberToStr(low, PriceFormat) +" ["+ pid +"]["+ i +"]";
+         label = "Bracket low "+ TimeWindow +" "+ NumberToStr(low, PriceFormat) +" ["+ i +"]["+ pid +"]";
          if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
-         ObjectSet(label, OBJPROP_TIME1,  chartStart );
-         ObjectSet(label, OBJPROP_PRICE1, low        );
-         ObjectSet(label, OBJPROP_TIME2,  chartEnd   );
-         ObjectSet(label, OBJPROP_PRICE2, low        );
+         ObjectSet(label, OBJPROP_TIME1,  chartStart);
+         ObjectSet(label, OBJPROP_PRICE1, low);
+         ObjectSet(label, OBJPROP_TIME2,  chartEnd);
+         ObjectSet(label, OBJPROP_PRICE2, low);
          ObjectSet(label, OBJPROP_STYLE,  STYLE_SOLID);
-         ObjectSet(label, OBJPROP_WIDTH,  3          );
-         ObjectSet(label, OBJPROP_COLOR,  Magenta    );
-         ObjectSet(label, OBJPROP_RAY,    false      );
-         ObjectSet(label, OBJPROP_BACK,   false      );
+         ObjectSet(label, OBJPROP_WIDTH,  3);
+         ObjectSet(label, OBJPROP_COLOR,  BracketsColor);
+         ObjectSet(label, OBJPROP_RAY,    false);
+         ObjectSet(label, OBJPROP_BACK,   false);
       }
    }
    return(true);
@@ -222,6 +228,7 @@ bool ParseTimeWindow(string timeframe, int &from, int &to, int &period) {
  */
 string InputsToStr() {
    return(StringConcatenate("TimeWindow=",       DoubleQuoteStr(TimeWindow), ";", NL,
-                            "NumberOfBrackets=", NumberOfBrackets,           ";")
+                            "NumberOfBrackets=", NumberOfBrackets,           ";", NL,
+                            "BracketsColor=",    ColorToStr(BracketsColor),  ";")
    );
 }
