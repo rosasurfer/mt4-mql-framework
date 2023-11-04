@@ -4,7 +4,7 @@
  * This EA's purpose is to protect the trading account and enforce adherence to a daily loss/drawdown limit (DDL). It monitors
  * open positions and floating PnL of all symbols (not only the chart symbol where the EA is attached).
  *
- * Positions of symbols without trade permission are immediately closed.
+ * Positions of symbols without trade permission and positions opened outside the permitted time range are immediately closed.
  *
  * Permitted positions are monitored until a predefined drawdown limit is reached. Once triggered the EA closes all open
  * positions and deletes all pending orders of the account, and further trading is prohibited until the end of the day.
@@ -15,13 +15,14 @@
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
 int __DeinitFlags[];
-int __virtualTicks = 800;                          // milliseconds (must be short as the EA watches all symbols)
+int __virtualTicks = 800;                             // milliseconds (must be short as the EA watches all symbols)
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string PermittedSymbols = "";               // symbols allowed to trade ("*": all symbols)
-extern string DrawdownLimit    = "200.00 | 5%*";   // absolute or percentage drawdown limit
-extern bool   IgnoreSpread     = true;             // whether to not apply the spread of open positions (prevents liquidation by spread widening)
+extern string PermittedSymbols   = "";                // symbols allowed to trade ("*": all symbols)
+extern string PermittedTimeRange = "00:00-23:59";     // time range trading is allowed in (server time; empty: no limitation)
+extern string DrawdownLimit      = "200.00 | 5%*";    // absolute or percentage drawdown limit
+extern bool   IgnoreSpread       = true;              // whether not to apply the spread of open positions (prevents liquidation by spread widening)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,23 +30,27 @@ extern bool   IgnoreSpread     = true;             // whether to not apply the s
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ComputeFloatingPnL.mqh>
+#include <functions/ParseDateTime.mqh>
+#include <functions/ParseTimeRange.mqh>
 #include <functions/SortClosedTickets.mqh>
 
-double   prevEquity;                               // equity value at the previous tick
-bool     isPctLimit;                               // whether a percent limit is configured
-double   absLimit;                                 // configured absolute drawdown limit
-double   pctLimit;                                 // configured percentage drawdown limit
+double   prevEquity;                                  // equity value at the previous tick
+bool     isPctLimit;                                  // whether a percent limit is configured
+double   absLimit;                                    // configured absolute drawdown limit
+double   pctLimit;                                    // configured percentage drawdown limit
 datetime lastLiquidationTime;
 
+datetime permittedFrom = -1;
+datetime permittedTo   = -1;
 string   permittedSymbols[];
 string   watchedSymbols  [];
 double   watchedPositions[][5];
 
-#define I_START_TIME       0                       // indexes of watchedPositions[]
-#define I_START_EQUITY     1                       //
-#define I_DRAWDOWN_LIMIT   2                       //
-#define I_OPEN_PROFIT      3                       //
-#define I_HISTORY          4                       //
+#define I_START_TIME       0                          // indexes of watchedPositions[]
+#define I_START_EQUITY     1                          //
+#define I_DRAWDOWN_LIMIT   2                          //
+#define I_OPEN_PROFIT      3                          //
+#define I_HISTORY          4                          //
 
 
 /**
@@ -60,10 +65,20 @@ int onInit() {
    int size = Explode(PermittedSymbols, ",", values, NULL);
    for (int i=0; i < size; i++) {
       sValue = StrTrim(values[i]);
-      if (StringLen(sValue) > MAX_SYMBOL_LENGTH) return(catch("onInit(1)  invalid parameter PermittedSymbols: "+ DoubleQuoteStr(PermittedSymbols) +" (max symbol length = "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER));
+      if (StringLen(sValue) > MAX_SYMBOL_LENGTH)                      return(catch("onInit(1)  invalid parameter PermittedSymbols: "+ DoubleQuoteStr(PermittedSymbols) +" (max symbol length = "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER));
       if (SearchStringArrayI(permittedSymbols, sValue) == -1) {
          ArrayPushString(permittedSymbols, sValue);
       }
+   }
+
+   // PermittedTimeRange: 09:00-10:00
+   permittedFrom = -1;
+   permittedTo   = -1;
+   sValue = StrTrim(PermittedTimeRange);
+   if (StringLen(sValue) > 0) {
+      int iNull;
+      if (!ParseTimeRange(sValue, permittedFrom, permittedTo, iNull)) return(catch("onInit(2)  invalid input parameter PermittedTimeRange: \""+ PermittedTimeRange +"\"", ERR_INVALID_INPUT_PARAMETER));
+      PermittedTimeRange = sValue;
    }
 
    // DrawdownLimit
@@ -76,22 +91,22 @@ int onInit() {
    }
    isPctLimit = StrEndsWith(sValue, "%");
    if (isPctLimit) sValue = StrTrimRight(StrLeft(sValue, -1));
-   if (!StrIsNumeric(sValue))                    return(catch("onInit(2)  invalid parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit), ERR_INVALID_PARAMETER));
+   if (!StrIsNumeric(sValue))                                         return(catch("onInit(3)  invalid parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit), ERR_INVALID_PARAMETER));
    double dValue = NormalizeDouble(-MathAbs(StrToDouble(sValue)), 2);
    if (isPctLimit) {
       pctLimit = dValue;
       absLimit = NULL;
-      if (!pctLimit)                             return(catch("onInit(3)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
-      if (pctLimit <= -100)                      return(catch("onInit(4)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be > -100)", ERR_INVALID_PARAMETER));
+      if (!pctLimit)                                                  return(catch("onInit(4)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
+      if (pctLimit <= -100)                                           return(catch("onInit(5)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be > -100)", ERR_INVALID_PARAMETER));
       DrawdownLimit = NumberToStr(pctLimit, ".+") +"%";
    }
    else {
       pctLimit = NULL;
       absLimit = dValue;
-      if (!absLimit)                             return(catch("onInit(5)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
+      if (!absLimit)                                                  return(catch("onInit(6)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
       DrawdownLimit = DoubleToStr(absLimit, 2);
    }
-   return(catch("onInit(6)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -163,10 +178,26 @@ int onTick() {
    for (i=0; prevEquity && i < openSize; i++) {
       // close non-permitted positions
       if (SearchStringArrayI(permittedSymbols, openSymbols[i]) == -1) {
-         logWarn("onTick(2)  closing non-permitted "+ openSymbols[i] +" position");
+         logWarn("onTick(4)  closing non-permitted "+ openSymbols[i] +" position");
          CloseOpenOrders(openSymbols[i]);
          continue;
       }
+      int now = Tick.time % DAY;
+      if (permittedFrom > -1) {
+         if (now < permittedFrom*MINUTES) {
+            logWarn("onTick(5)  closing non-permitted "+ openSymbols[i] +" position");
+            CloseOpenOrders(openSymbols[i]);
+            continue;
+         }
+      }
+      if (permittedTo > -1) {
+         if (now > permittedTo*MINUTES) {
+            logWarn("onTick(6)  closing non-permitted "+ openSymbols[i] +" position");
+            CloseOpenOrders(openSymbols[i]);
+            continue;
+         }
+      }
+
       // add new position to watchlist
       ArrayResize(watchedSymbols,   watchedSize+1);
       ArrayResize(watchedPositions, watchedSize+1);
@@ -176,7 +207,7 @@ int onTick() {
       watchedPositions[watchedSize][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);
       watchedPositions[watchedSize][I_OPEN_PROFIT   ] = openProfits[i];
       watchedPositions[watchedSize][I_HISTORY       ] = CalculateHistory(watchedSymbols[watchedSize], watchedPositions[watchedSize][I_START_TIME]); if (!watchedPositions[watchedSize][I_HISTORY] && last_error) return(last_error);
-      logInfo("onTick(4)  watching "+ watchedSymbols[watchedSize] +" position, ddl="+ DoubleToStr(watchedPositions[watchedSize][I_DRAWDOWN_LIMIT], 2));
+      logInfo("onTick(7)  watching "+ watchedSymbols[watchedSize] +" position, ddl="+ DoubleToStr(watchedPositions[watchedSize][I_DRAWDOWN_LIMIT], 2));
       watchedSize++;
    }
    prevEquity = equity;
@@ -189,14 +220,14 @@ int onTick() {
 
       if (openProfit+history < ddl) {
          lastLiquidationTime = TimeFXT();
-         logWarn("onTick(5)  "+ watchedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, liquidating positions...");
+         logWarn("onTick(8)  "+ watchedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, liquidating positions...");
          ArrayResize(watchedSymbols, 0);
          ArrayResize(watchedPositions, 0);
          CloseOpenOrders();
          break;
       }
    }
-   return(catch("onTick(6)"));
+   return(catch("onTick(9)"));
 }
 
 
@@ -378,7 +409,8 @@ bool CloseOpenOrders(string symbol = "") {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("PermittedSymbols=", DoubleQuoteStr(PermittedSymbols), ";", NL,
-                            "DrawdownLimit=",    DoubleQuoteStr(DrawdownLimit),    ";", NL,
-                            "IgnoreSpread=",     BoolToStr(IgnoreSpread),          ";"));
+   return(StringConcatenate("PermittedSymbols=",   DoubleQuoteStr(PermittedSymbols),   ";", NL,
+                            "PermittedTimeRange=", DoubleQuoteStr(PermittedTimeRange), ";", NL,
+                            "DrawdownLimit=",      DoubleQuoteStr(DrawdownLimit),      ";", NL,
+                            "IgnoreSpread=",       BoolToStr(IgnoreSpread),            ";"));
 }

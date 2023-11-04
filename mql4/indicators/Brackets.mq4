@@ -24,6 +24,7 @@ extern color  BracketsColor    = Magenta;                //
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iCopyRates.mqh>
 #include <functions/ParseDateTime.mqh>
+#include <functions/ParseTimeRange.mqh>
 
 #property indicator_chart_window
 
@@ -52,10 +53,10 @@ int onInit() {
       else if (IsConfigKey(section, stdSymbol +".TimeWindow")) sValue = GetConfigString(section, stdSymbol +".TimeWindow", sValue);
       else                                                     sValue = GetConfigString(section, "TimeWindow", sValue);
    }
-   if (!ParseTimeWindow(sValue, bracketStart, bracketEnd, ratesTimeframe)) return(catch("onInit(1)  invalid input parameter TimeWindow: \""+ sValue +"\"", ERR_INVALID_INPUT_PARAMETER));
+   if (!ParseTimeRange(sValue, bracketStart, bracketEnd, ratesTimeframe)) return(catch("onInit(1)  invalid input parameter TimeWindow: \""+ sValue +"\"", ERR_INVALID_INPUT_PARAMETER));
    TimeWindow = sValue;
-   ratesTimeframe = Min(ratesTimeframe, PERIOD_M5);                        // don't use calculation periods > M5 as some brokers/symbols may provide incorrectly aligned timeframe periods
-   if (ratesTimeframe == PERIOD_M1)                                        return(catch("onInit(2)  unsupported TimeWindow: \""+ sValue +"\" (M1 resolution not implemented)", ERR_NOT_IMPLEMENTED));
+   ratesTimeframe = Min(ratesTimeframe, PERIOD_M5);                       // don't use calculation periods > M5 as some brokers/symbols may provide incorrectly aligned timeframe periods
+   if (ratesTimeframe == PERIOD_M1)                                       return(catch("onInit(2)  unsupported TimeWindow: \""+ sValue +"\" (M1 resolution not implemented)", ERR_NOT_IMPLEMENTED));
 
    // NumberOfBrackets
    int iValue = NumberOfBrackets;
@@ -64,17 +65,17 @@ int onInit() {
       else if (IsConfigKey(section, stdSymbol +".NumberOfBrackets")) iValue = GetConfigInt(section, stdSymbol +".NumberOfBrackets", iValue);
       else                                                           iValue = GetConfigInt(section, "NumberOfBrackets", iValue);
    }
-   if (iValue < -1)                                                        return(catch("onInit(3)  invalid input parameter NumberOfBrackets: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
+   if (iValue < -1)                                                       return(catch("onInit(3)  invalid input parameter NumberOfBrackets: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
    NumberOfBrackets = iValue;
    maxBrackets = ifInt(iValue==-1, INT_MAX, iValue);
 
    // BracketsColor
-   if (BracketsColor == 0xFF000000) BracketsColor = CLR_NONE;              // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (BracketsColor == 0xFF000000) BracketsColor = CLR_NONE;             // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) {
       BracketsColor = GetConfigColor(indicator, "BracketsColor", BracketsColor);
    }
 
-   SetIndexLabel(0, NULL);                                                 // disable "Data" window display
+   SetIndexLabel(0, NULL);                                                // disable "Data" window display
    return(catch("onInit(4)"));
 }
 
@@ -179,44 +180,6 @@ bool UpdateBrackets() {
          ObjectSet(label, OBJPROP_BACK,   false);
       }
    }
-   return(true);
-}
-
-
-/**
- * Parse the given bracket timeframe description and return the resulting bracket parameters.
- *
- * @param  _In_  string timeframe - bracket timeframe description
- * @param  _Out_ int    from      - bracket start time in minutes since Midnight servertime
- * @param  _Out_ int    to        - bracket end time in minutes since Midnight servertime
- * @param  _Out_ int    period    - price period to use for bracket calculations
- *
- * @return bool - success status
- */
-bool ParseTimeWindow(string timeframe, int &from, int &to, int &period) {
-   if (!StrContains(timeframe, "-")) return(false);
-   int result[];
-
-   string sFrom = StrTrim(StrLeftTo(timeframe, "-"));
-   if (!ParseDateTime(sFrom, DATE_OPTIONAL, result)) return(false);
-   if (result[PT_HAS_DATE] || result[PT_SECOND])     return(false);
-   int _from = result[PT_HOUR]*60 + result[PT_MINUTE];
-
-   string sTo = StrTrim(StrRightFrom(timeframe, "-"));
-   if (!ParseDateTime(sTo, DATE_OPTIONAL, result)) return(false);
-   if (result[PT_HAS_DATE] || result[PT_SECOND])   return(false);
-   int _to = result[PT_HOUR]*60 + result[PT_MINUTE];
-
-   if (_from >= _to) return(false);
-   from = _from;
-   to = _to;
-
-   if      (!(from % PERIOD_H1  + to % PERIOD_H1))  period = PERIOD_H1;
-   else if (!(from % PERIOD_M30 + to % PERIOD_M30)) period = PERIOD_M30;
-   else if (!(from % PERIOD_M15 + to % PERIOD_M15)) period = PERIOD_M15;
-   else if (!(from % PERIOD_M5  + to % PERIOD_M5))  period = PERIOD_M5;
-   else                                             period = PERIOD_M1;
-
    return(true);
 }
 
