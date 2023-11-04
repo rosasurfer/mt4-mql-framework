@@ -271,7 +271,6 @@ double CalculateHistory(string symbol, datetime from) {
    double   hst.swaps      []; ArrayResize(hst.swaps,       orders);
    double   hst.profits    []; ArrayResize(hst.profits,     orders);
    string   hst.comments   []; ArrayResize(hst.comments,    orders);
-   bool     hst.valid      []; ArrayResize(hst.valid,       orders);
 
    for (i=0; i < orders; i++) {
       if (!SelectTicket(sortKeys[i][2], "CalculateHistory(2)")) return(NULL);
@@ -286,12 +285,13 @@ double CalculateHistory(string symbol, datetime from) {
       hst.swaps      [i] = OrderSwap();
       hst.profits    [i] = OrderProfit();
       hst.comments   [i] = OrderComment();
-      hst.valid      [i] = true;
    }
 
    // adjust hedges: apply all data to the first ticket and discard the hedging ticket
    for (i=0; i < orders; i++) {
-      if (EQ(hst.lotSizes[i], 0)) {                                  // lotSize = 0: hedge order
+      if (!hst.tickets[i]) continue;                                 // skip discarded tickets
+
+      if (EQ(hst.lotSizes[i], 0)) {                                  // lotSize = 0: hedging order
          // TODO: check behaviour if OrderComment() is a custom value
          if (!StrStartsWithI(hst.comments[i], "close hedge by #")) {
             return(!catch("CalculateHistory(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
@@ -317,7 +317,7 @@ double CalculateHistory(string symbol, datetime from) {
          }
          hst.closeTimes [first] = hst.openTimes [second];
          hst.closePrices[first] = hst.openPrices[second];
-         hst.valid     [second] = false;                             // mark hedging ticket as discarded
+         hst.tickets   [second] = NULL;                              // mark hedging ticket as discarded
       }
    }
 
@@ -325,7 +325,7 @@ double CalculateHistory(string symbol, datetime from) {
    double profit = 0;
    n=0;
    for (i=0; i < orders; i++) {
-      if (!hst.valid[i])            continue;                        // skip discarded tickets
+      if (!hst.tickets[i])          continue;                        // skip discarded tickets
       if (hst.closeTimes[i] < from) continue;
       profit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
       n++;

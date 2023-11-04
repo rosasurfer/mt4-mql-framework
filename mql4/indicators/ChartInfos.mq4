@@ -3323,6 +3323,8 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 
          // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen (auch Positionen mehrerer Symbole werden korrekt zugeordnet)
          for (i=0; i < orders; i++) {
+            if (!hst.valid[i]) continue;                                      // skip processed hedging orders
+
             if (EQ(hst.lotSizes[i], 0)) {                                     // lotSize = 0: Hedge-Position
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
                if (!StrStartsWithI(hst.comments[i], "close hedge by #")) {
