@@ -157,7 +157,7 @@ bool UpdateBrackets() {
          ObjectSet(label, OBJPROP_WIDTH,  3          );
          ObjectSet(label, OBJPROP_COLOR,  Magenta    );
          ObjectSet(label, OBJPROP_RAY,    false      );
-         ObjectSet(label, OBJPROP_BACK,   true       );
+         ObjectSet(label, OBJPROP_BACK,   false      );
 
          // low
          label = "Bracket low "+ TimeWindow +": "+ NumberToStr(low, PriceFormat) +" ["+ pid +"]["+ i +"]";
@@ -170,7 +170,7 @@ bool UpdateBrackets() {
          ObjectSet(label, OBJPROP_WIDTH,  3          );
          ObjectSet(label, OBJPROP_COLOR,  Magenta    );
          ObjectSet(label, OBJPROP_RAY,    false      );
-         ObjectSet(label, OBJPROP_BACK,   true       );
+         ObjectSet(label, OBJPROP_BACK,   false      );
       }
    }
    return(true);
