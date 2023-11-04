@@ -38,6 +38,7 @@ extern string Signal.SMS      = "on | off | auto*";
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/SortClosedTickets.mqh>
 #include <functions/ta/ADR.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
@@ -3322,10 +3323,11 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 
          // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen (auch Positionen mehrerer Symbole werden korrekt zugeordnet)
          for (i=0; i < orders; i++) {
-            if (hst.tickets[i] && EQ(hst.lotSizes[i], 0)) {                      // lotSize = 0: Hedge-Position
+            if (EQ(hst.lotSizes[i], 0)) {                                     // lotSize = 0: Hedge-Position
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
-               if (!StrStartsWithI(hst.comments[i], "close hedge by #"))
+               if (!StrStartsWithI(hst.comments[i], "close hedge by #")) {
                   return(!catch("ExtractPosition(2)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+               }
 
                // Gegenstück suchen
                hst.ticket = StrToInteger(StringSubstr(hst.comments[i], 16));
@@ -3340,7 +3342,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 
                // Orderdaten korrigieren
                if (i == first) {
-                  hst.lotSizes   [first] = hst.lotSizes   [second];              // alle Transaktionsdaten in der ersten Order speichern
+                  hst.lotSizes   [first] = hst.lotSizes   [second];           // alle Transaktionsdaten in der ersten Order speichern
                   hst.commissions[first] = hst.commissions[second];
                   hst.swaps      [first] = hst.swaps      [second];
                   hst.profits    [first] = hst.profits    [second];
@@ -3348,8 +3350,8 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                hst.closeTimes [first] = hst.openTimes [second];
                hst.closePrices[first] = hst.openPrices[second];
 
-               hst.closeTimes[second] = hst.closeTimes[first];                   // CloseTime des hedgenden Tickets auf die erste Order setzen, damit es durch den Zeitfilter kommt und an ShowTradeHistory() übergeben werden kann
-               hst.valid     [second] = false;                                   // hedgendes Ticket als verworfen markieren
+               hst.closeTimes[second] = hst.closeTimes[first];                // CloseTime des hedgenden Tickets auf die erste Order setzen, damit es durch den Zeitfilter kommt und an ShowTradeHistory() übergeben werden kann
+               hst.valid     [second] = false;                                // hedgendes Ticket als verworfen markieren
             }
          }
 
@@ -3361,14 +3363,14 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          for (i=0; i < orders; i++) {
             if (from && hst.closeTimes[i] < from) continue;
             if (to   && hst.closeTimes[i] > to  ) continue;
-            ArrayPushInt(showTickets, hst.tickets[i]);                           // collect tickets to pass to ShowTradeHistory()
-            if (!hst.valid[i])                    continue;                      // verworfene Hedges überspringen
+            ArrayPushInt(showTickets, hst.tickets[i]);                        // collect tickets to pass to ShowTradeHistory()
+            if (!hst.valid[i])                    continue;                   // verworfene Hedges überspringen
             lastProfit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
             n++;
-         }                                                                       // call ShowTradeHistory() if specified
+         }                                                                    // call ShowTradeHistory() if specified
          if (flags & F_SHOW_CUSTOM_HISTORY && ArraySize(showTickets)) ShowTradeHistory(showTickets);
 
-         if (!n) lastProfit = EMPTY_VALUE;                                       // keine passenden geschlossenen Trades gefunden
+         if (!n) lastProfit = EMPTY_VALUE;                                    // keine passenden geschlossenen Trades gefunden
          else    lastProfit = NormalizeDouble(lastProfit, 2);
          termResult1        = lastProfit;
          termResult2        = _orders;
@@ -3833,156 +3835,6 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
    //debug("StorePosition(0.4)  history: realPL="+ NumberToStr(totalProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2"));
    return(!catch("StorePosition(8)"));
-}
-
-
-/**
- * Sortiert die übergebenen Ticketdaten nach {CloseTime, OpenTime, Ticket}.
- *
- * @param  _InOut_ int tickets[]
- *
- * @return bool - success status
- */
-bool SortClosedTickets(int &tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
-   if (ArrayRange(tickets, 1) != 3) return(!catch("SortClosedTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAY));
-
-   int rows = ArrayRange(tickets, 0);
-   if (rows < 2) return(true);                                       // single row, nothing to do
-
-   // alle Zeilen nach CloseTime sortieren
-   ArraySort(tickets);
-
-   // Zeilen mit gleicher CloseTime zusätzlich nach OpenTime sortieren
-   int closeTime, openTime, ticket, lastCloseTime, sameCloseTimes[][3];
-   ArrayResize(sameCloseTimes, 1);
-
-   for (int n, i=0; i < rows; i++) {
-      closeTime = tickets[i][0];
-      openTime  = tickets[i][1];
-      ticket    = tickets[i][2];
-
-      if (closeTime == lastCloseTime) {
-         n++;
-         ArrayResize(sameCloseTimes, n+1);
-      }
-      else if (n > 0) {
-         // in sameCloseTimes[] angesammelte Zeilen von tickets[] nach OpenTime sortieren
-         __SCT.SameCloseTimes(tickets, sameCloseTimes);
-         ArrayResize(sameCloseTimes, 1);
-         n = 0;
-      }
-      sameCloseTimes[n][0] = openTime;
-      sameCloseTimes[n][1] = ticket;
-      sameCloseTimes[n][2] = i;                                      // Originalposition der Zeile in keys[]
-
-      lastCloseTime = closeTime;
-   }
-   if (n > 0) {
-      // im letzten Schleifendurchlauf in sameCloseTimes[] angesammelte Zeilen müssen auch sortiert werden
-      __SCT.SameCloseTimes(tickets, sameCloseTimes);
-      n = 0;
-   }
-   ArrayResize(sameCloseTimes, 0);
-
-   // Zeilen mit gleicher Close- und OpenTime zusätzlich nach Ticket sortieren
-   int lastOpenTime, sameOpenTimes[][2];
-   ArrayResize(sameOpenTimes, 1);
-   lastCloseTime = 0;
-
-   for (i=0; i < rows; i++) {
-      closeTime = tickets[i][0];
-      openTime  = tickets[i][1];
-      ticket    = tickets[i][2];
-
-      if (closeTime==lastCloseTime && openTime==lastOpenTime) {
-         n++;
-         ArrayResize(sameOpenTimes, n+1);
-      }
-      else if (n > 0) {
-         // in sameOpenTimes[] angesammelte Zeilen von tickets[] nach Ticket sortieren
-         __SCT.SameOpenTimes(tickets, sameOpenTimes);
-         ArrayResize(sameOpenTimes, 1);
-         n = 0;
-      }
-      sameOpenTimes[n][0] = ticket;
-      sameOpenTimes[n][1] = i;                                       // Originalposition der Zeile in tickets[]
-
-      lastCloseTime = closeTime;
-      lastOpenTime  = openTime;
-   }
-   if (n > 0) {
-      // im letzten Schleifendurchlauf in sameOpenTimes[] angesammelte Zeilen müssen auch sortiert werden
-      __SCT.SameOpenTimes(tickets, sameOpenTimes);
-   }
-   ArrayResize(sameOpenTimes, 0);
-
-   return(!catch("SortClosedTickets(2)"));
-}
-
-
-/**
- * Internal helper for SortClosedTickets().
- *
- * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach {OpenTime, Ticket}. Die CloseTime-Felder dieser Zeilen
- * sind gleich und müssen nicht umsortiert werden.
- *
- * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
- * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
- *
- * @return bool - success status
- *
- * @access private
- */
-bool __SCT.SameCloseTimes(int &ticketData[][/*{CloseTime, OpenTime, Ticket}*/], int rowsToSort[][/*{OpenTime, Ticket, i}*/]) {
-   int rows.copy[][3]; ArrayResize(rows.copy, 0);
-   ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
-
-   // Zeilen nach OpenTime sortieren
-   ArraySort(rows.copy);
-
-   // Original-Daten mit den sortierten Werten überschreiben
-   int openTime, ticket, rows=ArrayRange(rowsToSort, 0);
-
-   for (int i, n=0; n < rows; n++) {                                 // Originaldaten mit den sortierten Werten überschreiben
-      i                = rowsToSort[n][2];
-      ticketData[i][1] = rows.copy [n][0];
-      ticketData[i][2] = rows.copy [n][1];
-   }
-
-   ArrayResize(rows.copy, 0);
-   return(!catch("__SCT.SameCloseTimes(1)"));
-}
-
-
-/**
- * Internal helper for SortClosedTickets().
- *
- * Sortiert die in rowsToSort[] angegebene Zeilen des Datenarrays ticketData[] nach {Ticket}. Die Open- und CloseTime-Felder dieser Zeilen
- * sind gleich und müssen nicht umsortiert werden.
- *
- * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
- * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
- *
- * @return bool - success status
- *
- * @access private
- */
-bool __SCT.SameOpenTimes(int &ticketData[][/*{OpenTime, CloseTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
-   int rows.copy[][2]; ArrayResize(rows.copy, 0);
-   ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
-
-   // Zeilen nach Ticket sortieren
-   ArraySort(rows.copy);
-
-   int ticket, rows=ArrayRange(rowsToSort, 0);
-
-   for (int i, n=0; n < rows; n++) {                                 // Originaldaten mit den sortierten Werten überschreiben
-      i                = rowsToSort[n][1];
-      ticketData[i][2] = rows.copy [n][0];
-   }
-
-   ArrayResize(rows.copy, 0);
-   return(!catch("__SCT.SameOpenTimes(1)"));
 }
 
 
