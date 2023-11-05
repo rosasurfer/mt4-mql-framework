@@ -1,12 +1,15 @@
 /**
- * This indicator displays market data, account infos and trade statistics on the chart.
+ * ChartInfos
+ *
+ * This indicator displays various market data, trade statistics and account infos on the chart.
  *
  *  - The current price and spread.
  *  - The current instrument name (only in terminals <= build 509).
  *  - The pre-calculated unitsize for a standard position.
  *  - The currently open total position with resulting risk and leverage values.
- *  - PL of open positions and/or trade history.
- *  - Current PL target levels and the current account stopout level.
+ *  - PnL of customizable open positions and/or trade history.
+ *  - Breakeven and PnL target levels.
+ *  - The current account stopout level.
  *  - A warning when the account's open order limit is approached.
  *
  *
@@ -21,7 +24,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string UnitSize.Corner = "top | bottom*";                  // may be shortened
+extern string UnitSize.Corner = "top | bottom*";                  // can be shortened
 extern string Track.Orders    = "on | off | auto*";               // whether to signal position open/close events
 extern string ___a__________________________;
 
@@ -49,25 +52,25 @@ extern string Signal.SMS      = "on | off | auto*";
 #property indicator_chart_window
 
 // chart infos
-int displayedPrice = PRICE_MEDIAN;                                // price type: Bid | Ask | Median (default)
+int     displayedPrice = PRICE_MEDIAN;                            // Bid | Ask | Median (default)
 
-// unitsize calculation, see CalculateUnitSize()
-bool   mm.done;                                                   // processing flag
-double mm.externalAssets;                                         // external assets
-double mm.equity;                                                 // equity value used for calculations, incl. external assets and floating losses (but w/o floating/unrealized profits)
+// unitsize calculation
+bool    mm.done;                                                  // processing flag
+double  mm.externalAssets;                                        // external assets
+double  mm.equity;                                                // equity value used for calculations, incl. external assets and floating losses (but w/o floating/unrealized profits)
 
-double mm.cfgLeverage;
-double mm.cfgRiskPercent;
-double mm.cfgRiskRange;
-bool   mm.cfgRiskRangeIsADR;                                      // whether the price range is configured as "ADR"
+double  mm.cfgLeverage;
+double  mm.cfgRiskPercent;
+double  mm.cfgRiskRange;
+bool    mm.cfgRiskRangeIsADR;                                     // whether the price range is configured as "ADR"
 
-double mm.lotValue;                                               // value of 1 lot in account currency
-double mm.unleveragedLots;                                        // unleveraged unitsize
-double mm.leveragedLots;                                          // leveraged unitsize
-double mm.leveragedLotsNormalized;                                // leveraged unitsize normalized to MODE_LOTSTEP
-double mm.leverage;                                               // resulting leverage
-double mm.riskPercent;                                            // resulting risk
-double mm.riskRange;                                              // resulting price range
+double  mm.lotValue;                                              // value of 1 lot in account currency
+double  mm.unleveragedLots;                                       // unleveraged unitsize
+double  mm.leveragedLots;                                         // leveraged unitsize
+double  mm.leveragedLotsNormalized;                               // leveraged unitsize normalized to MODE_LOTSTEP
+double  mm.leverage;                                              // resulting leverage
+double  mm.riskPercent;                                           // resulting risk
+double  mm.riskRange;                                             // resulting price range
 
 // internal + external position data
 bool    isPendings;                                               // ob Pending-Limits im Markt liegen (Orders oder Positions)
@@ -212,11 +215,12 @@ double  trackedOrders[][3];                                       // {ticket, or
 #define CLOSE_STOPLOSS     2
 #define CLOSE_STOPOUT      3                                      // margin call
 
-// Konfiguration der Signalisierung
+// signaling
 bool    signal.sound;
-string  signal.sound.orderFailed    = "speech/OrderCancelled.wav";
-string  signal.sound.positionOpened = "speech/OrderFilled.wav";
-string  signal.sound.positionClosed = "speech/PositionClosed.wav";
+string  signal.sound.orderFailed      = "speech/OrderCancelled.wav";
+string  signal.sound.positionOpened   = "speech/OrderFilled.wav";
+string  signal.sound.positionClosed   = "speech/PositionClosed.wav";
+string  signal.sound.positionOverstep = "MarginLow.wav";          // position increased by more than 1 x unitsize
 bool    signal.mail;
 string  signal.mail.sender   = "";
 string  signal.mail.receiver = "";
@@ -1240,7 +1244,7 @@ bool UpdateUnitSize() {
 
 
 /**
- * Update detailed P/L stats (bottom-left) and total open position (bottom-right).
+ * Update detailed PnL stats (bottom-left) and total open position (bottom-right).
  *
  * @return bool - success status
  */
@@ -1773,13 +1777,21 @@ bool UpdateStopoutLevel() {
       }
    }
 
-   // Ergebnisse intern + extern
-   longPosition  = NormalizeDouble(longPosition,  2);                            // global vars
+   // results intern + extern
+   double prevTotalPosition = totalPosition;
+   longPosition  = NormalizeDouble(longPosition,  2);
    shortPosition = NormalizeDouble(shortPosition, 2);
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = longPosition || shortPosition;
 
-   // individuelle Konfiguration parsen
+   // signal potential click errors if the position increased by more than 1 x unitsize
+   double change = NormalizeDouble(MathAbs(totalPosition)-MathAbs(prevTotalPosition), 2);
+   if (change > mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
+      logInfo("AnalyzePositions(2)  position "+ NumberToStr(change, "+.+") +" => "+ NumberToStr(totalPosition, ".+") +" (unitsize "+ NumberToStr(mm.leveragedLotsNormalized, ".+") +")");
+      PlaySoundEx(signal.sound.positionOverstep);
+   }
+
+   // parse custom configuration
    int prevError = last_error;
    SetLastError(NO_ERROR);
 
@@ -1869,7 +1881,7 @@ bool UpdateStopoutLevel() {
       return(false);
    }
    positions.analyzed = true;
-   return(!catch("AnalyzePositions(2)"));
+   return(!catch("AnalyzePositions(3)"));
 }
 
 
@@ -3111,12 +3123,12 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * @return bool - success status
  */
 bool ExtractPosition(int termType, double termValue1, double termValue2, double &termResult1, double &termResult2,
-                     double &longPosition,       double &shortPosition,       double &totalPosition,       int &tickets[],       int &types[],       double &lots[],       datetime &openTimes[], double &openPrices[],       double &commissions[],       double &swaps[],       double &profits[],
+                     double &lLongPosition,      double &lShortPosition,      double &lTotalPosition,      int &tickets[],       int &types[],       double &lots[],       datetime &openTimes[], double &openPrices[],       double &commissions[],       double &swaps[],       double &profits[],
                      double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[], int &customTypes[], double &customLots[],                        double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &closedProfit, double &adjustedProfit, double &customEquity, double &profitMarkerPrice, double &profitMarkerPercent, double &lossMarkerPrice, double &lossMarkerPercent,
                      bool   &isCustomVirtual, int flags = NULL) {
    isCustomVirtual = isCustomVirtual!=0;
 
-   double   lotsize;
+   double lotsize;
    datetime from, to;
    int ticket, sizeTickets = ArraySize(tickets);
 
@@ -3125,7 +3137,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 
       if (lotsize == EMPTY) {
          // alle übrigen Long-Positionen
-         if (longPosition > 0) {
+         if (lLongPosition > 0) {
             for (int i=0; i < sizeTickets; i++) {
                if (!tickets[i]) continue;
 
@@ -3139,9 +3151,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   ArrayPushDouble(customSwaps,       swaps      [i]);
                   ArrayPushDouble(customProfits,     profits    [i]);
                   if (!isCustomVirtual) {
-                     longPosition  = NormalizeDouble(longPosition - lots[i],       2);
-                     totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
-                     tickets[i]    = NULL;
+                     lLongPosition  = NormalizeDouble(lLongPosition - lots[i],        2);
+                     lTotalPosition = NormalizeDouble(lLongPosition - lShortPosition, 2);
+                     tickets[i]     = NULL;
                   }
                   customLongPosition  = NormalizeDouble(customLongPosition + lots[i],             3);
                   customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
@@ -3172,7 +3184,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 
       if (lotsize == EMPTY) {
          // alle übrigen Short-Positionen
-         if (shortPosition > 0) {
+         if (lShortPosition > 0) {
             for (i=0; i < sizeTickets; i++) {
                if (!tickets[i]) continue;
 
@@ -3186,9 +3198,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   ArrayPushDouble(customSwaps,       swaps      [i]);
                   ArrayPushDouble(customProfits,     profits    [i]);
                   if (!isCustomVirtual) {
-                     shortPosition = NormalizeDouble(shortPosition - lots[i],       2);
-                     totalPosition = NormalizeDouble(longPosition  - shortPosition, 2);
-                     tickets[i]    = NULL;
+                     lShortPosition = NormalizeDouble(lShortPosition - lots[i],       2);
+                     lTotalPosition = NormalizeDouble(lLongPosition - lShortPosition, 2);
+                     tickets[i]     = NULL;
                   }
                   customShortPosition = NormalizeDouble(customShortPosition + lots[i],             3);
                   customTotalPosition = NormalizeDouble(customLongPosition  - customShortPosition, 3);
@@ -3219,7 +3231,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       to   = termValue2;
 
       // alle offenen Positionen des aktuellen Symbols eines Zeitraumes
-      if (longPosition || shortPosition) {
+      if (lLongPosition || lShortPosition) {
          for (i=0; i < sizeTickets; i++) {
             if (!tickets[i])                 continue;
             if (from && openTimes[i] < from) continue;
@@ -3234,13 +3246,13 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             ArrayPushDouble(customSwaps,       swaps      [i]);
             ArrayPushDouble(customProfits,     profits    [i]);
             if (!isCustomVirtual) {
-               if (types[i] == OP_BUY) longPosition     = NormalizeDouble(longPosition  - lots[i],       2);
-               else                    shortPosition    = NormalizeDouble(shortPosition - lots[i],       2);
-                                       totalPosition    = NormalizeDouble(longPosition  - shortPosition, 2);
+               if (types[i] == OP_BUY) lLongPosition    = NormalizeDouble(lLongPosition  - lots[i], 2);
+               else                    lShortPosition   = NormalizeDouble(lShortPosition - lots[i], 2);
+                                       lTotalPosition   = NormalizeDouble(lLongPosition - lShortPosition, 2);
                                        tickets[i]       = NULL;
             }
-            if (types[i] == OP_BUY) customLongPosition  = NormalizeDouble(customLongPosition  + lots[i],             3);
-            else                    customShortPosition = NormalizeDouble(customShortPosition + lots[i],             3);
+            if (types[i] == OP_BUY) customLongPosition  = NormalizeDouble(customLongPosition  + lots[i], 3);
+            else                    customShortPosition = NormalizeDouble(customShortPosition + lots[i], 3);
                                     customTotalPosition = NormalizeDouble(customLongPosition  - customShortPosition, 3);
          }
       }
@@ -3422,14 +3434,14 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                ArrayPushDouble(customSwaps,       swaps      [i]);
                ArrayPushDouble(customProfits,     profits    [i]);
                if (!isCustomVirtual) {
-                  if (types[i] == OP_BUY) longPosition        = NormalizeDouble(longPosition  - lots[i],       2);
-                  else                    shortPosition       = NormalizeDouble(shortPosition - lots[i],       2);
-                                          totalPosition       = NormalizeDouble(longPosition  - shortPosition, 2);
+                  if (types[i] == OP_BUY) lLongPosition       = NormalizeDouble(lLongPosition  - lots[i], 2);
+                  else                    lShortPosition      = NormalizeDouble(lShortPosition - lots[i], 2);
+                                          lTotalPosition      = NormalizeDouble(lLongPosition - lShortPosition, 2);
                                           tickets[i]          = NULL;
                }
-               if (types[i] == OP_BUY)    customLongPosition  = NormalizeDouble(customLongPosition  + lots[i],             3);
-               else                       customShortPosition = NormalizeDouble(customShortPosition + lots[i],             3);
-                                          customTotalPosition = NormalizeDouble(customLongPosition  - customShortPosition, 3);
+               if (types[i] == OP_BUY)    customLongPosition  = NormalizeDouble(customLongPosition  + lots[i], 3);
+               else                       customShortPosition = NormalizeDouble(customShortPosition + lots[i], 3);
+                                          customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
                break;
             }
          }
@@ -3442,7 +3454,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                if (EQ(lotsize, lots[i])) {
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(TERM_TICKET, ticket, EMPTY, termResult1, termResult2,
-                                       longPosition,       shortPosition,       totalPosition,       tickets,       types,       lots,       openTimes, openPrices,       commissions,       swaps,       profits,
+                                       lLongPosition,      lShortPosition,      lTotalPosition,      tickets,       types,       lots,       openTimes, openPrices,       commissions,       swaps,       profits,
                                        customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,            customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent, lossMarkerPrice, lossMarkerPercent,
                                        isCustomVirtual))
                      return(false);
@@ -3458,13 +3470,13 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   ArrayPushDouble(customCommissions, commissions[i] * factor); if (!isCustomVirtual) commissions[i] *= (1-factor);                          // anteilig
                   ArrayPushDouble(customProfits,     profits    [i] * factor); if (!isCustomVirtual) profits    [i] *= (1-factor);                          // anteilig
                   if (!isCustomVirtual) {
-                     if (types[i] == OP_BUY) longPosition        = NormalizeDouble(longPosition  - lotsize, 2);
-                     else                    shortPosition       = NormalizeDouble(shortPosition - lotsize, 2);
-                                             totalPosition       = NormalizeDouble(longPosition  - shortPosition, 2);
+                     if (types[i] == OP_BUY) lLongPosition       = NormalizeDouble(lLongPosition  - lotsize, 2);
+                     else                    lShortPosition      = NormalizeDouble(lShortPosition - lotsize, 2);
+                                             lTotalPosition      = NormalizeDouble(lLongPosition - lShortPosition, 2);
                   }
                   if (types[i] == OP_BUY)    customLongPosition  = NormalizeDouble(customLongPosition  + lotsize, 3);
                   else                       customShortPosition = NormalizeDouble(customShortPosition + lotsize, 3);
-                                             customTotalPosition = NormalizeDouble(customLongPosition  - customShortPosition, 3);
+                                             customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
                }
                break;
             }
@@ -3486,9 +3498,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
  *
  * @param  _In_    bool   isVirtual
  *
- * @param  _In_    double longPosition
- * @param  _In_    double shortPosition
- * @param  _In_    double totalPosition
+ * @param  _In_    double lLongPosition
+ * @param  _In_    double lShortPosition
+ * @param  _In_    double lTotalPosition
  *
  * @param  _InOut_ int    tickets    []
  * @param  _In_    int    types      []
@@ -3511,7 +3523,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
  *
  * @return bool - success status
  */
-bool StorePosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerPercent, double lossMarkerPrice, double lossMarkerPercent, int configLine, bool &skipped) {
+bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, double lTotalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerPercent, double lossMarkerPrice, double lossMarkerPercent, int configLine, bool &skipped) {
    isVirtual = isVirtual!=0;
 
    double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, swap, commission, openProfit, floatingProfit, hedgedProfit, totalProfit, terminalProfit, totalProfitMT4, equity, equity100Pct, pipValue, pipDistance;
@@ -3519,7 +3531,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit (History) noch AdjustedProfit, wird sie übersprungen.
    // Ein Test auf size(tickets) != 0 reicht nicht aus, da einige Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
-   if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (closedProfit==EMPTY_VALUE) /*&&*/ if (!adjustedProfit) {
+   if (!lLongPosition) /*&&*/ if (!lShortPosition) /*&&*/ if (!lTotalPosition) /*&&*/ if (closedProfit==EMPTY_VALUE) /*&&*/ if (!adjustedProfit) {
       skipped = true;
       return(true);
    }
@@ -3540,8 +3552,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    // - direktionaler Anteil:       Breakeven unter Berücksichtigung des Profits eines gehedgten Anteils berechnen
 
    // Profit und BE-Distance einer eventuellen Hedgeposition ermitteln
-   if (longPosition && shortPosition) {
-      hedgedLots     = MathMin(longPosition, shortPosition);
+   if (lLongPosition && lShortPosition) {
+      hedgedLots     = MathMin(lLongPosition, lShortPosition);
       remainingLong  = hedgedLots;
       remainingShort = hedgedLots;
 
@@ -3606,7 +3618,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       }
 
       // (1.1) Kein direktionaler Anteil: Hedge-Position speichern und Rückkehr
-      if (!totalPosition) {
+      if (!lTotalPosition) {
          positions.data[n][I_CONFIG_LINE     ] = configLine;
          positions.data[n][I_CUSTOM_TYPE     ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
          positions.data[n][I_POSITION_TYPE   ] = POSITION_HEDGE;
@@ -3636,8 +3648,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
    // Direktionaler Anteil: Bei Breakeven-Berechnung den Profit eines gehedgten Anteils und AdjustedProfit berücksichtigen.
    // eventuelle Longposition ermitteln
-   if (totalPosition > 0) {
-      remainingLong  = totalPosition;
+   if (lTotalPosition > 0) {
+      remainingLong  = lTotalPosition;
       openPrice      = 0;
       swap           = 0;
       commission     = 0;
@@ -3671,13 +3683,13 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             }
          }
       }
-      if (remainingLong != 0) return(!catch("StorePosition(4)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of long position = "+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingLong != 0) return(!catch("StorePosition(4)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of long position = "+ NumberToStr(lTotalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
       positions.data[n][I_CONFIG_LINE     ] = configLine;
       positions.data[n][I_CUSTOM_TYPE     ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
       positions.data[n][I_POSITION_TYPE   ] = POSITION_LONG;
-      positions.data[n][I_DIRECTIONAL_LOTS] = totalPosition;
+      positions.data[n][I_DIRECTIONAL_LOTS] = lTotalPosition;
       positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;     openProfit     = hedgedProfit + swap + commission + floatingProfit;
       positions.data[n][I_BREAKEVEN_PRICE ] = NULL;           totalProfit    = openProfit + closedProfit + adjustedProfit;
       positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitMT4 = terminalProfit + closedProfit + adjustedProfit;
@@ -3685,7 +3697,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
       if (configLine >= 0) {
-         config.dData[configLine][I_MAX_LOTS  ] = MathMax(totalPosition, config.dData[configLine][I_MAX_LOTS]);
+         config.dData[configLine][I_MAX_LOTS  ] = MathMax(lTotalPosition, config.dData[configLine][I_MAX_LOTS]);
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
@@ -3697,25 +3709,25 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
       positions.data[n][I_LOSS_MARKER_PCT    ] = NULL;
 
-      pipValue = PipValue(totalPosition, true);                         // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
+      pipValue = PipValue(lTotalPosition, true);                        // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
-         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit)/pipValue*Pip, Digits);
+         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit)/pipValue*Pip, Digits);
 
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (openPrice/totalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (openPrice/lTotalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(profitMarkerPercent)) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
             positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPercent;
          }
 
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
-            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit + (lossMarkerPrice-openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit + (lossMarkerPrice-openPrice/lTotalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(lossMarkerPercent)) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
             positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPercent;
          }
       }
@@ -3724,8 +3736,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    }
 
    // eventuelle Shortposition ermitteln
-   if (totalPosition < 0) {
-      remainingShort = -totalPosition;
+   if (lTotalPosition < 0) {
+      remainingShort = -lTotalPosition;
       openPrice      = 0;
       swap           = 0;
       commission     = 0;
@@ -3759,13 +3771,13 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             }
          }
       }
-      if (remainingShort != 0) return(!catch("StorePosition(6)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of short position = "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingShort != 0) return(!catch("StorePosition(6)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of short position = "+ NumberToStr(-lTotalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
       positions.data[n][I_CONFIG_LINE     ] = configLine;
       positions.data[n][I_CUSTOM_TYPE     ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
       positions.data[n][I_POSITION_TYPE   ] = POSITION_SHORT;
-      positions.data[n][I_DIRECTIONAL_LOTS] = -totalPosition;
+      positions.data[n][I_DIRECTIONAL_LOTS] = -lTotalPosition;
       positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;     openProfit     = hedgedProfit + swap + commission + floatingProfit;
       positions.data[n][I_BREAKEVEN_PRICE ] = NULL;           totalProfit    = openProfit + closedProfit + adjustedProfit;
       positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitMT4 = terminalProfit + closedProfit + adjustedProfit;
@@ -3773,7 +3785,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
       if (configLine >= 0) {
-         config.dData[configLine][I_MAX_LOTS  ] = MathMax(-totalPosition, config.dData[configLine][I_MAX_LOTS]);
+         config.dData[configLine][I_MAX_LOTS  ] = MathMax(-lTotalPosition, config.dData[configLine][I_MAX_LOTS]);
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
@@ -3785,25 +3797,25 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
       positions.data[n][I_LOSS_MARKER_PCT    ] = NULL;
 
-      pipValue = PipValue(-totalPosition, true);                        // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
+      pipValue = PipValue(-lTotalPosition, true);                       // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
-         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble((totalProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, Digits);
+         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble((totalProfit-floatingProfit)/pipValue*Pip - openPrice/lTotalPosition, Digits);
 
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (profitMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (profitMarkerPrice + openPrice/lTotalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(profitMarkerPercent)) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/totalPosition, Digits);
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, Digits);
             positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPercent;
          }
 
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
-            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (lossMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (lossMarkerPrice + openPrice/lTotalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(lossMarkerPercent)) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/totalPosition, Digits);
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, Digits);
             positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPercent;
          }
       }
