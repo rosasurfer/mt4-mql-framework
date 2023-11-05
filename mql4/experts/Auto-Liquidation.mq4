@@ -2,15 +2,24 @@
  * Auto-Liquidation
  *
  * This EA's purpose is to protect the trading account and enforce adherence to a daily loss/drawdown limit (DDL). It monitors
- * open positions and floating PnL of all symbols (not only the chart symbol where the EA is attached).
+ * open positions and PnL of all symbols (not only the symbol where the EA is attached).
  *
  * Positions of symbols without trade permission and positions opened outside the permitted time range are immediately closed.
  *
- * Permitted positions are monitored until a predefined drawdown limit is reached. Once triggered the EA closes all open
- * positions and deletes all pending orders of the account, and further trading is prohibited until the end of the day.
+ * Permitted positions are monitored until a predefined drawdown limit is reached. Once the DDL is triggered the EA closes all
+ * open positions and deletes all pending orders, and further trading is prohibited until the end of the day.
  *
- * The EA should run in a separate terminal connected 24/7 to the trade server. For best operation it's strongly advised to
- * setup a hosted environment (VM or dedicated server).
+ * The EA should run in a separate terminal connected 24/7 to the trade server. For best operation it's recommended to setup
+ * a hosted environment (VM or dedicated server).
+ *
+ *
+ * Input parameters:
+ * -----------------
+ * • PermittedSymbols:   Comma-separated list of symbols allowed to trade ("*" allows all available symbols).
+ * • PermittedTimeRange: Time range when trading is allowed. Format: "00:00-23:59" in server time (empty: no limitation).
+ * • DrawdownLimit:      Either an absolute money value or a percentage value describing the drawdown limit of an open position.
+ * • IgnoreSpread:       Whether to ignore the spread of a floating position when calculating PnL. Enabling this setting
+ *                       prevents liquidation by spread widening/spikes.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
@@ -20,9 +29,9 @@ int __virtualTicks = 800;                             // milliseconds (must be s
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string PermittedSymbols   = "";                // symbols allowed to trade ("*": all symbols)
-extern string PermittedTimeRange = "00:00-23:59";     // time range trading is allowed in (server time; empty: no limitation)
+extern string PermittedTimeRange = "";                // time range trading is allowed (empty: no limitation)
 extern string DrawdownLimit      = "200.00 | 5%*";    // absolute or percentage drawdown limit
-extern bool   IgnoreSpread       = true;              // whether not to apply the spread of open positions (prevents liquidation by spread widening)
+extern bool   IgnoreSpread       = true;              // whether to ignore the spread of floating positions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
