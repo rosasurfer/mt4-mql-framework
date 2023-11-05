@@ -51,6 +51,7 @@ datetime lastLiquidationTime;
 
 datetime permittedFrom = -1;
 datetime permittedTo   = -1;
+bool     permitAllSymbols;
 string   permittedSymbols[];
 string   watchedSymbols  [];
 double   watchedPositions[][5];
@@ -70,13 +71,16 @@ double   watchedPositions[][5];
 int onInit() {
    // validate inputs
    // PermittedSymbols
-   string sValue="", values[];
-   int size = Explode(PermittedSymbols, ",", values, NULL);
-   for (int i=0; i < size; i++) {
-      sValue = StrTrim(values[i]);
-      if (StringLen(sValue) > MAX_SYMBOL_LENGTH)                      return(catch("onInit(1)  invalid parameter PermittedSymbols: "+ DoubleQuoteStr(PermittedSymbols) +" (max symbol length = "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER));
-      if (SearchStringArrayI(permittedSymbols, sValue) == -1) {
-         ArrayPushString(permittedSymbols, sValue);
+   string sValue = StrTrim(PermittedSymbols), sValues[];
+   permitAllSymbols = (sValue == "*");
+   if (!permitAllSymbols) {
+      int size = Explode(PermittedSymbols, ",", sValues, NULL);
+      for (int i=0; i < size; i++) {
+         sValue = StrTrim(sValues[i]);
+         if (StringLen(sValue) > MAX_SYMBOL_LENGTH)                   return(catch("onInit(1)  invalid parameter PermittedSymbols: "+ DoubleQuoteStr(PermittedSymbols) +" (max symbol length = "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER));
+         if (SearchStringArrayI(permittedSymbols, sValue) == -1) {
+            ArrayPushString(permittedSymbols, sValue);
+         }
       }
    }
 
@@ -91,9 +95,9 @@ int onInit() {
    }
 
    // DrawdownLimit
-   if (Explode(DrawdownLimit, "*", values, 2) > 1) {
-      size = Explode(values[0], "|", values, NULL);
-      sValue = StrTrim(values[size-1]);
+   if (Explode(DrawdownLimit, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = StrTrim(sValues[size-1]);
    }
    else {
       sValue = StrTrim(DrawdownLimit);
@@ -186,10 +190,12 @@ int onTick() {
    // process new positions
    for (i=0; prevEquity && i < openSize; i++) {
       // close non-permitted positions
-      if (SearchStringArrayI(permittedSymbols, openSymbols[i]) == -1) {
-         logWarn("onTick(4)  closing non-permitted "+ openSymbols[i] +" position");
-         CloseOpenOrders(openSymbols[i]);
-         continue;
+      if (!permitAllSymbols) {
+         if (SearchStringArrayI(permittedSymbols, openSymbols[i]) == -1) {
+            logWarn("onTick(4)  closing non-permitted "+ openSymbols[i] +" position");
+            CloseOpenOrders(openSymbols[i]);
+            continue;
+         }
       }
       int now = Tick.time % DAY;
       if (permittedFrom > -1) {
