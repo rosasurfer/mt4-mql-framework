@@ -1788,7 +1788,7 @@ bool UpdateStopoutLevel() {
    double change = NormalizeDouble(MathAbs(totalPosition)-MathAbs(prevTotalPosition), 2);
    if (change > mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
       logInfo("AnalyzePositions(2)  position "+ NumberToStr(change, "+.+") +" => "+ NumberToStr(totalPosition, ".+") +" (unitsize "+ NumberToStr(mm.leveragedLotsNormalized, ".+") +")");
-      PlaySoundEx(signal.sound.positionOverstep);
+      if (signal.sound) PlaySoundEx(signal.sound.positionOverstep);
    }
 
    // parse custom configuration
