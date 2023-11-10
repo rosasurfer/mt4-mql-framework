@@ -1,5 +1,5 @@
 /**
- * Auto-Liquidation
+ * DDL-Monitor
  *
  * This EA's purpose is to protect the trading account and enforce adherence to a daily loss/drawdown limit (DDL). It monitors
  * open positions and PnL of all symbols (not only the symbol where the EA is attached).
@@ -19,7 +19,7 @@
  * • PermittedTimeRange: Time range when trading is allowed. Format: "00:00-23:59" in server time (empty: no limitation).
  * • DrawdownLimit:      Either an absolute money value or a percentage value describing the drawdown limit of an open position.
  * • IgnoreSpread:       Whether to ignore the spread of a floating position when calculating PnL. Enabling this setting
- *                       prevents liquidation by spread widening/spikes.
+ *                       prevents DDL triggering by spread widening/spikes.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
@@ -173,7 +173,7 @@ int onTick() {
       }
    }
 
-   // auto-liquidate new positions after a previous liquidation at the same day
+   // liquidate new positions after a previous liquidation at the same day
    if (openSize > 0) {
       datetime today = TimeFXT();
       today -= (today % DAY);
