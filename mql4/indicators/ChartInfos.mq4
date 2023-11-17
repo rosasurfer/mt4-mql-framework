@@ -220,7 +220,7 @@ bool    signal.sound;
 string  signal.sound.orderFailed      = "speech/OrderCancelled.wav";
 string  signal.sound.positionOpened   = "speech/OrderFilled.wav";
 string  signal.sound.positionClosed   = "speech/PositionClosed.wav";
-string  signal.sound.positionOverstep = "MarginLow.wav";          // position increased by more than 1 x unitsize
+string  signal.sound.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
 bool    signal.mail;
 string  signal.mail.sender   = "";
 string  signal.mail.receiver = "";
@@ -1785,10 +1785,23 @@ bool UpdateStopoutLevel() {
    isPosition    = longPosition || shortPosition;
 
    // signal potential click errors if the position increased by more than 1 x unitsize
-   double change = NormalizeDouble(MathAbs(totalPosition)-MathAbs(prevTotalPosition), 2);
-   if (change > mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
-      logInfo("AnalyzePositions(2)  position "+ NumberToStr(change, "+.+") +" => "+ NumberToStr(totalPosition, ".+") +" (unitsize "+ NumberToStr(mm.leveragedLotsNormalized, ".+") +")");
-      if (signal.sound) PlaySoundEx(signal.sound.positionOverstep);
+   if (orderTracker.enabled && __ExecutionContext[EC.cycleTicks] > 1 && !__isTesting) {
+      double diff = MathAbs(totalPosition);
+      if (Sign(totalPosition) == Sign(prevTotalPosition)) diff -= MathAbs(prevTotalPosition);
+      if (NormalizeDouble(diff, 2) > mm.leveragedLotsNormalized) {
+         bool eventLogged = false;
+         if (IsLogInfo()) {
+            string msgDetail = NumberToStr(prevTotalPosition, ".+") +" => "+ NumberToStr(totalPosition, ".+") +" (unitsize "+ NumberToStr(mm.leveragedLotsNormalized, ".+") +")";
+            string event = "IncreasePosition::"+ msgDetail +" ("+ TimeToStr(Tick.time-Tick.time%10, TIME_MINUTES|TIME_SECONDS) +")";
+            if (!IsOrderEventLogged(event)) {
+               logInfo("AnalyzePositions(2)  position "+ msgDetail);
+               eventLogged = SetOrderEventLogged(event, true);
+            }
+         }
+         if (eventLogged && signal.sound) {
+            PlaySoundEx(signal.sound.positionStepSize);
+         }
+      }
    }
 
    // parse custom configuration
@@ -4741,3 +4754,23 @@ string InputsToStr() {
    string   TicketsToStr.Lots    (int array[], string separator);
    string   TicketsToStr.Position(int array[]);
 #import
+
+
+
+// distinct values of a column
+// WENN(
+//    ISTNV(
+//       INDEX(
+//          $A$3:$A$17,
+//          VERGLEICH(0, ZÄHLENWENN($B$2:B2, $A$3:$A$17), 0)
+//       )
+//    ),
+//    "",
+//    INDEX(
+//       $A$3:$A$17,
+//       VERGLEICH(0, ZÄHLENWENN($B$2:B2, $A$3:$A$17), 0)
+//    )
+// )
+//
+// IF(ISNA(INDEX($A$2:$A$16, MATCH(0, COUNTIF($B$1:B1, $A$2:$A$16), 0))),"",INDEX($A$2:$A$16, MATCH(0, COUNTIF($B$1:B1, $A$2:$A$16), 0)))
+// wenn(istnv(INDEX($A$2:$A$16, vergleich(0, zählenwenn($B$1:B1, $A$2:$A$16), 0))),"",INDEX($A$2:$A$16, vergleich(0, zählenwenn($B$1:B1, $A$2:$A$16), 0)))
