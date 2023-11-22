@@ -4754,23 +4754,3 @@ string InputsToStr() {
    string   TicketsToStr.Lots    (int array[], string separator);
    string   TicketsToStr.Position(int array[]);
 #import
-
-
-
-// distinct values of a column
-// WENN(
-//    ISTNV(
-//       INDEX(
-//          $A$3:$A$17,
-//          VERGLEICH(0, ZÄHLENWENN($B$2:B2, $A$3:$A$17), 0)
-//       )
-//    ),
-//    "",
-//    INDEX(
-//       $A$3:$A$17,
-//       VERGLEICH(0, ZÄHLENWENN($B$2:B2, $A$3:$A$17), 0)
-//    )
-// )
-//
-// IF(ISNA(INDEX($A$2:$A$16, MATCH(0, COUNTIF($B$1:B1, $A$2:$A$16), 0))),"",INDEX($A$2:$A$16, MATCH(0, COUNTIF($B$1:B1, $A$2:$A$16), 0)))
-// wenn(istnv(INDEX($A$2:$A$16, vergleich(0, zählenwenn($B$1:B1, $A$2:$A$16), 0))),"",INDEX($A$2:$A$16, vergleich(0, zählenwenn($B$1:B1, $A$2:$A$16), 0)))
