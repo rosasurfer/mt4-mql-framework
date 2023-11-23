@@ -1784,8 +1784,8 @@ bool UpdateStopoutLevel() {
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = longPosition || shortPosition;
 
-   // signal potential click errors if the position increased by more than 1 x unitsize
-   if (orderTracker.enabled && __ExecutionContext[EC.cycleTicks] > 1 && !__isTesting) {
+   // signal potential errors if the position increased by more than 1 x unitsize
+   if (!__isTesting && orderTracker.enabled && mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
       double diff = MathAbs(totalPosition);
       if (Sign(totalPosition) == Sign(prevTotalPosition)) diff -= MathAbs(prevTotalPosition);
       if (NormalizeDouble(diff, 2) > mm.leveragedLotsNormalized) {
