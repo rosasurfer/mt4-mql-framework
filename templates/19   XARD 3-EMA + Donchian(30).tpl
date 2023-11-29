@@ -16708,29 +16708,4 @@ show_data=1
 </indicator>
 </window>
 
-<window>
-height=1
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=MACD
-flags=339
-window_num=1
-<inputs>
-FastMA.Periods=9
-FastMA.Method=EMA
-FastMA.AppliedPrice=Median
-SlowMA.Periods=36
-SlowMA.Method=EMA
-SlowMA.AppliedPrice=Median
-Signal.onCross=on
-Signal.Sound=on
-</inputs>
-</expert>
-period_flags=0
-show_data=1
-</indicator>
-</window>
-
 </chart>
