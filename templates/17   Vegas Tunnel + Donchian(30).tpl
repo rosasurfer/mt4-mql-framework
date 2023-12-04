@@ -16455,7 +16455,7 @@ S1MAwidth=2
 S1MAbgclr=5789784
 S1MAupclr=16760576
 STR05=<<<==== [05] BOXtxt Settings ====>>>
-showBOXtxt=false
+showBOXtxt=true
 STR06=<<<==== [06] Alert Settings ====>>>
 inpAlertsOn=true
 inpAlertsOnCurrent=true
@@ -16691,9 +16691,9 @@ flags=339
 window_num=0
 <inputs>
 TimeWindow=09:00-10:00
-NumberOfBrackets=3
+NumberOfBrackets=5
 BracketsColor=16711935
-AutoConfiguration=0
+AutoConfiguration=1
 </inputs>
 </expert>
 period_flags=0
