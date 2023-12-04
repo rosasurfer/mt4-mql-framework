@@ -1,7 +1,7 @@
 /**
  * MA Tunnel
  *
- * A signal monitor for price crossing a channel (or tunnel) built using 1-3 Moving Averages.
+ * A signal monitor for price crossing a channel (aka tunnel) built using 1 to 3 Moving Averages.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

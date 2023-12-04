@@ -37,8 +37,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-; resulting height = ratio height-top-wnd/height-btm-wnd
-height=5000
+height=800
 fixed_height=0
 
 <indicator>
@@ -16481,7 +16480,7 @@ S1MAupclr=16760576
 STR05=<<<==== [05] BOXtxt Settings ====>>>
 showBOXtxt=false
 STR06=<<<==== [06] Alert Settings ====>>>
-inpAlertsOn=true
+inpAlertsOn=false
 inpAlertsOnCurrent=true
 inpAlertsSound=true
 inpAlertsMessage=false
