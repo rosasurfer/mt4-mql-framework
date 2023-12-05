@@ -16412,6 +16412,26 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Inside Bars
+flags=339
+window_num=0
+<inputs>
+Timeframe=H1
+NumberOfInsideBars=2
+</inputs>
+</expert>
+shift_0=0
+draw_0=0
+color_0=0
+style_0=0
+weight_0=0
+period_flags=3
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=.Xard/2021.05.05/indicators/XU v4-XARDFX
 flags=339
 window_num=0
@@ -16431,7 +16451,7 @@ T2MAper=144
 T2MAmode=1
 T2MAshift=-1
 T2MAtype=4
-T2MAwidth=2
+T2MAwidth=4
 T2MAbgclr=5789784
 T2MAupclr=16760576
 T2MAdnclr=55295
@@ -16441,7 +16461,7 @@ T1MAper=36
 T1MAmode=1
 T1MAshift=-1
 T1MAtype=4
-T1MAwidth=2
+T1MAwidth=3
 T1MAbgclr=5789784
 T1MAupclr=16760576
 T1MAdnclr=55295
@@ -16692,7 +16712,7 @@ window_num=0
 <inputs>
 TimeWindow=09:00-10:00
 NumberOfBrackets=5
-BracketsColor=16711935
+BracketsColor=16711680
 AutoConfiguration=1
 </inputs>
 </expert>
