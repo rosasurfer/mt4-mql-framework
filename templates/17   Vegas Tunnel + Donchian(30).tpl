@@ -16477,7 +16477,7 @@ S1MAupclr=16760576
 STR05=<<<==== [05] BOXtxt Settings ====>>>
 showBOXtxt=true
 STR06=<<<==== [06] Alert Settings ====>>>
-inpAlertsOn=true
+inpAlertsOn=false
 inpAlertsOnCurrent=true
 inpAlertsSound=true
 inpAlertsMessage=false
@@ -16710,8 +16710,6 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-TimeWindow=09:00-10:00
-NumberOfBrackets=5
 BracketsColor=16711680
 AutoConfiguration=1
 </inputs>
