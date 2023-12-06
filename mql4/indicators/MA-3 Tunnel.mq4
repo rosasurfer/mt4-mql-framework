@@ -1,5 +1,5 @@
 /**
- * MA Tunnel
+ * MA-3 Tunnel
  *
  * A signal monitor for price crossing a channel (aka tunnel) built using 1 to 3 Moving Averages.
  */
