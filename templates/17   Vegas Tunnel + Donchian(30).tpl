@@ -1,6 +1,8 @@
 <!--
-An improved Vegas Tunnel. The original tunnel is built from EMA(144) + EMA(169) and is way too narrow. 
-Here it's replaced by a "XARD 3-MA-Tunnel" which is wider and produces better signals.
+A modified Vegas Tunnel. The original tunnel is built from EMA(144) + EMA(169) and is too narrow. 
+It's replaced by a "XARD 3-MA-Tunnel" (XU v4-XARDFX) which is wider and produces better signals.
+
+@see https://forex-station.com/viewtopic.php?p=1295434513#p1295434513
 -->
 
 <chart>
