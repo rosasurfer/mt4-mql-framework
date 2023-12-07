@@ -77,7 +77,6 @@ bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
-string signal.sms.receiver = "";
 
 
 /**
@@ -103,11 +102,12 @@ int onInit() {
    if (Signal.Level >= 100)       return(catch("onInit(5)  invalid input parameter Signal.Level: "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
 
    // signal configuration
-   if (!ConfigureSignals("BFXDelta", Signal.onLevelCross, signals))                                      return(last_error);
+   if (!ConfigureSignals("BFXDelta", Signal.onLevelCross, signals))                                     return(last_error);
    if (signals) {
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      string sValue = "";
+      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound))                                         return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS, signal.sms, sValue))                                     return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
    }
@@ -252,7 +252,7 @@ bool onLevelCross(int mode) {
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.levelCross.long);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      if (signal.sms)   error |= !SendSMS("", message);
       return(!error);
    }
 
@@ -263,7 +263,7 @@ bool onLevelCross(int mode) {
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.levelCross.short);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      if (signal.sms)   error |= !SendSMS("", message);
       return(!error);
    }
 

@@ -100,7 +100,6 @@ bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
-string signal.sms.receiver = "";
 
 
 /**
@@ -196,9 +195,9 @@ int onInit() {
    // signaling
    if (!ConfigureSignals(ProgramName(), Signal.onCross, signals)) return(last_error);
    if (signals) {
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound))                                         return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS, signal.sms, sValue))                                     return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
    }
@@ -349,7 +348,7 @@ bool onCross(int section) {
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.crossUp);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      if (signal.sms)   error |= !SendSMS("", message);
       return(!error);
    }
 
@@ -360,7 +359,7 @@ bool onCross(int section) {
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.crossDown);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      if (signal.sms)   error |= !SendSMS("", message);
       return(!error);
    }
 

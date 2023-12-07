@@ -104,7 +104,6 @@ bool   signalTrendChange.mail;
 string signalTrendChange.mailSender   = "";
 string signalTrendChange.mailReceiver = "";
 bool   signalTrendChange.sms;
-string signalTrendChange.smsReceiver = "";
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -180,7 +179,7 @@ int onInit() {
       if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalTrendChange.sound))                                                              return(last_error);
       if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalTrendChange.popup))                                                              return(last_error);
       if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalTrendChange.mail, signalTrendChange.mailSender, signalTrendChange.mailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalTrendChange.sms, signalTrendChange.smsReceiver))                                 return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalTrendChange.sms, sValue))                                                        return(last_error);
       if (signalTrendChange.sound || signalTrendChange.popup || signalTrendChange.mail || signalTrendChange.sms) {
          legendInfo = StrLeft(ifString(signalTrendChange.sound, "sound,", "") + ifString(signalTrendChange.popup, "popup,", "") + ifString(signalTrendChange.mail, "mail,", "") + ifString(signalTrendChange.sms, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
@@ -333,7 +332,7 @@ bool onTrendChange(int trend) {
       if (signalTrendChange.popup)          Alert(message);
       if (signalTrendChange.sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
       if (signalTrendChange.mail)  error |= !SendEmail(signalTrendChange.mailSender, signalTrendChange.mailReceiver, message, message + NL + accountTime);
-      if (signalTrendChange.sms)   error |= !SendSMS(signalTrendChange.smsReceiver, message + NL + accountTime);
+      if (signalTrendChange.sms)   error |= !SendSMS("", message + NL + accountTime);
       return(!error);
    }
 
@@ -345,7 +344,7 @@ bool onTrendChange(int trend) {
       if (signalTrendChange.popup)          Alert(message);
       if (signalTrendChange.sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
       if (signalTrendChange.mail)  error |= !SendEmail(signalTrendChange.mailSender, signalTrendChange.mailReceiver, message, message + NL + accountTime);
-      if (signalTrendChange.sms)   error |= !SendSMS(signalTrendChange.smsReceiver, message + NL + accountTime);
+      if (signalTrendChange.sms)   error |= !SendSMS("", message + NL + accountTime);
       return(!error);
    }
 

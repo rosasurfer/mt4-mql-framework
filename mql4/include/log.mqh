@@ -556,15 +556,10 @@ int log2SMS(string message, int error, int level) {
       isRecursion = true;
       ec_SetLoglevelSMS(__ExecutionContext, LOG_OFF);                               // prevent recursive calls
 
-      static string receiver = ""; if (!StringLen(receiver)) {
-         sValue = GetConfigString("SMS", "Receiver");
-         if (!StrIsPhoneNumber(sValue)) return(_int(error, catch("log2SMS(3)  invalid phone number configuration: [SMS]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
-         receiver = sValue;
-      }
       string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
                   +"("+ TimeToStr(TimeLocalEx("log2SMS(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-      if (SendSMS(receiver, text)) {
+      if (SendSMS("", text)) {
          ec_SetLoglevelSMS(__ExecutionContext, configLevel);                        // restore the configuration or leave it disabled
       }
       isRecursion = false;

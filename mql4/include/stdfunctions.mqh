@@ -6395,45 +6395,44 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
 
 
 /**
- * Verschickt eine E-Mail.
+ * Send an e-mail.
  *
- * @param  string sender   - E-Mailadresse des Senders    (default: der in der Konfiguration angegebene Standard-Sender)
- * @param  string receiver - E-Mailadresse des Empfängers (default: der in der Konfiguration angegebene Standard-Empfänger)
- * @param  string subject  - Subject der E-Mail
- * @param  string message  - Body der E-Mail
+ * @param  string sender   - sender address, if empty the configuration is queried
+ * @param  string receiver - receiver address, if empty the configuration is queried
+ * @param  string subject  - message subject
+ * @param  string message  - message body
  *
- * @return bool - success status: TRUE, wenn die E-Mail zum Versand akzeptiert wurde (nicht, ob sie versendet wurde);
- *                               FALSE andererseits
+ * @return bool - whether the e-mail was successfully queued, not whether it was sent
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
    string filesDir = GetMqlSandboxPath() +"/";
 
-   // Validierung
-   // Sender
+   // validation
+   // sender
    string _sender = StrTrim(sender);
    if (!StringLen(_sender)) {
       string section = "Mail";
       string key     = "Sender";
       _sender = GetConfigString(section, key);
-      if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing global/terminal configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_VALUE));
-      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/terminal configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
+      if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing configuration: ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid configuration: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
    }
    else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender: "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
    sender = _sender;
 
-   // Receiver
+   // receiver
    string _receiver = StrTrim(receiver);
    if (!StringLen(_receiver)) {
       section   = "Mail";
       key       = "Receiver";
       _receiver = GetConfigString(section, key);
-      if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing global/terminal configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
-      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/terminal configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
+      if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing configuration: ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid configuration: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
    }
    else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
    receiver = _receiver;
 
-   // Subject
+   // subject
    string _subject = StrTrim(subject);
    if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject: "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
    _subject = StrReplace(StrReplace(StrReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " ");          // Linebreaks mit Leerzeichen ersetzen
@@ -6489,7 +6488,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
           cmdLine  = bash +" -lc '"+ cmdLine +"'";
 
-   // (5) Shell-Aufruf
+   // Shell-Aufruf
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
    if (result < 32) return(!catch("SendEmail(13)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
@@ -6501,46 +6500,52 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 /**
  * Send a text message to the specified phone number.
  *
- * @param  string receiver - phone number (international format: +49-123-456789)
+ * @param  string receiver - phone number in international format (e.g. +49-123-456789), if empty the configuration is queried
  * @param  string message  - text
  *
  * @return bool - success status
  */
 bool SendSMS(string receiver, string message) {
-   string _receiver = StrReplace(StrReplace(StrTrim(receiver), "-", ""), " ", "", true);
+   if (!StringLen(receiver)) {
+      string sValue = GetConfigString("SMS", "Receiver");
+      if (!StrIsPhoneNumber(sValue)) return(!catch("SendSMS(1)  invalid configuration: [SMS]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE));
+      receiver = sValue;
+   }
+   string receiverBak = receiver;
+   receiver = StrReplace(StrReplace(StrTrim(receiver), "-", ""), " ", "", true);
 
-   if      (StrStartsWith(_receiver, "+" )) _receiver = StrSubstr(_receiver, 1);
-   else if (StrStartsWith(_receiver, "00")) _receiver = StrSubstr(_receiver, 2);
-   if (!StrIsDigits(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   if      (StrStartsWith(receiver, "+" )) receiver = StrSubstr(receiver, 1);
+   else if (StrStartsWith(receiver, "00")) receiver = StrSubstr(receiver, 2);
+   if (!StrIsDigits(receiver)) return(!catch("SendSMS(2)  invalid parameter receiver: "+ DoubleQuoteStr(receiverBak), ERR_INVALID_PARAMETER));
 
    // get SMS gateway details
    // service
    string section  = "SMS";
    string key      = "Provider";
    string provider = GetConfigString(section, key);
-   if (!StringLen(provider)) return(!catch("SendSMS(2)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (!StringLen(provider)) return(!catch("SendSMS(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // user
    section = "SMS."+ provider;
    key     = "username";
    string username = GetConfigString(section, key);
-   if (!StringLen(username)) return(!catch("SendSMS(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (!StringLen(username)) return(!catch("SendSMS(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // password
    key = "password";
    string password = GetConfigString(section, key);
-   if (!StringLen(password)) return(!catch("SendSMS(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (!StringLen(password)) return(!catch("SendSMS(5)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // API id
    key = "api_id";
    int api_id = GetConfigInt(section, key);
    if (api_id <= 0) {
       string value = GetConfigString(section, key);
-      if (!StringLen(value)) return(!catch("SendSMS(5)  missing configuration ["+ section +"]->"+ key,                      ERR_INVALID_CONFIG_VALUE));
-                             return(!catch("SendSMS(6)  invalid config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
+      if (!StringLen(value)) return(!catch("SendSMS(6)  missing configuration ["+ section +"]->"+ key,                      ERR_INVALID_CONFIG_VALUE));
+                             return(!catch("SendSMS(7)  invalid config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
    }
 
    // compose shell command line
-   string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
+   string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlSandboxPath();
-   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(8)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"/sms.log";
    string cmd          = GetMqlDirectoryA() +"/libraries/wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -6548,7 +6553,7 @@ bool SendSMS(string receiver, string message) {
 
    // execute shell command
    int result = WinExec(cmdLine, SW_HIDE);
-   if (result < 32) return(!catch("SendSMS(8)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendSMS(9)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    // TODO: analyse the response
    // --------------------------
@@ -6560,8 +6565,8 @@ bool SendSMS(string receiver, string message) {
    // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
    // Giving up.
 
-   if (IsLogDebug()) logDebug("SendSMS(9)  SMS sent to "+ receiver +": \""+ message +"\"");
-   return(!catch("SendSMS(10)"));
+   if (IsLogDebug()) logDebug("SendSMS(10)  SMS sent to "+ receiverBak +": \""+ message +"\"");
+   return(!catch("SendSMS(11)"));
 }
 
 

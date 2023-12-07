@@ -186,7 +186,6 @@ bool     signalReversal.mail;
 string   signalReversal.mailSender   = "";
 string   signalReversal.mailReceiver = "";
 bool     signalReversal.sms;
-string   signalReversal.smsReceiver = "";
 
 // signal direction types
 #define D_LONG     TRADE_DIRECTION_LONG      // 1
@@ -276,7 +275,7 @@ int onInit() {
       if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound))                                                        return(last_error);
       if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup))                                                        return(last_error);
       if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail, signalReversal.mailSender, signalReversal.mailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, signalReversal.smsReceiver))                              return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, sValue))                                                  return(last_error);
       if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
          legendInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
@@ -574,7 +573,7 @@ bool onReversal(int direction, int bar) {
 
       if (signalReversal.popup)           Alert(message);
       if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
-      if (signalReversal.sms)   error |= !SendSMS(signalReversal.smsReceiver, message + NL + accountTime);
+      if (signalReversal.sms)   error |= !SendSMS("", message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark event as signaled
    }
    return(!error);
