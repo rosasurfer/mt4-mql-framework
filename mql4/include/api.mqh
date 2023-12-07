@@ -332,9 +332,15 @@ void     Bands.UpdateLegend(string label, string name, string status, color band
 double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
 bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false);;
 bool     ConfigureSignals(string name, string &configValue, bool &enabled);;
+bool     ConfigureSignals2(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsByMail(string configValue, bool &enabled, string &sender, string &receiver);;
+bool     ConfigureSignalsByMail2(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalsByPopup(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiver);;
+bool     ConfigureSignalsBySMS2(string signalId, bool autoConfig, bool &enabled, string &receiver);;
 bool     ConfigureSignalsBySound(string configValue, bool &enabled);;
+bool     ConfigureSignalsBySound2(string signalId, bool autoConfig, bool &enabled);;
+
 string   CreateLegend();;
 int      ExplodeStrings(int &buffer[], string &results[]);;
 bool     HandleCommands(string channel="", bool remove=true);;

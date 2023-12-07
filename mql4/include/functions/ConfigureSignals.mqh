@@ -47,7 +47,7 @@ bool ConfigureSignals(string name, string &configValue, bool &enabled) {
    ConfigureSignals2(NULL, NULL, bNull);
    ConfigureSignalsBySound2(NULL, NULL, bNull);
    ConfigureSignalsByPopup(NULL, NULL, bNull);
-   ConfigureSignalsByMail2(NULL, NULL, bNull, sNull, sNull);
+   ConfigureSignalsByMail2(NULL, NULL, bNull);
    ConfigureSignalsBySMS2(NULL, NULL, bNull, sNull);
 }
 
@@ -126,47 +126,17 @@ bool ConfigureSignalsByPopup(string signalId, bool autoConfig, bool &enabled) {
  * @param  _In_    string signalId   - case-insensitive signal identifier
  * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
- * @param  _Out_   string sender     - the configured email sender address
- * @param  _Out_   string receiver   - the configured email receiver address
  *
  * @return bool - success status
  */
-bool ConfigureSignalsByMail2(string signalId, bool autoConfig, bool &enabled, string &sender, string &receiver) {
+bool ConfigureSignalsByMail2(string signalId, bool autoConfig, bool &enabled) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
-   sender = "";
-   receiver = "";
-
-   string signalSection = ifString(__isTesting, "Tester.", "") + ProgramName();
-   string mailSection   = "Mail";
-   string senderKey     = "Sender";
-   string receiverKey   = "Receiver";
-   string defaultSender = "mt4@"+ GetHostName() +".localdomain", _sender="", _receiver="";
-
-   bool _enabled = enabled;
-   enabled = false;
 
    if (autoConfig) {
-      if (GetConfigBool(signalSection, signalId +".Mail", _enabled)) {
-         _sender = GetConfigString(mailSection, senderKey, defaultSender);
-         if (!StrIsEmailAddress(_sender))   return(!catch("ConfigureSignalsByMail2(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ DoubleQuoteStr(_sender), "defaultSender = "+ DoubleQuoteStr(defaultSender)), ERR_INVALID_CONFIG_VALUE));
-
-         _receiver = GetConfigString(mailSection, receiverKey);
-         if (!StrIsEmailAddress(_receiver)) return(!catch("ConfigureSignalsByMail2(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
-         enabled = true;
-      }
+      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
+      enabled = GetConfigBool(section, signalId +".Mail", enabled);
    }
-   else if (_enabled) {
-      _sender = GetConfigString(mailSection, senderKey, defaultSender);
-      if (!StrIsEmailAddress(_sender))   return(!catch("ConfigureSignalsByMail2(3)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ DoubleQuoteStr(_sender), "defaultSender = "+ DoubleQuoteStr(defaultSender)), ERR_INVALID_CONFIG_VALUE));
-
-      _receiver = GetConfigString(mailSection, receiverKey);
-      if (!StrIsEmailAddress(_receiver)) return(!catch("ConfigureSignalsByMail2(4)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
-      enabled = true;
-   }
-
-   sender = _sender;
-   receiver = _receiver;
    return(true);
 }
 

@@ -108,10 +108,10 @@ int onInit() {
    string signalId = "Signal.onTunnelCross";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalCrossing)) return(last_error);
    if (signalCrossing) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalCrossing.sound))                return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalCrossing.popup))                return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalCrossing.mail, sValue, sValue)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalCrossing.sms, sValue))          return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalCrossing.sound))       return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalCrossing.popup))       return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalCrossing.mail))        return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalCrossing.sms, sValue)) return(last_error);
       if (signalCrossing.sound || signalCrossing.popup || signalCrossing.mail || signalCrossing.sms) {
          legendInfo = StrLeft(ifString(signalCrossing.sound, "sound,", "") + ifString(signalCrossing.popup, "popup,", "") + ifString(signalCrossing.mail, "mail,", "") + ifString(signalCrossing.sms, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";

@@ -184,10 +184,10 @@ int onInit() {
    string signalId = "Signal.onBreakout";
    if (!ConfigureSignals2(signalId, AutoConfiguration, Signal.onBreakout)) return(last_error);
    if (Signal.onBreakout) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onBreakout.Sound))                return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, Signal.onBreakout.Popup))                return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onBreakout.Mail, sValue, sValue)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onBreakout.SMS, sValue))          return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onBreakout.Sound))       return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, Signal.onBreakout.Popup))       return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onBreakout.Mail))        return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onBreakout.SMS, sValue)) return(last_error);
       if (Signal.onBreakout.Sound || Signal.onBreakout.Popup || Signal.onBreakout.Mail || Signal.onBreakout.SMS) {
          signalDescription = "onBreakout="+ StrLeft(ifString(Signal.onBreakout.Sound, "Sound+", "") + ifString(Signal.onBreakout.Popup, "Popup+", "") + ifString(Signal.onBreakout.Mail, "Mail+", "") + ifString(Signal.onBreakout.SMS, "SMS+", ""), -1);
          if (IsLogDebug()) logDebug("onInit(11)  "+ signalDescription);
