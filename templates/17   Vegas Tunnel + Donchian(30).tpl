@@ -16448,7 +16448,7 @@ CandleDn=4800490
 STR01=<<<==== [01] T3MA Trend Settings ====>>>
 showT3MA=false
 STR02=<<<==== [02] T2MA Trend Settings ====>>>
-showT2MA=false
+showT2MA=true
 T2MAper=144
 T2MAmode=1
 T2MAshift=-1
