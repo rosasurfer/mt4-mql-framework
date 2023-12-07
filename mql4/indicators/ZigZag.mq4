@@ -183,8 +183,6 @@ bool     signalReversal;
 bool     signalReversal.sound;
 bool     signalReversal.popup;
 bool     signalReversal.mail;
-string   signalReversal.mailSender   = "";
-string   signalReversal.mailReceiver = "";
 bool     signalReversal.sms;
 
 // signal direction types
@@ -272,10 +270,10 @@ int onInit() {
    string signalId = "Signal.onReversal";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal)) return(last_error);
    if (signalReversal) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound))                                                        return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup))                                                        return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail, signalReversal.mailSender, signalReversal.mailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, sValue))                                                  return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound))                return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup))                return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail, sValue, sValue)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, sValue))          return(last_error);
       if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
          legendInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
@@ -572,7 +570,7 @@ bool onReversal(int direction, int bar) {
       if (signalReversal.mail || signalReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (signalReversal.popup)           Alert(message);
-      if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
+      if (signalReversal.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
       if (signalReversal.sms)   error |= !SendSMS("", message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark event as signaled
    }

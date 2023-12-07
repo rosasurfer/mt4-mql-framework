@@ -50,8 +50,6 @@ bool   signalCrossing;
 bool   signalCrossing.sound;
 bool   signalCrossing.popup;
 bool   signalCrossing.mail;
-string signalCrossing.mailSender   = "";
-string signalCrossing.mailReceiver = "";
 bool   signalCrossing.sms;
 
 
@@ -100,7 +98,7 @@ int onInit() {
    if (Max.Bars < -1)                   return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxBarsBack = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
-   // signaling
+   // configure signaling
    signalCrossing       = Signal.onTunnelCross;
    signalCrossing.sound = Signal.onTunnelCross.Sound;
    signalCrossing.popup = Signal.onTunnelCross.Popup;
@@ -110,10 +108,10 @@ int onInit() {
    string signalId = "Signal.onTunnelCross";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalCrossing)) return(last_error);
    if (signalCrossing) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalCrossing.sound))                                                        return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalCrossing.popup))                                                        return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalCrossing.mail, signalCrossing.mailSender, signalCrossing.mailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalCrossing.sms, sValue))                                                  return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalCrossing.sound))                return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalCrossing.popup))                return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalCrossing.mail, sValue, sValue)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalCrossing.sms, sValue))          return(last_error);
       if (signalCrossing.sound || signalCrossing.popup || signalCrossing.mail || signalCrossing.sms) {
          legendInfo = StrLeft(ifString(signalCrossing.sound, "sound,", "") + ifString(signalCrossing.popup, "popup,", "") + ifString(signalCrossing.mail, "mail,", "") + ifString(signalCrossing.sms, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";

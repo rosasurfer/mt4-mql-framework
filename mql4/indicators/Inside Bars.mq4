@@ -64,8 +64,6 @@ bool     signalInsideBar;
 bool     signalInsideBar.sound;
 bool     signalInsideBar.popup;
 bool     signalInsideBar.mail;
-string   signalInsideBar.mailSender   = "";
-string   signalInsideBar.mailReceiver = "";
 bool     signalInsideBar.sms;
 
 bool     monitorProjections;
@@ -111,10 +109,10 @@ int onInit() {
    string signalId="Signal.onInsideBar", signalInfo="";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalInsideBar)) return(last_error);
    if (signalInsideBar) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalInsideBar.sound))                                                          return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalInsideBar.popup))                                                          return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalInsideBar.mail, signalInsideBar.mailSender, signalInsideBar.mailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalInsideBar.sms, sValue))                                                    return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalInsideBar.sound))                return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalInsideBar.popup))                return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalInsideBar.mail, sValue, sValue)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalInsideBar.sms, sValue))          return(last_error);
       if (signalInsideBar.sound || signalInsideBar.popup || signalInsideBar.mail || signalInsideBar.sms) {
          signalInfo = "  ("+ StrLeft(ifString(signalInsideBar.sound, "sound,", "") + ifString(signalInsideBar.popup, "popup,", "") + ifString(signalInsideBar.mail, "mail,", "") + ifString(signalInsideBar.sms, "sms,", ""), -1) +")";
       }
@@ -792,7 +790,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    int error = NO_ERROR;
    if (signalInsideBar.popup)          Alert(message);
    if (signalInsideBar.sound) error |= PlaySoundEx(Sound.onInsideBar);
-   if (signalInsideBar.mail)  error |= !SendEmail(signalInsideBar.mailSender, signalInsideBar.mailReceiver, message, message + NL + sLocalTime);
+   if (signalInsideBar.mail)  error |= !SendEmail("", "", message, message + NL + sLocalTime);
    if (signalInsideBar.sms)   error |= !SendSMS("", message + NL + sLocalTime);
 
    if (__isTesting) Tester.Pause();

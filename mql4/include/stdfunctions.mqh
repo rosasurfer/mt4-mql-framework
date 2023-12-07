@@ -6413,11 +6413,10 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    if (!StringLen(_sender)) {
       string section = "Mail";
       string key     = "Sender";
-      _sender = GetConfigString(section, key);
-      if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing configuration: ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_VALUE));
-      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid configuration: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
+      _sender = GetConfigString(section, key, "mt4@"+ GetHostName() +".localdomain");
+      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(1)  invalid configuration: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
    }
-   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender: "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(2)  invalid parameter sender: "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
    sender = _sender;
 
    // receiver
@@ -6426,15 +6425,15 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       section   = "Mail";
       key       = "Receiver";
       _receiver = GetConfigString(section, key);
-      if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing configuration: ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
-      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid configuration: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
+      if (!StringLen(_receiver))           return(!catch("SendEmail(3)  missing configuration: ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(4)  invalid configuration: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
    }
-   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(5)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
    receiver = _receiver;
 
    // subject
    string _subject = StrTrim(subject);
-   if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject: "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
+   if (!StringLen(_subject))               return(!catch("SendEmail(6)  invalid parameter subject: "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
    _subject = StrReplace(StrReplace(StrReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " ");          // Linebreaks mit Leerzeichen ersetzen
    _subject = StrReplace(_subject, "\"", "\\\"");                                                        // Double-Quotes in email-Parametern escapen
    _subject = StrReplace(_subject, "'", "'\"'\"'");                                                      // Single-Quotes im bash-Parameter escapen
@@ -6445,15 +6444,15 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    string message.txt = CreateTempFile(filesDir, "msg");
    if (StringLen(message) > 0) {
       int hFile = FileOpen(StrRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                    // FileOpen() benötigt einen MQL-Pfad
-      if (hFile < 0)  return(!catch("SendEmail(8)->FileOpen()"));
+      if (hFile < 0)  return(!catch("SendEmail(7)->FileOpen()"));
       int bytes = FileWriteString(hFile, message, StringLen(message));
       FileClose(hFile);
-      if (bytes <= 0) return(!catch("SendEmail(9)->FileWriteString() => "+ bytes +" written"));
+      if (bytes <= 0) return(!catch("SendEmail(8)->FileWriteString() => "+ bytes +" written"));
    }
 
    // benötigte Executables ermitteln: Bash und Mailclient
    string bash = GetConfigString("System", "Bash");
-   if (!IsFile(bash, MODE_SYSTEM)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
+   if (!IsFile(bash, MODE_SYSTEM)) return(!catch("SendEmail(9)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
    // TODO: absoluter Pfad => direkt testen
    // TODO: relativer Pfad => Systemverzeichnisse und $PATH durchsuchen
 
@@ -6461,7 +6460,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    if (!StringLen(sendmail)) {
       // TODO: - kein Mailclient angegeben: Umgebungsvariable $SENDMAIL auswerten
       //       - sendmail suchen
-      return(!catch("SendEmail(11)  missing global/terminal configuration [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
+      return(!catch("SendEmail(10)  missing configuration: [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
    }
 
    // Notes:
@@ -6490,10 +6489,10 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // Shell-Aufruf
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
-   if (result < 32) return(!catch("SendEmail(13)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendEmail(11)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   if (IsLogDebug()) logDebug("SendEmail(14)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
-   return(!catch("SendEmail(15)"));
+   if (IsLogDebug()) logDebug("SendEmail(12)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   return(!catch("SendEmail(13)"));
 }
 
 

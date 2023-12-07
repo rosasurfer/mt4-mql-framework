@@ -186,9 +186,9 @@ bool OrderTracker.Configure() {
 
    if (orderTracker.enabled) {
       // read signaling method configuration
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound))               return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, sValue, sValue)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS, signal.sms, sValue))           return(last_error);
 
       // register the indicator as order event listener
       if (!__isTesting) {

@@ -222,10 +222,7 @@ string  signal.sound.positionOpened   = "speech/OrderFilled.wav";
 string  signal.sound.positionClosed   = "speech/PositionClosed.wav";
 string  signal.sound.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
 bool    signal.mail;
-string  signal.mail.sender   = "";
-string  signal.mail.receiver = "";
 bool    signal.sms;
-string  signal.sms.receiver = "";
 
 #include <apps/chartinfos/init.mqh>
 #include <apps/chartinfos/deinit.mqh>

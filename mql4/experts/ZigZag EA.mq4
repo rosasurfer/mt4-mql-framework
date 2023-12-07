@@ -183,7 +183,6 @@
  *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
  *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
- *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
  *  - VPS: monitor and notify of incoming emails
  *  - notifications for open positions running into swap charges
  *  - CLI tools to rename/update/delete symbols
