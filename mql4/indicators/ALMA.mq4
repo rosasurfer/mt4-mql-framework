@@ -177,10 +177,10 @@ int onInit() {
    string signalId = "Signal.onTrendChange";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalTrendChange)) return(last_error);
    if (signalTrendChange) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalTrendChange.sound))       return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalTrendChange.popup))       return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalTrendChange.mail))        return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalTrendChange.sms, sValue)) return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalTrendChange.sound)) return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalTrendChange.popup)) return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalTrendChange.mail))  return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalTrendChange.sms))   return(last_error);
       if (signalTrendChange.sound || signalTrendChange.popup || signalTrendChange.mail || signalTrendChange.sms) {
          legendInfo = StrLeft(ifString(signalTrendChange.sound, "sound,", "") + ifString(signalTrendChange.popup, "popup,", "") + ifString(signalTrendChange.mail, "mail,", "") + ifString(signalTrendChange.sms, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";

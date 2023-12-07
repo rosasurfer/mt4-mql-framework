@@ -48,7 +48,7 @@ bool ConfigureSignals(string name, string &configValue, bool &enabled) {
    ConfigureSignalsBySound2(NULL, NULL, bNull);
    ConfigureSignalsByPopup(NULL, NULL, bNull);
    ConfigureSignalsByMail2(NULL, NULL, bNull);
-   ConfigureSignalsBySMS2(NULL, NULL, bNull, sNull);
+   ConfigureSignalsBySMS2(NULL, NULL, bNull);
 }
 
 
@@ -147,29 +147,16 @@ bool ConfigureSignalsByMail2(string signalId, bool autoConfig, bool &enabled) {
  * @param  _In_    string signalId   - case-insensitive signal identifier
  * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
- * @param  _Out_   string receiver   - the configured receiver phone number
  *
  * @return bool - validation success status
  */
-bool ConfigureSignalsBySMS2(string signalId, bool autoConfig, bool &enabled, string &receiver) {
+bool ConfigureSignalsBySMS2(string signalId, bool autoConfig, bool &enabled) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
-   string signalSection = ifString(__isTesting, "Tester.", "") + ProgramName();
-   string smsSection = "SMS";
-   string receiverKey = "Receiver";
-
-   bool _enabled = enabled;
-   if (autoConfig) _enabled = GetConfigBool(signalSection, signalId +".SMS", _enabled);
-
-   enabled = false;
-   receiver = "";
-
-   if (_enabled) {
-      string sValue = GetConfigString(smsSection, receiverKey);
-      if (!StrIsPhoneNumber(sValue)) return(!catch("ConfigureSignalsBySMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE));
-      enabled  = true;
-      receiver = sValue;
+   if (autoConfig) {
+      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
+      enabled = GetConfigBool(section, signalId +".SMS", enabled);
    }
    return(true);
 }

@@ -337,7 +337,7 @@ bool     ConfigureSignalsByMail(string configValue, bool &enabled, string &sende
 bool     ConfigureSignalsByMail2(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsByPopup(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiver);;
-bool     ConfigureSignalsBySMS2(string signalId, bool autoConfig, bool &enabled, string &receiver);;
+bool     ConfigureSignalsBySMS2(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsBySound(string configValue, bool &enabled);;
 bool     ConfigureSignalsBySound2(string signalId, bool autoConfig, bool &enabled);;
 

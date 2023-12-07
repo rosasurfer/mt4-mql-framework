@@ -270,10 +270,10 @@ int onInit() {
    string signalId = "Signal.onReversal";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal)) return(last_error);
    if (signalReversal) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound))       return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup))       return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail))        return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, sValue)) return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound)) return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup)) return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail))  return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms))   return(last_error);
       if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
          legendInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
