@@ -39,7 +39,7 @@
 #define EXECUTION_CONTEXT_size            1040
 #define EXECUTION_CONTEXT_intSize          260
 
-#define EC.pid                               0     // All offsets must be in sync with the MT4Expander.
+#define EC.pid                               0     // All offsets must be in sync with the MT4Expander DLL.
 #define EC.previousPid                       1
 #define EC.started                           2
 #define EC.programType                       3

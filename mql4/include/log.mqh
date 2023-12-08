@@ -501,21 +501,11 @@ int log2Mail(string message, int error, int level) {
       isRecursion = true;
       ec_SetLoglevelMail(__ExecutionContext, LOG_OFF);                              // prevent recursive calls
 
-      static string sender = ""; if (!StringLen(sender)) {
-         sValue = GetConfigString("Mail", "Sender", "mt4@"+ GetHostName() +".localdomain");
-         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(3)  invalid mail sender address configuration [Mail]->Sender = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
-         sender = sValue;
-      }
-      static string receiver = ""; if (!StringLen(receiver)) {
-         sValue = GetConfigString("Mail", "Receiver");
-         if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(4)  invalid mail receiver address configuration [Mail]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
-         receiver = sValue;
-      }
       message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string subject = StrReplace(message, NL, " ");
-      string body    = message + NL +"("+ TimeToStr(TimeLocalEx("log2Mail(5)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+      string body    = message + NL +"("+ TimeToStr(TimeLocalEx("log2Mail(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-      if (SendEmail(sender, receiver, subject, body)) {
+      if (SendEmail("", "", subject, body)) {
          ec_SetLoglevelMail(__ExecutionContext, configLevel);                       // restore the configuration or leave it disabled
       }
       isRecursion = false;
@@ -556,15 +546,10 @@ int log2SMS(string message, int error, int level) {
       isRecursion = true;
       ec_SetLoglevelSMS(__ExecutionContext, LOG_OFF);                               // prevent recursive calls
 
-      static string receiver = ""; if (!StringLen(receiver)) {
-         sValue = GetConfigString("SMS", "Receiver");
-         if (!StrIsPhoneNumber(sValue)) return(_int(error, catch("log2SMS(3)  invalid phone number configuration: [SMS]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
-         receiver = sValue;
-      }
       string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
                   +"("+ TimeToStr(TimeLocalEx("log2SMS(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-      if (SendSMS(receiver, text)) {
+      if (SendSMS("", text)) {
          ec_SetLoglevelSMS(__ExecutionContext, configLevel);                        // restore the configuration or leave it disabled
       }
       isRecursion = false;

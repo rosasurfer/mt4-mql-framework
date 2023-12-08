@@ -97,10 +97,7 @@ bool   signal.sound;
 string signal.sound.crossUp   = "Signal Up.wav";
 string signal.sound.crossDown = "Signal Down.wav";
 bool   signal.mail;
-string signal.mail.sender   = "";
-string signal.mail.receiver = "";
 bool   signal.sms;
-string signal.sms.receiver = "";
 
 
 /**
@@ -196,9 +193,9 @@ int onInit() {
    // signaling
    if (!ConfigureSignals(ProgramName(), Signal.onCross, signals)) return(last_error);
    if (signals) {
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound))               return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, sValue, sValue)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS, signal.sms, sValue))           return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
    }
@@ -344,12 +341,12 @@ bool onCross(int section) {
 
    if (section == MODE_UPPER_SECTION) {
       message = indicatorName +" crossed up at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
-      if (IsLogInfo()) logInfo("onCross(1)  "+ StrRightFrom(message, "MACD ", -1));                   // -1 makes sure on error the whole string is returned
+      if (IsLogInfo()) logInfo("onCross(1)  "+ StrRightFrom(message, "MACD ", -1));    // -1 makes sure on error the whole string is returned
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.crossUp);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail)  error |= !SendEmail("", "", message, "");                      // subject only (empty mail body)
+      if (signal.sms)   error |= !SendSMS("", message);
       return(!error);
    }
 
@@ -359,8 +356,8 @@ bool onCross(int section) {
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.crossDown);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
+      if (signal.mail)  error |= !SendEmail("", "", message, "");
+      if (signal.sms)   error |= !SendSMS("", message);
       return(!error);
    }
 

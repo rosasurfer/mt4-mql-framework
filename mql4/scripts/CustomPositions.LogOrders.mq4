@@ -1,7 +1,7 @@
 /**
- * CustomPositions.LogTickets
+ * CustomPositions.LogOrders
  *
- * Send a command to the ChartInfos indicator to log tickets of custom positions.
+ * Send a command to the ChartInfos indicator to log all order tickets of custom positions.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};

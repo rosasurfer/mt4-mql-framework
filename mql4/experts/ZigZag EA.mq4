@@ -89,8 +89,6 @@
  *  - rename Max.Bars to MaxBarsBack
  *  - investigate an auto-updating global var MaxBarsBack to prevent possible integer overflows
  *  - implement global var indicator::CalculatedBars
- *  - support for M5 and 4BF scalping
- *  - Grid: fix price levels
  *
  *  - ChartInfos
  *     include current daily range in ADR calculation/display
@@ -98,16 +96,11 @@
  *      if TP exists => mark partial TP
  *      if SL exists => mark partial SL
  *
- *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
+ *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "Today 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 2 sec, retrying...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 3 sec, retrying...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 4 sec, retrying...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 5 sec, retrying...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 6 sec, retrying...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 7 sec, retrying...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 8 sec, retrying...
+ *     ...
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 9 sec, retrying...
  *     FATAL   BTCUSD,202  ChartInfos::rsfLib::AquireLock(5)  failed to get lock on mutex "mutex.ChartInfos.command" after 10 sec, giving up  [ERR_RUNTIME_ERROR]
  *
@@ -159,10 +152,10 @@
  *    - configuration:
  *       default: auto-config using the SYMBOL configuration
  *       manual override of times and behaviors (per instance => via input parameters)
- *    - default behavior:
+ *    - default behaviour:
  *       no trade commands
  *       synchronize-after if an opposite signal occurred
- *    - manual behavior configuration:
+ *    - manual behaviour configuration:
  *       close-before      (default: no)
  *       synchronize-after (default: yes; if no: wait for the next signal)
  *    - better parsing of struct SYMBOL
@@ -190,9 +183,7 @@
  *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
  *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
- *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
  *  - VPS: monitor and notify of incoming emails
- *  - visual/audible confirmation for manual orders (to detect execution errors)
  *  - notifications for open positions running into swap charges
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
@@ -207,9 +198,6 @@
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - Superbars: ETH/RTH separation for Frankfurt session
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
- *  - ChartInfos: update unitsize positioning
- *  - in-chart news hints (to not forget untypical ones like press conferences), check Anuko clock again
- *  - on restart delete dead screen sockets
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};

@@ -2,70 +2,52 @@
  * A ZigZag indicator with non-repainting price reversals suitable for automation.
  *
  *
- * The ZigZag indicator provided by MetaQuotes is of little use. The algorithm is flawed and the implementation performes
- * badly. Furthermore the indicator repaints past ZigZag reversal points and can't be used for automation.
+ * The ZigZag indicator provided by MetaQuotes is flawed and the implementation performes badly. Furthermore the indicator
+ * repaints past ZigZag reversal points and can't be used for automation.
  *
  * This indicator fixes those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores). Once
  * the ZigZag direction changed the semaphore will not change anymore. Like the MetaQuotes version the indicator uses a
  * Donchian channel for determining legs and reversals but this indicator draws vertical line segments if a large bar crosses
  * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it developes over
- * time and supports manual period stepping via hotkey (parameter change via keyboard). Finally the indicator supports
- * signaling of new ZigZag reversals.
+ * time and supports manual period stepping via hotkey (keyboard). Finally the indicator supports signaling of Donchian
+ * channel widening (new high/low) and ZigZag reversals.
  *
  *
  * Input parameters
  * ----------------
- * • ZigZag.Periods: Lookback periods of the Donchian channel.
+ * • ZigZag.Periods:               Lookback periods of the Donchian channel.
+ * • ZigZag.Periods.Step:          Controls parameter 'ZigZag.Periods' via the keyboard. If non-zero it enables the parameter
+ *                                  stepper and defines its step size. If zero the parameter stepper is disabled.
+ * • ZigZag.Type:                  Whether to display ZigZag lines or ZigZag semaphores. Can be shortened as long as distinct.
+ * • ZigZag.Width:                 Controls the ZigZag's line width/semaphore size.
+ * • ZigZag.Semaphores.Wingdings:  Controls the WingDing symbol used for ZigZag semaphores.
+ * • ZigZag.Color:                 Controls the color of ZigZag lines/semaphores.
  *
- * • ZigZag.Periods.Step: Controls parameter 'ZigZag.Periods' via the keyboard. If non-zero it enables the parameter stepper
- *    and defines its step size. If zero the parameter stepper is disabled.
+ * • Donchian.ShowChannel:         Whether to display the internally used Donchian channel.
+ * • Donchian.ShowCrossings:       Controls displayed Donchian channel price crossings.
+ *                                  "Off":   No crossings are displayed.
+ *                                  "First": Only the first crossing per direction is displayed (the moment when ZigZag creates a new leg).
+ *                                  "All":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
+ * • Donchian.Crossings.Width:     Controls the size of the displayed Donchian channel crossings.
+ * • Donchian.Crossings.Wingdings: Controls the WingDing symbol used for displayed Donchian channel crossings.
+ * • Donchian.Upper.Color:         Controls the color of upper Donchian channel band and displayed crossings.
+ * • Donchian.Lower.Color:         Controls the color of lower Donchian channel band and displayed crossings.
  *
- * • ZigZag.Type: Whether to display ZigZag lines or ZigZag semaphores. Can be shortened as long as distinct.
+ * • Max.Bars:                     Maximum number of bars back to calculate the indicator (performance).
  *
- * • ZigZag.Width: Controls the ZigZag's line width/semaphore size.
+ * • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
+ * • Signal.onReversal.Sound:      Whether to signal ZigZag reversals by sound.
+ * • Signal.onReversal.SoundUp:    Sound file used for signaling ZigZag reversals to the upside.
+ * • Signal.onReversal.SoundDown:  Sound file used for signaling ZigZag reversals to the downside.
+ * • Signal.onReversal.Popup:      Whether to signal ZigZag reversals by popup (MetaTrader alert dialog).
+ * • Signal.onReversal.Mail:       Whether to signal ZigZag reversals by e-mail.
+ * • Signal.onReversal.SMS:        Whether to signal ZigZag reversals by text message.
  *
- * • ZigZag.Semaphores.Wingdings: Controls the WingDing symbol used for ZigZag semaphores.
+ * • Sound.onCrossing:             Whether to signal Donchian channel crossings (channel widenings).
+ * • Sound.onCrossing.Up:          Sound file used for signaling a Donchian channel widening to the upside.
+ * • Sound.onCrossing.Down:        Sound file used for signaling a Donchian channel widening to the downside.
  *
- * • ZigZag.Color: Controls the color of ZigZag lines/semaphores.
- *
- * • Donchian.ShowChannel: Whether to display the Donchian channel used by the internal calculation.
- *
- * • Donchian.ShowCrossings: Controls the displayed Donchian channel crossings.
- *    "Off":   No crossings are displayed.
- *    "First": Only the first crossing per direction is displayed (the moment when the ZigZag creates a new leg).
- *    "All":   All crossings are displayed. Displays the trail of the ZigZag leg as it developes over time.
- *
- * • Donchian.Crossings.Width: Controls the size of the displayed Donchian channel crossings.
- *
- * • Donchian.Crossings.Wingdings: Controls the WingDing symbol used for Donchian channel crossings.
- *
- * • Donchian.Upper.Color: Controls the color of upper Donchian channel band and crossings.
- *
- * • Donchian.Lower.Color: Controls the color of lower Donchian channel band and crossings.
- *
- * • Max.Bars: Maximum number of bars back to calculate the indicator (performance).
- *
- * • Signal.onReversal: Whether to signal ZigZag reversals (the moment when the ZigZag creates a new leg).
- *
- * • Signal.onReversal.Sound: Whether to signal ZigZag reversals by sound.
- *
- * • Signal.onReversal.SoundUp: Sound file used for signaling ZigZag reversals to the upside.
- *
- * • Signal.onReversal.SoundDown: Sound file used for signaling ZigZag reversals to the downside.
- *
- * • Signal.onReversal.Popup: Whether to signal ZigZag reversals by a popup (MetaTrader alert dialog).
- *
- * • Signal.onReversal.Mail: Whether to signal ZigZag reversals by e-mail.
- *
- * • Signal.onReversal.SMS: Whether to signal ZigZag reversals by text message.
- *
- * • Sound.onCrossing: Whether to signal all Donchian channel crossings (widening of the channel).
- *
- * • Sound.onCrossing.Up: Sound file used for signaling a Donchian channel widening to the upside.
- *
- * • Sound.onCrossing.Down: Sound file used for signaling a Donchian channel widening to the downside.
- *
- * • AutoConfiguration: If enabled all input parameters can be overwritten with custom default values (via framework config).
+ * • AutoConfiguration:            If enabled all input parameters can be overwritten with custom framework config values.
  *
  *
  * TODO:
@@ -201,10 +183,7 @@ bool     signalReversal;
 bool     signalReversal.sound;
 bool     signalReversal.popup;
 bool     signalReversal.mail;
-string   signalReversal.mailSender   = "";
-string   signalReversal.mailReceiver = "";
 bool     signalReversal.sms;
-string   signalReversal.smsReceiver = "";
 
 // signal direction types
 #define D_LONG     TRADE_DIRECTION_LONG      // 1
@@ -291,10 +270,10 @@ int onInit() {
    string signalId = "Signal.onReversal";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal)) return(last_error);
    if (signalReversal) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound))                                                        return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup))                                                        return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail, signalReversal.mailSender, signalReversal.mailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, signalReversal.smsReceiver))                              return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound)) return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup)) return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail))  return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms))   return(last_error);
       if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
          legendInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
@@ -591,8 +570,8 @@ bool onReversal(int direction, int bar) {
       if (signalReversal.mail || signalReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (signalReversal.popup)           Alert(message);
-      if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
-      if (signalReversal.sms)   error |= !SendSMS(signalReversal.smsReceiver, message + NL + accountTime);
+      if (signalReversal.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
+      if (signalReversal.sms)   error |= !SendSMS("", message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark event as signaled
    }
    return(!error);

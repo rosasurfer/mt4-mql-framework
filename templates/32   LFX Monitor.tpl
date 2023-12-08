@@ -1,10 +1,10 @@
 <chart>
-symbol=GBPUSD
+symbol=GBPAUD
 period=60
 digits=5
 
-leftpos=9229
-scale=2
+leftpos=17392
+scale=1
 graph=1
 fore=0
 grid=0
@@ -13,15 +13,15 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
+scroll=1
 shift=1
 shift_size=50
 
 fixed_pos=620
 window_left=0
-window_top=0
-window_right=1292
-window_bottom=812
+window_top=47
+window_right=996
+window_bottom=632
 window_type=3
 background_color=16316664
 foreground_color=0
@@ -36,7 +36,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=300
+height=10
 
 <indicator>
 name=main
@@ -16372,55 +16372,33 @@ value_0=0.50
 <indicator>
 name=Custom Indicator
 <expert>
-name=Grid
-flags=347
-window_num=0
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ChartInfos
-flags=347
-window_num=0
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=SuperBars
-flags=339
-window_num=0
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Bollinger Bands
+name=LFX-Monitor
 flags=339
 window_num=0
 <inputs>
-MA.Periods=200
-MA.Method=SMA | LWMA | EMA | ALMA*
-MA.AppliedPrice=Close
-MA.LineWidth=0
-MA.Color=3329330
-Bands.StdDevs=2.0
-Bands.LineWidth=1
-Bands.Color=14772545
+AUDLFX.Enabled=1
+CADLFX.Enabled=1
+CHFLFX.Enabled=1
+EURLFX.Enabled=1
+GBPLFX.Enabled=1
+JPYLFX.Enabled=1
+NZDLFX.Enabled=1
+USDLFX.Enabled=1
+NOKFX7.Enabled=1
+SEKFX7.Enabled=1
+SGDFX7.Enabled=1
+ZARFX7.Enabled=1
+USDX.Enabled=1
+EURX.Enabled=1
+XAUI.Enabled=1
+Recording.Enabled=1
+Recording.HistoryDirectory=history/XTrade-Synthetic
+Recording.HistoryFormat=400
 </inputs>
 </expert>
+color_0=4294967295
 period_flags=0
-show_data=1
+show_data=0
 </indicator>
 
 </window>

@@ -1,11 +1,7 @@
 /**
- * MA Tunnel Monitor
+ * MA-3 Tunnel
  *
- * A signal monitor for trends defined by multiple moving averages. Can be used e.g. for the "XARD trend following" or the
- * "Vegas tunnel" system.
- *
- * @link  https://forex-station.com/viewtopic.php?f=578267&t=8416709#                  [XARD - Simple Trend Following System]
- * @link  https://www.forexfactory.com/thread/4365#                                                     [Vegas Tunnel Method]
+ * A signal monitor for price crossing a channel (aka tunnel) built using 1 to 3 Moving Averages.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -89,12 +85,9 @@ int    ma3AppliedPrice;
 int    totalInitPeriods;
 double totalTrend[];
 
-string signalSoundUp      = "Signal Up.wav";
-string signalSoundDown    = "Signal Down.wav";
-string signalMailSender   = "";
-string signalMailReceiver = "";
-string signalSmsReceiver  = "";
-string signalDescription  = "";
+string signalSoundUp     = "Signal Up.wav";
+string signalSoundDown   = "Signal Down.wav";
+string signalDescription = "";
 
 
 /**
@@ -189,12 +182,12 @@ int onInit() {
 
    // signaling
    string signalId = "Signal.onBreakout";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, Signal.onBreakout))                                                      return(last_error);
+   if (!ConfigureSignals2(signalId, AutoConfiguration, Signal.onBreakout)) return(last_error);
    if (Signal.onBreakout) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onBreakout.Sound))                                      return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, Signal.onBreakout.Popup))                                      return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onBreakout.Mail, signalMailSender, signalMailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onBreakout.SMS, signalSmsReceiver))                     return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onBreakout.Sound)) return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, Signal.onBreakout.Popup)) return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onBreakout.Mail))  return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onBreakout.SMS))   return(last_error);
       if (Signal.onBreakout.Sound || Signal.onBreakout.Popup || Signal.onBreakout.Mail || Signal.onBreakout.SMS) {
          signalDescription = "onBreakout="+ StrLeft(ifString(Signal.onBreakout.Sound, "Sound+", "") + ifString(Signal.onBreakout.Popup, "Popup+", "") + ifString(Signal.onBreakout.Mail, "Mail+", "") + ifString(Signal.onBreakout.SMS, "SMS+", ""), -1);
          if (IsLogDebug()) logDebug("onInit(11)  "+ signalDescription);
@@ -350,8 +343,8 @@ bool onBreakout(int mode) {
 
       if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
       if (Signal.onBreakout.Sound) error |= PlaySoundEx(signalSoundUp);
-      if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
-      if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
+      if (Signal.onBreakout.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onBreakout.SMS)   error |= !SendSMS("", message +NL+ accountTime);
       return(!error);
    }
 
@@ -362,8 +355,8 @@ bool onBreakout(int mode) {
 
       if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
       if (Signal.onBreakout.Sound) error |= PlaySoundEx(signalSoundDown);
-      if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
-      if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
+      if (Signal.onBreakout.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onBreakout.SMS)   error |= !SendSMS("", message +NL+ accountTime);
       return(!error);
    }
 

@@ -37,8 +37,7 @@ int __DeinitFlags[];
 #include <structs/rsf/LFXOrder.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-bool   signal.sms;
-string signal.sms.receiver = "";
+bool signalSMS;
 
 
 /**
@@ -50,9 +49,9 @@ int onInit() {
    if (!InitTradeAccount())
       return(last_error);
 
-   // (2) SMS-Konfiguration des Accounts einlesen
-   if (!ConfigureSignalsBySMS("auto", signal.sms, signal.sms.receiver))
-      return(last_error);
+   // SMS-Konfiguration des Accounts einlesen
+   string sValue = "";
+   if (!ConfigureSignalsBySMS("auto", signalSMS, sValue)) return(last_error);
 
    return(catch("onInit(3)"));
 }
@@ -508,7 +507,7 @@ bool OpenLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
  * @return bool - success status
  */
 bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigger, int error) {
-   if (signal.sms) {
+   if (signalSMS) {
       string comment=lo.Comment(lo), currency=lo.Currency(lo);
          if (StrStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
          if (StrStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
@@ -520,7 +519,7 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
       else                        message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
-      if (!SendSMS(signal.sms.receiver, TimeToStr(TimeLocalEx("OpenLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
+      if (!SendSMS("", TimeToStr(TimeLocalEx("OpenLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(false);
    }
    return(true);
@@ -706,7 +705,7 @@ bool CloseLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
  * @return bool - success status
  */
 bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger, int error) {
-   if (signal.sms) {
+   if (signalSMS) {
       string currency = lo.Currency(lo);
       if (StrStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
       if (StrStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
@@ -718,7 +717,7 @@ bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger
       else                        message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
-      if (!SendSMS(signal.sms.receiver, TimeToStr(TimeLocalEx("CloseLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
+      if (!SendSMS("", TimeToStr(TimeLocalEx("CloseLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(false);
    }
    return(true);

@@ -160,7 +160,7 @@ int onStart() {
          int oe[], oes[][ORDER_EXECUTION_intSize], oeFlags=NULL;
 
          if (sizeOfOpenPositions > 0) {
-            if (!OrdersClose(openPositions, 1, Orange, oeFlags, oes)) return(ERR_RUNTIME_ERROR);
+            if (!OrdersClose(openPositions, 1, CLR_NONE, oeFlags, oes))  return(ERR_RUNTIME_ERROR);
          }
          for (i=0; i < sizeOfPendingOrders; i++) {
             if (!OrderDeleteEx(pendingOrders[i], CLR_NONE, oeFlags, oe)) return(ERR_RUNTIME_ERROR);

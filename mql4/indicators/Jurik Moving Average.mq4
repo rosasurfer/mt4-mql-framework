@@ -191,10 +191,7 @@ bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal Up.wav";
 string signal.sound.trendChange_down = "Signal Down.wav";
 bool   signal.mail;
-string signal.mail.sender   = "";
-string signal.mail.receiver = "";
 bool   signal.sms;
-string signal.sms.receiver = "";
 
 
 /**
@@ -247,11 +244,11 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   if (!ConfigureSignals(ProgramName(), Signal.onTrendChange, signals)) return(last_error);
+   if (!ConfigureSignals(ProgramName(), Signal.onTrendChange, signals))       return(last_error);
    if (signals) {
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound))               return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, sValue, sValue)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS, signal.sms, sValue))           return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          legendInfo = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
@@ -358,8 +355,8 @@ bool onTrendChange(int trend) {
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_up);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
+      if (signal.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
+      if (signal.sms)   error |= !SendSMS("", message +NL+ accountTime);
       return(!error);
    }
 
@@ -369,8 +366,8 @@ bool onTrendChange(int trend) {
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_down);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
+      if (signal.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
+      if (signal.sms)   error |= !SendSMS("", message +NL+ accountTime);
       return(!error);
    }
 
