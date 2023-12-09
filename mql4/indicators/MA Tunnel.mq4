@@ -15,11 +15,17 @@ extern color  Tunnel.Color                   = Magenta;
 extern int    Max.Bars                       = 10000;     // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
-extern bool   Signal.onTunnelCross           = false;     // on channel leave at opposite side
-extern bool   Signal.onTunnelCross.Sound     = true;
-extern bool   Signal.onTunnelCross.Popup     = false;
-extern bool   Signal.onTunnelCross.Mail      = false;
-extern bool   Signal.onTunnelCross.SMS       = false;
+extern bool   Signal.onTickCross             = false;     // on channel leave at opposite side of a single tick
+extern bool   Signal.onTickCross.Sound       = true;
+extern bool   Signal.onTickCross.Popup       = false;
+extern bool   Signal.onTickCross.Mail        = false;
+extern bool   Signal.onTickCross.SMS         = false;
+
+extern bool   Signal.onBarCross              = false;     // on channel leave at opposite side of bar-close
+extern bool   Signal.onBarCross.Sound        = true;
+extern bool   Signal.onBarCross.Popup        = false;
+extern bool   Signal.onBarCross.Mail         = false;
+extern bool   Signal.onBarCross.SMS          = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,20 +35,23 @@ extern bool   Signal.onTunnelCross.SMS       = false;
 #include <functions/ConfigureSignals.mqh>
 #include <functions/legend.mqh>
 
-#define MODE_UPPER_BAND       0                       // indicator buffer ids
-#define MODE_LOWER_BAND       1                       //
-#define MODE_TREND            2                       // direction + shift of the last tunnel crossing: +1...+n=up, -1...-n=down
+#define MODE_UPPER_BAND       0              // indicator buffer ids
+#define MODE_LOWER_BAND       1              //
+#define MODE_TICK_TREND       2              // direction + shift of the last tunnel crossing: +1...+n=up, -1...-n=down
+#define MODE_BAR_TREND        3              // ...
 
 #property indicator_chart_window
-#property indicator_buffers   3
+#property indicator_buffers   4
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
 #property indicator_color3    CLR_NONE
+#property indicator_color4    CLR_NONE
 
-double upperBand[];                                   // upper band:      visible
-double lowerBand[];                                   // lower band:      visible
-double trend    [];                                   // trend direction: invisible, displayed in "Data" window
+double upperBand[];                          // upper band:      visible
+double lowerBand[];                          // lower band:      visible
+double tickTrend[];                          // trend direction: invisible, displayed in "Data" window
+double barTrend [];                          // ...
 
 int    maMethod;
 int    maPeriods;
@@ -50,13 +59,19 @@ int    maxBarsBack;
 
 string indicatorName = "";
 string legendLabel   = "";
-string legendInfo    = "";                            // additional chart legend info
+string legendInfo    = "";                   // additional chart legend info
 
-bool   signalCrossing;
-bool   signalCrossing.sound;
-bool   signalCrossing.popup;
-bool   signalCrossing.mail;
-bool   signalCrossing.sms;
+bool   signal.tickCross;
+bool   signal.tickCross.sound;
+bool   signal.tickCross.popup;
+bool   signal.tickCross.mail;
+bool   signal.tickCross.sms;
+
+bool   signal.barCross;
+bool   signal.barCross.sound;
+bool   signal.barCross.popup;
+bool   signal.barCross.mail;
+bool   signal.barCross.sms;
 
 
 /**
@@ -92,36 +107,55 @@ int onInit() {
    maxBarsBack = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signal configuration
-   signalCrossing       = Signal.onTunnelCross;
-   signalCrossing.sound = Signal.onTunnelCross.Sound;
-   signalCrossing.popup = Signal.onTunnelCross.Popup;
-   signalCrossing.mail  = Signal.onTunnelCross.Mail;
-   signalCrossing.sms   = Signal.onTunnelCross.SMS;
-   legendInfo           = "";
-   string signalId = "Signal.onTunnelCross";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, signalCrossing)) return(last_error);
-   if (signalCrossing) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalCrossing.sound)) return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalCrossing.popup)) return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalCrossing.mail))  return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalCrossing.sms))   return(last_error);
-      if (signalCrossing.sound || signalCrossing.popup || signalCrossing.mail || signalCrossing.sms) {
-         legendInfo = StrLeft(ifString(signalCrossing.sound, "sound,", "") + ifString(signalCrossing.popup, "popup,", "") + ifString(signalCrossing.mail, "mail,", "") + ifString(signalCrossing.sms, "sms,", ""), -1);
-         legendInfo = "("+ legendInfo +")";
+   signal.tickCross       = Signal.onTickCross;
+   signal.tickCross.sound = Signal.onTickCross.Sound;
+   signal.tickCross.popup = Signal.onTickCross.Popup;
+   signal.tickCross.mail  = Signal.onTickCross.Mail;
+   signal.tickCross.sms   = Signal.onTickCross.SMS;
+   legendInfo = "";
+   string signalId = "Signal.onTickCross";
+   if (!ConfigureSignals2(signalId, AutoConfiguration, signal.tickCross)) return(last_error);
+   if (signal.tickCross) {
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signal.tickCross.sound)) return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signal.tickCross.popup)) return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signal.tickCross.mail))  return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signal.tickCross.sms))   return(last_error);
+      if (signal.tickCross.sound || signal.tickCross.popup || signal.tickCross.mail || signal.tickCross.sms) {
+         legendInfo = legendInfo +", "+ StrLeft(ifString(signal.tickCross.sound, "sound,", "") + ifString(signal.tickCross.popup, "popup,", "") + ifString(signal.tickCross.mail, "mail,", "") + ifString(signal.tickCross.sms, "sms,", ""), -1);
       }
-      else signalCrossing = false;
+      else signal.tickCross = false;
    }
+   signal.barCross       = Signal.onBarCross;
+   signal.barCross.sound = Signal.onBarCross.Sound;
+   signal.barCross.popup = Signal.onBarCross.Popup;
+   signal.barCross.mail  = Signal.onBarCross.Mail;
+   signal.barCross.sms   = Signal.onBarCross.SMS;
+   signalId = "Signal.onBarCross";
+   if (!ConfigureSignals2(signalId, AutoConfiguration, signal.barCross)) return(last_error);
+   if (signal.barCross) {
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signal.barCross.sound)) return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signal.barCross.popup)) return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signal.barCross.mail))  return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signal.barCross.sms))   return(last_error);
+      if (signal.barCross.sound || signal.barCross.popup || signal.barCross.mail || signal.barCross.sms) {
+         legendInfo = legendInfo +", "+ StrLeft(ifString(signal.barCross.sound, "sound,", "") + ifString(signal.barCross.popup, "popup,", "") + ifString(signal.barCross.mail, "mail,", "") + ifString(signal.barCross.sms, "sms,", ""), -1);
+      }
+      else signal.barCross = false;
+   }
+   if (legendInfo != "") legendInfo = StrRight(legendInfo, -2);
 
    // buffer management
    SetIndexBuffer(MODE_UPPER_BAND, upperBand);
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);
-   SetIndexBuffer(MODE_TREND,      trend    ); SetIndexEmptyValue(MODE_TREND, 0);
+   SetIndexBuffer(MODE_TICK_TREND, tickTrend); SetIndexEmptyValue(MODE_TICK_TREND, 0);
+   SetIndexBuffer(MODE_BAR_TREND,  barTrend);  SetIndexEmptyValue(MODE_BAR_TREND, 0);
 
    // names, labels and display options
    legendLabel = CreateLegend();
    indicatorName = "Tunnel "+ MA.Method +"("+ MA.Periods +")";
-   IndicatorShortName(indicatorName);                 // chart tooltips and context menu
-   SetIndexLabel(MODE_TREND, indicatorName);          // chart tooltips and "Data" window
+   IndicatorShortName(indicatorName);                       // chart tooltips and context menu
+   SetIndexLabel(MODE_TICK_TREND, indicatorName +" tick");  // "Data" window
+   SetIndexLabel(MODE_BAR_TREND,  indicatorName +" bar");   // ...
    SetIndexLabel(MODE_UPPER_BAND, NULL);
    SetIndexLabel(MODE_LOWER_BAND, NULL);
    IndicatorDigits(Digits);
@@ -138,13 +172,14 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(trend)) return(logInfo("onTick(1)  sizeof(trend) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(barTrend)) return(logInfo("onTick(1)  sizeof(barTrend) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(upperBand, EMPTY_VALUE);
       ArrayInitialize(lowerBand, EMPTY_VALUE);
-      ArrayInitialize(trend,               0);
+      ArrayInitialize(tickTrend,           0);
+      ArrayInitialize(barTrend,            0);
       SetIndicatorOptions();
    }
 
@@ -152,12 +187,13 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(upperBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(tickTrend, Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(barTrend,  Bars, ShiftedBars,           0);
    }
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxBarsBack);
-   int startbar = Min(bars-1, Bars-maPeriods), prevTrend;
+   int startbar = Min(bars-1, Bars-maPeriods), prevBarTrend;
    if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
@@ -165,17 +201,17 @@ int onTick() {
       upperBand[bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, PRICE_HIGH, bar);
       lowerBand[bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, PRICE_LOW,  bar);
 
-      prevTrend = trend[bar+1];
-      if      (Close[bar] > upperBand[bar+1]) trend[bar] = _int(MathMax(prevTrend, 0)) + 1;
-      else if (Close[bar] < lowerBand[bar+1]) trend[bar] = _int(MathMin(prevTrend, 0)) - 1;
-      else                                    trend[bar] = prevTrend + Sign(prevTrend);
+      prevBarTrend = barTrend[bar+1];
+      if      (Close[bar] > upperBand[bar+1]) barTrend[bar] = _int(MathMax(prevBarTrend, 0)) + 1;
+      else if (Close[bar] < lowerBand[bar+1]) barTrend[bar] = _int(MathMin(prevBarTrend, 0)) - 1;
+      else                                    barTrend[bar] = prevBarTrend + Sign(prevBarTrend);
    }
 
    if (!__isSuperContext) {
       //UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
-      if (signalCrossing) {
+      if (signal.barCross) {
          //if      (trend[1] == +1) onTunnelCross(MODE_UPTREND);
          //else if (trend[1] == -1) onTunnelCross(MODE_DOWNTREND);
       }
@@ -193,7 +229,8 @@ void SetIndicatorOptions() {
 
    SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
    SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
-   SetIndexStyle(MODE_TREND,      DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+   SetIndexStyle(MODE_TICK_TREND, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+   SetIndexStyle(MODE_BAR_TREND,  DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 }
 
 
@@ -203,15 +240,21 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",                MA.Periods,                            ";", NL,
-                            "MA.Method=",                 DoubleQuoteStr(MA.Method),             ";", NL,
-                            "Tunnel.Color=",              ColorToStr(Tunnel.Color),              ";", NL,
-                            "Max.Bars=",                  Max.Bars,                              ";", NL,
+   return(StringConcatenate("MA.Periods=",              MA.Periods,                          ";", NL,
+                            "MA.Method=",               DoubleQuoteStr(MA.Method),           ";", NL,
+                            "Tunnel.Color=",            ColorToStr(Tunnel.Color),            ";", NL,
+                            "Max.Bars=",                Max.Bars,                            ";", NL,
 
-                            "Signal.onTunnelCross",       BoolToStr(Signal.onTunnelCross),       ";", NL,
-                            "Signal.onTunnelCross.Sound", BoolToStr(Signal.onTunnelCross.Sound), ";", NL,
-                            "Signal.onTunnelCross.Popup", BoolToStr(Signal.onTunnelCross.Popup), ";", NL,
-                            "Signal.onTunnelCross.Mail",  BoolToStr(Signal.onTunnelCross.Mail),  ";", NL,
-                            "Signal.onTunnelCross.SMS",   BoolToStr(Signal.onTunnelCross.SMS),   ";")
+                            "Signal.onTickCross",       BoolToStr(Signal.onTickCross),       ";", NL,
+                            "Signal.onTickCross.Sound", BoolToStr(Signal.onTickCross.Sound), ";", NL,
+                            "Signal.onTickCross.Popup", BoolToStr(Signal.onTickCross.Popup), ";", NL,
+                            "Signal.onTickCross.Mail",  BoolToStr(Signal.onTickCross.Mail),  ";", NL,
+                            "Signal.onTickCross.SMS",   BoolToStr(Signal.onTickCross.SMS),   ";", NL,
+
+                            "Signal.onBarCross",        BoolToStr(Signal.onBarCross),        ";", NL,
+                            "Signal.onBarCross.Sound",  BoolToStr(Signal.onBarCross.Sound),  ";", NL,
+                            "Signal.onBarCross.Popup",  BoolToStr(Signal.onBarCross.Popup),  ";", NL,
+                            "Signal.onBarCross.Mail",   BoolToStr(Signal.onBarCross.Mail),   ";", NL,
+                            "Signal.onBarCross.SMS",    BoolToStr(Signal.onBarCross.SMS),    ";")
    );
 }
