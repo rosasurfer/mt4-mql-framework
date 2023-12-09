@@ -9,6 +9,9 @@
  *  The first cut won't hurt at all
  *  The second only makes you wonder
  *  The third will have you on your knees
+ *  You start bleeding, I start screaming
+ *
+ *  @link  [Duel - Propaganda] https://www.youtube.com/watch?v=NTM_apWWcO0
  *
  *
  * Input parameters:
@@ -33,9 +36,6 @@
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
- *
- *  @link  http://www.rosasurfer.com/.mt4/The%20Grid.mp4#                                                          [The Grid]
- *  @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                      [Duel - I've looked at life from both sides now]
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
