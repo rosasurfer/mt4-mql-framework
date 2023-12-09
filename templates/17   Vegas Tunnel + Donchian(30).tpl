@@ -16721,27 +16721,16 @@ show_data=0
 </indicator>
 
 <indicator>
-name=Moving Average
-period=144
-shift=0
-method=1
-apply=2
-color=16711935
-style=0
-weight=1
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Moving Average
-period=144
-shift=0
-method=1
-apply=3
-color=16711935
-style=0
-weight=1
+name=Custom Indicator
+<expert>
+name=MA Tunnel
+flags=339
+window_num=0
+<inputs>
+MA.Periods=144
+MA.Method=SMA | LWMA | EMA* | SMMA
+</inputs>
+</expert>
 period_flags=0
 show_data=1
 </indicator>

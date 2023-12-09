@@ -14,13 +14,14 @@ extern string MA.Method                      = "SMA | LWMA | EMA* | SMMA";
 extern color  Tunnel.Color                   = Magenta;
 extern int    Max.Bars                       = 10000;     // max. values to calculate (-1: all available)
 
-extern string ___a__________________________ = "=== Signaling ===";
+extern string ___a__________________________ = "=== Signaling on Tick ===";
 extern bool   Signal.onTickCross             = false;     // on channel leave at opposite side of a single tick
 extern bool   Signal.onTickCross.Sound       = true;
 extern bool   Signal.onTickCross.Popup       = false;
 extern bool   Signal.onTickCross.Mail        = false;
 extern bool   Signal.onTickCross.SMS         = false;
 
+extern string ___b__________________________ = "=== Signaling on BarClose ===";
 extern bool   Signal.onBarCross              = false;     // on channel leave at opposite side of bar-close
 extern bool   Signal.onBarCross.Sound        = true;
 extern bool   Signal.onBarCross.Popup        = false;
@@ -153,9 +154,9 @@ int onInit() {
    // names, labels and display options
    legendLabel = CreateLegend();
    indicatorName = "Tunnel "+ MA.Method +"("+ MA.Periods +")";
-   IndicatorShortName(indicatorName);                       // chart tooltips and context menu
-   SetIndexLabel(MODE_TICK_TREND, indicatorName +" tick");  // "Data" window
-   SetIndexLabel(MODE_BAR_TREND,  indicatorName +" bar");   // ...
+   IndicatorShortName(indicatorName);                             // chart tooltips and context menu
+   SetIndexLabel(MODE_TICK_TREND, indicatorName +" tick trend");  // "Data" window
+   SetIndexLabel(MODE_BAR_TREND,  indicatorName +" bar trend");   // ...
    SetIndexLabel(MODE_UPPER_BAND, NULL);
    SetIndexLabel(MODE_LOWER_BAND, NULL);
    IndicatorDigits(Digits);
