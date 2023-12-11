@@ -51,11 +51,10 @@ extern bool   Signal.onBarCross.SMS          = false;
 
 double upperBand[];                          // upper band:      visible
 double lowerBand[];                          // lower band:      visible
-double tickTrend[];                          // trend direction: invisible, displayed in "Data" window
-double barTrend [];                          // ...
+double barTrend [];                          // trend direction: invisible, displayed in "Data" window
+double tickTrend[];                          // ...
 
 int    maMethod;
-int    maPeriods;
 int    maxBarsBack;
 
 string indicatorName = "";
@@ -87,7 +86,6 @@ int onInit() {
    // MA.Periods
    if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
    if (MA.Periods < 1)                  return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   maPeriods = MA.Periods;
    // MA.Method
    string sValues[], sValue = MA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.Method", sValue);
@@ -148,17 +146,17 @@ int onInit() {
    // buffer management
    SetIndexBuffer(MODE_UPPER_BAND, upperBand);
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);
-   SetIndexBuffer(MODE_TICK_TREND, tickTrend); SetIndexEmptyValue(MODE_TICK_TREND, 0);
    SetIndexBuffer(MODE_BAR_TREND,  barTrend);  SetIndexEmptyValue(MODE_BAR_TREND, 0);
+   SetIndexBuffer(MODE_TICK_TREND, tickTrend); SetIndexEmptyValue(MODE_TICK_TREND, 0);
 
    // names, labels and display options
    legendLabel = CreateLegend();
-   indicatorName = "Tunnel "+ MA.Method +"("+ MA.Periods +")";
+   indicatorName = MA.Method +"("+ MA.Periods +") Tunnel";
    IndicatorShortName(indicatorName);                             // chart tooltips and context menu
-   SetIndexLabel(MODE_TICK_TREND, indicatorName +" tick trend");  // "Data" window
-   SetIndexLabel(MODE_BAR_TREND,  indicatorName +" bar trend");   // ...
-   SetIndexLabel(MODE_UPPER_BAND, NULL);
-   SetIndexLabel(MODE_LOWER_BAND, NULL);
+   SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper band");  // "Data" window and context menu
+   SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower band");  // ...
+   SetIndexLabel(MODE_BAR_TREND,  indicatorName +" bar trend" );  //
+   SetIndexLabel(MODE_TICK_TREND, indicatorName +" tick trend");  //
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
@@ -179,8 +177,8 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(upperBand, EMPTY_VALUE);
       ArrayInitialize(lowerBand, EMPTY_VALUE);
-      ArrayInitialize(tickTrend,           0);
       ArrayInitialize(barTrend,            0);
+      ArrayInitialize(tickTrend,           0);
       SetIndicatorOptions();
    }
 
@@ -188,30 +186,45 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(upperBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(tickTrend, Bars, ShiftedBars,           0);
       ShiftDoubleIndicatorBuffer(barTrend,  Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(tickTrend, Bars, ShiftedBars,           0);
    }
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxBarsBack);
-   int startbar = Min(bars-1, Bars-maPeriods), prevBarTrend;
+   int startbar = Min(bars-1, Bars-MA.Periods), prevBarTrend;
    if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      upperBand[bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, PRICE_HIGH, bar);
-      lowerBand[bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, PRICE_LOW,  bar);
+      upperBand[bar] = iMA(NULL, NULL, MA.Periods, 0, maMethod, PRICE_HIGH, bar);
+      lowerBand[bar] = iMA(NULL, NULL, MA.Periods, 0, maMethod, PRICE_LOW,  bar);
 
       prevBarTrend = barTrend[bar+1];
-      if      (Close[bar] > upperBand[bar+1]) barTrend[bar] = _int(MathMax(prevBarTrend, 0)) + 1;
-      else if (Close[bar] < lowerBand[bar+1]) barTrend[bar] = _int(MathMin(prevBarTrend, 0)) - 1;
-      else                                    barTrend[bar] = prevBarTrend + Sign(prevBarTrend);
+      if      (Close[bar] > upperBand[bar]) barTrend[bar] = _int(MathMax(prevBarTrend, 0)) + 1;
+      else if (Close[bar] < lowerBand[bar]) barTrend[bar] = _int(MathMin(prevBarTrend, 0)) - 1;
+      else                                  barTrend[bar] = prevBarTrend + Sign(prevBarTrend);
+      tickTrend[bar] = barTrend[bar];
    }
+   int prevTickTrend = tickTrend[1];
+
+
+
+
+
+
+
+
+   //debug("onTick(0.1)  barTrend="+ _int(barTrend[0]) +"  tickTrend="+ _int(tickTrend[0]));
 
    if (!__isSuperContext) {
       //UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
+      if (signal.tickCross) {
+         //if      (trend[1] == +1) onTunnelCross(MODE_UPTREND);
+         //else if (trend[1] == -1) onTunnelCross(MODE_DOWNTREND);
+      }
       if (signal.barCross) {
          //if      (trend[1] == +1) onTunnelCross(MODE_UPTREND);
          //else if (trend[1] == -1) onTunnelCross(MODE_DOWNTREND);
@@ -230,8 +243,8 @@ void SetIndicatorOptions() {
 
    SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
    SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
-   SetIndexStyle(MODE_TICK_TREND, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexStyle(MODE_BAR_TREND,  DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+   SetIndexStyle(MODE_TICK_TREND, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 }
 
 
