@@ -3,7 +3,7 @@
 
 
 /**
- * Create a text label object in the main chart for a program's chart legend.
+ * Create a text label object in the main chart for an indicator's chart legend.
  *
  * @return string - object name or an empty string in case of errors
  */
@@ -26,11 +26,11 @@ string CreateChartLegend() {
 
 
 /**
- * Remove a program's chart legend from the main chart.
+ * Remove an indicator's chart legend from the chart.
  *
  * @return bool - success status
  */
-bool RemoveLegend() {
+bool RemoveChartLegend() {
    if (__isChart && !__isSuperContext) {
       string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
       if (ObjectFind(name) != -1) {
@@ -43,7 +43,7 @@ bool RemoveLegend() {
 
 
 /**
- * Order and rearrange all chart legends. Discards obsolete legends of old or inactive programs.
+ * Order and rearrange all chart legends. Discards obsolete legends of removed indicators.
  *
  * @return bool - success status
  */
