@@ -34,7 +34,7 @@ extern bool   Signal.onBarCross.SMS          = false;
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 
 #define MODE_UPPER_BAND       0              // indicator buffer ids
 #define MODE_LOWER_BAND       1              //

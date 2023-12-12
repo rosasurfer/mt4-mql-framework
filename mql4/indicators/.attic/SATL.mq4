@@ -40,7 +40,7 @@ extern string Signal.SMS           = "on | off | auto*";
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/trend.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids

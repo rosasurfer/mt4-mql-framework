@@ -14,7 +14,7 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   2

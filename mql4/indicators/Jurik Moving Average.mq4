@@ -153,7 +153,7 @@ extern string Signal.SMS           = "on | off | auto*";
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/trend.mqh>
 #include <functions/ta/JMA.mqh>
 

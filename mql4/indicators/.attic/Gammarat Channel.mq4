@@ -37,7 +37,7 @@ extern bool   AlertsOn         = false;
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids

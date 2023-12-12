@@ -35,7 +35,7 @@ extern int    Max.Bars        = 10000;                            // max. values
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA                       // indicator buffer ids

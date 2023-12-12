@@ -359,7 +359,7 @@ bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 
 
-// include/functions/legend.mqh
+// include/functions/chartlegend.mqh
 string   CreateLegend();;
 bool     RearrangeLegends();;
 bool     RemoveLegend();;

@@ -43,7 +43,7 @@ extern string Signal.SMS         = "on | off | auto*";
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids

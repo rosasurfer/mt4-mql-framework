@@ -40,7 +40,7 @@ extern int    Max.Bars          = 10000;                                // max. 
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/trend.mqh>
 
 #define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids

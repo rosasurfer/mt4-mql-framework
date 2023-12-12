@@ -101,7 +101,7 @@ extern string Sound.onCrossing.Down          = "Price Decline.wav";
 #include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <win32api.mqh>
 
 // indicator buffer ids

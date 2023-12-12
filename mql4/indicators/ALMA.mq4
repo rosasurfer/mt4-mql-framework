@@ -50,7 +50,7 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <functions/ConfigureSignals.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/trend.mqh>
 #include <functions/ta/ALMA.mqh>
 

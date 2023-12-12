@@ -28,7 +28,7 @@ extern int    Max.Bars        = 10000;                               // max. val
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
 #include <functions/ParseDateTime.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/trend.mqh>
 
 #define MODE_BUFFER1         0                                       // indicator buffer ids
