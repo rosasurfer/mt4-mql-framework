@@ -14,19 +14,13 @@ extern string MA.Method                      = "SMA | LWMA | EMA* | SMMA";
 extern color  Tunnel.Color                   = Magenta;
 extern int    Max.Bars                       = 10000;     // max. values to calculate (-1: all available)
 
-extern string ___a__________________________ = "=== Signaling on Tick ===";
-extern bool   Signal.onTickCross             = false;     // on channel leave at opposite side of a single tick
-extern bool   Signal.onTickCross.Sound       = true;
-extern bool   Signal.onTickCross.Popup       = false;
-extern bool   Signal.onTickCross.Mail        = false;
-extern bool   Signal.onTickCross.SMS         = false;
-
-extern string ___b__________________________ = "=== Signaling on BarClose ===";
+extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onBarCross              = false;     // on channel leave at opposite side of bar-close
 extern bool   Signal.onBarCross.Sound        = true;
 extern bool   Signal.onBarCross.Popup        = false;
 extern bool   Signal.onBarCross.Mail         = false;
 extern bool   Signal.onBarCross.SMS          = false;
+extern bool   Signal.onTickCross.Sound       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -61,17 +55,12 @@ string indicatorName = "";
 string legendLabel   = "";
 string signalInfo    = "";
 
-bool   signal.tickCross;
-bool   signal.tickCross.sound;
-bool   signal.tickCross.popup;
-bool   signal.tickCross.mail;
-bool   signal.tickCross.sms;
-
 bool   signal.barCross;
 bool   signal.barCross.sound;
 bool   signal.barCross.popup;
 bool   signal.barCross.mail;
 bool   signal.barCross.sms;
+bool   signal.tickCross;
 
 
 /**
@@ -106,26 +95,12 @@ int onInit() {
    maxBarsBack = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signal configuration
-   signal.tickCross       = Signal.onTickCross;
-   signal.tickCross.sound = Signal.onTickCross.Sound;
-   signal.tickCross.popup = Signal.onTickCross.Popup;
-   signal.tickCross.mail  = Signal.onTickCross.Mail;
-   signal.tickCross.sms   = Signal.onTickCross.SMS;
-   string signalId = "Signal.onTickCross";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, signal.tickCross)) return(last_error);
-   if (signal.tickCross) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signal.tickCross.sound)) return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signal.tickCross.popup)) return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signal.tickCross.mail))  return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signal.tickCross.sms))   return(last_error);
-      signal.tickCross = (signal.tickCross.sound || signal.tickCross.popup || signal.tickCross.mail || signal.tickCross.sms);
-   }
    signal.barCross       = Signal.onBarCross;
    signal.barCross.sound = Signal.onBarCross.Sound;
    signal.barCross.popup = Signal.onBarCross.Popup;
    signal.barCross.mail  = Signal.onBarCross.Mail;
    signal.barCross.sms   = Signal.onBarCross.SMS;
-   signalId = "Signal.onBarCross";
+   string signalId = "Signal.onBarCross";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signal.barCross)) return(last_error);
    if (signal.barCross) {
       if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signal.barCross.sound)) return(last_error);
@@ -134,9 +109,11 @@ int onInit() {
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signal.barCross.sms))   return(last_error);
       signal.barCross = (signal.barCross.sound || signal.barCross.popup || signal.barCross.mail || signal.barCross.sms);
    }
+   signal.tickCross = Signal.onTickCross.Sound;
+   if (!ConfigureSignalsBySound2("Signal.onTickCross", AutoConfiguration, signal.tickCross)) return(last_error);
    signalInfo = "";
-   if (signal.tickCross || signal.barCross) {
-      signalInfo = ifString(signal.tickCross.sound || signal.barCross.sound, "sound,", "") + ifString(signal.tickCross.popup || signal.barCross.popup, "popup,", "") + ifString(signal.tickCross.mail || signal.barCross.mail, "mail,", "") + ifString(signal.tickCross.sms || signal.barCross.sms, "sms,", "");
+   if (signal.barCross) {
+      signalInfo = ifString(signal.barCross.sound, "sound,", "") + ifString(signal.barCross.popup, "popup,", "") + ifString(signal.barCross.mail, "mail,", "") + ifString(signal.barCross.sms, "sms,", "");
       signalInfo = "("+ StrLeft(signalInfo, -1) +")";
    }
 
@@ -203,13 +180,29 @@ int onTick() {
       else                                  barTrend[bar] = prevBarTrend + Sign(prevBarTrend);
       tickTrend[bar] = barTrend[bar];
    }
-   int prevTickTrend = tickTrend[1];
 
-   //debug("onTick(0.1)  barTrend="+ _int(barTrend[0]) +"  tickTrend="+ _int(tickTrend[0]));
+   // recalculate tick trend
+   static int currTickTrend, prevTickTrend;
+   if (!prevTickTrend) prevTickTrend = tickTrend[0];
+   static double prevHigh=INT_MAX, prevLow=INT_MIN;
 
+   if      (Close[0] > upperBand[0] || (High[0] > prevHigh && High[0] > upperBand[0])) currTickTrend = MathMax(prevTickTrend, 0) + 1;
+   else if (Close[0] < lowerBand[0] || (Low [0] < prevLow  && Low [0] < lowerBand[0])) currTickTrend = MathMin(prevTickTrend, 0) - 1;
+   else                                                                                currTickTrend = prevTickTrend + Sign(prevTickTrend);
+   tickTrend[0]  = currTickTrend;
+   prevTickTrend = currTickTrend;
+   prevHigh      = High[0];
+   prevLow       = Low [0];
 
+   // update legend and monitor signals
    if (!__isSuperContext) {
-      UpdateBandLegend(legendLabel, indicatorName, signalInfo, Tunnel.Color, upperBand[0], lowerBand[0]);
+      string status = signalInfo;
+      if (signal.tickCross) {
+         string sBarTrend  = NumberToStr(barTrend [0], "+.");
+         string sTickTrend = NumberToStr(tickTrend[0], "+.");
+         status = StringConcatenate(sBarTrend, "/", sTickTrend, "  ", signalInfo);
+      }
+      UpdateBandLegend(legendLabel, indicatorName, status, Tunnel.Color, upperBand[0], lowerBand[0]);
 
       // signal trend changes
       if (signal.tickCross) {
@@ -250,16 +243,11 @@ string InputsToStr() {
                             "Tunnel.Color=",            ColorToStr(Tunnel.Color),            ";", NL,
                             "Max.Bars=",                Max.Bars,                            ";", NL,
 
-                            "Signal.onTickCross",       BoolToStr(Signal.onTickCross),       ";", NL,
-                            "Signal.onTickCross.Sound", BoolToStr(Signal.onTickCross.Sound), ";", NL,
-                            "Signal.onTickCross.Popup", BoolToStr(Signal.onTickCross.Popup), ";", NL,
-                            "Signal.onTickCross.Mail",  BoolToStr(Signal.onTickCross.Mail),  ";", NL,
-                            "Signal.onTickCross.SMS",   BoolToStr(Signal.onTickCross.SMS),   ";", NL,
-
                             "Signal.onBarCross",        BoolToStr(Signal.onBarCross),        ";", NL,
                             "Signal.onBarCross.Sound",  BoolToStr(Signal.onBarCross.Sound),  ";", NL,
                             "Signal.onBarCross.Popup",  BoolToStr(Signal.onBarCross.Popup),  ";", NL,
                             "Signal.onBarCross.Mail",   BoolToStr(Signal.onBarCross.Mail),   ";", NL,
-                            "Signal.onBarCross.SMS",    BoolToStr(Signal.onBarCross.SMS),    ";")
+                            "Signal.onBarCross.SMS",    BoolToStr(Signal.onBarCross.SMS),    ";", NL,
+                            "Signal.onTickCross.Sound", BoolToStr(Signal.onTickCross.Sound), ";")
    );
 }
