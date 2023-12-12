@@ -24,12 +24,11 @@ extern int    Max.Bars        = 10000;                               // max. val
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
 #include <functions/ParseDateTime.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/trend.mqh>
 
 #define MODE_BUFFER1         0                                       // indicator buffer ids
 #define MODE_BUFFER2         1

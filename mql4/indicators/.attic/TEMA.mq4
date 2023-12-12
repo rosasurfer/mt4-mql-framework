@@ -31,7 +31,6 @@ extern int    Max.Bars        = 10000;                   // max. values to calcu
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/chartlegend.mqh>
-#include <functions/trend.mqh>
 
 #define MODE_TEMA             MovingAverage.MODE_MA
 #define MODE_EMA_1            1
