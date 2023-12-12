@@ -294,7 +294,7 @@ int onTick() {
 
    if (!__isSuperContext) {
       color trendColor = ifInt(lineUp[0]!=0, Support.Color, Resistance.Color);
-      UpdateTrendLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR, Digits, NULL);
+      UpdateTrendLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR, NULL);
    }
    return(last_error);
 }

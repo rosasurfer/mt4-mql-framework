@@ -298,7 +298,7 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      UpdateTrendLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], trend[0]);
    }
    return(last_error);
 }
