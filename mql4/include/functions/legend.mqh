@@ -18,6 +18,10 @@ string CreateLegend() {
       RearrangeLegends();
    }
    return(name);
+
+   // suppress compiler warnings
+   UpdateBandLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   UpdateTrendLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 
@@ -125,4 +129,61 @@ void UpdateBandLegend(string label, string name, string status, color bandsColor
 
    int error = GetLastError();                                    // on ObjectDrag or opened "Properties" dialog
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateBandLegend(1)", error);
+}
+
+
+/**
+ * Update the chart legend of a trend indicator.
+ *
+ * @param  string   legendName     - the legend's chart object name
+ * @param  string   indicatorName  - displayed indicator name
+ * @param  string   status         - additional status info (if any)
+ * @param  color    uptrendColor   - the uptrend color
+ * @param  color    downtrendColor - the downtrend color
+ * @param  double   value          - indicator value to display
+ * @param  int      digits         - digits of the value to display
+ * @param  double   dTrend         - trend direction of the value to display (type double allows passing of non-normalized values)
+ * @param  datetime time           - bar time of the value to display
+ */
+void UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend, datetime time) {
+   static string   lastName = "";
+   static double   lastValue;
+   static int      lastTrend;
+   static datetime lastTime;
+   string sValue="", sTrend="", sOnTrendChange="";
+
+   value = NormalizeDouble(value, digits);
+   int trend = MathRound(dTrend);
+
+   // update if name, value, trend direction or bar changed
+   if (indicatorName!=lastName || value!=lastValue || trend!=lastTrend || time!=lastTime) {
+      if (digits == Digits) sValue = NumberToStr(value, PriceFormat);
+      else                  sValue = DoubleToStr(value, digits);
+
+      if (trend  != 0)  sTrend = StringConcatenate("  (", trend, ")");
+      if (status != "") status = StringConcatenate("  ", status);
+
+      if (uptrendColor != downtrendColor) {
+         if      (trend ==  1) sOnTrendChange = "  turns up";           // intra-bar trend change
+         else if (trend == -1) sOnTrendChange = "  turns down";         // ...
+      }
+
+      string text = StringConcatenate(indicatorName, "   ", sValue, sTrend, sOnTrendChange, status);
+      color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
+      if      (textColor == Aqua        ) textColor = DeepSkyBlue;
+      else if (textColor == Gold        ) textColor = Orange;
+      else if (textColor == LightSkyBlue) textColor = C'94,174,255';
+      else if (textColor == Lime        ) textColor = LimeGreen;
+      else if (textColor == Yellow      ) textColor = Orange;
+
+      ObjectSetText(legendName, text, 9, "Arial Fett", textColor);
+
+      int error = GetLastError();                                       // on ObjectDrag or opened "Properties" dialog
+      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateTrendLegend(1)", error);
+   }
+
+   lastName  = indicatorName;
+   lastValue = value;
+   lastTrend = trend;
+   lastTime  = time;
 }

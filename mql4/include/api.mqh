@@ -357,7 +357,6 @@ string   JoinInts(int &values[], string separator=", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
 bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
-void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime time);;
 
 
 // include/functions/legend.mqh
@@ -365,6 +364,7 @@ string   CreateLegend();;
 bool     RearrangeLegends();;
 bool     RemoveLegend();;
 void     UpdateBandLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
+void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime time);;
 
 
 // include/functions/ta/
