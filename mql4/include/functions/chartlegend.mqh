@@ -20,7 +20,7 @@ string CreateChartLegend() {
    return(name);
 
    // suppress compiler warnings
-   UpdateBandLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   UpdateBandLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    UpdateTrendLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
@@ -98,16 +98,15 @@ bool RearrangeChartLegends() {
 /**
  * Update the chart legend of a band indicator.
  *
- * @param  string   label          - chart label of the legend object
- * @param  string   name           - the band's name (usually the indicator name)
- * @param  string   status         - additional status info (if any)
- * @param  color    bandsColor     - the band color
- * @param  double   upperValue     - current upper band value
- * @param  double   lowerValue     - current lower band value
- * @param  int      digits         - digits of the values to display
- * @param  datetime barOpenTime    - current bar opentime
+ * @param  string legendName    - the legend's chart object name
+ * @param  string indicatorName - displayed indicator name
+ * @param  string status        - additional status info (if any)
+ * @param  color  bandsColor    - the band color
+ * @param  double upperValue    - current upper band value
+ * @param  double lowerValue    - current lower band value
+ * @param  int    digits        - digits of the values to display
  */
-void UpdateBandLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime) {
+void UpdateBandLegend(string legendName, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue, int digits) {
    string sUpperValue="", sLowerValue="";
 
    if (digits == Digits) {
@@ -118,14 +117,14 @@ void UpdateBandLegend(string label, string name, string status, color bandsColor
       sUpperValue = DoubleToStr(upperValue, digits);
       sLowerValue = DoubleToStr(lowerValue, digits);
    }
-   string text = StringConcatenate(name, "   ", sLowerValue, " / ", sUpperValue, "   ", status);
+   string text = StringConcatenate(indicatorName, "   ", sLowerValue, " / ", sUpperValue, "   ", status);
    color  textColor = bandsColor;
    if      (textColor == Aqua        ) textColor = DeepSkyBlue;
    else if (textColor == Gold        ) textColor = Orange;
    else if (textColor == LightSkyBlue) textColor = C'94,174,255';
    else if (textColor == Lime        ) textColor = LimeGreen;
    else if (textColor == Yellow      ) textColor = Orange;
-   ObjectSetText(label, text, 9, "Arial Fett", textColor);
+   ObjectSetText(legendName, text, 9, "Arial Fett", textColor);
 
    int error = GetLastError();                                    // on ObjectDrag or opened "Properties" dialog
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateBandLegend(1)", error);
