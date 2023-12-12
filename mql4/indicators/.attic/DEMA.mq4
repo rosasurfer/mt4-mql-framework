@@ -164,7 +164,7 @@ int onTick() {
 
    // (3) update chart legend
    if (!__isSuperContext) {
-       UpdateTrendLegend(legendLabel, ma.name, "", MA.Color, MA.Color, dema[0], NULL);
+       UpdateTrendLegend(legendLabel, ma.name, "", MA.Color, MA.Color, dema[0]);
    }
    return(last_error);
 }

@@ -53,13 +53,12 @@ extern string Signal.SMS           = "on | off | auto*";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/trend.mqh>
 
 #define MODE_MAIN             SuperTrend.MODE_MAIN       // indicator buffer ids
 #define MODE_TREND            SuperTrend.MODE_TREND

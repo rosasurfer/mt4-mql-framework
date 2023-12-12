@@ -37,7 +37,6 @@ extern color  ATR.Channel.Color     = CLR_NONE;
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/chartlegend.mqh>
-#include <functions/trend.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER_BAND       Bands.MODE_UPPER
@@ -294,7 +293,7 @@ int onTick() {
 
    if (!__isSuperContext) {
       color trendColor = ifInt(lineUp[0]!=0, Support.Color, Resistance.Color);
-      UpdateTrendLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR, NULL);
+      UpdateTrendLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR);
    }
    return(last_error);
 }

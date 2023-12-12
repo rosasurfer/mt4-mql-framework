@@ -331,7 +331,7 @@ string   CreateChartLegend();;
 bool     RearrangeChartLegends();;
 bool     RemoveChartLegend();;
 void     UpdateBandLegend(string legendName, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue);;
-void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, double trend);;
+void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int trend=0);;
 
 
 // include/functions/
