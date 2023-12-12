@@ -125,7 +125,7 @@ bool UpdateTrendDirection(double values[], int offset, double &trend[], double &
 
 
 /**
- * Update a trendline's chart legend.
+ * Update the chart legend of a trend indicator.
  *
  * @param  string   legendName     - the legend's chart object name
  * @param  string   indicatorName  - displayed indicator name
@@ -160,7 +160,7 @@ void UpdateTrendLegend(string legendName, string indicatorName, string status, c
          else if (trend == -1) sOnTrendChange = "  turns down";         // ...
       }
 
-      string text = StringConcatenate(indicatorName, "    ", sValue, sTrend, sOnTrendChange, status);
+      string text = StringConcatenate(indicatorName, "   ", sValue, sTrend, sOnTrendChange, status);
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
       if      (textColor == Aqua        ) textColor = DeepSkyBlue;
       else if (textColor == Gold        ) textColor = Orange;
@@ -169,9 +169,9 @@ void UpdateTrendLegend(string legendName, string indicatorName, string status, c
       else if (textColor == Yellow      ) textColor = Orange;
 
       ObjectSetText(legendName, text, 9, "Arial Fett", textColor);
-      int error = GetLastError();
-      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                    // on ObjectDrag or opened "Properties" dialog
-         return(catch("UpdateTrendLegend(1)", error));
+
+      int error = GetLastError();                                       // on ObjectDrag or opened "Properties" dialog
+      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateTrendLegend(1)", error);
    }
 
    lastName  = indicatorName;
@@ -179,14 +179,6 @@ void UpdateTrendLegend(string legendName, string indicatorName, string status, c
    lastTrend = trend;
    lastTime  = time;
    return;
-
-   /*                  [3] [2] [1] [0]
-   onBarOpen()  trend: -6  -7  -8  -9
-   onBarOpen()  trend: -6  -7  -8   1     after a downtrend of 8 bars trend turns up
-   onBarOpen()  trend: -7  -8   1   2
-   onBarOpen()  trend: -8   1   2   3
-   onBarOpen()  trend:  1   2   3  -1     after an uptrend of 3 bars trend turns down
-   */
 
    // dummy call
    double dNull[];

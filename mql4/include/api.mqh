@@ -328,7 +328,6 @@ bool     WaitForTicket(int ticket, bool select=false);;
 
 
 // include/functions/
-void     Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
 bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false);;
 bool     ConfigureSignals(string name, string &configValue, bool &enabled);;
@@ -341,7 +340,6 @@ bool     ConfigureSignalsBySMS2(string signalId, bool autoConfig, bool &enabled)
 bool     ConfigureSignalsBySound(string configValue, bool &enabled);;
 bool     ConfigureSignalsBySound2(string signalId, bool autoConfig, bool &enabled);;
 
-string   CreateLegend();;
 int      ExplodeStrings(int &buffer[], string &results[]);;
 bool     HandleCommands(string channel="", bool remove=true);;
 int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int mute=NULL);;
@@ -358,10 +356,15 @@ string   JoinDoublesEx(double &values[], int digits, string separator=", ");;
 string   JoinInts(int &values[], string separator=", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
 bool     ParseDateTime(string value, int flags, int &result[]);;
-bool     RearrangeLegends();;
-bool     RemoveLegend();;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime time);;
+
+
+// include/functions/legend.mqh
+string   CreateLegend();;
+bool     RearrangeLegends();;
+bool     RemoveLegend();;
+void     UpdateBandLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 
 
 // include/functions/ta/

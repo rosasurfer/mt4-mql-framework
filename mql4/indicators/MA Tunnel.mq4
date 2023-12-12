@@ -38,8 +38,8 @@ extern bool   Signal.onBarCross.SMS          = false;
 
 #define MODE_UPPER_BAND       0              // indicator buffer ids
 #define MODE_LOWER_BAND       1              //
-#define MODE_TICK_TREND       2              // direction + shift of the last tunnel crossing: +1...+n=up, -1...-n=down
-#define MODE_BAR_TREND        3              // ...
+#define MODE_BAR_TREND        2              // direction + shift of the last tunnel crossing: +1...+n=up, -1...-n=down
+#define MODE_TICK_TREND       3              // ...
 
 #property indicator_chart_window
 #property indicator_buffers   4
@@ -59,7 +59,7 @@ int    maxBarsBack;
 
 string indicatorName = "";
 string legendLabel   = "";
-string legendInfo    = "";                   // additional chart legend info
+string signalInfo    = "";
 
 bool   signal.tickCross;
 bool   signal.tickCross.sound;
@@ -111,7 +111,6 @@ int onInit() {
    signal.tickCross.popup = Signal.onTickCross.Popup;
    signal.tickCross.mail  = Signal.onTickCross.Mail;
    signal.tickCross.sms   = Signal.onTickCross.SMS;
-   legendInfo = "";
    string signalId = "Signal.onTickCross";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signal.tickCross)) return(last_error);
    if (signal.tickCross) {
@@ -119,10 +118,7 @@ int onInit() {
       if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signal.tickCross.popup)) return(last_error);
       if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signal.tickCross.mail))  return(last_error);
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signal.tickCross.sms))   return(last_error);
-      if (signal.tickCross.sound || signal.tickCross.popup || signal.tickCross.mail || signal.tickCross.sms) {
-         legendInfo = legendInfo +", "+ StrLeft(ifString(signal.tickCross.sound, "sound,", "") + ifString(signal.tickCross.popup, "popup,", "") + ifString(signal.tickCross.mail, "mail,", "") + ifString(signal.tickCross.sms, "sms,", ""), -1);
-      }
-      else signal.tickCross = false;
+      signal.tickCross = (signal.tickCross.sound || signal.tickCross.popup || signal.tickCross.mail || signal.tickCross.sms);
    }
    signal.barCross       = Signal.onBarCross;
    signal.barCross.sound = Signal.onBarCross.Sound;
@@ -136,12 +132,13 @@ int onInit() {
       if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signal.barCross.popup)) return(last_error);
       if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signal.barCross.mail))  return(last_error);
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signal.barCross.sms))   return(last_error);
-      if (signal.barCross.sound || signal.barCross.popup || signal.barCross.mail || signal.barCross.sms) {
-         legendInfo = legendInfo +", "+ StrLeft(ifString(signal.barCross.sound, "sound,", "") + ifString(signal.barCross.popup, "popup,", "") + ifString(signal.barCross.mail, "mail,", "") + ifString(signal.barCross.sms, "sms,", ""), -1);
-      }
-      else signal.barCross = false;
+      signal.barCross = (signal.barCross.sound || signal.barCross.popup || signal.barCross.mail || signal.barCross.sms);
    }
-   if (legendInfo != "") legendInfo = StrRight(legendInfo, -2);
+   signalInfo = "";
+   if (signal.tickCross || signal.barCross) {
+      signalInfo = ifString(signal.tickCross.sound || signal.barCross.sound, "sound,", "") + ifString(signal.tickCross.popup || signal.barCross.popup, "popup,", "") + ifString(signal.tickCross.mail || signal.barCross.mail, "mail,", "") + ifString(signal.tickCross.sms || signal.barCross.sms, "sms,", "");
+      signalInfo = "("+ StrLeft(signalInfo, -1) +")";
+   }
 
    // buffer management
    SetIndexBuffer(MODE_UPPER_BAND, upperBand);
@@ -208,17 +205,11 @@ int onTick() {
    }
    int prevTickTrend = tickTrend[1];
 
-
-
-
-
-
-
-
    //debug("onTick(0.1)  barTrend="+ _int(barTrend[0]) +"  tickTrend="+ _int(tickTrend[0]));
 
+
    if (!__isSuperContext) {
-      //UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      UpdateBandLegend(legendLabel, indicatorName, signalInfo, Tunnel.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
 
       // signal trend changes
       if (signal.tickCross) {

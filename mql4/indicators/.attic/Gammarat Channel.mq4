@@ -36,7 +36,6 @@ extern bool   AlertsOn         = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/Bands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/legend.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
@@ -276,7 +275,7 @@ void CalculateRepaintingTMA(int startbar) {
    }
 
    if (!__isSuperContext) {
-      Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
+      UpdateBandLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
    }
    return(last_error);
 }

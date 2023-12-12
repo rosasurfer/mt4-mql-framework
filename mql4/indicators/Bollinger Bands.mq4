@@ -39,7 +39,6 @@ extern string Signal.SMS         = "on | off | auto*";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/Bands.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>
@@ -241,7 +240,7 @@ int onTick() {
 
    // update chart legend
    if (!__isSuperContext) {
-      Bands.UpdateLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
+      UpdateBandLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
    }
    return(last_error);
 }

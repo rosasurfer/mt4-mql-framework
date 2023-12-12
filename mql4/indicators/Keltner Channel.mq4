@@ -35,7 +35,6 @@ extern int    Max.Bars        = 10000;                            // max. values
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/Bands.mqh>
 #include <functions/legend.mqh>
 #include <functions/ta/ALMA.mqh>
 
@@ -207,7 +206,7 @@ int onTick() {
       }
    }
    if (!__isSuperContext) {
-      Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
+      UpdateBandLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
    }
    return(last_error);
 }
