@@ -7,7 +7,7 @@
  *
  * @return string - object name or an empty string in case of errors
  */
-string CreateLegend() {
+string CreateChartLegend() {
    string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
 
    if (__isChart && !__isSuperContext) {

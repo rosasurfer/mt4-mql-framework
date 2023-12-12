@@ -204,7 +204,7 @@ int onInit() {
    maPeriods = ArraySize(maWeights);
 
    // chart legend and coloring
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    enableMultiColoring = !__isSuperContext;
 
    return(catch("onInit(9)"));

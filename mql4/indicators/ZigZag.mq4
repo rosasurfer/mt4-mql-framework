@@ -288,7 +288,7 @@ int onInit() {
 
    // buffer management and display options
    SetIndicatorOptions();
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
 
    // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
    // invalid signals caused by ticks during data pumping.

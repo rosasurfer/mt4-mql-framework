@@ -105,7 +105,7 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    string shortName="TEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "TEMA("+ MA.Periods + strAppliedPrice +")";

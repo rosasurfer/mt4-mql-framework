@@ -235,7 +235,7 @@ int onInit() {
    SetIndicatorOptions();
 
    // chart legend and coloring
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    enableMultiColoring = !__isSuperContext;
 
    InitializeT3();

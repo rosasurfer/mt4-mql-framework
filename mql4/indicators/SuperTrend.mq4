@@ -162,7 +162,7 @@ int onInit() {
    SetIndexBuffer(MODE_MA,         sma      );           // MA                  visible
 
    // names, labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    indicatorName = ProgramName() +"("+ ATR.Periods +")";
    IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window

@@ -160,7 +160,7 @@ int onInit() {
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // single-bar uptrends:            visible
 
    // names, labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = ProgramName() +"("+ MA.Periods + sAppliedPrice +")";
    string shortName = ProgramName() +"("+ MA.Periods +")";

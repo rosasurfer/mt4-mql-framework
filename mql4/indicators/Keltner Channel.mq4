@@ -140,7 +140,7 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER, lowerBand);
 
    // names, labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    string sMa            = MA.Method +"("+ maPeriods +")";
    string sAtrMultiplier = ifString(atrMultiplier==1, "", NumberToStr(atrMultiplier, ".+") +"*");
    string sAtrTimeframe  = ifString(ATR.Timeframe=="current", "", "x"+ ATR.Timeframe);

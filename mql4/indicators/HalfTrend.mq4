@@ -136,7 +136,7 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);           // lower channel band: visible
 
    // names, labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    indicatorName = ProgramName() +"("+ Periods +")";
    IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window

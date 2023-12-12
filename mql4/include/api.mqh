@@ -121,7 +121,6 @@ string   ColorToStr(color value);;
 void     CopyMemory(int destination, int source, int bytes);;
 int      CountDecimals(double number);;
 bool     CreateDirectory(string path, int flags);;
-string   CreateLegend();;
 string   CreateString(int length);;
 datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
 datetime DateTime2(int parsed[], int flags=DATE_OF_TODAY);;
@@ -327,6 +326,14 @@ bool     UseTradeServerPath(string path, string caller="");;
 bool     WaitForTicket(int ticket, bool select=false);;
 
 
+// include/functions/chartlegend.mqh
+string   CreateChartLegend();;
+bool     RearrangeLegends();;
+bool     RemoveLegend();;
+void     UpdateBandLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
+void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime time);;
+
+
 // include/functions/
 double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
 bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false);;
@@ -357,14 +364,6 @@ string   JoinInts(int &values[], string separator=", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
 bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
-
-
-// include/functions/chartlegend.mqh
-string   CreateLegend();;
-bool     RearrangeLegends();;
-bool     RemoveLegend();;
-void     UpdateBandLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
-void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime time);;
 
 
 // include/functions/ta/

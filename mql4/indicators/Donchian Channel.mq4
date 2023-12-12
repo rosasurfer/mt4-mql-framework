@@ -51,7 +51,7 @@ int onInit() {
 
    // Legende
    if (!__isSuperContext) {
-       string legendLabel = CreateLegend();
+       string legendLabel = CreateChartLegend();
        ObjectSetText(legendLabel, indicatorName, 9, "Arial Fett", Blue);
        int error = GetLastError();
        if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)             // on ObjectDrag or opened "Properties" dialog

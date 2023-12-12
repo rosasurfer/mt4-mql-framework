@@ -206,7 +206,7 @@ int onInit() {
    ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights);
 
    // chart legend and coloring
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    enableMultiColoring = !__isSuperContext;
 
    return(catch("onInit(11)"));
