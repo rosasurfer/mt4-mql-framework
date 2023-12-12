@@ -240,7 +240,7 @@ int onTick() {
 
    // update chart legend
    if (!__isSuperContext) {
-      UpdateBandLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0], Digits);
+      UpdateBandLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0]);
    }
    return(last_error);
 }

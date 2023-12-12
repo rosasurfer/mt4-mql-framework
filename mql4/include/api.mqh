@@ -330,7 +330,7 @@ bool     WaitForTicket(int ticket, bool select=false);;
 string   CreateChartLegend();;
 bool     RearrangeChartLegends();;
 bool     RemoveChartLegend();;
-void     UpdateBandLegend(string legendName, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue, int digits);;
+void     UpdateBandLegend(string legendName, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue);;
 void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, double trend);;
 
 

@@ -209,7 +209,7 @@ int onTick() {
 
 
    if (!__isSuperContext) {
-      UpdateBandLegend(legendLabel, indicatorName, signalInfo, Tunnel.Color, upperBand[0], lowerBand[0], Digits;
+      UpdateBandLegend(legendLabel, indicatorName, signalInfo, Tunnel.Color, upperBand[0], lowerBand[0]);
 
       // signal trend changes
       if (signal.tickCross) {

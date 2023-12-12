@@ -20,7 +20,7 @@ string CreateChartLegend() {
    return(name);
 
    // suppress compiler warnings
-   UpdateBandLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   UpdateBandLegend(NULL, NULL, NULL, NULL, NULL, NULL);
    UpdateTrendLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
@@ -104,19 +104,11 @@ bool RearrangeChartLegends() {
  * @param  color  bandsColor    - the band color
  * @param  double upperValue    - current upper band value
  * @param  double lowerValue    - current lower band value
- * @param  int    digits        - digits of the values to display
  */
-void UpdateBandLegend(string legendName, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue, int digits) {
-   string sUpperValue="", sLowerValue="";
+void UpdateBandLegend(string legendName, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue) {
+   string sUpperValue = NumberToStr(upperValue, PriceFormat);
+   string sLowerValue = NumberToStr(lowerValue, PriceFormat);
 
-   if (digits == Digits) {
-      sUpperValue = NumberToStr(upperValue, PriceFormat);
-      sLowerValue = NumberToStr(lowerValue, PriceFormat);
-   }
-   else {
-      sUpperValue = DoubleToStr(upperValue, digits);
-      sLowerValue = DoubleToStr(lowerValue, digits);
-   }
    string text = StringConcatenate(indicatorName, "   ", sLowerValue, " / ", sUpperValue, "   ", status);
    color  textColor = bandsColor;
    if      (textColor == Aqua        ) textColor = DeepSkyBlue;

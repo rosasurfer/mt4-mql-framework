@@ -206,7 +206,7 @@ int onTick() {
       }
    }
    if (!__isSuperContext) {
-      UpdateBandLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits);
+      UpdateBandLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0]);
    }
    return(last_error);
 }
