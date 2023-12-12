@@ -397,7 +397,7 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], Digits, trend[0], Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], Digits, trend[0]);
 
       if (signalTrendChange) /*&&*/ if (IsBarOpen()) {               // monitor trend reversals
          int iTrend = Round(trend[1]);

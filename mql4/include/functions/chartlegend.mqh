@@ -21,7 +21,7 @@ string CreateChartLegend() {
 
    // suppress compiler warnings
    UpdateBandLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-   UpdateTrendLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   UpdateTrendLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 
@@ -142,20 +142,18 @@ void UpdateBandLegend(string legendName, string indicatorName, string status, co
  * @param  double   value          - indicator value to display
  * @param  int      digits         - digits of the value to display
  * @param  double   dTrend         - trend direction of the value to display (type double allows passing of non-normalized values)
- * @param  datetime time           - bar time of the value to display
  */
-void UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend, datetime time) {
-   static string   lastName = "";
-   static double   lastValue;
-   static int      lastTrend;
-   static datetime lastTime;
+void UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend) {
+   static string lastName = "";
+   static double lastValue;
+   static int    lastTrend;
    string sValue="", sTrend="", sOnTrendChange="";
 
    value = NormalizeDouble(value, digits);
    int trend = MathRound(dTrend);
 
    // update if name, value, trend direction or bar changed
-   if (indicatorName!=lastName || value!=lastValue || trend!=lastTrend || time!=lastTime) {
+   if (indicatorName!=lastName || value!=lastValue || trend!=lastTrend) {
       if (digits == Digits) sValue = NumberToStr(value, PriceFormat);
       else                  sValue = DoubleToStr(value, digits);
 
@@ -184,5 +182,4 @@ void UpdateTrendLegend(string legendName, string indicatorName, string status, c
    lastName  = indicatorName;
    lastValue = value;
    lastTrend = trend;
-   lastTime  = time;
 }
