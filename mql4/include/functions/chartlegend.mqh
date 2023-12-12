@@ -15,7 +15,7 @@ string CreateChartLegend() {
          if (!ObjectCreateRegister(name, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
          ObjectSetText(name, " ");
       }
-      RearrangeLegends();
+      RearrangeChartLegends();
    }
    return(name);
 
@@ -35,7 +35,7 @@ bool RemoveChartLegend() {
       string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
       if (ObjectFind(name) != -1) {
          ObjectDelete(name);
-         return(RearrangeLegends());
+         return(RearrangeChartLegends());
       }
    }
    return(true);
@@ -47,7 +47,7 @@ bool RemoveChartLegend() {
  *
  * @return bool - success status
  */
-bool RearrangeLegends() {
+bool RearrangeChartLegends() {
    if (!__isChart || __isSuperContext) return(true);
 
    // collect the pids of existing legends
@@ -91,7 +91,7 @@ bool RearrangeLegends() {
          ObjectSet(name, OBJPROP_YDISTANCE, yDist + i*lineHeight);
       }
    }
-   return(!catch("RearrangeLegends(1)"));
+   return(!catch("RearrangeChartLegends(1)"));
 }
 
 

@@ -328,7 +328,7 @@ bool     WaitForTicket(int ticket, bool select=false);;
 
 // include/functions/chartlegend.mqh
 string   CreateChartLegend();;
-bool     RearrangeLegends();;
+bool     RearrangeChartLegends();;
 bool     RemoveChartLegend();;
 void     UpdateBandLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime time);;
