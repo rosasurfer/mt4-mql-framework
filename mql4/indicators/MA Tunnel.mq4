@@ -15,7 +15,7 @@ extern color  Tunnel.Color                   = Magenta;
 extern int    Max.Bars                       = 10000;     // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
-extern bool   Signal.onBarCross              = false;     // on channel leave at opposite side of bar-close
+extern bool   Signal.onBarCross              = false;     // on channel leave at opposite side of last crossing
 extern bool   Signal.onBarCross.Sound        = true;
 extern bool   Signal.onBarCross.Popup        = false;
 extern bool   Signal.onBarCross.Mail         = false;
@@ -194,7 +194,7 @@ int onTick() {
    prevHigh      = High[0];
    prevLow       = Low [0];
 
-   // update legend and monitor signals
+   // update chart legend and monitor signals
    if (!__isSuperContext) {
       string status = signalInfo;
       if (signal.tickCross) {
