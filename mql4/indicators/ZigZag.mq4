@@ -531,8 +531,7 @@ int onAccountChange(int previous, int current) {
 
 
 /**
- * An event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple parallel running
- * terminals.
+ * Event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple parallel running terminals.
  *
  * @param  int direction - reversal direction: D_LONG | D_SHORT
  * @param  int bar       - bar of the reversal (the current or the closed bar)
@@ -543,7 +542,7 @@ bool onReversal(int direction, int bar) {
    if (!signalReversal)                         return(false);
    if (ChangedBars > 2)                         return(false);
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_ILLEGAL_STATE));
+   if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
    if (IsPossibleDataPumping())                 return(true);                 // skip signals during possible data pumping
 
    // check wether the event was already signaled
@@ -579,7 +578,7 @@ bool onReversal(int direction, int bar) {
 
 
 /**
- * An event handler signaling Donchian channel crossings.
+ * Event handler signaling Donchian channel crossings.
  *
  * @param  int direction - crossing direction: D_LONG | D_SHORT
  *
