@@ -13,6 +13,7 @@ extern int    MA.Periods                     = 36;
 extern string MA.Method                      = "SMA | LWMA | EMA* | SMMA";
 extern color  Tunnel.Color                   = Magenta;
 extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
+extern bool   ShowChartLegend                = true;
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onBarCross              = false;             // on channel leave at opposite side of the last crossing
@@ -98,6 +99,8 @@ int onInit() {
    if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
    if (Max.Bars < -1)                   return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxBarsBack = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // ShowChartLegend
+   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
 
    // signal configuration
    string signalId = "Signal.onBarCross";
@@ -131,7 +134,7 @@ int onInit() {
    SetIndexBuffer(MODE_TICK_TREND, tickTrend); SetIndexEmptyValue(MODE_TICK_TREND, 0);
 
    // names, labels and display options
-   legendLabel = CreateChartLegend();
+   if (ShowChartLegend) legendLabel = CreateChartLegend();
    indicatorName = MA.Method +"("+ MA.Periods +") Tunnel";
    IndicatorShortName(indicatorName);                             // chart tooltips and context menu
    SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper band");  // "Data" window and context menu
@@ -203,15 +206,9 @@ int onTick() {
 
    // update chart legend and monitor signals
    if (!__isSuperContext) {
-      string status = signalInfo;
-      if (signal.tickCross) {
-         string sBarTrend  = NumberToStr(barTrend [0], "+.");
-         string sTickTrend = NumberToStr(tickTrend[0], "+.");
-         status = StringConcatenate(sBarTrend, "/", sTickTrend, "  ", signalInfo);
-      }
-      UpdateBandLegend(legendLabel, indicatorName, status, Tunnel.Color, upperBand[0], lowerBand[0]);
+      if (ShowChartLegend) UpdateBandLegend(legendLabel, indicatorName, signalInfo, Tunnel.Color, upperBand[0], lowerBand[0]);
 
-      // signal trend changes
+      // signal tunnel crosses
       if (signal.tickCross) {
          if      (tickTrend[0] == +1) onCross(D_LONG, 0);
          else if (tickTrend[0] == -1) onCross(D_SHORT, 0);
@@ -306,6 +303,7 @@ string InputsToStr() {
                             "MA.Method=",                    DoubleQuoteStr(MA.Method),                    ";", NL,
                             "Tunnel.Color=",                 ColorToStr(Tunnel.Color),                     ";", NL,
                             "Max.Bars=",                     Max.Bars,                                     ";", NL,
+                            "ShowChartLegend",               BoolToStr(ShowChartLegend),                   ";", NL,
 
                             "Signal.onBarCross",             BoolToStr(Signal.onBarCross),                 ";", NL,
                             "Signal.onBarCross.Sound",       BoolToStr(Signal.onBarCross.Sound),           ";", NL,
