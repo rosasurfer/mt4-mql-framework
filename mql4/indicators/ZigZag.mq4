@@ -578,7 +578,7 @@ bool onReversal(int direction, int bar) {
 
 
 /**
- * Event handler signaling Donchian channel crossings.
+ * Event handler signaling Donchian channel widening.
  *
  * @param  int direction - crossing direction: D_LONG | D_SHORT
  *
@@ -590,7 +590,6 @@ bool onChannelCrossing(int direction) {
 
    if (lastSound+2000 < GetTickCount()) {                                  // at least 2 sec pause between sound signals
       int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onCrossing.Up, Sound.onCrossing.Down));
-
       if      (!error)                      lastSound = GetTickCount();
       else if (error == ERR_FILE_NOT_FOUND) Sound.onCrossing = false;
    }
