@@ -694,26 +694,6 @@
 #define MOUSEEVENTF_ABSOLUTE                  0x8000     // absolute move
 
 
-// PlaySound() flags
-#define SND_SYNC                                0x00     // play synchronously (default)
-#define SND_ASYNC                               0x01     // play asynchronously in another thread and immediately return (doesn't mix sounds)
-#define SND_NODEFAULT                           0x02     // silence (!default) if sound not found
-#define SND_MEMORY                              0x04     // lpSound points to a memory file
-#define SND_LOOP                                0x08     // loop the sound until next sndPlaySound
-#define SND_NOSTOP                              0x10     // don't stop any currently playing sound
-
-#define SND_NOWAIT                        0x00002000     // don't wait if the driver is busy
-#define SND_ALIAS                         0x00010000     // name is a registry alias
-#define SND_ALIAS_ID                      0x00110000     // alias is a predefined ID
-#define SND_FILENAME                      0x00020000     // name is file name
-#define SND_RESOURCE                      0x00040004     // name is resource name or atom
-
-#define SND_PURGE                             0x0040     // purge non-static events for task
-#define SND_APPLICATION                       0x0080     // look for application specific association
-#define SND_SENTRY                        0x00080000     // generate a SoundSentry event with this sound
-#define SND_SYSTEM                        0x00200000     // treat this as a system sound
-
-
 // Process creation flags, see CreateProcess()
 #define DEBUG_PROCESS                    0x00000001
 #define DEBUG_ONLY_THIS_PROCESS          0x00000002

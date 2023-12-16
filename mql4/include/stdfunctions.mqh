@@ -326,35 +326,20 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
 }
 
 
-#define SND_ASYNC           0x01       // play sound in another thread and immediately return (doesn't mix sounds)
-#define SND_FILENAME     0x20000       // parameter is a file name
-
-
 /**
- * Dropin-replacement for the built-in MQL function PlaySound().
+ * Replacement for the built-in MQL function PlaySound().
  *
- * Queue a .WAV sound file for playing and immediately continue (instead of waiting for the end of the sound as the terminal
- * does). Also plays a sound if the terminal doesn't support it in the current context (e.g. in tester).
+ * Queues a soundfile for playing and immediately returns (non-blocking). Plays all sound types currently supported on the
+ * system. Allows mixing of sounds (except midi files). Also plays sounds if the terminal doesn't support it in the current
+ * context (e.g. in tester).
  *
- * @param  string soundfile
- *
+ * @param  string soundfile - either an absolute filename or
+ *                            a filename relative to "sounds" of either the terminal or the data directory
  * @return int - error status
- *
- * Notes: This is a wrapper for the SoundPlayer API which cannot mix sounds. If the SoundPlayer currently plays a sound the
- *        sound is stopped and the specified sound is played. Use the MediaPlayer API to mix multiple sounds.
  */
 int PlaySoundEx(string soundfile) {
-   string filename = StrReplace(soundfile, "/", "\\");
-   string fullName = TerminalPath() +"\\sounds\\"+ filename;
-
-   if (!IsFile(fullName, MODE_SYSTEM)) {
-      fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
-      if (!IsFile(fullName, MODE_SYSTEM)) {
-         return(logError("PlaySoundEx(1)  sound file \""+ soundfile +"\" not found", ERR_FILE_NOT_FOUND));
-      }
-   }
-   PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
-   return(catch("PlaySoundEx(2)"));
+   bool success = PlaySoundA(soundfile);
+   return(ifInt(success, NO_ERROR, __ExecutionContext[EC.dllError]));
 }
 
 
@@ -7735,7 +7720,4 @@ void __DummyCalls() {
    bool     PostMessageA(int hWnd, int msg, int wParam, int lParam);
    int      RegisterWindowMessageA(string lpString);
    int      SendMessageA(int hWnd, int msg, int wParam, int lParam);
-
-#import "winmm.dll"
-   bool     PlaySoundA(string lpSound, int hMod, int fSound);
 #import

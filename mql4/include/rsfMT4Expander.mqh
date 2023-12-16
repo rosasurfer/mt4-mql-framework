@@ -176,6 +176,7 @@
    int      GetLastWin32Error();
    bool     IsProgramType(int type);
    bool     IsVirtualKeyDown(int vKey);
+   bool     PlaySoundA(string soundfile);
 
    // Virtual no-ops. Automatically over-written by MQL implementations of the same name.
    int      onInit();

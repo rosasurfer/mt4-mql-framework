@@ -10,7 +10,7 @@ extern int    __lpSuperContext;
 int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double __rates[][6];                                                 // current price series
 int    __tickTimerId;                                                // timer id for virtual ticks
-bool   __trackExecutionTime = false;                                 // whether to track the execution time of a full recalculation (ValidBars = 0)
+bool   __trackExecutionTime = false;                                 // whether to track the execution time of a full recalculation (if ValidBars = 0)
 bool   __isAccountChange    = false;
 bool   __isOfflineChart     = -1;                                    // initialized in start(), not before
 
@@ -369,9 +369,11 @@ int start() {
    error = onTick();
    if (error && error!=last_error) CheckErrors("start(6)", error);
 
-   if (!__isTesting) /*&&*/ if (!ValidBars && __trackExecutionTime) {
-      int millis = (GetTickCount()-starttime);
-      logDebug("start(7)  Tick="+ Ticks +"  Bars="+ Bars +"  full recalculation="+ DoubleToStr(millis/1000., 3) +" sec");
+   if (!__isTesting && __trackExecutionTime && !ValidBars) {
+      if (IsLogDebug()) {
+         int millis = (GetTickCount()-starttime);
+         logDebug("start(7)  Tick="+ Ticks +"  Bars="+ Bars +"  full recalculation="+ DoubleToStr(millis/1000., 3) +" sec");
+      }
    }
 
    // check all errors
