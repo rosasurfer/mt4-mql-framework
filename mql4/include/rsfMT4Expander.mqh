@@ -20,7 +20,6 @@
    int      GetUIThreadId();
    bool     IsUIThread(int threadId);
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
-   bool     LoadMqlProgramW(int hChart, int programType, string programName);
    int      MT4InternalMsg();
    bool     ReopenAlertDialog(int sound);
    //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
@@ -94,7 +93,6 @@
    int      GetStringAddress (string value   );                // Warning: GetStringAddress() must be used with string array elements only.
    int      GetStringsAddress(string values[]);                //  Simple strings are passed to DLLs as copies. The resulting address
    string   GetStringA(int address);                           //  is a dangling pointer and accessing it may cause a terminal crash.
-   //string GetStringW(int address);
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
    // array functions
@@ -120,7 +118,6 @@
    //string MD5Hash(int buffer[], int size);
    string   MD5HashA(string str);
    //bool   SortMqlStringsA(string values[], int size);
-   //bool   SortMqlStringsW(string values[], int size);
    bool     StrCompare(string s1, string s2);
    bool     StrEndsWith(string str, string suffix);
    bool     StrIsNull(string str);

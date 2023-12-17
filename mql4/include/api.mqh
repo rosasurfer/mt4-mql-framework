@@ -920,6 +920,7 @@ string   NumberFormat(double value, string format);;
 string   OrderTypeDescription(int type);;
 string   PeriodToStr(int period);;
 int      PlaySoundA(string soundfile);;
+int      PlaySoundW(string soundfile);;
 string   ProgramTypeDescription(int type);;
 string   ProgramTypeToStr(int type);;
 bool     ReleaseTickTimer(int timerId);;
