@@ -366,6 +366,10 @@ bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 
 
+// include/functions/iCustom/
+double   icMaTunnel(int timeframe, int maPeriods, string maMethod, int iBuffer, int iBar);;
+
+
 // include/functions/ta/
 bool     ALMA.CalculateWeights(int periods, double offset, double sigma, double &weights[]);;
 double   ATR(string symbol, int timeframe, int periods, int offset);;
