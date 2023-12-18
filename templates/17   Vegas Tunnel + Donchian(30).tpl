@@ -16434,22 +16434,6 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MA Tunnel
-flags=339
-window_num=0
-<inputs>
-MA.Periods=144
-MA.Method=SMA | LWMA | EMA* | SMMA
-ShowChartLegend=0
-</inputs>
-</expert>
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=.Xard/2021.05.05/indicators/XU v4-XARDFX
 flags=339
 window_num=0
@@ -16688,6 +16672,21 @@ draw_36=12
 color_36=0
 style_36=0
 weight_36=0
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Tunnel
+flags=339
+window_num=0
+<inputs>
+MA.Periods=144
+MA.Method=SMA | LWMA | EMA* | SMMA
+</inputs>
+</expert>
 period_flags=0
 show_data=1
 </indicator>
