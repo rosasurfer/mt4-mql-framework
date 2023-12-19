@@ -1,5 +1,5 @@
 /**
- * Close all orders matching the specified inputs.
+ * Close all orders matching the specified input.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = { INIT_NO_BARS_REQUIRED };
@@ -120,6 +120,8 @@ int onInit() {
 int onStart() {
    int orders = OrdersTotal(), pendingOrders[], openPositions[];
 
+   debug("onStart(0.1)  symbols="+ StringsToStr(closeSymbols, NULL));
+
    // select orders to close
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
@@ -150,23 +152,15 @@ int onStart() {
    }
 
    // close orders
-   bool isInput = (closeAllSymbols || ArraySize(closeSymbols) || ArraySize(closeTypes) || ArraySize(closeTickets) || ArraySize(closeMagics) || ArraySize(closeComments));
-
    int sizeOfPendingOrders = ArraySize(pendingOrders);
    int sizeOfOpenPositions = ArraySize(openPositions);
    PlaySoundEx("Windows Notify.wav");
 
    if (sizeOfPendingOrders || sizeOfOpenPositions) {
-      string msg = "";
-      if (isInput) {
-         string sPendingOrders = ifString(sizeOfPendingOrders, "delete "+ sizeOfPendingOrders +" pending order"+ Pluralize(sizeOfPendingOrders), "");
-         string sAnd           = ifString(sizeOfPendingOrders && sizeOfOpenPositions, " and ", "");
-         string sOpenPositions = ifString(sizeOfOpenPositions, "close "+ sizeOfOpenPositions +" open position"+ Pluralize(sizeOfOpenPositions), "");
-         msg = "Do you really want to "+ sPendingOrders + sAnd + sOpenPositions +"?";
-      }
-      else {
-         msg = "Do you really want to close all "+ (sizeOfPendingOrders + sizeOfOpenPositions) +" open orders?";
-      }
+      string sPendingOrders = ifString(sizeOfPendingOrders, "delete "+ sizeOfPendingOrders +" pending order"+ Pluralize(sizeOfPendingOrders), "");
+      string sAnd           = ifString(sizeOfPendingOrders && sizeOfOpenPositions, " and ", "");
+      string sOpenPositions = ifString(sizeOfOpenPositions, "close "+ sizeOfOpenPositions +" open position"+ Pluralize(sizeOfOpenPositions), "");
+      string msg            = "Do you really want to "+ sPendingOrders + sAnd + sOpenPositions +"?";
 
       int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
