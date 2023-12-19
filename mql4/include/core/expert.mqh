@@ -217,7 +217,7 @@ int init() {
    ShowStatus(last_error);
 
    // setup virtual ticks
-   if (!__isTesting) {
+   if (__virtualTicks && !__isTesting) {
       int hWnd = __ExecutionContext[EC.hChart];
       __tickTimerId = SetupTickTimer(hWnd, __virtualTicks, NULL);
       if (!__tickTimerId) return(catch("init(15)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));

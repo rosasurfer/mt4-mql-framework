@@ -200,7 +200,7 @@
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
+int   __InitFlags[] = { INIT_PIPVALUE, INIT_BUFFERED_LOG };
 int __DeinitFlags[];
 int __virtualTicks  = 10000;                                // every 10 seconds to continue operation on a stalled data feed
 

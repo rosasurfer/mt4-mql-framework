@@ -5553,12 +5553,16 @@ int StrToOperationType(string value) {
       if (str == "SELL"      ) return(OP_SELL     );
       if (str == "BUYLIMIT"  ) return(OP_BUYLIMIT );
       if (str == "BUY LIMIT" ) return(OP_BUYLIMIT );
+      if (str == "BUY-LIMIT" ) return(OP_BUYLIMIT );
       if (str == "SELLLIMIT" ) return(OP_SELLLIMIT);
       if (str == "SELL LIMIT") return(OP_SELLLIMIT);
+      if (str == "SELL-LIMIT") return(OP_SELLLIMIT);
       if (str == "BUYSTOP"   ) return(OP_BUYSTOP  );
       if (str == "STOP BUY"  ) return(OP_BUYSTOP  );
+      if (str == "STOP-BUY"  ) return(OP_BUYSTOP  );
       if (str == "SELLSTOP"  ) return(OP_SELLSTOP );
       if (str == "STOP SELL" ) return(OP_SELLSTOP );
+      if (str == "STOP-SELL" ) return(OP_SELLSTOP );
       if (str == "BALANCE"   ) return(OP_BALANCE  );
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }

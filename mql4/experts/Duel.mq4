@@ -38,7 +38,7 @@
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
+int   __InitFlags[] = { INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING };
 int __DeinitFlags[];
 int __virtualTicks  = 10000;                                                  // every 10 seconds to continue operation on a stalled data feed
 

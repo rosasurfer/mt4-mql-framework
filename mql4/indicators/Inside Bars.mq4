@@ -9,7 +9,7 @@
  *  - check bar alignment of all timeframes and use the largest correctly aligned instead of M5
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE};
+int   __InitFlags[] = { INIT_TIMEZONE };
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
