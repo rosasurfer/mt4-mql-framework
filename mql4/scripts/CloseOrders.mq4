@@ -120,8 +120,6 @@ int onInit() {
 int onStart() {
    int orders = OrdersTotal(), pendingOrders[], openPositions[];
 
-   debug("onStart(0.1)  symbols="+ StringsToStr(closeSymbols, NULL));
-
    // select orders to close
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
