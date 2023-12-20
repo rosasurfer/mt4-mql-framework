@@ -16683,8 +16683,7 @@ name=MA Tunnel
 flags=339
 window_num=0
 <inputs>
-MA.Periods=144
-MA.Method=SMA | LWMA | EMA* | SMMA
+Tunnel.Definition=EMA(144)
 </inputs>
 </expert>
 period_flags=0

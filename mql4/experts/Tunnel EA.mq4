@@ -1,16 +1,16 @@
 /**
  * Tunnel EA
  *
- * wip: work-in-progress
+ * don't use (work-in-progress)
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = { INIT_PIPVALUE, INIT_BUFFERED_LOG };
 int __DeinitFlags[];
-int __virtualTicks = 10000;                     // every 10 seconds to continue operation on a stalled data feed
+int __virtualTicks = 0;
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID = "";                 // instance to load from a status file
+extern string Sequence.ID = "";                 // EA instance id
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -19,7 +19,7 @@ extern string Sequence.ID = "";                 // instance to load from a statu
 #include <rsfLib.mqh>
 #include <functions/iCustom/MaTunnel.mqh>
 
-#define STRATEGY_ID  108                        // unique strategy id (between 101-1023, 10 bit)
+#define STRATEGY_ID  108                        // unique strategy id (10 bit, between 101-1023)
 
 
 /**
@@ -28,7 +28,7 @@ extern string Sequence.ID = "";                 // instance to load from a statu
  * @return int - error status
  */
 int onTick() {
-   double value = icMaTunnel(NULL, 34, "EMA", 0, 0);
+   double value = icMaTunnel(NULL, "EMA(36)", 0, 0);
 
    debug("onTick(0.1)  Tick="+ Ticks +"  MaTunnel[0]="+ NumberToStr(value, PriceFormat));
 

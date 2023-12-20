@@ -336,9 +336,6 @@ double  N_INF;                                                    // -1.#INF: ne
 #define Bands.MODE_UPPER                  1     // upper band value
 #define Bands.MODE_LOWER                  2     // lower band value
 
-#define Broketrader.MODE_MA               6     // Broketrader SMA value
-#define Broketrader.MODE_TREND            7     // Broketrader trend direction and length
-
 #define Fisher.MODE_MAIN          MODE_MAIN     // Fisher Transform main line (0)
 #define Fisher.MODE_SECTION               1     // Fisher Transform section and section length
 
