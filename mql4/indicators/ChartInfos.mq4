@@ -322,7 +322,7 @@ bool onCommand(string cmd, string params, int keys) {
       if (!ToggleTradeHistory(flags)) return(false);
    }
 
-   else if (cmd == "toggle-profit-unit") {
+   else if (cmd == "toggle-profit") {
       if (!CustomPositions.ToggleProfits()) return(false);
    }
 
