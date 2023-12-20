@@ -1,7 +1,7 @@
 /**
  * MA Tunnel
  *
- * An indicator for price crossing a High/Low channel (aka a tunnel) around a single Moving Average.
+ * An indicator for price crossing a High/Low channel (aka a tunnel) built from one or more Moving Averages.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -9,7 +9,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Tunnel.Definition              = "EMA(36)";         // one or more MAs separated by ","
+extern string Tunnel.Definition              = "EMA(144)";        // one or more MAs separated by ","
 extern string Supported.MA.Methods           = "SMA, LWMA, EMA, SMMA";
 extern color  Tunnel.Color                   = Magenta;
 extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
@@ -59,7 +59,9 @@ double tickTrend[];                                      // ...
 #define MA_METHOD    0                                   // indexes of ma[]
 #define MA_PERIODS   1
 
-int    ma[][2];                                          // MA definitions
+string maDefinitions[];                                  // MA definitions
+int    ma[][2];                                          // integer representation
+int    maxMaPeriods;
 int    maxBarsBack;
 
 bool   signal.barCross;
@@ -69,8 +71,8 @@ string signalInfo = "";
 string indicatorName = "";
 string legendLabel   = "";
 
-#define D_LONG    TRADE_DIRECTION_LONG                   // 1 (signal direction types)
-#define D_SHORT   TRADE_DIRECTION_SHORT                  // 2
+#define D_LONG    TRADE_DIRECTION_LONG                   // signal direction types
+#define D_SHORT   TRADE_DIRECTION_SHORT                  //
 
 
 /**
@@ -83,6 +85,11 @@ int onInit() {
 
    // input validation
    // Tunnel.Definition
+   ArrayResize(ma, 0);
+   ArrayResize(maDefinitions, 0);
+   int mas = 0;
+   maxMaPeriods = 0;
+
    string sValues[], sValue = Tunnel.Definition;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Tunnel.Definition", sValue);
    int size = Explode(sValue, ",", sValues, NULL);
@@ -95,7 +102,6 @@ int onInit() {
       int iMethod = StrToMaMethod(sMethod, F_ERR_INVALID_PARAMETER);
       if (iMethod == -1)               return(catch("onInit(2)  invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition), ERR_INVALID_INPUT_PARAMETER));
       if (iMethod > MODE_LWMA)         return(catch("onInit(3)  unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition), ERR_INVALID_INPUT_PARAMETER));
-      sMethod = MaMethodDescription(iMethod);
 
       string sPeriods = StrRightFrom(sValue, "(");
       if (!StrEndsWith(sPeriods, ")")) return(catch("onInit(4)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
@@ -104,17 +110,22 @@ int onInit() {
       int iPeriods = StrToInteger(sPeriods);
       if (iPeriods < 1)                return(catch("onInit(6)  invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
 
-      int n = ArrayRange(ma, 0);
-      ArrayResize(ma, n+1);
-      ma[n][MA_METHOD ] = iMethod;
-      ma[n][MA_PERIODS] = iPeriods;
+      ArrayResize(ma, mas+1);
+      ArrayResize(maDefinitions, mas+1);
+      ma[mas][MA_METHOD ] = iMethod;
+      ma[mas][MA_PERIODS] = iPeriods;
+      maDefinitions[mas]  = MaMethodDescription(iMethod) +"("+ iPeriods +")";
+      maxMaPeriods = MathMax(maxMaPeriods, iPeriods);
+      mas++;
    }
+   if (!mas)                           return(catch("onInit(7)  missing input parameter Tunnel.Definition (empty)", ERR_INVALID_INPUT_PARAMETER));
+
    // Tunnel.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Tunnel.Color = GetConfigColor(indicator, "Tunnel.Color", Tunnel.Color);
    if (Tunnel.Color == 0xFF000000) Tunnel.Color = CLR_NONE;
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)               return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)               return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    maxBarsBack = ifInt(MaxBarsBack==-1, INT_MAX, MaxBarsBack);
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
@@ -152,12 +163,7 @@ int onInit() {
 
    // names, labels and display options
    if (ShowChartLegend) legendLabel = CreateChartLegend();
-   indicatorName = "Tunnel ";
-   int mas = ArrayRange(ma, 0);
-   for (i=0; i < mas; i++) {
-      indicatorName = indicatorName + MaMethodDescription(ma[i][MA_METHOD]) +"("+ ma[i][MA_PERIODS] +"),";
-   }
-   indicatorName = StrLeft(indicatorName, -1);
+   indicatorName = "Tunnel "+ JoinStrings(maDefinitions, ",");
    IndicatorShortName(indicatorName);                             // chart tooltips and context menu
    SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper band");  // "Data" window and context menu
    SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower band");  // ...
@@ -166,7 +172,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -198,13 +204,21 @@ int onTick() {
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxBarsBack);
-   int startbar = Min(bars-1, Bars-ma[0][MA_PERIODS]), prevBarTrend;
+   int startbar = Min(bars-1, Bars-maxMaPeriods), prevBarTrend;
    if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+
+   int numberOfMas = ArrayRange(ma, 0);
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      upperBand[bar] = iMA(NULL, NULL, ma[0][MA_PERIODS], 0, ma[0][MA_METHOD], PRICE_HIGH, bar);
-      lowerBand[bar] = iMA(NULL, NULL, ma[0][MA_PERIODS], 0, ma[0][MA_METHOD], PRICE_LOW,  bar);
+      double high=INT_MIN, low=INT_MAX;
+
+      for (int i=0; i < numberOfMas; i++) {
+         high = MathMax(high, iMA(NULL, NULL, ma[i][MA_PERIODS], 0, ma[i][MA_METHOD], PRICE_HIGH, bar));
+         low  = MathMin(low,  iMA(NULL, NULL, ma[i][MA_PERIODS], 0, ma[i][MA_METHOD], PRICE_LOW,  bar));
+      }
+      upperBand[bar] = high;
+      lowerBand[bar] = low;
 
       prevBarTrend = barTrend[bar+1];
       if      (Close[bar] > upperBand[bar]) barTrend[bar] = _int(MathMax(prevBarTrend, 0)) + 1;
@@ -316,15 +330,6 @@ void SetIndicatorOptions() {
 
 
 /**
- *
- */
-double icSelf() {
-   double value = icMaTunnel(NULL, NULL, NULL, NULL);
-   return(value);
-}
-
-
-/**
  * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
@@ -349,5 +354,5 @@ string InputsToStr() {
    );
 
    // suppress compiler warnings
-   icSelf();
+   icMaTunnel(NULL, NULL, NULL, NULL);
 }

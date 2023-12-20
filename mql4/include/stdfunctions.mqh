@@ -687,12 +687,12 @@ string JoinStrings(string values[], string separator = ", ") {
    int size = ArraySize(values);
 
    for (int i=0; i < size; i++) {
-      if (StrIsNull(values[i])) result = StringConcatenate(result, "NULL",    separator);
+      if (StrIsNull(values[i])) result = StringConcatenate(result, "(null)",  separator);
       else                      result = StringConcatenate(result, values[i], separator);
    }
-   if (size > 0)
+   if (size > 0) {
       result = StrLeft(result, -StringLen(separator));
-
+   }
    return(result);
 }
 
