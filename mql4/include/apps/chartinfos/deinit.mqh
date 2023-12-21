@@ -4,21 +4,20 @@
  * @return int - error status
  */
 int onDeinit() {
-   // uninstall a running chart ticker
+   // uninstall the chart ticker
    if (__tickTimerId > NULL) {
       int id = __tickTimerId; __tickTimerId = NULL;
       if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
 
-   if (!StoreStatus()) return(last_error);
-
    // unregister the order event listener
-   if (orderTracker.enabled) {
+   if (Track.Orders) {
       string name = orderTracker.key + StrToLower(Symbol());
       int counter = Max(GetPropA(hWndDesktop, name), 1) - 1;
       SetPropA(hWndDesktop, name, counter);
    }
 
+   StoreStatus();
    QC.StopChannels();
    ScriptRunner.StopParamSender();
    return(last_error);

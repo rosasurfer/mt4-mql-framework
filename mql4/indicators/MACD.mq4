@@ -23,28 +23,30 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    FastMA.Periods        = 12;
-extern string FastMA.Method         = "SMA | LWMA | EMA | ALMA*";
-extern string FastMA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern int    FastMA.Periods                 = 12;
+extern string FastMA.Method                  = "SMA | LWMA | EMA | ALMA*";
+extern string FastMA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern int    SlowMA.Periods        = 38;
-extern string SlowMA.Method         = "SMA | LWMA | EMA | ALMA*";
-extern string SlowMA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern int    SlowMA.Periods                 = 38;
+extern string SlowMA.Method                  = "SMA | LWMA | EMA | ALMA*";
+extern string SlowMA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Histogram.Color.Upper = LimeGreen;
-extern color  Histogram.Color.Lower = Red;
-extern int    Histogram.Style.Width = 2;
+extern color  Histogram.Color.Upper          = LimeGreen;
+extern color  Histogram.Color.Lower          = Red;
+extern int    Histogram.Style.Width          = 2;
 
-extern color  MainLine.Color        = DodgerBlue;
-extern int    MainLine.Width        = 1;
+extern color  MainLine.Color                 = DodgerBlue;
+extern int    MainLine.Width                 = 1;
+extern int    Max.Bars                       = 10000;                // max. values to calculate (-1: all available)
 
-extern int    Max.Bars              = 10000;                // max. values to calculate (-1: all available)
-extern string ___a__________________________;
-
-extern string Signal.onCross        = "on | off | auto*";
-extern string Signal.Sound          = "on | off | auto*";
-extern string Signal.Mail           = "on | off | auto*";
-extern string Signal.SMS            = "on | off | auto*";
+extern string ___a__________________________ = "=== Signaling ===";
+extern bool   Signal.onCross                 = false;
+extern bool   Signal.onCross.Sound           = true;
+extern string Signal.onCross.SoundUp         = "Signal Up.wav";
+extern string Signal.onCross.SoundDown       = "Signal Down.wav";
+extern bool   Signal.onCross.Popup           = false;
+extern bool   Signal.onCross.Mail            = false;
+extern bool   Signal.onCross.SMS             = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -52,9 +54,6 @@ extern string Signal.SMS            = "on | off | auto*";
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
-#include <functions/ConfigureSignalsByMail.mqh>
-#include <functions/ConfigureSignalsBySMS.mqh>
-#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/ta/ALMA.mqh>
 
@@ -92,13 +91,6 @@ int    maxValues;
 bool   isCentUnit    = false;                               // display unit: cent or pip
 string indicatorName = "";                                  // "Data" window and signal notification name
 
-bool   signals;
-bool   signal.sound;
-string signal.sound.crossUp   = "Signal Up.wav";
-string signal.sound.crossDown = "Signal Down.wav";
-bool   signal.mail;
-bool   signal.sms;
-
 
 /**
  * Initialization
@@ -110,7 +102,6 @@ int onInit() {
    // FastMA.Periods
    if (FastMA.Periods < 1)              return(catch("onInit(1)  invalid input parameter FastMA.Periods: "+ FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    fastMA.periods = FastMA.Periods;
-
    // FastMA.Method
    string sValue="", values[];
    if (Explode(FastMA.Method, "*", values, 2) > 1) {
@@ -124,7 +115,6 @@ int onInit() {
    if (fastMA.method == -1)             return(catch("onInit(2)  invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    if (fastMA.method == MODE_SMMA)      return(catch("onInit(3)  unsupported FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    FastMA.Method = MaMethodDescription(fastMA.method);
-
    // FastMA.AppliedPrice
    sValue = StrToLower(FastMA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
@@ -137,7 +127,6 @@ int onInit() {
    if (fastMA.appliedPrice==-1 || fastMA.appliedPrice > PRICE_WEIGHTED)
                                         return(catch("onInit(4)  invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    FastMA.AppliedPrice = PriceTypeDescription(fastMA.appliedPrice);
-
    // SlowMA.Periods
    if (SlowMA.Periods < 1)              return(catch("onInit(5)  invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slowMA.periods = SlowMA.Periods;
@@ -149,7 +138,6 @@ int onInit() {
          }
       }
    }
-
    // SlowMA.Method
    if (Explode(SlowMA.Method, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
@@ -162,7 +150,6 @@ int onInit() {
    if (slowMA.method == -1)             return(catch("onInit(8)  invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    if (slowMA.method == MODE_SMMA)      return(catch("onInit(9)  unsuported SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.Method = MaMethodDescription(slowMA.method);
-
    // SlowMA.AppliedPrice
    sValue = StrToLower(SlowMA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
@@ -175,29 +162,27 @@ int onInit() {
    if (slowMA.appliedPrice==-1 || slowMA.appliedPrice > PRICE_WEIGHTED)
                                         return(catch("onInit(10)  invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
-
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
-
    // styles
    if (Histogram.Style.Width < 0)       return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5)       return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (MainLine.Width < 0)              return(catch("onInit(13)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-
    // Max.Bars
    if (Max.Bars < -1)                   return(catch("onInit(14)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
-   // signaling
-   if (!ConfigureSignals(ProgramName(), Signal.onCross, signals)) return(last_error);
-   if (signals) {
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound))               return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, sValue, sValue)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS, signal.sms, sValue))           return(last_error);
-      if (!signal.sound && !signal.mail && !signal.sms)
-         signals = false;
+   // signal configuration
+   string signalId = "Signal.onCross";
+   if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
+   if (Signal.onCross) {
+      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onCross.Sound)) return(last_error);
+      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onCross.Popup)) return(last_error);
+      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onCross.Mail))  return(last_error);
+      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onCross.SMS))   return(last_error);
+      Signal.onCross = (Signal.onCross.Sound || Signal.onCross.Popup || Signal.onCross.Mail || Signal.onCross.SMS);
    }
 
    // buffer management
@@ -218,7 +203,7 @@ int onInit() {
    else                                                                          indicatorName = "MACD "+ fastMA.name +", "+ slowMA.name;
    if (FastMA.Method==SlowMA.Method)                                             dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
    else                                                                          dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
-   string signalInfo = ifString(signals, "  onCross="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail, "Mail,", "") + ifString(signal.sms, "SMS,", ""), -1), "");
+   string signalInfo = ifString(Signal.onCross, "  onCross="+ StrLeft(ifString(Signal.onCross.Sound, "sound,", "") + ifString(Signal.onCross.Popup, "popup,", "") + ifString(Signal.onCross.Mail, "mail,", "") + ifString(Signal.onCross.SMS, "sms,", ""), -1), "");
 
    IndicatorShortName(indicatorName + signalInfo +"  ");                // chart subwindow and context menu
    SetIndexLabel(MODE_MAIN,          dataName);                         // chart tooltips and "Data" window
@@ -316,7 +301,7 @@ int onTick() {
 
    // detect zero line crossings
    if (!__isSuperContext) {
-      if (signals) /*&&*/ if (IsBarOpen()) {
+      if (Signal.onCross) /*&&*/ if (IsBarOpen()) {
          static int lastSide; if (!lastSide) lastSide = bufferSection[2];
          int side = bufferSection[1];
          if      (lastSide<=0 && side > 0) onCross(MODE_UPPER_SECTION);    // this also detects crosses on bars without ticks (e.g. on slow M1)
@@ -344,9 +329,10 @@ bool onCross(int section) {
       if (IsLogInfo()) logInfo("onCross(1)  "+ StrRightFrom(message, "MACD ", -1));    // -1 makes sure on error the whole string is returned
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= PlaySoundEx(signal.sound.crossUp);
-      if (signal.mail)  error |= !SendEmail("", "", message, "");                      // subject only (empty mail body)
-      if (signal.sms)   error |= !SendSMS("", message);
+      if (Signal.onCross.Popup)          Alert(message);
+      if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundUp);
+      if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
+      if (Signal.onCross.SMS)   error |= !SendSMS("", message);
       return(!error);
    }
 
@@ -355,9 +341,10 @@ bool onCross(int section) {
       if (IsLogInfo()) logInfo("onCross(2)  "+ StrRightFrom(message, "MACD ", -1));
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= PlaySoundEx(signal.sound.crossDown);
-      if (signal.mail)  error |= !SendEmail("", "", message, "");
-      if (signal.sms)   error |= !SendSMS("", message);
+      if (Signal.onCross.Popup)          Alert(message);
+      if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundDown);
+      if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
+      if (Signal.onCross.SMS)   error |= !SendSMS("", message);
       return(!error);
    }
 
@@ -388,21 +375,25 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("FastMA.Periods=",        FastMA.Periods,                       ";"+ NL,
-                            "FastMA.Method=",         DoubleQuoteStr(FastMA.Method),        ";"+ NL,
-                            "FastMA.AppliedPrice=",   DoubleQuoteStr(FastMA.AppliedPrice),  ";"+ NL,
-                            "SlowMA.Periods=",        SlowMA.Periods,                       ";"+ NL,
-                            "SlowMA.Method=",         DoubleQuoteStr(SlowMA.Method),        ";"+ NL,
-                            "SlowMA.AppliedPrice=",   DoubleQuoteStr(SlowMA.AppliedPrice),  ";"+ NL,
-                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";"+ NL,
-                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";"+ NL,
-                            "Histogram.Style.Width=", Histogram.Style.Width,                ";"+ NL,
-                            "MainLine.Color=",        ColorToStr(MainLine.Color),           ";"+ NL,
-                            "MainLine.Width=",        MainLine.Width,                       ";"+ NL,
-                            "Max.Bars=",              Max.Bars,                             ";"+ NL,
-                            "Signal.onCross=",        DoubleQuoteStr(Signal.onCross),       ";"+ NL,
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";"+ NL,
-                            "Signal.Mail=",           DoubleQuoteStr(Signal.Mail),          ";"+ NL,
-                            "Signal.SMS=",            DoubleQuoteStr(Signal.SMS),           ";")
+   return(StringConcatenate("FastMA.Periods=",           FastMA.Periods,                           ";"+ NL,
+                            "FastMA.Method=",            DoubleQuoteStr(FastMA.Method),            ";"+ NL,
+                            "FastMA.AppliedPrice=",      DoubleQuoteStr(FastMA.AppliedPrice),      ";"+ NL,
+                            "SlowMA.Periods=",           SlowMA.Periods,                           ";"+ NL,
+                            "SlowMA.Method=",            DoubleQuoteStr(SlowMA.Method),            ";"+ NL,
+                            "SlowMA.AppliedPrice=",      DoubleQuoteStr(SlowMA.AppliedPrice),      ";"+ NL,
+                            "Histogram.Color.Upper=",    ColorToStr(Histogram.Color.Upper),        ";"+ NL,
+                            "Histogram.Color.Lower=",    ColorToStr(Histogram.Color.Lower),        ";"+ NL,
+                            "Histogram.Style.Width=",    Histogram.Style.Width,                    ";"+ NL,
+                            "MainLine.Color=",           ColorToStr(MainLine.Color),               ";"+ NL,
+                            "MainLine.Width=",           MainLine.Width,                           ";"+ NL,
+                            "Max.Bars=",                 Max.Bars,                                 ";"+ NL,
+
+                            "Signal.onCross=",           BoolToStr(Signal.onCross),                ";", NL,
+                            "Signal.onCross.Sound=",     BoolToStr(Signal.onCross.Sound),          ";", NL,
+                            "Signal.onCross.SoundUp=",   DoubleQuoteStr(Signal.onCross.SoundUp),   ";", NL,
+                            "Signal.onCross.SoundDown=", DoubleQuoteStr(Signal.onCross.SoundDown), ";", NL,
+                            "Signal.onCross.Popup=",     BoolToStr(Signal.onCross.Popup),          ";", NL,
+                            "Signal.onCross.Mail=",      BoolToStr(Signal.onCross.Mail),           ";", NL,
+                            "Signal.onCross.SMS=",       BoolToStr(Signal.onCross.SMS),            ";")
    );
 }

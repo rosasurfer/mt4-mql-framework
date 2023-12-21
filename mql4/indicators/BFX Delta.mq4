@@ -19,18 +19,20 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color  Histogram.Color.Long  = LimeGreen;
-extern color  Histogram.Color.Short = Red;
-extern int    Histogram.Style.Width = 2;
+extern color  Histogram.Color.Long           = LimeGreen;
+extern color  Histogram.Color.Short          = Red;
+extern int    Histogram.Style.Width          = 2;
+extern int    Max.Bars                       = 10000;          // max. values to calculate (-1: all available)
 
-extern int    Max.Bars              = 10000;                   // max. values to calculate (-1: all available)
-extern string ___a__________________________;
-
-extern int    Signal.Level          = 20;
-extern string Signal.onLevelCross   = "on | off | auto*";
-extern string Signal.Sound          = "on | off | auto*";
-extern string Signal.Mail           = "on | off | auto*";
-extern string Signal.SMS            = "on | off | auto*";
+extern string ___a__________________________ = "=== Signaling ===";
+extern int    Signal.Level                   = 20;
+extern bool   Signal.onCross                 = false;
+extern bool   Signal.onCross.Sound           = true;
+extern string Signal.onCross.SoundUp         = "Signal Up.wav";
+extern string Signal.onCross.SoundDown       = "Signal Down.wav";
+extern bool   Signal.onCross.Popup           = false;
+extern bool   Signal.onCross.Mail            = false;
+extern bool   Signal.onCross.SMS             = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,9 +40,6 @@ extern string Signal.SMS            = "on | off | auto*";
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
-#include <functions/ConfigureSignalsByMail.mqh>
-#include <functions/ConfigureSignalsBySMS.mqh>
-#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
 
 #define MODE_DELTA_MAIN       0                                // this indicator's buffer ids
@@ -69,13 +68,6 @@ string indicatorName = "";                                     // "Data" window 
 string bfxName    = ".attic/BFX Core Volume v1.20.0";          // BFX indicator name
 string bfxLicense = "";                                        // BFX indicator license
 
-bool   signals;
-bool   signal.sound;
-string signal.sound.levelCross.long  = "Signal Up.wav";
-string signal.sound.levelCross.short = "Signal Down.wav";
-bool   signal.mail;
-bool   signal.sms;
-
 
 /**
  * Initialization
@@ -83,35 +75,31 @@ bool   signal.sms;
  * @return int - error status
  */
 int onInit() {
-   // (1) input validation
+   // validate inputs
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
-
-   // styles
+   // Histogram.Style.Width
    if (Histogram.Style.Width < 0) return(catch("onInit(1)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5) return(catch("onInit(2)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-
    // Max.Bars
    if (Max.Bars < -1)             return(catch("onInit(3)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-
    // Signal.Level
    if (Signal.Level <    0)       return(catch("onInit(4)  invalid input parameter Signal.Level: "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
    if (Signal.Level >= 100)       return(catch("onInit(5)  invalid input parameter Signal.Level: "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
 
    // signal configuration
-   if (!ConfigureSignals("BFXDelta", Signal.onLevelCross, signals))           return(last_error);
-   if (signals) {
-      string sValue = "";
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound))               return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, sValue, sValue)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS, signal.sms, sValue))           return(last_error);
-      if (!signal.sound && !signal.mail && !signal.sms)
-         signals = false;
+   string signalId = "Signal.onCross";
+   if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
+   if (Signal.onCross) {
+      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onCross.Sound)) return(last_error);
+      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onCross.Popup)) return(last_error);
+      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onCross.Mail))  return(last_error);
+      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onCross.SMS))   return(last_error);
+      Signal.onCross = (Signal.onCross.Sound || Signal.onCross.Popup || Signal.onCross.Mail || Signal.onCross.SMS);
    }
 
-
-   // (2) check BFX indicator and license for existence
+   // check BFX indicator and license
    string indicatorFile = GetMqlDirectoryA() +"/indicators/"+ bfxName +".ex4";
    if (!IsFile(indicatorFile, MODE_SYSTEM)) return(catch("onInit(6)  BankersFX Core Volume indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
@@ -119,17 +107,15 @@ int onInit() {
    bfxLicense = GetConfigString(section, key);
    if (!StringLen(bfxLicense))          return(!catch("onInit(7)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
-
-   // (3) setup buffer management
+   // setup buffer management
    SetIndexBuffer(MODE_DELTA_MAIN,   bufferMain  );            // all values:           invisible, displayed in "Data" window
    SetIndexBuffer(MODE_DELTA_SIGNAL, bufferSignal);            // direction and length: invisible
    SetIndexBuffer(MODE_DELTA_LONG,   bufferLong  );            // long values:          visible
    SetIndexBuffer(MODE_DELTA_SHORT,  bufferShort );            // short values:         visible
 
-
-   // (4) data display configuration, names and labels
+   // data display configuration, names and labels
    indicatorName = ProgramName();
-   string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StrSubstr(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), 2), "");
+   string signalInfo = ifString(Signal.onCross, "   onLevel("+ Signal.Level +")="+ StrSubstr(ifString(Signal.onCross.Sound, ", Sound", "") + ifString(Signal.onCross.Mail, ", Mail", "") + ifString(Signal.onCross.SMS, ", SMS", ""), 2), "");
    IndicatorShortName(indicatorName + signalInfo +"  ");       // chart subwindow and context menu
    SetIndexLabel(MODE_DELTA_MAIN,   indicatorName);            // chart tooltips and "Data" window
    SetIndexLabel(MODE_DELTA_SIGNAL, NULL);
@@ -137,8 +123,7 @@ int onInit() {
    SetIndexLabel(MODE_DELTA_SHORT,  NULL);
    IndicatorDigits(2);
 
-
-   // (5) drawing options and styles
+   // drawing options and styles
    int startDraw = 0;
    if (Max.Bars >= 0)
       startDraw = Max(startDraw, Bars-Max.Bars);
@@ -224,7 +209,7 @@ int onTick() {
    }
 
    // signal zero line crossings
-   if (signals && !__isSuperContext) /*&&*/ if (IsBarOpen()) {
+   if (Signal.onCross && !__isSuperContext) /*&&*/ if (IsBarOpen()) {
       if      (bufferSignal[1] ==  1) onLevelCross(MODE_UPPER);
       else if (bufferSignal[1] == -1) onLevelCross(MODE_LOWER);
    }
@@ -248,9 +233,10 @@ bool onLevelCross(int mode) {
       if (IsLogInfo()) logInfo("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= PlaySoundEx(signal.sound.levelCross.long);
-      if (signal.mail)  error |= !SendEmail("", "", message, message);  // subject = body
-      if (signal.sms)   error |= !SendSMS("", message);
+      if (Signal.onCross.Popup)          Alert(message);
+      if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundUp);
+      if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
+      if (Signal.onCross.SMS)   error |= !SendSMS("", message);
       return(!error);
    }
 
@@ -259,9 +245,10 @@ bool onLevelCross(int mode) {
       if (IsLogInfo()) logInfo("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= PlaySoundEx(signal.sound.levelCross.short);
-      if (signal.mail)  error |= !SendEmail("", "", message, message);  // subject = body
-      if (signal.sms)   error |= !SendSMS("", message);
+      if (Signal.onCross.Popup)          Alert(message);
+      if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundDown);
+      if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
+      if (Signal.onCross.SMS)   error |= !SendSMS("", message);
       return(!error);
    }
 
@@ -350,14 +337,18 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),    ";", NL,
-                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),   ";", NL,
-                            "Histogram.Style.Width=", Histogram.Style.Width,               ";", NL,
-                            "Max.Bars=",              Max.Bars,                            ";", NL,
-                            "Signal.Level=",          Signal.Level,                        ";", NL,
-                            "Signal.onLevelCross=",   DoubleQuoteStr(Signal.onLevelCross), ";", NL,
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),        ";", NL,
-                            "Signal.Mail=",           DoubleQuoteStr(Signal.Mail),         ";", NL,
-                            "Signal.SMS=",            DoubleQuoteStr(Signal.SMS),          ";")
+   return(StringConcatenate("Histogram.Color.Long=",     ColorToStr(Histogram.Color.Long),         ";", NL,
+                            "Histogram.Color.Short=",    ColorToStr(Histogram.Color.Short),        ";", NL,
+                            "Histogram.Style.Width=",    Histogram.Style.Width,                    ";", NL,
+                            "Max.Bars=",                 Max.Bars,                                 ";", NL,
+
+                            "Signal.Level=",             Signal.Level,                             ";", NL,
+                            "Signal.onCross=",           BoolToStr(Signal.onCross),                ";", NL,
+                            "Signal.onCross.Sound=",     BoolToStr(Signal.onCross.Sound),          ";", NL,
+                            "Signal.onCross.SoundUp=",   DoubleQuoteStr(Signal.onCross.SoundUp),   ";", NL,
+                            "Signal.onCross.SoundDown=", DoubleQuoteStr(Signal.onCross.SoundDown), ";", NL,
+                            "Signal.onCross.Popup=",     BoolToStr(Signal.onCross.Popup),          ";", NL,
+                            "Signal.onCross.Mail=",      BoolToStr(Signal.onCross.Mail),           ";", NL,
+                            "Signal.onCross.SMS=",       BoolToStr(Signal.onCross.SMS),            ";")
    );
 }

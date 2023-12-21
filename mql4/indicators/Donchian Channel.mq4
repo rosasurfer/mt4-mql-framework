@@ -36,7 +36,7 @@ double iLowerLevel[];                           // unterer Level
  */
 int onInit() {
    // Periods
-   if (Periods < 2) return(catch("onInit(1)  invalid input parameter Periods: "+ Periods, ERR_INVALID_CONFIG_VALUE));
+   if (Periods < 2) return(catch("onInit(1)  invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // Buffer zuweisen
    SetIndexBuffer(0, iUpperLevel);
@@ -71,9 +71,8 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // Abschluß der Buffer-Initialisierung überprüfen
-   if (!ArraySize(iUpperLevel))                                      // kann bei Terminal-Start auftreten
-      return(logInfo("onTick(1)  sizeof(iUpperLevel) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
+   if (!ArraySize(iUpperLevel)) return(logInfo("onTick(1)  sizeof(iUpperLevel) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {

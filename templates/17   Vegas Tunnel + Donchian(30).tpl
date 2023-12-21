@@ -16684,6 +16684,7 @@ flags=339
 window_num=0
 <inputs>
 Tunnel.Definition=EMA(144)
+ShowChartLegend=0
 </inputs>
 </expert>
 period_flags=0

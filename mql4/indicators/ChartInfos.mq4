@@ -25,20 +25,12 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string UnitSize.Corner = "top | bottom*";                  // can be shortened
-extern string Track.Orders    = "on | off | auto*";               // whether to signal position open/close events
-extern string ___a__________________________;
-
-extern string Signal.Sound    = "on | off | auto*";
-extern string Signal.Mail     = "on | off | auto*";
-extern string Signal.SMS      = "on | off | auto*";
+extern bool   Track.Orders    = true;                             // whether to track and signal position open/close events
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <functions/ConfigureSignalsByMail.mqh>
-#include <functions/ConfigureSignalsBySMS.mqh>
-#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/SortClosedTickets.mqh>
@@ -193,7 +185,7 @@ string  label.stopoutLevel   = "";
 int     totalPosition.corner = CORNER_BOTTOM_RIGHT;
 int     unitSize.corner      = CORNER_BOTTOM_RIGHT;
 
-// font settings for detailed positions
+// font settings for custom positions
 string  positions.fontName          = "MS Sans Serif";
 int     positions.fontSize          = 8;
 color   positions.fontColor.open    = Blue;
@@ -205,24 +197,18 @@ color   positions.fontColor.history = C'128,128,0';
 #define TI_ORDERTYPE       1
 #define TI_ENTRYLIMIT      2
 
-bool    orderTracker.enabled;
-string  orderTracker.key = "";                                    // key prefix for listener registration
 int     hWndDesktop;                                              // handle of the desktop main window (for listener registration)
 double  trackedOrders[][3];                                       // {ticket, orderType, openLimit}
+string  orderTracker.key = "";                                    // prefix for listener registration
+string  orderTracker.orderFailed      = "speech/OrderCancelled.wav";
+string  orderTracker.positionOpened   = "speech/OrderFilled.wav";
+string  orderTracker.positionClosed   = "speech/PositionClosed.wav";
+string  orderTracker.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
 
 // types for server-side closed positions
 #define CLOSE_TAKEPROFIT   1
 #define CLOSE_STOPLOSS     2
-#define CLOSE_STOPOUT      3                                      // margin call
-
-// signaling
-bool    signal.sound;
-string  signal.sound.orderFailed      = "speech/OrderCancelled.wav";
-string  signal.sound.positionOpened   = "speech/OrderFilled.wav";
-string  signal.sound.positionClosed   = "speech/PositionClosed.wav";
-string  signal.sound.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
-bool    signal.mail;
-bool    signal.sms;
+#define CLOSE_STOPOUT      3
 
 #include <apps/chartinfos/init.mqh>
 #include <apps/chartinfos/deinit.mqh>
@@ -253,7 +239,7 @@ int onTick() {
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // stopout level marker
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // counter for the account's open order limit
 
-      if (orderTracker.enabled) {                                                   // monitor execution of order limits
+      if (Track.Orders) {                                                           // monitor order execution
          double openedPositions[][2]; ArrayResize(openedPositions, 0);              // {ticket, entryLimit}
          int    closedPositions[][2]; ArrayResize(closedPositions, 0);              // {ticket, closedType}
          int    failedOrders   [];    ArrayResize(failedOrders,    0);              // {ticket}
@@ -1782,7 +1768,7 @@ bool UpdateStopoutLevel() {
    isPosition    = longPosition || shortPosition;
 
    // signal potential errors if the position increased by more than 1 x unitsize
-   if (!__isTesting && orderTracker.enabled && mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
+   if (!__isTesting && Track.Orders && mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
       double diff = MathAbs(totalPosition);
       if (Sign(totalPosition) == Sign(prevTotalPosition)) diff -= MathAbs(prevTotalPosition);
       if (NormalizeDouble(diff, 2) > mm.leveragedLotsNormalized) {
@@ -1795,9 +1781,7 @@ bool UpdateStopoutLevel() {
                eventLogged = SetOrderEventLogged(event, true);
             }
          }
-         if (eventLogged && signal.sound) {
-            PlaySoundEx(signal.sound.positionStepSize);
-         }
+         if (eventLogged && Track.Orders) PlaySoundEx(orderTracker.positionStepSize);
       }
    }
 
@@ -4503,8 +4487,9 @@ bool onPositionOpen(double data[][]) {
    }
    OrderPop();
 
-   if (eventLogged && signal.sound)
-      return(!PlaySoundEx(signal.sound.positionOpened));
+   if (eventLogged && Track.Orders) {
+      return(!PlaySoundEx(orderTracker.positionOpened));
+   }
    return(!catch("onPositionOpen(3)"));
 }
 
@@ -4565,8 +4550,8 @@ bool onPositionClose(int data[][]) {
    }
    OrderPop();
 
-   if (eventLogged && signal.sound)
-      return(!PlaySoundEx(signal.sound.positionClosed));
+   if (eventLogged && Track.Orders)
+      return(!PlaySoundEx(orderTracker.positionClosed));
    return(!catch("onPositionClose(3)"));
 }
 
@@ -4610,8 +4595,8 @@ bool onOrderFail(int tickets[]) {
    }
    OrderPop();
 
-   if (eventLogged && signal.sound)
-      return(!PlaySoundEx(signal.sound.orderFailed));
+   if (eventLogged && Track.Orders)
+      return(!PlaySoundEx(orderTracker.orderFailed));
    return(!catch("onOrderFail(3)"));
 }
 
@@ -4718,10 +4703,7 @@ string ConfigTermTypeToStr(int type) {
  */
 string InputsToStr() {
    return(StringConcatenate("UnitSize.Corner=", DoubleQuoteStr(UnitSize.Corner), ";", NL,
-                            "Track.Orders=",    DoubleQuoteStr(Track.Orders),    ";", NL,
-                            "Signal.Sound=",    DoubleQuoteStr(Signal.Sound),    ";", NL,
-                            "Signal.Mail=",     DoubleQuoteStr(Signal.Mail),     ";", NL,
-                            "Signal.SMS=",      DoubleQuoteStr(Signal.SMS),      ";")
+                            "Track.Orders=",    BoolToStr(Track.Orders),         ";")
    );
    ConfigTermTypeToStr(NULL);
 }

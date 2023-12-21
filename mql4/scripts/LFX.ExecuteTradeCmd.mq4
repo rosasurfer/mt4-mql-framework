@@ -27,7 +27,6 @@ int   __InitFlags[];
 int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <rsfLib.mqh>
 
@@ -37,8 +36,6 @@ int __DeinitFlags[];
 #include <structs/rsf/LFXOrder.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-bool signalSMS;
-
 
 /**
  * Initialisierung
@@ -46,13 +43,7 @@ bool signalSMS;
  * @return int - error status
  */
 int onInit() {
-   if (!InitTradeAccount())
-      return(last_error);
-
-   // SMS-Konfiguration des Accounts einlesen
-   string sValue = "";
-   if (!ConfigureSignalsBySMS("auto", signalSMS, sValue)) return(last_error);
-
+   InitTradeAccount();
    return(catch("onInit(3)"));
 }
 
@@ -225,7 +216,6 @@ bool OpenLfxOrder(int ticket, string trigger="") {
    //  - Order ausführen
    //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION berücksichtigen
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
-   //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
 
    int order[LFX_ORDER_intSize];
    int result = LFX.GetOrder(ticket, order);
@@ -238,10 +228,9 @@ bool OpenLfxOrder(int ticket, string trigger="") {
    bool success.open   = OpenLfxOrder.Execute        (order, subPositions); error = last_error;
    bool success.save   = OpenLfxOrder.Save           (order, !success.open);
    bool success.notify = OpenLfxOrder.NotifyListeners(order);
-   bool success.sms    = OpenLfxOrder.SendSMS        (order, subPositions, trigger, error);
 
    ArrayResize(order, 0);
-   return(success.open && success.save && success.notify && success.sms);
+   return(success.open && success.save && success.notify);
 }
 
 
@@ -497,36 +486,6 @@ bool OpenLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
 
 
 /**
- * Verschickt eine SMS über Erfolg/Mißerfolg der Orderausführung.
- *
- * @param  _In_ LFX_ORDER lo[]         - LFX-Order
- * @param  _In_ int       subPositions - Anzahl der geöffneten Subpositionen
- * @param  _In_ string    trigger      - Trigger-Message des Öffnens (falls zutreffend)
- * @param  _In_ int       error        - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
- *
- * @return bool - success status
- */
-bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigger, int error) {
-   if (signalSMS) {
-      string comment=lo.Comment(lo), currency=lo.Currency(lo);
-         if (StrStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
-         if (StrStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
-         if (StrStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
-      int    counter  = StrToInteger(comment);
-      string symbol.i = currency +"."+ counter;
-      string message  = GetAccountAlias(tradeAccount.company, tradeAccount.number) +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
-      if (lo.IsOpenError(lo))     message = message +" opening at "+ NumberToStr(lo.OpenPrice(lo), ".4'") +" failed ("+ ErrorToStr(error) +"), "+ subPositions +" subposition"+ Pluralize(subPositions) +" opened";
-      else                        message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
-      if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
-
-      if (!SendSMS("", TimeToStr(TimeLocalEx("OpenLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
-         return(false);
-   }
-   return(true);
-}
-
-
-/**
  * Schließt eine offene LFX-Position.
  *
  * @param  _In_ int    ticket  - LFX-Ticket der Position
@@ -541,7 +500,6 @@ bool CloseLfxOrder(int ticket, string trigger) {
    //  - Position schließen
    //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION berücksichtigen
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
-   //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
 
    // Order holen
    int order[LFX_ORDER_intSize];
@@ -556,10 +514,9 @@ bool CloseLfxOrder(int ticket, string trigger) {
    bool success.close  = CloseLfxOrder.Execute        (order); error = last_error;
    bool success.save   = CloseLfxOrder.Save           (order, !success.close);
    bool success.notify = CloseLfxOrder.NotifyListeners(order);
-   bool success.sms    = CloseLfxOrder.SendSMS        (order, comment, trigger, error);
 
    ArrayResize(order, 0);
-   return(success.close && success.save && success.notify && success.sms);
+   return(success.close && success.save && success.notify);
 }
 
 
@@ -691,34 +648,4 @@ bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
  */
 bool CloseLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
    return(QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close="+ (!lo.IsCloseError(lo))));
-}
-
-
-/**
- * Verschickt eine SMS über Erfolg/Mißerfolg der Orderausführung.
- *
- * @param  _In_ LFX_ORDER lo[]    - LFX-Order
- * @param  _In_ string    comment - das ursprüngliche Label bzw. der Comment der Order
- * @param  _In_ string    trigger - Trigger-Message des Schließen (falls zutreffend)
- * @param  _In_ int       error   - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
- *
- * @return bool - success status
- */
-bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger, int error) {
-   if (signalSMS) {
-      string currency = lo.Currency(lo);
-      if (StrStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
-      if (StrStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
-      if (StrStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
-      int    counter  = StrToInteger(comment);
-      string symbol.i = currency +"."+ counter;
-      string message  = GetAccountAlias(tradeAccount.company, tradeAccount.number) +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
-      if (lo.IsCloseError(lo))    message = message + " closing of position failed ("+ ErrorToStr(error) +")";
-      else                        message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
-      if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
-
-      if (!SendSMS("", TimeToStr(TimeLocalEx("CloseLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
-         return(false);
-   }
-   return(true);
 }

@@ -6613,14 +6613,12 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           distributionOffset,               // double Distribution.Offset
                           distributionSigma,                // double Distribution.Sigma
                           maReversalFilter,                 // double MA.ReversalFilter
-                          0,                                // ouble MA.ReversalFilter.Step
-
+                          0,                                // double MA.ReversalFilter.Step
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
-
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6629,7 +6627,6 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           false,                            // bool   Signal.onTrendChange.Popup
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
-
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
@@ -6651,42 +6648,6 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
 
 
 /**
- * Load and execute the "ChartInfos" indicator.
- *
- * @return bool - success status
- */
-bool icChartInfos() {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   iCustom(NULL, NULL, "ChartInfos",
-           "off",                                           // string Track.Orders
-           false,                                           // bool   Offline.Ticker
-           "",                                              // string ____________________
-           "off",                                           // string Signal.Sound
-           "off",                                           // string Signal.Mail
-           "off",                                           // string Signal.SMS
-           "",                                              // string ____________________
-           false,                                           // bool   AutoConfiguration
-           lpSuperContext,                                  // int    __lpSuperContext
-
-           0, 0);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icChartInfos(1)", error));
-      logWarn("icChartInfos(2)  "+ PeriodDescription() +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(true);
-   return(!SetLastError(error));
-}
-
-
-/**
  * Load the "FATL" indicator and return a value.
  *
  * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
@@ -6699,18 +6660,21 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "FATL",
+   double value = iCustom(NULL, timeframe, ".attic/FATL",
                           Blue,                             // color  Color.UpTrend
                           Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -6746,19 +6710,21 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
 
    double value = iCustom(NULL, timeframe, "HalfTrend",
                           periods,                          // int    Periods
-
                           Blue,                             // color  Color.UpTrend
                           Red,                              // color  Color.DownTrend
                           CLR_NONE,                         // color  Color.Channel
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -6798,18 +6764,20 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           periods,                          // int    Periods
                           phase,                            // int    Phase
                           appliedPrice,                     // string AppliedPrice
-
                           Blue,                             // color  Color.UpTrend
                           Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -6852,23 +6820,24 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           fastMaPeriods,                    // int    Fast.MA.Periods
                           fastMaMethod,                     // string Fast.MA.Method
                           fastMaAppliedPrice,               // string Fast.MA.AppliedPrice
-
                           slowMaPeriods,                    // int    Slow.MA.Periods
                           slowMaMethod,                     // string Slow.MA.Method
                           slowMaAppliedPrice,               // string Slow.MA.AppliedPrice
-
                           Blue,                             // color  MainLine.Color
                           1,                                // int    MainLine.Width
                           Green,                            // color  Histogram.Color.Upper
                           Red,                              // color  Histogram.Color.Lower
                           2,                                // int    Histogram.Style.Width
                           -1,                               // int    Max.Bars
-                          "",                               // string _____________________
-                          "off",                            // string Signal.onZeroCross
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string _____________________
+                          "",                               // string ________________________
+                          false,                            // bool   Signal.onCross
+                          false,                            // bool   Signal.onCross.Sound
+                          "",                               // string Signal.onCross.SoundUp
+                          "",                               // string Signal.onCross.SoundDown
+                          false,                            // bool   Signal.onCross.Popup
+                          false,                            // bool   Signal.onCross.Mail
+                          false,                            // bool   Signal.onCross.SMS
+                          "",                               // string ________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -6908,18 +6877,20 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           maPeriods,                        // int    MA.Periods
                           maMethod,                         // string MA.Method
                           maAppliedPrice,                   // string MA.AppliedPrice
-
                           Blue,                             // color  Color.UpTrend
                           Blue,                             // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           0,                                // int    Draw.Width
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -6961,13 +6932,11 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           maAppliedPrice,                   // string MA.AppliedPrice
                           maReversalFilter,                 // double MA.ReversalFilter
                           0,                                // double MA.ReversalFilter.Step
-
                           "Dot",                            // string Draw.Type
                           1,                                // int    Draw.Width
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
-
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6976,7 +6945,6 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           false,                            // bool   Signal.onTrendChange.Popup
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
-
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
@@ -7015,7 +6983,6 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
    double value = iCustom(NULL, timeframe, ".attic/RSI",
                           periods,                          // int    RSI.Periods
                           appliedPrice,                     // string RSI.AppliedPrice
-
                           Blue,                             // color  MainLine.Color
                           1,                                // int    MainLine.Width
                           Blue,                             // color  Histogram.Color.Upper
@@ -7055,18 +7022,21 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "SATL",
+   double value = iCustom(NULL, timeframe, ".attic/SATL",
                           Blue,                             // color  Color.UpTrend
                           Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -7104,18 +7074,20 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
    double value = iCustom(NULL, timeframe, "Ehlers 2-Pole-SuperSmoother",
                           periods,                          // int    Periods
                           appliedPrice,                     // string AppliedPrice
-
                           Blue,                             // color  Color.UpTrend
                           Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -7153,7 +7125,6 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
    double value = iCustom(NULL, timeframe, "SuperTrend",
                           atrPeriods,                       // int    ATR.Periods
                           smaPeriods,                       // int    SMA.Periods
-
                           Blue,                             // color  Color.UpTrend
                           Red,                              // color  Color.DownTrend
                           CLR_NONE,                         // color  Color.Channel
@@ -7161,12 +7132,15 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -7201,21 +7175,23 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "TriEMA",
+   double value = iCustom(NULL, timeframe, ".attic/TriEMA",
                           periods,                          // int    MA.Periods
                           appliedPrice,                     // string MA.AppliedPrice
-
                           Blue,                             // color  Color.UpTrend
                           Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -7250,10 +7226,9 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "Trix",
+   double value = iCustom(NULL, timeframe, ".attic/Trix",
                           periods,                          // int    EMA.Periods
                           appliedPrice,                     // string EMA.AppliedPrice
-
                           Blue,                             // color  MainLine.Color
                           1,                                // int    MainLine.Width
                           Green,                            // color  Histogram.Color.Upper
@@ -7490,7 +7465,6 @@ void __DummyCalls() {
    GT(NULL, NULL);
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-   icChartInfos();
    icFATL(NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);
    icJMA(NULL, NULL, NULL, NULL, NULL, NULL);

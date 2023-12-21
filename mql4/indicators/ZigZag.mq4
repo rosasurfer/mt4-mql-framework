@@ -179,12 +179,6 @@ string   shortName     = "";
 string   legendLabel   = "";
 string   legendInfo    = "";                                   // additional chart legend info
 
-bool     signalReversal;
-bool     signalReversal.sound;
-bool     signalReversal.popup;
-bool     signalReversal.mail;
-bool     signalReversal.sms;
-
 // signal direction types
 #define D_LONG     TRADE_DIRECTION_LONG      // 1
 #define D_SHORT    TRADE_DIRECTION_SHORT     // 2
@@ -261,24 +255,19 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   signalReversal       = Signal.onReversal;
-   signalReversal.sound = Signal.onReversal.Sound;
-   signalReversal.popup = Signal.onReversal.Popup;
-   signalReversal.mail  = Signal.onReversal.Mail;
-   signalReversal.sms   = Signal.onReversal.SMS;
-   legendInfo           = "";
    string signalId = "Signal.onReversal";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal)) return(last_error);
-   if (signalReversal) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound)) return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup)) return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail))  return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms))   return(last_error);
-      if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
-         legendInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
+   legendInfo = "";
+   if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onReversal)) return(last_error);
+   if (Signal.onReversal) {
+      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onReversal.Sound)) return(last_error);
+      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onReversal.Popup)) return(last_error);
+      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onReversal.Mail))  return(last_error);
+      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onReversal.SMS))   return(last_error);
+      if (Signal.onReversal.Sound || Signal.onReversal.Popup || Signal.onReversal.Mail || Signal.onReversal.SMS) {
+         legendInfo = StrLeft(ifString(Signal.onReversal.Sound, "sound,", "") + ifString(Signal.onReversal.Popup, "popup,", "") + ifString(Signal.onReversal.Mail, "mail,", "") + ifString(Signal.onReversal.SMS, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
       }
-      else signalReversal = false;
+      else Signal.onReversal = false;
    }
    // Sound.onCrossing
    if (AutoConfiguration) Sound.onCrossing = GetConfigBool(indicator, "Sound.onCrossing", Sound.onCrossing);
@@ -539,7 +528,7 @@ int onAccountChange(int previous, int current) {
  * @return bool - success status
  */
 bool onReversal(int direction, int bar) {
-   if (!signalReversal)                         return(false);
+   if (!Signal.onReversal)                      return(false);
    if (ChangedBars > 2)                         return(false);
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
@@ -558,19 +547,19 @@ bool onReversal(int direction, int bar) {
       string message = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")", accountTime="";
       if (IsLogInfo()) logInfo("onReversal("+ ZigZag.Periods +"x"+ sPeriod +")  "+ message);
 
-      if (signalReversal.sound) {
+      if (Signal.onReversal.Sound) {
          error = PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
          if (!error)                           lastSound = GetTickCount();
-         else if (error == ERR_FILE_NOT_FOUND) signalReversal.sound = false;
+         else if (error == ERR_FILE_NOT_FOUND) Signal.onReversal.Sound = false;
          else                                  error |= error;
       }
 
       message = Symbol() +","+ PeriodDescription() +": "+ shortName +" reversal "+ message;
-      if (signalReversal.mail || signalReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+      if (Signal.onReversal.Mail || Signal.onReversal.SMS) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-      if (signalReversal.popup)           Alert(message);
-      if (signalReversal.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (signalReversal.sms)   error |= !SendSMS("", message + NL + accountTime);
+      if (Signal.onReversal.Popup)           Alert(message);
+      if (Signal.onReversal.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onReversal.SMS)   error |= !SendSMS("", message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark event as signaled
    }
    return(!error);
@@ -673,7 +662,7 @@ void UpdateLegend() {
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
       if (!tickSize) tickSize = GetTickSize();
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
-      string sSignal   = ifString(signalReversal, "  "+ legendInfo, "");
+      string sSignal   = ifString(Signal.onReversal, "  "+ legendInfo, "");
       string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal);
 
       color clr = ZigZag.Color;

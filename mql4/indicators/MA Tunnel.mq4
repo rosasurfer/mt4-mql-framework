@@ -132,19 +132,19 @@ int onInit() {
 
    // signal configuration
    string signalId = "Signal.onBarCross";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, Signal.onBarCross)) return(last_error);
+   if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onBarCross)) return(last_error);
    if (Signal.onBarCross) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onBarCross.Sound)) return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, Signal.onBarCross.Popup)) return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onBarCross.Mail))  return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onBarCross.SMS))   return(last_error);
+      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onBarCross.Sound)) return(last_error);
+      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onBarCross.Popup)) return(last_error);
+      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onBarCross.Mail))  return(last_error);
+      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onBarCross.SMS))   return(last_error);
       Signal.onBarCross = (Signal.onBarCross.Sound || Signal.onBarCross.Popup || Signal.onBarCross.Mail || Signal.onBarCross.SMS);
    }
    signal.barCross = Signal.onBarCross;
    if (AutoConfiguration) Signal.onBarCross.SoundUp   = GetConfigString(indicator, "Signal.onBarCross.SoundUp",   Signal.onBarCross.SoundUp);
    if (AutoConfiguration) Signal.onBarCross.SoundDown = GetConfigString(indicator, "Signal.onBarCross.SoundDown", Signal.onBarCross.SoundDown);
 
-   if (!ConfigureSignalsBySound2("Signal.onTickCross", AutoConfiguration, Signal.onTickCross.Sound)) return(last_error);
+   if (!ConfigureSignalsBySound("Signal.onTickCross", AutoConfiguration, Signal.onTickCross.Sound)) return(last_error);
    signal.tickCross = Signal.onTickCross.Sound;
    if (AutoConfiguration) Signal.onTickCross.SoundUp   = GetConfigString(indicator, "Signal.onTickCross.SoundUp",   Signal.onTickCross.SoundUp);
    if (AutoConfiguration) Signal.onTickCross.SoundDown = GetConfigString(indicator, "Signal.onTickCross.SoundDown", Signal.onTickCross.SoundDown);
@@ -295,6 +295,7 @@ bool onCross(int direction, int bar) {
          if (IsLogInfo()) logInfo("onCross(5)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
+         if (Signal.onBarCross.Popup)          Alert(message);
          if (Signal.onBarCross.Sound) error |= PlaySoundEx(Signal.onBarCross.SoundUp);
          if (Signal.onBarCross.Mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
          if (Signal.onBarCross.SMS)   error |= !SendSMS("", message +NL+ accountTime);
@@ -304,6 +305,7 @@ bool onCross(int direction, int bar) {
          if (IsLogInfo()) logInfo("onCross(6)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
+         if (Signal.onBarCross.Popup)          Alert(message);
          if (Signal.onBarCross.Sound) error |= PlaySoundEx(Signal.onBarCross.SoundDown);
          if (Signal.onBarCross.Mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
          if (Signal.onBarCross.SMS)   error |= !SendSMS("", message +NL+ accountTime);
