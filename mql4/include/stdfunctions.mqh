@@ -6648,53 +6648,6 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
 
 
 /**
- * Load the "FATL" indicator and return a value.
- *
- * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int iBuffer   - indicator buffer index of the value to return
- * @param  int iBar      - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double icFATL(int timeframe, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   double value = iCustom(NULL, timeframe, ".attic/FATL",
-                          Blue,                             // color  Color.UpTrend
-                          Red,                              // color  Color.DownTrend
-                          "Line",                           // string Draw.Type
-                          1,                                // int    Draw.Width
-                          -1,                               // int    Max.Bars
-                          "",                               // string ______________________________
-                          false,                            // bool   Signal.onTrendChange
-                          false,                            // bool   Signal.onTrendChange.Sound
-                          "",                               // string Signal.onTrendChange.SoundUp
-                          "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
-                          false,                            // bool   Signal.onTrendChange.Mail
-                          false,                            // bool   Signal.onTrendChange.SMS
-                          "",                               // string ______________________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
-
-                          iBuffer, iBar);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icFATL(1)", error));
-      logWarn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(!SetLastError(error));
-}
-
-
-/**
  * Load the "HalfTrend" indicator and return a value.
  *
  * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
@@ -6966,97 +6919,6 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
 
 
 /**
- * Load the custom "RSI" indicator and return a value.
- *
- * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    periods      - indicator parameter
- * @param  string appliedPrice - indicator parameter
- * @param  int    iBuffer      - indicator buffer index of the value to return
- * @param  int    iBar         - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   double value = iCustom(NULL, timeframe, ".attic/RSI",
-                          periods,                          // int    RSI.Periods
-                          appliedPrice,                     // string RSI.AppliedPrice
-                          Blue,                             // color  MainLine.Color
-                          1,                                // int    MainLine.Width
-                          Blue,                             // color  Histogram.Color.Upper
-                          Red,                              // color  Histogram.Color.Lower
-                          0,                                // int    Histogram.Style.Width
-                          -1,                               // int    Max.Bars
-                          "",                               // string _____________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
-
-                          iBuffer, iBar);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icRSI(1)", error));
-      logWarn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(!SetLastError(error));
-}
-
-
-/**
- * Load the "SATL" indicator and return a value.
- *
- * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int iBuffer   - indicator buffer index of the value to return
- * @param  int iBar      - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double icSATL(int timeframe, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   double value = iCustom(NULL, timeframe, ".attic/SATL",
-                          Blue,                             // color  Color.UpTrend
-                          Red,                              // color  Color.DownTrend
-                          "Line",                           // string Draw.Type
-                          1,                                // int    Draw.Width
-                          -1,                               // int    Max.Bars
-                          "",                               // string ______________________________
-                          false,                            // bool   Signal.onTrendChange
-                          false,                            // bool   Signal.onTrendChange.Sound
-                          "",                               // string Signal.onTrendChange.SoundUp
-                          "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
-                          false,                            // bool   Signal.onTrendChange.Mail
-                          false,                            // bool   Signal.onTrendChange.SMS
-                          "",                               // string ______________________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
-
-                          iBuffer, iBar);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icSATL(1)", error));
-      logWarn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(!SetLastError(error));
-}
-
-
-/**
  * Load "Ehlers 2-Pole-SuperSmoother" indicator and return a value.
  *
  * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
@@ -7151,101 +7013,6 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperTrend(1)", error));
       logWarn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(!SetLastError(error));
-}
-
-
-/**
- * Load the "TriEMA" indicator and return a value.
- *
- * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    periods      - indicator parameter
- * @param  string appliedPrice - indicator parameter
- * @param  int    iBuffer      - indicator buffer index of the value to return
- * @param  int    iBar         - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   double value = iCustom(NULL, timeframe, ".attic/TriEMA",
-                          periods,                          // int    MA.Periods
-                          appliedPrice,                     // string MA.AppliedPrice
-                          Blue,                             // color  Color.UpTrend
-                          Red,                              // color  Color.DownTrend
-                          "Line",                           // string Draw.Type
-                          1,                                // int    Draw.Width
-                          -1,                               // int    Max.Bars
-                          "",                               // string ______________________________
-                          false,                            // bool   Signal.onTrendChange
-                          false,                            // bool   Signal.onTrendChange.Sound
-                          "",                               // string Signal.onTrendChange.SoundUp
-                          "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
-                          false,                            // bool   Signal.onTrendChange.Mail
-                          false,                            // bool   Signal.onTrendChange.SMS
-                          "",                               // string ______________________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
-
-                          iBuffer, iBar);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icTriEMA(1)", error));
-      logWarn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(!SetLastError(error));
-}
-
-
-/**
- * Load the "Trix" indicator and return a value.
- *
- * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    periods      - indicator parameter
- * @param  string appliedPrice - indicator parameter
- * @param  int    iBuffer      - indicator buffer index of the value to return
- * @param  int    iBar         - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   double value = iCustom(NULL, timeframe, ".attic/Trix",
-                          periods,                          // int    EMA.Periods
-                          appliedPrice,                     // string EMA.AppliedPrice
-                          Blue,                             // color  MainLine.Color
-                          1,                                // int    MainLine.Width
-                          Green,                            // color  Histogram.Color.Upper
-                          Red,                              // color  Histogram.Color.Lower
-                          2,                                // int    Histogram.Style.Width
-                          -1,                               // int    Max.Bars
-                          "",                               // string _____________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
-
-                          iBuffer, iBar);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icTrix(1)", error));
-      logWarn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -7465,18 +7232,13 @@ void __DummyCalls() {
    GT(NULL, NULL);
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-   icFATL(NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);
    icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
    icNLMA(NULL, NULL, NULL, NULL, NULL, NULL);
-   icRSI(NULL, NULL, NULL, NULL, NULL);
-   icSATL(NULL, NULL, NULL);
    icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
-   icTriEMA(NULL, NULL, NULL, NULL, NULL);
-   icTrix(NULL, NULL, NULL, NULL, NULL);
    icZigZag(NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
