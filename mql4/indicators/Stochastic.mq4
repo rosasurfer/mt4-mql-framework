@@ -24,7 +24,7 @@ extern int    SlowedMain.MA.Periods = 1;                 // slowed %K line (MA 1
 extern int    SignalLine.MA.Periods = 1;                 // %D line (MA 2 of resulting %K)                                 //         1          3
 extern color  MainLine.Color        = DodgerBlue;
 extern color  SignalLine.Color      = Red;
-extern int    MaxBars               = 10000;             // max. number of values to calculate (-1: all available)
+extern int    MaxBarsBack           = 10000;             // max. number of values to calculate (-1: all available)
 extern string ___a__________________________;
 
 extern int    SignalLevel.Long      = 73;                // signal level to cross upwards to trigger a long signal         //         73        70
@@ -67,7 +67,6 @@ int ma2Periods;
 int signalLevelLong;
 int signalLevelShort;
 
-int maxValues;
 int maxSignalBars;
 
 
@@ -89,9 +88,9 @@ int onInit() {
    if (SignalLevel.Short < 0 || SignalLevel.Short > 100) return(catch("onInit(5)  invalid input parameter SignalLevel.Short: "+ SignalLevel.Short +" (from 0..100)", ERR_INVALID_INPUT_PARAMETER));
    signalLevelLong  = SignalLevel.Long;
    signalLevelShort = SignalLevel.Short;
-   // MaxBars
-   if (MaxBars < -1)                                     return(catch("onInit(6)  invalid input parameter MaxBars: "+ MaxBars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(MaxBars==-1, INT_MAX, MaxBars);
+   // MaxBarsBack
+   if (MaxBarsBack < -1)                                 return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
    // SignalBars
    if (SignalBars < 0)                                   return(catch("onInit(7)  invalid input parameter SignalBars: "+ SignalBars, ERR_INVALID_INPUT_PARAMETER));
    maxSignalBars = SignalBars;
@@ -162,7 +161,7 @@ int onTick() {
    // +------------------------------------------------------+----------------------------------------------------+
    // |                 --->                                                ---^                                  |
    // +-----------------------------------------------------------------------------------------------------------+
-   int requestedBars = Min(ChangedBars, maxValues);
+   int requestedBars = Min(MaxBarsBack, ChangedBars);
    int resultingBars = Bars - stochPeriods - ma1Periods - ma2Periods + 3;  // max. resulting bars
    if (resultingBars < 1) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
@@ -289,7 +288,7 @@ string InputsToStr() {
                             "SignalLine.MA.Periods=", SignalLine.MA.Periods,         ";"+ NL,
                             "MainLine.Color=",        ColorToStr(MainLine.Color),    ";"+ NL,
                             "SignalLine.Color=",      ColorToStr(SignalLine.Color),  ";"+ NL,
-                            "MaxBars=",               MaxBars,                       ";"+ NL,
+                            "MaxBarsBack=",           MaxBarsBack,                   ";"+ NL,
                             "SignalLevel.Long=",      SignalLevel.Long,              ";"+ NL,
                             "SignalLevel.Short=",     SignalLevel.Short,             ";"+ NL,
                             "SignalColor.Long=",      ColorToStr(SignalColor.Long),  ";"+ NL,

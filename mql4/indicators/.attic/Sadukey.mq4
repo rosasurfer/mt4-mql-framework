@@ -14,10 +14,9 @@ int __DeinitFlags[];
 
 extern color  Color.UpTrend   = Blue;
 extern color  Color.DownTrend = Red;
-
 extern string MTF.Timeframe   = "current* | M15 | M30 | H1 | ...";   // empty: current
 extern string StartDate       = "yyyy.mm.dd";                        // start date of calculated values
-extern int    Max.Bars        = 10000;                               // max. values to calculate (-1: all available)
+extern int    MaxBarsBack     = 10000;                               // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +45,6 @@ double   buffer2[];
 
 int      dataTimeframe;
 datetime startTime;
-int      maxValues;
 
 string   indicatorName = "";
 string   legendLabel   = "";
@@ -86,9 +84,9 @@ int onInit() {
       if (!success)            return(catch("onInit(2)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
       startTime = DateTime2(pt);
    }
-   // Max.Bars
-   if (Max.Bars < -1)          return(catch("onInit(2)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (MaxBarsBack < -1)       return(catch("onInit(2)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // buffer management
    SetIndexBuffer(MODE_BUFFER1, buffer1);
@@ -278,8 +276,8 @@ int onTick() {
 
       for (i=changedBars-1; i >= 0; i--) {
          int offset = iBarShiftPrevious(NULL, dataTimeframe, Time[i]+barLength);
-         buffer1[i] = iMTF(MODE_BUFFER1, offset); if (last_error != 0) return(last_error);
-         buffer2[i] = iMTF(MODE_BUFFER2, offset); if (last_error != 0) return(last_error);
+         buffer1[i] = icSelf(MODE_BUFFER1, offset); if (last_error != 0) return(last_error);
+         buffer2[i] = icSelf(MODE_BUFFER2, offset); if (last_error != 0) return(last_error);
       }
    }
 
@@ -309,10 +307,10 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
 
    if (timeframe == currentTimeframe) {
       // the displayed timeframe equals the chart timeframe
-      static int _maxValues = -1; if (_maxValues < 0) {
-         _maxValues = Mul(maxValues, ifInt(dataTimeframe > currentTimeframe, dataTimeframe/currentTimeframe, 1), /*boundaryOnOverflow=*/true);
+      static int maxValues = -1; if (maxValues < 0) {
+         maxValues = Mul(MaxBarsBack, ifInt(dataTimeframe > currentTimeframe, dataTimeframe/currentTimeframe, 1), /*boundaryOnOverflow=*/true);
       }
-      changedBars = Min(ChangedBars, _maxValues);
+      changedBars = Min(ChangedBars, maxValues);
       startbar    = Min(changedBars-1, Bars-filterLength);
       if (startbar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  Bars="+ Bars +"  ChangedBars="+ changedBars +"  startbar="+ startbar, ERR_HISTORY_INSUFFICIENT)));
       if (limitStartTime) /*&&*/ if (Time[startbar]+currentTimeframe*MINUTES-1 < startTime)
@@ -323,9 +321,9 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
       // the displayed timeframe is different from the chart timeframe
       // resolve startbar to update in the data timeframe
       bars        = iBars(NULL, timeframe);
-      changedBars = Min(iChangedBars(NULL, timeframe), maxValues);
+      changedBars = Min(iChangedBars(NULL, timeframe), MaxBarsBack);
       startbar    = Min(changedBars-1, bars-filterLength);
-      if (startbar < 0) return(_EMPTY(catch("ComputeChangedBars(2)  timeframe="+ TimeframeDescription(timeframe) +"  bars="+ bars +"  changedBars="+ changedBars +"  startbar="+ startbar, ERR_HISTORY_INSUFFICIENT)));
+      if (startbar < 0 && MaxBarsBack) return(_EMPTY(catch("ComputeChangedBars(2)  timeframe="+ TimeframeDescription(timeframe) +"  bars="+ bars +"  changedBars="+ changedBars +"  startbar="+ startbar, ERR_HISTORY_INSUFFICIENT)));
 
       // resolve corresponding bar offset in the current timeframe
       startbar = iBarShiftNext(NULL, NULL, iTime(NULL, timeframe, startbar));
@@ -349,16 +347,16 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double iMTF(int iBuffer, int iBar) {
+double icSelf(int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, dataTimeframe, WindowExpertName(),
-                          "current",                              // string Timeframe
                           CLR_NONE,                               // color  Color.UpTrend
                           CLR_NONE,                               // color  Color.DownTrend
+                          "current",                              // string MTF.Timeframe
                           StartDate,                              // string StartDate
-                          Max.Bars,                               // int    Max.Bars
+                          MaxBarsBack,                            // int    Max.Bars
                           "",                                     // string ________________
                           false,                                  // bool   AutoConfiguration
                           lpSuperContext,                         // int    __lpSuperContext
@@ -369,7 +367,7 @@ double iMTF(int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("iMTF(1)", error));
-      logWarn("iMTF(2)  "+ TimeframeDescription(dataTimeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
+      logWarn("icSelf(2)  "+ TimeframeDescription(dataTimeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts
@@ -399,6 +397,6 @@ string InputsToStr() {
                             "Color.DownTrend=", ColorToStr(Color.DownTrend),   ";", NL,
                             "MTF.Timeframe=",   DoubleQuoteStr(MTF.Timeframe), ";", NL,
                             "StartDate=",       DoubleQuoteStr(StartDate),     ";", NL,
-                            "Max.Bars=",        Max.Bars,                      ";")
+                            "MaxBarsBack=",     MaxBarsBack,                   ";")
    );
 }

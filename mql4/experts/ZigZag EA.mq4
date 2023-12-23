@@ -85,8 +85,6 @@
  *     fix gap between days/weeks if market is not open 24h
  *     implement more timeframes
  *
- *  - move iCustom() to ta/includes
- *  - rename Max.Bars to MaxBarsBack
  *  - investigate an auto-updating global var MaxBarsBack to prevent possible integer overflows
  *  - implement global var indicator::CalculatedBars
  *

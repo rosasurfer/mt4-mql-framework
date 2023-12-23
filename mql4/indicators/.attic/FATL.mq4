@@ -22,7 +22,7 @@ extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern int    Max.Bars                       = 10000;    // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;    // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -66,12 +66,10 @@ double uptrend2 [];                                      // single-bar uptrends:
 
 double filterWeights[];                                  // filter coefficients
 
-int    maxValues;
-int    drawType;
-
 string indicatorName = "";
 string legendLabel   = "";
 string legendInfo    = "";                               // additional chart legend info
+int    drawType;
 
 
 /**
@@ -93,12 +91,12 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                return(catch("onInit(1)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                  return(catch("onInit(1)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
-   if (Draw.Width < 0) return(catch("onInit(2)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   // Max.Bars
-   if (Max.Bars < -1)  return(catch("onInit(3)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   if (Draw.Width < 0)   return(catch("onInit(2)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   // MaxBarsBack
+   if (MaxBarsBack < -1) return(catch("onInit(3)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
    string signalId = "Signal.onTrendChange";
@@ -172,9 +170,8 @@ int onTick() {
 
    // calculate start bar
    int length   = ArraySize(filterWeights);
-   int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-length);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-length);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
@@ -319,7 +316,7 @@ string InputsToStr() {
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";", NL,
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";", NL,
                             "Draw.Width=",                     Draw.Width,                                     ";", NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";", NL,
+                            "MaxBarsBack=",                    MaxBarsBack,                                    ";", NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";", NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";", NL,

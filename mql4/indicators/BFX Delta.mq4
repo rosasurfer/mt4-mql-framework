@@ -22,7 +22,7 @@ int __DeinitFlags[];
 extern color  Histogram.Color.Long           = LimeGreen;
 extern color  Histogram.Color.Short          = Red;
 extern int    Histogram.Style.Width          = 2;
-extern int    Max.Bars                       = 10000;          // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;          // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern int    Signal.Level                   = 20;
@@ -82,8 +82,9 @@ int onInit() {
    // Histogram.Style.Width
    if (Histogram.Style.Width < 0) return(catch("onInit(1)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5) return(catch("onInit(2)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   // Max.Bars
-   if (Max.Bars < -1)             return(catch("onInit(3)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   // MaxBarsBack
+   if (MaxBarsBack < -1)          return(catch("onInit(3)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
    // Signal.Level
    if (Signal.Level <    0)       return(catch("onInit(4)  invalid input parameter Signal.Level: "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
    if (Signal.Level >= 100)       return(catch("onInit(5)  invalid input parameter Signal.Level: "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
@@ -124,9 +125,7 @@ int onInit() {
    IndicatorDigits(2);
 
    // drawing options and styles
-   int startDraw = 0;
-   if (Max.Bars >= 0)
-      startDraw = Max(startDraw, Bars-Max.Bars);
+   int startDraw = Bars - MaxBarsBack;
    SetIndexDrawBegin(MODE_DELTA_LONG,  startDraw);
    SetIndexDrawBegin(MODE_DELTA_SHORT, startDraw);
    SetIndicatorOptions();
@@ -167,11 +166,8 @@ int onTick() {
 
 
    // (1) calculate start bar
-   int changedBars = ChangedBars;
-   if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
-      changedBars = Max.Bars;
-   int startbar = changedBars-1;
-   if (startbar < 0) return(logInfo("onTick(3)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(3)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
@@ -340,7 +336,7 @@ string InputsToStr() {
    return(StringConcatenate("Histogram.Color.Long=",     ColorToStr(Histogram.Color.Long),         ";", NL,
                             "Histogram.Color.Short=",    ColorToStr(Histogram.Color.Short),        ";", NL,
                             "Histogram.Style.Width=",    Histogram.Style.Width,                    ";", NL,
-                            "Max.Bars=",                 Max.Bars,                                 ";", NL,
+                            "MaxBarsBack=",              MaxBarsBack,                              ";", NL,
 
                             "Signal.Level=",             Signal.Level,                             ";", NL,
                             "Signal.onCross=",           BoolToStr(Signal.onCross),                ";", NL,

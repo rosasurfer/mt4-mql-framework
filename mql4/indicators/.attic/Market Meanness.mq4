@@ -13,11 +13,9 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int   MMI.Periods = 100;
-
 extern color Line.Color  = Blue;
 extern int   Line.Width  = 1;
-
-extern int   Max.Bars    = 10000;                           // max. values to calculate (-1: all available)
+extern int   MaxBarsBack = 10000;                           // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -44,17 +42,17 @@ int mmi.periods;
 int onInit() {
    // (1) input validation
    // MMI.Periods
-   if (MMI.Periods < 1) return(catch("onInit(1)  invalid input parameter Periods: "+ MMI.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MMI.Periods < 1)  return(catch("onInit(1)  invalid input parameter Periods: "+ MMI.Periods, ERR_INVALID_INPUT_PARAMETER));
    mmi.periods = MMI.Periods;
 
    // Colors (might be wrongly initialized after re-compilation or terminal restart)
    if (Line.Color == 0xFF000000) Line.Color = CLR_NONE;
 
    // Styles
-   if (Line.Width < 0)  return(catch("onInit(2)  invalid input parameter Line.Width: "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Line.Width < 0)   return(catch("onInit(2)  invalid input parameter Line.Width: "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Bars
-   if (Max.Bars < -1)   return(catch("onInit(3)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   // MaxBarsBack
+   if (MaxBarsBack < -1) return(catch("onInit(3)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) indicator buffer management
@@ -69,10 +67,7 @@ int onInit() {
 
 
    // (4) drawing options and styles
-   int startDraw = 0;
-   if (Max.Bars >= 0) startDraw += Bars - Max.Bars;
-   if (startDraw < 0) startDraw = 0;
-   SetIndexDrawBegin(MODE_MAIN, startDraw);
+   SetIndexDrawBegin(MODE_MAIN, Bars-MaxBarsBack);
    SetLevelValue(0, 75);
    SetLevelValue(1, 50);
    SetIndicatorOptions();
@@ -103,11 +98,8 @@ int onTick() {
 
 
    // (1) calculate start bar
-   int changedBars = ChangedBars;
-   if (Max.Bars >= 0) /*&&*/ if (ChangedBars > Max.Bars)
-      changedBars = Max.Bars;
-   int startbar = Min(changedBars-1, Bars-mmi.periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-mmi.periods);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
@@ -149,6 +141,6 @@ string InputsToStr() {
    return(StringConcatenate("MMI.Periods=", MMI.Periods,            ";", NL,
                             "Line.Color=",  ColorToStr(Line.Color), ";", NL,
                             "Line.Width=",  Line.Width,             ";", NL,
-                            "Max.Bars=",    Max.Bars,               ";")
+                            "MaxBarsBack=", MaxBarsBack,            ";")
    );
 }

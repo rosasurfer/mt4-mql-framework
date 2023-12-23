@@ -37,7 +37,7 @@ extern int    Histogram.Style.Width          = 2;
 
 extern color  MainLine.Color                 = DodgerBlue;
 extern int    MainLine.Width                 = 1;
-extern int    Max.Bars                       = 10000;                // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;                // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onCross                 = false;
@@ -87,9 +87,8 @@ int    slowMA.method;
 int    slowMA.appliedPrice;
 double slowALMA.weights[];                                  // slow ALMA weights
 
-int    maxValues;
-bool   isCentUnit    = false;                               // display unit: cent or pip
 string indicatorName = "";                                  // "Data" window and signal notification name
+bool   isCentUnit    = false;                               // display unit: cent or pip
 
 
 /**
@@ -170,9 +169,9 @@ int onInit() {
    if (Histogram.Style.Width < 0)       return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5)       return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (MainLine.Width < 0)              return(catch("onInit(13)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   // Max.Bars
-   if (Max.Bars < -1)                   return(catch("onInit(14)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (MaxBarsBack < -1)                return(catch("onInit(14)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signal configuration
    string signalId = "Signal.onCross";
@@ -250,9 +249,8 @@ int onTick() {
    }
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-slowMA.periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-slowMA.periods);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    double fastMA, slowMA;
@@ -386,7 +384,7 @@ string InputsToStr() {
                             "Histogram.Style.Width=",    Histogram.Style.Width,                    ";"+ NL,
                             "MainLine.Color=",           ColorToStr(MainLine.Color),               ";"+ NL,
                             "MainLine.Width=",           MainLine.Width,                           ";"+ NL,
-                            "Max.Bars=",                 Max.Bars,                                 ";"+ NL,
+                            "MaxBarsBack=",              MaxBarsBack,                              ";"+ NL,
 
                             "Signal.onCross=",           BoolToStr(Signal.onCross),                ";", NL,
                             "Signal.onCross.Sound=",     BoolToStr(Signal.onCross.Sound),          ";", NL,

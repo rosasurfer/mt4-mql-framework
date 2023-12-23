@@ -32,7 +32,7 @@ extern color  Histogram.Color.Upper = LimeGreen;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Bars              = 10000;                // max. values to calculate (-1: all available)
+extern int    MaxBarsBack           = 10000;                // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -104,9 +104,9 @@ int onInit() {
    if (Histogram.Style.Width < 0) return(catch("onInit(4)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5) return(catch("onInit(5)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Bars
-   if (Max.Bars < -1)             return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-
+   // MaxBarsBack
+   if (MaxBarsBack < -1)          return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // (2) setup buffer management
    SetIndexBuffer(MODE_EMA_1,         firstEma );
@@ -134,9 +134,7 @@ int onInit() {
 
 
    // (4) drawing options and styles
-   int startDraw = 0;
-   if (Max.Bars >= 0) startDraw += Bars - Max.Bars;
-   if (startDraw < 0) startDraw  = 0;
+   int startDraw = Bars - MaxBarsBack;
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
@@ -177,17 +175,12 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(trixLower, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(trixTrend, Bars, ShiftedBars,           0);
    }
+                                                                                       // Because EMA(EMA(EMA)) is used in the calculation, TriEMA needs
+   // calculate start bar                                                              // 3*<period>-2 samples to start producing values in contrast to
+   int bar, startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-(3*EMA.Periods-2));      // <period> samples needed by a regular EMA.
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
-
-   // (1) calculate start bar
-   int changedBars = ChangedBars;
-   if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)             // Because EMA(EMA(EMA)) is used in the calculation, TriEMA needs
-      changedBars = Max.Bars;                                        // 3*<period>-2 samples to start producing values in contrast to
-   int bar, startbar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
-
-
-   // (2) recalculate changed bars
+   // recalculate changed bars
    double dNull[];
    for (bar=ChangedBars-1; bar >= 0; bar--) firstEma [bar] =        iMA(NULL,      NULL,        EMA.Periods, 0, MODE_EMA, ema.appliedPrice, bar);
    for (bar=ChangedBars-1; bar >= 0; bar--) secondEma[bar] = iMAOnArray(firstEma,  WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
@@ -242,6 +235,6 @@ string InputsToStr() {
                             "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), ";", NL,
                             "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), ";", NL,
                             "Histogram.Style.Width=", Histogram.Style.Width,             ";", NL,
-                            "Max.Bars=",              Max.Bars,                          ";")
+                            "MaxBarsBack=",           MaxBarsBack,                       ";")
    );
 }

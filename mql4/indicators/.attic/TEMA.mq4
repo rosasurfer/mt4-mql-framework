@@ -22,8 +22,7 @@ extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical |
 extern color  MA.Color        = OrangeRed;
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.Width      = 2;
-
-extern int    Max.Bars        = 10000;                   // max. values to calculate (-1: all available)
+extern int    MaxBarsBack     = 10000;                   // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -72,7 +71,7 @@ int onInit() {
    if (sValue == "") sValue = "close";                      // default price type
    ma.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (IsEmpty(ma.appliedPrice) || ma.appliedPrice > PRICE_WEIGHTED) {
-                       return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
@@ -88,14 +87,12 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
-
+   else                  return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
-   if (Draw.Width < 0) return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-
-   // Max.Bars
-   if (Max.Bars < -1)  return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-
+   if (Draw.Width < 0)   return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   // MaxBarsBack
+   if (MaxBarsBack < -1) return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // (2) setup buffer management
    SetIndexBuffer(MODE_TEMA,  tema     );
@@ -116,10 +113,7 @@ int onInit() {
 
 
    // (4) drawing options and styles
-   int startDraw = 0;
-   if (Max.Bars >= 0) startDraw = Bars - Max.Bars;
-   if (startDraw < 0) startDraw = 0;
-   SetIndexDrawBegin(MODE_TEMA, startDraw);
+   SetIndexDrawBegin(MODE_TEMA, Bars-MaxBarsBack);
    SetIndicatorOptions();
 
    return(catch("onInit(6)"));
@@ -151,12 +145,9 @@ int onTick() {
    }
 
 
-   // (1) calculate start bar
-   int changedBars = ChangedBars;
-   if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)
-      changedBars = Max.Bars;                                        // Because EMA(EMA(EMA)) is used in the calculation, TEMA needs 3*<period>-2 samples
-   int bar, startbar = Min(changedBars-1, Bars - (3*MA.Periods-2));  // to start producing values in contrast to <period> samples needed by a regular EMA.
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   // (1) calculate start bar                                                       // Because EMA(EMA(EMA)) is used in the calculation, TEMA needs 3*<period>-2 samples
+   int bar, startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars - (3*MA.Periods-2));  // to start producing values in contrast to <period> samples needed by a regular EMA.
+   if (startbar < 0 & MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
@@ -200,6 +191,6 @@ string InputsToStr() {
                             "MA.Color=",        ColorToStr(MA.Color),            ";", NL,
                             "Draw.Type=",       DoubleQuoteStr(Draw.Type),       ";", NL,
                             "Draw.Width=",      Draw.Width,                      ";", NL,
-                            "Max.Bars=",        Max.Bars,                        ";")
+                            "MaxBarsBack=",     MaxBarsBack,                     ";")
    );
 }

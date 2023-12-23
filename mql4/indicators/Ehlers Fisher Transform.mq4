@@ -1,9 +1,8 @@
 /**
  * Ehlers' Fisher Transform
  *
- * as described in his book "Cybernetic Analysis for Stocks and Futures". This indicator is a different visualization of a
+ * As described in his book "Cybernetic Analysis for Stocks and Futures". This indicator is a different visualization of a
  * smoothed Stochastic oscillator.
- *
  *
  * Indicator buffers for iCustom():
  *  • Fisher.MODE_MAIN:    oscillator main values
@@ -12,11 +11,9 @@
  *    - length:  the absolute value is each histogram's section length (bars since the last crossing of zero)
  *
  *
- *
- *
  * TODO:
  *    - implement customizable moving averages for Stochastic and Fisher Transform
- *    - implement Max.Bars
+ *    - implement MaxBarsBack
  *    - implement PRICE_* types
  *    - check required run-up period
  */
@@ -27,7 +24,6 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int   Fisher.Periods        = 10;
-
 extern color Histogram.Color.Upper = LimeGreen;
 extern color Histogram.Color.Lower = Red;
 extern int   Histogram.Style.Width = 2;

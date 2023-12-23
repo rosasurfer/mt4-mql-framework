@@ -76,7 +76,7 @@ extern int    Donchian.Crossings.Width       = 1;
 extern int    Donchian.Crossings.Wingdings   = 161;                     // a small circle
 extern color  Donchian.Upper.Color           = DodgerBlue;
 extern color  Donchian.Lower.Color           = Magenta;
-extern int    Max.Bars                       = 10000;                   // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___c__________________________ = "=== Reversal signaling ===";
 extern bool   Signal.onReversal              = false;                   // on ZigZag reversal (first channel crossing)
@@ -166,7 +166,6 @@ double   combinedTrend   [];                                   // combined known
 
 int      zigzagDrawType;
 int      crossingDrawType;
-int      maxValues;
 double   tickSize;
 datetime lastTick;
 int      lastSound;
@@ -249,10 +248,10 @@ int onInit() {
    if (ZigZag.Color         == 0xFF000000) ZigZag.Color         = CLR_NONE;
    if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
    if (Donchian.Lower.Color == 0xFF000000) Donchian.Lower.Color = CLR_NONE;
-   // Max.Bars
-   if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
-   if (Max.Bars < -1)                      return(catch("onInit(11)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
+   if (MaxBarsBack < -1)                   return(catch("onInit(11)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
    string signalId = "Signal.onReversal";
@@ -375,9 +374,8 @@ int onTick() {
    IsPossibleDataPumping();
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-ZigZag.Periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ ZigZag.Periods, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-ZigZag.Periods);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ ZigZag.Periods, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
@@ -979,7 +977,7 @@ string InputsToStr() {
                             "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings                +";"+ NL,
                             "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)            +";"+ NL,
                             "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)            +";"+ NL,
-                            "Max.Bars=",                     Max.Bars                                    +";"+ NL,
+                            "MaxBarsBack=",                  MaxBarsBack                                 +";"+ NL,
 
                             "Signal.onReversal=",            BoolToStr(Signal.onReversal)                +";"+ NL,
                             "Signal.onReversal.Sound=",      BoolToStr(Signal.onReversal.Sound)          +";"+ NL,

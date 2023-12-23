@@ -135,7 +135,6 @@ extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern int    Max.Bars                       = 10000;    // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -179,7 +178,6 @@ double downtrend[];                                      // downtrend values:   
 double uptrend2 [];                                      // single-bar uptrends: visible
 
 int    appliedPrice;
-int    maxValues;
 int    drawType;
 
 string indicatorName = "";
@@ -226,9 +224,6 @@ int onInit() {
    else                return(catch("onInit(5)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (Draw.Width < 0) return(catch("onInit(6)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   // Max.Bars
-   if (Max.Bars < -1)  return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
    string signalId = "Signal.onTrendChange";
@@ -268,7 +263,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -396,7 +391,6 @@ string InputsToStr() {
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";", NL,
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";", NL,
                             "Draw.Width=",                     Draw.Width,                                     ";", NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";", NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";", NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";", NL,

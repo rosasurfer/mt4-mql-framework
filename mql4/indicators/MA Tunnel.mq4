@@ -62,7 +62,6 @@ double tickTrend[];                                      // ...
 string maDefinitions[];                                  // MA definitions
 int    ma[][2];                                          // integer representation
 int    maxMaPeriods;
-int    maxBarsBack;
 
 bool   signal.barCross;
 bool   signal.tickCross;
@@ -126,7 +125,8 @@ int onInit() {
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)               return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
-   maxBarsBack = ifInt(MaxBarsBack==-1, INT_MAX, MaxBarsBack);
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
+
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
 
@@ -203,9 +203,9 @@ int onTick() {
    }
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxBarsBack);
+   int bars     = Min(ChangedBars, MaxBarsBack);
    int startbar = Min(bars-1, Bars-maxMaPeriods), prevBarTrend;
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    int numberOfMas = ArrayRange(ma, 0);
 

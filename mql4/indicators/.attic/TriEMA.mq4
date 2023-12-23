@@ -24,7 +24,7 @@ extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern int    Max.Bars                       = 10000;    // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;    // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -73,7 +73,6 @@ double downtrend[];                                      // downtrend values:   
 double uptrend2 [];                                      // single-bar uptrends:            visible
 
 int    maAppliedPrice;
-int    maxValues;
 int    drawType;
 
 string indicatorName = "";
@@ -89,7 +88,7 @@ string legendInfo    = "";                               // additional chart leg
 int onInit() {
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1) return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)   return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    // MA.AppliedPrice
    string sValues[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -105,7 +104,7 @@ int onInit() {
    else if (StrStartsWith("median",   sValue)) maAppliedPrice = PRICE_MEDIAN;
    else if (StrStartsWith("typical",  sValue)) maAppliedPrice = PRICE_TYPICAL;
    else if (StrStartsWith("weighted", sValue)) maAppliedPrice = PRICE_WEIGHTED;
-   else                return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   else                  return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
@@ -119,12 +118,12 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                  return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
-   if (Draw.Width < 0) return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   // Max.Bars
-   if (Max.Bars < -1)  return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   if (Draw.Width < 0)   return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   // MaxBarsBack
+   if (MaxBarsBack < -1) return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
    string signalId = "Signal.onTrendChange";
@@ -203,10 +202,9 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-   // calculate start bar
-   int i, bars  = Min(ChangedBars, maxValues);                                              // Because EMA(EMA(EMA)) is used in the calculation TriEMA
-   int startbar = Min(bars-1, Bars - (3*MA.Periods-2));                                     // needs 3*<period>-2 samples to start producing values,
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));  // in contrast to <period> samples needed by a regular EMA.
+   // calculate start bar                                                                                   // Because EMA(EMA(EMA)) is used in the calculation TriEMA
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars - (3*MA.Periods-2)), i;                            // needs 3*<period>-2 samples to start producing values,
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));   // in contrast to <period> samples needed by a regular EMA.
 
    // recalculate changed bars
    for (i=ChangedBars-1; i >= 0; i--)   firstEma [i] =        iMA(NULL,      NULL,        MA.Periods, 0, MODE_EMA, maAppliedPrice, i);
@@ -297,7 +295,7 @@ string InputsToStr() {
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";", NL,
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";", NL,
                             "Draw.Width=",                     Draw.Width,                                     ";", NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";", NL,
+                            "MaxBarsBack=",                    MaxBarsBack,                                    ";", NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";", NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";", NL,

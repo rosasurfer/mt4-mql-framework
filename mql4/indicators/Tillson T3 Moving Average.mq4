@@ -4,7 +4,7 @@
  * The T3 is a six-pole nonlinear Kalman filter. Kalman filters use the error to correct themselves. In technical analysis
  * they are called adaptive moving averages, they track the time series more aggressively when it makes large moves.
  *
- * The input parameter 'T3.Periods' can be scaled following Matulich (2) which is just cosmetics and makes the T3 look more
+ * The input parameter 'T3.Periods' can be scaled following Matulich which is just cosmetics and makes the T3 look more
  * synchronized with an SMA or EMA of the same length (MA calculation does not change).
  *
  * Indicator buffers for iCustom():
@@ -14,8 +14,7 @@
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
  *
- *  @link  (2) http://unicorn.us.com/trading/el.html#_T3Average                                 [T3 Moving Average, Matulich]
- *
+ *  @link  http://unicorn.us.com/trading/el.html#_T3Average                                     [T3 Moving Average, Matulich]
  *  @see   additional notes at the end of this file
  */
 #include <stddefines.mqh>
@@ -41,7 +40,7 @@ extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Aqua;
-extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 
 extern string ___d__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -116,7 +115,6 @@ double alpha;                                            // weight of the curren
 int    appliedPrice;
 int    requiredBars;
 int    drawType;
-int    maxValues;
 
 string indicatorName = "";
 string shortName     = "";
@@ -188,10 +186,10 @@ int onInit() {
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
-   // Max.Bars
-   if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
-   if (Max.Bars < -1)                                    return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
+   if (MaxBarsBack < -1)                                 return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
    string signalId = "Signal.onTrendChange";
@@ -254,8 +252,8 @@ bool InitializeT3() {                                          // see notes at t
    double bars  = MathLog(1-rel)/MathLog(1-alpha);             // k = log(1-rel)/log(1-alpha)
    requiredBars = MathCeil(bars);
 
-   if (maxValues + requiredBars < 0) {
-      maxValues -= requiredBars;                               // prevent integer overflow
+   if (MaxBarsBack + requiredBars < 0) {
+      MaxBarsBack -= requiredBars;                             // prevent integer overflow
    }
    return(!catch("InitializeT3(1)"));
 }
@@ -329,7 +327,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int limit = Min(ChangedBars, Bars-1, maxValues+requiredBars-1);      // how many bars need recalculation
+   int limit = Min(ChangedBars, Bars-1, MaxBarsBack+requiredBars-1);    // how many bars need recalculation
    int startbar = limit-1;
    if (Bars < requiredBars) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  required="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
 
@@ -645,7 +643,7 @@ string InputsToStr() {
                             "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
                             "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";"+ NL,
+                            "MaxBarsBack=",                    MaxBarsBack,                                    ";"+ NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,

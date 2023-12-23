@@ -30,7 +30,7 @@ extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
-extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -85,7 +85,6 @@ double maAverage [];                                     // average of maChange[
 int    maAppliedPrice;
 double maWeights[];                                      // bar weighting of the MA
 int    drawType;
-int    maxValues;
 
 string indicatorName = "";
 string shortName     = "";
@@ -155,10 +154,10 @@ int onInit() {
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
-   // Max.Bars
-   if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
-   if (Max.Bars < -1)                                        return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
+   if (MaxBarsBack < -1)                                     return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
    string signalId = "Signal.onTrendChange";
@@ -250,9 +249,8 @@ int onTick() {
    }
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-MA.Periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ MA.Periods, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-MA.Periods);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ MA.Periods, ERR_HISTORY_INSUFFICIENT));
 
    double sum, stdDev, minChange;
 
@@ -571,7 +569,7 @@ string InputsToStr() {
                             "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
                             "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";"+ NL,
+                            "MaxBarsBack=",                    MaxBarsBack,                                    ";"+ NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,

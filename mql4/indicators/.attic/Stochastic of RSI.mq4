@@ -31,8 +31,7 @@ extern color  Main.Color               = DodgerBlue;
 extern color  Signal.Color             = Red;
 extern string Signal.DrawType          = "Line* | Dot";
 extern int    Signal.DrawWidth         = 1;
-
-extern int    Max.Bars                 = 10000;          // max. values to calculate (-1: all available)
+extern int    MaxBarsBack              = 10000;          // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -70,7 +69,6 @@ int rsiPeriods;
 
 int signalDrawType;
 int signalDrawWidth;
-int maxValues;
 
 
 /**
@@ -108,9 +106,9 @@ int onInit() {
    if (Signal.DrawWidth < 0)       return(catch("onInit(6)  invalid input parameter Signal.DrawWidth: "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    signalDrawWidth = Signal.DrawWidth;
 
-   // Max.Bars
-   if (Max.Bars < -1)              return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (MaxBarsBack < -1)           return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // buffer management
    SetIndexBuffer(MODE_RSI,       bufferRsi  );          // RSI value:      invisible
@@ -184,7 +182,7 @@ int onTick() {
    // +-----------------------------------------------------------------------------------------------------------+
 
    // calculate start bars
-   int requestedBars = Min(ChangedBars, maxValues);
+   int requestedBars = Min(ChangedBars, MaxBarsBack);
    int resultingBars = Bars - rsiPeriods - stochPeriods - ma1Periods - ma2Periods - 1; // max. resulting bars
    if (resultingBars < 1) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
@@ -238,14 +236,14 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Stoch.Main.Periods=",       Stoch.Main.Periods,       ";"+ NL,
-                            "Stoch.SlowedMain.Periods=", Stoch.SlowedMain.Periods, ";"+ NL,
-                            "Stoch.Signal.Periods=",     Stoch.Signal.Periods,     ";"+ NL,
-                            "RSI.Periods=",              RSI.Periods,              ";"+ NL,
-                            "Main.Color=",               ColorToStr(Main.Color),   ";"+ NL,
-                            "Signal.Color=",             ColorToStr(Signal.Color), ";"+ NL,
-                            "Signal.DrawType=",          Signal.DrawType,          ";"+ NL,
-                            "Signal.DrawWidth=",         Signal.DrawWidth,         ";"+ NL,
-                            "Max.Bars=",                 Max.Bars,                 ";")
+   return(StringConcatenate("Stoch.Main.Periods=",       Stoch.Main.Periods,       ";", NL,
+                            "Stoch.SlowedMain.Periods=", Stoch.SlowedMain.Periods, ";", NL,
+                            "Stoch.Signal.Periods=",     Stoch.Signal.Periods,     ";", NL,
+                            "RSI.Periods=",              RSI.Periods,              ";", NL,
+                            "Main.Color=",               ColorToStr(Main.Color),   ";", NL,
+                            "Signal.Color=",             ColorToStr(Signal.Color), ";", NL,
+                            "Signal.DrawType=",          Signal.DrawType,          ";", NL,
+                            "Signal.DrawWidth=",         Signal.DrawWidth,         ";", NL,
+                            "MaxBarsBack=",              MaxBarsBack,              ";")
    );
 }

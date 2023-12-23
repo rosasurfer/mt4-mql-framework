@@ -6618,7 +6618,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           1,                                // int    Draw.Width
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
-                          -1,                               // int    Max.Bars
+                          -1,                               // int    MaxBarsBack
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6668,7 +6668,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           CLR_NONE,                         // color  Color.Channel
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
-                          -1,                               // int    Max.Bars
+                          -1,                               // int    MaxBarsBack
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6721,7 +6721,6 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
-                          -1,                               // int    Max.Bars
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6781,7 +6780,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           Green,                            // color  Histogram.Color.Upper
                           Red,                              // color  Histogram.Color.Lower
                           2,                                // int    Histogram.Style.Width
-                          -1,                               // int    Max.Bars
+                          -1,                               // int    MaxBarsBack
                           "",                               // string ________________________
                           false,                            // bool   Signal.onCross
                           false,                            // bool   Signal.onCross.Sound
@@ -6834,7 +6833,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           Blue,                             // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           0,                                // int    Draw.Width
-                          -1,                               // int    Max.Bars
+                          -1,                               // int    MaxBarsBack
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6889,7 +6888,7 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           1,                                // int    Draw.Width
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
-                          -1,                               // int    Max.Bars
+                          -1,                               // int    MaxBarsBack
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6940,7 +6939,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
                           Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
-                          -1,                               // int    Max.Bars
+                          -1,                               // int    MaxBarsBack
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6993,7 +6992,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           CLR_NONE,                         // color  Color.MovingAverage
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
-                          -1,                               // int    Max.Bars
+                          -1,                               // int    MaxBarsBack
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -7052,7 +7051,7 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           161,                              // int    Donchian.Crossings.Wingdings
                           CLR_NONE,                         // color  Donchian.Upper.Color
                           CLR_NONE,                         // color  Donchian.Lower.Color
-                          -1,                               // int    Max.Bars
+                          -1,                               // int    MaxBarsBack
 
                           "",                               // string ____________________________
                           false,                            // bool   Signal.onReversal

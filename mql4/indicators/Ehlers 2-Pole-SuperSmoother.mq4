@@ -26,7 +26,7 @@ extern color  Color.UpTrend                  = RoyalBlue;
 extern color  Color.DownTrend                = Gold;
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern int    Max.Bars                       = 10000;    // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;    // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -73,7 +73,6 @@ double coef1;
 double coef2;
 double coef3;
 int    drawType;
-int    maxValues;
 
 string indicatorName = "";
 string legendLabel   = "";
@@ -99,7 +98,7 @@ int onInit() {
    if (sValue == "") sValue = "close";                   // default price type
    appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (appliedPrice==-1 || appliedPrice > PRICE_WEIGHTED)
-                       return(catch("onInit(2)  invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                         return(catch("onInit(2)  invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    AppliedPrice = PriceTypeDescription(appliedPrice);
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
@@ -113,12 +112,12 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                  return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
-   if (Draw.Width < 0) return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   // Max.Bars
-   if (Max.Bars < -1)  return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   if (Draw.Width < 0)   return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   // MaxBarsBack
+   if (MaxBarsBack < -1) return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signal configuration
    string signalId = "Signal.onTrendChange";
@@ -199,9 +198,8 @@ int onTick() {
    }
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-Periods);             // TODO: fix the run-up period
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods);             // TODO: fix the run-up period
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
@@ -293,7 +291,7 @@ string InputsToStr() {
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";", NL,
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";", NL,
                             "Draw.Width=",                     Draw.Width,                                     ";", NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";", NL,
+                            "MaxBarsBack=",                    MaxBarsBack,                                    ";", NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";", NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";", NL,
