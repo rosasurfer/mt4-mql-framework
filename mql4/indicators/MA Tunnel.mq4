@@ -35,12 +35,12 @@ extern string Signal.onTickCross.SoundDown   = "Alert Down.wav";
 #include <rsfLib.mqh>
 #include <functions/chartlegend.mqh>
 #include <functions/ConfigureSignals.mqh>
-#include <functions/iCustom/MaTunnel.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/iCustom/MaTunnel.mqh>
 
 #define MODE_UPPER_BAND       MaTunnel.MODE_UPPER_BAND   // indicator buffer ids
 #define MODE_LOWER_BAND       MaTunnel.MODE_LOWER_BAND   //
-#define MODE_BAR_TREND        MaTunnel.MODE_BAR_TREND    // direction + shift of the last tunnel crossing: +1...+n=up, -1...-n=down
+#define MODE_BAR_TREND        MaTunnel.MODE_BAR_TREND    // direction/shift of the last tunnel crossing: +1...+n=up, -1...-n=down
 #define MODE_TICK_TREND       MaTunnel.MODE_TICK_TREND   // ...
 
 #property indicator_chart_window
@@ -126,7 +126,6 @@ int onInit() {
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)               return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
-
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
 
