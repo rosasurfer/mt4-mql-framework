@@ -11,8 +11,6 @@
  *  The third will have you on your knees
  *  You start bleeding, I start screaming
  *
- *  @link  [Duel - Propaganda] https://www.youtube.com/watch?v=NTM_apWWcO0
- *
  *
  * Input parameters:
  * -----------------
@@ -29,16 +27,17 @@
  *    grid for a single trade direction. In birectional mode (input "both") it creates a separate grid for each direction.
  *    A "long" grid consists of BuyStop and/or BuyLimit orders, a "short" grid of SellStop and/or SellLimit orders.
  *
- * • GridVolatility:
- *
- *
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
+ *
+ *
+ *  @link  http://www.rosasurfer.com/.mt4/Propaganda%20-%20Duel%20(KGM%20Sasha%20Extended%20Remix).mp4#   [Propaganda - Duel]
+ *  @link  http://www.rosasurfer.com/.mt4/The%20Grid.mp4#                                                          [The Grid]
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = { INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING };
+int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
 int __DeinitFlags[];
 int __virtualTicks  = 10000;                                                  // every 10 seconds to continue operation on a stalled data feed
 

@@ -2,7 +2,7 @@
  * Close all orders matching the specified input.
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = { INIT_NO_BARS_REQUIRED };
+int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
 int __DeinitFlags[];
 
 #property show_inputs

@@ -5,7 +5,7 @@
  * Session.
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = { INIT_TIMEZONE };
+int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
