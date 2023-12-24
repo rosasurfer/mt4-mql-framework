@@ -185,7 +185,7 @@ int __virtualTicks  = 10000;                                // every 10 seconds 
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID          = "";                    // instance to load from a status file, format /T?[0-9]{3}/
+extern string Sequence.ID          = "";                    // instance to load from a status file, format "T?[0-9]{3}"
 extern string TradingMode          = "regular* | virtual";  // can be shortened if distinct
 
 extern int    ZigZag.Periods       = 30;
@@ -1884,7 +1884,7 @@ int CreateSequenceId() {
 
    while (!magicNumber) {
       while (sequenceId < SID_MIN || sequenceId > SID_MAX) {
-         sequenceId = MathRand();                           // TODO: generate consecutive ids in tester
+         sequenceId = MathRand();                           // TODO: generate consecutive ids when in tester
       }
       magicNumber = CalculateMagicNumber(sequenceId); if (!magicNumber) return(NULL);
 
@@ -2097,7 +2097,7 @@ string GetStatusFilename(bool relative = false) {
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = StrToLower(Symbol()) +".ZigZag."+ sequence.id +".set";
+      string baseName  = Symbol() +".ZigZag."+ sequence.id +".set";
       filename = StrReplace(directory, "\\", "/") + baseName;
    }
 
@@ -2353,7 +2353,7 @@ bool RestoreSequence() {
    if (IsLastError())        return(false);
    if (!ReadStatus())        return(false);              // read and apply the status file
    if (!ValidateInputs())    return(false);              // validate restored input parameters
-   if (!SynchronizeStatus()) return(false);              // synchronize restored state with the trade server
+   if (!SynchronizeStatus()) return(false);              // synchronize restored state with current order state
    return(true);
 }
 
@@ -2884,14 +2884,14 @@ void RestoreInputs() {
 
 
 /**
- * Validate and apply the input parameter "Sequence.ID".
+ * Validate and apply input parameter "Sequence.ID".
  *
- * @return bool - whether a sequence id was successfully restored (the status file is not checked)
+ * @return bool - whether a sequence id value was successfully restored (the status file is not checked)
  */
 bool ValidateInputs.SID() {
    bool errorFlag = true;
 
-   if (!ApplySequenceId(Sequence.ID, errorFlag, "ValidateInputs.SID(1)")) {
+   if (!SetSequenceId(Sequence.ID, errorFlag, "ValidateInputs.SID(1)")) {
       if (errorFlag) onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: \""+ Sequence.ID +"\"");
       return(false);
    }
@@ -3136,7 +3136,7 @@ bool RestoreSequenceId() {
 
    // check input parameter
    string value = Sequence.ID;
-   if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(1)")) return(true);
+   if (SetSequenceId(value, muteErrors, "RestoreSequenceId(1)")) return(true);
    isError = muteErrors;
    if (isError) return(false);
 
@@ -3145,14 +3145,14 @@ bool RestoreSequenceId() {
       string name = ProgramName() +".Sequence.ID";
       value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
       muteErrors = false;
-      if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
+      if (SetSequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
       isError = muteErrors;
       if (isError) return(false);
 
       // check chart
       if (Chart.RestoreString(name, value, false)) {
          muteErrors = false;
-         if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(3)")) return(true);
+         if (SetSequenceId(value, muteErrors, "RestoreSequenceId(3)")) return(true);
       }
    }
    return(false);
@@ -3182,16 +3182,16 @@ bool RemoveSequenceId() {
 
 
 /**
- * Parse and apply the passed sequence id value (format: /T?[0-9]{3}/).
+ * Parse and set the passed sequence id value (format: "T?[0-9]{3}").
  *
- * @param  _In_    string value  - stringyfied sequence id
- * @param  _InOut_ bool   error  - in:  whether to mute a parse error (TRUE) or to trigger a fatal error (FALSE)
- *                                 out: whether a parsing error occurred (stored in last_error)
+ * @param  _In_    string value  - sequence id value
+ * @param  _InOut_ bool   error  - in:  mute parse errors (TRUE) or trigger a fatal error (FALSE)
+ *                                 out: whether parse errors occurred (stored in last_error)
  * @param  _In_    string caller - caller identification (for error messages)
  *
- * @return bool - whether the sequence id was successfully applied
+ * @return bool - whether the sequence id value was successfully set
  */
-bool ApplySequenceId(string value, bool &error, string caller) {
+bool SetSequenceId(string value, bool &error, string caller) {
    string valueBak = value;
    bool muteErrors = error!=0;
    error = false;
@@ -3204,20 +3204,20 @@ bool ApplySequenceId(string value, bool &error, string caller) {
 
    if (StrStartsWith(value, "T")) {
       isTest = true;
-      value = StrSubstr(value, 1);
+      value = StringTrimLeft(StrSubstr(value, 1));
    }
 
    if (!StrIsDigits(value)) {
       error = true;
       if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
-      return(!catch(caller +"->ApplySequenceId(1)  invalid sequence id value: \""+ valueBak +"\" (must be digits only)", ERR_INVALID_PARAMETER));
+      return(!catch(caller +"->SetSequenceId(1)  invalid sequence id value: \""+ valueBak +"\" (must be digits only)", ERR_INVALID_PARAMETER));
    }
 
    int iValue = StrToInteger(value);
    if (iValue < SID_MIN || iValue > SID_MAX) {
       error = true;
       if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
-      return(!catch(caller +"->ApplySequenceId(2)  invalid sequence id value: \""+ valueBak +"\" (range error)", ERR_INVALID_PARAMETER));
+      return(!catch(caller +"->SetSequenceId(2)  invalid sequence id value: \""+ valueBak +"\" (range error)", ERR_INVALID_PARAMETER));
    }
 
    sequence.isTest = isTest;
