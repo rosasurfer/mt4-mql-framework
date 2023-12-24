@@ -1,16 +1,21 @@
 /**
- * Tunnel EA
+ * Vegas EA (don't use, work-in-progress)
  *
- * don't use (work-in-progress)
+ * A hybrid strategy using ideas of the "Vegas H1 Tunnel" system, the system of the "Turtle Traders" and a regular grid.
+ *
+ *
+ *  @see  https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here#                 [Vegas H1 Tunnel Method]
+ *  @see  https://analyzingalpha.com/turtle-trading#                                                         [Turtle Trading]
+ *  @see  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/experts/Duel.mq4#                             [Duel Grid EA]
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = { INIT_PIPVALUE, INIT_BUFFERED_LOG };
+int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
 int __virtualTicks = 0;
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID = "";                 // EA instance id
+extern string Instance.ID = "";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,5 +47,5 @@ int onTick() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Sequence.ID=", DoubleQuoteStr(Sequence.ID), ";"));
+   return(StringConcatenate("Instance.ID=", DoubleQuoteStr(Instance.ID), ";"));
 }

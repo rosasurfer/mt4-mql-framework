@@ -1,12 +1,8 @@
 /**
  * ZigZag EA - a modified version of the system traded by the "Turtle traders" of Richard Dennis
  *
- *
- * The ZigZag indicator coming with MetaTrader internally uses a Donchian channel for it's calculation. Thus it can be used
- * to implement the Donchian channel system as traded by Richard Dennis in his "Turtle trading" program. This EA uses a custom
- * and greatly enhanced version of the ZigZag indicator (most signals are still the same).
- *
- *  @link  https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/#             ["Turtle Trading"]
+ * The ZigZag indicator in this GitHub repository uses a Donchian channel for it's calculation. Thus it can be used to
+ * implement the Donchian channel system.
  *
  *
  * Input parameters
@@ -26,7 +22,7 @@
  *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
  *
- *    Timeseries in "quote units" are recorded in the best matching unit (one of pip, quote currency or index points).
+ *    Timeseries in "quote units" are recorded in the best matching unit (either pip, quote currency or index points).
  *
  *
  * External control
@@ -40,6 +36,10 @@
  *              start the EA in a predefined direction. Nothing changes if a position is already open.
  *  • EA.Stop:  When a "stop" command is received the EA closes open positions and stops waiting for new ZigZag signals.
  *              Nothing changes if the EA is already stopped.
+ *
+ *
+ *  @see  https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/#                [Turtle Trading]
+ *  @see  https://analyzingalpha.com/turtle-trading#                                                         [Turtle Trading]
  *
  *
  * TODO:
@@ -85,21 +85,10 @@
  *     fix gap between days/weeks if market is not open 24h
  *     implement more timeframes
  *
- *  - investigate an auto-updating global var MaxBarsBack to prevent possible integer overflows
- *  - implement global var indicator::CalculatedBars
- *
- *  - ChartInfos
- *     include current daily range in ADR calculation/display
- *     improve pending order markers (it's not visible whether a pending target covers the full position)
- *      if TP exists => mark partial TP
- *      if SL exists => mark partial SL
- *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "Today 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 2 sec, retrying...
  *     ...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 9 sec, retrying...
  *     FATAL   BTCUSD,202  ChartInfos::rsfLib::AquireLock(5)  failed to get lock on mutex "mutex.ChartInfos.command" after 10 sec, giving up  [ERR_RUNTIME_ERROR]
  *
  *  - stop on reverse signal
@@ -122,7 +111,6 @@
  *     reverse trading and command EA.Reverse
  *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
- *     analyze channel contraction
  *
  *  - visualization
  *     a chart profile per instrument
@@ -143,7 +131,6 @@
  *     recorded symbols with descriptions
  *
  *  - trade breaks
- *    - DAX: Global Prime has a session break at 23:00-23:03 (trade and quotes)
  *    - full session (24h) with trade breaks
  *    - partial session (e.g. 09:00-16:00) with trade breaks
  *    - trading is disabled but the price feed is active
@@ -176,21 +163,15 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
- *  - TradeManager for custom positions
- *     close new|all hedges
- *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
  *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
  *  - VPS: monitor and notify of incoming emails
- *  - notifications for open positions running into swap charges
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
- *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - move custom metric validation to EA
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64/terminal=512)
  *  - pass input "EA.Recorder" to the Expander as a string
- *  - build script for all .EX4 files after deployment
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
