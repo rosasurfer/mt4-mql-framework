@@ -169,7 +169,6 @@ double   icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, doub
 double   icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMainPeriods, int stochSignalPeriods, int rsiPeriods, int iBuffer, int iBar);;
 double   icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
-double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 bool     ifBool(bool condition, bool thenValue, bool elseValue);;
 double   ifDouble(bool condition, double thenValue, double elseValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;
@@ -358,6 +357,7 @@ bool     UpdateTrendDirection(double &values[], int offset, double &trend[], dou
 
 // include/functions/iCustom/
 double   icMaTunnel(int timeframe, int maPeriods, string maMethod, int iBuffer, int iBar);;
+double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 
 
 // include/functions/ta/

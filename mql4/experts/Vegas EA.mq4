@@ -1,12 +1,12 @@
 /**
- * Vegas EA (don't use, work-in-progress)
+ * Vegas EA (work-in-progress, do not yet use)
  *
  * A hybrid strategy using ideas of the "Vegas H1 Tunnel" system, the system of the "Turtle Traders" and a regular grid.
  *
  *
- *  @see  https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here#                 [Vegas H1 Tunnel Method]
- *  @see  https://analyzingalpha.com/turtle-trading#                                                         [Turtle Trading]
- *  @see  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/experts/Duel.mq4#                             [Duel Grid EA]
+ *  @see  [Vegas H1 Tunnel Method]  https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
+ *  @see  [Turtle Trading]          https://analyzingalpha.com/turtle-trading
+ *  @see  [Duel Grid EA]            https://github.com/rosasurfer/mt4-mql/blob/master/mql4/experts/Duel.mq4
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -15,7 +15,8 @@ int __virtualTicks = 0;
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID = "";
+extern string Instance.ID      = "";
+extern int    Donchian.Periods = 30;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -24,14 +25,21 @@ extern string Instance.ID = "";
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/iCustom/MaTunnel.mqh>
+#include <functions/iCustom/ZigZag.mqh>
 
-#define STRATEGY_ID         108                    // unique strategy id (10 bit, between 100-999)
+#define STRATEGY_ID         108                    // unique strategy id (used for magic order numbers)
+#define IID_MIN             100                    // min/max range of valid instance id values
+#define IID_MAX             999
 
-#define STATUS_PROGRESSING    1                    // instance status values
-#define STATUS_STOPPED        2
+#define STATUS_WAITING        1                    // instance has no open positions and waits for trade signals
+#define STATUS_PROGRESSING    2                    // instance manages open positions
+#define STATUS_STOPPED        3                    // instance has no open positions and doesn't wait for trade signals
+
+#define SIGNAL_LONG  TRADE_DIRECTION_LONG          // 1 signal types
+#define SIGNAL_SHORT TRADE_DIRECTION_SHORT         // 2
 
 // instance data
-int      instance.id;                              // instance id between 100-999
+int      instance.id;                              // instance id (100-999, also used for magic order numbers)
 datetime instance.created;
 string   instance.name = "";
 int      instance.status;
@@ -48,14 +56,16 @@ int onTick() {
 
    if (__isChart) HandleCommands();                // process incoming commands
 
-   switch (instance.status) {
-      case STATUS_PROGRESSING: break;
-      case STATUS_STOPPED:     break;
+   if (instance.status != STATUS_STOPPED) {
+      int zzSignal;
+      IsZigZagSignal(zzSignal);                    // check on every tick (signals can occur anytime)
+
+      if (instance.status == STATUS_WAITING) {
+      }
+      else if (instance.status == STATUS_PROGRESSING) {
+      }
    }
    return(catch("onTick(1)"));
-
-   double value = icMaTunnel(NULL, "EMA(36)", 0, 0);
-   debug("onTick(0.1)  Tick="+ Ticks +"  MaTunnel[0]="+ NumberToStr(value, PriceFormat));
 }
 
 
@@ -72,20 +82,80 @@ bool onCommand(string cmd, string params, int keys) {
    string fullCmd = cmd +":"+ params +":"+ keys;
 
    if (cmd == "start") {
-      if (instance.status == STATUS_STOPPED) {
-         logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-         return(StartInstance(NULL));
+      switch (instance.status) {
+         case STATUS_STOPPED:
+            logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            return(StartInstance(NULL));
       }
    }
    else if (cmd == "stop") {
-      if (instance.status == STATUS_PROGRESSING) {
-         logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-         return(StopInstance(NULL));
+      switch (instance.status) {
+         case STATUS_WAITING:
+         case STATUS_PROGRESSING:
+            logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            return(StopInstance(NULL));
       }
    }
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
+}
+
+
+/**
+ * Whether a new ZigZag reversal occurred.
+ *
+ * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
+ *
+ * @return bool
+ */
+bool IsZigZagSignal(int &signal) {
+   if (last_error != NULL) return(false);
+   signal = NULL;
+
+   static int lastTick, lastResult, lastSignal;
+   int trend, reversal;
+
+   if (Ticks == lastTick) {
+      signal = lastResult;
+   }
+   else {
+      if (!GetZigZagTrendData(0, trend, reversal)) return(false);
+
+      if (Abs(trend)==reversal || !reversal) {     // reversal=0 denotes a double crossing, trend is +1 or -1
+         if (trend > 0) {
+            if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
+         }
+         else {
+            if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
+         }
+         if (signal != NULL) {
+            if (instance.status == STATUS_PROGRESSING) {
+               if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            }
+            lastSignal = signal;
+         }
+      }
+      lastTick   = Ticks;
+      lastResult = signal;
+   }
+   return(signal != NULL);
+}
+
+
+/**
+ * Get ZigZag trend data at the specified bar offset.
+ *
+ * @param  _In_  int bar            - bar offset
+ * @param  _Out_ int &combinedTrend - combined trend value (MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers)
+ * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to the previous ZigZag extreme
+ *
+ * @return bool - success status
+ */
+bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
+   combinedTrend = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_TREND,    bar));
+   reversal      = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_REVERSAL, bar));
+   return(combinedTrend != 0);
 }
 
 
@@ -104,15 +174,15 @@ bool StartInstance(int signal) {
 
 
 /**
- * Stop a progressing instance and close open positions (if any).
+ * Stop a waiting or progressing instance and close open positions (if any).
  *
  * @param  int signal - trade signal causing the call or NULL on explicit stop (i.e. manual)
  *
  * @return bool - success status
  */
 bool StopInstance(int signal) {
-   if (last_error != NULL)                    return(false);
-   if (instance.status != STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)                                                     return(false);
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    return(true);
 }
 
@@ -127,6 +197,7 @@ bool StopInstance(int signal) {
 string StatusToStr(int status) {
    switch (status) {
       case NULL              : return("(NULL)"            );
+      case STATUS_WAITING    : return("STATUS_WAITING"    );
       case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
       case STATUS_STOPPED    : return("STATUS_STOPPED"    );
    }
@@ -144,6 +215,7 @@ string StatusToStr(int status) {
 string StatusDescription(int status) {
    switch (status) {
       case NULL              : return("undefined"  );
+      case STATUS_WAITING    : return("waiting"    );
       case STATUS_PROGRESSING: return("progressing");
       case STATUS_STOPPED    : return("stopped"    );
    }
@@ -157,5 +229,9 @@ string StatusDescription(int status) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=", DoubleQuoteStr(Instance.ID), ";"));
+   return(StringConcatenate("Instance.ID=",      DoubleQuoteStr(Instance.ID), ";", NL,
+                            "Donchian.Periods=", Donchian.Periods,            ";")
+   );
+
+   icMaTunnel(NULL, NULL, NULL, NULL);
 }

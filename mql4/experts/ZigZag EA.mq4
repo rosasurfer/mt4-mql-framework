@@ -38,8 +38,8 @@
  *              Nothing changes if the EA is already stopped.
  *
  *
- *  @see  https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/#                [Turtle Trading]
- *  @see  https://analyzingalpha.com/turtle-trading#                                                         [Turtle Trading]
+ *  @see  [Turtle Trading]  http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
+ *  @see  [Turtle Trading]  https://analyzingalpha.com/turtle-trading
  *
  *
  * TODO:
@@ -188,7 +188,7 @@ int __virtualTicks  = 10000;                                // every 10 seconds 
 extern string Sequence.ID          = "";                    // instance to load from a status file, format /T?[0-9]{3}/
 extern string TradingMode          = "regular* | virtual";  // can be shortened if distinct
 
-extern int    ZigZag.Periods       = 40;
+extern int    ZigZag.Periods       = 30;
 extern double Lots                 = 0.1;
 extern string StartConditions      = "";                    // @time(datetime|time)
 extern string StopConditions       = "";                    // @time(datetime|time)          // TODO: @signal([long|short]), @breakeven(on-profit), @trail([on-profit:]stepsize)
@@ -206,9 +206,10 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/ParseDateTime.mqh>
+#include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID               107           // unique strategy id (between 101-1023, 10 bit)
+#define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
 #define SID_MIN                   100           // range of valid sequence id values
 #define SID_MAX                   999
 
@@ -363,7 +364,7 @@ int onTick() {
 
    if (sequence.status != STATUS_STOPPED) {
       int signal, zzSignal;
-      IsZigZagSignal(zzSignal);                                // check ZigZag on every tick (signals occur anytime)
+      IsZigZagSignal(zzSignal);                                // check ZigZag on every tick (signals can occur anytime)
 
       if (sequence.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) StartSequence(signal);
@@ -734,7 +735,7 @@ void RecordMetrics() {
 /**
  * Whether a new ZigZag reversal occurred.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of an occurred reversal
+ * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
  *
  * @return bool
  */
@@ -751,7 +752,7 @@ bool IsZigZagSignal(int &signal) {
    else {
       if (!GetZigZagTrendData(0, trend, reversal)) return(false);
 
-      if (Abs(trend)==reversal || !reversal) {     // reversal=0 describes a double crossing, trend is +1 or -1
+      if (Abs(trend)==reversal || !reversal) {     // reversal=0 denotes a double crossing, trend is +1 or -1
          if (trend > 0) {
             if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
          }
@@ -781,13 +782,13 @@ bool IsZigZagSignal(int &signal) {
  *
  * @param  _In_  int bar            - bar offset
  * @param  _Out_ int &combinedTrend - combined trend value (MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers)
- * @param  _Out_ int &reversal      - bar offset of the current ZigZag reversal to the previous ZigZag extreme
+ * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to the previous ZigZag extreme
  *
  * @return bool - success status
  */
 bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
-   combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
-   reversal      = Round(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
+   combinedTrend = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
+   reversal      = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
 }
 
@@ -2107,24 +2108,6 @@ string GetStatusFilename(bool relative = false) {
 
 
 /**
- * Return a description of a sequence status code.
- *
- * @param  int status
- *
- * @return string - description or an empty string in case of errors
- */
-string StatusDescription(int status) {
-   switch (status) {
-      case NULL              : return("undefined"  );
-      case STATUS_WAITING    : return("waiting"    );
-      case STATUS_PROGRESSING: return("progressing");
-      case STATUS_STOPPED    : return("stopped"    );
-   }
-   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
  * Return a readable presentation of a sequence status code.
  *
  * @param  int status
@@ -2139,6 +2122,24 @@ string StatusToStr(int status) {
       case STATUS_STOPPED    : return("STATUS_STOPPED"    );
    }
    return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return a description of a sequence status code.
+ *
+ * @param  int status
+ *
+ * @return string - description or an empty string in case of errors
+ */
+string StatusDescription(int status) {
+   switch (status) {
+      case NULL              : return("undefined"  );
+      case STATUS_WAITING    : return("waiting"    );
+      case STATUS_PROGRESSING: return("progressing");
+      case STATUS_STOPPED    : return("stopped"    );
+   }
+   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
 }
 
 

@@ -97,11 +97,12 @@ extern string Sound.onCrossing.Down          = "Price Decline.wav";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
-#include <functions/chartlegend.mqh>
+#include <functions/iCustom/ZigZag.mqh>
 #include <win32api.mqh>
 
 // indicator buffer ids
@@ -991,4 +992,7 @@ string InputsToStr() {
                             "Sound.onCrossing.Up=",          DoubleQuoteStr(Sound.onCrossing.Up)         +";"+ NL,
                             "Sound.onCrossing.Down=",        DoubleQuoteStr(Sound.onCrossing.Down)       +";")
    );
+
+   // suppress compiler warnings
+   icZigZag(NULL, NULL, NULL, NULL);
 }

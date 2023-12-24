@@ -7022,72 +7022,6 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
 
 
 /**
- * Load the custom "ZigZag" indicator and return a value.
- *
- * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int periods   - indicator parameter
- * @param  int iBuffer   - indicator buffer index of the value to return
- * @param  int iBar      - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   double value = iCustom(NULL, timeframe, "ZigZag",
-                          "",                               // string ____________________________
-                          periods,                          // int    ZigZag.Periods
-                          0,                                // int    ZigZag.Periods.Step
-                          "Line",                           // string ZigZag.Type
-                          1,                                // int    ZigZag.Width
-                          108,                              // int    ZigZag.Semaphores.Wingdings
-                          CLR_NONE,                         // color  ZigZag.Color
-
-                          "",                               // string ____________________________
-                          false,                            // bool   Donchian.ShowChannel
-                          "off",                            // string Donchian.ShowCrossings
-                          1,                                // int    Donchian.Crossings.Width
-                          161,                              // int    Donchian.Crossings.Wingdings
-                          CLR_NONE,                         // color  Donchian.Upper.Color
-                          CLR_NONE,                         // color  Donchian.Lower.Color
-                          -1,                               // int    MaxBarsBack
-
-                          "",                               // string ____________________________
-                          false,                            // bool   Signal.onReversal
-                          false,                            // bool   Signal.onReversal.Sound
-                          "",                               // string Signal.onReversal.SoundUp
-                          "",                               // string Signal.onReversal.SoundDown
-                          false,                            // bool   Signal.onReversal.Popup
-                          false,                            // bool   Signal.onReversal.Mail
-                          false,                            // bool   Signal.onReversal.SMS
-
-                          "",                               // string ____________________________
-                          false,                            // bool   Sound.onCrossing
-                          "",                               // string Sound.onCrossing.Up
-                          "",                               // string Sound.onCrossing.Down
-
-                          "",                               // string ____________________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
-
-                          iBuffer, iBar);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icZigZag(1)", error));
-      logWarn("icZigZag(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(!SetLastError(error));
-}
-
-
-/**
  * Check a trade server path for safe usage. If the path was not used before a notice is emitted and the path is marked.
  *
  * @param  string path              - if a relative path:  relative to the MQL sandbox/files directory
@@ -7238,7 +7172,6 @@ void __DummyCalls() {
    icNLMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
-   icZigZag(NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
