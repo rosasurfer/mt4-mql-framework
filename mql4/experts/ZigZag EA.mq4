@@ -1855,9 +1855,9 @@ int CalculateMagicNumber(int sequenceId = NULL) {
 
 
 /**
- * Whether the currently selected ticket belongs to the current strategy and/or instance.
+ * Whether the currently selected ticket belongs to the current strategy and optionally sequence.
  *
- * @param  int sequenceId [optional] - sequence to check the ticket against (default: check for matching strategy)
+ * @param  int sequenceId [optional] - sequence to check the ticket against (default: check for matching strategy only)
  *
  * @return bool
  */
@@ -2098,7 +2098,7 @@ string GetStatusFilename(bool relative = false) {
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompanyId()) +"/";
       string baseName  = Symbol() +".ZigZag."+ sequence.id +".set";
-      filename = StrReplace(directory, "\\", "/") + baseName;
+      filename = directory + baseName;
    }
 
    if (relative)
@@ -2380,7 +2380,7 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sSequenceID          = GetIniStringA(file, section, "Sequence.ID",          "");            // string Sequence.ID          = T1234
+   string sSequenceID          = GetIniStringA(file, section, "Sequence.ID",          "");            // string Sequence.ID          = T123
    string sTradingMode         = GetIniStringA(file, section, "TradingMode",          "");            // string TradingMode          = regular
    int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"          );            // int    ZigZag.Periods       = 40
    string sLots                = GetIniStringA(file, section, "Lots",                 "");            // double Lots                 = 0.1
@@ -2415,10 +2415,10 @@ bool ReadStatus() {
    tradingMode                 = GetIniInt    (file, section, "tradingMode");                         // int      tradingMode                 = 1
 
    // sequence data
-   sequence.id                 = GetIniInt    (file, section, "sequence.id"                );         // int      sequence.id                 = 1234
+   sequence.id                 = GetIniInt    (file, section, "sequence.id"                );         // int      sequence.id                 = 123
    sequence.created            = GetIniInt    (file, section, "sequence.created"           );         // datetime sequence.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
    sequence.isTest             = GetIniBool   (file, section, "sequence.isTest"            );         // bool     sequence.isTest             = 1
-   sequence.name               = GetIniStringA(file, section, "sequence.name",           "");         // string   sequence.name               = Z.1234
+   sequence.name               = GetIniStringA(file, section, "sequence.name",           "");         // string   sequence.name               = Z.123
    sequence.status             = GetIniInt    (file, section, "sequence.status"            );         // int      sequence.status             = 1
    sequence.startEquityM       = GetIniDouble (file, section, "sequence.startEquityM"      );         // double   sequence.startEquityM       = 1000.00
 
@@ -2608,7 +2608,8 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
 
 
 /**
- * Synchronize restored state and runtime vars with the trade server. Called only from RestoreSequence().
+ * Synchronize restored state and runtime vars with current order status on the trade server.
+ * Called only from RestoreSequence().
  *
  * @return bool - success status
  */

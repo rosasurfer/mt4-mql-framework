@@ -4094,20 +4094,20 @@ int DeleteRegisteredObjects() {
 /**
  * Findet alle zum angegebenen Muster passenden Dateinamen. Die Pseudo-Verzeichnisse "." und ".." werden nicht berücksichtigt.
  *
- * @param  string pattern     - Namensmuster mit Wildcards nach Windows-Konventionen
- * @param  string lpResults[] - Zeiger auf Array zur Aufnahme der Suchergebnisse
- * @param  int    flags       - zusätzliche Suchflags: [FF_DIRSONLY | FF_FILESONLY | FF_SORT] (default: keine)
+ * @param  string pattern    - Namensmuster mit Wildcards nach Windows-Konventionen
+ * @param  string &results[] - Array zur Aufnahme der Suchergebnisse
+ * @param  int    flags      - zusätzliche Suchflags: [FF_DIRSONLY | FF_FILESONLY | FF_SORT] (default: keine)
  *
- *                              FF_DIRSONLY:  return only directory entries which match the pattern (default: all entries)
- *                              FF_FILESONLY: return only file entries which match the pattern      (default: all entries)
- *                              FF_SORT:      sort returned entries                                 (default: NTFS: sorting, FAT: no sorting)
+ *                             FF_DIRSONLY:  return matching directory entries only (default: all entries)
+ *                             FF_FILESONLY: return matching file entries onöy      (default: all entries)
+ *                             FF_SORT:      sort returned results                  (default: FAT=unsorted, NTFS=sorted)
  *
  * @return int - Anzahl der gefundenen Einträge oder EMPTY (-1), falls ein Fehler auftrat
  */
-int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
+int FindFileNames(string pattern, string &results[], int flags = NULL) {
    if (!StringLen(pattern)) return(_EMPTY(catch("FindFileNames(1)  illegal parameter pattern: \""+ pattern +"\"", ERR_INVALID_PARAMETER)));
 
-   ArrayResize(lpResults, 0);
+   ArrayResize(results, 0);
 
    string name = "";
    /*WIN32_FIND_DATA*/ int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA_size);
@@ -4122,7 +4122,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
             if (name == "..")               break;
          }
          else if (flags & FF_DIRSONLY && 1) break;
-         ArrayPushString(lpResults, name);
+         ArrayPushString(results, name);
          break;
       }
       next = FindNextFileA(hSearch, wfd);
@@ -4133,7 +4133,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
       return(0);
    FindClose(hSearch);
 
-   int size = ArraySize(lpResults);
+   int size = ArraySize(results);
 
    if (flags & FF_SORT && size > 1) {                                // TODO: Ergebnisse ggf. sortieren
    }

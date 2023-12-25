@@ -231,6 +231,25 @@ int CalculateMagicNumber(int instanceId = NULL) {
 
 
 /**
+ * Whether the currently selected ticket belongs to the current strategy and optionally instance.
+ *
+ * @param  int instanceId [optional] - instance to check the ticket against (default: check for matching strategy only)
+ *
+ * @return bool
+ */
+bool IsMyOrder(int instanceId = NULL) {
+   if (OrderSymbol() == Symbol()) {
+      int strategy = OrderMagicNumber() >> 22;
+      if (strategy == STRATEGY_ID) {
+         int instance = OrderMagicNumber() >> 8 & 0x3FFF;   // 14 bit starting at bit 8: instance id
+         return(!instanceId || instanceId==instance);
+      }
+   }
+   return(false);
+}
+
+
+/**
  * Generate a new instance id. Must be unique for all instances of this strategy.
  *
  * @return int - instances id in the range of 100-999 or NULL in case of errors
@@ -323,13 +342,83 @@ bool SetInstanceId(string value, bool &error, string caller) {
  * @return bool - success status
  */
 bool RestoreInstance() {
-   return(!catch("RestoreInstance(1)", ERR_NOT_IMPLEMENTED));
-
-   //if (IsLastError())        return(false);
-   //if (!ReadStatus())        return(false);              // read and apply the status file
-   //if (!ValidateInputs())    return(false);              // validate restored input parameters
-   //if (!SynchronizeStatus()) return(false);              // synchronize restored state with current order state
+   if (IsLastError())        return(false);
+   if (!ReadStatus())        return(false);              // read and apply the status file
+   if (!ValidateInputs())    return(false);              // validate restored input parameters
+   if (!SynchronizeStatus()) return(false);              // synchronize restored state with current order state
    return(true);
+}
+
+
+/**
+ * Read the status file of an instance and restore inputs and runtime variables. Called only from RestoreSequence().
+ *
+ * @return bool - success status
+ */
+bool ReadStatus() {
+   if (IsLastError()) return(false);
+   if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
+
+   string section="", file=FindStatusFile(instance.id);
+   if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
+   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+
+   // [General]
+   section = "General";
+   string sAccount     = GetIniStringA(file, section, "Account", "");                  // string Account = ICMarkets:12345678 (demo)
+   string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                  // string Symbol  = EURUSD
+   string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
+   if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(4)  "+ instance.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   if (!StrCompareI(sSymbol, Symbol()))                       return(!catch("ReadStatus(5)  "+ instance.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+
+   // [Inputs]
+   section = "Inputs";
+   string sInstanceID      = GetIniStringA(file, section, "Instance.ID",  "");         // string Instance.ID      = T123
+   int    iDonchianPeriods = GetIniInt    (file, section, "Donchian.Periods");         // int    Donchian.Periods = 40
+
+   Instance.ID      = sInstanceID;
+   Donchian.Periods = iDonchianPeriods;
+
+   // [Runtime status]
+   section = "Runtime status";
+   instance.id             = GetIniInt    (file, section, "instance.id"      );        // int      instance.id      = 123
+   instance.created        = GetIniInt    (file, section, "instance.created" );        // datetime instance.created = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.isTest         = GetIniBool   (file, section, "instance.isTest"  );        // bool     instance.isTest  = 1
+   instance.name           = GetIniStringA(file, section, "instance.name", "");        // string   instance.name    = V.123
+   instance.status         = GetIniInt    (file, section, "instance.status"  );        // int      instance.status  = 1
+   SS.InstanceName();
+
+   return(!catch("ReadStatus(6)"));
+}
+
+
+/**
+ * Synchronize restored state and runtime vars with current order status on the trade server.
+ * Called only from RestoreSequence().
+ *
+ * @return bool - success status
+ */
+bool SynchronizeStatus() {
+   if (IsLastError()) return(false);
+
+   // detect & handle dangling open positions
+   for (int i=OrdersTotal()-1; i >= 0; i--) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
+      if (IsMyOrder(instance.id)) {
+         // TODO
+      }
+   }
+
+   // detect & handle dangling closed positions
+   for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) continue;
+      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders (atm not supported)
+
+      if (IsMyOrder(instance.id)) {
+         // TODO
+      }
+   }
+   return(!catch("SynchronizeStatus(1)"));
 }
 
 
@@ -355,17 +444,44 @@ string GetLogFilename() {
  */
 string GetStatusFilename(bool relative = false) {
    relative = relative!=0;
-   if (!instance.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE)));
+   if (!instance.id)      return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ instance.name +" illegal value of instance.id: 0", ERR_ILLEGAL_STATE)));
+   if (!instance.created) return(_EMPTY_STR(catch("GetStatusFilename(2)  "+ instance.name +" illegal value of instance.created: 0", ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = Symbol() +".Vegas."+ instance.id +".set";
-      filename = StrReplace(directory, "\\", "/") + baseName;
+      string baseName  = Symbol() +"."+ GmtTimeFormat(instance.created, "%Y.%m.%d %H.%M") +".Vegas."+ instance.id +".set";
+      filename = directory + baseName;
    }
 
    if (relative)
       return(filename);
    return(GetMqlSandboxPath() +"/"+ filename);
+}
+
+
+/**
+ * Find the name of the status file for the specified instance.
+ *
+ * @param  int instanceId
+ *
+ * @return string - absolute filename or an empty string in case of errors
+ */
+string FindStatusFile(int instanceId) {
+   if (instanceId < IID_MIN || instanceId > IID_MAX) return(_EMPTY_STR(catch("FindStatusFile(1)  "+ instance.name +" invalid parameter instanceId: "+ instanceId, ERR_INVALID_PARAMETER)));
+
+   string sandboxDir  = GetMqlSandboxPath() +"/";
+   string statusDir   = "presets/"+ GetAccountCompanyId() +"/";
+   string basePattern = Symbol() +".*.Vegas."+ instanceId +".set";
+   string pathPattern = sandboxDir + statusDir + basePattern;
+
+   string result[];
+   int size = FindFileNames(pathPattern, result, FF_FILESONLY);
+
+   if (size != 1) {
+      if (size > 1) logWarn("FindStatusFile(2)  "+ instance.name +" multiple matching files found for pattern "+ DoubleQuoteStr(pathPattern), ERR_ILLEGAL_STATE);
+      return("");
+   }
+   return(sandboxDir + statusDir + result[0]);
 }
 
 
@@ -397,8 +513,7 @@ bool SaveStatus() {
    // [Inputs]
    section = "Inputs";
    WriteIniString(file, section, "Instance.ID",      /*string*/ Instance.ID);
-   WriteIniString(file, section, "Donchian.Periods", /*int   */ Donchian.Periods);
-   WriteIniString(file, section, "EA.Recorder",      /*string*/ EA.Recorder + separator);                            // conditional section separator
+   WriteIniString(file, section, "Donchian.Periods", /*int   */ Donchian.Periods + separator);                       // conditional section separator
 
    // [Runtime status]
    section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
