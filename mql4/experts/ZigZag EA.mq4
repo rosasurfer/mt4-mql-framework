@@ -973,7 +973,7 @@ bool IsTradingTime() {
 /**
  * Whether a start condition is satisfied for a sequence.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
+ * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
  *
  * @return bool
  */
@@ -981,12 +981,12 @@ bool IsStartSignal(int &signal) {
    signal = NULL;
    if (last_error || sequence.status!=STATUS_WAITING) return(false);
 
-   // start.time: -----------------------------------------------------------------------------------------------------------
+   // start.time ------------------------------------------------------------------------------------------------------------
    if (!IsTradingTime()) {
       return(false);
    }
 
-   // ZigZag signal: --------------------------------------------------------------------------------------------------------
+   // ZigZag signal ---------------------------------------------------------------------------------------------------------
    if (IsZigZagSignal(signal)) {
       bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
       int loglevel = ifInt(sequenceWasStarted, LOG_INFO, LOG_NOTICE);
@@ -2084,10 +2084,10 @@ string GetLogFilename() {
 
 
 /**
- * Return the full name of the instance status file.
+ * Return the name of the status file.
  *
- * @param  bool relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
- *                                    (default: the absolute path)
+ * @param  bool relative [optional] - whether to return an absolute path or a path relative to the MQL "files" directory
+ *                                    (default: absolute path)
  *
  * @return string - filename or an empty string in case of errors
  */

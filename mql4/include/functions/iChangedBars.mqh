@@ -15,7 +15,7 @@
  * @return int - number of changed bars or EMPTY (-1) in case of errors
  */
 int iChangedBars(string symbol="0", int timeframe=NULL) {
-   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(_EMPTY(catch("iChangedBars(1)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_ILLEGAL_STATE)));
+   if (__CoreFunction != CF_START) return(_EMPTY(catch("iChangedBars(1)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__CoreFunction), ERR_ILLEGAL_STATE)));
 
    if (symbol == "0") symbol = Symbol();                          // (string) NULL
    if (!timeframe) timeframe = Period();

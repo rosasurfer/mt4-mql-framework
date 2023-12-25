@@ -33,9 +33,9 @@
  *            arrive the array is dynamically extended.
  */
 int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
-   if (ArrayDimension(target) != 2)                            return(_EMPTY(catch("iCopyRates(1)  invalid parameter target[] (illegal number of dimensions: "+ ArrayDimension(target) +")", ERR_INCOMPATIBLE_ARRAY)));
-   if (ArrayRange(target, 1) != 6)                             return(_EMPTY(catch("iCopyRates(2)  invalid size of parameter target: array["+ ArrayRange(target, 0) +"]["+ ArrayRange(target, 1) +"]", ERR_INCOMPATIBLE_ARRAY)));
-   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(_EMPTY(catch("iCopyRates(3)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_ILLEGAL_STATE)));
+   if (ArrayDimension(target) != 2) return(_EMPTY(catch("iCopyRates(1)  invalid parameter target[] (illegal number of dimensions: "+ ArrayDimension(target) +")", ERR_INCOMPATIBLE_ARRAY)));
+   if (ArrayRange(target, 1) != 6)  return(_EMPTY(catch("iCopyRates(2)  invalid size of parameter target: array["+ ArrayRange(target, 0) +"]["+ ArrayRange(target, 1) +"]", ERR_INCOMPATIBLE_ARRAY)));
+   if (__CoreFunction != CF_START)  return(_EMPTY(catch("iCopyRates(3)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__CoreFunction), ERR_ILLEGAL_STATE)));
 
    if (symbol == "0") symbol = Symbol();                       // (string) NULL
    if (!timeframe) timeframe = Period();

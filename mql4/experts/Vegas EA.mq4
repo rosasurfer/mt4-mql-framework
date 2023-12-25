@@ -30,8 +30,10 @@ extern int    Donchian.Periods = 30;
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
+#include <functions/IsBarOpen.mqh>
 #include <functions/iCustom/MaTunnel.mqh>
 #include <functions/iCustom/ZigZag.mqh>
+#include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID         108                    // unique strategy id (used for magic order numbers)
 #define IID_MIN             100                    // min/max range of valid instance id values
@@ -70,10 +72,11 @@ int onTick() {
    if (__isChart) HandleCommands();                // process incoming commands
 
    if (instance.status != STATUS_STOPPED) {
-      int zzSignal;
-      IsZigZagSignal(zzSignal);                    // check on every tick (signals can occur anytime)
+      int signal, dcnSignal;
+      IsDonchianSignal(dcnSignal);                 // check on every tick (signals can occur anytime)
 
       if (instance.status == STATUS_WAITING) {
+         if (IsStartSignal(signal)) StartInstance(signal);
       }
       else if (instance.status == STATUS_PROGRESSING) {
       }
@@ -94,11 +97,11 @@ int onTick() {
 bool onCommand(string cmd, string params, int keys) {
    string fullCmd = cmd +":"+ params +":"+ keys;
 
-   if (cmd == "start") {
+   if (cmd == "restart") {
       switch (instance.status) {
          case STATUS_STOPPED:
             logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            return(StartInstance(NULL));
+            return(RestartInstance());
       }
    }
    else if (cmd == "stop") {
@@ -116,13 +119,39 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Whether a new ZigZag reversal occurred.
+ * Whether a new MA tunnel crossing occurred.
  *
  * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
  *
  * @return bool
  */
-bool IsZigZagSignal(int &signal) {
+bool IsMaTunnelSignal(int &signal) {
+   if (last_error != NULL) return(false);
+   signal = NULL;
+
+   if (IsBarOpen()) {
+      string tunnelDefinition = "EMA(9), EMA(36), EMA(144)";
+      int trend = icMaTunnel(NULL, tunnelDefinition, MaTunnel.MODE_BAR_TREND, 1);
+
+      if      (trend == +1) signal = SIGNAL_LONG;
+      else if (trend == -1) signal = SIGNAL_SHORT;
+
+      if (signal && instance.status==STATUS_PROGRESSING) {
+         if (IsLogInfo()) logInfo("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      }
+   }
+   return(signal != NULL);
+}
+
+
+/**
+ * Whether a new Donchian channel reversal occurred.
+ *
+ * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
+ *
+ * @return bool
+ */
+bool IsDonchianSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
@@ -144,7 +173,7 @@ bool IsZigZagSignal(int &signal) {
          }
          if (signal != NULL) {
             if (instance.status == STATUS_PROGRESSING) {
-               if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+               if (IsLogInfo()) logInfo("IsDonchianSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             }
             lastSignal = signal;
          }
@@ -161,7 +190,7 @@ bool IsZigZagSignal(int &signal) {
  *
  * @param  _In_  int bar            - bar offset
  * @param  _Out_ int &combinedTrend - combined trend value (MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers)
- * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to the previous ZigZag extreme
+ * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to the previous ZigZag semaphore
  *
  * @return bool - success status
  */
@@ -173,15 +202,42 @@ bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
 
 
 /**
- * Restart a stopped instance.
+ * Whether a start condition is satisfied for the waiting instance.
  *
- * @param  int signal - trade signal causing the call or NULL on explicit start (i.e. manual)
+ * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
+ *
+ * @return bool
+ */
+bool IsStartSignal(int &signal) {
+   signal = NULL;
+   if (last_error || instance.status!=STATUS_WAITING) return(false);
+
+   // MA Tunnel signal ------------------------------------------------------------------------------------------------------
+   if (IsMaTunnelSignal(signal)) {
+      logInfo("IsStartSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      return(true);
+   }
+
+   // Donchian signal -------------------------------------------------------------------------------------------------------
+   if (IsDonchianSignal(signal)) {
+      logInfo("IsStartSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Start a waiting instance and change the status to "progressing".
+ *
+ * @param  int signal - trade signal causing the call
  *
  * @return bool - success status
  */
 bool StartInstance(int signal) {
-   if (last_error != NULL)                return(false);
-   if (instance.status != STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)                          return(false);
+   if (instance.status != STATUS_WAITING)           return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    return(true);
 }
 
@@ -196,6 +252,18 @@ bool StartInstance(int signal) {
 bool StopInstance(int signal) {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   return(true);
+}
+
+
+/**
+ * Restart a stopped instance.
+ *
+ * @return bool - success status
+ */
+bool RestartInstance() {
+   if (last_error != NULL)                return(false);
+   if (instance.status != STATUS_STOPPED) return(!catch("RestartInstance(1)  "+ instance.name +" cannot restart "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    return(true);
 }
 
@@ -359,12 +427,12 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string section="", file=FindStatusFile(instance.id);
+   string file = FindStatusFile(instance.id);
    if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
    if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
-   section = "General";
+   string section      = "General";
    string sAccount     = GetIniStringA(file, section, "Account", "");                  // string Account = ICMarkets:12345678 (demo)
    string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                  // string Symbol  = EURUSD
    string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
@@ -435,10 +503,10 @@ string GetLogFilename() {
 
 
 /**
- * Return the full name of the instance status file.
+ * Return the name of the status file.
  *
- * @param  bool relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
- *                                    (default: the absolute path)
+ * @param  bool relative [optional] - whether to return an absolute path or a path relative to the MQL "files" directory
+ *                                    (default: absolute path)
  *
  * @return string - filename or an empty string in case of errors
  */
@@ -460,7 +528,7 @@ string GetStatusFilename(bool relative = false) {
 
 
 /**
- * Find the name of the status file for the specified instance.
+ * Find an existing status file for the specified instance.
  *
  * @param  int instanceId
  *
@@ -478,8 +546,7 @@ string FindStatusFile(int instanceId) {
    int size = FindFileNames(pathPattern, result, FF_FILESONLY);
 
    if (size != 1) {
-      if (size > 1) logWarn("FindStatusFile(2)  "+ instance.name +" multiple matching files found for pattern "+ DoubleQuoteStr(pathPattern), ERR_ILLEGAL_STATE);
-      return("");
+      if (size > 1) return(_EMPTY_STR(logError("FindStatusFile(2)  "+ instance.name +" multiple matching files found for pattern "+ DoubleQuoteStr(pathPattern), ERR_ILLEGAL_STATE)));
    }
    return(sandboxDir + statusDir + result[0]);
 }
@@ -809,5 +876,7 @@ string InputsToStr() {
                             "Donchian.Periods=", Donchian.Periods,            ";")
    );
 
-   icMaTunnel(NULL, NULL, NULL, NULL);
+   // suppress compiler warnings
+   int iNulls[];
+   ORDER_EXECUTION.toStr(iNulls);
 }
