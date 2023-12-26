@@ -2108,7 +2108,7 @@ string GetStatusFilename(bool relative = false) {
 
 
 /**
- * Return a readable presentation of a sequence status code.
+ * Return a readable representation of a sequence status code.
  *
  * @param  int status
  *
@@ -2134,7 +2134,7 @@ string StatusToStr(int status) {
  */
 string StatusDescription(int status) {
    switch (status) {
-      case NULL              : return("undefined"  );
+      case NULL              : return("(undefined)");
       case STATUS_WAITING    : return("waiting"    );
       case STATUS_PROGRESSING: return("progressing");
       case STATUS_STOPPED    : return("stopped"    );
@@ -2144,7 +2144,7 @@ string StatusDescription(int status) {
 
 
 /**
- * Return a readable presentation of a signal constant.
+ * Return a readable representation of a signal constant.
  *
  * @param  int signal
  *
@@ -2152,7 +2152,7 @@ string StatusDescription(int status) {
  */
 string SignalToStr(int signal) {
    switch (signal) {
-      case NULL             : return("no signal"        );
+      case NULL             : return("(undefined)"      );
       case SIGNAL_LONG      : return("SIGNAL_LONG"      );
       case SIGNAL_SHORT     : return("SIGNAL_SHORT"     );
       case SIGNAL_TIME      : return("SIGNAL_TIME"      );
@@ -2393,8 +2393,8 @@ bool ReadStatus() {
    string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",          "");            // string EA.Recorder          = 1,2,4
    string sEaRecorderAutoScale = GetIniStringA(file, section, "EA.RecorderAutoScale", "");            // bool   EA.RecorderAutoScale = 0
 
-   if (!StrIsNumeric(sLots))                 return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (!StrIsNumeric(sTakeProfit))           return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sLots))       return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sTakeProfit)) return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
    Sequence.ID          = sSequenceID;
    TradingMode          = sTradingMode;
@@ -2444,8 +2444,8 @@ bool ReadStatus() {
 
    // open order data
    open.ticket                 = GetIniInt    (file, section, "open.ticket"      );                   // int      open.ticket       = 123456
-   open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 0
-   open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800
+   open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 1
+   open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
    open.bid                    = GetIniDouble (file, section, "open.bid"         );                   // double   open.bid          = 1.24363
    open.ask                    = GetIniDouble (file, section, "open.ask"         );                   // double   open.ask          = 1.24363
    open.price                  = GetIniDouble (file, section, "open.price"       );                   // double   open.price        = 1.24363
@@ -2716,8 +2716,8 @@ bool IsLocalClosedPosition(int ticket) {
 
 
 /**
- * Whether the current sequence was created in the tester. Considers that a test sequence can be loaded into an online
- * chart after the test (for visualization and analysis).
+ * Whether the current instance was created in the tester. Considers that a finished test may have been loaded into an online
+ * chart for visualization and further analysis.
  *
  * @return bool
  */
@@ -2780,7 +2780,7 @@ bool     prev.recordCustom;
  * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backup input parameters, also accessed for comparison in ValidateInputs()
+   // backup input parameters, used for comparison in ValidateInputs()
    prev.Sequence.ID          = StringConcatenate(Sequence.ID, "");   // string inputs are references to internal C literals and must be copied to break the reference
    prev.TradingMode          = StringConcatenate(TradingMode, "");
    prev.ZigZag.Periods       = ZigZag.Periods;
@@ -3357,7 +3357,7 @@ void SS.PLStats() {
             sSequenceMaxNetProfit   = NumberToStr(sequence.maxNetProfitM, "+.2");
             sSequenceMaxNetDrawdown = NumberToStr(sequence.maxNetDrawdownM, "+.2");
          }
-         sSequencePlStats = StringConcatenate("(", sSequenceMaxNetProfit, " / ", sSequenceMaxNetDrawdown, ")");
+         sSequencePlStats = StringConcatenate("(", sSequenceMaxNetDrawdown, "/", sSequenceMaxNetProfit, ")");
       }
    }
 }

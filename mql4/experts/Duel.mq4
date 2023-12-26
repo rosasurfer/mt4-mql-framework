@@ -4328,14 +4328,14 @@ void SS.PLStats(bool enforce = false) {
       else {
          string sSequenceMaxProfit="", sSequenceMaxDrawdown="";
          if (ShowProfitInPercent) {
-            sSequenceMaxProfit   = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
-            sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+            sSequenceMaxProfit   = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2");
+            sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2");
          }
          else {
             sSequenceMaxProfit   = NumberToStr(sequence.maxProfit, "+.2");
             sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
          }
-         sSequencePlStats = StringConcatenate("(", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
+         sSequencePlStats = StringConcatenate("(", sSequenceMaxDrawdown, "/", sSequenceMaxProfit, ")");
       }
    }
 }
