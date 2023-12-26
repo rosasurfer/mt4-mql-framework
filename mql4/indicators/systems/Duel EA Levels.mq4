@@ -1,5 +1,5 @@
 /**
- * Duel PL Levels
+ * Duel EA Levels
  *
  * Visualizes breakeven, profit and stoploss levels of a Duel sequence. The indicator gets its values from the expert running
  * in the same chart (online and in tester).
