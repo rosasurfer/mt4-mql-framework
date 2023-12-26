@@ -1,7 +1,7 @@
 /**
  * Vegas EA (work-in-progress, do not yet use)
  *
- * A hybrid strategy using ideas of the "Vegas H1 Tunnel" system, the system of the "Turtle Traders" and a grid.
+ * A hybrid strategy using ideas of the "Vegas H1 Tunnel" system, the "Turtle Traders" system and a grid for scaling in/out.
  *
  *
  * Input parameters:
@@ -47,14 +47,14 @@ extern int    Donchian.Periods = 30;
 #define SIGNAL_SHORT TRADE_DIRECTION_SHORT         // 2
 
 // instance data
-int      instance.id;                              // instance id (100-999, also used for magic order numbers)
+int      instance.id;                              // instance id (100-999, used for magic order numbers)
 datetime instance.created;
 string   instance.name = "";
 int      instance.status;
 bool     instance.isTest;
 
 // debug settings                                  // configurable via framework config, see afterInit()
-bool     test.onStopPause        = false;          // whether to pause a test after a final StopInstance()
+bool     test.onStopPause        = false;          // whether to pause a test after StopInstance()
 bool     test.reduceStatusWrites = true;           // whether to reduce status file writes in tester
 
 #include <apps/vegas-ea/init.mqh>
@@ -71,15 +71,11 @@ int onTick() {
 
    if (__isChart) HandleCommands();                // process incoming commands
 
-   if (instance.status != STATUS_STOPPED) {
-      int signal, dcnSignal;
-      IsDonchianSignal(dcnSignal);                 // check on every tick (signals can occur anytime)
-
-      if (instance.status == STATUS_WAITING) {
-         if (IsStartSignal(signal)) StartInstance(signal);
-      }
-      else if (instance.status == STATUS_PROGRESSING) {
-      }
+   if (instance.status == STATUS_WAITING) {
+      int signal;
+      if (IsTradeSignal(signal)) StartTrading(signal);
+   }
+   else if (instance.status == STATUS_PROGRESSING) {
    }
    return(catch("onTick(1)"));
 }
@@ -115,32 +111,6 @@ bool onCommand(string cmd, string params, int keys) {
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
-}
-
-
-/**
- * Whether a new MA tunnel crossing occurred.
- *
- * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
- *
- * @return bool
- */
-bool IsMaTunnelSignal(int &signal) {
-   if (last_error != NULL) return(false);
-   signal = NULL;
-
-   if (IsBarOpen()) {
-      string tunnelDefinition = "EMA(9), EMA(36), EMA(144)";
-      int trend = icMaTunnel(NULL, tunnelDefinition, MaTunnel.MODE_BAR_TREND, 1);
-
-      if      (trend == +1) signal = SIGNAL_LONG;
-      else if (trend == -1) signal = SIGNAL_SHORT;
-
-      if (signal && instance.status==STATUS_PROGRESSING) {
-         if (IsLogInfo()) logInfo("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      }
-   }
-   return(signal != NULL);
 }
 
 
@@ -202,42 +172,70 @@ bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
 
 
 /**
- * Whether a start condition is satisfied for the waiting instance.
+ * Whether a new MA tunnel crossing occurred.
+ *
+ * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
+ *
+ * @return bool
+ */
+bool IsMaTunnelSignal(int &signal) {
+   if (last_error != NULL) return(false);
+   signal = NULL;
+
+   if (IsBarOpen()) {
+      string tunnelDefinition = "EMA(9), EMA(36), EMA(144)";
+      int trend = icMaTunnel(NULL, tunnelDefinition, MaTunnel.MODE_BAR_TREND, 1);
+
+      if      (trend == +1) signal = SIGNAL_LONG;
+      else if (trend == -1) signal = SIGNAL_SHORT;
+
+      if (signal && instance.status==STATUS_PROGRESSING) {
+         if (IsLogInfo()) logInfo("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      }
+   }
+   return(signal != NULL);
+}
+
+
+/**
+ * Whether a trade signal occurred.
  *
  * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
  *
  * @return bool
  */
-bool IsStartSignal(int &signal) {
+bool IsTradeSignal(int &signal) {
    signal = NULL;
    if (last_error || instance.status!=STATUS_WAITING) return(false);
 
    // MA Tunnel signal ------------------------------------------------------------------------------------------------------
    if (IsMaTunnelSignal(signal)) {
-      logInfo("IsStartSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      logInfo("IsTradeSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
 
    // Donchian signal -------------------------------------------------------------------------------------------------------
-   if (IsDonchianSignal(signal)) {
-      logInfo("IsStartSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      return(true);
-   }
+   //if (IsDonchianSignal(signal)) {
+   //   logInfo("IsTradeSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   //   return(true);
+   //}
    return(false);
 }
 
 
 /**
- * Start a waiting instance and change the status to "progressing".
+ * Start trading on a waiting instance and change the status to "progressing".
  *
  * @param  int signal - trade signal causing the call
  *
  * @return bool - success status
  */
-bool StartInstance(int signal) {
+bool StartTrading(int signal) {
    if (last_error != NULL)                          return(false);
-   if (instance.status != STATUS_WAITING)           return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   if (instance.status != STATUS_WAITING)           return(!catch("StartTrading(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartTrading(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+
+   debug("StartTrading(0.1)");
    return(true);
 }
 
@@ -877,6 +875,7 @@ string InputsToStr() {
    );
 
    // suppress compiler warnings
-   int iNulls[];
+   int signal, iNulls[];
+   IsDonchianSignal(signal);
    ORDER_EXECUTION.toStr(iNulls);
 }
