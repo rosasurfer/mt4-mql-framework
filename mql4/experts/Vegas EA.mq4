@@ -63,6 +63,19 @@ extern double Lots             = 0.1;
 #define SIGNAL_LONG  TRADE_DIRECTION_LONG          // 1 signal types
 #define SIGNAL_SHORT TRADE_DIRECTION_SHORT         // 2
 
+#define H_TICKET              0                    // trade history indexes
+#define H_LOTS                1
+#define H_OPENTYPE            2
+#define H_OPENTIME            3
+#define H_OPENPRICE           4
+#define H_CLOSETIME           5
+#define H_CLOSEPRICE          6
+#define H_SLIPPAGE            7
+#define H_SWAP                8
+#define H_COMMISSION          9
+#define H_GROSSPROFIT        10
+#define H_NETPROFIT          11
+
 // instance data
 int      instance.id;                              // instance id (100-999, used for magic order numbers)
 datetime instance.created;
@@ -113,7 +126,8 @@ int onTick() {
 
    if (instance.status != STATUS_STOPPED) {
       int signal;
-      if (IsTradeSignal(signal)) UpdateStatus(signal);
+      IsTradeSignal(signal);
+      UpdateStatus(signal);
    }
    return(catch("onTick(1)"));
 }
@@ -149,6 +163,54 @@ bool onCommand(string cmd, string params, int keys) {
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
+}
+
+
+/**
+ * Whether a trade signal occurred.
+ *
+ * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
+ *
+ * @return bool
+ */
+bool IsTradeSignal(int &signal) {
+   signal = NULL;
+   if (last_error != NULL) return(false);
+
+   // MA Tunnel signal ------------------------------------------------------------------------------------------------------
+   if (IsMaTunnelSignal(signal)) {
+      logInfo("IsTradeSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      return(true);
+   }
+
+   // Donchian signal -------------------------------------------------------------------------------------------------------
+   //if (IsDonchianSignal(signal)) {
+   //   logInfo("IsTradeSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   //   return(true);
+   //}
+   return(false);
+}
+
+
+/**
+ * Whether a new MA tunnel crossing occurred.
+ *
+ * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
+ *
+ * @return bool
+ */
+bool IsMaTunnelSignal(int &signal) {
+   if (last_error != NULL) return(false);
+   signal = NULL;
+
+   if (IsBarOpen()) {
+      string tunnelDefinition = "EMA(9), EMA(36), EMA(144)";
+      int trend = icMaTunnel(NULL, tunnelDefinition, MaTunnel.MODE_BAR_TREND, 1);
+
+      if      (trend == +1) signal = SIGNAL_LONG;
+      else if (trend == -1) signal = SIGNAL_SHORT;
+   }
+   return(signal != NULL);
 }
 
 
@@ -210,58 +272,6 @@ bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
 
 
 /**
- * Whether a new MA tunnel crossing occurred.
- *
- * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
- *
- * @return bool
- */
-bool IsMaTunnelSignal(int &signal) {
-   if (last_error != NULL) return(false);
-   signal = NULL;
-
-   if (IsBarOpen()) {
-      string tunnelDefinition = "EMA(9), EMA(36), EMA(144)";
-      int trend = icMaTunnel(NULL, tunnelDefinition, MaTunnel.MODE_BAR_TREND, 1);
-
-      if      (trend == +1) signal = SIGNAL_LONG;
-      else if (trend == -1) signal = SIGNAL_SHORT;
-
-      if (signal && instance.status==STATUS_PROGRESSING) {
-         if (IsLogInfo()) logInfo("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      }
-   }
-   return(signal != NULL);
-}
-
-
-/**
- * Whether a trade signal occurred.
- *
- * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
- *
- * @return bool
- */
-bool IsTradeSignal(int &signal) {
-   signal = NULL;
-   if (last_error || instance.status!=STATUS_WAITING) return(false);
-
-   // MA Tunnel signal ------------------------------------------------------------------------------------------------------
-   if (IsMaTunnelSignal(signal)) {
-      logInfo("IsTradeSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      return(true);
-   }
-
-   // Donchian signal -------------------------------------------------------------------------------------------------------
-   //if (IsDonchianSignal(signal)) {
-   //   logInfo("IsTradeSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-   //   return(true);
-   //}
-   return(false);
-}
-
-
-/**
  * Update order status and PL stats.
  *
  * @param  int signal [optional] - trade signal causing the call (default: stats update only)
@@ -272,16 +282,29 @@ bool UpdateStatus(int signal = NULL) {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ instance.name +" illegal instance status "+ StatusToStr(instance.status), ERR_ILLEGAL_STATE));
 
-   debug("UpdateStatus(0.1)");
+   if (!signal) {
+      if (open.ticket != NULL) {
+         if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
+         if (OrderCloseTime() > 0) return(!catch("UpdateStatus(3)  "+ instance.name +" #"+ open.ticket+" is not an open position anymore", ERR_ILLEGAL_STATE));
 
-   if (signal != NULL) {
-      if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT)                    return(!catch("UpdateStatus(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+         open.swap        = OrderSwap();
+         open.commission  = OrderCommission();
+         open.grossProfit = OrderProfit();
+         open.netProfit   = open.grossProfit + open.swap + open.commission;
+      }
+   }
+   else {
+      if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("UpdateStatus(4)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
       instance.status = STATUS_PROGRESSING;
 
-      // close an existing position
+      // close an existing open position
       if (open.ticket != NULL) {
-         if (open.type != ifInt(signal==SIGNAL_SHORT, OP_LONG, OP_SHORT)) return(!catch("UpdateStatus(3)  "+ instance.name +" cannot process "+ SignalToStr(signal) +" with open "+ OperationTypeToStr(open.type) +" position", ERR_ILLEGAL_STATE));
-         return(!catch("UpdateStatus(0.2)  close position", ERR_NOT_IMPLEMENTED));
+         if (open.type != ifInt(signal==SIGNAL_SHORT, OP_LONG, OP_SHORT)) return(!catch("UpdateStatus(5)  "+ instance.name +" cannot process "+ SignalToStr(signal) +" with open "+ OperationTypeToStr(open.type) +" position", ERR_ILLEGAL_STATE));
+
+         int oeFlags = NULL, oe[];
+         bool success = OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe);
+         if (!success) return(!SetLastError(oe.Error(oe)));
+         if (!ArchiveClosedPosition(open.ticket, -oe.Slippage(oe))) return(false);
       }
 
       // open a new position
@@ -294,7 +317,7 @@ bool UpdateStatus(int signal = NULL) {
       int      magicNumber = CalculateMagicNumber();
       datetime expires     = NULL;
       color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
-      int      oeFlags     = NULL, oe[];
+               oeFlags     = NULL;
 
       int ticket = OrderSendEx(Symbol(), type, Lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
       if (!ticket) return(!SetLastError(oe.Error(oe)));
@@ -313,14 +336,69 @@ bool UpdateStatus(int signal = NULL) {
 
    // update PL numbers
    instance.totalNetProfit = open.netProfit + instance.closedNetProfit;
-   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
-   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+   if      (instance.totalNetProfit > instance.maxNetProfit  ) { instance.maxNetProfit   = instance.totalNetProfit; SS.PLStats(); }
+   else if (instance.totalNetProfit < instance.maxNetDrawdown) { instance.maxNetDrawdown = instance.totalNetProfit; SS.PLStats(); }
    SS.TotalPL();
-   SS.PLStats();
 
    if (signal != NULL)
       return(SaveStatus());
-   return(!catch("UpdateStatus(4)"));
+   return(!catch("UpdateStatus(6)"));
+}
+
+
+/**
+ * Add trade details of the specified closed ticket to the local history and reset open position data.
+ *
+ * @param int    ticket   - closed ticket
+ * @param double slippage - close slippage in pip
+ *
+ * @return bool - success status
+ */
+bool ArchiveClosedPosition(int ticket, double slippage) {
+   if (last_error != NULL)                    return(false);
+   if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ instance.name +" cannot archive position of "+ StatusDescription(instance.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   SelectTicket(ticket, "ArchiveClosedPosition(2)", /*push=*/true);
+
+   // update now closed position data
+   open.swap        = OrderSwap();
+   open.commission  = OrderCommission();
+   open.grossProfit = OrderProfit();
+   open.netProfit   = open.grossProfit + open.swap + open.commission;
+
+   // update history
+   int i = ArrayRange(history, 0);
+   ArrayResize(history, i+1);
+   history[i][H_TICKET     ] = ticket;
+   history[i][H_LOTS       ] = OrderLots();
+   history[i][H_OPENTYPE   ] = OrderType();
+   history[i][H_OPENTIME   ] = OrderOpenTime();
+   history[i][H_OPENPRICE  ] = OrderOpenPrice();
+   history[i][H_CLOSETIME  ] = OrderCloseTime();
+   history[i][H_CLOSEPRICE ] = OrderClosePrice();
+   history[i][H_SLIPPAGE   ] = open.slippage + slippage;
+   history[i][H_SWAP       ] = open.swap;
+   history[i][H_COMMISSION ] = open.commission;
+   history[i][H_GROSSPROFIT] = open.grossProfit;
+   history[i][H_NETPROFIT  ] = open.netProfit;
+   OrderPop("ArchiveClosedPosition(3)");
+
+   // update PL numbers
+   instance.openNetProfit    = 0;
+   instance.closedNetProfit += open.netProfit;
+   instance.totalNetProfit   = instance.closedNetProfit;
+
+   // reset open position data
+   open.ticket      = NULL;
+   open.type        = NULL;
+   open.time        = NULL;
+   open.price       = NULL;
+   open.slippage    = NULL;
+   open.swap        = NULL;
+   open.commission  = NULL;
+   open.grossProfit = NULL;
+   open.netProfit   = NULL;
+   return(!catch("ArchiveClosedPosition(4)"));
 }
 
 
@@ -559,7 +637,119 @@ bool ReadStatus() {
    open.grossProfit         = GetIniDouble (file, section, "open.grossProfit");           // double   open.grossProfit         = 12.34
    open.netProfit           = GetIniDouble (file, section, "open.netProfit"  );           // double   open.netProfit           = 12.56
 
-   return(!catch("ReadStatus(7)"));
+   // history data
+   string sKeys[], sOrder="";
+   int size = ReadStatus.HistoryKeys(file, section, sKeys); if (size < 0) return(false);
+   for (int i=0; i < size; i++) {
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                // history.{i} = {data}
+      if (!ReadStatus.ParseHistory(sKeys[i], sOrder)) return(!catch("ReadStatus(7)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+   }
+   return(!catch("ReadStatus(8)"));
+}
+
+
+/**
+ * Read and return the keys of all trade history records found in the status file (sorting order doesn't matter).
+ *
+ * @param  _In_  string file    - status filename
+ * @param  _In_  string section - status section
+ * @param  _Out_ string &keys[] - array receiving the found keys
+ *
+ * @return int - number of found keys or EMPTY (-1) in case of errors
+ */
+int ReadStatus.HistoryKeys(string file, string section, string &keys[]) {
+   int size = GetIniKeys(file, section, keys);
+   if (size < 0) return(EMPTY);
+
+   for (int i=size-1; i >= 0; i--) {
+      if (StrStartsWithI(keys[i], "history."))
+         continue;
+      ArraySpliceStrings(keys, i, 1);     // drop all non-order keys
+      size--;
+   }
+   return(size);                          // no need to sort as records are inserted at the correct position
+}
+
+
+/**
+ * Parse the string representation of a closed order record and store the parsed data.
+ *
+ * @param  string key   - order key
+ * @param  string value - order string to parse
+ *
+ * @return bool - success status
+ */
+bool ReadStatus.ParseHistory(string key, string value) {
+   if (IsLastError())                    return(false);
+   if (!StrStartsWithI(key, "history.")) return(!catch("ReadStatus.ParseHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+
+   // history.i=ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,grossProfit,netProfit
+   string values[];
+   string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(!catch("ReadStatus.ParseHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
+
+   int      ticket      = StrToInteger(values[H_TICKET     ]);
+   double   lots        =  StrToDouble(values[H_LOTS       ]);
+   int      openType    = StrToInteger(values[H_OPENTYPE   ]);
+   datetime openTime    = StrToInteger(values[H_OPENTIME   ]);
+   double   openPrice   =  StrToDouble(values[H_OPENPRICE  ]);
+   datetime closeTime   = StrToInteger(values[H_CLOSETIME  ]);
+   double   closePrice  =  StrToDouble(values[H_CLOSEPRICE ]);
+   double   slippage    =  StrToDouble(values[H_SLIPPAGE   ]);
+   double   swap        =  StrToDouble(values[H_SWAP       ]);
+   double   commission  =  StrToDouble(values[H_COMMISSION ]);
+   double   grossProfit =  StrToDouble(values[H_GROSSPROFIT]);
+   double   netProfit   =  StrToDouble(values[H_NETPROFIT  ]);
+
+   return(!IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, closeTime, closePrice, slippage, swap, commission, grossProfit, netProfit)));
+}
+
+
+/**
+ * Add an order record to the history array. Records are ordered ascending by {OpenTime;Ticket} and the new record is inserted
+ * at the correct position. No data is overwritten.
+ *
+ * @param  int ticket - order record details
+ * @param  ...
+ *
+ * @return int - index the record was inserted at or EMPTY (-1) in case of errors
+ */
+int History.AddRecord(int ticket, double lots, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
+   int size = ArrayRange(history, 0);
+
+   for (int i=0; i < size; i++) {
+      if (EQ(ticket,   history[i][H_TICKET  ])) return(_EMPTY(catch("History.AddRecord(1)  "+ instance.name +" cannot add record, ticket #"+ ticket +" already exists (offset: "+ i +")", ERR_INVALID_PARAMETER)));
+      if (GT(openTime, history[i][H_OPENTIME])) continue;
+      if (LT(openTime, history[i][H_OPENTIME])) break;
+      if (LT(ticket,   history[i][H_TICKET  ])) break;
+   }
+
+   // 'i' now holds the array index to insert at
+   if (i == size) {
+      ArrayResize(history, size+1);                                  // add a new empty slot or...
+   }
+   else {
+      int dim2=ArrayRange(history, 1), from=i*dim2, to=from+dim2;    // ...free an existing slot by shifting existing data
+      ArrayCopy(history, history, to, from);
+   }
+
+   // insert the new data
+   history[i][H_TICKET     ] = ticket;
+   history[i][H_LOTS       ] = lots;
+   history[i][H_OPENTYPE   ] = openType;
+   history[i][H_OPENTIME   ] = openTime;
+   history[i][H_OPENPRICE  ] = openPrice;
+   history[i][H_CLOSETIME  ] = closeTime;
+   history[i][H_CLOSEPRICE ] = closePrice;
+   history[i][H_SLIPPAGE   ] = slippage;
+   history[i][H_SWAP       ] = swap;
+   history[i][H_COMMISSION ] = commission;
+   history[i][H_GROSSPROFIT] = grossProfit;
+   history[i][H_NETPROFIT  ] = netProfit;
+
+   if (!catch("History.AddRecord(2)"))
+      return(i);
+   return(EMPTY);
 }
 
 
@@ -714,7 +904,39 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.grossProfit",         /*double  */ DoubleToStr(open.grossProfit, 2));
    WriteIniString(file, section, "open.netProfit",           /*double  */ DoubleToStr(open.netProfit, 2) + CRLF);
 
+   // closed order data
+   int size = ArrayRange(history, 0);
+   for (int i=0; i < size; i++) {
+      WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
+   }
    return(!catch("SaveStatus(2)"));
+}
+
+
+/**
+ * Return a string representation of a history record to be stored by SaveStatus().
+ *
+ * @param  int index - index of the history record
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string SaveStatus.HistoryToStr(int index) {
+   // result: ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,grossProfit,netProfit
+
+   int      ticket      = history[index][H_TICKET     ];
+   double   lots        = history[index][H_LOTS       ];
+   int      openType    = history[index][H_OPENTYPE   ];
+   datetime openTime    = history[index][H_OPENTIME   ];
+   double   openPrice   = history[index][H_OPENPRICE  ];
+   datetime closeTime   = history[index][H_CLOSETIME  ];
+   double   closePrice  = history[index][H_CLOSEPRICE ];
+   double   slippage    = history[index][H_SLIPPAGE   ];
+   double   swap        = history[index][H_SWAP       ];
+   double   commission  = history[index][H_COMMISSION ];
+   double   grossProfit = history[index][H_GROSSPROFIT];
+   double   netProfit   = history[index][H_NETPROFIT  ];
+
+   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
 
 
