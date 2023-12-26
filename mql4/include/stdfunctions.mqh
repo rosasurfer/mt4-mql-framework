@@ -403,7 +403,7 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    bool win32 = false;
    if      (IsTesting())                                                       win32 = true;
    else if (IsIndicator())                                                     win32 = true;
-   else if (__CoreFunction==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
+   else if (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
    if (!win32) int button = MessageBox(message, caption, flags);
    else            button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
@@ -3871,7 +3871,7 @@ bool Tester.IsStopped() {
       // TODO: because of i18n we can't rely on the control's text
       return(GetInternalWindowTextA(hWndStartStopBtn) == "Start");
    }
-   return(__CoreFunction == CF_DEINIT);         // if in deinit() the tester was already stopped, no matter whether in an expert or an indicator
+   return(__ExecutionContext[EC.programCoreFunction] == CF_DEINIT);  // if in deinit() the tester was already stopped, no matter whether in an expert or an indicator
 }
 
 

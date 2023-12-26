@@ -5231,7 +5231,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
             else                             dSlippage = 0;
          oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, digits & 1));  // total slippage after requotes in pip
 
-         if (IsLogDebug()) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
+         if (IsLogInfo()) logInfo("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
 
          if (__isTesting) {
             if (type<=OP_SELL && __ExecutionContext[EC.externalReporting]) {
@@ -5540,7 +5540,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setCommission(oe, ifDouble(isPendingOrder, 0, OrderCommission()));
          oe.setProfit    (oe, ifDouble(isPendingOrder, 0, OrderProfit()));
 
-         if (IsLogDebug()) logDebug("OrderModifyEx(31)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
+         if (IsLogInfo()) logInfo("OrderModifyEx(31)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
          if (!__isTesting) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
          return(!_bool(Order.HandleError("OrderModifyEx(32)", GetLastError(), oeFlags, oe), OrderPop("OrderModifyEx(33)")));
       }
@@ -5830,7 +5830,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
             oe.setRemainingTicket(oe, remainder);
             oe.setRemainingLots  (oe, openLots-lots);
          }
-         if (IsLogDebug()) logDebug("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
+         if (IsLogInfo()) logInfo("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
          if (!__isTesting)                                       PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
          else if (__ExecutionContext[EC.externalReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
@@ -6185,7 +6185,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
             oe.setRemainingLots  (oe, remainderLots                 );
          }
 
-         if (IsLogDebug()) logDebug("OrderCloseByEx(26)  "+ OrderCloseByEx.SuccessMsg(first, second, largerType, oe));
+         if (IsLogInfo()) logInfo("OrderCloseByEx(26)  "+ OrderCloseByEx.SuccessMsg(first, second, largerType, oe));
          if (!__isTesting) PlaySoundEx("OrderOk.wav");
          return(!oe.setError(oe, catch("OrderCloseByEx(27)", NULL, O_POP)));     // regular exit (NO_ERROR)
       }
@@ -6935,7 +6935,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
          if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(12)")));
 
-         if (IsLogDebug()) logDebug(StringConcatenate("OrderDeleteEx(13)  ", OrderDeleteEx.SuccessMsg(oe)));
+         if (IsLogInfo()) logInfo(StringConcatenate("OrderDeleteEx(13)  ", OrderDeleteEx.SuccessMsg(oe)));
          if (!__isTesting) PlaySoundEx("OrderOk.wav");
 
          return(!oe.setError(oe, catch("OrderDeleteEx(14)", NULL, O_POP)));   // regular exit (NO_ERROR)
