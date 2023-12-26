@@ -43,7 +43,7 @@ int __virtualTicks  = 10000;                                                  //
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                                  // instance to load from a file, format /T?[0-9]{4}/
+extern string   Sequence.ID            = "";                                  // instance to load from a file, format "[T]1234"
 
 extern string   GridDirection          = "Long | Short | Both*";              //
 extern string   GridSize               = "";                                  // grid spacing in pip or quote unit (2 | 3.4 | 123.00)
@@ -4058,7 +4058,7 @@ bool RemoveSequenceId() {
 
 
 /**
- * Parse and set the passed sequence id value (format: "T?[0-9]{4}").
+ * Parse and set the passed sequence id value. Format: "[T]1234"
  *
  * @param  _In_    string value  - sequence id value
  * @param  _InOut_ bool   error  - in:  mute parse errors (TRUE) or trigger a fatal error (FALSE)

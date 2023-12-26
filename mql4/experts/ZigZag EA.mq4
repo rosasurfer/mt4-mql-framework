@@ -1,8 +1,8 @@
 /**
- * ZigZag EA - a modified version of the system traded by the "Turtle traders" of Richard Dennis
+ * ZigZag EA - a modified version of the system traded by the "Turtle Traders" of Richard Dennis
  *
- * The ZigZag indicator in this GitHub repository uses a Donchian channel for it's calculation. Thus it can be used to
- * implement the Donchian channel system.
+ * The ZigZag indicator in this GitHub repository uses a Donchian channel for calculation. It can be used to implement the
+ * Donchian channel system.
  *
  *
  * Input parameters
@@ -185,7 +185,7 @@ int __virtualTicks  = 10000;                                // every 10 seconds 
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID          = "";                    // instance to load from a status file, format "T?[0-9]{3}"
+extern string Sequence.ID          = "";                    // instance to load from a status file, format "[T]123"
 extern string TradingMode          = "regular* | virtual";  // can be shortened if distinct
 
 extern int    ZigZag.Periods       = 30;
@@ -3183,7 +3183,7 @@ bool RemoveSequenceId() {
 
 
 /**
- * Parse and set the passed sequence id value (format: "T?[0-9]{3}").
+ * Parse and set the passed sequence id value. Format: "[T]123"
  *
  * @param  _In_    string value  - sequence id value
  * @param  _InOut_ bool   error  - in:  mute parse errors (TRUE) or trigger a fatal error (FALSE)

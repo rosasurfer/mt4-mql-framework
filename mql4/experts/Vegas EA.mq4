@@ -1,7 +1,22 @@
 /**
- * Vegas EA (work-in-progress, do not yet use)
+ * WORK-IN-PROGRESS, DO NOT YET USE
  *
- * A hybrid strategy using ideas of the "Vegas H1 Tunnel" system, the "Turtle Traders" system and a grid for scaling in/out.
+ * Vegas EA
+ *
+ * A mixture of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in and out.
+ *
+ *
+ * Features:
+ * ---------
+ * • A finished test can be loaded into an online chart for trade inspection and further analysis.
+ *
+ * • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
+ *   trade related deviations that impact test results or real trading (tester bugs, spread, slippage, swap, commission).
+ *   It allows the EA to be tested and calibrated under idealised conditions.
+ *
+ * • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in the tester).
+ *   These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. They can be
+ *   displayed and analysed like regular MetaTrader charts.
  *
  *
  * Input parameters:
@@ -21,7 +36,7 @@ int __virtualTicks = 0;
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID      = "";               // instance to load from a status file, format "T?[0-9]{3}"
+extern string Instance.ID      = "";               // instance to load from a status file, format "[T]123"
 extern int    Donchian.Periods = 30;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -356,7 +371,7 @@ int CreateInstanceId() {
 
 
 /**
- * Parse and set the passed instance id value (format: "T?[0-9]{3}").
+ * Parse and set the passed instance id value. Format: "[T]123"
  *
  * @param  _In_    string value  - instance id value
  * @param  _InOut_ bool   error  - in:  mute parse errors (TRUE) or trigger a fatal error (FALSE)
