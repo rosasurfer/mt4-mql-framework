@@ -4,7 +4,7 @@
  * The T3 is a six-pole nonlinear Kalman filter. Kalman filters use the error to correct themselves. In technical analysis
  * they are called adaptive moving averages, they track the time series more aggressively when it makes large moves.
  *
- * The input parameter 'T3.Periods' can be scaled following Matulich (2) which is just cosmetics and makes the T3 look more
+ * The input parameter 'T3.Periods' can be scaled following Matulich which is just cosmetics and makes the T3 look more
  * synchronized with an SMA or EMA of the same length (MA calculation does not change).
  *
  * Indicator buffers for iCustom():
@@ -14,8 +14,7 @@
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
  *
- *  @link  (2) http://unicorn.us.com/trading/el.html#_T3Average                                 [T3 Moving Average, Matulich]
- *
+ *  @link  http://unicorn.us.com/trading/el.html#_T3Average                                     [T3 Moving Average, Matulich]
  *  @see   additional notes at the end of this file
  */
 #include <stddefines.mqh>
@@ -41,7 +40,7 @@ extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Aqua;
-extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 
 extern string ___d__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -61,7 +60,7 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/trend.mqh>
 
 #define MODE_MA_FILTERED      MovingAverage.MODE_MA      // indicator buffer ids
@@ -116,19 +115,12 @@ double alpha;                                            // weight of the curren
 int    appliedPrice;
 int    requiredBars;
 int    drawType;
-int    maxValues;
 
 string indicatorName = "";
 string shortName     = "";
 string legendLabel   = "";
 string legendInfo    = "";                               // additional chart legend info
 bool   enableMultiColoring;
-
-bool   signalTrendChange;
-bool   signalTrendChange.sound;
-bool   signalTrendChange.popup;
-bool   signalTrendChange.mail;
-bool   signalTrendChange.sms;
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -194,30 +186,25 @@ int onInit() {
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
-   // Max.Bars
-   if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
-   if (Max.Bars < -1)                                    return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
+   if (MaxBarsBack < -1)                                 return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
-   signalTrendChange       = Signal.onTrendChange;
-   signalTrendChange.sound = Signal.onTrendChange.Sound;
-   signalTrendChange.popup = Signal.onTrendChange.Popup;
-   signalTrendChange.mail  = Signal.onTrendChange.Mail;
-   signalTrendChange.sms   = Signal.onTrendChange.SMS;
-   legendInfo              = "";
    string signalId = "Signal.onTrendChange";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, signalTrendChange)) return(last_error);
-   if (signalTrendChange) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalTrendChange.sound)) return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalTrendChange.popup)) return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalTrendChange.mail))  return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalTrendChange.sms))   return(last_error);
-      if (signalTrendChange.sound || signalTrendChange.popup || signalTrendChange.mail || signalTrendChange.sms) {
-         legendInfo = StrLeft(ifString(signalTrendChange.sound, "sound,", "") + ifString(signalTrendChange.popup, "popup,", "") + ifString(signalTrendChange.mail, "mail,", "") + ifString(signalTrendChange.sms, "sms,", ""), -1);
+   legendInfo = "";
+   if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
+   if (Signal.onTrendChange) {
+      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onTrendChange.Sound)) return(last_error);
+      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onTrendChange.Popup)) return(last_error);
+      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onTrendChange.Mail))  return(last_error);
+      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onTrendChange.SMS))   return(last_error);
+      if (Signal.onTrendChange.Sound || Signal.onTrendChange.Popup || Signal.onTrendChange.Mail || Signal.onTrendChange.SMS) {
+         legendInfo = StrLeft(ifString(Signal.onTrendChange.Sound, "sound,", "") + ifString(Signal.onTrendChange.Popup, "popup,", "") + ifString(Signal.onTrendChange.Mail, "mail,", "") + ifString(Signal.onTrendChange.SMS, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
       }
-      else signalTrendChange = false;
+      else Signal.onTrendChange = false;
    }
 
    // restore a stored runtime status
@@ -235,7 +222,7 @@ int onInit() {
    SetIndicatorOptions();
 
    // chart legend and coloring
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    enableMultiColoring = !__isSuperContext;
 
    InitializeT3();
@@ -265,8 +252,8 @@ bool InitializeT3() {                                          // see notes at t
    double bars  = MathLog(1-rel)/MathLog(1-alpha);             // k = log(1-rel)/log(1-alpha)
    requiredBars = MathCeil(bars);
 
-   if (maxValues + requiredBars < 0) {
-      maxValues -= requiredBars;                               // prevent integer overflow
+   if (MaxBarsBack + requiredBars < 0) {
+      MaxBarsBack -= requiredBars;                             // prevent integer overflow
    }
    return(!catch("InitializeT3(1)"));
 }
@@ -340,7 +327,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int limit = Min(ChangedBars, Bars-1, maxValues+requiredBars-1);      // how many bars need recalculation
+   int limit = Min(ChangedBars, Bars-1, MaxBarsBack+requiredBars-1);    // how many bars need recalculation
    int startbar = limit-1;
    if (Bars < requiredBars) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  required="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
 
@@ -397,9 +384,9 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], Digits, trend[0], Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], trend[0]);
 
-      if (signalTrendChange) /*&&*/ if (IsBarOpen()) {               // monitor trend reversals
+      if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {            // monitor trend reversals
          int iTrend = Round(trend[1]);
          if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
@@ -426,10 +413,10 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signalTrendChange.popup)          Alert(message);
-      if (signalTrendChange.sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
-      if (signalTrendChange.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (signalTrendChange.sms)   error |= !SendSMS("", message + NL + accountTime);
+      if (Signal.onTrendChange.Popup)          Alert(message);
+      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
+      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
       return(!error);
    }
 
@@ -438,10 +425,10 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signalTrendChange.popup)          Alert(message);
-      if (signalTrendChange.sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
-      if (signalTrendChange.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (signalTrendChange.sms)   error |= !SendSMS("", message + NL + accountTime);
+      if (Signal.onTrendChange.Popup)          Alert(message);
+      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
+      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
       return(!error);
    }
 
@@ -656,7 +643,7 @@ string InputsToStr() {
                             "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
                             "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";"+ NL,
+                            "MaxBarsBack=",                    MaxBarsBack,                                    ";"+ NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,

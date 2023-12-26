@@ -13,7 +13,7 @@ extern bool     Test.ExternalReporting = false;                         // wheth
 #include <functions/InitializeByteBuffer.mqh>
 
 #define __lpSuperContext NULL
-int     __CoreFunction = NULL;               // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
+int     __CoreFunction = NULL;               // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double  __rates[][6];                        // current price series
 int     __tickTimerId;                       // timer id for virtual ticks
 
@@ -77,8 +77,8 @@ int init() {
       return(last_error);
    }
 
-   if (__CoreFunction == NULL) {                               // init() is called by the terminal
-      __CoreFunction = CF_INIT;                                // TODO: ??? does this work in experts ???
+   if (__CoreFunction != CF_START) {                           // init() is called by the terminal
+      __CoreFunction = CF_INIT;
       prev_error   = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
@@ -98,7 +98,6 @@ int init() {
       last_error          = error;
       __STATUS_OFF        = true;                              // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
       __STATUS_OFF.reason = last_error;                        // is undefined. We must not trigger loading of MQL libraries and return asap.
-      __CoreFunction      = NULL;
       return(last_error);
    }
 
@@ -217,7 +216,7 @@ int init() {
    ShowStatus(last_error);
 
    // setup virtual ticks
-   if (!__isTesting) {
+   if (__virtualTicks && !__isTesting) {
       int hWnd = __ExecutionContext[EC.hChart];
       __tickTimerId = SetupTickTimer(hWnd, __virtualTicks, NULL);
       if (!__tickTimerId) return(catch("init(15)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
@@ -263,16 +262,18 @@ int start() {
 
    // if called after init() check it's return value
    if (__CoreFunction == CF_INIT) {
-      __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);  // __STATUS_OFF is FALSE here, but an error may be set
+      __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
+      // check initialization result: ERS_TERMINAL_NOT_YET_READY is the only error causing a repeated init() call
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {
          logInfo("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
-         last_error = NO_ERROR;
+         prev_error = last_error;
+         ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
          int error = init();                                                     // call init() again
          if (__STATUS_OFF) return(last_error);
 
-         if (error == ERS_TERMINAL_NOT_YET_READY) {                              // again an error may be set, reset __CoreFunction and wait for the next tick
+         if (error == ERS_TERMINAL_NOT_YET_READY) {                              // restore CF_INIT and wait for the next tick
             __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);
             return(ShowStatus(error));
          }
@@ -284,7 +285,7 @@ int start() {
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
-   // check a finished chart initialization (may fail on terminal start)
+   // check a finished chart initialization (spurious issue which was observed on older terminals at terminal start)
    if (!Bars) return(ShowStatus(SetLastError(logInfo("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
    // tester: wait until a configured start time/price is reached

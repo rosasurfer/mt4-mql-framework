@@ -29,10 +29,9 @@ extern string Output.MA.Method  = "none* | SMA | LWMA | EMA | SMMA";    // smoot
 
 extern color  Color.BarUp       = Blue;
 extern color  Color.BarDown     = Red;
-
 extern int    CandleWidth       = 2;
 extern bool   ShowWicks         = false;
-extern int    Max.Bars          = 10000;                                // max. values to calculate (-1: all available)
+extern int    MaxBarsBack       = 10000;                                // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -40,8 +39,7 @@ extern int    Max.Bars          = 10000;                                // max. 
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/legend.mqh>
-#include <functions/trend.mqh>
+#include <functions/chartlegend.mqh>
 
 #define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids
 #define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   //
@@ -81,8 +79,6 @@ int inputInitPeriods;
 int outputMaMethod;
 int outputMaPeriods;
 int outputInitPeriods;
-
-int maxValues;
 
 string indicatorName = "";
 string legendLabel   = "";
@@ -143,9 +139,9 @@ int onInit() {
    if (CandleWidth < 0)          return(catch("onInit(5)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
    if (CandleWidth > 5)          return(catch("onInit(6)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
 
-   // Max.Bars
-   if (Max.Bars < -1)            return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (MaxBarsBack < -1)         return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // buffer management
    SetIndexBuffer(MODE_OUT_OPEN,    outOpen   );
@@ -158,7 +154,7 @@ int onInit() {
    SetIndexBuffer(MODE_HA_LOW,      haLow     );
 
    // names, labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    indicatorName = "Heikin-Ashi";               // or  Heikin-Ashi(SMA(10))  or  EMA(Heikin-Ashi(SMA(10)), 5)
    if (!IsEmpty(inputMaMethod))  indicatorName = indicatorName +"("+ Input.MA.Method +"("+ inputMaPeriods +"))";
    if (!IsEmpty(outputMaMethod)) indicatorName = Output.MA.Method +"("+ indicatorName +", "+ outputMaPeriods +")";
@@ -241,11 +237,10 @@ int onTick() {
    // +-------------------------------------------------------------------------------------------------------------------+
 
    // calculate start bars
-   int requestedBars = Min(ChangedBars, maxValues);
    int resultingBars = Bars - inputInitPeriods - outputInitPeriods + 1; // max. resulting bars
    if (resultingBars < 1) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
-   int bars           = Min(requestedBars, resultingBars);              // actual number of bars to be updated
+   int bars           = Min(MaxBarsBack, ChangedBars, resultingBars);   // actual number of bars to be updated
    int outputStartbar = bars - 1;
    int haStartbar     = outputStartbar + outputInitPeriods - 1;
 
@@ -298,7 +293,7 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      UpdateTrendLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], trend[0]);
    }
    return(last_error);
 }
@@ -361,6 +356,6 @@ string InputsToStr() {
                             "Color.BarDown=",     ColorToStr(Color.BarDown),        ";", NL,
                             "CandleWidth=",       CandleWidth,                      ";", NL,
                             "ShowWicks=",         BoolToStr(ShowWicks),             ";", NL,
-                            "Max.Bars=",          Max.Bars,                         ";")
+                            "MaxBarsBack=",       MaxBarsBack,                      ";")
    );
 }

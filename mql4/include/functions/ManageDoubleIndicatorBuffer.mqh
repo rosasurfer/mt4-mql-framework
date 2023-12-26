@@ -15,9 +15,9 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
    // TODO: At the moment the function reallocates memory each time the number of bars changes.
    //       Pre-allocate excess memory and use a dynamic offset to improve the performance of additional buffers.
 
-   if (id < 0)                                                 return(!catch("ManageDoubleIndicatorBuffer(1)  invalid parameter id: "+ id, ERR_INVALID_PARAMETER));
-   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(!catch("ManageDoubleIndicatorBuffer(2)  id="+ id +", invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_ILLEGAL_STATE));
-   if (!Bars)                                                  return(!catch("ManageDoubleIndicatorBuffer(3)  id="+ id +", Tick="+ Ticks +"  Bars=0", ERR_ILLEGAL_STATE));
+   if (id < 0)                     return(!catch("ManageDoubleIndicatorBuffer(1)  invalid parameter id: "+ id, ERR_INVALID_PARAMETER));
+   if (__CoreFunction != CF_START) return(!catch("ManageDoubleIndicatorBuffer(2)  id="+ id +", invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__CoreFunction), ERR_ILLEGAL_STATE));
+   if (!Bars)                      return(!catch("ManageDoubleIndicatorBuffer(3)  id="+ id +", Tick="+ Ticks +"  Bars=0", ERR_ILLEGAL_STATE));
 
    // maintain a metadata array {id => data[]} to support multiple buffers
    #define IB.Tick            0                                      // last Tick value for detecting multiple calls during the same tick

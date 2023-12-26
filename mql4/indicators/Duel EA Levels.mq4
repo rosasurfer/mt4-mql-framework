@@ -1,10 +1,10 @@
 /**
- * Duel PL Levels
+ * Duel EA Levels
  *
  * Visualizes breakeven, profit and stoploss levels of a Duel sequence. The indicator gets its values from the expert running
  * in the same chart (online and in tester).
  *
- * @see  mql4/experts/Duel.mq4
+ *  @see  [Duel EA] https://github.com/rosasurfer/mt4-mql/blob/master/mql4/experts/Duel.mq4
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

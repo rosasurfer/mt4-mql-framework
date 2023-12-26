@@ -7,27 +7,26 @@
  * @return bool
  *
  * Notes:
- *  - The function signals correctly aligned BarOpen events even if the bar alignment of the instrument is incorrect/offset.
+ *  - The function correctly signals BarOpen events even if the bar alignment of the instrument is incorrect.
  *  - The function cannot detect BarOpen events at the first tick after program start or after recompilation.
  */
 bool IsBarOpen(int timeframe = NULL) {
    static bool contextChecked = false;
    if (!contextChecked) {
-      if (IsLibrary())                   return(!catch("IsBarOpen(1)  can't be used in a library (no tick support)", ERR_FUNC_NOT_ALLOWED));
-      if (IsScript())                    return(!catch("IsBarOpen(2)  can't be used in a script (no tick support)", ERR_FUNC_NOT_ALLOWED));
+      if (IsLibrary())             return(!catch("IsBarOpen(1)  can't be used in a library (no tick support)", ERR_FUNC_NOT_ALLOWED));
+      if (IsScript())              return(!catch("IsBarOpen(2)  can't be used in a script (no tick support)", ERR_FUNC_NOT_ALLOWED));
 
       if (IsIndicator()) {
-         if (__isSuperContext)           return(!catch("IsBarOpen(3)  can't be used in an indicator loaded by iCustom() (no tick support)", ERR_FUNC_NOT_ALLOWED));
-         if (__CoreFunction != CF_START) return(!catch("IsBarOpen(4)  can only be used in the program's start() function", ERR_FUNC_NOT_ALLOWED));
+         if (__isSuperContext)     return(!catch("IsBarOpen(3)  can't be used in an indicator loaded by iCustom() (no tick support)", ERR_FUNC_NOT_ALLOWED));
          if (__isTesting) {
-            if (!IsTesting())            return(!catch("IsBarOpen(5)  can't be used in a standalone indicator in tester (tick time not available)", ERR_FUNC_NOT_ALLOWED));
+            if (!IsTesting())      return(!catch("IsBarOpen(4)  can't be used in a standalone indicator in tester (tick time not available)", ERR_FUNC_NOT_ALLOWED));
             // TODO: check tick details/support
             //       check VisualMode On/Off
          }
       }
       contextChecked = true;
-   }                                     // prevent calls in deinit()
-   if (__CoreFunction != CF_START)       return(!catch("IsBarOpen(6)  can only be used in the program's start() function", ERR_FUNC_NOT_ALLOWED));
+   }
+   if (__CoreFunction != CF_START) return(!catch("IsBarOpen(5)  invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__CoreFunction), ERR_FUNC_NOT_ALLOWED));
 
    #define IBO_PERIOD      0             // timeframe period
    #define IBO_OPENTIME    1             // period open time
@@ -50,8 +49,8 @@ bool IsBarOpen(int timeframe = NULL) {
       case PERIOD_D1 :     i = 10; break;
 
       case PERIOD_W1 :
-      case PERIOD_MN1: return(!catch("IsBarOpen(7)  unsupported timeframe "+ TimeframeToStr(timeframe), ERR_INVALID_PARAMETER));
-      default:         return(!catch("IsBarOpen(8)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
+      case PERIOD_MN1: return(!catch("IsBarOpen(6)  unsupported timeframe "+ TimeframeToStr(timeframe), ERR_INVALID_PARAMETER));
+      default:         return(!catch("IsBarOpen(7)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
    }
 
    // recalculate bar open/close time of the timeframe in question

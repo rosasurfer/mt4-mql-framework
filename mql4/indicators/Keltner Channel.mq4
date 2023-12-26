@@ -27,16 +27,14 @@ extern string ATR.Timeframe   = "current* | M1 | M5 | M15 | ..."; // empty: curr
 extern int    ATR.Periods     = 60;
 extern double ATR.Multiplier  = 1;
 extern color  Bands.Color     = Blue;
-
-extern int    Max.Bars        = 10000;                            // max. values to calculate (-1: all available)
+extern int    MaxBarsBack     = 10000;                            // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/Bands.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA                       // indicator buffer ids
@@ -70,7 +68,6 @@ double atrMultiplier;
 
 string indicatorName = "";
 string legendLabel   = "";
-int    maxValues;
 
 
 /**
@@ -131,9 +128,9 @@ int onInit() {
    if (MA.Color    == 0xFF000000) MA.Color    = CLR_NONE;
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
-   // Max.Bars
-   if (Max.Bars < -1)         return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (MaxBarsBack < -1)      return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // buffer management
    SetIndexBuffer(MODE_MA,    ma       );
@@ -141,7 +138,7 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER, lowerBand);
 
    // names, labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    string sMa            = MA.Method +"("+ maPeriods +")";
    string sAtrMultiplier = ifString(atrMultiplier==1, "", NumberToStr(atrMultiplier, ".+") +"*");
    string sAtrTimeframe  = ifString(ATR.Timeframe=="current", "", "x"+ ATR.Timeframe);
@@ -189,9 +186,8 @@ int onTick() {
    }
 
    // calculate start bar
-   int changedBars = Min(ChangedBars, maxValues);
-   int startbar = Min(changedBars, Bars-maPeriods+1) - 1;
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack, ChangedBars, Bars-maPeriods+1) - 1;
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    if (maMethod == MODE_ALMA) {
@@ -207,7 +203,7 @@ int onTick() {
       }
    }
    if (!__isSuperContext) {
-      Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
+      UpdateBandLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0]);
    }
    return(last_error);
 }
@@ -262,6 +258,6 @@ string InputsToStr() {
                             "ATR.Periods=",     ATR.Periods,                       ";", NL,
                             "ATR.Multiplier=",  NumberToStr(ATR.Multiplier, ".+"), ";", NL,
                             "Bands.Color=",     ColorToStr(Bands.Color),           ";", NL,
-                            "Max.Bars=",        Max.Bars,                          ";")
+                            "MaxBarsBack=",     MaxBarsBack,                       ";")
    );
 }

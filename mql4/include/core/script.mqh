@@ -1,6 +1,6 @@
 
 #define __lpSuperContext NULL
-int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
+int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double  __rates[][6];                                                // current price series
 
 
@@ -12,7 +12,7 @@ double  __rates[][6];                                                // current 
 int init() {
    __isSuperContext = false;
    if (__STATUS_OFF) return(__STATUS_OFF.reason);
-   if (__CoreFunction == NULL) __CoreFunction = CF_INIT;             // init() called by the terminal, all variables are reset
+   if (__CoreFunction != CF_START) __CoreFunction = CF_INIT;         // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this script.");
@@ -39,12 +39,10 @@ int init() {
       return(last_error);
    }
 
-
-   // (1) finish initialization
+   // finish initialization
    if (!init_Globals()) if (CheckErrors("init(2)")) return(last_error);
 
-
-   // (2) user-spezifische Init-Tasks ausführen
+   // user-spezifische Init-Tasks ausführen
    int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
@@ -61,8 +59,7 @@ int init() {
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
-
-   // (3) Pre/Postprocessing-Hook
+   // Pre/Postprocessing-Hook
    error = onInit();                                                 // Preprocessing-Hook
    if (error != -1) {
       afterInit();                                                   // Postprocessing-Hook nur ausführen, wenn Preprocessing-Hook
@@ -111,7 +108,7 @@ int start() {
       }
       return(__STATUS_OFF.reason);
    }
-   __CoreFunction = CF_START;
+   __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
    Ticks++;                                                                   // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im Tester- und Offline-Chart falsch !!!

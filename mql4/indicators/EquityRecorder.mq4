@@ -23,7 +23,7 @@ extern int    HistoryFormat    = 401;                      // written history fo
 #include <rsfLib.mqh>
 #include <rsfHistory.mqh>
 #include <functions/ComputeFloatingPnL.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   1                          // there's a minimum of 1 buffer
@@ -84,7 +84,7 @@ int onInit() {
    }
 
    // indicator labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    indicatorName = ProgramName();
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);

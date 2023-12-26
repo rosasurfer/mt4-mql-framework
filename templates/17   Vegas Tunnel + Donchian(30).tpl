@@ -1,6 +1,6 @@
 <!--
 A modified Vegas Tunnel. The original tunnel is built from EMA(144) + EMA(169) and is too narrow. 
-It's replaced by a "XARD 3-MA-Tunnel" (XU v4-XARDFX) which is wider and produces better signals.
+It's replaced by a "XARD 3-MA-Tunnel" (XU v4-XARDFX) which is wider and produces less noise.
 
 @see https://forex-station.com/viewtopic.php?p=1295434513#p1295434513
 -->
@@ -16679,6 +16679,21 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
+name=MA Tunnel
+flags=339
+window_num=0
+<inputs>
+Tunnel.Definition=EMA(144)
+ShowChartLegend=0
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=ZigZag
 flags=339
 window_num=0
@@ -16718,32 +16733,6 @@ AutoConfiguration=1
 </expert>
 period_flags=0
 show_data=0
-</indicator>
-
-<indicator>
-name=Moving Average
-period=144
-shift=0
-method=1
-apply=2
-color=16711935
-style=0
-weight=1
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Moving Average
-period=144
-shift=0
-method=1
-apply=3
-color=16711935
-style=0
-weight=1
-period_flags=0
-show_data=1
 </indicator>
 </window>
 </chart>

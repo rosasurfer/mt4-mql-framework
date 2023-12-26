@@ -11,7 +11,6 @@
  *
  *  @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/#             [Arnaud Legoux Moving Average]
  *  @link  https://www.forexfactory.com/thread/251668#                                         [Arnaud Legoux Moving Average]
- *
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -31,7 +30,7 @@ extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
-extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -47,10 +46,10 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/legend.mqh>
 #include <functions/trend.mqh>
 #include <functions/ta/ALMA.mqh>
 
@@ -86,19 +85,12 @@ double maAverage [];                                     // average of maChange[
 int    maAppliedPrice;
 double maWeights[];                                      // bar weighting of the MA
 int    drawType;
-int    maxValues;
 
 string indicatorName = "";
 string shortName     = "";
 string legendLabel   = "";
 string legendInfo    = "";                               // additional chart legend info
 bool   enableMultiColoring;
-
-bool   signalTrendChange;
-bool   signalTrendChange.sound;
-bool   signalTrendChange.popup;
-bool   signalTrendChange.mail;
-bool   signalTrendChange.sms;
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -162,30 +154,25 @@ int onInit() {
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
-   // Max.Bars
-   if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
-   if (Max.Bars < -1)                                        return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
+   if (MaxBarsBack < -1)                                     return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
-   signalTrendChange       = Signal.onTrendChange;
-   signalTrendChange.sound = Signal.onTrendChange.Sound;
-   signalTrendChange.popup = Signal.onTrendChange.Popup;
-   signalTrendChange.mail  = Signal.onTrendChange.Mail;
-   signalTrendChange.sms   = Signal.onTrendChange.SMS;
-   legendInfo              = "";
    string signalId = "Signal.onTrendChange";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, signalTrendChange)) return(last_error);
-   if (signalTrendChange) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalTrendChange.sound)) return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalTrendChange.popup)) return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalTrendChange.mail))  return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalTrendChange.sms))   return(last_error);
-      if (signalTrendChange.sound || signalTrendChange.popup || signalTrendChange.mail || signalTrendChange.sms) {
-         legendInfo = StrLeft(ifString(signalTrendChange.sound, "sound,", "") + ifString(signalTrendChange.popup, "popup,", "") + ifString(signalTrendChange.mail, "mail,", "") + ifString(signalTrendChange.sms, "sms,", ""), -1);
+   legendInfo = "";
+   if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
+   if (Signal.onTrendChange) {
+      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onTrendChange.Sound)) return(last_error);
+      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onTrendChange.Popup)) return(last_error);
+      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onTrendChange.Mail))  return(last_error);
+      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onTrendChange.SMS))   return(last_error);
+      if (Signal.onTrendChange.Sound || Signal.onTrendChange.Popup || Signal.onTrendChange.Mail || Signal.onTrendChange.SMS) {
+         legendInfo = StrLeft(ifString(Signal.onTrendChange.Sound, "sound,", "") + ifString(Signal.onTrendChange.Popup, "popup,", "") + ifString(Signal.onTrendChange.Mail, "mail,", "") + ifString(Signal.onTrendChange.SMS, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
       }
-      else signalTrendChange = false;
+      else Signal.onTrendChange = false;
    }
 
    // restore a stored runtime status
@@ -206,7 +193,7 @@ int onInit() {
    ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights);
 
    // chart legend and coloring
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    enableMultiColoring = !__isSuperContext;
 
    return(catch("onInit(11)"));
@@ -262,9 +249,8 @@ int onTick() {
    }
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-MA.Periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ MA.Periods, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-MA.Periods);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ MA.Periods, ERR_HISTORY_INSUFFICIENT));
 
    double sum, stdDev, minChange;
 
@@ -301,9 +287,9 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], Digits, trend[0], Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], trend[0]);
 
-      if (signalTrendChange) /*&&*/ if (IsBarOpen()) {               // monitor trend reversals
+      if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {            // monitor trend reversals
          int iTrend = Round(trend[1]);
          if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
@@ -369,10 +355,10 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signalTrendChange.popup)          Alert(message);
-      if (signalTrendChange.sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
-      if (signalTrendChange.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (signalTrendChange.sms)   error |= !SendSMS("", message + NL + accountTime);
+      if (Signal.onTrendChange.Popup)          Alert(message);
+      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
+      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
       return(!error);
    }
 
@@ -381,10 +367,10 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signalTrendChange.popup)          Alert(message);
-      if (signalTrendChange.sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
-      if (signalTrendChange.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (signalTrendChange.sms)   error |= !SendSMS("", message + NL + accountTime);
+      if (Signal.onTrendChange.Popup)          Alert(message);
+      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
+      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
       return(!error);
    }
 
@@ -583,7 +569,7 @@ string InputsToStr() {
                             "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
                             "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";"+ NL,
+                            "MaxBarsBack=",                    MaxBarsBack,                                    ";"+ NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,

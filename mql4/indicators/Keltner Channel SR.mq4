@@ -36,8 +36,7 @@ extern color  ATR.Channel.Color     = CLR_NONE;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/legend.mqh>
-#include <functions/trend.mqh>
+#include <functions/chartlegend.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER_BAND       Bands.MODE_UPPER
@@ -175,7 +174,7 @@ int onInit() {
    SetIndexBuffer(MODE_LINE_DOWNSTART, lineDownStart); SetIndexEmptyValue(MODE_LINE_DOWNSTART, 0);
 
    // names, labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    indicatorName = WindowExpertName();
    IndicatorShortName(indicatorName);                                                                                               // chart tooltips and context menu
    SetIndexLabel(MODE_MA,         "KCh MA"   );      if (MA.Color          == CLR_NONE) SetIndexLabel(MODE_MA,             NULL);   // chart tooltips and "Data" window
@@ -294,7 +293,7 @@ int onTick() {
 
    if (!__isSuperContext) {
       color trendColor = ifInt(lineUp[0]!=0, Support.Color, Resistance.Color);
-      UpdateTrendLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR, Digits, NULL, Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR);
    }
    return(last_error);
 }

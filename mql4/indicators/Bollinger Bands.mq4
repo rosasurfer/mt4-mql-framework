@@ -16,35 +16,23 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods         = 200;
-extern string MA.Method          = "SMA | LWMA | EMA | ALMA*";
-extern string MA.AppliedPrice    = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern color  MA.Color           = LimeGreen;
-extern int    MA.LineWidth       = 0;
+extern int    MA.Periods      = 200;
+extern string MA.Method       = "SMA | LWMA | EMA | ALMA*";
+extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern color  MA.Color        = LimeGreen;
+extern int    MA.LineWidth    = 0;
 
-extern double Bands.StdDevs      = 2;
-extern color  Bands.Color        = RoyalBlue;
-extern int    Bands.LineWidth    = 1;
-
-extern int    Max.Bars           = 10000;             // max. values to calculate (-1: all available)
-extern string ___a__________________________;
-
-extern string Signal.onTouchBand = "on | off | auto*";
-extern string Signal.Sound       = "on | off | auto*";
-extern string Signal.Mail        = "on | off | auto*";
-extern string Signal.SMS         = "on | off | auto*";
+extern double Bands.StdDevs   = 2;
+extern color  Bands.Color     = RoyalBlue;
+extern int    Bands.LineWidth = 1;
+extern int    MaxBarsBack     = 10000;                // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/Bands.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/ConfigureSignalsByMail.mqh>
-#include <functions/ConfigureSignalsBySMS.mqh>
-#include <functions/ConfigureSignalsBySound.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
@@ -70,15 +58,6 @@ string indicatorName = "";                            // name for chart legend
 string legendLabel   = "";
 string legendInfo    = "";                            // additional chart legend info
 
-bool   signals;
-bool   signal.sound;
-string signal.sound.touchBand = "Signal Up.wav";
-bool   signal.mail;
-string signal.mail.sender   = "";
-string signal.mail.receiver = "";
-bool   signal.sms;
-string signal.sms.receiver = "";
-
 
 /**
  * Initialization
@@ -89,7 +68,6 @@ int onInit() {
    // validate inputs
    // MA.Periods
    if (MA.Periods < 1)        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-
    // MA.Method
    string values[], sValue = MA.Method;
    if (Explode(MA.Method, "*", values, 2) > 1) {
@@ -101,7 +79,6 @@ int onInit() {
    if (maMethod == -1)        return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    if (maMethod == MODE_SMMA) return(catch("onInit(3)  unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
-
    // MA.AppliedPrice
    sValue = MA.AppliedPrice;
    if (Explode(sValue, "*", values, 2) > 1) {
@@ -109,41 +86,23 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
-   if (sValue == "") sValue = "close";                                  // default price type
+   if (sValue == "") sValue = "close";                         // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
                               return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
-
-   // MA.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (MA.Color == 0xFF000000) MA.Color = CLR_NONE;
-
    // MA.LineWidth
    if (MA.LineWidth < 0)      return(catch("onInit(5)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-
    // Bands.StdDevs
    if (Bands.StdDevs < 0)     return(catch("onInit(6)  invalid input parameter Bands.StdDevs: "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
-
-   // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
-
    // Bands.LineWidth
    if (Bands.LineWidth < 0)   return(catch("onInit(7)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-
-   // Max.Bars
-   if (Max.Bars < -1)         return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-
-   // Signals
-   if (!ConfigureSignals("BollingerBand", Signal.onTouchBand, signals))                                  return(last_error);
-   if (signals) {
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
-      if (signal.sound || signal.mail || signal.sms) {
-         legendInfo = "TouchBand="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
-      }
-      else signals = false;
-   }
+   // MaxBarsBack
+   if (MaxBarsBack < -1)      return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (MA.Color    == 0xFF000000) MA.Color    = CLR_NONE;
+   if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
    // setup buffer management
    SetIndexBuffer(MODE_MA,    bufferMa   );                    // MA values:         visible if configured
@@ -151,7 +110,7 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
 
    // data display configuration, names and labels
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    string sMaAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = ProgramName() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
    IndicatorShortName(ProgramName() +"("+ MA.Periods +")");    // chart tooltips and context menu
@@ -162,9 +121,7 @@ int onInit() {
    IndicatorDigits(Digits | 1);
 
    // drawing options and styles
-   int startDraw = MA.Periods;
-   if (Max.Bars >= 0)
-      startDraw = Max(startDraw, Bars-Max.Bars);
+   int startDraw = Bars - MaxBarsBack;
    SetIndexDrawBegin(MODE_MA,    startDraw);
    SetIndexDrawBegin(MODE_UPPER, startDraw);
    SetIndexDrawBegin(MODE_LOWER, startDraw);
@@ -205,11 +162,8 @@ int onTick() {
 
 
    // calculate start bar
-   int changedBars = ChangedBars;
-   if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
-      changedBars = Max.Bars;
-   int startbar = Min(changedBars-1, Bars-MA.Periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-MA.Periods);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
 
    // recalculate changed bars
@@ -241,7 +195,7 @@ int onTick() {
 
    // update chart legend
    if (!__isSuperContext) {
-      Bands.UpdateLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
+      UpdateBandLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0]);
    }
    return(last_error);
 }
@@ -280,6 +234,6 @@ string InputsToStr() {
                             "Bands.StdDevs=",   NumberToStr(Bands.StdDevs, ".1+"), ";", NL,
                             "Bands.Color=",     ColorToStr(Bands.Color),           ";", NL,
                             "Bands.LineWidth=", Bands.LineWidth,                   ";", NL,
-                            "Max.Bars=",        Max.Bars,                          ";")
+                            "MaxBarsBack=",     MaxBarsBack,                       ";")
    );
 }

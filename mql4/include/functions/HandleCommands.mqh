@@ -1,9 +1,9 @@
 /**
  * Retrieve received commands and pass them to the command handler. Command format: "cmd[:params[:modifiers]]"
  *
- *  - cmd:       command identifier (required)
- *  - params:    one or more command parameters separated by comma "," (optional)
- *  - modifiers: one or more virtual key modifiers separated by comma "," (optional)
+ *  cmd:       command identifier (required)
+ *  params:    one or more command parameters separated by comma "," (optional)
+ *  modifiers: one or more virtual key modifiers separated by comma "," (optional)
  *
  * @param  string channel [optional] - id of the channel to check for commands (default: the program's standard channel id)
  * @param  bool   remove  [optional] - Whether to remove received commands from the channel (default: yes). If this parameter
@@ -12,7 +12,6 @@
  */
 bool HandleCommands(string channel="", bool remove=true) {
    if (__isSuperContext) return(true);
-   bool isLogNotice = IsLogNotice();
 
    string commands[];
    ArrayResize(commands, 0);
@@ -33,12 +32,12 @@ bool HandleCommands(string channel="", bool remove=true) {
             if      (modifier == "VK_CAPITAL")    keys |= F_VK_CAPITAL;
             else if (modifier == "VK_SHIFT")      keys |= F_VK_SHIFT;
             else if (modifier == "VK_LWIN")       keys |= F_VK_LWIN;
-            else if (modifier!="" && isLogNotice) logNotice("HandleCommands(1)  skipping unsupported command modifier: "+ modifier);
+            else if (modifier != "") logNotice("HandleCommands(1)  skipping unsupported command modifier: "+ modifier);
          }
       }
 
       if (cmd == "") {
-         if (isLogNotice) logNotice("HandleCommands(2)  skipping empty command: \""+ commands[i] +"\"");
+         logNotice("HandleCommands(2)  skipping empty command: \""+ commands[i] +"\"");
          continue;
       }
       onCommand(cmd, params, keys);

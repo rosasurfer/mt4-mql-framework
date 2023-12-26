@@ -1,9 +1,8 @@
 /**
  * Ehlers' Fisher Transform
  *
- * as described in his book "Cybernetic Analysis for Stocks and Futures". This indicator is a different visualization of a
+ * As described in his book "Cybernetic Analysis for Stocks and Futures". This indicator is a different representation of a
  * smoothed Stochastic oscillator.
- *
  *
  * Indicator buffers for iCustom():
  *  • Fisher.MODE_MAIN:    oscillator main values
@@ -12,11 +11,9 @@
  *    - length:  the absolute value is each histogram's section length (bars since the last crossing of zero)
  *
  *
- *
- *
  * TODO:
  *    - implement customizable moving averages for Stochastic and Fisher Transform
- *    - implement Max.Bars
+ *    - implement MaxBarsBack
  *    - implement PRICE_* types
  *    - check required run-up period
  */
@@ -27,7 +24,6 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int   Fisher.Periods        = 10;
-
 extern color Histogram.Color.Upper = LimeGreen;
 extern color Histogram.Color.Lower = Red;
 extern int   Histogram.Style.Width = 2;
@@ -121,7 +117,7 @@ int onTick() {
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(fisherMain,       EMPTY_VALUE);
-      ArrayInitialize(fisherSection,               0);
+      ArrayInitialize(fisherSection,              0);
       ArrayInitialize(fisherUpper,      EMPTY_VALUE);
       ArrayInitialize(fisherLower,      EMPTY_VALUE);
       ArrayInitialize(rawPrices,        EMPTY_VALUE);
@@ -170,8 +166,8 @@ int onTick() {
          fisherMain      [bar] = MathLog((1+normalizedPrices[bar])/(1-normalizedPrices[bar]));
       }
       else {
-         normalizedPrices[bar] = 0.33*centeredPrice + 0.67*normalizedPrices[bar+1];       // EMA(5): periods = 2/alpha - 1;   alpha = 2/(periods+1)
-         normalizedPrices[bar] = MathMax(MathMin(normalizedPrices[bar], limit), -limit);  // limit values to the original range
+         normalizedPrices[bar] = 0.33*centeredPrice + 0.67*normalizedPrices[bar+1];                                        // EMA(5): periods=2/alpha-1;   alpha=2/(periods+1)
+         normalizedPrices[bar] = MathMax(MathMin(normalizedPrices[bar], limit), -limit);                                   // limit values to the original range
          fisherMain      [bar] = 0.5*MathLog((1+normalizedPrices[bar])/(1-normalizedPrices[bar])) + 0.5*fisherMain[bar+1]; // EMA(3)
       }
 

@@ -10,7 +10,7 @@ extern int    __lpSuperContext;
 int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double __rates[][6];                                                 // current price series
 int    __tickTimerId;                                                // timer id for virtual ticks
-bool   __trackExecutionTime = false;                                 // whether to track the execution time of a full recalculation (ValidBars = 0)
+bool   __trackExecutionTime = false;                                 // whether to track the execution time of a full recalculation (if ValidBars = 0)
 bool   __isAccountChange    = false;
 bool   __isOfflineChart     = -1;                                    // initialized in start(), not before
 
@@ -23,7 +23,7 @@ bool   __isOfflineChart     = -1;                                    // initiali
 int init() {
    __isSuperContext = (__lpSuperContext != 0);
    if (__STATUS_OFF) return(__STATUS_OFF.reason);
-   if (__CoreFunction == NULL) __CoreFunction = CF_INIT;             // init() called by the terminal, all variables are reset
+   if (__CoreFunction != CF_START) __CoreFunction = CF_INIT;         // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this indicator.");
@@ -215,7 +215,7 @@ int start() {
    }
 
    // check chart initialization: Without history (i.e. no bars) Indicator::start() is never called.
-   // However for older builds Bars=0 used to be a spurious issue observed on terminal start.
+   // However on older builds Bars=0 used to be a spurious issue which was sometimes observed on terminal start.
    if (!Bars) return(_last_error(logInfo("start(1)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(2)")));
 
    // initialize ValidBars, ChangedBars and ShiftedBars (updated later)
@@ -237,7 +237,6 @@ int start() {
    else if ( Volume[0] ==  prevVolume) Tick.isVirtual = true;
    else                                Tick.isVirtual = (ChangedBars > 2);
    prevVolume = Volume[0];
-
 
    // detect and handle account changes
    // ---------------------------------
@@ -262,13 +261,13 @@ int start() {
    if (__CoreFunction == CF_INIT) {
       __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
-      // check initialization result: ERS_TERMINAL_NOT_YET_READY is the only error causing repetition of the init() call
+      // check initialization result: ERS_TERMINAL_NOT_YET_READY is the only error causing a repeated init() call
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {
          logDebug("start(4)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          prev_error = last_error;
          ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-         error = init();
+         error = init();                                                         // call init() again
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                              // restore CF_INIT and wait for the next tick
@@ -369,9 +368,11 @@ int start() {
    error = onTick();
    if (error && error!=last_error) CheckErrors("start(6)", error);
 
-   if (!__isTesting) /*&&*/ if (!ValidBars && __trackExecutionTime) {
-      int millis = (GetTickCount()-starttime);
-      logDebug("start(7)  Tick="+ Ticks +"  Bars="+ Bars +"  full recalculation="+ DoubleToStr(millis/1000., 3) +" sec");
+   if (!__isTesting && __trackExecutionTime && !ValidBars) {
+      if (IsLogDebug()) {
+         int millis = (GetTickCount()-starttime);
+         logDebug("start(7)  Tick="+ Ticks +"  Bars="+ Bars +"  full recalculation="+ DoubleToStr(millis/1000., 3) +" sec");
+      }
    }
 
    // check all errors
@@ -426,7 +427,7 @@ int deinit() {
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
    if (!__isTesting) {
-      RemoveLegend();
+      RemoveChartLegend();
       DeleteRegisteredObjects();
    }
 
@@ -568,7 +569,7 @@ bool CheckErrors(string caller, int error = NULL) {
    int  ec_SetDllError           (int ec[], int error);
    int  ec_SetProgramCoreFunction(int ec[], int function);
 
-   bool RemoveLegend();
+   bool RemoveChartLegend();
    bool ShiftDoubleIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
 
    int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);

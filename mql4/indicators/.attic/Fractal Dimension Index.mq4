@@ -23,13 +23,10 @@
  * Indicator buffers for iCustom():
  *  • FDI.MODE_MAIN: FDI values
  *
- *
- *                                         [Long, 2003]
  * @link  http://web.archive.org/web/20120413090115/http://www.fractalfinance.com/fracdimin.html#         [Long, 2004]
  * @link  http://web.archive.org/web/20080726032123/http://complexity.org.au/ci/vol05/sevcik/sevcik.html# [Estimation of Fractal Dimension, Sevcik, 1998]
  * @link  http://unicorn.us.com/trading/el.html#_FractalDim                                               [Fractal Dimension, Matulich, 2006]
  * @link  http://beathespread.com/pages/view/2228/fractal-dimension-indicators-and-their-use#             [FDI Usage, JohnLast, 2010]
- *
  * @link  https://www.mql5.com/en/code/8997#                                                              [FGDI with fixed FDI issues, LastViking]
  */
 #include <stddefines.mqh>
@@ -43,7 +40,7 @@ extern color  Color.Ranging  = Blue;
 extern color  Color.Trending = Red;
 extern string DrawType       = "Line* | Dot";
 extern int    DrawWidth      = 1;
-extern int    Max.Bars       = 10000;                    // max. values to calculate (-1: all available)
+extern int    MaxBarsBack    = 10000;                    // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -71,10 +68,8 @@ double upper[];                                          // upper line:     visi
 double lower[];                                          // lower line:     visible (trending)
 
 int fdiPeriods;
-
 int drawType;
 int drawWidth;
-int maxValues;
 
 
 /**
@@ -85,7 +80,7 @@ int maxValues;
 int onInit() {
    // validate inputs
    // Periods
-   if (Periods < 2)   return(catch("onInit(1)  invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Periods < 2)      return(catch("onInit(1)  invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    fdiPeriods = Periods;
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.Ranging  == 0xFF000000) Color.Ranging  = CLR_NONE;
@@ -99,13 +94,13 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  DrawType = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; DrawType = "Dot";  }
-   else               return(catch("onInit(2)  invalid input parameter DrawType: "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
+   else                  return(catch("onInit(2)  invalid input parameter DrawType: "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
    // DrawWidth
-   if (DrawWidth < 0) return(catch("onInit(3)  invalid input parameter DrawWidth: "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (DrawWidth < 0)    return(catch("onInit(3)  invalid input parameter DrawWidth: "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    drawWidth = DrawWidth;
-   // Max.Bars
-   if (Max.Bars < -1) return(catch("onInit(4)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (MaxBarsBack < -1) return(catch("onInit(4)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // buffer management
    SetIndexBuffer(MODE_MAIN,  main );                    // all FDI values: invisible
@@ -149,9 +144,8 @@ int onTick() {
    }
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-fdiPeriods-1);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-fdiPeriods-1);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    UpdateChangedBars(startbar);
@@ -245,6 +239,6 @@ string InputsToStr() {
                             "Color.Trending=", ColorToStr(Color.Trending), ";", NL,
                             "DrawType=",       DoubleQuoteStr(DrawType),   ";", NL,
                             "DrawWidth=",      DrawWidth,                  ";", NL,
-                            "Max.Bars=",       Max.Bars,                   ";")
+                            "MaxBarsBack=",    MaxBarsBack,                ";")
    );
 }

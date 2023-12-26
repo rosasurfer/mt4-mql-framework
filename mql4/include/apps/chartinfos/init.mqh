@@ -4,6 +4,8 @@
  * @return int - error status
  */
 int onInit() {
+   string indicator = WindowExpertName();
+
    // validate inputs
    // UnitSize.Corner: "top | bottom*" (may be shortened)
    string sValues[], sValue = UnitSize.Corner;
@@ -17,12 +19,8 @@ int onInit() {
    else return(catch("onInit(1)  invalid input parameter UnitSize.Corner: "+ UnitSize.Corner, ERR_INVALID_INPUT_PARAMETER));
    totalPosition.corner = unitSize.corner;
    UnitSize.Corner      = ifString(unitSize.corner==CORNER_TOP_RIGHT, "top", "bottom");
-
-   // init labels, status and used trade account
-   if (!CreateLabels())         return(last_error);
-   if (!RestoreStatus())        return(last_error);
-   if (!InitTradeAccount())     return(last_error);
-   if (!UpdateAccountDisplay()) return(last_error);
+   // Track.Orders
+   if (AutoConfiguration) Track.Orders = GetConfigBool(indicator, "Track.Orders", Track.Orders);
 
    // resolve the price type to display
    string section = "ChartInfos";
@@ -33,15 +31,18 @@ int onInit() {
    else if (sValue == "median") displayedPrice = PRICE_MEDIAN;
    else return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
+   // init labels, status and used trade account
+   if (!CreateLabels())         return(last_error);
+   if (!RestoreStatus())        return(last_error);
+   if (!InitTradeAccount())     return(last_error);
+   if (!UpdateAccountDisplay()) return(last_error);
+
    if (mode.intern) {
-      // resolve unitsize configuration
+      // resolve unitsize configuration, after InitTradeAccount()
       if (!ReadUnitSizeConfigValue("Leverage",    sValue)) return(last_error); mm.cfgLeverage    = StrToDouble(sValue);
       if (!ReadUnitSizeConfigValue("RiskPercent", sValue)) return(last_error); mm.cfgRiskPercent = StrToDouble(sValue);
       if (!ReadUnitSizeConfigValue("RiskRange",   sValue)) return(last_error); mm.cfgRiskRange   = StrToDouble(sValue);
       mm.cfgRiskRangeIsADR = StrCompareI(sValue, "ADR");
-
-      // order tracker
-      if (!OrderTracker.Configure()) return(last_error);
    }
    return(catch("onInit(3)"));
 }
@@ -129,6 +130,15 @@ int afterInit() {
       positions.showAbsProfits = true;
    }
    else {
+      // register an order event listener
+      if (mode.intern && Track.Orders) {
+         hWndDesktop = GetDesktopWindow();
+         orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
+         string name = orderTracker.key + StrToLower(Symbol());
+         int counter = Max(GetPropA(hWndDesktop, name), 0) + 1;
+         SetPropA(hWndDesktop, name, counter);
+      }
+
       // setup a chart ticker
       int hWnd = __ExecutionContext[EC.hChart];
       int millis = 1000;                                          // once every second
@@ -152,56 +162,8 @@ int afterInit() {
          if (!__tickTimerId) return(catch("afterInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       }
    }
-   //debug("afterInit(0.1)  IsConnected="+ IsConnected() +"  wndTitle="+ GetInternalWindowTextA(__ExecutionContext[EC.hChartWindow]));
    return(catch("afterInit(3)"));
 }
-
-
-/**
- * Konfiguriert den internen OrderTracker.
- *
- * @return bool - success status
- */
-bool OrderTracker.Configure() {
-   if (!mode.intern) return(true);
-   orderTracker.enabled = false;
-
-   string sValues[], sValue = StrToLower(Track.Orders);           // default: "on | off | auto*"
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   sValue = StrTrim(sValue);
-
-   if (sValue == "on") {
-      orderTracker.enabled = true;
-   }
-   else if (sValue == "off") {
-      orderTracker.enabled = false;
-   }
-   else if (sValue == "auto") {
-      orderTracker.enabled = GetConfigBool("ChartInfos", "Track.Orders");
-   }
-   else return(!catch("OrderTracker.Configure(1)  invalid input parameter Track.Orders: "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
-
-   if (orderTracker.enabled) {
-      // read signaling method configuration
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound))               return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, sValue, sValue)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS, signal.sms, sValue))           return(last_error);
-
-      // register the indicator as order event listener
-      if (!__isTesting) {
-         hWndDesktop = GetDesktopWindow();
-         orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
-         string name = orderTracker.key + StrToLower(Symbol());
-         int counter = Max(GetPropA(hWndDesktop, name), 0) + 1;
-         SetPropA(hWndDesktop, name, counter);
-      }
-   }
-   return(!catch("OrderTracker.Configure(2)"));
-}
-
 
 /**
  * Find the applicable configuration for the [UnitSize] calculation and return the configured value.

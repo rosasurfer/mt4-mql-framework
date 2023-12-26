@@ -13,7 +13,7 @@ int __DeinitFlags[];
 
 extern string TimeWindow       = "09:00-10:00";          // server timezone
 extern int    NumberOfBrackets = 1;                      // -1: process all available data
-extern color  BracketsColor    = Magenta;                //
+extern color  BracketsColor    = Blue;                   //
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

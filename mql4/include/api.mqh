@@ -121,7 +121,6 @@ string   ColorToStr(color value);;
 void     CopyMemory(int destination, int source, int bytes);;
 int      CountDecimals(double number);;
 bool     CreateDirectory(string path, int flags);;
-string   CreateLegend();;
 string   CreateString(int length);;
 datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
 datetime DateTime2(int parsed[], int flags=DATE_OF_TODAY);;
@@ -162,21 +161,14 @@ datetime GmtToServerTime(datetime time);;
 bool     GT(double double1, double double2, int digits=8);;
 string   HistoryFlagsToStr(int flags);;
 double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, double maReversalFilter, int iBuffer, int iBar);;
-bool     icChartInfos();;
-double   icFATL(NULL, NULL, NULL);;
 double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
 double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
 double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
 double   icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double maReversalFilter, int iBuffer, int iBar);;
-double   icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
-double   icSATL(NULL, NULL, NULL);;
 double   icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMainPeriods, int stochSignalPeriods, int rsiPeriods, int iBuffer, int iBar);;
 double   icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
-double   icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
-double   icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
-double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 bool     ifBool(bool condition, bool thenValue, bool elseValue);;
 double   ifDouble(bool condition, double thenValue, double elseValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;
@@ -243,7 +235,7 @@ string   PeriodFlagToStr(int flag);;
 string   PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=false);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
 double   PipValueEx(string symbol, double lots, int &error, string caller="");;
-int      PlaySoundEx(string soundfile);;
+bool     PlaySoundEx(string soundfile);;
 string   Pluralize(int count, string singular="", string plural="s");;
 string   PriceTypeDescription(int type);;
 string   PriceTypeToStr(int type);;
@@ -327,21 +319,23 @@ bool     UseTradeServerPath(string path, string caller="");;
 bool     WaitForTicket(int ticket, bool select=false);;
 
 
+// include/functions/chartlegend.mqh
+string   CreateChartLegend();;
+bool     RearrangeChartLegends();;
+bool     RemoveChartLegend();;
+void     UpdateBandLegend(string legendName, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue);;
+void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int trend=0);;
+
+
 // include/functions/
-void     Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
 bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false);;
-bool     ConfigureSignals(string name, string &configValue, bool &enabled);;
-bool     ConfigureSignals2(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalsByMail(string configValue, bool &enabled, string &sender, string &receiver);;
-bool     ConfigureSignalsByMail2(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignals(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsByPopup(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiver);;
-bool     ConfigureSignalsBySMS2(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalsBySound(string configValue, bool &enabled);;
-bool     ConfigureSignalsBySound2(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalsBySMS(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled);;
 
-string   CreateLegend();;
 int      ExplodeStrings(int &buffer[], string &results[]);;
 bool     HandleCommands(string channel="", bool remove=true);;
 int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int mute=NULL);;
@@ -358,10 +352,12 @@ string   JoinDoublesEx(double &values[], int digits, string separator=", ");;
 string   JoinInts(int &values[], string separator=", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
 bool     ParseDateTime(string value, int flags, int &result[]);;
-bool     RearrangeLegends();;
-bool     RemoveLegend();;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
-void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime time);;
+
+
+// include/functions/iCustom/
+double   icMaTunnel(int timeframe, int maPeriods, string maMethod, int iBuffer, int iBar);;
+double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 
 
 // include/functions/ta/
@@ -917,6 +913,8 @@ int      MT4InternalMsg();;
 string   NumberFormat(double value, string format);;
 string   OrderTypeDescription(int type);;
 string   PeriodToStr(int period);;
+int      PlaySoundA(string soundfile);;
+int      PlaySoundW(string soundfile);;
 string   ProgramTypeDescription(int type);;
 string   ProgramTypeToStr(int type);;
 bool     ReleaseTickTimer(int timerId);;

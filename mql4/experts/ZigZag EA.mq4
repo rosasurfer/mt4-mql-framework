@@ -1,12 +1,8 @@
 /**
- * ZigZag EA - a modified version of the system traded by the "Turtle traders" of Richard Dennis
+ * ZigZag EA - a modified version of the system traded by the "Turtle Traders" of Richard Dennis
  *
- *
- * The ZigZag indicator coming with MetaTrader internally uses a Donchian channel for it's calculation. Thus it can be used
- * to implement the Donchian channel system as traded by Richard Dennis in his "Turtle trading" program. This EA uses a custom
- * and greatly enhanced version of the ZigZag indicator (most signals are still the same).
- *
- *  @link  https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/#             ["Turtle Trading"]
+ * The ZigZag indicator in this GitHub repository uses a Donchian channel for calculation. It can be used to implement the
+ * Donchian channel system.
  *
  *
  * Input parameters
@@ -26,7 +22,7 @@
  *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
  *
- *    Timeseries in "quote units" are recorded in the best matching unit (one of pip, quote currency or index points).
+ *    Timeseries in "quote units" are recorded in the best matching unit (either pip, quote currency or index points).
  *
  *
  * External control
@@ -40,6 +36,10 @@
  *              start the EA in a predefined direction. Nothing changes if a position is already open.
  *  • EA.Stop:  When a "stop" command is received the EA closes open positions and stops waiting for new ZigZag signals.
  *              Nothing changes if the EA is already stopped.
+ *
+ *
+ *  @see  [Turtle Trading]  http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
+ *  @see  [Turtle Trading]  https://analyzingalpha.com/turtle-trading
  *
  *
  * TODO:
@@ -85,23 +85,10 @@
  *     fix gap between days/weeks if market is not open 24h
  *     implement more timeframes
  *
- *  - move iCustom() to ta/includes
- *  - rename Max.Bars to MaxBarsBack
- *  - investigate an auto-updating global var MaxBarsBack to prevent possible integer overflows
- *  - implement global var indicator::CalculatedBars
- *
- *  - ChartInfos
- *     include current daily range in ADR calculation/display
- *     improve pending order markers (it's not visible whether a pending target covers the full position)
- *      if TP exists => mark partial TP
- *      if SL exists => mark partial SL
- *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "Today 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 2 sec, retrying...
  *     ...
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 9 sec, retrying...
  *     FATAL   BTCUSD,202  ChartInfos::rsfLib::AquireLock(5)  failed to get lock on mutex "mutex.ChartInfos.command" after 10 sec, giving up  [ERR_RUNTIME_ERROR]
  *
  *  - stop on reverse signal
@@ -124,7 +111,6 @@
  *     reverse trading and command EA.Reverse
  *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
- *     analyze channel contraction
  *
  *  - visualization
  *     a chart profile per instrument
@@ -145,7 +131,6 @@
  *     recorded symbols with descriptions
  *
  *  - trade breaks
- *    - DAX: Global Prime has a session break at 23:00-23:03 (trade and quotes)
  *    - full session (24h) with trade breaks
  *    - partial session (e.g. 09:00-16:00) with trade breaks
  *    - trading is disabled but the price feed is active
@@ -178,21 +163,15 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
- *  - TradeManager for custom positions
- *     close new|all hedges
- *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
  *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
  *  - VPS: monitor and notify of incoming emails
- *  - notifications for open positions running into swap charges
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
- *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - move custom metric validation to EA
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64/terminal=512)
  *  - pass input "EA.Recorder" to the Expander as a string
- *  - build script for all .EX4 files after deployment
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
@@ -206,10 +185,10 @@ int __virtualTicks  = 10000;                                // every 10 seconds 
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID          = "";                    // instance to load from a status file, format /T?[0-9]{3}/
+extern string Sequence.ID          = "";                    // instance to load from a status file, format "[T]123"
 extern string TradingMode          = "regular* | virtual";  // can be shortened if distinct
 
-extern int    ZigZag.Periods       = 40;
+extern int    ZigZag.Periods       = 30;
 extern double Lots                 = 0.1;
 extern string StartConditions      = "";                    // @time(datetime|time)
 extern string StopConditions       = "";                    // @time(datetime|time)          // TODO: @signal([long|short]), @breakeven(on-profit), @trail([on-profit:]stepsize)
@@ -227,9 +206,10 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/ParseDateTime.mqh>
+#include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID               107           // unique strategy id (between 101-1023, 10 bit)
+#define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
 #define SID_MIN                   100           // range of valid sequence id values
 #define SID_MAX                   999
 
@@ -384,7 +364,7 @@ int onTick() {
 
    if (sequence.status != STATUS_STOPPED) {
       int signal, zzSignal;
-      IsZigZagSignal(zzSignal);                                // check ZigZag on every tick (signals occur anytime)
+      IsZigZagSignal(zzSignal);                                // check ZigZag on every tick (signals can occur anytime)
 
       if (sequence.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) StartSequence(signal);
@@ -755,7 +735,7 @@ void RecordMetrics() {
 /**
  * Whether a new ZigZag reversal occurred.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of an occurred reversal
+ * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
  *
  * @return bool
  */
@@ -772,7 +752,7 @@ bool IsZigZagSignal(int &signal) {
    else {
       if (!GetZigZagTrendData(0, trend, reversal)) return(false);
 
-      if (Abs(trend)==reversal || !reversal) {     // reversal=0 describes a double crossing, trend is +1 or -1
+      if (Abs(trend)==reversal || !reversal) {     // reversal=0 denotes a double crossing, trend is +1 or -1
          if (trend > 0) {
             if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
          }
@@ -802,13 +782,13 @@ bool IsZigZagSignal(int &signal) {
  *
  * @param  _In_  int bar            - bar offset
  * @param  _Out_ int &combinedTrend - combined trend value (MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers)
- * @param  _Out_ int &reversal      - bar offset of the current ZigZag reversal to the previous ZigZag extreme
+ * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to the previous ZigZag extreme
  *
  * @return bool - success status
  */
 bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
-   combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
-   reversal      = Round(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
+   combinedTrend = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
+   reversal      = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
 }
 
@@ -993,7 +973,7 @@ bool IsTradingTime() {
 /**
  * Whether a start condition is satisfied for a sequence.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
+ * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
  *
  * @return bool
  */
@@ -1001,12 +981,12 @@ bool IsStartSignal(int &signal) {
    signal = NULL;
    if (last_error || sequence.status!=STATUS_WAITING) return(false);
 
-   // start.time: -----------------------------------------------------------------------------------------------------------
+   // start.time ------------------------------------------------------------------------------------------------------------
    if (!IsTradingTime()) {
       return(false);
    }
 
-   // ZigZag signal: --------------------------------------------------------------------------------------------------------
+   // ZigZag signal ---------------------------------------------------------------------------------------------------------
    if (IsZigZagSignal(signal)) {
       bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
       int loglevel = ifInt(sequenceWasStarted, LOG_INFO, LOG_NOTICE);
@@ -1875,9 +1855,9 @@ int CalculateMagicNumber(int sequenceId = NULL) {
 
 
 /**
- * Whether the currently selected ticket belongs to the current strategy and/or instance.
+ * Whether the currently selected ticket belongs to the current strategy and optionally sequence.
  *
- * @param  int sequenceId [optional] - sequence to check the ticket against (default: check for matching strategy)
+ * @param  int sequenceId [optional] - sequence to check the ticket against (default: check for matching strategy only)
  *
  * @return bool
  */
@@ -1904,7 +1884,7 @@ int CreateSequenceId() {
 
    while (!magicNumber) {
       while (sequenceId < SID_MIN || sequenceId > SID_MAX) {
-         sequenceId = MathRand();                           // TODO: generate consecutive ids in tester
+         sequenceId = MathRand();                           // TODO: generate consecutive ids when in tester
       }
       magicNumber = CalculateMagicNumber(sequenceId); if (!magicNumber) return(NULL);
 
@@ -2104,10 +2084,10 @@ string GetLogFilename() {
 
 
 /**
- * Return the full name of the instance status file.
+ * Return the name of the status file.
  *
- * @param  bool relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
- *                                    (default: the absolute path)
+ * @param  bool relative [optional] - whether to return an absolute path or a path relative to the MQL "files" directory
+ *                                    (default: absolute path)
  *
  * @return string - filename or an empty string in case of errors
  */
@@ -2117,31 +2097,13 @@ string GetStatusFilename(bool relative = false) {
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = StrToLower(Symbol()) +".ZigZag."+ sequence.id +".set";
-      filename = StrReplace(directory, "\\", "/") + baseName;
+      string baseName  = Symbol() +".ZigZag."+ sequence.id +".set";
+      filename = directory + baseName;
    }
 
    if (relative)
       return(filename);
    return(GetMqlSandboxPath() +"/"+ filename);
-}
-
-
-/**
- * Return a description of a sequence status code.
- *
- * @param  int status
- *
- * @return string - description or an empty string in case of errors
- */
-string StatusDescription(int status) {
-   switch (status) {
-      case NULL              : return("undefined"  );
-      case STATUS_WAITING    : return("waiting"    );
-      case STATUS_PROGRESSING: return("progressing");
-      case STATUS_STOPPED    : return("stopped"    );
-   }
-   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -2160,6 +2122,24 @@ string StatusToStr(int status) {
       case STATUS_STOPPED    : return("STATUS_STOPPED"    );
    }
    return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return a description of a sequence status code.
+ *
+ * @param  int status
+ *
+ * @return string - description or an empty string in case of errors
+ */
+string StatusDescription(int status) {
+   switch (status) {
+      case NULL              : return("undefined"  );
+      case STATUS_WAITING    : return("waiting"    );
+      case STATUS_PROGRESSING: return("progressing");
+      case STATUS_STOPPED    : return("stopped"    );
+   }
+   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -2373,7 +2353,7 @@ bool RestoreSequence() {
    if (IsLastError())        return(false);
    if (!ReadStatus())        return(false);              // read and apply the status file
    if (!ValidateInputs())    return(false);              // validate restored input parameters
-   if (!SynchronizeStatus()) return(false);              // synchronize restored state with the trade server
+   if (!SynchronizeStatus()) return(false);              // synchronize restored state with current order state
    return(true);
 }
 
@@ -2400,7 +2380,7 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sSequenceID          = GetIniStringA(file, section, "Sequence.ID",          "");            // string Sequence.ID          = T1234
+   string sSequenceID          = GetIniStringA(file, section, "Sequence.ID",          "");            // string Sequence.ID          = T123
    string sTradingMode         = GetIniStringA(file, section, "TradingMode",          "");            // string TradingMode          = regular
    int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"          );            // int    ZigZag.Periods       = 40
    string sLots                = GetIniStringA(file, section, "Lots",                 "");            // double Lots                 = 0.1
@@ -2435,10 +2415,10 @@ bool ReadStatus() {
    tradingMode                 = GetIniInt    (file, section, "tradingMode");                         // int      tradingMode                 = 1
 
    // sequence data
-   sequence.id                 = GetIniInt    (file, section, "sequence.id"                );         // int      sequence.id                 = 1234
+   sequence.id                 = GetIniInt    (file, section, "sequence.id"                );         // int      sequence.id                 = 123
    sequence.created            = GetIniInt    (file, section, "sequence.created"           );         // datetime sequence.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
    sequence.isTest             = GetIniBool   (file, section, "sequence.isTest"            );         // bool     sequence.isTest             = 1
-   sequence.name               = GetIniStringA(file, section, "sequence.name",           "");         // string   sequence.name               = Z.1234
+   sequence.name               = GetIniStringA(file, section, "sequence.name",           "");         // string   sequence.name               = Z.123
    sequence.status             = GetIniInt    (file, section, "sequence.status"            );         // int      sequence.status             = 1
    sequence.startEquityM       = GetIniDouble (file, section, "sequence.startEquityM"      );         // double   sequence.startEquityM       = 1000.00
 
@@ -2628,7 +2608,8 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
 
 
 /**
- * Synchronize restored state and runtime vars with the trade server. Called only from RestoreSequence().
+ * Synchronize restored state and runtime vars with current order status on the trade server.
+ * Called only from RestoreSequence().
  *
  * @return bool - success status
  */
@@ -2904,14 +2885,14 @@ void RestoreInputs() {
 
 
 /**
- * Validate and apply the input parameter "Sequence.ID".
+ * Validate and apply input parameter "Sequence.ID".
  *
- * @return bool - whether a sequence id was successfully restored (the status file is not checked)
+ * @return bool - whether a sequence id value was successfully restored (the status file is not checked)
  */
 bool ValidateInputs.SID() {
    bool errorFlag = true;
 
-   if (!ApplySequenceId(Sequence.ID, errorFlag, "ValidateInputs.SID(1)")) {
+   if (!SetSequenceId(Sequence.ID, errorFlag, "ValidateInputs.SID(1)")) {
       if (errorFlag) onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: \""+ Sequence.ID +"\"");
       return(false);
    }
@@ -3156,7 +3137,7 @@ bool RestoreSequenceId() {
 
    // check input parameter
    string value = Sequence.ID;
-   if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(1)")) return(true);
+   if (SetSequenceId(value, muteErrors, "RestoreSequenceId(1)")) return(true);
    isError = muteErrors;
    if (isError) return(false);
 
@@ -3165,14 +3146,14 @@ bool RestoreSequenceId() {
       string name = ProgramName() +".Sequence.ID";
       value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
       muteErrors = false;
-      if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
+      if (SetSequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
       isError = muteErrors;
       if (isError) return(false);
 
       // check chart
       if (Chart.RestoreString(name, value, false)) {
          muteErrors = false;
-         if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(3)")) return(true);
+         if (SetSequenceId(value, muteErrors, "RestoreSequenceId(3)")) return(true);
       }
    }
    return(false);
@@ -3202,16 +3183,16 @@ bool RemoveSequenceId() {
 
 
 /**
- * Parse and apply the passed sequence id value (format: /T?[0-9]{3}/).
+ * Parse and set the passed sequence id value. Format: "[T]123"
  *
- * @param  _In_    string value  - stringyfied sequence id
- * @param  _InOut_ bool   error  - in:  whether to mute a parse error (TRUE) or to trigger a fatal error (FALSE)
- *                                 out: whether a parsing error occurred (stored in last_error)
+ * @param  _In_    string value  - sequence id value
+ * @param  _InOut_ bool   error  - in:  mute parse errors (TRUE) or trigger a fatal error (FALSE)
+ *                                 out: whether parse errors occurred (stored in last_error)
  * @param  _In_    string caller - caller identification (for error messages)
  *
- * @return bool - whether the sequence id was successfully applied
+ * @return bool - whether the sequence id value was successfully set
  */
-bool ApplySequenceId(string value, bool &error, string caller) {
+bool SetSequenceId(string value, bool &error, string caller) {
    string valueBak = value;
    bool muteErrors = error!=0;
    error = false;
@@ -3224,20 +3205,20 @@ bool ApplySequenceId(string value, bool &error, string caller) {
 
    if (StrStartsWith(value, "T")) {
       isTest = true;
-      value = StrSubstr(value, 1);
+      value = StringTrimLeft(StrSubstr(value, 1));
    }
 
    if (!StrIsDigits(value)) {
       error = true;
       if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
-      return(!catch(caller +"->ApplySequenceId(1)  invalid sequence id value: \""+ valueBak +"\" (must be digits only)", ERR_INVALID_PARAMETER));
+      return(!catch(caller +"->SetSequenceId(1)  invalid sequence id value: \""+ valueBak +"\" (must be digits only)", ERR_INVALID_PARAMETER));
    }
 
    int iValue = StrToInteger(value);
    if (iValue < SID_MIN || iValue > SID_MAX) {
       error = true;
       if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
-      return(!catch(caller +"->ApplySequenceId(2)  invalid sequence id value: \""+ valueBak +"\" (range error)", ERR_INVALID_PARAMETER));
+      return(!catch(caller +"->SetSequenceId(2)  invalid sequence id value: \""+ valueBak +"\" (range error)", ERR_INVALID_PARAMETER));
    }
 
    sequence.isTest = isTest;

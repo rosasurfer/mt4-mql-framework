@@ -1,17 +1,14 @@
 /**
  * Ehlers' Two-Pole Super Smoother Filter
  *
- * as described in his book "Cybernetic Analysis for Stocks and Futures". Compared to the ALMA the SuperSmoother is a little
+ * As described in his book "Cybernetic Analysis for Stocks and Futures". Compared to the ALMA the SuperSmoother is a little
  * more smooth at the cost of a bit more lag.
- *
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    all filter values
  *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
- *
- *
  *
  *
  * TODO: analyze and fix the required run-up period
@@ -22,32 +19,32 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Periods              = 38;
-extern string AppliedPrice         = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern int    Periods                        = 38;
+extern string AppliedPrice                   = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Color.UpTrend        = RoyalBlue;
-extern color  Color.DownTrend      = Gold;
-extern string Draw.Type            = "Line* | Dot";
-extern int    Draw.Width           = 3;
-extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
-extern string ___a__________________________;
+extern color  Color.UpTrend                  = RoyalBlue;
+extern color  Color.DownTrend                = Gold;
+extern string Draw.Type                      = "Line* | Dot";
+extern int    Draw.Width                     = 3;
+extern int    MaxBarsBack                    = 10000;    // max. values to calculate (-1: all available)
 
-extern string Signal.onTrendChange = "on | off | auto*";
-extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail          = "on | off | auto*";
-extern string Signal.SMS           = "on | off | auto*";
+extern string ___a__________________________ = "=== Signaling ===";
+extern bool   Signal.onTrendChange           = false;
+extern bool   Signal.onTrendChange.Sound     = true;
+extern string Signal.onTrendChange.SoundUp   = "Signal Up.wav";
+extern string Signal.onTrendChange.SoundDown = "Signal Down.wav";
+extern bool   Signal.onTrendChange.Popup     = false;
+extern bool   Signal.onTrendChange.Mail      = false;
+extern bool   Signal.onTrendChange.SMS       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ConfigureSignals.mqh>
-#include <functions/ConfigureSignalsByMail.mqh>
-#include <functions/ConfigureSignalsBySMS.mqh>
-#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/legend.mqh>
 #include <functions/trend.mqh>
 
 #define MODE_MAIN             MovingAverage.MODE_MA      // indicator buffer ids
@@ -76,18 +73,10 @@ double coef1;
 double coef2;
 double coef3;
 int    drawType;
-int    maxValues;
 
 string indicatorName = "";
 string legendLabel   = "";
 string legendInfo    = "";                               // additional chart legend info
-
-bool   signals;
-bool   signal.sound;
-string signal.sound.trendChange_up   = "Signal Up.wav";
-string signal.sound.trendChange_down = "Signal Down.wav";
-bool   signal.mail;
-bool   signal.sms;
 
 
 /**
@@ -99,7 +88,6 @@ int onInit() {
    // validate inputs
    // Periods
    if (Periods < 1)    return(catch("onInit(1)  invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMETER));
-
    // AppliedPrice
    string sValues[], sValue = StrToLower(AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -110,13 +98,11 @@ int onInit() {
    if (sValue == "") sValue = "close";                   // default price type
    appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (appliedPrice==-1 || appliedPrice > PRICE_WEIGHTED)
-                       return(catch("onInit(2)  invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                         return(catch("onInit(2)  invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    AppliedPrice = PriceTypeDescription(appliedPrice);
-
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
-
    // Draw.Type
    sValue = StrToLower(Draw.Type);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -126,27 +112,25 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
-
+   else                  return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
-   if (Draw.Width < 0) return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)   return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   // MaxBarsBack
+   if (MaxBarsBack < -1) return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
-   // Max.Bars
-   if (Max.Bars < -1)  return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
-
-   // signaling
-   if (!ConfigureSignals("2-Pole-Filter", Signal.onTrendChange, signals))     return(last_error);
-   if (signals) {
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound))               return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, sValue, sValue)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS, signal.sms, sValue))           return(last_error);
-
-      debug("onInit(0.1)  signal.sound="+ signal.sound +"  signal.mail="+ signal.mail +"  signal.sms="+ signal.sms);
-      if (signal.sound || signal.mail || signal.sms) {
-         legendInfo = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+   // signal configuration
+   string signalId = "Signal.onTrendChange";
+   if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
+   if (Signal.onTrendChange) {
+      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onTrendChange.Sound)) return(last_error);
+      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onTrendChange.Popup)) return(last_error);
+      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onTrendChange.Mail))  return(last_error);
+      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onTrendChange.SMS))   return(last_error);
+      Signal.onTrendChange = (Signal.onTrendChange.Sound || Signal.onTrendChange.Popup || Signal.onTrendChange.Mail || Signal.onTrendChange.SMS);
+      if (Signal.onTrendChange) {
+         legendInfo = StrLeft(ifString(Signal.onTrendChange.Sound, "sound,", "") + ifString(Signal.onTrendChange.Popup, "popup,", "") + ifString(Signal.onTrendChange.Mail, "mail,", "") + ifString(Signal.onTrendChange.SMS, "sms,", ""), -1);
       }
-      else signals = false;
    }
 
    // buffer management
@@ -157,7 +141,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
    // names, labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
    indicatorName = "2-Pole-Filter("+ Periods + sAppliedPrice +")";
    string shortName = "2-Pole-Filter("+ Periods +")";
@@ -214,9 +198,8 @@ int onTick() {
    }
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-Periods);             // TODO: fix the run-up period
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods);             // TODO: fix the run-up period
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
@@ -229,10 +212,10 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], trend[0]);
 
       // signal trend changes
-      if (signals) /*&&*/ if (IsBarOpen()) {
+      if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {
          int iTrend = Round(trend[1]);
          if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
@@ -258,9 +241,10 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_up);
-      if (signal.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
-      if (signal.sms)   error |= !SendSMS("", message +NL+ accountTime);
+      if (Signal.onTrendChange.Popup)          Alert(message);
+      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
+      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
+      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message +NL+ accountTime);
       return(!error);
    }
 
@@ -269,9 +253,10 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_down);
-      if (signal.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
-      if (signal.sms)   error |= !SendSMS("", message +NL+ accountTime);
+      if (Signal.onTrendChange.Popup)          Alert(message);
+      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
+      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
+      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message +NL+ accountTime);
       return(!error);
    }
 
@@ -300,16 +285,20 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Periods=",              Periods,                              ";", NL,
-                            "AppliedPrice=",         DoubleQuoteStr(AppliedPrice),         ";", NL,
-                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),            ";", NL,
-                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
-                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
-                            "Draw.Width=",           Draw.Width,                           ";", NL,
-                            "Max.Bars=",             Max.Bars,                             ";", NL,
-                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
-                            "Signal.Mail=",          DoubleQuoteStr(Signal.Mail),          ";", NL,
-                            "Signal.SMS=",           DoubleQuoteStr(Signal.SMS),           ";")
+   return(StringConcatenate("Periods=",                        Periods,                                        ";", NL,
+                            "AppliedPrice=",                   DoubleQuoteStr(AppliedPrice),                   ";", NL,
+                            "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";", NL,
+                            "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";", NL,
+                            "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";", NL,
+                            "Draw.Width=",                     Draw.Width,                                     ";", NL,
+                            "MaxBarsBack=",                    MaxBarsBack,                                    ";", NL,
+
+                            "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";", NL,
+                            "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";", NL,
+                            "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";", NL,
+                            "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";", NL,
+                            "Signal.onTrendChange.Popup=",     BoolToStr(Signal.onTrendChange.Popup),          ";", NL,
+                            "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";", NL,
+                            "Signal.onTrendChange.SMS=",       BoolToStr(Signal.onTrendChange.SMS),            ";")
    );
 }

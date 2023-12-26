@@ -1,7 +1,6 @@
 /**
- * CustomPositions.ToggleRisk
- *
- * Send a command to the ChartInfos indicator to toggle the MaxRisk display of custom positions.
+ * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der PL-Beträge der Positionen von
+ * "absolut" zu "prozentual" umzuschaltem.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -11,11 +10,11 @@ int __DeinitFlags[];
 
 
 /**
- * Main function
+ * Main-Funktion
  *
  * @return int - error status
  */
 int onStart() {
-   SendChartCommand("ChartInfos.command", "toggle-risk");
+   SendChartCommand("ChartInfos.command", "toggle-profit");
    return(catch("onStart(1)"));
 }

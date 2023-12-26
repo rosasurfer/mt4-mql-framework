@@ -22,13 +22,13 @@ extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical |
 extern double Bands.Deviations = 2.5;
 extern color  Bands.Color      = LightSkyBlue;
 extern int    Bands.LineWidth  = 3;
-extern string ___a__________________________;
 
+extern string ___a__________________________;
 extern bool   RepaintingMode   = true;             // toggle repainting mode (a full recalculation is way too slow when disabled)
 extern bool   MarkReversals    = true;
-extern int    Max.Bars         = 5000;             // max. values to calculate (-1: all available)
-extern string ___b__________________________;
+extern int    MaxBarsBack      = 10000;            // max. values to calculate (-1: all available)
 
+extern string ___b__________________________;
 extern bool   AlertsOn         = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,9 +36,8 @@ extern bool   AlertsOn         = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/Bands.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/legend.mqh>
+#include <functions/chartlegend.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
@@ -80,7 +79,6 @@ double reversalAge   [];
 
 int    maPeriods;
 int    maAppliedPrice;
-int    maxValues;
 double tmaWindow[];
 
 string indicatorName = "";
@@ -117,9 +115,9 @@ int onInit() {
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
    // Bands.LineWidth
    if (Bands.LineWidth < 0)                                   return(catch("onInit(5)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   // Max.Bars
-   if (Max.Bars < -1)                                         return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
-   maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // MaxBarsBack
+   if (MaxBarsBack < -1)                                      return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // buffer management
    SetIndexBuffer(MODE_TMA_RP,            tmaRP          ); SetIndexEmptyValue(MODE_TMA_RP,          0);
@@ -132,7 +130,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER_VARIANCE_RP, upperVarianceRP);                                              // not visible
 
    // names, labels and display options
-   legendLabel = CreateLegend();
+   legendLabel = CreateChartLegend();
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = "TMA("+ maPeriods + sAppliedPrice +") Gammarat Channel"+ ifString(RepaintingMode, " RP", " NRP");
    string shortName = "TMA("+ maPeriods +") Gammarat Channel";
@@ -208,18 +206,18 @@ int onTick() {
 
    // calculate start bars
    int maHalfLength  = maPeriods/2;
-   int requestedBars = Min(ChangedBars, maxValues);
+   int requestedBars = Min(ChangedBars, MaxBarsBack);
    int maxTmaBars    = Bars - maHalfLength;                    // max. possible TMA bars
 
    int bars = Min(requestedBars, maxTmaBars);                  // actual number of TMA bars to be updated w/o a channel
    int tmaStartbar = bars - 1;                                 // non-repainting TMA startbar w/o a channel
-   if (tmaStartbar < 0)        return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (tmaStartbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
    int tmaStartbarRP = Max(tmaStartbar, maHalfLength);         // repainting TMA startbar
 
    int maxChannelBars = maxTmaBars - maPeriods + 1;            // max. possible channel bars                      TODO: adjust to final algorithm
    bars = Min(requestedBars, maxChannelBars);                  // actual number of channel bars to be updated
    int channelStartbarNRP = bars - 1;
-   if (channelStartbarNRP < 0) return(logInfo("onTick(3)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (channelStartbarNRP < 0 && MaxBarsBack) return(logInfo("onTick(3)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate TMA and Gammarat channel
    if (true || RepaintingMode) {
@@ -276,7 +274,7 @@ void CalculateRepaintingTMA(int startbar) {
    }
 
    if (!__isSuperContext) {
-      Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
+      UpdateBandLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0]);
    }
    return(last_error);
 }
@@ -787,7 +785,7 @@ string InputsToStr() {
                             "Bands.LineWidth=",  Bands.LineWidth,                      ";", NL,
                             "RepaintingMode=",   BoolToStr(RepaintingMode),            ";", NL,
                             "MarkReversals=",    BoolToStr(MarkReversals),             ";", NL,
-                            "Max.Bars=",         Max.Bars,                             ";", NL,
+                            "MaxBarsBack=",      MaxBarsBack,                          ";", NL,
                             "AlertsOn=",         BoolToStr(AlertsOn),                  ";")
    );
 }

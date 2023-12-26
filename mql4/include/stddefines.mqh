@@ -336,9 +336,6 @@ double  N_INF;                                                    // -1.#INF: ne
 #define Bands.MODE_UPPER                  1     // upper band value
 #define Bands.MODE_LOWER                  2     // lower band value
 
-#define Broketrader.MODE_MA               6     // Broketrader SMA value
-#define Broketrader.MODE_TREND            7     // Broketrader trend direction and length
-
 #define Fisher.MODE_MAIN          MODE_MAIN     // Fisher Transform main line (0)
 #define Fisher.MODE_SECTION               1     // Fisher Transform section and section length
 
@@ -371,15 +368,6 @@ double  N_INF;                                                    // -1.#INF: ne
 
 #define SuperTrend.MODE_MAIN      MODE_MAIN     // SuperTrend SR line (0)
 #define SuperTrend.MODE_TREND             1     // SuperTrend trend direction and length
-
-#define ZigZag.MODE_SEMAPHORE_OPEN        0     // ZigZag semaphore open price
-#define ZigZag.MODE_SEMAPHORE_CLOSE       1     // ZigZag semaphore close price
-#define ZigZag.MODE_UPPER_BAND            2     // ZigZag upper channel band
-#define ZigZag.MODE_LOWER_BAND            3     // ZigZag lower channel band
-#define ZigZag.MODE_UPPER_CROSS           4     // ZigZag upper channel band crossing
-#define ZigZag.MODE_LOWER_CROSS           5     // ZigZag lower channel band crossing
-#define ZigZag.MODE_REVERSAL              6     // ZigZag leg reversal
-#define ZigZag.MODE_TREND                 7     // ZigZag trend (combined known and unknown trend)
 
 
 // sorting modes, see ArraySort()
