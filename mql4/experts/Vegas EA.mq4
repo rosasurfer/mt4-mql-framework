@@ -151,6 +151,7 @@ bool onCommand(string cmd, string params, int keys) {
             return(RestartInstance());
       }
    }
+
    else if (cmd == "stop") {
       switch (instance.status) {
          case STATUS_WAITING:
@@ -159,9 +160,287 @@ bool onCommand(string cmd, string params, int keys) {
             return(StopInstance());
       }
    }
+
+   else if (cmd == "toggle-open-orders") {
+      return(ToggleOpenOrders());
+   }
+
+   else if (cmd == "toggle-trade-history") {
+      return(ToggleTradeHistory());
+   }
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
+}
+
+
+/**
+ * Toggle the display of open orders.
+ *
+ * @return bool - success status
+ */
+bool ToggleOpenOrders() {
+   // read current status and toggle it
+   bool showOrders = !GetOpenOrderDisplayStatus();
+
+   // ON: display open orders
+   if (showOrders) {
+      int orders = ShowOpenOrders();
+      if (orders == -1) return(false);
+      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
+         showOrders = false;                          // remove any existing open order markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove open order markers
+   if (!showOrders) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) continue;
+               }
+               ObjectDelete(name);
+            }
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetOpenOrderDisplayStatus(showOrders);
+
+   if (__isTesting) WindowRedraw();
+   return(!catch("ToggleOpenOrders(1)"));
+}
+
+
+/**
+ * Resolve the current 'ShowOpenOrders' display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetOpenOrderDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) != -1) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the passed 'ShowOpenOrders' display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetOpenOrderDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart (for terminal restarts)
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetOpenOrderDisplayStatus(1)"));
+}
+
+
+/**
+ * Display the currently open orders.
+ *
+ * @return int - number of displayed orders or EMPTY (-1) in case of errors
+ */
+int ShowOpenOrders() {
+   string orderTypes[] = {"buy", "sell"};
+   color colors[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
+   int openOrders = 0;
+
+   if (open.ticket != NULL) {
+      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(Lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
+      if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(EMPTY);
+      ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
+      ObjectSet    (label, OBJPROP_TIME1,     open.time);
+      ObjectSet    (label, OBJPROP_PRICE1,    open.price);
+      ObjectSetText(label, instance.name);
+      openOrders++;
+   }
+
+   if (!catch("ShowOpenOrders(1)"))
+      return(openOrders);
+   return(EMPTY);
+}
+
+
+/**
+ * Toggle the display of closed trades.
+ *
+ * @return bool - success status
+ */
+bool ToggleTradeHistory() {
+   // read current status and toggle it
+   bool showHistory = !GetTradeHistoryDisplayStatus();
+
+   // ON: display closed trades
+   if (showHistory) {
+      int trades = ShowTradeHistory();
+      if (trades == -1) return(false);
+      if (!trades) {                                        // Without any closed trades the status must be reset to enable
+         showHistory = false;                               // the "off" section to clear existing markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove all closed trade markers (from this EA or another program)
+   if (!showHistory) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_CLOSED) continue;
+               }
+            }
+            else if (ObjectType(name) != OBJ_TREND) continue;
+            ObjectDelete(name);
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetTradeHistoryDisplayStatus(showHistory);
+
+   if (__isTesting) WindowRedraw();
+   return(!catch("ToggleTradeHistory(1)"));
+}
+
+
+/**
+ * Resolve the current "ShowTradeHistory" display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetTradeHistoryDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) != -1) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the passed "ShowTradeHistory" display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetTradeHistoryDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetTradeHistoryDisplayStatus(1)"));
+}
+
+
+/**
+ * Display closed trades.
+ *
+ * @return int - number of displayed trades or EMPTY (-1) in case of errors
+ */
+int ShowTradeHistory() {
+   string openLabel="", lineLabel="", closeLabel="", sOpenPrice="", sClosePrice="", sOperations[]={"buy", "sell"};
+   int iOpenColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, iLineColors[]={Blue, Red};
+
+   // process the local trade history
+   int orders = ArrayRange(history, 0), closedTrades = 0;
+
+   for (int i=0; i < orders; i++) {
+      int      ticket     = history[i][H_TICKET    ];
+      int      type       = history[i][H_OPENTYPE  ];
+      double   lots       = history[i][H_LOTS      ];
+      datetime openTime   = history[i][H_OPENTIME  ];
+      double   openPrice  = history[i][H_OPENPRICE ];
+      datetime closeTime  = history[i][H_CLOSETIME ];
+      double   closePrice = history[i][H_CLOSEPRICE];
+
+      if (!closeTime)                    continue;             // skip open tickets (should not happen)
+      if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
+
+      sOpenPrice  = NumberToStr(openPrice, PriceFormat);
+      sClosePrice = NumberToStr(closePrice, PriceFormat);
+
+      // open marker
+      openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
+      if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
+      ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (openLabel, OBJPROP_COLOR,     iOpenColors[type]);
+      ObjectSet    (openLabel, OBJPROP_TIME1,     openTime);
+      ObjectSet    (openLabel, OBJPROP_PRICE1,    openPrice);
+      ObjectSetText(openLabel, instance.name);
+
+      // trend line
+      lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
+      if (ObjectFind(lineLabel) == -1) ObjectCreate(lineLabel, OBJ_TREND, 0, 0, 0, 0, 0);
+      ObjectSet(lineLabel, OBJPROP_RAY,    false);
+      ObjectSet(lineLabel, OBJPROP_STYLE,  STYLE_DOT);
+      ObjectSet(lineLabel, OBJPROP_COLOR,  iLineColors[type]);
+      ObjectSet(lineLabel, OBJPROP_BACK,   true);
+      ObjectSet(lineLabel, OBJPROP_TIME1,  openTime);
+      ObjectSet(lineLabel, OBJPROP_PRICE1, openPrice);
+      ObjectSet(lineLabel, OBJPROP_TIME2,  closeTime);
+      ObjectSet(lineLabel, OBJPROP_PRICE2, closePrice);
+
+      // close marker
+      closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+      if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
+      ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+      ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+      ObjectSet    (closeLabel, OBJPROP_TIME1,     closeTime);
+      ObjectSet    (closeLabel, OBJPROP_PRICE1,    closePrice);
+      ObjectSetText(closeLabel, instance.name);
+      closedTrades++;
+   }
+
+   if (!catch("ShowTradeHistory(1)"))
+      return(closedTrades);
+   return(EMPTY);
 }
 
 
