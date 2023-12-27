@@ -99,7 +99,7 @@ double   open.swap;
 double   open.commission;
 double   open.grossProfit;
 double   open.netProfit;
-double   history[][16];                            // multiple closed positions
+double   history[][12];                            // multiple closed positions
 
 // caching vars to speed-up ShowStatus()
 string   sLots               = "";

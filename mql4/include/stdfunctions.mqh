@@ -4125,18 +4125,6 @@ datetime GetServerTime() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * Convert an FXT timestamp to GMT.
  *
@@ -4149,21 +4137,6 @@ datetime FxtToGmtTime(datetime time) {
    if (offset == EMPTY_VALUE) return(_NaT(logInfo("FxtToGmtTime(1)->GetFxtToGmtTimeOffset() => EMPTY_VALUE", __ExecutionContext[EC.mqlError])));
    return(time - offset);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /**

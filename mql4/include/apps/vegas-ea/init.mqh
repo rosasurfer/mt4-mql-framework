@@ -25,9 +25,9 @@ int onInitUser() {
          instance.isTest  = __isTesting;
          instance.id      = CreateInstanceId();
          Instance.ID      = ifString(instance.isTest, "T", "") + instance.id; SS.InstanceName();
-         instance.created = TimeLocalEx("onInitUser(1)");
+         instance.created = GetLocalTime();
          instance.status  = STATUS_WAITING;
-         logInfo("onInitUser(2)  instance "+ instance.name +" created");
+         logInfo("onInitUser(1)  instance "+ instance.name +" created");
          SaveStatus();
       }
    }
