@@ -225,22 +225,22 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #define SIGNAL_TIME                 3
 #define SIGNAL_TAKEPROFIT           4
 
-#define HI_TICKET                   0           // trade history indexes
-#define HI_LOTS                     1
-#define HI_OPENTYPE                 2
-#define HI_OPENTIME                 3
-#define HI_OPENBID                  4
-#define HI_OPENASK                  5
-#define HI_OPENPRICE                6
-#define HI_CLOSETIME                7
-#define HI_CLOSEBID                 8
-#define HI_CLOSEASK                 9
-#define HI_CLOSEPRICE              10
-#define HI_SLIPPAGE_P              11           // P: in pip
-#define HI_SWAP_M                  12           // M: in account currency (money)
-#define HI_COMMISSION_M            13           // U: in quote units
-#define HI_GROSS_PROFIT_M          14
-#define HI_NET_PROFIT_M            15
+#define H_TICKET                    0           // trade history indexes
+#define H_LOTS                      1
+#define H_OPENTYPE                  2
+#define H_OPENTIME                  3
+#define H_OPENBID                   4
+#define H_OPENASK                   5
+#define H_OPENPRICE                 6
+#define H_CLOSETIME                 7
+#define H_CLOSEBID                  8
+#define H_CLOSEASK                  9
+#define H_CLOSEPRICE               10
+#define H_SLIPPAGE_P               11           // P: in pip
+#define H_SWAP_M                   12           // M: in account currency (money)
+#define H_COMMISSION_M             13           // U: in quote units
+#define H_GROSS_PROFIT_M           14
+#define H_NET_PROFIT_M             15
 
 #define TP_TYPE_MONEY               1           // TakeProfit types
 #define TP_TYPE_PERCENT             2
@@ -667,13 +667,13 @@ int ShowTradeHistory() {
    int orders = ArrayRange(history, 0), closedTrades = 0;
 
    for (int i=0; i < orders; i++) {
-      int      ticket     = history[i][HI_TICKET    ];
-      int      type       = history[i][HI_OPENTYPE  ];
-      double   lots       = history[i][HI_LOTS      ];
-      datetime openTime   = history[i][HI_OPENTIME  ];
-      double   openPrice  = history[i][HI_OPENPRICE ];
-      datetime closeTime  = history[i][HI_CLOSETIME ];
-      double   closePrice = history[i][HI_CLOSEPRICE];
+      int      ticket     = history[i][H_TICKET    ];
+      int      type       = history[i][H_OPENTYPE  ];
+      double   lots       = history[i][H_LOTS      ];
+      datetime openTime   = history[i][H_OPENTIME  ];
+      double   openPrice  = history[i][H_OPENPRICE ];
+      datetime closeTime  = history[i][H_CLOSETIME ];
+      double   closePrice = history[i][H_CLOSEPRICE];
 
       if (!closeTime)                    continue;             // skip open tickets (should not happen)
       if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
@@ -1340,7 +1340,7 @@ bool ReverseVirtualSequence(int signal) {
 
 
 /**
- * Add trade details of the specified ticket to the local history and reset open position data.
+ * Add trade details of the specified closed ticket to the local history and reset open position data.
  *
  * @param int    ticket   - closed ticket
  * @param double bid      - Bid price before the position was closed
@@ -1372,28 +1372,28 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
 
    // update history
    int i = ArrayRange(history, 0);
-   ArrayResize(history, i + 1);
-   history[i][HI_TICKET        ] = ticket;
-   history[i][HI_LOTS          ] = OrderLots();
-   history[i][HI_OPENTYPE      ] = OrderType();
-   history[i][HI_OPENTIME      ] = OrderOpenTime();
-   history[i][HI_OPENBID       ] = open.bid;
-   history[i][HI_OPENASK       ] = open.ask;
-   history[i][HI_OPENPRICE     ] = OrderOpenPrice();
-   history[i][HI_CLOSETIME     ] = OrderCloseTime();
-   history[i][HI_CLOSEBID      ] = doubleOr(bid, OrderClosePrice());
-   history[i][HI_CLOSEASK      ] = doubleOr(ask, OrderClosePrice());
-   history[i][HI_CLOSEPRICE    ] = OrderClosePrice();
-   history[i][HI_SLIPPAGE_P    ] = open.slippageP + slippage;
-   history[i][HI_SWAP_M        ] = open.swapM;
-   history[i][HI_COMMISSION_M  ] = open.commissionM;
-   history[i][HI_GROSS_PROFIT_M] = open.grossProfitM;
-   history[i][HI_NET_PROFIT_M  ] = open.netProfitM;
+   ArrayResize(history, i+1);
+   history[i][H_TICKET        ] = ticket;
+   history[i][H_LOTS          ] = OrderLots();
+   history[i][H_OPENTYPE      ] = OrderType();
+   history[i][H_OPENTIME      ] = OrderOpenTime();
+   history[i][H_OPENBID       ] = open.bid;
+   history[i][H_OPENASK       ] = open.ask;
+   history[i][H_OPENPRICE     ] = OrderOpenPrice();
+   history[i][H_CLOSETIME     ] = OrderCloseTime();
+   history[i][H_CLOSEBID      ] = doubleOr(bid, OrderClosePrice());
+   history[i][H_CLOSEASK      ] = doubleOr(ask, OrderClosePrice());
+   history[i][H_CLOSEPRICE    ] = OrderClosePrice();
+   history[i][H_SLIPPAGE_P    ] = open.slippageP + slippage;
+   history[i][H_SWAP_M        ] = open.swapM;
+   history[i][H_COMMISSION_M  ] = open.commissionM;
+   history[i][H_GROSS_PROFIT_M] = open.grossProfitM;
+   history[i][H_NET_PROFIT_M  ] = open.netProfitM;
    OrderPop("ArchiveClosedPosition(3)");
 
    // update PL numbers
    sequence.openZeroProfitU    = 0;                                           // both directions use Bid prices
-   sequence.closedZeroProfitU += ifDouble(!open.type, history[i][HI_CLOSEBID]-open.bid, open.bid-history[i][HI_CLOSEBID]);
+   sequence.closedZeroProfitU += ifDouble(!open.type, history[i][H_CLOSEBID]-open.bid, open.bid-history[i][H_CLOSEBID]);
    sequence.totalZeroProfitU   = sequence.closedZeroProfitU;
 
    sequence.openGrossProfitU    = 0;
@@ -1449,27 +1449,27 @@ bool ArchiveClosedVirtualPosition(int ticket) {
 
    // update history
    int i = ArrayRange(history, 0);
-   ArrayResize(history, i + 1);
-   history[i][HI_TICKET        ] = ticket;
-   history[i][HI_LOTS          ] = Lots;
-   history[i][HI_OPENTYPE      ] = open.type;
-   history[i][HI_OPENTIME      ] = open.time;
-   history[i][HI_OPENBID       ] = open.bid;
-   history[i][HI_OPENASK       ] = open.ask;
-   history[i][HI_OPENPRICE     ] = open.price;
-   history[i][HI_CLOSETIME     ] = Tick.time;
-   history[i][HI_CLOSEBID      ] = Bid;
-   history[i][HI_CLOSEASK      ] = Ask;
-   history[i][HI_CLOSEPRICE    ] = ifDouble(!open.type, Bid, Ask);
-   history[i][HI_SLIPPAGE_P    ] = open.slippageP;
-   history[i][HI_SWAP_M        ] = open.swapM;
-   history[i][HI_COMMISSION_M  ] = open.commissionM;
-   history[i][HI_GROSS_PROFIT_M] = open.grossProfitM;
-   history[i][HI_NET_PROFIT_M  ] = open.netProfitM;
+   ArrayResize(history, i+1);
+   history[i][H_TICKET        ] = ticket;
+   history[i][H_LOTS          ] = Lots;
+   history[i][H_OPENTYPE      ] = open.type;
+   history[i][H_OPENTIME      ] = open.time;
+   history[i][H_OPENBID       ] = open.bid;
+   history[i][H_OPENASK       ] = open.ask;
+   history[i][H_OPENPRICE     ] = open.price;
+   history[i][H_CLOSETIME     ] = Tick.time;
+   history[i][H_CLOSEBID      ] = Bid;
+   history[i][H_CLOSEASK      ] = Ask;
+   history[i][H_CLOSEPRICE    ] = ifDouble(!open.type, Bid, Ask);
+   history[i][H_SLIPPAGE_P    ] = open.slippageP;
+   history[i][H_SWAP_M        ] = open.swapM;
+   history[i][H_COMMISSION_M  ] = open.commissionM;
+   history[i][H_GROSS_PROFIT_M] = open.grossProfitM;
+   history[i][H_NET_PROFIT_M  ] = open.netProfitM;
 
    // update PL numbers
    sequence.openZeroProfitU    = 0;                                           // both directions use Bid prices
-   sequence.closedZeroProfitU += ifDouble(!open.type, history[i][HI_CLOSEBID]-open.bid, open.bid-history[i][HI_CLOSEBID]);
+   sequence.closedZeroProfitU += ifDouble(!open.type, history[i][H_CLOSEBID]-open.bid, open.bid-history[i][H_CLOSEBID]);
    sequence.totalZeroProfitU   = sequence.closedZeroProfitU;
 
    sequence.openGrossProfitU    = 0;
@@ -1923,7 +1923,7 @@ int CreateSequenceId() {
 int VirtualOrderSend(int type) {
    int ticket = open.ticket;
    int size = ArrayRange(history, 0);
-   if (size > 0) ticket = Max(ticket, history[size-1][HI_TICKET]);
+   if (size > 0) ticket = Max(ticket, history[size-1][H_TICKET]);
    ticket++;
 
    if (IsLogInfo()) {
@@ -2108,7 +2108,7 @@ string GetStatusFilename(bool relative = false) {
 
 
 /**
- * Return a readable presentation of a sequence status code.
+ * Return a readable representation of a sequence status code.
  *
  * @param  int status
  *
@@ -2134,7 +2134,7 @@ string StatusToStr(int status) {
  */
 string StatusDescription(int status) {
    switch (status) {
-      case NULL              : return("undefined"  );
+      case NULL              : return("(undefined)");
       case STATUS_WAITING    : return("waiting"    );
       case STATUS_PROGRESSING: return("progressing");
       case STATUS_STOPPED    : return("stopped"    );
@@ -2144,7 +2144,7 @@ string StatusDescription(int status) {
 
 
 /**
- * Return a readable presentation of a signal constant.
+ * Return a readable representation of a signal constant.
  *
  * @param  int signal
  *
@@ -2152,7 +2152,7 @@ string StatusDescription(int status) {
  */
 string SignalToStr(int signal) {
    switch (signal) {
-      case NULL             : return("no signal"        );
+      case NULL             : return("(undefined)"      );
       case SIGNAL_LONG      : return("SIGNAL_LONG"      );
       case SIGNAL_SHORT     : return("SIGNAL_SHORT"     );
       case SIGNAL_TIME      : return("SIGNAL_TIME"      );
@@ -2323,22 +2323,22 @@ string SaveStatus.ConditionsToStr(string sConditions) {
 string SaveStatus.HistoryToStr(int index) {
    // result: ticket,lots,openType,openTime,openBid,OpenAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
 
-   int      ticket      = history[index][HI_TICKET        ];
-   double   lots        = history[index][HI_LOTS          ];
-   int      openType    = history[index][HI_OPENTYPE      ];
-   datetime openTime    = history[index][HI_OPENTIME      ];
-   double   openBid     = history[index][HI_OPENBID       ];
-   double   openAsk     = history[index][HI_OPENASK       ];
-   double   openPrice   = history[index][HI_OPENPRICE     ];
-   datetime closeTime   = history[index][HI_CLOSETIME     ];
-   double   closeBid    = history[index][HI_CLOSEBID      ];
-   double   closeAsk    = history[index][HI_CLOSEASK      ];
-   double   closePrice  = history[index][HI_CLOSEPRICE    ];
-   double   slippage    = history[index][HI_SLIPPAGE_P    ];
-   double   swap        = history[index][HI_SWAP_M        ];
-   double   commission  = history[index][HI_COMMISSION_M  ];
-   double   grossProfit = history[index][HI_GROSS_PROFIT_M];
-   double   netProfit   = history[index][HI_NET_PROFIT_M  ];
+   int      ticket      = history[index][H_TICKET        ];
+   double   lots        = history[index][H_LOTS          ];
+   int      openType    = history[index][H_OPENTYPE      ];
+   datetime openTime    = history[index][H_OPENTIME      ];
+   double   openBid     = history[index][H_OPENBID       ];
+   double   openAsk     = history[index][H_OPENASK       ];
+   double   openPrice   = history[index][H_OPENPRICE     ];
+   datetime closeTime   = history[index][H_CLOSETIME     ];
+   double   closeBid    = history[index][H_CLOSEBID      ];
+   double   closeAsk    = history[index][H_CLOSEASK      ];
+   double   closePrice  = history[index][H_CLOSEPRICE    ];
+   double   slippage    = history[index][H_SLIPPAGE_P    ];
+   double   swap        = history[index][H_SWAP_M        ];
+   double   commission  = history[index][H_COMMISSION_M  ];
+   double   grossProfit = history[index][H_GROSS_PROFIT_M];
+   double   netProfit   = history[index][H_NET_PROFIT_M  ];
 
    return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openBid, Digits), ",", DoubleToStr(openAsk, Digits), ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closeBid, Digits), ",", DoubleToStr(closeAsk, Digits), ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
@@ -2393,8 +2393,8 @@ bool ReadStatus() {
    string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",          "");            // string EA.Recorder          = 1,2,4
    string sEaRecorderAutoScale = GetIniStringA(file, section, "EA.RecorderAutoScale", "");            // bool   EA.RecorderAutoScale = 0
 
-   if (!StrIsNumeric(sLots))                 return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (!StrIsNumeric(sTakeProfit))           return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sLots))       return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sTakeProfit)) return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
    Sequence.ID          = sSequenceID;
    TradingMode          = sTradingMode;
@@ -2444,8 +2444,8 @@ bool ReadStatus() {
 
    // open order data
    open.ticket                 = GetIniInt    (file, section, "open.ticket"      );                   // int      open.ticket       = 123456
-   open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 0
-   open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800
+   open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 1
+   open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
    open.bid                    = GetIniDouble (file, section, "open.bid"         );                   // double   open.bid          = 1.24363
    open.ask                    = GetIniDouble (file, section, "open.ask"         );                   // double   open.ask          = 1.24363
    open.price                  = GetIniDouble (file, section, "open.price"       );                   // double   open.price        = 1.24363
@@ -2495,7 +2495,7 @@ bool ReadStatus() {
 
 
 /**
- * Read and return the keys of the trade history records found in the status file (sorting order doesn't matter).
+ * Read and return the keys of all trade history records found in the status file (sorting order doesn't matter).
  *
  * @param  _In_  string file    - status filename
  * @param  _In_  string section - status section
@@ -2534,22 +2534,22 @@ bool ReadStatus.ParseHistory(string key, string value) {
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(!catch("ReadStatus.ParseHistory(2)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
 
-   int      ticket      = StrToInteger(values[HI_TICKET        ]);
-   double   lots        =  StrToDouble(values[HI_LOTS          ]);
-   int      openType    = StrToInteger(values[HI_OPENTYPE      ]);
-   datetime openTime    = StrToInteger(values[HI_OPENTIME      ]);
-   double   openBid     =  StrToDouble(values[HI_OPENBID       ]);
-   double   openAsk     =  StrToDouble(values[HI_OPENASK       ]);
-   double   openPrice   =  StrToDouble(values[HI_OPENPRICE     ]);
-   datetime closeTime   = StrToInteger(values[HI_CLOSETIME     ]);
-   double   closeBid    =  StrToDouble(values[HI_CLOSEBID      ]);
-   double   closeAsk    =  StrToDouble(values[HI_CLOSEASK      ]);
-   double   closePrice  =  StrToDouble(values[HI_CLOSEPRICE    ]);
-   double   slippage    =  StrToDouble(values[HI_SLIPPAGE_P    ]);
-   double   swap        =  StrToDouble(values[HI_SWAP_M        ]);
-   double   commission  =  StrToDouble(values[HI_COMMISSION_M  ]);
-   double   grossProfit =  StrToDouble(values[HI_GROSS_PROFIT_M]);
-   double   netProfit   =  StrToDouble(values[HI_NET_PROFIT_M  ]);
+   int      ticket      = StrToInteger(values[H_TICKET        ]);
+   double   lots        =  StrToDouble(values[H_LOTS          ]);
+   int      openType    = StrToInteger(values[H_OPENTYPE      ]);
+   datetime openTime    = StrToInteger(values[H_OPENTIME      ]);
+   double   openBid     =  StrToDouble(values[H_OPENBID       ]);
+   double   openAsk     =  StrToDouble(values[H_OPENASK       ]);
+   double   openPrice   =  StrToDouble(values[H_OPENPRICE     ]);
+   datetime closeTime   = StrToInteger(values[H_CLOSETIME     ]);
+   double   closeBid    =  StrToDouble(values[H_CLOSEBID      ]);
+   double   closeAsk    =  StrToDouble(values[H_CLOSEASK      ]);
+   double   closePrice  =  StrToDouble(values[H_CLOSEPRICE    ]);
+   double   slippage    =  StrToDouble(values[H_SLIPPAGE_P    ]);
+   double   swap        =  StrToDouble(values[H_SWAP_M        ]);
+   double   commission  =  StrToDouble(values[H_COMMISSION_M  ]);
+   double   grossProfit =  StrToDouble(values[H_GROSS_PROFIT_M]);
+   double   netProfit   =  StrToDouble(values[H_NET_PROFIT_M  ]);
 
    return(!IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openBid, openAsk, openPrice, closeTime, closeBid, closeAsk, closePrice, slippage, swap, commission, grossProfit, netProfit)));
 }
@@ -2568,10 +2568,10 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
-      if (EQ(ticket,   history[i][HI_TICKET  ])) return(_EMPTY(catch("History.AddRecord(1)  "+ sequence.name +" cannot add record, ticket #"+ ticket +" already exists (offset: "+ i +")", ERR_INVALID_PARAMETER)));
-      if (GT(openTime, history[i][HI_OPENTIME])) continue;
-      if (LT(openTime, history[i][HI_OPENTIME])) break;
-      if (LT(ticket,   history[i][HI_TICKET  ])) break;
+      if (EQ(ticket,   history[i][H_TICKET  ])) return(_EMPTY(catch("History.AddRecord(1)  "+ sequence.name +" cannot add record, ticket #"+ ticket +" already exists (offset: "+ i +")", ERR_INVALID_PARAMETER)));
+      if (GT(openTime, history[i][H_OPENTIME])) continue;
+      if (LT(openTime, history[i][H_OPENTIME])) break;
+      if (LT(ticket,   history[i][H_TICKET  ])) break;
    }
 
    // 'i' now holds the array index to insert at
@@ -2584,22 +2584,22 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
    }
 
    // insert the new data
-   history[i][HI_TICKET        ] = ticket;
-   history[i][HI_LOTS          ] = lots;
-   history[i][HI_OPENTYPE      ] = openType;
-   history[i][HI_OPENTIME      ] = openTime;
-   history[i][HI_OPENBID       ] = openBid;
-   history[i][HI_OPENASK       ] = openAsk;
-   history[i][HI_OPENPRICE     ] = openPrice;
-   history[i][HI_CLOSETIME     ] = closeTime;
-   history[i][HI_CLOSEBID      ] = closeBid;
-   history[i][HI_CLOSEASK      ] = closeAsk;
-   history[i][HI_CLOSEPRICE    ] = closePrice;
-   history[i][HI_SLIPPAGE_P    ] = slippage;
-   history[i][HI_SWAP_M        ] = swap;
-   history[i][HI_COMMISSION_M  ] = commission;
-   history[i][HI_GROSS_PROFIT_M] = grossProfit;
-   history[i][HI_NET_PROFIT_M  ] = netProfit;
+   history[i][H_TICKET        ] = ticket;
+   history[i][H_LOTS          ] = lots;
+   history[i][H_OPENTYPE      ] = openType;
+   history[i][H_OPENTIME      ] = openTime;
+   history[i][H_OPENBID       ] = openBid;
+   history[i][H_OPENASK       ] = openAsk;
+   history[i][H_OPENPRICE     ] = openPrice;
+   history[i][H_CLOSETIME     ] = closeTime;
+   history[i][H_CLOSEBID      ] = closeBid;
+   history[i][H_CLOSEASK      ] = closeAsk;
+   history[i][H_CLOSEPRICE    ] = closePrice;
+   history[i][H_SLIPPAGE_P    ] = slippage;
+   history[i][H_SWAP_M        ] = swap;
+   history[i][H_COMMISSION_M  ] = commission;
+   history[i][H_GROSS_PROFIT_M] = grossProfit;
+   history[i][H_NET_PROFIT_M  ] = netProfit;
 
    if (!catch("History.AddRecord(2)"))
       return(i);
@@ -2709,15 +2709,15 @@ bool SynchronizeStatus() {
 bool IsLocalClosedPosition(int ticket) {
    int size = ArrayRange(history, 0);
    for (int i=0; i < size; i++) {
-      if (history[i][HI_TICKET] == ticket) return(true);
+      if (history[i][H_TICKET] == ticket) return(true);
    }
    return(false);
 }
 
 
 /**
- * Whether the current sequence was created in the tester. Considers that a test sequence can be loaded into an online
- * chart after the test (for visualization and analysis).
+ * Whether the current instance was created in the tester. Considers that a finished test may have been loaded into an online
+ * chart for visualization and further analysis.
  *
  * @return bool
  */
@@ -2780,7 +2780,7 @@ bool     prev.recordCustom;
  * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backup input parameters, also accessed for comparison in ValidateInputs()
+   // backup input parameters, used for comparison in ValidateInputs()
    prev.Sequence.ID          = StringConcatenate(Sequence.ID, "");   // string inputs are references to internal C literals and must be copied to break the reference
    prev.TradingMode          = StringConcatenate(TradingMode, "");
    prev.ZigZag.Periods       = ZigZag.Periods;
@@ -3357,7 +3357,7 @@ void SS.PLStats() {
             sSequenceMaxNetProfit   = NumberToStr(sequence.maxNetProfitM, "+.2");
             sSequenceMaxNetDrawdown = NumberToStr(sequence.maxNetDrawdownM, "+.2");
          }
-         sSequencePlStats = StringConcatenate("(", sSequenceMaxNetProfit, " / ", sSequenceMaxNetDrawdown, ")");
+         sSequencePlStats = StringConcatenate("(", sSequenceMaxNetDrawdown, "/", sSequenceMaxNetProfit, ")");
       }
    }
 }

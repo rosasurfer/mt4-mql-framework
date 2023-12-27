@@ -339,7 +339,7 @@ string InputsToStr() {
    return(StringConcatenate("Tunnel.Definition=",            DoubleQuoteStr(Tunnel.Definition),            ";", NL,
                             "Tunnel.Color=",                 ColorToStr(Tunnel.Color),                     ";", NL,
                             "MaxBarsBack=",                  MaxBarsBack,                                  ";", NL,
-                            "ShowChartLegend",               BoolToStr(ShowChartLegend),                   ";", NL,
+                            "ShowChartLegend=",              BoolToStr(ShowChartLegend),                   ";", NL,
 
                             "Signal.onBarCross",             BoolToStr(Signal.onBarCross),                 ";", NL,
                             "Signal.onBarCross.Sound",       BoolToStr(Signal.onBarCross.Sound),           ";", NL,

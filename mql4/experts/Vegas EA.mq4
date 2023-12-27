@@ -23,11 +23,11 @@
  * -----------------
  * • Instance.ID:  ...
  * • Donchian.Periods:  ...
+ * • Lots:  ...
  *
  *
  *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
  *  @see  [Turtle Trading]         https://analyzingalpha.com/turtle-trading
- *  @see  [Duel Grid EA]           https://github.com/rosasurfer/mt4-mql/blob/master/mql4/experts/Duel.mq4
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -38,6 +38,7 @@ int __virtualTicks = 0;
 
 extern string Instance.ID      = "";               // instance to load from a status file, format "[T]123"
 extern int    Donchian.Periods = 30;
+extern double Lots             = 0.1;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -61,12 +62,48 @@ extern int    Donchian.Periods = 30;
 #define SIGNAL_LONG  TRADE_DIRECTION_LONG          // 1 signal types
 #define SIGNAL_SHORT TRADE_DIRECTION_SHORT         // 2
 
+#define H_TICKET              0                    // trade history indexes
+#define H_LOTS                1
+#define H_OPENTYPE            2
+#define H_OPENTIME            3
+#define H_OPENPRICE           4
+#define H_CLOSETIME           5
+#define H_CLOSEPRICE          6
+#define H_SLIPPAGE            7
+#define H_SWAP                8
+#define H_COMMISSION          9
+#define H_GROSSPROFIT        10
+#define H_NETPROFIT          11
+
 // instance data
 int      instance.id;                              // instance id (100-999, used for magic order numbers)
 datetime instance.created;
 string   instance.name = "";
 int      instance.status;
 bool     instance.isTest;
+
+double   instance.openNetProfit;
+double   instance.closedNetProfit;
+double   instance.totalNetProfit;
+double   instance.maxNetProfit;                    // max. observed total net profit:   0...+n
+double   instance.maxNetDrawdown;                  // max. observed total net drawdown: -n...0
+
+// order data
+int      open.ticket;                              // one open position
+int      open.type;
+datetime open.time;
+double   open.price;
+double   open.slippage;
+double   open.swap;
+double   open.commission;
+double   open.grossProfit;
+double   open.netProfit;
+double   history[][12];                            // multiple closed positions
+
+// caching vars to speed-up ShowStatus()
+string   sLots               = "";
+string   sInstanceTotalNetPL = "";
+string   sInstancePlStats    = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause        = false;          // whether to pause a test after StopInstance()
@@ -86,11 +123,10 @@ int onTick() {
 
    if (__isChart) HandleCommands();                // process incoming commands
 
-   if (instance.status == STATUS_WAITING) {
+   if (instance.status != STATUS_STOPPED) {
       int signal;
-      if (IsTradeSignal(signal)) StartTrading(signal);
-   }
-   else if (instance.status == STATUS_PROGRESSING) {
+      IsTradeSignal(signal);
+      UpdateStatus(signal);
    }
    return(catch("onTick(1)"));
 }
@@ -126,6 +162,54 @@ bool onCommand(string cmd, string params, int keys) {
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
+}
+
+
+/**
+ * Whether a trade signal occurred.
+ *
+ * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
+ *
+ * @return bool
+ */
+bool IsTradeSignal(int &signal) {
+   signal = NULL;
+   if (last_error != NULL) return(false);
+
+   // MA Tunnel signal ------------------------------------------------------------------------------------------------------
+   if (IsMaTunnelSignal(signal)) {
+      logInfo("IsTradeSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      return(true);
+   }
+
+   // Donchian signal -------------------------------------------------------------------------------------------------------
+   //if (IsDonchianSignal(signal)) {
+   //   logInfo("IsTradeSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   //   return(true);
+   //}
+   return(false);
+}
+
+
+/**
+ * Whether a new MA tunnel crossing occurred.
+ *
+ * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
+ *
+ * @return bool
+ */
+bool IsMaTunnelSignal(int &signal) {
+   if (last_error != NULL) return(false);
+   signal = NULL;
+
+   if (IsBarOpen()) {
+      string tunnelDefinition = "EMA(9), EMA(36), EMA(144)";
+      int trend = icMaTunnel(NULL, tunnelDefinition, MaTunnel.MODE_BAR_TREND, 1);
+
+      if      (trend == +1) signal = SIGNAL_LONG;
+      else if (trend == -1) signal = SIGNAL_SHORT;
+   }
+   return(signal != NULL);
 }
 
 
@@ -187,71 +271,133 @@ bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
 
 
 /**
- * Whether a new MA tunnel crossing occurred.
+ * Update order status and PL stats.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
- *
- * @return bool
- */
-bool IsMaTunnelSignal(int &signal) {
-   if (last_error != NULL) return(false);
-   signal = NULL;
-
-   if (IsBarOpen()) {
-      string tunnelDefinition = "EMA(9), EMA(36), EMA(144)";
-      int trend = icMaTunnel(NULL, tunnelDefinition, MaTunnel.MODE_BAR_TREND, 1);
-
-      if      (trend == +1) signal = SIGNAL_LONG;
-      else if (trend == -1) signal = SIGNAL_SHORT;
-
-      if (signal && instance.status==STATUS_PROGRESSING) {
-         if (IsLogInfo()) logInfo("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      }
-   }
-   return(signal != NULL);
-}
-
-
-/**
- * Whether a trade signal occurred.
- *
- * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
- *
- * @return bool
- */
-bool IsTradeSignal(int &signal) {
-   signal = NULL;
-   if (last_error || instance.status!=STATUS_WAITING) return(false);
-
-   // MA Tunnel signal ------------------------------------------------------------------------------------------------------
-   if (IsMaTunnelSignal(signal)) {
-      logInfo("IsTradeSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      return(true);
-   }
-
-   // Donchian signal -------------------------------------------------------------------------------------------------------
-   //if (IsDonchianSignal(signal)) {
-   //   logInfo("IsTradeSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-   //   return(true);
-   //}
-   return(false);
-}
-
-
-/**
- * Start trading on a waiting instance and change the status to "progressing".
- *
- * @param  int signal - trade signal causing the call
+ * @param  int signal [optional] - trade signal causing the call (default: stats update only)
  *
  * @return bool - success status
  */
-bool StartTrading(int signal) {
-   if (last_error != NULL)                          return(false);
-   if (instance.status != STATUS_WAITING)           return(!catch("StartTrading(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartTrading(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+bool UpdateStatus(int signal = NULL) {
+   if (last_error != NULL)                                                     return(false);
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ instance.name +" illegal instance status "+ StatusToStr(instance.status), ERR_ILLEGAL_STATE));
 
-   debug("StartTrading(0.1)");
-   return(true);
+   if (!signal) {
+      if (open.ticket != NULL) {
+         if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
+         if (OrderCloseTime() > 0) return(!catch("UpdateStatus(3)  "+ instance.name +" #"+ open.ticket+" is not an open position anymore", ERR_ILLEGAL_STATE));
+
+         open.swap        = OrderSwap();
+         open.commission  = OrderCommission();
+         open.grossProfit = OrderProfit();
+         open.netProfit   = open.grossProfit + open.swap + open.commission;
+      }
+   }
+   else {
+      if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("UpdateStatus(4)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+      instance.status = STATUS_PROGRESSING;
+
+      // close an existing open position
+      if (open.ticket != NULL) {
+         if (open.type != ifInt(signal==SIGNAL_SHORT, OP_LONG, OP_SHORT)) return(!catch("UpdateStatus(5)  "+ instance.name +" cannot process "+ SignalToStr(signal) +" with open "+ OperationTypeToStr(open.type) +" position", ERR_ILLEGAL_STATE));
+
+         int oeFlags = NULL, oe[];
+         bool success = OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe);
+         if (!success) return(!SetLastError(oe.Error(oe)));
+         if (!ArchiveClosedPosition(open.ticket, -oe.Slippage(oe))) return(false);
+      }
+
+      // open a new position
+      int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
+      double   price       = NULL;
+      int      slippage    = NULL;
+      double   stopLoss    = NULL;
+      double   takeProfit  = NULL;
+      string   comment     = "Vegas."+ instance.id;
+      int      magicNumber = CalculateMagicNumber();
+      datetime expires     = NULL;
+      color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+               oeFlags     = NULL;
+
+      int ticket = OrderSendEx(Symbol(), type, Lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+      if (!ticket) return(!SetLastError(oe.Error(oe)));
+
+      // store the new position
+      open.ticket      = ticket;
+      open.type        = type;
+      open.time        = oe.OpenTime  (oe);
+      open.price       = oe.OpenPrice (oe);
+      open.slippage    = -oe.Slippage (oe);
+      open.swap        = oe.Swap      (oe);
+      open.commission  = oe.Commission(oe);
+      open.grossProfit = oe.Profit    (oe);
+      open.netProfit   = open.grossProfit + open.swap + open.commission;
+   }
+
+   // update PL numbers
+   instance.totalNetProfit = open.netProfit + instance.closedNetProfit;
+   if      (instance.totalNetProfit > instance.maxNetProfit  ) { instance.maxNetProfit   = instance.totalNetProfit; SS.PLStats(); }
+   else if (instance.totalNetProfit < instance.maxNetDrawdown) { instance.maxNetDrawdown = instance.totalNetProfit; SS.PLStats(); }
+   SS.TotalPL();
+
+   if (signal != NULL)
+      return(SaveStatus());
+   return(!catch("UpdateStatus(6)"));
+}
+
+
+/**
+ * Add trade details of the specified closed ticket to the local history and reset open position data.
+ *
+ * @param int    ticket   - closed ticket
+ * @param double slippage - close slippage in pip
+ *
+ * @return bool - success status
+ */
+bool ArchiveClosedPosition(int ticket, double slippage) {
+   if (last_error != NULL)                    return(false);
+   if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ instance.name +" cannot archive position of "+ StatusDescription(instance.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   SelectTicket(ticket, "ArchiveClosedPosition(2)", /*push=*/true);
+
+   // update now closed position data
+   open.swap        = OrderSwap();
+   open.commission  = OrderCommission();
+   open.grossProfit = OrderProfit();
+   open.netProfit   = open.grossProfit + open.swap + open.commission;
+
+   // update history
+   int i = ArrayRange(history, 0);
+   ArrayResize(history, i+1);
+   history[i][H_TICKET     ] = ticket;
+   history[i][H_LOTS       ] = OrderLots();
+   history[i][H_OPENTYPE   ] = OrderType();
+   history[i][H_OPENTIME   ] = OrderOpenTime();
+   history[i][H_OPENPRICE  ] = OrderOpenPrice();
+   history[i][H_CLOSETIME  ] = OrderCloseTime();
+   history[i][H_CLOSEPRICE ] = OrderClosePrice();
+   history[i][H_SLIPPAGE   ] = open.slippage + slippage;
+   history[i][H_SWAP       ] = open.swap;
+   history[i][H_COMMISSION ] = open.commission;
+   history[i][H_GROSSPROFIT] = open.grossProfit;
+   history[i][H_NETPROFIT  ] = open.netProfit;
+   OrderPop("ArchiveClosedPosition(3)");
+
+   // update PL numbers
+   instance.openNetProfit    = 0;
+   instance.closedNetProfit += open.netProfit;
+   instance.totalNetProfit   = instance.closedNetProfit;
+
+   // reset open position data
+   open.ticket      = NULL;
+   open.type        = NULL;
+   open.time        = NULL;
+   open.price       = NULL;
+   open.slippage    = NULL;
+   open.swap        = NULL;
+   open.commission  = NULL;
+   open.grossProfit = NULL;
+   open.netProfit   = NULL;
+   return(!catch("ArchiveClosedPosition(4)"));
 }
 
 
@@ -265,7 +411,7 @@ bool StartTrading(int signal) {
 bool StopInstance(int signal) {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   return(true);
+   return(!catch("StopInstance(2)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -277,13 +423,13 @@ bool StopInstance(int signal) {
 bool RestartInstance() {
    if (last_error != NULL)                return(false);
    if (instance.status != STATUS_STOPPED) return(!catch("RestartInstance(1)  "+ instance.name +" cannot restart "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   return(true);
+   return(!catch("RestartInstance(2)", ERR_NOT_IMPLEMENTED));
 }
 
 
 /**
- * Whether the current instance was created in the tester. Considers that a test instance can be loaded into an online
- * chart after the test (for visualization and analysis).
+ * Whether the current instance was created in the tester. Considers that a finished test may have been loaded into an online
+ * chart for visualization and further analysis.
  *
  * @return bool
  */
@@ -446,30 +592,163 @@ bool ReadStatus() {
 
    // [General]
    string section      = "General";
-   string sAccount     = GetIniStringA(file, section, "Account", "");                  // string Account = ICMarkets:12345678 (demo)
-   string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                  // string Symbol  = EURUSD
+   string sAccount     = GetIniStringA(file, section, "Account", "");                     // string Account = ICMarkets:12345678 (demo)
+   string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                     // string Symbol  = EURUSD
    string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
    if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(4)  "+ instance.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
    if (!StrCompareI(sSymbol, Symbol()))                       return(!catch("ReadStatus(5)  "+ instance.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID      = GetIniStringA(file, section, "Instance.ID",  "");         // string Instance.ID      = T123
-   int    iDonchianPeriods = GetIniInt    (file, section, "Donchian.Periods");         // int    Donchian.Periods = 40
+   string sInstanceID       = GetIniStringA(file, section, "Instance.ID",  "");           // string Instance.ID      = T123
+   int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods");           // int    Donchian.Periods = 40
+   string sLots             = GetIniStringA(file, section, "Lots",         "");           // double Lots             = 0.1
+
+   if (!StrIsNumeric(sLots)) return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
    Instance.ID      = sInstanceID;
    Donchian.Periods = iDonchianPeriods;
+   Lots             = StrToDouble(sLots);
 
    // [Runtime status]
    section = "Runtime status";
-   instance.id             = GetIniInt    (file, section, "instance.id"      );        // int      instance.id      = 123
-   instance.created        = GetIniInt    (file, section, "instance.created" );        // datetime instance.created = 1624924800 (Mon, 2021.05.12 13:22:34)
-   instance.isTest         = GetIniBool   (file, section, "instance.isTest"  );        // bool     instance.isTest  = 1
-   instance.name           = GetIniStringA(file, section, "instance.name", "");        // string   instance.name    = V.123
-   instance.status         = GetIniInt    (file, section, "instance.status"  );        // int      instance.status  = 1
+   instance.id              = GetIniInt    (file, section, "instance.id"      );          // int      instance.id              = 123
+   instance.created         = GetIniInt    (file, section, "instance.created" );          // datetime instance.created         = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.isTest          = GetIniBool   (file, section, "instance.isTest"  );          // bool     instance.isTest          = 1
+   instance.name            = GetIniStringA(file, section, "instance.name", "");          // string   instance.name            = V.123
+   instance.status          = GetIniInt    (file, section, "instance.status"  );          // int      instance.status          = 1
+
+   instance.openNetProfit   = GetIniDouble (file, section, "instance.openNetProfit"  );   // double   instance.openNetProfit   = 23.45
+   instance.closedNetProfit = GetIniDouble (file, section, "instance.closedNetProfit");   // double   instance.closedNetProfit = 45.67
+   instance.totalNetProfit  = GetIniDouble (file, section, "instance.totalNetProfit" );   // double   instance.totalNetProfit  = 123.45
+   instance.maxNetProfit    = GetIniDouble (file, section, "instance.maxNetProfit"   );   // double   instance.maxNetProfit    = 23.45
+   instance.maxNetDrawdown  = GetIniDouble (file, section, "instance.maxNetDrawdown" );   // double   instance.maxNetDrawdown  = -11.23
    SS.InstanceName();
 
-   return(!catch("ReadStatus(6)"));
+   // open order data
+   open.ticket              = GetIniInt    (file, section, "open.ticket"     );           // int      open.ticket              = 123456
+   open.type                = GetIniInt    (file, section, "open.type"       );           // int      open.type                = 1
+   open.time                = GetIniInt    (file, section, "open.time"       );           // datetime open.time                = 1624924800 (Mon, 2021.05.12 13:22:34)
+   open.price               = GetIniDouble (file, section, "open.price"      );           // double   open.price               = 1.24363
+   open.slippage            = GetIniDouble (file, section, "open.slippage"   );           // double   open.slippage            = 1.0
+   open.swap                = GetIniDouble (file, section, "open.swap"       );           // double   open.swap                = -1.23
+   open.commission          = GetIniDouble (file, section, "open.commission" );           // double   open.commission          = -5.50
+   open.grossProfit         = GetIniDouble (file, section, "open.grossProfit");           // double   open.grossProfit         = 12.34
+   open.netProfit           = GetIniDouble (file, section, "open.netProfit"  );           // double   open.netProfit           = 12.56
+
+   // history data
+   string sKeys[], sOrder="";
+   int size = ReadStatus.HistoryKeys(file, section, sKeys); if (size < 0) return(false);
+   for (int i=0; i < size; i++) {
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                // history.{i} = {data}
+      if (!ReadStatus.ParseHistory(sKeys[i], sOrder)) return(!catch("ReadStatus(7)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+   }
+   return(!catch("ReadStatus(8)"));
+}
+
+
+/**
+ * Read and return the keys of all trade history records found in the status file (sorting order doesn't matter).
+ *
+ * @param  _In_  string file    - status filename
+ * @param  _In_  string section - status section
+ * @param  _Out_ string &keys[] - array receiving the found keys
+ *
+ * @return int - number of found keys or EMPTY (-1) in case of errors
+ */
+int ReadStatus.HistoryKeys(string file, string section, string &keys[]) {
+   int size = GetIniKeys(file, section, keys);
+   if (size < 0) return(EMPTY);
+
+   for (int i=size-1; i >= 0; i--) {
+      if (StrStartsWithI(keys[i], "history."))
+         continue;
+      ArraySpliceStrings(keys, i, 1);     // drop all non-order keys
+      size--;
+   }
+   return(size);                          // no need to sort as records are inserted at the correct position
+}
+
+
+/**
+ * Parse the string representation of a closed order record and store the parsed data.
+ *
+ * @param  string key   - order key
+ * @param  string value - order string to parse
+ *
+ * @return bool - success status
+ */
+bool ReadStatus.ParseHistory(string key, string value) {
+   if (IsLastError())                    return(false);
+   if (!StrStartsWithI(key, "history.")) return(!catch("ReadStatus.ParseHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+
+   // history.i=ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,grossProfit,netProfit
+   string values[];
+   string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(!catch("ReadStatus.ParseHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
+
+   int      ticket      = StrToInteger(values[H_TICKET     ]);
+   double   lots        =  StrToDouble(values[H_LOTS       ]);
+   int      openType    = StrToInteger(values[H_OPENTYPE   ]);
+   datetime openTime    = StrToInteger(values[H_OPENTIME   ]);
+   double   openPrice   =  StrToDouble(values[H_OPENPRICE  ]);
+   datetime closeTime   = StrToInteger(values[H_CLOSETIME  ]);
+   double   closePrice  =  StrToDouble(values[H_CLOSEPRICE ]);
+   double   slippage    =  StrToDouble(values[H_SLIPPAGE   ]);
+   double   swap        =  StrToDouble(values[H_SWAP       ]);
+   double   commission  =  StrToDouble(values[H_COMMISSION ]);
+   double   grossProfit =  StrToDouble(values[H_GROSSPROFIT]);
+   double   netProfit   =  StrToDouble(values[H_NETPROFIT  ]);
+
+   return(!IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, closeTime, closePrice, slippage, swap, commission, grossProfit, netProfit)));
+}
+
+
+/**
+ * Add an order record to the history array. Records are ordered ascending by {OpenTime;Ticket} and the new record is inserted
+ * at the correct position. No data is overwritten.
+ *
+ * @param  int ticket - order record details
+ * @param  ...
+ *
+ * @return int - index the record was inserted at or EMPTY (-1) in case of errors
+ */
+int History.AddRecord(int ticket, double lots, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
+   int size = ArrayRange(history, 0);
+
+   for (int i=0; i < size; i++) {
+      if (EQ(ticket,   history[i][H_TICKET  ])) return(_EMPTY(catch("History.AddRecord(1)  "+ instance.name +" cannot add record, ticket #"+ ticket +" already exists (offset: "+ i +")", ERR_INVALID_PARAMETER)));
+      if (GT(openTime, history[i][H_OPENTIME])) continue;
+      if (LT(openTime, history[i][H_OPENTIME])) break;
+      if (LT(ticket,   history[i][H_TICKET  ])) break;
+   }
+
+   // 'i' now holds the array index to insert at
+   if (i == size) {
+      ArrayResize(history, size+1);                                  // add a new empty slot or...
+   }
+   else {
+      int dim2=ArrayRange(history, 1), from=i*dim2, to=from+dim2;    // ...free an existing slot by shifting existing data
+      ArrayCopy(history, history, to, from);
+   }
+
+   // insert the new data
+   history[i][H_TICKET     ] = ticket;
+   history[i][H_LOTS       ] = lots;
+   history[i][H_OPENTYPE   ] = openType;
+   history[i][H_OPENTIME   ] = openTime;
+   history[i][H_OPENPRICE  ] = openPrice;
+   history[i][H_CLOSETIME  ] = closeTime;
+   history[i][H_CLOSEPRICE ] = closePrice;
+   history[i][H_SLIPPAGE   ] = slippage;
+   history[i][H_SWAP       ] = swap;
+   history[i][H_COMMISSION ] = commission;
+   history[i][H_GROSSPROFIT] = grossProfit;
+   history[i][H_NETPROFIT  ] = netProfit;
+
+   if (!catch("History.AddRecord(2)"))
+      return(i);
+   return(EMPTY);
 }
 
 
@@ -592,27 +871,78 @@ bool SaveStatus() {
 
    // [Inputs]
    section = "Inputs";
-   WriteIniString(file, section, "Instance.ID",      /*string*/ Instance.ID);
-   WriteIniString(file, section, "Donchian.Periods", /*int   */ Donchian.Periods + separator);                       // conditional section separator
+   WriteIniString(file, section, "Instance.ID",              /*string*/ Instance.ID);
+   WriteIniString(file, section, "Donchian.Periods",         /*int   */ Donchian.Periods);
+   WriteIniString(file, section, "Lots",                     /*double*/ NumberToStr(Lots, ".+") + separator);        // conditional section separator
 
    // [Runtime status]
-   section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
-   EmptyIniSectionA(file, section);                             // orphaned status file records the section is emptied before writing to it.
+   section = "Runtime status";                               // On deletion of pending orders the number of stored order records decreases. To prevent
+   EmptyIniSectionA(file, section);                          // orphaned status file records the section is emptied before writing to it.
 
    // instance data
-   WriteIniString(file, section, "instance.id",      /*int     */ instance.id);
-   WriteIniString(file, section, "instance.created", /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "instance.isTest",  /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.name",    /*string  */ instance.name);
-   WriteIniString(file, section, "instance.status",  /*int     */ instance.status);
+   WriteIniString(file, section, "instance.id",              /*int     */ instance.id);
+   WriteIniString(file, section, "instance.created",         /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.isTest",          /*bool    */ instance.isTest);
+   WriteIniString(file, section, "instance.name",            /*string  */ instance.name);
+   WriteIniString(file, section, "instance.status",          /*int     */ instance.status + CRLF);
 
+   WriteIniString(file, section, "instance.openNetProfit",   /*double  */ DoubleToStr(instance.openNetProfit, 2));
+   WriteIniString(file, section, "instance.closedNetProfit", /*double  */ DoubleToStr(instance.closedNetProfit, 2));
+   WriteIniString(file, section, "instance.totalNetProfit",  /*double  */ DoubleToStr(instance.totalNetProfit, 2));
+   WriteIniString(file, section, "instance.maxNetProfit",    /*double  */ DoubleToStr(instance.maxNetProfit, 2));
+   WriteIniString(file, section, "instance.maxNetDrawdown",  /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
+
+   // open order data
+   WriteIniString(file, section, "open.ticket",              /*int     */ open.ticket);
+   WriteIniString(file, section, "open.type",                /*int     */ open.type);
+   WriteIniString(file, section, "open.time",                /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "open.price",               /*double  */ DoubleToStr(open.price, Digits));
+   WriteIniString(file, section, "open.slippage",            /*double  */ DoubleToStr(open.slippage, 1));
+   WriteIniString(file, section, "open.swap",                /*double  */ DoubleToStr(open.swap, 2));
+   WriteIniString(file, section, "open.commission",          /*double  */ DoubleToStr(open.commission, 2));
+   WriteIniString(file, section, "open.grossProfit",         /*double  */ DoubleToStr(open.grossProfit, 2));
+   WriteIniString(file, section, "open.netProfit",           /*double  */ DoubleToStr(open.netProfit, 2) + CRLF);
+
+   // closed order data
+   int size = ArrayRange(history, 0);
+   for (int i=0; i < size; i++) {
+      WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
+   }
    return(!catch("SaveStatus(2)"));
+}
+
+
+/**
+ * Return a string representation of a history record to be stored by SaveStatus().
+ *
+ * @param  int index - index of the history record
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string SaveStatus.HistoryToStr(int index) {
+   // result: ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,grossProfit,netProfit
+
+   int      ticket      = history[index][H_TICKET     ];
+   double   lots        = history[index][H_LOTS       ];
+   int      openType    = history[index][H_OPENTYPE   ];
+   datetime openTime    = history[index][H_OPENTIME   ];
+   double   openPrice   = history[index][H_OPENPRICE  ];
+   datetime closeTime   = history[index][H_CLOSETIME  ];
+   double   closePrice  = history[index][H_CLOSEPRICE ];
+   double   slippage    = history[index][H_SLIPPAGE   ];
+   double   swap        = history[index][H_SWAP       ];
+   double   commission  = history[index][H_COMMISSION ];
+   double   grossProfit = history[index][H_GROSSPROFIT];
+   double   netProfit   = history[index][H_NETPROFIT  ];
+
+   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
 
 
 // backed-up input parameters
 string   prev.Instance.ID = "";
 int      prev.Donchian.Periods;
+double   prev.Lots;
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.instance.id;
@@ -627,9 +957,10 @@ int      prev.instance.status;
  * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backup input parameters, also accessed for comparison in ValidateInputs()
+   // backup input parameters, used for comparison in ValidateInputs()
    prev.Instance.ID      = StringConcatenate(Instance.ID, "");    // string inputs are references to internal C literals and must be copied to break the reference
    prev.Donchian.Periods = Donchian.Periods;
+   prev.Lots             = Lots;
 
    // backup runtime variables affected by changing input parameters
    prev.instance.id      = instance.id;
@@ -647,6 +978,7 @@ void RestoreInputs() {
    // restore input parameters
    Instance.ID      = prev.Instance.ID;
    Donchian.Periods = prev.Donchian.Periods;
+   Lots             = prev.Lots;
 
    // restore runtime variables
    instance.id      = prev.instance.id;
@@ -702,8 +1034,12 @@ bool ValidateInputs() {
    }
    if (Donchian.Periods < 2)               return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input parameter Donchian.Periods: "+ Donchian.Periods +" (must be > 1)"));
 
+   // Lots
+   if (LT(Lots, 0))                        return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
+   if (NE(Lots, NormalizeLots(Lots)))      return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+
    SS.All();
-   return(!catch("ValidateInputs(4)"));
+   return(!catch("ValidateInputs(6)"));
 }
 
 
@@ -776,7 +1112,7 @@ bool RestoreInstanceId() {
 
 
 /**
- * Return a readable presentation of an instance status code.
+ * Return a readable representation of an instance status code.
  *
  * @param  int status
  *
@@ -812,11 +1148,31 @@ string StatusDescription(int status) {
 
 
 /**
+ * Return a readable representation of a signal constant.
+ *
+ * @param  int signal
+ *
+ * @return string - readable constant or an empty string in case of errors
+ */
+string SignalToStr(int signal) {
+   switch (signal) {
+      case NULL        : return("(undefined)" );
+      case SIGNAL_LONG : return("SIGNAL_LONG" );
+      case SIGNAL_SHORT: return("SIGNAL_SHORT");
+   }
+   return(_EMPTY_STR(catch("SignalToStr(1)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
  * ShowStatus: Update all string representations.
  */
 void SS.All() {
    if (__isChart) {
       SS.InstanceName();
+      SS.Lots();
+      SS.TotalPL();
+      SS.PLStats();
    }
 }
 
@@ -826,6 +1182,46 @@ void SS.All() {
  */
 void SS.InstanceName() {
    instance.name = "V."+ instance.id;
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the lotsize.
+ */
+void SS.Lots() {
+   if (__isChart) {
+      sLots = NumberToStr(Lots, ".+");
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of "instance.netTotalPL".
+ */
+void SS.TotalPL() {
+   if (__isChart) {
+      // not before a position was opened
+      if (!open.ticket && !ArrayRange(history, 0)) sInstanceTotalNetPL = "-";
+      else                                         sInstanceTotalNetPL = NumberToStr(instance.totalNetProfit, "R+.2");
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representaton of the PL statistics.
+ */
+void SS.PLStats() {
+   if (__isChart) {
+      // not before a position was opened
+      if (!open.ticket && !ArrayRange(history, 0)) {
+         sInstancePlStats = "";
+      }
+      else {
+         string sMaxProfit   = NumberToStr(instance.maxNetProfit, "+.2");
+         string sMaxDrawdown = NumberToStr(instance.maxNetDrawdown, "+.2");
+         sInstancePlStats = StringConcatenate("(", sMaxDrawdown, "/", sMaxProfit, ")");
+      }
+   }
 }
 
 
@@ -856,9 +1252,10 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError, NL,
-                                                                           NL,
-                                  "Profit:   ",                            NL
+   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                    NL,
+                                                                                              NL,
+                                  "Lots:     ", sLots,                                        NL,
+                                  "Profit:   ",  sInstanceTotalNetPL, "  ", sInstancePlStats, NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
@@ -886,11 +1283,11 @@ int ShowStatus(int error = NO_ERROR) {
  */
 string InputsToStr() {
    return(StringConcatenate("Instance.ID=",      DoubleQuoteStr(Instance.ID), ";", NL,
-                            "Donchian.Periods=", Donchian.Periods,            ";")
+                            "Donchian.Periods=", Donchian.Periods,            ";", NL,
+                            "Lots=",             NumberToStr(Lots, ".1+"),    ";")
    );
 
    // suppress compiler warnings
-   int signal, iNulls[];
+   int signal;
    IsDonchianSignal(signal);
-   ORDER_EXECUTION.toStr(iNulls);
 }
