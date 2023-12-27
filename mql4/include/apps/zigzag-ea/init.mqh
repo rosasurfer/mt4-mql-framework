@@ -17,7 +17,7 @@ int onInit() {
  * @return int - error status
  */
 int onInitUser() {
-   if (ValidateInputs.SID()) {                     // TRUE: a valid sequence id was specified
+   if (ValidateInputs.ID()) {                      // TRUE: a valid sequence id was specified
       RestoreSequence();                           // try to reload the given sequence
    }
    else if (StrTrim(Sequence.ID) == "") {          // no sequence id was specified

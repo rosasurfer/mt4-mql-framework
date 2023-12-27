@@ -16434,7 +16434,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MQL5/indicators/XU v4-XARDFX
+name=MQL5/XU v4-XARDFX
 flags=339
 window_num=0
 <inputs>

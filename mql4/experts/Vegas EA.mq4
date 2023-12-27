@@ -1356,11 +1356,11 @@ void RestoreInputs() {
  *
  * @return bool - whether an instance id value was successfully restored (the status file is not checked)
  */
-bool ValidateInputs.IID() {
+bool ValidateInputs.ID() {
    bool errorFlag = true;
 
-   if (!SetInstanceId(Instance.ID, errorFlag, "ValidateInputs.IID(1)")) {
-      if (errorFlag) onInputError("ValidateInputs.IID(2)  invalid input parameter Instance.ID: \""+ Instance.ID +"\"");
+   if (!SetInstanceId(Instance.ID, errorFlag, "ValidateInputs.ID(1)")) {
+      if (errorFlag) onInputError("ValidateInputs.ID(2)  invalid input parameter Instance.ID: \""+ Instance.ID +"\"");
       return(false);
    }
    return(true);
@@ -1382,7 +1382,7 @@ bool ValidateInputs() {
    bool hasOpenOrders    = false;
 
    // Instance.ID
-   if (isInitParameters) {                                        // otherwise the id was validated in ValidateInputs.IID()
+   if (isInitParameters) {                                        // otherwise the id was validated in ValidateInputs.ID()
       string sValue = StrTrim(Instance.ID);
       if (sValue == "") {                                         // the id was deleted or not yet set, restore the internal id
          Instance.ID = prev.Instance.ID;

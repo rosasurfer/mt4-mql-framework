@@ -17,7 +17,7 @@ int onInit() {
  * @return int - error status
  */
 int onInitUser() {
-   if (ValidateInputs.IID()) {                     // TRUE: a valid instance id was specified
+   if (ValidateInputs.ID()) {                      // TRUE: a valid instance id was specified
       RestoreInstance();                           // try to reload the given instance
    }
    else if (StrTrim(Instance.ID) == "") {          // no instance id was specified

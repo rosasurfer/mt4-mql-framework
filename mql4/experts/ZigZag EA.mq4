@@ -2918,11 +2918,11 @@ void RestoreInputs() {
  *
  * @return bool - whether a sequence id value was successfully restored (the status file is not checked)
  */
-bool ValidateInputs.SID() {
+bool ValidateInputs.ID() {
    bool errorFlag = true;
 
-   if (!SetSequenceId(Sequence.ID, errorFlag, "ValidateInputs.SID(1)")) {
-      if (errorFlag) onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: \""+ Sequence.ID +"\"");
+   if (!SetSequenceId(Sequence.ID, errorFlag, "ValidateInputs.ID(1)")) {
+      if (errorFlag) onInputError("ValidateInputs.ID(2)  invalid input parameter Sequence.ID: \""+ Sequence.ID +"\"");
       return(false);
    }
    return(true);
@@ -2944,7 +2944,7 @@ bool ValidateInputs() {
    bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
 
    // Sequence.ID
-   if (isInitParameters) {                               // otherwise the id was validated in ValidateInputs.SID()
+   if (isInitParameters) {                               // otherwise the id was validated in ValidateInputs.ID()
       string sValues[], sValue=StrTrim(Sequence.ID);
       if (sValue == "") {                                // the id was deleted or not yet set, re-apply the internal id
          Sequence.ID = prev.Sequence.ID;
