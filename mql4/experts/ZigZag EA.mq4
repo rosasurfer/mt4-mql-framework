@@ -2093,17 +2093,45 @@ string GetLogFilename() {
  */
 string GetStatusFilename(bool relative = false) {
    relative = relative!=0;
-   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
+   if (!sequence.id)      return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: 0", ERR_ILLEGAL_STATE)));
+   if (!sequence.created) return(_EMPTY_STR(catch("GetStatusFilename(2)  "+ sequence.name +" illegal value of sequence.created: 0", ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = Symbol() +".ZigZag."+ sequence.id +".set";
+      string baseName  = Symbol() +"."+ GmtTimeFormat(sequence.created, "%Y.%m.%d %H.%M") +".ZigZag."+ sequence.id +".set";
       filename = directory + baseName;
    }
 
    if (relative)
       return(filename);
    return(GetMqlSandboxPath() +"/"+ filename);
+}
+
+
+/**
+ * Find an existing status file for the specified sequence.
+ *
+ * @param  int  sequenceId - sequenceId id
+ * @param  bool isTest     - whether the sequence is a test sequence
+ *
+ * @return string - absolute filename or an empty string in case of errors
+ */
+string FindStatusFile(int sequenceId, bool isTest) {
+   if (sequenceId < SID_MIN || sequenceId > SID_MAX) return(_EMPTY_STR(catch("FindStatusFile(1)  "+ sequence.name +" invalid parameter sequenceId: "+ sequenceId, ERR_INVALID_PARAMETER)));
+   isTest = isTest!=0;
+
+   string sandboxDir  = GetMqlSandboxPath() +"/";
+   string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
+   string basePattern = Symbol() +".*.ZigZag."+ sequenceId +".set";
+   string pathPattern = sandboxDir + statusDir + basePattern;
+
+   string result[];
+   int size = FindFileNames(pathPattern, result, FF_FILESONLY);
+
+   if (size != 1) {
+      if (size > 1) return(_EMPTY_STR(logError("FindStatusFile(2)  "+ sequence.name +" multiple matching files found for pattern "+ DoubleQuoteStr(pathPattern), ERR_ILLEGAL_STATE)));
+   }
+   return(sandboxDir + statusDir + result[0]);
 }
 
 
@@ -2367,16 +2395,17 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   string section="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   string file = FindStatusFile(sequence.id, sequence.isTest);
+   if (file == "")                 return(!catch("ReadStatus(2)  "+ sequence.name +" status file not found", ERR_RUNTIME_ERROR));
+   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ sequence.name +" file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
-   section = "General";
+   string section      = "General";
    string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678 (demo)
    string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                                 // string Symbol  = EURUSD
    string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
-   if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
-   if (!StrCompareI(sSymbol, Symbol()))                       return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(4)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   if (!StrCompareI(sSymbol, Symbol()))                       return(!catch("ReadStatus(5)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
    // [Inputs]
    section = "Inputs";
@@ -2393,8 +2422,8 @@ bool ReadStatus() {
    string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",          "");            // string EA.Recorder          = 1,2,4
    string sEaRecorderAutoScale = GetIniStringA(file, section, "EA.RecorderAutoScale", "");            // bool   EA.RecorderAutoScale = 0
 
-   if (!StrIsNumeric(sLots))       return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (!StrIsNumeric(sTakeProfit)) return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sLots))       return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sTakeProfit)) return(!catch("ReadStatus(7)  "+ sequence.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
    Sequence.ID          = sSequenceID;
    TradingMode          = sTradingMode;
@@ -2463,7 +2492,7 @@ bool ReadStatus() {
    int size = ReadStatus.HistoryKeys(file, section, sKeys); if (size < 0) return(false);
    for (int i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, sKeys[i], "");                                            // history.{i} = {data}
-      if (!ReadStatus.ParseHistory(sKeys[i], sOrder)) return(!catch("ReadStatus(7)  "+ sequence.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      if (!ReadStatus.ParseHistory(sKeys[i], sOrder)) return(!catch("ReadStatus(8)  "+ sequence.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
    // other
@@ -2490,7 +2519,7 @@ bool ReadStatus() {
    stop.profitQu.value        = GetIniDouble (file, section, "stop.profitQu.value"          );        // double   stop.profitQu.value        = 1.23456
    stop.profitQu.description  = GetIniStringA(file, section, "stop.profitQu.description", "");        // string   stop.profitQu.description  = text
 
-   return(!catch("ReadStatus(8)"));
+   return(!catch("ReadStatus(9)"));
 }
 
 
