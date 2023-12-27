@@ -52,8 +52,9 @@ extern double Lots             = 0.1;
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID         108                    // unique strategy id (used for magic order numbers)
-#define IID_MIN             100                    // min/max range of valid instance id values
-#define IID_MAX             999
+
+#define INSTANCE_ID_MIN     100                    // range of valid instance ids
+#define INSTANCE_ID_MAX     999                    // ...
 
 #define STATUS_WAITING        1                    // instance has no open positions and waits for trade signals
 #define STATUS_PROGRESSING    2                    // instance manages open positions
@@ -76,7 +77,7 @@ extern double Lots             = 0.1;
 #define H_NETPROFIT          11
 
 // instance data
-int      instance.id;                              // instance id (100-999, used for magic order numbers)
+int      instance.id;                              // instance id (used for magic order numbers)
 datetime instance.created;
 string   instance.name = "";
 int      instance.status;
@@ -100,10 +101,13 @@ double   open.grossProfit;
 double   open.netProfit;
 double   history[][12];                            // multiple closed positions
 
-// caching vars to speed-up ShowStatus()
+// cache vars to speed-up ShowStatus()
 string   sLots               = "";
 string   sInstanceTotalNetPL = "";
 string   sInstancePlStats    = "";
+
+// other
+int      order.slippage = 1;                       // in MQL points
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause        = false;          // whether to pause a test after StopInstance()
@@ -593,7 +597,6 @@ bool UpdateStatus(int signal = NULL) {
       // open a new position
       int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
       double   price       = NULL;
-      int      slippage    = NULL;
       double   stopLoss    = NULL;
       double   takeProfit  = NULL;
       string   comment     = "Vegas."+ instance.id;
@@ -602,7 +605,7 @@ bool UpdateStatus(int signal = NULL) {
       color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
                oeFlags     = NULL;
 
-      int ticket = OrderSendEx(Symbol(), type, Lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+      int ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
       if (!ticket) return(!SetLastError(oe.Error(oe)));
 
       // store the new position
@@ -806,9 +809,9 @@ bool IsTestInstance() {
  * @return int - magic number or NULL in case of errors
  */
 int CalculateMagicNumber(int instanceId = NULL) {
-   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("CalculateMagicNumber(1)  "+ instance.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023)      return(!catch("CalculateMagicNumber(1)  "+ instance.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    int id = intOr(instanceId, instance.id);
-   if (id < IID_MIN || id > IID_MAX)            return(!catch("CalculateMagicNumber(2)  "+ instance.name +" illegal instance id: "+ id, ERR_ILLEGAL_STATE));
+   if (id < INSTANCE_ID_MIN || id > INSTANCE_ID_MAX) return(!catch("CalculateMagicNumber(2)  "+ instance.name +" illegal instance id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                              // 101-1023 (10 bit)
    int instance = id;                                       // 100-999  (14 bit, used to be 1000-9999)
@@ -846,7 +849,7 @@ int CreateInstanceId() {
    int instanceId, magicNumber;
 
    while (!magicNumber) {
-      while (instanceId < IID_MIN || instanceId > IID_MAX) {
+      while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
          instanceId = MathRand();                           // TODO: generate consecutive ids when in tester
       }
       magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
@@ -909,7 +912,7 @@ bool SetInstanceId(string value, bool &error, string caller) {
    }
 
    int iValue = StrToInteger(value);
-   if (iValue < IID_MIN || iValue > IID_MAX) {
+   if (iValue < INSTANCE_ID_MIN || iValue > INSTANCE_ID_MAX) {
       error = true;
       if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
       return(!catch(caller +"->SetInstanceId(2)  invalid instance id value: \""+ valueBak +"\" (range error)", ERR_INVALID_PARAMETER));
@@ -1188,7 +1191,7 @@ string GetStatusFilename(bool relative = false) {
  * @return string - absolute filename or an empty string in case of errors
  */
 string FindStatusFile(int instanceId, bool isTest) {
-   if (instanceId < IID_MIN || instanceId > IID_MAX) return(_EMPTY_STR(catch("FindStatusFile(1)  "+ instance.name +" invalid parameter instanceId: "+ instanceId, ERR_INVALID_PARAMETER)));
+   if (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) return(_EMPTY_STR(catch("FindStatusFile(1)  "+ instance.name +" invalid parameter instanceId: "+ instanceId, ERR_INVALID_PARAMETER)));
    isTest = isTest!=0;
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
