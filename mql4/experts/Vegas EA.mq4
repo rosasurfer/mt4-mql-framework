@@ -28,7 +28,6 @@
  *
  *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
  *  @see  [Turtle Trading]         https://analyzingalpha.com/turtle-trading
- *  @see  [Duel Grid EA]           https://github.com/rosasurfer/mt4-mql/blob/master/mql4/experts/Duel.mq4
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
