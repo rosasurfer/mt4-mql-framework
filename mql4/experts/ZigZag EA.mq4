@@ -1548,9 +1548,9 @@ double stop.profitPct.AbsValue() {
 
 
 /**
- * Stop a waiting progressing sequence and close open positions (if any).
+ * Stop a waiting or progressing sequence and close open positions (if any).
  *
- * @param  int signal - signal which triggered the stop condition or NULL on explicit stop (i.e. manual)
+ * @param  int signal - signal which triggered the stop condition or NULL on explicit stop (e.g. manual)
  *
  * @return bool - success status
  */
@@ -1559,7 +1559,7 @@ bool StopSequence(int signal) {
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (tradingMode == TRADINGMODE_VIRTUAL)                                     return(StopVirtualSequence(signal));
 
-   // close open positions
+   // close an open position
    if (sequence.status == STATUS_PROGRESSING) {
       if (open.ticket > 0) {
          if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping ("+ SignalToStr(signal) +")");
@@ -1601,7 +1601,7 @@ bool StopSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.name +" "+ ifString(__isTesting && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.name +" "+ ifString(__isTesting && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ sSequencePlStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
@@ -1763,7 +1763,7 @@ bool UpdateVirtualStatus() {
  * @return string - log message or an empty string in case of errors
  */
 string UpdateStatus.PositionCloseMsg(int &error) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("Z.8692") was [unexpectedly ]closed [by SL ]at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("Z.869") was [unexpectedly ]closed [by SL ]at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
    error = NO_ERROR;
 
    int    ticket     = OrderTicket();
@@ -1813,7 +1813,7 @@ bool IsClosedBySL(double stoploss) {
 
 
 /**
- * Error handler for an unexpected close of the current position.
+ * Event handler for an unexpectedly closed position.
  *
  * @param  string message - error message
  * @param  int    error   - error code
@@ -1826,7 +1826,7 @@ int onPositionClose(string message, int error) {
    if (error == ERR_ORDER_CHANGED)                          // expected in a fast market: a SL was triggered
       return(!logNotice(message, error));                   // continue
 
-   if (__isTesting) return(catch(message, error));          // tester: treat everything else as terminating
+   if (__isTesting) return(catch(message, error));          // in tester treat everything else as terminating
 
    logWarn(message, error);                                 // online
    if (error == ERR_CONCURRENT_MODIFICATION)                // unexpected: most probably manually closed
@@ -2152,7 +2152,7 @@ string StatusDescription(int status) {
  */
 string SignalToStr(int signal) {
    switch (signal) {
-      case NULL             : return("(undefined)"      );
+      case NULL             : return("no signal"        );
       case SIGNAL_LONG      : return("SIGNAL_LONG"      );
       case SIGNAL_SHORT     : return("SIGNAL_SHORT"     );
       case SIGNAL_TIME      : return("SIGNAL_TIME"      );

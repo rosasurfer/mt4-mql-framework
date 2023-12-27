@@ -56,7 +56,7 @@ int onDeinitChartChange() {
  */
 int onDeinitChartClose() {
    if (!__isTesting && sequence.status!=STATUS_STOPPED) {
-      logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ sSequencePlStats);
       SaveStatus();
    }
    return(NO_ERROR);
@@ -71,7 +71,7 @@ int onDeinitChartClose() {
  */
 int onDeinitTemplate() {
    if (!__isTesting && sequence.status!=STATUS_STOPPED) {
-      logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ sSequencePlStats);
       SaveStatus();
    }
    return(NO_ERROR);
@@ -85,7 +85,7 @@ int onDeinitTemplate() {
  */
 int onDeinitRemove() {
    if (sequence.status != STATUS_STOPPED) {
-      logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ sSequencePlStats);
       SaveStatus();
    }
    RemoveSequenceId();                                               // remove a stored sequence id
@@ -100,7 +100,7 @@ int onDeinitRemove() {
  */
 int onDeinitClose() {
    if (sequence.status != STATUS_STOPPED) {
-      logInfo("onDeinitClose(1)  "+ sequence.name +" terminal shutdown in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      logInfo("onDeinitClose(1)  "+ sequence.name +" terminal shutdown in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ sSequencePlStats);
       SaveStatus();
    }
    return(NO_ERROR);

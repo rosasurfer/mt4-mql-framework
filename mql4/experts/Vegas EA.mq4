@@ -156,7 +156,7 @@ bool onCommand(string cmd, string params, int keys) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
             logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            return(StopInstance(NULL));
+            return(StopInstance());
       }
    }
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
@@ -280,16 +280,21 @@ bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
 bool UpdateStatus(int signal = NULL) {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ instance.name +" illegal instance status "+ StatusToStr(instance.status), ERR_ILLEGAL_STATE));
+   int error;
 
    if (!signal) {
       if (open.ticket != NULL) {
          if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
-         if (OrderCloseTime() > 0) return(!catch("UpdateStatus(3)  "+ instance.name +" #"+ open.ticket+" is not an open position anymore", ERR_ILLEGAL_STATE));
-
-         open.swap        = OrderSwap();
-         open.commission  = OrderCommission();
-         open.grossProfit = OrderProfit();
-         open.netProfit   = open.grossProfit + open.swap + open.commission;
+         if (OrderCloseTime() > 0) {
+            if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
+            if (!ArchiveClosedPosition(open.ticket, NULL)) return(false);
+         }
+         else {
+            open.swap        = OrderSwap();
+            open.commission  = OrderCommission();
+            open.grossProfit = OrderProfit();
+            open.netProfit   = open.grossProfit + open.swap + open.commission;
+         }
       }
    }
    else {
@@ -346,6 +351,57 @@ bool UpdateStatus(int signal = NULL) {
 
 
 /**
+ * Compose a log message for a closed position. The ticket is selected.
+ *
+ * @param  _Out_ int error - error code to be returned from the call (if any)
+ *
+ * @return string - log message or an empty string in case of errors
+ */
+string UpdateStatus.PositionCloseMsg(int &error) {
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("V.869") was [unexpectedly ]closed [by SL ]at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
+   error = NO_ERROR;
+
+   int    ticket      = OrderTicket();
+   double lots        = OrderLots();
+   string sType       = OperationTypeDescription(OrderType());
+   string sOpenPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
+   string sClosePrice = NumberToStr(OrderClosePrice(), PriceFormat);
+   string sUnexpected = ifString(__isTesting && __CoreFunction==CF_DEINIT, "", "unexpectedly ");
+   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ instance.name +"\") was "+ sUnexpected +"closed at "+ sClosePrice;
+
+   string sStopout = "";
+   if (StrStartsWithI(OrderComment(), "so:")) {       error = ERR_MARGIN_STOPOUT; sStopout = ", "+ OrderComment(); }
+   else if (__isTesting && __CoreFunction==CF_DEINIT) error = NO_ERROR;
+   else                                               error = ERR_CONCURRENT_MODIFICATION;
+
+   return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
+}
+
+
+/**
+ * Event handler for an unexpectedly closed position.
+ *
+ * @param  string message - error message
+ * @param  int    error   - error code
+ *
+ * @return int - error status, i.e. whether to interrupt program execution
+ */
+int onPositionClose(string message, int error) {
+   if (!error) return(logInfo(message));                    // no error
+
+   if (error == ERR_ORDER_CHANGED)                          // expected in a fast market: a SL was triggered
+      return(!logNotice(message, error));                   // continue
+
+   if (__isTesting) return(catch(message, error));          // in tester treat everything else as terminating
+
+   logWarn(message, error);                                 // online
+   if (error == ERR_CONCURRENT_MODIFICATION)                // unexpected: most probably manually closed
+      return(NO_ERROR);                                     // continue
+   return(error);
+}
+
+
+/**
  * Add trade details of the specified closed ticket to the local history and reset open position data.
  *
  * @param int    ticket   - closed ticket
@@ -397,6 +453,7 @@ bool ArchiveClosedPosition(int ticket, double slippage) {
    open.commission  = NULL;
    open.grossProfit = NULL;
    open.netProfit   = NULL;
+
    return(!catch("ArchiveClosedPosition(4)"));
 }
 
@@ -404,14 +461,38 @@ bool ArchiveClosedPosition(int ticket, double slippage) {
 /**
  * Stop a waiting or progressing instance and close open positions (if any).
  *
- * @param  int signal - trade signal causing the call or NULL on explicit stop (i.e. manual)
- *
  * @return bool - success status
  */
-bool StopInstance(int signal) {
+bool StopInstance() {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   return(!catch("StopInstance(2)", ERR_NOT_IMPLEMENTED));
+
+   // close an open position
+   if (instance.status == STATUS_PROGRESSING) {
+      if (open.ticket > 0) {
+         if (IsLogInfo()) logInfo("StopInstance(2)  "+ instance.name +" stopping");
+         int oeFlags, oe[];
+         if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+         if (!ArchiveClosedPosition(open.ticket, -oe.Slippage(oe)))           return(false);
+
+         instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
+         instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+         SS.TotalPL();
+         SS.PLStats();
+      }
+   }
+
+   // update status
+   instance.status = STATUS_STOPPED;
+   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting, "test ", "") +"instance stopped, profit: "+ sInstanceTotalNetPL +" "+ sInstancePlStats);
+   SaveStatus();
+
+   // pause/stop the tester according to the debug configuration
+   if (__isTesting) {
+      if      (!IsVisualMode())  Tester.Stop ("StopInstance(4)");
+      else if (test.onStopPause) Tester.Pause("StopInstance(5)");
+   }
+   return(!catch("StopInstance(6)"));
 }
 
 
@@ -1112,6 +1193,28 @@ bool RestoreInstanceId() {
 
 
 /**
+ * Remove a stored instance id.
+ *
+ * @return bool - success status
+ */
+bool RemoveInstanceId() {
+   if (__isChart) {
+      // chart window
+      string name = ProgramName() +".Instance.ID";
+      RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
+
+      // chart
+      Chart.RestoreString(name, name, true);
+
+      // remove a chart status for chart commands
+      name = "EA.status";
+      if (ObjectFind(name) != -1) ObjectDelete(name);
+   }
+   return(!catch("RemoveInstanceId(1)"));
+}
+
+
+/**
  * Return a readable representation of an instance status code.
  *
  * @param  int status
@@ -1156,7 +1259,7 @@ string StatusDescription(int status) {
  */
 string SignalToStr(int signal) {
    switch (signal) {
-      case NULL        : return("(undefined)" );
+      case NULL        : return("no signal"   );
       case SIGNAL_LONG : return("SIGNAL_LONG" );
       case SIGNAL_SHORT: return("SIGNAL_SHORT");
    }
