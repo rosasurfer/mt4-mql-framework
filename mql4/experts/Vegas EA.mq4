@@ -667,7 +667,7 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string file = FindStatusFile(instance.id);
+   string file = FindStatusFile(instance.id, instance.isTest);
    if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
    if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
@@ -903,15 +903,17 @@ string GetStatusFilename(bool relative = false) {
 /**
  * Find an existing status file for the specified instance.
  *
- * @param  int instanceId
+ * @param  int  instanceId - instance id
+ * @param  bool isTest     - whether the instance is a test instance
  *
  * @return string - absolute filename or an empty string in case of errors
  */
-string FindStatusFile(int instanceId) {
+string FindStatusFile(int instanceId, bool isTest) {
    if (instanceId < IID_MIN || instanceId > IID_MAX) return(_EMPTY_STR(catch("FindStatusFile(1)  "+ instance.name +" invalid parameter instanceId: "+ instanceId, ERR_INVALID_PARAMETER)));
+   isTest = isTest!=0;
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
-   string statusDir   = "presets/"+ GetAccountCompanyId() +"/";
+   string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
    string basePattern = Symbol() +".*.Vegas."+ instanceId +".set";
    string pathPattern = sandboxDir + statusDir + basePattern;
 
