@@ -687,7 +687,7 @@ int onPositionClose(string message, int error) {
  * Add trade details of the specified closed ticket to the local history and reset open position data.
  *
  * @param int    ticket   - closed ticket
- * @param double slippage - close slippage in pip
+ * @param double slippage - close slippage
  *
  * @return bool - success status
  */
@@ -993,7 +993,7 @@ bool ReadStatus() {
    open.type                = GetIniInt    (file, section, "open.type"       );           // int      open.type                = 1
    open.time                = GetIniInt    (file, section, "open.time"       );           // datetime open.time                = 1624924800 (Mon, 2021.05.12 13:22:34)
    open.price               = GetIniDouble (file, section, "open.price"      );           // double   open.price               = 1.24363
-   open.slippage            = GetIniDouble (file, section, "open.slippage"   );           // double   open.slippage            = 1.0
+   open.slippage            = GetIniDouble (file, section, "open.slippage"   );           // double   open.slippage            = 0.00003
    open.swap                = GetIniDouble (file, section, "open.swap"       );           // double   open.swap                = -1.23
    open.commission          = GetIniDouble (file, section, "open.commission" );           // double   open.commission          = -5.50
    open.grossProfit         = GetIniDouble (file, section, "open.grossProfit");           // double   open.grossProfit         = 12.34
@@ -1262,7 +1262,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.type",                /*int     */ open.type);
    WriteIniString(file, section, "open.time",                /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "open.price",               /*double  */ DoubleToStr(open.price, Digits));
-   WriteIniString(file, section, "open.slippage",            /*double  */ DoubleToStr(open.slippage, 1));
+   WriteIniString(file, section, "open.slippage",            /*double  */ DoubleToStr(open.slippage, Digits));
    WriteIniString(file, section, "open.swap",                /*double  */ DoubleToStr(open.swap, 2));
    WriteIniString(file, section, "open.commission",          /*double  */ DoubleToStr(open.commission, 2));
    WriteIniString(file, section, "open.grossProfit",         /*double  */ DoubleToStr(open.grossProfit, 2));
@@ -1300,7 +1300,7 @@ string SaveStatus.HistoryToStr(int index) {
    double   grossProfit = history[index][H_GROSSPROFIT];
    double   netProfit   = history[index][H_NETPROFIT  ];
 
-   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
+   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
 
 

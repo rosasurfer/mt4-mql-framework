@@ -5229,7 +5229,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
             if      (type == OP_BUY ) double dSlippage = ask - OrderOpenPrice();
             else if (type == OP_SELL)        dSlippage = OrderOpenPrice() - bid;
             else                             dSlippage = 0;
-         oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, digits & 1));  // total slippage after requotes in pip
+         oe.setSlippage(oe, NormalizeDouble(dSlippage, digits));           // total slippage after requotes
 
          if (IsLogInfo()) logInfo("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
 
@@ -5312,8 +5312,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
 string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8[ instead of 1.5522'0], sl=1.5500'0, tp=1.5600'0 (slippage: -2.8 pip, market: Bid/Ask) after 0.345 s and 1 requote
 
-   int    digits      = oe.Digits(oe);
+   int    digits      = MathMax(oe.Digits(oe), 2);
    int    pipDigits   = digits & (~1);
+   double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
 
    string sType       = OperationTypeDescription(oe.Type(oe));
@@ -5327,7 +5328,9 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) {
          sPrice    = sPrice +" instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat);
-         sSlippage = "slippage: "+ NumberToStr(slippage, "+."+ (Digits & 1)) +" pip, ";
+         if (digits > 2) sSlippage = NumberToStr(slippage/pip, "+."+ (digits & 1)) +" pip";
+         else            sSlippage = NumberToStr(slippage, "+"+ priceFormat);
+         sSlippage = "slippage: "+ sSlippage +", ";
       }
    string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice;
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
@@ -5791,7 +5794,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          oe.setRequotes  (oe, requotes);
             if (OrderType() == OP_BUY) double dSlippage = oe.Bid(oe) - OrderClosePrice();
             else                              dSlippage = OrderClosePrice() - oe.Ask(oe);
-         oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, 1));                    // in pip
+         oe.setSlippage(oe, NormalizeDouble(dSlippage, digits));
 
          // find the remaining position
          if (NE(lots, openLots, 2)) {
@@ -5889,10 +5892,11 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
 string OrderCloseEx.SuccessMsg(int oe[]) {
    // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 [partially] at 1.5534'4[ instead of 1.5532'2][, remainder: #2 Buy 0.1 GBPUSD] ([slippage: -2.8 pip, ]market: Bid/Ask) after 0.123 s and 1 requote
 
-   int    digits      = oe.Digits(oe);
+   int    digits      = MathMax(oe.Digits(oe), 2);
    int    pipDigits   = digits & (~1);
    double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
+
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string symbol      = oe.Symbol(oe);
@@ -5903,13 +5907,14 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    string comment     = oe.Comment(oe);
       if (StringLen(comment) > 0) comment = " \""+ comment +"\"";
    string sSlippage   = "";
-
-   double slippage = oe.Slippage(oe);
-   if (NE(slippage, 0, digits)) {
-      sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(!oe.Type(oe), oe.Bid(oe), oe.Ask(oe)), priceFormat);
-      sSlippage   = "slippage: "+ NumberToStr(slippage, "+."+ (Digits & 1)) +" pip, ";
-   }
-   int remainder = oe.RemainingTicket(oe);
+      double slippage = oe.Slippage(oe);
+      if (NE(slippage, 0, digits)) {
+         sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(!oe.Type(oe), oe.Bid(oe), oe.Ask(oe)), priceFormat);
+         if (digits > 2) sSlippage = NumberToStr(slippage/pip, "+."+ (digits & 1)) +" pip";
+         else            sSlippage = NumberToStr(slippage, "+."+ priceFormat);
+         sSlippage   = "slippage: "+ sSlippage +", ";
+      }
+   int  remainder = oe.RemainingTicket(oe);
    string message = "closed #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" from "+ sOpenPrice + ifString(!remainder, "", " partially") +" at "+ sClosePrice;
 
    if (remainder != 0) message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;

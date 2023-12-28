@@ -176,7 +176,6 @@
  *  - ChartInfos::CustomPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - Superbars: ETH/RTH separation for Frankfurt session
- *  - fix unit of oe.Slippage() in log messages (pip/money)
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -236,7 +235,7 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #define H_CLOSEBID                  8
 #define H_CLOSEASK                  9
 #define H_CLOSEPRICE               10
-#define H_SLIPPAGE_P               11           // P: in pip
+#define H_SLIPPAGE                 11
 #define H_SWAP_M                   12           // M: in money (account currency)
 #define H_COMMISSION_M             13           // U: in quote units
 #define H_GROSSPROFIT_M            14
@@ -294,7 +293,7 @@ double   open.bid;
 double   open.ask;
 double   open.price;
 double   open.stoploss;
-double   open.slippageP;
+double   open.slippage;
 double   open.swap;
 double   open.commission;
 double   open.grossProfit;
@@ -1095,7 +1094,7 @@ bool StartInstance(int signal) {
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
    open.stoploss     = oe.StopLoss  (oe);
-   open.slippageP    = oe.Slippage  (oe);
+   open.slippage     = oe.Slippage  (oe);
    open.swap         = oe.Swap      (oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit    (oe);
@@ -1159,7 +1158,7 @@ bool StartVirtualInstance(int signal) {
    open.time         = Tick.time;
    open.price        = ifDouble(type, Bid, Ask);
    open.stoploss     = 0;
-   open.slippageP    = 0;
+   open.slippage     = 0;
    open.swap         = 0;
    open.commission   = 0;
    open.grossProfitU = Bid-Ask;
@@ -1249,7 +1248,7 @@ bool ReverseInstance(int signal) {
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
    open.stoploss     = oe.StopLoss  (oe);
-   open.slippageP    = oe.Slippage  (oe);
+   open.slippage     = oe.Slippage  (oe);
    open.swap         = oe.Swap      (oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit    (oe);
@@ -1310,7 +1309,7 @@ bool ReverseVirtualInstance(int signal) {
    open.time         = Tick.time;
    open.price        = ifDouble(type, Bid, Ask);
    open.stoploss     = 0;
-   open.slippageP    = 0;
+   open.slippage     = 0;
    open.swap         = 0;
    open.commission   = 0;
    open.grossProfitU = Bid-Ask;
@@ -1345,7 +1344,7 @@ bool ReverseVirtualInstance(int signal) {
  * @param int    ticket   - closed ticket
  * @param double bid      - Bid price before the position was closed
  * @param double ask      - Ask price before the position was closed
- * @param double slippage - close slippage in pip
+ * @param double slippage - close slippage
  *
  * @return bool - success status
  */
@@ -1384,7 +1383,7 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    history[i][H_CLOSEBID     ] = doubleOr(bid, OrderClosePrice());
    history[i][H_CLOSEASK     ] = doubleOr(ask, OrderClosePrice());
    history[i][H_CLOSEPRICE   ] = OrderClosePrice();
-   history[i][H_SLIPPAGE_P   ] = open.slippageP + slippage;
+   history[i][H_SLIPPAGE     ] = open.slippage + slippage;
    history[i][H_SWAP_M       ] = open.swap;
    history[i][H_COMMISSION_M ] = open.commission;
    history[i][H_GROSSPROFIT_M] = open.grossProfit;
@@ -1416,7 +1415,7 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    open.ask          = NULL;
    open.price        = NULL;
    open.stoploss     = NULL;
-   open.slippageP    = NULL;
+   open.slippage     = NULL;
    open.swap         = NULL;
    open.commission   = NULL;
    open.grossProfit  = NULL;
@@ -1461,7 +1460,7 @@ bool ArchiveClosedVirtualPosition(int ticket) {
    history[i][H_CLOSEBID     ] = Bid;
    history[i][H_CLOSEASK     ] = Ask;
    history[i][H_CLOSEPRICE   ] = ifDouble(!open.type, Bid, Ask);
-   history[i][H_SLIPPAGE_P   ] = open.slippageP;
+   history[i][H_SLIPPAGE     ] = open.slippage;
    history[i][H_SWAP_M       ] = open.swap;
    history[i][H_COMMISSION_M ] = open.commission;
    history[i][H_GROSSPROFIT_M] = open.grossProfit;
@@ -1491,7 +1490,7 @@ bool ArchiveClosedVirtualPosition(int ticket) {
    open.bid          = NULL;
    open.ask          = NULL;
    open.price        = NULL;
-   open.slippageP    = NULL;
+   open.slippage     = NULL;
    open.swap         = NULL;
    open.commission   = NULL;
    open.grossProfit  = NULL;
@@ -2269,7 +2268,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.ask",                    /*double  */ DoubleToStr(open.ask, Digits));
    WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
    WriteIniString(file, section, "open.stoploss",               /*double  */ DoubleToStr(open.stoploss, Digits));
-   WriteIniString(file, section, "open.slippageP",              /*double  */ DoubleToStr(open.slippageP, 1));
+   WriteIniString(file, section, "open.slippage",               /*double  */ DoubleToStr(open.slippage, Digits));
    WriteIniString(file, section, "open.swap",                   /*double  */ DoubleToStr(open.swap, 2));
    WriteIniString(file, section, "open.commission",             /*double  */ DoubleToStr(open.commission, 2));
    WriteIniString(file, section, "open.grossProfit",            /*double  */ DoubleToStr(open.grossProfit, 2));
@@ -2359,13 +2358,13 @@ string SaveStatus.HistoryToStr(int index) {
    double   closeBid    = history[index][H_CLOSEBID     ];
    double   closeAsk    = history[index][H_CLOSEASK     ];
    double   closePrice  = history[index][H_CLOSEPRICE   ];
-   double   slippage    = history[index][H_SLIPPAGE_P   ];
+   double   slippage    = history[index][H_SLIPPAGE     ];
    double   swap        = history[index][H_SWAP_M       ];
    double   commission  = history[index][H_COMMISSION_M ];
    double   grossProfit = history[index][H_GROSSPROFIT_M];
    double   netProfit   = history[index][H_NETPROFIT_M  ];
 
-   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openBid, Digits), ",", DoubleToStr(openAsk, Digits), ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closeBid, Digits), ",", DoubleToStr(closeAsk, Digits), ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
+   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openBid, Digits), ",", DoubleToStr(openAsk, Digits), ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closeBid, Digits), ",", DoubleToStr(closeAsk, Digits), ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
 
 
@@ -2473,7 +2472,7 @@ bool ReadStatus() {
    open.ask                    = GetIniDouble (file, section, "open.ask"         );                   // double   open.ask          = 1.24363
    open.price                  = GetIniDouble (file, section, "open.price"       );                   // double   open.price        = 1.24363
    open.stoploss               = GetIniDouble (file, section, "open.stoploss"    );                   // double   open.stoploss     = 1.24363
-   open.slippageP              = GetIniDouble (file, section, "open.slippageP"   );                   // double   open.slippageP    = 1.0
+   open.slippage               = GetIniDouble (file, section, "open.slippage"    );                   // double   open.slippage     = 0.00002
    open.swap                   = GetIniDouble (file, section, "open.swap"        );                   // double   open.swap         = -1.23
    open.commission             = GetIniDouble (file, section, "open.commission"  );                   // double   open.commission   = -5.50
    open.grossProfit            = GetIniDouble (file, section, "open.grossProfit" );                   // double   open.grossProfit  = 12.34
@@ -2568,7 +2567,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
    double   closeBid    =  StrToDouble(values[H_CLOSEBID     ]);
    double   closeAsk    =  StrToDouble(values[H_CLOSEASK     ]);
    double   closePrice  =  StrToDouble(values[H_CLOSEPRICE   ]);
-   double   slippage    =  StrToDouble(values[H_SLIPPAGE_P   ]);
+   double   slippage    =  StrToDouble(values[H_SLIPPAGE     ]);
    double   swap        =  StrToDouble(values[H_SWAP_M       ]);
    double   commission  =  StrToDouble(values[H_COMMISSION_M ]);
    double   grossProfit =  StrToDouble(values[H_GROSSPROFIT_M]);
@@ -2618,7 +2617,7 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
    history[i][H_CLOSEBID     ] = closeBid;
    history[i][H_CLOSEASK     ] = closeAsk;
    history[i][H_CLOSEPRICE   ] = closePrice;
-   history[i][H_SLIPPAGE_P   ] = slippage;
+   history[i][H_SLIPPAGE     ] = slippage;
    history[i][H_SWAP_M       ] = swap;
    history[i][H_COMMISSION_M ] = commission;
    history[i][H_GROSSPROFIT_M] = grossProfit;
@@ -2659,7 +2658,7 @@ bool SynchronizeStatus() {
             open.stoploss  = OrderStopLoss();
             open.bid       = open.price;
             open.ask       = open.price;
-            open.slippageP = NULL;                                   // open PL numbers will auto-update in the following UpdateStatus() call
+            open.slippage  = NULL;                                   // open PL numbers will auto-update in the following UpdateStatus() call
          }
          else if (OrderTicket() != open.ticket) {
             return(!catch("SynchronizeStatus(3)  "+ instance.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
