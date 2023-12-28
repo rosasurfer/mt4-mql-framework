@@ -1278,7 +1278,7 @@ int HandleScriptError(string caller, string message, int error) {
 
 
 /**
- * Dummy-Calls unterdrücken unnütze Compilerwarnungen.
+ * Suppress compiler warnings.
  */
 void DummyCalls() {
    int iNull, iNulls[];
