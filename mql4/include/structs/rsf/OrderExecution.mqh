@@ -20,13 +20,13 @@
  *    int    takeProfit;         //   4      => oe[16]      // takeprofit price in MQL points                                       (get/set return quote units)
  *    int    closeTime;          //   4      => oe[17]      // close time
  *    int    closePrice;         //   4      => oe[18]      // close price in MQL points                                            (get/set return quote units)
- *    int    swap;               //   4      => oe[19]      // swap amount in hundredths of 1 account currency unit                 (get/set return currency units)
- *    int    commission;         //   4      => oe[20]      // commission amount in hundredths of 1 account currency unit           (get/set return currency units)
- *    int    profit;             //   4      => oe[21]      // profit amount in hundredths of 1 account currency unit               (get/set return currency units)
+ *    int    swap;               //   4      => oe[19]      // swap amount in hundredths of 1 account currency unit                 (get/set return account currency units)
+ *    int    commission;         //   4      => oe[20]      // commission amount in hundredths of 1 account currency unit           (get/set return account currency units)
+ *    int    profit;             //   4      => oe[21]      // profit amount in hundredths of 1 account currency unit               (get/set return account currency units)
  *    szchar comment[28];        //  28      => oe[22]      // order comment terminated by <NUL>
  *    int    duration;           //   4      => oe[29]      // duration of the execution in milliseconds
  *    int    requotes;           //   4      => oe[30]      // number of requotes occurred
- *    int    slippage;           //   4      => oe[31]      // slippage occurred in MQL points (positive: unfavourable, negative: favourable)
+ *    int    slippage;           //   4      => oe[31]      // slippage occurred in MQL points                                      (get/set return pips)
  *    int    remainingTicket;    //   4      => oe[32]      // additionally created ticket after partial close
  *    int    remainingLots;      //   4      => oe[33]      // remaining order volume in hundredths of 1 lot after partial close    (get/set return lots)
  * } oe;                         // 136 byte = int[34]

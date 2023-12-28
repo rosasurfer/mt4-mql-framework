@@ -5226,8 +5226,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          oe.setCommission(oe, ifDouble(isPendingType, 0, OrderCommission()));
          oe.setProfit    (oe, 0              );
          oe.setRequotes  (oe, requotes       );
-            if      (type == OP_BUY ) double dSlippage = OrderOpenPrice() - ask;
-            else if (type == OP_SELL)        dSlippage = bid - OrderOpenPrice();
+            if      (type == OP_BUY ) double dSlippage = ask - OrderOpenPrice();
+            else if (type == OP_SELL)        dSlippage = OrderOpenPrice() - bid;
             else                             dSlippage = 0;
          oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, digits & 1));  // total slippage after requotes in pip
 
@@ -5327,7 +5327,7 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) {
          sPrice    = sPrice +" instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat);
-         sSlippage = "slippage: "+ NumberToStr(-slippage, "+."+ (Digits & 1)) +" pip, ";
+         sSlippage = "slippage: "+ NumberToStr(slippage, "+."+ (Digits & 1)) +" pip, ";
       }
    string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice;
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
@@ -5789,8 +5789,8 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          oe.setCommission(oe, OrderCommission());
          oe.setProfit    (oe, OrderProfit());
          oe.setRequotes  (oe, requotes);
-            if (OrderType() == OP_BUY ) double dSlippage = oe.Bid(oe) - OrderClosePrice();
-            else                               dSlippage = OrderClosePrice() - oe.Ask(oe);
+            if (OrderType() == OP_BUY) double dSlippage = oe.Bid(oe) - OrderClosePrice();
+            else                              dSlippage = OrderClosePrice() - oe.Ask(oe);
          oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, 1));                    // in pip
 
          // find the remaining position
@@ -5907,7 +5907,7 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    double slippage = oe.Slippage(oe);
    if (NE(slippage, 0, digits)) {
       sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(!oe.Type(oe), oe.Bid(oe), oe.Ask(oe)), priceFormat);
-      sSlippage   = "slippage: "+ NumberToStr(-slippage, "+."+ (Digits & 1)) +" pip, ";
+      sSlippage   = "slippage: "+ NumberToStr(slippage, "+."+ (Digits & 1)) +" pip, ";
    }
    int remainder = oe.RemainingTicket(oe);
    string message = "closed #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" from "+ sOpenPrice + ifString(!remainder, "", " partially") +" at "+ sClosePrice;

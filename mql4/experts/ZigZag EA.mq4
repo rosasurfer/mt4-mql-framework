@@ -155,7 +155,7 @@
  *  - improve handling of network outages (price and/or trade connection)
  *  - "no connection" event, no price feed for 5 minutes, signals during this time are not detected => EA out of sync
  *
- *  - handle order.slippage dynamically (via framework config)
+ *  - handle orders.acceptableSlippage dynamically (via framework config)
  *     https://www.mql5.com/en/forum/120795
  *     https://www.mql5.com/en/forum/289014#comment_9296322
  *     https://www.mql5.com/en/forum/146808#comment_3701979#  [ECN restriction removed since build 500]
@@ -176,7 +176,7 @@
  *  - ChartInfos::CustomPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - Superbars: ETH/RTH separation for Frankfurt session
- *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
+ *  - fix unit of oe.Slippage() in log messages (pip/money)
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -340,7 +340,7 @@ string   sInstancePlStats     = "";
 // other
 string   tradingModeDescriptions[] = {"", "regular", "virtual"};
 string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote currency", "index points"};
-int      order.slippage            = 1;         // in MQL points
+int      orders.acceptableSlippage = 1;         // in MQL points
 
 // debug settings                               // configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
@@ -1083,7 +1083,7 @@ bool StartInstance(int signal) {
    color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
    int      oeFlags     = NULL, oe[];
 
-   int ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+   int ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
@@ -1095,7 +1095,7 @@ bool StartInstance(int signal) {
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
    open.stoploss     = oe.StopLoss  (oe);
-   open.slippageP    = -oe.Slippage (oe);
+   open.slippageP    = oe.Slippage  (oe);
    open.swap         = oe.Swap      (oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit    (oe);
@@ -1222,10 +1222,10 @@ bool ReverseInstance(int signal) {
       // ...or close the open position
       int oe[], oeFlags=F_ERR_INVALID_TRADE_PARAMETERS | F_LOG_NOTICE;     // the SL may be triggered/position closed between UpdateStatus() and ReverseInstance()
 
-      bool success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_NONE, oeFlags, oe);
+      bool success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
       if (!success && oe.Error(oe)!=ERR_INVALID_TRADE_PARAMETERS) return(!SetLastError(oe.Error(oe)));
 
-      if (!ArchiveClosedPosition(open.ticket, ifDouble(success, bid, 0), ifDouble(success, ask, 0), ifDouble(success, -oe.Slippage(oe), 0))) return(false);
+      if (!ArchiveClosedPosition(open.ticket, ifDouble(success, bid, 0), ifDouble(success, ask, 0), ifDouble(success, oe.Slippage(oe), 0))) return(false);
    }
 
    // open a new position
@@ -1238,7 +1238,7 @@ bool ReverseInstance(int signal) {
    int      magicNumber = CalculateMagicNumber();
    color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   if (!OrderSendEx(Symbol(), type, Lots, price, order.slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+   if (!OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
    // store the new position data
    double currentBid = MarketInfo(Symbol(), MODE_BID), currentAsk = MarketInfo(Symbol(), MODE_ASK);
@@ -1567,8 +1567,8 @@ bool StopInstance(int signal) {
          double bid = Bid, ask = Ask;
          int oeFlags, oe[];
 
-         if (!OrderCloseEx(open.ticket, NULL, order.slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-         if (!ArchiveClosedPosition(open.ticket, bid, ask, -oe.Slippage(oe)))   return(false);
+         if (!OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+         if (!ArchiveClosedPosition(open.ticket, bid, ask, oe.Slippage(oe)))                     return(false);
 
          instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
          instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);

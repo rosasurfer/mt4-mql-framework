@@ -107,7 +107,7 @@ string   sInstanceTotalNetPL = "";
 string   sInstancePlStats    = "";
 
 // other
-int      order.slippage = 1;                       // in MQL points
+int      orders.acceptableSlippage = 1;            // in MQL points
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause        = false;          // whether to pause a test after StopInstance()
@@ -591,7 +591,7 @@ bool UpdateStatus(int signal = NULL) {
          int oeFlags = NULL, oe[];
          bool success = OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe);
          if (!success) return(!SetLastError(oe.Error(oe)));
-         if (!ArchiveClosedPosition(open.ticket, -oe.Slippage(oe))) return(false);
+         if (!ArchiveClosedPosition(open.ticket, oe.Slippage(oe))) return(false);
       }
 
       // open a new position
@@ -605,7 +605,7 @@ bool UpdateStatus(int signal = NULL) {
       color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
                oeFlags     = NULL;
 
-      int ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+      int ticket = OrderSendEx(NULL, type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
       if (!ticket) return(!SetLastError(oe.Error(oe)));
 
       // store the new position
@@ -613,7 +613,7 @@ bool UpdateStatus(int signal = NULL) {
       open.type        = type;
       open.time        = oe.OpenTime  (oe);
       open.price       = oe.OpenPrice (oe);
-      open.slippage    = -oe.Slippage (oe);
+      open.slippage    = oe.Slippage  (oe);
       open.swap        = oe.Swap      (oe);
       open.commission  = oe.Commission(oe);
       open.grossProfit = oe.Profit    (oe);
@@ -755,7 +755,7 @@ bool StopInstance() {
          if (IsLogInfo()) logInfo("StopInstance(2)  "+ instance.name +" stopping");
          int oeFlags, oe[];
          if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-         if (!ArchiveClosedPosition(open.ticket, -oe.Slippage(oe)))           return(false);
+         if (!ArchiveClosedPosition(open.ticket, oe.Slippage(oe)))            return(false);
 
          instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
          instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
