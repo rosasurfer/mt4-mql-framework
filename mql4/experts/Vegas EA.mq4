@@ -77,7 +77,7 @@ extern double Lots             = 0.1;
 #define H_NETPROFIT          11
 
 // instance data
-int      instance.id;                              // instance id (used for magic order numbers)
+int      instance.id;                              // used for magic order numbers
 datetime instance.created;
 string   instance.name = "";
 int      instance.status;
@@ -693,7 +693,7 @@ int onPositionClose(string message, int error) {
  */
 bool ArchiveClosedPosition(int ticket, double slippage) {
    if (last_error != NULL)                    return(false);
-   if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ instance.name +" cannot archive position of "+ StatusDescription(instance.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ instance.name +" cannot archive position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
    SelectTicket(ticket, "ArchiveClosedPosition(2)", /*push=*/true);
 
@@ -941,7 +941,7 @@ bool RestoreInstance() {
 
 
 /**
- * Read the status file of an instance and restore inputs and runtime variables. Called only from RestoreSequence().
+ * Read the status file of an instance and restore inputs and runtime variables. Called only from RestoreInstance().
  *
  * @return bool - success status
  */
@@ -1117,7 +1117,7 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
 
 /**
  * Synchronize restored state and runtime vars with current order status on the trade server.
- * Called only from RestoreSequence().
+ * Called only from RestoreInstance().
  *
  * @return bool - success status
  */
