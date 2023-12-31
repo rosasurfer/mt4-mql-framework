@@ -2,11 +2,11 @@
 //////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern string   EA.Recorder            = "on | off* | 1,2,3=1000,...";  // on=std-equity | off | custom-metrics, format: {uint}[={double}]
-                                                                                                                      // {uint}:   metric id (required)
-extern datetime Test.StartTime         = 0;                             // time to start a test                       // {double}: recording base value (optional)
-extern double   Test.StartPrice        = 0;                             // price to start a test
-extern bool     Test.ExternalReporting = false;                         // whether to send PositionOpen/Close events to the Expander
+extern string   EA.Recorder            = "on | off* | 1,2,3,...";    // on=std-equity | off | custom metrics separated by comma, format: <metric-id>[=<base-value>]
+                                                                     //                                                                  metric id:  integer (required)
+extern datetime Test.StartTime         = 0;                          // time to start a test                                             base value: double (optional)
+extern double   Test.StartPrice        = 0;                          // price to start a test
+extern bool     Test.ExternalReporting = false;                      // whether to send PositionOpen/Close events to the MT4Expander
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -28,8 +28,8 @@ string recordModeDescr[] = {"off", "internal", "custom"};
 bool   recordInternal    = false;
 bool   recordCustom      = false;
 
-double recorder.defaultHstBase = 5000.0;
-bool   recorder.initialized    = false;
+double recorder.defaultBaseValue = 10000.0;
+bool   recorder.initialized      = false;
 
 bool   recorder.enabled      [];             // whether a metric is enabled
 bool   recorder.debug        [];
@@ -736,7 +736,7 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    recorder.symbolGroup  [i] = symbolGroup;
    recorder.symbolDigits [i] = symbolDigits;
    recorder.currValue    [i] = NULL;
-   recorder.hstBase      [i] = doubleOr(hstBase, doubleOr(recorder.hstBase[i], recorder.defaultHstBase));
+   recorder.hstBase      [i] = doubleOr(hstBase, doubleOr(recorder.hstBase[i], recorder.defaultBaseValue));
    recorder.hstMultiplier[i] = intOr(hstMultiplier, intOr(recorder.hstMultiplier[i], 1));
    recorder.hstDirectory [i] = hstDirectory;
    recorder.hstFormat    [i] = hstFormat;
@@ -904,7 +904,7 @@ bool init_RecorderValidateInput(int &metrics) {
          string sid = iValue;
          sValue = StrTrim(StrRight(sValue, -StringLen(sid)));
 
-         double hstBase = recorder.defaultHstBase;
+         double hstBase = recorder.defaultBaseValue;
          if (sValue != "") {                             // use specified base value instead of the default
             if (!StrStartsWith(sValue, "=")) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric format error, not \"{uint}[={double}]\")", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
             sValue = StrTrim(StrRight(sValue, -1));
