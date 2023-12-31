@@ -1,7 +1,9 @@
 /**
- * WORK-IN-PROGRESS, DO NOT YET USE
+ ***************************************************************************************************************************
+ *                                           WORK-IN-PROGRESS, DO NOT YET USE                                              *
+ ***************************************************************************************************************************
  *
- * Vegas EA
+ * Vegas EA (subject to change)
  *
  * A mixture of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in and out.
  *
@@ -21,9 +23,10 @@
  *
  * Input parameters:
  * -----------------
- * • Instance.ID:  ...
- * • Donchian.Periods:  ...
- * • Lots:  ...
+ * • Instance.ID:        ...
+ * • Tunnel.Definition:  ...
+ * • Donchian.Periods:   ...
+ * • Lots:               ...
  *
  *
  *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
@@ -1405,15 +1408,9 @@ bool ValidateInputs() {
       else if (sValue != prev.Instance.ID) return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
    }
 
-   // Donchian.Periods
-   if (isInitParameters && Donchian.Periods!=prev.Donchian.Periods) {
-      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input parameter Donchian.Periods with open orders"));
-   }
-   if (Donchian.Periods < 2)               return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input parameter Donchian.Periods: "+ Donchian.Periods +" (must be > 1)"));
-
    // Tunnel.Definition
    if (isInitParameters && Tunnel.Definition!=prev.Tunnel.Definition) {
-      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(4)  "+ instance.name +" cannot change input parameter Tunnel.Definition with open orders"));
+      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input parameter Tunnel.Definition with open orders"));
    }
    string sValues[], sMAs[];
    ArrayResize(sMAs, 0);
@@ -1423,24 +1420,30 @@ bool ValidateInputs() {
       if (sValue == "") continue;
 
       string sMethod = StrLeftTo(sValue, "(");
-      if (sMethod == sValue)               return(!onInputError("ValidateInputs(5)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      if (sMethod == sValue)               return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
       int iMethod = StrToMaMethod(sMethod, F_ERR_INVALID_PARAMETER);
-      if (iMethod == -1)                   return(!onInputError("ValidateInputs(6)  invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
-      if (iMethod > MODE_LWMA)             return(!onInputError("ValidateInputs(7)  unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
+      if (iMethod == -1)                   return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
+      if (iMethod > MODE_LWMA)             return(!onInputError("ValidateInputs(5)  "+ instance.name +" unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
 
       string sPeriods = StrRightFrom(sValue, "(");
-      if (!StrEndsWith(sPeriods, ")"))     return(!onInputError("ValidateInputs(8)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      if (!StrEndsWith(sPeriods, ")"))     return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
       sPeriods = StrTrim(StrLeft(sPeriods, -1));
-      if (!StrIsDigits(sPeriods))          return(!onInputError("ValidateInputs(9)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      if (!StrIsDigits(sPeriods))          return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
       int iPeriods = StrToInteger(sPeriods);
-      if (iPeriods < 1)                    return(!onInputError("ValidateInputs(10)  invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be > 0)"));
+      if (iPeriods < 1)                    return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be > 0)"));
 
       ArrayResize(sMAs, n+1);
       sMAs[n]  = MaMethodDescription(iMethod) +"("+ iPeriods +")";
       n++;
    }
-   if (!n)                                 return(!onInputError("ValidateInputs(11)  missing input parameter Tunnel.Definition (empty)"));
+   if (!n)                                 return(!onInputError("ValidateInputs(9)  "+ instance.name +" missing input parameter Tunnel.Definition (empty)"));
    Tunnel.Definition = JoinStrings(sMAs);
+
+   // Donchian.Periods
+   if (isInitParameters && Donchian.Periods!=prev.Donchian.Periods) {
+      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(10)  "+ instance.name +" cannot change input parameter Donchian.Periods with open orders"));
+   }
+   if (Donchian.Periods < 2)               return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Donchian.Periods: "+ Donchian.Periods +" (must be > 1)"));
 
    // Lots
    if (LT(Lots, 0))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
