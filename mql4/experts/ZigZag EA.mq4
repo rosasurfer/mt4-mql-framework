@@ -7,8 +7,9 @@
  *
  * Input parameters
  * ----------------
- * • EA.Recorder: Recorded metrics, one of "on", "off" or one/more custom metric ids separated by comma. For the syntax of
- *                metric ids see the input parameter "EA.Recorder" in "mql4/include/core/expert.mqh".
+ * • EA.Recorder: Metrics to record, can be "on", "off" or multiple metric ids separated by comma. For the syntax of the
+ *                metric ids see input parameter "EA.Recorder" in "mql4/include/core/expert.mqh".
+ *
  *    "off": Recording is disabled.
  *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
@@ -22,7 +23,7 @@
  *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
  *
- *    Timeseries in "quote units" are recorded in the best matching unit (either pip, quote currency or index points).
+ *    Timeseries in "quote units" are recorded in the best matching unit (pip for Forex, full quote points otherwise).
  *
  *
  * External control
@@ -195,7 +196,6 @@ extern double TakeProfit           = 0;                     // TP value
 extern string TakeProfit.Type      = "off* | money | percent | pip | quote-unit";            // can be shortened if distinct        // TODO: redefine point as index point
 
 extern bool   ShowProfitInPercent  = true;                  // whether PL is displayed in money or percentage terms
-extern bool   EA.RecorderAutoScale = false;                 // use adaptive multiplier for metrics in quote units
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -341,7 +341,7 @@ string   tradingModeDescriptions[] = {"", "regular", "virtual"};
 string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote currency", "index points"};
 int      orders.acceptableSlippage = 1;         // in MQL points
 
-// debug settings                               // configurable via framework config, see afterInit()
+// debug settings, configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
 bool     test.onSessionBreakPause = false;      // whether to pause a test after StopInstance(SIGNAL_TIME)
 bool     test.onStopPause         = false;      // whether to pause a test after a final StopInstance()
@@ -1961,7 +1961,7 @@ bool VirtualOrderClose(int ticket) {
 
 
 /**
- * Return custom symbol definitions for metrics to be recorded by this instance.
+ * Return symbol definitions for metrics to be recorded.
  *
  * @param  _In_  int    i             - zero-based index of the timeseries (position in the recorder)
  * @param  _Out_ bool   enabled       - whether the metric is active and should be recorded
@@ -1995,15 +1995,14 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    hstDirectory  = "";
    hstFormat     = NULL;
 
-   int quoteUnitMultiplier = 1;                                               // use absolute value: e.g. 1.23 QU => 1.23 quote currency or index points
-   if (!EA.RecorderAutoScale || Digits!=2 || Close[0] < 500) {
-      quoteUnitMultiplier = Round(MathPow(10, Digits & (~1)));                // convert to pip:     e.g. 1.23 QU => 123.0 pip
+   int quoteUnitMultiplier = 1;                                               // original value: 1.23 => 1.23 point
+   int digits = MathMax(Digits, 2);
+   if (digits > 2) {
+      quoteUnitMultiplier = MathRound(MathPow(10, digits & (~1)));            // convert to pip: 0.1234'5 => 1234.5 pip
    }
 
    static string sQuoteUnits = ""; if (!StringLen(sQuoteUnits)) {
-      if (quoteUnitMultiplier != 1)                                          sQuoteUnits = "pip";
-      else if (StrEndsWith(Symbol(), "EUR") || StrEndsWith(Symbol(), "USD")) sQuoteUnits = "QC";         // quote currency
-      else                                                                   sQuoteUnits = "index points";
+      sQuoteUnits = ifString(quoteUnitMultiplier==1, "points", "pip");
    }
 
    switch (i) {
@@ -2011,27 +2010,27 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
       case METRIC_TOTAL_UNITS_ZERO:             // OK
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"A";    // "zUS500_123A"
          symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", zero spread";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);            // "ZigZag(40,H1) 1 US500 in index points, zero spread"
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);            // "ZigZag(40,H1) 1 US500 in points, zero spread"
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_TOTAL_UNITS_GROSS:            // OK
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"B";
          symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", gross";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_TOTAL_UNITS_NET:              // OK
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"C";
          symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", net";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_TOTAL_MONEY_NET:              // OK
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"D";    // in account currency
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in AC, net";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"D";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ AccountCurrency() +", net";
          symbolDigits  = 2;
          hstMultiplier = 1;
          return(true);
@@ -2040,27 +2039,27 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
       case METRIC_DAILY_UNITS_ZERO:
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"E";    // "zEURUS_456A"
          symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ sQuoteUnits +", zero spread";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);            // "ZigZag(40,H1) 3 EURUSD daily in pip, zero spread"
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);            // "ZigZag(40,H1) 3 EURUSD daily in pip, zero spread"
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_DAILY_UNITS_GROSS:
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"F";
          symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ sQuoteUnits +", gross";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_DAILY_UNITS_NET:
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"G";
          symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ sQuoteUnits +", net";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_DAILY_MONEY_NET:
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"H";    // in account currency
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in AC, net";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"H";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ AccountCurrency() +", net";
          symbolDigits  = 2;
          hstMultiplier = 1;
          return(true);
@@ -2224,8 +2223,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "TakeProfit",                  /*double*/ NumberToStr(TakeProfit, ".+"));
    WriteIniString(file, section, "TakeProfit.Type",             /*string*/ TakeProfit.Type);
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool  */ ShowProfitInPercent);
-   WriteIniString(file, section, "EA.Recorder",                 /*string*/ EA.Recorder);
-   WriteIniString(file, section, "EA.RecorderAutoScale",        /*bool  */ EA.RecorderAutoScale + separator);              // conditional section separator
+   WriteIniString(file, section, "EA.Recorder",                 /*string*/ EA.Recorder + separator);                       // conditional section separator
 
    // [Runtime status]
    section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
@@ -2415,7 +2413,6 @@ bool ReadStatus() {
    string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",      "");            // string TakeProfit.Type      = off* | money | percent | pip
    string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent",  "");            // bool   ShowProfitInPercent  = 1
    string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",          "");            // string EA.Recorder          = 1,2,4
-   string sEaRecorderAutoScale = GetIniStringA(file, section, "EA.RecorderAutoScale", "");            // bool   EA.RecorderAutoScale = 0
 
    if (!StrIsNumeric(sLots))       return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sTakeProfit)) return(!catch("ReadStatus(7)  "+ instance.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -2430,7 +2427,6 @@ bool ReadStatus() {
    TakeProfit.Type      = sTakeProfitType;
    ShowProfitInPercent  = StrToBool(sShowProfitInPercent);
    EA.Recorder          = sEaRecorder;
-   EA.RecorderAutoScale = StrToBool(sEaRecorderAutoScale);
 
    // [Runtime status]
    section = "Runtime status";
@@ -2759,7 +2755,6 @@ double   prev.TakeProfit;
 string   prev.TakeProfit.Type = "";
 bool     prev.ShowProfitInPercent;
 string   prev.EA.Recorder = "";
-bool     prev.EA.RecorderAutoScale;
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.tradingMode;
@@ -2812,7 +2807,6 @@ void BackupInputs() {
    prev.TakeProfit.Type      = StringConcatenate(TakeProfit.Type, "");
    prev.ShowProfitInPercent  = ShowProfitInPercent;
    prev.EA.Recorder          = StringConcatenate(EA.Recorder, "");
-   prev.EA.RecorderAutoScale = EA.RecorderAutoScale;
 
    // backup runtime variables affected by changing input parameters
    prev.tradingMode                = tradingMode;
@@ -2865,7 +2859,6 @@ void RestoreInputs() {
    TakeProfit.Type      = prev.TakeProfit.Type;
    ShowProfitInPercent  = prev.ShowProfitInPercent;
    EA.Recorder          = prev.EA.Recorder;
-   EA.RecorderAutoScale = prev.EA.RecorderAutoScale;
 
    // restore runtime variables
    tradingMode                = prev.tradingMode;
@@ -3093,18 +3086,6 @@ bool ValidateInputs() {
       if (!init_RecorderValidateInput(metrics)) return(false);
       if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
    }
-
-   // tmp. overwrite recorder.hstMultiplier of metrics 1,2,3,5,6,7 (remove together with input "EA.RecorderAutoScale")
-   int hstMultiplier = 1;
-   if (!EA.RecorderAutoScale || Digits!=2 || Close[0] < 500) {
-      hstMultiplier = Round(MathPow(10, Digits & (~1)));
-   }
-   if (metrics > 0) recorder.hstMultiplier[0] = hstMultiplier;
-   if (metrics > 1) recorder.hstMultiplier[1] = hstMultiplier;
-   if (metrics > 2) recorder.hstMultiplier[2] = hstMultiplier;
-   if (metrics > 4) recorder.hstMultiplier[4] = hstMultiplier;
-   if (metrics > 5) recorder.hstMultiplier[5] = hstMultiplier;
-   if (metrics > 6) recorder.hstMultiplier[6] = hstMultiplier;
 
    SS.All();
    return(!catch("ValidateInputs(27)"));
@@ -3449,7 +3430,6 @@ string InputsToStr() {
                             "StopConditions=",       DoubleQuoteStr(StopConditions),  ";", NL,
                             "TakeProfit=",           NumberToStr(TakeProfit, ".1+"),  ";", NL,
                             "TakeProfit.Type=",      DoubleQuoteStr(TakeProfit.Type), ";", NL,
-                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),  ";", NL,
-                            "EA.RecorderAutoScale=", BoolToStr(EA.RecorderAutoScale), ";")
+                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),  ";")
    );
 }

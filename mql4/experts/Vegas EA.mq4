@@ -34,8 +34,12 @@
  *
  *
  * TODO:
- *  - document input params, control scripts and general usage
+ *  - add/update performance recording
+ *  - add/update virtual trading
+ *  - implement multiple exit strategies
+ *  - implement multiple entry strategies
  *  - add/use input "TradingTimeframe"
+ *  - document input params, control scripts and general usage
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
