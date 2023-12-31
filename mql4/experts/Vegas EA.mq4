@@ -32,7 +32,6 @@
  *
  * TODO:
  *  - document input params, control scripts and general usage
- *  - make tunnel definition an input
  *  - add/use input "TradingTimeframe"
  */
 #include <stddefines.mqh>
@@ -42,9 +41,11 @@ int __virtualTicks = 0;
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID      = "";               // instance to load from a status file, format "[T]123"
-extern int    Donchian.Periods = 30;
-extern double Lots             = 0.1;
+extern string Instance.ID          = "";                             // instance to load from a status file, format "[T]123"
+extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MAs separated by ","
+extern string Supported.MA.Methods = "SMA, LWMA, EMA, SMMA";
+extern int    Donchian.Periods     = 30;
+extern double Lots                 = 0.1;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -492,8 +493,7 @@ bool IsMaTunnelSignal(int &signal) {
    signal = NULL;
 
    if (IsBarOpen()) {
-      string tunnelDefinition = "EMA(9), EMA(36), EMA(144)";
-      int trend = icMaTunnel(NULL, tunnelDefinition, MaTunnel.MODE_BAR_TREND, 1);
+      int trend = icMaTunnel(NULL, Tunnel.Definition, MaTunnel.MODE_BAR_TREND, 1);
 
       if      (trend == +1) signal = SIGNAL_LONG;
       else if (trend == -1) signal = SIGNAL_SHORT;
@@ -969,15 +969,17 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID       = GetIniStringA(file, section, "Instance.ID",  "");           // string Instance.ID      = T123
-   int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods");           // int    Donchian.Periods = 40
-   string sLots             = GetIniStringA(file, section, "Lots",         "");           // double Lots             = 0.1
+   string sInstanceID       = GetIniStringA(file, section, "Instance.ID",       "");      // string Instance.ID       = T123
+   string sTunnelDefinition = GetIniStringA(file, section, "Tunnel.Definition", "");      // string Tunnel.Definition = EMA(1), EMA(2), EMA(3)
+   int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods"     );      // int    Donchian.Periods  = 40
+   string sLots             = GetIniStringA(file, section, "Lots",              "");      // double Lots              = 0.1
 
    if (!StrIsNumeric(sLots)) return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
-   Instance.ID      = sInstanceID;
-   Donchian.Periods = iDonchianPeriods;
-   Lots             = StrToDouble(sLots);
+   Instance.ID       = sInstanceID;
+   Tunnel.Definition = sTunnelDefinition;
+   Donchian.Periods  = iDonchianPeriods;
+   Lots              = StrToDouble(sLots);
 
    // [Runtime status]
    section = "Runtime status";
@@ -1243,6 +1245,7 @@ bool SaveStatus() {
    // [Inputs]
    section = "Inputs";
    WriteIniString(file, section, "Instance.ID",              /*string*/ Instance.ID);
+   WriteIniString(file, section, "Tunnel.Definition",        /*string*/ Tunnel.Definition);
    WriteIniString(file, section, "Donchian.Periods",         /*int   */ Donchian.Periods);
    WriteIniString(file, section, "Lots",                     /*double*/ NumberToStr(Lots, ".+") + separator);        // conditional section separator
 
@@ -1312,6 +1315,7 @@ string SaveStatus.HistoryToStr(int index) {
 
 // backed-up input parameters
 string   prev.Instance.ID = "";
+string   prev.Tunnel.Definition = "";
 int      prev.Donchian.Periods;
 double   prev.Lots;
 
@@ -1329,9 +1333,10 @@ int      prev.instance.status;
  */
 void BackupInputs() {
    // backup input parameters, used for comparison in ValidateInputs()
-   prev.Instance.ID      = StringConcatenate(Instance.ID, "");    // string inputs are references to internal C literals and must be copied to break the reference
-   prev.Donchian.Periods = Donchian.Periods;
-   prev.Lots             = Lots;
+   prev.Instance.ID       = StringConcatenate(Instance.ID, "");         // string inputs are references to internal C literals
+   prev.Tunnel.Definition = StringConcatenate(Tunnel.Definition, "");   // and must be copied to break the reference
+   prev.Donchian.Periods  = Donchian.Periods;
+   prev.Lots              = Lots;
 
    // backup runtime variables affected by changing input parameters
    prev.instance.id      = instance.id;
@@ -1347,9 +1352,10 @@ void BackupInputs() {
  */
 void RestoreInputs() {
    // restore input parameters
-   Instance.ID      = prev.Instance.ID;
-   Donchian.Periods = prev.Donchian.Periods;
-   Lots             = prev.Lots;
+   Instance.ID       = prev.Instance.ID;
+   Tunnel.Definition = prev.Tunnel.Definition;
+   Donchian.Periods  = prev.Donchian.Periods;
+   Lots              = prev.Lots;
 
    // restore runtime variables
    instance.id      = prev.instance.id;
@@ -1405,12 +1411,43 @@ bool ValidateInputs() {
    }
    if (Donchian.Periods < 2)               return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input parameter Donchian.Periods: "+ Donchian.Periods +" (must be > 1)"));
 
+   // Tunnel.Definition
+   if (isInitParameters && Tunnel.Definition!=prev.Tunnel.Definition) {
+      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(4)  "+ instance.name +" cannot change input parameter Tunnel.Definition with open orders"));
+   }
+   string sValues[], sMAs[];
+   ArrayResize(sMAs, 0);
+   int n=0, size=Explode(Tunnel.Definition, ",", sValues, NULL);
+   for (int i=0; i < size; i++) {
+      sValue = StrTrim(sValues[i]);
+      if (sValue == "") continue;
+
+      string sMethod = StrLeftTo(sValue, "(");
+      if (sMethod == sValue)               return(!onInputError("ValidateInputs(5)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      int iMethod = StrToMaMethod(sMethod, F_ERR_INVALID_PARAMETER);
+      if (iMethod == -1)                   return(!onInputError("ValidateInputs(6)  invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
+      if (iMethod > MODE_LWMA)             return(!onInputError("ValidateInputs(7)  unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
+
+      string sPeriods = StrRightFrom(sValue, "(");
+      if (!StrEndsWith(sPeriods, ")"))     return(!onInputError("ValidateInputs(8)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      sPeriods = StrTrim(StrLeft(sPeriods, -1));
+      if (!StrIsDigits(sPeriods))          return(!onInputError("ValidateInputs(9)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      int iPeriods = StrToInteger(sPeriods);
+      if (iPeriods < 1)                    return(!onInputError("ValidateInputs(10)  invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be > 0)"));
+
+      ArrayResize(sMAs, n+1);
+      sMAs[n]  = MaMethodDescription(iMethod) +"("+ iPeriods +")";
+      n++;
+   }
+   if (!n)                                 return(!onInputError("ValidateInputs(11)  missing input parameter Tunnel.Definition (empty)"));
+   Tunnel.Definition = JoinStrings(sMAs);
+
    // Lots
-   if (LT(Lots, 0))                        return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
-   if (NE(Lots, NormalizeLots(Lots)))      return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
+   if (NE(Lots, NormalizeLots(Lots)))      return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    SS.All();
-   return(!catch("ValidateInputs(6)"));
+   return(!catch("ValidateInputs(14)"));
 }
 
 
@@ -1675,9 +1712,10 @@ int ShowStatus(int error = NO_ERROR) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",      DoubleQuoteStr(Instance.ID), ";", NL,
-                            "Donchian.Periods=", Donchian.Periods,            ";", NL,
-                            "Lots=",             NumberToStr(Lots, ".1+"),    ";")
+   return(StringConcatenate("Instance.ID=",       DoubleQuoteStr(Instance.ID),       ";", NL,
+                            "Tunnel.Definition=", DoubleQuoteStr(Tunnel.Definition), ";", NL,
+                            "Donchian.Periods=",  Donchian.Periods,                  ";", NL,
+                            "Lots=",              NumberToStr(Lots, ".1+"),          ";")
    );
 
    // suppress compiler warnings
