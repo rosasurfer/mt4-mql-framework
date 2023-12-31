@@ -249,7 +249,7 @@ double   RoundCeil(double number, int decimals=0);;
 double   RoundEx(double number, int decimals=0);;
 double   RoundFloor(double number, int decimals=0);;
 bool     SelectTicket(int ticket, string caller, bool pushTicket=false, bool onErrorPopTicket=false);;
-bool     SendChartCommand(string cmdObject, string cmd, string cmdMutex="");;
+bool     SendChartCommand(string cmdObject, string cmd, string mutex="");;
 bool     SendEmail(string sender, string receiver, string subject, string message);;
 bool     SendSMS(string receiver, string message);;
 datetime ServerToFxtTime(datetime time);;
@@ -575,7 +575,7 @@ bool     HistorySet3.AddTick(int hSet, datetime time, double value, int flags=NU
 
 // libraries/rsfLib.ex4
 int      AddSymbolGroup(int sgs[], string name, string description, color bgColor);;
-bool     AquireLock(string mutexName, bool wait);;
+bool     AquireLock(string mutex);;
 bool     ArrayAddInt(int &array[], int value);;
 int      ArrayDropBool(bool &array[], bool value);;
 int      ArrayDropDouble(double &array[], double value);;
@@ -701,7 +701,7 @@ int      OrdersHedge(int &tickets[], int slippage, int oeFlags, int &oes[][]);;
 bool     OrdersCloseHedged(int &tickets[], color markerColor, int oeFlags, int &oes[][]);;
 string   PricesToStr(double &array[], string separator);;
 string   RatesToStr(double &array[], string separator);;
-bool     ReleaseLock(string mutexName);;
+bool     ReleaseLock(string mutex);;
 bool     ReverseBoolArray(bool &array[]);;
 bool     ReverseDoubleArray(double &array[]);;
 bool     ReverseIntArray(int &array[]);;

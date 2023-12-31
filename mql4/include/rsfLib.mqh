@@ -131,8 +131,8 @@
 
 
    // locking
-   bool     AquireLock(string mutexName, bool wait);
-   bool     ReleaseLock(string mutexName);
+   bool     AquireLock(string mutex);
+   bool     ReleaseLock(string mutex);
 
 
    // strings

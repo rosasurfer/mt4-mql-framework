@@ -15,8 +15,8 @@
  *   It allows the EA to be tested and calibrated under idealised conditions.
  *
  * • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in the tester).
- *   These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. They can be
- *   displayed and analysed like regular MetaTrader charts.
+ *   These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they
+ *   can be displayed and analysed like regular MetaTrader charts.
  *
  *
  * Input parameters:
@@ -28,6 +28,12 @@
  *
  *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
  *  @see  [Turtle Trading]         https://analyzingalpha.com/turtle-trading
+ *
+ *
+ * TODO:
+ *  - document input params, control scripts and general usage
+ *  - make tunnel definition an input
+ *  - add/use input "TradingTimeframe"
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -148,20 +154,20 @@ int onTick() {
 bool onCommand(string cmd, string params, int keys) {
    string fullCmd = cmd +":"+ params +":"+ keys;
 
-   if (cmd == "restart") {
-      switch (instance.status) {
-         case STATUS_STOPPED:
-            logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            return(RestartInstance());
-      }
-   }
-
-   else if (cmd == "stop") {
+   if (cmd == "stop") {
       switch (instance.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
-            logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
             return(StopInstance());
+      }
+   }
+
+   else if (cmd == "restart") {
+      switch (instance.status) {
+         case STATUS_STOPPED:
+            logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            return(RestartInstance());
       }
    }
 

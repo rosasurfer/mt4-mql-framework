@@ -237,7 +237,7 @@ int onStart() {
 
    // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist               TODO: System-weites Lock setzen
    string mutex = "mutex.LFX.#"+ magicNumber;
-   if (!AquireLock(mutex, true))
+   if (!AquireLock(mutex))
       return(ERR_RUNTIME_ERROR);
 
 

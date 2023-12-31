@@ -69,7 +69,7 @@ bool IsChartCommand(string channel, bool remove, string &commands[]) {
    string mutex = "mutex."+ label;
 
    if (ObjectFind(label) != -1) {                              // check non-synchronized (read-only access) to prevent locking on every tick
-      if (AquireLock(mutex, true)) {                           // aquire the lock and process command synchronized (read-write access)
+      if (AquireLock(mutex)) {                                 // aquire the lock and process command synchronized (read-write access)
          ArrayPushString(commands, ObjectDescription(label));
          if (remove) ObjectDelete(label);
          return(ReleaseLock(mutex));

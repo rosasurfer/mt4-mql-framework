@@ -54,7 +54,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   return(CheckLocks());
+   return(_CheckLocks());
 }
 
 
@@ -308,32 +308,29 @@ int    __lockCounters[];                                          // Anzahl der 
 
 
 /**
- * Versucht, das Terminal-weite Lock mit dem angegebenen Namen zu erwerben.
+ * Get a terminal-wide lock on the specified mutex.
  *
- * @param  string mutexName - Namensbezeichner des Mutexes
- * @param  bool   wait      - ob auf das Lock gewartet (TRUE) oder sofort zurückgekehrt (FALSE) werden soll
+ * @param  string mutex - mutex name
  *
  * @return bool - success status
  */
-bool AquireLock(string mutexName, bool wait) {
-   wait = wait!=0;
-
-   if (!StringLen(mutexName)) return(!catch("AquireLock(1)  illegal parameter mutexName: "+ DoubleQuoteStr(mutexName), ERR_INVALID_PARAMETER));
+bool AquireLock(string mutex) {
+   if (!StringLen(mutex)) return(!catch("AquireLock(1)  illegal parameter mutex: "+ DoubleQuoteStr(mutex), ERR_INVALID_PARAMETER));
 
    // check if we already own the lock
-   int i = SearchStringArray(__lockNames, mutexName);
+   int i = SearchStringArray(__lockNames, mutex);
    if (i > -1) {                                               // yes
       __lockCounters[i]++;
       return(true);
    }
 
    int error, duration, seconds=1, startTime=GetTickCount();
-   string globalVar = ifString(__isTesting, "tester.", "") + mutexName;
+   string globalVar = ifString(__isTesting, "tester.", "") + mutex;
 
    // loop until lock is aquired
    while (true) {
       if (GlobalVariableSetOnCondition(globalVar, 1, 0)) {     // try to get it
-         ArrayPushString(__lockNames, mutexName);               // got it
+         ArrayPushString(__lockNames, mutex);                  // got it
          ArrayPushInt   (__lockCounters,      1);
          return(true);
       }
@@ -342,20 +339,19 @@ bool AquireLock(string mutexName, bool wait) {
       if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {            // create mutex if it doesn't yet exist
          if (!GlobalVariableSet(globalVar, 0)) {
             error = GetLastError();
-            return(!catch("AquireLock(2)  failed to create mutex "+ DoubleQuoteStr(mutexName), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            return(!catch("AquireLock(2)  failed to create mutex "+ DoubleQuoteStr(mutex), ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
          continue;                                             // retry
       }
-      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName), error));
-      if (IsStopped())    return(_true(logWarn("AquireLock(4)  couldn't yet get lock on mutex "+ DoubleQuoteStr(mutexName) +" but was ordered to stop, taking it...")));
-      if (!wait)          return(false);
+      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock on mutex "+ DoubleQuoteStr(mutex), error));
+      if (IsStopped())    return(!logWarn("AquireLock(4)  couldn't yet get lock on mutex "+ DoubleQuoteStr(mutex) +" but was ordered to stop, taking it..."));
 
       // warn every second, cancel after 10 seconds
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
-            return(!catch("AquireLock(5)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ (duration/1000) +" sec, giving up", ERR_RUNTIME_ERROR));
-         logNotice("AquireLock(6)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ duration/1000 +" sec, retrying...");
+            return(!catch("AquireLock(5)  failed to get lock on mutex "+ DoubleQuoteStr(mutex) +" after "+ (duration/1000) +" sec, giving up", ERR_RUNTIME_ERROR));
+         logNotice("AquireLock(6)  couldn't get lock on mutex "+ DoubleQuoteStr(mutex) +" after "+ duration/1000 +" sec, retrying...");
          seconds++;
       }
 
@@ -370,36 +366,33 @@ bool AquireLock(string mutexName, bool wait) {
 
 
 /**
- * Gibt das Terminal-Lock mit dem angegebenen Namen wieder frei.
+ * Release the lock with the specified name.
  *
- * @param  string mutexName - Namensbezeichner des Mutexes
+ * @param  string mutex - mutex name
  *
  * @return bool - success status
  */
-bool ReleaseLock(string mutexName) {
-   if (!StringLen(mutexName)) return(!catch("ReleaseLock(1)  illegal parameter mutexName: \"\"", ERR_INVALID_PARAMETER));
+bool ReleaseLock(string mutex) {
+   if (!StringLen(mutex)) return(!catch("ReleaseLock(1)  illegal parameter mutex: \"\"", ERR_INVALID_PARAMETER));
 
    // check, if we indeed own that lock
-   int i = SearchStringArray(__lockNames, mutexName);
-   if (i == -1)
-      return(!catch("ReleaseLock(2)  do not own a lock for mutex \""+ mutexName +"\"", ERR_RUNTIME_ERROR));
+   int i = SearchStringArray(__lockNames, mutex);
+   if (i == -1) return(!catch("ReleaseLock(2)  don't own lock for mutex \""+ mutex +"\"", ERR_RUNTIME_ERROR));
 
-   // we do, decrease the counter
+   // decrease the counter
    __lockCounters[i]--;
 
-   // remove it, if counter is zero
+   // remove it if counter is zero
    if (__lockCounters[i] == 0) {
       ArraySpliceStrings(__lockNames,    i, 1);
       ArraySpliceInts   (__lockCounters, i, 1);
 
-      string globalVarName = mutexName;
-
-      if (__isTesting)
-         globalVarName = "tester."+ mutexName;
+      string globalVarName = mutex;
+      if (__isTesting) globalVarName = "tester."+ mutex;
 
       if (!GlobalVariableSet(globalVarName, 0)) {
          int error = GetLastError();
-         return(!catch("ReleaseLock(3)  failed to reset mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+         return(!catch("ReleaseLock(3)  failed to reset mutex \""+ mutex +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
       }
    }
    return(true);
@@ -407,19 +400,16 @@ bool ReleaseLock(string mutexName) {
 
 
 /**
- * Clean up aquired locks and issue a warning if an unreleased lock was found.
+ * Clean up aquired locks and issue a warning if an unreleased lock was found. Called from deinit() only.
  *
  * @return int - error status
- *
- * @access private
  */
-int CheckLocks() {
+int _CheckLocks() {
    int error = NO_ERROR;
 
    for (int i=ArraySize(__lockNames)-1; i >= 0; i--) {
-      logWarn("CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(__lockNames[i]));
-      if (!ReleaseLock(__lockNames[i]))
-         error = last_error;
+      logWarn("_CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(__lockNames[i]));
+      if (!ReleaseLock(__lockNames[i])) error = last_error;
    }
    return(error);
 }
