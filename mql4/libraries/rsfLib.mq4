@@ -2398,8 +2398,8 @@ string TicketsToStr(int tickets[], string separator = ", ") {
 
 
 /**
- * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…), Control-Characters (< 0x20h)
- * fett (•) dargestellt.
+ * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…),
+ * Control-Characters (< 0x20h) fett (•) dargestellt.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
  *
@@ -2408,7 +2408,7 @@ string TicketsToStr(int tickets[], string separator = ", ") {
 string BufferToStr(int buffer[]) {
    int dimensions = ArrayDimension(buffer);
    if (dimensions != 1)
-      return(__BuffersToStr(buffer));
+      return(_BufferToStr(buffer));
 
    string result = "";
    int size = ArraySize(buffer);                                        // ein Integer = 4 Byte = 4 Zeichen
@@ -2432,18 +2432,11 @@ string BufferToStr(int buffer[]) {
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als lesbaren String zurück. NUL-Bytes (0x00h) werden gestrichelt (…), Control-Character (< 0x20h)
- * fett (•) dargestellt. Nützlich, um einen Bufferinhalt schnell visualisieren zu können.
- *
- * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
- *
- * @return string
- *
- * @access private - Aufruf nur aus BufferToStr()
+ * Internal helper function working around the compiler's dimension check. Used only by BufferToStr().
  */
-string __BuffersToStr(int buffer[][]) {
+string _BufferToStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_EMPTY_STR(catch("__BuffersToStr()  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   if (dimensions > 2) return(_EMPTY_STR(catch("_BufferToStr(1)  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 
    if (dimensions == 1)
       return(BufferToStr(buffer));
@@ -2481,7 +2474,7 @@ string __BuffersToStr(int buffer[][]) {
 string BufferToHexStr(int buffer[]) {
    int dimensions = ArrayDimension(buffer);
    if (dimensions != 1)
-      return(__BuffersToHexStr(buffer));
+      return(_BufferToHexStr(buffer));
 
    string hex="", byte1="", byte2="", byte3="", byte4="", result="";
    int size = ArraySize(buffer);
@@ -2502,17 +2495,11 @@ string BufferToHexStr(int buffer[]) {
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als hexadezimalen String zurück.
- *
- * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
- *
- * @return string
- *
- * @access private - Aufruf nur aus BufferToHexStr()
+ * Internal helper function working around the compiler's dimension check. Used only by BufferToHexStr().
  */
-string __BuffersToHexStr(int buffer[][]) {
+string _BufferToHexStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_EMPTY_STR(catch("__BuffersToHexStr()  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   if (dimensions > 2) return(_EMPTY_STR(catch("_BufferToHexStr(1)  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 
    if (dimensions == 1)
       return(BufferToHexStr(buffer));
@@ -3368,14 +3355,14 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
  * @return string - string representation or an empty string in case of errors
  */
 string BoolsToStr(bool array[][], string separator = ", ") {
-   return(__BoolsToStr(array, array, separator));
+   return(_BoolsToStr(array, array, separator));
 }
 
 
 /**
  * Internal helper function working around the compiler's dimension check. Used only by BoolsToStr().
  */
-string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
+string _BoolsToStr(bool values2[][], bool values3[][][], string separator) {
    if (separator == "0")                              // (string) NULL
       separator = ", ";
    string result = "";
@@ -3433,7 +3420,7 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
       ArrayResize( values3_Z, 0);
       return(result);
    }
-   return(_EMPTY_STR(catch("__BoolsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_BoolsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
@@ -3446,14 +3433,14 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
  * @return string - string representation or an empty string in case of errors
  */
 string StringsToStr(string array[][], string separator = ", ") {
-   return(__StringsToStr(array, array, separator));
+   return(_StringsToStr(array, array, separator));
 }
 
 
 /**
  * Internal helper function working around the compiler's dimension check. Used only by StringsToStr().
  */
-string __StringsToStr(string values2[][], string values3[][][], string separator) {
+string _StringsToStr(string values2[][], string values3[][][], string separator) {
    if (separator == "0")                              // (string) NULL
       separator = ", ";
    string result = "";
@@ -3517,7 +3504,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
       ArrayResize( values3_Z, 0);
       return(result);
    }
-   return(_EMPTY_STR(catch("__StringsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_StringsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
@@ -4508,16 +4495,14 @@ string CharsToStr(int values[], string separator = ", ") {
  * @return string - human-readable string or an empty string in case of errors
  */
 string DoublesToStr(double values[][], string separator = ", ") {
-   return(__DoublesToStr(values, values, separator));
+   return(_DoublesToStr(values, values, separator));
 }
 
 
 /**
- * Helper for DoublesToStr(), works around the compiler's dimension check.
- *
- * @access private
+ * Internal helper function working around the compiler's dimension check. Used only by DoublesToStr().
  */
-string __DoublesToStr(double values2[][], double values3[][][], string separator) {
+string _DoublesToStr(double values2[][], double values3[][][], string separator) {
    if (separator == "0")               // (string) NULL
       separator = ", ";
 
@@ -4574,7 +4559,7 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
       return(result);
    }
 
-   return(_EMPTY_STR(catch("__DoublesToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_DoublesToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
@@ -4588,17 +4573,15 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
  * @return string - human-readable string or an empty string in case of errors
  */
 string DoublesToStrEx(double values[][], string separator, int digits) {
-   return(__DoublesToStrEx(values, values, separator, digits));
+   return(_DoublesToStrEx(values, values, separator, digits));
 }
 
 
 /**
- * Internal helper for DoublesToStrEx(), works around the compiler's dimension check.
- *
- * @access private
+ * Internal helper function working around the compiler's dimension check. Used only by DoublesToStrEx().
  */
-string __DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
-   if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("__DoublesToStrEx(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
+string _DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
+   if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("_DoublesToStrEx(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
 
    if (separator == "0")               // (string) NULL
       separator = ", ";
@@ -4656,7 +4639,7 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
       return(result);
    }
 
-   return(_EMPTY_STR(catch("__DoublesToStrEx(2)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_DoublesToStrEx(2)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
@@ -4669,16 +4652,14 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
  * @return string - human-readable string or an empty string in case of errors
  */
 string IntsToStr(int values[][], string separator = ", ") {
-   return(__IntsToStr(values, values, separator));
+   return(_IntsToStr(values, values, separator));
 }
 
 
 /**
- * Internal helper for IntsToStr(), works around the compiler's dimension check.
- *
- * @access private
+ * Internal helper function working around the compiler's dimension check. Used only by IntsToStr().
  */
-string __IntsToStr(int values2[][], int values3[][][], string separator) {
+string _IntsToStr(int values2[][], int values3[][][], string separator) {
    if (separator == "0")               // (string) NULL
       separator = ", ";
 
@@ -4735,7 +4716,7 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
       return(result);
    }
 
-   return(_EMPTY_STR(catch("__IntsToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_IntsToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
