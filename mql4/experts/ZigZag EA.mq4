@@ -1967,12 +1967,10 @@ bool VirtualOrderClose(int ticket) {
  * @param  _Out_ int    symbolDigits  - timeseries digits
  * @param  _Out_ double hstBase       - history base value (if zero recorder defaults are used)
  * @param  _Out_ int    hstMultiplier - multiplier applied to the recorded history values (if zero recorder defaults are used)
- * @param  _Out_ string hstDirectory  - history directory of the timeseries (if empty recorder defaults are used)
- * @param  _Out_ int    hstFormat     - history format of the timeseries (if empty recorder defaults are used)
  *
  * @return bool - whether to add a definition for the specified index
  */
-bool Recorder_GetSymbolDefinition(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat) {
+bool Recorder_GetSymbolDefinition(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier) {
    enabled = false;
    if (IsLastError())                    return(false);
    if (!instance.id)                     return(!catch("Recorder_GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
@@ -1988,8 +1986,6 @@ bool Recorder_GetSymbolDefinition(int i, bool &enabled, string &symbol, string &
    symbolGroup   = "";
    hstBase       = NULL;
    hstMultiplier = NULL;
-   hstDirectory  = "";
-   hstFormat     = NULL;
 
    int quoteUnitMultiplier = 1;                                               // original value: 1.23 => 1.23 point
    int digits = MathMax(Digits, 2);

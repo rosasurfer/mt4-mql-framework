@@ -35,7 +35,7 @@
  *
  *
  * TODO:
- *  - add/update performance recording
+ *  - add/update recording
  *  - add/update virtual trading
  *  - implement multiple exit strategies
  *  - implement multiple entry strategies

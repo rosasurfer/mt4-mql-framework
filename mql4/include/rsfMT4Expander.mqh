@@ -208,7 +208,7 @@
 
    void     DummyCalls();                                      // other virtual no-ops
    string   InputsToStr();
-   bool     Recorder_GetSymbolDefinition(int i, int enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double hstBase, int hstMultiplier, string hstDirectory, int hstFormat);
+   bool     Recorder_GetSymbolDefinition(int i, int enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double hstBase, int hstMultiplier);
    bool     RemoveChartLegend();
    int      ShowStatus(int error);
 #import

@@ -1,9 +1,9 @@
 /**
-During runtime an EA can record any number of performance graphs (aka metrics). Also in the tester. These recordings are
+During runtime an EA can record any number of performance graphs (aka metrics; also in the tester). These recordings are
 saved as regular chart symbols in the history directory of a second MT4 terminal. From there they can be displayed and analysed
 like regular MetaTrader charts.
 
-Metrics are declared using input parameter "EA.Recorder". Syntax:
+Metrics are declared using input parameter "EA.Recorder". Multiple declarations must be separated by a comma. Syntax:
 
  off:  Recording is disabled (default).
  on:   Records a timeseries representing the EA's equity graph as reported by the built-in function AccountEquity().
@@ -11,10 +11,8 @@ Metrics are declared using input parameter "EA.Recorder". Syntax:
        base value (double) to ensure that all recorded values are positive (MT4 charts cannot display negative values). If no
        base value is defined the recorder uses 10'000.00 as the default value.
 
-Multiple metric ids must be separated by comma.
-
-During EA initialization the function Recorder_GetSymbolDefinition(int metricId, ...) is called for each specified metric id,
-to retrieve the exact metric definition. This function must be implemented by the EA, with the following signature:
+During EA initialization the function Recorder_GetSymbolDefinition(int id, ...) is called for each specified metric id. This
+call retrieves the symbol definition of a metric. The function must be implemented by the EA. Signature:
 
 
 /**
@@ -22,25 +20,23 @@ to retrieve the exact metric definition. This function must be implemented by th
  *
  * @param  _In_  int    id             - metric id
  * @param  _Out_ bool   &enabled       - whether the metric is active and should be recorded
- * @param  _Out_ string &symbol        - unique timeseries symbol
- * @param  _Out_ string &symbolDescr   - symbol description
- * @param  _Out_ string &symbolGroup   - the symbol's group name (if empty a name is generated)
- * @param  _Out_ int    &symbolDigits  - symbol digits
+ * @param  _Out_ string &symbol        - unique MT4 timeseries symbol
+ * @param  _Out_ string &symbolDescr   - MT4 symbol description
+ * @param  _Out_ string &symbolGroup   - the symbol's MT4 group name (if empty a name is generated)
+ * @param  _Out_ int    &symbolDigits  - the symbol's MT4 digits value
  * @param  _Out_ double &hstBase       - history base value (if zero the default base value is used)
  * @param  _Out_ int    &hstMultiplier - multiplier applied to recorded values (if zero no multiplier is used)
- * @param  _Out_ string &hstDirectory  - history directory of the timeseries (if empty the framework configuration is queried)
- * @param  _Out_ int    &hstFormat     - history format of the timeseries (if zero the framework configuration is queried)
  *
- * @return bool - TRUE:  add the definition and continue with the next metric;
- *                FALSE: skip the current and all remaining metrics
+ * @return bool - success status TRUE:  process the returned definition and continue with the next metric;
+ *                               FALSE: skip current and all remaining metrics
  *
-bool Recorder_GetSymbolDefinition(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat);
+bool Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier);
  */
 
 //////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern string   EA.Recorder            = "on | off* | 1,2,3,..."; // see documentation above
+extern string   EA.Recorder            = "on | off* | 1,2,3,..."; // @see documentation above
 
 extern datetime Test.StartTime         = 0;                       // time to start a test
 extern double   Test.StartPrice        = 0;                       // price to start a test
@@ -681,15 +677,15 @@ string init_MarketInfo() {
 bool init_Recorder() {
    if (!recorder.initialized) {
       if (recordMode && !IsOptimization()) {
-         int i=0, symbolDigits, hstMultiplier, hstFormat;
+         int i=0, symbolDigits, hstMultiplier;
          bool enabled;
          double hstBase;
-         string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
+         string symbol="", symbolDescr="", symbolGroup="";
 
          if (recordCustom) {
-            // fetch symbol definitions from the EA to record custom metrics
-            while (Recorder_GetSymbolDefinition(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier, hstDirectory, hstFormat)) {
-               if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier, hstDirectory, hstFormat)) return(false);
+            // fetch custom symbol definitions from the EA
+            while (Recorder_GetSymbolDefinition(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier)) {
+               if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier)) return(false);
                i++;
             }
             if (IsLastError()) return(false);
@@ -699,7 +695,7 @@ bool init_Recorder() {
             symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);                        // sizeof(SYMBOL.description) = 64 chars
             symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");    // 43 + 1 + 19 = 63 chars
             symbolDigits = 2;
-            if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, NULL, NULL, "", NULL)) return(false);
+            if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, NULL, NULL)) return(false);
          }
       }
       else {
@@ -723,21 +719,19 @@ bool init_Recorder() {
  * @param  int    symbolDigits  - digits of the timeseries to record
  * @param  double hstBase       - nominal base value of the timeseries (if zero recorder defaults are used)
  * @param  int    hstMultiplier - multiplier for the timeseries (if zero recorder defaults are used)
- * @param  string hstDirectory  - history directory of the timeseries to record (if empty recorder defaults are used)
- * @param  int    hstFormat     - history format of the timeseries to recorded (if empty recorder defaults are used)
  *
  * @return bool - success status
  */
-bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double hstBase, int hstMultiplier, string hstDirectory, int hstFormat) {
+bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double hstBase, int hstMultiplier) {
    enabled = enabled!=0;                  // (bool) int
    if (i < 0) return(!catch("init_RecorderAddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
 
-   symbolGroup  = init_RecorderSymbolGroup ("init_RecorderAddSymbol(2)", symbolGroup);  if (!StringLen(symbolGroup))  return(false);
-   hstDirectory = init_RecorderHstDirectory("init_RecorderAddSymbol(3)", hstDirectory); if (!StringLen(hstDirectory)) return(false);
-   hstFormat    = init_RecorderHstFormat   ("init_RecorderAddSymbol(4)", hstFormat);    if (!hstFormat)               return(false);
+   symbolGroup         = init_RecorderSymbolGroup ("init_RecorderAddSymbol(2)", symbolGroup); if (!StringLen(symbolGroup))  return(false);
+   string hstDirectory = init_RecorderHstDirectory("init_RecorderAddSymbol(3)");              if (!StringLen(hstDirectory)) return(false);
+   int    hstFormat    = init_RecorderHstFormat   ("init_RecorderAddSymbol(4)");              if (!hstFormat)               return(false);
 
    if (enabled) {
-      // check an existing symbol
+      // check for an existing symbol
       if (IsRawSymbol(symbol, hstDirectory)) {
          if (__isTesting) return(!catch("init_RecorderAddSymbol(5)  symbol \""+ symbol +"\" already exists", ERR_ILLEGAL_STATE));
          // TODO: update an existing raw symbol
@@ -847,52 +841,62 @@ string init_RecorderSymbolGroup(string caller, string symbolGroup = "") {
 
 
 /**
- * Resolve the history directory to use for a recorded timeseries.
+ * Resolve the history directory for recorded timeseries.
  *
- * @param  string caller                  - caller identifier
- * @param  string hstDirectory [optional] - user-defined directory (if empty recorder defaults are used)
+ * @param  string caller - caller identifier
  *
- * @return string - history directory or an empty string in case of errors
+ * @return string - directory or an empty string in case of errors
  */
-string init_RecorderHstDirectory(string caller, string hstDirectory = "") {
-   static string configValue = "";
+string init_RecorderHstDirectory(string caller) {
+   static string result = "";
 
-   if (!StringLen(hstDirectory)) {
-      if (!StringLen(configValue)) {
-         string section = ifString(__isTesting, "Tester.", "") +"EA.Recorder";
-         string sValue  = GetConfigString(section, "HistoryDirectory", "");
-         if (!StringLen(sValue)) return(_EMPTY_STR(catch(caller +"->init_RecorderHstDirectory(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE)));
-         configValue = sValue;
+   if (!StringLen(result)) {
+      string section = ifString(__isTesting, "Tester.", "") + WindowExpertName();
+      string key = "Recorder.HistoryDirectory", sValue="";
+
+      if (IsConfigKey(section, key)) {
+         sValue = GetConfigString(section, key, "");
       }
-      hstDirectory = configValue;
+      else {
+         section = ifString(__isTesting, "Tester.", "") +"Experts";
+         if (IsConfigKey(section, key)) {
+            sValue = GetConfigString(section, key, "");
+         }
+      }
+      if (!StringLen(sValue)) return(_EMPTY_STR(catch(caller +"->init_RecorderHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
+      result = sValue;
    }
-   return(hstDirectory);
+   return(result);
 }
 
 
 /**
- * Resolve the history format to use for a recorded timeseries.
+ * Resolve the history format for recorded timeseries.
  *
- * @param  string caller            - caller identifier
- * @param  int hstFormat [optional] - user-defined format (if empty recorder defaults are used)
+ * @param  string caller - caller identifier
  *
  * @return int - history format or NULL (0) in case of errors
  */
-int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
-   static int configValue = 0;
+int init_RecorderHstFormat(string caller) {
+   static int result = 0;
 
-   if (!hstFormat) {
-      if (!configValue) {
-         string section = ifString(__isTesting, "Tester.", "") +"EA.Recorder";
-         int iValue = GetConfigInt(section, "HistoryFormat", 401);
-         if (iValue!=400 && iValue!=401)      return(!catch(caller +"->init_RecorderHstFormat(1)  invalid config value ["+ section +"]->HistoryFormat: "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
-         configValue = iValue;
+   if (!result) {
+      string section = ifString(__isTesting, "Tester.", "") + WindowExpertName();
+      string key = "Recorder.HistoryFormat";
+
+      if (IsConfigKey(section, key)) {
+         int iValue = GetConfigInt(section, key, 0);
       }
-      hstFormat = configValue;
+      else {
+         section = ifString(__isTesting, "Tester.", "") +"Experts";
+         if (IsConfigKey(section, key)) {
+            iValue = GetConfigInt(section, key, 0);
+         }
+      }
+      if (iValue!=400 && iValue!=401) return(!catch(caller +"->init_RecorderHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+      result = iValue;
    }
-   else if (hstFormat!=400 && hstFormat!=401) return(!catch(caller +"->init_RecorderHstFormat(2)  invalid parameter hstFormat: "+ hstFormat, ERR_INVALID_PARAMETER));
-
-   return(hstFormat);
+   return(result);
 }
 
 
