@@ -3,7 +3,7 @@
  *                                           WORK-IN-PROGRESS, DO NOT YET USE                                              *
  ***************************************************************************************************************************
  *
- * Vegas EA (subject to change)
+ * Channel Breakout
  *
  * A mixture of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in and out.
  *
@@ -27,6 +27,7 @@
  * • Tunnel.Definition:  ...
  * • Donchian.Periods:   ...
  * • Lots:               ...
+ * • EA.Recorder:        Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.mqh
  *
  *
  *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here

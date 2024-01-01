@@ -7,11 +7,7 @@
  *
  * Input parameters
  * ----------------
- * • EA.Recorder: Metrics to record, can be "on", "off" or multiple metric ids separated by comma. For the syntax of the
- *                metric ids see input parameter "EA.Recorder" in "mql4/include/core/expert.mqh".
- *
- *    "off": Recording is disabled.
- *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
+ * • EA.Recorder: Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.mqh
  *
  *    "1":   Records a timeseries depicting theoretical PL with zero spread and no costs in quote units.                   OK
  *    "2":   Records a timeseries depicting PL after spread but before all other costs (gross) in quote units.             OK
@@ -1976,10 +1972,10 @@ bool VirtualOrderClose(int ticket) {
  *
  * @return bool - whether to add a definition for the specified index
  */
-bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat) {
+bool Recorder_GetSymbolDefinition(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat) {
    enabled = false;
    if (IsLastError())                    return(false);
-   if (!instance.id)                     return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
+   if (!instance.id)                     return(!catch("Recorder_GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
    if (IsTestInstance() && !__isTesting) return(false);                       // never record anything in a stopped test
 
    string ids[];
