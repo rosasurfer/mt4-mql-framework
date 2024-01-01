@@ -11,27 +11,27 @@ int onInit() {
 
 
 /**
- * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off". There was an input
- * dialog.
+ * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
+ * There was an input dialog.
  *
  * @return int - error status
  */
 int onInitUser() {
-   if (ValidateInputs.SID()) {                     // TRUE: a valid sequence id was specified
-      RestoreSequence();                           // try to reload the given sequence
+   if (ValidateInputs.ID()) {                      // TRUE: a valid instance id was specified
+      RestoreInstance();                           // try to reload the given instance
    }
-   else if (StrTrim(Sequence.ID) == "") {          // no sequence id was specified
+   else if (StrTrim(Instance.ID) == "") {          // no instance id was specified
       if (ValidateInputs()) {
-         sequence.isTest  = __isTesting;
-         sequence.id      = CreateSequenceId();
-         Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
-         sequence.created = GetLocalTime();
-         sequence.status  = STATUS_WAITING;
-         logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
+         instance.isTest  = __isTesting;
+         instance.id      = CreateInstanceId();
+         Instance.ID      = ifString(instance.isTest, "T", "") + instance.id; SS.InstanceName();
+         instance.created = GetLocalTime();
+         instance.status  = STATUS_WAITING;
+         logInfo("onInitUser(1)  instance "+ instance.name +" created");
          SaveStatus();
       }
    }
-   //else {}                                       // an invalid sequence id was specified
+   //else {}                                       // an invalid instance id was specified
    return(last_error);
 }
 
@@ -78,13 +78,13 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   if (RestoreSequenceId()) {                      // a sequence id was found and restored
-      if (RestoreSequence()) {                     // the sequence was restored
-         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
+   if (RestoreInstanceId()) {                      // an instance id was found and restored
+      if (RestoreInstance()) {                     // the instance was restored
+         logInfo("onInitTemplate(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
       return(last_error);
    }
-   return(catch("onInitTemplate(2)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
+   return(catch("onInitTemplate(2)  could not restore instance id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
@@ -94,13 +94,13 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitRecompile() {
-   if (RestoreSequenceId()) {                      // same as for onInitTemplate()
-      if (RestoreSequence()) {
-         logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
+   if (RestoreInstanceId()) {                      // same as for onInitTemplate()
+      if (RestoreInstance()) {
+         logInfo("onInitRecompile(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
       return(last_error);
    }
-   return(catch("onInitRecompile(2)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
+   return(catch("onInitRecompile(2)  could not restore instance id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
@@ -110,7 +110,7 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {                                  // open the log file (flushes the log buffer) but don't touch the file
-   if (__isTesting || !IsTestSequence()) {         // of a finished test (i.e. a test loaded into an online chart)
+   if (__isTesting || !IsTestInstance()) {         // of a finished test (i.e. a test loaded into an online chart)
       if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));
    }
 
@@ -128,7 +128,7 @@ int afterInit() {                                  // open the log file (flushes
       recorder.debug[i] = GetConfigBool(section, "DebugRecorder."+ i, false);
    }
 
-   StoreSequenceId();                              // store the sequence id for templates changes/restart/recompilation etc.
+   StoreInstanceId();                              // store the instance id for templates changes/restart/recompilation etc.
    return(catch("afterInit(2)"));
 }
 

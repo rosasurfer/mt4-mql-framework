@@ -1,26 +1,64 @@
+/**
+During runtime an EA can record any number of performance graphs (aka metrics). Also in the tester. These recordings are
+saved as regular chart symbols in the history directory of a second MT4 terminal. From there they can be displayed and analysed
+like regular MetaTrader charts.
+
+Metrics are declared using input parameter "EA.Recorder". Syntax:
+
+ off:  Recording is disabled (default).
+ on:   Records a timeseries representing the EA's equity graph as reported by the built-in function AccountEquity().
+ <id>[=<base-value>]:  Records a timeseries representing a custom metric identified by <id> (integer). Define an appropriate
+       base value (double) to ensure that all recorded values are positive (MT4 charts cannot display negative values). If no
+       base value is defined the recorder uses 10'000.00 as the default value.
+
+Multiple metric ids must be separated by comma.
+
+During EA initialization the function Recorder_GetSymbolDefinition(int metricId, ...) is called for each specified metric id,
+to retrieve the exact metric definition. This function must be implemented by the EA, with the following signature:
+
+
+/**
+ * Return a symbol definition for the specified metric to be recorded.
+ *
+ * @param  _In_  int    id             - metric id
+ * @param  _Out_ bool   &enabled       - whether the metric is active and should be recorded
+ * @param  _Out_ string &symbol        - unique timeseries symbol
+ * @param  _Out_ string &symbolDescr   - symbol description
+ * @param  _Out_ string &symbolGroup   - the symbol's group name (if empty a name is generated)
+ * @param  _Out_ int    &symbolDigits  - symbol digits
+ * @param  _Out_ double &hstBase       - history base value (if zero the default base value is used)
+ * @param  _Out_ int    &hstMultiplier - multiplier applied to recorded values (if zero no multiplier is used)
+ * @param  _Out_ string &hstDirectory  - history directory of the timeseries (if empty the framework configuration is queried)
+ * @param  _Out_ int    &hstFormat     - history format of the timeseries (if zero the framework configuration is queried)
+ *
+ * @return bool - TRUE:  add the definition and continue with the next metric;
+ *                FALSE: skip the current and all remaining metrics
+ *
+bool Recorder_GetSymbolDefinition(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat);
+ */
 
 //////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern string   EA.Recorder            = "on | off* | 1,2,3=1000,...";  // on=std-equity | off | custom-metrics, format: {uint}[={double}]
-                                                                                                                      // {uint}:   metric id (required)
-extern datetime Test.StartTime         = 0;                             // time to start a test                       // {double}: recording base value (optional)
-extern double   Test.StartPrice        = 0;                             // price to start a test
-extern bool     Test.ExternalReporting = false;                         // whether to send PositionOpen/Close events to the Expander
+extern string   EA.Recorder            = "on | off* | 1,2,3,..."; // see documentation above
+
+extern datetime Test.StartTime         = 0;                       // time to start a test
+extern double   Test.StartPrice        = 0;                       // price to start a test
+extern bool     Test.ExternalReporting = false;                   // whether to send PositionOpen/Close events to the MT4Expander
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <functions/InitializeByteBuffer.mqh>
 
 #define __lpSuperContext NULL
-int     __CoreFunction = NULL;               // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
-double  __rates[][6];                        // current price series
-int     __tickTimerId;                       // timer id for virtual ticks
+int     __CoreFunction = NULL;                  // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
+double  __rates[][6];                           // current price series
+int     __tickTimerId;                          // timer id for virtual ticks
 
 // recorder modes
-#define RECORDING_OFF         0              // recording off
-#define RECORDING_INTERNAL    1              // recording of a single internal PL timeseries
-#define RECORDING_CUSTOM      2              // recording of one or more custom timeseries
+#define RECORDING_OFF         0                 // recording off
+#define RECORDING_INTERNAL    1                 // recording of a single internal PL timeseries
+#define RECORDING_CUSTOM      2                 // recording of one or more custom timeseries
 
 // recorder management
 int    recordMode        = RECORDING_OFF;
@@ -28,10 +66,11 @@ string recordModeDescr[] = {"off", "internal", "custom"};
 bool   recordInternal    = false;
 bool   recordCustom      = false;
 
-double recorder.defaultHstBase = 5000.0;
-bool   recorder.initialized    = false;
+double recorder.defaultBaseValue = 10000.0;
+bool   recorder.initialized      = false;
 
-bool   recorder.enabled      [];             // whether a metric is enabled
+// metric definitions
+bool   recorder.enabled      [];                // whether a metric is enabled
 bool   recorder.debug        [];
 string recorder.symbol       [];
 string recorder.symbolDescr  [];
@@ -635,7 +674,7 @@ string init_MarketInfo() {
 
 
 /**
- * Initialize the PL recorder. Called on the first tick.
+ * Initialize the performance recorder. Called on the first tick.
  *
  * @return bool - success status
  */
@@ -649,7 +688,7 @@ bool init_Recorder() {
 
          if (recordCustom) {
             // fetch symbol definitions from the EA to record custom metrics
-            while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier, hstDirectory, hstFormat)) {
+            while (Recorder_GetSymbolDefinition(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier, hstDirectory, hstFormat)) {
                if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier, hstDirectory, hstFormat)) return(false);
                i++;
             }
@@ -736,7 +775,7 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    recorder.symbolGroup  [i] = symbolGroup;
    recorder.symbolDigits [i] = symbolDigits;
    recorder.currValue    [i] = NULL;
-   recorder.hstBase      [i] = doubleOr(hstBase, doubleOr(recorder.hstBase[i], recorder.defaultHstBase));
+   recorder.hstBase      [i] = doubleOr(hstBase, doubleOr(recorder.hstBase[i], recorder.defaultBaseValue));
    recorder.hstMultiplier[i] = intOr(hstMultiplier, intOr(recorder.hstMultiplier[i], 1));
    recorder.hstDirectory [i] = hstDirectory;
    recorder.hstFormat    [i] = hstFormat;
@@ -904,7 +943,7 @@ bool init_RecorderValidateInput(int &metrics) {
          string sid = iValue;
          sValue = StrTrim(StrRight(sValue, -StringLen(sid)));
 
-         double hstBase = recorder.defaultHstBase;
+         double hstBase = recorder.defaultBaseValue;
          if (sValue != "") {                             // use specified base value instead of the default
             if (!StrStartsWith(sValue, "=")) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric format error, not \"{uint}[={double}]\")", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
             sValue = StrTrim(StrRight(sValue, -1));

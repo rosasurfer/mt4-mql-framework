@@ -54,7 +54,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   return(CheckLocks());
+   return(_CheckLocks());
 }
 
 
@@ -308,32 +308,29 @@ int    __lockCounters[];                                          // Anzahl der 
 
 
 /**
- * Versucht, das Terminal-weite Lock mit dem angegebenen Namen zu erwerben.
+ * Get a terminal-wide lock on the specified mutex.
  *
- * @param  string mutexName - Namensbezeichner des Mutexes
- * @param  bool   wait      - ob auf das Lock gewartet (TRUE) oder sofort zurückgekehrt (FALSE) werden soll
+ * @param  string mutex - mutex name
  *
  * @return bool - success status
  */
-bool AquireLock(string mutexName, bool wait) {
-   wait = wait!=0;
-
-   if (!StringLen(mutexName)) return(!catch("AquireLock(1)  illegal parameter mutexName: "+ DoubleQuoteStr(mutexName), ERR_INVALID_PARAMETER));
+bool AquireLock(string mutex) {
+   if (!StringLen(mutex)) return(!catch("AquireLock(1)  illegal parameter mutex: "+ DoubleQuoteStr(mutex), ERR_INVALID_PARAMETER));
 
    // check if we already own the lock
-   int i = SearchStringArray(__lockNames, mutexName);
+   int i = SearchStringArray(__lockNames, mutex);
    if (i > -1) {                                               // yes
       __lockCounters[i]++;
       return(true);
    }
 
    int error, duration, seconds=1, startTime=GetTickCount();
-   string globalVar = ifString(__isTesting, "tester.", "") + mutexName;
+   string globalVar = ifString(__isTesting, "tester.", "") + mutex;
 
    // loop until lock is aquired
    while (true) {
       if (GlobalVariableSetOnCondition(globalVar, 1, 0)) {     // try to get it
-         ArrayPushString(__lockNames, mutexName);               // got it
+         ArrayPushString(__lockNames, mutex);                  // got it
          ArrayPushInt   (__lockCounters,      1);
          return(true);
       }
@@ -342,20 +339,19 @@ bool AquireLock(string mutexName, bool wait) {
       if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {            // create mutex if it doesn't yet exist
          if (!GlobalVariableSet(globalVar, 0)) {
             error = GetLastError();
-            return(!catch("AquireLock(2)  failed to create mutex "+ DoubleQuoteStr(mutexName), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            return(!catch("AquireLock(2)  failed to create mutex "+ DoubleQuoteStr(mutex), ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
          continue;                                             // retry
       }
-      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName), error));
-      if (IsStopped())    return(_true(logWarn("AquireLock(4)  couldn't yet get lock on mutex "+ DoubleQuoteStr(mutexName) +" but was ordered to stop, taking it...")));
-      if (!wait)          return(false);
+      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock on mutex "+ DoubleQuoteStr(mutex), error));
+      if (IsStopped())    return(!logWarn("AquireLock(4)  couldn't yet get lock on mutex "+ DoubleQuoteStr(mutex) +" but was ordered to stop, taking it..."));
 
       // warn every second, cancel after 10 seconds
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
-            return(!catch("AquireLock(5)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ (duration/1000) +" sec, giving up", ERR_RUNTIME_ERROR));
-         logNotice("AquireLock(6)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ duration/1000 +" sec, retrying...");
+            return(!catch("AquireLock(5)  failed to get lock on mutex "+ DoubleQuoteStr(mutex) +" after "+ (duration/1000) +" sec, giving up", ERR_RUNTIME_ERROR));
+         logNotice("AquireLock(6)  couldn't get lock on mutex "+ DoubleQuoteStr(mutex) +" after "+ duration/1000 +" sec, retrying...");
          seconds++;
       }
 
@@ -370,36 +366,33 @@ bool AquireLock(string mutexName, bool wait) {
 
 
 /**
- * Gibt das Terminal-Lock mit dem angegebenen Namen wieder frei.
+ * Release the lock with the specified name.
  *
- * @param  string mutexName - Namensbezeichner des Mutexes
+ * @param  string mutex - mutex name
  *
  * @return bool - success status
  */
-bool ReleaseLock(string mutexName) {
-   if (!StringLen(mutexName)) return(!catch("ReleaseLock(1)  illegal parameter mutexName: \"\"", ERR_INVALID_PARAMETER));
+bool ReleaseLock(string mutex) {
+   if (!StringLen(mutex)) return(!catch("ReleaseLock(1)  illegal parameter mutex: \"\"", ERR_INVALID_PARAMETER));
 
    // check, if we indeed own that lock
-   int i = SearchStringArray(__lockNames, mutexName);
-   if (i == -1)
-      return(!catch("ReleaseLock(2)  do not own a lock for mutex \""+ mutexName +"\"", ERR_RUNTIME_ERROR));
+   int i = SearchStringArray(__lockNames, mutex);
+   if (i == -1) return(!catch("ReleaseLock(2)  don't own lock for mutex \""+ mutex +"\"", ERR_RUNTIME_ERROR));
 
-   // we do, decrease the counter
+   // decrease the counter
    __lockCounters[i]--;
 
-   // remove it, if counter is zero
+   // remove it if counter is zero
    if (__lockCounters[i] == 0) {
       ArraySpliceStrings(__lockNames,    i, 1);
       ArraySpliceInts   (__lockCounters, i, 1);
 
-      string globalVarName = mutexName;
-
-      if (__isTesting)
-         globalVarName = "tester."+ mutexName;
+      string globalVarName = mutex;
+      if (__isTesting) globalVarName = "tester."+ mutex;
 
       if (!GlobalVariableSet(globalVarName, 0)) {
          int error = GetLastError();
-         return(!catch("ReleaseLock(3)  failed to reset mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+         return(!catch("ReleaseLock(3)  failed to reset mutex \""+ mutex +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
       }
    }
    return(true);
@@ -407,19 +400,16 @@ bool ReleaseLock(string mutexName) {
 
 
 /**
- * Clean up aquired locks and issue a warning if an unreleased lock was found.
+ * Clean up aquired locks and issue a warning if an unreleased lock was found. Called from deinit() only.
  *
  * @return int - error status
- *
- * @access private
  */
-int CheckLocks() {
+int _CheckLocks() {
    int error = NO_ERROR;
 
    for (int i=ArraySize(__lockNames)-1; i >= 0; i--) {
-      logWarn("CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(__lockNames[i]));
-      if (!ReleaseLock(__lockNames[i]))
-         error = last_error;
+      logWarn("_CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(__lockNames[i]));
+      if (!ReleaseLock(__lockNames[i])) error = last_error;
    }
    return(error);
 }
@@ -2408,8 +2398,8 @@ string TicketsToStr(int tickets[], string separator = ", ") {
 
 
 /**
- * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…), Control-Characters (< 0x20h)
- * fett (•) dargestellt.
+ * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…),
+ * Control-Characters (< 0x20h) fett (•) dargestellt.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
  *
@@ -2418,7 +2408,7 @@ string TicketsToStr(int tickets[], string separator = ", ") {
 string BufferToStr(int buffer[]) {
    int dimensions = ArrayDimension(buffer);
    if (dimensions != 1)
-      return(__BuffersToStr(buffer));
+      return(_BufferToStr(buffer));
 
    string result = "";
    int size = ArraySize(buffer);                                        // ein Integer = 4 Byte = 4 Zeichen
@@ -2442,18 +2432,11 @@ string BufferToStr(int buffer[]) {
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als lesbaren String zurück. NUL-Bytes (0x00h) werden gestrichelt (…), Control-Character (< 0x20h)
- * fett (•) dargestellt. Nützlich, um einen Bufferinhalt schnell visualisieren zu können.
- *
- * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
- *
- * @return string
- *
- * @access private - Aufruf nur aus BufferToStr()
+ * Internal helper function working around the compiler's dimension check. Used only by BufferToStr().
  */
-string __BuffersToStr(int buffer[][]) {
+string _BufferToStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_EMPTY_STR(catch("__BuffersToStr()  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   if (dimensions > 2) return(_EMPTY_STR(catch("_BufferToStr(1)  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 
    if (dimensions == 1)
       return(BufferToStr(buffer));
@@ -2491,7 +2474,7 @@ string __BuffersToStr(int buffer[][]) {
 string BufferToHexStr(int buffer[]) {
    int dimensions = ArrayDimension(buffer);
    if (dimensions != 1)
-      return(__BuffersToHexStr(buffer));
+      return(_BufferToHexStr(buffer));
 
    string hex="", byte1="", byte2="", byte3="", byte4="", result="";
    int size = ArraySize(buffer);
@@ -2512,17 +2495,11 @@ string BufferToHexStr(int buffer[]) {
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als hexadezimalen String zurück.
- *
- * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
- *
- * @return string
- *
- * @access private - Aufruf nur aus BufferToHexStr()
+ * Internal helper function working around the compiler's dimension check. Used only by BufferToHexStr().
  */
-string __BuffersToHexStr(int buffer[][]) {
+string _BufferToHexStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_EMPTY_STR(catch("__BuffersToHexStr()  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   if (dimensions > 2) return(_EMPTY_STR(catch("_BufferToHexStr(1)  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 
    if (dimensions == 1)
       return(BufferToHexStr(buffer));
@@ -3378,14 +3355,14 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
  * @return string - string representation or an empty string in case of errors
  */
 string BoolsToStr(bool array[][], string separator = ", ") {
-   return(__BoolsToStr(array, array, separator));
+   return(_BoolsToStr(array, array, separator));
 }
 
 
 /**
  * Internal helper function working around the compiler's dimension check. Used only by BoolsToStr().
  */
-string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
+string _BoolsToStr(bool values2[][], bool values3[][][], string separator) {
    if (separator == "0")                              // (string) NULL
       separator = ", ";
    string result = "";
@@ -3443,7 +3420,7 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
       ArrayResize( values3_Z, 0);
       return(result);
    }
-   return(_EMPTY_STR(catch("__BoolsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_BoolsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
@@ -3456,14 +3433,14 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
  * @return string - string representation or an empty string in case of errors
  */
 string StringsToStr(string array[][], string separator = ", ") {
-   return(__StringsToStr(array, array, separator));
+   return(_StringsToStr(array, array, separator));
 }
 
 
 /**
  * Internal helper function working around the compiler's dimension check. Used only by StringsToStr().
  */
-string __StringsToStr(string values2[][], string values3[][][], string separator) {
+string _StringsToStr(string values2[][], string values3[][][], string separator) {
    if (separator == "0")                              // (string) NULL
       separator = ", ";
    string result = "";
@@ -3527,7 +3504,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
       ArrayResize( values3_Z, 0);
       return(result);
    }
-   return(_EMPTY_STR(catch("__StringsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_StringsToStr(1)  too many dimensions of parameter array: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
@@ -4518,16 +4495,14 @@ string CharsToStr(int values[], string separator = ", ") {
  * @return string - human-readable string or an empty string in case of errors
  */
 string DoublesToStr(double values[][], string separator = ", ") {
-   return(__DoublesToStr(values, values, separator));
+   return(_DoublesToStr(values, values, separator));
 }
 
 
 /**
- * Helper for DoublesToStr(), works around the compiler's dimension check.
- *
- * @access private
+ * Internal helper function working around the compiler's dimension check. Used only by DoublesToStr().
  */
-string __DoublesToStr(double values2[][], double values3[][][], string separator) {
+string _DoublesToStr(double values2[][], double values3[][][], string separator) {
    if (separator == "0")               // (string) NULL
       separator = ", ";
 
@@ -4584,7 +4559,7 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
       return(result);
    }
 
-   return(_EMPTY_STR(catch("__DoublesToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_DoublesToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
@@ -4598,17 +4573,15 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
  * @return string - human-readable string or an empty string in case of errors
  */
 string DoublesToStrEx(double values[][], string separator, int digits) {
-   return(__DoublesToStrEx(values, values, separator, digits));
+   return(_DoublesToStrEx(values, values, separator, digits));
 }
 
 
 /**
- * Internal helper for DoublesToStrEx(), works around the compiler's dimension check.
- *
- * @access private
+ * Internal helper function working around the compiler's dimension check. Used only by DoublesToStrEx().
  */
-string __DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
-   if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("__DoublesToStrEx(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
+string _DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
+   if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("_DoublesToStrEx(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
 
    if (separator == "0")               // (string) NULL
       separator = ", ";
@@ -4666,7 +4639,7 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
       return(result);
    }
 
-   return(_EMPTY_STR(catch("__DoublesToStrEx(2)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_DoublesToStrEx(2)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
@@ -4679,16 +4652,14 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
  * @return string - human-readable string or an empty string in case of errors
  */
 string IntsToStr(int values[][], string separator = ", ") {
-   return(__IntsToStr(values, values, separator));
+   return(_IntsToStr(values, values, separator));
 }
 
 
 /**
- * Internal helper for IntsToStr(), works around the compiler's dimension check.
- *
- * @access private
+ * Internal helper function working around the compiler's dimension check. Used only by IntsToStr().
  */
-string __IntsToStr(int values2[][], int values3[][][], string separator) {
+string _IntsToStr(int values2[][], int values3[][][], string separator) {
    if (separator == "0")               // (string) NULL
       separator = ", ";
 
@@ -4745,7 +4716,7 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
       return(result);
    }
 
-   return(_EMPTY_STR(catch("__IntsToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
+   return(_EMPTY_STR(catch("_IntsToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
 }
 
 
@@ -5226,10 +5197,10 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          oe.setCommission(oe, ifDouble(isPendingType, 0, OrderCommission()));
          oe.setProfit    (oe, 0              );
          oe.setRequotes  (oe, requotes       );
-            if      (type == OP_BUY ) double dSlippage = OrderOpenPrice() - ask;
-            else if (type == OP_SELL)        dSlippage = bid - OrderOpenPrice();
+            if      (type == OP_BUY ) double dSlippage = ask - OrderOpenPrice();
+            else if (type == OP_SELL)        dSlippage = OrderOpenPrice() - bid;
             else                             dSlippage = 0;
-         oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, digits & 1));  // total slippage after requotes in pip
+         oe.setSlippage(oe, NormalizeDouble(dSlippage, digits));           // total slippage after requotes
 
          if (IsLogInfo()) logInfo("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
 
@@ -5312,8 +5283,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
 string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8[ instead of 1.5522'0], sl=1.5500'0, tp=1.5600'0 (slippage: -2.8 pip, market: Bid/Ask) after 0.345 s and 1 requote
 
-   int    digits      = oe.Digits(oe);
+   int    digits      = MathMax(oe.Digits(oe), 2);
    int    pipDigits   = digits & (~1);
+   double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
 
    string sType       = OperationTypeDescription(oe.Type(oe));
@@ -5327,7 +5299,9 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) {
          sPrice    = sPrice +" instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat);
-         sSlippage = "slippage: "+ NumberToStr(-slippage, "+."+ (Digits & 1)) +" pip, ";
+         if (digits > 2) sSlippage = NumberToStr(slippage/pip, "+."+ (digits & 1)) +" pip";
+         else            sSlippage = NumberToStr(slippage, "+"+ priceFormat);
+         sSlippage = "slippage: "+ sSlippage +", ";
       }
    string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice;
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
@@ -5789,9 +5763,9 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          oe.setCommission(oe, OrderCommission());
          oe.setProfit    (oe, OrderProfit());
          oe.setRequotes  (oe, requotes);
-            if (OrderType() == OP_BUY ) double dSlippage = oe.Bid(oe) - OrderClosePrice();
-            else                               dSlippage = OrderClosePrice() - oe.Ask(oe);
-         oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, 1));                    // in pip
+            if (OrderType() == OP_BUY) double dSlippage = oe.Bid(oe) - OrderClosePrice();
+            else                              dSlippage = OrderClosePrice() - oe.Ask(oe);
+         oe.setSlippage(oe, NormalizeDouble(dSlippage, digits));
 
          // find the remaining position
          if (NE(lots, openLots, 2)) {
@@ -5889,10 +5863,11 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
 string OrderCloseEx.SuccessMsg(int oe[]) {
    // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 [partially] at 1.5534'4[ instead of 1.5532'2][, remainder: #2 Buy 0.1 GBPUSD] ([slippage: -2.8 pip, ]market: Bid/Ask) after 0.123 s and 1 requote
 
-   int    digits      = oe.Digits(oe);
+   int    digits      = MathMax(oe.Digits(oe), 2);
    int    pipDigits   = digits & (~1);
    double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
+
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string symbol      = oe.Symbol(oe);
@@ -5903,13 +5878,14 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    string comment     = oe.Comment(oe);
       if (StringLen(comment) > 0) comment = " \""+ comment +"\"";
    string sSlippage   = "";
-
-   double slippage = oe.Slippage(oe);
-   if (NE(slippage, 0, digits)) {
-      sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(!oe.Type(oe), oe.Bid(oe), oe.Ask(oe)), priceFormat);
-      sSlippage   = "slippage: "+ NumberToStr(-slippage, "+."+ (Digits & 1)) +" pip, ";
-   }
-   int remainder = oe.RemainingTicket(oe);
+      double slippage = oe.Slippage(oe);
+      if (NE(slippage, 0, digits)) {
+         sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(!oe.Type(oe), oe.Bid(oe), oe.Ask(oe)), priceFormat);
+         if (digits > 2) sSlippage = NumberToStr(slippage/pip, "+."+ (digits & 1)) +" pip";
+         else            sSlippage = NumberToStr(slippage, "+."+ priceFormat);
+         sSlippage   = "slippage: "+ sSlippage +", ";
+      }
+   int  remainder = oe.RemainingTicket(oe);
    string message = "closed #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" from "+ sOpenPrice + ifString(!remainder, "", " partially") +" at "+ sClosePrice;
 
    if (remainder != 0) message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;

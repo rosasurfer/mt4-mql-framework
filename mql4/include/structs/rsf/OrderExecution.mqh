@@ -1,35 +1,37 @@
 /**
- * Framework struct ORDER_EXECUTION
+ * All order functions of the framework return a struct ORDER_EXECUTION with details/results of the execution.
+ * Unused or non-applicable fields are set to NULL.
+ *
  *
  * struct ORDER_EXECUTION {
- *    int    error;           //   4      => oe[ 0]      // Fehlercode
- *    szchar symbol[12];      //  16      => oe[ 1]      // OrderSymbol, <NUL>-terminiert
- *    int    digits;          //   4      => oe[ 5]      // Digits des Ordersymbols
- *    int    stopDistance;    //   4      => oe[ 6]      // Stop-Distance in Point
- *    int    freezeDistance;  //   4      => oe[ 7]      // Freeze-Distance in Point
- *    int    bid;             //   4      => oe[ 8]      // Bid-Preis vor Ausführung in Point
- *    int    ask;             //   4      => oe[ 9]      // Ask-Preis vor Ausführung in Point
- *    int    ticket;          //   4      => oe[10]      // Ticket
- *    int    type;            //   4      => oe[11]      // Operation-Type
- *    int    lots;            //   4      => oe[12]      // Ordervolumen in Hundertsteln eines Lots
- *    int    openTime;        //   4      => oe[13]      // OrderOpenTime
- *    int    openPrice;       //   4      => oe[14]      // OpenPrice in Point
- *    int    stopLoss;        //   4      => oe[15]      // StopLoss-Preis in Point
- *    int    takeProfit;      //   4      => oe[16]      // TakeProfit-Preis in Point
- *    int    closeTime;       //   4      => oe[17]      // OrderCloseTime
- *    int    closePrice;      //   4      => oe[18]      // ClosePrice in Point
- *    int    swap;            //   4      => oe[19]      // Swap-Betrag in Hundertsteln der Account-Währung
- *    int    commission;      //   4      => oe[20]      // Commission-Betrag in Hundertsteln der Account-Währung
- *    int    profit;          //   4      => oe[21]      // Profit in Hundertsteln der Account-Währung
- *    szchar comment[28];     //  28      => oe[22]      // Orderkommentar, <NUL>-terminiert
- *    int    duration;        //   4      => oe[29]      // Dauer der Auführung in Millisekunden
- *    int    requotes;        //   4      => oe[30]      // Anzahl aufgetretener Requotes
- *    int    slippage;        //   4      => oe[31]      // aufgetretene Slippage in Point (positiv: zu Ungunsten, negativ: zu Gunsten)
- *    int    remainingTicket; //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
- *    int    remainingLots;   //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
- * } oe;                      // 136 byte = int[34]
+ *    int    error;              //   4      => oe[ 0]      // error code
+ *    szchar symbol[12];         //  16      => oe[ 1]      // order symbol terminated by <NUL>
+ *    int    digits;             //   4      => oe[ 5]      // MQL digits of the order symbol
+ *    int    stopDistance;       //   4      => oe[ 6]      // stop distance in MQL points
+ *    int    freezeDistance;     //   4      => oe[ 7]      // freeze distance in MQL points
+ *    int    bid;                //   4      => oe[ 8]      // Bid price before execution in MQL points                             (get/set return quote units)
+ *    int    ask;                //   4      => oe[ 9]      // Ask price before execution in MQL points                             (get/set return quote units)
+ *    int    ticket;             //   4      => oe[10]      // order ticket
+ *    int    type;               //   4      => oe[11]      // order operation type
+ *    int    lots;               //   4      => oe[12]      // order volume in hundredths of 1 lot                                  (get/set return lots)
+ *    int    openTime;           //   4      => oe[13]      // open time
+ *    int    openPrice;          //   4      => oe[14]      // open price in MQL points                                             (get/set return quote units)
+ *    int    stopLoss;           //   4      => oe[15]      // stoploss price in MQL points                                         (get/set return quote units)
+ *    int    takeProfit;         //   4      => oe[16]      // takeprofit price in MQL points                                       (get/set return quote units)
+ *    int    closeTime;          //   4      => oe[17]      // close time
+ *    int    closePrice;         //   4      => oe[18]      // close price in MQL points                                            (get/set return quote units)
+ *    int    swap;               //   4      => oe[19]      // swap amount in hundredths of 1 account currency unit                 (get/set return account currency units)
+ *    int    commission;         //   4      => oe[20]      // commission amount in hundredths of 1 account currency unit           (get/set return account currency units)
+ *    int    profit;             //   4      => oe[21]      // profit amount in hundredths of 1 account currency unit               (get/set return account currency units)
+ *    szchar comment[28];        //  28      => oe[22]      // order comment terminated by <NUL>
+ *    int    duration;           //   4      => oe[29]      // duration of the execution in milliseconds
+ *    int    requotes;           //   4      => oe[30]      // number of requotes occurred
+ *    int    slippage;           //   4      => oe[31]      // slippage occurred in MQL points                                      (get/set return quote units)
+ *    int    remainingTicket;    //   4      => oe[32]      // additionally created ticket after partial close
+ *    int    remainingLots;      //   4      => oe[33]      // remaining order volume in hundredths of 1 lot after partial close    (get/set return lots)
+ * } oe;                         // 136 byte = int[34]
  */
-#define OE.error                  0                      // Array-Offsets
+#define OE.error                  0                         // array offsets
 #define OE.symbol                 1
 #define OE.digits                 5
 #define OE.stopDistance           6
@@ -56,7 +58,7 @@
 #define OE.remainingLots         33
 
 
-// Getter
+// getters
 int      oe.Error              (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.error          ]);                                         ORDER_EXECUTION.toStr(oe); }
 bool     oe.IsError            (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.error          ] != 0);                                    ORDER_EXECUTION.toStr(oe); }
 string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) {                     return(GetStringA(GetIntsAddress(oe) + OE.symbol*4));                                             ORDER_EXECUTION.toStr(oe); }
@@ -80,7 +82,7 @@ double   oe.Profit             (/*ORDER_EXECUTION*/int oe[]         ) {         
 string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]         ) {                     return(GetStringA(GetIntsAddress(oe) + OE.comment*4));                                            ORDER_EXECUTION.toStr(oe); }
 int      oe.Duration           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.duration       ]);                                         ORDER_EXECUTION.toStr(oe); }
 int      oe.Requotes           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.requotes       ]);                                         ORDER_EXECUTION.toStr(oe); }
-double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.slippage       ]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
+double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[OE.slippage       ]/MathPow(10, digits), digits));            ORDER_EXECUTION.toStr(oe); }
 int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[OE.remainingTicket]);                                         ORDER_EXECUTION.toStr(oe); }
 double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[OE.remainingLots  ]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
 
@@ -107,20 +109,20 @@ double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i) {         
 string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION_intSize + OE.comment)*4));              ORDER_EXECUTION.toStr(oe); }
 int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.duration       ]);                                      ORDER_EXECUTION.toStr(oe); }
 int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.requotes       ]);                                      ORDER_EXECUTION.toStr(oe); }
-double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.slippage       ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
+double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.slippage       ]/MathPow(10, digits), digits));         ORDER_EXECUTION.toStr(oe); }
 int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.remainingTicket]);                                      ORDER_EXECUTION.toStr(oe); }
 double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][OE.remainingLots  ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
 
 
-// Setter
+// setters
 int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[OE.error          ]  = error;                                                       return(error     ); ORDER_EXECUTION.toStr(oe); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oe.setSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oe.setSymbol(1)  invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oe.setSymbol(2)  too long parameter symbol: \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    string array[]; ArrayResize(array, 1); array[0]=symbol;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + OE.symbol*4;
-   CopyMemory(dest, src, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/
+   CopyMemory(dest, src, StringLen(symbol)+1);                 // copy the terminating <NUL>
    ArrayResize(array, 0);                                                                                                                                                            return(symbol    ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[OE.digits         ]  = digits;                                                      return(digits    ); ORDER_EXECUTION.toStr(oe); }
 double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[OE.stopDistance   ]  = MathRound(distance * MathPow(10, oe.Digits(oe) & 1));        return(distance  ); ORDER_EXECUTION.toStr(oe); }
@@ -143,16 +145,16 @@ double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[],          double   
 double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[OE.profit         ]  = MathRound(profit * 100);                                     return(profit    ); ORDER_EXECUTION.toStr(oe); }
 double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[OE.profit         ] += MathRound(profit * 100);                                     return(profit    ); ORDER_EXECUTION.toStr(oe); }
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
-   if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
+   if (!StringLen(comment)) comment = "";                      // make sure the string is initialized
    if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oe.setComment()  too long parameter comment: \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + OE.comment*4;
-   CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/
+   CopyMemory(dest, src, StringLen(comment)+1);                // copy the terminating <NUL>
    ArrayResize(array, 0);                                                                                                                                                            return(comment   ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[OE.duration       ] = milliSec;                                                     return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[OE.requotes       ] = requotes;                                                     return(requotes  ); ORDER_EXECUTION.toStr(oe); }
-double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   slippage  ) { oe[OE.slippage       ] = MathRound(slippage * MathPow(10, oe.Digits(oe) & 1));         return(slippage  ); ORDER_EXECUTION.toStr(oe); }
+double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   slippage  ) { oe[OE.slippage       ] = MathRound(slippage * MathPow(10, oe.Digits(oe)));             return(slippage  ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setRemainingTicket (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[OE.remainingTicket] = ticket;                                                       return(ticket    ); ORDER_EXECUTION.toStr(oe); }
 double   oe.setRemainingLots   (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[OE.remainingLots  ] = MathRound(lots * 100);                                        return(lots      ); ORDER_EXECUTION.toStr(oe); }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -161,12 +163,12 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
    if (i == -1) { for (int n=ArrayRange(oe, 0)-1; n >= 0; n--)                                oe[n][OE.error          ] = error;                                                     return(error     ); }
                                                                                               oe[i][OE.error          ] = error;                                                     return(error     ); ORDER_EXECUTION.toStr(oe); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oes.setSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol)), ERR_INVALID_PARAMETER));
+   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oes.setSymbol(1)  invalid parameter symbol: \""+ symbol +"\""), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oes.setSymbol(2)  too long parameter symbol: \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=symbol;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION_intSize + OE.symbol)*4;
-   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/
+   CopyMemory(dest, src, StringLen(symbol)+1);                 // copy the terminating <NUL>
    ArrayResize(array, 0);                                                                                                                                                            return(symbol    ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][OE.digits         ]  = digits;                                                   return(digits    ); ORDER_EXECUTION.toStr(oe); }
 double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][OE.stopDistance   ]  = MathRound(distance * MathPow(10, oes.Digits(oe, i) & 1)); return(distance  ); ORDER_EXECUTION.toStr(oe); }
@@ -189,26 +191,26 @@ double   oes.addCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][OE.profit         ]  = MathRound(profit * 100);                                  return(profit    ); ORDER_EXECUTION.toStr(oe); }
 double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][OE.profit         ] += MathRound(profit * 100);                                  return(profit    ); ORDER_EXECUTION.toStr(oe); }
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
-   if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
+   if (!StringLen(comment)) comment = "";                      // make sure the string is initialized
    if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oes.setComment()  too long parameter comment: \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION_intSize + OE.comment)*4;
-   CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/
+   CopyMemory(dest, src, StringLen(comment)+1);                // copy the terminating <NUL>
    ArrayResize(array, 0);                                                                                                                                                            return(comment   ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][OE.duration       ] = milliSec;                                                  return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][OE.requotes       ] = requotes;                                                  return(requotes  ); ORDER_EXECUTION.toStr(oe); }
-double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  ) { oe[i][OE.slippage       ] = MathRound(slippage * MathPow(10, oes.Digits(oe, i) & 1));  return(slippage  ); ORDER_EXECUTION.toStr(oe); }
+double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  ) { oe[i][OE.slippage       ] = MathRound(slippage * MathPow(10, oes.Digits(oe, i)));      return(slippage  ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setRemainingTicket(/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    ) { oe[i][OE.remainingTicket] = ticket;                                                    return(ticket    ); ORDER_EXECUTION.toStr(oe); }
 double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      ) { oe[i][OE.remainingLots  ] = MathRound(lots * 100);                                     return(lots      ); ORDER_EXECUTION.toStr(oe); }
 
 
 /**
- * Gibt die lesbare Repräsentation ein oder mehrerer ORDER_EXECUTION-Structs zurück.
+ * Return a readable representation of one or more struct ORDER_EXECUTION.
  *
  * @param  int oe[] - struct ORDER_EXECUTION
  *
- * @return string - lesbarer String oder Leerstring, falls ein Fehler auftrat
+ * @return string - string representation or empty string in case of errors
  */
 string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
    int dimensions = ArrayDimension(oe);
@@ -220,11 +222,11 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
 
 
    if (dimensions == 1) {
-      // oe ist einzelnes Struct ORDER_EXECUTION (eine Dimension)
+      // oe[] is a single struct (one dimension)
       digits      = oe.Digits(oe);
       pipDigits   = digits & (~1);
       priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-      line        = StringConcatenate("{error="          ,          ifString(!oe.Error          (oe), 0, StringConcatenate(oe.Error(oe), " [", ErrorDescription(oe.Error(oe)), "]")),
+      line        = StringConcatenate("{error="          ,          ifString(!oe.Error          (oe), "0", StringConcatenate(oe.Error(oe), " [", ErrorDescription(oe.Error(oe)), "]")),
                                      ", symbol=\""       ,                    oe.Symbol         (oe), "\"",
                                      ", digits="         ,                    oe.Digits         (oe),
                                      ", stopDistance="   ,        NumberToStr(oe.StopDistance   (oe), ".+"),
@@ -234,32 +236,32 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
                                      ", ticket="         ,                    oe.Ticket         (oe),
                                      ", type="           , OperationTypeToStr(oe.Type           (oe)),
                                      ", lots="           ,        NumberToStr(oe.Lots           (oe), ".+"),
-                                     ", openTime="       ,           ifString(oe.OpenTime       (oe), "'"+ TimeToStr(oe.OpenTime(oe), TIME_FULL) +"'", "0"),
+                                     ", openTime="       ,          ifString(!oe.OpenTime       (oe), "0", "'"+ TimeToStr(oe.OpenTime(oe), TIME_FULL) +"'"),
                                      ", openPrice="      ,        NumberToStr(oe.OpenPrice      (oe), priceFormat),
                                      ", stopLoss="       ,        NumberToStr(oe.StopLoss       (oe), priceFormat),
                                      ", takeProfit="     ,        NumberToStr(oe.TakeProfit     (oe), priceFormat),
-                                     ", closeTime="      ,           ifString(oe.CloseTime      (oe), "'"+ TimeToStr(oe.CloseTime(oe), TIME_FULL) +"'", "0"),
+                                     ", closeTime="      ,          ifString(!oe.CloseTime      (oe), "0", "'"+ TimeToStr(oe.CloseTime(oe), TIME_FULL) +"'"),
                                      ", closePrice="     ,        NumberToStr(oe.ClosePrice     (oe), priceFormat),
                                      ", swap="           ,        DoubleToStr(oe.Swap           (oe), 2),
                                      ", commission="     ,        DoubleToStr(oe.Commission     (oe), 2),
                                      ", profit="         ,        DoubleToStr(oe.Profit         (oe), 2),
                                      ", duration="       ,                    oe.Duration       (oe),
                                      ", requotes="       ,                    oe.Requotes       (oe),
-                                     ", slippage="       ,        DoubleToStr(oe.Slippage       (oe), 1),
+                                     ", slippage="       ,          ifString(!oe.Slippage       (oe), "0", NumberToStr(oe.Slippage(oe), priceFormat)),
                                      ", comment=\""      ,                    oe.Comment        (oe), "\"",
                                      ", remainingTicket=",                    oe.RemainingTicket(oe),
                                      ", remainingLots="  ,        NumberToStr(oe.RemainingLots  (oe), ".+"), "}");
       ArrayPushString(lines, line);
    }
    else {
-      // oe ist Struct-Array ORDER_EXECUTION[] (zwei Dimensionen)
+      // oe[][] is an array of structs (two dimensions)
       int size = ArrayRange(oe, 0);
 
       for (int i=0; i < size; i++) {
          digits      = oes.Digits(oe, i);
          pipDigits   = digits & (~1);
          priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-         line        = StringConcatenate("[", i, "]={error="          ,          ifString(!oes.Error          (oe, i), 0, StringConcatenate(oes.Error(oe, i), " [", ErrorDescription(oes.Error(oe, i)), "]")),
+         line        = StringConcatenate("[", i, "]={error="          ,          ifString(!oes.Error          (oe, i), "0", StringConcatenate(oes.Error(oe, i), " [", ErrorDescription(oes.Error(oe, i)), "]")),
                                                   ", symbol=\""       ,                    oes.Symbol         (oe, i), "\"",
                                                   ", digits="         ,                    oes.Digits         (oe, i),
                                                   ", stopDistance="   ,        DoubleToStr(oes.StopDistance   (oe, i), 1),
@@ -269,18 +271,18 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
                                                   ", ticket="         ,                    oes.Ticket         (oe, i),
                                                   ", type="           , OperationTypeToStr(oes.Type           (oe, i)),
                                                   ", lots="           ,        NumberToStr(oes.Lots           (oe, i), ".+"),
-                                                  ", openTime="       ,           ifString(oes.OpenTime       (oe, i), "'"+ TimeToStr(oes.OpenTime(oe, i), TIME_FULL) +"'", "0"),
+                                                  ", openTime="       ,          ifString(!oes.OpenTime       (oe, i), "0", "'"+ TimeToStr(oes.OpenTime(oe, i), TIME_FULL) +"'"),
                                                   ", openPrice="      ,        NumberToStr(oes.OpenPrice      (oe, i), priceFormat),
                                                   ", stopLoss="       ,        NumberToStr(oes.StopLoss       (oe, i), priceFormat),
                                                   ", takeProfit="     ,        NumberToStr(oes.TakeProfit     (oe, i), priceFormat),
-                                                  ", closeTime="      ,           ifString(oes.CloseTime      (oe, i), "'"+ TimeToStr(oes.CloseTime(oe, i), TIME_FULL) +"'", "0"),
+                                                  ", closeTime="      ,          ifString(!oes.CloseTime      (oe, i), "0", "'"+ TimeToStr(oes.CloseTime(oe, i), TIME_FULL) +"'"),
                                                   ", closePrice="     ,        NumberToStr(oes.ClosePrice     (oe, i), priceFormat),
                                                   ", swap="           ,        DoubleToStr(oes.Swap           (oe, i), 2),
                                                   ", commission="     ,        DoubleToStr(oes.Commission     (oe, i), 2),
                                                   ", profit="         ,        DoubleToStr(oes.Profit         (oe, i), 2),
                                                   ", duration="       ,                    oes.Duration       (oe, i),
                                                   ", requotes="       ,                    oes.Requotes       (oe, i),
-                                                  ", slippage="       ,        DoubleToStr(oes.Slippage       (oe, i), 1),
+                                                  ", slippage="       ,          ifString(!oes.Slippage       (oe, i), "0", NumberToStr(oes.Slippage(oe, i), priceFormat)),
                                                   ", comment=\""      ,                    oes.Comment        (oe, i), "\"",
                                                   ", remainingTicket=",                    oes.RemainingTicket(oe, i),
                                                   ", remainingLots="  ,        NumberToStr(oes.RemainingLots  (oe, i), ".+"), "}");
@@ -294,7 +296,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
    catch("ORDER_EXECUTION.toStr(3)");
    return(output);
 
-   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
+   // suppress compiler warnings
    oe.Error             (oe);       oes.Error             (oe, NULL);
    oe.IsError           (oe);       oes.IsError           (oe, NULL);
    oe.Symbol            (oe);       oes.Symbol            (oe, NULL);

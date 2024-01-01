@@ -6,12 +6,12 @@
  */
 int onDeinit() {
    if (__isTesting) {
-      if (!last_error && sequence.status!=STATUS_STOPPED) {
+      if (!last_error && instance.status!=STATUS_STOPPED) {
          bool success = true;
-         if (sequence.status == STATUS_PROGRESSING) {
+         if (instance.status == STATUS_PROGRESSING) {
             success = UpdateStatus();
          }
-         if (success) StopSequence(NULL);
+         if (success) StopInstance(NULL);
          RecordMetrics();
          ShowStatus();
       }
@@ -55,8 +55,8 @@ int onDeinitChartChange() {
  * @return int - error status
  */
 int onDeinitChartClose() {
-   if (!__isTesting && sequence.status!=STATUS_STOPPED) {
-      logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (!__isTesting && instance.status!=STATUS_STOPPED) {
+      logInfo("onDeinitChartClose(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ sInstanceTotalNetPL +" "+ sInstancePlStats);
       SaveStatus();
    }
    return(NO_ERROR);
@@ -70,8 +70,8 @@ int onDeinitChartClose() {
  * @return int - error status
  */
 int onDeinitTemplate() {
-   if (!__isTesting && sequence.status!=STATUS_STOPPED) {
-      logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (!__isTesting && instance.status!=STATUS_STOPPED) {
+      logInfo("onDeinitTemplate(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ sInstanceTotalNetPL +" "+ sInstancePlStats);
       SaveStatus();
    }
    return(NO_ERROR);
@@ -84,11 +84,11 @@ int onDeinitTemplate() {
  * @return int - error status
  */
 int onDeinitRemove() {
-   if (sequence.status != STATUS_STOPPED) {
-      logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (instance.status != STATUS_STOPPED) {
+      logInfo("onDeinitRemove(1)  "+ instance.name +" expert removed in status \""+ StatusDescription(instance.status) +"\", profit: "+ sInstanceTotalNetPL +" "+ sInstancePlStats);
       SaveStatus();
    }
-   RemoveSequenceId();                                               // remove a stored sequence id
+   RemoveInstanceId();                                               // remove a stored instance id
    return(NO_ERROR);
 }
 
@@ -99,8 +99,8 @@ int onDeinitRemove() {
  * @return int - error status
  */
 int onDeinitClose() {
-   if (sequence.status != STATUS_STOPPED) {
-      logInfo("onDeinitClose(1)  "+ sequence.name +" terminal shutdown in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (instance.status != STATUS_STOPPED) {
+      logInfo("onDeinitClose(1)  "+ instance.name +" terminal shutdown in status \""+ StatusDescription(instance.status) +"\", profit: "+ sInstanceTotalNetPL +" "+ sInstancePlStats);
       SaveStatus();
    }
    return(NO_ERROR);

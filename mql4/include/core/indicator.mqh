@@ -561,10 +561,6 @@ bool CheckErrors(string caller, int error = NULL) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "rsfLib.ex4"
-   bool AquireLock(string mutexName, bool wait);
-   bool ReleaseLock(string mutexName);
-
 #import "rsfMT4Expander.dll"
    int  ec_SetDllError           (int ec[], int error);
    int  ec_SetProgramCoreFunction(int ec[], int function);

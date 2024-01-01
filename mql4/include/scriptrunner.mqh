@@ -221,7 +221,7 @@ bool ScriptRunner.StopParamReceiver() {
 
 
 /**
- * Dummy-Calls unterdrücken unnütze Compilerwarnungen.
+ * Suppress compiler warnings.
  *
  * @access private - Aufruf nur aus dieser Datei
  */

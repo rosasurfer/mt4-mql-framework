@@ -6325,27 +6325,25 @@ string ShellExecuteErrorDescription(int error) {
 /**
  * Send a chart command. Modifies the specified chart object using the specified mutex.
  *
- * @param  string cmdObject           - label of the chart object to use for transmitting the command
- * @param  string cmd                 - command to send
- * @param  string cmdMutex [optional] - label of the chart object to use for gaining synchronized write-access to cmdObject
- *                                      (default: generated from cmdObject)
+ * @param  string cmdObject        - label of the chart object transmitting the command
+ * @param  string cmd              - command to send
+ * @param  string mutex [optional] - label of the chart object used for synchronizing writes on cmdObject
+ *                                   (default: generated from cmdObject)
  * @return bool - success status
  */
-bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
-   if (!StringLen(cmdMutex))                                // generate default mutex if needed
-      cmdMutex = StringConcatenate("mutex.", cmdObject);
-
-   if (!AquireLock(cmdMutex, true))                         // aquire write-lock
-      return(false);
+bool SendChartCommand(string cmdObject, string cmd, string mutex = "") {
+   if (!StringLen(mutex)) {
+      mutex = StringConcatenate("mutex.", cmdObject);       // generate mutex if needed
+   }
+   if (!AquireLock(mutex)) return(false);                   // aquire write-lock
 
    if (ObjectFind(cmdObject) != 0) {                        // create cmd object
-      if (!ObjectCreate(cmdObject, OBJ_LABEL, 0, 0, 0))                return(_false(ReleaseLock(cmdMutex)));
-      if (!ObjectSet(cmdObject, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE)) return(_false(ReleaseLock(cmdMutex)));
+      if (!ObjectCreate(cmdObject, OBJ_LABEL, 0, 0, 0))                return(_false(ReleaseLock(mutex)));
+      if (!ObjectSet(cmdObject, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE)) return(_false(ReleaseLock(mutex)));
    }
 
    ObjectSetText(cmdObject, cmd);                           // set command
-   if (!ReleaseLock(cmdMutex))                              // release the lock
-      return(false);
+   if (!ReleaseLock(mutex)) return(false);                  // release the lock
    Chart.SendTick();                                        // notify the chart
 
    return(!catch("SendChartCommand(1)"));
@@ -7309,7 +7307,7 @@ void __DummyCalls() {
 
 
 #import "rsfLib.ex4"
-   bool     AquireLock(string mutexName, bool wait);
+   bool     AquireLock(string mutex);
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
@@ -7331,7 +7329,7 @@ void __DummyCalls() {
    int      GetServerToGmtTimeOffset(datetime serverTime);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
-   bool     ReleaseLock(string mutexName);
+   bool     ReleaseLock(string mutex);
    bool     ReverseStringArray(string array[]);
 
 #import "rsfMT4Expander.dll"

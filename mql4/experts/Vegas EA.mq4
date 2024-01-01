@@ -1,7 +1,9 @@
 /**
- * WORK-IN-PROGRESS, DO NOT YET USE
+ ***************************************************************************************************************************
+ *                                           WORK-IN-PROGRESS, DO NOT YET USE                                              *
+ ***************************************************************************************************************************
  *
- * Vegas EA
+ * Channel Breakout
  *
  * A mixture of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in and out.
  *
@@ -15,19 +17,30 @@
  *   It allows the EA to be tested and calibrated under idealised conditions.
  *
  * • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in the tester).
- *   These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. They can be
- *   displayed and analysed like regular MetaTrader charts.
+ *   These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they
+ *   can be displayed and analysed like regular MetaTrader charts.
  *
  *
  * Input parameters:
  * -----------------
- * • Instance.ID:  ...
- * • Donchian.Periods:  ...
- * • Lots:  ...
+ * • Instance.ID:        ...
+ * • Tunnel.Definition:  ...
+ * • Donchian.Periods:   ...
+ * • Lots:               ...
+ * • EA.Recorder:        Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.mqh
  *
  *
  *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
  *  @see  [Turtle Trading]         https://analyzingalpha.com/turtle-trading
+ *
+ *
+ * TODO:
+ *  - add/update performance recording
+ *  - add/update virtual trading
+ *  - implement multiple exit strategies
+ *  - implement multiple entry strategies
+ *  - add/use input "TradingTimeframe"
+ *  - document input params, control scripts and general usage
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -36,9 +49,11 @@ int __virtualTicks = 0;
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID      = "";               // instance to load from a status file, format "[T]123"
-extern int    Donchian.Periods = 30;
-extern double Lots             = 0.1;
+extern string Instance.ID          = "";                             // instance to load from a status file, format "[T]123"
+extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MAs separated by ","
+extern string Supported.MA.Methods = "SMA, LWMA, EMA, SMMA";
+extern int    Donchian.Periods     = 30;
+extern double Lots                 = 0.1;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -52,8 +67,9 @@ extern double Lots             = 0.1;
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID         108                    // unique strategy id (used for magic order numbers)
-#define IID_MIN             100                    // min/max range of valid instance id values
-#define IID_MAX             999
+
+#define INSTANCE_ID_MIN     100                    // range of valid instance ids
+#define INSTANCE_ID_MAX     999                    // ...
 
 #define STATUS_WAITING        1                    // instance has no open positions and waits for trade signals
 #define STATUS_PROGRESSING    2                    // instance manages open positions
@@ -76,7 +92,7 @@ extern double Lots             = 0.1;
 #define H_NETPROFIT          11
 
 // instance data
-int      instance.id;                              // instance id (100-999, used for magic order numbers)
+int      instance.id;                              // used for magic order numbers
 datetime instance.created;
 string   instance.name = "";
 int      instance.status;
@@ -100,10 +116,13 @@ double   open.grossProfit;
 double   open.netProfit;
 double   history[][12];                            // multiple closed positions
 
-// caching vars to speed-up ShowStatus()
+// cache vars to speed-up ShowStatus()
 string   sLots               = "";
 string   sInstanceTotalNetPL = "";
 string   sInstancePlStats    = "";
+
+// other
+int      orders.acceptableSlippage = 1;            // in MQL points
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause        = false;          // whether to pause a test after StopInstance()
@@ -144,24 +163,303 @@ int onTick() {
 bool onCommand(string cmd, string params, int keys) {
    string fullCmd = cmd +":"+ params +":"+ keys;
 
-   if (cmd == "restart") {
-      switch (instance.status) {
-         case STATUS_STOPPED:
-            logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            return(RestartInstance());
-      }
-   }
-   else if (cmd == "stop") {
+   if (cmd == "stop") {
       switch (instance.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
-            logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            return(StopInstance(NULL));
+            logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            return(StopInstance());
       }
+   }
+
+   else if (cmd == "restart") {
+      switch (instance.status) {
+         case STATUS_STOPPED:
+            logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            return(RestartInstance());
+      }
+   }
+
+   else if (cmd == "toggle-open-orders") {
+      return(ToggleOpenOrders());
+   }
+
+   else if (cmd == "toggle-trade-history") {
+      return(ToggleTradeHistory());
    }
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
+}
+
+
+/**
+ * Toggle the display of open orders.
+ *
+ * @return bool - success status
+ */
+bool ToggleOpenOrders() {
+   // read current status and toggle it
+   bool showOrders = !GetOpenOrderDisplayStatus();
+
+   // ON: display open orders
+   if (showOrders) {
+      int orders = ShowOpenOrders();
+      if (orders == -1) return(false);
+      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
+         showOrders = false;                          // remove any existing open order markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove open order markers
+   if (!showOrders) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) continue;
+               }
+               ObjectDelete(name);
+            }
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetOpenOrderDisplayStatus(showOrders);
+
+   if (__isTesting) WindowRedraw();
+   return(!catch("ToggleOpenOrders(1)"));
+}
+
+
+/**
+ * Resolve the current 'ShowOpenOrders' display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetOpenOrderDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) != -1) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the passed 'ShowOpenOrders' display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetOpenOrderDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart (for terminal restarts)
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetOpenOrderDisplayStatus(1)"));
+}
+
+
+/**
+ * Display the currently open orders.
+ *
+ * @return int - number of displayed orders or EMPTY (-1) in case of errors
+ */
+int ShowOpenOrders() {
+   string orderTypes[] = {"buy", "sell"};
+   color colors[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
+   int openOrders = 0;
+
+   if (open.ticket != NULL) {
+      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(Lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
+      if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(EMPTY);
+      ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
+      ObjectSet    (label, OBJPROP_TIME1,     open.time);
+      ObjectSet    (label, OBJPROP_PRICE1,    open.price);
+      ObjectSetText(label, instance.name);
+      openOrders++;
+   }
+
+   if (!catch("ShowOpenOrders(1)"))
+      return(openOrders);
+   return(EMPTY);
+}
+
+
+/**
+ * Toggle the display of closed trades.
+ *
+ * @return bool - success status
+ */
+bool ToggleTradeHistory() {
+   // read current status and toggle it
+   bool showHistory = !GetTradeHistoryDisplayStatus();
+
+   // ON: display closed trades
+   if (showHistory) {
+      int trades = ShowTradeHistory();
+      if (trades == -1) return(false);
+      if (!trades) {                                        // Without any closed trades the status must be reset to enable
+         showHistory = false;                               // the "off" section to clear existing markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove all closed trade markers (from this EA or another program)
+   if (!showHistory) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_CLOSED) continue;
+               }
+            }
+            else if (ObjectType(name) != OBJ_TREND) continue;
+            ObjectDelete(name);
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetTradeHistoryDisplayStatus(showHistory);
+
+   if (__isTesting) WindowRedraw();
+   return(!catch("ToggleTradeHistory(1)"));
+}
+
+
+/**
+ * Resolve the current "ShowTradeHistory" display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetTradeHistoryDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) != -1) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the passed "ShowTradeHistory" display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetTradeHistoryDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetTradeHistoryDisplayStatus(1)"));
+}
+
+
+/**
+ * Display closed trades.
+ *
+ * @return int - number of displayed trades or EMPTY (-1) in case of errors
+ */
+int ShowTradeHistory() {
+   string openLabel="", lineLabel="", closeLabel="", sOpenPrice="", sClosePrice="", sOperations[]={"buy", "sell"};
+   int iOpenColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, iLineColors[]={Blue, Red};
+
+   // process the local trade history
+   int orders = ArrayRange(history, 0), closedTrades = 0;
+
+   for (int i=0; i < orders; i++) {
+      int      ticket     = history[i][H_TICKET    ];
+      int      type       = history[i][H_OPENTYPE  ];
+      double   lots       = history[i][H_LOTS      ];
+      datetime openTime   = history[i][H_OPENTIME  ];
+      double   openPrice  = history[i][H_OPENPRICE ];
+      datetime closeTime  = history[i][H_CLOSETIME ];
+      double   closePrice = history[i][H_CLOSEPRICE];
+
+      if (!closeTime)                    continue;             // skip open tickets (should not happen)
+      if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
+
+      sOpenPrice  = NumberToStr(openPrice, PriceFormat);
+      sClosePrice = NumberToStr(closePrice, PriceFormat);
+
+      // open marker
+      openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
+      if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
+      ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (openLabel, OBJPROP_COLOR,     iOpenColors[type]);
+      ObjectSet    (openLabel, OBJPROP_TIME1,     openTime);
+      ObjectSet    (openLabel, OBJPROP_PRICE1,    openPrice);
+      ObjectSetText(openLabel, instance.name);
+
+      // trend line
+      lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
+      if (ObjectFind(lineLabel) == -1) ObjectCreate(lineLabel, OBJ_TREND, 0, 0, 0, 0, 0);
+      ObjectSet(lineLabel, OBJPROP_RAY,    false);
+      ObjectSet(lineLabel, OBJPROP_STYLE,  STYLE_DOT);
+      ObjectSet(lineLabel, OBJPROP_COLOR,  iLineColors[type]);
+      ObjectSet(lineLabel, OBJPROP_BACK,   true);
+      ObjectSet(lineLabel, OBJPROP_TIME1,  openTime);
+      ObjectSet(lineLabel, OBJPROP_PRICE1, openPrice);
+      ObjectSet(lineLabel, OBJPROP_TIME2,  closeTime);
+      ObjectSet(lineLabel, OBJPROP_PRICE2, closePrice);
+
+      // close marker
+      closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+      if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
+      ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+      ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+      ObjectSet    (closeLabel, OBJPROP_TIME1,     closeTime);
+      ObjectSet    (closeLabel, OBJPROP_PRICE1,    closePrice);
+      ObjectSetText(closeLabel, instance.name);
+      closedTrades++;
+   }
+
+   if (!catch("ShowTradeHistory(1)"))
+      return(closedTrades);
+   return(EMPTY);
 }
 
 
@@ -203,8 +501,7 @@ bool IsMaTunnelSignal(int &signal) {
    signal = NULL;
 
    if (IsBarOpen()) {
-      string tunnelDefinition = "EMA(9), EMA(36), EMA(144)";
-      int trend = icMaTunnel(NULL, tunnelDefinition, MaTunnel.MODE_BAR_TREND, 1);
+      int trend = icMaTunnel(NULL, Tunnel.Definition, MaTunnel.MODE_BAR_TREND, 1);
 
       if      (trend == +1) signal = SIGNAL_LONG;
       else if (trend == -1) signal = SIGNAL_SHORT;
@@ -280,16 +577,21 @@ bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
 bool UpdateStatus(int signal = NULL) {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ instance.name +" illegal instance status "+ StatusToStr(instance.status), ERR_ILLEGAL_STATE));
+   int error;
 
    if (!signal) {
       if (open.ticket != NULL) {
          if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
-         if (OrderCloseTime() > 0) return(!catch("UpdateStatus(3)  "+ instance.name +" #"+ open.ticket+" is not an open position anymore", ERR_ILLEGAL_STATE));
-
-         open.swap        = OrderSwap();
-         open.commission  = OrderCommission();
-         open.grossProfit = OrderProfit();
-         open.netProfit   = open.grossProfit + open.swap + open.commission;
+         if (OrderCloseTime() > 0) {
+            if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
+            if (!ArchiveClosedPosition(open.ticket, NULL)) return(false);
+         }
+         else {
+            open.swap        = OrderSwap();
+            open.commission  = OrderCommission();
+            open.grossProfit = OrderProfit();
+            open.netProfit   = open.grossProfit + open.swap + open.commission;
+         }
       }
    }
    else {
@@ -303,13 +605,12 @@ bool UpdateStatus(int signal = NULL) {
          int oeFlags = NULL, oe[];
          bool success = OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe);
          if (!success) return(!SetLastError(oe.Error(oe)));
-         if (!ArchiveClosedPosition(open.ticket, -oe.Slippage(oe))) return(false);
+         if (!ArchiveClosedPosition(open.ticket, oe.Slippage(oe))) return(false);
       }
 
       // open a new position
       int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
       double   price       = NULL;
-      int      slippage    = NULL;
       double   stopLoss    = NULL;
       double   takeProfit  = NULL;
       string   comment     = "Vegas."+ instance.id;
@@ -318,7 +619,7 @@ bool UpdateStatus(int signal = NULL) {
       color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
                oeFlags     = NULL;
 
-      int ticket = OrderSendEx(Symbol(), type, Lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+      int ticket = OrderSendEx(NULL, type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
       if (!ticket) return(!SetLastError(oe.Error(oe)));
 
       // store the new position
@@ -326,7 +627,7 @@ bool UpdateStatus(int signal = NULL) {
       open.type        = type;
       open.time        = oe.OpenTime  (oe);
       open.price       = oe.OpenPrice (oe);
-      open.slippage    = -oe.Slippage (oe);
+      open.slippage    = oe.Slippage  (oe);
       open.swap        = oe.Swap      (oe);
       open.commission  = oe.Commission(oe);
       open.grossProfit = oe.Profit    (oe);
@@ -346,16 +647,67 @@ bool UpdateStatus(int signal = NULL) {
 
 
 /**
+ * Compose a log message for a closed position. The ticket is selected.
+ *
+ * @param  _Out_ int error - error code to be returned from the call (if any)
+ *
+ * @return string - log message or an empty string in case of errors
+ */
+string UpdateStatus.PositionCloseMsg(int &error) {
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("V.869") was [unexpectedly ]closed [by SL ]at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
+   error = NO_ERROR;
+
+   int    ticket      = OrderTicket();
+   double lots        = OrderLots();
+   string sType       = OperationTypeDescription(OrderType());
+   string sOpenPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
+   string sClosePrice = NumberToStr(OrderClosePrice(), PriceFormat);
+   string sUnexpected = ifString(__isTesting && __CoreFunction==CF_DEINIT, "", "unexpectedly ");
+   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ instance.name +"\") was "+ sUnexpected +"closed at "+ sClosePrice;
+
+   string sStopout = "";
+   if (StrStartsWithI(OrderComment(), "so:")) {       error = ERR_MARGIN_STOPOUT; sStopout = ", "+ OrderComment(); }
+   else if (__isTesting && __CoreFunction==CF_DEINIT) error = NO_ERROR;
+   else                                               error = ERR_CONCURRENT_MODIFICATION;
+
+   return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
+}
+
+
+/**
+ * Event handler for an unexpectedly closed position.
+ *
+ * @param  string message - error message
+ * @param  int    error   - error code
+ *
+ * @return int - error status, i.e. whether to interrupt program execution
+ */
+int onPositionClose(string message, int error) {
+   if (!error) return(logInfo(message));                    // no error
+
+   if (error == ERR_ORDER_CHANGED)                          // expected in a fast market: a SL was triggered
+      return(!logNotice(message, error));                   // continue
+
+   if (__isTesting) return(catch(message, error));          // in tester treat everything else as terminating
+
+   logWarn(message, error);                                 // online
+   if (error == ERR_CONCURRENT_MODIFICATION)                // unexpected: most probably manually closed
+      return(NO_ERROR);                                     // continue
+   return(error);
+}
+
+
+/**
  * Add trade details of the specified closed ticket to the local history and reset open position data.
  *
  * @param int    ticket   - closed ticket
- * @param double slippage - close slippage in pip
+ * @param double slippage - close slippage
  *
  * @return bool - success status
  */
 bool ArchiveClosedPosition(int ticket, double slippage) {
    if (last_error != NULL)                    return(false);
-   if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ instance.name +" cannot archive position of "+ StatusDescription(instance.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ instance.name +" cannot archive position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
    SelectTicket(ticket, "ArchiveClosedPosition(2)", /*push=*/true);
 
@@ -397,6 +749,7 @@ bool ArchiveClosedPosition(int ticket, double slippage) {
    open.commission  = NULL;
    open.grossProfit = NULL;
    open.netProfit   = NULL;
+
    return(!catch("ArchiveClosedPosition(4)"));
 }
 
@@ -404,14 +757,38 @@ bool ArchiveClosedPosition(int ticket, double slippage) {
 /**
  * Stop a waiting or progressing instance and close open positions (if any).
  *
- * @param  int signal - trade signal causing the call or NULL on explicit stop (i.e. manual)
- *
  * @return bool - success status
  */
-bool StopInstance(int signal) {
+bool StopInstance() {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   return(!catch("StopInstance(2)", ERR_NOT_IMPLEMENTED));
+
+   // close an open position
+   if (instance.status == STATUS_PROGRESSING) {
+      if (open.ticket > 0) {
+         if (IsLogInfo()) logInfo("StopInstance(2)  "+ instance.name +" stopping");
+         int oeFlags, oe[];
+         if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+         if (!ArchiveClosedPosition(open.ticket, oe.Slippage(oe)))            return(false);
+
+         instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
+         instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+         SS.TotalPL();
+         SS.PLStats();
+      }
+   }
+
+   // update status
+   instance.status = STATUS_STOPPED;
+   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting, "test ", "") +"instance stopped, profit: "+ sInstanceTotalNetPL +" "+ sInstancePlStats);
+   SaveStatus();
+
+   // pause/stop the tester according to the debug configuration
+   if (__isTesting) {
+      if      (!IsVisualMode())  Tester.Stop ("StopInstance(4)");
+      else if (test.onStopPause) Tester.Pause("StopInstance(5)");
+   }
+   return(!catch("StopInstance(6)"));
 }
 
 
@@ -446,9 +823,9 @@ bool IsTestInstance() {
  * @return int - magic number or NULL in case of errors
  */
 int CalculateMagicNumber(int instanceId = NULL) {
-   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("CalculateMagicNumber(1)  "+ instance.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023)      return(!catch("CalculateMagicNumber(1)  "+ instance.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    int id = intOr(instanceId, instance.id);
-   if (id < IID_MIN || id > IID_MAX)            return(!catch("CalculateMagicNumber(2)  "+ instance.name +" illegal instance id: "+ id, ERR_ILLEGAL_STATE));
+   if (id < INSTANCE_ID_MIN || id > INSTANCE_ID_MAX) return(!catch("CalculateMagicNumber(2)  "+ instance.name +" illegal instance id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                              // 101-1023 (10 bit)
    int instance = id;                                       // 100-999  (14 bit, used to be 1000-9999)
@@ -486,7 +863,7 @@ int CreateInstanceId() {
    int instanceId, magicNumber;
 
    while (!magicNumber) {
-      while (instanceId < IID_MIN || instanceId > IID_MAX) {
+      while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
          instanceId = MathRand();                           // TODO: generate consecutive ids when in tester
       }
       magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
@@ -549,7 +926,7 @@ bool SetInstanceId(string value, bool &error, string caller) {
    }
 
    int iValue = StrToInteger(value);
-   if (iValue < IID_MIN || iValue > IID_MAX) {
+   if (iValue < INSTANCE_ID_MIN || iValue > INSTANCE_ID_MAX) {
       error = true;
       if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
       return(!catch(caller +"->SetInstanceId(2)  invalid instance id value: \""+ valueBak +"\" (range error)", ERR_INVALID_PARAMETER));
@@ -578,7 +955,7 @@ bool RestoreInstance() {
 
 
 /**
- * Read the status file of an instance and restore inputs and runtime variables. Called only from RestoreSequence().
+ * Read the status file of an instance and restore inputs and runtime variables. Called only from RestoreInstance().
  *
  * @return bool - success status
  */
@@ -586,7 +963,7 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string file = FindStatusFile(instance.id);
+   string file = FindStatusFile(instance.id, instance.isTest);
    if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
    if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
@@ -600,15 +977,17 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID       = GetIniStringA(file, section, "Instance.ID",  "");           // string Instance.ID      = T123
-   int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods");           // int    Donchian.Periods = 40
-   string sLots             = GetIniStringA(file, section, "Lots",         "");           // double Lots             = 0.1
+   string sInstanceID       = GetIniStringA(file, section, "Instance.ID",       "");      // string Instance.ID       = T123
+   string sTunnelDefinition = GetIniStringA(file, section, "Tunnel.Definition", "");      // string Tunnel.Definition = EMA(1), EMA(2), EMA(3)
+   int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods"     );      // int    Donchian.Periods  = 40
+   string sLots             = GetIniStringA(file, section, "Lots",              "");      // double Lots              = 0.1
 
    if (!StrIsNumeric(sLots)) return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
-   Instance.ID      = sInstanceID;
-   Donchian.Periods = iDonchianPeriods;
-   Lots             = StrToDouble(sLots);
+   Instance.ID       = sInstanceID;
+   Tunnel.Definition = sTunnelDefinition;
+   Donchian.Periods  = iDonchianPeriods;
+   Lots              = StrToDouble(sLots);
 
    // [Runtime status]
    section = "Runtime status";
@@ -630,7 +1009,7 @@ bool ReadStatus() {
    open.type                = GetIniInt    (file, section, "open.type"       );           // int      open.type                = 1
    open.time                = GetIniInt    (file, section, "open.time"       );           // datetime open.time                = 1624924800 (Mon, 2021.05.12 13:22:34)
    open.price               = GetIniDouble (file, section, "open.price"      );           // double   open.price               = 1.24363
-   open.slippage            = GetIniDouble (file, section, "open.slippage"   );           // double   open.slippage            = 1.0
+   open.slippage            = GetIniDouble (file, section, "open.slippage"   );           // double   open.slippage            = 0.00003
    open.swap                = GetIniDouble (file, section, "open.swap"       );           // double   open.swap                = -1.23
    open.commission          = GetIniDouble (file, section, "open.commission" );           // double   open.commission          = -5.50
    open.grossProfit         = GetIniDouble (file, section, "open.grossProfit");           // double   open.grossProfit         = 12.34
@@ -754,7 +1133,7 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
 
 /**
  * Synchronize restored state and runtime vars with current order status on the trade server.
- * Called only from RestoreSequence().
+ * Called only from RestoreInstance().
  *
  * @return bool - success status
  */
@@ -822,15 +1201,17 @@ string GetStatusFilename(bool relative = false) {
 /**
  * Find an existing status file for the specified instance.
  *
- * @param  int instanceId
+ * @param  int  instanceId - instance id
+ * @param  bool isTest     - whether the instance is a test instance
  *
  * @return string - absolute filename or an empty string in case of errors
  */
-string FindStatusFile(int instanceId) {
-   if (instanceId < IID_MIN || instanceId > IID_MAX) return(_EMPTY_STR(catch("FindStatusFile(1)  "+ instance.name +" invalid parameter instanceId: "+ instanceId, ERR_INVALID_PARAMETER)));
+string FindStatusFile(int instanceId, bool isTest) {
+   if (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) return(_EMPTY_STR(catch("FindStatusFile(1)  "+ instance.name +" invalid parameter instanceId: "+ instanceId, ERR_INVALID_PARAMETER)));
+   isTest = isTest!=0;
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
-   string statusDir   = "presets/"+ GetAccountCompanyId() +"/";
+   string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
    string basePattern = Symbol() +".*.Vegas."+ instanceId +".set";
    string pathPattern = sandboxDir + statusDir + basePattern;
 
@@ -872,6 +1253,7 @@ bool SaveStatus() {
    // [Inputs]
    section = "Inputs";
    WriteIniString(file, section, "Instance.ID",              /*string*/ Instance.ID);
+   WriteIniString(file, section, "Tunnel.Definition",        /*string*/ Tunnel.Definition);
    WriteIniString(file, section, "Donchian.Periods",         /*int   */ Donchian.Periods);
    WriteIniString(file, section, "Lots",                     /*double*/ NumberToStr(Lots, ".+") + separator);        // conditional section separator
 
@@ -897,7 +1279,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.type",                /*int     */ open.type);
    WriteIniString(file, section, "open.time",                /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "open.price",               /*double  */ DoubleToStr(open.price, Digits));
-   WriteIniString(file, section, "open.slippage",            /*double  */ DoubleToStr(open.slippage, 1));
+   WriteIniString(file, section, "open.slippage",            /*double  */ DoubleToStr(open.slippage, Digits));
    WriteIniString(file, section, "open.swap",                /*double  */ DoubleToStr(open.swap, 2));
    WriteIniString(file, section, "open.commission",          /*double  */ DoubleToStr(open.commission, 2));
    WriteIniString(file, section, "open.grossProfit",         /*double  */ DoubleToStr(open.grossProfit, 2));
@@ -935,12 +1317,13 @@ string SaveStatus.HistoryToStr(int index) {
    double   grossProfit = history[index][H_GROSSPROFIT];
    double   netProfit   = history[index][H_NETPROFIT  ];
 
-   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
+   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
 
 
 // backed-up input parameters
 string   prev.Instance.ID = "";
+string   prev.Tunnel.Definition = "";
 int      prev.Donchian.Periods;
 double   prev.Lots;
 
@@ -958,9 +1341,10 @@ int      prev.instance.status;
  */
 void BackupInputs() {
    // backup input parameters, used for comparison in ValidateInputs()
-   prev.Instance.ID      = StringConcatenate(Instance.ID, "");    // string inputs are references to internal C literals and must be copied to break the reference
-   prev.Donchian.Periods = Donchian.Periods;
-   prev.Lots             = Lots;
+   prev.Instance.ID       = StringConcatenate(Instance.ID, "");         // string inputs are references to internal C literals
+   prev.Tunnel.Definition = StringConcatenate(Tunnel.Definition, "");   // and must be copied to break the reference
+   prev.Donchian.Periods  = Donchian.Periods;
+   prev.Lots              = Lots;
 
    // backup runtime variables affected by changing input parameters
    prev.instance.id      = instance.id;
@@ -976,9 +1360,10 @@ void BackupInputs() {
  */
 void RestoreInputs() {
    // restore input parameters
-   Instance.ID      = prev.Instance.ID;
-   Donchian.Periods = prev.Donchian.Periods;
-   Lots             = prev.Lots;
+   Instance.ID       = prev.Instance.ID;
+   Tunnel.Definition = prev.Tunnel.Definition;
+   Donchian.Periods  = prev.Donchian.Periods;
+   Lots              = prev.Lots;
 
    // restore runtime variables
    instance.id      = prev.instance.id;
@@ -994,11 +1379,11 @@ void RestoreInputs() {
  *
  * @return bool - whether an instance id value was successfully restored (the status file is not checked)
  */
-bool ValidateInputs.IID() {
+bool ValidateInputs.ID() {
    bool errorFlag = true;
 
-   if (!SetInstanceId(Instance.ID, errorFlag, "ValidateInputs.IID(1)")) {
-      if (errorFlag) onInputError("ValidateInputs.IID(2)  invalid input parameter Instance.ID: \""+ Instance.ID +"\"");
+   if (!SetInstanceId(Instance.ID, errorFlag, "ValidateInputs.ID(1)")) {
+      if (errorFlag) onInputError("ValidateInputs.ID(2)  invalid input parameter Instance.ID: \""+ Instance.ID +"\"");
       return(false);
    }
    return(true);
@@ -1020,7 +1405,7 @@ bool ValidateInputs() {
    bool hasOpenOrders    = false;
 
    // Instance.ID
-   if (isInitParameters) {                                        // otherwise the id was validated in ValidateInputs.IID()
+   if (isInitParameters) {                                        // otherwise the id was validated in ValidateInputs.ID()
       string sValue = StrTrim(Instance.ID);
       if (sValue == "") {                                         // the id was deleted or not yet set, restore the internal id
          Instance.ID = prev.Instance.ID;
@@ -1028,18 +1413,49 @@ bool ValidateInputs() {
       else if (sValue != prev.Instance.ID) return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
    }
 
+   // Tunnel.Definition
+   if (isInitParameters && Tunnel.Definition!=prev.Tunnel.Definition) {
+      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input parameter Tunnel.Definition with open orders"));
+   }
+   string sValues[], sMAs[];
+   ArrayResize(sMAs, 0);
+   int n=0, size=Explode(Tunnel.Definition, ",", sValues, NULL);
+   for (int i=0; i < size; i++) {
+      sValue = StrTrim(sValues[i]);
+      if (sValue == "") continue;
+
+      string sMethod = StrLeftTo(sValue, "(");
+      if (sMethod == sValue)               return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      int iMethod = StrToMaMethod(sMethod, F_ERR_INVALID_PARAMETER);
+      if (iMethod == -1)                   return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
+      if (iMethod > MODE_LWMA)             return(!onInputError("ValidateInputs(5)  "+ instance.name +" unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
+
+      string sPeriods = StrRightFrom(sValue, "(");
+      if (!StrEndsWith(sPeriods, ")"))     return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      sPeriods = StrTrim(StrLeft(sPeriods, -1));
+      if (!StrIsDigits(sPeriods))          return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      int iPeriods = StrToInteger(sPeriods);
+      if (iPeriods < 1)                    return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be > 0)"));
+
+      ArrayResize(sMAs, n+1);
+      sMAs[n]  = MaMethodDescription(iMethod) +"("+ iPeriods +")";
+      n++;
+   }
+   if (!n)                                 return(!onInputError("ValidateInputs(9)  "+ instance.name +" missing input parameter Tunnel.Definition (empty)"));
+   Tunnel.Definition = JoinStrings(sMAs);
+
    // Donchian.Periods
    if (isInitParameters && Donchian.Periods!=prev.Donchian.Periods) {
-      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input parameter Donchian.Periods with open orders"));
+      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(10)  "+ instance.name +" cannot change input parameter Donchian.Periods with open orders"));
    }
-   if (Donchian.Periods < 2)               return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input parameter Donchian.Periods: "+ Donchian.Periods +" (must be > 1)"));
+   if (Donchian.Periods < 2)               return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Donchian.Periods: "+ Donchian.Periods +" (must be > 1)"));
 
    // Lots
-   if (LT(Lots, 0))                        return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
-   if (NE(Lots, NormalizeLots(Lots)))      return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
+   if (NE(Lots, NormalizeLots(Lots)))      return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    SS.All();
-   return(!catch("ValidateInputs(6)"));
+   return(!catch("ValidateInputs(14)"));
 }
 
 
@@ -1112,6 +1528,28 @@ bool RestoreInstanceId() {
 
 
 /**
+ * Remove a stored instance id.
+ *
+ * @return bool - success status
+ */
+bool RemoveInstanceId() {
+   if (__isChart) {
+      // chart window
+      string name = ProgramName() +".Instance.ID";
+      RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
+
+      // chart
+      Chart.RestoreString(name, name, true);
+
+      // remove a chart status for chart commands
+      name = "EA.status";
+      if (ObjectFind(name) != -1) ObjectDelete(name);
+   }
+   return(!catch("RemoveInstanceId(1)"));
+}
+
+
+/**
  * Return a readable representation of an instance status code.
  *
  * @param  int status
@@ -1156,7 +1594,7 @@ string StatusDescription(int status) {
  */
 string SignalToStr(int signal) {
    switch (signal) {
-      case NULL        : return("(undefined)" );
+      case NULL        : return("no signal"   );
       case SIGNAL_LONG : return("SIGNAL_LONG" );
       case SIGNAL_SHORT: return("SIGNAL_SHORT");
    }
@@ -1282,9 +1720,10 @@ int ShowStatus(int error = NO_ERROR) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",      DoubleQuoteStr(Instance.ID), ";", NL,
-                            "Donchian.Periods=", Donchian.Periods,            ";", NL,
-                            "Lots=",             NumberToStr(Lots, ".1+"),    ";")
+   return(StringConcatenate("Instance.ID=",       DoubleQuoteStr(Instance.ID),       ";", NL,
+                            "Tunnel.Definition=", DoubleQuoteStr(Tunnel.Definition), ";", NL,
+                            "Donchian.Periods=",  Donchian.Periods,                  ";", NL,
+                            "Lots=",              NumberToStr(Lots, ".1+"),          ";")
    );
 
    // suppress compiler warnings

@@ -4710,7 +4710,6 @@ string InputsToStr() {
 
 
 #import "rsfLib.ex4"
-   bool     AquireLock(string mutexName, bool wait);
    int      ArrayDropInt          (int    &array[], int value);
    int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);
    int      ArrayInsertDoubles    (double &array[], int offset, double values[]);
@@ -4726,7 +4725,6 @@ string InputsToStr() {
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetSymbolName(string symbol);
    string   IntsToStr(int array[], string separator);
-   bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
    bool     SortOpenTickets(int &keys[][]);
    string   StringsToStr(string array[], string separator);

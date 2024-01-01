@@ -120,7 +120,7 @@ int onStart() {
    // (3) Alle selektierten LFX-Orders sperren, damit andere Indikatoren/Charts keine temporären Teilpositionen verarbeiten.
    for (i=0; i < magicsSize; i++) {
       // TODO: Deadlocks verhindern, falls einer der Mutexe bereits gesperrt ist.
-      //if (!AquireLock("mutex.LFX.#"+ magics[i], true))
+      //if (!AquireLock("mutex.LFX.#"+ magics[i]))
       //   return(ERR_RUNTIME_ERROR);
    }
 

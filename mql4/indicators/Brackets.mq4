@@ -140,25 +140,23 @@ bool UpdateBrackets() {
 
    // update bracket visualization
    if (changedRateBars > 2) {
-      int size=ArrayRange(brackets, 0), pid=__ExecutionContext[EC.pid];
-      datetime chartStart, chartEnd;
+      int size=ArrayRange(brackets, 0), pid=__ExecutionContext[EC.pid], barRange=Period()*MINUTES;
       double high, low;
       string label = "";
 
       for (i=0; i < size; i++) {
-         rangeStart = brackets[i][I_STARTTIME];
-         rangeEnd   = brackets[i][I_ENDTIME];
          high       = brackets[i][I_HIGH];
          low        = brackets[i][I_LOW];
-         chartStart = rangeStart;
-         chartEnd   = Min(rangeEnd-1, Tick.time);
+         rangeStart = brackets[i][I_STARTTIME];
+         rangeEnd   = MathMin(brackets[i][I_ENDTIME], Time[0] + barRange);
+         rangeEnd--;
 
          // high
          label = "Bracket "+ TimeWindow +" High "+ NumberToStr(high, PriceFormat) +" ["+ i +"]["+ pid +"]";
          if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
-         ObjectSet(label, OBJPROP_TIME1,  chartStart);
+         ObjectSet(label, OBJPROP_TIME1,  rangeStart);
          ObjectSet(label, OBJPROP_PRICE1, high);
-         ObjectSet(label, OBJPROP_TIME2,  chartEnd);
+         ObjectSet(label, OBJPROP_TIME2,  rangeEnd);
          ObjectSet(label, OBJPROP_PRICE2, high);
          ObjectSet(label, OBJPROP_STYLE,  STYLE_SOLID);
          ObjectSet(label, OBJPROP_WIDTH,  3);
@@ -169,9 +167,9 @@ bool UpdateBrackets() {
          // low
          label = "Bracket "+ TimeWindow +" Low "+ NumberToStr(low, PriceFormat) +" ["+ i +"]["+ pid +"]";
          if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
-         ObjectSet(label, OBJPROP_TIME1,  chartStart);
+         ObjectSet(label, OBJPROP_TIME1,  rangeStart);
          ObjectSet(label, OBJPROP_PRICE1, low);
-         ObjectSet(label, OBJPROP_TIME2,  chartEnd);
+         ObjectSet(label, OBJPROP_TIME2,  rangeEnd);
          ObjectSet(label, OBJPROP_PRICE2, low);
          ObjectSet(label, OBJPROP_STYLE,  STYLE_SOLID);
          ObjectSet(label, OBJPROP_WIDTH,  3);
