@@ -136,7 +136,7 @@ int init() {
    }
 
    // finish initialization of global vars
-   if (!init_Globals()) if (CheckErrors("init(3)")) return(last_error);
+   if (!initGlobals()) if (CheckErrors("init(3)")) return(last_error);
 
    // execute custom init tasks
    initFlags = __ExecutionContext[EC.programInitFlags];
@@ -183,7 +183,7 @@ int init() {
    if (__isTesting) {                                          // log MarketInfo() data
       if (IsLogInfo()) {
          string title = "::: TEST (bar model: "+ BarModelDescription(__Test.barModel) +") :::";
-         string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ init_MarketInfo();
+         string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ initMarketInfo();
          string separator = StrRepeat(":", StringLen(msg));
          if (__isTesting) separator = title + StrRight(separator, -StringLen(title));
          logInfo(separator);
@@ -374,12 +374,12 @@ int start() {
 
    // initialize PL recorder
    if (!recorder.initialized) {
-      if (!init_Recorder()) return(_last_error(CheckErrors("start(7)")));
+      if (!initRecorder()) return(_last_error(CheckErrors("start(7)")));
    }
 
    // initialize test
    if (!test.initialized) {
-      if (!init_Test()) return(_last_error(CheckErrors("start(8)")));
+      if (!initTest()) return(_last_error(CheckErrors("start(8)")));
    }
 
    // call the userland main function
@@ -388,7 +388,7 @@ int start() {
 
    // record PL
    if (recordMode != RECORDING_OFF) {
-      if (!start_Recorder()) return(_last_error(CheckErrors("start(10)")));
+      if (!startRecorder()) return(_last_error(CheckErrors("start(10)")));
    }
 
    // check all errors
@@ -599,17 +599,17 @@ bool CheckErrors(string caller, int error = NULL) {
 
    // suppress compiler warnings
    int iNull;
-   init_RecorderValidateInput(iNull);
+   initRecorder_ValidateInput(iNull);
    __DummyCalls();
 }
 
 
 /**
- * Update global variables. Called immediately after SyncMainContext_init().
+ * Initialize/update global variables. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  */
-bool init_Globals() {
+bool initGlobals() {
    __isChart       = (__ExecutionContext[EC.hChart] != 0);
    __isTesting     = IsTesting();
    __Test.barModel = ec_TestBarModel(__ExecutionContext);
@@ -624,16 +624,16 @@ bool init_Globals() {
    P_INF = -N_INF;                                                            // positive infinity
    NaN   =  N_INF - N_INF;                                                    // not-a-number
 
-   return(!catch("init_Globals(1)"));
+   return(!catch("initGlobals(1)"));
 }
 
 
 /**
- * Return current MarketInfo() data.
+ * Return current MarketInfo() data. Called during initialization of a test.
  *
  * @return string - MarketInfo() data or an empty string in case of errors
  */
-string init_MarketInfo() {
+string initMarketInfo() {
    string message = "";
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message + "Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
@@ -662,7 +662,7 @@ string init_MarketInfo() {
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0")                        +";";
 
-   if (!catch("init_MarketInfo(1)"))
+   if (!catch("initMarketInfo(1)"))
       return(message);
    return("");
 }
@@ -673,7 +673,7 @@ string init_MarketInfo() {
  *
  * @return bool - success status
  */
-bool init_Recorder() {
+bool initRecorder() {
    if (!recorder.initialized) {
       if (recordMode && !IsOptimization()) {
          int i=0, symbolDigits, hstMultiplier;
@@ -684,21 +684,21 @@ bool init_Recorder() {
          if (recordCustom) {
             // fetch custom symbol definitions from the EA
             while (Recorder_GetSymbolDefinition(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier)) {
-               if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier)) return(false);
+               if (!initRecorder_AddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier)) return(false);
                i++;
             }
             if (IsLastError()) return(false);
          }
          else {
             // create a single new equity symbol using default values
-            symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);                        // sizeof(SYMBOL.description) = 64 chars
+            symbol       = initRecorder_CreateSymbol(); if (!StringLen(symbol)) return(false);                        // sizeof(SYMBOL.description) = 64 chars
             symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");    // 43 + 1 + 19 = 63 chars
             symbolDigits = 2;
-            if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, NULL, NULL)) return(false);
+            if (!initRecorder_AddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, NULL, NULL)) return(false);
          }
       }
       else {
-         recordMode = RECORDING_OFF;         // disable recording in case init_RecorderValidateInput() was not called
+         recordMode = RECORDING_OFF;         // disable recording in case initRecorder_ValidateInput() was not called
          ec_SetRecordMode(__ExecutionContext, recordMode);
       }
       recorder.initialized = true;
@@ -721,18 +721,18 @@ bool init_Recorder() {
  *
  * @return bool - success status
  */
-bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double hstBase, int hstMultiplier) {
+bool initRecorder_AddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double hstBase, int hstMultiplier) {
    enabled = enabled!=0;                  // (bool) int
-   if (i < 0) return(!catch("init_RecorderAddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
+   if (i < 0) return(!catch("initRecorder_AddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
 
-   symbolGroup         = init_RecorderSymbolGroup ("init_RecorderAddSymbol(2)", symbolGroup); if (!StringLen(symbolGroup))  return(false);
-   string hstDirectory = init_RecorderHstDirectory("init_RecorderAddSymbol(3)");              if (!StringLen(hstDirectory)) return(false);
-   int    hstFormat    = init_RecorderHstFormat   ("init_RecorderAddSymbol(4)");              if (!hstFormat)               return(false);
+   symbolGroup         = initRecorder_GetSymbolGroup ("initRecorder_AddSymbol(2)", symbolGroup); if (!StringLen(symbolGroup))  return(false);
+   string hstDirectory = initRecorder_GetHstDirectory("initRecorder_AddSymbol(3)");              if (!StringLen(hstDirectory)) return(false);
+   int    hstFormat    = initRecorder_GetHstFormat   ("initRecorder_AddSymbol(4)");              if (!hstFormat)               return(false);
 
    if (enabled) {
       // check for an existing symbol
       if (IsRawSymbol(symbol, hstDirectory)) {
-         if (__isTesting) return(!catch("init_RecorderAddSymbol(5)  symbol \""+ symbol +"\" already exists", ERR_ILLEGAL_STATE));
+         if (__isTesting) return(!catch("initRecorder_AddSymbol(5)  symbol \""+ symbol +"\" already exists", ERR_ILLEGAL_STATE));
          // TODO: update an existing raw symbol
       }
       else {
@@ -758,7 +758,7 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
       ArrayResize(recorder.hstFormat,     size);
       ArrayResize(recorder.hSet,          size);
    }
-   if (StringLen(recorder.symbol[i]) != 0) return(!catch("init_RecorderAddSymbol(6)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
+   if (StringLen(recorder.symbol[i]) != 0) return(!catch("initRecorder_AddSymbol(6)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
 
    recorder.enabled      [i] = enabled;
    recorder.symbol       [i] = symbol;
@@ -781,22 +781,22 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
  *
  * @return string - symbol or an empty string in case of errors
  */
-string init_RecorderNewSymbol() {
-   string hstDirectory = init_RecorderHstDirectory("init_RecorderNewSymbol(1)"); if (!StringLen(hstDirectory)) return("");
+string initRecorder_CreateSymbol() {
+   string hstDirectory = initRecorder_GetHstDirectory("initRecorder_CreateSymbol(1)"); if (!StringLen(hstDirectory)) return("");
 
    // open "symbols.raw" and read symbols
    string filename = hstDirectory +"/symbols.raw";
    int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
-   if (hFile <= 0)                                      return(!catch("init_RecorderNewSymbol(2)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+   if (hFile <= 0)                                      return(!catch("initRecorder_CreateSymbol(2)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
    int fileSize = FileSize(hFile);
-   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("init_RecorderNewSymbol(3)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("initRecorder_CreateSymbol(3)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
    int symbolsSize = fileSize/SYMBOL_size;
 
    int symbols[]; InitializeByteBuffer(symbols, fileSize);
    if (fileSize > 0) {
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-      if (ints!=fileSize/4) { FileClose(hFile);         return(!catch("init_RecorderNewSymbol(4)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+      if (ints!=fileSize/4) { FileClose(hFile);         return(!catch("initRecorder_CreateSymbol(4)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
    }
    FileClose(hFile);
 
@@ -824,7 +824,7 @@ string init_RecorderNewSymbol() {
  *
  * @return string - symbol group or an empty string in case of errors
  */
-string init_RecorderSymbolGroup(string caller, string symbolGroup = "") {
+string initRecorder_GetSymbolGroup(string caller, string symbolGroup = "") {
    static string defaultValue = "";
 
    if (!StringLen(symbolGroup)) {
@@ -844,7 +844,7 @@ string init_RecorderSymbolGroup(string caller, string symbolGroup = "") {
  *
  * @return string - directory or an empty string in case of errors
  */
-string init_RecorderHstDirectory(string caller) {
+string initRecorder_GetHstDirectory(string caller) {
    static string result = "";
 
    if (!StringLen(result)) {
@@ -860,7 +860,7 @@ string init_RecorderHstDirectory(string caller) {
             sValue = GetConfigString(section, key, "");
          }
       }
-      if (!StringLen(sValue)) return(_EMPTY_STR(catch(caller +"->init_RecorderHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
+      if (!StringLen(sValue)) return(_EMPTY_STR(catch(caller +"->initRecorder_GetHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
       result = sValue;
    }
    return(result);
@@ -874,7 +874,7 @@ string init_RecorderHstDirectory(string caller) {
  *
  * @return int - history format or NULL (0) in case of errors
  */
-int init_RecorderHstFormat(string caller) {
+int initRecorder_GetHstFormat(string caller) {
    static int result = 0;
 
    if (!result) {
@@ -890,7 +890,7 @@ int init_RecorderHstFormat(string caller) {
             iValue = GetConfigInt(section, key, 0);
          }
       }
-      if (iValue!=400 && iValue!=401) return(!catch(caller +"->init_RecorderHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+      if (iValue!=400 && iValue!=401) return(!catch(caller +"->initRecorder_GetHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
       result = iValue;
    }
    return(result);
@@ -904,7 +904,7 @@ int init_RecorderHstFormat(string caller) {
  *
  * @return bool - success status
  */
-bool init_RecorderValidateInput(int &metrics) {
+bool initRecorder_ValidateInput(int &metrics) {
    bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);
 
    string sValues[], sValue = StrToLower(EA.Recorder);   // "on | off* | 1,2,3=1000,..."
@@ -938,19 +938,19 @@ bool init_RecorderValidateInput(int &metrics) {
          if (sValue == "") continue;
 
          int iValue = StrToInteger(sValue);
-         if (iValue <= 0)                    return(_false(log("init_RecorderValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric ids must be positive integers)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
-         if (IntInArray(ids, iValue))        return(_false(log("init_RecorderValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate metric ids)",                 ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (iValue <= 0)                    return(_false(log("initRecorder_ValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric ids must be positive integers)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (IntInArray(ids, iValue))        return(_false(log("initRecorder_ValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate metric ids)",                 ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
 
          string sid = iValue;
          sValue = StrTrim(StrRight(sValue, -StringLen(sid)));
 
          double hstBase = recorder.defaultBase;
          if (sValue != "") {                             // use specified base value instead of the default
-            if (!StrStartsWith(sValue, "=")) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (format error, not \"<int>[=<double>]\")", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+            if (!StrStartsWith(sValue, "=")) return(_false(log("initRecorder_ValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (format error, not \"<int>[=<double>]\")", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
             sValue = StrTrim(StrRight(sValue, -1));
-            if (!StrIsNumeric(sValue))       return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (base values must be numeric)",            ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+            if (!StrIsNumeric(sValue))       return(_false(log("initRecorder_ValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (base values must be numeric)",            ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
             hstBase = StrToDouble(sValue);
-            if (hstBase <= 0)                return(_false(log("init_RecorderValidateInput(5)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (base values must be positive)",           ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+            if (hstBase <= 0)                return(_false(log("initRecorder_ValidateInput(5)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (base values must be positive)",           ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
          }
          ArrayPushInt(ids, iValue);
 
@@ -970,7 +970,7 @@ bool init_RecorderValidateInput(int &metrics) {
          recorder.enabled[iValue-1] = true;
          recorder.hstBase[iValue-1] = hstBase;
       }
-      if (!ArraySize(ids))                   return(_false(log("init_RecorderValidateInput(6)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing metric ids)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+      if (!ArraySize(ids))                   return(_false(log("initRecorder_ValidateInput(6)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing metric ids)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
 
       recordMode     = RECORDING_CUSTOM;
       recordInternal = false;
@@ -989,7 +989,7 @@ bool init_RecorderValidateInput(int &metrics) {
  *
  * @return bool - success status
  */
-bool init_Test() {
+bool initTest() {
    if (!test.initialized) {
       if (__isTesting && Test.ExternalReporting) {
          datetime time = MarketInfo(Symbol(), MODE_TIME);
@@ -1009,7 +1009,7 @@ bool init_Test() {
  *
  * @return bool - success status
  */
-bool start_Recorder() {
+bool startRecorder() {
    /*
     Speed test SnowRoller EURUSD,M15  04.10.2012, Long, GridSize=18
    +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+

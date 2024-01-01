@@ -3075,7 +3075,7 @@ bool ValidateInputs() {
    // EA.Recorder
    if (!IsTestInstance() || __isTesting) {      // never init the recorder of a stopped test
       int metrics;
-      if (!init_RecorderValidateInput(metrics)) return(false);
+      if (!initRecorder_ValidateInput(metrics)) return(false);
       if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
    }
 
