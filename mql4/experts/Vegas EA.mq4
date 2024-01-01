@@ -39,7 +39,7 @@
  *  - add/update virtual trading
  *  - implement multiple exit strategies
  *  - implement multiple entry strategies
- *  - add/use input "TradingTimeframe"
+ *  - add input "TradingTimeframe"
  *  - document input params, control scripts and general usage
  */
 #include <stddefines.mqh>
@@ -50,7 +50,7 @@ int __virtualTicks = 0;
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID          = "";                             // instance to load from a status file, format "[T]123"
-extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MAs separated by ","
+extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MA definitions separated by comma
 extern string Supported.MA.Methods = "SMA, LWMA, EMA, SMMA";
 extern int    Donchian.Periods     = 30;
 extern double Lots                 = 0.1;
@@ -981,6 +981,7 @@ bool ReadStatus() {
    string sTunnelDefinition = GetIniStringA(file, section, "Tunnel.Definition", "");      // string Tunnel.Definition = EMA(1), EMA(2), EMA(3)
    int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods"     );      // int    Donchian.Periods  = 40
    string sLots             = GetIniStringA(file, section, "Lots",              "");      // double Lots              = 0.1
+   string sEaRecorder       = GetIniStringA(file, section, "EA.Recorder",       "");      // string EA.Recorder       = 1,2,4
 
    if (!StrIsNumeric(sLots)) return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
@@ -988,6 +989,7 @@ bool ReadStatus() {
    Tunnel.Definition = sTunnelDefinition;
    Donchian.Periods  = iDonchianPeriods;
    Lots              = StrToDouble(sLots);
+   EA.Recorder       = sEaRecorder;
 
    // [Runtime status]
    section = "Runtime status";
@@ -1255,7 +1257,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.ID",              /*string*/ Instance.ID);
    WriteIniString(file, section, "Tunnel.Definition",        /*string*/ Tunnel.Definition);
    WriteIniString(file, section, "Donchian.Periods",         /*int   */ Donchian.Periods);
-   WriteIniString(file, section, "Lots",                     /*double*/ NumberToStr(Lots, ".+") + separator);        // conditional section separator
+   WriteIniString(file, section, "Lots",                     /*double*/ NumberToStr(Lots, ".+"));
+   WriteIniString(file, section, "EA.Recorder",              /*string*/ EA.Recorder + separator);                    // conditional section separator
 
    // [Runtime status]
    section = "Runtime status";                               // On deletion of pending orders the number of stored order records decreases. To prevent
@@ -1326,6 +1329,7 @@ string   prev.Instance.ID = "";
 string   prev.Tunnel.Definition = "";
 int      prev.Donchian.Periods;
 double   prev.Lots;
+string   prev.EA.Recorder = "";
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.instance.id;
@@ -1333,6 +1337,7 @@ datetime prev.instance.created;
 bool     prev.instance.isTest;
 string   prev.instance.name = "";
 int      prev.instance.status;
+int      prev.recorder.mode;
 
 
 /**
@@ -1345,6 +1350,7 @@ void BackupInputs() {
    prev.Tunnel.Definition = StringConcatenate(Tunnel.Definition, "");   // and must be copied to break the reference
    prev.Donchian.Periods  = Donchian.Periods;
    prev.Lots              = Lots;
+   prev.EA.Recorder       = StringConcatenate(EA.Recorder, "");
 
    // backup runtime variables affected by changing input parameters
    prev.instance.id      = instance.id;
@@ -1352,6 +1358,7 @@ void BackupInputs() {
    prev.instance.isTest  = instance.isTest;
    prev.instance.name    = instance.name;
    prev.instance.status  = instance.status;
+   prev.recorder.mode    = recorder.mode;
 }
 
 
@@ -1364,6 +1371,7 @@ void RestoreInputs() {
    Tunnel.Definition = prev.Tunnel.Definition;
    Donchian.Periods  = prev.Donchian.Periods;
    Lots              = prev.Lots;
+   EA.Recorder       = prev.EA.Recorder;
 
    // restore runtime variables
    instance.id      = prev.instance.id;
@@ -1371,6 +1379,7 @@ void RestoreInputs() {
    instance.isTest  = prev.instance.isTest;
    instance.name    = prev.instance.name;
    instance.status  = prev.instance.status;
+   recorder.mode    = prev.recorder.mode;
 }
 
 

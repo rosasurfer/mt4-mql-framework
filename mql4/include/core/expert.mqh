@@ -1,37 +1,36 @@
-/**
-During runtime an EA can record any number of performance graphs (aka metrics; also in the tester). These recordings are
-saved as regular chart symbols in the history directory of a second MT4 terminal. From there they can be displayed and analysed
-like regular MetaTrader charts.
-
-Metrics are declared using input parameter "EA.Recorder". Multiple declarations must be separated by a comma. Syntax:
-
- off:  Recording is disabled (default).
- on:   Records a timeseries representing the EA's equity graph as reported by the built-in function AccountEquity().
- <id>[=<base-value>]:  Records a timeseries representing a custom metric identified by <id> (integer). Define an appropriate
-       base value (double) to ensure that all recorded values are positive (MT4 charts cannot display negative values). If no
-       base value is defined the recorder uses 10'000.00 as the default value.
-
-During EA initialization the function Recorder_GetSymbolDefinition(int id, ...) is called for each specified metric id. This
-call retrieves the symbol definition of a metric. The function must be implemented by the EA. Signature:
-
-
-/**
- * Return a symbol definition for the specified metric to be recorded.
- *
- * @param  _In_  int    id             - metric id
- * @param  _Out_ bool   &enabled       - whether the metric is active and should be recorded
- * @param  _Out_ string &symbol        - unique MT4 timeseries symbol
- * @param  _Out_ string &symbolDescr   - MT4 symbol description
- * @param  _Out_ string &symbolGroup   - the symbol's MT4 group name (if empty a name is generated)
- * @param  _Out_ int    &symbolDigits  - the symbol's MT4 digits value
- * @param  _Out_ double &hstBase       - history base value (if zero the default base value is used)
- * @param  _Out_ int    &hstMultiplier - multiplier applied to recorded values (if zero no multiplier is used)
- *
- * @return bool - success status TRUE:  process the returned definition and continue with the next metric;
- *                               FALSE: skip current and all remaining metrics
- *
-bool Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier);
- */
+//
+// During runtime an EA can record any number of performance graphs (aka metrics), online and in tester. These recordings are
+// saved as regular chart symbols in the history directory of a second MT4 terminal. From there they can be displayed and
+// analysed like regular MetaTrader charts.
+//
+// Metrics are declared using input parameter "EA.Recorder". Multiple declarations must be separated by a comma. Syntax:
+//
+//  off:  Recording is disabled (default).
+//  on:   Records a timeseries representing the EA's equity graph as reported by the built-in function AccountEquity().
+//  <id>[=<base-value>]:  Records a timeseries representing a custom metric identified by <id> (integer). Define an appropriate
+//        base value (double) to ensure that all recorded values are positive (MT4 charts cannot display negative values).
+//        If no base value is defined the recorder queries the framework configuration.
+//
+// During EA initialization the function Recorder_GetSymbolDefinition(int id, ...) is called for each specified metric id.
+// This call retrieves the symbol definition of a metric. The function must be implemented by the EA. Signature:
+//
+// /**
+//  * Return a symbol definition for the specified metric to be recorded.
+//  *
+//  * @param  _In_  int    id             - metric id
+//  * @param  _Out_ bool   &enabled       - whether the metric is active and should be recorded
+//  * @param  _Out_ string &symbol        - unique MT4 timeseries symbol
+//  * @param  _Out_ string &symbolDescr   - MT4 symbol description
+//  * @param  _Out_ string &symbolGroup   - the symbol's MT4 group name (if empty a name is generated)
+//  * @param  _Out_ int    &symbolDigits  - the symbol's MT4 digits value
+//  * @param  _Out_ double &hstBase       - history base value (if zero the default base value is used)
+//  * @param  _Out_ int    &hstMultiplier - multiplier applied to recorded values (if zero no multiplier is used)
+//  *
+//  * @return bool - success status TRUE:  process the returned definition and continue with the next metric;
+//  *                               FALSE: skip current and all remaining metrics
+//  */
+// bool Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier);
+//
 
 //////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
 
@@ -52,16 +51,12 @@ double  __rates[][6];                           // current price series
 int     __tickTimerId;                          // timer id for virtual ticks
 
 // recorder modes
-#define RECORDING_OFF         0                 // recording off
-#define RECORDING_INTERNAL    1                 // recording of a single internal PL timeseries
-#define RECORDING_CUSTOM      2                 // recording of one or more custom timeseries
+#define RECORDER_OFF          0                 // recording off
+#define RECORDER_INTERNAL     1                 // recording of a single internal PL timeseries
+#define RECORDER_CUSTOM       2                 // recording of one or more custom timeseries
 
 // recorder management
-int    recordMode        = RECORDING_OFF;
-string recordModeDescr[] = {"off", "internal", "custom"};
-bool   recordInternal    = false;
-bool   recordCustom      = false;
-
+int    recorder.mode        = RECORDER_OFF;
 double recorder.defaultBase = 10000.0;
 bool   recorder.initialized = false;
 
@@ -125,7 +120,7 @@ int init() {
    if (initFlags & INIT_NO_EXTERNAL_REPORTING && 1) {
       Test.ExternalReporting = false;                          // the input must be reset before SyncMainContext_init()
    }
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recordMode, IsTesting(), IsVisualMode(), IsOptimization(), Test.ExternalReporting, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recorder.mode, IsTesting(), IsVisualMode(), IsOptimization(), Test.ExternalReporting, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                         // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -386,8 +381,8 @@ int start() {
    error = onTick();
    if (error && error!=last_error) CheckErrors("start(9)", error);
 
-   // record PL
-   if (recordMode != RECORDING_OFF) {
+   // record performance graphs
+   if (recorder.mode != RECORDER_OFF) {
       if (!startRecorder()) return(_last_error(CheckErrors("start(10)")));
    }
 
@@ -675,13 +670,13 @@ string initMarketInfo() {
  */
 bool initRecorder() {
    if (!recorder.initialized) {
-      if (recordMode && !IsOptimization()) {
+      if (recorder.mode && !IsOptimization()) {
          int i=0, symbolDigits, hstMultiplier;
          bool enabled;
          double hstBase;
          string symbol="", symbolDescr="", symbolGroup="";
 
-         if (recordCustom) {
+         if (recorder.mode == RECORDER_CUSTOM) {
             // fetch custom symbol definitions from the EA
             while (Recorder_GetSymbolDefinition(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier)) {
                if (!initRecorder_AddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier)) return(false);
@@ -691,15 +686,15 @@ bool initRecorder() {
          }
          else {
             // create a single new equity symbol using default values
-            symbol       = initRecorder_CreateSymbol(); if (!StringLen(symbol)) return(false);                        // sizeof(SYMBOL.description) = 64 chars
-            symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");    // 43 + 1 + 19 = 63 chars
+            symbol       = initRecorder_CreateSymbol(); if (!StringLen(symbol)) return(false);                 // sizeof(SYMBOL.description) = 64 chars
+            symbolDescr  = StrLeft(ProgramName(), 46) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M");   // 46 + 1 + 16 + <nul>        = 64 chars
             symbolDigits = 2;
             if (!initRecorder_AddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, NULL, NULL)) return(false);
          }
       }
       else {
-         recordMode = RECORDING_OFF;         // disable recording in case initRecorder_ValidateInput() was not called
-         ec_SetRecordMode(__ExecutionContext, recordMode);
+         recorder.mode = RECORDER_OFF;                         // also disables recording if initRecorder_ValidateInput() was not called
+         ec_SetRecordMode(__ExecutionContext, recorder.mode);
       }
       recorder.initialized = true;
    }
@@ -722,7 +717,7 @@ bool initRecorder() {
  * @return bool - success status
  */
 bool initRecorder_AddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double hstBase, int hstMultiplier) {
-   enabled = enabled!=0;                  // (bool) int
+   enabled = enabled!=0;
    if (i < 0) return(!catch("initRecorder_AddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
 
    symbolGroup         = initRecorder_GetSymbolGroup ("initRecorder_AddSymbol(2)", symbolGroup); if (!StringLen(symbolGroup))  return(false);
@@ -915,18 +910,14 @@ bool initRecorder_ValidateInput(int &metrics) {
    sValue = StrTrim(sValue);
 
    if (sValue == "off" || IsOptimization()) {
-      recordMode     = RECORDING_OFF;
-      recordInternal = false;
-      recordCustom   = false;
-      metrics        = 0;
-      EA.Recorder    = recordModeDescr[recordMode];
+      recorder.mode = RECORDER_OFF;
+      metrics       = 0;
+      EA.Recorder   = sValue;
    }
    else if (sValue == "on" ) {
-      recordMode     = RECORDING_INTERNAL;
-      recordInternal = true;
-      recordCustom   = false;
-      metrics        = 1;
-      EA.Recorder    = recordModeDescr[recordMode];
+      recorder.mode = RECORDER_INTERNAL;
+      metrics       = 1;
+      EA.Recorder   = sValue;
    }
    else {
       string sValueBak = sValue;
@@ -972,13 +963,11 @@ bool initRecorder_ValidateInput(int &metrics) {
       }
       if (!ArraySize(ids))                   return(_false(log("initRecorder_ValidateInput(6)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing metric ids)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
 
-      recordMode     = RECORDING_CUSTOM;
-      recordInternal = false;
-      recordCustom   = true;
-      metrics        = ArraySize(recorder.symbol);
-      EA.Recorder    = StrReplace(sValueBak, " ", "");
+      recorder.mode = RECORDER_CUSTOM;
+      metrics       = ArraySize(recorder.symbol);
+      EA.Recorder   = StrReplace(sValueBak, " ", "");
    }
-   ec_SetRecordMode(__ExecutionContext, recordMode);
+   ec_SetRecordMode(__ExecutionContext, recorder.mode);
 
    return(true);
 }
@@ -1046,8 +1035,8 @@ bool startRecorder() {
             if (!recorder.hSet[i]) return(false);
          }
       }
-      if (recordInternal) value = AccountEquity() - AccountCredit();
-      else                value = recorder.hstBase[i] + recorder.currValue[i] * recorder.hstMultiplier[i];
+      if (recorder.mode == RECORDER_INTERNAL) value = AccountEquity() - AccountCredit();
+      else                                    value = recorder.hstBase[i] + recorder.currValue[i] * recorder.hstMultiplier[i];
 
       if (__isTesting) flags = HST_BUFFER_TICKS;
 

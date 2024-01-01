@@ -1,8 +1,8 @@
 /**
  * ZigZag EA - a modified version of the system traded by the "Turtle Traders" of Richard Dennis
  *
- * The ZigZag indicator in this GitHub repository uses a Donchian channel for calculation. It can be used to implement the
- * Donchian channel system.
+ * The ZigZag indicator in this GitHub repository uses a Donchian channel for calculation. It's different from the flawed
+ * ZigZag indicator provided by MetaQuotes. Thus it can be used to implement the system of the turtles.
  *
  *
  * Input parameters
@@ -83,10 +83,6 @@
  *     implement more timeframes
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "Today 09:00"  [ERR_INVALID_CONFIG_VALUE]
- *  - on chart command
- *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
- *     ...
- *     FATAL   BTCUSD,202  ChartInfos::rsfLib::AquireLock(5)  failed to get lock on mutex "mutex.ChartInfos.command" after 10 sec, giving up  [ERR_RUNTIME_ERROR]
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
@@ -143,11 +139,14 @@
  *    - better parsing of struct SYMBOL
  *    - config support for session and trade breaks at specific day times
  *
+ *  - move custom metric validation to EA
+ *  - backup/restore recorder related runtime vars
  *  - on exceeding the max. open file limit of the terminal (512)
- *     FATAL  GBPJPY,M5  ZigZag::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE]
- *     ERROR  GBPJPY,M5  ZigZag::rsfHistory1::catch(1)  recursion: SendEmail(8)->FileOpen()  [ERR_CANNOT_OPEN_FILE]
- *            GBPJPY,M5  ZigZag::rsfHistory1::SendSMS(8)  SMS sent to +************: "FATAL:  GBPJPY,M5  ZigZag::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE] (12:59:52, ICM-DM-EUR)"
- *     btw: why not "ZigZag EA"?
+ *     FATAL  GBPJPY,M5  ZigZag EA::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE]
+ *     ERROR  GBPJPY,M5  ZigZag EA::rsfHistory1::catch(1)  recursion: SendEmail(8)->FileOpen()  [ERR_CANNOT_OPEN_FILE]
+ *            GBPJPY,M5  ZigZag EA::rsfHistory1::SendSMS(8)  SMS sent to +************: "FATAL:  GBPJPY,M5  ZigZag::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE] (12:59:52, ICM-DM-EUR)"
+ *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
+ *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64/terminal=512)
  *
  *  - improve handling of network outages (price and/or trade connection)
  *  - "no connection" event, no price feed for 5 minutes, signals during this time are not detected => EA out of sync
@@ -157,17 +156,14 @@
  *     https://www.mql5.com/en/forum/289014#comment_9296322
  *     https://www.mql5.com/en/forum/146808#comment_3701979#  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981#  [Query execution mode in MQL]
- *  - merge inputs TakeProfit and StopConditions
- *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
+ *  - merge inputs TakeProfit and StopConditions
  *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
  *  - VPS: monitor and notify of incoming emails
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the instance name)
- *  - move custom metric validation to EA
  *  - permanent spread logging to a separate logfile
- *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64/terminal=512)
  *  - pass input "EA.Recorder" to the Expander as a string
  *  - ChartInfos::CustomPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CustomPosition() including/excluding a specific strategy is not supported
@@ -718,7 +714,7 @@ int ShowTradeHistory() {
  * Update recorder with current metric values.
  */
 void RecordMetrics() {
-   if (recordCustom) {
+   if (recorder.mode == RECORDER_CUSTOM) {
       if (recorder.enabled[METRIC_TOTAL_UNITS_ZERO ]) recorder.currValue[METRIC_TOTAL_UNITS_ZERO ] = instance.totalZeroProfitU;
       if (recorder.enabled[METRIC_TOTAL_UNITS_GROSS]) recorder.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitU;
       if (recorder.enabled[METRIC_TOTAL_UNITS_NET  ]) recorder.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitU;
@@ -2778,9 +2774,7 @@ int      prev.stop.profitQu.type;
 double   prev.stop.profitQu.value;
 string   prev.stop.profitQu.description = "";
 
-int      prev.recordMode;
-bool     prev.recordInternal;
-bool     prev.recordCustom;
+int      prev.recorder.mode;
 
 
 /**
@@ -2830,9 +2824,7 @@ void BackupInputs() {
    prev.stop.profitQu.value        = stop.profitQu.value;
    prev.stop.profitQu.description  = stop.profitQu.description;
 
-   prev.recordMode                 = recordMode;
-   prev.recordInternal             = recordInternal;
-   prev.recordCustom               = recordCustom;
+   prev.recorder.mode              = recorder.mode;
 }
 
 
@@ -2882,9 +2874,7 @@ void RestoreInputs() {
    stop.profitQu.value        = prev.stop.profitQu.value;
    stop.profitQu.description  = prev.stop.profitQu.description;
 
-   recordMode                 = prev.recordMode;
-   recordInternal             = prev.recordInternal;
-   recordCustom               = prev.recordCustom;
+   recorder.mode              = prev.recorder.mode;
 }
 
 
@@ -3073,10 +3063,13 @@ bool ValidateInputs() {
    TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
    // EA.Recorder
-   if (!IsTestInstance() || __isTesting) {      // never init the recorder of a stopped test
+   if (IsTestInstance() && !__isTesting) {
+      recorder.mode = RECORDER_OFF;                      // ignore/disable recorder if a test is loaded in an online chart
+   }
+   else {
       int metrics;
-      if (!initRecorder_ValidateInput(metrics)) return(false);
-      if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+      if (!initRecorder_ValidateInput(metrics))          return(false);
+      if (recorder.mode==RECORDER_CUSTOM && metrics > 8) return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
    }
 
    SS.All();
