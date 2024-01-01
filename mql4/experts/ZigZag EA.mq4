@@ -1987,42 +1987,42 @@ bool Recorder_GetSymbolDefinition(int i, bool &enabled, string &symbol, string &
    hstBase       = NULL;
    hstMultiplier = NULL;
 
-   int quoteUnitMultiplier = 1;                                               // original value: 1.23 => 1.23 point
-   int digits = MathMax(Digits, 2);
+   int    symDigits  = 2;
+   int    multiplier = 1;                                                     // store original value: 1.23 => 1.23 point
+   string sQuoteUnit = "point";
+   int    digits     = MathMax(Digits, 2);
    if (digits > 2) {
-      quoteUnitMultiplier = MathRound(MathPow(10, digits & (~1)));            // convert to pip: 0.1234'5 => 1234.5 pip
-   }
-
-   static string sQuoteUnits = ""; if (!StringLen(sQuoteUnits)) {
-      sQuoteUnits = ifString(quoteUnitMultiplier==1, "points", "pip");
+      symDigits  = 1;
+      multiplier = MathRound(MathPow(10, digits & (~1)));                     // convert values to pip: 0.0123'4 => 123.4 pip
+      sQuoteUnit = "pip";
    }
 
    switch (i) {
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_TOTAL_UNITS_ZERO:             // OK
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"A";    // "zUS500_123A"
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", zero spread";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);            // "ZigZag(40,H1) 1 US500 in points, zero spread"
-         hstMultiplier = quoteUnitMultiplier;
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ sQuoteUnit +", zero spread";
+         symbolDigits  = symDigits;                                           // "ZigZag(40,H1) US500 in point, zero spread"
+         hstMultiplier = multiplier;
          return(true);
 
       case METRIC_TOTAL_UNITS_GROSS:            // OK
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"B";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", gross";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);
-         hstMultiplier = quoteUnitMultiplier;
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ sQuoteUnit +", gross";
+         symbolDigits  = symDigits;
+         hstMultiplier = multiplier;
          return(true);
 
       case METRIC_TOTAL_UNITS_NET:              // OK
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"C";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", net";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);
-         hstMultiplier = quoteUnitMultiplier;
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ sQuoteUnit +", net";
+         symbolDigits  = symDigits;
+         hstMultiplier = multiplier;
          return(true);
 
       case METRIC_TOTAL_MONEY_NET:              // OK
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"D";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ AccountCurrency() +", net";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ AccountCurrency() +", net";
          symbolDigits  = 2;
          hstMultiplier = 1;
          return(true);
@@ -2030,28 +2030,28 @@ bool Recorder_GetSymbolDefinition(int i, bool &enabled, string &symbol, string &
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_UNITS_ZERO:
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"E";    // "zEURUS_456A"
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ sQuoteUnits +", zero spread";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);            // "ZigZag(40,H1) 3 EURUSD daily in pip, zero spread"
-         hstMultiplier = quoteUnitMultiplier;
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ sQuoteUnit +", zero spread";
+         symbolDigits  = symDigits;                                           // "ZigZag(40,H1) EURUSD daily in pip, zero spread"
+         hstMultiplier = multiplier;
          return(true);
 
       case METRIC_DAILY_UNITS_GROSS:
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"F";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ sQuoteUnits +", gross";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);
-         hstMultiplier = quoteUnitMultiplier;
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ sQuoteUnit +", gross";
+         symbolDigits  = symDigits;
+         hstMultiplier = multiplier;
          return(true);
 
       case METRIC_DAILY_UNITS_NET:
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"G";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ sQuoteUnits +", net";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, digits, 1);
-         hstMultiplier = quoteUnitMultiplier;
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ sQuoteUnit +", net";
+         symbolDigits  = symDigits;
+         hstMultiplier = multiplier;
          return(true);
 
       case METRIC_DAILY_MONEY_NET:
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"H";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ AccountCurrency() +", net";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ AccountCurrency() +", net";
          symbolDigits  = 2;
          hstMultiplier = 1;
          return(true);

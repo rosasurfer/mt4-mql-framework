@@ -123,11 +123,6 @@ int afterInit() {                                  // open the log file (flushes
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",  true);
    }
 
-   int size = ArraySize(recorder.symbol);
-   for (int i=0; i < size; i++) {
-      recorder.debug[i] = GetConfigBool(section, "DebugRecorder."+ i, false);
-   }
-
    StoreInstanceId();                              // store the instance id for templates changes/restart/recompilation etc.
    return(catch("afterInit(2)"));
 }

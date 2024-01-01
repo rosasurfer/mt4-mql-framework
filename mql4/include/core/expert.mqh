@@ -62,12 +62,11 @@ string recordModeDescr[] = {"off", "internal", "custom"};
 bool   recordInternal    = false;
 bool   recordCustom      = false;
 
-double recorder.defaultBaseValue = 10000.0;
-bool   recorder.initialized      = false;
+double recorder.defaultBase = 10000.0;
+bool   recorder.initialized = false;
 
 // metric definitions
 bool   recorder.enabled      [];                // whether a metric is enabled
-bool   recorder.debug        [];
 string recorder.symbol       [];
 string recorder.symbolDescr  [];
 string recorder.symbolGroup  [];
@@ -748,7 +747,6 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    if (i >= size) {
       size = i + 1;
       ArrayResize(recorder.enabled,       size);
-      ArrayResize(recorder.debug,         size);
       ArrayResize(recorder.symbol,        size);
       ArrayResize(recorder.symbolDescr,   size);
       ArrayResize(recorder.symbolGroup,   size);
@@ -763,13 +761,12 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    if (StringLen(recorder.symbol[i]) != 0) return(!catch("init_RecorderAddSymbol(6)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
 
    recorder.enabled      [i] = enabled;
- //recorder.debug        [i] = ...              // keep existing value, possibly from afterInit()
    recorder.symbol       [i] = symbol;
    recorder.symbolDescr  [i] = symbolDescr;
    recorder.symbolGroup  [i] = symbolGroup;
    recorder.symbolDigits [i] = symbolDigits;
    recorder.currValue    [i] = NULL;
-   recorder.hstBase      [i] = doubleOr(hstBase, doubleOr(recorder.hstBase[i], recorder.defaultBaseValue));
+   recorder.hstBase      [i] = doubleOr(hstBase, doubleOr(recorder.hstBase[i], recorder.defaultBase));
    recorder.hstMultiplier[i] = intOr(hstMultiplier, intOr(recorder.hstMultiplier[i], 1));
    recorder.hstDirectory [i] = hstDirectory;
    recorder.hstFormat    [i] = hstFormat;
@@ -936,30 +933,29 @@ bool init_RecorderValidateInput(int &metrics) {
       int ids[]; ArrayResize(ids, 0);
       size = Explode(sValue, ",", sValues, NULL);
 
-      for (int i=0; i < size; i++) {                     // metric syntax: {uint}[={double}]       // {uint}:   metric id (required)
-         sValue = StrTrim(sValues[i]);                                                             // {double}: recording base value (optional)
+      for (int i=0; i < size; i++) {                     // metric syntax: <int>[=<double>]     // <int>:    metric id (required)
+         sValue = StrTrim(sValues[i]);                                                          // <double>: metric base value (optional)
          if (sValue == "") continue;
 
          int iValue = StrToInteger(sValue);
-         if (iValue <= 0)                    return(_false(log("init_RecorderValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric ids must be positive digits)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
-         if (IntInArray(ids, iValue))        return(_false(log("init_RecorderValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate metric ids)",               ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (iValue <= 0)                    return(_false(log("init_RecorderValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric ids must be positive integers)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (IntInArray(ids, iValue))        return(_false(log("init_RecorderValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate metric ids)",                 ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
 
          string sid = iValue;
          sValue = StrTrim(StrRight(sValue, -StringLen(sid)));
 
-         double hstBase = recorder.defaultBaseValue;
+         double hstBase = recorder.defaultBase;
          if (sValue != "") {                             // use specified base value instead of the default
-            if (!StrStartsWith(sValue, "=")) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric format error, not \"{uint}[={double}]\")", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+            if (!StrStartsWith(sValue, "=")) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (format error, not \"<int>[=<double>]\")", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
             sValue = StrTrim(StrRight(sValue, -1));
-            if (!StrIsNumeric(sValue))       return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric base values must be numeric)",             ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+            if (!StrIsNumeric(sValue))       return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (base values must be numeric)",            ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
             hstBase = StrToDouble(sValue);
-            if (hstBase <= 0)                return(_false(log("init_RecorderValidateInput(5)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric base values must be positive)",            ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+            if (hstBase <= 0)                return(_false(log("init_RecorderValidateInput(5)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (base values must be positive)",           ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
          }
          ArrayPushInt(ids, iValue);
 
          if (ArraySize(recorder.symbol) < iValue) {
             ArrayResize(recorder.enabled,       iValue);
-            ArrayResize(recorder.debug,         iValue);
             ArrayResize(recorder.symbol,        iValue);
             ArrayResize(recorder.symbolDescr,   iValue);
             ArrayResize(recorder.symbolGroup,   iValue);
@@ -1016,14 +1012,14 @@ bool init_Test() {
 bool start_Recorder() {
    /*
     Speed test SnowRoller EURUSD,M15  04.10.2012, Long, GridSize=18
-   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Toshiba Satellite           |     old      | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
-   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 - no recording         | 17.613 t/sec |           |              |             |             |              |              |              |
-   | v225 - HST_BUFFER_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
-   | v419 - HST_BUFFER_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
-   | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
-   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | Toshiba Satellite         |     old    | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in library  |
+   +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | v419 no recording         | 17.613 t/s |           |              |             |             |              |              |              |
+   | v225 HST_BUFFER_TICKS=Off |  6.426 t/s |           |              |             |             |              |              |              |
+   | v419 HST_BUFFER_TICKS=Off |  5.871 t/s | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
+   | v419 HST_BUFFER_TICKS=On  |            |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
+   +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
    int size = ArraySize(recorder.hSet), flags=NULL;
    double value;
@@ -1055,14 +1051,11 @@ bool start_Recorder() {
 
       if (__isTesting) flags = HST_BUFFER_TICKS;
 
-      if (recorder.debug[i]) debug("start_Recorder(0."+ i +")  "+ recorder.symbol[i] +"  Tick="+ Ticks +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
-
       if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, value, flags);
       else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, value, flags);
       else             success = HistorySet3.AddTick(recorder.hSet[i], Tick.time, value, flags);
       if (!success) break;
    }
-
    return(success);
 }
 
