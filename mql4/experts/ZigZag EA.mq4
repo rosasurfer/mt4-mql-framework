@@ -715,10 +715,10 @@ int ShowTradeHistory() {
  */
 void RecordMetrics() {
    if (recorder.mode == RECORDER_CUSTOM) {
-      if (recorder.enabled[METRIC_TOTAL_UNITS_ZERO ]) recorder.currValue[METRIC_TOTAL_UNITS_ZERO ] = instance.totalZeroProfitU;
-      if (recorder.enabled[METRIC_TOTAL_UNITS_GROSS]) recorder.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitU;
-      if (recorder.enabled[METRIC_TOTAL_UNITS_NET  ]) recorder.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitU;
-      if (recorder.enabled[METRIC_TOTAL_MONEY_NET  ]) recorder.currValue[METRIC_TOTAL_MONEY_NET  ] = instance.totalNetProfit;
+      if (metric.enabled[METRIC_TOTAL_UNITS_ZERO ]) metric.currValue[METRIC_TOTAL_UNITS_ZERO ] = instance.totalZeroProfitU;
+      if (metric.enabled[METRIC_TOTAL_UNITS_GROSS]) metric.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitU;
+      if (metric.enabled[METRIC_TOTAL_UNITS_NET  ]) metric.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitU;
+      if (metric.enabled[METRIC_TOTAL_MONEY_NET  ]) metric.currValue[METRIC_TOTAL_MONEY_NET  ] = instance.totalNetProfit;
    }
 }
 
@@ -2775,6 +2775,17 @@ double   prev.stop.profitQu.value;
 string   prev.stop.profitQu.description = "";
 
 int      prev.recorder.mode;
+bool     prev.metric.enabled     [];
+string   prev.metric.symbol      [];
+string   prev.metric.description [];
+string   prev.metric.group       [];
+int      prev.metric.digits      [];
+double   prev.metric.currValue   [];
+double   prev.metric.baseValue   [];
+int      prev.metric.multiplier  [];
+string   prev.metric.hstDirectory[];
+int      prev.metric.hstFormat   [];
+int      prev.metric.hSet        [];
 
 
 /**
@@ -2824,7 +2835,20 @@ void BackupInputs() {
    prev.stop.profitQu.value        = stop.profitQu.value;
    prev.stop.profitQu.description  = stop.profitQu.description;
 
-   prev.recorder.mode              = recorder.mode;
+   prev.recorder.mode = recorder.mode;
+   ArrayResize(prev.metric.enabled,      ArrayCopy(prev.metric.enabled,      metric.enabled     ));
+   ArrayResize(prev.metric.symbol,       ArrayCopy(prev.metric.symbol,       metric.symbol      ));
+   ArrayResize(prev.metric.description,  ArrayCopy(prev.metric.description,  metric.description ));
+   ArrayResize(prev.metric.group,        ArrayCopy(prev.metric.group,        metric.group       ));
+   ArrayResize(prev.metric.digits,       ArrayCopy(prev.metric.digits,       metric.digits      ));
+   ArrayResize(prev.metric.currValue,    ArrayCopy(prev.metric.currValue,    metric.currValue   ));
+   ArrayResize(prev.metric.baseValue,    ArrayCopy(prev.metric.baseValue,    metric.baseValue   ));
+   ArrayResize(prev.metric.multiplier,   ArrayCopy(prev.metric.multiplier,   metric.multiplier  ));
+   ArrayResize(prev.metric.hstDirectory, ArrayCopy(prev.metric.hstDirectory, metric.hstDirectory));
+   ArrayResize(prev.metric.hstFormat,    ArrayCopy(prev.metric.hstFormat,    metric.hstFormat   ));
+   ArrayResize(prev.metric.hSet,         ArrayCopy(prev.metric.hSet,         metric.hSet        ));
+
+   catch("BackupInputs(1)");
 }
 
 
@@ -2874,7 +2898,20 @@ void RestoreInputs() {
    stop.profitQu.value        = prev.stop.profitQu.value;
    stop.profitQu.description  = prev.stop.profitQu.description;
 
-   recorder.mode              = prev.recorder.mode;
+   recorder.mode = prev.recorder.mode;
+   ArrayResize(metric.enabled,      ArrayCopy(metric.enabled,      prev.metric.enabled     ));
+   ArrayResize(metric.symbol,       ArrayCopy(metric.symbol,       prev.metric.symbol      ));
+   ArrayResize(metric.description,  ArrayCopy(metric.description,  prev.metric.description ));
+   ArrayResize(metric.group,        ArrayCopy(metric.group,        prev.metric.group       ));
+   ArrayResize(metric.digits,       ArrayCopy(metric.digits,       prev.metric.digits      ));
+   ArrayResize(metric.currValue,    ArrayCopy(metric.currValue,    prev.metric.currValue   ));
+   ArrayResize(metric.baseValue,    ArrayCopy(metric.baseValue,    prev.metric.baseValue   ));
+   ArrayResize(metric.multiplier,   ArrayCopy(metric.multiplier,   prev.metric.multiplier  ));
+   ArrayResize(metric.hstDirectory, ArrayCopy(metric.hstDirectory, prev.metric.hstDirectory));
+   ArrayResize(metric.hstFormat,    ArrayCopy(metric.hstFormat,    prev.metric.hstFormat   ));
+   ArrayResize(metric.hSet,         ArrayCopy(metric.hSet,         prev.metric.hSet        ));
+
+   catch("RestoreInputs(1)");
 }
 
 
@@ -3062,18 +3099,90 @@ bool ValidateInputs() {
    }
    TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
-   // EA.Recorder
-   if (IsTestInstance() && !__isTesting) {
-      recorder.mode = RECORDER_OFF;                      // ignore/disable recorder if a test is loaded in an online chart
-   }
-   else {
-      int metrics;
-      if (!initRecorder_ValidateInput(metrics))          return(false);
-      if (recorder.mode==RECORDER_CUSTOM && metrics > 8) return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+   // EA.Recorder: on | off* | 1,2,3=1000,...
+   if (!isInitParameters || EA.Recorder!=prev.EA.Recorder) {
+      sValue = StrToLower(EA.Recorder);
+      if (Explode(sValue, "*", sValues, 2) > 1) {
+         size = Explode(sValues[0], "|", sValues, NULL);
+         sValue = sValues[size-1];
+      }
+      sValue = StrTrim(sValue);
+      if (sValue == "off" || IsOptimization() || (IsTestInstance() && !__isTesting)) {
+         recorder.mode = RECORDER_OFF;
+         EA.Recorder   = sValue;
+      }
+      else if (sValue == "on" ) {
+         recorder.mode = RECORDER_INTERNAL;
+         EA.Recorder   = sValue;
+      }
+      else {
+         ArrayResize(metric.enabled,      0);
+         ArrayResize(metric.symbol,       0);
+         ArrayResize(metric.description,  0);
+         ArrayResize(metric.group,        0);
+         ArrayResize(metric.digits,       0);
+         ArrayResize(metric.currValue,    0);
+         ArrayResize(metric.baseValue,    0);
+         ArrayResize(metric.multiplier,   0);
+         ArrayResize(metric.hstDirectory, 0);
+         ArrayResize(metric.hstFormat,    0);
+         ArrayResize(metric.hSet,         0);
+         int sizeOfMetrics = 0;
+
+         string sInput = "";
+         size = Explode(sValue, ",", sValues, NULL);
+
+         for (i=0; i < size; i++) {
+            sValue = StrTrim(sValues[i]);                // syntax: <int>[=<double>]      <int>:    metric id (required)
+            if (sValue == "")    continue;               //                               <double>: metric base value (optional)
+            if (sValue == "...") continue;
+
+            string sId = StrTrim(StrLeftTo(sValue, "="));
+            iValue = StrToInteger(sId);
+            if (!StrIsDigits(sId) || !iValue)            return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (metric ids must be positive integers)"));
+            int metricId = iValue;
+            if (sizeOfMetrics > metricId) {
+               if (metric.enabled[metricId])             return(!onInputError("ValidateInputs(27)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (duplicate metric id "+ metricId +")"));
+            }
+            string sBase = StrTrim(StrRightFrom(sValue, "="));
+            double dValue = StrToDouble(sBase);
+            if (!StrIsNumeric(sBase) || dValue <= 0)     return(!onInputError("ValidateInputs(28)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (base values must be positive numbers)"));
+            double baseValue = dValue;
+
+            // metricId and baseValue are now syntactically validated
+            if (sizeOfMetrics < metricId+1) {
+               sizeOfMetrics++;
+               ArrayResize(metric.enabled,      sizeOfMetrics);
+               ArrayResize(metric.symbol,       sizeOfMetrics);
+               ArrayResize(metric.description,  sizeOfMetrics);
+               ArrayResize(metric.group,        sizeOfMetrics);
+               ArrayResize(metric.digits,       sizeOfMetrics);
+               ArrayResize(metric.currValue,    sizeOfMetrics);
+               ArrayResize(metric.baseValue,    sizeOfMetrics);
+               ArrayResize(metric.multiplier,   sizeOfMetrics);
+               ArrayResize(metric.hstDirectory, sizeOfMetrics);
+               ArrayResize(metric.hstFormat,    sizeOfMetrics);
+               ArrayResize(metric.hSet,         sizeOfMetrics);
+            }
+            metric.enabled  [metricId] = true;
+            metric.baseValue[metricId] = baseValue;
+            sInput = StringConcatenate(sInput, ",", metricId, ifString(!baseValue, "", "="+ NumberToStr(baseValue, ".+")));
+         }
+
+         if (!sizeOfMetrics) {
+            recorder.mode = RECORDER_OFF;
+            EA.Recorder = "off";
+         }
+         else {
+            recorder.mode = RECORDER_CUSTOM;
+            EA.Recorder = StrSubstr(sInput, 1);
+         }
+      }
+      ec_SetRecordMode(__ExecutionContext, recorder.mode);
    }
 
    SS.All();
-   return(!catch("ValidateInputs(27)"));
+   return(!catch("ValidateInputs(29)"));
 }
 
 
