@@ -140,7 +140,8 @@
  *    - config support for session and trade breaks at specific day times
  *
  *  - move custom metric validation to EA
- *  - backup/restore recorder related runtime vars
+ *  - reset recorder.initialized
+ *
  *  - on exceeding the max. open file limit of the terminal (512)
  *     FATAL  GBPJPY,M5  ZigZag EA::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE]
  *     ERROR  GBPJPY,M5  ZigZag EA::rsfHistory1::catch(1)  recursion: SendEmail(8)->FileOpen()  [ERR_CANNOT_OPEN_FILE]
