@@ -41,6 +41,7 @@
  *
  *
  * TODO:
+ *  - check errors in Recorder.Backup/RestoreInputs()
  *  - add var recorder.internalSymbol and store/restore value
  *
  *  - visible/audible alert at daily loss limit

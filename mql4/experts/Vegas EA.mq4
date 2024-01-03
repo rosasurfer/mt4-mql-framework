@@ -18,7 +18,7 @@
  *
  * • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in the tester).
  *   These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they
- *   can be displayed and analysed like regular MetaTrader charts.
+ *   can be displayed and analysed like regular MetaTrader symbols.
  *
  *
  * Input parameters:
@@ -27,7 +27,7 @@
  * • Tunnel.Definition:  ...
  * • Donchian.Periods:   ...
  * • Lots:               ...
- * • EA.Recorder:        Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.mqh
+ * • EA.Recorder:        Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
  *
  *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
@@ -35,7 +35,7 @@
  *
  *
  * TODO:
- *  - add recording
+ *  - add custom metrics
  *  - add/update virtual trading
  *  - implement multiple exit strategies
  *  - implement multiple entry strategies
@@ -1355,6 +1355,8 @@ void BackupInputs() {
    prev.instance.isTest  = instance.isTest;
    prev.instance.name    = instance.name;
    prev.instance.status  = instance.status;
+
+   Recorder.BackupInputs();
 }
 
 
@@ -1374,6 +1376,8 @@ void RestoreInputs() {
    instance.isTest  = prev.instance.isTest;
    instance.name    = prev.instance.name;
    instance.status  = prev.instance.status;
+
+   Recorder.RestoreInputs();
 }
 
 
@@ -1458,7 +1462,7 @@ bool ValidateInputs() {
    if (NE(Lots, NormalizeLots(Lots)))      return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
-   //if (!ValidateInputs.Recorder()) return(false);
+   if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
    return(!catch("ValidateInputs(14)"));
