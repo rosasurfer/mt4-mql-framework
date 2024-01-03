@@ -40,7 +40,7 @@ int init() {
    }
 
    // finish initialization
-   if (!init_Globals()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initGlobals()) if (CheckErrors("init(2)")) return(last_error);
 
    // user-spezifische Init-Tasks ausführen
    int initFlags = __ExecutionContext[EC.programInitFlags];
@@ -71,11 +71,11 @@ int init() {
 
 
 /**
- * Update global variables. Called immediately after SyncMainContext_init().
+ * Initialize/update global variables. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  */
-bool init_Globals() {
+bool initGlobals() {
    __isChart   = (__ExecutionContext[EC.hChart ] != 0);
    __isTesting = (__ExecutionContext[EC.testing] != 0);
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
@@ -90,7 +90,7 @@ bool init_Globals() {
    P_INF = -N_INF;                                                   // positive infinity
    NaN   =  N_INF - N_INF;                                           // not-a-number
 
-   return(!catch("init_Globals(1)"));
+   return(!catch("initGlobals(1)"));
 }
 
 

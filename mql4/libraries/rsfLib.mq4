@@ -331,7 +331,7 @@ bool AquireLock(string mutex) {
    while (true) {
       if (GlobalVariableSetOnCondition(globalVar, 1, 0)) {     // try to get it
          ArrayPushString(__lockNames, mutex);                  // got it
-         ArrayPushInt   (__lockCounters,      1);
+         ArrayPushInt(__lockCounters, 1);
          return(true);
       }
       error = GetLastError();

@@ -60,7 +60,7 @@ int init() {
    }
 
    // finish initialization
-   if (!init_Globals()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initGlobals()) if (CheckErrors("init(2)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
@@ -158,11 +158,11 @@ int init() {
 
 
 /**
- * Update global variables. Called immediately after SyncMainContext_init().
+ * Initialize/update global variables. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  */
-bool init_Globals() {
+bool initGlobals() {
    // Terminal bug 1: On opening of a new chart window and on account change the global vars Digits and Point are set to the
    //                 values stored in the applied template, irrespective of the real symbol properties. This affects only
    //                 the first init() call, in start() the true values have been applied.
@@ -190,7 +190,7 @@ bool init_Globals() {
    P_INF = -N_INF;                                                   // positive infinity
    NaN   =  N_INF - N_INF;                                           // not-a-number
 
-   return(!catch("init_Globals(1)"));
+   return(!catch("initGlobals(1)"));
 }
 
 

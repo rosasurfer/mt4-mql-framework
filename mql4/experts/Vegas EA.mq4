@@ -1,7 +1,7 @@
 /**
- ***************************************************************************************************************************
- *                                           WORK-IN-PROGRESS, DO NOT YET USE                                              *
- ***************************************************************************************************************************
+ ****************************************************************************************************************************
+ *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
+ ****************************************************************************************************************************
  *
  * Channel Breakout
  *
@@ -18,7 +18,7 @@
  *
  * • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in the tester).
  *   These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they
- *   can be displayed and analysed like regular MetaTrader charts.
+ *   can be displayed and analysed like regular MetaTrader symbols.
  *
  *
  * Input parameters:
@@ -27,7 +27,7 @@
  * • Tunnel.Definition:  ...
  * • Donchian.Periods:   ...
  * • Lots:               ...
- * • EA.Recorder:        Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.mqh
+ * • EA.Recorder:        Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
  *
  *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
@@ -35,11 +35,11 @@
  *
  *
  * TODO:
- *  - add/update performance recording
+ *  - add custom metrics
  *  - add/update virtual trading
  *  - implement multiple exit strategies
  *  - implement multiple entry strategies
- *  - add/use input "TradingTimeframe"
+ *  - add input "TradingTimeframe"
  *  - document input params, control scripts and general usage
  */
 #include <stddefines.mqh>
@@ -50,7 +50,7 @@ int __virtualTicks = 0;
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID          = "";                             // instance to load from a status file, format "[T]123"
-extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MAs separated by ","
+extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MA definitions separated by comma
 extern string Supported.MA.Methods = "SMA, LWMA, EMA, SMMA";
 extern int    Donchian.Periods     = 30;
 extern double Lots                 = 0.1;
@@ -981,6 +981,7 @@ bool ReadStatus() {
    string sTunnelDefinition = GetIniStringA(file, section, "Tunnel.Definition", "");      // string Tunnel.Definition = EMA(1), EMA(2), EMA(3)
    int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods"     );      // int    Donchian.Periods  = 40
    string sLots             = GetIniStringA(file, section, "Lots",              "");      // double Lots              = 0.1
+   string sEaRecorder       = GetIniStringA(file, section, "EA.Recorder",       "");      // string EA.Recorder       = 1,2,4
 
    if (!StrIsNumeric(sLots)) return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
@@ -988,6 +989,7 @@ bool ReadStatus() {
    Tunnel.Definition = sTunnelDefinition;
    Donchian.Periods  = iDonchianPeriods;
    Lots              = StrToDouble(sLots);
+   EA.Recorder       = sEaRecorder;
 
    // [Runtime status]
    section = "Runtime status";
@@ -1255,7 +1257,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.ID",              /*string*/ Instance.ID);
    WriteIniString(file, section, "Tunnel.Definition",        /*string*/ Tunnel.Definition);
    WriteIniString(file, section, "Donchian.Periods",         /*int   */ Donchian.Periods);
-   WriteIniString(file, section, "Lots",                     /*double*/ NumberToStr(Lots, ".+") + separator);        // conditional section separator
+   WriteIniString(file, section, "Lots",                     /*double*/ NumberToStr(Lots, ".+"));
+   WriteIniString(file, section, "EA.Recorder",              /*string*/ EA.Recorder + separator);                    // conditional section separator
 
    // [Runtime status]
    section = "Runtime status";                               // On deletion of pending orders the number of stored order records decreases. To prevent
@@ -1352,6 +1355,8 @@ void BackupInputs() {
    prev.instance.isTest  = instance.isTest;
    prev.instance.name    = instance.name;
    prev.instance.status  = instance.status;
+
+   Recorder.BackupInputs();
 }
 
 
@@ -1371,6 +1376,8 @@ void RestoreInputs() {
    instance.isTest  = prev.instance.isTest;
    instance.name    = prev.instance.name;
    instance.status  = prev.instance.status;
+
+   Recorder.RestoreInputs();
 }
 
 
@@ -1391,8 +1398,8 @@ bool ValidateInputs.ID() {
 
 
 /**
- * Validate all input parameters. Parameters may have been entered through the input dialog, read from a status file or
- * deserialized and applied programmatically by the terminal (e.g. at terminal restart). Called from onInitUser(),
+ * Validate all input parameters. Parameters may have been entered through the input dialog, read from a status file or were
+ * deserialized and set programmatically by the terminal (e.g. at terminal restart). Called from onInitUser(),
  * onInitParameters() or onInitTemplate().
  *
  * @return bool - whether input parameters are valid
@@ -1453,6 +1460,9 @@ bool ValidateInputs() {
    // Lots
    if (LT(Lots, 0))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
    if (NE(Lots, NormalizeLots(Lots)))      return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+
+   // EA.Recorder: on | off* | 1,2,3=1000,...
+   if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
    return(!catch("ValidateInputs(14)"));
