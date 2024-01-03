@@ -1,5 +1,5 @@
 /**
- * DDL-Monitor
+ * DDL Monitor
  *
  * This EA's purpose is to protect the trading account and enforce adherence to a daily loss/drawdown limit (DDL). It monitors
  * open positions and PnL of all symbols (not only the symbol where the EA is attached).
