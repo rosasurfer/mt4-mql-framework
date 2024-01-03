@@ -1,45 +1,51 @@
 /**
  * ZigZag EA - a modified version of the system traded by the "Turtle Traders" of Richard Dennis
  *
- * The ZigZag indicator in this GitHub repository uses a Donchian channel for calculation. It's different from the flawed
- * ZigZag indicator provided by MetaQuotes. Thus it can be used to implement the system of the turtles.
+ *
+ * To implement the Donchian channel system of the "Turtles" we need the ZigZag indicator of this GitHub repository (the
+ * flawed ZigZag indicator provided by MetaQuotes can't be used).
+ *
+ *  @see  [Turtle Trading]    http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
+ *  @see  [Turtle Trading]    https://analyzingalpha.com/turtle-trading
+ *  @see  [ZigZag indicator]  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
  *
  *
  * Input parameters
  * ----------------
- * • EA.Recorder: Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.mqh
+ * • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.mqh
  *
- *    "1":   Records a timeseries depicting theoretical PL with zero spread and no costs in quote units.                   OK
- *    "2":   Records a timeseries depicting PL after spread but before all other costs (gross) in quote units.             OK
- *    "3":   Records a timeseries depicting PL after all costs (net) in quote units.                                       OK
- *    "4":   Records a timeseries depicting PL after all costs (net) in account currency (like "on" except base value).    OK
+ *    "1":  Records a timeseries depicting theoretical PL with zero spread and no costs in quote units.
+ *    "2":  Records a timeseries depicting PL after spread but before all other costs (gross) in quote units.
+ *    "3":  Records a timeseries depicting PL after all costs (net) in quote units.
+ *    "4":  Records a timeseries depicting PL after all costs (net) in account currency (like "on" but supports a base value).
  *
- *    "5":   Records a timeseries depicting theoretical daily PL with zero spread and no costs in quote units.
- *    "6":   Records a timeseries depicting daily PL after spread but before all other costs (gross) in quote units.
- *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
- *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
+ *    "5":  Records a timeseries depicting theoretical daily PL with zero spread and no costs in quote units.            TODO
+ *    "6":  Records a timeseries depicting daily PL after spread but before all other costs (gross) in quote units.      TODO
+ *    "7":  Records a timeseries depicting daily PL after all costs (net) in quote units.                                TODO
+ *    "8":  Records a timeseries depicting daily PL after all costs (net) in account currency.                           TODO
  *
- *    Timeseries in "quote units" are recorded in the best matching unit (pip for Forex, full quote points otherwise).
+ *    Metrics in quote units are scaled to the best matching unit. That's pip for Forex and full points otherwise.
  *
  *
  * External control
  * ----------------
- * The EA can be controlled externally via execution of the following scripts (online and in tester):
+ * The EA status can be controlled via execution of the following scripts (online and in tester):
  *
- *  • EA.Wait:  When a "wait" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
- *              arrives the EA starts trading. Nothing changes if the EA is already in status "waiting".
+ *  • EA.Wait:  When a "wait" command is received a stopped EA starts waiting for new trade signals. After the next signal
+ *              the EA starts trading. The command has no effect if the EA is already in status "waiting".
  *  • EA.Start: When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
  *              trend and doesn't wait for the next signal. There are two sub-commands "start:long" and "start:short" to
- *              start the EA in a predefined direction. Nothing changes if a position is already open.
- *  • EA.Stop:  When a "stop" command is received the EA closes open positions and stops waiting for new ZigZag signals.
- *              Nothing changes if the EA is already stopped.
- *
- *
- *  @see  [Turtle Trading]  http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
- *  @see  [Turtle Trading]  https://analyzingalpha.com/turtle-trading
+ *              start the EA in a predefined direction. The command has no effect if the EA already manages an open position.
+ *  • EA.Stop:  When a "stop" command is received the EA closes open positions and stops waiting for new trade signals.
+ *              The command has no effect if the EA is already stopped.
  *
  *
  * TODO:
+ *  - add Recorder.ResetMetrics()
+ *  - reset recorder.initialized
+ *  - move metric validation to include file
+ *  - add var recorder.internalSymbol and store/restore value
+ *
  *  - visible/audible alert at daily loss limit
  *  - visible alert at profit target
  *
@@ -139,9 +145,6 @@
  *    - better parsing of struct SYMBOL
  *    - config support for session and trade breaks at specific day times
  *
- *  - move custom metric validation to EA
- *  - reset recorder.initialized
- *
  *  - on exceeding the max. open file limit of the terminal (512)
  *     FATAL  GBPJPY,M5  ZigZag EA::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE]
  *     ERROR  GBPJPY,M5  ZigZag EA::rsfHistory1::catch(1)  recursion: SendEmail(8)->FileOpen()  [ERR_CANNOT_OPEN_FILE]
@@ -239,15 +242,15 @@ extern bool   ShowProfitInPercent  = true;                  // whether PL is dis
 #define TP_TYPE_PIP                 3
 #define TP_TYPE_QUOTEUNIT           4
 
-#define METRIC_TOTAL_UNITS_ZERO     0           // cumulated PL metrics
-#define METRIC_TOTAL_UNITS_GROSS    1
-#define METRIC_TOTAL_UNITS_NET      2
-#define METRIC_TOTAL_MONEY_NET      3
+#define METRIC_TOTAL_UNITS_ZERO     1           // cumulated PL metrics
+#define METRIC_TOTAL_UNITS_GROSS    2
+#define METRIC_TOTAL_UNITS_NET      3
+#define METRIC_TOTAL_MONEY_NET      4
 
-#define METRIC_DAILY_UNITS_ZERO     4           // daily PL metrics
-#define METRIC_DAILY_UNITS_GROSS    5
-#define METRIC_DAILY_UNITS_NET      6
-#define METRIC_DAILY_MONEY_NET      7
+#define METRIC_DAILY_UNITS_ZERO     5           // daily PL metrics
+#define METRIC_DAILY_UNITS_GROSS    6
+#define METRIC_DAILY_UNITS_NET      7
+#define METRIC_DAILY_MONEY_NET      8
 
 // general
 int      tradingMode;
@@ -1954,106 +1957,79 @@ bool VirtualOrderClose(int ticket) {
 
 
 /**
- * Return symbol definitions for metrics to be recorded.
+ * Return a symbol definition for the specified metric to be recorded.
  *
- * @param  _In_  int    i             - zero-based index of the timeseries (position in the recorder)
- * @param  _Out_ bool   enabled       - whether the metric is active and should be recorded
- * @param  _Out_ string symbol        - unique timeseries symbol
- * @param  _Out_ string symbolDescr   - timeseries description
- * @param  _Out_ string symbolGroup   - timeseries group (if empty recorder defaults are used)
- * @param  _Out_ int    symbolDigits  - timeseries digits
- * @param  _Out_ double hstBase       - history base value (if zero recorder defaults are used)
- * @param  _Out_ int    hstMultiplier - multiplier applied to the recorded history values (if zero recorder defaults are used)
+ * @param  _In_  int    id           - metric id
+ * @param  _Out_ bool   &enabled     - whether the metric is active and should be recorded
+ * @param  _Out_ string &symbol      - unique MT4 timeseries symbol
+ * @param  _Out_ string &description - symbol description as in the MT4 "Symbols" window
+ * @param  _Out_ string &group       - symbol group name as in the MT4 "Symbols" window
+ * @param  _Out_ int    &digits      - symbol digits value
+ * @param  _Out_ double &baseValue   - quotes base value (if EMPTY recorder settings are used)
+ * @param  _Out_ int    &multiplier  - quotes multiplier
  *
- * @return bool - whether to add a definition for the specified index
+ * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
-bool Recorder_GetSymbolDefinition(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier) {
-   enabled = false;
-   if (IsLastError())                    return(false);
-   if (!instance.id)                     return(!catch("Recorder_GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
-   if (IsTestInstance() && !__isTesting) return(false);                       // never record anything in a stopped test
+int Recorder.GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
+   if (!instance.id) return(catch("Recorder.GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string ids[];
-   int size = Explode(EA.Recorder, ",", ids, NULL);
-   for (int n=0; n < size; n++) {
-      ids[n] = ""+ StrToInteger(ids[n]);                                      // cut-off a specified base value
-   }
+   int _Digits  = MathMax(Digits, 2);                                         // transform Digits=1 to 2
+   string punit = ifString(_Digits > 2, "pip", "point");
 
-   enabled       = StringInArray(ids, ""+ (i+1));
-   symbolGroup   = "";
-   hstBase       = NULL;
-   hstMultiplier = NULL;
-
-   int    symDigits  = 2;
-   int    multiplier = 1;                                                     // store original value: 1.23 => 1.23 point
-   string sQuoteUnit = "point";
-   int    digits     = MathMax(Digits, 2);
-   if (digits > 2) {
-      symDigits  = 1;
-      multiplier = MathRound(MathPow(10, digits & (~1)));                     // convert values to pip: 0.0123'4 => 123.4 pip
-      sQuoteUnit = "pip";
-   }
-
-   switch (i) {
+   switch (id) {
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_TOTAL_UNITS_ZERO:             // OK
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"A";    // "zUS500_123A"
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ sQuoteUnit +", zero spread";
-         symbolDigits  = symDigits;                                           // "ZigZag(40,H1) US500 in point, zero spread"
-         hstMultiplier = multiplier;
-         return(true);
+         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"A";      // "zUS500_123A"
+         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", zero spread";
+         break;                                                               // "ZigZag(40,H1) US500 in point, zero spread"
 
       case METRIC_TOTAL_UNITS_GROSS:            // OK
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"B";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ sQuoteUnit +", gross";
-         symbolDigits  = symDigits;
-         hstMultiplier = multiplier;
-         return(true);
+         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"B";
+         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", gross";
+         break;
 
       case METRIC_TOTAL_UNITS_NET:              // OK
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"C";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ sQuoteUnit +", net";
-         symbolDigits  = symDigits;
-         hstMultiplier = multiplier;
-         return(true);
+         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"C";
+         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", net";
+         break;
 
       case METRIC_TOTAL_MONEY_NET:              // OK
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"D";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ AccountCurrency() +", net";
-         symbolDigits  = 2;
-         hstMultiplier = 1;
-         return(true);
+         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"D";
+         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ AccountCurrency() +", net";
+         break;
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_UNITS_ZERO:
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"E";    // "zEURUS_456A"
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ sQuoteUnit +", zero spread";
-         symbolDigits  = symDigits;                                           // "ZigZag(40,H1) EURUSD daily in pip, zero spread"
-         hstMultiplier = multiplier;
-         return(true);
+         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"E";      // "zEURUS_456A"
+         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", zero spread";
+         break;                                                               // "ZigZag(40,H1) EURUSD daily in pip, zero spread"
 
       case METRIC_DAILY_UNITS_GROSS:
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"F";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ sQuoteUnit +", gross";
-         symbolDigits  = symDigits;
-         hstMultiplier = multiplier;
-         return(true);
+         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"F";
+         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", gross";
+         break;
 
       case METRIC_DAILY_UNITS_NET:
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"G";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ sQuoteUnit +", net";
-         symbolDigits  = symDigits;
-         hstMultiplier = multiplier;
-         return(true);
+         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"G";
+         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", net";
+         break;
 
       case METRIC_DAILY_MONEY_NET:
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"H";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ AccountCurrency() +", net";
-         symbolDigits  = 2;
-         hstMultiplier = 1;
-         return(true);
+         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"H";
+         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ AccountCurrency() +", net";
+         break;
+
+      default:
+         return(ERR_INVALID_INPUT_PARAMETER);
    }
-   return(false);
+
+   enabled    = true;
+   group      = "";
+   baseValue  = EMPTY;
+   digits     = ifInt(_Digits > 2, 1, 2);                                     // store 1.23 as 1.23 point
+   multiplier = ifInt(_Digits > 2, Round(MathPow(10, _Digits & (~1))), 1);    // store 0.0123'4 as 123.4 pip
+
+   return(NO_ERROR);
 }
 
 
@@ -2776,17 +2752,16 @@ double   prev.stop.profitQu.value;
 string   prev.stop.profitQu.description = "";
 
 int      prev.recorder.mode;
-bool     prev.metric.enabled     [];
-string   prev.metric.symbol      [];
-string   prev.metric.description [];
-string   prev.metric.group       [];
-int      prev.metric.digits      [];
-double   prev.metric.currValue   [];
-double   prev.metric.baseValue   [];
-int      prev.metric.multiplier  [];
-string   prev.metric.hstDirectory[];
-int      prev.metric.hstFormat   [];
-int      prev.metric.hSet        [];
+
+bool     prev.metric.enabled    [];
+string   prev.metric.symbol     [];
+string   prev.metric.description[];
+string   prev.metric.group      [];
+int      prev.metric.digits     [];
+double   prev.metric.currValue  [];
+double   prev.metric.baseValue  [];
+int      prev.metric.multiplier [];
+int      prev.metric.hSet       [];
 
 
 /**
@@ -2836,18 +2811,17 @@ void BackupInputs() {
    prev.stop.profitQu.value        = stop.profitQu.value;
    prev.stop.profitQu.description  = stop.profitQu.description;
 
-   prev.recorder.mode = recorder.mode;
-   ArrayResize(prev.metric.enabled,      ArrayCopy(prev.metric.enabled,      metric.enabled     ));
-   ArrayResize(prev.metric.symbol,       ArrayCopy(prev.metric.symbol,       metric.symbol      ));
-   ArrayResize(prev.metric.description,  ArrayCopy(prev.metric.description,  metric.description ));
-   ArrayResize(prev.metric.group,        ArrayCopy(prev.metric.group,        metric.group       ));
-   ArrayResize(prev.metric.digits,       ArrayCopy(prev.metric.digits,       metric.digits      ));
-   ArrayResize(prev.metric.currValue,    ArrayCopy(prev.metric.currValue,    metric.currValue   ));
-   ArrayResize(prev.metric.baseValue,    ArrayCopy(prev.metric.baseValue,    metric.baseValue   ));
-   ArrayResize(prev.metric.multiplier,   ArrayCopy(prev.metric.multiplier,   metric.multiplier  ));
-   ArrayResize(prev.metric.hstDirectory, ArrayCopy(prev.metric.hstDirectory, metric.hstDirectory));
-   ArrayResize(prev.metric.hstFormat,    ArrayCopy(prev.metric.hstFormat,    metric.hstFormat   ));
-   ArrayResize(prev.metric.hSet,         ArrayCopy(prev.metric.hSet,         metric.hSet        ));
+   prev.recorder.mode              = recorder.mode;
+
+   ArrayResize(prev.metric.enabled,     ArrayCopy(prev.metric.enabled,     metric.enabled    ));
+   ArrayResize(prev.metric.symbol,      ArrayCopy(prev.metric.symbol,      metric.symbol     ));
+   ArrayResize(prev.metric.description, ArrayCopy(prev.metric.description, metric.description));
+   ArrayResize(prev.metric.group,       ArrayCopy(prev.metric.group,       metric.group      ));
+   ArrayResize(prev.metric.digits,      ArrayCopy(prev.metric.digits,      metric.digits     ));
+   ArrayResize(prev.metric.currValue,   ArrayCopy(prev.metric.currValue,   metric.currValue  ));
+   ArrayResize(prev.metric.baseValue,   ArrayCopy(prev.metric.baseValue,   metric.baseValue  ));
+   ArrayResize(prev.metric.multiplier,  ArrayCopy(prev.metric.multiplier,  metric.multiplier ));
+   ArrayResize(prev.metric.hSet,        ArrayCopy(prev.metric.hSet,        metric.hSet       ));
 
    catch("BackupInputs(1)");
 }
@@ -2899,18 +2873,17 @@ void RestoreInputs() {
    stop.profitQu.value        = prev.stop.profitQu.value;
    stop.profitQu.description  = prev.stop.profitQu.description;
 
-   recorder.mode = prev.recorder.mode;
-   ArrayResize(metric.enabled,      ArrayCopy(metric.enabled,      prev.metric.enabled     ));
-   ArrayResize(metric.symbol,       ArrayCopy(metric.symbol,       prev.metric.symbol      ));
-   ArrayResize(metric.description,  ArrayCopy(metric.description,  prev.metric.description ));
-   ArrayResize(metric.group,        ArrayCopy(metric.group,        prev.metric.group       ));
-   ArrayResize(metric.digits,       ArrayCopy(metric.digits,       prev.metric.digits      ));
-   ArrayResize(metric.currValue,    ArrayCopy(metric.currValue,    prev.metric.currValue   ));
-   ArrayResize(metric.baseValue,    ArrayCopy(metric.baseValue,    prev.metric.baseValue   ));
-   ArrayResize(metric.multiplier,   ArrayCopy(metric.multiplier,   prev.metric.multiplier  ));
-   ArrayResize(metric.hstDirectory, ArrayCopy(metric.hstDirectory, prev.metric.hstDirectory));
-   ArrayResize(metric.hstFormat,    ArrayCopy(metric.hstFormat,    prev.metric.hstFormat   ));
-   ArrayResize(metric.hSet,         ArrayCopy(metric.hSet,         prev.metric.hSet        ));
+   recorder.mode              = prev.recorder.mode;
+
+   ArrayResize(metric.enabled,     ArrayCopy(metric.enabled,     prev.metric.enabled    ));
+   ArrayResize(metric.symbol,      ArrayCopy(metric.symbol,      prev.metric.symbol     ));
+   ArrayResize(metric.description, ArrayCopy(metric.description, prev.metric.description));
+   ArrayResize(metric.group,       ArrayCopy(metric.group,       prev.metric.group      ));
+   ArrayResize(metric.digits,      ArrayCopy(metric.digits,      prev.metric.digits     ));
+   ArrayResize(metric.currValue,   ArrayCopy(metric.currValue,   prev.metric.currValue  ));
+   ArrayResize(metric.baseValue,   ArrayCopy(metric.baseValue,   prev.metric.baseValue  ));
+   ArrayResize(metric.multiplier,  ArrayCopy(metric.multiplier,  prev.metric.multiplier ));
+   ArrayResize(metric.hSet,        ArrayCopy(metric.hSet,        prev.metric.hSet       ));
 
    catch("RestoreInputs(1)");
 }
@@ -3100,14 +3073,15 @@ bool ValidateInputs() {
    }
    TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
-   // EA.Recorder: on | off* | 1,2,3=1000,...
-   if (!isInitParameters || EA.Recorder!=prev.EA.Recorder) {
-      sValue = StrToLower(EA.Recorder);
+   // EA.Recorder: on | off* | 1,2,3=1000,...                     // syntax: <integer>[=<number>]
+   if (!isInitParameters || EA.Recorder!=prev.EA.Recorder) {      //   <integer>: positive metric id (required)
+      sValue = StrToLower(EA.Recorder);                           //   <number>:  positive quote base (optional)
       if (Explode(sValue, "*", sValues, 2) > 1) {
          size = Explode(sValues[0], "|", sValues, NULL);
          sValue = sValues[size-1];
       }
       sValue = StrTrim(sValue);
+
       if (sValue == "off" || IsOptimization() || (IsTestInstance() && !__isTesting)) {
          recorder.mode = RECORDER_OFF;
          EA.Recorder   = sValue;
@@ -3117,65 +3091,63 @@ bool ValidateInputs() {
          EA.Recorder   = sValue;
       }
       else {
-         ArrayResize(metric.enabled,      0);
-         ArrayResize(metric.symbol,       0);
-         ArrayResize(metric.description,  0);
-         ArrayResize(metric.group,        0);
-         ArrayResize(metric.digits,       0);
-         ArrayResize(metric.currValue,    0);
-         ArrayResize(metric.baseValue,    0);
-         ArrayResize(metric.multiplier,   0);
-         ArrayResize(metric.hstDirectory, 0);
-         ArrayResize(metric.hstFormat,    0);
-         ArrayResize(metric.hSet,         0);
-         int sizeOfMetrics = 0;
+         recorder.mode = RECORDER_CUSTOM;
 
-         string sInput = "";
+         ArrayResize(metric.enabled,     0);
+         ArrayResize(metric.symbol,      0);
+         ArrayResize(metric.description, 0);
+         ArrayResize(metric.group,       0);
+         ArrayResize(metric.digits,      0);
+         ArrayResize(metric.currValue,   0);
+         ArrayResize(metric.baseValue,   0);
+         ArrayResize(metric.multiplier,  0);
+         ArrayResize(metric.hSet,        0);
+
+         bool   enabled;
+         int    metricId, digits, multiplier, metrics;
+         double dValue, baseValue;
+         string sId, sBase, symbol, description, group, sInput="";
+
          size = Explode(sValue, ",", sValues, NULL);
-
          for (i=0; i < size; i++) {
-            sValue = StrTrim(sValues[i]);                // syntax: <int>[=<double>]      <int>:    metric id (required)
-            if (sValue == "")    continue;               //                               <double>: metric base value (optional)
+            // syntactical metric validation
+            sValue = StrTrim(sValues[i]);
+            if (sValue == "")    continue;
             if (sValue == "...") continue;
-
-            string sId = StrTrim(StrLeftTo(sValue, "="));
+            sId = StrTrim(StrLeftTo(sValue, "="));
             iValue = StrToInteger(sId);
             if (!StrIsDigits(sId) || !iValue)            return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (metric ids must be positive integers)"));
-            int metricId = iValue;
-            if (sizeOfMetrics > metricId) {
+            metricId = iValue;
+            if (ArraySize(metric.enabled) > metricId) {
                if (metric.enabled[metricId])             return(!onInputError("ValidateInputs(27)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (duplicate metric id "+ metricId +")"));
             }
-            string sBase = StrTrim(StrRightFrom(sValue, "="));
-            double dValue = StrToDouble(sBase);
-            if (!StrIsNumeric(sBase) || dValue <= 0)     return(!onInputError("ValidateInputs(28)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (base values must be positive numbers)"));
-            double baseValue = dValue;
-
-            // metricId and baseValue are now syntactically validated
-            if (sizeOfMetrics < metricId+1) {
-               sizeOfMetrics++;
-               ArrayResize(metric.enabled,      sizeOfMetrics);
-               ArrayResize(metric.symbol,       sizeOfMetrics);
-               ArrayResize(metric.description,  sizeOfMetrics);
-               ArrayResize(metric.group,        sizeOfMetrics);
-               ArrayResize(metric.digits,       sizeOfMetrics);
-               ArrayResize(metric.currValue,    sizeOfMetrics);
-               ArrayResize(metric.baseValue,    sizeOfMetrics);
-               ArrayResize(metric.multiplier,   sizeOfMetrics);
-               ArrayResize(metric.hstDirectory, sizeOfMetrics);
-               ArrayResize(metric.hstFormat,    sizeOfMetrics);
-               ArrayResize(metric.hSet,         sizeOfMetrics);
+            dValue = 0;
+            if (StrContains(sValue, "=")) {
+               sBase = StrTrim(StrRightFrom(sValue, "="));
+               dValue = StrToDouble(sBase);
+               if (!StrIsNumeric(sBase) || dValue <= 0)  return(!onInputError("ValidateInputs(28)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (base values must be positive numbers)"));
             }
-            metric.enabled  [metricId] = true;
-            metric.baseValue[metricId] = baseValue;
+
+            // logical metric validation
+            int error = Recorder.GetSymbolDefinition(metricId, enabled, symbol, description, group, digits, baseValue, multiplier);
+            if (error != NULL) {
+               if (error == ERR_INVALID_INPUT_PARAMETER) return(!onInputError("ValidateInputs(29)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric id "+ metricId +")"));
+               return(false);                            // a runtime error (already raised)
+            }
+            if (!enabled) continue;
+            if (dValue > 0) baseValue = dValue;
+
+            // store metric details
+            if (!Recorder.AddMetric(metricId, symbol, description, group, digits, baseValue, multiplier)) return(false);
+            metrics++;
             sInput = StringConcatenate(sInput, ",", metricId, ifString(!baseValue, "", "="+ NumberToStr(baseValue, ".+")));
          }
 
-         if (!sizeOfMetrics) {
+         if (!metrics) {
             recorder.mode = RECORDER_OFF;
             EA.Recorder = "off";
          }
          else {
-            recorder.mode = RECORDER_CUSTOM;
             EA.Recorder = StrSubstr(sInput, 1);
          }
       }
@@ -3183,7 +3155,7 @@ bool ValidateInputs() {
    }
 
    SS.All();
-   return(!catch("ValidateInputs(29)"));
+   return(!catch("ValidateInputs(30)"));
 }
 
 
