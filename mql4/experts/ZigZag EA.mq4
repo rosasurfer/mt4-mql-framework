@@ -5,14 +5,14 @@
  * To implement the Donchian channel system of the "Turtles" we need the ZigZag indicator of this GitHub repository (the
  * flawed ZigZag indicator provided by MetaQuotes can't be used).
  *
- *  @see  [Turtle Trading]    http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
- *  @see  [Turtle Trading]    https://analyzingalpha.com/turtle-trading
- *  @see  [ZigZag indicator]  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
+ *  @see  [Turtle Trading]   http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
+ *  @see  [Turtle Trading]   https://analyzingalpha.com/turtle-trading
+ *  @see  [ZigZag indicator] https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
  *
  *
  * Input parameters
  * ----------------
- * • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.mqh
+ * • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
  *    "1":  Records a timeseries depicting theoretical PL with zero spread and no costs in quote units.
  *    "2":  Records a timeseries depicting PL after spread but before all other costs (gross) in quote units.
@@ -41,9 +41,6 @@
  *
  *
  * TODO:
- *  - add Recorder.ResetMetrics()
- *  - reset recorder.initialized
- *  - move metric validation to include file
  *  - add var recorder.internalSymbol and store/restore value
  *
  *  - visible/audible alert at daily loss limit
@@ -99,7 +96,6 @@
  *  - reduce slippage on short reversal: enter market via StopSell
  *
  *  - virtual trading
- *     analyze PL differences DAX,M1 2022.01.04
  *     adjust virtual commissions
  *
  *  - trading functionality
@@ -112,14 +108,13 @@
  *     support multiple units and targets (add new metrics)
  *
  *  - visualization
- *     a chart profile per instrument
  *     rename groups/instruments/history descriptions
  *     ChartInfos: read/display symbol description as long name
  *
  *  - performance tracking
  *     realtime equity charts
  *     notifications for price feed outages
- *     daily metric variants
+ *     daily metrics
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -1970,8 +1965,8 @@ bool VirtualOrderClose(int ticket) {
  *
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
-int Recorder.GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
-   if (!instance.id) return(catch("Recorder.GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
+int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
+   if (!instance.id) return(catch("Recorder_GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
 
    int _Digits  = MathMax(Digits, 2);                                         // transform Digits=1 to 2
    string punit = ifString(_Digits > 2, "pip", "point");
@@ -2719,7 +2714,6 @@ string   prev.StopConditions = "";
 double   prev.TakeProfit;
 string   prev.TakeProfit.Type = "";
 bool     prev.ShowProfitInPercent;
-string   prev.EA.Recorder = "";
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.tradingMode;
@@ -2751,18 +2745,6 @@ int      prev.stop.profitQu.type;
 double   prev.stop.profitQu.value;
 string   prev.stop.profitQu.description = "";
 
-int      prev.recorder.mode;
-
-bool     prev.metric.enabled    [];
-string   prev.metric.symbol     [];
-string   prev.metric.description[];
-string   prev.metric.group      [];
-int      prev.metric.digits     [];
-double   prev.metric.currValue  [];
-double   prev.metric.baseValue  [];
-int      prev.metric.multiplier [];
-int      prev.metric.hSet       [];
-
 
 /**
  * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
@@ -2770,16 +2752,15 @@ int      prev.metric.hSet       [];
  */
 void BackupInputs() {
    // backup input parameters, used for comparison in ValidateInputs()
-   prev.Instance.ID          = StringConcatenate(Instance.ID, "");   // string inputs are references to internal C literals and must be copied to break the reference
-   prev.TradingMode          = StringConcatenate(TradingMode, "");
-   prev.ZigZag.Periods       = ZigZag.Periods;
-   prev.Lots                 = Lots;
-   prev.StartConditions      = StringConcatenate(StartConditions, "");
-   prev.StopConditions       = StringConcatenate(StopConditions, "");
-   prev.TakeProfit           = TakeProfit;
-   prev.TakeProfit.Type      = StringConcatenate(TakeProfit.Type, "");
-   prev.ShowProfitInPercent  = ShowProfitInPercent;
-   prev.EA.Recorder          = StringConcatenate(EA.Recorder, "");
+   prev.Instance.ID         = StringConcatenate(Instance.ID, "");       // string inputs are references to internal C literals
+   prev.TradingMode         = StringConcatenate(TradingMode, "");       // and must be copied to break the reference
+   prev.ZigZag.Periods      = ZigZag.Periods;
+   prev.Lots                = Lots;
+   prev.StartConditions     = StringConcatenate(StartConditions, "");
+   prev.StopConditions      = StringConcatenate(StopConditions, "");
+   prev.TakeProfit          = TakeProfit;
+   prev.TakeProfit.Type     = StringConcatenate(TakeProfit.Type, "");
+   prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // backup runtime variables affected by changing input parameters
    prev.tradingMode                = tradingMode;
@@ -2811,19 +2792,7 @@ void BackupInputs() {
    prev.stop.profitQu.value        = stop.profitQu.value;
    prev.stop.profitQu.description  = stop.profitQu.description;
 
-   prev.recorder.mode              = recorder.mode;
-
-   ArrayResize(prev.metric.enabled,     ArrayCopy(prev.metric.enabled,     metric.enabled    ));
-   ArrayResize(prev.metric.symbol,      ArrayCopy(prev.metric.symbol,      metric.symbol     ));
-   ArrayResize(prev.metric.description, ArrayCopy(prev.metric.description, metric.description));
-   ArrayResize(prev.metric.group,       ArrayCopy(prev.metric.group,       metric.group      ));
-   ArrayResize(prev.metric.digits,      ArrayCopy(prev.metric.digits,      metric.digits     ));
-   ArrayResize(prev.metric.currValue,   ArrayCopy(prev.metric.currValue,   metric.currValue  ));
-   ArrayResize(prev.metric.baseValue,   ArrayCopy(prev.metric.baseValue,   metric.baseValue  ));
-   ArrayResize(prev.metric.multiplier,  ArrayCopy(prev.metric.multiplier,  metric.multiplier ));
-   ArrayResize(prev.metric.hSet,        ArrayCopy(prev.metric.hSet,        metric.hSet       ));
-
-   catch("BackupInputs(1)");
+   Recorder.BackupInputs();
 }
 
 
@@ -2873,19 +2842,7 @@ void RestoreInputs() {
    stop.profitQu.value        = prev.stop.profitQu.value;
    stop.profitQu.description  = prev.stop.profitQu.description;
 
-   recorder.mode              = prev.recorder.mode;
-
-   ArrayResize(metric.enabled,     ArrayCopy(metric.enabled,     prev.metric.enabled    ));
-   ArrayResize(metric.symbol,      ArrayCopy(metric.symbol,      prev.metric.symbol     ));
-   ArrayResize(metric.description, ArrayCopy(metric.description, prev.metric.description));
-   ArrayResize(metric.group,       ArrayCopy(metric.group,       prev.metric.group      ));
-   ArrayResize(metric.digits,      ArrayCopy(metric.digits,      prev.metric.digits     ));
-   ArrayResize(metric.currValue,   ArrayCopy(metric.currValue,   prev.metric.currValue  ));
-   ArrayResize(metric.baseValue,   ArrayCopy(metric.baseValue,   prev.metric.baseValue  ));
-   ArrayResize(metric.multiplier,  ArrayCopy(metric.multiplier,  prev.metric.multiplier ));
-   ArrayResize(metric.hSet,        ArrayCopy(metric.hSet,        prev.metric.hSet       ));
-
-   catch("RestoreInputs(1)");
+   Recorder.RestoreInputs();
 }
 
 
@@ -2906,8 +2863,8 @@ bool ValidateInputs.ID() {
 
 
 /**
- * Validate all input parameters. Parameters may have been entered through the input dialog, read from a status file or
- * deserialized and applied programmatically by the terminal (e.g. at terminal restart). Called from onInitUser(),
+ * Validate all input parameters. Parameters may have been entered through the input dialog, read from a status file or were
+ * deserialized and set programmatically by the terminal (e.g. at terminal restart). Called from onInitUser(),
  * onInitParameters() or onInitTemplate().
  *
  * @return bool - whether input parameters are valid
@@ -3073,89 +3030,11 @@ bool ValidateInputs() {
    }
    TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
-   // EA.Recorder: on | off* | 1,2,3=1000,...                     // syntax: <integer>[=<number>]
-   if (!isInitParameters || EA.Recorder!=prev.EA.Recorder) {      //   <integer>: positive metric id (required)
-      sValue = StrToLower(EA.Recorder);                           //   <number>:  positive quote base (optional)
-      if (Explode(sValue, "*", sValues, 2) > 1) {
-         size = Explode(sValues[0], "|", sValues, NULL);
-         sValue = sValues[size-1];
-      }
-      sValue = StrTrim(sValue);
-
-      if (sValue == "off" || IsOptimization() || (IsTestInstance() && !__isTesting)) {
-         recorder.mode = RECORDER_OFF;
-         EA.Recorder   = sValue;
-      }
-      else if (sValue == "on" ) {
-         recorder.mode = RECORDER_INTERNAL;
-         EA.Recorder   = sValue;
-      }
-      else {
-         recorder.mode = RECORDER_CUSTOM;
-
-         ArrayResize(metric.enabled,     0);
-         ArrayResize(metric.symbol,      0);
-         ArrayResize(metric.description, 0);
-         ArrayResize(metric.group,       0);
-         ArrayResize(metric.digits,      0);
-         ArrayResize(metric.currValue,   0);
-         ArrayResize(metric.baseValue,   0);
-         ArrayResize(metric.multiplier,  0);
-         ArrayResize(metric.hSet,        0);
-
-         bool   enabled;
-         int    metricId, digits, multiplier, metrics;
-         double dValue, baseValue;
-         string sId, sBase, symbol, description, group, sInput="";
-
-         size = Explode(sValue, ",", sValues, NULL);
-         for (i=0; i < size; i++) {
-            // syntactical metric validation
-            sValue = StrTrim(sValues[i]);
-            if (sValue == "")    continue;
-            if (sValue == "...") continue;
-            sId = StrTrim(StrLeftTo(sValue, "="));
-            iValue = StrToInteger(sId);
-            if (!StrIsDigits(sId) || !iValue)            return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (metric ids must be positive integers)"));
-            metricId = iValue;
-            if (ArraySize(metric.enabled) > metricId) {
-               if (metric.enabled[metricId])             return(!onInputError("ValidateInputs(27)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (duplicate metric id "+ metricId +")"));
-            }
-            dValue = 0;
-            if (StrContains(sValue, "=")) {
-               sBase = StrTrim(StrRightFrom(sValue, "="));
-               dValue = StrToDouble(sBase);
-               if (!StrIsNumeric(sBase) || dValue <= 0)  return(!onInputError("ValidateInputs(28)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (base values must be positive numbers)"));
-            }
-
-            // logical metric validation
-            int error = Recorder.GetSymbolDefinition(metricId, enabled, symbol, description, group, digits, baseValue, multiplier);
-            if (error != NULL) {
-               if (error == ERR_INVALID_INPUT_PARAMETER) return(!onInputError("ValidateInputs(29)  "+ instance.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric id "+ metricId +")"));
-               return(false);                            // a runtime error (already raised)
-            }
-            if (!enabled) continue;
-            if (dValue > 0) baseValue = dValue;
-
-            // store metric details
-            if (!Recorder.AddMetric(metricId, symbol, description, group, digits, baseValue, multiplier)) return(false);
-            metrics++;
-            sInput = StringConcatenate(sInput, ",", metricId, ifString(!baseValue, "", "="+ NumberToStr(baseValue, ".+")));
-         }
-
-         if (!metrics) {
-            recorder.mode = RECORDER_OFF;
-            EA.Recorder = "off";
-         }
-         else {
-            EA.Recorder = StrSubstr(sInput, 1);
-         }
-      }
-      ec_SetRecordMode(__ExecutionContext, recorder.mode);
-   }
+   // EA.Recorder: on | off* | 1,2,3=1000,...
+   if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(30)"));
+   return(!catch("ValidateInputs(26)"));
 }
 
 

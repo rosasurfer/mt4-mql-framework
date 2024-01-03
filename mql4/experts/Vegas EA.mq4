@@ -1329,7 +1329,6 @@ string   prev.Instance.ID = "";
 string   prev.Tunnel.Definition = "";
 int      prev.Donchian.Periods;
 double   prev.Lots;
-string   prev.EA.Recorder = "";
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.instance.id;
@@ -1337,7 +1336,6 @@ datetime prev.instance.created;
 bool     prev.instance.isTest;
 string   prev.instance.name = "";
 int      prev.instance.status;
-int      prev.recorder.mode;
 
 
 /**
@@ -1350,7 +1348,6 @@ void BackupInputs() {
    prev.Tunnel.Definition = StringConcatenate(Tunnel.Definition, "");   // and must be copied to break the reference
    prev.Donchian.Periods  = Donchian.Periods;
    prev.Lots              = Lots;
-   prev.EA.Recorder       = StringConcatenate(EA.Recorder, "");
 
    // backup runtime variables affected by changing input parameters
    prev.instance.id      = instance.id;
@@ -1358,7 +1355,6 @@ void BackupInputs() {
    prev.instance.isTest  = instance.isTest;
    prev.instance.name    = instance.name;
    prev.instance.status  = instance.status;
-   prev.recorder.mode    = recorder.mode;
 }
 
 
@@ -1371,7 +1367,6 @@ void RestoreInputs() {
    Tunnel.Definition = prev.Tunnel.Definition;
    Donchian.Periods  = prev.Donchian.Periods;
    Lots              = prev.Lots;
-   EA.Recorder       = prev.EA.Recorder;
 
    // restore runtime variables
    instance.id      = prev.instance.id;
@@ -1379,7 +1374,6 @@ void RestoreInputs() {
    instance.isTest  = prev.instance.isTest;
    instance.name    = prev.instance.name;
    instance.status  = prev.instance.status;
-   recorder.mode    = prev.recorder.mode;
 }
 
 
@@ -1400,8 +1394,8 @@ bool ValidateInputs.ID() {
 
 
 /**
- * Validate all input parameters. Parameters may have been entered through the input dialog, read from a status file or
- * deserialized and applied programmatically by the terminal (e.g. at terminal restart). Called from onInitUser(),
+ * Validate all input parameters. Parameters may have been entered through the input dialog, read from a status file or were
+ * deserialized and set programmatically by the terminal (e.g. at terminal restart). Called from onInitUser(),
  * onInitParameters() or onInitTemplate().
  *
  * @return bool - whether input parameters are valid
@@ -1462,6 +1456,9 @@ bool ValidateInputs() {
    // Lots
    if (LT(Lots, 0))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
    if (NE(Lots, NormalizeLots(Lots)))      return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+
+   // EA.Recorder: on | off* | 1,2,3=1000,...
+   //if (!ValidateInputs.Recorder()) return(false);
 
    SS.All();
    return(!catch("ValidateInputs(14)"));

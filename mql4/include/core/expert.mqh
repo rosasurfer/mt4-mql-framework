@@ -1,40 +1,8 @@
-//
-// During runtime an EA can record up to 32 different performance graphs (aka metrics), online and in tester. These recordings
-// are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they can be displayed and
-// analysed like regular MetaTrader charts.
-//
-// Metrics are declared using input parameter "EA.Recorder". Multiple declarations must be separated by a comma. Syntax:
-//
-//  off:  Recording is disabled (default).
-//  on:   Records a timeseries representing the EA's equity graph as reported by the built-in function AccountEquity().
-//  <id>[=<base-value>]:  Records a timeseries representing a custom metric identified by a postive <id> (integer). Specify an
-//        appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display negative
-//        values). If no base value is specified the recorder queries the framework configuration.
-//
-// During EA initialization the function Recorder.GetSymbolDefinition() is called for each metric id, to retrieve a metric's
-// symbol definition. The function must be implemented by the EA. Signature:
-//
-// /**
-//  * Return a symbol definition for the specified metric to be recorded.
-//  *
-//  * @param  _In_  int    id           - metric id
-//  * @param  _Out_ bool   &enabled     - whether the metric is active and should be recorded
-//  * @param  _Out_ string &symbol      - unique MT4 timeseries symbol
-//  * @param  _Out_ string &description - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
-//  * @param  _Out_ string &group       - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
-//  * @param  _Out_ int    &digits      - symbol digits value
-//  * @param  _Out_ double &baseValue   - quotes base value (if EMPTY recorder settings are used)
-//  * @param  _Out_ int    &multiplier  - quotes multiplier
-//  *
-//  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
-//  */
-// int Recorder.GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
-//
 
 //////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern string   EA.Recorder            = "on | off* | 1,2,3,..."; // @see documentation above
+extern string   EA.Recorder            = "on | off* | 1,2,3,..."; // @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
 
 extern datetime Test.StartTime         = 0;                       // time to start a test
 extern double   Test.StartPrice        = 0;                       // price to start a test
@@ -42,41 +10,16 @@ extern bool     Test.ExternalReporting = false;                   // whether to 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <core/expert.recorder.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 
 #define __lpSuperContext NULL
-int     __CoreFunction = NULL;                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
-double  __rates[][6];                                 // current price series
-int     __tickTimerId;                                // timer id for virtual ticks
-
-// recorder modes
-#define RECORDER_OFF          0                       // recording off
-#define RECORDER_INTERNAL     1                       // recording of AccountEquity()
-#define RECORDER_CUSTOM       2                       // recording of custom metrics
-
-// recorder settings
-int    recorder.mode;
-bool   recorder.initialized;
-string recorder.hstDirectory = "";
-int    recorder.hstFormat;
-
-string recorder.defaultDescription = "";
-string recorder.defaultGroup = "";
-double recorder.defaultBaseValue = 10000.0;
-
-// metric details
-bool   metric.enabled    [];
-string metric.symbol     [];
-string metric.description[];
-string metric.group      [];
-int    metric.digits     [];
-double metric.currValue  [];
-double metric.baseValue  [];
-int    metric.multiplier [];
-int    metric.hSet       [];
+int     __CoreFunction = NULL;                                    // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
+double  __rates[][6];                                             // current price series
+int     __tickTimerId;                                            // timer id for virtual ticks
 
 // test management
-bool   test.initialized = false;
+bool test.initialized = false;
 
 
 /**
@@ -87,7 +30,7 @@ bool   test.initialized = false;
 int init() {
    __isSuperContext = false;
 
-   if (__STATUS_OFF) {                                         // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
+   if (__STATUS_OFF) {                                            // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
       if (__STATUS_OFF.reason != ERR_TERMINAL_INIT_FAILURE)
          ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
@@ -108,27 +51,27 @@ int init() {
       return(last_error);
    }
 
-   if (__CoreFunction != CF_START) {                           // init() is called by the terminal
+   if (__CoreFunction != CF_START) {                              // init() is called by the terminal
       __CoreFunction = CF_INIT;
       prev_error   = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
    // initialize the execution context
-   int hChart = NULL; if (!IsTesting() || IsVisualMode()) {    // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
+   int hChart = NULL; if (!IsTesting() || IsVisualMode()) {       // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
    }
    int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
    if (initFlags & INIT_NO_EXTERNAL_REPORTING && 1) {
-      Test.ExternalReporting = false;                          // the input must be reset before SyncMainContext_init()
+      Test.ExternalReporting = false;                             // the input must be reset before SyncMainContext_init()
    }
    int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recorder.mode, IsTesting(), IsVisualMode(), IsOptimization(), Test.ExternalReporting, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
-   if (!error) error = GetLastError();                         // detect a DLL exception
+   if (!error) error = GetLastError();                            // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
       last_error          = error;
-      __STATUS_OFF        = true;                              // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
-      __STATUS_OFF.reason = last_error;                        // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __STATUS_OFF        = true;                                 // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
+      __STATUS_OFF.reason = last_error;                           // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
 
@@ -141,10 +84,10 @@ int init() {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
-      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);   // fails if there is no tick yet
+      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);      // fails if there is no tick yet
       error = GetLastError();
-      if (IsError(error)) {                                    // symbol not yet subscribed (start, account/template change), it may appear later
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                // synthetic symbol in offline chart
+      if (IsError(error)) {                                       // symbol not yet subscribed (start, account/template change), it may appear later
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                   // synthetic symbol in offline chart
             return(logInfo("init(5)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
@@ -155,12 +98,12 @@ int init() {
       if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
       if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}           // not yet implemented
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}              // not yet implemented
 
-   // enable experts if they are disabled                      // @see  https://www.mql5.com/en/code/29022#    [Disable auto trading for one EA]
+   // enable experts if they are disabled                         // @see  https://www.mql5.com/en/code/29022#    [Disable auto trading for one EA]
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!__isTesting) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-      error = Toolbar.Experts(true);                           // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
+      error = Toolbar.Experts(true);                              // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
    }
 
@@ -177,7 +120,7 @@ int init() {
    int account = GetAccountNumber(); if (!account) return(_last_error(CheckErrors("init(12)")));
    string initHandlers[] = {"", "initUser", "initTemplate", "", "", "initParameters", "initTimeframeChange", "initSymbolChange", "initRecompile"};
 
-   if (__isTesting) {                                          // log MarketInfo() data
+   if (__isTesting) {                                             // log MarketInfo() data
       if (IsLogInfo()) {
          string title = "::: TEST (bar model: "+ BarModelDescription(__Test.barModel) +") :::";
          string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ initMarketInfo();
@@ -187,7 +130,7 @@ int init() {
          logInfo(msg);
       }
    }
-   else if (UninitializeReason() != UR_CHARTCHANGE) {          // log account infos (this becomes the first regular online log entry)
+   else if (UninitializeReason() != UR_CHARTCHANGE) {             // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
          msg = initHandlers[initReason] +"(0)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
          logInfo(StrRepeat(":", StringLen(msg)));
@@ -195,7 +138,7 @@ int init() {
       }
    }
 
-   if (UninitializeReason() != UR_CHARTCHANGE) {               // log input parameters
+   if (UninitializeReason() != UR_CHARTCHANGE) {                  // log input parameters
       if (IsLogDebug()) {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
@@ -223,25 +166,25 @@ int init() {
    // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql/issues/1
    // +----------------------+-----------------------------------------------+-----------------+-------------+
    //
-   error = onInit();                                                          // preprocessing hook
-                                                                              //
-   if (!error && !__STATUS_OFF) {                                             //
-      switch (initReason) {                                                   //
-         case IR_USER            : error = onInitUser();            break;    // init reasons
-         case IR_TEMPLATE        : error = onInitTemplate();        break;    //
-         case IR_PARAMETERS      : error = onInitParameters();      break;    //
-         case IR_TIMEFRAMECHANGE : error = onInitTimeframeChange(); break;    //
-         case IR_SYMBOLCHANGE    : error = onInitSymbolChange();    break;    //
-         case IR_RECOMPILE       : error = onInitRecompile();       break;    //
-         case IR_TERMINAL_FAILURE:                                            //
-         default:                                                             //
-            return(_last_error(CheckErrors("init(13)  unsupported initReason: "+ initReason, ERR_RUNTIME_ERROR)));
-      }                                                                       //
-   }                                                                          //
-   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
-                                                                              //
-   if (!error && !__STATUS_OFF)                                               //
-      afterInit();                                                            // postprocessing hook
+   error = onInit();                                                       // preprocessing hook
+                                                                           //
+   if (!error && !__STATUS_OFF) {                                          //
+      switch (initReason) {                                                //
+         case IR_USER            : error = onInitUser();            break; // init reasons
+         case IR_TEMPLATE        : error = onInitTemplate();        break; //
+         case IR_PARAMETERS      : error = onInitParameters();      break; //
+         case IR_TIMEFRAMECHANGE : error = onInitTimeframeChange(); break; //
+         case IR_SYMBOLCHANGE    : error = onInitSymbolChange();    break; //
+         case IR_RECOMPILE       : error = onInitRecompile();       break; //
+         case IR_TERMINAL_FAILURE:                                         //
+         default:                                                          //
+            return(_last_error(CheckErrors("init(13)  unsupported initReaso"+ initReason, ERR_RUNTIME_ERROR)));
+      }                                                                    //
+   }                                                                       //
+   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
+                                                                           //
+   if (!error && !__STATUS_OFF)                                            //
+      afterInit();                                                         // postprocessing hook
 
    if (CheckErrors("init(14)")) return(last_error);
    ShowStatus(last_error);
@@ -254,8 +197,8 @@ int init() {
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
-   if (UninitializeReason() != UR_CHARTCHANGE)                                // At the very end, otherwise the window message queue may be processed
-      Chart.SendTick();                                                       // before this function is left and the tick might get lost.
+   if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the window message queue may be processed
+      Chart.SendTick();                                                    // before this function is left and the tick might get lost.
    return(last_error);
 }
 
@@ -271,8 +214,8 @@ int start() {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
          if (__isChart) ShowStatus(__STATUS_OFF.reason);
          static bool testerStopped = false;
-         if (__isTesting && !testerStopped) {                                    // stop the tester in case of errors
-            Tester.Stop("start(1)");                                             // covers errors in init(), too
+         if (__isTesting && !testerStopped) {                              // stop the tester in case of errors
+            Tester.Stop("start(1)");                                       // covers errors in init(), too
             testerStopped = true;
          }
       }
@@ -280,16 +223,16 @@ int start() {
    }
 
    // resolve tick status
-   Ticks++;                                                                      // simple counter, the value is meaningless
+   Ticks++;                                                                // simple counter, the value is meaningless
    Tick.time = MarketInfo(Symbol(), MODE_TIME);
    static int lastVolume;
    if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
    else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
    else                                Tick.isVirtual = false;
    lastVolume  = Volume[0];
-   ChangedBars = -1;                                                             // in experts not available
-   ValidBars   = -1;                                                             // ...
-   ShiftedBars = -1;                                                             // ...
+   ChangedBars = -1;                                                       // in experts not available
+   ValidBars   = -1;                                                       // ...
+   ShiftedBars = -1;                                                       // ...
 
    // if called after init() check it's return value
    if (__CoreFunction == CF_INIT) {
@@ -301,18 +244,18 @@ int start() {
          prev_error = last_error;
          ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-         int error = init();                                                     // call init() again
+         int error = init();                                               // call init() again
          if (__STATUS_OFF) return(last_error);
 
-         if (error == ERS_TERMINAL_NOT_YET_READY) {                              // restore CF_INIT and wait for the next tick
+         if (error == ERS_TERMINAL_NOT_YET_READY) {                        // restore CF_INIT and wait for the next tick
             __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);
             return(ShowStatus(error));
          }
       }
-      last_error = NO_ERROR;                                                     // init() was successful => reset error
+      last_error = NO_ERROR;                                               // init() was successful => reset error
    }
    else {
-      prev_error = last_error;                                                   // a regular tick: backup last_error and reset it
+      prev_error = last_error;                                             // a regular tick: backup last_error and reset it
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
@@ -663,269 +606,6 @@ bool initTest() {
       test.initialized = true;
    }
    return(true);
-}
-
-
-/**
- * Initialize the recorder. Completes metric definitions and creates/updates a raw symbol for each metric.
- *
- * @return bool - success status
- */
-bool Recorder.init() {
-   if (recorder.mode == RECORDER_OFF || IsOptimization()) {
-      recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
-      return(false);
-   }
-                                                                                                                     // sizeof(SYMBOL.description) = 64 chars
-   recorder.defaultDescription = StrLeft(ProgramName(), 46) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M");   // 46 + 1 + 16 + <nul>        = 64 chars
-   recorder.defaultGroup       = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
-   recorder.hstDirectory       = Recorder.GetHstDirectory("Recorder.init(1)"); if (!StringLen(recorder.hstDirectory)) return(false);
-   recorder.hstFormat          = Recorder.GetHstFormat("Recorder.init(2)");    if (!recorder.hstFormat)               return(false);
-
-   // create an internal metric for AccountEquity()
-   if (recorder.mode == RECORDER_INTERNAL) {
-      string symbol = Recorder.GetInternalSymbol(); if (!StringLen(symbol)) return(false);
-      string descr  = recorder.defaultDescription;
-      string group  = recorder.defaultGroup;
-      if (!Recorder.AddMetric(1, symbol, descr, group, 2, 0)) return(false);
-   }
-
-   // update metric details and create raw MT4 symbols
-   int size = ArraySize(metric.enabled);
-   for (int i=0; i < size; i++) {
-      if (!metric.enabled[i]) continue;
-      if (!StringLen(metric.description[i])) metric.description[i] = recorder.defaultDescription;
-      if (!StringLen(metric.group      [i])) metric.group      [i] = recorder.defaultGroup;
-      if (   IsEmpty(metric.baseValue  [i])) metric.baseValue  [i] = recorder.defaultBaseValue;
-      if (          !metric.multiplier [i])  metric.multiplier [i] = 1;
-
-      if (IsRawSymbol(metric.symbol[i], recorder.hstDirectory)) {
-         if (__isTesting) return(!catch("Recorder.init(3)  symbol \""+ metric.symbol[i] +"\" already exists", ERR_ILLEGAL_STATE));
-         // TODO: update existing properties
-      }
-      else {
-         int id = CreateRawSymbol(metric.symbol[i], metric.description[i], metric.group[i], metric.digits[1], AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
-         if (id < 0) return(false);
-      }
-   }
-
-   recorder.initialized = true;
-   return(true);
-}
-
-
-/**
- * Record performance metrics.
- *
- * @return bool - success status
- */
-bool Recorder.start() {
-   if (!recorder.initialized) {
-      if (!Recorder.init()) return(recorder.mode == RECORDER_OFF);
-   }
-
-   /*
-    Speed test SnowRoller EURUSD,M15  04.10.2012, Long, GridSize=18
-   +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Toshiba Satellite         |     old    | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in library  |
-   +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 no recording         | 17.613 t/s |           |              |             |             |              |              |              |
-   | v225 HST_BUFFER_TICKS=Off |  6.426 t/s |           |              |             |             |              |              |              |
-   | v419 HST_BUFFER_TICKS=Off |  5.871 t/s | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
-   | v419 HST_BUFFER_TICKS=On  |            |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
-   +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   */
-
-   int size=ArraySize(metric.hSet), flags=NULL;
-   if (__isTesting) flags = HST_BUFFER_TICKS;
-   double value;
-   bool success = true;
-
-   for (int i=0; i < size; i++) {
-      if (!metric.enabled[i]) continue;
-
-      if (!metric.hSet[i]) {
-         // online: prefer to continue an existing history
-         if (!__isTesting) {
-            if      (i <  7) metric.hSet[i] = HistorySet1.Get(metric.symbol[i], recorder.hstDirectory);
-            else if (i < 14) metric.hSet[i] = HistorySet2.Get(metric.symbol[i], recorder.hstDirectory);
-            else             metric.hSet[i] = HistorySet3.Get(metric.symbol[i], recorder.hstDirectory);
-            if      (metric.hSet[i] == -1) metric.hSet[i] = NULL;
-            else if (metric.hSet[i] <=  0) return(false);
-         }
-
-         // tester or no existing history
-         if (!metric.hSet[i]) {
-            if      (i <  7) metric.hSet[i] = HistorySet1.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
-            else if (i < 14) metric.hSet[i] = HistorySet2.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
-            else             metric.hSet[i] = HistorySet3.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
-            if (!metric.hSet[i]) return(false);
-         }
-      }
-
-      if (recorder.mode == RECORDER_INTERNAL) value = AccountEquity() - AccountCredit();
-      else                                    value = metric.baseValue[i] + metric.currValue[i] * metric.multiplier[i];
-
-      if      (i <  7) success = HistorySet1.AddTick(metric.hSet[i], Tick.time, value, flags);
-      else if (i < 14) success = HistorySet2.AddTick(metric.hSet[i], Tick.time, value, flags);
-      else             success = HistorySet3.AddTick(metric.hSet[i], Tick.time, value, flags);
-      if (!success) break;
-   }
-   return(success);
-}
-
-
-/**
- * Deinitialize the recorder.
- *
- * @return bool - success status
- */
-bool Recorder.deinit() {
-   // close history sets
-   int size = ArraySize(metric.hSet);
-   for (int i=0; i < size; i++) {
-      if (metric.hSet[i] > 0) {
-         int tmp = metric.hSet[i];
-         metric.hSet[i] = NULL;
-         if      (i <  7) { if (!HistorySet1.Close(tmp)) return(false); }
-         else if (i < 14) { if (!HistorySet2.Close(tmp)) return(false); }
-         else             { if (!HistorySet3.Close(tmp)) return(false); }
-      }
-   }
-   return(true);
-}
-
-
-/**
- * Add a metric to the recorder arrays. Prevents overwriting of existing metrics.
- *
- * @param  int    id                    - metric id
- * @param  string symbol                - symbol
- * @param  string description           - symbol description
- * @param  string group                 - symbol group (if empty the program name is used)
- * @param  int    digits                - symbol digits
- * @param  double baseValue  [optional] - quotes base value (default: recorder settings)
- * @param  int    multiplier [optional] - quotes multiplier (default: 1)
- *
- * @return bool - success status
- */
-bool Recorder.AddMetric(int id, string symbol, string description, string group, int digits, double baseValue = EMPTY, int multiplier = 1) {
-   if (id < 1 || id > 32) return(!catch("Recorder.AddMetric(1)  invalid parameter id: "+ id +" (allowed range: 1 to 32)", ERR_INVALID_PARAMETER));
-
-   int size = ArraySize(metric.enabled);
-   if (id >= size) {
-      size = id + 1;
-      ArrayResize(metric.enabled,     size);
-      ArrayResize(metric.symbol,      size);
-      ArrayResize(metric.description, size);
-      ArrayResize(metric.group,       size);
-      ArrayResize(metric.digits,      size);
-      ArrayResize(metric.currValue,   size);
-      ArrayResize(metric.baseValue,   size);
-      ArrayResize(metric.multiplier,  size);
-      ArrayResize(metric.hSet,        size);
-   }
-   if (metric.enabled[id]) return(!catch("Recorder.AddMetric(2)  invalid parameter id: "+ id +" (metric exists) ", ERR_INVALID_PARAMETER));
-
-   metric.enabled    [id] = true;
-   metric.symbol     [id] = symbol;
-   metric.description[id] = description;
-   metric.group      [id] = group;
-   metric.digits     [id] = digits;
-   metric.currValue  [id] = NULL;
-   metric.baseValue  [id] = baseValue;
-   metric.multiplier [id] = multiplier;
-   metric.hSet       [id] = NULL;
-
-   return(!catch("Recorder.AddMetric(3)"));
-}
-
-
-/**
- * Compose a new unique MT4 symbol for internal equity recording.
- *
- * @return string - symbol or an empty string in case of errors
- */
-string Recorder.GetInternalSymbol() {
-   // open "symbols.raw" and read symbols
-   string filename = recorder.hstDirectory +"/symbols.raw";
-   int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
-   if (hFile <= 0)                                      return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR))));
-
-   int fileSize = FileSize(hFile);
-   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
-   int symbolsSize = fileSize/SYMBOL_size;
-
-   int symbols[]; InitializeByteBuffer(symbols, fileSize);
-   if (fileSize > 0) {
-      int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-      if (ints!=fileSize/4) { FileClose(hFile);         return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
-   }
-   FileClose(hFile);
-
-   // iterate over all symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-   string symbol="", suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
-
-   for (int i, maxId=0; i < symbolsSize; i++) {
-      symbol = symbols_Name(symbols, i);
-      if (StrStartsWithI(symbol, name)) {
-         suffix = StrSubstr(symbol, StringLen(name));
-         if (StringLen(suffix)==3) /*&&*/ if (StrIsDigits(suffix)) {
-            maxId = Max(maxId, StrToInteger(suffix));
-         }
-      }
-   }
-   return(name + StrPadLeft(""+ (maxId+1), 3, "0"));
-}
-
-
-/**
- * Resolve the history directory for recorded timeseries.
- *
- * @param  string caller - caller identifier
- *
- * @return string - directory or an empty string in case of errors
- */
-string Recorder.GetHstDirectory(string caller) {
-   string section = ifString(__isTesting, "Tester.", "") + WindowExpertName();
-   string key = "Recorder.HistoryDirectory", sValue="";
-
-   if (IsConfigKey(section, key)) {
-      sValue = GetConfigString(section, key, "");
-   }
-   else {
-      section = ifString(__isTesting, "Tester.", "") +"Experts";
-      if (IsConfigKey(section, key)) {
-         sValue = GetConfigString(section, key, "");
-      }
-   }
-   if (!StringLen(sValue)) return(_EMPTY_STR(catch(caller +"->Recorder.GetHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
-   return(sValue);
-}
-
-
-/**
- * Resolve the history format for recorded timeseries.
- *
- * @param  string caller - caller identifier
- *
- * @return int - history format or NULL (0) in case of errors
- */
-int Recorder.GetHstFormat(string caller) {
-   string section = ifString(__isTesting, "Tester.", "") + WindowExpertName();
-   string key = "Recorder.HistoryFormat";
-
-   if (IsConfigKey(section, key)) {
-      int iValue = GetConfigInt(section, key, 0);
-   }
-   else {
-      section = ifString(__isTesting, "Tester.", "") +"Experts";
-      if (IsConfigKey(section, key)) {
-         iValue = GetConfigInt(section, key, 0);
-      }
-   }
-   if (iValue!=400 && iValue!=401) return(!catch(caller +"->Recorder.GetHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
-   return(iValue);
 }
 
 
