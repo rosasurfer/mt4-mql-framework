@@ -423,35 +423,39 @@ void Recorder.ResetMetrics() {
  * @return string - symbol or an empty string in case of errors
  */
 string Recorder.GetInternalSymbol() {
-   // open "symbols.raw" and read symbols
    string filename = recorder.hstDirectory +"/symbols.raw";
-   int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
-   if (hFile <= 0)                                      return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR))));
+   string prefix = StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
+   int maxId = 0;
 
-   int fileSize = FileSize(hFile);
-   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
-   int symbolsSize = fileSize/SYMBOL_size;
+   if (IsFile(filename, MODE_MQL)) {
+      // open "symbols.raw" and read existing symbols
+      int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
+      if (hFile <= 0)                                      return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR))));
 
-   int symbols[]; InitializeByteBuffer(symbols, fileSize);
-   if (fileSize > 0) {
-      int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-      if (ints!=fileSize/4) { FileClose(hFile);         return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
-   }
-   FileClose(hFile);
+      int fileSize = FileSize(hFile);
+      if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
+      int symbolsSize = fileSize/SYMBOL_size;
 
-   // iterate over all symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-   string symbol="", suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
+      int symbols[]; InitializeByteBuffer(symbols, fileSize);
+      if (fileSize > 0) {
+         int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
+         if (ints!=fileSize/4) { FileClose(hFile);         return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
+      }
+      FileClose(hFile);
 
-   for (int i, maxId=0; i < symbolsSize; i++) {
-      symbol = symbols_Name(symbols, i);
-      if (StrStartsWithI(symbol, name)) {
-         suffix = StrSubstr(symbol, StringLen(name));
-         if (StringLen(suffix)==3) /*&&*/ if (StrIsDigits(suffix)) {
-            maxId = Max(maxId, StrToInteger(suffix));
+      // iterate over all symbols, determine the max counter matching "<prefix>[0-9]+"
+      string symbol="", suffix="";
+      for (int i=0; i < symbolsSize; i++) {
+         symbol = symbols_Name(symbols, i);
+         if (StrStartsWithI(symbol, prefix)) {
+            suffix = StrRight(symbol, -StringLen(prefix));
+            if (StrIsDigits(suffix)) {
+               maxId = MathMax(maxId, StrToInteger(suffix));
+            }
          }
       }
    }
-   return(name + StrPadLeft(""+ (maxId+1), 3, "0"));
+   return(prefix + StrPadLeft(""+ (maxId+1), 3, "0"));
 }
 
 
