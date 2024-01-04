@@ -3383,8 +3383,8 @@ bool CreateDirectory(string path, int flags) {
 
    if (flags & MODE_MQL && 1) {
       string filesDirectory = GetMqlSandboxPath();
-      if (!StringLen(filesDirectory))
-         return(false);
+      if (!StringLen(filesDirectory)) return(false);
+
       path = StringConcatenate(filesDirectory, "/", path);
       flags &= ~MODE_MQL;
    }
@@ -6993,7 +6993,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
 
 
 /**
- * Check a trade server path (history directory). Create the directory, "symbols.raw" and "symgroups.raw" if they don't exist.
+ * Check/initialize a trade server path (a history directory). Makes sure directory, "symbols.raw" and "symgroups.raw" exist.
  *
  * @param  string path - absolute path or path relative to the MQL sandbox directory
  *
@@ -7002,13 +7002,13 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
 bool InitTradeServerPath(string path) {
    int fsMode = ifInt(IsAbsolutePath(path), MODE_SYSTEM, MODE_MQL);
 
-   // create the directory
+   // check/create the directory
    if (!IsDirectory(path, fsMode)) {
       logInfo("InitTradeServerPath(1)  creating \""+ path +"\"");
       if (!CreateDirectory(path, fsMode|MODE_MKPARENT)) return(!catch("InitTradeServerPath(2)  cannot create directory \""+ path +"\"", ERR_INVALID_PARAMETER));
    }
 
-   // create "symbols.raw"
+   // check/create "symbols.raw"
    string symbolsFile = path +"/symbols.raw";
    if (!IsFile(symbolsFile, fsMode)) {
       logInfo("InitTradeServerPath(3)  creating \""+ symbolsFile +"\"");
@@ -7020,11 +7020,11 @@ bool InitTradeServerPath(string path) {
                               CREATE_NEW,             // create file only if it doesn't exist
                               FILE_ATTRIBUTE_NORMAL,  // flags and attributes: normal file
                               NULL);                  // no template file handle
-      if (hFile == INVALID_HANDLE_VALUE) return(!catch("InitTradeServerPath(4)->CreateFileA(\""+ symbolsFile +"\")", ERR_WIN32_ERROR + GetLastWin32Error()));
+      if (hFile == INVALID_HANDLE_VALUE) return(!catch("InitTradeServerPath(4)  cannot create file \""+ symbolsFile +"\"", ERR_WIN32_ERROR + GetLastWin32Error()));
       CloseHandle(hFile);
    }
 
-   // create "symgroups.raw"
+   // check/create "symgroups.raw"
    string groupsFile  = path +"/symgroups.raw";
    if (!IsFile(groupsFile, fsMode)) {
       logInfo("InitTradeServerPath(5)  creating \""+ groupsFile +"\"");
@@ -7036,7 +7036,7 @@ bool InitTradeServerPath(string path) {
                           CREATE_NEW,                 // create file only if it doesn't exist
                           FILE_ATTRIBUTE_NORMAL,      // flags and attributes: normal file
                           NULL);                      // no template file handle
-      if (hFile == INVALID_HANDLE_VALUE) return(!catch("InitTradeServerPath(6)->CreateFileA(\""+ groupsFile +"\")", ERR_WIN32_ERROR + GetLastWin32Error()));
+      if (hFile == INVALID_HANDLE_VALUE) return(!catch("InitTradeServerPath(6)  cannot create file \""+ groupsFile +"\"", ERR_WIN32_ERROR + GetLastWin32Error()));
       CloseHandle(hFile);
    }
    return(true);

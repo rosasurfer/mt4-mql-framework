@@ -250,8 +250,9 @@
 
 // file function flags
 #define MODE_MQL                                1        // restrict file system operations to the MQL sandbox
-#define MODE_SYSTEM                             2        // allow file system operations outside of the MQL sandbox
-#define MODE_MKPARENT                           4        // create non-existing parent directories as needed, @see CreateDirectory()
+#define MODE_SYSTEM                             2        // don't restrict file system operations
+#define MODE_TESTER                             4        // with MODE_MQL: apply the tester sandbox
+#define MODE_MKPARENT                           8        // create non-existing parent directories as needed, @see CreateDirectory()
 
 
 // time constants
