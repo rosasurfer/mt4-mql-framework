@@ -1,5 +1,5 @@
 /**
- * Functions for querying the application configuration.
+ * Functions for reading/writing the framework configuration.
  */
 
 
@@ -685,11 +685,11 @@ bool WriteIniString(string fileName, string section, string key, string value) {
 
          if (directory!=name) /*&&*/ if (!IsDirectory(directory, MODE_SYSTEM)) {
             error = CreateDirectoryA(directory, MODE_SYSTEM|MODE_MKPARENT);
-            if (IsError(error)) return(!catch("WriteIniString(1)  cannot create directory "+ DoubleQuoteStr(directory), ERR_WIN32_ERROR+error));
+            if (IsError(error)) return(!catch("WriteIniString(1)  cannot create directory \""+ directory +"\"", error));
             return(WriteIniString(fileName, section, key, value));
          }
       }
-      return(!catch("WriteIniString(2)->WritePrivateProfileString(fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR+error));
+      return(!catch("WriteIniString(2)->WritePrivateProfileString(fileName=\""+ fileName +"\")", ERR_WIN32_ERROR+error));
    }
    return(true);
 }

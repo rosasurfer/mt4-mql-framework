@@ -847,6 +847,8 @@ datetime GetLocalTime32();;
 datetime GetLocalTime64();;
 string   GetMqlDirectoryA();;
 string   GetMqlDirectoryW();;
+string   GetMqlSandboxPathA(int inTester);;
+string   GetMqlSandboxPathW(int inTester);;
 string   GetReparsePointTargetA(string name);;
 string   GetStringA(int address);;
 string   GetStringW(int address);;

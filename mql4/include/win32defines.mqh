@@ -849,9 +849,12 @@
 #define ERROR_SHARING_VIOLATION                   32     // The process cannot access the file because it is being used by another process.
 #define ERROR_LOCK_VIOLATION                      33     // The process cannot access the file because another process has locked a portion of the file.
 #define ERROR_WRONG_DISK                          34     // The wrong diskette is in the drive. Insert %2 (Volume Serial Number: %3 ) into drive %1.
+
 #define ERROR_SHARING_BUFFER_EXCEEDED             36     // Too many files opened for sharing.
+
 #define ERROR_HANDLE_EOF                          38     // Reached the end of the file.
 #define ERROR_HANDLE_DISK_FULL                    39     // The disk is full.
+
 #define ERROR_NOT_SUPPORTED                       50     // The request is not supported.
 #define ERROR_REM_NOT_LIST                        51     // Windows cannot find the network path.
 #define ERROR_DUP_NAME                            52     // You were not connected because a duplicate name exists on the network.
@@ -875,7 +878,9 @@
 #define ERROR_SHARING_PAUSED                      70     // The remote server has been paused or is in the process of being started.
 #define ERROR_REQ_NOT_ACCEP                       71     // No more connections can be made to this remote computer at this time because there are already as many connections as the computer can accept.
 #define ERROR_REDIR_PAUSED                        72     // The specified printer or disk device has been paused.
+
 #define ERROR_FILE_EXISTS                         80     // The file exists.
+
 #define ERROR_CANNOT_MAKE                         82     // The directory or file cannot be created.
 #define ERROR_FAIL_I24                            83     // Fail on INT 24.
 #define ERROR_OUT_OF_STRUCTURES                   84     // Storage to process this request is not available.
@@ -884,6 +889,7 @@
 #define ERROR_INVALID_PARAMETER                   87     // The parameter is incorrect (DDE).
 #define ERROR_NET_WRITE_FAULT                     88     // A write fault occurred on the network.
 #define ERROR_NO_PROC_SLOTS                       89     // The system cannot start another process at this time.
+
 #define ERROR_TOO_MANY_SEMAPHORES                100     // Cannot create another system semaphore.
 #define ERROR_EXCL_SEM_ALREADY_OWNED             101     // The exclusive semaphore is owned by another process.
 #define ERROR_SEM_IS_SET                         102     // The semaphore is set and cannot be closed.
@@ -899,6 +905,7 @@
 #define ERROR_DISK_FULL                          112     // There is not enough space on the disk.
 #define ERROR_NO_MORE_SEARCH_HANDLES             113     // No more internal file identifiers available.
 #define ERROR_INVALID_TARGET_HANDLE              114     // The target internal file identifier is incorrect.
+
 #define ERROR_INVALID_CATEGORY                   117     // The IOCTL call made by the application program is not correct.
 #define ERROR_INVALID_VERIFY_SWITCH              118     // The verify-on-write switch parameter value is not correct.
 #define ERROR_BAD_DRIVER_LEVEL                   119     // The system does not support the command requested.
@@ -910,6 +917,7 @@
 #define ERROR_NO_VOLUME_LABEL                    125     // The disk has no volume label.
 #define ERROR_MOD_NOT_FOUND                      126     // The specified module could not be found.
 #define ERROR_PROC_NOT_FOUND                     127     // The specified procedure could not be found.
-// ...
+
 #define ERROR_CONTROL_ID_NOT_FOUND              1421     // Control ID not found.
+
 #define ERROR_NOT_A_REPARSE_POINT               4390     // The file or directory is not a reparse point.

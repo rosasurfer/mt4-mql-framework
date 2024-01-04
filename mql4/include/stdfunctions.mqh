@@ -3393,26 +3393,13 @@ bool CreateDirectory(string path, int flags) {
 
 
 /**
- * Return the full path of the MQL sandbox directory. This is the only directory accessible to MQL file functions.
+ * Return the full path of the MQL sandbox directory. This is the only directory accessible to built-in MQL file functions.
  *
- * @return string - directory path or an empty string in case of errors
+ * @return string - directory path without trailing path separator or an empty string in case of errors
  */
 string GetMqlSandboxPath() {
-   static string path = ""; if (!StringLen(path)) {
-      if (__isTesting) {
-         string dataDirectory = GetTerminalDataPathA();
-         if (!StringLen(dataDirectory)) return(EMPTY_STR);
-
-         path = dataDirectory +"/tester/files";
-      }
-      else {
-         string mqlDirectory = GetMqlDirectoryA();
-         if (!StringLen(mqlDirectory)) return(EMPTY_STR);
-
-         path = mqlDirectory +"/files";
-      }
-      path = StrReplace(path, "\\", "/");
-   }
+   static string path = "";
+   if (!StringLen(path)) path = GetMqlSandboxPathA(__isTesting);
    return(path);
 }
 
