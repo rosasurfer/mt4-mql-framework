@@ -1,16 +1,16 @@
-// ----------------------------------------------------------------------------------------------------------------------- //
 //
 // During runtime an EA can record up to 32 different performance graphs (aka metrics; online and in tester). These recordings
 // are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they can be displayed and
 // analysed like regular MetaTrader symbols.
 //
-// Metrics are declared using input parameter "EA.Recorder". Multiple declarations must be separated by comma. Syntax:
+// Metrics to record are declared using input parameter "EA.Recorder". Multiple declarations must be separated by comma.
 //
-//  off:  Recording is disabled (default).
-//  on:   Records a timeseries representing the EA's equity graph as reported by the built-in function AccountEquity().
-//  <id>[=<base-value>]:  Records a timeseries representing a custom metric identified by a postive <id> (integer). Specify an
-//        appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display negative
-//        values). If no base value is specified the recorder queries the framework configuration.
+//  Syntax:
+//   off:  Recording is disabled (default).
+//   on:   Records a timeseries representing the EA's equity graph as reported by the built-in function AccountEquity().
+//   <id>[=<base-value>]:  Records a timeseries representing a custom metric identified by a postive <id> (integer). Specify
+//         an appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display
+//         negative values). Without a value is the recorder queries the framework configuration.
 //
 // During EA initialization the function Recorder_GetSymbolDefinition() is called for each metric id, to retrieve a metric's
 // symbol definition. The function must be implemented by the EA. Signature:
@@ -31,7 +31,6 @@
 //  */
 // int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
 //
-// ----------------------------------------------------------------------------------------------------------------------- //
 
 // recorder modes
 #define RECORDER_OFF          0                       // recording off

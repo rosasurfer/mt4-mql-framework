@@ -5,7 +5,7 @@
  *
  * Channel Breakout
  *
- * A mixture of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in and out.
+ * A mixture of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in/out.
  *
  *
  * Features:
@@ -36,7 +36,7 @@
  *
  * TODO:
  *  - add custom metrics
- *  - add/update virtual trading
+ *  - add virtual trading
  *  - implement multiple exit strategies
  *  - implement multiple entry strategies
  *  - add input "TradingTimeframe"

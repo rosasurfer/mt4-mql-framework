@@ -2,8 +2,7 @@
  * ZigZag EA - a modified version of the system traded by the "Turtle Traders" of Richard Dennis
  *
  *
- * To implement the Donchian channel system of the "Turtles" we need the ZigZag indicator of this GitHub repository (the
- * flawed ZigZag indicator provided by MetaQuotes can't be used).
+ * The EA needs the ZigZag indicator from this GitHub repository (the version provided by MetaQuotes can't be used).
  *
  *  @see  [Turtle Trading]   http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
  *  @see  [Turtle Trading]   https://analyzingalpha.com/turtle-trading

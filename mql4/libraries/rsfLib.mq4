@@ -99,31 +99,31 @@ bool EditFile(string filename) {
  */
 bool EditFiles(string &filenames[]) {
    int size = ArraySize(filenames);
-   if (!size) return(!catch("EditFiles(1)  invalid parameter filenames: {}", ERR_INVALID_PARAMETER));
+   if (!size) return(!catch("EditFiles(1)  invalid parameter filenames: {} (empty)", ERR_INVALID_PARAMETER));
 
    for (int i=0; i < size; i++) {
-      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
+      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: \"\" (empty)", ERR_INVALID_PARAMETER));
       if (IsLogDebug()) logDebug("EditFiles(3)  loading "+ DoubleQuoteStr(filenames[i]));
 
       if (IsFile(filenames[i], MODE_SYSTEM)) {
          while (IsSymlinkA(filenames[i])) {
             string target = GetReparsePointTargetA(filenames[i]);    // resolve symlinks as some editors cannot write to it (e.g. TextPad)
-            if (!StringLen(target))
-               break;
+            if (!StringLen(target)) break;
             filenames[i] = target;
          }
       }
       else if (IsDirectory(filenames[i], MODE_SYSTEM)) {
-         logError("EditFiles(4)  cannot edit directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
+         logError("EditFiles(4)  filename is a directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(filenames, i, 1);
-         size--; i--;
+         size--;
+         i--;
          continue;
       }
       else {}                                                        // file doesn't exist, behavior is up to the editor
    }
 
    // check the editor configuration
-   string editor = GetGlobalConfigString("System", "Editor");
+   string editor = GetConfigString("System", "Editor");
 
    if (StringLen(editor) > 0) {
       // use configured editor
