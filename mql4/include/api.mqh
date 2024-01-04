@@ -174,6 +174,7 @@ double   ifDouble(bool condition, double thenValue, double elseValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;
 string   ifString(bool condition, string thenValue, string elseValue);;
 string   InitReasonDescription(int reason);;
+bool     InitTradeServerPath(string path);;
 int      intOr(int value, int altValue);;
 bool     IsAbsolutePath(string path);;
 bool     IsCurrency(string value);;
@@ -315,7 +316,6 @@ int      Toolbar.Experts(bool enable);;
 string   TradeCommandToStr(int cmd);;
 string   UninitializeReasonDescription(int reason);;
 string   UrlEncode(string value);;
-bool     UseTradeServerPath(string path, string caller="");;
 bool     WaitForTicket(int ticket, bool select=false);;
 
 

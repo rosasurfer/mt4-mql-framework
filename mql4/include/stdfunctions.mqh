@@ -3008,7 +3008,7 @@ TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
 
 
 /**
- * Pad a string left-side to a minimum length using another substring.
+ * Pad a string left-side to a minimum length using a pad string.
  *
  * @param  string input                - source string
  * @param  int    padLength            - minimum length of the resulting string
@@ -3027,7 +3027,7 @@ string StrPadLeft(string input, int padLength, string padString = " ") {
 /**
  * Alias of StrPadLeft()
  *
- * Pad a string left-side to a minimum length using another substring.
+ * Pad a string left-side to a minimum length using a pad substring.
  *
  * @param  string input                - source string
  * @param  int    padLength            - minimum length of the resulting string
@@ -3041,7 +3041,7 @@ string StrLeftPad(string input, int padLength, string padString = " ") {
 
 
 /**
- * Pad a string right-side to a minimum length using another substring.
+ * Pad a string right-side to a minimum length using a pad string.
  *
  * @param  string input                - source string
  * @param  int    padLength            - minimum length of the resulting string
@@ -3060,7 +3060,7 @@ string StrPadRight(string input, int padLength, string padString = " ") {
 /**
  * Alias of StrPadRight()
  *
- * Pad a string right-side to a minimum length using another substring.
+ * Pad a string right-side to a minimum length using a pad string.
  *
  * @param  string input                - source string
  * @param  int    padLength            - minimum length of the resulting string
@@ -6993,43 +6993,51 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
 
 
 /**
- * Check a trade server path for safe usage. If the path was not used before a notice is emitted and the path is marked.
+ * Check a trade server path (history directory). Create the directory, "symbols.raw" and "symgroups.raw" if they don't exist.
  *
- * @param  string path              - if a relative path:  relative to the MQL sandbox/files directory
- *                                    if an absolute path: as is
- * @param  string caller [optional] - location identifier of the caller (default: none)
+ * @param  string path - absolute path or path relative to the MQL sandbox directory
  *
- * @return bool - whether it's safe to use the path
+ * @return bool - success status
  */
-bool UseTradeServerPath(string path, string caller = "") {
+bool InitTradeServerPath(string path) {
    int fsMode = ifInt(IsAbsolutePath(path), MODE_SYSTEM, MODE_MQL);
+
+   // create the directory
+   if (!IsDirectory(path, fsMode)) {
+      logInfo("InitTradeServerPath(1)  creating \""+ path +"\"");
+      if (!CreateDirectory(path, fsMode|MODE_MKPARENT)) return(!catch("InitTradeServerPath(2)  cannot create directory \""+ path +"\"", ERR_INVALID_PARAMETER));
+   }
+
+   // create "symbols.raw"
    string symbolsFile = path +"/symbols.raw";
+   if (!IsFile(symbolsFile, fsMode)) {
+      logInfo("InitTradeServerPath(3)  creating \""+ symbolsFile +"\"");
+      if (fsMode == MODE_MQL) symbolsFile = GetMqlSandboxPath() +"/"+ symbolsFile;
+      int hFile = CreateFileA(symbolsFile,            // file name
+                              GENERIC_READ,           // desired access
+                              FILE_SHARE_READ,        // share mode
+                              NULL,                   // default security
+                              CREATE_NEW,             // create file only if it doesn't exist
+                              FILE_ATTRIBUTE_NORMAL,  // flags and attributes: normal file
+                              NULL);                  // no template file handle
+      if (hFile == INVALID_HANDLE_VALUE) return(!catch("InitTradeServerPath(4)->CreateFileA(\""+ symbolsFile +"\")", ERR_WIN32_ERROR + GetLastWin32Error()));
+      CloseHandle(hFile);
+   }
+
+   // create "symgroups.raw"
    string groupsFile  = path +"/symgroups.raw";
-
-   if (!IsFile(symbolsFile, fsMode)) /*&&*/ if (!IsFile(groupsFile, fsMode)) {
-      if (caller == "0") caller = "";                       // (string) NULL
-      if (caller != "")  caller = caller +"->";
-      logNotice(caller +"UseTradeServerPath(1)  \""+ path +"\" doesn't seem to be a regular trade server directory (file \"symbols.raw\" not found)");
-
-      // make sure the directory exists
-      if (!CreateDirectory(path, fsMode|MODE_MKPARENT)) return(!catch(caller +"UseTradeServerPath(2)  cannot create directory \""+ path +"\"", ERR_INVALID_PARAMETER));
-
-      // make sure "symbols.raw" exists
-      if (!IsFile(symbolsFile, fsMode)) {
-         if (fsMode == MODE_MQL) symbolsFile = GetMqlSandboxPath() +"/"+ symbolsFile;
-         int hFile = CreateFileA(symbolsFile,               // file name
-                                 GENERIC_READ,              // desired access
-                                 FILE_SHARE_READ,           // share mode
-                                 NULL,                      // default security
-                                 CREATE_NEW,                // create file only if it doesn't exist
-                                 FILE_ATTRIBUTE_NORMAL,     // flags and attributes: normal file
-                                 NULL);                     // no template file handle
-         if (hFile == INVALID_HANDLE_VALUE) {
-            int error = GetLastWin32Error();
-            if (error != ERROR_FILE_EXISTS) return(!catch(caller +"UseTradeServerPath(3)->CreateFileA(\""+ symbolsFile +"\")", ERR_WIN32_ERROR+error));
-         }
-         else CloseHandle(hFile);
-      }
+   if (!IsFile(groupsFile, fsMode)) {
+      logInfo("InitTradeServerPath(5)  creating \""+ groupsFile +"\"");
+      if (fsMode == MODE_MQL) groupsFile = GetMqlSandboxPath() +"/"+ groupsFile;
+      hFile = CreateFileA(groupsFile,                 // file name
+                          GENERIC_READ,               // desired access
+                          FILE_SHARE_READ,            // share mode
+                          NULL,                       // default security
+                          CREATE_NEW,                 // create file only if it doesn't exist
+                          FILE_ATTRIBUTE_NORMAL,      // flags and attributes: normal file
+                          NULL);                      // no template file handle
+      if (hFile == INVALID_HANDLE_VALUE) return(!catch("InitTradeServerPath(6)->CreateFileA(\""+ groupsFile +"\")", ERR_WIN32_ERROR + GetLastWin32Error()));
+      CloseHandle(hFile);
    }
    return(true);
 }
@@ -7148,6 +7156,7 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    InitReasonDescription(NULL);
+   InitTradeServerPath(NULL);
    IntegerToHexString(NULL);
    intOr(NULL, NULL);
    IsAbsolutePath(NULL);
@@ -7297,7 +7306,6 @@ void __DummyCalls() {
    TradeCommandToStr(NULL);
    UninitializeReasonDescription(NULL);
    UrlEncode(NULL);
-   UseTradeServerPath(NULL);
    WaitForTicket(NULL);
    WriteIniString(NULL, NULL, NULL, NULL);
 }

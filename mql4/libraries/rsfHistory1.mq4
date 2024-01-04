@@ -197,7 +197,7 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
 
    if (directory == "") {                                               // current trade server, use MQL::FileOpenHistory()
       string serverPath = GetAccountServerPath();
-      if (!UseTradeServerPath(serverPath, "HistorySet1.Create(7)")) return(NULL);
+      if (!InitTradeServerPath(serverPath)) return(NULL);
 
       for (i=0; i < sizeOfPeriods; i++) {
          basename = StringConcatenate(symbol, periods[i], ".hst");
@@ -217,7 +217,7 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
    }
 
    else if (!IsAbsolutePath(directory)) {                               // relative sandbox path, use MQL::FileOpen()
-      if (!UseTradeServerPath(directory, "HistorySet1.Create(10)")) return(NULL);
+      if (!InitTradeServerPath(directory)) return(NULL);
 
       for (i=0; i < sizeOfPeriods; i++) {
          filename = StringConcatenate(directory, "/", symbol, periods[i], ".hst");
@@ -506,7 +506,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
    string filename="", basename=symbol + timeframe +".hst";
 
    if (directory == "") {                                                        // current trade server, use MQL::FileOpenHistory()
-      if (!read_only) /*&&*/ if (!UseTradeServerPath(GetAccountServerPath(), "HistoryFile1.Open(6)")) return(NULL);
+      if (!read_only) /*&&*/ if (!InitTradeServerPath(GetAccountServerPath())) return(NULL);
       filename = basename;
 
       // open the file: read-only
@@ -529,7 +529,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
 
    else if (!IsAbsolutePath(directory)) {                                        // relative sandbox path, use MQL::FileOpen()
       // on write access make sure the directory exists
-      if (!read_only) /*&&*/ if (!UseTradeServerPath(directory, "HistoryFile1.Open(10)")) return(NULL);
+      if (!read_only) /*&&*/ if (!InitTradeServerPath(directory)) return(NULL);
       filename = directory +"/"+ basename;
 
       // open the file: read-only
