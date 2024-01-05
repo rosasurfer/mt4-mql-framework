@@ -14,7 +14,7 @@
  * • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
  *    1:  Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
- *    2:  Records PnL in price units without spread, swap and transaction costs (virt)
+ *    2:  Records PnL in price units without spread, swap and transaction costs (virt).
  *    3:  Records PnL in price units after spread but without any other costs (gross).
  *    4:  Records PnL in price units after all costs (net).
  *
@@ -265,7 +265,7 @@ double   instance.maxNetProfit;                 // max. observed total net profi
 double   instance.maxNetDrawdown;               // max. observed total net drawdown: -n...0
 
 double   instance.openVirtProfitP;              // PnL in price units without spread, swap and transaction costs
-double   instance.closedVirtProfitP;            // P: price units (quote currency or index points)
+double   instance.closedVirtProfitP;
 double   instance.totalVirtProfitP;
 
 double   instance.openGrossProfitP;             // PnL in price units after spread but without any other costs (gross)
@@ -706,19 +706,6 @@ int ShowTradeHistory() {
    if (!catch("ShowTradeHistory(1)"))
       return(closedTrades);
    return(EMPTY);
-}
-
-
-/**
- * Update recorder with current metric values.
- */
-void RecordMetrics() {
-   if (recorder.mode == RECORDER_CUSTOM) {
-      if (metric.enabled[METRIC_TOTAL_MONEY_NET  ]) metric.currValue[METRIC_TOTAL_MONEY_NET  ] = instance.totalNetProfit;
-      if (metric.enabled[METRIC_TOTAL_UNITS_VIRT ]) metric.currValue[METRIC_TOTAL_UNITS_VIRT ] = instance.totalVirtProfitP;
-      if (metric.enabled[METRIC_TOTAL_UNITS_GROSS]) metric.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitP;
-      if (metric.enabled[METRIC_TOTAL_UNITS_NET  ]) metric.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitP;
-   }
 }
 
 
@@ -1967,7 +1954,7 @@ bool VirtualOrderClose(int ticket) {
 int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
    if (!instance.id) return(catch("Recorder_GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   int _Digits  = MathMax(Digits, 2);                                         // transform Digits=1 to 2
+   int _Digits  = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for some indices)
    string punit = ifString(_Digits > 2, "pip", "point");
 
    enabled    = true;
@@ -2029,6 +2016,19 @@ int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &
          return(ERR_INVALID_INPUT_PARAMETER);
    }
    return(NO_ERROR);
+}
+
+
+/**
+ * Update the recorder with current metric values.
+ */
+void RecordMetrics() {
+   if (recorder.mode == RECORDER_CUSTOM) {
+      if (metric.enabled[METRIC_TOTAL_MONEY_NET  ]) metric.currValue[METRIC_TOTAL_MONEY_NET  ] = instance.totalNetProfit;
+      if (metric.enabled[METRIC_TOTAL_UNITS_VIRT ]) metric.currValue[METRIC_TOTAL_UNITS_VIRT ] = instance.totalVirtProfitP;
+      if (metric.enabled[METRIC_TOTAL_UNITS_GROSS]) metric.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitP;
+      if (metric.enabled[METRIC_TOTAL_UNITS_NET  ]) metric.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitP;
+   }
 }
 
 
@@ -2367,16 +2367,16 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID          = GetIniStringA(file, section, "Instance.ID",          "");            // string Instance.ID          = T123
-   string sTradingMode         = GetIniStringA(file, section, "TradingMode",          "");            // string TradingMode          = regular
-   int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"          );            // int    ZigZag.Periods       = 40
-   string sLots                = GetIniStringA(file, section, "Lots",                 "");            // double Lots                 = 0.1
-   string sStartConditions     = GetIniStringA(file, section, "StartConditions",      "");            // string StartConditions      = @time(datetime|time)
-   string sStopConditions      = GetIniStringA(file, section, "StopConditions",       "");            // string StopConditions       = @time(datetime|time)
-   string sTakeProfit          = GetIniStringA(file, section, "TakeProfit",           "");            // double TakeProfit           = 3.0
-   string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",      "");            // string TakeProfit.Type      = off* | money | percent | pip
-   string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent",  "");            // bool   ShowProfitInPercent  = 1
-   string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",          "");            // string EA.Recorder          = 1,2,4
+   string sInstanceID          = GetIniStringA(file, section, "Instance.ID",          "");            // string Instance.ID         = T123
+   string sTradingMode         = GetIniStringA(file, section, "TradingMode",          "");            // string TradingMode         = regular
+   int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"          );            // int    ZigZag.Periods      = 40
+   string sLots                = GetIniStringA(file, section, "Lots",                 "");            // double Lots                = 0.1
+   string sStartConditions     = GetIniStringA(file, section, "StartConditions",      "");            // string StartConditions     = @time(datetime|time)
+   string sStopConditions      = GetIniStringA(file, section, "StopConditions",       "");            // string StopConditions      = @time(datetime|time)
+   string sTakeProfit          = GetIniStringA(file, section, "TakeProfit",           "");            // double TakeProfit          = 3.0
+   string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",      "");            // string TakeProfit.Type     = off* | money | percent | pip
+   string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent",  "");            // bool   ShowProfitInPercent = 1
+   string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",          "");            // string EA.Recorder         = 1,2,4
 
    if (!StrIsNumeric(sLots))       return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sTakeProfit)) return(!catch("ReadStatus(7)  "+ instance.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));

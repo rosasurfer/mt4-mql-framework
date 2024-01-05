@@ -7,14 +7,17 @@
  *
  * A mixture of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in/out.
  *
+ *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
+ *  @see  [Turtle Trading]         https://analyzingalpha.com/turtle-trading
+ *
  *
  * Features:
  * ---------
  * • A finished test can be loaded into an online chart for trade inspection and further analysis.
  *
  * • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
- *   trade related deviations that impact test results or real trading (tester bugs, spread, slippage, swap, commission).
- *   It allows the EA to be tested and calibrated under idealised conditions.
+ *   trading related deviations that impact test or real results (tester bugs, spread, slippage, swap, commission).
+ *   It allows the EA to be tested and adjusted under idealised conditions.
  *
  * • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in the tester).
  *   These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they
@@ -29,13 +32,14 @@
  * • Lots:               ...
  * • EA.Recorder:        Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
+ *    1:  Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
+ *    2:  Records PnL in price units without spread, swap and transaction costs (virt).
  *
- *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
- *  @see  [Turtle Trading]         https://analyzingalpha.com/turtle-trading
+ *    Metrics in price units are scaled to the best matching unit. That's pip for Forex and full points otherwise.
  *
  *
  * TODO:
- *  - add custom metrics: 1=std-equity, 2=zero-pu
+ *  - calculate/update METRIC_TOTAL_UNITS_VIRT (2)
  *  - add exit strategies
  *  - add entry strategies
  *  - add virtual trading
@@ -66,30 +70,33 @@ extern double Lots                 = 0.1;
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID         108                    // unique strategy id (used for magic order numbers)
+#define STRATEGY_ID            108                 // unique strategy id (used for magic order numbers)
 
-#define INSTANCE_ID_MIN     100                    // range of valid instance ids
-#define INSTANCE_ID_MAX     999                    // ...
+#define INSTANCE_ID_MIN        100                 // range of valid instance ids
+#define INSTANCE_ID_MAX        999                 // ...
 
-#define STATUS_WAITING        1                    // instance has no open positions and waits for trade signals
-#define STATUS_PROGRESSING    2                    // instance manages open positions
-#define STATUS_STOPPED        3                    // instance has no open positions and doesn't wait for trade signals
+#define STATUS_WAITING           1                 // instance has no open positions and waits for trade signals
+#define STATUS_PROGRESSING       2                 // instance manages open positions
+#define STATUS_STOPPED           3                 // instance has no open positions and doesn't wait for trade signals
 
 #define SIGNAL_LONG  TRADE_DIRECTION_LONG          // 1 signal types
 #define SIGNAL_SHORT TRADE_DIRECTION_SHORT         // 2
 
-#define H_TICKET              0                    // trade history indexes
-#define H_LOTS                1
-#define H_OPENTYPE            2
-#define H_OPENTIME            3
-#define H_OPENPRICE           4
-#define H_CLOSETIME           5
-#define H_CLOSEPRICE          6
-#define H_SLIPPAGE            7
-#define H_SWAP                8
-#define H_COMMISSION          9
-#define H_GROSSPROFIT        10
-#define H_NETPROFIT          11
+#define H_TICKET                 0                 // trade history indexes
+#define H_LOTS                   1
+#define H_OPENTYPE               2
+#define H_OPENTIME               3
+#define H_OPENPRICE              4
+#define H_CLOSETIME              5
+#define H_CLOSEPRICE             6
+#define H_SLIPPAGE               7
+#define H_SWAP                   8
+#define H_COMMISSION             9
+#define H_GROSSPROFIT           10
+#define H_NETPROFIT             11
+
+#define METRIC_TOTAL_MONEY_NET   1                 // custom metrics
+#define METRIC_TOTAL_UNITS_VIRT  2
 
 // instance data
 int      instance.id;                              // used for magic order numbers
@@ -98,11 +105,15 @@ string   instance.name = "";
 int      instance.status;
 bool     instance.isTest;
 
-double   instance.openNetProfit;
+double   instance.openNetProfit;                   // PnL in account currency (net)
 double   instance.closedNetProfit;
 double   instance.totalNetProfit;
 double   instance.maxNetProfit;                    // max. observed total net profit:   0...+n
 double   instance.maxNetDrawdown;                  // max. observed total net drawdown: -n...0
+
+double   instance.openVirtProfitP;                 // PnL in price units without spread, swap and transaction costs
+double   instance.closedVirtProfitP;
+double   instance.totalVirtProfitP;
 
 // order data
 int      open.ticket;                              // one open position
@@ -146,6 +157,7 @@ int onTick() {
       int signal;
       IsTradeSignal(signal);
       UpdateStatus(signal);
+      RecordMetrics();
    }
    return(catch("onTick(1)"));
 }
@@ -969,19 +981,19 @@ bool ReadStatus() {
 
    // [General]
    string section      = "General";
-   string sAccount     = GetIniStringA(file, section, "Account", "");                     // string Account = ICMarkets:12345678 (demo)
-   string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                     // string Symbol  = EURUSD
+   string sAccount     = GetIniStringA(file, section, "Account", "");                        // string Account = ICMarkets:12345678 (demo)
+   string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                        // string Symbol  = EURUSD
    string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
    if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(4)  "+ instance.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
    if (!StrCompareI(sSymbol, Symbol()))                       return(!catch("ReadStatus(5)  "+ instance.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID       = GetIniStringA(file, section, "Instance.ID",       "");      // string Instance.ID       = T123
-   string sTunnelDefinition = GetIniStringA(file, section, "Tunnel.Definition", "");      // string Tunnel.Definition = EMA(1), EMA(2), EMA(3)
-   int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods"     );      // int    Donchian.Periods  = 40
-   string sLots             = GetIniStringA(file, section, "Lots",              "");      // double Lots              = 0.1
-   string sEaRecorder       = GetIniStringA(file, section, "EA.Recorder",       "");      // string EA.Recorder       = 1,2,4
+   string sInstanceID         = GetIniStringA(file, section, "Instance.ID",       "");       // string Instance.ID       = T123
+   string sTunnelDefinition   = GetIniStringA(file, section, "Tunnel.Definition", "");       // string Tunnel.Definition = EMA(1), EMA(2), EMA(3)
+   int    iDonchianPeriods    = GetIniInt    (file, section, "Donchian.Periods"     );       // int    Donchian.Periods  = 40
+   string sLots               = GetIniStringA(file, section, "Lots",              "");       // double Lots              = 0.1
+   string sEaRecorder         = GetIniStringA(file, section, "EA.Recorder",       "");       // string EA.Recorder       = 1,2,4
 
    if (!StrIsNumeric(sLots)) return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
@@ -993,35 +1005,39 @@ bool ReadStatus() {
 
    // [Runtime status]
    section = "Runtime status";
-   instance.id              = GetIniInt    (file, section, "instance.id"      );          // int      instance.id              = 123
-   instance.created         = GetIniInt    (file, section, "instance.created" );          // datetime instance.created         = 1624924800 (Mon, 2021.05.12 13:22:34)
-   instance.isTest          = GetIniBool   (file, section, "instance.isTest"  );          // bool     instance.isTest          = 1
-   instance.name            = GetIniStringA(file, section, "instance.name", "");          // string   instance.name            = V.123
-   instance.status          = GetIniInt    (file, section, "instance.status"  );          // int      instance.status          = 1
+   instance.id                = GetIniInt    (file, section, "instance.id"      );           // int      instance.id                = 123
+   instance.created           = GetIniInt    (file, section, "instance.created" );           // datetime instance.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.isTest            = GetIniBool   (file, section, "instance.isTest"  );           // bool     instance.isTest            = 1
+   instance.name              = GetIniStringA(file, section, "instance.name", "");           // string   instance.name              = V.123
+   instance.status            = GetIniInt    (file, section, "instance.status"  );           // int      instance.status            = 1
 
-   instance.openNetProfit   = GetIniDouble (file, section, "instance.openNetProfit"  );   // double   instance.openNetProfit   = 23.45
-   instance.closedNetProfit = GetIniDouble (file, section, "instance.closedNetProfit");   // double   instance.closedNetProfit = 45.67
-   instance.totalNetProfit  = GetIniDouble (file, section, "instance.totalNetProfit" );   // double   instance.totalNetProfit  = 123.45
-   instance.maxNetProfit    = GetIniDouble (file, section, "instance.maxNetProfit"   );   // double   instance.maxNetProfit    = 23.45
-   instance.maxNetDrawdown  = GetIniDouble (file, section, "instance.maxNetDrawdown" );   // double   instance.maxNetDrawdown  = -11.23
+   instance.openNetProfit     = GetIniDouble (file, section, "instance.openNetProfit"  );    // double   instance.openNetProfit     = 23.45
+   instance.closedNetProfit   = GetIniDouble (file, section, "instance.closedNetProfit");    // double   instance.closedNetProfit   = 45.67
+   instance.totalNetProfit    = GetIniDouble (file, section, "instance.totalNetProfit" );    // double   instance.totalNetProfit    = 123.45
+   instance.maxNetProfit      = GetIniDouble (file, section, "instance.maxNetProfit"   );    // double   instance.maxNetProfit      = 23.45
+   instance.maxNetDrawdown    = GetIniDouble (file, section, "instance.maxNetDrawdown" );    // double   instance.maxNetDrawdown    = -11.23
+
+   instance.openVirtProfitP   = GetIniDouble (file, section, "instance.openVirtProfitP"  );  // double   instance.openVirtProfitP   = 0.12345
+   instance.closedVirtProfitP = GetIniDouble (file, section, "instance.closedVirtProfitP");  // double   instance.closedVirtProfitP = -0.23456
+   instance.totalVirtProfitP  = GetIniDouble (file, section, "instance.totalVirtProfitP" );  // double   instance.totalVirtProfitP  = 1.23456
    SS.InstanceName();
 
    // open order data
-   open.ticket              = GetIniInt    (file, section, "open.ticket"     );           // int      open.ticket              = 123456
-   open.type                = GetIniInt    (file, section, "open.type"       );           // int      open.type                = 1
-   open.time                = GetIniInt    (file, section, "open.time"       );           // datetime open.time                = 1624924800 (Mon, 2021.05.12 13:22:34)
-   open.price               = GetIniDouble (file, section, "open.price"      );           // double   open.price               = 1.24363
-   open.slippage            = GetIniDouble (file, section, "open.slippage"   );           // double   open.slippage            = 0.00003
-   open.swap                = GetIniDouble (file, section, "open.swap"       );           // double   open.swap                = -1.23
-   open.commission          = GetIniDouble (file, section, "open.commission" );           // double   open.commission          = -5.50
-   open.grossProfit         = GetIniDouble (file, section, "open.grossProfit");           // double   open.grossProfit         = 12.34
-   open.netProfit           = GetIniDouble (file, section, "open.netProfit"  );           // double   open.netProfit           = 12.56
+   open.ticket                = GetIniInt    (file, section, "open.ticket"     );            // int      open.ticket      = 123456
+   open.type                  = GetIniInt    (file, section, "open.type"       );            // int      open.type        = 1
+   open.time                  = GetIniInt    (file, section, "open.time"       );            // datetime open.time        = 1624924800 (Mon, 2021.05.12 13:22:34)
+   open.price                 = GetIniDouble (file, section, "open.price"      );            // double   open.price       = 1.24363
+   open.slippage              = GetIniDouble (file, section, "open.slippage"   );            // double   open.slippage    = 0.00003
+   open.swap                  = GetIniDouble (file, section, "open.swap"       );            // double   open.swap        = -1.23
+   open.commission            = GetIniDouble (file, section, "open.commission" );            // double   open.commission  = -5.50
+   open.grossProfit           = GetIniDouble (file, section, "open.grossProfit");            // double   open.grossProfit = 12.34
+   open.netProfit             = GetIniDouble (file, section, "open.netProfit"  );            // double   open.netProfit   = 12.56
 
    // history data
    string sKeys[], sOrder="";
    int size = ReadStatus.HistoryKeys(file, section, sKeys); if (size < 0) return(false);
    for (int i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                // history.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                   // history.{i} = {data}
       if (!ReadStatus.ParseHistory(sKeys[i], sOrder)) return(!catch("ReadStatus(7)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
    return(!catch("ReadStatus(8)"));
@@ -1254,39 +1270,43 @@ bool SaveStatus() {
 
    // [Inputs]
    section = "Inputs";
-   WriteIniString(file, section, "Instance.ID",              /*string*/ Instance.ID);
-   WriteIniString(file, section, "Tunnel.Definition",        /*string*/ Tunnel.Definition);
-   WriteIniString(file, section, "Donchian.Periods",         /*int   */ Donchian.Periods);
-   WriteIniString(file, section, "Lots",                     /*double*/ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "EA.Recorder",              /*string*/ EA.Recorder + separator);                    // conditional section separator
+   WriteIniString(file, section, "Instance.ID",                /*string*/ Instance.ID);
+   WriteIniString(file, section, "Tunnel.Definition",          /*string*/ Tunnel.Definition);
+   WriteIniString(file, section, "Donchian.Periods",           /*int   */ Donchian.Periods);
+   WriteIniString(file, section, "Lots",                       /*double*/ NumberToStr(Lots, ".+"));
+   WriteIniString(file, section, "EA.Recorder",                /*string*/ EA.Recorder + separator);                  // conditional section separator
 
    // [Runtime status]
-   section = "Runtime status";                               // On deletion of pending orders the number of stored order records decreases. To prevent
-   EmptyIniSectionA(file, section);                          // orphaned status file records the section is emptied before writing to it.
+   section = "Runtime status";                                 // On deletion of pending orders the number of stored order records decreases. To prevent
+   EmptyIniSectionA(file, section);                            // orphaned status file records the section is emptied before writing to it.
 
    // instance data
-   WriteIniString(file, section, "instance.id",              /*int     */ instance.id);
-   WriteIniString(file, section, "instance.created",         /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "instance.isTest",          /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.name",            /*string  */ instance.name);
-   WriteIniString(file, section, "instance.status",          /*int     */ instance.status + CRLF);
+   WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
+   WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
+   WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
+   WriteIniString(file, section, "instance.status",            /*int     */ instance.status + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",   /*double  */ DoubleToStr(instance.openNetProfit, 2));
-   WriteIniString(file, section, "instance.closedNetProfit", /*double  */ DoubleToStr(instance.closedNetProfit, 2));
-   WriteIniString(file, section, "instance.totalNetProfit",  /*double  */ DoubleToStr(instance.totalNetProfit, 2));
-   WriteIniString(file, section, "instance.maxNetProfit",    /*double  */ DoubleToStr(instance.maxNetProfit, 2));
-   WriteIniString(file, section, "instance.maxNetDrawdown",  /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
+   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ DoubleToStr(instance.openNetProfit, 2));
+   WriteIniString(file, section, "instance.closedNetProfit",   /*double  */ DoubleToStr(instance.closedNetProfit, 2));
+   WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ DoubleToStr(instance.totalNetProfit, 2));
+   WriteIniString(file, section, "instance.maxNetProfit",      /*double  */ DoubleToStr(instance.maxNetProfit, 2));
+   WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
+
+   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
+   WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
+   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits) + CRLF);
 
    // open order data
-   WriteIniString(file, section, "open.ticket",              /*int     */ open.ticket);
-   WriteIniString(file, section, "open.type",                /*int     */ open.type);
-   WriteIniString(file, section, "open.time",                /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
-   WriteIniString(file, section, "open.price",               /*double  */ DoubleToStr(open.price, Digits));
-   WriteIniString(file, section, "open.slippage",            /*double  */ DoubleToStr(open.slippage, Digits));
-   WriteIniString(file, section, "open.swap",                /*double  */ DoubleToStr(open.swap, 2));
-   WriteIniString(file, section, "open.commission",          /*double  */ DoubleToStr(open.commission, 2));
-   WriteIniString(file, section, "open.grossProfit",         /*double  */ DoubleToStr(open.grossProfit, 2));
-   WriteIniString(file, section, "open.netProfit",           /*double  */ DoubleToStr(open.netProfit, 2) + CRLF);
+   WriteIniString(file, section, "open.ticket",                /*int     */ open.ticket);
+   WriteIniString(file, section, "open.type",                  /*int     */ open.type);
+   WriteIniString(file, section, "open.time",                  /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "open.price",                 /*double  */ DoubleToStr(open.price, Digits));
+   WriteIniString(file, section, "open.slippage",              /*double  */ DoubleToStr(open.slippage, Digits));
+   WriteIniString(file, section, "open.swap",                  /*double  */ DoubleToStr(open.swap, 2));
+   WriteIniString(file, section, "open.commission",            /*double  */ DoubleToStr(open.commission, 2));
+   WriteIniString(file, section, "open.grossProfit",           /*double  */ DoubleToStr(open.grossProfit, 2));
+   WriteIniString(file, section, "open.netProfit",             /*double  */ DoubleToStr(open.netProfit, 2) + CRLF);
 
    // closed order data
    int size = ArrayRange(history, 0);
@@ -1482,6 +1502,64 @@ int onInputError(string message) {
    if (ProgramInitReason() == IR_PARAMETERS)
       return(logError(message, error));                           // non-terminating error
    return(catch(message, error));                                 // terminating error
+}
+
+
+/**
+ * Return a symbol definition for the specified metric to be recorded.
+ *
+ * @param  _In_  int    id           - metric id
+ * @param  _Out_ bool   &enabled     - whether the metric is active and should be recorded
+ * @param  _Out_ string &symbol      - unique MT4 timeseries symbol
+ * @param  _Out_ string &description - symbol description as in the MT4 "Symbols" window
+ * @param  _Out_ string &group       - symbol group name as in the MT4 "Symbols" window
+ * @param  _Out_ int    &digits      - symbol digits value
+ * @param  _Out_ double &baseValue   - quotes base value (if EMPTY recorder settings are used)
+ * @param  _Out_ int    &multiplier  - quotes multiplier
+ *
+ * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
+ */
+int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
+   if (!instance.id) return(catch("Recorder_GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
+
+   int _Digits  = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for some indices)
+   string punit = ifString(_Digits > 2, "pip", "point");
+
+   enabled    = true;
+   group      = "";
+   baseValue  = EMPTY;
+   digits     = ifInt(_Digits > 2, 1, 2);                                     // store 1.23 as 1.23 point
+   multiplier = ifInt(_Digits > 2, Round(MathPow(10, _Digits & (~1))), 1);    // store 0.0123'4 as 123.4 pip
+
+   switch (id) {
+      case METRIC_TOTAL_MONEY_NET:
+         symbol      = "v"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"A";      // "zUS500_123A"
+         description = "Vegas "+ PeriodDescription() +" Tunnel "+ Symbol() +" in "+ AccountCurrency() +", net";
+         digits      = 2;                                                     // "Vegas H1 Tunnel US500 in USD, net"
+         baseValue   = 0;
+         multiplier  = 1;
+         break;
+
+      case METRIC_TOTAL_UNITS_VIRT:
+         symbol      = "v"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"B";
+         description = "Vegas "+ PeriodDescription() +" Tunnel "+ Symbol() +" in "+ punit +", virt";
+         break;
+
+      default:
+         return(ERR_INVALID_INPUT_PARAMETER);
+   }
+   return(NO_ERROR);
+}
+
+
+/**
+ * Update the recorder with current metric values.
+ */
+void RecordMetrics() {
+   if (recorder.mode == RECORDER_CUSTOM) {
+      if (metric.enabled[METRIC_TOTAL_MONEY_NET ]) metric.currValue[METRIC_TOTAL_MONEY_NET ] = instance.totalNetProfit;
+      if (metric.enabled[METRIC_TOTAL_UNITS_VIRT]) metric.currValue[METRIC_TOTAL_UNITS_VIRT] = instance.totalVirtProfitP;
+   }
 }
 
 
