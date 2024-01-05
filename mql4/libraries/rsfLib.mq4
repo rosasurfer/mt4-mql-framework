@@ -7549,10 +7549,10 @@ string CreateTempFile(string path, string prefix="") {
  * Whether a symbol exists in "symbols.raw" of a directory.
  *
  * @param  string symbol               - symbol
- * @param  string directory [optional] - directory
- *                                        if empty:            the current trade server directory (default)
- *                                        if a relative path:  relative to the MQL sandbox/files directory
- *                                        if an absolute path: as is
+ * @param  string directory [optional] - directory, if:
+ *                                        empty:         the current trade server directory (default)
+ *                                        relative path: relative to the MQL sandbox directory
+ *                                        absolute path: as is
  *
  * @return bool - success status or FALSE in case of errors
  */
@@ -7627,7 +7627,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
  *                                        a relative path:  relative to the MQL sandbox/files directory
  *                                        an absolute path: as is
  *
- * @return int - id of the new symbol (field SYMBOL.id) or EMPTY (-1) in case of errors
+ * @return int - MT4 id of the new symbol (field SYMBOL.id) or EMPTY (-1) in case of errors
  */
 int CreateRawSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory = "") {
    if (!StringLen(symbol))                         return(_EMPTY(catch("CreateRawSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));

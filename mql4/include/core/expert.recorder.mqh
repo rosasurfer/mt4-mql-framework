@@ -1,5 +1,5 @@
 //
-// During runtime an EA can record up to 32 different performance graphs (aka metrics; online and in tester). These recordings
+// During runtime an EA can record up to 21 different performance graphs (aka metrics; online and in tester). These recordings
 // are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they can be displayed and
 // analysed like regular MetaTrader symbols.
 //
@@ -370,7 +370,7 @@ bool Recorder.deinit() {
  * @return bool - success status
  */
 bool Recorder.AddMetric(int id, string symbol, string description, string group, int digits, double baseValue = EMPTY, int multiplier = 1) {
-   if (id < 1 || id > 32) return(!catch("Recorder.AddMetric(1)  invalid parameter id: "+ id +" (allowed range: 1 to 32)", ERR_INVALID_PARAMETER));
+   if (id < 1 || id > 21) return(!catch("Recorder.AddMetric(1)  invalid parameter id: "+ id +" (allowed range: 1 to 21)", ERR_INVALID_PARAMETER));
 
    int size = ArraySize(metric.enabled);
    if (id >= size) {
