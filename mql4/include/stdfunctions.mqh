@@ -3413,7 +3413,7 @@ string GetMqlSandboxPath() {
  */
 string StrToHexStr(string value) {
    if (StrIsNull(value))
-      return("(NULL)");
+      return("(null)");
 
    string result = "";
    int len = StringLen(value);

@@ -241,12 +241,12 @@ bool Recorder.init() {
    if (!recorder.initialized) {
       recorder.defaultDescription = StrLeft(ProgramName(), 46) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M");   // 46 + 1 + 16 + <nul>        = 64 chars
       recorder.defaultGroup       = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
-      recorder.hstDirectory       = Recorder.GetHstDirectory("Recorder.init(1)"); if (!StringLen(recorder.hstDirectory)) return(false);
-      recorder.hstFormat          = Recorder.GetHstFormat("Recorder.init(2)");    if (!recorder.hstFormat)               return(false);
+      recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
+      recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               return(false);
 
       // create an internal metric for AccountEquity()
       if (recorder.mode == RECORDER_INTERNAL) {
-         string symbol = Recorder.GetInternalSymbol(); if (!StringLen(symbol)) return(false);
+         string symbol = Recorder.GetEquitySymbol(); if (!StringLen(symbol)) return(false);
          string descr  = recorder.defaultDescription;
          string group  = recorder.defaultGroup;
          if (!Recorder.AddMetric(1, symbol, descr, group, 2, 0)) return(false);
@@ -262,7 +262,7 @@ bool Recorder.init() {
          if (          !metric.multiplier [i])  metric.multiplier [i] = 1;
 
          if (IsRawSymbol(metric.symbol[i], recorder.hstDirectory)) {
-            if (__isTesting) return(!catch("Recorder.init(3)  symbol \""+ metric.symbol[i] +"\" already exists", ERR_ILLEGAL_STATE));
+            if (__isTesting) return(!catch("Recorder.init(1)  symbol \""+ metric.symbol[i] +"\" already exists", ERR_ILLEGAL_STATE));
             // TODO: update existing properties
          }
          else {
@@ -418,11 +418,11 @@ void Recorder.ResetMetrics() {
 
 
 /**
- * Compose a new unique MT4 symbol for internal equity recording.
+ * Get the next free MT4 symbol for internal equity recording.
  *
  * @return string - symbol or an empty string in case of errors
  */
-string Recorder.GetInternalSymbol() {
+string Recorder.GetEquitySymbol() {
    string filename = recorder.hstDirectory +"/symbols.raw";
    string prefix = StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
    int maxId = 0;
@@ -430,16 +430,16 @@ string Recorder.GetInternalSymbol() {
    if (IsFile(filename, MODE_MQL)) {
       // open "symbols.raw" and read existing symbols
       int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
-      if (hFile <= 0)                                      return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0)                                      return(_EMPTY_STR(catch("Recorder.GetEquitySymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR))));
 
       int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
+      if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(_EMPTY_STR(catch("Recorder.GetEquitySymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
       int symbolsSize = fileSize/SYMBOL_size;
 
       int symbols[]; InitializeByteBuffer(symbols, fileSize);
       if (fileSize > 0) {
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-         if (ints!=fileSize/4) { FileClose(hFile);         return(_EMPTY_STR(catch("Recorder.GetInternalSymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
+         if (ints!=fileSize/4) { FileClose(hFile);         return(_EMPTY_STR(catch("Recorder.GetEquitySymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
       }
       FileClose(hFile);
 
@@ -462,11 +462,9 @@ string Recorder.GetInternalSymbol() {
 /**
  * Resolve the history directory for recorded timeseries.
  *
- * @param  string caller - caller identifier
- *
  * @return string - directory or an empty string in case of errors
  */
-string Recorder.GetHstDirectory(string caller) {
+string Recorder.GetHstDirectory() {
    string section = ifString(__isTesting, "Tester.", "") + WindowExpertName();
    string key = "Recorder.HistoryDirectory", sValue="";
 
@@ -479,7 +477,7 @@ string Recorder.GetHstDirectory(string caller) {
          sValue = GetConfigString(section, key, "");
       }
    }
-   if (!StringLen(sValue)) return(_EMPTY_STR(catch(caller +"->Recorder.GetHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
+   if (!StringLen(sValue)) return(_EMPTY_STR(catch("Recorder.GetHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
    return(sValue);
 }
 
@@ -487,11 +485,9 @@ string Recorder.GetHstDirectory(string caller) {
 /**
  * Resolve the history format for recorded timeseries.
  *
- * @param  string caller - caller identifier
- *
  * @return int - history format or NULL (0) in case of errors
  */
-int Recorder.GetHstFormat(string caller) {
+int Recorder.GetHstFormat() {
    string section = ifString(__isTesting, "Tester.", "") + WindowExpertName();
    string key = "Recorder.HistoryFormat";
 
@@ -504,7 +500,7 @@ int Recorder.GetHstFormat(string caller) {
          iValue = GetConfigInt(section, key, 0);
       }
    }
-   if (iValue!=400 && iValue!=401) return(!catch(caller +"->Recorder.GetHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+   if (iValue!=400 && iValue!=401) return(!catch("Recorder.GetHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
    return(iValue);
 
    // suppress compiler warnings
