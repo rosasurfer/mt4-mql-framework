@@ -35,10 +35,10 @@
  *
  *
  * TODO:
- *  - add custom metrics
+ *  - add custom metrics: 1=std-equity, 2=zero-pu
+ *  - add exit strategies
+ *  - add entry strategies
  *  - add virtual trading
- *  - implement multiple exit strategies
- *  - implement multiple entry strategies
  *  - add input "TradingTimeframe"
  *  - document input params, control scripts and general usage
  */
