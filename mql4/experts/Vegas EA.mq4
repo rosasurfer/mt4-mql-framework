@@ -39,7 +39,7 @@
  *
  *
  * TODO:
- *  - calculate/update METRIC_TOTAL_UNITS_VIRT (2)
+ *  - calculate/update METRIC_TOTAL_UNITS_VIRT
  *  - add exit strategies
  *  - add entry strategies
  *  - add virtual trading
@@ -1206,7 +1206,7 @@ string GetStatusFilename(bool relative = false) {
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = Symbol() +"."+ GmtTimeFormat(instance.created, "%Y.%m.%d %H.%M") +".Vegas."+ instance.id +".set";
+      string baseName  = "v"+ Symbol() +"."+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +".Vegas."+ instance.id +".set";
       filename = directory + baseName;
    }
 
@@ -1230,7 +1230,7 @@ string FindStatusFile(int instanceId, bool isTest) {
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
    string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
-   string basePattern = Symbol() +".*.Vegas."+ instanceId +".set";
+   string basePattern = "v"+ Symbol() +".*.Vegas."+ instanceId +".set";
    string pathPattern = sandboxDir + statusDir + basePattern;
 
    string result[];
