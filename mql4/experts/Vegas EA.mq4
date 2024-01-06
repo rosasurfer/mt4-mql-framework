@@ -1206,7 +1206,7 @@ string GetStatusFilename(bool relative = false) {
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = "Vegas."+ Symbol() +"."+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +".id="+ instance.id +".set";
+      string baseName  = "Vegas, "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ instance.id +".set";
       filename = directory + baseName;
    }
 
@@ -1230,7 +1230,7 @@ string FindStatusFile(int instanceId, bool isTest) {
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
    string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
-   string basePattern = "Vegas."+ Symbol() +".*.id="+ instanceId +".set";
+   string basePattern = "Vegas, "+ Symbol() +",*id="+ instanceId +".set";
    string pathPattern = sandboxDir + statusDir + basePattern;
 
    string result[];
