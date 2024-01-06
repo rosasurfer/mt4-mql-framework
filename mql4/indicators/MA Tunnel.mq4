@@ -2,6 +2,10 @@
  * MA Tunnel
  *
  * An indicator for price crossing a High/Low channel (aka a tunnel) built from one or more Moving Averages.
+ *
+ *
+ * TODO:
+ *  - add input "Tunnel.Width" = 100% (percent of High/Low range)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
