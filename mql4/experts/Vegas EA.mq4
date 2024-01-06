@@ -488,15 +488,15 @@ bool IsTradeSignal(int &signal) {
 
    // MA Tunnel signal ------------------------------------------------------------------------------------------------------
    if (IsMaTunnelSignal(signal)) {
-      logInfo("IsTradeSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      logNotice("IsTradeSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
 
    // Donchian signal -------------------------------------------------------------------------------------------------------
-   //if (IsDonchianSignal(signal)) {
-   //   logInfo("IsTradeSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-   //   return(true);
-   //}
+   if (false) /*&&*/ if (IsDonchianSignal(signal)) {
+      logNotice("IsTradeSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      return(true);
+   }
    return(false);
 }
 
@@ -549,12 +549,7 @@ bool IsDonchianSignal(int &signal) {
          else {
             if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
          }
-         if (signal != NULL) {
-            if (instance.status == STATUS_PROGRESSING) {
-               if (IsLogInfo()) logInfo("IsDonchianSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-            }
-            lastSignal = signal;
-         }
+         if (signal != NULL) lastSignal = signal;
       }
       lastTick   = Ticks;
       lastResult = signal;
