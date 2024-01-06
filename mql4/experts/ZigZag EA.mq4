@@ -43,31 +43,28 @@
  *  - log file: fix empty PnL in StopInstance()
  *  - add var recorder.internalSymbol and store/restore value
  *
- *  - visible/audible alert at daily loss limit
- *  - visible alert at profit target
- *
  *  - time functions
- *      TimeCurrentEx()          check scripts/standalone-indicators in tester/offline charts in old/current terminals
- *      TimeLocalEx()            check scripts/standalone-indicators in tester/offline charts in old/current terminals
- *      TimeFXT()
- *      TimeGMT()                check scripts/standalone-indicators in tester/offline charts in old/current terminals
- *      TimeServer()             check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *     TimeLocalEx()       check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *     TimeFXT()
+ *     TimeGMT()           check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *     TimeServer()        check scripts/standalone-indicators in tester/offline charts in old/current terminals
  *
- *      FxtToGmtTime
- *      FxtToLocalTime
- *      FxtToServerTime
+ *     FxtToGmtTime
+ *     FxtToLocalTime
+ *     FxtToServerTime
  *
- *      GmtToFxtTime
- *      GmtToLocalTime     OK    finish unit tests
- *      GmtToServerTime
+ *     GmtToFxtTime
+ *     GmtToLocalTime      OK    finish unit tests
+ *     GmtToServerTime
  *
- *      LocalToFxtTime
- *      LocalToGmtTime     OK    finish unit tests
- *      LocalToServerTime
+ *     LocalToFxtTime
+ *     LocalToGmtTime      OK    finish unit tests
+ *     LocalToServerTime
  *
- *      ServerToFxtTime
- *      ServerToGmtTime
- *      ServerToLocalTime
+ *     ServerToFxtTime
+ *     ServerToGmtTime
+ *     ServerToLocalTime
  *
  *  - merge Get(Prev|Next)?SessionStartTime()
  *  - merge Get(Prev|Next)?SessionEndTime()
@@ -2199,22 +2196,22 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.status",             /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "instance.startEquity",        /*double  */ DoubleToStr(instance.startEquity, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ DoubleToStr(instance.openNetProfit, 2) +" (PnL in account currency)");
+   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 10)         +" (account currency)");
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2) + CRLF);
 
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ DoubleToStr(instance.openVirtProfitP, Digits) +" (PnL in price units without spread, swap and transaction costs)");
+   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 10)  +" (price units without spread, swap and transaction costs)");
    WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
    WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits) + CRLF);
 
-   WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ DoubleToStr(instance.openGrossProfitP, Digits) +" (PnL in price units after spread but without any other costs)");
+   WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openGrossProfitP, Digits), 10) +" (price units after spread but without any other costs)");
    WriteIniString(file, section, "instance.closedGrossProfitP", /*double  */ DoubleToStr(instance.closedGrossProfitP, Digits));
    WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ DoubleToStr(instance.totalGrossProfitP, Digits) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ DoubleToStr(instance.openNetProfitP, Digits) +" (PnL in price units after all costs)");
+   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(DoubleToStr(instance.openNetProfitP, Digits), 10)   +" (price units after all costs)");
    WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ DoubleToStr(instance.closedNetProfitP, Digits));
    WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ DoubleToStr(instance.totalNetProfitP, Digits) + CRLF);
 
@@ -2401,21 +2398,21 @@ bool ReadStatus() {
    instance.status             = GetIniInt    (file, section, "instance.status"            );         // int      instance.status             = 1 (waiting)
    instance.startEquity        = GetIniDouble (file, section, "instance.startEquity"       );         // double   instance.startEquity        = 1000.00
 
-   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"     );         // double   instance.openNetProfit      = 23.45    (PnL in account currency)
+   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"     );         // double   instance.openNetProfit      = 23.45    (account currency)
    instance.closedNetProfit    = GetIniDouble (file, section, "instance.closedNetProfit"   );         // double   instance.closedNetProfit    = 45.67
    instance.totalNetProfit     = GetIniDouble (file, section, "instance.totalNetProfit"    );         // double   instance.totalNetProfit     = 123.45
    instance.maxNetProfit       = GetIniDouble (file, section, "instance.maxNetProfit"      );         // double   instance.maxNetProfit       = 23.45
    instance.maxNetDrawdown     = GetIniDouble (file, section, "instance.maxNetDrawdown"    );         // double   instance.maxNetDrawdown     = -11.23
 
-   instance.openVirtProfitP    = GetIniDouble (file, section, "instance.openVirtProfitP"   );         // double   instance.openVirtProfitP    = 0.12345  (PnL in price units without spread, swap and transaction costs)
+   instance.openVirtProfitP    = GetIniDouble (file, section, "instance.openVirtProfitP"   );         // double   instance.openVirtProfitP    = 0.12345  (price units without spread, swap and transaction costs)
    instance.closedVirtProfitP  = GetIniDouble (file, section, "instance.closedVirtProfitP" );         // double   instance.closedVirtProfitP  = -0.23456
    instance.totalVirtProfitP   = GetIniDouble (file, section, "instance.totalVirtProfitP"  );         // double   instance.totalVirtProfitP   = 1.23456
 
-   instance.openGrossProfitP   = GetIniDouble (file, section, "instance.openGrossProfitP"  );         // double   instance.openGrossProfitP   = 0.12345  (PnL in price units after spread but without any other costs)
+   instance.openGrossProfitP   = GetIniDouble (file, section, "instance.openGrossProfitP"  );         // double   instance.openGrossProfitP   = 0.12345  (price units after spread but without any other costs)
    instance.closedGrossProfitP = GetIniDouble (file, section, "instance.closedGrossProfitP");         // double   instance.closedGrossProfitP = -0.23456
    instance.totalGrossProfitP  = GetIniDouble (file, section, "instance.totalGrossProfitP" );         // double   instance.totalGrossProfitP  = 1.23456
 
-   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"    );         // double   instance.openNetProfitP     = 0.12345  (PnL in price units after all costs)
+   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"    );         // double   instance.openNetProfitP     = 0.12345  (price units after all costs)
    instance.closedNetProfitP   = GetIniDouble (file, section, "instance.closedNetProfitP"  );         // double   instance.closedNetProfitP   = -0.23456
    instance.totalNetProfitP    = GetIniDouble (file, section, "instance.totalNetProfitP"   );         // double   instance.totalNetProfitP    = 1.23456
    SS.InstanceName();
