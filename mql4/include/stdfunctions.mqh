@@ -3025,22 +3025,6 @@ string StrPadLeft(string input, int padLength, string padString = " ") {
 
 
 /**
- * Alias of StrPadLeft()
- *
- * Pad a string left-side to a minimum length using a pad substring.
- *
- * @param  string input                - source string
- * @param  int    padLength            - minimum length of the resulting string
- * @param  string padString [optional] - substring used for padding (default: space chars)
- *
- * @return string
- */
-string StrLeftPad(string input, int padLength, string padString = " ") {
-   return(StrPadLeft(input, padLength, padString));
-}
-
-
-/**
  * Pad a string right-side to a minimum length using a pad string.
  *
  * @param  string input                - source string
@@ -3054,22 +3038,6 @@ string StrPadRight(string input, int padLength, string padString = " ") {
       input = StringConcatenate(input, padString);
    }
    return(input);
-}
-
-
-/**
- * Alias of StrPadRight()
- *
- * Pad a string right-side to a minimum length using a pad string.
- *
- * @param  string input                - source string
- * @param  int    padLength            - minimum length of the resulting string
- * @param  string padString [optional] - substring used for padding (default: space chars)
- *
- * @return string
- */
-string StrRightPad(string input, int padLength, string padString = " ") {
-   return(StrPadRight(input, padLength, padString));
 }
 
 
@@ -7247,7 +7215,6 @@ void __DummyCalls() {
    StrIsNumeric(NULL);
    StrIsPhoneNumber(NULL);
    StrLeft(NULL, NULL);
-   StrLeftPad(NULL, NULL);
    StrLeftTo(NULL, NULL);
    StrPadLeft(NULL, NULL);
    StrPadRight(NULL, NULL);
@@ -7255,7 +7222,6 @@ void __DummyCalls() {
    StrReplace(NULL, NULL, NULL);
    StrRight(NULL, NULL);
    StrRightFrom(NULL, NULL);
-   StrRightPad(NULL, NULL);
    StrStartsWithI(NULL, NULL);
    StrSubstr(NULL, NULL);
    StrToBool(NULL);
