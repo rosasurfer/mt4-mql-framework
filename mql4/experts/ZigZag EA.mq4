@@ -41,7 +41,6 @@
  *
  * TODO:
  *  - revert loglevel changes in EA, rsfLib
- *  - status file: status description, PnL description
  *  - log file: fix empty PnL in StopInstance()
  *  - add var recorder.internalSymbol and store/restore value
  *
@@ -2201,25 +2200,25 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.created",            /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",             /*bool    */ instance.isTest);
    WriteIniString(file, section, "instance.name",               /*string  */ instance.name);
-   WriteIniString(file, section, "instance.status",             /*int     */ instance.status);
+   WriteIniString(file, section, "instance.status",             /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "instance.startEquity",        /*double  */ DoubleToStr(instance.startEquity, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ DoubleToStr(instance.openNetProfit, 2));
+   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ DoubleToStr(instance.openNetProfit, 2) +" (PnL in account currency)");
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2) + CRLF);
 
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
+   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ DoubleToStr(instance.openVirtProfitP, Digits) +" (PnL in price units without spread, swap and transaction costs)");
    WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
    WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits) + CRLF);
 
-   WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ DoubleToStr(instance.openGrossProfitP, Digits));
+   WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ DoubleToStr(instance.openGrossProfitP, Digits) +" (PnL in price units after spread but without any other costs)");
    WriteIniString(file, section, "instance.closedGrossProfitP", /*double  */ DoubleToStr(instance.closedGrossProfitP, Digits));
    WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ DoubleToStr(instance.totalGrossProfitP, Digits) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ DoubleToStr(instance.openNetProfitP, Digits));
+   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ DoubleToStr(instance.openNetProfitP, Digits) +" (PnL in price units after all costs)");
    WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ DoubleToStr(instance.closedNetProfitP, Digits));
    WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ DoubleToStr(instance.totalNetProfitP, Digits) + CRLF);
 
@@ -2403,24 +2402,24 @@ bool ReadStatus() {
    instance.created            = GetIniInt    (file, section, "instance.created"           );         // datetime instance.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest             = GetIniBool   (file, section, "instance.isTest"            );         // bool     instance.isTest             = 1
    instance.name               = GetIniStringA(file, section, "instance.name",           "");         // string   instance.name               = Z.123
-   instance.status             = GetIniInt    (file, section, "instance.status"            );         // int      instance.status             = 1
+   instance.status             = GetIniInt    (file, section, "instance.status"            );         // int      instance.status             = 1 (waiting)
    instance.startEquity        = GetIniDouble (file, section, "instance.startEquity"       );         // double   instance.startEquity        = 1000.00
 
-   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"     );         // double   instance.openNetProfit      = 23.45
+   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"     );         // double   instance.openNetProfit      = 23.45    (PnL in account currency)
    instance.closedNetProfit    = GetIniDouble (file, section, "instance.closedNetProfit"   );         // double   instance.closedNetProfit    = 45.67
    instance.totalNetProfit     = GetIniDouble (file, section, "instance.totalNetProfit"    );         // double   instance.totalNetProfit     = 123.45
    instance.maxNetProfit       = GetIniDouble (file, section, "instance.maxNetProfit"      );         // double   instance.maxNetProfit       = 23.45
    instance.maxNetDrawdown     = GetIniDouble (file, section, "instance.maxNetDrawdown"    );         // double   instance.maxNetDrawdown     = -11.23
 
-   instance.openVirtProfitP    = GetIniDouble (file, section, "instance.openVirtProfitP"   );         // double   instance.openVirtProfitP    = 0.12345
+   instance.openVirtProfitP    = GetIniDouble (file, section, "instance.openVirtProfitP"   );         // double   instance.openVirtProfitP    = 0.12345  (PnL in price units without spread, swap and transaction costs)
    instance.closedVirtProfitP  = GetIniDouble (file, section, "instance.closedVirtProfitP" );         // double   instance.closedVirtProfitP  = -0.23456
    instance.totalVirtProfitP   = GetIniDouble (file, section, "instance.totalVirtProfitP"  );         // double   instance.totalVirtProfitP   = 1.23456
 
-   instance.openGrossProfitP   = GetIniDouble (file, section, "instance.openGrossProfitP"  );         // double   instance.openGrossProfitP   = 0.12345
+   instance.openGrossProfitP   = GetIniDouble (file, section, "instance.openGrossProfitP"  );         // double   instance.openGrossProfitP   = 0.12345  (PnL in price units after spread but without any other costs)
    instance.closedGrossProfitP = GetIniDouble (file, section, "instance.closedGrossProfitP");         // double   instance.closedGrossProfitP = -0.23456
    instance.totalGrossProfitP  = GetIniDouble (file, section, "instance.totalGrossProfitP" );         // double   instance.totalGrossProfitP  = 1.23456
 
-   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"    );         // double   instance.openNetProfitP     = 0.12345
+   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"    );         // double   instance.openNetProfitP     = 0.12345  (PnL in price units after all costs)
    instance.closedNetProfitP   = GetIniDouble (file, section, "instance.closedNetProfitP"  );         // double   instance.closedNetProfitP   = -0.23456
    instance.totalNetProfitP    = GetIniDouble (file, section, "instance.totalNetProfitP"   );         // double   instance.totalNetProfitP    = 1.23456
    SS.InstanceName();

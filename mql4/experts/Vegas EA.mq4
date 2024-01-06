@@ -1009,15 +1009,15 @@ bool ReadStatus() {
    instance.created           = GetIniInt    (file, section, "instance.created" );           // datetime instance.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest            = GetIniBool   (file, section, "instance.isTest"  );           // bool     instance.isTest            = 1
    instance.name              = GetIniStringA(file, section, "instance.name", "");           // string   instance.name              = V.123
-   instance.status            = GetIniInt    (file, section, "instance.status"  );           // int      instance.status            = 1
+   instance.status            = GetIniInt    (file, section, "instance.status"  );           // int      instance.status            = 1 (waiting)
 
-   instance.openNetProfit     = GetIniDouble (file, section, "instance.openNetProfit"  );    // double   instance.openNetProfit     = 23.45
+   instance.openNetProfit     = GetIniDouble (file, section, "instance.openNetProfit"  );    // double   instance.openNetProfit     = 23.45  (PnL in account currency)
    instance.closedNetProfit   = GetIniDouble (file, section, "instance.closedNetProfit");    // double   instance.closedNetProfit   = 45.67
    instance.totalNetProfit    = GetIniDouble (file, section, "instance.totalNetProfit" );    // double   instance.totalNetProfit    = 123.45
    instance.maxNetProfit      = GetIniDouble (file, section, "instance.maxNetProfit"   );    // double   instance.maxNetProfit      = 23.45
    instance.maxNetDrawdown    = GetIniDouble (file, section, "instance.maxNetDrawdown" );    // double   instance.maxNetDrawdown    = -11.23
 
-   instance.openVirtProfitP   = GetIniDouble (file, section, "instance.openVirtProfitP"  );  // double   instance.openVirtProfitP   = 0.12345
+   instance.openVirtProfitP   = GetIniDouble (file, section, "instance.openVirtProfitP"  );  // double   instance.openVirtProfitP   = 0.12345 (PnL in price units without spread, swap and transaction costs)
    instance.closedVirtProfitP = GetIniDouble (file, section, "instance.closedVirtProfitP");  // double   instance.closedVirtProfitP = -0.23456
    instance.totalVirtProfitP  = GetIniDouble (file, section, "instance.totalVirtProfitP" );  // double   instance.totalVirtProfitP  = 1.23456
    SS.InstanceName();
@@ -1285,16 +1285,16 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
    WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
-   WriteIniString(file, section, "instance.status",            /*int     */ instance.status + CRLF);
+   WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ DoubleToStr(instance.openNetProfit, 2));
+   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ DoubleToStr(instance.openNetProfit, 2) +" (PnL in account currency)");
    WriteIniString(file, section, "instance.closedNetProfit",   /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ DoubleToStr(instance.totalNetProfit, 2) + CRLF);
 
    WriteIniString(file, section, "instance.maxNetProfit",      /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
+   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ DoubleToStr(instance.openVirtProfitP, Digits) +" (PnL in price units without spread, swap and transaction costs)");
    WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
    WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits) + CRLF);
 
