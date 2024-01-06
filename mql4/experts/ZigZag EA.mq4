@@ -40,7 +40,6 @@
  *
  *
  * TODO:
- *  - revert loglevel changes: rsfLib order functions => LOG_DEBUG
  *  - log file: fix empty PnL in StopInstance()
  *  - add var recorder.internalSymbol and store/restore value
  *
