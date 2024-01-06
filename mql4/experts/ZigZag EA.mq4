@@ -40,7 +40,6 @@
  *
  *
  * TODO:
- *  - stop.profitPu.* => stop.profitPun.*
  *  - revert loglevel changes in EA, rsfLib
  *  - status file: status description, PnL description
  *  - log file: fix empty PnL in StopInstance()
@@ -317,10 +316,10 @@ double   stop.profitPct.value;
 double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
 
-bool     stop.profitPu.condition;               // whether a takeprofit condition in price units is active (pip or full point)
-int      stop.profitPu.type;
-double   stop.profitPu.value;
-string   stop.profitPu.description = "";
+bool     stop.profitPun.condition;              // whether a takeprofit condition in price units is active (pip or full point)
+int      stop.profitPun.type;
+double   stop.profitPun.value;
+string   stop.profitPun.description = "";
 
 // cache vars to speed-up ShowStatus()
 string   sTradingModeStatus[] = {"", "", "Virtual "};
@@ -1008,11 +1007,11 @@ bool IsStopSignal(int &signal) {
          }
       }
 
-      // stop.profitPu: -----------------------------------------------------------------------------------------------------
-      if (stop.profitPu.condition) {
-         if (instance.totalNetProfitP >= stop.profitPu.value) {
+      // stop.profitPun: ----------------------------------------------------------------------------------------------------
+      if (stop.profitPun.condition) {
+         if (instance.totalNetProfitP >= stop.profitPun.value) {
             signal = SIGNAL_TAKEPROFIT;
-            logInfo("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.profitPu.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            logInfo("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -1564,7 +1563,7 @@ bool StopInstance(int signal) {
       case SIGNAL_TAKEPROFIT:
          stop.profitAbs.condition = false;
          stop.profitPct.condition = false;
-         stop.profitPu.condition  = false;
+         stop.profitPun.condition = false;
          instance.status          = STATUS_STOPPED;
          break;
 
@@ -1622,7 +1621,7 @@ bool StopVirtualInstance(int signal) {
       case SIGNAL_TAKEPROFIT:
          stop.profitAbs.condition = false;
          stop.profitPct.condition = false;
-         stop.profitPu.condition  = false;
+         stop.profitPun.condition = false;
          instance.status          = STATUS_STOPPED;
          break;
 
@@ -2264,10 +2263,10 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitPct.value",        /*double  */ NumberToStr(stop.profitPct.value, ".1+"));
    WriteIniString(file, section, "stop.profitPct.absValue",     /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
    WriteIniString(file, section, "stop.profitPct.description",  /*string  */ stop.profitPct.description);
-   WriteIniString(file, section, "stop.profitPu.condition",     /*bool    */ stop.profitPu.condition);
-   WriteIniString(file, section, "stop.profitPu.type",          /*int     */ stop.profitPu.type);
-   WriteIniString(file, section, "stop.profitPu.value",         /*double  */ NumberToStr(stop.profitPu.value, ".1+"));
-   WriteIniString(file, section, "stop.profitPu.description",   /*string  */ stop.profitPu.description + CRLF);
+   WriteIniString(file, section, "stop.profitPun.condition",    /*bool    */ stop.profitPun.condition);
+   WriteIniString(file, section, "stop.profitPun.type",         /*int     */ stop.profitPun.type);
+   WriteIniString(file, section, "stop.profitPun.value",        /*double  */ NumberToStr(stop.profitPun.value, ".1+"));
+   WriteIniString(file, section, "stop.profitPun.description",  /*string  */ stop.profitPun.description + CRLF);
 
    return(!catch("SaveStatus(2)"));
 }
@@ -2469,10 +2468,10 @@ bool ReadStatus() {
    stop.profitPct.absValue    = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX);     // double   stop.profitPct.absValue    = 0.00
    stop.profitPct.description = GetIniStringA(file, section, "stop.profitPct.description",   "");     // string   stop.profitPct.description = text
 
-   stop.profitPu.condition    = GetIniBool   (file, section, "stop.profitPu.condition"      );        // bool     stop.profitPu.condition    = 1
-   stop.profitPu.type         = GetIniInt    (file, section, "stop.profitPu.type"           );        // int      stop.profitPu.type         = 4
-   stop.profitPu.value        = GetIniDouble (file, section, "stop.profitPu.value"          );        // double   stop.profitPu.value        = 1.23456
-   stop.profitPu.description  = GetIniStringA(file, section, "stop.profitPu.description", "");        // string   stop.profitPu.description  = text
+   stop.profitPun.condition   = GetIniBool   (file, section, "stop.profitPun.condition"      );       // bool     stop.profitPun.condition   = 1
+   stop.profitPun.type        = GetIniInt    (file, section, "stop.profitPun.type"           );       // int      stop.profitPun.type        = 4
+   stop.profitPun.value       = GetIniDouble (file, section, "stop.profitPun.value"          );       // double   stop.profitPun.value       = 1.23456
+   stop.profitPun.description = GetIniStringA(file, section, "stop.profitPun.description", "");       // string   stop.profitPun.description = text
 
    return(!catch("ReadStatus(9)"));
 }
@@ -2746,10 +2745,10 @@ bool     prev.stop.profitPct.condition;
 double   prev.stop.profitPct.value;
 double   prev.stop.profitPct.absValue;
 string   prev.stop.profitPct.description = "";
-bool     prev.stop.profitPu.condition;
-int      prev.stop.profitPu.type;
-double   prev.stop.profitPu.value;
-string   prev.stop.profitPu.description = "";
+bool     prev.stop.profitPun.condition;
+int      prev.stop.profitPun.type;
+double   prev.stop.profitPun.value;
+string   prev.stop.profitPun.description = "";
 
 
 /**
@@ -2793,10 +2792,10 @@ void BackupInputs() {
    prev.stop.profitPct.value       = stop.profitPct.value;
    prev.stop.profitPct.absValue    = stop.profitPct.absValue;
    prev.stop.profitPct.description = stop.profitPct.description;
-   prev.stop.profitPu.condition    = stop.profitPu.condition;
-   prev.stop.profitPu.type         = stop.profitPu.type;
-   prev.stop.profitPu.value        = stop.profitPu.value;
-   prev.stop.profitPu.description  = stop.profitPu.description;
+   prev.stop.profitPun.condition    = stop.profitPun.condition;
+   prev.stop.profitPun.type         = stop.profitPun.type;
+   prev.stop.profitPun.value        = stop.profitPun.value;
+   prev.stop.profitPun.description  = stop.profitPun.description;
 
    Recorder.BackupInputs();
 }
@@ -2843,10 +2842,10 @@ void RestoreInputs() {
    stop.profitPct.value       = prev.stop.profitPct.value;
    stop.profitPct.absValue    = prev.stop.profitPct.absValue;
    stop.profitPct.description = prev.stop.profitPct.description;
-   stop.profitPu.condition    = prev.stop.profitPu.condition;
-   stop.profitPu.type         = prev.stop.profitPu.type;
-   stop.profitPu.value        = prev.stop.profitPu.value;
-   stop.profitPu.description  = prev.stop.profitPu.description;
+   stop.profitPun.condition   = prev.stop.profitPun.condition;
+   stop.profitPun.type        = prev.stop.profitPun.type;
+   stop.profitPun.value       = prev.stop.profitPun.value;
+   stop.profitPun.description = prev.stop.profitPun.description;
 
    Recorder.RestoreInputs();
 }
@@ -2994,21 +2993,21 @@ bool ValidateInputs() {
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (StrStartsWith("off",        sValue)) stop.profitPu.type = NULL;
-   else if (StrStartsWith("money",      sValue)) stop.profitPu.type = TP_TYPE_MONEY;
-   else if (StrStartsWith("quote-unit", sValue)) stop.profitPu.type = TP_TYPE_PRICEUNIT;
+   if      (StrStartsWith("off",        sValue)) stop.profitPun.type = NULL;
+   else if (StrStartsWith("money",      sValue)) stop.profitPun.type = TP_TYPE_MONEY;
+   else if (StrStartsWith("quote-unit", sValue)) stop.profitPun.type = TP_TYPE_PRICEUNIT;
    else if (StringLen(sValue) < 2)                       return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
-   else if (StrStartsWith("percent", sValue))    stop.profitPu.type = TP_TYPE_PERCENT;
-   else if (StrStartsWith("pip",     sValue))    stop.profitPu.type = TP_TYPE_PIP;
+   else if (StrStartsWith("percent", sValue))    stop.profitPun.type = TP_TYPE_PERCENT;
+   else if (StrStartsWith("pip",     sValue))    stop.profitPun.type = TP_TYPE_PIP;
    else                                                  return(!onInputError("ValidateInputs(25)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitAbs.condition   = false;
    stop.profitAbs.description = "";
    stop.profitPct.condition   = false;
    stop.profitPct.description = "";
-   stop.profitPu.condition    = false;
-   stop.profitPu.description  = "";
+   stop.profitPun.condition   = false;
+   stop.profitPun.description = "";
 
-   switch (stop.profitPu.type) {
+   switch (stop.profitPun.type) {
       case TP_TYPE_MONEY:
          stop.profitAbs.condition   = true;
          stop.profitAbs.value       = NormalizeDouble(TakeProfit, 2);
@@ -3023,18 +3022,18 @@ bool ValidateInputs() {
          break;
 
       case TP_TYPE_PIP:
-         stop.profitPu.condition   = true;
-         stop.profitPu.value       = NormalizeDouble(TakeProfit*Pip, Digits);
-         stop.profitPu.description = "profit("+ NumberToStr(TakeProfit, ".+") +" pip)";
+         stop.profitPun.condition   = true;
+         stop.profitPun.value       = NormalizeDouble(TakeProfit*Pip, Digits);
+         stop.profitPun.description = "profit("+ NumberToStr(TakeProfit, ".+") +" pip)";
          break;
 
       case TP_TYPE_PRICEUNIT:
-         stop.profitPu.condition   = true;
-         stop.profitPu.value       = NormalizeDouble(TakeProfit, Digits);
-         stop.profitPu.description = "profit("+ NumberToStr(stop.profitPu.value, PriceFormat) +" point)";
+         stop.profitPun.condition   = true;
+         stop.profitPun.value       = NormalizeDouble(TakeProfit, Digits);
+         stop.profitPun.description = "profit("+ NumberToStr(stop.profitPun.value, PriceFormat) +" point)";
          break;
    }
-   TakeProfit.Type = tpTypeDescriptions[stop.profitPu.type];
+   TakeProfit.Type = tpTypeDescriptions[stop.profitPun.type];
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
    if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
@@ -3268,8 +3267,8 @@ void SS.StartStopConditions() {
       if (stop.profitPct.description != "") {
          sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
       }
-      if (stop.profitPu.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPu.condition, "@", "!") + stop.profitPu.description;
+      if (stop.profitPun.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPun.condition, "@", "!") + stop.profitPun.description;
       }
       if (sValue == "") sStopConditions = "-";
       else              sStopConditions = sValue;
