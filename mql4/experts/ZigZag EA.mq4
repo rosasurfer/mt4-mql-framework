@@ -40,7 +40,10 @@
  *
  *
  * TODO:
- *  - check errors in Recorder.Backup/RestoreInputs()
+ *  - stop.profitPu.* => stop.profitPun.*
+ *  - revert loglevel changes in EA, rsfLib
+ *  - status file: status description, PnL description
+ *  - log file: fix empty PnL in StopInstance()
  *  - add var recorder.internalSymbol and store/restore value
  *
  *  - visible/audible alert at daily loss limit
@@ -172,7 +175,7 @@
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks  = 10000;                                // every 10 seconds to continue operation on a stalled data feed
+int __virtualTicks = 10000;                                 // every 10 seconds to continue operation on a stalled data feed
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -336,7 +339,7 @@ int      orders.acceptableSlippage = 1;         // in MQL points
 bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
 bool     test.onSessionBreakPause = false;      // whether to pause a test after StopInstance(SIGNAL_TIME)
 bool     test.onStopPause         = false;      // whether to pause a test after a final StopInstance()
-bool     test.reduceStatusWrites  = true;       // whether to reduce status file writes in tester
+bool     test.reduceStatusWrites  = true;       // whether to reduce status file I/O in tester
 
 #include <apps/zigzag-ea/init.mqh>
 #include <apps/zigzag-ea/deinit.mqh>
@@ -2057,7 +2060,7 @@ string GetStatusFilename(bool relative = false) {
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = "z"+ Symbol() +"."+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +".ZigZag."+ instance.id +".set";
+      string baseName  = "ZigZag."+ Symbol() +"."+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +".id="+ instance.id +".set";
       filename = directory + baseName;
    }
 
@@ -2081,7 +2084,7 @@ string FindStatusFile(int instanceId, bool isTest) {
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
    string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
-   string basePattern = "z"+ Symbol() +".*.ZigZag."+ instanceId +".set";
+   string basePattern = "ZigZag."+ Symbol() +".*.id="+ instanceId +".set";
    string pathPattern = sandboxDir + statusDir + basePattern;
 
    string result[];
@@ -2204,7 +2207,8 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "instance.openNetProfit",      /*double  */ DoubleToStr(instance.openNetProfit, 2));
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
-   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2));
+   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2) + CRLF);
+
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 

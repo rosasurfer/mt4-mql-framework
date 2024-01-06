@@ -81,21 +81,25 @@ int    prev.metric.hSet       [];
  * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
  */
 void Recorder.BackupInputs() {
-   prev.EA.Recorder          = StringConcatenate(EA.Recorder, "");   // string inputs are references to internal C literals
-   prev.recorder.mode        = recorder.mode;                        // and must be copied to break the reference
-   prev.recorder.initialized = recorder.initialized;
+   if (!catch("Recorder.BackupInputs(1)")) {
+      prev.EA.Recorder          = StringConcatenate(EA.Recorder, "");   // string inputs are references to internal C literals
+      prev.recorder.mode        = recorder.mode;                        // and must be copied to break the reference
+      prev.recorder.initialized = recorder.initialized;
 
-   ArrayResize(prev.metric.enabled,     ArrayCopy(prev.metric.enabled,     metric.enabled    ));
-   ArrayResize(prev.metric.symbol,      ArrayCopy(prev.metric.symbol,      metric.symbol     ));
-   ArrayResize(prev.metric.description, ArrayCopy(prev.metric.description, metric.description));
-   ArrayResize(prev.metric.group,       ArrayCopy(prev.metric.group,       metric.group      ));
-   ArrayResize(prev.metric.digits,      ArrayCopy(prev.metric.digits,      metric.digits     ));
-   ArrayResize(prev.metric.currValue,   ArrayCopy(prev.metric.currValue,   metric.currValue  ));
-   ArrayResize(prev.metric.baseValue,   ArrayCopy(prev.metric.baseValue,   metric.baseValue  ));
-   ArrayResize(prev.metric.multiplier,  ArrayCopy(prev.metric.multiplier,  metric.multiplier ));
-   ArrayResize(prev.metric.hSet,        ArrayCopy(prev.metric.hSet,        metric.hSet       ));
+      ArrayResize(prev.metric.enabled,     ArrayCopy(prev.metric.enabled,     metric.enabled    ));
+      ArrayResize(prev.metric.symbol,      ArrayCopy(prev.metric.symbol,      metric.symbol     ));
+      ArrayResize(prev.metric.description, ArrayCopy(prev.metric.description, metric.description));
+      ArrayResize(prev.metric.group,       ArrayCopy(prev.metric.group,       metric.group      ));
+      ArrayResize(prev.metric.digits,      ArrayCopy(prev.metric.digits,      metric.digits     ));
+      ArrayResize(prev.metric.currValue,   ArrayCopy(prev.metric.currValue,   metric.currValue  ));
+      ArrayResize(prev.metric.baseValue,   ArrayCopy(prev.metric.baseValue,   metric.baseValue  ));
+      ArrayResize(prev.metric.multiplier,  ArrayCopy(prev.metric.multiplier,  metric.multiplier ));
+      ArrayResize(prev.metric.hSet,        ArrayCopy(prev.metric.hSet,        metric.hSet       ));
 
-   catch("Recorder.BackupInputs(1)");
+      // don't check ArraySize(source), instead handle a generated error
+      int error = GetLastError();
+      if (error && error!=ERR_INVALID_PARAMETER) catch("Recorder.BackupInputs(2)", error);
+   }
 }
 
 
@@ -103,21 +107,25 @@ void Recorder.BackupInputs() {
  * Restore backed-up input parameters and runtime variables. Called from onInitParameters() and onInitTimeframeChange().
  */
 void Recorder.RestoreInputs() {
-   EA.Recorder          = prev.EA.Recorder;
-   recorder.mode        = prev.recorder.mode;
-   recorder.initialized = prev.recorder.initialized;
+   if (!catch("Recorder.RestoreInputs(1)")) {
+      EA.Recorder          = prev.EA.Recorder;
+      recorder.mode        = prev.recorder.mode;
+      recorder.initialized = prev.recorder.initialized;
 
-   ArrayResize(metric.enabled,     ArrayCopy(metric.enabled,     prev.metric.enabled    ));
-   ArrayResize(metric.symbol,      ArrayCopy(metric.symbol,      prev.metric.symbol     ));
-   ArrayResize(metric.description, ArrayCopy(metric.description, prev.metric.description));
-   ArrayResize(metric.group,       ArrayCopy(metric.group,       prev.metric.group      ));
-   ArrayResize(metric.digits,      ArrayCopy(metric.digits,      prev.metric.digits     ));
-   ArrayResize(metric.currValue,   ArrayCopy(metric.currValue,   prev.metric.currValue  ));
-   ArrayResize(metric.baseValue,   ArrayCopy(metric.baseValue,   prev.metric.baseValue  ));
-   ArrayResize(metric.multiplier,  ArrayCopy(metric.multiplier,  prev.metric.multiplier ));
-   ArrayResize(metric.hSet,        ArrayCopy(metric.hSet,        prev.metric.hSet       ));
+      ArrayResize(metric.enabled,     ArrayCopy(metric.enabled,     prev.metric.enabled    ));
+      ArrayResize(metric.symbol,      ArrayCopy(metric.symbol,      prev.metric.symbol     ));
+      ArrayResize(metric.description, ArrayCopy(metric.description, prev.metric.description));
+      ArrayResize(metric.group,       ArrayCopy(metric.group,       prev.metric.group      ));
+      ArrayResize(metric.digits,      ArrayCopy(metric.digits,      prev.metric.digits     ));
+      ArrayResize(metric.currValue,   ArrayCopy(metric.currValue,   prev.metric.currValue  ));
+      ArrayResize(metric.baseValue,   ArrayCopy(metric.baseValue,   prev.metric.baseValue  ));
+      ArrayResize(metric.multiplier,  ArrayCopy(metric.multiplier,  prev.metric.multiplier ));
+      ArrayResize(metric.hSet,        ArrayCopy(metric.hSet,        prev.metric.hSet       ));
 
-   catch("Recorder.RestoreInputs(1)");
+      // don't check ArraySize(source), instead handle a generated error
+      int error = GetLastError();
+      if (error && error!=ERR_INVALID_PARAMETER) catch("Recorder.RestoreInputs(2)", error);
+   }
 }
 
 
