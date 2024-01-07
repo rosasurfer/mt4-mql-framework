@@ -19,7 +19,7 @@
 //  * Return a symbol definition for the specified metric to be recorded.
 //  *
 //  * @param  _In_  int    id           - metric id
-//  * @param  _Out_ bool   &enabled     - whether the metric is active and should be recorded
+//  * @param  _Out_ bool   &ready       - whether metric details are complete and the metric is ready to be recorded
 //  * @param  _Out_ string &symbol      - unique MT4 timeseries symbol
 //  * @param  _Out_ string &description - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
 //  * @param  _Out_ string &group       - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
@@ -29,7 +29,7 @@
 //  *
 //  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
 //  */
-// int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
+// int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
 //
 
 // recorder modes
@@ -48,7 +48,7 @@ string recorder.defaultGroup = "";
 double recorder.defaultBaseValue = 10000.0;
 
 // metric details
-bool   metric.enabled    [];
+bool   metric.ready      [];
 string metric.symbol     [];
 string metric.description[];
 string metric.group      [];
@@ -65,7 +65,7 @@ string prev.EA.Recorder = "";
 int    prev.recorder.mode;
 bool   prev.recorder.initialized;
 
-bool   prev.metric.enabled    [];
+bool   prev.metric.ready      [];
 string prev.metric.symbol     [];
 string prev.metric.description[];
 string prev.metric.group      [];
@@ -86,7 +86,7 @@ void Recorder.BackupInputs() {
       prev.recorder.mode        = recorder.mode;                        // and must be copied to break the reference
       prev.recorder.initialized = recorder.initialized;
 
-      ArrayResize(prev.metric.enabled,     ArrayCopy(prev.metric.enabled,     metric.enabled    ));
+      ArrayResize(prev.metric.ready,       ArrayCopy(prev.metric.ready,       metric.ready      ));
       ArrayResize(prev.metric.symbol,      ArrayCopy(prev.metric.symbol,      metric.symbol     ));
       ArrayResize(prev.metric.description, ArrayCopy(prev.metric.description, metric.description));
       ArrayResize(prev.metric.group,       ArrayCopy(prev.metric.group,       metric.group      ));
@@ -112,7 +112,7 @@ void Recorder.RestoreInputs() {
       recorder.mode        = prev.recorder.mode;
       recorder.initialized = prev.recorder.initialized;
 
-      ArrayResize(metric.enabled,     ArrayCopy(metric.enabled,     prev.metric.enabled    ));
+      ArrayResize(metric.ready,       ArrayCopy(metric.ready,       prev.metric.ready      ));
       ArrayResize(metric.symbol,      ArrayCopy(metric.symbol,      prev.metric.symbol     ));
       ArrayResize(metric.description, ArrayCopy(metric.description, prev.metric.description));
       ArrayResize(metric.group,       ArrayCopy(metric.group,       prev.metric.group      ));
@@ -177,30 +177,29 @@ bool Recorder.ValidateInputs(bool isTest) {
             if (sValue == "...") continue;
             string sId = StrTrim(StrLeftTo(sValue, "="));
             int iValue = StrToInteger(sId);
-            if (!StrIsDigits(sId) || !iValue)            return(!Recorder.onInputError("Recorder.ValidateInputs(1)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (metric ids must be positive integers)"));
+            if (!StrIsDigits(sId) || !iValue)              return(!Recorder.onInputError("Recorder.ValidateInputs(1)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (metric ids must be positive integers)"));
             int metricId = iValue;
-            if (ArraySize(metric.enabled) > metricId) {
-               if (metric.enabled[metricId])             return(!Recorder.onInputError("Recorder.ValidateInputs(2)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (duplicate metric id "+ metricId +")"));
+            if (ArraySize(metric.symbol) > metricId) {
+               if (StringLen(metric.symbol[metricId]) > 0) return(!Recorder.onInputError("Recorder.ValidateInputs(2)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (duplicate metric id "+ metricId +")"));
             }
             double dValue = 0;
             if (StrContains(sValue, "=")) {
                string sBase = StrTrim(StrRightFrom(sValue, "="));
                dValue = StrToDouble(sBase);
-               if (!StrIsNumeric(sBase) || dValue <= 0)  return(!Recorder.onInputError("Recorder.ValidateInputs(3)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (base values must be positive numbers)"));
+               if (!StrIsNumeric(sBase) || dValue <= 0)    return(!Recorder.onInputError("Recorder.ValidateInputs(3)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (base values must be positive numbers)"));
             }
 
             // logical metric validation
-            bool enabled;
-            int error = Recorder_GetSymbolDefinition(metricId, enabled, symbol, description, group, digits, baseValue, multiplier);
+            bool complete;
+            int error = Recorder_GetSymbolDefinition(metricId, complete, symbol, description, group, digits, baseValue, multiplier);
             if (error != NULL) {
-               if (error == ERR_INVALID_INPUT_PARAMETER) return(!Recorder.onInputError("Recorder.ValidateInputs(4)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric id "+ metricId +")"));
-               return(false);                            // a runtime error (already raised)
+               if (error == ERR_INVALID_INPUT_PARAMETER)   return(!Recorder.onInputError("Recorder.ValidateInputs(4)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric id "+ metricId +")"));
+               return(false);                              // a runtime error (already raised)
             }
-            if (!enabled) continue;
             if (dValue > 0) baseValue = dValue;
 
             // store metric details
-            if (!Recorder.AddMetric(metricId, symbol, description, group, digits, baseValue, multiplier)) return(false);
+            if (!Recorder.AddMetric(metricId, complete, symbol, description, group, digits, baseValue, multiplier)) return(false);
             metrics++;
             sInput = StringConcatenate(sInput, ",", metricId, ifString(!baseValue, "", "="+ NumberToStr(baseValue, ".+")));
          }
@@ -252,30 +251,49 @@ bool Recorder.init() {
       recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
       recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               return(false);
 
+      bool ready;
+      int digits, multiplier;
+      double baseValue;
+      string symbol="", descr="", group="";
+
       // create an internal metric for AccountEquity()
       if (recorder.mode == RECORDER_INTERNAL) {
-         string symbol = Recorder.GetEquitySymbol(); if (!StringLen(symbol)) return(false);
-         string descr  = recorder.defaultDescription;
-         string group  = recorder.defaultGroup;
-         if (!Recorder.AddMetric(1, symbol, descr, group, 2, 0)) return(false);
+         symbol = Recorder.GetEquitySymbol(); if (!StringLen(symbol)) return(false);
+         descr  = recorder.defaultDescription;
+         group  = recorder.defaultGroup;
+         if (!Recorder.AddMetric(1, true, symbol, descr, group, 2, 0, 1)) return(false);
       }
 
       // update metric details and create raw MT4 symbols
-      int size = ArraySize(metric.enabled);
-      for (int i=0; i < size; i++) {
-         if (!metric.enabled[i]) continue;
-         if (!StringLen(metric.description[i])) metric.description[i] = recorder.defaultDescription;
-         if (!StringLen(metric.group      [i])) metric.group      [i] = recorder.defaultGroup;
-         if (   IsEmpty(metric.baseValue  [i])) metric.baseValue  [i] = recorder.defaultBaseValue;
-         if (          !metric.multiplier [i])  metric.multiplier [i] = 1;
+      int size = ArraySize(metric.symbol);
 
-         if (IsRawSymbol(metric.symbol[i], recorder.hstDirectory)) {
-            if (__isTesting) return(!catch("Recorder.init(1)  symbol \""+ metric.symbol[i] +"\" already exists", ERR_ILLEGAL_STATE));
+      for (int id=1; id < size; id++) {
+         if (!metric.ready[id]) {
+            int error = Recorder_GetSymbolDefinition(id, ready, symbol, descr, group, digits, baseValue, multiplier);
+            if (error == ERR_INVALID_INPUT_PARAMETER) continue;
+            if (error != NULL)                        return(false);
+            if (!ready)                               continue;
+
+            metric.ready      [id] = true;
+            metric.symbol     [id] = symbol;
+            metric.description[id] = descr;
+            metric.group      [id] = group;
+            metric.digits     [id] = digits;
+            metric.currValue  [id] = NULL;
+            metric.baseValue  [id] = baseValue;
+            metric.multiplier [id] = multiplier;
+         }
+         if (!StringLen(metric.description[id])) metric.description[id] = recorder.defaultDescription;
+         if (!StringLen(metric.group      [id])) metric.group      [id] = recorder.defaultGroup;
+         if (   IsEmpty(metric.baseValue  [id])) metric.baseValue  [id] = recorder.defaultBaseValue;
+         if (          !metric.multiplier [id])  metric.multiplier [id] = 1;
+
+         if (IsRawSymbol(metric.symbol[id], recorder.hstDirectory)) {
+            if (__isTesting) return(!catch("Recorder.init(2)  symbol \""+ metric.symbol[id] +"\" already exists", ERR_ILLEGAL_STATE));
             // TODO: update existing properties
          }
-         else {
-            int id = CreateRawSymbol(metric.symbol[i], metric.description[i], metric.group[i], metric.digits[1], AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
-            if (id < 0) return(false);
+         else if (0 > CreateRawSymbol(metric.symbol[id], metric.description[id], metric.group[id], metric.digits[id], AccountCurrency(), AccountCurrency(), recorder.hstDirectory)) {
+            return(false);
          }
       }
       recorder.initialized = true;
@@ -310,7 +328,7 @@ bool Recorder.start() {
    bool success = true;
 
    for (int i=0; i < size; i++) {
-      if (!metric.enabled[i]) continue;
+      if (!metric.ready[i]) continue;
 
       if (!metric.hSet[i]) {
          // online: prefer to continue an existing history
@@ -367,23 +385,25 @@ bool Recorder.deinit() {
 /**
  * Add a metric to the recorder arrays. Prevents overwriting of existing metrics.
  *
- * @param  int    id                    - metric id
- * @param  string symbol                - symbol
- * @param  string description           - symbol description
- * @param  string group                 - symbol group (if empty the program name is used)
- * @param  int    digits                - symbol digits
- * @param  double baseValue  [optional] - quotes base value (default: recorder settings)
- * @param  int    multiplier [optional] - quotes multiplier (default: 1)
+ * @param  int    id          - metric id
+ * @param  bool   ready       - whether metric details are complete and the metric is ready to be recorded
+ * @param  string symbol      - symbol
+ * @param  string description - symbol description
+ * @param  string group       - symbol group (if empty the program name is used)
+ * @param  int    digits      - symbol digits
+ * @param  double baseValue   - quotes base value (EMPTY: use recorder settings)
+ * @param  int    multiplier  - quotes multiplier
  *
  * @return bool - success status
  */
-bool Recorder.AddMetric(int id, string symbol, string description, string group, int digits, double baseValue = EMPTY, int multiplier = 1) {
+bool Recorder.AddMetric(int id, bool ready, string symbol, string description, string group, int digits, double baseValue, int multiplier) {
+   ready = ready!=0;
    if (id < 1 || id > 21) return(!catch("Recorder.AddMetric(1)  invalid parameter id: "+ id +" (allowed range: 1 to 21)", ERR_INVALID_PARAMETER));
 
-   int size = ArraySize(metric.enabled);
+   int size = ArraySize(metric.symbol);
    if (id >= size) {
       size = id + 1;
-      ArrayResize(metric.enabled,     size);
+      ArrayResize(metric.ready,       size);
       ArrayResize(metric.symbol,      size);
       ArrayResize(metric.description, size);
       ArrayResize(metric.group,       size);
@@ -393,9 +413,9 @@ bool Recorder.AddMetric(int id, string symbol, string description, string group,
       ArrayResize(metric.multiplier,  size);
       ArrayResize(metric.hSet,        size);
    }
-   if (metric.enabled[id]) return(!catch("Recorder.AddMetric(2)  invalid parameter id: "+ id +" (metric exists) ", ERR_INVALID_PARAMETER));
+   if (StringLen(metric.symbol[id]) > 0) return(!catch("Recorder.AddMetric(2)  invalid parameter id: "+ id +" (metric exists) ", ERR_INVALID_PARAMETER));
 
-   metric.enabled    [id] = true;
+   metric.ready      [id] = ready;
    metric.symbol     [id] = symbol;
    metric.description[id] = description;
    metric.group      [id] = group;
@@ -413,7 +433,7 @@ bool Recorder.AddMetric(int id, string symbol, string description, string group,
  * Remove all metrics currently registered in the recorder.
  */
 void Recorder.ResetMetrics() {
-   ArrayResize(metric.enabled,     0);
+   ArrayResize(metric.ready,       0);
    ArrayResize(metric.symbol,      0);
    ArrayResize(metric.description, 0);
    ArrayResize(metric.group,       0);
@@ -520,5 +540,5 @@ int Recorder.GetHstFormat() {
 
 
 #import "rsfMT4Expander.dll"
-   int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
+   int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
 #import

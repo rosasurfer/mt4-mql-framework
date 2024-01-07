@@ -7,12 +7,14 @@
  *
  * A mixture of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in/out.
  *
+ *
  *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
  *  @see  [Turtle Trading]         https://analyzingalpha.com/turtle-trading
+ *  @see  [Turtle Trading]         http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
  *
  *
- * Features:
- * ---------
+ * Features
+ * --------
  * • A finished test can be loaded into an online chart for trade inspection and further analysis.
  *
  * • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
@@ -24,8 +26,14 @@
  *   can be displayed and analysed like regular MetaTrader symbols.
  *
  *
- * Input parameters:
- * -----------------
+ * Requirements
+ * ------------
+ * - MA Tunnel indicator: @see  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/MA%20Tunnel.mq4
+ * - ZigZag indicator:    @see  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
+ *
+ *
+ * Input parameters
+ * ----------------
  * • Instance.ID:        ...
  * • Tunnel.Definition:  ...
  * • Donchian.Periods:   ...
@@ -35,11 +43,11 @@
  *    1:  Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
  *    2:  Records PnL in price units without spread, swap and transaction costs (virt).
  *
- *    Metrics in price units are scaled to the best matching unit. That's pip for Forex and full points otherwise.
+ *    Metrics in price units are recorded in the best matching unit. That's pip for Forex and full points otherwise.
  *
  *
  * TODO:
- *  - calculate/update METRIC_TOTAL_UNITS_VIRT
+ *  - calculate METRIC_TOTAL_UNITS_VIRT
  *  - add exit strategies
  *  - add entry strategies
  *  - add virtual trading
@@ -100,8 +108,8 @@ extern double Lots                 = 0.1;
 
 // instance data
 int      instance.id;                              // used for magic order numbers
-datetime instance.created;
 string   instance.name = "";
+datetime instance.created;
 int      instance.status;
 bool     instance.isTest;
 
@@ -478,7 +486,7 @@ int ShowTradeHistory() {
 /**
  * Whether a trade signal occurred.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
+ * @param  _Out_ int &signal - variable receiving the signal identifier of a triggered condition
  *
  * @return bool
  */
@@ -1522,7 +1530,7 @@ int onInputError(string message) {
  * Return a symbol definition for the specified metric to be recorded.
  *
  * @param  _In_  int    id           - metric id
- * @param  _Out_ bool   &enabled     - whether the metric is active and should be recorded
+ * @param  _Out_ bool   &ready       - whether metric details are complete and the metric is ready to be recorded
  * @param  _Out_ string &symbol      - unique MT4 timeseries symbol
  * @param  _Out_ string &description - symbol description as in the MT4 "Symbols" window
  * @param  _Out_ string &group       - symbol group name as in the MT4 "Symbols" window
@@ -1532,13 +1540,12 @@ int onInputError(string message) {
  *
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
-int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
-   if (!instance.id) return(catch("Recorder_GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
-
-   int _Digits  = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for some indices)
+int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
+   string   sId = ifString(!instance.id, "???", instance.id);
+   int  _Digits = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for some indices)
    string punit = ifString(_Digits > 2, "pip", "point");
 
-   enabled    = true;
+   ready      = false;
    group      = "";
    baseValue  = EMPTY;
    digits     = ifInt(_Digits > 2, 1, 2);                                     // store 1.23 as 1.23 point
@@ -1546,21 +1553,23 @@ int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &
 
    switch (id) {
       case METRIC_TOTAL_MONEY_NET:
-         symbol      = "v"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"A";      // "zUS500_123A"
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                   // "US500.123A"
          description = "Vegas "+ PeriodDescription() +" Tunnel "+ Symbol() +" in "+ AccountCurrency() +", net";
          digits      = 2;                                                     // "Vegas H1 Tunnel US500 in USD, net"
-         baseValue   = 0;
+         baseValue   = EMPTY;
          multiplier  = 1;
          break;
 
       case METRIC_TOTAL_UNITS_VIRT:
-         symbol      = "v"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"B";
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
          description = "Vegas "+ PeriodDescription() +" Tunnel "+ Symbol() +" in "+ punit +", virt";
          break;
 
       default:
          return(ERR_INVALID_INPUT_PARAMETER);
    }
+
+   ready = (instance.id > 0);
    return(NO_ERROR);
 }
 
@@ -1570,8 +1579,9 @@ int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &
  */
 void RecordMetrics() {
    if (recorder.mode == RECORDER_CUSTOM) {
-      if (metric.enabled[METRIC_TOTAL_MONEY_NET ]) metric.currValue[METRIC_TOTAL_MONEY_NET ] = instance.totalNetProfit;
-      if (metric.enabled[METRIC_TOTAL_UNITS_VIRT]) metric.currValue[METRIC_TOTAL_UNITS_VIRT] = instance.totalVirtProfitP;
+      int size = ArraySize(metric.ready);
+      if (size > METRIC_TOTAL_MONEY_NET ) metric.currValue[METRIC_TOTAL_MONEY_NET ] = instance.totalNetProfit;
+      if (size > METRIC_TOTAL_UNITS_VIRT) metric.currValue[METRIC_TOTAL_UNITS_VIRT] = instance.totalVirtProfitP;
    }
 }
 

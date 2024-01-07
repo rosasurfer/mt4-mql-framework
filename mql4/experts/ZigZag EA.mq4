@@ -1,12 +1,12 @@
 /**
- * ZigZag EA - a modified version of the system traded by the "Turtle Traders" of Richard Dennis
+ * ZigZag EA
+ *
+ * A strategy inspired by the system traded by the "Turtle Traders" of Richard Dennis.
  *
  *
- * The EA needs the ZigZag indicator from this GitHub repository (the version provided by MetaQuotes can't be used).
- *
- *  @see  [Turtle Trading]   http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
- *  @see  [Turtle Trading]   https://analyzingalpha.com/turtle-trading
- *  @see  [ZigZag indicator] https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
+ * Requirements
+ * ------------
+ * - ZigZag indicator: @see  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
  *
  *
  * Input parameters
@@ -23,7 +23,7 @@
  *    7:  Records daily PnL in price units after spread but without any other costs (gross).                            TODO
  *    8:  Records daily PnL in price units after all costs (net).                                                       TODO
  *
- *    Metrics in price units are scaled to the best matching unit. That's pip for Forex and full points otherwise.
+ *    Metrics in price units are recorded in the best matching unit. That's pip for Forex and full points otherwise.
  *
  *
  * External control
@@ -37,6 +37,10 @@
  *              start the EA in a predefined direction. The command has no effect if the EA already manages an open position.
  *  • EA.Stop:  When a "stop" command is received the EA closes open positions and stops waiting for new trade signals.
  *              The command has no effect if the EA is already stopped.
+ *
+ *
+ *  @see  [Turtle Trading]   https://analyzingalpha.com/turtle-trading
+ *  @see  [Turtle Trading]   http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
  *
  *
  * TODO:
@@ -249,9 +253,9 @@ int      tradingMode;
 
 // instance data
 int      instance.id;                           // used for magic order numbers
+string   instance.name = "";
 datetime instance.created;
 bool     instance.isTest;                       // whether the instance is a test
-string   instance.name = "";
 int      instance.status;
 double   instance.startEquity;
 
@@ -942,9 +946,9 @@ bool IsTradingTime() {
 
 
 /**
- * Whether a start condition is satisfied for an instance.
+ * Whether a start condition is triggered.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of a satisfied condition
+ * @param  _Out_ int &signal - variable receiving the signal identifier of a triggered condition
  *
  * @return bool
  */
@@ -967,9 +971,9 @@ bool IsStartSignal(int &signal) {
 
 
 /**
- * Whether a stop condition is satisfied for an instance.
+ * Whether a stop condition is triggered.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
+ * @param  _Out_ int &signal - variable receiving the identifier of a triggered condition
  *
  * @return bool
  */
@@ -982,7 +986,7 @@ bool IsStopSignal(int &signal) {
       if (stop.profitAbs.condition) {
          if (instance.totalNetProfit >= stop.profitAbs.value) {
             signal = SIGNAL_TAKEPROFIT;
-            logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitAbs.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -994,7 +998,7 @@ bool IsStopSignal(int &signal) {
 
          if (instance.totalNetProfit >= stop.profitPct.absValue) {
             signal = SIGNAL_TAKEPROFIT;
-            logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPct.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -1003,7 +1007,7 @@ bool IsStopSignal(int &signal) {
       if (stop.profitPun.condition) {
          if (instance.totalNetProfitP >= stop.profitPun.value) {
             signal = SIGNAL_TAKEPROFIT;
-            logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -1013,7 +1017,7 @@ bool IsStopSignal(int &signal) {
    if (stop.time.condition) {
       if (!IsTradingTime()) {
          signal = SIGNAL_TIME;
-         logNotice("IsStopSignal(4)  "+ instance.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         logNotice("IsStopSignal(4)  "+ instance.name +" stop condition \"@"+ stop.time.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          return(true);
       }
    }
@@ -1929,7 +1933,7 @@ bool VirtualOrderClose(int ticket) {
  * Return a symbol definition for the specified metric to be recorded.
  *
  * @param  _In_  int    id           - metric id
- * @param  _Out_ bool   &enabled     - whether the metric is active and should be recorded
+ * @param  _Out_ bool   &ready       - whether metric details are complete and the metric is ready to be recorded
  * @param  _Out_ string &symbol      - unique MT4 timeseries symbol
  * @param  _Out_ string &description - symbol description as in the MT4 "Symbols" window
  * @param  _Out_ string &group       - symbol group name as in the MT4 "Symbols" window
@@ -1939,13 +1943,12 @@ bool VirtualOrderClose(int ticket) {
  *
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
-int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
-   if (!instance.id) return(catch("Recorder_GetSymbolDefinition(1)  "+ instance.name +" illegal instance id: "+ instance.id, ERR_ILLEGAL_STATE));
-
-   int _Digits  = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for some indices)
+int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
+   string   sId = ifString(!instance.id, "???", instance.id);
+   int  _Digits = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for some indices)
    string punit = ifString(_Digits > 2, "pip", "point");
 
-   enabled    = true;
+   ready      = false;
    group      = "";
    baseValue  = EMPTY;
    digits     = ifInt(_Digits > 2, 1, 2);                                     // store 1.23 as 1.23 point
@@ -1954,55 +1957,57 @@ int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &
    switch (id) {
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_TOTAL_MONEY_NET:              // OK
-         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"A";      // "zUS500_123A"
-         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ AccountCurrency() +", net";
-         digits      = 2;                                                     // "ZigZag(40,H1) US500 in USD, net"
-         baseValue   = 0;
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                   // "US500.123A"
+         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ AccountCurrency() +", net";
+         digits      = 2;                                                     // "ZigZag(40xH1) US500 in USD, net"
+         baseValue   = EMPTY;
          multiplier  = 1;
          break;
 
       case METRIC_TOTAL_UNITS_VIRT:             // OK
-         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"B";
-         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", virt";
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
+         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", virt";
          break;
 
       case METRIC_TOTAL_UNITS_GROSS:            // OK
-         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"C";
-         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", gross";
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
+         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", gross";
          break;
 
       case METRIC_TOTAL_UNITS_NET:              // OK
-         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"D";
-         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", net";
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"D";
+         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", net";
          break;
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_MONEY_NET:
-         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"E";      // "zEURUS_456E"
-         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ AccountCurrency() +", net";
-         digits      = 2;                                                     // "ZigZag(40,H1) EURUSD daily in USD, net"
-         baseValue   = 0;
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"E";                   // "EURUSD.456E"
+         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ AccountCurrency() +", net";
+         digits      = 2;                                                     // "ZigZag(40xH1) EURUSD daily in USD, net"
+         baseValue   = EMPTY;
          multiplier  = 1;
          break;
 
       case METRIC_DAILY_UNITS_VIRT:
-         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"F";
-         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", virt";
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
+         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", virt";
          break;
 
       case METRIC_DAILY_UNITS_GROSS:
-         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"G";
-         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", gross";
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"G";
+         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", gross";
          break;
 
       case METRIC_DAILY_UNITS_NET:
-         symbol      = "z"+ StrLeft(Symbol(), 5) +"_"+ instance.id +"H";
-         description = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", net";
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"H";
+         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", net";
          break;
 
       default:
          return(ERR_INVALID_INPUT_PARAMETER);
    }
+
+   ready = (instance.id > 0);
    return(NO_ERROR);
 }
 
@@ -2012,10 +2017,11 @@ int Recorder_GetSymbolDefinition(int id, bool &enabled, string &symbol, string &
  */
 void RecordMetrics() {
    if (recorder.mode == RECORDER_CUSTOM) {
-      if (metric.enabled[METRIC_TOTAL_MONEY_NET  ]) metric.currValue[METRIC_TOTAL_MONEY_NET  ] = instance.totalNetProfit;
-      if (metric.enabled[METRIC_TOTAL_UNITS_VIRT ]) metric.currValue[METRIC_TOTAL_UNITS_VIRT ] = instance.totalVirtProfitP;
-      if (metric.enabled[METRIC_TOTAL_UNITS_GROSS]) metric.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitP;
-      if (metric.enabled[METRIC_TOTAL_UNITS_NET  ]) metric.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitP;
+      int size = ArraySize(metric.ready);
+      if (size > METRIC_TOTAL_MONEY_NET  ) metric.currValue[METRIC_TOTAL_MONEY_NET  ] = instance.totalNetProfit;
+      if (size > METRIC_TOTAL_UNITS_VIRT ) metric.currValue[METRIC_TOTAL_UNITS_VIRT ] = instance.totalVirtProfitP;
+      if (size > METRIC_TOTAL_UNITS_GROSS) metric.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitP;
+      if (size > METRIC_TOTAL_UNITS_NET  ) metric.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitP;
    }
 }
 
