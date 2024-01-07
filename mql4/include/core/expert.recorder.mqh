@@ -201,7 +201,7 @@ bool Recorder.ValidateInputs(bool isTest) {
             // store metric details
             if (!Recorder.AddMetric(metricId, complete, symbol, description, group, digits, baseValue, multiplier)) return(false);
             metrics++;
-            sInput = StringConcatenate(sInput, ",", metricId, ifString(!baseValue, "", "="+ NumberToStr(baseValue, ".+")));
+            sInput = StringConcatenate(sInput, ",", metricId, ifString(IsEmpty(baseValue), "", "="+ NumberToStr(baseValue, ".+")));
          }
 
          if (!metrics) {
