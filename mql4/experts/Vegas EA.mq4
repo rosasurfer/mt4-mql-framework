@@ -1001,9 +1001,9 @@ bool ReadStatus() {
    // [Runtime status]
    section = "Runtime status";
    instance.id                = GetIniInt    (file, section, "instance.id"      );           // int      instance.id                = 123
+   instance.name              = GetIniStringA(file, section, "instance.name", "");           // string   instance.name              = V.123
    instance.created           = GetIniInt    (file, section, "instance.created" );           // datetime instance.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest            = GetIniBool   (file, section, "instance.isTest"  );           // bool     instance.isTest            = 1
-   instance.name              = GetIniStringA(file, section, "instance.name", "");           // string   instance.name              = V.123
    instance.status            = GetIniInt    (file, section, "instance.status"  );           // int      instance.status            = 1 (waiting)
 
    instance.openNetProfit     = GetIniDouble (file, section, "instance.openNetProfit"  );    // double   instance.openNetProfit     = 23.45   (account currency)
@@ -1253,6 +1253,16 @@ bool SaveStatus() {
       if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
    }
+   int _digits = MathMax(Digits, 2);                           // transform Digits=1 to 2 (for some indices)
+   string punit = "", sSpread = "";
+   if (_digits > 2) {
+      punit = "pip";
+      sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, 1);
+   }
+   else {
+      punit = "point";
+      sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)*Point, 2);
+   }
 
    string section="", separator="", file=GetStatusFilename();
    if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;            // an empty line as additional section separator
@@ -1262,6 +1272,13 @@ bool SaveStatus() {
    WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber() +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
    WriteIniString(file, section, "Symbol",  Symbol());
    WriteIniString(file, section, "Created", GmtTimeFormat(instance.created, "%a, %Y.%m.%d %H:%M:%S") + separator);   // conditional section separator
+
+   if (__isTesting) {
+      WriteIniString(file, section, "Test.Range",    "?");
+      WriteIniString(file, section, "Test.Period",   PeriodDescription());
+      WriteIniString(file, section, "Test.BarModel", BarModelDescription(__Test.barModel));
+      WriteIniString(file, section, "Test.Spread",   sSpread + separator);                                           // conditional section separator
+   }
 
    // [Inputs]
    section = "Inputs";
@@ -1277,19 +1294,19 @@ bool SaveStatus() {
 
    // instance data
    WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
+   WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
    WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
    WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 13)        +" (money after all costs)");
+   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 13)        +" ; in "+ AccountCurrency() +" after all costs");
    WriteIniString(file, section, "instance.closedNetProfit",   /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ DoubleToStr(instance.totalNetProfit, 2) + CRLF);
 
    WriteIniString(file, section, "instance.maxNetProfit",      /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 11) +" (price units without spread, swap and transaction costs)");
+   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 11) +" ; in "+ punit +" without spread, swap and transaction costs");
    WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
    WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits) + CRLF);
 
