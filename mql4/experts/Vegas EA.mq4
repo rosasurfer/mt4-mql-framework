@@ -1282,14 +1282,14 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
    WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 10)        +" (account currency)");
+   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 13)        +" (money after all costs)");
    WriteIniString(file, section, "instance.closedNetProfit",   /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ DoubleToStr(instance.totalNetProfit, 2) + CRLF);
 
    WriteIniString(file, section, "instance.maxNetProfit",      /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 10) +" (price units without spread, swap and transaction costs)");
+   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 11) +" (price units without spread, swap and transaction costs)");
    WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
    WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits) + CRLF);
 
@@ -1690,12 +1690,10 @@ string SignalToStr(int signal) {
  * ShowStatus: Update all string representations.
  */
 void SS.All() {
-   if (__isChart) {
-      SS.InstanceName();
-      SS.Lots();
-      SS.TotalPL();
-      SS.PLStats();
-   }
+   SS.InstanceName();
+   SS.Lots();
+   SS.TotalPL();
+   SS.PLStats();
 }
 
 
@@ -1711,9 +1709,7 @@ void SS.InstanceName() {
  * ShowStatus: Update the string representation of the lotsize.
  */
 void SS.Lots() {
-   if (__isChart) {
-      sLots = NumberToStr(Lots, ".+");
-   }
+   sLots = NumberToStr(Lots, ".+");
 }
 
 
@@ -1721,11 +1717,9 @@ void SS.Lots() {
  * ShowStatus: Update the string representation of "instance.netTotalPL".
  */
 void SS.TotalPL() {
-   if (__isChart) {
-      // not before a position was opened
-      if (!open.ticket && !ArrayRange(history, 0)) sInstanceTotalNetPL = "-";
-      else                                         sInstanceTotalNetPL = NumberToStr(instance.totalNetProfit, "R+.2");
-   }
+   // not before a position was opened
+   if (!open.ticket && !ArrayRange(history, 0)) sInstanceTotalNetPL = "-";
+   else                                         sInstanceTotalNetPL = NumberToStr(instance.totalNetProfit, "R+.2");
 }
 
 
@@ -1733,16 +1727,14 @@ void SS.TotalPL() {
  * ShowStatus: Update the string representaton of the PL statistics.
  */
 void SS.PLStats() {
-   if (__isChart) {
-      // not before a position was opened
-      if (!open.ticket && !ArrayRange(history, 0)) {
-         sInstancePlStats = "";
-      }
-      else {
-         string sMaxProfit   = NumberToStr(instance.maxNetProfit, "+.2");
-         string sMaxDrawdown = NumberToStr(instance.maxNetDrawdown, "+.2");
-         sInstancePlStats = StringConcatenate("(", sMaxDrawdown, "/", sMaxProfit, ")");
-      }
+   // not before a position was opened
+   if (!open.ticket && !ArrayRange(history, 0)) {
+      sInstancePlStats = "";
+   }
+   else {
+      string sMaxProfit   = NumberToStr(instance.maxNetProfit, "+.2");
+      string sMaxDrawdown = NumberToStr(instance.maxNetDrawdown, "+.2");
+      sInstancePlStats = StringConcatenate("(", sMaxDrawdown, "/", sMaxProfit, ")");
    }
 }
 
@@ -1774,10 +1766,10 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                    NL,
-                                                                                              NL,
-                                  "Lots:     ", sLots,                                        NL,
-                                  "Profit:   ",  sInstanceTotalNetPL, "  ", sInstancePlStats, NL
+   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                   NL,
+                                                                                             NL,
+                                  "Lots:     ", sLots,                                       NL,
+                                  "Profit:   ", sInstanceTotalNetPL, "  ", sInstancePlStats, NL
    );
 
    // 3 lines margin-top for instrument and indicator legends

@@ -40,7 +40,6 @@
  *
  *
  * TODO:
- *  - log file: fix empty PnL in StopInstance()
  *  - add var recorder.internalSymbol and store/restore value
  *
  *  - time functions
@@ -1034,8 +1033,6 @@ bool StartInstance(int signal) {
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT)                        return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    if (tradingMode == TRADINGMODE_VIRTUAL)                                 return(StartVirtualInstance(signal));
 
-   if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" starting ("+ SignalToStr(signal) +")");
-
    instance.status = STATUS_PROGRESSING;
    if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
@@ -1097,7 +1094,7 @@ bool StartInstance(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StartInstance(5)  "+ instance.name +" instance started ("+ SignalToStr(signal) +")");
+   if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalToStr(signal) +")");
    return(SaveStatus());
 }
 
@@ -1528,8 +1525,6 @@ bool StopInstance(int signal) {
    // close an open position
    if (instance.status == STATUS_PROGRESSING) {
       if (open.ticket > 0) {
-         if (IsLogInfo()) logInfo("StopInstance(2)  "+ instance.name +" stopping ("+ SignalToStr(signal) +")");
-
          double bid = Bid, ask = Ask;
          int oeFlags, oe[];
 
@@ -1563,20 +1558,20 @@ bool StopInstance(int signal) {
          instance.status = STATUS_STOPPED;
          break;
 
-      default: return(!catch("StopInstance(4)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopInstance(5)  "+ instance.name +" "+ ifString(__isTesting && !signal, "test ", "") +"instance stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sInstanceTotalNetPL +" "+ sInstancePlStats);
+   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !signal, "test ", "") +"instance stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sInstanceTotalNetPL +" "+ sInstancePlStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
    if (__isTesting) {
-      if      (!IsVisualMode())       { if (instance.status == STATUS_STOPPED) Tester.Stop ("StopInstance(6)"); }
-      else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopInstance(7)"); }
-      else                            { if (test.onStopPause)                  Tester.Pause("StopInstance(8)"); }
+      if      (!IsVisualMode())       { if (instance.status == STATUS_STOPPED) Tester.Stop ("StopInstance(4)"); }
+      else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopInstance(5)"); }
+      else                            { if (test.onStopPause)                  Tester.Pause("StopInstance(6)"); }
    }
-   return(!catch("StopInstance(9)"));
+   return(!catch("StopInstance(7)"));
 }
 
 
@@ -2196,14 +2191,14 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.status",             /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "instance.startEquity",        /*double  */ DoubleToStr(instance.startEquity, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 10)         +" (account currency)");
+   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 13)         +" (money after all costs)");
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2) + CRLF);
 
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 10)  +" (price units without spread, swap and transaction costs)");
+   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 11)  +" (price units without spread, swap and transaction costs)");
    WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
    WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits) + CRLF);
 
@@ -2211,7 +2206,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.closedGrossProfitP", /*double  */ DoubleToStr(instance.closedGrossProfitP, Digits));
    WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ DoubleToStr(instance.totalGrossProfitP, Digits) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(DoubleToStr(instance.openNetProfitP, Digits), 10)   +" (price units after all costs)");
+   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(DoubleToStr(instance.openNetProfitP, Digits), 12)   +" (price units after all costs)");
    WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ DoubleToStr(instance.closedNetProfitP, Digits));
    WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ DoubleToStr(instance.totalNetProfitP, Digits) + CRLF);
 
@@ -3199,13 +3194,11 @@ double PriceUnitValue(double lots = 1.0) {
  * ShowStatus: Update all string representations.
  */
 void SS.All() {
-   if (__isChart) {
-      SS.InstanceName();
-      SS.Lots();
-      SS.StartStopConditions();
-      SS.TotalPL();
-      SS.PLStats();
-   }
+   SS.InstanceName();
+   SS.Lots();
+   SS.StartStopConditions();
+   SS.TotalPL();
+   SS.PLStats();
 }
 
 
@@ -3229,9 +3222,7 @@ void SS.InstanceName() {
  * ShowStatus: Update the string representation of the lotsize.
  */
 void SS.Lots() {
-   if (__isChart) {
-      sLots = NumberToStr(Lots, ".+");
-   }
+   sLots = NumberToStr(Lots, ".+");
 }
 
 
@@ -3272,12 +3263,10 @@ void SS.StartStopConditions() {
  * ShowStatus: Update the string representation of "instance.netTotalPL".
  */
 void SS.TotalPL() {
-   if (__isChart) {
-      // not before a position was opened
-      if (!open.ticket && !ArrayRange(history, 0)) sInstanceTotalNetPL = "-";
-      else if (ShowProfitInPercent)                sInstanceTotalNetPL = NumberToStr(MathDiv(instance.totalNetProfit, instance.startEquity) * 100, "R+.2") +"%";
-      else                                         sInstanceTotalNetPL = NumberToStr(instance.totalNetProfit, "R+.2");
-   }
+   // not before a position was opened
+   if (!open.ticket && !ArrayRange(history, 0)) sInstanceTotalNetPL = "-";
+   else if (ShowProfitInPercent)                sInstanceTotalNetPL = NumberToStr(MathDiv(instance.totalNetProfit, instance.startEquity) * 100, "R+.2") +"%";
+   else                                         sInstanceTotalNetPL = NumberToStr(instance.totalNetProfit, "R+.2");
 }
 
 
@@ -3285,23 +3274,21 @@ void SS.TotalPL() {
  * ShowStatus: Update the string representaton of the PL stats.
  */
 void SS.PLStats() {
-   if (__isChart) {
-      // not before a position was opened
-      if (!open.ticket && !ArrayRange(history, 0)) {
-         sInstancePlStats = "";
+   // not before a position was opened
+   if (!open.ticket && !ArrayRange(history, 0)) {
+      sInstancePlStats = "";
+   }
+   else {
+      string sInstanceMaxNetProfit="", sInstanceMaxNetDrawdown="";
+      if (ShowProfitInPercent) {
+         sInstanceMaxNetProfit   = NumberToStr(MathDiv(instance.maxNetProfit,   instance.startEquity) * 100, "R+.2") +"%";
+         sInstanceMaxNetDrawdown = NumberToStr(MathDiv(instance.maxNetDrawdown, instance.startEquity) * 100, "R+.2") +"%";
       }
       else {
-         string sInstanceMaxNetProfit="", sInstanceMaxNetDrawdown="";
-         if (ShowProfitInPercent) {
-            sInstanceMaxNetProfit   = NumberToStr(MathDiv(instance.maxNetProfit,   instance.startEquity) * 100, "R+.2") +"%";
-            sInstanceMaxNetDrawdown = NumberToStr(MathDiv(instance.maxNetDrawdown, instance.startEquity) * 100, "R+.2") +"%";
-         }
-         else {
-            sInstanceMaxNetProfit   = NumberToStr(instance.maxNetProfit, "+.2");
-            sInstanceMaxNetDrawdown = NumberToStr(instance.maxNetDrawdown, "+.2");
-         }
-         sInstancePlStats = StringConcatenate("(", sInstanceMaxNetDrawdown, "/", sInstanceMaxNetProfit, ")");
+         sInstanceMaxNetProfit   = NumberToStr(instance.maxNetProfit, "+.2");
+         sInstanceMaxNetDrawdown = NumberToStr(instance.maxNetDrawdown, "+.2");
       }
+      sInstancePlStats = StringConcatenate("(", sInstanceMaxNetDrawdown, "/", sInstanceMaxNetProfit, ")");
    }
 }
 
