@@ -47,7 +47,7 @@
  *
  *
  * TODO:
- *  - calculate METRIC_TOTAL_UNITS_VIRT
+ *  - calculate METRIC_TOTAL_UNITS_PERF
  *  - add exit strategies
  *  - add entry strategies
  *  - add virtual trading
@@ -104,7 +104,7 @@ extern double Lots                 = 0.1;
 #define H_NETPROFIT             11
 
 #define METRIC_TOTAL_MONEY_NET   1                 // custom metrics
-#define METRIC_TOTAL_UNITS_VIRT  2
+#define METRIC_TOTAL_UNITS_PERF  2
 
 // instance data
 int      instance.id;                              // used for magic order numbers
@@ -113,15 +113,15 @@ datetime instance.created;
 int      instance.status;
 bool     instance.isTest;
 
-double   instance.openNetProfit;                   // PnL in account currency (net)
+double   instance.openNetProfit;                   // PnL in money (net)
 double   instance.closedNetProfit;
 double   instance.totalNetProfit;
-double   instance.maxNetProfit;                    // max. observed total net profit:   0...+n
-double   instance.maxNetDrawdown;                  // max. observed total net drawdown: -n...0
+double   instance.maxNetProfit;                    // max. observed profit:   0...+n
+double   instance.maxNetDrawdown;                  // max. observed drawdown: -n...0
 
-double   instance.openVirtProfitP;                 // PnL in price units without spread, swap and transaction costs
-double   instance.closedVirtProfitP;
-double   instance.totalVirtProfitP;
+double   instance.openPerfProfitP;                 // PnL in point without spread, swap and transaction costs (perfect execution)
+double   instance.closedPerfProfitP;
+double   instance.totalPerfProfitP;
 
 // order data
 int      open.ticket;                              // one open position
@@ -1014,15 +1014,15 @@ bool ReadStatus() {
    instance.isTest            = GetIniBool   (file, section, "instance.isTest"  );           // bool     instance.isTest            = 1
    instance.status            = GetIniInt    (file, section, "instance.status"  );           // int      instance.status            = 1 (waiting)
 
-   instance.openNetProfit     = GetIniDouble (file, section, "instance.openNetProfit"  );    // double   instance.openNetProfit     = 23.45   (account currency)
+   instance.openNetProfit     = GetIniDouble (file, section, "instance.openNetProfit"  );    // double   instance.openNetProfit     = 23.45     ; in money (net)
    instance.closedNetProfit   = GetIniDouble (file, section, "instance.closedNetProfit");    // double   instance.closedNetProfit   = 45.67
    instance.totalNetProfit    = GetIniDouble (file, section, "instance.totalNetProfit" );    // double   instance.totalNetProfit    = 123.45
    instance.maxNetProfit      = GetIniDouble (file, section, "instance.maxNetProfit"   );    // double   instance.maxNetProfit      = 23.45
    instance.maxNetDrawdown    = GetIniDouble (file, section, "instance.maxNetDrawdown" );    // double   instance.maxNetDrawdown    = -11.23
 
-   instance.openVirtProfitP   = GetIniDouble (file, section, "instance.openVirtProfitP"  );  // double   instance.openVirtProfitP   = 0.12345 (price units without spread, swap and transaction costs)
-   instance.closedVirtProfitP = GetIniDouble (file, section, "instance.closedVirtProfitP");  // double   instance.closedVirtProfitP = -0.23456
-   instance.totalVirtProfitP  = GetIniDouble (file, section, "instance.totalVirtProfitP" );  // double   instance.totalVirtProfitP  = 1.23456
+   instance.openPerfProfitP   = GetIniDouble (file, section, "instance.openPerfProfitP"  );  // double   instance.openPerfProfitP   = 0.12345   ; in point without spread, swap and transaction costs (perfect execution)
+   instance.closedPerfProfitP = GetIniDouble (file, section, "instance.closedPerfProfitP");  // double   instance.closedPerfProfitP = -0.23456
+   instance.totalPerfProfitP  = GetIniDouble (file, section, "instance.totalPerfProfitP" );  // double   instance.totalPerfProfitP  = 1.23456
    SS.InstanceName();
 
    // open order data
@@ -1309,14 +1309,14 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "instance.openNetProfit",     /*double  */ DoubleToStr(instance.openNetProfit, 2));
    WriteIniString(file, section, "instance.closedNetProfit",   /*double  */ DoubleToStr(instance.closedNetProfit, 2));
-   WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 13) +" ; in "+ AccountCurrency() +" after all costs"+ CRLF);
+   WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 13) +" ; in "+ AccountCurrency() +" after all costs (net)"+ CRLF);
 
    WriteIniString(file, section, "instance.maxNetProfit",      /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; in "+ punit +" without spread, swap and transaction costs"+ CRLF);
+   WriteIniString(file, section, "instance.openPerfProfitP",   /*double  */ DoubleToStr(instance.openPerfProfitP, Digits));
+   WriteIniString(file, section, "instance.closedPerfProfitP", /*double  */ DoubleToStr(instance.closedPerfProfitP, Digits));
+   WriteIniString(file, section, "instance.totalPerfProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalPerfProfitP, Digits), 11) +" ; in "+ punit +" without spread, swap and transaction costs (perfect execution)"+ CRLF);
 
    // open order data
    WriteIniString(file, section, "open.ticket",                /*int     */ open.ticket);
@@ -1560,7 +1560,7 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          multiplier  = 1;
          break;
 
-      case METRIC_TOTAL_UNITS_VIRT:
+      case METRIC_TOTAL_UNITS_PERF:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
          description = "Vegas "+ PeriodDescription() +" Tunnel "+ Symbol() +" in "+ punit +", virt";
          break;
@@ -1581,7 +1581,7 @@ void RecordMetrics() {
    if (recorder.mode == RECORDER_CUSTOM) {
       int size = ArraySize(metric.ready);
       if (size > METRIC_TOTAL_MONEY_NET ) metric.currValue[METRIC_TOTAL_MONEY_NET ] = instance.totalNetProfit;
-      if (size > METRIC_TOTAL_UNITS_VIRT) metric.currValue[METRIC_TOTAL_UNITS_VIRT] = instance.totalVirtProfitP;
+      if (size > METRIC_TOTAL_UNITS_PERF) metric.currValue[METRIC_TOTAL_UNITS_PERF] = instance.totalPerfProfitP;
    }
 }
 

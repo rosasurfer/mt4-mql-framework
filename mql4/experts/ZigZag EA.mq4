@@ -238,12 +238,12 @@ extern bool   ShowProfitInPercent  = true;                  // whether PL is dis
 #define TP_TYPE_PRICEUNIT           4
 
 #define METRIC_TOTAL_MONEY_NET      1           // cumulated PnL metrics
-#define METRIC_TOTAL_UNITS_VIRT     2
+#define METRIC_TOTAL_UNITS_PERF     2
 #define METRIC_TOTAL_UNITS_GROSS    3
 #define METRIC_TOTAL_UNITS_NET      4
 
 #define METRIC_DAILY_MONEY_NET      5           // daily PnL metrics
-#define METRIC_DAILY_UNITS_VIRT     6
+#define METRIC_DAILY_UNITS_PERF     6
 #define METRIC_DAILY_UNITS_GROSS    7
 #define METRIC_DAILY_UNITS_NET      8
 
@@ -258,21 +258,21 @@ bool     instance.isTest;                       // whether the instance is a tes
 int      instance.status;
 double   instance.startEquity;
 
-double   instance.openNetProfit;                // PnL in account currency (net)
+double   instance.openNetProfit;                // PnL in money (net)
 double   instance.closedNetProfit;
 double   instance.totalNetProfit;
-double   instance.maxNetProfit;                 // max. observed total net profit:   0...+n
-double   instance.maxNetDrawdown;               // max. observed total net drawdown: -n...0
+double   instance.maxNetProfit;                 // max. observed profit:   0...+n
+double   instance.maxNetDrawdown;               // max. observed drawdown: -n...0
 
-double   instance.openVirtProfitP;              // PnL in price units without spread, swap and transaction costs
-double   instance.closedVirtProfitP;
-double   instance.totalVirtProfitP;
+double   instance.openPerfProfitP;              // PnL in point without spread, swap and transaction costs (perfect execution)
+double   instance.closedPerfProfitP;
+double   instance.totalPerfProfitP;
 
-double   instance.openGrossProfitP;             // PnL in price units after spread but without any other costs (gross)
+double   instance.openGrossProfitP;             // PnL in point after spread but without any other costs (gross)
 double   instance.closedGrossProfitP;
 double   instance.totalGrossProfitP;
 
-double   instance.openNetProfitP;               // PnL in price units after all costs (net)
+double   instance.openNetProfitP;               // PnL in point after all costs (net)
 double   instance.closedNetProfitP;
 double   instance.totalNetProfitP;
 
@@ -1079,8 +1079,8 @@ bool StartInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openVirtProfitP  = ifDouble(!type, currentBid-open.bid, open.bid-currentBid);    // both directions use Bid prices
-   instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
+   instance.openPerfProfitP  = ifDouble(!type, currentBid-open.bid, open.bid-currentBid);    // perfect: no spread
+   instance.totalPerfProfitP = instance.openPerfProfitP + instance.closedPerfProfitP;
 
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
@@ -1142,8 +1142,8 @@ bool StartVirtualInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openVirtProfitP  = 0;
-   instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
+   instance.openPerfProfitP  = 0;
+   instance.totalPerfProfitP = instance.openPerfProfitP + instance.closedPerfProfitP;
 
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
@@ -1226,8 +1226,8 @@ bool ReverseInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openVirtProfitP  = 0;
-   instance.totalVirtProfitP = instance.closedVirtProfitP;
+   instance.openPerfProfitP  = 0;
+   instance.totalPerfProfitP = instance.closedPerfProfitP;
 
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
@@ -1286,8 +1286,8 @@ bool ReverseVirtualInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openVirtProfitP  = 0;
-   instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
+   instance.openPerfProfitP  = 0;
+   instance.totalPerfProfitP = instance.openPerfProfitP + instance.closedPerfProfitP;
 
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
@@ -1351,9 +1351,9 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    instance.closedNetProfit += open.netProfit;
    instance.totalNetProfit   = instance.closedNetProfit;
 
-   instance.openVirtProfitP    = 0;                                        // both directions use Bid prices
-   instance.closedVirtProfitP += ifDouble(!open.type, history[i][H_CLOSEBID]-open.bid, open.bid-history[i][H_CLOSEBID]);
-   instance.totalVirtProfitP   = instance.closedVirtProfitP;
+   instance.openPerfProfitP    = 0;                                        // perfect: no spread
+   instance.closedPerfProfitP += ifDouble(!open.type, history[i][H_CLOSEBID]-open.bid, open.bid-history[i][H_CLOSEBID]);
+   instance.totalPerfProfitP   = instance.closedPerfProfitP;
 
    instance.openGrossProfitP    = 0;
    instance.closedGrossProfitP += open.grossProfitP;
@@ -1427,9 +1427,9 @@ bool ArchiveClosedVirtualPosition(int ticket) {
    instance.closedNetProfit += open.netProfit;
    instance.totalNetProfit   = instance.closedNetProfit;
 
-   instance.openVirtProfitP    = 0;                                           // both directions use Bid prices
-   instance.closedVirtProfitP += ifDouble(!open.type, history[i][H_CLOSEBID]-open.bid, open.bid-history[i][H_CLOSEBID]);
-   instance.totalVirtProfitP   = instance.closedVirtProfitP;
+   instance.openPerfProfitP    = 0;                                           // perfect: no spread
+   instance.closedPerfProfitP += ifDouble(!open.type, history[i][H_CLOSEBID]-open.bid, open.bid-history[i][H_CLOSEBID]);
+   instance.totalPerfProfitP   = instance.closedPerfProfitP;
 
    instance.openGrossProfitP    = 0;
    instance.closedGrossProfitP += open.grossProfitP;
@@ -1647,7 +1647,7 @@ bool UpdateStatus() {
          open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PriceUnitValue(OrderLots());
 
          instance.openNetProfit    = open.netProfit;
-         instance.openVirtProfitP  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // both directions use Bid prices
+         instance.openPerfProfitP  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // perfect: no spread
          instance.openGrossProfitP = open.grossProfitP;
          instance.openNetProfitP   = open.netProfitP;
       }
@@ -1656,7 +1656,7 @@ bool UpdateStatus() {
          if (!ArchiveClosedPosition(open.ticket, NULL, NULL, NULL)) return(false);
       }
       instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-      instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
+      instance.totalPerfProfitP  = instance.openPerfProfitP  + instance.closedPerfProfitP;
       instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
       instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
       SS.TotalPL();
@@ -1684,12 +1684,12 @@ bool UpdateVirtualStatus() {
    open.netProfit    = open.grossProfit;
 
    instance.openNetProfit    = open.netProfit;
-   instance.openVirtProfitP  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // both directions use Bid prices
+   instance.openPerfProfitP  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // perfect: no spread
    instance.openGrossProfitP = open.grossProfitP;
    instance.openNetProfitP   = open.netProfitP;
 
    instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-   instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
+   instance.totalPerfProfitP  = instance.openPerfProfitP  + instance.closedPerfProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
    instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
    SS.TotalPL();
@@ -1942,7 +1942,7 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          multiplier  = 1;
          break;
 
-      case METRIC_TOTAL_UNITS_VIRT:             // OK
+      case METRIC_TOTAL_UNITS_PERF:             // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
          description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", virt";
          break;
@@ -1966,7 +1966,7 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          multiplier  = 1;
          break;
 
-      case METRIC_DAILY_UNITS_VIRT:
+      case METRIC_DAILY_UNITS_PERF:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
          description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", virt";
          break;
@@ -1997,7 +1997,7 @@ void RecordMetrics() {
    if (recorder.mode == RECORDER_CUSTOM) {
       int size = ArraySize(metric.ready);
       if (size > METRIC_TOTAL_MONEY_NET  ) metric.currValue[METRIC_TOTAL_MONEY_NET  ] = instance.totalNetProfit;
-      if (size > METRIC_TOTAL_UNITS_VIRT ) metric.currValue[METRIC_TOTAL_UNITS_VIRT ] = instance.totalVirtProfitP;
+      if (size > METRIC_TOTAL_UNITS_PERF ) metric.currValue[METRIC_TOTAL_UNITS_PERF ] = instance.totalPerfProfitP;
       if (size > METRIC_TOTAL_UNITS_GROSS) metric.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitP;
       if (size > METRIC_TOTAL_UNITS_NET  ) metric.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitP;
    }
@@ -2194,22 +2194,22 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "instance.openNetProfit",      /*double  */ DoubleToStr(instance.openNetProfit, 2));
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
-   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 13) +" ; in "+ AccountCurrency() +" after all costs"+ CRLF);
+   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 13) +" ; in "+ AccountCurrency() +" after all costs (net)"+ CRLF);
 
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; in "+ punit +" without spread, swap and transaction costs"+ CRLF);
+   WriteIniString(file, section, "instance.openPerfProfitP",    /*double  */ DoubleToStr(instance.openPerfProfitP, Digits));
+   WriteIniString(file, section, "instance.closedPerfProfitP",  /*double  */ DoubleToStr(instance.closedPerfProfitP, Digits));
+   WriteIniString(file, section, "instance.totalPerfProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalPerfProfitP, Digits), 11) +" ; in "+ punit +" without spread, swap and transaction costs (perfect execution)"+ CRLF);
 
    WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ DoubleToStr(instance.openGrossProfitP, Digits));
    WriteIniString(file, section, "instance.closedGrossProfitP", /*double  */ DoubleToStr(instance.closedGrossProfitP, Digits));
-   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalGrossProfitP, Digits), 10) +" ; in "+ punit +" after spread but without any other costs"+ CRLF);
+   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalGrossProfitP, Digits), 10) +" ; in "+ punit +" after spread but without any other costs (gross)"+ CRLF);
 
    WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ DoubleToStr(instance.openNetProfitP, Digits));
    WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ DoubleToStr(instance.closedNetProfitP, Digits));
-   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfitP, Digits), 12) +" ; in "+ punit +" after all costs"+ CRLF);
+   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfitP, Digits), 12) +" ; in "+ punit +" after all costs (net)"+ CRLF);
 
    // open order data
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
@@ -2394,21 +2394,21 @@ bool ReadStatus() {
    instance.status             = GetIniInt    (file, section, "instance.status"            );         // int      instance.status             = 1 (waiting)
    instance.startEquity        = GetIniDouble (file, section, "instance.startEquity"       );         // double   instance.startEquity        = 1000.00
 
-   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"     );         // double   instance.openNetProfit      = 23.45    (account currency)
+   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"     );         // double   instance.openNetProfit      = 23.45    ; in money (net)
    instance.closedNetProfit    = GetIniDouble (file, section, "instance.closedNetProfit"   );         // double   instance.closedNetProfit    = 45.67
    instance.totalNetProfit     = GetIniDouble (file, section, "instance.totalNetProfit"    );         // double   instance.totalNetProfit     = 123.45
    instance.maxNetProfit       = GetIniDouble (file, section, "instance.maxNetProfit"      );         // double   instance.maxNetProfit       = 23.45
    instance.maxNetDrawdown     = GetIniDouble (file, section, "instance.maxNetDrawdown"    );         // double   instance.maxNetDrawdown     = -11.23
 
-   instance.openVirtProfitP    = GetIniDouble (file, section, "instance.openVirtProfitP"   );         // double   instance.openVirtProfitP    = 0.12345  (price units without spread, swap and transaction costs)
-   instance.closedVirtProfitP  = GetIniDouble (file, section, "instance.closedVirtProfitP" );         // double   instance.closedVirtProfitP  = -0.23456
-   instance.totalVirtProfitP   = GetIniDouble (file, section, "instance.totalVirtProfitP"  );         // double   instance.totalVirtProfitP   = 1.23456
+   instance.openPerfProfitP    = GetIniDouble (file, section, "instance.openPerfProfitP"   );         // double   instance.openPerfProfitP    = 0.12345  ; in point without spread, swap and transaction costs (perfect execution)
+   instance.closedPerfProfitP  = GetIniDouble (file, section, "instance.closedPerfProfitP" );         // double   instance.closedPerfProfitP  = -0.23456
+   instance.totalPerfProfitP   = GetIniDouble (file, section, "instance.totalPerfProfitP"  );         // double   instance.totalPerfProfitP   = 1.23456
 
-   instance.openGrossProfitP   = GetIniDouble (file, section, "instance.openGrossProfitP"  );         // double   instance.openGrossProfitP   = 0.12345  (price units after spread but without any other costs)
+   instance.openGrossProfitP   = GetIniDouble (file, section, "instance.openGrossProfitP"  );         // double   instance.openGrossProfitP   = 0.12345  ; in point after spread but without any other costs (gross)
    instance.closedGrossProfitP = GetIniDouble (file, section, "instance.closedGrossProfitP");         // double   instance.closedGrossProfitP = -0.23456
    instance.totalGrossProfitP  = GetIniDouble (file, section, "instance.totalGrossProfitP" );         // double   instance.totalGrossProfitP  = 1.23456
 
-   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"    );         // double   instance.openNetProfitP     = 0.12345  (price units after all costs)
+   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"    );         // double   instance.openNetProfitP     = 0.12345  ; in point after all costs (net)
    instance.closedNetProfitP   = GetIniDouble (file, section, "instance.closedNetProfitP"  );         // double   instance.closedNetProfitP   = -0.23456
    instance.totalNetProfitP    = GetIniDouble (file, section, "instance.totalNetProfitP"   );         // double   instance.totalNetProfitP    = 1.23456
    SS.InstanceName();
@@ -2646,7 +2646,7 @@ bool SynchronizeStatus() {
 
             // update closed PL numbers
             instance.closedNetProfit    += netProfit;
-            instance.closedVirtProfitP  += grossProfitP;
+            instance.closedPerfProfitP  += grossProfitP;
             instance.closedGrossProfitP += grossProfitP;
             instance.closedNetProfitP   += grossProfitP + MathDiv(swap + commission, PriceUnitValue(lots));
          }
@@ -2655,7 +2655,7 @@ bool SynchronizeStatus() {
 
    // recalculate total PL numbers
    instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-   instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
+   instance.totalPerfProfitP  = instance.openPerfProfitP  + instance.closedPerfProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
    instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
 
