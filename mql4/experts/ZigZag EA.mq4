@@ -163,7 +163,6 @@
  *  - VPS: monitor and notify of incoming emails
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the instance name)
- *  - permanent spread logging to a separate logfile
  *  - pass input "EA.Recorder" to the Expander as a string
  *  - ChartInfos::CustomPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CustomPosition() including/excluding a specific strategy is not supported
@@ -1180,8 +1179,6 @@ bool ReverseInstance(int signal) {
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("ReverseInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    if (tradingMode == TRADINGMODE_VIRTUAL)          return(ReverseVirtualInstance(signal));
 
-   double bid = Bid, ask = Ask;
-
    if (open.ticket > 0) {
       // continue in the same direction...
       if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
@@ -1190,11 +1187,9 @@ bool ReverseInstance(int signal) {
       }
       // ...or close the open position
       int oe[], oeFlags=F_ERR_INVALID_TRADE_PARAMETERS | F_LOG_NOTICE;     // the SL may be triggered/position closed between UpdateStatus() and ReverseInstance()
-
       bool success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
       if (!success && oe.Error(oe)!=ERR_INVALID_TRADE_PARAMETERS) return(!SetLastError(oe.Error(oe)));
-
-      if (!ArchiveClosedPosition(open.ticket, ifDouble(success, bid, 0), ifDouble(success, ask, 0), ifDouble(success, oe.Slippage(oe), 0))) return(false);
+      if (!ArchiveClosedPosition(open.ticket, ifDouble(success, oe.Bid(oe), 0), ifDouble(success, oe.Ask(oe), 0), ifDouble(success, oe.Slippage(oe), 0))) return(false);
    }
 
    // open a new position
@@ -1210,11 +1205,10 @@ bool ReverseInstance(int signal) {
    if (!OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
    // store the new position data
-   double currentBid = MarketInfo(Symbol(), MODE_BID), currentAsk = MarketInfo(Symbol(), MODE_ASK);
-   open.bid          = bid;
-   open.ask          = ask;
    open.ticket       = oe.Ticket    (oe);
    open.type         = oe.Type      (oe);
+   open.bid          = oe.Bid       (oe);
+   open.ask          = oe.Ask       (oe);
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
    open.stoploss     = oe.StopLoss  (oe);
@@ -1222,7 +1216,7 @@ bool ReverseInstance(int signal) {
    open.swap         = oe.Swap      (oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit    (oe);
-   open.grossProfitP = ifDouble(!type, currentBid-open.price, open.price-currentAsk);
+   open.grossProfitP = ifDouble(!open.type, open.bid-open.price, open.price-open.ask);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
    open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PriceUnitValue(Lots);
 
@@ -1232,8 +1226,8 @@ bool ReverseInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openVirtProfitP  = ifDouble(!type, currentBid-open.bid, open.bid-currentBid); // both directions use Bid prices
-   instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
+   instance.openVirtProfitP  = 0;
+   instance.totalVirtProfitP = instance.closedVirtProfitP;
 
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
@@ -1324,19 +1318,12 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    SelectTicket(ticket, "ArchiveClosedPosition(2)", /*push=*/true);
 
    // update now closed position data
-   open.swap        = OrderSwap();
-   open.commission  = OrderCommission();
-   open.grossProfit = OrderProfit();
-   open.netProfit   = open.grossProfit + open.swap + open.commission;
-
-   if (!OrderLots()) {                 // it may be a hedge counterpart with Lots=0.0 (#465291275 Buy 0.0 US500 at 4'522.30, closed...
-      open.grossProfitP = 0;           // ...at 4'522.30, commission=0.00, swap=0.00, profit=0.00, magicNumber=448817408, comment="close hedge by #465308924")
-      open.netProfitP   = 0;
-   }
-   else {
-      open.grossProfitP = ifDouble(!OrderType(), OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
-      open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PriceUnitValue(OrderLots());
-   }
+   open.swap         = OrderSwap();
+   open.commission   = OrderCommission();
+   open.grossProfit  = OrderProfit();
+   open.netProfit    = open.grossProfit + open.swap + open.commission;
+   open.grossProfitP = ifDouble(!OrderType(), OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
+   open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PriceUnitValue(OrderLots());
 
    // update history
    int i = ArrayRange(history, 0);
@@ -1651,29 +1638,20 @@ bool UpdateStatus() {
 
    if (open.ticket > 0) {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
-      bool isOpen = !OrderCloseTime();
-
-      open.swap        = OrderSwap();
-      open.commission  = OrderCommission();
-      open.grossProfit = OrderProfit();
-      open.netProfit   = open.grossProfit + open.swap + open.commission;
-
-      if (!OrderLots()) {                 // if already closed it may be a hedge counterpart with Lots=0.0 (#465291275 Buy 0.0 US500 at 4'522.30, closed...
-         open.grossProfitP = 0;           // ...at 4'522.30, commission=0.00, swap=0.00, profit=0.00, magicNumber=448817408, comment="close hedge by #465308924")
-         open.netProfitP   = 0;
-      }
-      else {
+      if (!OrderCloseTime()) {                                                            // still open
+         open.swap         = OrderSwap();
+         open.commission   = OrderCommission();
+         open.grossProfit  = OrderProfit();
+         open.netProfit    = open.grossProfit + open.swap + open.commission;
          open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
          open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PriceUnitValue(OrderLots());
-      }
 
-      if (isOpen) {
          instance.openNetProfit    = open.netProfit;
          instance.openVirtProfitP  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // both directions use Bid prices
          instance.openGrossProfitP = open.grossProfitP;
          instance.openNetProfitP   = open.netProfitP;
       }
-      else {
+      else {                                                                              // now closed
          if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, NULL, NULL, NULL)) return(false);
       }
@@ -3283,7 +3261,7 @@ void SS.StartStopConditions() {
 
 
 /**
- * ShowStatus: Update the string representation of "instance.netTotalPL".
+ * ShowStatus: Update the string representation of "instance.totalNetProfit".
  */
 void SS.TotalPL() {
    // not before a position was opened

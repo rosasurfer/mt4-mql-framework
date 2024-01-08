@@ -585,7 +585,7 @@ bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
 /**
  * Update order status and PL stats.
  *
- * @param  int signal [optional] - trade signal causing the call (default: stats update only)
+ * @param  int signal [optional] - trade signal causing the call (default: none, update status only)
  *
  * @return bool - success status
  */
@@ -597,15 +597,15 @@ bool UpdateStatus(int signal = NULL) {
    if (!signal) {
       if (open.ticket != NULL) {
          if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
-         if (OrderCloseTime() > 0) {
-            if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-            if (!ArchiveClosedPosition(open.ticket, NULL)) return(false);
-         }
-         else {
+         if (!OrderCloseTime()) {                     // still open
             open.swap        = OrderSwap();
             open.commission  = OrderCommission();
             open.grossProfit = OrderProfit();
             open.netProfit   = open.grossProfit + open.swap + open.commission;
+         }
+         else {                                       // now closed
+            if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
+            if (!ArchiveClosedPosition(open.ticket, NULL)) return(false);
          }
       }
    }
@@ -1741,7 +1741,7 @@ void SS.Lots() {
 
 
 /**
- * ShowStatus: Update the string representation of "instance.netTotalPL".
+ * ShowStatus: Update the string representation of "instance.totalNetProfit".
  */
 void SS.TotalPL() {
    // not before a position was opened
