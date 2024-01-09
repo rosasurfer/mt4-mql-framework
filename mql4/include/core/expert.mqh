@@ -139,7 +139,7 @@ int init() {
    }
 
    if (UninitializeReason() != UR_CHARTCHANGE) {                  // log input parameters
-      if (IsLogDebug()) {
+      if (IsLogInfo()) {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
             sInputs = StringConcatenate(sInputs,
@@ -147,7 +147,7 @@ int init() {
                ifString(!Test.StartTime,         "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
                ifString(!Test.StartPrice,        "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
                ifString(!Test.ExternalReporting, "", NL +"Test.ExternalReporting=TRUE"                                 +";"));
-            logDebug(initHandlers[initReason] +"(0)  inputs: "+ sInputs);
+            logInfo(initHandlers[initReason] +"(0)  inputs: "+ sInputs);
          }
       }
    }

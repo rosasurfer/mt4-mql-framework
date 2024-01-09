@@ -14,12 +14,12 @@
  * • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
  *    1:  Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
- *    2:  Records PnL in price units without spread, swap and transaction costs (virt).
+ *    2:  Records PnL in price units without spread and any costs (virtual, assumes exact execution).
  *    3:  Records PnL in price units after spread but without any other costs (gross).
  *    4:  Records PnL in price units after all costs (net).
  *
  *    5:  Records daily PnL in account currency after all costs (net).                                                  TODO
- *    6:  Records daily PnL in price units without spread, swap and transaction costs (virt).                           TODO
+ *    6:  Records daily PnL in price units without spread and any costs (virtual, assumes exact execution).             TODO
  *    7:  Records daily PnL in price units after spread but without any other costs (gross).                            TODO
  *    8:  Records daily PnL in price units after all costs (net).                                                       TODO
  *
@@ -44,8 +44,14 @@
  *
  *
  * TODO:
+ *  - add var open.virtProfitP
+ *  - add index history[][H_VIRTPROFIT_P]
+ *  - drop all Virtual* functions
+ *  - fix recorder: re-add metric.enabled[]
+ *  - recorder: improve internal symbol/description
+ *  - on SaveStatus/ReadStatus: validate calculated profit numbers
  *  - add var recorder.internalSymbol and store/restore value
- *  - in tester the EA cannot run with bar model MODE_BAROPEN
+ *  - in tester the ZigZag EA cannot run with bar model MODE_BAROPEN
  *
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
@@ -215,37 +221,35 @@ extern bool   ShowProfitInPercent  = true;                  // whether PL is dis
 #define SIGNAL_TIME                 3
 #define SIGNAL_TAKEPROFIT           4
 
-#define H_TICKET                    0           // trade history indexes
-#define H_LOTS                      1
-#define H_OPENTYPE                  2
-#define H_OPENTIME                  3
-#define H_OPENBID                   4
-#define H_OPENASK                   5
-#define H_OPENPRICE                 6
-#define H_CLOSETIME                 7
-#define H_CLOSEBID                  8
-#define H_CLOSEASK                  9
-#define H_CLOSEPRICE               10
-#define H_SLIPPAGE                 11
-#define H_SWAP                     12
-#define H_COMMISSION               13
-#define H_GROSSPROFIT              14
-#define H_NETPROFIT                15
-
 #define TP_TYPE_MONEY               1           // TakeProfit types
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
 #define TP_TYPE_PRICEUNIT           4
 
 #define METRIC_TOTAL_MONEY_NET      1           // cumulated PnL metrics
-#define METRIC_TOTAL_UNITS_PERF     2
+#define METRIC_TOTAL_UNITS_VIRT     2
 #define METRIC_TOTAL_UNITS_GROSS    3
 #define METRIC_TOTAL_UNITS_NET      4
 
 #define METRIC_DAILY_MONEY_NET      5           // daily PnL metrics
-#define METRIC_DAILY_UNITS_PERF     6
+#define METRIC_DAILY_UNITS_VIRT     6
 #define METRIC_DAILY_UNITS_GROSS    7
 #define METRIC_DAILY_UNITS_NET      8
+
+#define H_TICKET                    0           // trade history indexes
+#define H_LOTS                      1
+#define H_OPENTYPE                  2
+#define H_OPENTIME                  3
+#define H_OPENPRICE                 4
+#define H_OPENPRICE_VIRT            5
+#define H_CLOSETIME                 6
+#define H_CLOSEPRICE                7
+#define H_CLOSEPRICE_VIRT           8
+#define H_SLIPPAGE                  9
+#define H_SWAP                     10
+#define H_COMMISSION               11
+#define H_GROSSPROFIT              12
+#define H_NETPROFIT                13
 
 // general
 int      tradingMode;
@@ -261,12 +265,13 @@ double   instance.startEquity;
 double   instance.openNetProfit;                // PnL in money (net)
 double   instance.closedNetProfit;
 double   instance.totalNetProfit;
+
 double   instance.maxNetProfit;                 // max. observed profit:   0...+n
 double   instance.maxNetDrawdown;               // max. observed drawdown: -n...0
 
-double   instance.openPerfProfitP;              // PnL in point without spread, swap and transaction costs (perfect execution)
-double   instance.closedPerfProfitP;
-double   instance.totalPerfProfitP;
+double   instance.openVirtProfitP;              // virtual PnL in point without any costs (exact execution)
+double   instance.closedVirtProfitP;
+double   instance.totalVirtProfitP;
 
 double   instance.openGrossProfitP;             // PnL in point after spread but without any other costs (gross)
 double   instance.closedGrossProfitP;
@@ -280,9 +285,8 @@ double   instance.totalNetProfitP;
 int      open.ticket;                           // one open position
 int      open.type;
 datetime open.time;
-double   open.bid;
-double   open.ask;
 double   open.price;
+double   open.priceVirt;
 double   open.stoploss;
 double   open.slippage;
 double   open.swap;
@@ -291,7 +295,7 @@ double   open.grossProfit;
 double   open.grossProfitP;
 double   open.netProfit;
 double   open.netProfitP;
-double   history[][16];                         // multiple closed positions
+double   history[][14];                         // multiple closed positions
 
 // start conditions
 bool     start.time.condition;                  // whether a time condition is active
@@ -1042,8 +1046,6 @@ bool StartInstance(int signal) {
 
    // open a new position
    int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
-   double   bid         = Bid;
-   double   ask         = Ask;
    double   price       = NULL;
    double   stopLoss    = CalculateStopLoss(signal);
    double   takeProfit  = NULL;
@@ -1057,19 +1059,17 @@ bool StartInstance(int signal) {
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
-   double currentBid = MarketInfo(Symbol(), MODE_BID), currentAsk = MarketInfo(Symbol(), MODE_ASK);
    open.ticket       = ticket;
    open.type         = type;
-   open.bid          = bid;
-   open.ask          = ask;
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
+   open.priceVirt    = Bid;
    open.stoploss     = oe.StopLoss  (oe);
    open.slippage     = oe.Slippage  (oe);
    open.swap         = oe.Swap      (oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit    (oe);
-   open.grossProfitP = ifDouble(!type, currentBid-open.price, open.price-currentAsk);
+   open.grossProfitP = ifDouble(!type, Bid-open.price, open.price-Ask);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
    open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PriceUnitValue(Lots);
 
@@ -1079,8 +1079,8 @@ bool StartInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openPerfProfitP  = ifDouble(!type, currentBid-open.bid, open.bid-currentBid);    // perfect: no spread
-   instance.totalPerfProfitP = instance.openPerfProfitP + instance.closedPerfProfitP;
+   instance.openVirtProfitP  = 0;
+   instance.totalVirtProfitP = instance.closedVirtProfitP;
 
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
@@ -1123,10 +1123,9 @@ bool StartVirtualInstance(int signal) {
    // store the position data
    open.ticket       = ticket;
    open.type         = type;
-   open.bid          = Bid;
-   open.ask          = Ask;
    open.time         = Tick.time;
    open.price        = ifDouble(type, Bid, Ask);
+   open.priceVirt    = Bid;
    open.stoploss     = 0;
    open.slippage     = 0;
    open.swap         = 0;
@@ -1142,8 +1141,8 @@ bool StartVirtualInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openPerfProfitP  = 0;
-   instance.totalPerfProfitP = instance.openPerfProfitP + instance.closedPerfProfitP;
+   instance.openVirtProfitP  = 0;
+   instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
 
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
@@ -1188,8 +1187,8 @@ bool ReverseInstance(int signal) {
       // ...or close the open position
       int oe[], oeFlags=F_ERR_INVALID_TRADE_PARAMETERS | F_LOG_NOTICE;     // the SL may be triggered/position closed between UpdateStatus() and ReverseInstance()
       bool success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
-      if (!success && oe.Error(oe)!=ERR_INVALID_TRADE_PARAMETERS) return(!SetLastError(oe.Error(oe)));
-      if (!ArchiveClosedPosition(open.ticket, ifDouble(success, oe.Bid(oe), 0), ifDouble(success, oe.Ask(oe), 0), ifDouble(success, oe.Slippage(oe), 0))) return(false);
+      if (!success && oe.Error(oe)!=ERR_INVALID_TRADE_PARAMETERS)                                                                return(!SetLastError(oe.Error(oe)));
+      if (!ArchiveClosedPosition(open.ticket, open.priceVirt, ifDouble(success, Bid, 0), ifDouble(success, oe.Slippage(oe), 0))) return(false);
    }
 
    // open a new position
@@ -1207,16 +1206,15 @@ bool ReverseInstance(int signal) {
    // store the new position data
    open.ticket       = oe.Ticket    (oe);
    open.type         = oe.Type      (oe);
-   open.bid          = oe.Bid       (oe);
-   open.ask          = oe.Ask       (oe);
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
+   open.priceVirt    = Bid;
    open.stoploss     = oe.StopLoss  (oe);
    open.slippage     = oe.Slippage  (oe);
    open.swap         = oe.Swap      (oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit    (oe);
-   open.grossProfitP = ifDouble(!open.type, open.bid-open.price, open.price-open.ask);
+   open.grossProfitP = ifDouble(!open.type, oe.Bid(oe)-open.price, open.price-oe.Ask(oe));
    open.netProfit    = open.grossProfit + open.swap + open.commission;
    open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PriceUnitValue(Lots);
 
@@ -1226,8 +1224,8 @@ bool ReverseInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openPerfProfitP  = 0;
-   instance.totalPerfProfitP = instance.closedPerfProfitP;
+   instance.openVirtProfitP  = 0;
+   instance.totalVirtProfitP = instance.closedVirtProfitP;
 
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
@@ -1267,10 +1265,9 @@ bool ReverseVirtualInstance(int signal) {
    // store the position data
    open.ticket       = ticket;
    open.type         = type;
-   open.bid          = Bid;
-   open.ask          = Ask;
    open.time         = Tick.time;
    open.price        = ifDouble(type, Bid, Ask);
+   open.priceVirt    = Bid;
    open.stoploss     = 0;
    open.slippage     = 0;
    open.swap         = 0;
@@ -1286,8 +1283,8 @@ bool ReverseVirtualInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openPerfProfitP  = 0;
-   instance.totalPerfProfitP = instance.openPerfProfitP + instance.closedPerfProfitP;
+   instance.openVirtProfitP  = 0;
+   instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
 
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
@@ -1304,18 +1301,20 @@ bool ReverseVirtualInstance(int signal) {
 /**
  * Add trade details of the specified closed ticket to the local history and reset open position data.
  *
- * @param int    ticket   - closed ticket
- * @param double bid      - Bid price before the position was closed
- * @param double ask      - Ask price before the position was closed
- * @param double slippage - close slippage
+ * @param int    ticket         - closed ticket
+ * @param double virtOpenPrice  - virtual open price
+ * @param double virtClosePrice - virtual close price
+ * @param double slippage       - close slippage
  *
  * @return bool - success status
  */
-bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) {
+bool ArchiveClosedPosition(int ticket, double virtOpenPrice, double virtClosePrice, double slippage) {
    if (last_error != NULL)                    return(false);
    if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ instance.name +" cannot archive position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
    SelectTicket(ticket, "ArchiveClosedPosition(2)", /*push=*/true);
+   if (!virtOpenPrice)  virtOpenPrice  = OrderOpenPrice();
+   if (!virtClosePrice) virtClosePrice = OrderClosePrice();
 
    // update now closed position data
    open.swap         = OrderSwap();
@@ -1328,22 +1327,20 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    // update history
    int i = ArrayRange(history, 0);
    ArrayResize(history, i+1);
-   history[i][H_TICKET     ] = ticket;
-   history[i][H_LOTS       ] = OrderLots();
-   history[i][H_OPENTYPE   ] = OrderType();
-   history[i][H_OPENTIME   ] = OrderOpenTime();
-   history[i][H_OPENBID    ] = open.bid;
-   history[i][H_OPENASK    ] = open.ask;
-   history[i][H_OPENPRICE  ] = OrderOpenPrice();
-   history[i][H_CLOSETIME  ] = OrderCloseTime();
-   history[i][H_CLOSEBID   ] = doubleOr(bid, OrderClosePrice());
-   history[i][H_CLOSEASK   ] = doubleOr(ask, OrderClosePrice());
-   history[i][H_CLOSEPRICE ] = OrderClosePrice();
-   history[i][H_SLIPPAGE   ] = open.slippage + slippage;
-   history[i][H_SWAP       ] = open.swap;
-   history[i][H_COMMISSION ] = open.commission;
-   history[i][H_GROSSPROFIT] = open.grossProfit;
-   history[i][H_NETPROFIT  ] = open.netProfit;
+   history[i][H_TICKET         ] = ticket;
+   history[i][H_LOTS           ] = OrderLots();
+   history[i][H_OPENTYPE       ] = OrderType();
+   history[i][H_OPENTIME       ] = OrderOpenTime();
+   history[i][H_OPENPRICE      ] = OrderOpenPrice();
+   history[i][H_OPENPRICE_VIRT ] = virtOpenPrice;
+   history[i][H_CLOSETIME      ] = OrderCloseTime();
+   history[i][H_CLOSEPRICE     ] = OrderClosePrice();
+   history[i][H_CLOSEPRICE_VIRT] = virtClosePrice;
+   history[i][H_SLIPPAGE       ] = open.slippage + slippage;
+   history[i][H_SWAP           ] = open.swap;
+   history[i][H_COMMISSION     ] = open.commission;
+   history[i][H_GROSSPROFIT    ] = open.grossProfit;
+   history[i][H_NETPROFIT      ] = open.netProfit;
    OrderPop("ArchiveClosedPosition(3)");
 
    // update PL numbers
@@ -1351,9 +1348,9 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    instance.closedNetProfit += open.netProfit;
    instance.totalNetProfit   = instance.closedNetProfit;
 
-   instance.openPerfProfitP    = 0;                                        // perfect: no spread
-   instance.closedPerfProfitP += ifDouble(!open.type, history[i][H_CLOSEBID]-open.bid, open.bid-history[i][H_CLOSEBID]);
-   instance.totalPerfProfitP   = instance.closedPerfProfitP;
+   instance.openVirtProfitP    = 0;
+   instance.closedVirtProfitP += ifDouble(!open.type, virtClosePrice-virtOpenPrice, virtOpenPrice-virtClosePrice);
+   instance.totalVirtProfitP   = instance.closedVirtProfitP;
 
    instance.openGrossProfitP    = 0;
    instance.closedGrossProfitP += open.grossProfitP;
@@ -1367,9 +1364,8 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    open.ticket       = NULL;
    open.type         = NULL;
    open.time         = NULL;
-   open.bid          = NULL;
-   open.ask          = NULL;
    open.price        = NULL;
+   open.priceVirt    = NULL;
    open.stoploss     = NULL;
    open.slippage     = NULL;
    open.swap         = NULL;
@@ -1405,31 +1401,29 @@ bool ArchiveClosedVirtualPosition(int ticket) {
    // update history
    int i = ArrayRange(history, 0);
    ArrayResize(history, i+1);
-   history[i][H_TICKET     ] = ticket;
-   history[i][H_LOTS       ] = Lots;
-   history[i][H_OPENTYPE   ] = open.type;
-   history[i][H_OPENTIME   ] = open.time;
-   history[i][H_OPENBID    ] = open.bid;
-   history[i][H_OPENASK    ] = open.ask;
-   history[i][H_OPENPRICE  ] = open.price;
-   history[i][H_CLOSETIME  ] = Tick.time;
-   history[i][H_CLOSEBID   ] = Bid;
-   history[i][H_CLOSEASK   ] = Ask;
-   history[i][H_CLOSEPRICE ] = ifDouble(!open.type, Bid, Ask);
-   history[i][H_SLIPPAGE   ] = open.slippage;
-   history[i][H_SWAP       ] = open.swap;
-   history[i][H_COMMISSION ] = open.commission;
-   history[i][H_GROSSPROFIT] = open.grossProfit;
-   history[i][H_NETPROFIT  ] = open.netProfit;
+   history[i][H_TICKET         ] = ticket;
+   history[i][H_LOTS           ] = Lots;
+   history[i][H_OPENTYPE       ] = open.type;
+   history[i][H_OPENTIME       ] = open.time;
+   history[i][H_OPENPRICE      ] = open.price;
+   history[i][H_OPENPRICE_VIRT ] = open.priceVirt;
+   history[i][H_CLOSETIME      ] = Tick.time;
+   history[i][H_CLOSEPRICE     ] = ifDouble(!open.type, Bid, Ask);
+   history[i][H_CLOSEPRICE_VIRT] = Bid;
+   history[i][H_SLIPPAGE       ] = open.slippage;
+   history[i][H_SWAP           ] = open.swap;
+   history[i][H_COMMISSION     ] = open.commission;
+   history[i][H_GROSSPROFIT    ] = open.grossProfit;
+   history[i][H_NETPROFIT      ] = open.netProfit;
 
    // update PL numbers
    instance.openNetProfit    = 0;
    instance.closedNetProfit += open.netProfit;
    instance.totalNetProfit   = instance.closedNetProfit;
 
-   instance.openPerfProfitP    = 0;                                           // perfect: no spread
-   instance.closedPerfProfitP += ifDouble(!open.type, history[i][H_CLOSEBID]-open.bid, open.bid-history[i][H_CLOSEBID]);
-   instance.totalPerfProfitP   = instance.closedPerfProfitP;
+   instance.openVirtProfitP    = 0;
+   instance.closedVirtProfitP += ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
+   instance.totalVirtProfitP   = instance.closedVirtProfitP;
 
    instance.openGrossProfitP    = 0;
    instance.closedGrossProfitP += open.grossProfitP;
@@ -1443,9 +1437,8 @@ bool ArchiveClosedVirtualPosition(int ticket) {
    open.ticket       = NULL;
    open.type         = NULL;
    open.time         = NULL;
-   open.bid          = NULL;
-   open.ask          = NULL;
    open.price        = NULL;
+   open.priceVirt    = NULL;
    open.slippage     = NULL;
    open.swap         = NULL;
    open.commission   = NULL;
@@ -1517,11 +1510,9 @@ bool StopInstance(int signal) {
    // close an open position
    if (instance.status == STATUS_PROGRESSING) {
       if (open.ticket > 0) {
-         double bid = Bid, ask = Ask;
          int oeFlags, oe[];
-
          if (!OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-         if (!ArchiveClosedPosition(open.ticket, bid, ask, oe.Slippage(oe)))                     return(false);
+         if (!ArchiveClosedPosition(open.ticket, open.priceVirt, Bid, oe.Slippage(oe)))          return(false);
 
          instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
          instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
@@ -1647,16 +1638,16 @@ bool UpdateStatus() {
          open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PriceUnitValue(OrderLots());
 
          instance.openNetProfit    = open.netProfit;
-         instance.openPerfProfitP  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // perfect: no spread
+         instance.openVirtProfitP  = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
          instance.openGrossProfitP = open.grossProfitP;
          instance.openNetProfitP   = open.netProfitP;
       }
       else {                                                                              // now closed
          if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!ArchiveClosedPosition(open.ticket, NULL, NULL, NULL)) return(false);
+         if (!ArchiveClosedPosition(open.ticket, open.priceVirt, 0, 0))                                                      return(false);
       }
       instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-      instance.totalPerfProfitP  = instance.openPerfProfitP  + instance.closedPerfProfitP;
+      instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
       instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
       instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
       SS.TotalPL();
@@ -1684,12 +1675,12 @@ bool UpdateVirtualStatus() {
    open.netProfit    = open.grossProfit;
 
    instance.openNetProfit    = open.netProfit;
-   instance.openPerfProfitP  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // perfect: no spread
+   instance.openVirtProfitP  = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
    instance.openGrossProfitP = open.grossProfitP;
    instance.openNetProfitP   = open.netProfitP;
 
    instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-   instance.totalPerfProfitP  = instance.openPerfProfitP  + instance.closedPerfProfitP;
+   instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
    instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
    SS.TotalPL();
@@ -1942,7 +1933,7 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          multiplier  = 1;
          break;
 
-      case METRIC_TOTAL_UNITS_PERF:             // OK
+      case METRIC_TOTAL_UNITS_VIRT:             // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
          description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", virt";
          break;
@@ -1966,7 +1957,7 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          multiplier  = 1;
          break;
 
-      case METRIC_DAILY_UNITS_PERF:
+      case METRIC_DAILY_UNITS_VIRT:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
          description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", virt";
          break;
@@ -1997,7 +1988,7 @@ void RecordMetrics() {
    if (recorder.mode == RECORDER_CUSTOM) {
       int size = ArraySize(metric.ready);
       if (size > METRIC_TOTAL_MONEY_NET  ) metric.currValue[METRIC_TOTAL_MONEY_NET  ] = instance.totalNetProfit;
-      if (size > METRIC_TOTAL_UNITS_PERF ) metric.currValue[METRIC_TOTAL_UNITS_PERF ] = instance.totalPerfProfitP;
+      if (size > METRIC_TOTAL_UNITS_VIRT ) metric.currValue[METRIC_TOTAL_UNITS_VIRT ] = instance.totalVirtProfitP;
       if (size > METRIC_TOTAL_UNITS_GROSS) metric.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitP;
       if (size > METRIC_TOTAL_UNITS_NET  ) metric.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitP;
    }
@@ -2199,9 +2190,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openPerfProfitP",    /*double  */ DoubleToStr(instance.openPerfProfitP, Digits));
-   WriteIniString(file, section, "instance.closedPerfProfitP",  /*double  */ DoubleToStr(instance.closedPerfProfitP, Digits));
-   WriteIniString(file, section, "instance.totalPerfProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalPerfProfitP, Digits), 11) +" ; in "+ punit +" without spread, swap and transaction costs (perfect execution)"+ CRLF);
+   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
+   WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
+   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; virtual PnL in "+ punit +" without any costs (exact execution)"+ CRLF);
 
    WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ DoubleToStr(instance.openGrossProfitP, Digits));
    WriteIniString(file, section, "instance.closedGrossProfitP", /*double  */ DoubleToStr(instance.closedGrossProfitP, Digits));
@@ -2215,9 +2206,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
    WriteIniString(file, section, "open.type",                   /*int     */ open.type);
    WriteIniString(file, section, "open.time",                   /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
-   WriteIniString(file, section, "open.bid",                    /*double  */ DoubleToStr(open.bid, Digits));
-   WriteIniString(file, section, "open.ask",                    /*double  */ DoubleToStr(open.ask, Digits));
    WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
+   WriteIniString(file, section, "open.priceVirt",              /*double  */ DoubleToStr(open.priceVirt, Digits));
    WriteIniString(file, section, "open.stoploss",               /*double  */ DoubleToStr(open.stoploss, Digits));
    WriteIniString(file, section, "open.slippage",               /*double  */ DoubleToStr(open.slippage, Digits));
    WriteIniString(file, section, "open.swap",                   /*double  */ DoubleToStr(open.swap, 2));
@@ -2296,26 +2286,24 @@ string SaveStatus.ConditionsToStr(string sConditions) {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int index) {
-   // result: ticket,lots,openType,openTime,openBid,OpenAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
+   // result: ticket,lots,openType,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,netProfit
 
-   int      ticket      = history[index][H_TICKET     ];
-   double   lots        = history[index][H_LOTS       ];
-   int      openType    = history[index][H_OPENTYPE   ];
-   datetime openTime    = history[index][H_OPENTIME   ];
-   double   openBid     = history[index][H_OPENBID    ];
-   double   openAsk     = history[index][H_OPENASK    ];
-   double   openPrice   = history[index][H_OPENPRICE  ];
-   datetime closeTime   = history[index][H_CLOSETIME  ];
-   double   closeBid    = history[index][H_CLOSEBID   ];
-   double   closeAsk    = history[index][H_CLOSEASK   ];
-   double   closePrice  = history[index][H_CLOSEPRICE ];
-   double   slippage    = history[index][H_SLIPPAGE   ];
-   double   swap        = history[index][H_SWAP       ];
-   double   commission  = history[index][H_COMMISSION ];
-   double   grossProfit = history[index][H_GROSSPROFIT];
-   double   netProfit   = history[index][H_NETPROFIT  ];
+   int      ticket         = history[index][H_TICKET         ];
+   double   lots           = history[index][H_LOTS           ];
+   int      openType       = history[index][H_OPENTYPE       ];
+   datetime openTime       = history[index][H_OPENTIME       ];
+   double   openPrice      = history[index][H_OPENPRICE      ];
+   double   openPriceVirt  = history[index][H_OPENPRICE_VIRT ];
+   datetime closeTime      = history[index][H_CLOSETIME      ];
+   double   closePrice     = history[index][H_CLOSEPRICE     ];
+   double   closePriceVirt = history[index][H_CLOSEPRICE_VIRT];
+   double   slippage       = history[index][H_SLIPPAGE       ];
+   double   swap           = history[index][H_SWAP           ];
+   double   commission     = history[index][H_COMMISSION     ];
+   double   grossProfit    = history[index][H_GROSSPROFIT    ];
+   double   netProfit      = history[index][H_NETPROFIT      ];
 
-   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openBid, Digits), ",", DoubleToStr(openAsk, Digits), ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closeBid, Digits), ",", DoubleToStr(closeAsk, Digits), ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
+   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceVirt, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceVirt, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
 
 
@@ -2394,21 +2382,22 @@ bool ReadStatus() {
    instance.status             = GetIniInt    (file, section, "instance.status"            );         // int      instance.status             = 1 (waiting)
    instance.startEquity        = GetIniDouble (file, section, "instance.startEquity"       );         // double   instance.startEquity        = 1000.00
 
-   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"     );         // double   instance.openNetProfit      = 23.45    ; in money (net)
+   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"     );         // double   instance.openNetProfit      = 23.45
    instance.closedNetProfit    = GetIniDouble (file, section, "instance.closedNetProfit"   );         // double   instance.closedNetProfit    = 45.67
    instance.totalNetProfit     = GetIniDouble (file, section, "instance.totalNetProfit"    );         // double   instance.totalNetProfit     = 123.45
+
    instance.maxNetProfit       = GetIniDouble (file, section, "instance.maxNetProfit"      );         // double   instance.maxNetProfit       = 23.45
    instance.maxNetDrawdown     = GetIniDouble (file, section, "instance.maxNetDrawdown"    );         // double   instance.maxNetDrawdown     = -11.23
 
-   instance.openPerfProfitP    = GetIniDouble (file, section, "instance.openPerfProfitP"   );         // double   instance.openPerfProfitP    = 0.12345  ; in point without spread, swap and transaction costs (perfect execution)
-   instance.closedPerfProfitP  = GetIniDouble (file, section, "instance.closedPerfProfitP" );         // double   instance.closedPerfProfitP  = -0.23456
-   instance.totalPerfProfitP   = GetIniDouble (file, section, "instance.totalPerfProfitP"  );         // double   instance.totalPerfProfitP   = 1.23456
+   instance.openVirtProfitP    = GetIniDouble (file, section, "instance.openVirtProfitP"   );         // double   instance.openVirtProfitP    = 0.12345
+   instance.closedVirtProfitP  = GetIniDouble (file, section, "instance.closedVirtProfitP" );         // double   instance.closedVirtProfitP  = -0.23456
+   instance.totalVirtProfitP   = GetIniDouble (file, section, "instance.totalVirtProfitP"  );         // double   instance.totalVirtProfitP   = 1.23456
 
-   instance.openGrossProfitP   = GetIniDouble (file, section, "instance.openGrossProfitP"  );         // double   instance.openGrossProfitP   = 0.12345  ; in point after spread but without any other costs (gross)
+   instance.openGrossProfitP   = GetIniDouble (file, section, "instance.openGrossProfitP"  );         // double   instance.openGrossProfitP   = 0.12345
    instance.closedGrossProfitP = GetIniDouble (file, section, "instance.closedGrossProfitP");         // double   instance.closedGrossProfitP = -0.23456
    instance.totalGrossProfitP  = GetIniDouble (file, section, "instance.totalGrossProfitP" );         // double   instance.totalGrossProfitP  = 1.23456
 
-   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"    );         // double   instance.openNetProfitP     = 0.12345  ; in point after all costs (net)
+   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"    );         // double   instance.openNetProfitP     = 0.12345
    instance.closedNetProfitP   = GetIniDouble (file, section, "instance.closedNetProfitP"  );         // double   instance.closedNetProfitP   = -0.23456
    instance.totalNetProfitP    = GetIniDouble (file, section, "instance.totalNetProfitP"   );         // double   instance.totalNetProfitP    = 1.23456
    SS.InstanceName();
@@ -2417,9 +2406,8 @@ bool ReadStatus() {
    open.ticket                 = GetIniInt    (file, section, "open.ticket"      );                   // int      open.ticket       = 123456
    open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 1
    open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
-   open.bid                    = GetIniDouble (file, section, "open.bid"         );                   // double   open.bid          = 1.24363
-   open.ask                    = GetIniDouble (file, section, "open.ask"         );                   // double   open.ask          = 1.24363
    open.price                  = GetIniDouble (file, section, "open.price"       );                   // double   open.price        = 1.24363
+   open.priceVirt              = GetIniDouble (file, section, "open.priceVirt"   );                   // double   open.priceVirt    = 1.24363
    open.stoploss               = GetIniDouble (file, section, "open.stoploss"    );                   // double   open.stoploss     = 1.24363
    open.slippage               = GetIniDouble (file, section, "open.slippage"    );                   // double   open.slippage     = 0.00002
    open.swap                   = GetIniDouble (file, section, "open.swap"        );                   // double   open.swap         = -1.23
@@ -2500,29 +2488,27 @@ bool ReadStatus.ParseHistory(string key, string value) {
    if (IsLastError())                    return(false);
    if (!StrStartsWithI(key, "history.")) return(!catch("ReadStatus.ParseHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
 
-   // history.i=ticket,lots,openType,openTime,openBid,openAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
+   // history.i=ticket,lots,openType,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,netProfit
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(!catch("ReadStatus.ParseHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
 
-   int      ticket      = StrToInteger(values[H_TICKET     ]);
-   double   lots        =  StrToDouble(values[H_LOTS       ]);
-   int      openType    = StrToInteger(values[H_OPENTYPE   ]);
-   datetime openTime    = StrToInteger(values[H_OPENTIME   ]);
-   double   openBid     =  StrToDouble(values[H_OPENBID    ]);
-   double   openAsk     =  StrToDouble(values[H_OPENASK    ]);
-   double   openPrice   =  StrToDouble(values[H_OPENPRICE  ]);
-   datetime closeTime   = StrToInteger(values[H_CLOSETIME  ]);
-   double   closeBid    =  StrToDouble(values[H_CLOSEBID   ]);
-   double   closeAsk    =  StrToDouble(values[H_CLOSEASK   ]);
-   double   closePrice  =  StrToDouble(values[H_CLOSEPRICE ]);
-   double   slippage    =  StrToDouble(values[H_SLIPPAGE   ]);
-   double   swap        =  StrToDouble(values[H_SWAP       ]);
-   double   commission  =  StrToDouble(values[H_COMMISSION ]);
-   double   grossProfit =  StrToDouble(values[H_GROSSPROFIT]);
-   double   netProfit   =  StrToDouble(values[H_NETPROFIT  ]);
+   int      ticket         = StrToInteger(values[H_TICKET         ]);
+   double   lots           =  StrToDouble(values[H_LOTS           ]);
+   int      openType       = StrToInteger(values[H_OPENTYPE       ]);
+   datetime openTime       = StrToInteger(values[H_OPENTIME       ]);
+   double   openPrice      =  StrToDouble(values[H_OPENPRICE      ]);
+   double   openPriceVirt  =  StrToDouble(values[H_OPENPRICE_VIRT ]);
+   datetime closeTime      = StrToInteger(values[H_CLOSETIME      ]);
+   double   closePrice     =  StrToDouble(values[H_CLOSEPRICE     ]);
+   double   closePriceVirt =  StrToDouble(values[H_CLOSEPRICE_VIRT]);
+   double   slippage       =  StrToDouble(values[H_SLIPPAGE       ]);
+   double   swap           =  StrToDouble(values[H_SWAP           ]);
+   double   commission     =  StrToDouble(values[H_COMMISSION     ]);
+   double   grossProfit    =  StrToDouble(values[H_GROSSPROFIT    ]);
+   double   netProfit      =  StrToDouble(values[H_NETPROFIT      ]);
 
-   return(!IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openBid, openAsk, openPrice, closeTime, closeBid, closeAsk, closePrice, slippage, swap, commission, grossProfit, netProfit)));
+   return(!IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPriceVirt, closeTime, closePrice, closePriceVirt, slippage, swap, commission, grossProfit, netProfit)));
 }
 
 
@@ -2535,7 +2521,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int History.AddRecord(int ticket, double lots, int openType, datetime openTime, double openBid, double openAsk, double openPrice, datetime closeTime, double closeBid, double closeAsk, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
+int History.AddRecord(int ticket, double lots, int openType, datetime openTime, double openPrice, double openPriceVirt, datetime closeTime, double closePrice, double closePriceVirt, double slippage, double swap, double commission, double grossProfit, double netProfit) {
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
@@ -2555,22 +2541,20 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
    }
 
    // insert the new data
-   history[i][H_TICKET     ] = ticket;
-   history[i][H_LOTS       ] = lots;
-   history[i][H_OPENTYPE   ] = openType;
-   history[i][H_OPENTIME   ] = openTime;
-   history[i][H_OPENBID    ] = openBid;
-   history[i][H_OPENASK    ] = openAsk;
-   history[i][H_OPENPRICE  ] = openPrice;
-   history[i][H_CLOSETIME  ] = closeTime;
-   history[i][H_CLOSEBID   ] = closeBid;
-   history[i][H_CLOSEASK   ] = closeAsk;
-   history[i][H_CLOSEPRICE ] = closePrice;
-   history[i][H_SLIPPAGE   ] = slippage;
-   history[i][H_SWAP       ] = swap;
-   history[i][H_COMMISSION ] = commission;
-   history[i][H_GROSSPROFIT] = grossProfit;
-   history[i][H_NETPROFIT  ] = netProfit;
+   history[i][H_TICKET         ] = ticket;
+   history[i][H_LOTS           ] = lots;
+   history[i][H_OPENTYPE       ] = openType;
+   history[i][H_OPENTIME       ] = openTime;
+   history[i][H_OPENPRICE      ] = openPrice;
+   history[i][H_OPENPRICE_VIRT ] = openPriceVirt;
+   history[i][H_CLOSETIME      ] = closeTime;
+   history[i][H_CLOSEPRICE     ] = closePrice;
+   history[i][H_CLOSEPRICE_VIRT] = closePriceVirt;
+   history[i][H_SLIPPAGE       ] = slippage;
+   history[i][H_SWAP           ] = swap;
+   history[i][H_COMMISSION     ] = commission;
+   history[i][H_GROSSPROFIT    ] = grossProfit;
+   history[i][H_NETPROFIT      ] = netProfit;
 
    if (!catch("History.AddRecord(2)"))
       return(i);
@@ -2604,10 +2588,9 @@ bool SynchronizeStatus() {
             open.type      = OrderType();
             open.time      = OrderOpenTime();
             open.price     = OrderOpenPrice();
+            open.priceVirt = open.price;
             open.stoploss  = OrderStopLoss();
-            open.bid       = open.price;
-            open.ask       = open.price;
-            open.slippage  = NULL;                                   // open PL numbers will auto-update in the following UpdateStatus() call
+            open.slippage  = NULL;                                   // open PnL numbers will auto-update in the following UpdateStatus() call
          }
          else if (OrderTicket() != open.ticket) {
             return(!catch("SynchronizeStatus(3)  "+ instance.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
@@ -2634,7 +2617,7 @@ bool SynchronizeStatus() {
             double   openPrice    = OrderOpenPrice();
             datetime closeTime    = OrderCloseTime();
             double   closePrice   = OrderClosePrice();
-            double   slippageP    = 0;
+            double   slippage     = 0;
             double   swap         = OrderSwap();
             double   commission   = OrderCommission();
             double   grossProfit  = OrderProfit();
@@ -2642,11 +2625,11 @@ bool SynchronizeStatus() {
             double   grossProfitP = ifDouble(!openType, closePrice-openPrice, openPrice-closePrice);
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" dangling closed position found: #"+ ticket +", adding to instance...");
-            if (IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPrice, openPrice, closeTime, closePrice, closePrice, closePrice, slippageP, swap, commission, grossProfit, netProfit))) return(false);
+            if (IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit))) return(false);
 
             // update closed PL numbers
             instance.closedNetProfit    += netProfit;
-            instance.closedPerfProfitP  += grossProfitP;
+            instance.closedVirtProfitP  += grossProfitP;
             instance.closedGrossProfitP += grossProfitP;
             instance.closedNetProfitP   += grossProfitP + MathDiv(swap + commission, PriceUnitValue(lots));
          }
@@ -2655,7 +2638,7 @@ bool SynchronizeStatus() {
 
    // recalculate total PL numbers
    instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-   instance.totalPerfProfitP  = instance.openPerfProfitP  + instance.closedPerfProfitP;
+   instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
    instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
 
