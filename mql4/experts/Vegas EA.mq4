@@ -15,7 +15,7 @@
  *
  * Features
  * --------
- * • A finished test can be loaded into an online chart for trade inspection and further analysis.
+ * • A finished test can be loaded onto an online chart for trade inspection and further analysis.
  *
  * • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
  *   trading related deviations that impact test or real results (tester bugs, spread, slippage, swap, commission).
@@ -38,7 +38,7 @@
  * • Tunnel.Definition:  ...
  * • Donchian.Periods:   ...
  * • Lots:               ...
- * • EA.Recorder:        Metrics to record, @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
+ * • EA.Recorder:        Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
  *    1:  Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
  *    2:  Records PnL in price units without spread and any costs (virtual, assumes exact execution).
@@ -121,7 +121,7 @@ double   instance.totalNetProfit;
 double   instance.maxNetProfit;                    // max. observed profit:   0...+n
 double   instance.maxNetDrawdown;                  // max. observed drawdown: -n...0
 
-double   instance.openVirtProfitP;                 // virtual PnL in point without any costs (exact execution)
+double   instance.openVirtProfitP;                 // virtual PnL in point without any costs (assumes exact execution)
 double   instance.closedVirtProfitP;
 double   instance.totalVirtProfitP;
 
@@ -1347,7 +1347,7 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
    WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; virtual PnL in "+ punit +" without any costs (exact execution)"+ CRLF);
+   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; virtual PnL in "+ punit +" without any costs (assumes exact execution)"+ CRLF);
 
    // open order data
    WriteIniString(file, section, "open.ticket",                /*int     */ open.ticket);
