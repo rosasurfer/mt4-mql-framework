@@ -1039,7 +1039,6 @@ bool StartInstance(int signal) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT)                        return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
-   if (tradingMode == TRADINGMODE_VIRTUAL)                                 return(StartVirtualInstance(signal));
 
    instance.status = STATUS_PROGRESSING;
    if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
@@ -1052,10 +1051,11 @@ bool StartInstance(int signal) {
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ instance.id;
    int      magicNumber = CalculateMagicNumber();
-   color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
-   int      oeFlags     = NULL, oe[];
+   color    marker      = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   int ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+   int ticket, oe[], oeFlags=NULL;
+   if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, stopLoss, takeProfit, marker, oe);
+   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, marker, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
@@ -1093,7 +1093,7 @@ bool StartInstance(int signal) {
 
    // update start conditions
    if (start.time.condition) {
-      if (!start.time.isDaily || !stop.time.condition) {                                     // see start/stop time variants
+      if (!start.time.isDaily || !stop.time.condition) {                   // see start/stop time variants
          start.time.condition = false;
       }
    }
@@ -3027,68 +3027,6 @@ string InputsToStr() {
 
 
 /**
- * Start a waiting virtual instance.
- *
- * @param  int signal - trade signal causing the call
- *
- * @return bool - success status
- */
-bool StartVirtualInstance(int signal) {
-   return(!catch("StartVirtualInstance(1)", ERR_ILLEGAL_STATE));
-
-   instance.status = STATUS_PROGRESSING;
-   if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
-
-   // create a virtual position
-   int type   = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
-   int ticket = VirtualOrderSend(type);
-
-   // store the position data
-   open.ticket       = ticket;
-   open.type         = type;
-   open.time         = Tick.time;
-   open.price        = ifDouble(type, Bid, Ask);
-   open.priceVirt    = Bid;
-   open.stoploss     = 0;
-   open.slippage     = 0;
-   open.swap         = 0;
-   open.commission   = 0;
-   open.grossProfitP = Bid-Ask;
-   open.grossProfit  = open.grossProfitP * PriceUnitValue(Lots);
-   open.netProfitP   = open.grossProfitP;
-   open.netProfit    = open.grossProfit;
-
-   // update PL numbers
-   instance.openNetProfit  = open.netProfit;
-   instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
-   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
-   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
-
-   instance.openVirtProfitP  = 0;
-   instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
-
-   instance.openGrossProfitP  = open.grossProfitP;
-   instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
-
-   instance.openNetProfitP  = open.netProfitP;
-   instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
-   SS.TotalPL();
-   SS.PLStats();
-
-   // update start conditions
-   if (start.time.condition) {
-      if (!start.time.isDaily || !stop.time.condition) {          // see start/stop time variants
-         start.time.condition = false;
-      }
-   }
-   SS.StartStopConditions();
-
-   if (IsLogInfo()) logInfo("StartVirtualInstance(2)  "+ instance.name +" instance started ("+ SignalToStr(signal) +")");
-   return(SaveStatus());
-}
-
-
-/**
  * Stop a waiting or progressing virtual instance. Close open positions (if any).
  *
  * @param  int signal - signal which triggered the stop condition or NULL on explicit (i.e. manual) stop
@@ -3169,7 +3107,7 @@ bool ReverseVirtualInstance(int signal) {
 
    // create a virtual position
    int type   = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
-   int ticket = VirtualOrderSend(type);
+   int ticket = 123456;
 
    // store the position data
    open.ticket       = ticket;
@@ -3242,27 +3180,77 @@ bool UpdateVirtualStatus() {
 
 
 /**
- * Emulate opening of a virtual market position with the specified parameters.
+ * Virtual replacement for OrderSendEx().
  *
- * @param  int type - trade operation type
+ * @param  _In_  int    type       - trade operation type
+ * @param  _In_  double lots       - trade volume in lots
+ * @param  _In_  double stopLoss   - stoploss price
+ * @param  _In_  double takeProfit - takeprofit price
+ * @param  _In_  color  marker     - color of the chart marker to set
+ * @param  _Out_ int    &oe[]      - order execution details (struct ORDER_EXECUTION)
  *
- * @return int - virtual ticket or NULL in case of errors
+ * @return int - resulting ticket or NULL in case of errors
  */
-int VirtualOrderSend(int type) {
+int VirtualOrderSend(int type, double lots, double stopLoss, double takeProfit, color marker, int &oe[]) {
+   // validate parameters
+   // oe[]
+   if (ArrayDimension(oe) > 1)                       return(!catch("VirtualOrderSend(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAY));
+   if (ArraySize(oe) != ORDER_EXECUTION_intSize) ArrayResize(oe, ORDER_EXECUTION_intSize);
+   ArrayInitialize(oe, 0);
+   // type
+   if (type!=OP_BUY && type!=OP_SELL)                return(!catch("VirtualOrderSend(2)  invalid parameter type: "+ type, oe.setError(oe, ERR_INVALID_PARAMETER)));
+   // lots
+   if (LT(lots, MarketInfo(Symbol(), MODE_MINLOT)))  return(!catch("VirtualOrderSend(3)  illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", oe.setError(oe, ERR_INVALID_TRADE_VOLUME)));
+   if (GT(lots, MarketInfo(Symbol(), MODE_MAXLOT)))  return(!catch("VirtualOrderSend(4)  illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(MarketInfo(Symbol(), MODE_MAXLOT), ".+") +")", oe.setError(oe, ERR_INVALID_TRADE_VOLUME)));
+   double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
+   if (MathModFix(lots, lotStep) != 0)               return(!catch("VirtualOrderSend(5)  illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", oe.setError(oe, ERR_INVALID_TRADE_VOLUME)));
+   lots = NormalizeDouble(lots, CountDecimals(lotStep));
+   // stopLoss
+   if (stopLoss < 0)                                 return(!catch("VirtualOrderSend(6)  illegal parameter stopLoss: "+ NumberToStr(stopLoss, PriceFormat), oe.setError(oe, ERR_INVALID_PARAMETER)));
+   stopLoss = NormalizeDouble(stopLoss, Digits);
+   // takeProfit
+   if (takeProfit < 0)                               return(!catch("VirtualOrderSend(7)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, PriceFormat), oe.setError(oe, ERR_INVALID_PARAMETER)));
+   takeProfit = NormalizeDouble(takeProfit, Digits);
+   // marker
+   if (marker < CLR_NONE || marker > C'255,255,255') return(!catch("VirtualOrderSend(8)  illegal parameter marker: 0x"+ IntToHexStr(marker), oe.setError(oe, ERR_INVALID_PARAMETER)));
+
+   double openPrice = ifDouble(type, Bid, Ask);
+   string comment   = "virt. ZigZag."+ instance.id;
+
+   // generate a new ticket
    int ticket = open.ticket;
    int size = ArrayRange(history, 0);
    if (size > 0) ticket = Max(ticket, history[size-1][H_TICKET]);
    ticket++;
 
-   if (IsLogInfo()) {
+   // populate oe[]
+   oe.setTicket    (oe, ticket);
+   oe.setSymbol    (oe, Symbol());
+   oe.setDigits    (oe, Digits);
+   oe.setBid       (oe, Bid);
+   oe.setAsk       (oe, Ask);
+   oe.setType      (oe, type);
+   oe.setLots      (oe, lots);
+   oe.setOpenTime  (oe, Tick.time);
+   oe.setOpenPrice (oe, openPrice);
+   oe.setStopLoss  (oe, stopLoss);
+   oe.setTakeProfit(oe, takeProfit);
+   oe.setComment   (oe, comment);
+
+   if (IsLogDebug()) {
       string sType  = OperationTypeDescription(type);
-      string sLots  = NumberToStr(Lots, ".+");
-      string sPrice = NumberToStr(ifDouble(type, Bid, Ask), PriceFormat);
+      string sLots  = NumberToStr(lots, ".+");
+      string sPrice = NumberToStr(openPrice, PriceFormat);
       string sBid   = NumberToStr(Bid, PriceFormat);
       string sAsk   = NumberToStr(Ask, PriceFormat);
-      logInfo("VirtualOrderSend(1)  "+ instance.name +" opened virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ instance.id +"\" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")");
+      logDebug("VirtualOrderSend(9)  "+ instance.name +" opened virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \""+ comment +"\" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")");
    }
-   return(ticket);
+   if (__isChart && marker!=CLR_NONE) ChartMarker.OrderSent_B(ticket, Digits, marker, type, lots, Symbol(), Tick.time, openPrice, stopLoss, takeProfit, comment);
+   if (!__isTesting)                  PlaySoundEx("OrderOk.wav");
+
+   if (!oe.setError(oe, catch("VirtualOrderSend(10)")))
+      return(ticket);
+   return(NULL);
 }
 
 
