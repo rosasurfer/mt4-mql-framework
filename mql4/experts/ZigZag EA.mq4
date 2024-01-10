@@ -1051,7 +1051,7 @@ bool StartInstance(int signal) {
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ instance.id;
    int      magicNumber = CalculateMagicNumber();
-   color    marker      = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+   color    marker      = ifInt(!type, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    int ticket, oeFlags, oe[];
    if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, stopLoss, takeProfit, marker, oe);
@@ -1115,19 +1115,26 @@ bool ReverseInstance(int signal) {
    if (last_error != NULL)                          return(false);
    if (instance.status != STATUS_PROGRESSING)       return(!catch("ReverseInstance(1)  "+ instance.name +" cannot reverse "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("ReverseInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
-   if (tradingMode == TRADINGMODE_VIRTUAL)          return(ReverseVirtualInstance(signal));
+   int ticket, oeFlags, oe[];
 
    if (open.ticket > 0) {
-      // continue in the same direction...
+      // continue with an already reversed position
       if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
-         logNotice("ReverseInstance(3)  "+ instance.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position #"+ open.ticket);
+         logWarn("ReverseInstance(3)  "+ instance.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(tradingMode==TRADINGMODE_VIRTUAL, "virtual ", "") + ifString(signal==SIGNAL_LONG, "long", "short") +" position #"+ open.ticket);
          return(true);
       }
-      // ...or close the open position
-      int oe[], oeFlags=F_ERR_INVALID_TRADE_PARAMETERS | F_LOG_NOTICE;     // the SL may be triggered/position closed between UpdateStatus() and ReverseInstance()
-      bool success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
-      if (!success && oe.Error(oe)!=ERR_INVALID_TRADE_PARAMETERS)                                                                return(!SetLastError(oe.Error(oe)));
-      if (!ArchiveClosedPosition(open.ticket, open.priceVirt, ifDouble(success, Bid, 0), ifDouble(success, oe.Slippage(oe), 0))) return(false);
+
+      // close the old position
+      if (tradingMode == TRADINGMODE_VIRTUAL) {
+         if (!VirtualOrderClose(open.ticket, Lots, CLR_NONE, oe)) return(!SetLastError(oe.Error(oe)));
+         if (!ArchiveClosedVirtualPosition(open.ticket))          return(false);
+      }
+      else {
+         oeFlags = F_ERR_INVALID_TRADE_PARAMETERS | F_LOG_NOTICE;    // the SL may just have been triggered
+         bool success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
+         if (!success && oe.Error(oe)!=ERR_INVALID_TRADE_PARAMETERS)                                                                return(!SetLastError(oe.Error(oe)));
+         if (!ArchiveClosedPosition(open.ticket, open.priceVirt, ifDouble(success, Bid, 0), ifDouble(success, oe.Slippage(oe), 0))) return(false);
+      }
    }
 
    // open a new position
@@ -1138,22 +1145,24 @@ bool ReverseInstance(int signal) {
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ instance.id;
    int      magicNumber = CalculateMagicNumber();
-   color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+   color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   if (!OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+   if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, stopLoss, takeProfit, marker, oe);
+   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, marker, oeFlags, oe);
+   if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the new position data
-   open.ticket       = oe.Ticket    (oe);
-   open.type         = oe.Type      (oe);
+   open.ticket       = ticket;
+   open.type         = type;
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
    open.priceVirt    = Bid;
-   open.stoploss     = oe.StopLoss  (oe);
+   open.stoploss     = stopLoss;
    open.slippage     = oe.Slippage  (oe);
    open.swap         = oe.Swap      (oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit    (oe);
-   open.grossProfitP = ifDouble(!open.type, oe.Bid(oe)-open.price, open.price-oe.Ask(oe));
+   open.grossProfitP = ifDouble(type==OP_BUY, oe.Bid(oe)-open.price, open.price-oe.Ask(oe));
    open.netProfit    = open.grossProfit + open.swap + open.commission;
    open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PointValue(Lots);
    open.virtProfitP  = 0;
@@ -1164,14 +1173,14 @@ bool ReverseInstance(int signal) {
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.openVirtProfitP  = 0;
-   instance.totalVirtProfitP = instance.closedVirtProfitP;
-
    instance.openGrossProfitP  = open.grossProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
 
    instance.openNetProfitP  = open.netProfitP;
    instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
+
+   instance.openVirtProfitP  = 0;
+   instance.totalVirtProfitP = instance.closedVirtProfitP;
    SS.TotalPL();
    SS.PLStats();
 
@@ -1231,11 +1240,8 @@ bool ArchiveClosedPosition(int ticket, double virtOpenPrice, double virtClosePri
    instance.openNetProfit    = 0;
    instance.closedNetProfit += open.netProfit;
    instance.totalNetProfit   = instance.closedNetProfit;
-
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
-   SS.TotalPL();
-   SS.PLStats();
 
    instance.openVirtProfitP    = 0;
    instance.closedVirtProfitP += open.virtProfitP;
@@ -1248,6 +1254,8 @@ bool ArchiveClosedPosition(int ticket, double virtOpenPrice, double virtClosePri
    instance.openNetProfitP    = 0;
    instance.closedNetProfitP += open.netProfitP;
    instance.totalNetProfitP   = instance.closedNetProfitP;
+   SS.TotalPL();
+   SS.PLStats();
 
    // reset open position data
    open.ticket       = NULL;
@@ -2913,6 +2921,55 @@ int VirtualOrderSend(int type, double lots, double stopLoss, double takeProfit, 
 
 
 /**
+ * Virtual replacement for OrderCloseEx().
+ *
+ * @param  _In_  int    ticket - order ticket of the position to close
+ * @param  _In_  double lots   - order size to close
+ * @param  _In_  color  marker - color of the chart marker to set
+ * @param  _Out_ int    &oe[]  - execution details (struct ORDER_EXECUTION)
+ *
+ * @return bool - success status
+ */
+bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
+   if (ArraySize(oe) != ORDER_EXECUTION_intSize) ArrayResize(oe, ORDER_EXECUTION_intSize);
+   ArrayInitialize(oe, 0);
+
+   if (ticket != open.ticket) return(!catch("VirtualOrderClose(1)  "+ instance.name +" parameter ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, oe.setError(oe, ERR_INVALID_PARAMETER)));
+   double closePrice = ifDouble(!open.type, Bid, Ask);
+   double profit = NormalizeDouble(ifDouble(!open.type, closePrice-open.price, open.price-closePrice) * PointValue(lots), 2);
+
+   // populate oe[]
+   oe.setTicket    (oe, ticket);
+   oe.setSymbol    (oe, Symbol());
+   oe.setDigits    (oe, Digits);
+   oe.setBid       (oe, Bid);
+   oe.setAsk       (oe, Ask);
+   oe.setType      (oe, open.type);
+   oe.setLots      (oe, lots);
+   oe.setOpenTime  (oe, open.time);
+   oe.setOpenPrice (oe, open.price);
+   oe.setStopLoss  (oe, open.stoploss);
+   oe.setCloseTime (oe, Tick.time);
+   oe.setClosePrice(oe, closePrice);
+   oe.setProfit    (oe, profit);
+
+   if (IsLogDebug()) {
+      string sType       = OperationTypeDescription(open.type);
+      string sLots       = NumberToStr(lots, ".+");
+      string sOpenPrice  = NumberToStr(open.price, PriceFormat);
+      string sClosePrice = NumberToStr(closePrice, PriceFormat);
+      string sBid        = NumberToStr(Bid, PriceFormat);
+      string sAsk        = NumberToStr(Ask, PriceFormat);
+      logDebug("VirtualOrderClose(2)  "+ instance.name +" closed virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ instance.id +"\" from "+ sOpenPrice +" at "+ sClosePrice +" (market: "+ sBid +"/"+ sAsk +")");
+   }
+   if (__isChart && marker!=CLR_NONE) ChartMarker.PositionClosed_B(ticket, Digits, marker, open.type, lots, Symbol(), open.time, open.price, Tick.time, closePrice);
+   if (!__isTesting)                  PlaySoundEx("OrderOk.wav");
+
+   return(true);
+}
+
+
+/**
  * ShowStatus: Update all string representations.
  */
 void SS.All() {
@@ -3088,67 +3145,6 @@ string InputsToStr() {
 
 
 /**
- * Reverse a progressing virtual instance.
- *
- * @param  int signal - trade signal causing the call
- *
- * @return bool - success status
- */
-bool ReverseVirtualInstance(int signal) {
-   return(!catch("ReverseVirtualInstance(0)", ERR_ILLEGAL_STATE));
-
-   if (open.ticket > 0) {
-      // continue in the same direction...
-      if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
-         logWarn("ReverseVirtualInstance(1)  "+ instance.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open virtual "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position");
-         return(true);
-      }
-      // ...or close and archive the open position
-      VirtualOrderClose_old(open.ticket);
-      ArchiveClosedVirtualPosition(open.ticket);
-   }
-
-   // create a virtual position
-   int type   = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
-   int ticket = 123456;
-
-   // store the position data
-   open.ticket       = ticket;
-   open.type         = type;
-   open.time         = Tick.time;
-   open.price        = ifDouble(type, Bid, Ask);
-   open.priceVirt    = Bid;
-   open.stoploss     = 0;
-   open.slippage     = 0;
-   open.swap         = 0;
-   open.commission   = 0;
-   open.grossProfitP = Bid-Ask;
-   open.grossProfit  = open.grossProfitP * PointValue(Lots);
-   open.netProfitP   = open.grossProfitP;
-   open.netProfit    = open.grossProfit;
-
-   // update PL numbers
-   instance.openNetProfit  = open.netProfit;
-   instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
-   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
-   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
-
-   instance.openVirtProfitP  = 0;
-   instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
-
-   instance.openGrossProfitP  = open.grossProfitP;
-   instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
-
-   instance.openNetProfitP  = open.netProfitP;
-   instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
-   SS.TotalPL();
-   SS.PLStats();
-
-   return(SaveStatus());
-}
-
-
-/**
  * Update virtual order status and PL.
  *
  * @return bool - success status
@@ -3183,79 +3179,6 @@ bool UpdateVirtualStatus() {
 
 
 /**
- * Emulate closing of a virtual position with the specified parameters.
- *
- * @param  int ticket - order ticket
- *
- * @return bool - success status
- */
-bool VirtualOrderClose_old(int ticket) {
-   if (ticket != open.ticket) return(!catch("VirtualOrderClose_old(1)  "+ instance.name +" ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, ERR_ILLEGAL_STATE));
-
-   if (IsLogDebug()) {
-      string sType       = OperationTypeDescription(open.type);
-      string sLots       = NumberToStr(Lots, ".+");
-      string sOpenPrice  = NumberToStr(open.price, PriceFormat);
-      double closePrice  = ifDouble(!open.type, Bid, Ask);
-      string sClosePrice = NumberToStr(closePrice, PriceFormat);
-      string sBid        = NumberToStr(Bid, PriceFormat);
-      string sAsk        = NumberToStr(Ask, PriceFormat);
-      logDebug("VirtualOrderClose_old(2)  "+ instance.name +" closed virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ instance.id +"\" from "+ sOpenPrice +" at "+ sClosePrice +" (market: "+ sBid +"/"+ sAsk +")");
-   }
-   return(true);
-}
-
-
-/**
- * Virtual replacement for OrderCloseEx().
- *
- * @param  _In_  int    ticket - order ticket of the position to close
- * @param  _In_  double lots   - order size to close
- * @param  _In_  color  marker - color of the chart marker to set
- * @param  _Out_ int    &oe[]  - execution details (struct ORDER_EXECUTION)
- *
- * @return bool - success status
- */
-bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
-   if (ArraySize(oe) != ORDER_EXECUTION_intSize) ArrayResize(oe, ORDER_EXECUTION_intSize);
-   ArrayInitialize(oe, 0);
-
-   if (ticket != open.ticket) return(!catch("VirtualOrderClose(1)  "+ instance.name +" parameter ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, oe.setError(oe, ERR_INVALID_PARAMETER)));
-   double closePrice = ifDouble(!open.type, Bid, Ask);
-   double profit = NormalizeDouble(ifDouble(!open.type, closePrice-open.price, open.price-closePrice) * PointValue(lots), 2);
-
-   // populate oe[]
-   oe.setTicket    (oe, ticket);
-   oe.setSymbol    (oe, Symbol());
-   oe.setDigits    (oe, Digits);
-   oe.setBid       (oe, Bid);
-   oe.setAsk       (oe, Ask);
-   oe.setType      (oe, open.type);
-   oe.setLots      (oe, lots);
-   oe.setOpenTime  (oe, open.time);
-   oe.setOpenPrice (oe, open.price);
-   oe.setStopLoss  (oe, open.stoploss);
-   oe.setCloseTime (oe, Tick.time);
-   oe.setClosePrice(oe, closePrice);
-   oe.setProfit    (oe, profit);
-
-   if (IsLogDebug()) {
-      string sType       = OperationTypeDescription(open.type);
-      string sLots       = NumberToStr(lots, ".+");
-      string sOpenPrice  = NumberToStr(open.price, PriceFormat);
-      string sClosePrice = NumberToStr(closePrice, PriceFormat);
-      string sBid        = NumberToStr(Bid, PriceFormat);
-      string sAsk        = NumberToStr(Ask, PriceFormat);
-      logDebug("VirtualOrderClose(2)  "+ instance.name +" closed virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ instance.id +"\" from "+ sOpenPrice +" at "+ sClosePrice +" (market: "+ sBid +"/"+ sAsk +")");
-   }
-   if (__isChart && marker!=CLR_NONE) ChartMarker.PositionClosed_B(ticket, Digits, marker, open.type, lots, Symbol(), open.time, open.price, Tick.time, closePrice);
-   if (!__isTesting)                  PlaySoundEx("OrderOk.wav");
-
-   return(true);
-}
-
-
-/**
  * Add trade details of the specified virtual ticket to the local history and reset open position data.
  *
  * @param int ticket - closed ticket
@@ -3263,7 +3186,6 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
  * @return bool - success status
  */
 bool ArchiveClosedVirtualPosition(int ticket) {
-   return(!catch("ArchiveClosedVirtualPosition(0)", ERR_ILLEGAL_STATE));
    if (last_error != NULL)                    return(false);
    if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedVirtualPosition(1)  "+ instance.name +" cannot archive virtual position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (ticket != open.ticket)                 return(!catch("ArchiveClosedVirtualPosition(2)  "+ instance.name +" parameter ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, ERR_ILLEGAL_STATE));
@@ -3300,11 +3222,8 @@ bool ArchiveClosedVirtualPosition(int ticket) {
    instance.openNetProfit    = 0;
    instance.closedNetProfit += open.netProfit;
    instance.totalNetProfit   = instance.closedNetProfit;
-
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
-   SS.TotalPL();
-   SS.PLStats();
 
    instance.openVirtProfitP    = 0;
    instance.closedVirtProfitP += open.virtProfitP;
@@ -3317,6 +3236,8 @@ bool ArchiveClosedVirtualPosition(int ticket) {
    instance.openNetProfitP    = 0;
    instance.closedNetProfitP += open.netProfitP;
    instance.totalNetProfitP   = instance.closedNetProfitP;
+   SS.TotalPL();
+   SS.PLStats();
 
    // reset open position data
    open.ticket       = NULL;
