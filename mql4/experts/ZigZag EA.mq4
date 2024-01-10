@@ -1392,38 +1392,54 @@ bool StopInstance(int signal) {
 bool UpdateStatus() {
    if (last_error != NULL)                    return(false);
    if (instance.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ instance.name +" cannot update order status of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (tradingMode == TRADINGMODE_VIRTUAL)    return(UpdateVirtualStatus());
-   int error;
+   if (!open.ticket)                          return(true);
 
-   if (open.ticket > 0) {
+   if (tradingMode == TRADINGMODE_VIRTUAL) {
+      open.swap         = 0;
+      open.commission   = 0;
+      open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
+      open.grossProfit  = open.grossProfitP * PointValue(Lots);
+      open.netProfit    = open.grossProfit;
+      open.netProfitP   = open.grossProfitP;
+      open.virtProfitP  = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
+
+      instance.openNetProfit    = open.netProfit;
+      instance.openNetProfitP   = open.netProfitP;
+      instance.openGrossProfitP = open.grossProfitP;
+      instance.openVirtProfitP  = open.virtProfitP;
+   }
+   else {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
-      if (!OrderCloseTime()) {                                                            // still open
+      if (!OrderCloseTime()) {                           // still open
          open.swap         = OrderSwap();
          open.commission   = OrderCommission();
          open.grossProfit  = OrderProfit();
-         open.netProfit    = open.grossProfit + open.swap + open.commission;
          open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
+         open.netProfit    = open.grossProfit + open.swap + open.commission;
          open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PointValue(OrderLots());
          open.virtProfitP  = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
 
          instance.openNetProfit    = open.netProfit;
-         instance.openVirtProfitP  = open.virtProfitP;
-         instance.openGrossProfitP = open.grossProfitP;
          instance.openNetProfitP   = open.netProfitP;
+         instance.openGrossProfitP = open.grossProfitP;
+         instance.openVirtProfitP  = open.virtProfitP;
       }
-      else {                                                                              // now closed
+      else {
+         int error;                                      // now closed
          if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, open.priceVirt, 0, 0))                                                      return(false);
       }
-      instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-      instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
-      instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
-      instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
-      SS.TotalPL();
-
-      if      (instance.totalNetProfit > instance.maxNetProfit  ) { instance.maxNetProfit   = instance.totalNetProfit; SS.PLStats(); }
-      else if (instance.totalNetProfit < instance.maxNetDrawdown) { instance.maxNetDrawdown = instance.totalNetProfit; SS.PLStats(); }
    }
+
+   instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
+   instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
+   instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
+   instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
+   SS.TotalPL();
+
+   if      (instance.totalNetProfit > instance.maxNetProfit  ) { instance.maxNetProfit   = instance.totalNetProfit; SS.PLStats(); }
+   else if (instance.totalNetProfit < instance.maxNetDrawdown) { instance.maxNetDrawdown = instance.totalNetProfit; SS.PLStats(); }
+
    return(!catch("UpdateStatus(4)"));
 }
 
@@ -3118,40 +3134,6 @@ string InputsToStr() {
                             "TakeProfit.Type=",      DoubleQuoteStr(TakeProfit.Type), ";", NL,
                             "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),  ";")
    );
-}
-
-
-/**
- * Update virtual order status and PL.
- *
- * @return bool - success status
- */
-bool UpdateVirtualStatus() {
-   return(!catch("UpdateVirtualStatus(0)", ERR_ILLEGAL_STATE));
-   if (!open.ticket) return(!catch("UpdateVirtualStatus(1)  "+ instance.name +" no open ticket found", ERR_ILLEGAL_STATE));
-
-   open.swap         = 0;
-   open.commission   = 0;
-   open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
-   open.grossProfit  = open.grossProfitP * PointValue(Lots);
-   open.netProfitP   = open.grossProfitP;
-   open.netProfit    = open.grossProfit;
-
-   instance.openNetProfit    = open.netProfit;
-   instance.openVirtProfitP  = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
-   instance.openGrossProfitP = open.grossProfitP;
-   instance.openNetProfitP   = open.netProfitP;
-
-   instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-   instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
-   instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
-   instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
-   SS.TotalPL();
-
-   if      (instance.totalNetProfit > instance.maxNetProfit  ) { instance.maxNetProfit   = instance.totalNetProfit; SS.PLStats(); }
-   else if (instance.totalNetProfit < instance.maxNetDrawdown) { instance.maxNetDrawdown = instance.totalNetProfit; SS.PLStats(); }
-
-   return(!catch("UpdateVirtualStatus(2)"));
 }
 
 
