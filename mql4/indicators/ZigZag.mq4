@@ -66,14 +66,14 @@ extern int    ZigZag.Periods                 = 40;                      // lookb
 extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (keyboard)
 extern string ZigZag.Type                    = "Line | Semaphores*";    // a ZigZag line or reversal points (may be shortened)
 extern int    ZigZag.Width                   = 1;
-extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a large dot
+extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a narrow ring
 extern color  ZigZag.Color                   = Blue;
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
 extern string Donchian.ShowCrossings         = "off | first* | all";    // which channel crossings to display
 extern int    Donchian.Crossings.Width       = 1;
-extern int    Donchian.Crossings.Wingdings   = 161;                     // a small circle
+extern int    Donchian.Crossings.Wingdings   = 163;                     // a bold ring
 extern color  Donchian.Upper.Color           = DodgerBlue;
 extern color  Donchian.Lower.Color           = Magenta;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
