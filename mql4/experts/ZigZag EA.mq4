@@ -1,7 +1,7 @@
 /**
  * ZigZag EA
  *
- * A strategy inspired by Richard Dennis' "Turtle Trading" system.
+ * A strategy inspired by the "Turtle Trading" system of Richard Dennis.
  *
  *
  * Requirements
@@ -30,13 +30,13 @@
  * ----------------
  * The EA status can be controlled via execution of the following scripts (online and in tester):
  *
- *  • EA.Wait:  When a "wait" command is received a stopped EA starts waiting for new trade signals. After the next signal
- *              the EA starts trading. The command has no effect if the EA is already in status "waiting".
- *  • EA.Start: When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
- *              trend and doesn't wait for the next signal. There are two sub-commands "start:long" and "start:short" to
- *              start the EA in a predefined direction. The command has no effect if the EA already manages an open position.
- *  • EA.Stop:  When a "stop" command is received the EA closes open positions and stops waiting for new trade signals.
- *              The command has no effect if the EA is already stopped.
+ *  • EA.Start: When a "start" command is received the EA opens a position in direction of the current ZigZag leg. There are
+ *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction. The command has
+ *              no effect if the EA already manages an open position.
+ *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for trade signals.
+ *              The command has no effect if the EA is already in status "stopped".
+ *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for a new trade signals and start trading.
+ *              The command has no effect if the EA is already in status "waiting".
  *
  *
  *  @see  [Turtle Trading] https://analyzingalpha.com/turtle-trading
@@ -44,7 +44,6 @@
  *
  *
  * TODO:
- *  - drop all Virtual* functions
  *  - fix recorder: re-add metric.enabled[]
  *  - on SaveStatus/ReadStatus: validate calculated profit numbers
  *  - recorder: improve internal symbol/description
@@ -1240,6 +1239,87 @@ bool ArchiveClosedPosition(int ticket, double virtOpenPrice, double virtClosePri
    instance.openNetProfit    = 0;
    instance.closedNetProfit += open.netProfit;
    instance.totalNetProfit   = instance.closedNetProfit;
+   instance.maxNetProfit     = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
+   instance.maxNetDrawdown   = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+
+   instance.openNetProfitP    = 0;
+   instance.closedNetProfitP += open.netProfitP;
+   instance.totalNetProfitP   = instance.closedNetProfitP;
+
+   instance.openGrossProfitP    = 0;
+   instance.closedGrossProfitP += open.grossProfitP;
+   instance.totalGrossProfitP   = instance.closedGrossProfitP;
+
+   instance.openVirtProfitP    = 0;
+   instance.closedVirtProfitP += open.virtProfitP;
+   instance.totalVirtProfitP   = instance.closedVirtProfitP;
+   SS.TotalPL();
+   SS.PLStats();
+
+   // reset open position data
+   open.ticket       = NULL;
+   open.type         = NULL;
+   open.time         = NULL;
+   open.price        = NULL;
+   open.priceVirt    = NULL;
+   open.stoploss     = NULL;
+   open.slippage     = NULL;
+   open.swap         = NULL;
+   open.commission   = NULL;
+   open.grossProfit  = NULL;
+   open.grossProfitP = NULL;
+   open.netProfit    = NULL;
+   open.netProfitP   = NULL;
+   open.virtProfitP  = NULL;
+
+   return(!catch("ArchiveClosedPosition(5)"));
+}
+
+
+/**
+ * Add trade details of the specified virtual ticket to the local history and reset open position data.
+ *
+ * @param int ticket - closed ticket
+ *
+ * @return bool - success status
+ */
+bool ArchiveClosedVirtualPosition(int ticket) {
+   if (last_error != NULL)                    return(false);
+   if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedVirtualPosition(1)  "+ instance.name +" cannot archive virtual position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (ticket != open.ticket)                 return(!catch("ArchiveClosedVirtualPosition(2)  "+ instance.name +" parameter ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, ERR_ILLEGAL_STATE));
+
+   // update now closed position data
+   open.swap         = 0;
+   open.commission   = 0;
+   open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
+   open.grossProfit  = open.grossProfitP * PointValue(Lots);
+   open.netProfitP   = open.grossProfitP;
+   open.netProfit    = open.grossProfit;
+   open.virtProfitP  = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
+
+   // update history
+   int i = ArrayRange(history, 0);
+   ArrayResize(history, i+1);
+   history[i][H_TICKET         ] = ticket;
+   history[i][H_LOTS           ] = Lots;
+   history[i][H_OPENTYPE       ] = open.type;
+   history[i][H_OPENTIME       ] = open.time;
+   history[i][H_OPENPRICE      ] = open.price;
+   history[i][H_OPENPRICE_VIRT ] = open.priceVirt;
+   history[i][H_CLOSETIME      ] = Tick.time;
+   history[i][H_CLOSEPRICE     ] = ifDouble(!open.type, Bid, Ask);
+   history[i][H_CLOSEPRICE_VIRT] = Bid;
+   history[i][H_SLIPPAGE       ] = open.slippage;
+   history[i][H_SWAP           ] = open.swap;
+   history[i][H_COMMISSION     ] = open.commission;
+   history[i][H_GROSSPROFIT    ] = open.grossProfit;
+   history[i][H_NETPROFIT      ] = open.netProfit;
+   history[i][H_VIRTPROFIT_P   ] = open.virtProfitP;
+
+   // update PL numbers
+   instance.openNetProfit    = 0;
+   instance.closedNetProfit += open.netProfit;
+   instance.totalNetProfit   = instance.closedNetProfit;
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
@@ -1273,7 +1353,7 @@ bool ArchiveClosedPosition(int ticket, double virtOpenPrice, double virtClosePri
    open.netProfitP   = NULL;
    open.virtProfitP  = NULL;
 
-   return(!catch("ArchiveClosedPosition(5)"));
+   return(!catch("ArchiveClosedVirtualPosition(3)"));
 }
 
 
@@ -3134,85 +3214,4 @@ string InputsToStr() {
                             "TakeProfit.Type=",      DoubleQuoteStr(TakeProfit.Type), ";", NL,
                             "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),  ";")
    );
-}
-
-
-/**
- * Add trade details of the specified virtual ticket to the local history and reset open position data.
- *
- * @param int ticket - closed ticket
- *
- * @return bool - success status
- */
-bool ArchiveClosedVirtualPosition(int ticket) {
-   if (last_error != NULL)                    return(false);
-   if (instance.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedVirtualPosition(1)  "+ instance.name +" cannot archive virtual position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (ticket != open.ticket)                 return(!catch("ArchiveClosedVirtualPosition(2)  "+ instance.name +" parameter ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, ERR_ILLEGAL_STATE));
-
-   // update now closed position data
-   open.swap         = 0;
-   open.commission   = 0;
-   open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
-   open.grossProfit  = open.grossProfitP * PointValue(Lots);
-   open.netProfitP   = open.grossProfitP;
-   open.netProfit    = open.grossProfit;
-   open.virtProfitP  = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
-
-   // update history
-   int i = ArrayRange(history, 0);
-   ArrayResize(history, i+1);
-   history[i][H_TICKET         ] = ticket;
-   history[i][H_LOTS           ] = Lots;
-   history[i][H_OPENTYPE       ] = open.type;
-   history[i][H_OPENTIME       ] = open.time;
-   history[i][H_OPENPRICE      ] = open.price;
-   history[i][H_OPENPRICE_VIRT ] = open.priceVirt;
-   history[i][H_CLOSETIME      ] = Tick.time;
-   history[i][H_CLOSEPRICE     ] = ifDouble(!open.type, Bid, Ask);
-   history[i][H_CLOSEPRICE_VIRT] = Bid;
-   history[i][H_SLIPPAGE       ] = open.slippage;
-   history[i][H_SWAP           ] = open.swap;
-   history[i][H_COMMISSION     ] = open.commission;
-   history[i][H_GROSSPROFIT    ] = open.grossProfit;
-   history[i][H_NETPROFIT      ] = open.netProfit;
-   history[i][H_VIRTPROFIT_P   ] = open.virtProfitP;
-
-   // update PL numbers
-   instance.openNetProfit    = 0;
-   instance.closedNetProfit += open.netProfit;
-   instance.totalNetProfit   = instance.closedNetProfit;
-   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
-   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
-
-   instance.openVirtProfitP    = 0;
-   instance.closedVirtProfitP += open.virtProfitP;
-   instance.totalVirtProfitP   = instance.closedVirtProfitP;
-
-   instance.openGrossProfitP    = 0;
-   instance.closedGrossProfitP += open.grossProfitP;
-   instance.totalGrossProfitP   = instance.closedGrossProfitP;
-
-   instance.openNetProfitP    = 0;
-   instance.closedNetProfitP += open.netProfitP;
-   instance.totalNetProfitP   = instance.closedNetProfitP;
-   SS.TotalPL();
-   SS.PLStats();
-
-   // reset open position data
-   open.ticket       = NULL;
-   open.type         = NULL;
-   open.time         = NULL;
-   open.price        = NULL;
-   open.priceVirt    = NULL;
-   open.stoploss     = NULL;
-   open.slippage     = NULL;
-   open.swap         = NULL;
-   open.commission   = NULL;
-   open.grossProfit  = NULL;
-   open.grossProfitP = NULL;
-   open.netProfit    = NULL;
-   open.netProfitP   = NULL;
-   open.virtProfitP  = NULL;
-
-   return(!catch("ArchiveClosedVirtualPosition(3)"));
 }
