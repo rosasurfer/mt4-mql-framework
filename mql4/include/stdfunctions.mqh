@@ -698,6 +698,19 @@ string JoinStrings(string values[], string separator = ", ") {
 
 
 /**
+ * Return the current symbol's full point value for the specified lot amount.
+ *
+ * @param  double lots           [optional] - lot amount (default: 1 lot)
+ * @param  bool   suppressErrors [optional] - whether to suppress runtime errors (default: no)
+ *
+ * @return double - point value or NULL (0) in case of errors
+ */
+double PointValue(double lots=1.0, bool suppressErrors=false) {
+   return(PipValue(lots, suppressErrors)/Pip);
+}
+
+
+/**
  * Return the current symbol's pip value for the specified lot amount.
  *
  * @param  double lots           [optional] - lot amount (default: 1 lot)
@@ -719,7 +732,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    }
 
    static double staticTickValue;
-   static bool flagsResolved, isConstant, isApproximation, isCalculatable, giveTesterWarning;
+   static bool flagsResolved, isConstant, isApproximation, isCalculatable, warnApproximation;
 
    if (!flagsResolved) {
       if (StrEndsWith(Symbol(), AccountCurrency())) {                         // TickValue is constant and can be cached
@@ -736,7 +749,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
          isApproximation = __isTesting;                                       // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
       isCalculatable = StrStartsWith(Symbol(), AccountCurrency());            // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
-      giveTesterWarning = (isApproximation && !isCalculatable);               // muß im Tester nach einmaliger Warnung der Online-Wert verwendet werden.
+      warnApproximation = (isApproximation && !isCalculatable);               // muß im Tester nach einmaliger Warnung der Online-Wert verwendet werden.
       flagsResolved = true;
    }
 
@@ -784,12 +797,12 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       if (!suppressErrors) catch("PipValue(9)", error);
       return(0);
    }
-   if (giveTesterWarning) {
+   if (!suppressErrors && warnApproximation) {
       string message = "Exact tickvalue not available."+ NL
                       +"The test will use the current online tickvalue ("+ dynamicTickValue +") which is an approximation. "
                       +"Test with another account currency if you need exact values.";
       logWarn("PipValue(10)  "+ message);
-      giveTesterWarning = false;
+      warnApproximation = false;
    }
    return(Pip/tickSize * dynamicTickValue * lots);
 }

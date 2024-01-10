@@ -2844,29 +2844,6 @@ bool SetInstanceId(string value, bool &error, string caller) {
 
 
 /**
- * Same as PipValue() but for a full price unit (point).
- *
- * @param  double lots [optional] - lot amount (default: 1 lot)
- *
- * @return double - unit value or NULL (0) in case of errors (in tester the value may not be exact)
- */
-double PointValue(double lots = 1.0) {
-   if (!lots) return(0);
-
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   int error = GetLastError();
-   if (error || !tickValue)   return(!catch("PointValue(1)  MarketInfo(MODE_TICKVALUE) = "+ tickValue, intOr(error, ERR_SYMBOL_NOT_AVAILABLE)));
-
-   static double tickSize; if (!tickSize) {
-      tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
-      error = GetLastError();
-      if (error || !tickSize) return(!catch("PointValue(2)  MarketInfo(MODE_TICKSIZE) = "+ tickSize, intOr(error, ERR_SYMBOL_NOT_AVAILABLE)));
-   }
-   return(tickValue/tickSize * lots);
-}
-
-
-/**
  * Virtual replacement for OrderSendEx().
  *
  * @param  _In_  int    type       - trade operation type

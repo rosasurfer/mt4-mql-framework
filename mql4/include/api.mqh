@@ -238,6 +238,7 @@ double   PipValue(double lots=1.0, bool suppressErrors=false);;
 double   PipValueEx(string symbol, double lots, int &error, string caller="");;
 bool     PlaySoundEx(string soundfile);;
 string   Pluralize(int count, string singular="", string plural="s");;
+double   PointValue(double lots=1.0, bool suppressErrors=false);;
 string   PriceTypeDescription(int type);;
 string   PriceTypeToStr(int type);;
 int      ProgramInitReason();;
