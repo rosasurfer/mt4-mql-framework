@@ -44,11 +44,11 @@
  *
  *
  * TODO:
- *  - fix recorder: re-add metric.enabled[]
  *  - on SaveStatus/ReadStatus: validate calculated profit numbers
- *  - recorder: improve internal symbol/description
+ *  - tester: add config to disable MODE_TICKVALUE warning
+ *  - recorder: improve internal/custom symbols/descriptions
  *  - add var recorder.internalSymbol and store/restore value
- *  - in tester the ZigZag EA cannot run with bar model MODE_BAROPEN
+ *  - tester: ZigZag EA cannot yet run with bar model MODE_BAROPEN
  *
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
@@ -2409,26 +2409,27 @@ bool SynchronizeStatus() {
             double   swap         = OrderSwap();
             double   commission   = OrderCommission();
             double   grossProfit  = OrderProfit();
-            double   netProfit    = grossProfit + swap + commission;
             double   grossProfitP = ifDouble(!openType, closePrice-openPrice, openPrice-closePrice);
+            double   netProfit    = grossProfit + swap + commission;
+            double   netProfitP   = grossProfitP + MathDiv(swap + commission, PointValue(lots));
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" dangling closed position found: #"+ ticket +", adding to instance...");
             if (IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, grossProfitP))) return(false);
 
             // update closed PL numbers
             instance.closedNetProfit    += netProfit;
-            instance.closedVirtProfitP  += grossProfitP;    // for orphaned position same as virtProfitP
+            instance.closedNetProfitP   += netProfitP;
             instance.closedGrossProfitP += grossProfitP;
-            instance.closedNetProfitP   += grossProfitP + MathDiv(swap + commission, PointValue(lots));
+            instance.closedVirtProfitP  += grossProfitP;             // for orphaned positions same as grossProfitP
          }
       }
    }
 
    // recalculate total PL numbers
    instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-   instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
-   instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
    instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
+   instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
+   instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
 
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
