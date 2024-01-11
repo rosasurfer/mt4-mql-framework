@@ -18,7 +18,9 @@ int onInit() {
  */
 int onInitUser() {
    if (ValidateInputs.ID()) {                      // TRUE: a valid instance id was specified
-      RestoreInstance();                           // try to reload the given instance
+      if (RestoreInstance()) {                     // try to reload the given instance
+         logInfo("onInitUser(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
+      }
    }
    else if (StrTrim(Instance.ID) == "") {          // no instance id was specified
       if (ValidateInputs()) {
@@ -27,7 +29,7 @@ int onInitUser() {
          Instance.ID      = ifString(instance.isTest, "T", "") + instance.id; SS.InstanceName();
          instance.created = GetLocalTime();
          instance.status  = STATUS_WAITING;
-         logInfo("onInitUser(1)  instance "+ instance.name +" created");
+         logInfo("onInitUser(2)  instance "+ instance.name +" created");
          SaveStatus();
       }
    }

@@ -44,7 +44,7 @@
  *
  *
  * TODO:
- *  - ReadStatus: cross-check calculated instance stats
+ *  - ReadStatus: cross-check restored instance stats
  *  - tester: add config to disable MODE_TICKVALUE warning
  *  - recorder: improve internal/custom symbols/descriptions
  *  - add var recorder.internalSymbol and store/restore value
@@ -2019,7 +2019,7 @@ bool SaveStatus() {
       virtProfitP  += history[i][H_VIRTPROFIT_P ];
    }
 
-   // cross-check instance data
+   // cross-check stored instance stats
    if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) doesn't match instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" vs. "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
    if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) doesn't match instance.closedNetProfitP ("+ NumberToStr(netProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
    if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) doesn't match instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
@@ -2225,11 +2225,25 @@ bool ReadStatus() {
 
    // history data
    string sKeys[], sOrder="";
+   double netProfit, netProfitP, grossProfitP, virtProfitP;
    int size = ReadStatus.HistoryKeys(file, section, sKeys); if (size < 0) return(false);
+
    for (int i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, sKeys[i], "");                                            // history.{i} = {data}
-      if (!ReadStatus.ParseHistory(sKeys[i], sOrder)) return(!catch("ReadStatus(8)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      int n = ReadStatus.RestoreHistory(sKeys[i], sOrder);
+      if (n < 0) return(!catch("ReadStatus(8)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+
+      netProfit    += history[n][H_NETPROFIT    ];
+      netProfitP   += history[n][H_NETPROFIT_P  ];
+      grossProfitP += history[n][H_GROSSPROFIT_P];
+      virtProfitP  += history[n][H_VIRTPROFIT_P ];
    }
+
+   // cross-check restored instance stats
+   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("ReadStatus(9)  "+ instance.name +" sum(history[H_NETPROFIT]) doesn't match instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" vs. "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) doesn't match instance.closedNetProfitP ("+ NumberToStr(netProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) doesn't match instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("ReadStatus(12)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) doesn't match instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    // other
    start.time.condition       = GetIniBool   (file, section, "start.time.condition"      );           // bool     start.time.condition       = 1
@@ -2255,13 +2269,7 @@ bool ReadStatus() {
    stop.profitPun.value       = GetIniDouble (file, section, "stop.profitPun.value"          );       // double   stop.profitPun.value       = 1.23456
    stop.profitPun.description = GetIniStringA(file, section, "stop.profitPun.description", "");       // string   stop.profitPun.description = text
 
-   // cross-check restored performance numbers
-   //instance.closedNetProfit
-   //instance.closedNetProfitP
-   //instance.closedGrossProfitP
-   //instance.closedVirtProfitP
-
-   return(!catch("ReadStatus(9)"));
+   return(!catch("ReadStatus(13)"));
 }
 
 
@@ -2294,16 +2302,16 @@ int ReadStatus.HistoryKeys(string file, string section, string &keys[]) {
  * @param  string key   - order key
  * @param  string value - order string to parse
  *
- * @return bool - success status
+ * @return int - index the data record was inserted at or EMPTY (-1) in case of errors
  */
-bool ReadStatus.ParseHistory(string key, string value) {
-   if (IsLastError())                    return(false);
-   if (!StrStartsWithI(key, "history.")) return(!catch("ReadStatus.ParseHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+int ReadStatus.RestoreHistory(string key, string value) {
+   if (IsLastError())                    return(EMPTY);
+   if (!StrStartsWithI(key, "history.")) return(_EMPTY(catch("ReadStatus.RestoreHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
 
    // history.i=ticket,lots,openType,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,grossProfitP,netProfit,netProfitP,virtProfitP
    string values[];
-   string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(!catch("ReadStatus.ParseHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
-   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
+   string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(_EMPTY(catch("ReadStatus.RestoreHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
+   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.RestoreHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT)));
 
    int      ticket         = StrToInteger(values[H_TICKET         ]);
    double   lots           =  StrToDouble(values[H_LOTS           ]);
@@ -2323,7 +2331,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
    double   netProfitP     =  StrToDouble(values[H_NETPROFIT_P    ]);
    double   virtProfitP    =  StrToDouble(values[H_VIRTPROFIT_P   ]);
 
-   return(!IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPriceVirt, closeTime, closePrice, closePriceVirt, slippage, swap, commission, grossProfit, grossProfitP, netProfit, netProfitP, virtProfitP)));
+   return(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPriceVirt, closeTime, closePrice, closePriceVirt, slippage, swap, commission, grossProfit, grossProfitP, netProfit, netProfitP, virtProfitP));
 }
 
 
