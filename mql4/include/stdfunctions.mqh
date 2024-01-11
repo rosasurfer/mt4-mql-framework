@@ -798,8 +798,8 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       return(0);
    }
    if (!suppressErrors && warnApproximation) {
-      string message = "Historic MarketInfo(MODE_TICKVALUE) not available."+ NL
-                      +"The test will use the current online value, which may differ from the historical one. "
+      string message = "Historic MarketInfo(MODE_TICKVALUE) not available."                                   + NL
+                      +"The test will use the current online value, which may differ from the historical one."+ NL
                       +"Test with a different account currency to get exact values.";
       logWarn("PipValue(10)  "+ message);
       warnApproximation = false;

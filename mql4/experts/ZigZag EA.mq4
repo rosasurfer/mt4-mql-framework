@@ -44,7 +44,7 @@
  *
  *
  * TODO:
- *  - on SaveStatus/ReadStatus: validate calculated profit numbers
+ *  - ReadStatus: cross-check calculated instance stats
  *  - tester: add config to disable MODE_TICKVALUE warning
  *  - recorder: improve internal/custom symbols/descriptions
  *  - add var recorder.internalSymbol and store/restore value
@@ -246,8 +246,10 @@ extern bool   ShowProfitInPercent  = true;                  // whether PL is dis
 #define H_SWAP                     10
 #define H_COMMISSION               11
 #define H_GROSSPROFIT              12
-#define H_NETPROFIT                13
-#define H_VIRTPROFIT_P             14
+#define H_GROSSPROFIT_P            13
+#define H_NETPROFIT                14
+#define H_NETPROFIT_P              15
+#define H_VIRTPROFIT_P             16
 
 // general
 int      tradingMode;
@@ -294,7 +296,7 @@ double   open.grossProfitP;
 double   open.netProfit;
 double   open.netProfitP;
 double   open.virtProfitP;
-double   history[][15];                         // multiple closed positions
+double   history[][17];                         // multiple closed positions
 
 // start conditions
 bool     start.time.condition;                  // whether a time condition is active
@@ -1231,7 +1233,9 @@ bool ArchiveClosedPosition(int ticket, double virtOpenPrice, double virtClosePri
    history[i][H_SWAP           ] = open.swap;
    history[i][H_COMMISSION     ] = open.commission;
    history[i][H_GROSSPROFIT    ] = open.grossProfit;
+   history[i][H_GROSSPROFIT_P  ] = open.grossProfitP;
    history[i][H_NETPROFIT      ] = open.netProfit;
+   history[i][H_NETPROFIT_P    ] = open.netProfitP;
    history[i][H_VIRTPROFIT_P   ] = open.virtProfitP;
    OrderPop("ArchiveClosedPosition(4)");
 
@@ -1313,7 +1317,9 @@ bool ArchiveClosedVirtualPosition(int ticket) {
    history[i][H_SWAP           ] = open.swap;
    history[i][H_COMMISSION     ] = open.commission;
    history[i][H_GROSSPROFIT    ] = open.grossProfit;
+   history[i][H_GROSSPROFIT_P  ] = open.grossProfitP;
    history[i][H_NETPROFIT      ] = open.netProfit;
+   history[i][H_NETPROFIT_P    ] = open.netProfitP;
    history[i][H_VIRTPROFIT_P   ] = open.virtProfitP;
 
    // update PL numbers
@@ -2002,10 +2008,22 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.virtProfitP",            /*double  */ DoubleToStr(open.virtProfitP, Digits) + CRLF);
 
    // closed order data
+   double netProfit, netProfitP, grossProfitP, virtProfitP;
    int size = ArrayRange(history, 0);
+
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
+      netProfit    += history[i][H_NETPROFIT    ];
+      netProfitP   += history[i][H_NETPROFIT_P  ];
+      grossProfitP += history[i][H_GROSSPROFIT_P];
+      virtProfitP  += history[i][H_VIRTPROFIT_P ];
    }
+
+   // cross-check instance data
+   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) doesn't match instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" vs. "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) doesn't match instance.closedNetProfitP ("+ NumberToStr(netProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) doesn't match instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("SaveStatus(5)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) doesn't match instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    // start/stop conditions
    WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
@@ -2030,7 +2048,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitPun.value",        /*double  */ NumberToStr(stop.profitPun.value, ".1+"));
    WriteIniString(file, section, "stop.profitPun.description",  /*string  */ stop.profitPun.description + CRLF);
 
-   return(!catch("SaveStatus(2)"));
+   return(!catch("SaveStatus(6)"));
 }
 
 
@@ -2070,7 +2088,7 @@ string SaveStatus.ConditionsToStr(string sConditions) {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int index) {
-   // result: ticket,lots,openType,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,netProfit,virtProfitP
+   // result: ticket,lots,openType,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,grossProfitP,netProfit,netProfiP,virtProfitP
 
    int      ticket         = history[index][H_TICKET         ];
    double   lots           = history[index][H_LOTS           ];
@@ -2085,10 +2103,12 @@ string SaveStatus.HistoryToStr(int index) {
    double   swap           = history[index][H_SWAP           ];
    double   commission     = history[index][H_COMMISSION     ];
    double   grossProfit    = history[index][H_GROSSPROFIT    ];
+   double   grossProfitP   = history[index][H_GROSSPROFIT_P  ];
    double   netProfit      = history[index][H_NETPROFIT      ];
+   double   netProfitP     = history[index][H_NETPROFIT_P    ];
    double   virtProfitP    = history[index][H_VIRTPROFIT_P   ];
 
-   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceVirt, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceVirt, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", DoubleToStr(virtProfitP, Digits)));
+   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceVirt, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceVirt, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(grossProfitP, Digits), ",", DoubleToStr(netProfit, 2), ",", DoubleToStr(netProfitP, Digits), ",", DoubleToStr(virtProfitP, Digits)));
 }
 
 
@@ -2235,6 +2255,12 @@ bool ReadStatus() {
    stop.profitPun.value       = GetIniDouble (file, section, "stop.profitPun.value"          );       // double   stop.profitPun.value       = 1.23456
    stop.profitPun.description = GetIniStringA(file, section, "stop.profitPun.description", "");       // string   stop.profitPun.description = text
 
+   // cross-check restored performance numbers
+   //instance.closedNetProfit
+   //instance.closedNetProfitP
+   //instance.closedGrossProfitP
+   //instance.closedVirtProfitP
+
    return(!catch("ReadStatus(9)"));
 }
 
@@ -2274,7 +2300,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
    if (IsLastError())                    return(false);
    if (!StrStartsWithI(key, "history.")) return(!catch("ReadStatus.ParseHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
 
-   // history.i=ticket,lots,openType,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,netProfit,virtProfitP
+   // history.i=ticket,lots,openType,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,grossProfitP,netProfit,netProfitP,virtProfitP
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(!catch("ReadStatus.ParseHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
@@ -2292,10 +2318,12 @@ bool ReadStatus.ParseHistory(string key, string value) {
    double   swap           =  StrToDouble(values[H_SWAP           ]);
    double   commission     =  StrToDouble(values[H_COMMISSION     ]);
    double   grossProfit    =  StrToDouble(values[H_GROSSPROFIT    ]);
+   double   grossProfitP   =  StrToDouble(values[H_GROSSPROFIT_P  ]);
    double   netProfit      =  StrToDouble(values[H_NETPROFIT      ]);
+   double   netProfitP     =  StrToDouble(values[H_NETPROFIT_P    ]);
    double   virtProfitP    =  StrToDouble(values[H_VIRTPROFIT_P   ]);
 
-   return(!IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPriceVirt, closeTime, closePrice, closePriceVirt, slippage, swap, commission, grossProfit, netProfit, virtProfitP)));
+   return(!IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPriceVirt, closeTime, closePrice, closePriceVirt, slippage, swap, commission, grossProfit, grossProfitP, netProfit, netProfitP, virtProfitP)));
 }
 
 
@@ -2308,7 +2336,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int History.AddRecord(int ticket, double lots, int openType, datetime openTime, double openPrice, double openPriceVirt, datetime closeTime, double closePrice, double closePriceVirt, double slippage, double swap, double commission, double grossProfit, double netProfit, double virtProfitP) {
+int History.AddRecord(int ticket, double lots, int openType, datetime openTime, double openPrice, double openPriceVirt, datetime closeTime, double closePrice, double closePriceVirt, double slippage, double swap, double commission, double grossProfit, double grossProfitP, double netProfit, double netProfitP, double virtProfitP) {
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
@@ -2341,7 +2369,9 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
    history[i][H_SWAP           ] = swap;
    history[i][H_COMMISSION     ] = commission;
    history[i][H_GROSSPROFIT    ] = grossProfit;
+   history[i][H_GROSSPROFIT_P  ] = grossProfitP;
    history[i][H_NETPROFIT      ] = netProfit;
+   history[i][H_NETPROFIT_P    ] = netProfitP;
    history[i][H_VIRTPROFIT_P   ] = virtProfitP;
 
    if (!catch("History.AddRecord(2)"))
@@ -2351,8 +2381,7 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
 
 
 /**
- * Synchronize restored state and runtime vars with current order status on the trade server.
- * Called only from RestoreInstance().
+ * Synchronize runtime state and vars with current order status on the trade server. Called only from RestoreInstance().
  *
  * @return bool - success status
  */
@@ -2414,7 +2443,7 @@ bool SynchronizeStatus() {
             double   netProfitP   = grossProfitP + MathDiv(swap + commission, PointValue(lots));
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" dangling closed position found: #"+ ticket +", adding to instance...");
-            if (IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, grossProfitP))) return(false);
+            if (IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, grossProfitP, netProfit, netProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
             instance.closedNetProfit    += netProfit;

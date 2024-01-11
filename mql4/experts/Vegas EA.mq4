@@ -1072,6 +1072,11 @@ bool ReadStatus() {
       sOrder = GetIniStringA(file, section, sKeys[i], "");                                   // history.{i} = {data}
       if (!ReadStatus.ParseHistory(sKeys[i], sOrder)) return(!catch("ReadStatus(7)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
+
+   // cross-check restored performance numbers
+   //instance.closedNetProfit
+   //instance.closedVirtProfitP
+
    return(!catch("ReadStatus(8)"));
 }
 
@@ -1188,8 +1193,7 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
 
 
 /**
- * Synchronize restored state and runtime vars with current order status on the trade server.
- * Called only from RestoreInstance().
+ * Synchronize runtime state and vars with current order status on the trade server. Called only from RestoreInstance().
  *
  * @return bool - success status
  */
@@ -1367,11 +1371,20 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.virtProfitP",           /*double  */ DoubleToStr(open.virtProfitP, Digits) + CRLF);
 
    // closed order data
+   double netProfit, virtProfitP;
    int size = ArrayRange(history, 0);
+
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
+      netProfit   += history[i][H_NETPROFIT   ];
+      virtProfitP += history[i][H_VIRTPROFIT_P];
    }
-   return(!catch("SaveStatus(2)"));
+
+   // cross-check instance data
+   if (NE(netProfit,   instance.closedNetProfit, 2))        return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) doesn't match instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" vs. "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP, instance.closedVirtProfitP, Digits)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) doesn't match instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+
+   return(!catch("SaveStatus(4)"));
 }
 
 
