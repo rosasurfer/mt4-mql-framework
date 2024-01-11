@@ -1244,7 +1244,7 @@ string GetStatusFilename(bool relative = false) {
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = "Vegas, "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ instance.id +".set";
+      string baseName  = ProgramName() +", "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ instance.id +".set";
       filename = directory + baseName;
    }
 
@@ -1268,7 +1268,7 @@ string FindStatusFile(int instanceId, bool isTest) {
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
    string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
-   string basePattern = "Vegas, "+ Symbol() +",*id="+ instanceId +".set";
+   string basePattern = ProgramName() +", "+ Symbol() +",*id="+ instanceId +".set";
    string pathPattern = sandboxDir + statusDir + basePattern;
 
    string result[];
@@ -1582,7 +1582,7 @@ int onInputError(string message) {
  */
 int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
    string   sId = ifString(!instance.id, "???", instance.id);
-   int  _Digits = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for some indices)
+   int  _Digits = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for indices with Digits=1)
    string punit = ifString(_Digits > 2, "pip", "point");
 
    ready      = false;
@@ -1602,7 +1602,7 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
 
       case METRIC_TOTAL_UNITS_VIRT:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         description = "Vegas "+ PeriodDescription() +" Tunnel "+ Symbol() +" in "+ punit +", virt";
+         description = "Vegas "+ PeriodDescription() +" Tunnel "+ Symbol() +" in "+ punit +", virtual";
          break;
 
       default:

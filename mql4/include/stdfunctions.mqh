@@ -798,9 +798,9 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       return(0);
    }
    if (!suppressErrors && warnApproximation) {
-      string message = "Exact tickvalue not available."+ NL
-                      +"The test will use the current online tickvalue ("+ dynamicTickValue +") which is an approximation. "
-                      +"Test with another account currency if you need exact values.";
+      string message = "Historic MarketInfo(MODE_TICKVALUE) not available."+ NL
+                      +"The test will use the current online value, which may differ from the historical one. "
+                      +"Test with a different account currency to get exact values.";
       logWarn("PipValue(10)  "+ message);
       warnApproximation = false;
    }
@@ -6973,14 +6973,14 @@ bool InitTradeServerPath(string path) {
 
    // check/create the directory
    if (!IsDirectory(path, fsMode)) {
-      logInfo("InitTradeServerPath(1)  creating \""+ path +"\"");
+      logDebug("InitTradeServerPath(1)  creating \""+ path +"\"");
       if (!CreateDirectory(path, fsMode|MODE_MKPARENT)) return(!catch("InitTradeServerPath(2)  cannot create directory \""+ path +"\"", ERR_INVALID_PARAMETER));
    }
 
    // check/create "symbols.raw"
    string symbolsFile = path +"/symbols.raw";
    if (!IsFile(symbolsFile, fsMode)) {
-      logInfo("InitTradeServerPath(3)  creating \""+ symbolsFile +"\"");
+      logDebug("InitTradeServerPath(3)  creating \""+ symbolsFile +"\"");
       if (fsMode == MODE_MQL) symbolsFile = GetMqlSandboxPath() +"/"+ symbolsFile;
       int hFile = CreateFileA(symbolsFile,            // file name
                               GENERIC_READ,           // desired access
@@ -6996,7 +6996,7 @@ bool InitTradeServerPath(string path) {
    // check/create "symgroups.raw"
    string groupsFile  = path +"/symgroups.raw";
    if (!IsFile(groupsFile, fsMode)) {
-      logInfo("InitTradeServerPath(5)  creating \""+ groupsFile +"\"");
+      logDebug("InitTradeServerPath(5)  creating \""+ groupsFile +"\"");
       if (fsMode == MODE_MQL) groupsFile = GetMqlSandboxPath() +"/"+ groupsFile;
       hFile = CreateFileA(groupsFile,                 // file name
                           GENERIC_READ,               // desired access
@@ -7193,6 +7193,7 @@ void __DummyCalls() {
    PipValueEx(NULL, NULL, iNull);
    PlaySoundEx(NULL);
    Pluralize(NULL);
+   PointValue();
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
    ProgramInitReason();

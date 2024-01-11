@@ -90,13 +90,13 @@ int init() {
    __trackExecutionTime = GetConfigBool(WindowExpertName(), "TrackExecutionTime");
 
    // before onInit(): log input parameters if loaded by iCustom()
-   if (__isSuperContext && IsLogDebug()) {
+   if (__isSuperContext && IsLogInfo()) {
       string sInputs = InputsToStr();
       if (StringLen(sInputs) > 0) {
          sInputs = StringConcatenate(sInputs,
             ifString(!AutoConfiguration, "", NL +"AutoConfiguration=TRUE;"),
                                              NL +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";");
-         logDebug("init(13)  input: "+ sInputs);
+         logInfo("init(13)  input: "+ sInputs);
       }
    }
 

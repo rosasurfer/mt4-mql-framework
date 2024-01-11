@@ -7639,7 +7639,7 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
    if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateRawSymbol(4)  invalid parameter group: "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    if (directory == "0") directory = "";           // (string) NULL
 
-   if (IsLogInfo()) logInfo("CreateRawSymbol(5)  creating \""+ directory + ifString(directory=="", "", "/") + symbol +"\" (group \""+ group +"\")");
+   if (IsLogInfo()) logInfo("CreateRawSymbol(5)  creating symbol \""+ directory + ifString(directory=="", "", "/") + symbol +"\" (group \""+ group +"\")");
 
    int   groupIndex;
    color groupColor = CLR_NONE;
