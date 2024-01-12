@@ -119,8 +119,9 @@ int afterInit() {                                  // open the log file (flushes
    // read debug config
    string section = ifString(__isTesting, "Tester.", "") + ProgramName();
    if (__isTesting) {
-      test.onStopPause        = GetConfigBool(section, "OnStopPause",        true);
-      test.reduceStatusWrites = GetConfigBool(section, "ReduceStatusWrites", true);
+      test.disableTickValueWarning = GetConfigBool(section, "DisableTickValueWarning", false);
+      test.onStopPause             = GetConfigBool(section, "OnStopPause",             true);
+      test.reduceStatusWrites      = GetConfigBool(section, "ReduceStatusWrites",      true);
    }
    StoreInstanceId();                              // store the instance id for templates changes/restart/recompilation etc.
    return(catch("afterInit(2)"));

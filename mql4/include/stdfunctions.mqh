@@ -710,6 +710,10 @@ double PointValue(double lots=1.0, bool suppressErrors=false) {
 }
 
 
+// whether to disable an "Incorrect MODE_TICKVALUE" warning in tester, @see function PipValue()
+bool test.disableTickValueWarning = false;
+
+
 /**
  * Return the current symbol's pip value for the specified lot amount.
  *
@@ -724,18 +728,18 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    static double tickSize;
    if (!tickSize) {
       int error;
-      tickSize = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "PipValue(1)"); // fails if there's no tick yet (it may arrive later), e.g.
-      if (error != NO_ERROR) {                                                // symbol not yet subscribed, terminal start, account/template change
-         if (!suppressErrors) catch("PipValue(2)", error);                    // ERR_SYMBOL_NOT_AVAILABLE: synthetic symbol in offline chart
+      tickSize = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "PipValue(1)");             // fails if there's no tick yet (it may arrive later), e.g.
+      if (error != NO_ERROR) {                                                            // symbol not yet subscribed, terminal start, account/template change
+         if (!suppressErrors) catch("PipValue(2)", error);                                // ERR_SYMBOL_NOT_AVAILABLE: synthetic symbol in offline chart
          return(0);
       }
    }
 
    static double staticTickValue;
-   static bool flagsResolved, isConstant, isApproximation, isCalculatable, warnApproximation;
+   static bool flagsResolved, isConstant, isApproximation, isCalculatable;
 
    if (!flagsResolved) {
-      if (StrEndsWith(Symbol(), AccountCurrency())) {                         // TickValue is constant and can be cached
+      if (StrEndsWith(Symbol(), AccountCurrency())) {                                     // TickValue is constant and can be cached
          staticTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(3)");
          if (error != NO_ERROR) {
             if (!suppressErrors) catch("PipValue(4)", error);
@@ -745,12 +749,18 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
          isApproximation = false;
       }
       else {
-         isConstant = false;                                                  // TickValue is dynamic
-         isApproximation = __isTesting;                                       // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
+         isConstant = false;                                                              // TickValue is dynamic
+         isApproximation = __isTesting;                                                   // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
-      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());            // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
-      warnApproximation = (isApproximation && !isCalculatable);               // muß im Tester nach einmaliger Warnung der Online-Wert verwendet werden.
-      flagsResolved = true;
+      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());                        // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
+      flagsResolved = true;                                                               // muß im Tester (ggf. nach Warnung) der Online-Wert verwendet werden.
+
+      if (isApproximation && !isCalculatable && !test.disableTickValueWarning) {
+         string message = "Historic MarketInfo(MODE_TICKVALUE) not available."                                   + NL
+                         +"The test will use the current online value, which may differ from the historical one."+ NL
+                         +"Test with a different account currency to get exact values.";
+         logWarn("PipValue(10)  "+ message);
+      }
    }
 
    // constant value
@@ -796,13 +806,6 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    if (error != NO_ERROR) {
       if (!suppressErrors) catch("PipValue(9)", error);
       return(0);
-   }
-   if (!suppressErrors && warnApproximation) {
-      string message = "Historic MarketInfo(MODE_TICKVALUE) not available."                                   + NL
-                      +"The test will use the current online value, which may differ from the historical one."+ NL
-                      +"Test with a different account currency to get exact values.";
-      logWarn("PipValue(10)  "+ message);
-      warnApproximation = false;
    }
    return(Pip/tickSize * dynamicTickValue * lots);
 }

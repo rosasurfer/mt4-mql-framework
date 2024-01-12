@@ -44,10 +44,9 @@
  *
  *
  * TODO:
- *  - Grid: 0.50er at 185 level
- *  - tester: add config to disable MODE_TICKVALUE warning
  *  - recorder: improve internal/custom symbols/descriptions
  *  - add var recorder.internalSymbol and store/restore value
+ *  - Grid: 0.50er at 185 level
  *  - tester: ZigZag EA cannot yet run with bar model MODE_BAROPEN
  *
  *  - time functions
