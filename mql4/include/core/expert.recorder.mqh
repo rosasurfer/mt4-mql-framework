@@ -249,21 +249,23 @@ bool Recorder.init() {
       return(false);
    }
 
-   if (!recorder.initialized) {                                                                                         // sizeof(SYMBOL.description) = 64 chars
-      recorder.defaultDescription = StrLeft(ProgramName(), 46) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M");   // 46 + 1 + 16 + <nul>        = 64 chars
-      recorder.defaultGroup       = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
-      recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
-      recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               return(false);
-
+   if (!recorder.initialized) {
       bool ready;
       int digits, multiplier;
       double baseValue;
-      string symbol="", descr="", group="";
+      string symbol="", descr="", group="", suffix="";
+
+      suffix                      = ", "+ PeriodDescription() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+      recorder.defaultDescription = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                                             // sizeof(SYMBOL.description) = 64 chars (szchar)
+      recorder.defaultGroup       = StrTrimRight(StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH));
+      recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
+      recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               return(false);
 
       // create an internal metric for AccountEquity()
       if (recorder.mode == RECORDER_INTERNAL) {
          symbol = Recorder.GetEquitySymbol(); if (!StringLen(symbol)) return(false);
-         descr  = recorder.defaultDescription;
+         suffix = ", "+ PeriodDescription() +", AccountEquity in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descr  = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;
          group  = recorder.defaultGroup;
          if (!Recorder.AddMetric(1, true, symbol, descr, group, 2, 0, 1)) return(false);
       }
@@ -453,13 +455,13 @@ void Recorder.ResetMetrics() {
 
 
 /**
- * Get the next free MT4 symbol for internal equity recording.
+ * Get the next available MT4 symbol for internal equity recording.
  *
  * @return string - symbol or an empty string in case of errors
  */
 string Recorder.GetEquitySymbol() {
    string filename = recorder.hstDirectory +"/symbols.raw";
-   string prefix = StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
+   string prefix = StrLeft(Symbol(), 7) +".";
    int maxId = 0;
 
    if (IsFile(filename, MODE_MQL)) {
@@ -478,7 +480,7 @@ string Recorder.GetEquitySymbol() {
       }
       FileClose(hFile);
 
-      // iterate over all symbols, determine the max counter matching "<prefix>[0-9]+"
+      // iterate over all symbols and determine the max counter matching "<prefix>[0-9]+"
       string symbol="", suffix="";
       for (int i=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);

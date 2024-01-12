@@ -1601,34 +1601,36 @@ int onInputError(string message) {
  */
 int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
    string   sId = ifString(!instance.id, "???", instance.id);
-   int  _Digits = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for indices with Digits=1)
-   string punit = ifString(_Digits > 2, "pip", "point");
+   int  _Digits = MathMax(Digits, 2);                                            // transform Digits=1 to 2 (for indices with Digits=1)
+   string punit = ifString(_Digits > 2, "pip", "point"), descrSuffix="";
 
    ready      = false;
    group      = "";
    baseValue  = EMPTY;
-   digits     = ifInt(_Digits > 2, 1, 2);                                     // store 1.23 as 1.23 point
-   multiplier = ifInt(_Digits > 2, Round(MathPow(10, _Digits & (~1))), 1);    // store 0.0123'4 as 123.4 pip
+   digits     = ifInt(_Digits > 2, 1, 2);                                        // store 1.23 as 1.23 point
+   multiplier = ifInt(_Digits > 2, Round(MathPow(10, _Digits & (~1))), 1);       // store 0.0123'4 as 123.4 pip
 
    switch (id) {
       case METRIC_TOTAL_MONEY_NET:
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                   // "US500.123A"
-         description = "Vegas "+ PeriodDescription() +" Tunnel "+ Symbol() +" in "+ AccountCurrency() +", net";
-         digits      = 2;                                                     // "Vegas H1 Tunnel US500 in USD, net"
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                      // "US500.123A"
+         descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         digits      = 2;
          baseValue   = EMPTY;
          multiplier  = 1;
          break;
 
       case METRIC_TOTAL_UNITS_VIRT:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         description = "Vegas "+ PeriodDescription() +" Tunnel "+ Symbol() +" in "+ punit +", virtual";
+         descrSuffix = ", "+ PeriodDescription() +", virtual PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       default:
          return(ERR_INVALID_INPUT_PARAMETER);
    }
 
+   description = StrLeft(ProgramName(), 63-StringLen(descrSuffix )) + descrSuffix;
    ready = (instance.id > 0);
+
    return(NO_ERROR);
 }
 

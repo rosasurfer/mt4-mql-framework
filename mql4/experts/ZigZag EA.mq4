@@ -44,7 +44,6 @@
  *
  *
  * TODO:
- *  - recorder: improve internal/custom symbols/descriptions
  *  - add var recorder.internalSymbol and store/restore value
  *  - Grid: 0.50er at 185 level
  *  - tester: ZigZag EA cannot yet run with bar model MODE_BAROPEN
@@ -1702,69 +1701,71 @@ int CreateInstanceId() {
  */
 int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
    string   sId = ifString(!instance.id, "???", instance.id);
-   int  _Digits = MathMax(Digits, 2);                                         // transform Digits=1 to 2 (for indices with Digits=1)
-   string punit = ifString(_Digits > 2, "pip", "point");
+   int  _Digits = MathMax(Digits, 2);                                            // transform Digits=1 to 2 (for indices with Digits=1)
+   string punit = ifString(_Digits > 2, "pip", "point"), descrSuffix="";
 
    ready      = false;
    group      = "";
    baseValue  = EMPTY;
-   digits     = ifInt(_Digits > 2, 1, 2);                                     // store 1.23 as 1.23 point
-   multiplier = ifInt(_Digits > 2, Round(MathPow(10, _Digits & (~1))), 1);    // store 0.0123'4 as 123.4 pip
+   digits     = ifInt(_Digits > 2, 1, 2);                                        // store 1.23 as 1.23 point
+   multiplier = ifInt(_Digits > 2, Round(MathPow(10, _Digits & (~1))), 1);       // store 0.0123'4 as 123.4 pip
 
    switch (id) {
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_TOTAL_MONEY_NET:              // OK
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                   // "US500.123A"
-         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ AccountCurrency() +", net";
-         digits      = 2;                                                     // "ZigZag(40xH1) US500 in USD, net"
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                      // "US500.123A"
+         descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         digits      = 2;
          baseValue   = EMPTY;
          multiplier  = 1;
          break;
 
       case METRIC_TOTAL_UNITS_VIRT:             // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", virtual";
+         descrSuffix = ", "+ PeriodDescription() +", virtual PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_TOTAL_UNITS_GROSS:            // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
-         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", gross";
+         descrSuffix = ", "+ PeriodDescription() +", gross PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_TOTAL_UNITS_NET:              // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"D";
-         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" in "+ punit +", net";
+         descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_MONEY_NET:
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"E";                   // "EURUSD.456E"
-         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ AccountCurrency() +", net";
-         digits      = 2;                                                     // "ZigZag(40xH1) EURUSD daily in USD, net"
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"E";                      // "EURUSD.456E"
+         descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         digits      = 2;
          baseValue   = EMPTY;
          multiplier  = 1;
          break;
 
       case METRIC_DAILY_UNITS_VIRT:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
-         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", virtual";
+         descrSuffix = ", "+ PeriodDescription() +", daily virtual PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_DAILY_UNITS_GROSS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"G";
-         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", gross";
+         descrSuffix = ", "+ PeriodDescription() +", daily gross PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_DAILY_UNITS_NET:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"H";
-         description = "ZigZag("+ ZigZag.Periods +"x"+ PeriodDescription() +") "+ Symbol() +" daily in "+ punit +", net";
+         descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       default:
          return(ERR_INVALID_INPUT_PARAMETER);
    }
 
+   description = StrLeft(ProgramName(), 63-StringLen(descrSuffix )) + descrSuffix;
    ready = (instance.id > 0);
+
    return(NO_ERROR);
 }
 
