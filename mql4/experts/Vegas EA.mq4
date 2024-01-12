@@ -603,7 +603,7 @@ bool UpdateStatus(int signal = NULL) {
       if (open.ticket != NULL) {
          if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
          if (!OrderCloseTime()) {                     // still open
-            open.swap        = OrderSwap();
+            open.swap        = NormalizeDouble(OrderSwap(), 2);
             open.commission  = OrderCommission();
             open.grossProfit = OrderProfit();
             open.netProfit   = open.grossProfit + open.swap + open.commission;
@@ -743,7 +743,7 @@ bool ArchiveClosedPosition(int ticket, double virtOpenPrice, double virtClosePri
    if (!virtClosePrice) virtClosePrice = OrderClosePrice();
 
    // update now closed position data
-   open.swap        = OrderSwap();
+   open.swap        = NormalizeDouble(OrderSwap(), 2);
    open.commission  = OrderCommission();
    open.grossProfit = OrderProfit();
    open.netProfit   = open.grossProfit + open.swap + open.commission;
@@ -1080,10 +1080,10 @@ bool ReadStatus() {
    }
 
    // cross-check restored instance stats
-   if (NE(netProfit,   instance.closedNetProfit, 2))        return(!catch("ReadStatus(9)  "+ instance.name +" sum(history[H_NETPROFIT]) doesn't match instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" vs. "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP, instance.closedVirtProfitP, Digits)) return(!catch("ReadStatus(12)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) doesn't match instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,   instance.closedNetProfit, 2))        return(!catch("ReadStatus(8)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" != "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP, instance.closedVirtProfitP, Digits)) return(!catch("ReadStatus(9)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
-   return(!catch("ReadStatus(8)"));
+   return(!catch("ReadStatus(10)"));
 }
 
 
@@ -1382,13 +1382,13 @@ bool SaveStatus() {
 
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
-      netProfit   += history[i][H_NETPROFIT   ];
-      virtProfitP += history[i][H_VIRTPROFIT_P];
+      netProfit   += NormalizeDouble(history[i][H_NETPROFIT   ], 2     );
+      virtProfitP += NormalizeDouble(history[i][H_VIRTPROFIT_P], Digits);
    }
 
    // cross-check stored instance stats
-   if (NE(netProfit,   instance.closedNetProfit, 2))        return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) doesn't match instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" vs. "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP, instance.closedVirtProfitP, Digits)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) doesn't match instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,   instance.closedNetProfit, 2))        return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" != "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP, instance.closedVirtProfitP, Digits)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("SaveStatus(4)"));
 }

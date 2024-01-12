@@ -44,7 +44,7 @@
  *
  *
  * TODO:
- *  - ReadStatus: cross-check restored instance stats
+ *  - Grid: 0.50er at 185 level
  *  - tester: add config to disable MODE_TICKVALUE warning
  *  - recorder: improve internal/custom symbols/descriptions
  *  - add var recorder.internalSymbol and store/restore value
@@ -1209,7 +1209,7 @@ bool ArchiveClosedPosition(int ticket, double virtOpenPrice, double virtClosePri
    if (!virtClosePrice) virtClosePrice = OrderClosePrice();
 
    // update now closed position data
-   open.swap         = OrderSwap();
+   open.swap         = NormalizeDouble(OrderSwap(), 2);
    open.commission   = OrderCommission();
    open.grossProfit  = OrderProfit();
    open.netProfit    = open.grossProfit + open.swap + open.commission;
@@ -1496,8 +1496,8 @@ bool UpdateStatus() {
    }
    else {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
-      if (!OrderCloseTime()) {                           // still open
-         open.swap         = OrderSwap();
+      if (!OrderCloseTime()) {                                 // still open
+         open.swap         = NormalizeDouble(OrderSwap(), 2);
          open.commission   = OrderCommission();
          open.grossProfit  = OrderProfit();
          open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
@@ -1511,7 +1511,7 @@ bool UpdateStatus() {
          instance.openVirtProfitP  = open.virtProfitP;
       }
       else {
-         int error;                                      // now closed
+         int error;                                            // now closed
          if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, open.priceVirt, 0, 0))                                                      return(false);
       }
@@ -2013,17 +2013,17 @@ bool SaveStatus() {
 
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
-      netProfit    += history[i][H_NETPROFIT    ];
-      netProfitP   += history[i][H_NETPROFIT_P  ];
-      grossProfitP += history[i][H_GROSSPROFIT_P];
-      virtProfitP  += history[i][H_VIRTPROFIT_P ];
+      netProfit    += NormalizeDouble(history[i][H_NETPROFIT    ], 2);
+      netProfitP   += NormalizeDouble(history[i][H_NETPROFIT_P  ], Digits);
+      grossProfitP += NormalizeDouble(history[i][H_GROSSPROFIT_P], Digits);
+      virtProfitP  += NormalizeDouble(history[i][H_VIRTPROFIT_P ], Digits);
    }
 
    // cross-check stored instance stats
-   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) doesn't match instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" vs. "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) doesn't match instance.closedNetProfitP ("+ NumberToStr(netProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) doesn't match instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("SaveStatus(5)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) doesn't match instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" != "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("+ NumberToStr(netProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("SaveStatus(5)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    // start/stop conditions
    WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
@@ -2149,16 +2149,16 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID          = GetIniStringA(file, section, "Instance.ID",          "");            // string Instance.ID         = T123
-   string sTradingMode         = GetIniStringA(file, section, "TradingMode",          "");            // string TradingMode         = regular
-   int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"          );            // int    ZigZag.Periods      = 40
-   string sLots                = GetIniStringA(file, section, "Lots",                 "");            // double Lots                = 0.1
-   string sStartConditions     = GetIniStringA(file, section, "StartConditions",      "");            // string StartConditions     = @time(datetime|time)
-   string sStopConditions      = GetIniStringA(file, section, "StopConditions",       "");            // string StopConditions      = @time(datetime|time)
-   string sTakeProfit          = GetIniStringA(file, section, "TakeProfit",           "");            // double TakeProfit          = 3.0
-   string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",      "");            // string TakeProfit.Type     = off* | money | percent | pip
-   string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent",  "");            // bool   ShowProfitInPercent = 1
-   string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",          "");            // string EA.Recorder         = 1,2,4
+   string sInstanceID          = GetIniStringA(file, section, "Instance.ID",         "");             // string Instance.ID         = T123
+   string sTradingMode         = GetIniStringA(file, section, "TradingMode",         "");             // string TradingMode         = regular
+   int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"         );             // int    ZigZag.Periods      = 40
+   string sLots                = GetIniStringA(file, section, "Lots",                "");             // double Lots                = 0.1
+   string sStartConditions     = GetIniStringA(file, section, "StartConditions",     "");             // string StartConditions     = @time(datetime|time)
+   string sStopConditions      = GetIniStringA(file, section, "StopConditions",      "");             // string StopConditions      = @time(datetime|time)
+   string sTakeProfit          = GetIniStringA(file, section, "TakeProfit",          "");             // double TakeProfit          = 3.0
+   string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",     "");             // string TakeProfit.Type     = off* | money | percent | pip
+   string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent", "");             // bool   ShowProfitInPercent = 1
+   string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",         "");             // string EA.Recorder         = 1,2,4
 
    if (!StrIsNumeric(sLots))       return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sTakeProfit)) return(!catch("ReadStatus(7)  "+ instance.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -2240,10 +2240,10 @@ bool ReadStatus() {
    }
 
    // cross-check restored instance stats
-   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("ReadStatus(9)  "+ instance.name +" sum(history[H_NETPROFIT]) doesn't match instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" vs. "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) doesn't match instance.closedNetProfitP ("+ NumberToStr(netProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) doesn't match instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("ReadStatus(12)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) doesn't match instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") vs. "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("ReadStatus(9)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" != "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("+ NumberToStr(netProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("ReadStatus(12)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    // other
    start.time.condition       = GetIniBool   (file, section, "start.time.condition"      );           // bool     start.time.condition       = 1
@@ -2443,7 +2443,7 @@ bool SynchronizeStatus() {
             datetime closeTime    = OrderCloseTime();
             double   closePrice   = OrderClosePrice();
             double   slippage     = 0;
-            double   swap         = OrderSwap();
+            double   swap         = NormalizeDouble(OrderSwap(), 2);
             double   commission   = OrderCommission();
             double   grossProfit  = OrderProfit();
             double   grossProfitP = ifDouble(!openType, closePrice-openPrice, openPrice-closePrice);
