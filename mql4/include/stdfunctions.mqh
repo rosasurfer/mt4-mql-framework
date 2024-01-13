@@ -698,6 +698,23 @@ string JoinStrings(string values[], string separator = ", ") {
 
 
 /**
+ * Return the current symbol's full point value for the specified lot amount.
+ *
+ * @param  double lots           [optional] - lot amount (default: 1 lot)
+ * @param  bool   suppressErrors [optional] - whether to suppress runtime errors (default: no)
+ *
+ * @return double - point value or NULL (0) in case of errors
+ */
+double PointValue(double lots=1.0, bool suppressErrors=false) {
+   return(PipValue(lots, suppressErrors)/Pip);
+}
+
+
+// whether to disable an "Incorrect MODE_TICKVALUE" warning in tester, @see function PipValue()
+bool test.disableTickValueWarning = false;
+
+
+/**
  * Return the current symbol's pip value for the specified lot amount.
  *
  * @param  double lots           [optional] - lot amount (default: 1 lot)
@@ -711,18 +728,18 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    static double tickSize;
    if (!tickSize) {
       int error;
-      tickSize = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "PipValue(1)"); // fails if there's no tick yet (it may arrive later), e.g.
-      if (error != NO_ERROR) {                                                // symbol not yet subscribed, terminal start, account/template change
-         if (!suppressErrors) catch("PipValue(2)", error);                    // ERR_SYMBOL_NOT_AVAILABLE: synthetic symbol in offline chart
+      tickSize = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "PipValue(1)");             // fails if there's no tick yet (it may arrive later), e.g.
+      if (error != NO_ERROR) {                                                            // symbol not yet subscribed, terminal start, account/template change
+         if (!suppressErrors) catch("PipValue(2)", error);                                // ERR_SYMBOL_NOT_AVAILABLE: synthetic symbol in offline chart
          return(0);
       }
    }
 
    static double staticTickValue;
-   static bool flagsResolved, isConstant, isApproximation, isCalculatable, giveTesterWarning;
+   static bool flagsResolved, isConstant, isApproximation, isCalculatable;
 
    if (!flagsResolved) {
-      if (StrEndsWith(Symbol(), AccountCurrency())) {                         // TickValue is constant and can be cached
+      if (StrEndsWith(Symbol(), AccountCurrency())) {                                     // TickValue is constant and can be cached
          staticTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(3)");
          if (error != NO_ERROR) {
             if (!suppressErrors) catch("PipValue(4)", error);
@@ -732,12 +749,18 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
          isApproximation = false;
       }
       else {
-         isConstant = false;                                                  // TickValue is dynamic
-         isApproximation = __isTesting;                                       // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
+         isConstant = false;                                                              // TickValue is dynamic
+         isApproximation = __isTesting;                                                   // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
-      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());            // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
-      giveTesterWarning = (isApproximation && !isCalculatable);               // muß im Tester nach einmaliger Warnung der Online-Wert verwendet werden.
-      flagsResolved = true;
+      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());                        // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
+      flagsResolved = true;                                                               // muß im Tester (ggf. nach Warnung) der Online-Wert verwendet werden.
+
+      if (isApproximation && !isCalculatable && !test.disableTickValueWarning) {
+         string message = "Historic MarketInfo(MODE_TICKVALUE) not available."                                   + NL
+                         +"The test will use the current online value, which may differ from the historical one."+ NL
+                         +"Test with a different account currency to get exact values.";
+         logWarn("PipValue(10)  "+ message);
+      }
    }
 
    // constant value
@@ -783,13 +806,6 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    if (error != NO_ERROR) {
       if (!suppressErrors) catch("PipValue(9)", error);
       return(0);
-   }
-   if (giveTesterWarning) {
-      string message = "Exact tickvalue not available."+ NL
-                      +"The test will use the current online tickvalue ("+ dynamicTickValue +") which is an approximation. "
-                      +"Test with another account currency if you need exact values.";
-      logWarn("PipValue(10)  "+ message);
-      giveTesterWarning = false;
    }
    return(Pip/tickSize * dynamicTickValue * lots);
 }
@@ -3008,7 +3024,7 @@ TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
 
 
 /**
- * Pad a string left-side to a minimum length using another substring.
+ * Pad a string left-side to a minimum length using a pad string.
  *
  * @param  string input                - source string
  * @param  int    padLength            - minimum length of the resulting string
@@ -3025,23 +3041,7 @@ string StrPadLeft(string input, int padLength, string padString = " ") {
 
 
 /**
- * Alias of StrPadLeft()
- *
- * Pad a string left-side to a minimum length using another substring.
- *
- * @param  string input                - source string
- * @param  int    padLength            - minimum length of the resulting string
- * @param  string padString [optional] - substring used for padding (default: space chars)
- *
- * @return string
- */
-string StrLeftPad(string input, int padLength, string padString = " ") {
-   return(StrPadLeft(input, padLength, padString));
-}
-
-
-/**
- * Pad a string right-side to a minimum length using another substring.
+ * Pad a string right-side to a minimum length using a pad string.
  *
  * @param  string input                - source string
  * @param  int    padLength            - minimum length of the resulting string
@@ -3054,22 +3054,6 @@ string StrPadRight(string input, int padLength, string padString = " ") {
       input = StringConcatenate(input, padString);
    }
    return(input);
-}
-
-
-/**
- * Alias of StrPadRight()
- *
- * Pad a string right-side to a minimum length using another substring.
- *
- * @param  string input                - source string
- * @param  int    padLength            - minimum length of the resulting string
- * @param  string padString [optional] - substring used for padding (default: space chars)
- *
- * @return string
- */
-string StrRightPad(string input, int padLength, string padString = " ") {
-   return(StrPadRight(input, padLength, padString));
 }
 
 
@@ -3383,8 +3367,8 @@ bool CreateDirectory(string path, int flags) {
 
    if (flags & MODE_MQL && 1) {
       string filesDirectory = GetMqlSandboxPath();
-      if (!StringLen(filesDirectory))
-         return(false);
+      if (!StringLen(filesDirectory)) return(false);
+
       path = StringConcatenate(filesDirectory, "/", path);
       flags &= ~MODE_MQL;
    }
@@ -3393,26 +3377,13 @@ bool CreateDirectory(string path, int flags) {
 
 
 /**
- * Return the full path of the MQL sandbox directory. This is the only directory accessible to MQL file functions.
+ * Return the full path of the MQL sandbox directory. This is the only directory accessible to built-in MQL file functions.
  *
- * @return string - directory path or an empty string in case of errors
+ * @return string - directory path without trailing path separator or an empty string in case of errors
  */
 string GetMqlSandboxPath() {
-   static string path = ""; if (!StringLen(path)) {
-      if (__isTesting) {
-         string dataDirectory = GetTerminalDataPathA();
-         if (!StringLen(dataDirectory)) return(EMPTY_STR);
-
-         path = dataDirectory +"/tester/files";
-      }
-      else {
-         string mqlDirectory = GetMqlDirectoryA();
-         if (!StringLen(mqlDirectory)) return(EMPTY_STR);
-
-         path = mqlDirectory +"/files";
-      }
-      path = StrReplace(path, "\\", "/");
-   }
+   static string path = "";
+   if (!StringLen(path)) path = GetMqlSandboxPathA(__isTesting);
    return(path);
 }
 
@@ -3426,7 +3397,7 @@ string GetMqlSandboxPath() {
  */
 string StrToHexStr(string value) {
    if (StrIsNull(value))
-      return("(NULL)");
+      return("(null)");
 
    string result = "";
    int len = StringLen(value);
@@ -5772,12 +5743,12 @@ string NumberToStr(double value, string mask) {
 
 
 /**
- * Format a value representing a pip distance of the current symbol. Depending on symbol and symbol price the resulting
- * string is the pip amount converted to pips, subpips or quote units (e.g. index points).
+ * Format a pip value of the current symbol. Depending on symbol and price the resulting string represents pip, subpip or
+ * quote units (e.g. index points).
  *
- * @param  double value                         - pip distance
- * @param  bool   thousandsSeparator [optional] - whether to use the thousands separator "'" (default: no)
- * @param  bool   appendSuffix       [optional] - whether to append the suffix " pip" to the formatted value (default: no)
+ * @param  double value                         - pip value
+ * @param  bool   thousandsSeparator [optional] - whether to format using thousands separators "'" (default: no)
+ * @param  bool   appendSuffix       [optional] - whether to append suffix " pip" to the formatted value (default: no)
  *
  * @return string
  */
@@ -5785,13 +5756,14 @@ string PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=f
    thousandsSeparator = thousandsSeparator!=0;
    appendSuffix       = appendSuffix!=0;
    string sSeparator="", sValue=value;
-   if (thousandsSeparator) sSeparator = ",'";
 
    if (StringGetChar(sValue, 3) == '#')                              // "-1.#IND0000" => NaN
       return(sValue);                                                // "-1.#INF0000" => Infinite
 
+   if (thousandsSeparator) sSeparator = ",'";
+
    if (Digits==2 && Close[0]>=500) {
-      sValue = NumberToStr(value/100, sSeparator +"R.2");            // 123 pip => 1.23 quote units/index points
+      sValue = NumberToStr(value/100, sSeparator +"R.2");            // 123 pip => 1.23 quote units
    }
    else {
       sValue = NumberToStr(value, sSeparator +"R."+ (Digits & 1));   // 123 pip
@@ -6993,43 +6965,51 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
 
 
 /**
- * Check a trade server path for safe usage. If the path was not used before a notice is emitted and the path is marked.
+ * Check/initialize a trade server path (a history directory). Makes sure directory, "symbols.raw" and "symgroups.raw" exist.
  *
- * @param  string path              - if a relative path:  relative to the MQL sandbox/files directory
- *                                    if an absolute path: as is
- * @param  string caller [optional] - location identifier of the caller (default: none)
+ * @param  string path - absolute path or path relative to the MQL sandbox directory
  *
- * @return bool - whether it's safe to use the path
+ * @return bool - success status
  */
-bool UseTradeServerPath(string path, string caller = "") {
+bool InitTradeServerPath(string path) {
    int fsMode = ifInt(IsAbsolutePath(path), MODE_SYSTEM, MODE_MQL);
+
+   // check/create the directory
+   if (!IsDirectory(path, fsMode)) {
+      logDebug("InitTradeServerPath(1)  creating \""+ path +"\"");
+      if (!CreateDirectory(path, fsMode|MODE_MKPARENT)) return(!catch("InitTradeServerPath(2)  cannot create directory \""+ path +"\"", ERR_INVALID_PARAMETER));
+   }
+
+   // check/create "symbols.raw"
    string symbolsFile = path +"/symbols.raw";
+   if (!IsFile(symbolsFile, fsMode)) {
+      logDebug("InitTradeServerPath(3)  creating \""+ symbolsFile +"\"");
+      if (fsMode == MODE_MQL) symbolsFile = GetMqlSandboxPath() +"/"+ symbolsFile;
+      int hFile = CreateFileA(symbolsFile,            // file name
+                              GENERIC_READ,           // desired access
+                              FILE_SHARE_READ,        // share mode
+                              NULL,                   // default security
+                              CREATE_NEW,             // create file only if it doesn't exist
+                              FILE_ATTRIBUTE_NORMAL,  // flags and attributes: normal file
+                              NULL);                  // no template file handle
+      if (hFile == INVALID_HANDLE_VALUE) return(!catch("InitTradeServerPath(4)  cannot create file \""+ symbolsFile +"\"", ERR_WIN32_ERROR + GetLastWin32Error()));
+      CloseHandle(hFile);
+   }
+
+   // check/create "symgroups.raw"
    string groupsFile  = path +"/symgroups.raw";
-
-   if (!IsFile(symbolsFile, fsMode)) /*&&*/ if (!IsFile(groupsFile, fsMode)) {
-      if (caller == "0") caller = "";                       // (string) NULL
-      if (caller != "")  caller = caller +"->";
-      logNotice(caller +"UseTradeServerPath(1)  \""+ path +"\" doesn't seem to be a regular trade server directory (file \"symbols.raw\" not found)");
-
-      // make sure the directory exists
-      if (!CreateDirectory(path, fsMode|MODE_MKPARENT)) return(!catch(caller +"UseTradeServerPath(2)  cannot create directory \""+ path +"\"", ERR_INVALID_PARAMETER));
-
-      // make sure "symbols.raw" exists
-      if (!IsFile(symbolsFile, fsMode)) {
-         if (fsMode == MODE_MQL) symbolsFile = GetMqlSandboxPath() +"/"+ symbolsFile;
-         int hFile = CreateFileA(symbolsFile,               // file name
-                                 GENERIC_READ,              // desired access
-                                 FILE_SHARE_READ,           // share mode
-                                 NULL,                      // default security
-                                 CREATE_NEW,                // create file only if it doesn't exist
-                                 FILE_ATTRIBUTE_NORMAL,     // flags and attributes: normal file
-                                 NULL);                     // no template file handle
-         if (hFile == INVALID_HANDLE_VALUE) {
-            int error = GetLastWin32Error();
-            if (error != ERROR_FILE_EXISTS) return(!catch(caller +"UseTradeServerPath(3)->CreateFileA(\""+ symbolsFile +"\")", ERR_WIN32_ERROR+error));
-         }
-         else CloseHandle(hFile);
-      }
+   if (!IsFile(groupsFile, fsMode)) {
+      logDebug("InitTradeServerPath(5)  creating \""+ groupsFile +"\"");
+      if (fsMode == MODE_MQL) groupsFile = GetMqlSandboxPath() +"/"+ groupsFile;
+      hFile = CreateFileA(groupsFile,                 // file name
+                          GENERIC_READ,               // desired access
+                          FILE_SHARE_READ,            // share mode
+                          NULL,                       // default security
+                          CREATE_NEW,                 // create file only if it doesn't exist
+                          FILE_ATTRIBUTE_NORMAL,      // flags and attributes: normal file
+                          NULL);                      // no template file handle
+      if (hFile == INVALID_HANDLE_VALUE) return(!catch("InitTradeServerPath(6)  cannot create file \""+ groupsFile +"\"", ERR_WIN32_ERROR + GetLastWin32Error()));
+      CloseHandle(hFile);
    }
    return(true);
 }
@@ -7148,6 +7128,7 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    InitReasonDescription(NULL);
+   InitTradeServerPath(NULL);
    IntegerToHexString(NULL);
    intOr(NULL, NULL);
    IsAbsolutePath(NULL);
@@ -7215,6 +7196,7 @@ void __DummyCalls() {
    PipValueEx(NULL, NULL, iNull);
    PlaySoundEx(NULL);
    Pluralize(NULL);
+   PointValue();
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
    ProgramInitReason();
@@ -7250,7 +7232,6 @@ void __DummyCalls() {
    StrIsNumeric(NULL);
    StrIsPhoneNumber(NULL);
    StrLeft(NULL, NULL);
-   StrLeftPad(NULL, NULL);
    StrLeftTo(NULL, NULL);
    StrPadLeft(NULL, NULL);
    StrPadRight(NULL, NULL);
@@ -7258,7 +7239,6 @@ void __DummyCalls() {
    StrReplace(NULL, NULL, NULL);
    StrRight(NULL, NULL);
    StrRightFrom(NULL, NULL);
-   StrRightPad(NULL, NULL);
    StrStartsWithI(NULL, NULL);
    StrSubstr(NULL, NULL);
    StrToBool(NULL);
@@ -7297,7 +7277,6 @@ void __DummyCalls() {
    TradeCommandToStr(NULL);
    UninitializeReasonDescription(NULL);
    UrlEncode(NULL);
-   UseTradeServerPath(NULL);
    WaitForTicket(NULL);
    WriteIniString(NULL, NULL, NULL, NULL);
 }

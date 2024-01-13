@@ -17,20 +17,19 @@
  *
  * Notes:
  * ------
- *  - The MQL4 language in terminal builds <= 509 imposes a limit of 16 open files per MQL module. In terminal builds > 509
- *    this limit was extended to 64 open files per MQL module. It means older terminals can manage max. 1 full history set
- *    and newer terminals max. 7 full history sets per MQL module. For some use cases this is still not sufficient.
- *    To overcome this limits there are 3 fully identical history libraries, extending the limits for newer terminal builds
- *    to max. 21 full history sets per MQL program.
+ *  - MQL4 in terminal builds <= 509 imposes a limit of 16 open files per MQL module. In terminal builds > 509 this limit was
+ *    extended to 64 open files per MQL module. This means older terminals can manage max. 1 full history set and newer
+ *    terminals max. 7 full history sets per MQL module. That's still not sufficient. To overcome the limits there are 3
+ *    identical history libraries, extending the limits for newer terminals to max. 21 history sets per MQL program.
  *
  *  - Since terminal builds > 509 MT4 supports two history file formats. The format is identified in history files by the
  *    field HISTORY_HEADER.barFormat. The default bar format in builds <= 509 is "400" and in builds > 509 "401".
  *    Builds <= 509 can only read/write format "400". Builds > 509 can read both formats but write only format "401".
  *
- *  - If a terminal build <= 509 accesses history files in new format (401) it will delete those files on shutdown.
+ *  - If a terminal build <= 509 accesses history files in new format "401" it will delete the files on shutdown.
  *
- *  - If a terminal build > 509 accesses history files in old format (400) it will convert them to the new format (401) except
- *    offline history files for custom symbols. Such offline history files will not be converted.
+ *  - If a terminal build > 509 accesses history files in old format "400" it will convert them to format "401", except
+ *    custom offline history files. Custom files are read but not modified in any way.
  *
  *  @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
  */
@@ -197,7 +196,7 @@ int HistorySet3.Create(string symbol, string description, int digits, int format
 
    if (directory == "") {                                               // current trade server, use MQL::FileOpenHistory()
       string serverPath = GetAccountServerPath();
-      if (!UseTradeServerPath(serverPath, "HistorySet3.Create(7)")) return(NULL);
+      if (!InitTradeServerPath(serverPath)) return(NULL);
 
       for (i=0; i < sizeOfPeriods; i++) {
          basename = StringConcatenate(symbol, periods[i], ".hst");
@@ -205,38 +204,38 @@ int HistorySet3.Create(string symbol, string description, int digits, int format
 
          if (IsFile(filename, MODE_SYSTEM)) {                           // reset existing file to 0
             hFile = FileOpenHistory(basename, FILE_WRITE|FILE_BIN);
-            if (hFile <= 0) return(!catch("HistorySet3.Create(8)->FileOpenHistory(\""+ basename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (hFile <= 0) return(!catch("HistorySet3.Create(7)->FileOpenHistory(\""+ basename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
             hh_SetPeriod(hh, periods[i]);
             FileWriteArray(hFile, hh, 0, ArraySize(hh));                // write new HISTORY_HEADER
             FileClose(hFile);
             error = GetLastError();
-            if (error != NO_ERROR) return(!catch("HistorySet3.Create(9)  symbol="+ DoubleQuoteStr(symbol), error));
+            if (error != NO_ERROR) return(!catch("HistorySet3.Create(8)  symbol="+ DoubleQuoteStr(symbol), error));
          }
       }
    }
 
    else if (!IsAbsolutePath(directory)) {                               // relative sandbox path, use MQL::FileOpen()
-      if (!UseTradeServerPath(directory, "HistorySet3.Create(10)")) return(NULL);
+      if (!InitTradeServerPath(directory)) return(NULL);
 
       for (i=0; i < sizeOfPeriods; i++) {
          filename = StringConcatenate(directory, "/", symbol, periods[i], ".hst");
 
          if (IsFile(filename, MODE_MQL)) {                              // reset existing file to 0
             hFile = FileOpen(filename, FILE_BIN|FILE_WRITE);
-            if (hFile <= 0) return(!catch("HistorySet3.Create(11)->FileOpen(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (hFile <= 0) return(!catch("HistorySet3.Create(9)->FileOpen(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
             hh_SetPeriod(hh, periods[i]);
             FileWriteArray(hFile, hh, 0, ArraySize(hh));                // write new HISTORY_HEADER
             FileClose(hFile);
             error = GetLastError();
-            if (error != NO_ERROR) return(!catch("HistorySet3.Create(12)  symbol="+ DoubleQuoteStr(symbol), error));
+            if (error != NO_ERROR) return(!catch("HistorySet3.Create(10)  symbol="+ DoubleQuoteStr(symbol), error));
          }
       }
    }
 
    else {                                                               // absolute path, use Expander
-      return(!catch("HistorySet3.Create(13)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("HistorySet3.Create(11)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    ArrayResize(hh, 0);
@@ -506,52 +505,52 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    string filename="", basename=symbol + timeframe +".hst";
 
    if (directory == "") {                                                        // current trade server, use MQL::FileOpenHistory()
-      if (!read_only) /*&&*/ if (!UseTradeServerPath(GetAccountServerPath(), "HistoryFile3.Open(6)")) return(NULL);
+      if (!read_only) /*&&*/ if (!InitTradeServerPath(GetAccountServerPath())) return(NULL);
       filename = basename;
 
       // open the file: read-only
       if (read_only) {
          if (!IsFile(filename, MODE_SYSTEM)) return(-1);                         // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
          hFile = FileOpenHistory(filename, mode|FILE_BIN);
-         if (hFile <= 0) return(!catch("HistoryFile3.Open(7)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(6)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
       // read-write
       else if (read_write) {
          hFile = FileOpenHistory(filename, mode|FILE_BIN);
-         if (hFile <= 0) return(!catch("HistoryFile3.Open(8)->FileOpenHistory(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(7)->FileOpenHistory(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
       // write-only
       else if (write_only) {
          hFile = FileOpenHistory(filename, mode|FILE_BIN);
-         if (hFile <= 0) return(!catch("HistoryFile3.Open(9)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(8)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
    }
 
    else if (!IsAbsolutePath(directory)) {                                        // relative sandbox path, use MQL::FileOpen()
       // on write access make sure the directory exists
-      if (!read_only) /*&&*/ if (!UseTradeServerPath(directory, "HistoryFile3.Open(10)")) return(NULL);
+      if (!read_only) /*&&*/ if (!InitTradeServerPath(directory)) return(NULL);
       filename = directory +"/"+ basename;
 
       // open the file: read-only
       if (read_only) {
          if (!IsFile(filename, MODE_MQL)) return(-1);                            // without the additional check FileOpen(READ) logs a warning if the file doesn't exist
          hFile = FileOpen(filename, mode|FILE_BIN);
-         if (hFile <= 0) return(!catch("HistoryFile3.Open(11)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(9)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
       // read-write
       else if (read_write) {
          hFile = FileOpen(filename, mode|FILE_BIN);
-         if (hFile <= 0) return(!catch("HistoryFile3.Open(12)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(10)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
       // write-only
       else if (write_only) {
          hFile = FileOpen(filename, mode|FILE_BIN);
-         if (hFile <= 0) return(!catch("HistoryFile3.Open(13)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(11)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
    }
 
    else {                                                                        // absolute path, use Expander
-      return(!catch("HistoryFile3.Open(14)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("HistoryFile3.Open(12)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
@@ -561,8 +560,8 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    if (write_only || (read_write && fileSize < HISTORY_HEADER_size)) {
       // create and write new HISTORY_HEADER where appropriate
       if (StringLen(description) > 63) description = StrLeft(description, 63);   // shorten a too long description
-      if (digits < 0)                 return(!catch("HistoryFile3.Open(15)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
-      if (format!=400 && format!=401) return(!catch("HistoryFile3.Open(16)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
+      if (digits < 0)                 return(!catch("HistoryFile3.Open(13)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
+      if (format!=400 && format!=401) return(!catch("HistoryFile3.Open(14)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
 
       hh_SetBarFormat  (hh, format     );
       hh_SetDescription(hh, description);
@@ -576,7 +575,7 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
       // read existing HISTORY_HEADER where appropriate
       if (FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize) != HISTORY_HEADER_intSize) {
          FileClose(hFile);
-         return(!catch("HistoryFile3.Open(17)  invalid history file \""+ filename +"\" (size="+ fileSize +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         return(!catch("HistoryFile3.Open(15)  invalid history file \""+ filename +"\" (size="+ fileSize +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
 
       // read existing bar statistics
@@ -671,7 +670,7 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
 
    int error = GetLastError();
    if (!error) return(hFile);
-   return(!catch("HistoryFile3.Open(18)  "+ symbol +","+ PeriodDescription(timeframe), error));
+   return(!catch("HistoryFile3.Open(16)  "+ symbol +","+ PeriodDescription(timeframe), error));
 }
 
 

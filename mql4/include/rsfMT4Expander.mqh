@@ -2,7 +2,7 @@
  * MT4Expander import declarations
  *
  * Note: MQL4 supports up to 512 arrays per MQL module (in MQL5 this limit was removed). In this file all functions with array
- *       parameters are commented out to prevent hitting that limit. Import needed functions manually to use them.
+ *       parameters are commented out to prevent hitting that limit. Import commented functions manually to use them.
  */
 #import "rsfMT4Expander.dll"
 
@@ -10,6 +10,7 @@
    string   GetExpanderFileNameA();
    string   GetHistoryRootPathA();
    string   GetMqlDirectoryA();
+   string   GetMqlSandboxPathA(int inTester);
    int      GetTerminalBuild();
    int      GetTerminalMainWindow();
    string   GetTerminalVersion();

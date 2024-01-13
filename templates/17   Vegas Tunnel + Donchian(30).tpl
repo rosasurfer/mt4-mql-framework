@@ -16679,21 +16679,6 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=MA Tunnel
-flags=339
-window_num=0
-<inputs>
-Tunnel.Definition=EMA(144)
-ShowChartLegend=0
-</inputs>
-</expert>
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=ZigZag
 flags=339
 window_num=0
@@ -16703,7 +16688,7 @@ ZigZag.Type=Line* | Semaphores
 ZigZag.Width=0
 ZigZag.Color=16711680
 Donchian.ShowChannel=1
-Donchian.Crossings.Wingdings=108
+Donchian.Crossings.Wingdings=163
 Donchian.Upper.Color=16711680
 Donchian.Lower.Color=16711680
 Signal.onReversal=1
@@ -16727,7 +16712,6 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-BracketsColor=16711680
 AutoConfiguration=1
 </inputs>
 </expert>

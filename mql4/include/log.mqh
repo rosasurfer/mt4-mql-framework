@@ -216,25 +216,26 @@ int log(string message, int error, int level) {
             configLevel = LOG_ALL;                                         // online EAs: all
          }
          else {
-            string key="", value="";
-            if (__isTesting) {
+            string key=ifString(__isSuperContext, ep_SuperProgramName(pid), ProgramName()), value="";
+
+            if (IsConfigKey("Log", key)) {                                 // prefer program-specific setting
+               value = GetConfigString("Log", key, "");
+            }
+            else if (__isTesting) {
                key = "Tester";
-               value = GetConfigString("Log", key, "off");                 // tester, default: off
+               value = GetConfigString("Log", key, "off");                 // tester default: off
             }
             else {
-               key = ifString(__isSuperContext, ep_SuperProgramName(pid), ProgramName());
-               if (!IsConfigKey("Log", key)) key = "Online";
-               value = GetConfigString("Log", key, "all");                 // online others, default: all
+               key = "Online";
+               value = GetConfigString("Log", key, "all");                 // online default: all
             }
             configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
             if (!configLevel) configLevel = _int(LOG_OFF, catch("log(1)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
          }
       }
-
       ec_SetLoglevel(__ExecutionContext, configLevel);
    }
-   if (level == LOG_OFF)
-      return(configLevel);
+   if (level == LOG_OFF) return(configLevel);
 
    // apply the configured loglevel filter
    if (level >= configLevel) {

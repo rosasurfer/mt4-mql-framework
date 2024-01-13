@@ -99,31 +99,31 @@ bool EditFile(string filename) {
  */
 bool EditFiles(string &filenames[]) {
    int size = ArraySize(filenames);
-   if (!size) return(!catch("EditFiles(1)  invalid parameter filenames: {}", ERR_INVALID_PARAMETER));
+   if (!size) return(!catch("EditFiles(1)  invalid parameter filenames: {} (empty)", ERR_INVALID_PARAMETER));
 
    for (int i=0; i < size; i++) {
-      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
+      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: \"\" (empty)", ERR_INVALID_PARAMETER));
       if (IsLogDebug()) logDebug("EditFiles(3)  loading "+ DoubleQuoteStr(filenames[i]));
 
       if (IsFile(filenames[i], MODE_SYSTEM)) {
          while (IsSymlinkA(filenames[i])) {
             string target = GetReparsePointTargetA(filenames[i]);    // resolve symlinks as some editors cannot write to it (e.g. TextPad)
-            if (!StringLen(target))
-               break;
+            if (!StringLen(target)) break;
             filenames[i] = target;
          }
       }
       else if (IsDirectory(filenames[i], MODE_SYSTEM)) {
-         logError("EditFiles(4)  cannot edit directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
+         logError("EditFiles(4)  filename is a directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(filenames, i, 1);
-         size--; i--;
+         size--;
+         i--;
          continue;
       }
       else {}                                                        // file doesn't exist, behavior is up to the editor
    }
 
    // check the editor configuration
-   string editor = GetGlobalConfigString("System", "Editor");
+   string editor = GetConfigString("System", "Editor");
 
    if (StringLen(editor) > 0) {
       // use configured editor
@@ -4965,8 +4965,10 @@ string TimesToStr(datetime values[], string separator=", ") {
 /**
  * Handler for order related errors which occurred in one of the library's order functions.
  *
- * The error is always set in the passed struct ORDER_EXECUTION. After the passed execution flags determine how the error is
- * handled. All errors not matched by an execution flag (see F_ERR_* constants) cause a fatal runtime error.
+ * The error is stored in the passed struct ORDER_EXECUTION. The specified flags determine how the error is handled:
+ *  - Matching errors (see F_ERR_* constants) are filtered and logged with level LOG_INFO (default) or LOG_NOTICE if flag
+ *    F_LOG_NOTICE is set.
+ *  - Non-matching errors cause a fatal error.
  *
  * @param  _In_    string message                  - error message
  * @param  _In_    int    error                    - the occurred error
@@ -4999,8 +5001,7 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
    }
 
    // in tester always add ERS_EXECUTION_STOPPING to the passed flags
-   if (__isTesting && IsStopped())
-      oeFlags |= F_ERS_EXECUTION_STOPPING;
+   if (__isTesting && IsStopped()) oeFlags |= F_ERS_EXECUTION_STOPPING;
 
    // filter the flagged errors and log them accordingly
    int loglevel = ifInt(oeFlags & F_LOG_NOTICE, LOG_NOTICE, LOG_INFO);
@@ -5012,17 +5013,19 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
    if (error==ERR_INVALID_STOP             && oeFlags & F_ERR_INVALID_STOP            ) return(log(message, error, loglevel));
    if (error==ERR_INVALID_TICKET           && oeFlags & F_ERR_INVALID_TICKET          ) return(log(message, error, loglevel));
    if (error==ERR_INVALID_TRADE_PARAMETERS && oeFlags & F_ERR_INVALID_TRADE_PARAMETERS) return(log(message, error, loglevel));
-   if (error==ERR_MARKET_CLOSED            && oeFlags & F_ERR_MARKET_CLOSED           ) return(log(message, error, Max(loglevel, LOG_WARN)));
-   if (error==ERR_NO_CONNECTION            && oeFlags & F_ERR_NO_CONNECTION           ) return(log(message, error, Max(loglevel, LOG_WARN)));
    if (error==ERR_NO_RESULT                && oeFlags & F_ERR_NO_RESULT               ) return(log(message, error, loglevel));
    if (error==ERR_OFF_QUOTES               && oeFlags & F_ERR_OFF_QUOTES              ) return(log(message, error, loglevel));
    if (error==ERR_ORDER_CHANGED            && oeFlags & F_ERR_ORDER_CHANGED           ) return(log(message, error, loglevel));
    if (error==ERR_SERIES_NOT_AVAILABLE     && oeFlags & F_ERR_SERIES_NOT_AVAILABLE    ) return(log(message, error, loglevel));
    if (error==ERS_TERMINAL_NOT_YET_READY   && oeFlags & F_ERS_TERMINAL_NOT_YET_READY  ) return(log(message, error, loglevel));
-   if (error==ERR_TRADE_DISABLED           && oeFlags & F_ERR_TRADE_DISABLED          ) return(log(message, error, Max(loglevel, LOG_WARN)));
    if (error==ERR_TRADE_MODIFY_DENIED      && oeFlags & F_ERR_TRADE_MODIFY_DENIED     ) return(log(message, error, loglevel));
    if (error==ERR_STOP_DISTANCE_VIOLATED   && oeFlags & F_ERR_STOP_DISTANCE_VIOLATED  ) return(log(message, error, loglevel));
-   if (error==ERR_TRADESERVER_GONE         && oeFlags & F_ERR_TRADESERVER_GONE        ) return(log(message, error, Max(loglevel, LOG_WARN)));
+
+   loglevel = LOG_WARN;
+   if (error==ERR_TRADE_DISABLED           && oeFlags & F_ERR_TRADE_DISABLED          ) return(log(message, error, loglevel));
+   if (error==ERR_MARKET_CLOSED            && oeFlags & F_ERR_MARKET_CLOSED           ) return(log(message, error, loglevel));
+   if (error==ERR_TRADESERVER_GONE         && oeFlags & F_ERR_TRADESERVER_GONE        ) return(log(message, error, loglevel));
+   if (error==ERR_NO_CONNECTION            && oeFlags & F_ERR_NO_CONNECTION           ) return(log(message, error, loglevel));
 
    // trigger a fatal error for everything else
    return(catch(message, error));
@@ -5202,7 +5205,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
             else                             dSlippage = 0;
          oe.setSlippage(oe, NormalizeDouble(dSlippage, digits));           // total slippage after requotes
 
-         if (IsLogInfo()) logInfo("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
+         if (IsLogDebug()) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
 
          if (__isTesting) {
             if (type<=OP_SELL && __ExecutionContext[EC.externalReporting]) {
@@ -5514,7 +5517,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setCommission(oe, ifDouble(isPendingOrder, 0, OrderCommission()));
          oe.setProfit    (oe, ifDouble(isPendingOrder, 0, OrderProfit()));
 
-         if (IsLogInfo()) logInfo("OrderModifyEx(31)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
+         if (IsLogDebug()) logDebug("OrderModifyEx(31)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
          if (!__isTesting) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
          return(!_bool(Order.HandleError("OrderModifyEx(32)", GetLastError(), oeFlags, oe), OrderPop("OrderModifyEx(33)")));
       }
@@ -5804,7 +5807,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
             oe.setRemainingTicket(oe, remainder);
             oe.setRemainingLots  (oe, openLots-lots);
          }
-         if (IsLogInfo()) logInfo("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
+         if (IsLogDebug()) logDebug("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
          if (!__isTesting)                                       PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
          else if (__ExecutionContext[EC.externalReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
@@ -6161,7 +6164,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
             oe.setRemainingLots  (oe, remainderLots                 );
          }
 
-         if (IsLogInfo()) logInfo("OrderCloseByEx(26)  "+ OrderCloseByEx.SuccessMsg(first, second, largerType, oe));
+         if (IsLogDebug()) logDebug("OrderCloseByEx(26)  "+ OrderCloseByEx.SuccessMsg(first, second, largerType, oe));
          if (!__isTesting) PlaySoundEx("OrderOk.wav");
          return(!oe.setError(oe, catch("OrderCloseByEx(27)", NULL, O_POP)));     // regular exit (NO_ERROR)
       }
@@ -6911,7 +6914,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
          if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(12)")));
 
-         if (IsLogInfo()) logInfo(StringConcatenate("OrderDeleteEx(13)  ", OrderDeleteEx.SuccessMsg(oe)));
+         if (IsLogDebug()) logDebug("OrderDeleteEx(13)  "+ OrderDeleteEx.SuccessMsg(oe));
          if (!__isTesting) PlaySoundEx("OrderOk.wav");
 
          return(!oe.setError(oe, catch("OrderDeleteEx(14)", NULL, O_POP)));   // regular exit (NO_ERROR)
@@ -7549,10 +7552,10 @@ string CreateTempFile(string path, string prefix="") {
  * Whether a symbol exists in "symbols.raw" of a directory.
  *
  * @param  string symbol               - symbol
- * @param  string directory [optional] - directory
- *                                        if empty:            the current trade server directory (default)
- *                                        if a relative path:  relative to the MQL sandbox/files directory
- *                                        if an absolute path: as is
+ * @param  string directory [optional] - directory, if:
+ *                                        empty:         the current trade server directory (default)
+ *                                        relative path: relative to the MQL sandbox directory
+ *                                        absolute path: as is
  *
  * @return bool - success status or FALSE in case of errors
  */
@@ -7622,12 +7625,12 @@ bool IsRawSymbol(string symbol, string directory = "") {
  * @param  int    digits               - digits
  * @param  string baseCurrency         - base currency
  * @param  string marginCurrency       - margin currency
- * @param  string directory [optional] - directory name
- *                                        if empty:            the current trade server directory (default)
- *                                        if a relative path:  relative to the MQL sandbox/files directory
- *                                        if an absolute path: as is
+ * @param  string directory [optional] - directory name, if
+ *                                        empty:            the current trade server directory (default)
+ *                                        a relative path:  relative to the MQL sandbox/files directory
+ *                                        an absolute path: as is
  *
- * @return int - id of the new symbol (field SYMBOL.id) or EMPTY (-1) in case of errors
+ * @return int - MT4 id of the new symbol (field SYMBOL.id) or EMPTY (-1) in case of errors
  */
 int CreateRawSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory = "") {
    if (!StringLen(symbol))                         return(_EMPTY(catch("CreateRawSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
@@ -7636,7 +7639,7 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
    if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateRawSymbol(4)  invalid parameter group: "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    if (directory == "0") directory = "";           // (string) NULL
 
-   if (IsLogInfo()) logInfo("CreateRawSymbol(5)  creating \""+ directory + ifString(directory=="", "", "/") + symbol +"\" (group \""+ group +"\")");
+   if (IsLogInfo()) logInfo("CreateRawSymbol(5)  creating symbol \""+ directory + ifString(directory=="", "", "/") + symbol +"\" (group \""+ group +"\")");
 
    int   groupIndex;
    color groupColor = CLR_NONE;
@@ -7785,10 +7788,10 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
  * Add a symbol to "symbols.raw" of the specified directory and insert it at the correct position.
  *
  * @param  SYMBOL symbol               - symbol
- * @param  string directory [optional] - directory name
- *                                        if empty:            the current trade server directory (default)
- *                                        if a relative path:  relative to the MQL sandbox/files directory
- *                                        if an absolute path: as is
+ * @param  string directory [optional] - directory name, if:
+ *                                        empty:            the current trade server directory (default)
+ *                                        a relative path:  relative to the MQL sandbox/files directory
+ *                                        an absolute path: as is
  * @return bool - success status
  */
 bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
@@ -7798,31 +7801,31 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
    if (directory == "0") directory = "";           // (string) NULL
 
    if (directory == "") {                          // current trade server, use MQL::FileOpenHistory()
-      if (!UseTradeServerPath(GetAccountServerPath(), "InsertRawSymbol(3)")) return(false);
+      if (!InitTradeServerPath(GetAccountServerPath())) return(false);
 
       // open "symbols.raw"
       filename = "symbols.raw";
       int hFile = FileOpenHistory(filename, FILE_READ|FILE_WRITE|FILE_BIN);
       int error = GetLastError();
-      if (error || hFile <= 0) return(!catch("InsertRawSymbol(4)->FileOpenHistory(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (error || hFile <= 0) return(!catch("InsertRawSymbol(3)->FileOpenHistory(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
    else if (!IsAbsolutePath(directory)) {          // relative sandbox path, use MQL::FileOpen()
-      if (!UseTradeServerPath(directory, "InsertRawSymbol(5)")) return(false);
+      if (!InitTradeServerPath(directory)) return(false);
 
       // open "symbols.raw"
       filename = directory +"/symbols.raw";
       hFile = FileOpen(filename, FILE_READ|FILE_WRITE|FILE_BIN);
       error = GetLastError();
-      if (error || hFile <= 0) return(!catch("InsertRawSymbol(6)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (error || hFile <= 0) return(!catch("InsertRawSymbol(4)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
    else {                                          // absolute path, use Expander
-      return(!catch("InsertRawSymbol(7)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("InsertRawSymbol(5)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    // check file size
    int fileSize = FileSize(hFile);
    if (fileSize % SYMBOL_size != 0) {
-      FileClose(hFile); return(!catch("InsertRawSymbol(8)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      FileClose(hFile); return(!catch("InsertRawSymbol(6)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
    int symbolsSize = fileSize/SYMBOL_size, maxId=-1;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -7831,17 +7834,17 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
    if (fileSize > 0) {
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
       error = GetLastError();
-      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertRawSymbol(9)  error reading \""+ filename +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
+      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertRawSymbol(7)  error reading \""+ filename +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
 
       // make sure the new symbol doesn't already exist, and find largest symbol id
       for (int i=0; i < symbolsSize; i++) {
-         if (StrCompareI(symbols_Name(symbols, i), symbolName)) { FileClose(hFile); return(!catch("InsertRawSymbol(10)   symbol \""+ symbols_Name(symbols, i) +"\" already exists", ERR_RUNTIME_ERROR)); }
+         if (StrCompareI(symbols_Name(symbols, i), symbolName)) { FileClose(hFile); return(!catch("InsertRawSymbol(8)   symbol \""+ symbols_Name(symbols, i) +"\" already exists", ERR_RUNTIME_ERROR)); }
          maxId = Max(maxId, symbols_Id(symbols, i));
       }
    }
 
    // set new symbol id and append the new symbol to the end
-   if (symbol_SetId(symbol, maxId+1) == -1) { FileClose(hFile); return(!catch("InsertRawSymbol(11)->symbol_SetId() => -1", ERR_RUNTIME_ERROR)); }
+   if (symbol_SetId(symbol, maxId+1) == -1) { FileClose(hFile); return(!catch("InsertRawSymbol(9)->symbol_SetId() => -1", ERR_RUNTIME_ERROR)); }
    ArrayResize(symbols, (symbolsSize+1)*SYMBOL_intSize);
    i = symbolsSize;
    symbolsSize++;
@@ -7850,16 +7853,16 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
    CopyMemory(dest, src, SYMBOL_size);
 
    // sort symbols and save them to disk                       // TODO: synchronize "symbols.sel" (or delete?)
-   if (!SortSymbols(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertRawSymbol(12)->SortSymbols() => FALSE", ERR_RUNTIME_ERROR)); }
+   if (!SortSymbols(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertRawSymbol(10)->SortSymbols() => FALSE", ERR_RUNTIME_ERROR)); }
 
-   if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);      return(!catch("InsertRawSymbol(13)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
+   if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);      return(!catch("InsertRawSymbol(11)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
    int elements = symbolsSize * SYMBOL_size / 4;
    ints  = FileWriteArray(hFile, symbols, 0, elements);
    error = GetLastError();
    FileClose(hFile);
-   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(14)  error writing SYMBOL[] to \""+ filename +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL_size +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
+   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(12)  error writing SYMBOL[] to \""+ filename +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL_size +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
 
-   return(!catch("InsertRawSymbol(15)"));
+   return(!catch("InsertRawSymbol(13)"));
 }
 
 
@@ -7886,27 +7889,27 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
    ArrayCopy(sgs_copy, sgs);
 
    if (directory == "") {                          // current trade server, use MQL::FileOpenHistory()
-      if (!UseTradeServerPath(GetAccountServerPath(), "SaveSymbolGroups(3)")) return(false);
+      if (!InitTradeServerPath(GetAccountServerPath())) return(false);
 
       // open "symgroups.raw"
       string filename = "symgroups.raw";
       int hFile = FileOpenHistory(filename, FILE_WRITE|FILE_BIN);
       int error = GetLastError();
-      if (IsError(error) || hFile <= 0) return(!catch("SaveSymbolGroups(4)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0) return(!catch("SaveSymbolGroups(3)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
 
    else if (!IsAbsolutePath(directory)) {          // relative sandbox path, use MQL::FileOpen()
-      if (!UseTradeServerPath(directory, "SaveSymbolGroups(5)")) return(false);
+      if (!InitTradeServerPath(directory)) return(false);
 
       // open "symgroups.raw"
       filename = directory +"/symgroups.raw";
       hFile = FileOpen(filename, FILE_WRITE|FILE_BIN);
       error = GetLastError();
-      if (IsError(error) || hFile <= 0) return(!catch("SaveSymbolGroups(6)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0) return(!catch("SaveSymbolGroups(4)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
 
    else {                                          // absolute path, use Expander
-      return(!catch("SaveSymbolGroups(7)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("SaveSymbolGroups(5)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    // write "symgroups.raw"
@@ -7914,7 +7917,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
    int ints = FileWriteArray(hFile, sgs_copy, 0, arraySize);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(8)  error writing SYMBOL_GROUPs to \""+ filename +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(6)  error writing SYMBOL_GROUPs to \""+ filename +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
 
    ArrayResize(sgs_copy, 0);
    return(true);

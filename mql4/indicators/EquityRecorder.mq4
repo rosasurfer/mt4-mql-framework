@@ -64,15 +64,15 @@ int onInit() {
    // validate inputs
    // HistoryDirectory
    historyDirectory = StrTrim(HistoryDirectory);
-   if (IsAbsolutePath(historyDirectory))                       return(catch("onInit(1)  illegal input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (illegal directory name)", ERR_INVALID_INPUT_PARAMETER));
+   if (IsAbsolutePath(historyDirectory))                 return(catch("onInit(1)  illegal input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (illegal directory name)", ERR_INVALID_INPUT_PARAMETER));
    int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
-   if (StrContainsChars(historyDirectory, illegalChars))       return(catch("onInit(2)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (invalid directory name)", ERR_INVALID_INPUT_PARAMETER));
+   if (StrContainsChars(historyDirectory, illegalChars)) return(catch("onInit(2)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (invalid directory name)", ERR_INVALID_INPUT_PARAMETER));
    historyDirectory = StrReplace(historyDirectory, "\\", "/");
-   if (StrStartsWith(historyDirectory, "/"))                   return(catch("onInit(3)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
-   if (!UseTradeServerPath(historyDirectory, "onInit(4)"))     return(last_error);
+   if (StrStartsWith(historyDirectory, "/"))             return(catch("onInit(3)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
+   if (!InitTradeServerPath(historyDirectory))           return(last_error);
 
    // HistoryFormat
-   if (HistoryFormat!=400 && HistoryFormat!=401)               return(catch("onInit(5)  invalid input parameter HistoryFormat: "+ HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
+   if (HistoryFormat!=400 && HistoryFormat!=401)         return(catch("onInit(4)  invalid input parameter HistoryFormat: "+ HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
    historyFormat = HistoryFormat;
 
    // setup a chart ticker (online only)
@@ -80,7 +80,7 @@ int onInit() {
       int hWnd = __ExecutionContext[EC.hChart];
       int millis = 1000;                                 // a virtual tick every second (1000 milliseconds)
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!__tickTimerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!__tickTimerId) return(catch("onInit(5)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // indicator labels and display options
@@ -88,8 +88,7 @@ int onInit() {
    indicatorName = ProgramName();
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);
-
-   return(catch("onInit(7)"));
+   return(catch("onInit(6)"));
 }
 
 
