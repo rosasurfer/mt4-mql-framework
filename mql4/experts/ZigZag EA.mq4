@@ -292,7 +292,6 @@ int      open.type;
 datetime open.time;
 double   open.price;
 double   open.priceVirt;
-double   open.stoploss;
 double   open.slippage;
 double   open.swap;
 double   open.commission;
@@ -791,19 +790,6 @@ int GetZigZagTrend(int bar) {
 }
 
 
-/**
- * Get a ZigZag channel value at the specified bar offset.
- *
- * @param  int bar  - bar offset
- * @param  int mode - one of: ZigZag.MODE_UPPER_BAND | ZigZag.MODE_LOWER_BAND
- *
- * @return double - channel value or NULL (0) in case of errors
- */
-double GetZigZagChannel(int bar, int mode) {
-   return(icZigZag(NULL, ZigZag.Periods, mode, bar));
-}
-
-
 #define MODE_TRADESERVER   1
 #define MODE_STRATEGY      2
 
@@ -1052,29 +1038,26 @@ bool StartInstance(int signal) {
    // open a new position
    int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
-   double   stopLoss    = CalculateStopLoss(signal);
-   double   takeProfit  = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ instance.id;
    int      magicNumber = CalculateMagicNumber();
    color    marker      = ifInt(!type, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    int ticket, oeFlags, oe[];
-   if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, stopLoss, takeProfit, marker, oe);
-   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, marker, oeFlags, oe);
+   if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, NULL, NULL, marker, oe);
+   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
    open.ticket       = ticket;
    open.type         = type;
-   open.time         = oe.OpenTime  (oe);
-   open.price        = oe.OpenPrice (oe);
+   open.time         = oe.OpenTime(oe);
+   open.price        = oe.OpenPrice(oe);
    open.priceVirt    = Bid;
-   open.stoploss     = oe.StopLoss  (oe);
-   open.slippage     = oe.Slippage  (oe);
-   open.swap         = oe.Swap      (oe);
+   open.slippage     = oe.Slippage(oe);
+   open.swap         = oe.Swap(oe);
    open.commission   = oe.Commission(oe);
-   open.grossProfit  = oe.Profit    (oe);
+   open.grossProfit  = oe.Profit(oe);
    open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
    open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PointValue(Lots);
@@ -1154,15 +1137,13 @@ bool ReverseInstance(int signal) {
    // open a new position
    int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
-   double   stopLoss    = CalculateStopLoss(signal);
-   double   takeProfit  = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ instance.id;
    int      magicNumber = CalculateMagicNumber();
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, stopLoss, takeProfit, marker, oe);
-   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, marker, oeFlags, oe);
+   if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, NULL, NULL, marker, oe);
+   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the new position data
@@ -1171,7 +1152,6 @@ bool ReverseInstance(int signal) {
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
    open.priceVirt    = Bid;
-   open.stoploss     = stopLoss;
    open.slippage     = oe.Slippage  (oe);
    open.swap         = oe.Swap      (oe);
    open.commission   = oe.Commission(oe);
@@ -1205,33 +1185,6 @@ bool ReverseInstance(int signal) {
    SS.PLStats();
 
    return(SaveStatus());
-}
-
-
-/**
- * Calculate a desaster stop for a position. The stop is put behind the Donchian channel band opposite to the trade direction.
- *
- * @param  int direction - trade direction
- *
- * @return double - SL value or NULL (0) in case of errors
- */
-double CalculateStopLoss(int direction) {
-   if (last_error != NULL)                                return(NULL);
-   if (direction!=SIGNAL_LONG && direction!=SIGNAL_SHORT) return(!catch("CalculateStopLoss(1)  "+ instance.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-
-   double channelBand = GetZigZagChannel(0, ifInt(direction==SIGNAL_LONG, ZigZag.MODE_LOWER_BAND, ZigZag.MODE_UPPER_BAND));
-   if (!channelBand) return(NULL);
-
-   // calculate a min. distance from the channel
-   double dist1    = MathAbs(Bid-channelBand) * 0.2;        // that's min. 20% of the current price distance...
-   double dist2    = 4 * (Ask-Bid);                         // and min. 4 times the current spread
-   double minDist  = MathMax(dist1, dist2);
-
-   // move stoploss this min. distance away
-   if (direction == SIGNAL_LONG) double stoploss = channelBand - minDist;
-   else                                 stoploss = channelBand + minDist;
-
-   return(NormalizeDouble(stoploss, Digits));
 }
 
 
@@ -1412,7 +1365,7 @@ bool UpdateStatus() {
  * @return string - log message or an empty string in case of errors
  */
 string UpdateStatus.PositionCloseMsg(int &error) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("Z.869") was [unexpectedly ]closed [by SL ]at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("Z.869") was [unexpectedly ]closed at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
    error = NO_ERROR;
 
    int    ticket     = OrderTicket();
@@ -1420,43 +1373,20 @@ string UpdateStatus.PositionCloseMsg(int &error) {
    double lots       = OrderLots();
    double openPrice  = OrderOpenPrice();
    double closePrice = OrderClosePrice();
-   bool   closedBySl = IsClosedBySL(open.stoploss);
 
    string sType       = OperationTypeDescription(type);
    string sOpenPrice  = NumberToStr(openPrice, PriceFormat);
    string sClosePrice = NumberToStr(closePrice, PriceFormat);
-   string sUnexpected = ifString(closedBySl || __CoreFunction==CF_INIT || (__isTesting && __CoreFunction==CF_DEINIT), "", "unexpectedly ");
-   string sBySL       = ifString(closedBySl, "by SL ", "");
-   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ instance.name +"\") was "+ sUnexpected +"closed "+ sBySL +"at "+ sClosePrice;
+   string sUnexpected = ifString(__CoreFunction==CF_INIT || (__CoreFunction==CF_DEINIT && __isTesting), "", "unexpectedly ");
+   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ instance.name +"\") was "+ sUnexpected +"closed at "+ sClosePrice;
 
    string sStopout = "";
    if (StrStartsWithI(OrderComment(), "so:")) {       error = ERR_MARGIN_STOPOUT; sStopout = ", "+ OrderComment(); }
-   else if (closedBySl)                               error = ERR_ORDER_CHANGED;
    else if (__CoreFunction==CF_INIT)                  error = NO_ERROR;
-   else if (__isTesting && __CoreFunction==CF_DEINIT) error = NO_ERROR;
+   else if (__CoreFunction==CF_DEINIT && __isTesting) error = NO_ERROR;
    else                                               error = ERR_CONCURRENT_MODIFICATION;
 
    return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
-}
-
-
-/**
- * Whether the currently selected order was closed by the specified stoploss.
- *
- * @param  double stoploss - the stoploss price
- *
- * @return bool
- */
-bool IsClosedBySL(double stoploss) {
-   bool closedBySL = false;
-
-   if (stoploss && OrderType()<=OP_SELL && OrderCloseTime()) {
-      if      (StrEndsWithI(OrderComment(), "[sl]"))  closedBySL = true;
-      else if (StrStartsWithI(OrderComment(), "so:")) closedBySL = false;
-      else if (OrderType() == OP_BUY)                 closedBySL = LE(OrderClosePrice(), stoploss, Digits);
-      else                                            closedBySL = GE(OrderClosePrice(), stoploss, Digits);
-   }
-   return(closedBySL);
 }
 
 
@@ -1538,7 +1468,6 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    open.time         = NULL;
    open.price        = NULL;
    open.priceVirt    = NULL;
-   open.stoploss     = NULL;
    open.slippage     = NULL;
    open.swap         = NULL;
    open.commission   = NULL;
@@ -1940,7 +1869,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.time",                   /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
    WriteIniString(file, section, "open.priceVirt",              /*double  */ DoubleToStr(open.priceVirt, Digits));
-   WriteIniString(file, section, "open.stoploss",               /*double  */ DoubleToStr(open.stoploss, Digits));
    WriteIniString(file, section, "open.slippage",               /*double  */ DoubleToStr(open.slippage, Digits));
    WriteIniString(file, section, "open.swap",                   /*double  */ DoubleToStr(open.swap, 2));
    WriteIniString(file, section, "open.commission",             /*double  */ DoubleToStr(open.commission, 2));
@@ -2161,7 +2089,6 @@ bool ReadStatus() {
    open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
    open.price                  = GetIniDouble (file, section, "open.price"       );                   // double   open.price        = 1.24363
    open.priceVirt              = GetIniDouble (file, section, "open.priceVirt"   );                   // double   open.priceVirt    = 1.24363
-   open.stoploss               = GetIniDouble (file, section, "open.stoploss"    );                   // double   open.stoploss     = 1.24363
    open.slippage               = GetIniDouble (file, section, "open.slippage"    );                   // double   open.slippage     = 0.00002
    open.swap                   = GetIniDouble (file, section, "open.swap"        );                   // double   open.swap         = -1.23
    open.commission             = GetIniDouble (file, section, "open.commission"  );                   // double   open.commission   = -5.50
@@ -2362,7 +2289,6 @@ bool SynchronizeStatus() {
             open.time      = OrderOpenTime();
             open.price     = OrderOpenPrice();
             open.priceVirt = open.price;
-            open.stoploss  = OrderStopLoss();
             open.slippage  = NULL;                                   // open PnL numbers will auto-update in the following UpdateStatus() call
          }
          else if (OrderTicket() != open.ticket) {
@@ -3015,7 +2941,6 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
    oe.setLots      (oe, lots);
    oe.setOpenTime  (oe, open.time);
    oe.setOpenPrice (oe, open.price);
-   oe.setStopLoss  (oe, open.stoploss);
    oe.setCloseTime (oe, Tick.time);
    oe.setClosePrice(oe, closePrice);
    oe.setProfit    (oe, profit);
