@@ -1858,20 +1858,10 @@ bool SaveStatus() {
    if (!instance.id || StrTrim(Instance.ID)=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
    if (IsTestInstance() && !__isTesting)         return(true);  // don't change the status file of a finished test
 
-   if (__isTesting && test.reduceStatusWrites) {               // in tester skip most writes except file creation, instance stop and test end
+   if (__isTesting && test.reduceStatusWrites) {                // in tester skip most writes except file creation, instance stop and test end
       static bool saved = false;
       if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
-   }
-   int _digits = MathMax(Digits, 2);                           // transform Digits=1 to 2 (for some indices)
-   string punit = "", sSpread = "";
-   if (_digits > 2) {
-      punit = "pip";
-      sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, 1);
-   }
-   else {
-      punit = "point";
-      sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)*Point, 2);
    }
 
    string section="", separator="", file=GetStatusFilename();
@@ -1884,6 +1874,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "Created", GmtTimeFormat(instance.created, "%a, %Y.%m.%d %H:%M:%S") + separator);         // conditional section separator
 
    if (__isTesting) {
+      string sSpread = "";
+      if (MathMax(Digits, 2) > 2) sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, 1);                   // transform Digits=1 to 2 (for some indices)
+      else                        sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)*Point, 2);
       WriteIniString(file, section, "Test.Range",    "?");
       WriteIniString(file, section, "Test.Period",   PeriodDescription());
       WriteIniString(file, section, "Test.BarModel", BarModelDescription(__Test.barModel));
@@ -1925,19 +1918,19 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ DoubleToStr(instance.openNetProfitP, Digits));
    WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ DoubleToStr(instance.closedNetProfitP, Digits));
-   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfitP, Digits), 12) +" ; in "+ punit +" after all costs (net)");
+   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfitP, Digits), 12) +" ; in full point after all costs (net)");
    WriteIniString(file, section, "instance.maxNetProfitP",      /*double  */ DoubleToStr(instance.maxNetProfitP, Digits));
    WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ DoubleToStr(instance.maxNetDrawdownP, Digits) + CRLF);
 
    WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ DoubleToStr(instance.openGrossProfitP, Digits));
    WriteIniString(file, section, "instance.closedGrossProfitP", /*double  */ DoubleToStr(instance.closedGrossProfitP, Digits));
-   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalGrossProfitP, Digits), 10) +" ; in "+ punit +" after spread but without any other costs (gross)");
+   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalGrossProfitP, Digits), 10) +" ; in full point after spread but without any other costs (gross)");
    WriteIniString(file, section, "instance.maxGrossProfitP",    /*double  */ DoubleToStr(instance.maxGrossProfitP, Digits));
    WriteIniString(file, section, "instance.maxGrossDrawdownP",  /*double  */ DoubleToStr(instance.maxGrossDrawdownP, Digits) + CRLF);
 
    WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
    WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; virtual PnL in "+ punit +" without any costs (assumes exact execution)");
+   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; virtual PnL in full point without any costs (assumes exact execution)");
    WriteIniString(file, section, "instance.maxVirtProfitP",     /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtDrawdownP",   /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits) + CRLF);
 
@@ -3048,7 +3041,7 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
  */
 void SS.All() {
    SS.InstanceName();
-   SS.Lots();
+   SS.OpenLots();
    SS.StartStopConditions();
    SS.TotalPL();
    SS.PLStats();
@@ -3072,10 +3065,10 @@ void SS.InstanceName() {
 
 
 /**
- * ShowStatus: Update the string representation of the lotsize.
+ * ShowStatus: Update the string representation of the open position size.
  */
-void SS.Lots() {
-   sLots = NumberToStr(Lots, ".+");
+void SS.OpenLots() {
+   sLots = NumberToStr(Lots, ".+") +" lot";
 }
 
 
@@ -3175,10 +3168,11 @@ int ShowStatus(int error = NO_ERROR) {
 
    string text = StringConcatenate(sTradingModeStatus[tradingMode], ProgramName(), "    ", sStatus, sError, NL,
                                                                                                             NL,
-                                  "Lots:      ", sLots,                                                     NL,
-                                  "Start:    ",  sStartConditions,                                          NL,
-                                  "Stop:     ",  sStopConditions,                                           NL,
-                                  "Profit:   ",  sInstanceTotalNetPL, "  ", sInstancePlStats,               NL
+                                  "Start:    ", sStartConditions,                                           NL,
+                                  "Stop:     ", sStopConditions,                                            NL,
+                                  "Open:    ",  sLots,                                                      NL,
+                                  "Closed:  ",  "23 trades",                                                NL,
+                                  "Profit:   ", sInstanceTotalNetPL, "  ", sInstancePlStats,                NL
    );
 
    // 3 lines margin-top for instrument and indicator legends

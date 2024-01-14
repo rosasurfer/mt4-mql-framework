@@ -132,7 +132,7 @@ int afterInit() {                                  // open the log file (flushes
 
 
 /**
- * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
+ * Create the status display box. Consists of overlapping rectangles made of font "Webdings", char "g".
  * Called from onInit() only.
  *
  * @return bool - success status
@@ -140,7 +140,7 @@ int afterInit() {                                  // open the log file (flushes
 bool CreateStatusBox() {
    if (!__isChart) return(true);
 
-   int x[]={2, 70, 120}, y=50, fontSize=47, sizeofX=ArraySize(x);
+   int x[]={2, 88}, y=50, fontSize=53, sizeofX=ArraySize(x);
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {

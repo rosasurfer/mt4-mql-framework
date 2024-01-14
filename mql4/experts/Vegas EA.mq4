@@ -1311,26 +1311,16 @@ string FindStatusFile(int instanceId, bool isTest) {
 bool SaveStatus() {
    if (last_error != NULL)                       return(false);
    if (!instance.id || StrTrim(Instance.ID)=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestInstance() && !__isTesting)         return(true);  // don't change the status file of a finished test
+   if (IsTestInstance() && !__isTesting)         return(true); // don't change the status file of a finished test
 
-   if (__isTesting && test.reduceStatusWrites) {                // in tester skip most writes except file creation, instance stop and test end
+   if (__isTesting && test.reduceStatusWrites) {               // in tester skip most writes except file creation, instance stop and test end
       static bool saved = false;
       if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
    }
-   int _digits = MathMax(Digits, 2);                           // transform Digits=1 to 2 (for some indices)
-   string punit = "", sSpread = "";
-   if (_digits > 2) {
-      punit = "pip";
-      sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, 1);
-   }
-   else {
-      punit = "point";
-      sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)*Point, 2);
-   }
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;            // an empty line as additional section separator
+   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;           // an empty line as additional section separator
 
    // [General]
    section = "General";
@@ -1339,6 +1329,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "Created", GmtTimeFormat(instance.created, "%a, %Y.%m.%d %H:%M:%S") + separator);   // conditional section separator
 
    if (__isTesting) {
+      string sSpread = "";
+      if (MathMax(Digits, 2) > 2) sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, 1);             // transform Digits=1 to 2 (for some indices)
+      else                        sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)*Point, 2);
       WriteIniString(file, section, "Test.Range",    "?");
       WriteIniString(file, section, "Test.Period",   PeriodDescription());
       WriteIniString(file, section, "Test.BarModel", BarModelDescription(__Test.barModel));
@@ -1372,7 +1365,7 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
    WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; virtual PnL in "+ punit +" without any costs (assumes exact execution)");
+   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; virtual PnL in full point without any costs (assumes exact execution)");
    WriteIniString(file, section, "instance.maxVirtProfitP",    /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtDrawdownP",  /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits) + CRLF);
 
@@ -1792,7 +1785,7 @@ string SignalToStr(int signal) {
  */
 void SS.All() {
    SS.InstanceName();
-   SS.Lots();
+   SS.OpenLots();
    SS.TotalPL();
    SS.PLStats();
 }
@@ -1807,10 +1800,10 @@ void SS.InstanceName() {
 
 
 /**
- * ShowStatus: Update the string representation of the lotsize.
+ * ShowStatus: Update the string representation of the open position size.
  */
-void SS.Lots() {
-   sLots = NumberToStr(Lots, ".+");
+void SS.OpenLots() {
+   sLots = NumberToStr(Lots, ".+") +" lot";
 }
 
 
@@ -1869,7 +1862,8 @@ int ShowStatus(int error = NO_ERROR) {
 
    string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                   NL,
                                                                                              NL,
-                                  "Lots:     ", sLots,                                       NL,
+                                  "Open:    ",  sLots,                                       NL,
+                                  "Closed:  ",  "23 trades",                                 NL,
                                   "Profit:   ", sInstanceTotalNetPL, "  ", sInstancePlStats, NL
    );
 
