@@ -15,7 +15,7 @@
  *
  * Features
  * --------
- * • A finished test can be loaded onto an online chart for trade inspection and further analysis.
+ * • A finished test can be loaded into an online chart for trade inspection and further analysis.
  *
  * • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
  *   trading related deviations that impact test or real results (tester bugs, spread, slippage, swap, commission).
@@ -115,7 +115,7 @@ datetime instance.created;
 int      instance.status;
 bool     instance.isTest;
 
-double   instance.openNetProfit;                   // PnL in money (net)
+double   instance.openNetProfit;                   // real PnL in money after all costs (net)
 double   instance.closedNetProfit;
 double   instance.totalNetProfit;
 double   instance.maxNetProfit;                    // max. observed profit:   0...+n

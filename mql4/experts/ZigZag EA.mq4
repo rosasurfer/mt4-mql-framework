@@ -44,8 +44,10 @@
  *
  *
  * TODO:
+ *  - status: display trades and averages
+ *  - status: option to toggle between metrics
+ *  - open/closed trades: option to toggle between variants
  *  - add var recorder.internalSymbol and store/restore value
- *  - Grid: 0.50er at 185 level
  *  - tester: ZigZag EA cannot yet run with bar model MODE_BAROPEN
  *
  *  - time functions
