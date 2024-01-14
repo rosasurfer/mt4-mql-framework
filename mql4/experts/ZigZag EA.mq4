@@ -183,7 +183,7 @@ extern string Instance.ID          = "";                    // instance to load 
 extern string TradingMode          = "regular* | virtual";  // may be shortened
 
 extern int    ZigZag.Periods       = 30;
-extern double Lots                 = 0.1;
+extern double Lots                 = 1.0;
 extern string StartConditions      = "";                    // @time(datetime|time)
 extern string StopConditions       = "";                    // @time(datetime|time)          // TODO: @signal([long|short]), @breakeven(on-profit), @trail([on-profit:]stepsize)
 extern double TakeProfit           = 0;                     // TP value
@@ -234,8 +234,8 @@ extern bool   ShowProfitInPercent  = true;                  // whether PL is dis
 #define METRIC_DAILY_UNITS_NET      8
 
 #define H_TICKET                    0           // trade history indexes
-#define H_LOTS                      1
-#define H_OPENTYPE                  2
+#define H_OPENTYPE                  1
+#define H_LOTS                      2
 #define H_OPENTIME                  3
 #define H_OPENPRICE                 4
 #define H_OPENPRICE_VIRT            5
@@ -289,6 +289,7 @@ double   instance.maxVirtDrawdownP;
 // order data
 int      open.ticket;                           // one open position
 int      open.type;
+double   open.lots;
 datetime open.time;
 double   open.price;
 double   open.priceVirt;
@@ -547,7 +548,7 @@ int ShowOpenOrders() {
    int openOrders = 0;
 
    if (open.ticket != NULL) {
-      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(Lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
+      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
       if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(EMPTY);
       ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
       ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
@@ -1051,6 +1052,7 @@ bool StartInstance(int signal) {
    // store the position data
    open.ticket       = ticket;
    open.type         = type;
+   open.lots         = oe.Lots(oe); SS.OpenLots();
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
    open.priceVirt    = Bid;
@@ -1060,7 +1062,7 @@ bool StartInstance(int signal) {
    open.grossProfit  = oe.Profit(oe);
    open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PointValue(Lots);
+   open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PointValue(open.lots);
    open.virtProfitP  = 0;
 
    // update PL numbers
@@ -1120,9 +1122,9 @@ bool ReverseInstance(int signal) {
 
       // close the existing position
       bool success;
-      if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, Lots, CLR_NONE, oe);
+      if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_NONE, oe);
       else                                    success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
-      if (!success) return(!SetLastError(oe.Error(oe)));    // TODO: the SL may just have been triggered but F_ERR_INVALID_TRADE_PARAMETERS causes OrderCloseEx() to return incomplete data
+      if (!success) return(!SetLastError(oe.Error(oe)));
 
       open.slippage    += oe.Slippage(oe);
       open.swap         = oe.Swap(oe);
@@ -1149,16 +1151,17 @@ bool ReverseInstance(int signal) {
    // store the new position data
    open.ticket       = ticket;
    open.type         = type;
-   open.time         = oe.OpenTime  (oe);
-   open.price        = oe.OpenPrice (oe);
+   open.lots         = oe.Lots(oe); SS.OpenLots();
+   open.time         = oe.OpenTime(oe);
+   open.price        = oe.OpenPrice(oe);
    open.priceVirt    = Bid;
-   open.slippage     = oe.Slippage  (oe);
-   open.swap         = oe.Swap      (oe);
+   open.slippage     = oe.Slippage(oe);
+   open.swap         = oe.Swap(oe);
    open.commission   = oe.Commission(oe);
-   open.grossProfit  = oe.Profit    (oe);
+   open.grossProfit  = oe.Profit(oe);
    open.grossProfitP = ifDouble(type==OP_BUY, oe.Bid(oe)-open.price, open.price-oe.Ask(oe));
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PointValue(Lots);
+   open.netProfitP   = open.grossProfitP + (open.swap + open.commission)/PointValue(open.lots);
    open.virtProfitP  = 0;
 
    // update PL numbers
@@ -1221,9 +1224,9 @@ bool StopInstance(int signal) {
       if (open.ticket > 0) {
          bool success;
          int oeFlags, oe[];
-         if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, Lots, CLR_NONE, oe);
+         if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_NONE, oe);
          else                                    success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
-         if (!success) return(!SetLastError(oe.Error(oe)));    // TODO: the SL may just have been triggered but F_ERR_INVALID_TRADE_PARAMETERS causes OrderCloseEx() to return incomplete data
+         if (!success) return(!SetLastError(oe.Error(oe)));
 
          open.slippage    += oe.Slippage(oe);
          open.swap         = oe.Swap(oe);
@@ -1309,7 +1312,7 @@ bool UpdateStatus() {
       open.swap         = 0;
       open.commission   = 0;
       open.grossProfitP = ifDouble(!open.type, Bid-open.price, open.price-Ask);
-      open.grossProfit  = open.grossProfitP * PointValue(Lots);
+      open.grossProfit  = open.grossProfitP * PointValue(open.lots);
       open.netProfit    = open.grossProfit;
       open.netProfitP   = open.grossProfitP;
       open.virtProfitP  = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
@@ -1324,7 +1327,7 @@ bool UpdateStatus() {
       open.netProfitP   = open.grossProfitP; if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(OrderLots());
       open.virtProfitP  = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
 
-      if (OrderCloseTime() != NULL) {     // now closed
+      if (OrderCloseTime() != NULL) {
          int error;
          if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!MoveCurrentPositionToHistory(OrderCloseTime(), OrderClosePrice(), OrderClosePrice()))                          return(false);
@@ -1434,8 +1437,8 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    int i = ArrayRange(history, 0);
    ArrayResize(history, i+1);
    history[i][H_TICKET         ] = open.ticket;
-   history[i][H_LOTS           ] = Lots;
    history[i][H_OPENTYPE       ] = open.type;
+   history[i][H_LOTS           ] = open.lots;
    history[i][H_OPENTIME       ] = open.time;
    history[i][H_OPENPRICE      ] = open.price;
    history[i][H_OPENPRICE_VIRT ] = open.priceVirt;
@@ -1465,6 +1468,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    // reset open position data
    open.ticket       = NULL;
    open.type         = NULL;
+   open.lots         = NULL; SS.OpenLots();
    open.time         = NULL;
    open.price        = NULL;
    open.priceVirt    = NULL;
@@ -1866,6 +1870,7 @@ bool SaveStatus() {
    // open order data
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
    WriteIniString(file, section, "open.type",                   /*int     */ open.type);
+   WriteIniString(file, section, "open.lots",                   /*double  */ NumberToStr(open.lots, ".+"));
    WriteIniString(file, section, "open.time",                   /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
    WriteIniString(file, section, "open.priceVirt",              /*double  */ DoubleToStr(open.priceVirt, Digits));
@@ -1959,11 +1964,11 @@ string SaveStatus.ConditionsToStr(string sConditions) {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int index) {
-   // result: ticket,lots,openType,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,grossProfitP,netProfit,netProfiP,virtProfitP
+   // result: ticket,openType,lots,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,grossProfitP,netProfit,netProfiP,virtProfitP
 
    int      ticket         = history[index][H_TICKET         ];
-   double   lots           = history[index][H_LOTS           ];
    int      openType       = history[index][H_OPENTYPE       ];
+   double   lots           = history[index][H_LOTS           ];
    datetime openTime       = history[index][H_OPENTIME       ];
    double   openPrice      = history[index][H_OPENPRICE      ];
    double   openPriceVirt  = history[index][H_OPENPRICE_VIRT ];
@@ -1979,7 +1984,7 @@ string SaveStatus.HistoryToStr(int index) {
    double   netProfitP     = history[index][H_NETPROFIT_P    ];
    double   virtProfitP    = history[index][H_VIRTPROFIT_P   ];
 
-   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceVirt, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceVirt, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(grossProfitP, Digits), ",", DoubleToStr(netProfit, 2), ",", DoubleToStr(netProfitP, Digits), ",", DoubleToStr(virtProfitP, Digits)));
+   return(StringConcatenate(ticket, ",", openType, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceVirt, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceVirt, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(grossProfitP, Digits), ",", DoubleToStr(netProfit, 2), ",", DoubleToStr(netProfitP, Digits), ",", DoubleToStr(virtProfitP, Digits)));
 }
 
 
@@ -2086,6 +2091,7 @@ bool ReadStatus() {
    // open order data
    open.ticket                 = GetIniInt    (file, section, "open.ticket"      );                   // int      open.ticket       = 123456
    open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 1
+   open.lots                   = GetIniDouble (file, section, "open.lots"        );                   // double   open.lots         = 0.01
    open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
    open.price                  = GetIniDouble (file, section, "open.price"       );                   // double   open.price        = 1.24363
    open.priceVirt              = GetIniDouble (file, section, "open.priceVirt"   );                   // double   open.priceVirt    = 1.24363
@@ -2183,14 +2189,14 @@ int ReadStatus.RestoreHistory(string key, string value) {
    if (IsLastError())                    return(EMPTY);
    if (!StrStartsWithI(key, "history.")) return(_EMPTY(catch("ReadStatus.RestoreHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
 
-   // history.i=ticket,lots,openType,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,grossProfitP,netProfit,netProfitP,virtProfitP
+   // history.i=ticket,openType,lots,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,grossProfitP,netProfit,netProfitP,virtProfitP
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(_EMPTY(catch("ReadStatus.RestoreHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.RestoreHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT)));
 
    int      ticket         = StrToInteger(values[H_TICKET         ]);
-   double   lots           =  StrToDouble(values[H_LOTS           ]);
    int      openType       = StrToInteger(values[H_OPENTYPE       ]);
+   double   lots           =  StrToDouble(values[H_LOTS           ]);
    datetime openTime       = StrToInteger(values[H_OPENTIME       ]);
    double   openPrice      =  StrToDouble(values[H_OPENPRICE      ]);
    double   openPriceVirt  =  StrToDouble(values[H_OPENPRICE_VIRT ]);
@@ -2206,7 +2212,7 @@ int ReadStatus.RestoreHistory(string key, string value) {
    double   netProfitP     =  StrToDouble(values[H_NETPROFIT_P    ]);
    double   virtProfitP    =  StrToDouble(values[H_VIRTPROFIT_P   ]);
 
-   return(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPriceVirt, closeTime, closePrice, closePriceVirt, slippage, swap, commission, grossProfit, grossProfitP, netProfit, netProfitP, virtProfitP));
+   return(History.AddRecord(ticket, openType, lots, openTime, openPrice, openPriceVirt, closeTime, closePrice, closePriceVirt, slippage, swap, commission, grossProfit, grossProfitP, netProfit, netProfitP, virtProfitP));
 }
 
 
@@ -2219,7 +2225,7 @@ int ReadStatus.RestoreHistory(string key, string value) {
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int History.AddRecord(int ticket, double lots, int openType, datetime openTime, double openPrice, double openPriceVirt, datetime closeTime, double closePrice, double closePriceVirt, double slippage, double swap, double commission, double grossProfit, double grossProfitP, double netProfit, double netProfitP, double virtProfitP) {
+int History.AddRecord(int ticket, int openType, double lots, datetime openTime, double openPrice, double openPriceVirt, datetime closeTime, double closePrice, double closePriceVirt, double slippage, double swap, double commission, double grossProfit, double grossProfitP, double netProfit, double netProfitP, double virtProfitP) {
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
@@ -2240,8 +2246,8 @@ int History.AddRecord(int ticket, double lots, int openType, datetime openTime, 
 
    // insert the new data
    history[i][H_TICKET         ] = ticket;
-   history[i][H_LOTS           ] = lots;
    history[i][H_OPENTYPE       ] = openType;
+   history[i][H_LOTS           ] = lots;
    history[i][H_OPENTIME       ] = openTime;
    history[i][H_OPENPRICE      ] = openPrice;
    history[i][H_OPENPRICE_VIRT ] = openPriceVirt;
@@ -2993,7 +2999,9 @@ void SS.InstanceName() {
  * ShowStatus: Update the string representation of the open position size.
  */
 void SS.OpenLots() {
-   sLots = NumberToStr(Lots, ".+") +" lot";
+   if      (!open.lots)           sLots = "-";
+   else if (open.type == OP_LONG) sLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
+   else                           sLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
 }
 
 
@@ -3093,11 +3101,11 @@ int ShowStatus(int error = NO_ERROR) {
 
    string text = StringConcatenate(sTradingModeStatus[tradingMode], ProgramName(), "    ", sStatus, sError, NL,
                                                                                                             NL,
-                                  "Start:    ", sStartConditions,                                           NL,
-                                  "Stop:     ", sStopConditions,                                            NL,
-                                  "Open:    ",  sLots,                                                      NL,
-                                  "Closed:  ",  "23 trades",                                                NL,
-                                  "Profit:   ", sInstanceTotalNetPL, "  ", sInstancePlStats,                NL
+                                  "Start:    ",  sStartConditions,                                          NL,
+                                  "Stop:     ",  sStopConditions,                                           NL,
+                                  "Open:    ",   sLots,                                                     NL,
+                                  "Closed:  ",   "23 trades",                                               NL,
+                                  "Profit:    ", sInstanceTotalNetPL, "  ", sInstancePlStats,               NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
