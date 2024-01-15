@@ -7,7 +7,7 @@
 int onInit() {
    CreateStatusBox();
 
-   int digits = MathMax(Digits, 2); // transform Digits=1 to 2 (for some indices)
+   int digits = MathMax(Digits, 2);                // transform Digits=1 to 2 (for some indices)
    if (digits > 2) {
       pUnit       = "pip";
       pDigits     = 1;
@@ -149,7 +149,7 @@ int afterInit() {                                  // open the log file (flushes
 bool CreateStatusBox() {
    if (!__isChart) return(true);
 
-   int x[]={2, 60, 125}, y=50, fontSize=39, sizeofX=ArraySize(x);
+   int x[]={2, 66, 130}, y=50, fontSize=39, sizeofX=ArraySize(x);
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {

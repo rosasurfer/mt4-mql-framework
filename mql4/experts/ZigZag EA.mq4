@@ -44,7 +44,7 @@
  *
  *
  * TODO:
- *  - status: display trades and averages
+ *  - ZigZag: fix sum(history) mis-match on GBPJPY
  *  - status: option to toggle between metrics
  *  - open/closed trades: option to toggle between variants
  *  - add var recorder.internalSymbol and store/restore value
@@ -286,7 +286,7 @@ double   instance.totalVirtProfitP;
 double   instance.maxVirtProfitP;
 double   instance.maxVirtDrawdownP;
 
-// order data
+// open order data
 int      open.ticket;                           // one open position
 int      open.type;
 double   open.lots;
@@ -301,7 +301,13 @@ double   open.grossProfitP;
 double   open.netProfit;
 double   open.netProfitP;
 double   open.virtProfitP;
+
+// closed order data
 double   history[][17];                         // multiple closed positions
+double   history.avgNetProfit    = EMPTY_VALUE;
+double   history.avgNetProfitP   = EMPTY_VALUE;
+double   history.avgGrossProfitP = EMPTY_VALUE;
+double   history.avgVirtProfitP  = EMPTY_VALUE;
 
 // start conditions
 bool     start.time.condition;                  // whether a time condition is active
@@ -339,9 +345,12 @@ string   sInstanceTotalNetPL  = "";
 string   sInstancePlStats     = "";
 
 // other
+string   pUnit = "";
+int      pDigits;
+int      pMultiplier;
+int      orders.acceptableSlippage = 1;         // in MQL points
 string   tradingModeDescriptions[] = {"", "regular", "virtual"};
 string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote currency", "index points"};
-int      orders.acceptableSlippage = 1;         // in MQL points
 
 // debug settings, configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
@@ -1481,11 +1490,39 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    open.netProfit    = NULL;
    open.netProfitP   = NULL;
    open.virtProfitP  = NULL;
-
    SS.OpenLots();
+
+   // update trade stats
+   CalculateTradeStats();
    SS.ClosedTrades();
 
    return(!catch("MoveCurrentPositionToHistory(3)"));
+}
+
+
+/**
+ * Re-calculate trade statistics.
+ */
+void CalculateTradeStats() {
+   int size = ArrayRange(history, 0);
+
+   if (size > 0) {
+      double sum = 0;
+      for (int i=0; i < size; i++) sum += history[i][H_NETPROFIT];
+      history.avgNetProfit = sum/size;
+
+      sum = 0;
+      for (i=0; i < size; i++) sum += history[i][H_NETPROFIT_P];
+      history.avgNetProfitP = sum/size;
+
+      sum = 0;
+      for (i=0; i < size; i++) sum += history[i][H_GROSSPROFIT_P];
+      history.avgGrossProfitP = sum/size;
+
+      sum = 0;
+      for (i=0; i < size; i++) sum += history[i][H_VIRTPROFIT_P];
+      history.avgVirtProfitP = sum/size;
+   }
 }
 
 
@@ -1582,15 +1619,14 @@ int CreateInstanceId() {
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
 int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
-   string   sId = ifString(!instance.id, "???", instance.id);
-   int  _Digits = MathMax(Digits, 2);                                            // transform Digits=1 to 2 (for indices with Digits=1)
-   string punit = ifString(_Digits > 2, "pip", "point"), descrSuffix="";
+   string sId = ifString(!instance.id, "???", instance.id);
+   string descrSuffix = "";
 
    ready      = false;
    group      = "";
    baseValue  = EMPTY;
-   digits     = ifInt(_Digits > 2, 1, 2);                                        // store 1.23 as 1.23 point
-   multiplier = ifInt(_Digits > 2, Round(MathPow(10, _Digits & (~1))), 1);       // store 0.0123'4 as 123.4 pip
+   digits     = pDigits;
+   multiplier = pMultiplier;
 
    switch (id) {
       // --------------------------------------------------------------------------------------------------------------------
@@ -1598,23 +1634,22 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                      // "US500.123A"
          descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = 2;
-         baseValue   = EMPTY;
          multiplier  = 1;
          break;
 
       case METRIC_TOTAL_UNITS_VIRT:             // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         descrSuffix = ", "+ PeriodDescription() +", virtual PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", virtual PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_TOTAL_UNITS_GROSS:            // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
-         descrSuffix = ", "+ PeriodDescription() +", gross PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", gross PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_TOTAL_UNITS_NET:              // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"D";
-         descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       // --------------------------------------------------------------------------------------------------------------------
@@ -1622,23 +1657,22 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"E";
          descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = 2;
-         baseValue   = EMPTY;
          multiplier  = 1;
          break;
 
       case METRIC_DAILY_UNITS_VIRT:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
-         descrSuffix = ", "+ PeriodDescription() +", daily virtual PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", daily virtual PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_DAILY_UNITS_GROSS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"G";
-         descrSuffix = ", "+ PeriodDescription() +", daily gross PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", daily gross PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_DAILY_UNITS_NET:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"H";
-         descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       default:
@@ -1900,10 +1934,10 @@ bool SaveStatus() {
    }
 
    // cross-check stored instance stats
-   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" != "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("+ NumberToStr(netProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("SaveStatus(5)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
+   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("SaveStatus(5)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("  + NumberToStr(virtProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
 
    // start/stop conditions
    WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
@@ -3014,8 +3048,13 @@ void SS.OpenLots() {
  */
 void SS.ClosedTrades() {
    int size = ArrayRange(history, 0);
-   if (!size) sClosedTrades = "-";
-   else       sClosedTrades = size +" trades";
+   if (!size) {
+      sClosedTrades = "-";
+   }
+   else {
+      if (history.avgNetProfit == EMPTY_VALUE) CalculateTradeStats();
+      sClosedTrades = size +" trades    avg: "+ DoubleToStr(history.avgVirtProfitP * pMultiplier, pDigits) +" "+ pUnit;
+   }
 }
 
 
