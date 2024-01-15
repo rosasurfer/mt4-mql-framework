@@ -331,7 +331,8 @@ string   stop.profitPun.description = "";
 
 // cache vars to speed-up ShowStatus()
 string   sTradingModeStatus[] = {"", "", "Virtual "};
-string   sLots                = "";
+string   sOpenLots            = "";
+string   sClosedTrades        = "";
 string   sStartConditions     = "";
 string   sStopConditions      = "";
 string   sInstanceTotalNetPL  = "";
@@ -1468,7 +1469,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    // reset open position data
    open.ticket       = NULL;
    open.type         = NULL;
-   open.lots         = NULL; SS.OpenLots();
+   open.lots         = NULL;
    open.time         = NULL;
    open.price        = NULL;
    open.priceVirt    = NULL;
@@ -1480,6 +1481,9 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    open.netProfit    = NULL;
    open.netProfitP   = NULL;
    open.virtProfitP  = NULL;
+
+   SS.OpenLots();
+   SS.ClosedTrades();
 
    return(!catch("MoveCurrentPositionToHistory(3)"));
 }
@@ -2358,8 +2362,7 @@ bool SynchronizeStatus() {
    instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
    instance.maxVirtProfitP   = MathMax(instance.maxVirtProfitP,   instance.totalVirtProfitP);
    instance.maxVirtDrawdownP = MathMin(instance.maxVirtDrawdownP, instance.totalVirtProfitP);
-   SS.TotalPL();
-   SS.PLStats();
+   SS.All();
 
    if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize)
       return(SaveStatus());                                          // immediately save status if orders changed
@@ -2973,6 +2976,7 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
 void SS.All() {
    SS.InstanceName();
    SS.OpenLots();
+   SS.ClosedTrades();
    SS.StartStopConditions();
    SS.TotalPL();
    SS.PLStats();
@@ -2999,9 +3003,19 @@ void SS.InstanceName() {
  * ShowStatus: Update the string representation of the open position size.
  */
 void SS.OpenLots() {
-   if      (!open.lots)           sLots = "-";
-   else if (open.type == OP_LONG) sLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
-   else                           sLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
+   if      (!open.lots)           sOpenLots = "-";
+   else if (open.type == OP_LONG) sOpenLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
+   else                           sOpenLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
+}
+
+
+/**
+ * ShowStatus: Update the string summary of the closed trades.
+ */
+void SS.ClosedTrades() {
+   int size = ArrayRange(history, 0);
+   if (!size) sClosedTrades = "-";
+   else       sClosedTrades = size +" trades";
 }
 
 
@@ -3103,8 +3117,8 @@ int ShowStatus(int error = NO_ERROR) {
                                                                                                             NL,
                                   "Start:    ",  sStartConditions,                                          NL,
                                   "Stop:     ",  sStopConditions,                                           NL,
-                                  "Open:    ",   sLots,                                                     NL,
-                                  "Closed:  ",   "23 trades",                                               NL,
+                                  "Open:    ",   sOpenLots,                                                 NL,
+                                  "Closed:  ",   sClosedTrades,                                             NL,
                                   "Profit:    ", sInstanceTotalNetPL, "  ", sInstancePlStats,               NL
    );
 

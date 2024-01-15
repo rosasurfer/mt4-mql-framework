@@ -127,7 +127,7 @@ double   instance.totalVirtProfitP;
 double   instance.maxVirtProfitP;
 double   instance.maxVirtDrawdownP;
 
-// order data
+// open order data
 int      open.ticket;                              // one open position
 int      open.type;
 double   open.lots;
@@ -140,15 +140,23 @@ double   open.commission;
 double   open.grossProfit;
 double   open.netProfit;
 double   open.virtProfitP;
+
+// closed order data
 double   history[][15];                            // multiple closed positions
+double   history.avgNetProfit   = EMPTY_VALUE;
+double   history.avgVirtProfitP = EMPTY_VALUE;
 
 // cache vars to speed-up ShowStatus()
-string   sLots               = "";
+string   sOpenLots           = "";
+string   sClosedTrades       = "";
 string   sInstanceTotalNetPL = "";
 string   sInstancePlStats    = "";
 
 // other
 int      orders.acceptableSlippage = 1;            // in MQL points
+string   pUnit = "";
+int      pDigits;
+int      pMultiplier;
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause        = false;          // whether to pause a test after StopInstance()
@@ -734,67 +742,6 @@ int onPositionClose(string message, int error) {
 
 
 /**
- * Move the current open position to the trade history. Assumes the position is closed.
- *
- * @param datetime closeTime      - close time
- * @param double   closePrice     - close price
- * @param double   closePriceVirt - virtual close price
- *
- * @return bool - success status
- */
-bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double closePriceVirt) {
-   if (last_error != NULL)                    return(false);
-   if (instance.status != STATUS_PROGRESSING) return(!catch("MoveCurrentPositionToHistory(1)  "+ instance.name +" cannot process current position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!open.ticket)                          return(!catch("MoveCurrentPositionToHistory(2)  "+ instance.name +" no open position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
-
-   // update position data
-   open.virtProfitP = ifDouble(!open.type, closePriceVirt-open.priceVirt, open.priceVirt-closePriceVirt);
-
-   // add data to history
-   int i = ArrayRange(history, 0);
-   ArrayResize(history, i+1);
-   history[i][H_TICKET         ] = open.ticket;
-   history[i][H_OPENTYPE       ] = open.type;
-   history[i][H_LOTS           ] = open.lots;
-   history[i][H_OPENTIME       ] = open.time;
-   history[i][H_OPENPRICE      ] = open.price;
-   history[i][H_OPENPRICE_VIRT ] = open.priceVirt;
-   history[i][H_CLOSETIME      ] = closeTime;
-   history[i][H_CLOSEPRICE     ] = closePrice;
-   history[i][H_CLOSEPRICE_VIRT] = closePriceVirt;
-   history[i][H_SLIPPAGE       ] = open.slippage;
-   history[i][H_SWAP           ] = open.swap;
-   history[i][H_COMMISSION     ] = open.commission;
-   history[i][H_GROSSPROFIT    ] = open.grossProfit;
-   history[i][H_NETPROFIT      ] = open.netProfit;
-   history[i][H_VIRTPROFIT_P   ] = open.virtProfitP;
-
-   // update PL numbers
-   instance.openNetProfit   = 0;
-   instance.openVirtProfitP = 0;
-
-   instance.closedNetProfit   += open.netProfit;
-   instance.closedVirtProfitP += open.virtProfitP;
-
-   // reset open position data
-   open.ticket      = NULL;
-   open.type        = NULL;
-   open.lots        = NULL; SS.OpenLots();
-   open.time        = NULL;
-   open.price       = NULL;
-   open.priceVirt   = NULL;
-   open.slippage    = NULL;
-   open.swap        = NULL;
-   open.commission  = NULL;
-   open.grossProfit = NULL;
-   open.netProfit   = NULL;
-   open.virtProfitP = NULL;
-
-   return(!catch("MoveCurrentPositionToHistory(3)"));
-}
-
-
-/**
  * Stop a waiting or progressing instance and close open positions (if any).
  *
  * @return bool - success status
@@ -856,6 +803,90 @@ bool RestartInstance() {
    if (last_error != NULL)                return(false);
    if (instance.status != STATUS_STOPPED) return(!catch("RestartInstance(1)  "+ instance.name +" cannot restart "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    return(!catch("RestartInstance(2)", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Move the current open position to the trade history. Assumes the position is closed.
+ *
+ * @param datetime closeTime      - close time
+ * @param double   closePrice     - close price
+ * @param double   closePriceVirt - virtual close price
+ *
+ * @return bool - success status
+ */
+bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double closePriceVirt) {
+   if (last_error != NULL)                    return(false);
+   if (instance.status != STATUS_PROGRESSING) return(!catch("MoveCurrentPositionToHistory(1)  "+ instance.name +" cannot process current position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!open.ticket)                          return(!catch("MoveCurrentPositionToHistory(2)  "+ instance.name +" no open position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
+
+   // update position data
+   open.virtProfitP = ifDouble(!open.type, closePriceVirt-open.priceVirt, open.priceVirt-closePriceVirt);
+
+   // add data to history
+   int i = ArrayRange(history, 0);
+   ArrayResize(history, i+1);
+   history[i][H_TICKET         ] = open.ticket;
+   history[i][H_OPENTYPE       ] = open.type;
+   history[i][H_LOTS           ] = open.lots;
+   history[i][H_OPENTIME       ] = open.time;
+   history[i][H_OPENPRICE      ] = open.price;
+   history[i][H_OPENPRICE_VIRT ] = open.priceVirt;
+   history[i][H_CLOSETIME      ] = closeTime;
+   history[i][H_CLOSEPRICE     ] = closePrice;
+   history[i][H_CLOSEPRICE_VIRT] = closePriceVirt;
+   history[i][H_SLIPPAGE       ] = open.slippage;
+   history[i][H_SWAP           ] = open.swap;
+   history[i][H_COMMISSION     ] = open.commission;
+   history[i][H_GROSSPROFIT    ] = open.grossProfit;
+   history[i][H_NETPROFIT      ] = open.netProfit;
+   history[i][H_VIRTPROFIT_P   ] = open.virtProfitP;
+
+   // update PL numbers
+   instance.openNetProfit   = 0;
+   instance.openVirtProfitP = 0;
+
+   instance.closedNetProfit   += open.netProfit;
+   instance.closedVirtProfitP += open.virtProfitP;
+
+   // reset open position data
+   open.ticket      = NULL;
+   open.type        = NULL;
+   open.lots        = NULL;
+   open.time        = NULL;
+   open.price       = NULL;
+   open.priceVirt   = NULL;
+   open.slippage    = NULL;
+   open.swap        = NULL;
+   open.commission  = NULL;
+   open.grossProfit = NULL;
+   open.netProfit   = NULL;
+   open.virtProfitP = NULL;
+   SS.OpenLots();
+
+   // update trade stats
+   CalculateTradeStats();
+   SS.ClosedTrades();
+
+   return(!catch("MoveCurrentPositionToHistory(3)"));
+}
+
+
+/**
+ * Re-calculate trade statistics.
+ */
+void CalculateTradeStats() {
+   int size = ArrayRange(history, 0);
+
+   if (size > 0) {
+      double sum = 0;
+      for (int i=0; i < size; i++) sum += history[i][H_NETPROFIT];
+      history.avgNetProfit = sum/size;
+
+      sum = 0;
+      for (i=0; i < size; i++) sum += history[i][H_VIRTPROFIT_P];
+      history.avgVirtProfitP = sum/size;
+   }
 }
 
 
@@ -1239,6 +1270,8 @@ bool SynchronizeStatus() {
          // TODO
       }
    }
+
+   SS.All();
    return(!catch("SynchronizeStatus(1)"));
 }
 
@@ -1611,19 +1644,16 @@ int onInputError(string message) {
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
 int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
-   string   sId = ifString(!instance.id, "???", instance.id);
-   int  _Digits = MathMax(Digits, 2);                                            // transform Digits=1 to 2 (for indices with Digits=1)
-   string punit = ifString(_Digits > 2, "pip", "point"), descrSuffix="";
+   string sId = ifString(!instance.id, "???", instance.id);
+   string descrSuffix="";
 
-   ready      = false;
-   group      = "";
-   baseValue  = EMPTY;
-   digits     = ifInt(_Digits > 2, 1, 2);                                        // store 1.23 as 1.23 point
-   multiplier = ifInt(_Digits > 2, Round(MathPow(10, _Digits & (~1))), 1);       // store 0.0123'4 as 123.4 pip
+   ready     = false;
+   group     = "";
+   baseValue = EMPTY;
 
    switch (id) {
       case METRIC_TOTAL_MONEY_NET:
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                      // "US500.123A"
+         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";       // "US500.123A"
          descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = 2;
          baseValue   = EMPTY;
@@ -1632,7 +1662,9 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
 
       case METRIC_TOTAL_UNITS_VIRT:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         descrSuffix = ", "+ PeriodDescription() +", virtual PnL in "+ punit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", virtual PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         digits      = ifInt(MathMax(Digits, 2) > 2, 1, 2);       // transform Digits=1 to 2 (for indices with Digits=1)
+         multiplier  = pMultiplier;
          break;
 
       default:
@@ -1791,6 +1823,7 @@ string SignalToStr(int signal) {
 void SS.All() {
    SS.InstanceName();
    SS.OpenLots();
+   SS.ClosedTrades();
    SS.TotalPL();
    SS.PLStats();
 }
@@ -1808,9 +1841,24 @@ void SS.InstanceName() {
  * ShowStatus: Update the string representation of the open position size.
  */
 void SS.OpenLots() {
-   if      (!open.lots)           sLots = "-";
-   else if (open.type == OP_LONG) sLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
-   else                           sLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
+   if      (!open.lots)           sOpenLots = "-";
+   else if (open.type == OP_LONG) sOpenLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
+   else                           sOpenLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
+}
+
+
+/**
+ * ShowStatus: Update the string summary of the closed trades.
+ */
+void SS.ClosedTrades() {
+   int size = ArrayRange(history, 0);
+   if (!size) {
+      sClosedTrades = "-";
+   }
+   else {
+      if (history.avgNetProfit == EMPTY_VALUE) CalculateTradeStats();
+      sClosedTrades = size +" trades    avg: "+ DoubleToStr(history.avgVirtProfitP * pMultiplier, pDigits) +" "+ pUnit;
+   }
 }
 
 
@@ -1869,8 +1917,8 @@ int ShowStatus(int error = NO_ERROR) {
 
    string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                    NL,
                                                                                               NL,
-                                  "Open:    ",   sLots,                                       NL,
-                                  "Closed:  ",   "23 trades",                                 NL,
+                                  "Open:    ",   sOpenLots,                                   NL,
+                                  "Closed:  ",   sClosedTrades,                               NL,
                                   "Profit:    ", sInstanceTotalNetPL, "  ", sInstancePlStats, NL
    );
 
