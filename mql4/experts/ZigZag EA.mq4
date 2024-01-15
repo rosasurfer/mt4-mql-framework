@@ -44,7 +44,8 @@
  *
  *
  * TODO:
- *  - ZigZag: fix sum(history) mis-match on GBPJPY
+ *  - store trade stats in status file
+ *  - speed-up CalculateTradeStats()
  *  - status: option to toggle between metrics
  *  - open/closed trades: option to toggle between variants
  *  - add var recorder.internalSymbol and store/restore value
@@ -335,6 +336,14 @@ int      stop.profitPun.type;
 double   stop.profitPun.value;
 string   stop.profitPun.description = "";
 
+// other
+string   pUnit = "";
+int      pDigits;
+int      pMultiplier;
+int      orders.acceptableSlippage = 1;         // in MQL points
+string   tradingModeDescriptions[] = {"", "regular", "virtual"};
+string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote currency", "index points"};
+
 // cache vars to speed-up ShowStatus()
 string   sTradingModeStatus[] = {"", "", "Virtual "};
 string   sOpenLots            = "";
@@ -343,14 +352,6 @@ string   sStartConditions     = "";
 string   sStopConditions      = "";
 string   sInstanceTotalNetPL  = "";
 string   sInstancePlStats     = "";
-
-// other
-string   pUnit = "";
-int      pDigits;
-int      pMultiplier;
-int      orders.acceptableSlippage = 1;         // in MQL points
-string   tradingModeDescriptions[] = {"", "regular", "virtual"};
-string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote currency", "index points"};
 
 // debug settings, configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
@@ -1883,25 +1884,25 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "instance.openNetProfit",      /*double  */ DoubleToStr(instance.openNetProfit, 2));
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
-   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 13) +" ; in "+ AccountCurrency() +" after all costs (net)");
+   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 16)         +" ; in "+ AccountCurrency() +" after all costs (net)");
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ DoubleToStr(instance.openNetProfitP, Digits));
-   WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ DoubleToStr(instance.closedNetProfitP, Digits));
-   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfitP, Digits), 12) +" ; in full point after all costs (net)");
-   WriteIniString(file, section, "instance.maxNetProfitP",      /*double  */ DoubleToStr(instance.maxNetProfitP, Digits));
-   WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ DoubleToStr(instance.maxNetDrawdownP, Digits) + CRLF);
+   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ NumberToStr(instance.openNetProfitP, ".1+"));
+   WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ NumberToStr(instance.closedNetProfitP, ".1+"));
+   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ StrPadRight(NumberToStr(instance.totalNetProfitP, ".1+"), 15)    +" ; in full point after all costs (net)");
+   WriteIniString(file, section, "instance.maxNetProfitP",      /*double  */ NumberToStr(instance.maxNetProfitP, ".1+"));
+   WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+") + CRLF);
 
    WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ DoubleToStr(instance.openGrossProfitP, Digits));
    WriteIniString(file, section, "instance.closedGrossProfitP", /*double  */ DoubleToStr(instance.closedGrossProfitP, Digits));
-   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalGrossProfitP, Digits), 10) +" ; in full point after spread but without any other costs (gross)");
+   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalGrossProfitP, Digits), 13) +" ; in full point after spread but without any other costs (gross)");
    WriteIniString(file, section, "instance.maxGrossProfitP",    /*double  */ DoubleToStr(instance.maxGrossProfitP, Digits));
    WriteIniString(file, section, "instance.maxGrossDrawdownP",  /*double  */ DoubleToStr(instance.maxGrossDrawdownP, Digits) + CRLF);
 
    WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
    WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 11) +" ; virtual PnL in full point without any costs (assumes exact execution)");
+   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 14)  +" ; virtual PnL in full point without any costs (assumes exact execution)");
    WriteIniString(file, section, "instance.maxVirtProfitP",     /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtDrawdownP",   /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits) + CRLF);
 
@@ -1918,7 +1919,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.grossProfit",            /*double  */ DoubleToStr(open.grossProfit, 2));
    WriteIniString(file, section, "open.grossProfitP",           /*double  */ DoubleToStr(open.grossProfitP, Digits));
    WriteIniString(file, section, "open.netProfit",              /*double  */ DoubleToStr(open.netProfit, 2));
-   WriteIniString(file, section, "open.netProfitP",             /*double  */ DoubleToStr(open.netProfitP, Digits));
+   WriteIniString(file, section, "open.netProfitP",             /*double  */ NumberToStr(open.netProfitP, ".1+"));
    WriteIniString(file, section, "open.virtProfitP",            /*double  */ DoubleToStr(open.virtProfitP, Digits) + CRLF);
 
    // closed order data
@@ -1927,17 +1928,18 @@ bool SaveStatus() {
 
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
-      netProfit    += NormalizeDouble(history[i][H_NETPROFIT    ], 2);
-      netProfitP   += NormalizeDouble(history[i][H_NETPROFIT_P  ], Digits);
-      grossProfitP += NormalizeDouble(history[i][H_GROSSPROFIT_P], Digits);
-      virtProfitP  += NormalizeDouble(history[i][H_VIRTPROFIT_P ], Digits);
+      netProfit    += history[i][H_NETPROFIT    ];
+      netProfitP   += history[i][H_NETPROFIT_P  ];
+      grossProfitP += history[i][H_GROSSPROFIT_P];
+      virtProfitP  += history[i][H_VIRTPROFIT_P ];
    }
 
-   // cross-check stored instance stats
-   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
-   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("SaveStatus(5)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("  + NumberToStr(virtProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
+   // cross-check stored stats
+   int precision = MathMax(Digits, 2) + 1;                      // required precision for fractional point values
+   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
+   if (NE(grossProfitP, instance.closedGrossProfitP, Digits))  return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP,  instance.closedVirtProfitP,  Digits))  return(!catch("SaveStatus(5)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("  + NumberToStr(virtProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
 
    // start/stop conditions
    WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
@@ -2022,7 +2024,7 @@ string SaveStatus.HistoryToStr(int index) {
    double   netProfitP     = history[index][H_NETPROFIT_P    ];
    double   virtProfitP    = history[index][H_VIRTPROFIT_P   ];
 
-   return(StringConcatenate(ticket, ",", openType, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceVirt, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceVirt, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(grossProfitP, Digits), ",", DoubleToStr(netProfit, 2), ",", DoubleToStr(netProfitP, Digits), ",", DoubleToStr(virtProfitP, Digits)));
+   return(StringConcatenate(ticket, ",", openType, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceVirt, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceVirt, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(grossProfitP, Digits), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(virtProfitP, Digits)));
 }
 
 
@@ -2158,11 +2160,12 @@ bool ReadStatus() {
       virtProfitP  += history[n][H_VIRTPROFIT_P ];
    }
 
-   // cross-check restored instance stats
-   if (NE(netProfit,    instance.closedNetProfit, 2))         return(!catch("ReadStatus(9)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("+ NumberToStr(netProfit, ".2+") +" != "+ NumberToStr(instance.closedNetProfit, ".2+") +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, Digits))   return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("+ NumberToStr(netProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(grossProfitP, instance.closedGrossProfitP, Digits)) return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP,  instance.closedVirtProfitP, Digits))  return(!catch("ReadStatus(12)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +") != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   // cross-check restored stats
+   int precision = MathMax(Digits, 2) + 1;                     // required precision for fractional point values
+   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("ReadStatus(9)  "+  instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
+   if (NE(grossProfitP, instance.closedGrossProfitP, Digits))  return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP,  instance.closedVirtProfitP,  Digits))  return(!catch("ReadStatus(12)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("  + NumberToStr(virtProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
 
    // other
    start.time.condition       = GetIniBool   (file, section, "start.time.condition"      );           // bool     start.time.condition       = 1
