@@ -120,14 +120,16 @@ double   instance.closedNetProfit;
 double   instance.totalNetProfit;
 double   instance.maxNetProfit;                    // max. observed profit:   0...+n
 double   instance.maxNetDrawdown;                  // max. observed drawdown: -n...0
+double   instance.avgNetProfit = EMPTY_VALUE;
 
 double   instance.openVirtProfitP;                 // virtual PnL in point without any costs (assumes exact execution)
 double   instance.closedVirtProfitP;
 double   instance.totalVirtProfitP;
 double   instance.maxVirtProfitP;
 double   instance.maxVirtDrawdownP;
+double   instance.avgVirtProfitP = EMPTY_VALUE;
 
-// open order data
+// order data
 int      open.ticket;                              // one open position
 int      open.type;
 double   open.lots;
@@ -140,11 +142,7 @@ double   open.commission;
 double   open.grossProfit;
 double   open.netProfit;
 double   open.virtProfitP;
-
-// closed order data
 double   history[][15];                            // multiple closed positions
-double   history.avgNetProfit   = EMPTY_VALUE;
-double   history.avgVirtProfitP = EMPTY_VALUE;
 
 // other
 string   pUnit = "";
@@ -881,11 +879,11 @@ void CalculateTradeStats() {
    if (size > 0) {
       double sum = 0;
       for (int i=0; i < size; i++) sum += history[i][H_NETPROFIT];
-      history.avgNetProfit = sum/size;
+      instance.avgNetProfit = sum/size;
 
       sum = 0;
       for (i=0; i < size; i++) sum += history[i][H_VIRTPROFIT_P];
-      history.avgVirtProfitP = sum/size;
+      instance.avgVirtProfitP = sum/size;
    }
 }
 
@@ -1398,13 +1396,15 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.closedNetProfit",   /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 16)        +" ; in "+ AccountCurrency() +" after all costs (net)");
    WriteIniString(file, section, "instance.maxNetProfit",      /*double  */ DoubleToStr(instance.maxNetProfit, 2));
-   WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
+   WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
+   WriteIniString(file, section, "instance.avgNetProfit",      /*double  */ DoubleToStr(instance.avgNetProfit, 2) + CRLF);
 
    WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
    WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 14) +" ; virtual PnL in full point without any costs (assumes exact execution)");
+   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 14) +" ; virtual PnL in point without any costs (assumes exact execution)");
    WriteIniString(file, section, "instance.maxVirtProfitP",    /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.maxVirtDrawdownP",  /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits) + CRLF);
+   WriteIniString(file, section, "instance.maxVirtDrawdownP",  /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits));
+   WriteIniString(file, section, "instance.avgVirtProfitP",    /*double  */ DoubleToStr(instance.avgVirtProfitP, Digits+1) + CRLF);
 
    // open order data
    WriteIniString(file, section, "open.ticket",                /*int     */ open.ticket);
@@ -1855,8 +1855,8 @@ void SS.ClosedTrades() {
       sClosedTrades = "-";
    }
    else {
-      if (history.avgNetProfit == EMPTY_VALUE) CalculateTradeStats();
-      sClosedTrades = size +" trades    avg: "+ DoubleToStr(history.avgVirtProfitP * pMultiplier, pDigits) +" "+ pUnit;
+      if (instance.avgNetProfit == EMPTY_VALUE) CalculateTradeStats();
+      sClosedTrades = size +" trades    avg: "+ DoubleToStr(instance.avgVirtProfitP * pMultiplier, pDigits) +" "+ pUnit;
    }
 }
 

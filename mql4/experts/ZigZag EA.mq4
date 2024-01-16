@@ -44,7 +44,6 @@
  *
  *
  * TODO:
- *  - store trade stats in status file
  *  - speed-up CalculateTradeStats()
  *  - status: option to toggle between metrics
  *  - open/closed trades: option to toggle between variants
@@ -268,26 +267,30 @@ double   instance.closedNetProfit;
 double   instance.totalNetProfit;
 double   instance.maxNetProfit;                 // max. observed profit:   0...+n
 double   instance.maxNetDrawdown;               // max. observed drawdown: -n...0
+double   instance.avgNetProfit = EMPTY_VALUE;
 
 double   instance.openNetProfitP;               // PnL in point after all costs (net)
 double   instance.closedNetProfitP;
 double   instance.totalNetProfitP;
 double   instance.maxNetProfitP;
 double   instance.maxNetDrawdownP;
+double   instance.avgNetProfitP = EMPTY_VALUE;
 
 double   instance.openGrossProfitP;             // PnL in point after spread but without any other costs (gross)
 double   instance.closedGrossProfitP;
 double   instance.totalGrossProfitP;
 double   instance.maxGrossProfitP;
 double   instance.maxGrossDrawdownP;
+double   instance.avgGrossProfitP = EMPTY_VALUE;
 
 double   instance.openVirtProfitP;              // virtual PnL in point without any costs (assumes exact execution)
 double   instance.closedVirtProfitP;
 double   instance.totalVirtProfitP;
 double   instance.maxVirtProfitP;
 double   instance.maxVirtDrawdownP;
+double   instance.avgVirtProfitP = EMPTY_VALUE;
 
-// open order data
+// order data
 int      open.ticket;                           // one open position
 int      open.type;
 double   open.lots;
@@ -302,13 +305,7 @@ double   open.grossProfitP;
 double   open.netProfit;
 double   open.netProfitP;
 double   open.virtProfitP;
-
-// closed order data
 double   history[][17];                         // multiple closed positions
-double   history.avgNetProfit    = EMPTY_VALUE;
-double   history.avgNetProfitP   = EMPTY_VALUE;
-double   history.avgGrossProfitP = EMPTY_VALUE;
-double   history.avgVirtProfitP  = EMPTY_VALUE;
 
 // start conditions
 bool     start.time.condition;                  // whether a time condition is active
@@ -1510,19 +1507,19 @@ void CalculateTradeStats() {
    if (size > 0) {
       double sum = 0;
       for (int i=0; i < size; i++) sum += history[i][H_NETPROFIT];
-      history.avgNetProfit = sum/size;
+      instance.avgNetProfit = sum/size;
 
       sum = 0;
       for (i=0; i < size; i++) sum += history[i][H_NETPROFIT_P];
-      history.avgNetProfitP = sum/size;
+      instance.avgNetProfitP = sum/size;
 
       sum = 0;
       for (i=0; i < size; i++) sum += history[i][H_GROSSPROFIT_P];
-      history.avgGrossProfitP = sum/size;
+      instance.avgGrossProfitP = sum/size;
 
       sum = 0;
       for (i=0; i < size; i++) sum += history[i][H_VIRTPROFIT_P];
-      history.avgVirtProfitP = sum/size;
+      instance.avgVirtProfitP = sum/size;
    }
 }
 
@@ -1886,25 +1883,29 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 16)         +" ; in "+ AccountCurrency() +" after all costs (net)");
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
-   WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2) + CRLF);
+   WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
+   WriteIniString(file, section, "instance.avgNetProfit",       /*double  */ DoubleToStr(instance.avgNetProfit, 2) + CRLF);
 
    WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ NumberToStr(instance.openNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ NumberToStr(instance.closedNetProfitP, ".1+"));
-   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ StrPadRight(NumberToStr(instance.totalNetProfitP, ".1+"), 15)    +" ; in full point after all costs (net)");
+   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ StrPadRight(NumberToStr(instance.totalNetProfitP, ".1+"), 15)    +" ; in point after all costs (net)");
    WriteIniString(file, section, "instance.maxNetProfitP",      /*double  */ NumberToStr(instance.maxNetProfitP, ".1+"));
-   WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+") + CRLF);
+   WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
+   WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(instance.avgNetProfitP, ".1+") + CRLF);
 
    WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ DoubleToStr(instance.openGrossProfitP, Digits));
    WriteIniString(file, section, "instance.closedGrossProfitP", /*double  */ DoubleToStr(instance.closedGrossProfitP, Digits));
-   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalGrossProfitP, Digits), 13) +" ; in full point after spread but without any other costs (gross)");
+   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalGrossProfitP, Digits), 13) +" ; in point after spread but without any other costs (gross)");
    WriteIniString(file, section, "instance.maxGrossProfitP",    /*double  */ DoubleToStr(instance.maxGrossProfitP, Digits));
-   WriteIniString(file, section, "instance.maxGrossDrawdownP",  /*double  */ DoubleToStr(instance.maxGrossDrawdownP, Digits) + CRLF);
+   WriteIniString(file, section, "instance.maxGrossDrawdownP",  /*double  */ DoubleToStr(instance.maxGrossDrawdownP, Digits));
+   WriteIniString(file, section, "instance.avgGrossProfitP",    /*double  */ DoubleToStr(instance.avgGrossProfitP, Digits+1) + CRLF);
 
    WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
    WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 14)  +" ; virtual PnL in full point without any costs (assumes exact execution)");
+   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 14)  +" ; virtual PnL in point without any costs (assumes exact execution)");
    WriteIniString(file, section, "instance.maxVirtProfitP",     /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.maxVirtDrawdownP",   /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits) + CRLF);
+   WriteIniString(file, section, "instance.maxVirtDrawdownP",   /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits));
+   WriteIniString(file, section, "instance.avgVirtProfitP",     /*double  */ DoubleToStr(instance.avgVirtProfitP, Digits+1) + CRLF);
 
    // open order data
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
@@ -3055,8 +3056,8 @@ void SS.ClosedTrades() {
       sClosedTrades = "-";
    }
    else {
-      if (history.avgNetProfit == EMPTY_VALUE) CalculateTradeStats();
-      sClosedTrades = size +" trades    avg: "+ DoubleToStr(history.avgVirtProfitP * pMultiplier, pDigits) +" "+ pUnit;
+      if (instance.avgNetProfit == EMPTY_VALUE) CalculateTradeStats();
+      sClosedTrades = size +" trades    avg: "+ DoubleToStr(instance.avgVirtProfitP * pMultiplier, pDigits) +" "+ pUnit;
    }
 }
 
