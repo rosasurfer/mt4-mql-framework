@@ -148,6 +148,7 @@ double   history[][15];                            // multiple closed positions
 string   pUnit = "";
 int      pDigits;
 int      pMultiplier;
+int      statusBox.activeMetric;
 int      orders.acceptableSlippage = 1;            // in MQL points
 
 // cache vars to speed-up ShowStatus()
@@ -213,6 +214,10 @@ bool onCommand(string cmd, string params, int keys) {
       }
    }
 
+   else if (cmd == "toggle-metrics") {
+      return(ToggleMetrics());
+   }
+
    else if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());
    }
@@ -223,6 +228,17 @@ bool onCommand(string cmd, string params, int keys) {
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
+}
+
+
+/**
+ * Toggle EA status between displayed metrics.
+ *
+ * @return bool - success status
+ */
+bool ToggleMetrics() {
+   debug("ToggleMetrics(0.1)  "+ instance.name);
+   return(true);
 }
 
 
