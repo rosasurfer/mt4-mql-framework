@@ -44,7 +44,6 @@
  *
  *
  * TODO:
- *  - speed-up CalculateTradeStats()
  *  - status: option to toggle between metrics
  *  - open/closed trades: option to toggle between variants
  *  - add var recorder.internalSymbol and store/restore value
@@ -1499,27 +1498,38 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
 
 
 /**
- * Re-calculate trade statistics.
+ * Update trade statistics.
  */
 void CalculateTradeStats() {
+   static int lastSize = 0;
+   static double sumNetProfit=0, sumNetProfitP=0, sumGrossProfitP=0, sumVirtProfitP=0;
+
    int size = ArrayRange(history, 0);
 
-   if (size > 0) {
-      double sum = 0;
-      for (int i=0; i < size; i++) sum += history[i][H_NETPROFIT];
-      instance.avgNetProfit = sum/size;
+   if (!size || size < lastSize) {
+      sumNetProfit    = 0;
+      sumNetProfitP   = 0;
+      sumGrossProfitP = 0;
+      sumVirtProfitP  = 0;
+      instance.avgNetProfit    = EMPTY_VALUE;
+      instance.avgNetProfitP   = EMPTY_VALUE;
+      instance.avgGrossProfitP = EMPTY_VALUE;
+      instance.avgVirtProfitP  = EMPTY_VALUE;
+      lastSize = 0;
+   }
 
-      sum = 0;
-      for (i=0; i < size; i++) sum += history[i][H_NETPROFIT_P];
-      instance.avgNetProfitP = sum/size;
-
-      sum = 0;
-      for (i=0; i < size; i++) sum += history[i][H_GROSSPROFIT_P];
-      instance.avgGrossProfitP = sum/size;
-
-      sum = 0;
-      for (i=0; i < size; i++) sum += history[i][H_VIRTPROFIT_P];
-      instance.avgVirtProfitP = sum/size;
+   if (size > lastSize) {
+      for (int i=lastSize; i < size; i++) {                 // speed-up by processing only new history entries
+         sumNetProfit    += history[i][H_NETPROFIT    ];
+         sumNetProfitP   += history[i][H_NETPROFIT_P  ];
+         sumGrossProfitP += history[i][H_GROSSPROFIT_P];
+         sumVirtProfitP  += history[i][H_VIRTPROFIT_P ];
+      }
+      instance.avgNetProfit    = sumNetProfit/size;
+      instance.avgNetProfitP   = sumNetProfitP/size;
+      instance.avgGrossProfitP = sumGrossProfitP/size;
+      instance.avgVirtProfitP  = sumVirtProfitP/size;
+      lastSize = size;
    }
 }
 
@@ -3056,7 +3066,7 @@ void SS.ClosedTrades() {
       sClosedTrades = "-";
    }
    else {
-      if (instance.avgNetProfit == EMPTY_VALUE) CalculateTradeStats();
+      if (instance.avgVirtProfitP == EMPTY_VALUE) CalculateTradeStats();
       sClosedTrades = size +" trades    avg: "+ DoubleToStr(instance.avgVirtProfitP * pMultiplier, pDigits) +" "+ pUnit;
    }
 }
