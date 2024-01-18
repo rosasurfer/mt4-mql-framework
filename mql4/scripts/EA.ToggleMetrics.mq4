@@ -16,8 +16,6 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   if (__isTesting) Tester.Pause();
-
    string command   = "toggle-metrics";
    string params    = "";
    string modifiers = ifString(IsVirtualKeyDown(VK_SHIFT), "VK_SHIFT", "");

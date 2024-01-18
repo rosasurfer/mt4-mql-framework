@@ -44,7 +44,6 @@
  *
  *
  * TODO:
- *  - status: toggle and describe displayed metrics
  *  - status: toggle chart markers of trades between metrics (if visible)
  *  - document control scripts
  *  - add var recorder.internalSymbol and store/restore value
@@ -349,12 +348,13 @@ string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote c
 
 // cache vars to speed-up ShowStatus()
 string   sTradingModeStatus[] = {"", "", "Virtual "};
-string   sOpenLots            = "";
-string   sClosedTrades        = "";
 string   sStartConditions     = "";
 string   sStopConditions      = "";
-string   sInstanceTotalNetPL  = "";
-string   sInstancePlStats     = "";
+string   sMetric              = "";
+string   sOpenLots            = "";
+string   sClosedTrades        = "";
+string   sTotalProfit         = "";
+string   sProfitStats         = "";
 
 // debug settings, configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
@@ -483,7 +483,7 @@ bool ToggleMetrics(int direction) {
    if (status.activeMetric > 4) status.activeMetric = 1;
    StoreVolatileData();
 
-   debug("ToggleMetrics(0.1)  "+ instance.name +"  new metric: "+ status.activeMetric);
+   SS.All();
    return(true);
 }
 
@@ -1124,8 +1124,8 @@ bool StartInstance(int signal) {
    instance.totalVirtProfitP = instance.closedVirtProfitP;
    instance.maxVirtProfitP   = MathMax(instance.maxVirtProfitP,   instance.totalVirtProfitP);
    instance.maxVirtDrawdownP = MathMin(instance.maxVirtDrawdownP, instance.totalVirtProfitP);
-   SS.TotalPL();
-   SS.PLStats();
+   SS.TotalProfit();
+   SS.ProfitStats();
 
    // update start conditions
    if (start.time.condition) {
@@ -1223,8 +1223,8 @@ bool ReverseInstance(int signal) {
    instance.totalVirtProfitP = instance.closedVirtProfitP;
    instance.maxVirtProfitP   = MathMax(instance.maxVirtProfitP,   instance.totalVirtProfitP);
    instance.maxVirtDrawdownP = MathMin(instance.maxVirtDrawdownP, instance.totalVirtProfitP);
-   SS.TotalPL();
-   SS.PLStats();
+   SS.TotalProfit();
+   SS.ProfitStats();
 
    return(SaveStatus());
 }
@@ -1295,8 +1295,8 @@ bool StopInstance(int signal) {
          instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
          instance.maxVirtProfitP   = MathMax(instance.maxVirtProfitP,   instance.totalVirtProfitP);
          instance.maxVirtDrawdownP = MathMin(instance.maxVirtDrawdownP, instance.totalVirtProfitP);
-         SS.TotalPL();
-         SS.PLStats();
+         SS.TotalProfit();
+         SS.ProfitStats();
       }
    }
 
@@ -1324,7 +1324,7 @@ bool StopInstance(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !signal, "test ", "") +"instance stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sInstanceTotalNetPL +" "+ sInstancePlStats);
+   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !signal, "test ", "") +"instance stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sTotalProfit +" "+ sProfitStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
@@ -1382,7 +1382,7 @@ bool UpdateStatus() {
    instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
    instance.totalGrossProfitP = instance.openGrossProfitP + instance.closedGrossProfitP;
    instance.totalVirtProfitP  = instance.openVirtProfitP  + instance.closedVirtProfitP;
-   SS.TotalPL();
+   SS.TotalProfit();
 
    bool updateStats = false;
    if      (instance.totalNetProfit    > instance.maxNetProfit     ) { instance.maxNetProfit      = instance.totalNetProfit;    updateStats = true; }
@@ -1393,7 +1393,7 @@ bool UpdateStatus() {
    else if (instance.totalGrossProfitP < instance.maxGrossDrawdownP) { instance.maxGrossDrawdownP = instance.totalGrossProfitP; updateStats = true; }
    if      (instance.totalVirtProfitP  > instance.maxVirtProfitP   ) { instance.maxVirtProfitP    = instance.totalVirtProfitP;  updateStats = true; }
    else if (instance.totalVirtProfitP  < instance.maxVirtDrawdownP ) { instance.maxVirtDrawdownP  = instance.totalVirtProfitP;  updateStats = true; }
-   if (updateStats) SS.PLStats();
+   if (updateStats) SS.ProfitStats();
 
    return(!catch("UpdateStatus(4)"));
 }
@@ -3089,11 +3089,12 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
  */
 void SS.All() {
    SS.InstanceName();
+   SS.StartStopConditions();
+   SS.Metric();
    SS.OpenLots();
    SS.ClosedTrades();
-   SS.StartStopConditions();
-   SS.TotalPL();
-   SS.PLStats();
+   SS.TotalProfit();
+   SS.ProfitStats();
 }
 
 
@@ -3109,31 +3110,6 @@ void SS.InstanceName() {
       case TRADINGMODE_VIRTUAL:
          instance.name = "V"+ instance.name;
          break;
-   }
-}
-
-
-/**
- * ShowStatus: Update the string representation of the open position size.
- */
-void SS.OpenLots() {
-   if      (!open.lots)           sOpenLots = "-";
-   else if (open.type == OP_LONG) sOpenLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
-   else                           sOpenLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
-}
-
-
-/**
- * ShowStatus: Update the string summary of the closed trades.
- */
-void SS.ClosedTrades() {
-   int size = ArrayRange(history, 0);
-   if (!size) {
-      sClosedTrades = "-";
-   }
-   else {
-      if (instance.avgVirtProfitP == EMPTY_VALUE) CalculateTradeStats();
-      sClosedTrades = size +" trades    avg: "+ DoubleToStr(instance.avgVirtProfitP * pMultiplier, pDigits) +" "+ pUnit;
    }
 }
 
@@ -3172,37 +3148,140 @@ void SS.StartStopConditions() {
 
 
 /**
- * ShowStatus: Update the string representation of "instance.totalNetProfit".
+ * ShowStatus: Update the description of the displayed metric.
  */
-void SS.TotalPL() {
-   // not before a position was opened
-   if (!open.ticket && !ArrayRange(history, 0)) sInstanceTotalNetPL = "-";
-   else if (ShowProfitInPercent)                sInstanceTotalNetPL = NumberToStr(MathDiv(instance.totalNetProfit, instance.startEquity) * 100, "R+.2") +"%";
-   else                                         sInstanceTotalNetPL = NumberToStr(instance.totalNetProfit, "R+.2");
+void SS.Metric() {
+   switch (status.activeMetric) {
+      case METRIC_TOTAL_MONEY_NET:
+         sMetric = "Net PnL after all costs in "+ AccountCurrency() + NL + "-----------------------------------";
+         break;
+      case METRIC_TOTAL_UNITS_VIRT:
+         sMetric = "Virtual PnL without spread/any costs in "+ pUnit + NL + "-----------------------------------------------------";
+         break;
+      case METRIC_TOTAL_UNITS_GROSS:
+         sMetric = "Gross PnL after spread/without costs in "+ pUnit + NL + "------------------------------------------------------";
+         break;
+      case METRIC_TOTAL_UNITS_NET:
+         sMetric = "Net PnL after all costs in "+ pUnit + NL + "------------------------------------";
+         break;
+
+      default: return(!catch("SS.MetricDescription(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
+   }
 }
 
 
 /**
- * ShowStatus: Update the string representaton of the PL stats.
+ * ShowStatus: Update the string representation of the open position size.
  */
-void SS.PLStats() {
-   // not before a position was opened
-   if (!open.ticket && !ArrayRange(history, 0)) {
-      sInstancePlStats = "";
+void SS.OpenLots() {
+   if      (!open.lots)           sOpenLots = "-";
+   else if (open.type == OP_LONG) sOpenLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
+   else                           sOpenLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
+}
+
+
+/**
+ * ShowStatus: Update the string summary of the closed trades.
+ */
+void SS.ClosedTrades() {
+   int size = ArrayRange(history, 0);
+   if (!size) {
+      sClosedTrades = "-";
    }
    else {
-      string sInstanceMaxNetProfit="", sInstanceMaxNetDrawdown="";
-      if (ShowProfitInPercent) {
-         sInstanceMaxNetProfit   = NumberToStr(MathDiv(instance.maxNetProfit,   instance.startEquity) * 100, "R+.2") +"%";
-         sInstanceMaxNetDrawdown = NumberToStr(MathDiv(instance.maxNetDrawdown, instance.startEquity) * 100, "R+.2") +"%";
+      if (instance.avgNetProfitP == EMPTY_VALUE) CalculateTradeStats();
+
+      switch (status.activeMetric) {
+         case METRIC_TOTAL_MONEY_NET:
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgNetProfit, "R+.2") +" "+ AccountCurrency();
+            break;
+         case METRIC_TOTAL_UNITS_VIRT:
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgVirtProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            break;
+         case METRIC_TOTAL_UNITS_GROSS:
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgGrossProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            break;
+         case METRIC_TOTAL_UNITS_NET:
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            break;
+
+         default: return(!catch("SS.ClosedTrades(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
       }
-      else {
-         sInstanceMaxNetProfit   = NumberToStr(instance.maxNetProfit, "+.2");
-         sInstanceMaxNetDrawdown = NumberToStr(instance.maxNetDrawdown, "+.2");
-      }
-      sInstancePlStats = StringConcatenate("(", sInstanceMaxNetDrawdown, "/", sInstanceMaxNetProfit, ")");
    }
 }
+
+
+/**
+ * ShowStatus: Update the string representation of the total instance PnL.
+ */
+void SS.TotalProfit() {
+   // not before a position was opened
+   if (!open.ticket && !ArrayRange(history, 0)) {
+      sTotalProfit = "-";
+   }
+   else {
+      switch (status.activeMetric) {
+         case METRIC_TOTAL_MONEY_NET:
+            if (ShowProfitInPercent) sTotalProfit = NumberToStr(MathDiv(instance.totalNetProfit, instance.startEquity) * 100, "R+.2") +"%";
+            else                     sTotalProfit = NumberToStr(instance.totalNetProfit, "R+.2") +" "+ AccountCurrency();
+            break;
+         case METRIC_TOTAL_UNITS_VIRT:
+            sTotalProfit = NumberToStr(instance.totalVirtProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            break;
+         case METRIC_TOTAL_UNITS_GROSS:
+            sTotalProfit = NumberToStr(instance.totalGrossProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            break;
+         case METRIC_TOTAL_UNITS_NET:
+            sTotalProfit = NumberToStr(instance.totalNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            break;
+
+         default: return(!catch("SS.TotalProfit(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
+      }
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representaton of the PnL statistics.
+ */
+void SS.ProfitStats() {
+   // not before a position was opened
+   if (!open.ticket && !ArrayRange(history, 0)) {
+      sProfitStats = "";
+   }
+   else {
+      string sMaxProfit="", sMaxDrawdown="";
+
+      switch (status.activeMetric) {
+         case METRIC_TOTAL_MONEY_NET:
+            if (ShowProfitInPercent) {
+               sMaxProfit   = NumberToStr(MathDiv(instance.maxNetProfit,   instance.startEquity) * 100, "R+.2");
+               sMaxDrawdown = NumberToStr(MathDiv(instance.maxNetDrawdown, instance.startEquity) * 100, "R+.2");
+            }
+            else {
+               sMaxProfit   = NumberToStr(instance.maxNetProfit,   "R+.2");
+               sMaxDrawdown = NumberToStr(instance.maxNetDrawdown, "R+.2");
+            }
+            break;
+         case METRIC_TOTAL_UNITS_VIRT:
+            sMaxProfit   = NumberToStr(instance.maxVirtProfitP   * pMultiplier, "R+."+ pDigits);
+            sMaxDrawdown = NumberToStr(instance.maxVirtDrawdownP * pMultiplier, "R+."+ pDigits);
+            break;
+         case METRIC_TOTAL_UNITS_GROSS:
+            sMaxProfit   = NumberToStr(instance.maxGrossProfitP   * pMultiplier, "R+."+ pDigits);
+            sMaxDrawdown = NumberToStr(instance.maxGrossDrawdownP * pMultiplier, "R+."+ pDigits);
+            break;
+         case METRIC_TOTAL_UNITS_NET:
+            sMaxProfit   = NumberToStr(instance.maxNetProfitP   * pMultiplier, "R+."+ pDigits);
+            sMaxDrawdown = NumberToStr(instance.maxNetDrawdownP * pMultiplier, "R+."+ pDigits);
+            break;
+
+         default: return(!catch("SS.ProfitStats(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
+      }
+      sProfitStats = StringConcatenate("(", sMaxDrawdown, "/", sMaxProfit, ")");
+   }
+}
+
 
 
 /**
@@ -3236,9 +3315,11 @@ int ShowStatus(int error = NO_ERROR) {
                                                                                                             NL,
                                   "Start:    ",  sStartConditions,                                          NL,
                                   "Stop:     ",  sStopConditions,                                           NL,
+                                                                                                            NL,
+                                   sMetric,                                                                 NL,
                                   "Open:    ",   sOpenLots,                                                 NL,
                                   "Closed:  ",   sClosedTrades,                                             NL,
-                                  "Profit:    ", sInstanceTotalNetPL, "  ", sInstancePlStats,               NL
+                                  "Profit:    ", sTotalProfit, "  ", sProfitStats,                          NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
