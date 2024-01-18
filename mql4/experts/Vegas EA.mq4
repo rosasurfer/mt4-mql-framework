@@ -1402,8 +1402,7 @@ bool SaveStatus() {
    // [General]
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber() +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
-   WriteIniString(file, section, "Symbol",  Symbol());
-   WriteIniString(file, section, "Created", GmtTimeFormat(instance.created, "%a, %Y.%m.%d %H:%M:%S") + separator);   // conditional section separator
+   WriteIniString(file, section, "Symbol",  Symbol() + separator);                                                   // conditional section separator
 
    if (__isTesting) {
       string sSpread = "";
@@ -1424,8 +1423,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "EA.Recorder",                /*string*/ EA.Recorder + separator);                  // conditional section separator
 
    // [Runtime status]
-   section = "Runtime status";                                 // On deletion of pending orders the number of stored order records decreases. To prevent
-   EmptyIniSectionA(file, section);                            // orphaned status file records the section is emptied before writing to it.
+   section = "Runtime status";                                 // On deletion of pending orders (if any) the number of stored order records decreases.
+   EmptyIniSectionA(file, section);                            // To prevent orphaned status file records the section is emptied before writing to it.
 
    // instance data
    WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
@@ -1434,16 +1433,16 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
    WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ DoubleToStr(instance.openNetProfit, 2));
+   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 17)        +" ; in "+ AccountCurrency() +" after all costs (net)");
    WriteIniString(file, section, "instance.closedNetProfit",   /*double  */ DoubleToStr(instance.closedNetProfit, 2));
-   WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 16)        +" ; in "+ AccountCurrency() +" after all costs (net)");
+   WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ DoubleToStr(instance.totalNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetProfit",      /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
    WriteIniString(file, section, "instance.avgNetProfit",      /*double  */ DoubleToStr(instance.avgNetProfit, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
+   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 15) +" ; virtual PnL in point without any costs (assumes exact execution)");
    WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 14) +" ; virtual PnL in point without any costs (assumes exact execution)");
+   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtProfitP",    /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtDrawdownP",  /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits));
    WriteIniString(file, section, "instance.avgVirtProfitP",    /*double  */ DoubleToStr(instance.avgVirtProfitP, Digits+1) + CRLF);
@@ -1467,7 +1466,7 @@ bool SaveStatus() {
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
-      WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
+      WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i));
       netProfit   += history[i][H_NETPROFIT   ];
       virtProfitP += history[i][H_VIRTPROFIT_P];
    }

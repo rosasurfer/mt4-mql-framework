@@ -44,8 +44,9 @@
  *
  *
  * TODO:
- *  - status: option to toggle between metrics
- *  - open/closed trades: option to toggle between variants
+ *  - status: toggle and describe displayed metrics
+ *  - status: toggle chart markers of trades between metrics (if visible)
+ *  - document control scripts
  *  - add var recorder.internalSymbol and store/restore value
  *  - tester: ZigZag EA cannot yet run with bar model MODE_BAROPEN
  *
@@ -1880,8 +1881,7 @@ bool SaveStatus() {
    // [General]
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber() +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
-   WriteIniString(file, section, "Symbol",  Symbol());
-   WriteIniString(file, section, "Created", GmtTimeFormat(instance.created, "%a, %Y.%m.%d %H:%M:%S") + separator);         // conditional section separator
+   WriteIniString(file, section, "Symbol",  Symbol() + separator);                                                         // conditional section separator
 
    if (__isTesting) {
       string sSpread = "";
@@ -1907,8 +1907,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "EA.Recorder",                 /*string*/ EA.Recorder + separator);                       // conditional section separator
 
    // [Runtime status]
-   section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
-   EmptyIniSectionA(file, section);                             // orphaned status file records the section is emptied before writing to it.
+   section = "Runtime status";                                  // On deletion of pending orders (if any) the number of stored order records decreases.
+   EmptyIniSectionA(file, section);                             // To prevent orphaned status file records the section is emptied before writing to it.
 
    WriteIniString(file, section, "tradingMode",                 /*int     */ tradingMode + CRLF);
 
@@ -1920,33 +1920,56 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.status",             /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "instance.startEquity",        /*double  */ DoubleToStr(instance.startEquity, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ DoubleToStr(instance.openNetProfit, 2));
+   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 17)         +" ; in "+ AccountCurrency() +" after all costs (net)");
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
-   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.totalNetProfit, 2), 16)         +" ; in "+ AccountCurrency() +" after all costs (net)");
+   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
    WriteIniString(file, section, "instance.avgNetProfit",       /*double  */ DoubleToStr(instance.avgNetProfit, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ NumberToStr(instance.openNetProfitP, ".1+"));
+   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP, ".1+"), 16)    +" ; in point after all costs (net)");
    WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ NumberToStr(instance.closedNetProfitP, ".1+"));
-   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ StrPadRight(NumberToStr(instance.totalNetProfitP, ".1+"), 15)    +" ; in point after all costs (net)");
+   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ NumberToStr(instance.totalNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.maxNetProfitP",      /*double  */ NumberToStr(instance.maxNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
    WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(instance.avgNetProfitP, ".1+") + CRLF);
 
-   WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ DoubleToStr(instance.openGrossProfitP, Digits));
+   WriteIniString(file, section, "instance.openGrossProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openGrossProfitP, Digits), 14) +" ; in point after spread but without any other costs (gross)");
    WriteIniString(file, section, "instance.closedGrossProfitP", /*double  */ DoubleToStr(instance.closedGrossProfitP, Digits));
-   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ StrPadRight(DoubleToStr(instance.totalGrossProfitP, Digits), 13) +" ; in point after spread but without any other costs (gross)");
+   WriteIniString(file, section, "instance.totalGrossProfitP",  /*double  */ DoubleToStr(instance.totalGrossProfitP, Digits));
    WriteIniString(file, section, "instance.maxGrossProfitP",    /*double  */ DoubleToStr(instance.maxGrossProfitP, Digits));
    WriteIniString(file, section, "instance.maxGrossDrawdownP",  /*double  */ DoubleToStr(instance.maxGrossDrawdownP, Digits));
    WriteIniString(file, section, "instance.avgGrossProfitP",    /*double  */ DoubleToStr(instance.avgGrossProfitP, Digits+1) + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ DoubleToStr(instance.openVirtProfitP, Digits));
+   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 15)  +" ; virtual PnL in point without any costs (assumes exact execution)");
    WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.totalVirtProfitP, Digits), 14)  +" ; virtual PnL in point without any costs (assumes exact execution)");
+   WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtProfitP",     /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtDrawdownP",   /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits));
    WriteIniString(file, section, "instance.avgVirtProfitP",     /*double  */ DoubleToStr(instance.avgVirtProfitP, Digits+1) + CRLF);
+
+   // start/stop conditions
+   WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
+   WriteIniString(file, section, "start.time.value",            /*datetime*/ start.time.value);
+   WriteIniString(file, section, "start.time.isDaily",          /*bool    */ start.time.isDaily);
+   WriteIniString(file, section, "start.time.description",      /*string  */ start.time.description + CRLF);
+
+   WriteIniString(file, section, "stop.time.condition",         /*bool    */ stop.time.condition);
+   WriteIniString(file, section, "stop.time.value",             /*datetime*/ stop.time.value);
+   WriteIniString(file, section, "stop.time.isDaily",           /*bool    */ stop.time.isDaily);
+   WriteIniString(file, section, "stop.time.description",       /*string  */ stop.time.description + CRLF);
+
+   WriteIniString(file, section, "stop.profitAbs.condition",    /*bool    */ stop.profitAbs.condition);
+   WriteIniString(file, section, "stop.profitAbs.value",        /*double  */ DoubleToStr(stop.profitAbs.value, 2));
+   WriteIniString(file, section, "stop.profitAbs.description",  /*string  */ stop.profitAbs.description);
+   WriteIniString(file, section, "stop.profitPct.condition",    /*bool    */ stop.profitPct.condition);
+   WriteIniString(file, section, "stop.profitPct.value",        /*double  */ NumberToStr(stop.profitPct.value, ".1+"));
+   WriteIniString(file, section, "stop.profitPct.absValue",     /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
+   WriteIniString(file, section, "stop.profitPct.description",  /*string  */ stop.profitPct.description);
+   WriteIniString(file, section, "stop.profitPun.condition",    /*bool    */ stop.profitPun.condition);
+   WriteIniString(file, section, "stop.profitPun.type",         /*int     */ stop.profitPun.type);
+   WriteIniString(file, section, "stop.profitPun.value",        /*double  */ NumberToStr(stop.profitPun.value, ".1+"));
+   WriteIniString(file, section, "stop.profitPun.description",  /*string  */ stop.profitPun.description + CRLF);
 
    // open order data
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
@@ -1969,7 +1992,7 @@ bool SaveStatus() {
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
-      WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
+      WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i));
       netProfit    += history[i][H_NETPROFIT    ];
       netProfitP   += history[i][H_NETPROFIT_P  ];
       grossProfitP += history[i][H_GROSSPROFIT_P];
@@ -1982,29 +2005,6 @@ bool SaveStatus() {
    if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
    if (NE(grossProfitP, instance.closedGrossProfitP, Digits))  return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
    if (NE(virtProfitP,  instance.closedVirtProfitP,  Digits))  return(!catch("SaveStatus(5)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("  + NumberToStr(virtProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
-
-   // start/stop conditions
-   WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
-   WriteIniString(file, section, "start.time.value",            /*datetime*/ start.time.value + ifString(start.time.value, ifString(start.time.isDaily, " ("+ TimeToStr(start.time.value, TIME_MINUTES) +")", GmtTimeFormat(start.time.value, " (%a, %Y.%m.%d %H:%M:%S)")), ""));
-   WriteIniString(file, section, "start.time.isDaily",          /*bool    */ start.time.isDaily);
-   WriteIniString(file, section, "start.time.description",      /*string  */ start.time.description + CRLF);
-
-   WriteIniString(file, section, "stop.time.condition",         /*bool    */ stop.time.condition);
-   WriteIniString(file, section, "stop.time.value",             /*datetime*/ stop.time.value + ifString(stop.time.value, ifString(stop.time.isDaily, " ("+ TimeToStr(stop.time.value, TIME_MINUTES) +")", GmtTimeFormat(stop.time.value, " (%a, %Y.%m.%d %H:%M:%S)")), ""));
-   WriteIniString(file, section, "stop.time.isDaily",           /*bool    */ stop.time.isDaily);
-   WriteIniString(file, section, "stop.time.description",       /*string  */ stop.time.description + CRLF);
-
-   WriteIniString(file, section, "stop.profitAbs.condition",    /*bool    */ stop.profitAbs.condition);
-   WriteIniString(file, section, "stop.profitAbs.value",        /*double  */ DoubleToStr(stop.profitAbs.value, 2));
-   WriteIniString(file, section, "stop.profitAbs.description",  /*string  */ stop.profitAbs.description);
-   WriteIniString(file, section, "stop.profitPct.condition",    /*bool    */ stop.profitPct.condition);
-   WriteIniString(file, section, "stop.profitPct.value",        /*double  */ NumberToStr(stop.profitPct.value, ".1+"));
-   WriteIniString(file, section, "stop.profitPct.absValue",     /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
-   WriteIniString(file, section, "stop.profitPct.description",  /*string  */ stop.profitPct.description);
-   WriteIniString(file, section, "stop.profitPun.condition",    /*bool    */ stop.profitPun.condition);
-   WriteIniString(file, section, "stop.profitPun.type",         /*int     */ stop.profitPun.type);
-   WriteIniString(file, section, "stop.profitPun.value",        /*double  */ NumberToStr(stop.profitPun.value, ".1+"));
-   WriteIniString(file, section, "stop.profitPun.description",  /*string  */ stop.profitPun.description + CRLF);
 
    return(!catch("SaveStatus(6)"));
 }
@@ -2170,6 +2170,30 @@ bool ReadStatus() {
    instance.maxVirtDrawdownP   = GetIniDouble (file, section, "instance.maxVirtDrawdownP"  );         // double   instance.maxVirtDrawdownP   = -0.23456
    SS.InstanceName();
 
+   // start/stop conditions
+   start.time.condition        = GetIniBool   (file, section, "start.time.condition"      );          // bool     start.time.condition       = 1
+   start.time.value            = GetIniInt    (file, section, "start.time.value"          );          // datetime start.time.value           = 1624924800
+   start.time.isDaily          = GetIniBool   (file, section, "start.time.isDaily"        );          // bool     start.time.isDaily         = 0
+   start.time.description      = GetIniStringA(file, section, "start.time.description", "");          // string   start.time.description     = text
+
+   stop.time.condition         = GetIniBool   (file, section, "stop.time.condition"      );           // bool     stop.time.condition        = 1
+   stop.time.value             = GetIniInt    (file, section, "stop.time.value"          );           // datetime stop.time.value            = 1624924800
+   stop.time.isDaily           = GetIniBool   (file, section, "stop.time.isDaily"        );           // bool     stop.time.isDaily          = 0
+   stop.time.description       = GetIniStringA(file, section, "stop.time.description", "");           // string   stop.time.description      = text
+
+   stop.profitAbs.condition    = GetIniBool   (file, section, "stop.profitAbs.condition"        );    // bool     stop.profitAbs.condition   = 1
+   stop.profitAbs.value        = GetIniDouble (file, section, "stop.profitAbs.value"            );    // double   stop.profitAbs.value       = 10.00
+   stop.profitAbs.description  = GetIniStringA(file, section, "stop.profitAbs.description",   "");    // string   stop.profitAbs.description = text
+   stop.profitPct.condition    = GetIniBool   (file, section, "stop.profitPct.condition"        );    // bool     stop.profitPct.condition   = 0
+   stop.profitPct.value        = GetIniDouble (file, section, "stop.profitPct.value"            );    // double   stop.profitPct.value       = 0
+   stop.profitPct.absValue     = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX);    // double   stop.profitPct.absValue    = 0.00
+   stop.profitPct.description  = GetIniStringA(file, section, "stop.profitPct.description",   "");    // string   stop.profitPct.description = text
+
+   stop.profitPun.condition    = GetIniBool   (file, section, "stop.profitPun.condition"      );      // bool     stop.profitPun.condition   = 1
+   stop.profitPun.type         = GetIniInt    (file, section, "stop.profitPun.type"           );      // int      stop.profitPun.type        = 4
+   stop.profitPun.value        = GetIniDouble (file, section, "stop.profitPun.value"          );      // double   stop.profitPun.value       = 1.23456
+   stop.profitPun.description  = GetIniStringA(file, section, "stop.profitPun.description", "");      // string   stop.profitPun.description = text
+
    // open order data
    open.ticket                 = GetIniInt    (file, section, "open.ticket"      );                   // int      open.ticket       = 123456
    open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 1
@@ -2208,30 +2232,6 @@ bool ReadStatus() {
    if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
    if (NE(grossProfitP, instance.closedGrossProfitP, Digits))  return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_GROSSPROFIT_P]) != instance.closedGrossProfitP ("+ NumberToStr(grossProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedGrossProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
    if (NE(virtProfitP,  instance.closedVirtProfitP,  Digits))  return(!catch("ReadStatus(12)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("  + NumberToStr(virtProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
-
-   // other
-   start.time.condition       = GetIniBool   (file, section, "start.time.condition"      );           // bool     start.time.condition       = 1
-   start.time.value           = GetIniInt    (file, section, "start.time.value"          );           // datetime start.time.value           = 1624924800
-   start.time.isDaily         = GetIniBool   (file, section, "start.time.isDaily"        );           // bool     start.time.isDaily         = 0
-   start.time.description     = GetIniStringA(file, section, "start.time.description", "");           // string   start.time.description     = text
-
-   stop.time.condition        = GetIniBool   (file, section, "stop.time.condition"      );            // bool     stop.time.condition        = 1
-   stop.time.value            = GetIniInt    (file, section, "stop.time.value"          );            // datetime stop.time.value            = 1624924800
-   stop.time.isDaily          = GetIniBool   (file, section, "stop.time.isDaily"        );            // bool     stop.time.isDaily          = 0
-   stop.time.description      = GetIniStringA(file, section, "stop.time.description", "");            // string   stop.time.description      = text
-
-   stop.profitAbs.condition   = GetIniBool   (file, section, "stop.profitAbs.condition"        );     // bool     stop.profitAbs.condition   = 1
-   stop.profitAbs.value       = GetIniDouble (file, section, "stop.profitAbs.value"            );     // double   stop.profitAbs.value       = 10.00
-   stop.profitAbs.description = GetIniStringA(file, section, "stop.profitAbs.description",   "");     // string   stop.profitAbs.description = text
-   stop.profitPct.condition   = GetIniBool   (file, section, "stop.profitPct.condition"        );     // bool     stop.profitPct.condition   = 0
-   stop.profitPct.value       = GetIniDouble (file, section, "stop.profitPct.value"            );     // double   stop.profitPct.value       = 0
-   stop.profitPct.absValue    = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX);     // double   stop.profitPct.absValue    = 0.00
-   stop.profitPct.description = GetIniStringA(file, section, "stop.profitPct.description",   "");     // string   stop.profitPct.description = text
-
-   stop.profitPun.condition   = GetIniBool   (file, section, "stop.profitPun.condition"      );       // bool     stop.profitPun.condition   = 1
-   stop.profitPun.type        = GetIniInt    (file, section, "stop.profitPun.type"           );       // int      stop.profitPun.type        = 4
-   stop.profitPun.value       = GetIniDouble (file, section, "stop.profitPun.value"          );       // double   stop.profitPun.value       = 1.23456
-   stop.profitPun.description = GetIniStringA(file, section, "stop.profitPun.description", "");       // string   stop.profitPun.description = text
 
    return(!catch("ReadStatus(13)"));
 }
