@@ -222,16 +222,6 @@ extern bool   ShowProfitInPercent  = true;                  // whether PL is dis
 #define TP_TYPE_PIP                 3
 #define TP_TYPE_PRICEUNIT           4
 
-#define METRIC_TOTAL_MONEY_NET      1           // cumulated PnL metrics
-#define METRIC_TOTAL_UNITS_VIRT     2
-#define METRIC_TOTAL_UNITS_GROSS    3
-#define METRIC_TOTAL_UNITS_NET      4
-
-#define METRIC_DAILY_MONEY_NET      5           // daily PnL metrics
-#define METRIC_DAILY_UNITS_VIRT     6
-#define METRIC_DAILY_UNITS_GROSS    7
-#define METRIC_DAILY_UNITS_NET      8
-
 #define H_TICKET                    0           // trade history indexes
 #define H_OPENTYPE                  1
 #define H_LOTS                      2
@@ -249,6 +239,19 @@ extern bool   ShowProfitInPercent  = true;                  // whether PL is dis
 #define H_NETPROFIT                14
 #define H_NETPROFIT_P              15
 #define H_VIRTPROFIT_P             16
+
+#define METRIC_TOTAL_MONEY_NET      1           // cumulated PnL metrics
+#define METRIC_TOTAL_UNITS_VIRT     2
+#define METRIC_TOTAL_UNITS_GROSS    3
+#define METRIC_TOTAL_UNITS_NET      4
+
+#define METRIC_DAILY_MONEY_NET      5           // daily PnL metrics
+#define METRIC_DAILY_UNITS_VIRT     6
+#define METRIC_DAILY_UNITS_GROSS    7
+#define METRIC_DAILY_UNITS_NET      8
+
+#define METRIC_NEXT                 1           // directions for toggling between metrics
+#define METRIC_PREVIOUS            -1
 
 // general
 int      tradingMode;
@@ -331,6 +334,9 @@ bool     stop.profitPun.condition;              // whether a takeprofit conditio
 int      stop.profitPun.type;
 double   stop.profitPun.value;
 string   stop.profitPun.description = "";
+
+// volatile status data
+int      status.activeMetric = METRIC_TOTAL_MONEY_NET;
 
 // other
 string   pUnit = "";
@@ -444,7 +450,8 @@ bool onCommand(string cmd, string params, int keys) {
    }
 
    else if (cmd == "toggle-metrics") {
-      return(ToggleMetrics());
+      int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
+      return(ToggleMetrics(direction));
    }
 
    else if (cmd == "toggle-open-orders") {
@@ -463,10 +470,19 @@ bool onCommand(string cmd, string params, int keys) {
 /**
  * Toggle EA status between displayed metrics.
  *
+ * @param  int direction - METRIC_NEXT|METRIC_PREVIOUS
+ *
  * @return bool - success status
  */
-bool ToggleMetrics() {
-   debug("ToggleMetrics(0.1)  "+ instance.name);
+bool ToggleMetrics(int direction) {
+   if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   status.activeMetric += direction;
+   if (status.activeMetric < 1) status.activeMetric = 4;    // valid metrics: 1-4
+   if (status.activeMetric > 4) status.activeMetric = 1;
+   StoreVolatileData();
+
+   debug("ToggleMetrics(0.1)  "+ instance.name +"  new metric: "+ status.activeMetric);
    return(true);
 }
 
@@ -2811,76 +2827,111 @@ int onInputError(string message) {
 
 
 /**
- * Store the current instance id in the terminal (for template changes, terminal restart, recompilation etc).
+ * Store volatile runtime vars in chart and chart window (for template reload, terminal restart, recompilation etc).
  *
  * @return bool - success status
  */
-bool StoreInstanceId() {
-   string name = ProgramName() +".Instance.ID";
+bool StoreVolatileData() {
+   string name = ProgramName();
+
+   // input Instance.ID
    string value = ifString(instance.isTest, "T", "") + instance.id;
-
-   Instance.ID = value;                                              // store in input parameter
-
+   Instance.ID = value;
    if (__isChart) {
-      Chart.StoreString(name, value);                                // store in chart
-      SetWindowStringA(__ExecutionContext[EC.hChart], name, value);  // store in chart window
+      string key = name +".Instance.ID";
+      SetWindowStringA(__ExecutionContext[EC.hChart], key, value);
+      Chart.StoreString(key, value);
    }
-   return(!catch("StoreInstanceId(1)"));
+
+   // status.activeMetric
+   if (__isChart) {
+      key = name +".status.activeMetric";
+      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, status.activeMetric);
+      Chart.StoreInt(key, status.activeMetric);
+   }
+   return(!catch("StoreVolatileData(1)"));
 }
 
 
 /**
- * Find and restore a stored instance id (for template changes, terminal restart, recompilation etc).
+ * Restore volatile runtime data from chart or chart window (for template reload, terminal restart, recompilation etc).
  *
  * @return bool - whether an instance id was successfully restored
  */
-bool RestoreInstanceId() {
-   bool isError, muteErrors=false;
+bool RestoreVolatileData() {
+   string name = ProgramName();
 
-   // check input parameter
-   string value = Instance.ID;
-   if (SetInstanceId(value, muteErrors, "RestoreInstanceId(1)")) return(true);
-   isError = muteErrors;
-   if (isError) return(false);
+   // input Instance.ID
+   while (true) {
+      bool error = false;
+      if (SetInstanceId(Instance.ID, error, "RestoreVolatileData(1)")) break;
+      if (error) return(false);
 
-   if (__isChart) {
-      // check chart window
-      string name = ProgramName() +".Instance.ID";
-      value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
-      muteErrors = false;
-      if (SetInstanceId(value, muteErrors, "RestoreInstanceId(2)")) return(true);
-      isError = muteErrors;
-      if (isError) return(false);
+      if (__isChart) {
+         string key = name +".Instance.ID";
+         string sValue = GetWindowStringA(__ExecutionContext[EC.hChart], key);
+         if (SetInstanceId(sValue, error, "RestoreVolatileData(2)")) break;
+         if (error) return(false);
 
-      // check chart
-      if (Chart.RestoreString(name, value, false)) {
-         muteErrors = false;
-         if (SetInstanceId(value, muteErrors, "RestoreInstanceId(3)")) return(true);
+         Chart.RestoreString(key, sValue, false);
+         if (SetInstanceId(sValue, error, "RestoreVolatileData(3)")) break;
+         return(false);
       }
    }
-   return(false);
+
+   // status.activeMetric
+   if (__isChart) {
+      key = name +".status.activeMetric";
+      while (true) {
+         int iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
+         if (iValue != 0) {
+            if (iValue > 0 && iValue <= METRIC_TOTAL_UNITS_NET) {
+               status.activeMetric = iValue;
+               break;
+            }
+         }
+         if (Chart.RestoreInt(key, iValue, false)) {
+            if (iValue > 0 && iValue <= METRIC_TOTAL_UNITS_NET) {
+               status.activeMetric = iValue;
+               break;
+            }
+         }
+         status.activeMetric = METRIC_TOTAL_MONEY_NET;               // reset to default value
+         break;
+      }
+   }
+   return(true);
 }
 
 
 /**
- * Remove a stored instance id.
+ * Remove stored volatile runtime data from chart and chart window.
  *
  * @return bool - success status
  */
-bool RemoveInstanceId() {
+bool RemoveVolatileData() {
+   string name = ProgramName();
+
+   // input Instance.ID
    if (__isChart) {
-      // chart window
-      string name = ProgramName() +".Instance.ID";
-      RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
-
-      // chart
-      Chart.RestoreString(name, name, true);
-
-      // remove a chart status for chart commands
-      name = "EA.status";
-      if (ObjectFind(name) != -1) ObjectDelete(name);
+      string key = name +".Instance.ID";
+      string sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
+      Chart.RestoreString(key, sValue, true);
    }
-   return(!catch("RemoveInstanceId(1)"));
+
+   // status.activeMetric
+   if (__isChart) {
+      key = name +".status.activeMetric";
+      int iValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      Chart.RestoreInt(key, iValue, true);
+   }
+
+   // event object for chart commands
+   if (__isChart) {
+      key = "EA.status";
+      if (ObjectFind(key) != -1) ObjectDelete(key);
+   }
+   return(!catch("RemoveVolatileData(1)"));
 }
 
 
