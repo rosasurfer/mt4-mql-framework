@@ -1,4 +1,8 @@
 /**
+ ****************************************************************************************************************************
+ *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
+ ****************************************************************************************************************************
+ *
  * ZigZag EA
  *
  * A strategy inspired by the "Turtle Trading" system of Richard Dennis.
@@ -28,23 +32,28 @@
  *
  * External control
  * ----------------
- * The EA status can be controlled via execution of the following scripts (online and in tester):
+ * The EA can be controlled via execution of the following scripts (online and in tester):
  *
  *  • EA.Start: When a "start" command is received the EA opens a position in direction of the current ZigZag leg. There are
- *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction. The command has
- *              no effect if the EA already manages an open position.
- *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for trade signals.
- *              The command has no effect if the EA is already in status "stopped".
- *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for a new trade signals and start trading.
- *              The command has no effect if the EA is already in status "waiting".
+ *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction. The command has no
+ *              effect if the EA already manages an open position.
+ *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for trade signals. The
+ *              command has no effect if the EA is already in status "stopped".
+ *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new trade signals and start trading. The command
+ *              has no effect if the EA is already in status "waiting".
  *
  *
  *  @see  [Turtle Trading] https://analyzingalpha.com/turtle-trading
  *  @see  [Turtle Trading] http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
  *
  *
+ *
  * TODO:
- *  - status: toggle chart markers of trades between metrics (if visible)
+ *  - toggle chart markers together with metrics
+ *     update ShowOpenOrders()/ShowTradeHistory()
+ *     on metric-change event update visible chart markers
+ *     fix chart markers displayed during a test
+ *
  *  - document control scripts
  *  - add var recorder.internalSymbol and store/restore value
  *  - tester: ZigZag EA cannot yet run with bar model MODE_BAROPEN
@@ -110,9 +119,11 @@
  *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
  *
- *  - visualization
- *     rename groups/instruments/history descriptions
- *     ChartInfos: read/display symbol description as long name
+ *  - ChartInfos
+ *     read/display symbol description as long name
+ *     CustomPosition() weekend configuration/timespans don't work
+ *     CustomPosition() including/excluding a specific strategy is not supported
+ *     don't recalculate unitsize on every tick (every few seconds is sufficient)
  *
  *  - performance tracking
  *     realtime equity charts
@@ -121,11 +132,6 @@
  *
  *  - status display
  *     parameter: ZigZag.Periods
- *     current position
- *     current spread
- *     number of trades
- *     total commission
- *     recorded symbols with descriptions
  *
  *  - trade breaks
  *    - full session (24h) with trade breaks
@@ -160,15 +166,11 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701981#  [Query execution mode in MQL]
  *
  *  - merge inputs TakeProfit and StopConditions
+ *  - fix log messages in ValidateInputs (conditionally display the instance name)
  *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
  *  - VPS: monitor and notify of incoming emails
  *  - CLI tools to rename/update/delete symbols
- *  - fix log messages in ValidateInputs (conditionally display the instance name)
- *  - pass input "EA.Recorder" to the Expander as a string
- *  - ChartInfos::CustomPosition() weekend configuration/timespans don't work
- *  - ChartInfos::CustomPosition() including/excluding a specific strategy is not supported
- *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - Superbars: ETH/RTH separation for Frankfurt session
  */
 #include <stddefines.mqh>
@@ -337,6 +339,8 @@ string   stop.profitPun.description = "";
 
 // volatile status data
 int      status.activeMetric = METRIC_TOTAL_MONEY_NET;
+bool     status.showOpenOrders;
+bool     status.showTradeHistory;
 
 // other
 string   pUnit = "";
@@ -494,8 +498,8 @@ bool ToggleMetrics(int direction) {
  * @return bool - success status
  */
 bool ToggleOpenOrders() {
-   // read current status and toggle it
-   bool showOrders = !GetOpenOrderDisplayStatus();
+   // toggle current status
+   bool showOrders = !status.showOpenOrders;
 
    // ON: display open orders
    if (showOrders) {
@@ -529,50 +533,12 @@ bool ToggleOpenOrders() {
       }
    }
 
-   // store current status in the chart
-   SetOpenOrderDisplayStatus(showOrders);
+   // store current status
+   status.showOpenOrders = showOrders;
+   StoreVolatileData();
 
    if (__isTesting) WindowRedraw();
    return(!catch("ToggleOpenOrders(1)"));
-}
-
-
-/**
- * Resolve the current 'ShowOpenOrders' display status.
- *
- * @return bool - ON/OFF
- */
-bool GetOpenOrderDisplayStatus() {
-   bool status = false;
-
-   // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
-   if (ObjectFind(label) != -1) {
-      string sValue = ObjectDescription(label);
-      if (StrIsInteger(sValue))
-         status = (StrToInteger(sValue) != 0);
-   }
-   return(status);
-}
-
-
-/**
- * Store the passed 'ShowOpenOrders' display status.
- *
- * @param  bool status - display status
- *
- * @return bool - success status
- */
-bool SetOpenOrderDisplayStatus(bool status) {
-   status = status!=0;
-
-   // store status in the chart (for terminal restarts)
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
-   if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ status);
-
-   return(!catch("SetOpenOrderDisplayStatus(1)"));
 }
 
 
@@ -587,12 +553,14 @@ int ShowOpenOrders() {
    int openOrders = 0;
 
    if (open.ticket != NULL) {
-      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
+      double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_UNITS_VIRT, open.priceVirt, open.price);
+      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
+
       if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(EMPTY);
       ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
       ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
       ObjectSet    (label, OBJPROP_TIME1,     open.time);
-      ObjectSet    (label, OBJPROP_PRICE1,    open.price);
+      ObjectSet    (label, OBJPROP_PRICE1,    openPrice);
       ObjectSetText(label, instance.name);
       openOrders++;
    }
@@ -609,8 +577,8 @@ int ShowOpenOrders() {
  * @return bool - success status
  */
 bool ToggleTradeHistory() {
-   // read current status and toggle it
-   bool showHistory = !GetTradeHistoryDisplayStatus();
+   // toggle current status
+   bool showHistory = !status.showTradeHistory;
 
    // ON: display closed trades
    if (showHistory) {
@@ -645,51 +613,12 @@ bool ToggleTradeHistory() {
       }
    }
 
-   // store current status in the chart
-   SetTradeHistoryDisplayStatus(showHistory);
+   // store current status
+   status.showTradeHistory = showHistory;
+   StoreVolatileData();
 
    if (__isTesting) WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
-}
-
-
-/**
- * Resolve the current "ShowTradeHistory" display status.
- *
- * @return bool - ON/OFF
- */
-bool GetTradeHistoryDisplayStatus() {
-   bool status = false;
-
-   // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
-   if (ObjectFind(label) != -1) {
-      string sValue = ObjectDescription(label);
-      if (StrIsInteger(sValue))
-         status = (StrToInteger(sValue) != 0);
-   }
-   return(status);
-}
-
-
-/**
- * Store the passed "ShowTradeHistory" display status.
- *
- * @param  bool status - display status
- *
- * @return bool - success status
- */
-bool SetTradeHistoryDisplayStatus(bool status) {
-   status = status!=0;
-
-   // store status in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
-   if (ObjectFind(label) == -1)
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ status);
-
-   return(!catch("SetTradeHistoryDisplayStatus(1)"));
 }
 
 
@@ -2834,7 +2763,7 @@ int onInputError(string message) {
 bool StoreVolatileData() {
    string name = ProgramName();
 
-   // input Instance.ID
+   // input string Instance.ID
    string value = ifString(instance.isTest, "T", "") + instance.id;
    Instance.ID = value;
    if (__isChart) {
@@ -2843,11 +2772,25 @@ bool StoreVolatileData() {
       Chart.StoreString(key, value);
    }
 
-   // status.activeMetric
+   // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";
       SetWindowIntegerA(__ExecutionContext[EC.hChart], key, status.activeMetric);
       Chart.StoreInt(key, status.activeMetric);
+   }
+
+   // bool status.showOpenOrders
+   if (__isChart) {
+      key = name +".status.showOpenOrders";
+      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, ifInt(status.showOpenOrders, 1, -1));
+      Chart.StoreBool(key, status.showOpenOrders);
+   }
+
+   // bool status.showTradeHistory
+   if (__isChart) {
+      key = name +".status.showTradeHistory";
+      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, ifInt(status.showTradeHistory, 1, -1));
+      Chart.StoreBool(key, status.showTradeHistory);
    }
    return(!catch("StoreVolatileData(1)"));
 }
@@ -2861,7 +2804,7 @@ bool StoreVolatileData() {
 bool RestoreVolatileData() {
    string name = ProgramName();
 
-   // input Instance.ID
+   // input string Instance.ID
    while (true) {
       bool error = false;
       if (SetInstanceId(Instance.ID, error, "RestoreVolatileData(1)")) break;
@@ -2879,7 +2822,7 @@ bool RestoreVolatileData() {
       }
    }
 
-   // status.activeMetric
+   // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";
       while (true) {
@@ -2896,8 +2839,32 @@ bool RestoreVolatileData() {
                break;
             }
          }
-         status.activeMetric = METRIC_TOTAL_MONEY_NET;               // reset to default value
+         status.activeMetric = METRIC_TOTAL_MONEY_NET;      // reset to default value
          break;
+      }
+   }
+
+   // bool status.showOpenOrders
+   if (__isChart) {
+      key = name +".status.showOpenOrders";
+      iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      if (iValue != 0) {
+         status.showOpenOrders = (iValue > 0);
+      }
+      else if (!Chart.RestoreBool(key, status.showOpenOrders, false)) {
+         status.showOpenOrders = false;                     // reset to default value
+      }
+   }
+
+   // bool status.showTradeHistory
+   if (__isChart) {
+      key = name +".status.showTradeHistory";
+      iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      if (iValue != 0) {
+         status.showTradeHistory = (iValue > 0);
+      }
+      else if (!Chart.RestoreBool(key, status.showTradeHistory, false)) {
+         status.showOpenOrders = false;                     // reset to default value
       }
    }
    return(true);
@@ -2912,18 +2879,32 @@ bool RestoreVolatileData() {
 bool RemoveVolatileData() {
    string name = ProgramName();
 
-   // input Instance.ID
+   // input string Instance.ID
    if (__isChart) {
       string key = name +".Instance.ID";
       string sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
       Chart.RestoreString(key, sValue, true);
    }
 
-   // status.activeMetric
+   // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";
       int iValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
       Chart.RestoreInt(key, iValue, true);
+   }
+
+   // bool status.showOpenOrders
+   if (__isChart) {
+      key = name +".status.showOpenOrders";
+      bool bValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      Chart.RestoreBool(key, bValue, true);
+   }
+
+   // bool status.showTradeHistory
+   if (__isChart) {
+      key = name +".status.showTradeHistory";
+      bValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      Chart.RestoreBool(key, bValue, true);
    }
 
    // event object for chart commands
