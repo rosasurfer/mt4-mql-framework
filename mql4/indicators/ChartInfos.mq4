@@ -289,22 +289,22 @@ bool onCommand(string cmd, string params, int keys) {
    }
 
    else if (cmd == "toggle-open-orders") {
+      flags = NULL;
       if (keys & F_VK_SHIFT != 0) {
-         flags = F_SHOW_CUSTOM_POSITIONS;                                     // with VK_SHIFT:    show custom positions only
+         flags = F_SHOW_CUSTOM_POSITIONS;                                     // with VK_SHIFT: show custom positions only
          ArrayResize(configTerms, 0);                                         // reparse configuration
          GetExternalAssets(tradeAccount.company, tradeAccount.number, true);  // invalidate cached external assets
       }
-      else flags = NULL;                                                      // without VK_SHIFT: show all open positions
       if (!ToggleOpenOrders(flags)) return(false);
    }
 
    else if (cmd == "toggle-trade-history") {
+      flags = NULL;
       if (keys & F_VK_SHIFT != 0) {
-         flags = F_SHOW_CUSTOM_HISTORY;                                       // with VK_SHIFT:    show custom history only
+         flags = F_SHOW_CUSTOM_HISTORY;                                       // with VK_SHIFT: show custom history only
          ArrayResize(configTerms, 0);                                         // reparse configuration
          GetExternalAssets(tradeAccount.company, tradeAccount.number, true);  // invalidate cached external assets
       }
-      else flags = NULL;                                                      // without VK_SHIFT: show all available history
       if (!ToggleTradeHistory(flags)) return(false);
    }
 

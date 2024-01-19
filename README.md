@@ -3,8 +3,7 @@
 
 
 ### Where can I download MetaTrader 4?
-At the moment MetaTrader 4 can be downloaded from your broker's website or from this [Telegram channel](https://t.me/+FjsyKhm0TqAwMjQy).
-Due to a DMCA notice from MetaQuotes I had to disable the direct downloads. I'm working on a solution to fix it.
+MetaTrader 4 can be downloaded from your broker's website. Old versions may be available at this non-affiliated [Telegram channel](https://t.me/+FjsyKhm0TqAwMjQy).
 
 -----
 

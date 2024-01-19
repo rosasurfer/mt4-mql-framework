@@ -6,6 +6,18 @@
  */
 int onInit() {
    CreateStatusBox();
+
+   int digits = MathMax(Digits, 2);                // transform Digits=1 to 2 (for some indices)
+   if (digits > 2) {
+      pUnit       = "pip";
+      pDigits     = 1;
+      pMultiplier = MathRound(1/Pip);
+   }
+   else {
+      pUnit       = "point";
+      pDigits     = 2;
+      pMultiplier = 1;
+   }
    return(catch("onInit(1)"));
 }
 
@@ -80,7 +92,7 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   if (RestoreInstanceId()) {                      // an instance id was found and restored
+   if (RestoreVolatileData()) {                    // an instance id was found and restored
       if (RestoreInstance()) {                     // the instance was restored
          logInfo("onInitTemplate(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
@@ -96,7 +108,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitRecompile() {
-   if (RestoreInstanceId()) {                      // same as for onInitTemplate()
+   if (RestoreVolatileData()) {                    // same as for onInitTemplate()
       if (RestoreInstance()) {
          logInfo("onInitRecompile(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
@@ -123,13 +135,13 @@ int afterInit() {                                  // open the log file (flushes
       test.onStopPause             = GetConfigBool(section, "OnStopPause",             true);
       test.reduceStatusWrites      = GetConfigBool(section, "ReduceStatusWrites",      true);
    }
-   StoreInstanceId();                              // store the instance id for templates changes/restart/recompilation etc.
+   StoreVolatileData();                            // store the instance id for templates changes/restart/recompilation etc.
    return(catch("afterInit(2)"));
 }
 
 
 /**
- * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
+ * Create the status display box. Consists of overlapping rectangles made of font "Webdings", char "g".
  * Called from onInit() only.
  *
  * @return bool - success status
@@ -137,7 +149,7 @@ int afterInit() {                                  // open the log file (flushes
 bool CreateStatusBox() {
    if (!__isChart) return(true);
 
-   int x[]={2, 70, 120}, y=50, fontSize=47, sizeofX=ArraySize(x);
+   int x[]={2, 66, 125}, y=50, fontSize=54, sizeofX=ArraySize(x);
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {
