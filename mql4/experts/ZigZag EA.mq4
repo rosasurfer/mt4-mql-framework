@@ -50,7 +50,6 @@
  *
  * TODO:
  *  - toggle chart markers together with metrics
- *     update ShowOpenOrders()/ShowTradeHistory()
  *     on metric-change event update visible chart markers
  *     fix chart markers displayed during a test
  *
@@ -643,6 +642,10 @@ int ShowTradeHistory() {
       datetime closeTime  = history[i][H_CLOSETIME ];
       double   closePrice = history[i][H_CLOSEPRICE];
 
+      if (status.activeMetric == METRIC_TOTAL_UNITS_VIRT) {
+         openPrice  = history[i][H_OPENPRICE_VIRT ];
+         closePrice = history[i][H_CLOSEPRICE_VIRT];
+      }
       if (!closeTime)                    continue;             // skip open tickets (should not happen)
       if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
 
