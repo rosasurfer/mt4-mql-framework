@@ -1,7 +1,7 @@
 //
 // During runtime an EA can record up to 21 different performance graphs (aka metrics; online and in tester). These recordings
 // are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they can be displayed and
-// analysed like regular MetaTrader symbols.
+// analysed like regular MT4 symbols.
 //
 // Metrics to record are declared using input parameter "EA.Recorder". Multiple declarations must be separated by comma.
 //
@@ -34,7 +34,7 @@
 
 // recorder modes
 #define RECORDER_OFF          0              // recording off
-#define RECORDER_INTERNAL     1              // recording of AccountEquity()
+#define RECORDER_ON           1              // recording of a standard AccountEquity() graph
 #define RECORDER_CUSTOM       2              // recording of custom metrics
 
 // recorder settings
@@ -163,7 +163,7 @@ bool Recorder.ValidateInputs(bool isTest) {
          EA.Recorder   = sValue;
       }
       else if (sValue == "on" ) {
-         recorder.mode = RECORDER_INTERNAL;
+         recorder.mode = RECORDER_ON;
          EA.Recorder   = sValue;
       }
       else {
@@ -262,7 +262,7 @@ bool Recorder.init() {
       recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               return(false);
 
       // create an internal metric for AccountEquity()
-      if (recorder.mode == RECORDER_INTERNAL) {
+      if (recorder.mode == RECORDER_ON) {
          symbol = Recorder.GetEquitySymbol(); if (!StringLen(symbol)) return(false);
          suffix = ", "+ PeriodDescription() +", AccountEquity in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          descr  = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;
@@ -355,8 +355,8 @@ bool Recorder.start() {
          }
       }
 
-      if (recorder.mode == RECORDER_INTERNAL) value = AccountEquity() - AccountCredit();
-      else                                    value = metric.baseValue[i] + metric.currValue[i] * metric.multiplier[i];
+      if (recorder.mode == RECORDER_ON) value = AccountEquity() - AccountCredit();
+      else                              value = metric.baseValue[i] + metric.currValue[i] * metric.multiplier[i];
 
       if      (i <  7) success = HistorySet1.AddTick(metric.hSet[i], Tick.time, value, flags);
       else if (i < 14) success = HistorySet2.AddTick(metric.hSet[i], Tick.time, value, flags);
@@ -455,7 +455,7 @@ void Recorder.ResetMetrics() {
 
 
 /**
- * Get the next available MT4 symbol for internal equity recording.
+ * Get the next available MT4 symbol for standard equity recording.
  *
  * @return string - symbol or an empty string in case of errors
  */

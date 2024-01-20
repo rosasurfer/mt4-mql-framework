@@ -1,4 +1,8 @@
 /**
+ ****************************************************************************************************************************
+ *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
+ ****************************************************************************************************************************
+ *
  * ZigZag EA
  *
  * A strategy inspired by the "Turtle Trading" system of Richard Dennis.
@@ -28,23 +32,24 @@
  *
  * External control
  * ----------------
- * The EA status can be controlled via execution of the following scripts (online and in tester):
+ * The EA can be controlled via execution of the following scripts (online and in tester):
  *
  *  • EA.Start: When a "start" command is received the EA opens a position in direction of the current ZigZag leg. There are
- *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction. The command has
- *              no effect if the EA already manages an open position.
- *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for trade signals.
- *              The command has no effect if the EA is already in status "stopped".
- *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for a new trade signals and start trading.
- *              The command has no effect if the EA is already in status "waiting".
+ *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction. The command has no
+ *              effect if the EA already manages an open position.
+ *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for trade signals. The
+ *              command has no effect if the EA is already in status "stopped".
+ *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new trade signals and start trading. The command
+ *              has no effect if the EA is already in status "waiting".
  *
  *
  *  @see  [Turtle Trading] https://analyzingalpha.com/turtle-trading
  *  @see  [Turtle Trading] http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
  *
  *
+ *
  * TODO:
- *  - status: toggle chart markers of trades between metrics (if visible)
+ *  - fix chart markers during a test
  *  - document control scripts
  *  - add var recorder.internalSymbol and store/restore value
  *  - tester: ZigZag EA cannot yet run with bar model MODE_BAROPEN
@@ -87,6 +92,7 @@
  *  - SuperBars
  *     fix gap between days/weeks if market is not open 24h
  *     implement more timeframes
+ *     ETH/RTH separation for Frankfurt session
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "Today 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *
@@ -110,9 +116,11 @@
  *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
  *
- *  - visualization
- *     rename groups/instruments/history descriptions
- *     ChartInfos: read/display symbol description as long name
+ *  - ChartInfos
+ *     read/display symbol description as long name
+ *     CustomPosition() weekend configuration/timespans don't work
+ *     CustomPosition() including/excluding a specific strategy is not supported
+ *     don't recalculate unitsize on every tick (every few seconds is sufficient)
  *
  *  - performance tracking
  *     realtime equity charts
@@ -121,11 +129,6 @@
  *
  *  - status display
  *     parameter: ZigZag.Periods
- *     current position
- *     current spread
- *     number of trades
- *     total commission
- *     recorded symbols with descriptions
  *
  *  - trade breaks
  *    - full session (24h) with trade breaks
@@ -160,16 +163,11 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701981#  [Query execution mode in MQL]
  *
  *  - merge inputs TakeProfit and StopConditions
+ *  - fix log messages in ValidateInputs (conditionally display the instance name)
  *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
  *  - VPS: monitor and notify of incoming emails
  *  - CLI tools to rename/update/delete symbols
- *  - fix log messages in ValidateInputs (conditionally display the instance name)
- *  - pass input "EA.Recorder" to the Expander as a string
- *  - ChartInfos::CustomPosition() weekend configuration/timespans don't work
- *  - ChartInfos::CustomPosition() including/excluding a specific strategy is not supported
- *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
- *  - Superbars: ETH/RTH separation for Frankfurt session
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -337,6 +335,8 @@ string   stop.profitPun.description = "";
 
 // volatile status data
 int      status.activeMetric = METRIC_TOTAL_MONEY_NET;
+bool     status.showOpenOrders;
+bool     status.showTradeHistory;
 
 // other
 string   pUnit = "";
@@ -478,44 +478,74 @@ bool onCommand(string cmd, string params, int keys) {
 bool ToggleMetrics(int direction) {
    if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
+   bool virtualMetric = (status.activeMetric==METRIC_TOTAL_UNITS_VIRT || status.activeMetric==METRIC_DAILY_UNITS_VIRT);
+
    status.activeMetric += direction;
    if (status.activeMetric < 1) status.activeMetric = 4;    // valid metrics: 1-4
    if (status.activeMetric > 4) status.activeMetric = 1;
    StoreVolatileData();
-
    SS.All();
-   return(true);
+
+   virtualMetric = (virtualMetric || status.activeMetric==METRIC_TOTAL_UNITS_VIRT || status.activeMetric==METRIC_DAILY_UNITS_VIRT);
+
+   if (virtualMetric) {
+      if (status.showOpenOrders) {
+         ToggleOpenOrders(false);
+         ToggleOpenOrders(false);
+      }
+      if (status.showTradeHistory) {
+         ToggleTradeHistory(false);
+         ToggleTradeHistory(false);
+      }
+   }
+   return(!catch("ToggleMetrics(2)"));
 }
 
 
 /**
  * Toggle the display of open orders.
  *
+ * @param  bool soundOnNone [optional] - whether to play a sound if no open orders exist (default: yes)
+ *
  * @return bool - success status
  */
-bool ToggleOpenOrders() {
-   // read current status and toggle it
-   bool showOrders = !GetOpenOrderDisplayStatus();
+bool ToggleOpenOrders(bool soundOnNone = true) {
+   soundOnNone = soundOnNone!=0;
+
+   // toggle current status
+   bool showOrders = !status.showOpenOrders;
 
    // ON: display open orders
    if (showOrders) {
-      int orders = ShowOpenOrders();
-      if (orders == -1) return(false);
-      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
-         showOrders = false;                          // remove any existing open order markers.
-         PlaySoundEx("Plonk.wav");
+      string types[] = {"buy", "sell"};
+      color clrs[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
+
+      if (open.ticket != NULL) {
+         double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_UNITS_VIRT, open.priceVirt, open.price);
+         string label = StringConcatenate("#", open.ticket, " ", types[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
+
+         if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(!catch("ToggleOpenOrders(1)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (label, OBJPROP_COLOR,  clrs[open.type]);
+         ObjectSet    (label, OBJPROP_TIME1,  open.time);
+         ObjectSet    (label, OBJPROP_PRICE1, openPrice);
+         ObjectSetText(label, instance.name);
+      }
+      else {
+         showOrders = false;                          // Without open orders status must be reset to have the "off" section
+         if (soundOnNone) PlaySoundEx("Plonk.wav");   // remove any existing open order markers.
       }
    }
 
    // OFF: remove open order markers
    if (!showOrders) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
-         string name = ObjectName(i);
+         label = ObjectName(i);
 
-         if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name) == OBJ_ARROW) {
-               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR);
+         if (StringGetChar(label, 0) == '#') {
+            if (ObjectType(label) == OBJ_ARROW) {
+               int arrow = ObjectGet(label, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(label, OBJPROP_COLOR);
 
                if (arrow == SYMBOL_ORDEROPEN) {
                   if (clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) continue;
@@ -523,94 +553,33 @@ bool ToggleOpenOrders() {
                else if (arrow == SYMBOL_ORDERCLOSE) {
                   if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) continue;
                }
-               ObjectDelete(name);
+               ObjectDelete(label);
             }
          }
       }
    }
 
-   // store current status in the chart
-   SetOpenOrderDisplayStatus(showOrders);
+   // store current status
+   status.showOpenOrders = showOrders;
+   StoreVolatileData();
 
    if (__isTesting) WindowRedraw();
-   return(!catch("ToggleOpenOrders(1)"));
-}
-
-
-/**
- * Resolve the current 'ShowOpenOrders' display status.
- *
- * @return bool - ON/OFF
- */
-bool GetOpenOrderDisplayStatus() {
-   bool status = false;
-
-   // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
-   if (ObjectFind(label) != -1) {
-      string sValue = ObjectDescription(label);
-      if (StrIsInteger(sValue))
-         status = (StrToInteger(sValue) != 0);
-   }
-   return(status);
-}
-
-
-/**
- * Store the passed 'ShowOpenOrders' display status.
- *
- * @param  bool status - display status
- *
- * @return bool - success status
- */
-bool SetOpenOrderDisplayStatus(bool status) {
-   status = status!=0;
-
-   // store status in the chart (for terminal restarts)
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
-   if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ status);
-
-   return(!catch("SetOpenOrderDisplayStatus(1)"));
-}
-
-
-/**
- * Display the currently open orders.
- *
- * @return int - number of displayed orders or EMPTY (-1) in case of errors
- */
-int ShowOpenOrders() {
-   string orderTypes[] = {"buy", "sell"};
-   color colors[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
-   int openOrders = 0;
-
-   if (open.ticket != NULL) {
-      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
-      if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(EMPTY);
-      ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-      ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
-      ObjectSet    (label, OBJPROP_TIME1,     open.time);
-      ObjectSet    (label, OBJPROP_PRICE1,    open.price);
-      ObjectSetText(label, instance.name);
-      openOrders++;
-   }
-
-   if (!catch("ShowOpenOrders(1)"))
-      return(openOrders);
-   return(EMPTY);
+   return(!catch("ToggleOpenOrders(2)"));
 }
 
 
 /**
  * Toggle the display of closed trades.
  *
+ * @param  bool soundOnNone [optional] - whether to play a sound if no closed trades exist (default: yes)
+ *
  * @return bool - success status
  */
-bool ToggleTradeHistory() {
-   // read current status and toggle it
-   bool showHistory = !GetTradeHistoryDisplayStatus();
+bool ToggleTradeHistory(bool soundOnNone = true) {
+   soundOnNone = soundOnNone!=0;
+
+   // toggle current status
+   bool showHistory = !status.showTradeHistory;
 
    // ON: display closed trades
    if (showHistory) {
@@ -618,7 +587,7 @@ bool ToggleTradeHistory() {
       if (trades == -1) return(false);
       if (!trades) {                                        // Without any closed trades the status must be reset to enable
          showHistory = false;                               // the "off" section to clear existing markers.
-         PlaySoundEx("Plonk.wav");
+         if (soundOnNone) PlaySoundEx("Plonk.wav");
       }
    }
 
@@ -645,51 +614,12 @@ bool ToggleTradeHistory() {
       }
    }
 
-   // store current status in the chart
-   SetTradeHistoryDisplayStatus(showHistory);
+   // store current status
+   status.showTradeHistory = showHistory;
+   StoreVolatileData();
 
    if (__isTesting) WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
-}
-
-
-/**
- * Resolve the current "ShowTradeHistory" display status.
- *
- * @return bool - ON/OFF
- */
-bool GetTradeHistoryDisplayStatus() {
-   bool status = false;
-
-   // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
-   if (ObjectFind(label) != -1) {
-      string sValue = ObjectDescription(label);
-      if (StrIsInteger(sValue))
-         status = (StrToInteger(sValue) != 0);
-   }
-   return(status);
-}
-
-
-/**
- * Store the passed "ShowTradeHistory" display status.
- *
- * @param  bool status - display status
- *
- * @return bool - success status
- */
-bool SetTradeHistoryDisplayStatus(bool status) {
-   status = status!=0;
-
-   // store status in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
-   if (ObjectFind(label) == -1)
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ status);
-
-   return(!catch("SetTradeHistoryDisplayStatus(1)"));
 }
 
 
@@ -714,6 +644,10 @@ int ShowTradeHistory() {
       datetime closeTime  = history[i][H_CLOSETIME ];
       double   closePrice = history[i][H_CLOSEPRICE];
 
+      if (status.activeMetric == METRIC_TOTAL_UNITS_VIRT) {
+         openPrice  = history[i][H_OPENPRICE_VIRT ];
+         closePrice = history[i][H_CLOSEPRICE_VIRT];
+      }
       if (!closeTime)                    continue;             // skip open tickets (should not happen)
       if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
 
@@ -724,9 +658,9 @@ int ShowTradeHistory() {
       openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
       if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
       ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-      ObjectSet    (openLabel, OBJPROP_COLOR,     iOpenColors[type]);
-      ObjectSet    (openLabel, OBJPROP_TIME1,     openTime);
-      ObjectSet    (openLabel, OBJPROP_PRICE1,    openPrice);
+      ObjectSet    (openLabel, OBJPROP_COLOR,  iOpenColors[type]);
+      ObjectSet    (openLabel, OBJPROP_TIME1,  openTime);
+      ObjectSet    (openLabel, OBJPROP_PRICE1, openPrice);
       ObjectSetText(openLabel, instance.name);
 
       // trend line
@@ -745,9 +679,9 @@ int ShowTradeHistory() {
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
       if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
       ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-      ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
-      ObjectSet    (closeLabel, OBJPROP_TIME1,     closeTime);
-      ObjectSet    (closeLabel, OBJPROP_PRICE1,    closePrice);
+      ObjectSet    (closeLabel, OBJPROP_COLOR,  CLR_CLOSED);
+      ObjectSet    (closeLabel, OBJPROP_TIME1,  closeTime);
+      ObjectSet    (closeLabel, OBJPROP_PRICE1, closePrice);
       ObjectSetText(closeLabel, instance.name);
       closedTrades++;
    }
@@ -2834,7 +2768,7 @@ int onInputError(string message) {
 bool StoreVolatileData() {
    string name = ProgramName();
 
-   // input Instance.ID
+   // input string Instance.ID
    string value = ifString(instance.isTest, "T", "") + instance.id;
    Instance.ID = value;
    if (__isChart) {
@@ -2843,11 +2777,25 @@ bool StoreVolatileData() {
       Chart.StoreString(key, value);
    }
 
-   // status.activeMetric
+   // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";
       SetWindowIntegerA(__ExecutionContext[EC.hChart], key, status.activeMetric);
       Chart.StoreInt(key, status.activeMetric);
+   }
+
+   // bool status.showOpenOrders
+   if (__isChart) {
+      key = name +".status.showOpenOrders";
+      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, ifInt(status.showOpenOrders, 1, -1));
+      Chart.StoreBool(key, status.showOpenOrders);
+   }
+
+   // bool status.showTradeHistory
+   if (__isChart) {
+      key = name +".status.showTradeHistory";
+      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, ifInt(status.showTradeHistory, 1, -1));
+      Chart.StoreBool(key, status.showTradeHistory);
    }
    return(!catch("StoreVolatileData(1)"));
 }
@@ -2861,7 +2809,7 @@ bool StoreVolatileData() {
 bool RestoreVolatileData() {
    string name = ProgramName();
 
-   // input Instance.ID
+   // input string Instance.ID
    while (true) {
       bool error = false;
       if (SetInstanceId(Instance.ID, error, "RestoreVolatileData(1)")) break;
@@ -2879,7 +2827,7 @@ bool RestoreVolatileData() {
       }
    }
 
-   // status.activeMetric
+   // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";
       while (true) {
@@ -2896,8 +2844,32 @@ bool RestoreVolatileData() {
                break;
             }
          }
-         status.activeMetric = METRIC_TOTAL_MONEY_NET;               // reset to default value
+         status.activeMetric = METRIC_TOTAL_MONEY_NET;      // reset to default value
          break;
+      }
+   }
+
+   // bool status.showOpenOrders
+   if (__isChart) {
+      key = name +".status.showOpenOrders";
+      iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      if (iValue != 0) {
+         status.showOpenOrders = (iValue > 0);
+      }
+      else if (!Chart.RestoreBool(key, status.showOpenOrders, false)) {
+         status.showOpenOrders = false;                     // reset to default value
+      }
+   }
+
+   // bool status.showTradeHistory
+   if (__isChart) {
+      key = name +".status.showTradeHistory";
+      iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      if (iValue != 0) {
+         status.showTradeHistory = (iValue > 0);
+      }
+      else if (!Chart.RestoreBool(key, status.showTradeHistory, false)) {
+         status.showOpenOrders = false;                     // reset to default value
       }
    }
    return(true);
@@ -2912,18 +2884,32 @@ bool RestoreVolatileData() {
 bool RemoveVolatileData() {
    string name = ProgramName();
 
-   // input Instance.ID
+   // input string Instance.ID
    if (__isChart) {
       string key = name +".Instance.ID";
       string sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
       Chart.RestoreString(key, sValue, true);
    }
 
-   // status.activeMetric
+   // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";
       int iValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
       Chart.RestoreInt(key, iValue, true);
+   }
+
+   // bool status.showOpenOrders
+   if (__isChart) {
+      key = name +".status.showOpenOrders";
+      bool bValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      Chart.RestoreBool(key, bValue, true);
+   }
+
+   // bool status.showTradeHistory
+   if (__isChart) {
+      key = name +".status.showTradeHistory";
+      bValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      Chart.RestoreBool(key, bValue, true);
    }
 
    // event object for chart commands
