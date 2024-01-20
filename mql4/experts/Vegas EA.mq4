@@ -48,6 +48,7 @@
  *
  *
  * TODO:
+ *  - add metric METRIC_TOTAL_UNITS_NET
  *  - add exit strategies
  *  - add entry strategies
  *  - add virtual trading
@@ -251,12 +252,24 @@ bool onCommand(string cmd, string params, int keys) {
 bool ToggleMetrics(int direction) {
    if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
+   int lastMetric = status.activeMetric;
+
    status.activeMetric += direction;
    if (status.activeMetric < 1) status.activeMetric = 2;    // valid metrics: 1-2
    if (status.activeMetric > 2) status.activeMetric = 1;
    StoreVolatileData();
-
    SS.All();
+
+   if (lastMetric==METRIC_TOTAL_UNITS_VIRT || status.activeMetric==METRIC_TOTAL_UNITS_VIRT) {
+      if (status.showOpenOrders) {
+         ToggleOpenOrders(false);
+         ToggleOpenOrders(false);
+      }
+      if (status.showTradeHistory) {
+         ToggleTradeHistory(false);
+         ToggleTradeHistory(false);
+      }
+   }
    return(true);
 }
 
@@ -264,31 +277,47 @@ bool ToggleMetrics(int direction) {
 /**
  * Toggle the display of open orders.
  *
+ * @param  bool soundOnNone [optional] - whether to play a sound if no open orders exist (default: yes)
+ *
  * @return bool - success status
  */
-bool ToggleOpenOrders() {
+bool ToggleOpenOrders(bool soundOnNone = true) {
+   soundOnNone = soundOnNone!=0;
+
    // toggle current status
    bool showOrders = !status.showOpenOrders;
 
    // ON: display open orders
    if (showOrders) {
-      int orders = ShowOpenOrders();
-      if (orders == -1) return(false);
-      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
-         showOrders = false;                          // remove any existing open order markers.
-         PlaySoundEx("Plonk.wav");
+      string types[] = {"buy", "sell"};
+      color clrs[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
+
+      if (open.ticket != NULL) {
+         double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_UNITS_VIRT, open.priceVirt, open.price);
+         string label = StringConcatenate("#", open.ticket, " ", types[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
+
+         if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(!catch("ToggleOpenOrders(1)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (label, OBJPROP_COLOR,  clrs[open.type]);
+         ObjectSet    (label, OBJPROP_TIME1,  open.time);
+         ObjectSet    (label, OBJPROP_PRICE1, openPrice);
+         ObjectSetText(label, instance.name);
+      }
+      else {
+         showOrders = false;                          // Without open orders status must be reset to have the "off" section
+         if (soundOnNone) PlaySoundEx("Plonk.wav");   // remove any existing open order markers.
       }
    }
 
    // OFF: remove open order markers
    if (!showOrders) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
-         string name = ObjectName(i);
+         label = ObjectName(i);
 
-         if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name) == OBJ_ARROW) {
-               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR);
+         if (StringGetChar(label, 0) == '#') {
+            if (ObjectType(label) == OBJ_ARROW) {
+               int arrow = ObjectGet(label, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(label, OBJPROP_COLOR);
 
                if (arrow == SYMBOL_ORDEROPEN) {
                   if (clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) continue;
@@ -296,7 +325,7 @@ bool ToggleOpenOrders() {
                else if (arrow == SYMBOL_ORDERCLOSE) {
                   if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) continue;
                }
-               ObjectDelete(name);
+               ObjectDelete(label);
             }
          }
       }
@@ -307,45 +336,19 @@ bool ToggleOpenOrders() {
    StoreVolatileData();
 
    if (__isTesting) WindowRedraw();
-   return(!catch("ToggleOpenOrders(1)"));
-}
-
-
-/**
- * Display the currently open orders.
- *
- * @return int - number of displayed orders or EMPTY (-1) in case of errors
- */
-int ShowOpenOrders() {
-   string orderTypes[] = {"buy", "sell"};
-   color colors[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
-   int openOrders = 0;
-
-   if (open.ticket != NULL) {
-      double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_UNITS_VIRT, open.priceVirt, open.price);
-      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
-
-      if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(EMPTY);
-      ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-      ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
-      ObjectSet    (label, OBJPROP_TIME1,     open.time);
-      ObjectSet    (label, OBJPROP_PRICE1,    openPrice);
-      ObjectSetText(label, instance.name);
-      openOrders++;
-   }
-
-   if (!catch("ShowOpenOrders(1)"))
-      return(openOrders);
-   return(EMPTY);
+   return(!catch("ToggleOpenOrders(2)"));
 }
 
 
 /**
  * Toggle the display of closed trades.
  *
+ * @param  bool soundOnNone [optional] - whether to play a sound if no closed trades exist (default: yes)
+ *
  * @return bool - success status
  */
-bool ToggleTradeHistory() {
+bool ToggleTradeHistory(bool soundOnNone = true) {
+   soundOnNone = soundOnNone!=0;
    // toggle current status
    bool showHistory = !status.showTradeHistory;
 
@@ -355,7 +358,7 @@ bool ToggleTradeHistory() {
       if (trades == -1) return(false);
       if (!trades) {                                        // Without any closed trades the status must be reset to enable
          showHistory = false;                               // the "off" section to clear existing markers.
-         PlaySoundEx("Plonk.wav");
+         if (soundOnNone) PlaySoundEx("Plonk.wav");
       }
    }
 
@@ -426,9 +429,9 @@ int ShowTradeHistory() {
       openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
       if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
       ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-      ObjectSet    (openLabel, OBJPROP_COLOR,     iOpenColors[type]);
-      ObjectSet    (openLabel, OBJPROP_TIME1,     openTime);
-      ObjectSet    (openLabel, OBJPROP_PRICE1,    openPrice);
+      ObjectSet    (openLabel, OBJPROP_COLOR,  iOpenColors[type]);
+      ObjectSet    (openLabel, OBJPROP_TIME1,  openTime);
+      ObjectSet    (openLabel, OBJPROP_PRICE1, openPrice);
       ObjectSetText(openLabel, instance.name);
 
       // trend line
@@ -447,9 +450,9 @@ int ShowTradeHistory() {
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
       if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
       ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-      ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
-      ObjectSet    (closeLabel, OBJPROP_TIME1,     closeTime);
-      ObjectSet    (closeLabel, OBJPROP_PRICE1,    closePrice);
+      ObjectSet    (closeLabel, OBJPROP_COLOR,  CLR_CLOSED);
+      ObjectSet    (closeLabel, OBJPROP_TIME1,  closeTime);
+      ObjectSet    (closeLabel, OBJPROP_PRICE1, closePrice);
       ObjectSetText(closeLabel, instance.name);
       closedTrades++;
    }
