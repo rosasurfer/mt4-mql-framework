@@ -49,10 +49,10 @@
  *
  *
  * TODO:
- *  - fix chart markers during a test
  *  - document control scripts
  *  - add var recorder.internalSymbol and store/restore value
  *  - tester: ZigZag EA cannot yet run with bar model MODE_BAROPEN
+ *  - fix chart markers during a test
  *
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
@@ -238,15 +238,15 @@ extern bool   ShowProfitInPercent  = true;                  // whether PL is dis
 #define H_NETPROFIT_P              15
 #define H_VIRTPROFIT_P             16
 
-#define METRIC_TOTAL_MONEY_NET      1           // cumulated PnL metrics
-#define METRIC_TOTAL_UNITS_VIRT     2
-#define METRIC_TOTAL_UNITS_GROSS    3
-#define METRIC_TOTAL_UNITS_NET      4
+#define METRIC_TOTAL_NET_MONEY      1           // cumulated PnL metrics
+#define METRIC_TOTAL_VIRT_UNITS     2
+#define METRIC_TOTAL_GROSS_UNITS    3
+#define METRIC_TOTAL_NET_UNITS      4
 
-#define METRIC_DAILY_MONEY_NET      5           // daily PnL metrics
-#define METRIC_DAILY_UNITS_VIRT     6
-#define METRIC_DAILY_UNITS_GROSS    7
-#define METRIC_DAILY_UNITS_NET      8
+#define METRIC_DAILY_NET_MONEY      5           // daily PnL metrics
+#define METRIC_DAILY_VIRT_UNITS     6
+#define METRIC_DAILY_GROSS_UNITS    7
+#define METRIC_DAILY_NET_UNITS      8
 
 #define METRIC_NEXT                 1           // directions for toggling between metrics
 #define METRIC_PREVIOUS            -1
@@ -334,7 +334,7 @@ double   stop.profitPun.value;
 string   stop.profitPun.description = "";
 
 // volatile status data
-int      status.activeMetric = METRIC_TOTAL_MONEY_NET;
+int      status.activeMetric = METRIC_TOTAL_NET_MONEY;
 bool     status.showOpenOrders;
 bool     status.showTradeHistory;
 
@@ -478,7 +478,7 @@ bool onCommand(string cmd, string params, int keys) {
 bool ToggleMetrics(int direction) {
    if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   bool virtualMetric = (status.activeMetric==METRIC_TOTAL_UNITS_VIRT || status.activeMetric==METRIC_DAILY_UNITS_VIRT);
+   bool virtualMetric = (status.activeMetric==METRIC_TOTAL_VIRT_UNITS || status.activeMetric==METRIC_DAILY_VIRT_UNITS);
 
    status.activeMetric += direction;
    if (status.activeMetric < 1) status.activeMetric = 4;    // valid metrics: 1-4
@@ -486,7 +486,7 @@ bool ToggleMetrics(int direction) {
    StoreVolatileData();
    SS.All();
 
-   virtualMetric = (virtualMetric || status.activeMetric==METRIC_TOTAL_UNITS_VIRT || status.activeMetric==METRIC_DAILY_UNITS_VIRT);
+   virtualMetric = (virtualMetric || status.activeMetric==METRIC_TOTAL_VIRT_UNITS || status.activeMetric==METRIC_DAILY_VIRT_UNITS);
 
    if (virtualMetric) {
       if (status.showOpenOrders) {
@@ -521,7 +521,7 @@ bool ToggleOpenOrders(bool soundOnNone = true) {
       color clrs[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
 
       if (open.ticket != NULL) {
-         double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_UNITS_VIRT, open.priceVirt, open.price);
+         double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_VIRT_UNITS, open.priceVirt, open.price);
          string label = StringConcatenate("#", open.ticket, " ", types[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
 
          if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(!catch("ToggleOpenOrders(1)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
@@ -644,7 +644,7 @@ int ShowTradeHistory() {
       datetime closeTime  = history[i][H_CLOSETIME ];
       double   closePrice = history[i][H_CLOSEPRICE];
 
-      if (status.activeMetric == METRIC_TOTAL_UNITS_VIRT) {
+      if (status.activeMetric == METRIC_TOTAL_VIRT_UNITS) {
          openPrice  = history[i][H_OPENPRICE_VIRT ];
          closePrice = history[i][H_CLOSEPRICE_VIRT];
       }
@@ -1604,47 +1604,47 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
 
    switch (id) {
       // --------------------------------------------------------------------------------------------------------------------
-      case METRIC_TOTAL_MONEY_NET:              // OK
+      case METRIC_TOTAL_NET_MONEY:              // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                      // "US500.123A"
          descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = 2;
          multiplier  = 1;
          break;
 
-      case METRIC_TOTAL_UNITS_VIRT:             // OK
+      case METRIC_TOTAL_VIRT_UNITS:             // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
          descrSuffix = ", "+ PeriodDescription() +", virtual PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_TOTAL_UNITS_GROSS:            // OK
+      case METRIC_TOTAL_GROSS_UNITS:            // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
          descrSuffix = ", "+ PeriodDescription() +", gross PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_TOTAL_UNITS_NET:              // OK
+      case METRIC_TOTAL_NET_UNITS:              // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"D";
          descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       // --------------------------------------------------------------------------------------------------------------------
-      case METRIC_DAILY_MONEY_NET:
+      case METRIC_DAILY_NET_MONEY:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"E";
          descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = 2;
          multiplier  = 1;
          break;
 
-      case METRIC_DAILY_UNITS_VIRT:
+      case METRIC_DAILY_VIRT_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
          descrSuffix = ", "+ PeriodDescription() +", daily virtual PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_DAILY_UNITS_GROSS:
+      case METRIC_DAILY_GROSS_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"G";
          descrSuffix = ", "+ PeriodDescription() +", daily gross PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_DAILY_UNITS_NET:
+      case METRIC_DAILY_NET_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"H";
          descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
@@ -1666,10 +1666,10 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
 void RecordMetrics() {
    if (recorder.mode == RECORDER_CUSTOM) {
       int size = ArraySize(metric.ready);
-      if (size > METRIC_TOTAL_MONEY_NET  ) metric.currValue[METRIC_TOTAL_MONEY_NET  ] = instance.totalNetProfit;
-      if (size > METRIC_TOTAL_UNITS_VIRT ) metric.currValue[METRIC_TOTAL_UNITS_VIRT ] = instance.totalVirtProfitP;
-      if (size > METRIC_TOTAL_UNITS_GROSS) metric.currValue[METRIC_TOTAL_UNITS_GROSS] = instance.totalGrossProfitP;
-      if (size > METRIC_TOTAL_UNITS_NET  ) metric.currValue[METRIC_TOTAL_UNITS_NET  ] = instance.totalNetProfitP;
+      if (size > METRIC_TOTAL_NET_MONEY  ) metric.currValue[METRIC_TOTAL_NET_MONEY  ] = instance.totalNetProfit;
+      if (size > METRIC_TOTAL_VIRT_UNITS ) metric.currValue[METRIC_TOTAL_VIRT_UNITS ] = instance.totalVirtProfitP;
+      if (size > METRIC_TOTAL_GROSS_UNITS) metric.currValue[METRIC_TOTAL_GROSS_UNITS] = instance.totalGrossProfitP;
+      if (size > METRIC_TOTAL_NET_UNITS  ) metric.currValue[METRIC_TOTAL_NET_UNITS  ] = instance.totalNetProfitP;
    }
 }
 
@@ -2833,18 +2833,18 @@ bool RestoreVolatileData() {
       while (true) {
          int iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
          if (iValue != 0) {
-            if (iValue > 0 && iValue <= METRIC_TOTAL_UNITS_NET) {
+            if (iValue > 0 && iValue <= METRIC_TOTAL_NET_UNITS) {
                status.activeMetric = iValue;
                break;
             }
          }
          if (Chart.RestoreInt(key, iValue, false)) {
-            if (iValue > 0 && iValue <= METRIC_TOTAL_UNITS_NET) {
+            if (iValue > 0 && iValue <= METRIC_TOTAL_NET_UNITS) {
                status.activeMetric = iValue;
                break;
             }
          }
-         status.activeMetric = METRIC_TOTAL_MONEY_NET;      // reset to default value
+         status.activeMetric = METRIC_TOTAL_NET_MONEY;      // reset to default value
          break;
       }
    }
@@ -3138,16 +3138,16 @@ void SS.StartStopConditions() {
  */
 void SS.Metric() {
    switch (status.activeMetric) {
-      case METRIC_TOTAL_MONEY_NET:
+      case METRIC_TOTAL_NET_MONEY:
          sMetric = "Net PnL after all costs in "+ AccountCurrency() + NL + "-----------------------------------";
          break;
-      case METRIC_TOTAL_UNITS_VIRT:
+      case METRIC_TOTAL_VIRT_UNITS:
          sMetric = "Virtual PnL without spread/any costs in "+ pUnit + NL + "-----------------------------------------------------";
          break;
-      case METRIC_TOTAL_UNITS_GROSS:
+      case METRIC_TOTAL_GROSS_UNITS:
          sMetric = "Gross PnL after spread/without costs in "+ pUnit + NL + "------------------------------------------------------";
          break;
-      case METRIC_TOTAL_UNITS_NET:
+      case METRIC_TOTAL_NET_UNITS:
          sMetric = "Net PnL after all costs in "+ pUnit + NL + "------------------------------------";
          break;
 
@@ -3178,16 +3178,16 @@ void SS.ClosedTrades() {
       if (instance.avgNetProfitP == EMPTY_VALUE) CalculateTradeStats();
 
       switch (status.activeMetric) {
-         case METRIC_TOTAL_MONEY_NET:
+         case METRIC_TOTAL_NET_MONEY:
             sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgNetProfit, "R+.2") +" "+ AccountCurrency();
             break;
-         case METRIC_TOTAL_UNITS_VIRT:
+         case METRIC_TOTAL_VIRT_UNITS:
             sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgVirtProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_UNITS_GROSS:
+         case METRIC_TOTAL_GROSS_UNITS:
             sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgGrossProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_UNITS_NET:
+         case METRIC_TOTAL_NET_UNITS:
             sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
@@ -3207,17 +3207,17 @@ void SS.TotalProfit() {
    }
    else {
       switch (status.activeMetric) {
-         case METRIC_TOTAL_MONEY_NET:
+         case METRIC_TOTAL_NET_MONEY:
             if (ShowProfitInPercent) sTotalProfit = NumberToStr(MathDiv(instance.totalNetProfit, instance.startEquity) * 100, "R+.2") +"%";
             else                     sTotalProfit = NumberToStr(instance.totalNetProfit, "R+.2") +" "+ AccountCurrency();
             break;
-         case METRIC_TOTAL_UNITS_VIRT:
+         case METRIC_TOTAL_VIRT_UNITS:
             sTotalProfit = NumberToStr(instance.totalVirtProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_UNITS_GROSS:
+         case METRIC_TOTAL_GROSS_UNITS:
             sTotalProfit = NumberToStr(instance.totalGrossProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_UNITS_NET:
+         case METRIC_TOTAL_NET_UNITS:
             sTotalProfit = NumberToStr(instance.totalNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
@@ -3239,7 +3239,7 @@ void SS.ProfitStats() {
       string sMaxProfit="", sMaxDrawdown="";
 
       switch (status.activeMetric) {
-         case METRIC_TOTAL_MONEY_NET:
+         case METRIC_TOTAL_NET_MONEY:
             if (ShowProfitInPercent) {
                sMaxProfit   = NumberToStr(MathDiv(instance.maxNetProfit,   instance.startEquity) * 100, "R+.2");
                sMaxDrawdown = NumberToStr(MathDiv(instance.maxNetDrawdown, instance.startEquity) * 100, "R+.2");
@@ -3249,15 +3249,15 @@ void SS.ProfitStats() {
                sMaxDrawdown = NumberToStr(instance.maxNetDrawdown, "R+.2");
             }
             break;
-         case METRIC_TOTAL_UNITS_VIRT:
+         case METRIC_TOTAL_VIRT_UNITS:
             sMaxProfit   = NumberToStr(instance.maxVirtProfitP   * pMultiplier, "R+."+ pDigits);
             sMaxDrawdown = NumberToStr(instance.maxVirtDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
-         case METRIC_TOTAL_UNITS_GROSS:
+         case METRIC_TOTAL_GROSS_UNITS:
             sMaxProfit   = NumberToStr(instance.maxGrossProfitP   * pMultiplier, "R+."+ pDigits);
             sMaxDrawdown = NumberToStr(instance.maxGrossDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
-         case METRIC_TOTAL_UNITS_NET:
+         case METRIC_TOTAL_NET_UNITS:
             sMaxProfit   = NumberToStr(instance.maxNetProfitP   * pMultiplier, "R+."+ pDigits);
             sMaxDrawdown = NumberToStr(instance.maxNetDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
