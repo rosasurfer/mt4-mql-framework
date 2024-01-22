@@ -40,7 +40,8 @@
  *  • EA.Recorder:        Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
  *     1: Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
- *     2: Records PnL in price units without spread and any costs (virtual, assumes exact execution).
+ *     2: Records PnL in price units after all costs (net).
+ *     3: Records PnL in price units without spread and any costs (virtual, assumes exact execution).
  *
  *     Metrics in price units are recorded in the best matching unit. That's pip for Forex and full points otherwise.
  *
