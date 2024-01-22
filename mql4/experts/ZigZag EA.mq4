@@ -42,6 +42,7 @@
  *              command has no effect if the EA is already in status "stopped".
  *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new trade signals and start trading. The command
  *              has no effect if the EA is already in status "waiting".
+ *  • EA.ToggleMetrics
  *  • Chart.ToggleOpenOrders
  *  • Chart.ToggleTradeHistory
  *
@@ -258,7 +259,7 @@ bool     instance.isTest;                       // whether the instance is a tes
 int      instance.status;
 double   instance.startEquity;
 
-double   instance.openNetProfit;                // PnL in money (net)
+double   instance.openNetProfit;                // PnL in money after all costs (net)
 double   instance.closedNetProfit;
 double   instance.totalNetProfit;
 double   instance.maxNetProfit;                 // max. observed profit:   0...+n
@@ -1286,8 +1287,10 @@ bool UpdateStatus() {
    bool updateStats = false;
    if      (instance.totalNetProfit   > instance.maxNetProfit    ) { instance.maxNetProfit     = instance.totalNetProfit;   updateStats = true; }
    else if (instance.totalNetProfit   < instance.maxNetDrawdown  ) { instance.maxNetDrawdown   = instance.totalNetProfit;   updateStats = true; }
+
    if      (instance.totalNetProfitP  > instance.maxNetProfitP   ) { instance.maxNetProfitP    = instance.totalNetProfitP;  updateStats = true; }
    else if (instance.totalNetProfitP  < instance.maxNetDrawdownP ) { instance.maxNetDrawdownP  = instance.totalNetProfitP;  updateStats = true; }
+
    if      (instance.totalVirtProfitP > instance.maxVirtProfitP  ) { instance.maxVirtProfitP   = instance.totalVirtProfitP; updateStats = true; }
    else if (instance.totalVirtProfitP < instance.maxVirtDrawdownP) { instance.maxVirtDrawdownP = instance.totalVirtProfitP; updateStats = true; }
    if (updateStats) SS.ProfitStats();
@@ -1443,9 +1446,9 @@ void CalculateTradeStats() {
 
    if (size > lastSize) {
       for (int i=lastSize; i < size; i++) {                 // speed-up by processing only new history entries
-         sumNetProfit   += history[i][H_NETPROFIT    ];
-         sumNetProfitP  += history[i][H_NETPROFIT_P  ];
-         sumVirtProfitP += history[i][H_VIRTPROFIT_P ];
+         sumNetProfit   += history[i][H_NETPROFIT   ];
+         sumNetProfitP  += history[i][H_NETPROFIT_P ];
+         sumVirtProfitP += history[i][H_VIRTPROFIT_P];
       }
       instance.avgNetProfit   = sumNetProfit/size;
       instance.avgNetProfitP  = sumNetProfitP/size;
@@ -1566,14 +1569,14 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          multiplier  = 1;
          break;
 
-      case METRIC_TOTAL_VIRT_UNITS:             // OK
+      case METRIC_TOTAL_NET_UNITS:              // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         descrSuffix = ", "+ PeriodDescription() +", virtual PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_TOTAL_NET_UNITS:              // OK
+      case METRIC_TOTAL_VIRT_UNITS:             // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
-         descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", virtual PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       // --------------------------------------------------------------------------------------------------------------------
@@ -1584,14 +1587,14 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          multiplier  = 1;
          break;
 
-      case METRIC_DAILY_VIRT_UNITS:
+      case METRIC_DAILY_NET_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"E";
-         descrSuffix = ", "+ PeriodDescription() +", daily virtual PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_DAILY_NET_UNITS:
+      case METRIC_DAILY_VIRT_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
-         descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", daily virtual PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       default:
@@ -1863,13 +1866,13 @@ bool SaveStatus() {
 
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i));
-      netProfit   += history[i][H_NETPROFIT    ];
-      netProfitP  += history[i][H_NETPROFIT_P  ];
-      virtProfitP += history[i][H_VIRTPROFIT_P ];
+      netProfit   += history[i][H_NETPROFIT   ];
+      netProfitP  += history[i][H_NETPROFIT_P ];
+      virtProfitP += history[i][H_VIRTPROFIT_P];
    }
 
    // cross-check stored stats
-   int precision = MathMax(Digits, 2) + 1;                      // required precision for fractional point values
+   int precision = MathMax(Digits, 2) + 1;                    // required precision for fractional point values
    if (NE(netProfit,   instance.closedNetProfit, 2))          return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("     + NumberToStr(netProfit, ".2+")              +" != "+ NumberToStr(instance.closedNetProfit, ".2+")              +")", ERR_ILLEGAL_STATE));
    if (NE(netProfitP,  instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("  + NumberToStr(netProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
    if (NE(virtProfitP, instance.closedVirtProfitP,  Digits))  return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
@@ -2080,13 +2083,13 @@ bool ReadStatus() {
       int n = ReadStatus.RestoreHistory(sKeys[i], sOrder);
       if (n < 0) return(!catch("ReadStatus(8)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
 
-      netProfit   += history[n][H_NETPROFIT    ];
-      netProfitP  += history[n][H_NETPROFIT_P  ];
-      virtProfitP += history[n][H_VIRTPROFIT_P ];
+      netProfit   += history[n][H_NETPROFIT   ];
+      netProfitP  += history[n][H_NETPROFIT_P ];
+      virtProfitP += history[n][H_VIRTPROFIT_P];
    }
 
    // cross-check restored stats
-   int precision = MathMax(Digits, 2) + 1;                     // required precision for fractional point values
+   int precision = MathMax(Digits, 2) + 1;                    // required precision for fractional point values
    if (NE(netProfit,   instance.closedNetProfit, 2))          return(!catch("ReadStatus(9)  "+  instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("     + NumberToStr(netProfit, ".2+")              +" != "+ NumberToStr(instance.closedNetProfit, ".2+")              +")", ERR_ILLEGAL_STATE));
    if (NE(netProfitP,  instance.closedNetProfitP, precision)) return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("  + NumberToStr(netProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
    if (NE(virtProfitP, instance.closedVirtProfitP,  Digits))  return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
@@ -2317,8 +2320,7 @@ bool IsLocalClosedPosition(int ticket) {
 
 
 /**
- * Whether the current instance was created in the tester. Considers that a finished test may have been loaded into an online
- * chart for visualization and further analysis.
+ * Whether the current instance was created in the tester. Also returns TRUE if a finished test is loaded into an online chart.
  *
  * @return bool
  */
@@ -2494,9 +2496,7 @@ bool ValidateInputs.ID() {
  */
 bool ValidateInputs() {
    if (IsLastError()) return(false);
-   bool isInitParameters   = (ProgramInitReason()==IR_PARAMETERS);   // whether we validate manual or programatic input
-   bool isInitUser         = (ProgramInitReason()==IR_USER);
-   bool isInitTemplate     = (ProgramInitReason()==IR_TEMPLATE);
+   bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);  // whether we validate manual or programatic input
    bool instanceWasStarted = (open.ticket || ArrayRange(history, 0));
 
    // Instance.ID
