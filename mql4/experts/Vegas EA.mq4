@@ -5,45 +5,55 @@
  *
  * Channel Breakout
  *
- * A mixture of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in/out.
+ * A combination of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in/out.
  *
- *
- *  @see  [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
- *  @see  [Turtle Trading]         https://analyzingalpha.com/turtle-trading
- *  @see  [Turtle Trading]         http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
+ *  @see [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
+ *  @see [Turtle Trading]         https://analyzingalpha.com/turtle-trading
+ *  @see [Turtle Trading]         http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
  *
  *
  * Features
  * --------
- * • A finished test can be loaded into an online chart for trade inspection and further analysis.
+ *  • A finished test can be loaded into an online chart for trade inspection and further analysis.
  *
- * • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
- *   trading related deviations that impact test or real results (tester bugs, spread, slippage, swap, commission).
- *   It allows the EA to be tested and adjusted under idealised conditions.
+ *  • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
+ *    trading related deviations that impact test or real results (tester bugs, spread, slippage, swap, commission).
+ *    It allows the EA to be tested and adjusted under idealised conditions.
  *
- * • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in the tester).
- *   These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they
- *   can be displayed and analysed like regular MT4 symbols.
+ *  • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in the tester).
+ *    These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they
+ *    can be displayed and analysed like regular MT4 symbols.
  *
  *
  * Requirements
  * ------------
- * - MA Tunnel indicator: @see  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/MA%20Tunnel.mq4
- * - ZigZag indicator:    @see  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
+ *  • MA Tunnel indicator: @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/MA%20Tunnel.mq4
+ *  • ZigZag indicator:    @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
  *
  *
  * Input parameters
  * ----------------
- * • Instance.ID:        ...
- * • Tunnel.Definition:  ...
- * • Donchian.Periods:   ...
- * • Lots:               ...
- * • EA.Recorder:        Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
+ *  • Instance.ID:        ...
+ *  • Tunnel.Definition:  ...
+ *  • Donchian.Periods:   ...
+ *  • Lots:               ...
+ *  • EA.Recorder:        Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
- *    1:  Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
- *    2:  Records PnL in price units without spread and any costs (virtual, assumes exact execution).
+ *     1: Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
+ *     2: Records PnL in price units without spread and any costs (virtual, assumes exact execution).
  *
- *    Metrics in price units are recorded in the best matching unit. That's pip for Forex and full points otherwise.
+ *     Metrics in price units are recorded in the best matching unit. That's pip for Forex and full points otherwise.
+ *
+ *
+ * External control
+ * ----------------
+ * The EA can be controlled via execution of the following scripts (online and in tester):
+ *
+ *  • EA.Stop
+ *  • EA.Restart
+ *  • EA.ToggleMetrics
+ *  • Chart.ToggleOpenOrders
+ *  • Chart.ToggleTradeHistory
  *
  *
  *

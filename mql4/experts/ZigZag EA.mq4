@@ -7,25 +7,28 @@
  *
  * A strategy inspired by the "Turtle Trading" system of Richard Dennis.
  *
+ *  @see [Turtle Trading] https://analyzingalpha.com/turtle-trading
+ *  @see [Turtle Trading] http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
+ *
  *
  * Requirements
  * ------------
- * - ZigZag indicator: @see  https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
+ *  • ZigZag indicator: @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
  *
  *
  * Input parameters
  * ----------------
- * • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
+ *  • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
- *    1:  Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
- *    2:  Records PnL in price units after all costs (net).
- *    3:  Records PnL in price units without spread and any costs (virtual, assumes exact execution).
+ *     1: Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
+ *     2: Records PnL in price units after all costs (net).
+ *     3: Records PnL in price units without spread and any costs (virtual, assumes exact execution).
  *
- *    4:  Records daily PnL in account currency after all costs (net).                                                  TODO
- *    5:  Records daily PnL in price units after all costs (net).                                                       TODO
- *    6:  Records daily PnL in price units without spread and any costs (virtual, assumes exact execution).             TODO
+ *     4: Records daily PnL in account currency after all costs (net).                                                   TODO
+ *     5: Records daily PnL in price units after all costs (net).                                                        TODO
+ *     6: Records daily PnL in price units without spread and any costs (virtual, assumes exact execution).              TODO
  *
- *    Metrics in price units are recorded in the best matching unit. That's pip for Forex and full points otherwise.
+ *     Metrics in price units are recorded in the best matching unit. That's pip for Forex and full points otherwise.
  *
  *
  * External control
@@ -39,10 +42,8 @@
  *              command has no effect if the EA is already in status "stopped".
  *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new trade signals and start trading. The command
  *              has no effect if the EA is already in status "waiting".
- *
- *
- *  @see  [Turtle Trading] https://analyzingalpha.com/turtle-trading
- *  @see  [Turtle Trading] http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
+ *  • Chart.ToggleOpenOrders
+ *  • Chart.ToggleTradeHistory
  *
  *
  *
