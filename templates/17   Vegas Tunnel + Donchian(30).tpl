@@ -17421,7 +17421,7 @@ ZigZag.Color=16711680
 Donchian.ShowChannel=1
 Donchian.Crossings.Wingdings=163
 Donchian.Upper.Color=16711680
-Donchian.Lower.Color=16711680
+Donchian.Lower.Color=16711935
 Signal.onReversal=1
 Signal.onReversal.Sound=1
 </inputs>
