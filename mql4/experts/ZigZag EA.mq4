@@ -49,10 +49,12 @@
  *
  *
  * TODO:
+ *  - fix ZigZag errors
+ *  - fix tests with bar model MODE_BAROPEN
+ *  - fix virtual trading
  *  - document control scripts
  *  - add var recorder.internalSymbol and store/restore value
- *  - tester: ZigZag EA cannot yet run with bar model MODE_BAROPEN
- *  - fix chart markers during a test
+ *  - fix chart markers during testing
  *
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
@@ -3059,10 +3061,10 @@ void SS.Metric() {
          sMetric = "Net PnL after all costs in "+ AccountCurrency() + NL + "-----------------------------------";
          break;
       case METRIC_TOTAL_NET_UNITS:
-         sMetric = "Net PnL after all costs in "+ pUnit + NL + "------------------------------------";
+         sMetric = "Net PnL after all costs in "+ pUnit + NL + "---------------------------------"+ ifString(pUnit=="point", "---", "");
          break;
       case METRIC_TOTAL_VIRT_UNITS:
-         sMetric = "Virtual PnL without spread/any costs in "+ pUnit + NL + "-----------------------------------------------------";
+         sMetric = "Virtual PnL without spread/any costs in "+ pUnit + NL + "--------------------------------------------------"+ ifString(pUnit=="point", "---", "");
          break;
 
       default: return(!catch("SS.MetricDescription(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));

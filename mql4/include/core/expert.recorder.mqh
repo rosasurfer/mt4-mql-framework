@@ -10,7 +10,7 @@
 //   on:   Records a timeseries representing the EA's equity graph as reported by the built-in function AccountEquity().
 //   <id>[=<base-value>]:  Records a timeseries representing a custom metric identified by a postive <id> (integer). Specify
 //         an appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display
-//         negative values). Without a value is the recorder queries the framework configuration.
+//         negative values). Without a value the recorder queries the framework configuration.
 //
 // During EA initialization the function Recorder_GetSymbolDefinition() is called for each metric id, to retrieve a metric's
 // symbol definition. The function must be implemented by the EA. Signature:
