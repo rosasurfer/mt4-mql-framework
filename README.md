@@ -2,16 +2,16 @@
 # MetaTrader 4 MQL framework
 
 
-### Where can I download MetaTrader 4?
-MetaTrader 4 can be downloaded from your broker's website. Old versions may be available at this non-affiliated [Telegram channel](https://t.me/+FjsyKhm0TqAwMjQy).
-The link leads to content provided in agreement with MetaQuotes.
+### Where can I download old MetaTrader 4 versions?
+Use Google, every forex trading community offers various downloads. If you are unable to locate a specific version you may contact
+me via email and I may be able to locate it for you. New GitHub issues asking for old versions will be deleted.
 
 -----
 
 ### MetaTrader 4 News
 
 ###### January 2024:
-- MetaQuotes stops supporting terminals older than build 1384.
+- MetaQuotes stops supporting terminals older than build 1400.
 
 ###### December 2023:
 - MetaQuotes stops supporting terminals older than build 1380.
