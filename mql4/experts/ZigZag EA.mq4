@@ -49,7 +49,9 @@
  *
  *
  * TODO:
- *  - fix ZigZag errors
+ *  - ZigZag
+ *     fix errors
+ *     add projections
  *  - fix tests with bar model MODE_BAROPEN
  *  - fix virtual trading
  *  - document control scripts
@@ -325,7 +327,7 @@ double   stop.profitPun.value;
 string   stop.profitPun.description = "";
 
 // volatile status data
-int      status.activeMetric = METRIC_TOTAL_NET_MONEY;
+int      status.activeMetric = 1;
 bool     status.showOpenOrders;
 bool     status.showTradeHistory;
 
@@ -2752,18 +2754,18 @@ bool RestoreVolatileData() {
       while (true) {
          int iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
          if (iValue != 0) {
-            if (iValue > 0 && iValue <= METRIC_TOTAL_NET_UNITS) {
+            if (iValue > 0 && iValue <= 6) {                // valid metrics: 1-6
                status.activeMetric = iValue;
                break;
             }
          }
          if (Chart.RestoreInt(key, iValue, false)) {
-            if (iValue > 0 && iValue <= METRIC_TOTAL_NET_UNITS) {
+            if (iValue > 0 && iValue <= 6) {
                status.activeMetric = iValue;
                break;
             }
          }
-         status.activeMetric = METRIC_TOTAL_NET_MONEY;      // reset to default value
+         status.activeMetric = 1;                           // reset to default value
          break;
       }
    }
@@ -3064,7 +3066,7 @@ void SS.Metric() {
          sMetric = "Net PnL after all costs in "+ pUnit + NL + "---------------------------------"+ ifString(pUnit=="point", "---", "");
          break;
       case METRIC_TOTAL_VIRT_UNITS:
-         sMetric = "Virtual PnL without spread/any costs in "+ pUnit + NL + "--------------------------------------------------"+ ifString(pUnit=="point", "---", "");
+         sMetric = "Virtual PnL without spread/any costs in "+ pUnit + NL + "---------------------------------------------------"+ ifString(pUnit=="point", "--", "");
          break;
 
       default: return(!catch("SS.MetricDescription(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
