@@ -49,14 +49,14 @@
  *
  *
  * TODO:
- *  - ZigZag
- *     fix errors
- *     add projections
+ *  - realtime metric chart
+ *  - can METRIC_*_MONEY be removed?
+ *  - fix ZigZag errors
  *  - fix tests with bar model MODE_BAROPEN
- *  - fix virtual trading
+ *  - add ZigZag projections
  *  - document control scripts
  *  - add var recorder.internalSymbol and store/restore value
- *  - fix chart markers during testing
+ *  - fix virtual trading
  *
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
@@ -2765,6 +2765,7 @@ bool RestoreVolatileData() {
                break;
             }
          }
+         logWarn("RestoreVolatileData(4)  "+ instance.name +"  invalid data: status.activeMetric="+ iValue);
          status.activeMetric = 1;                           // reset to default value
          break;
       }

@@ -1822,6 +1822,7 @@ bool RestoreVolatileData() {
                break;
             }
          }
+         logWarn("RestoreVolatileData(4)  "+ instance.name +"  invalid data: status.activeMetric="+ iValue);
          status.activeMetric = 1;                           // reset to default value
          break;
       }
