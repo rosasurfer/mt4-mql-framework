@@ -711,7 +711,7 @@ double PointValue(double lots=1.0, bool suppressErrors=false) {
 }
 
 
-// whether to disable an "Incorrect MODE_TICKVALUE" warning in tester, @see function PipValue()
+// whether to disable an "Inaccurate MODE_TICKVALUE" warning in tester, @see function PipValue()
 bool test.disableTickValueWarning = false;
 
 
@@ -729,7 +729,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    static double tickSize;
    if (!tickSize) {
       int error;
-      tickSize = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "PipValue(1)");             // fails if there's no tick yet (it may arrive later), e.g.
+      tickSize = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "PipValue(1)");             // fails if there's no tick yet (may arrive later), e.g.
       if (error != NO_ERROR) {                                                            // symbol not yet subscribed, terminal start, account/template change
          if (!suppressErrors) catch("PipValue(2)", error);                                // ERR_SYMBOL_NOT_AVAILABLE: synthetic symbol in offline chart
          return(0);
@@ -737,7 +737,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    }
 
    static double staticTickValue;
-   static bool flagsResolved, isConstant, isApproximation, isCalculatable;
+   static bool flagsResolved, isConstant, isInaccurate, isCalculatable;
 
    if (!flagsResolved) {
       if (StrEndsWith(Symbol(), AccountCurrency())) {                                     // TickValue is constant and can be cached
@@ -747,16 +747,16 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
             return(0);
          }
          isConstant = true;
-         isApproximation = false;
+         isInaccurate = false;
       }
       else {
          isConstant = false;                                                              // TickValue is dynamic
-         isApproximation = __isTesting;                                                   // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
+         isInaccurate = __isTesting;                                                      // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
       isCalculatable = StrStartsWith(Symbol(), AccountCurrency());                        // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
       flagsResolved = true;                                                               // muß im Tester (ggf. nach Warnung) der Online-Wert verwendet werden.
 
-      if (isApproximation && !isCalculatable && !test.disableTickValueWarning) {
+      if (isInaccurate && !isCalculatable && !test.disableTickValueWarning) {
          string message = "Historic MarketInfo(MODE_TICKVALUE) not available."                                   + NL
                          +"The test will use the current online value, which may differ from the historical one."+ NL
                          +"Test with a different account currency to get exact values.";
@@ -769,8 +769,8 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       return(Pip/tickSize * staticTickValue * lots);
    }
 
-   // dynamic and exact value
-   if (!isApproximation) {
+   // dynamic and accurate value
+   if (!isInaccurate) {
       double dynamicTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(5)");
       if (error != NO_ERROR) {
          if (!suppressErrors) catch("PipValue(6)", error);
@@ -779,7 +779,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       return(Pip/tickSize * dynamicTickValue * lots);
    }
 
-   // dynamic and approximated value
+   // dynamic and inaccurate value
    if (isCalculatable) {
       if      (Symbol() == "EURAUD") dynamicTickValue =   1/Close[0];
       else if (Symbol() == "EURCAD") dynamicTickValue =   1/Close[0];
@@ -802,7 +802,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       return(Pip/tickSize * dynamicTickValue * lots);                         // return the calculated value
    }
 
-   // dynamic and approximated value: warn if in tester and continue with the approximation
+   // dynamic and inaccurate value: warn if in tester and continue with inaccurate value
    dynamicTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(8)");
    if (error != NO_ERROR) {
       if (!suppressErrors) catch("PipValue(9)", error);
@@ -841,7 +841,7 @@ double PipValueEx(string symbol, double lots, int &error, string caller = "") {
 /**
  * Calculate the current symbol's commission for the specified lotsize.
  *
- * - For tests the commission rate stored in the tester's FXT files is used (always correct).
+ * - For tests the commission rate stored in the tester's FXT files is used.
  * - Online the commission rate configured by the user is used (subject to configuration errors).
  *
  * @param  double lots [optional] - lotsize (default: 1 lot)

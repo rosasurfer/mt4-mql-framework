@@ -49,10 +49,12 @@
  *
  *
  * TODO:
+ *  - fix Tester_GetStartDate()/Tester_GetEndDate()
  *  - realtime metric chart
  *  - can METRIC_*_MONEY be removed?
  *  - fix ZigZag errors
  *  - fix tests with bar model MODE_BAROPEN
+ *  - tests kommentieren und archivieren (fix incomplete fields)
  *  - add ZigZag projections
  *  - document control scripts
  *  - add var recorder.internalSymbol and store/restore value
@@ -1750,32 +1752,43 @@ string SignalToStr(int signal) {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != NULL)                       return(false);
-   if (!instance.id || StrTrim(Instance.ID)=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestInstance() && !__isTesting)         return(true);  // don't change the status file of a finished test
-
-   if (__isTesting && test.reduceStatusWrites) {                // in tester skip most writes except file creation, instance stop and test end
-      static bool saved = false;
-      if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
-      saved = true;
+   if (last_error != NULL)               return(false);
+   if (!instance.id || Instance.ID=="")  return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
+   if (__isTesting) {
+      if (test.reduceStatusWrites) {                              // in tester skip most writes except file creation, instance stop and test end
+         static bool saved = false;
+         if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
+         saved = true;
+      }
    }
+   else if (IsTestInstance()) return(true);                       // don't change the status file of a finished test
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;            // an empty line as additional section separator
+   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;              // an empty line as additional section separator
 
    // [General]
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber() +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
-   WriteIniString(file, section, "Symbol",  Symbol() + separator);                                                         // conditional section separator
+   WriteIniString(file, section, "Symbol",  Symbol() + ifString(__isTesting, separator, ""));
 
-   if (__isTesting) {
-      string sSpread = "";
-      if (MathMax(Digits, 2) > 2) sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, 1);                   // transform Digits=1 to 2 (for some indices)
-      else                        sSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)*Point, 2);
-      WriteIniString(file, section, "Test.Range",    "?");
-      WriteIniString(file, section, "Test.Period",   PeriodDescription());
-      WriteIniString(file, section, "Test.BarModel", BarModelDescription(__Test.barModel));
-      WriteIniString(file, section, "Test.Spread",   sSpread + separator);                                                 // conditional section separator
+   if (!__isTesting) {
+      WriteIniString(file, section, "AccountCurrency",  AccountCurrency() + separator);
+   }
+   else {
+      WriteIniString(file, section, "Test.Timeframe", "?");       // TODO: TimeToStr(Tester_GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Tester_GetEndDate(), TIME_DATE)
+      WriteIniString(file, section, "Test.Period",    PeriodDescription());
+      WriteIniString(file, section, "Test.BarModel",  BarModelDescription(__Test.barModel));
+      WriteIniString(file, section, "Test.Spread",    DoubleToStr((Ask-Bid) * pMultiplier, pDigits));
+         double commission  = GetCommission();
+         string sCommission = DoubleToStr(commission, 2);
+         if (NE(commission, 0)) {
+            double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+            double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
+            double units     = MathDiv(commission, MathDiv(tickValue, tickSize));
+            sCommission = sCommission +" ("+ DoubleToStr(units * pMultiplier, pDigits) +" "+ pUnit +")";
+         }
+      WriteIniString(file, section, "Test.Commission", sCommission);
+      WriteIniString(file, section, "Test.Currency",   AccountCurrency() + separator);
    }
 
    // [Inputs]
@@ -1805,21 +1818,21 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.status",             /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "instance.startEquity",        /*double  */ DoubleToStr(instance.startEquity, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 17)         +" ; in "+ AccountCurrency() +" after all costs (net)");
+   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 17)         +" ; real PnL in "+ AccountCurrency() +" after all costs (net)");
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
    WriteIniString(file, section, "instance.avgNetProfit",       /*double  */ DoubleToStr(instance.avgNetProfit, 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP, ".1+"), 16)    +" ; in point after all costs (net)");
+   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP, ".1+"), 16)    +" ; real PnL in point after all costs (net)");
    WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ NumberToStr(instance.closedNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ NumberToStr(instance.totalNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.maxNetProfitP",      /*double  */ NumberToStr(instance.maxNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
    WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(instance.avgNetProfitP, ".1+") + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 15)  +" ; virtual PnL in point without any costs (assumes exact execution)");
+   WriteIniString(file, section, "instance.openVirtProfitP",    /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 15)  +" ; virtual PnL of signal levels in point (exact execution)");
    WriteIniString(file, section, "instance.closedVirtProfitP",  /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
    WriteIniString(file, section, "instance.totalVirtProfitP",   /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtProfitP",     /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
