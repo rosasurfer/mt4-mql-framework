@@ -49,12 +49,10 @@
  *
  *
  * TODO:
- *  - rewrite Test_GetCommission()
- *  - implement Test_GetStartDate()/Test_GetEndDate()
  *  - fix Expander i18n issues
  *     FindInputDialogA()
  *     ReopenAlertDialog()
- *  - fix DoubleQuoteStr()/DoubleQuoteStrW() inconsistency
+ *  - rewrite Test_GetCommission()
  *
  *  - status file
  *     tests kommentieren und archivieren

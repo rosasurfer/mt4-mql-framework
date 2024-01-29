@@ -744,7 +744,6 @@ string   DeinitFlagsToStr(int flags);;
 bool     DeleteIniKeyA(string fileName, string section, string key);;
 bool     DeleteIniSectionA(string fileName, string section);;
 int      DoubleExp(double value);;
-string   DoubleQuoteStr(string value);;
 double   ec_Ask                   (int &ec[]);;
 int      ec_Bars                  (int &ec[]);;
 double   ec_Bid                   (int &ec[]);;

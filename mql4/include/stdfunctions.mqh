@@ -2518,21 +2518,36 @@ int StrToMaMethod(string value, int flags = NULL) {
 
 
 /**
- * Faßt einen String in einfache Anführungszeichen ein. Für einen nicht initialisierten String (NULL-Pointer)
- * wird der String "NULL" (ohne Anführungszeichen) zurückgegeben.
+ * Wrap a string in single quote characters.
  *
  * @param  string value
  *
- * @return string - resultierender String
+ * @return string - wrapped string or the string "(null)" if a NULL pointer was passed
  */
 string QuoteStr(string value) {
    if (StrIsNull(value)) {
       int error = GetLastError();
-      if (error && error!=ERR_NOT_INITIALIZED_STRING)
-         catch("QuoteStr(1)", error);
-      return("NULL");
+      if (error && error!=ERR_NOT_INITIALIZED_STRING) catch("QuoteStr(1)", error);
+      return("(null)");
    }
    return(StringConcatenate("'", value, "'"));
+}
+
+
+/**
+ * Wrap a string in double quote characters.
+ *
+ * @param  string value
+ *
+ * @return string - wrapped string or the string "(null)" if a NULL pointer was passed
+ */
+string DoubleQuoteStr(string value) {
+   if (StrIsNull(value)) {
+      int error = GetLastError();
+      if (error && error!=ERR_NOT_INITIALIZED_STRING) catch("DoubleQuoteStr(1)", error);
+      return("(null)");
+   }
+   return(StringConcatenate("\"", value, "\""));
 }
 
 
@@ -7068,6 +7083,7 @@ void __DummyCalls() {
    DeinitReason();
    Div(NULL, NULL);
    doubleOr(NULL, NULL);
+   DoubleQuoteStr(NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();
    EnumChildWindows(NULL);
