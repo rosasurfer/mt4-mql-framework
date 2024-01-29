@@ -1396,13 +1396,13 @@ bool SaveStatus() {
    WriteIniString(file, section, "Symbol",  Symbol() + ifString(__isTesting, separator, ""));
 
    if (!__isTesting) {
-      WriteIniString(file, section, "AccountCurrency",  AccountCurrency() + separator);
+      WriteIniString(file, section, "AccountCurrency", AccountCurrency() + separator);
    }
    else {
-      WriteIniString(file, section, "Test.Timeframe", "?");    // TODO: TimeToStr(Tester_GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Tester_GetEndDate(), TIME_DATE)
-      WriteIniString(file, section, "Test.Period",    PeriodDescription());
-      WriteIniString(file, section, "Test.BarModel",  BarModelDescription(__Test.barModel));
-      WriteIniString(file, section, "Test.Spread",    DoubleToStr((Ask-Bid) * pMultiplier, pDigits));
+      WriteIniString(file, section, "Test.Timeframe",  TimeToStr(Tester_GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Tester_GetEndDate(), TIME_DATE));
+      WriteIniString(file, section, "Test.Period",     PeriodDescription());
+      WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
+      WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid) * pMultiplier, pDigits));
          double commission  = GetCommission();
          string sCommission = DoubleToStr(commission, 2);
          if (NE(commission, 0)) {
