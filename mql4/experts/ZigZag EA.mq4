@@ -49,25 +49,20 @@
  *
  *
  * TODO:
- *  - fix Expander i18n issues
- *     FindInputDialogA()
- *     ReopenAlertDialog()
- *  - rewrite Test_GetCommission()
+ *  - tests kommentieren und archivieren
  *
- *  - status file
- *     tests kommentieren und archivieren
- *     fix inputs Start/StopConditions
+ *  - fix inputs Start/StopConditions in status file
  *  - realtime metric chart
  *  - add var recorder.internalSymbol and store/restore value
  *  - fix ZigZag errors
  *  - fix tests with bar model MODE_BAROPEN
  *  - document control scripts
  *  - fix virtual trading
+ *  - rewrite Test_GetCommission()
  *
  *  - evaluate whether to
- *     remove METRIC_*_MONEY
- *     rename *.virtProfit => *.signalProfit
  *     add ZigZag projections
+ *     rename *.virtProfit => *.signalProfit
  *
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
@@ -1833,21 +1828,21 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ DoubleToStr(instance.totalNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetProfit",      /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
-   WriteIniString(file, section, "instance.avgNetProfit",      /*double  */ ifString(IsEmptyValue(instance.avgNetProfit), "(empty)", DoubleToStr(instance.avgNetProfit, 2)) + CRLF);
+   WriteIniString(file, section, "instance.avgNetProfit",      /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgNetProfit), 0, instance.avgNetProfit), 2) + CRLF);
 
    WriteIniString(file, section, "instance.openNetProfitP",    /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP, ".1+"), 16)    +" ; real PnL in point after all costs (net)");
    WriteIniString(file, section, "instance.closedNetProfitP",  /*double  */ NumberToStr(instance.closedNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.totalNetProfitP",   /*double  */ NumberToStr(instance.totalNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.maxNetProfitP",     /*double  */ NumberToStr(instance.maxNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.maxNetDrawdownP",   /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
-   WriteIniString(file, section, "instance.avgNetProfitP",     /*double  */ ifString(IsEmptyValue(instance.avgNetProfitP), "(empty)", NumberToStr(instance.avgNetProfitP, ".1+")) + CRLF);
+   WriteIniString(file, section, "instance.avgNetProfitP",     /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + CRLF);
 
    WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 15)  +" ; virtual PnL of signal levels in point (exact execution)");
    WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
    WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtProfitP",    /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
    WriteIniString(file, section, "instance.maxVirtDrawdownP",  /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits));
-   WriteIniString(file, section, "instance.avgVirtProfitP",    /*double  */ ifString(IsEmptyValue(instance.avgVirtProfitP), "(empty)", DoubleToStr(instance.avgVirtProfitP, Digits+1)) + CRLF);
+   WriteIniString(file, section, "instance.avgVirtProfitP",    /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgVirtProfitP), 0, instance.avgVirtProfitP), Digits+1) + CRLF);
 
    // start/stop conditions
    WriteIniString(file, section, "start.time.condition",       /*bool    */ start.time.condition);
