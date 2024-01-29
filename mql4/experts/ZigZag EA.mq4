@@ -50,15 +50,27 @@
  *
  * TODO:
  *  - fix Tester_GetStartDate()/Tester_GetEndDate()
+ *  - rewrite Test_GetCommission()
+ *  - implement Test_GetStartDate()/Test_GetEndDate()
+ *  - fix Expander i18n issues
+ *     Tester_GetStartDate()
+ *     Tester_GetEndDate()
+ *     FindInputDialogA()
+ *     ReopenAlertDialog()
+ *  - fix DoubleQuoteStr()/DoubleQuoteStrW() inconsistency
+ *
+ *  - tests kommentieren und archivieren (fix incomplete fields)
  *  - realtime metric chart
- *  - can METRIC_*_MONEY be removed?
+ *  - add var recorder.internalSymbol and store/restore value
  *  - fix ZigZag errors
  *  - fix tests with bar model MODE_BAROPEN
- *  - tests kommentieren und archivieren (fix incomplete fields)
- *  - add ZigZag projections
  *  - document control scripts
- *  - add var recorder.internalSymbol and store/restore value
  *  - fix virtual trading
+ *
+ *  - evaluate whether to
+ *     remove METRIC_*_MONEY
+ *     rename *.virtProfit => *.signalProfit
+ *     add ZigZag projections
  *
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
