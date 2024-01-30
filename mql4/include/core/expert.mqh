@@ -576,9 +576,13 @@ string initMarketInfo() {
             marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%")                                                                 +";";
    double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
    double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R")                                                                                             +";";
-   double   commission     = GetCommission();                                  message = message +" Commission="  + ifString(!commission, "0;", DoubleToStr(commission, 2) +"/lot");
+   double   commission     = GetCommission();                                  message = message +" Commission="  + ifString(!commission, "0.00;", DoubleToStr(commission, 2));
    if (NE(commission, 0)) {
-      double commissionPip = MathDiv(commission, pipValue);                    message = message +" ("            + NumberToStr(commissionPip, "."+ (Digits+1-PipDigits) +"R") +" pip)"                                                       +";";
+      int    digits      = MathMax(Digits, 2);                                 // transform Digits=1 to 2 (for some indices)
+      string pUnit       = ifString(digits > 2, "pip", "point");
+      int    pDigits     = ifInt(digits > 2, 1, 2);
+      int    pMultiplier = ifInt(digits > 2, MathRound(1/Pip), 1);
+      double pComm       = MathDiv(commission, MathDiv(tickValue, tickSize));  message = message +" ("            + DoubleToStr(pComm * pMultiplier, pDigits) +" "+ pUnit +")"                                                                +";";
    }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0")                        +";";

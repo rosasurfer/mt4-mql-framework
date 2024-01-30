@@ -132,7 +132,6 @@
    string   CoreFunctionDescription(int func);
    string   CoreFunctionToStr(int func);
    string   DeinitFlagsToStr(int flags);
-   string   DoubleQuoteStr(string value);
    string   ErrorToStrA(int error);
    string   InitFlagsToStr(int flags);
    string   InitializeReasonToStr(int reason);                 // alias of InitReasonToStr()

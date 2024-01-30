@@ -1,3 +1,7 @@
+<!--
+@see https://forex-station.com/viewtopic.php?p=1295434513#p1295434513
+-->
+
 <chart>
 symbol=GBPUSD
 period=60
@@ -17171,14 +17175,6 @@ CandleWt=11119017
 CandleDn=4800490
 STR01=<<<==== [01] T3MA Trend Settings ====>>>
 showT3MA=false
-T3MAper=576
-T3MAmode=1
-T3MAshift=-1
-T3MAtype=4
-T3MAwidth=12
-T3MAbgclr=1973790
-T3MAupclr=14772545
-T3MAdnclr=55295
 STR02=<<<==== [02] T2MA Trend Settings ====>>>
 showT2MA=true
 T2MAper=144
@@ -17436,6 +17432,6 @@ color_7=4294967295
 period_flags=0
 show_data=1
 </indicator>
-</window>
 
+</window>
 </chart>

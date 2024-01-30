@@ -1,8 +1,6 @@
 <!--
-A modified Vegas Tunnel. The original tunnel is built from EMA(144) + EMA(169) and is too narrow. 
-It's replaced by a "XARD 3-MA-Tunnel" (XU v4-XARDFX) which is wider and produces less noise.
-
-@see https://forex-station.com/viewtopic.php?p=1295434513#p1295434513
+The original Vegas Tunnel is built from EMA(144) + EMA(169) and is too narrow. 
+Here it's replaced by an "MA Tunnel(144)" which is wider and produces less noise.
 -->
 
 <chart>
@@ -17208,7 +17206,7 @@ S1MAwidth=2
 S1MAbgclr=5789784
 S1MAupclr=16760576
 STR05=<<<==== [05] BOXtxt Settings ====>>>
-showBOXtxt=true
+showBOXtxt=false
 STR06=<<<==== [06] Alert Settings ====>>>
 inpAlertsOn=false
 inpAlertsOnCurrent=true
@@ -17439,15 +17437,17 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=MA Tunnel
 flags=339
 window_num=0
 <inputs>
-AutoConfiguration=1
+Tunnel.Definition=EMA(144)
+Tunnel.Color=16711935
 </inputs>
 </expert>
 period_flags=0
-show_data=0
+show_data=1
 </indicator>
+
 </window>
 </chart>

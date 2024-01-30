@@ -427,8 +427,8 @@
 #define IDC_TOOLBAR_SEARCHBOX               38213        // search box       (terminal builds >  509)
 #define IDC_STATUSBAR                       59393        // status bar
 #define IDC_MDI_CLIENT                      59648        // MDI container (holding all charts)
-#define IDC_DOCKABLES_CONTAINER             59422        // window containing all child windows docked to the main application window
-#define IDC_UNDOCKED_CONTAINER              59423        // window containing a single undocked/floating dockable child window (possibly more than one, not a toplevel window)
+#define IDC_DOCKED_CONTAINER                59422        // window containing all dockable child windows docked to the main application window
+#define IDC_FLOATING_CONTAINER              59423        // window containing a single dockable but floating child window (possibly more than one, not a toplevel window)
 
 #define IDC_CUSTOM_INDICATOR_OK                 1        // load dialog "Custom Indicator"
 #define IDC_CUSTOM_INDICATOR_CANCEL             2        // ...

@@ -96,7 +96,7 @@ int init() {
          sInputs = StringConcatenate(sInputs,
             ifString(!AutoConfiguration, "", NL +"AutoConfiguration=TRUE;"),
                                              NL +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";");
-         logInfo("init(13)  input: "+ sInputs);
+         logInfo("init(13)  inputs: "+ sInputs);
       }
    }
 

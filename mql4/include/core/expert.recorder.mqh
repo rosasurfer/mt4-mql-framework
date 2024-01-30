@@ -12,24 +12,24 @@
 //         an appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display
 //         negative values). Without a value the recorder queries the framework configuration.
 //
-// During EA initialization the function Recorder_GetSymbolDefinition() is called for each metric id, to retrieve a metric's
-// symbol definition. The function must be implemented by the EA. Signature:
+// During EA initialization the function Recorder_GetSymbolDefinition() is called for each metric to retrieve the metric's
+// symbol definition (the function must be implemented by the EA). Signature:
 //
 // /**
 //  * Return a symbol definition for the specified metric to be recorded.
 //  *
-//  * @param  _In_  int    id           - metric id
+//  * @param  _In_  int    metricId     - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
 //  * @param  _Out_ bool   &ready       - whether metric details are complete and the metric is ready to be recorded
 //  * @param  _Out_ string &symbol      - unique MT4 timeseries symbol
 //  * @param  _Out_ string &description - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
 //  * @param  _Out_ string &group       - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
 //  * @param  _Out_ int    &digits      - symbol digits value
-//  * @param  _Out_ double &baseValue   - quotes base value (if EMPTY recorder settings are used)
+//  * @param  _Out_ double &baseValue   - quotes base value (if EMPTY default settings are used)
 //  * @param  _Out_ int    &multiplier  - quotes multiplier
 //  *
 //  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
 //  */
-// int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
+// int Recorder_GetSymbolDefinition(int metricId, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
 //
 
 // recorder modes
@@ -40,7 +40,8 @@
 // recorder settings
 int    recorder.mode;
 bool   recorder.initialized;
-string recorder.hstDirectory = "";
+string recorder.stdEquitySymbol = "";        // symbol used with mode = RECORDER_ON
+string recorder.hstDirectory    = "";
 int    recorder.hstFormat;
 
 string recorder.defaultDescription = "";
@@ -256,18 +257,28 @@ bool Recorder.init() {
       string symbol="", descr="", group="", suffix="";
 
       suffix                      = ", "+ PeriodDescription() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-      recorder.defaultDescription = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                                             // sizeof(SYMBOL.description) = 64 chars (szchar)
+      recorder.defaultDescription = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                           // sizeof(SYMBOL.description) = 64 chars (szchar)
       recorder.defaultGroup       = StrTrimRight(StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH));
       recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
       recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               return(false);
 
       // create an internal metric for AccountEquity()
       if (recorder.mode == RECORDER_ON) {
-         symbol = Recorder.GetEquitySymbol(); if (!StringLen(symbol)) return(false);
-         suffix = ", "+ PeriodDescription() +", AccountEquity in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-         descr  = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;
-         group  = recorder.defaultGroup;
-         if (!Recorder.AddMetric(1, true, symbol, descr, group, 2, 0, 1)) return(false);
+         if (Recorder_GetSymbolDefinition(NULL, ready, symbol, descr, group, digits, baseValue, multiplier) != NULL) return(false);
+         if (ready) {
+            if (symbol == "") {
+               symbol = Recorder.ComposeEquitySymbol(); if (!StringLen(symbol)) return(false);
+            }
+            if (descr == "") {
+               suffix = ", "+ PeriodDescription() +", AccountEquity in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+               descr  = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;
+            }
+            if (group == "") {
+               group = recorder.defaultGroup;
+            }
+            if (!Recorder.AddMetric(1, true, symbol, descr, group, 2, 0, 1)) return(false);
+            recorder.stdEquitySymbol = symbol;
+         }
       }
 
       // update metric details and create raw MT4 symbols
@@ -455,11 +466,11 @@ void Recorder.ResetMetrics() {
 
 
 /**
- * Get the next available MT4 symbol for standard equity recording.
+ * Compose the next available MT4 symbol for standard recording of AccountEquity().
  *
  * @return string - symbol or an empty string in case of errors
  */
-string Recorder.GetEquitySymbol() {
+string Recorder.ComposeEquitySymbol() {
    string filename = recorder.hstDirectory +"/symbols.raw";
    string prefix = StrLeft(Symbol(), 7) +".";
    int maxId = 0;
@@ -467,16 +478,16 @@ string Recorder.GetEquitySymbol() {
    if (IsFile(filename, MODE_MQL)) {
       // open "symbols.raw" and read existing symbols
       int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
-      if (hFile <= 0)                                      return(_EMPTY_STR(catch("Recorder.GetEquitySymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0)                                      return(_EMPTY_STR(catch("Recorder.ComposeEquitySymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR))));
 
       int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(_EMPTY_STR(catch("Recorder.GetEquitySymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
+      if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(_EMPTY_STR(catch("Recorder.ComposeEquitySymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
       int symbolsSize = fileSize/SYMBOL_size;
 
       int symbols[]; InitializeByteBuffer(symbols, fileSize);
       if (fileSize > 0) {
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-         if (ints!=fileSize/4) { FileClose(hFile);         return(_EMPTY_STR(catch("Recorder.GetEquitySymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
+         if (ints!=fileSize/4) { FileClose(hFile);         return(_EMPTY_STR(catch("Recorder.ComposeEquitySymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
       }
       FileClose(hFile);
 
