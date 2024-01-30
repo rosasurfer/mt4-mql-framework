@@ -91,8 +91,8 @@ extern double Lots                 = 1.0;
 
 #define STRATEGY_ID            108                 // unique strategy id (used for magic order numbers)
 
-#define INSTANCE_ID_MIN        100                 // range of valid instance ids
-#define INSTANCE_ID_MAX        999                 // ...
+#define INSTANCE_ID_MIN          1                 // range of valid instance ids
+#define INSTANCE_ID_MAX        999                 //
 
 #define STATUS_WAITING           1                 // instance has no open positions and waits for trade signals
 #define STATUS_PROGRESSING       2                 // instance manages open positions
@@ -631,7 +631,7 @@ bool UpdateStatus(int signal = NULL) {
       double   price       = NULL;
       double   stopLoss    = NULL;
       double   takeProfit  = NULL;
-      string   comment     = "Vegas."+ instance.id;
+      string   comment     = "Vegas."+ StrPadLeft(instance.id, 3, "0");
       int      magicNumber = CalculateMagicNumber();
       datetime expires     = NULL;
       color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
@@ -931,7 +931,7 @@ int CalculateMagicNumber(int instanceId = NULL) {
    if (id < INSTANCE_ID_MIN || id > INSTANCE_ID_MAX) return(!catch("CalculateMagicNumber(2)  "+ instance.name +" illegal instance id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                              // 101-1023 (10 bit)
-   int instance = id;                                       // 100-999  (14 bit, used to be 1000-9999)
+   int instance = id;                                       // 001-999  (14 bit, used to be 1000-9999)
 
    return((strategy<<22) + (instance<<8));                  // the remaining 8 bit are currently not used in this strategy
 }
@@ -973,13 +973,13 @@ int CreateInstanceId() {
       int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
 
       if (recorder.mode == RECORDER_OFF) {
-         while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {  // select random id between ID_MIN and ID_MAX
+         int minInstanceId = MathCeil(nextMetricId + 0.2*(INSTANCE_ID_MAX-nextMetricId)); // nextMetricId + 20% of remaining range (leave 20% of range empty for tests with metrics)
+         while (instanceId < minInstanceId || instanceId > INSTANCE_ID_MAX) {             // select random id between <minInstanceId> and ID_MAX
             instanceId = MathRand();
-            if (instanceId == nextMetricId) instanceId = 0;
          }
       }
       else {
-         instanceId = nextMetricId;                                              // use next metric id
+         instanceId = nextMetricId;                                                       // use next metric id
       }
    }
    else {
@@ -987,7 +987,7 @@ int CreateInstanceId() {
       while (!magicNumber) {
          // generate a new instance id
          while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
-            instanceId = MathRand();                                             // select random id between ID_MIN and ID_MAX
+            instanceId = MathRand();                                                      // select random id between ID_MIN and ID_MAX
          }
          magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
 
@@ -1058,7 +1058,7 @@ bool SetInstanceId(string value, bool &error, string caller) {
 
    instance.isTest = isTest;
    instance.id     = iValue;
-   Instance.ID     = ifString(IsTestInstance(), "T", "") + instance.id;
+   Instance.ID     = ifString(IsTestInstance(), "T", "") + StrPadLeft(""+ instance.id, 3, "0");
    SS.InstanceName();
    return(true);
 }
@@ -1362,7 +1362,7 @@ string GetStatusFilename(bool relative = false) {
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = ProgramName() +", "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ instance.id +".set";
+      string baseName  = ProgramName() +", "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ StrPadLeft(instance.id, 3, "0") +".set";
       filename = directory + baseName;
    }
 
@@ -1386,7 +1386,7 @@ string FindStatusFile(int instanceId, bool isTest) {
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
    string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
-   string basePattern = ProgramName() +", "+ Symbol() +",*id="+ instanceId +".set";
+   string basePattern = ProgramName() +", "+ Symbol() +",*id="+ StrPadLeft(""+ instanceId, 3, "0") +".set";
    string pathPattern = sandboxDir + statusDir + basePattern;
 
    string result[];
@@ -1727,7 +1727,7 @@ int onInputError(string message) {
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
 int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
-   string sId = ifString(!instance.id, "???", instance.id);
+   string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
    string descrSuffix = "";
 
    ready     = false;
@@ -1799,7 +1799,7 @@ bool StoreVolatileData() {
    string name = ProgramName();
 
    // input string Instance.ID
-   string value = ifString(instance.isTest, "T", "") + instance.id;
+   string value = ifString(instance.isTest, "T", "") + StrPadLeft(instance.id, 3, "0");
    Instance.ID = value;
    if (__isChart) {
       string key = name +".Instance.ID";
@@ -2022,7 +2022,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "V."+ instance.id;
+   instance.name = "V."+ StrPadLeft(""+ instance.id, 3, "0");
 }
 
 

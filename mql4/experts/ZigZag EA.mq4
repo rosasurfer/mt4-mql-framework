@@ -50,10 +50,10 @@
  *
  * TODO:
  *  - realtime metric charts
- *     consecutive instance ids in online
- *     fix offline ticker: dazu müssen Profile mit allen Chart-Timeframes automatisiert angelegt/gemanaged werden
- *     on restart the first recorded bar starts at instance.startEquity
+ *     für offline ticker müssen Profile mit allen Chart-Timeframes automatisiert angelegt werden
+ *  - consecutive instance ids online
  *
+ *  - on EA restart the first recorded bar starts at instance.startEquity
  *  - input TradingTimeframe
  *  - ChartInfos: read/display symbol description as long name
  *  - fix ZigZag errors
@@ -186,17 +186,17 @@ int __virtualTicks = 10000;                                 // every 10 seconds 
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID          = "";                    // instance to load from a status file, format "[T]123"
-extern string TradingMode          = "regular* | virtual";  // may be shortened
+extern string Instance.ID         = "";                     // instance to load from a status file, format "[T]123"
+extern string TradingMode         = "regular* | virtual";   // may be shortened
 
-extern int    ZigZag.Periods       = 30;
-extern double Lots                 = 1.0;
-extern string StartConditions      = "";                    // @time(datetime|time)
-extern string StopConditions       = "";                    // @time(datetime|time)          // TODO: @signal([long|short]), @breakeven(on-profit), @trail([on-profit:]stepsize)
-extern double TakeProfit           = 0;                     // TP value
-extern string TakeProfit.Type      = "off* | money | percent | pip | quote-unit";            // can be shortened if distinct        // TODO: redefine point as index point
+extern int    ZigZag.Periods      = 30;
+extern double Lots                = 1.0;
+extern string StartConditions     = "";                     // @time(datetime|time)
+extern string StopConditions      = "";                     // @time(datetime|time)    // TODO: @signal([long|short]), @breakeven(on-profit), @trail([on-profit:]stepsize)
+extern double TakeProfit          = 0;                      // TP value
+extern string TakeProfit.Type     = "off* | money | percent | pip | quote-unit";       // can be shortened if distinct        // TODO: redefine point as index point
 
-extern bool   ShowProfitInPercent  = true;                  // whether PL is displayed in money or percentage terms
+extern bool   ShowProfitInPercent = true;                   // whether PL is displayed in money or percentage terms
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -210,8 +210,8 @@ extern bool   ShowProfitInPercent  = true;                  // whether PL is dis
 
 #define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
 
-#define INSTANCE_ID_MIN           100           // range of valid instance ids
-#define INSTANCE_ID_MAX           999           // ...
+#define INSTANCE_ID_MIN             1           // range of valid instance ids
+#define INSTANCE_ID_MAX           999           //
 
 #define STATUS_WAITING              1           // instance status values
 #define STATUS_PROGRESSING          2
@@ -1007,7 +1007,7 @@ bool StartInstance(int signal) {
    int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    datetime expires     = NULL;
-   string   comment     = "ZigZag."+ instance.id;
+   string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
    int      magicNumber = CalculateMagicNumber();
    color    marker      = ifInt(!type, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
@@ -1100,7 +1100,7 @@ bool ReverseInstance(int signal) {
    int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    datetime expires     = NULL;
-   string   comment     = "ZigZag."+ instance.id;
+   string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
    int      magicNumber = CalculateMagicNumber();
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
@@ -1476,7 +1476,7 @@ int CalculateMagicNumber(int instanceId = NULL) {
    if (id < INSTANCE_ID_MIN || id > INSTANCE_ID_MAX) return(!catch("CalculateMagicNumber(2)  "+ instance.name +" illegal instance id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                              // 101-1023 (10 bit)
-   int instance = id;                                       // now 100-999 but was 1000-9999 (14 bit)
+   int instance = id;                                       // 001-999 but was 1000-9999 (14 bit)
 
    return((strategy<<22) + (instance<<8));                  // the remaining 8 bit are not used in this strategy
 }
@@ -1518,13 +1518,13 @@ int CreateInstanceId() {
       int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
 
       if (recorder.mode == RECORDER_OFF) {
-         while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {  // select random id between ID_MIN and ID_MAX
+         int minInstanceId = MathCeil(nextMetricId + 0.2*(INSTANCE_ID_MAX-nextMetricId));    // nextMetricId + 20% of remaining range (leave 20% of range empty for tests with metrics)
+         while (instanceId < minInstanceId || instanceId > INSTANCE_ID_MAX) {                // select random id between <minInstanceId> and ID_MAX
             instanceId = MathRand();
-            if (instanceId == nextMetricId) instanceId = 0;
          }
       }
       else {
-         instanceId = nextMetricId;                                              // use next metric id
+         instanceId = nextMetricId;                                                          // use next metric id
       }
    }
    else {
@@ -1532,7 +1532,7 @@ int CreateInstanceId() {
       while (!magicNumber) {
          // generate a new instance id
          while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
-            instanceId = MathRand();                                             // select random id between ID_MIN and ID_MAX
+            instanceId = MathRand();                                                         // select random id between ID_MIN and ID_MAX
          }
          magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
 
@@ -1577,7 +1577,7 @@ int CreateInstanceId() {
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
 int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
-   string sId = ifString(!instance.id, "???", instance.id);
+   string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
    string descrSuffix = "";
 
    ready      = false;
@@ -1683,7 +1683,7 @@ string GetStatusFilename(bool relative = false) {
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = ProgramName() +", "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ instance.id +".set";
+      string baseName  = ProgramName() +", "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ StrPadLeft(instance.id, 3, "0") +".set";
       filename = directory + baseName;
    }
 
@@ -1707,7 +1707,7 @@ string FindStatusFile(int instanceId, bool isTest) {
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
    string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
-   string basePattern = ProgramName() +", "+ Symbol() +",*id="+ instanceId +".set";
+   string basePattern = ProgramName() +", "+ Symbol() +",*id="+ StrPadLeft(""+ instanceId, 3, "0") +".set";
    string pathPattern = sandboxDir + statusDir + basePattern;
 
    string result[];
@@ -2739,7 +2739,7 @@ bool StoreVolatileData() {
    string name = ProgramName();
 
    // input string Instance.ID
-   string value = ifString(instance.isTest, "T", "") + instance.id;
+   string value = ifString(instance.isTest, "T", "") + StrPadLeft(instance.id, 3, "0");
    Instance.ID = value;
    if (__isChart) {
       string key = name +".Instance.ID";
@@ -2933,7 +2933,7 @@ bool SetInstanceId(string value, bool &error, string caller) {
 
    instance.isTest = isTest;
    instance.id     = iValue;
-   Instance.ID     = ifString(IsTestInstance(), "T", "") + instance.id;
+   Instance.ID     = ifString(IsTestInstance(), "T", "") + StrPadLeft(""+ instance.id, 3, "0");
    SS.InstanceName();
    return(true);
 }
@@ -2957,7 +2957,7 @@ int VirtualOrderSend(int type, double lots, double stopLoss, double takeProfit, 
 
    if (type!=OP_BUY && type!=OP_SELL) return(!catch("VirtualOrderSend(1)  invalid parameter type: "+ type, oe.setError(oe, ERR_INVALID_PARAMETER)));
    double openPrice = ifDouble(type, Bid, Ask);
-   string comment = "ZigZag."+ instance.id;
+   string comment = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
 
    // generate a new ticket
    int ticket = open.ticket;
@@ -3032,7 +3032,7 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
       string sClosePrice = NumberToStr(closePrice, PriceFormat);
       string sBid        = NumberToStr(Bid, PriceFormat);
       string sAsk        = NumberToStr(Ask, PriceFormat);
-      logDebug("VirtualOrderClose(2)  "+ instance.name +" closed virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ instance.id +"\" from "+ sOpenPrice +" at "+ sClosePrice +" (market: "+ sBid +"/"+ sAsk +")");
+      logDebug("VirtualOrderClose(2)  "+ instance.name +" closed virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ StrPadLeft(instance.id, 3, "0") +"\" from "+ sOpenPrice +" at "+ sClosePrice +" (market: "+ sBid +"/"+ sAsk +")");
    }
    if (__isChart && marker!=CLR_NONE) ChartMarker.PositionClosed_B(ticket, Digits, marker, open.type, lots, Symbol(), open.time, open.price, Tick.time, closePrice);
    if (!__isTesting)                  PlaySoundEx("OrderOk.wav");
@@ -3059,7 +3059,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "Z."+ instance.id;
+   instance.name = "Z."+ StrPadLeft(""+ instance.id, 3, "0");
 
    switch (tradingMode) {
       case TRADINGMODE_REGULAR:
