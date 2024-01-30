@@ -1073,11 +1073,17 @@ bool ReadStatus() {
 
    // [General]
    string section      = "General";
-   string sAccount     = GetIniStringA(file, section, "Account", "");                        // string Account = ICMarkets:12345678 (demo)
-   string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                        // string Symbol  = EURUSD
+   string sAccount     = GetIniStringA(file, section, "Account",     "");                    // string Account     = ICMarkets:12345678 (demo)
    string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
-   if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(4)  "+ instance.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
-   if (!StrCompareI(sSymbol, Symbol()))                       return(!catch("ReadStatus(5)  "+ instance.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   string sRealSymbol  = GetIniStringA(file, section, "Symbol",      "");                    // string Symbol      = EURUSD
+   string sTestSymbol  = GetIniStringA(file, section, "Test.Symbol", "");                    // string Test.Symbol = EURUSD
+   if (sTestSymbol == "") {
+      if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(4)  "+ instance.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+      if (!StrCompareI(sRealSymbol, Symbol()))                   return(!catch("ReadStatus(5)  "+ instance.name +" symbol mis-match: "+ DoubleQuoteStr(Symbol()) +" vs. "+ DoubleQuoteStr(sRealSymbol) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   }
+   else {
+      if (!StrCompareI(sTestSymbol, Symbol()))                   return(!catch("ReadStatus(6)  "+ instance.name +" symbol mis-match: "+ DoubleQuoteStr(Symbol()) +" vs. "+ DoubleQuoteStr(sTestSymbol) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   }
 
    // [Inputs]
    section = "Inputs";
@@ -1087,7 +1093,7 @@ bool ReadStatus() {
    string sLots               = GetIniStringA(file, section, "Lots",              "");       // double Lots              = 0.1
    string sEaRecorder         = GetIniStringA(file, section, "EA.Recorder",       "");       // string EA.Recorder       = 1,2,4
 
-   if (!StrIsNumeric(sLots)) return(!catch("ReadStatus(6)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sLots)) return(!catch("ReadStatus(7)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
    Instance.ID       = sInstanceID;
    Tunnel.Definition = sTunnelDefinition;
@@ -1145,7 +1151,7 @@ bool ReadStatus() {
    for (int i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, sKeys[i], "");                                   // history.{i} = {data}
       int n = ReadStatus.RestoreHistory(sKeys[i], sOrder);
-      if (n < 0) return(!catch("ReadStatus(7)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      if (n < 0) return(!catch("ReadStatus(8)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
 
       netProfit   += history[n][H_NETPROFIT   ];
       netProfitP  += history[n][H_NETPROFIT_P ];
@@ -1154,11 +1160,11 @@ bool ReadStatus() {
 
    // cross-check restored stats
    int precision = MathMax(Digits, 2) + 1;                    // required precision for fractional point values
-   if (NE(netProfit,   instance.closedNetProfit, 2))          return(!catch("ReadStatus(8)  "+  instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("     + NumberToStr(netProfit, ".2+")              +" != "+ NumberToStr(instance.closedNetProfit, ".2+")              +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,  instance.closedNetProfitP, precision)) return(!catch("ReadStatus(9)  "+  instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("  + NumberToStr(netProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP, instance.closedVirtProfitP, Digits))   return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,   instance.closedNetProfit, 2))          return(!catch("ReadStatus(9)  "+  instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("     + NumberToStr(netProfit, ".2+")              +" != "+ NumberToStr(instance.closedNetProfit, ".2+")              +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,  instance.closedNetProfitP, precision)) return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("  + NumberToStr(netProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
+   if (NE(virtProfitP, instance.closedVirtProfitP, Digits))   return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
-   return(!catch("ReadStatus(11)"));
+   return(!catch("ReadStatus(12)"));
 }
 
 
@@ -1401,7 +1407,7 @@ bool SaveStatus() {
    else {
       WriteIniString(file, section, "Test.Currency",   AccountCurrency());
       WriteIniString(file, section, "Test.Symbol",     Symbol());
-      WriteIniString(file, section, "Test.Timeframe",  TimeToStr(Tester_GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Tester_GetEndDate(), TIME_DATE));
+      WriteIniString(file, section, "Test.Timeframe",  TimeToStr(Tester_GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Tester_GetEndDate()-1*DAY, TIME_DATE));
       WriteIniString(file, section, "Test.Period",     PeriodDescription());
       WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
       WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid) * pMultiplier, pDigits) +" "+ pUnit);
