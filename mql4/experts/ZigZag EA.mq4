@@ -20,15 +20,15 @@
  * ----------------
  *  • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
- *     1: Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
- *     2: Records PnL in price units after all costs (net).
- *     3: Records PnL in price units without spread and any costs (virtual, assumes exact execution).
+ *     1: Records PnL after all costs in account currency (net).
+ *     2: Records PnL after all costs in price units (net).
+ *     3: Records PnL before spread/any costs in price units (synthetic, exact execution).
  *
- *     4: Records daily PnL in account currency after all costs (net).                                                   TODO
- *     5: Records daily PnL in price units after all costs (net).                                                        TODO
- *     6: Records daily PnL in price units without spread and any costs (virtual, assumes exact execution).              TODO
+ *     4: Records daily PnL after all costs in account currency (net).                                                   TODO
+ *     5: Records daily PnL after all costs in price units (net).                                                        TODO
+ *     6: Records daily PnL before spread/any costs in price units (synthetic, exact execution).                         TODO
  *
- *     Metrics in price units are recorded in the best matching unit. That's pip for Forex and full points otherwise.
+ *     Metrics in price units are recorded in the best matching unit. That's pip for Forex or full points otherwise.
  *
  *
  * External control
@@ -50,7 +50,12 @@
  *
  * TODO:
  *  - realtime metric charts
+ *     consecutive instance ids in online
+ *     fix offline ticker: dazu müssen Profile mit allen Chart-Timeframes automatisiert angelegt/gemanaged werden
+ *     on restart the first recorded bar starts at instance.startEquity
  *
+ *  - input TradingTimeframe
+ *  - ChartInfos: read/display symbol description as long name
  *  - fix ZigZag errors
  *  - fix tests with bar model MODE_BAROPEN
  *  - status file: don't empty inputs Start/StopConditions
@@ -121,17 +126,14 @@
  *     breakeven stop
  *     trailing stop
  *     reverse trading and command EA.Reverse
- *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
  *
  *  - ChartInfos
- *     read/display symbol description as long name
  *     CustomPosition() weekend configuration/timespans don't work
  *     CustomPosition() including/excluding a specific strategy is not supported
  *     don't recalculate unitsize on every tick (every few seconds is sufficient)
  *
  *  - performance tracking
- *     realtime equity charts
  *     notifications for price feed outages
  *     daily metrics
  *
@@ -409,20 +411,15 @@ bool onCommand(string cmd, string params, int keys) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
             string sDetail = " ";
-            int logLevel = LOG_INFO;
-
-            if (params == "long") {
-               int signal = SIGNAL_LONG;
-            }
-            else if (params == "short") {
-               signal = SIGNAL_SHORT;
-            }
+            int signal, logLevel=LOG_INFO;
+            if      (params == "long")  signal = SIGNAL_LONG;
+            else if (params == "short") signal = SIGNAL_SHORT;
             else {
+               signal = ifInt(GetZigZagTrend(0) > 0, SIGNAL_LONG, SIGNAL_SHORT);
                if (params != "") {
                   sDetail  = " skipping unsupported parameter in command ";
                   logLevel = LOG_NOTICE;
                }
-               signal = ifInt(GetZigZagTrend(0) > 0, SIGNAL_LONG, SIGNAL_SHORT);
             }
             log("onCommand(1)  "+ instance.name + sDetail + DoubleQuoteStr(fullCmd), NO_ERROR, logLevel);
             return(StartInstance(signal));
@@ -1505,38 +1502,59 @@ bool IsMyOrder(int instanceId = NULL) {
 
 
 /**
- * Generate a new instance id. Must be unique for all instances of this strategy.
+ * Generate a new instance id. Unique for all instances per symbol (instances of different symbols may use the same id).
  *
- * @return int - instance id in the range of 100-999 or NULL in case of errors
+ * @return int - instance id in the range of 100-999 or NULL (0) in case of errors
  */
 int CreateInstanceId() {
-   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
    int instanceId, magicNumber;
+   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
 
-   while (!magicNumber) {
-      while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
-         instanceId = MathRand();                           // TODO: generate consecutive ids when in tester
-      }
-      magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
+   if (__isTesting) {
+      // generate next consecutive id from already recorded metrics
+      string nextSymbol = Recorder.GetNextMetricSymbol(); if (nextSymbol == "") return(NULL);
+      string sCounter = StrRightFrom(nextSymbol, ".", -1);
+      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  illegal value for next symbol "+ DoubleQuoteStr(nextSymbol) +" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
+      int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
 
-      // test for uniqueness against open orders
-      int openOrders = OrdersTotal();
-      for (int i=0; i < openOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateInstanceId(1)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-         if (OrderMagicNumber() == magicNumber) {
-            magicNumber = NULL;
-            break;
+      if (recorder.mode == RECORDER_OFF) {
+         while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {  // select random id between ID_MIN and ID_MAX
+            instanceId = MathRand();
+            if (instanceId == nextMetricId) instanceId = 0;
          }
       }
-      if (!magicNumber) continue;
+      else {
+         instanceId = nextMetricId;                                              // use next metric id
+      }
+   }
+   else {
+      // online: generate random id
+      while (!magicNumber) {
+         // generate a new instance id
+         while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
+            instanceId = MathRand();                                             // select random id between ID_MIN and ID_MAX
+         }
+         magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
 
-      // test for uniqueness against closed orders
-      int closedOrders = OrdersHistoryTotal();
-      for (i=0; i < closedOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateInstanceId(2)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-         if (OrderMagicNumber() == magicNumber) {
-            magicNumber = NULL;
-            break;
+         // test for uniqueness against open orders
+         int openOrders = OrdersTotal();
+         for (int i=0; i < openOrders; i++) {
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateInstanceId(2)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (OrderMagicNumber() == magicNumber) {
+               magicNumber = NULL;
+               break;
+            }
+         }
+         if (!magicNumber) continue;
+
+         // test for uniqueness against closed orders
+         int closedOrders = OrdersHistoryTotal();
+         for (i=0; i < closedOrders; i++) {
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateInstanceId(3)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (OrderMagicNumber() == magicNumber) {
+               magicNumber = NULL;
+               break;
+            }
          }
       }
    }

@@ -10,7 +10,7 @@
  *  - PnL of customizable open positions and/or trade history.
  *  - Breakeven and PnL target levels.
  *  - The current account stopout level.
- *  - A warning when the account's open order limit is approached.
+ *  - A visual warning with increasing intensity when the account's open order limit is approached.
  *
  *
  * TODO:
