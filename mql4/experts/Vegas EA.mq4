@@ -270,7 +270,7 @@ bool onCommand(string cmd, string params, int keys) {
  * @return bool - success status
  */
 bool ToggleMetrics(int direction) {
-   if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  "+ instance.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    int lastMetric = status.activeMetric;
 
@@ -969,7 +969,7 @@ int CreateInstanceId() {
       // generate next consecutive id from already recorded metrics
       string nextSymbol = Recorder.GetNextMetricSymbol(); if (nextSymbol == "") return(NULL);
       string sCounter = StrRightFrom(nextSymbol, ".", -1);
-      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  illegal value for next symbol "+ DoubleQuoteStr(nextSymbol) +" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
+      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  "+ instance.name +" illegal value for next symbol "+ DoubleQuoteStr(nextSymbol) +" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
       int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
 
       if (recorder.mode == RECORDER_OFF) {

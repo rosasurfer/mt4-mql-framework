@@ -470,7 +470,7 @@ bool onCommand(string cmd, string params, int keys) {
  * @return bool - success status
  */
 bool ToggleMetrics(int direction) {
-   if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  "+ instance.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    bool virtualMetric = (status.activeMetric==METRIC_TOTAL_VIRT_UNITS || status.activeMetric==METRIC_DAILY_VIRT_UNITS);
 
@@ -884,25 +884,25 @@ bool IsTradingTime() {
    if (IsTradeSessionBreak()) return(false);
 
    if (!start.time.condition && !stop.time.condition) {     // case 1
-      return(!catch("IsTradingTime(1)  start.time=(empty) + stop.time=(empty) not implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("IsTradingTime(1)  "+ instance.name +" start.time=(empty) + stop.time=(empty) not implemented", ERR_NOT_IMPLEMENTED));
    }
    else if (!stop.time.condition) {                         // case 2 or 5
-      return(!catch("IsTradingTime(2)  stop.time=(empty) not implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("IsTradingTime(2)  "+ instance.name +" stop.time=(empty) not implemented", ERR_NOT_IMPLEMENTED));
    }
    else if (!start.time.condition) {                        // case 3 or 6
-      return(!catch("IsTradingTime(3)  start.time=(empty) not implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("IsTradingTime(3)  "+ instance.name +" start.time=(empty) not implemented", ERR_NOT_IMPLEMENTED));
    }
    else if (!start.time.isDaily && !stop.time.isDaily) {    // case 4
-      return(!catch("IsTradingTime(4)  start.time=(fix) + stop.time=(fix) not implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("IsTradingTime(4)  "+ instance.name +" start.time=(fix) + stop.time=(fix) not implemented", ERR_NOT_IMPLEMENTED));
    }
    else if (start.time.isDaily && stop.time.isDaily) {      // case 7
       if (IsStrategyBreak()) return(false);
    }
    else if (stop.time.isDaily) {                            // case 8
-      return(!catch("IsTradingTime(5)  start.time=(fix) + stop.time=(daily) not implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("IsTradingTime(5)  "+ instance.name +" start.time=(fix) + stop.time=(daily) not implemented", ERR_NOT_IMPLEMENTED));
    }
    else {                                                   // case 9
-      return(!catch("IsTradingTime(6)  start.time=(daily) + stop.time=(fix) not implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("IsTradingTime(6)  "+ instance.name +" start.time=(daily) + stop.time=(fix) not implemented", ERR_NOT_IMPLEMENTED));
    }
    return(true);
 }
@@ -1514,7 +1514,7 @@ int CreateInstanceId() {
       // generate next consecutive id from already recorded metrics
       string nextSymbol = Recorder.GetNextMetricSymbol(); if (nextSymbol == "") return(NULL);
       string sCounter = StrRightFrom(nextSymbol, ".", -1);
-      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  illegal value for next symbol "+ DoubleQuoteStr(nextSymbol) +" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
+      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  "+ instance.name +" illegal value for next symbol "+ DoubleQuoteStr(nextSymbol) +" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
       int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
 
       if (recorder.mode == RECORDER_OFF) {
@@ -2955,7 +2955,7 @@ int VirtualOrderSend(int type, double lots, double stopLoss, double takeProfit, 
    if (ArraySize(oe) != ORDER_EXECUTION_intSize) ArrayResize(oe, ORDER_EXECUTION_intSize);
    ArrayInitialize(oe, 0);
 
-   if (type!=OP_BUY && type!=OP_SELL) return(!catch("VirtualOrderSend(1)  invalid parameter type: "+ type, oe.setError(oe, ERR_INVALID_PARAMETER)));
+   if (type!=OP_BUY && type!=OP_SELL) return(!catch("VirtualOrderSend(1)  "+ instance.name +" invalid parameter type: "+ type, oe.setError(oe, ERR_INVALID_PARAMETER)));
    double openPrice = ifDouble(type, Bid, Ask);
    string comment = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
 
