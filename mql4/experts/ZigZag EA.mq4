@@ -49,24 +49,23 @@
  *
  *
  * TODO:
- *  - realtime metric charts
- *     für offline ticker müssen Profile mit allen Chart-Timeframes automatisiert angelegt werden
- *  - consecutive instance ids online
- *
  *  - on EA restart the first recorded bar starts at instance.startEquity
- *  - input TradingTimeframe
- *  - ChartInfos: read/display symbol description as long name
+ *  - status file: don't empty inputs Start/StopCondition
  *  - fix ZigZag errors
  *  - fix tests with bar model MODE_BAROPEN
- *  - status file: don't empty inputs Start/StopConditions
- *  - document control scripts
+ *  - input TradingTimeframe
  *  - fix virtual trading
  *  - rewrite Test_GetCommission()
+ *  - document control scripts
  *
  *  - evaluate whether to
  *     add ZigZag projections
  *     rename *.virtProfit => *.synthProfit
  *
+ *  - realtime metric charts
+ *     on CreateRawSymbol() also create/update offline profile
+ *     ChartInfos: read/display symbol description as long name
+
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
  *     TimeLocalEx()       check scripts/standalone-indicators in tester/offline charts in old/current terminals
