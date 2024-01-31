@@ -49,18 +49,15 @@
  *
  *
  * TODO:
- *  - on EA restart the first recorded bar starts at instance.startEquity
- *  - status file: don't empty inputs Start/StopCondition
+ *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - fix ZigZag errors
  *  - fix tests with bar model MODE_BAROPEN
  *  - input TradingTimeframe
  *  - fix virtual trading
+ *  - add ZigZag projections
  *  - rewrite Test_GetCommission()
  *  - document control scripts
- *
- *  - evaluate whether to
- *     add ZigZag projections
- *     rename *.virtProfit => *.synthProfit
+ *  - evaluate whether to rename *.virtProfit => *.synthProfit
  *
  *  - realtime metric charts
  *     on CreateRawSymbol() also create/update offline profile
@@ -1826,8 +1823,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "TradingMode",                /*string  */ TradingMode);
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "StartConditions",            /*string  */ SaveStatus.ConditionsToStr(sStartConditions)); // contains only active conditions
-   WriteIniString(file, section, "StopConditions",             /*string  */ SaveStatus.ConditionsToStr(sStopConditions));  // contains only active conditions
+   WriteIniString(file, section, "StartConditions",            /*string  */ StartConditions);
+   WriteIniString(file, section, "StopConditions",             /*string  */ StopConditions);
    WriteIniString(file, section, "TakeProfit",                 /*double  */ NumberToStr(TakeProfit, ".+"));
    WriteIniString(file, section, "TakeProfit.Type",            /*string  */ TakeProfit.Type);
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
@@ -1924,34 +1921,6 @@ bool SaveStatus() {
    if (NE(virtProfitP, instance.closedVirtProfitP,  Digits))  return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("SaveStatus(5)"));
-}
-
-
-/**
- * Return a string representation of active start/stop conditions to be stored by SaveStatus().
- *
- * @param  string sConditions - active and inactive conditions
- *
- * @param  string - active conditions
- */
-string SaveStatus.ConditionsToStr(string sConditions) {
-   sConditions = StrTrim(sConditions);
-   if (!StringLen(sConditions) || sConditions=="-") return("");
-
-   string values[], expr="", result="";
-   int size = Explode(sConditions, "|", values, NULL);
-
-   for (int i=0; i < size; i++) {
-      expr = StrTrim(values[i]);
-      if (!StringLen(expr))               continue;            // skip empty conditions
-      if (StringGetChar(expr, 0) == '!')  continue;            // skip disabled conditions
-      if (StrStartsWith(expr, "@profit")) continue;            // skip TP condition          // TODO: integrate input TakeProfit into StopConditions
-      result = StringConcatenate(result, " | ", expr);
-   }
-   if (StringLen(result) > 0) {
-      result = StrRight(result, -3);
-   }
-   return(result);
 }
 
 
@@ -2552,16 +2521,15 @@ bool ValidateInputs() {
    bool instanceWasStarted = (open.ticket || ArrayRange(history, 0));
 
    // Instance.ID
-   if (isInitParameters) {                               // otherwise the id was validated in ValidateInputs.ID()
-      string sValues[], sValue=StrTrim(Instance.ID);
-      if (sValue == "") {                                // the id was deleted or not yet set, re-apply the internal id
+   if (isInitParameters) {                              // otherwise the id was validated in ValidateInputs.ID()
+      if (StrTrim(Instance.ID) == "") {                 // the id was deleted or not yet set, re-apply the internal id
          Instance.ID = prev.Instance.ID;
       }
-      else if (sValue != prev.Instance.ID)               return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
+      else if (Instance.ID != prev.Instance.ID)         return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
    }
 
    // TradingMode: "regular* | virtual"
-   sValue = TradingMode;
+   string sValues[], sValue=TradingMode;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
@@ -2569,88 +2537,103 @@ bool ValidateInputs() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("regular", sValue)) tradingMode = TRADINGMODE_REGULAR;
    else if (StrStartsWith("virtual", sValue)) tradingMode = TRADINGMODE_VIRTUAL;
-   else                                                  return(!onInputError("ValidateInputs(2)  "+ instance.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode)));
+   else                                                 return(!onInputError("ValidateInputs(2)  "+ instance.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode)));
    if (isInitParameters && tradingMode!=prev.tradingMode) {
-      if (instanceWasStarted)                            return(!onInputError("ValidateInputs(3)  "+ instance.name +" cannot change input parameter TradingMode of "+ StatusDescription(instance.status) +" instance"));
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(3)  "+ instance.name +" cannot change input parameter TradingMode of "+ StatusDescription(instance.status) +" instance"));
    }
    TradingMode = tradingModeDescriptions[tradingMode];
 
    // ZigZag.Periods
    if (isInitParameters && ZigZag.Periods!=prev.ZigZag.Periods) {
-      if (instanceWasStarted)                            return(!onInputError("ValidateInputs(4)  "+ instance.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(instance.status) +" instance"));
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(4)  "+ instance.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(instance.status) +" instance"));
    }
-   if (ZigZag.Periods < 2)                               return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
+   if (ZigZag.Periods < 2)                              return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
 
    // Lots
    if (isInitParameters && NE(Lots, prev.Lots)) {
-      if (instanceWasStarted)                            return(!onInputError("ValidateInputs(6)  "+ instance.name +" cannot change input parameter Lots of "+ StatusDescription(instance.status) +" instance"));
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(6)  "+ instance.name +" cannot change input parameter Lots of "+ StatusDescription(instance.status) +" instance"));
    }
-   if (LT(Lots, 0))                                      return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
-   if (NE(Lots, NormalizeLots(Lots)))                    return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
+   if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    // StartConditions: @time(datetime|time)
    if (!isInitParameters || StartConditions!=prev.StartConditions) {
-      start.time.condition = false;                      // on initParameters conditions are re-enabled on change only
+      string exprs[], expr="", key="", descr="";        // split conditions
+      int sizeOfExprs = Explode(StartConditions, "|", exprs, NULL), iValue, time, pt[];
+      datetime dtValue;
+      bool isDaily, containsTimeCondition = false;
 
-      string exprs[], expr="", key="";                   // split conditions
-      int sizeOfExprs = Explode(StartConditions, "|", exprs, NULL), iValue, time, sizeOfElems;
-
-      for (int i=0; i < sizeOfExprs; i++) {              // validate each expression
+      for (int i=0; i < sizeOfExprs; i++) {             // validate each expression
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr))              continue;
-         if (StringGetChar(expr, 0) == '!') continue;    // skip disabled conditions
-         if (StringGetChar(expr, 0) != '@')              return(!onInputError("ValidateInputs(9)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-
-         if (Explode(expr, "(", sValues, NULL) != 2)     return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-         if (!StrEndsWith(sValues[1], ")"))              return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (!StringLen(expr)) continue;
+         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(9)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                         return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
 
          if (key == "@time") {
-            if (start.time.condition)                    return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
-            int pt[];
-            if (!ParseDateTime(sValue, NULL, pt))        return(!onInputError("ValidateInputs(14)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-            datetime dtValue = DateTime2(pt, DATE_OF_ERA);
-            start.time.condition   = true;
-            start.time.value       = dtValue;
-            start.time.isDaily     = !pt[PT_HAS_DATE];
-            start.time.description = "time("+ TimeToStr(start.time.value, ifInt(start.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
+            if (containsTimeCondition)                  return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
+            containsTimeCondition = true;
+
+            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(14)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+            dtValue = DateTime2(pt, DATE_OF_ERA);
+            isDaily = !pt[PT_HAS_DATE];
+            descr   = "time("+ TimeToStr(dtValue, ifInt(isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
+
+            if (descr != start.time.description) {      // enable condition only if changed
+               start.time.condition   = true;
+               start.time.value       = dtValue;
+               start.time.isDaily     = isDaily;
+               start.time.description = descr;
+            }
          }
-         else                                            return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         else                                           return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+      }
+      if (!containsTimeCondition && start.time.condition) {
+         start.time.condition = false;
       }
    }
 
    // StopConditions: @time(datetime|time)
    if (!isInitParameters || StopConditions!=prev.StopConditions) {
-      stop.time.condition = false;                       // on initParameters conditions are re-enabled on change only
       sizeOfExprs = Explode(StopConditions, "|", exprs, NULL);
+      containsTimeCondition = false;
 
-      for (i=0; i < sizeOfExprs; i++) {                  // validate each expression
+      for (i=0; i < sizeOfExprs; i++) {                 // validate each expression
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr))              continue;
-         if (StringGetChar(expr, 0) == '!') continue;    // skip disabled conditions
-         if (StringGetChar(expr, 0) != '@')              return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-
-         if (Explode(expr, "(", sValues, NULL) != 2)     return(!onInputError("ValidateInputs(17)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-         if (!StrEndsWith(sValues[1], ")"))              return(!onInputError("ValidateInputs(18)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StringLen(expr)) continue;
+         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(17)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(18)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                         return(!onInputError("ValidateInputs(19)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(19)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
 
          if (key == "@time") {
-            if (stop.time.condition)                     return(!onInputError("ValidateInputs(20)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            if (!ParseDateTime(sValue, NULL, pt))        return(!onInputError("ValidateInputs(21)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (containsTimeCondition)                  return(!onInputError("ValidateInputs(20)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
+            containsTimeCondition = true;
+
+            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(21)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             dtValue = DateTime2(pt, DATE_OF_ERA);
-            stop.time.condition   = true;
-            stop.time.value       = dtValue;
-            stop.time.isDaily     = !pt[PT_HAS_DATE];
-            stop.time.description = "time("+ TimeToStr(stop.time.value, ifInt(stop.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
+            isDaily = !pt[PT_HAS_DATE];
+            descr   = "time("+ TimeToStr(dtValue, ifInt(isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
+
+            if (descr != stop.time.description) {       // enable condition only if changed
+               stop.time.condition   = true;
+               stop.time.value       = dtValue;
+               stop.time.isDaily     = isDaily;
+               stop.time.description = descr;
+            }
             if (start.time.condition && !start.time.isDaily && !stop.time.isDaily) {
-               if (start.time.value >= stop.time.value)  return(!onInputError("ValidateInputs(22)  "+ instance.name +" invalid times in Start/StopConditions: "+ start.time.description +" / "+ stop.time.description +" (start time must preceed stop time)"));
+               if (start.time.value >= stop.time.value) return(!onInputError("ValidateInputs(22)  "+ instance.name +" invalid times in Start/StopConditions: "+ start.time.description +" / "+ stop.time.description +" (start time must preceed stop time)"));
             }
          }
-         else                                            return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         else                                           return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+      }
+      if (!containsTimeCondition && stop.time.condition) {
+         stop.time.condition = false;
       }
    }
 
@@ -2666,10 +2649,10 @@ bool ValidateInputs() {
    if      (StrStartsWith("off",        sValue)) stop.profitPun.type = NULL;
    else if (StrStartsWith("money",      sValue)) stop.profitPun.type = TP_TYPE_MONEY;
    else if (StrStartsWith("quote-unit", sValue)) stop.profitPun.type = TP_TYPE_PRICEUNIT;
-   else if (StringLen(sValue) < 2)                       return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   else if (StringLen(sValue) < 2)                      return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    else if (StrStartsWith("percent", sValue))    stop.profitPun.type = TP_TYPE_PERCENT;
    else if (StrStartsWith("pip",     sValue))    stop.profitPun.type = TP_TYPE_PIP;
-   else                                                  return(!onInputError("ValidateInputs(25)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   else                                                 return(!onInputError("ValidateInputs(25)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitAbs.condition   = false;
    stop.profitAbs.description = "";
    stop.profitPct.condition   = false;
