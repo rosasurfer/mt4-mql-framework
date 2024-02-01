@@ -49,15 +49,15 @@
  *
  *
  * TODO:
- *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - fix ZigZag errors
  *  - fix tests with bar model MODE_BAROPEN
  *  - input TradingTimeframe
  *  - fix virtual trading
  *  - add ZigZag projections
+ *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - rewrite Test_GetCommission()
- *  - document control scripts
  *  - evaluate whether to rename *.virtProfit => *.synthProfit
+ *  - document control scripts
  *
  *  - realtime metric charts
  *     on CreateRawSymbol() also create/update offline profile
@@ -729,7 +729,7 @@ bool IsZigZagSignal(int &signal) {
  *
  * @param  _In_  int bar            - bar offset
  * @param  _Out_ int &combinedTrend - combined trend value (MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers)
- * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to the previous ZigZag extreme
+ * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to previous ZigZag extreme
  *
  * @return bool - success status
  */
@@ -1230,7 +1230,10 @@ bool StopInstance(int signal) {
    SS.StartStopConditions();
 
    if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !signal, "test ", "") +"instance stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sTotalProfit +" "+ sProfitStats);
+
+   debug("StopInstance(0.1)");
    SaveStatus();
+   debug("StopInstance(0.2)");
 
    // pause/stop the tester according to the debug configuration
    if (__isTesting) {

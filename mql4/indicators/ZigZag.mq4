@@ -63,18 +63,18 @@ int __DeinitFlags[];
 
 extern string ___a__________________________ = "=== ZigZag settings ===";
 extern int    ZigZag.Periods                 = 40;                      // lookback periods of the Donchian channel
-extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (keyboard)
+extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (hotkey)
 extern string ZigZag.Type                    = "Line | Semaphores*";    // a ZigZag line or reversal points (may be shortened)
-extern int    ZigZag.Width                   = 1;
-extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a narrow ring
-extern color  ZigZag.Color                   = Blue;
+extern int    ZigZag.Width                   = 3;
+extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a large point
+extern color  ZigZag.Color                   = DodgerBlue;
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
 extern string Donchian.ShowCrossings         = "off | first* | all";    // which channel crossings to display
 extern int    Donchian.Crossings.Width       = 1;
-extern int    Donchian.Crossings.Wingdings   = 163;                     // a bold ring
-extern color  Donchian.Upper.Color           = DodgerBlue;
+extern int    Donchian.Crossings.Wingdings   = 163;                     // a circle
+extern color  Donchian.Upper.Color           = Blue;
 extern color  Donchian.Lower.Color           = Magenta;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
@@ -112,8 +112,8 @@ extern string Sound.onCrossing.Down          = "Price Decline.wav";
 #define MODE_LOWER_BAND_VISIBLE    ZigZag.MODE_LOWER_BAND      //  3: visible lower channel band segments
 #define MODE_UPPER_CROSS           ZigZag.MODE_UPPER_CROSS     //  4: upper channel crossings
 #define MODE_LOWER_CROSS           ZigZag.MODE_LOWER_CROSS     //  5: lower channel crossings
-#define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  6: bar offset of the current ZigZag reversal from the previous ZigZag extreme
-#define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  7: combined MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers
+#define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  6: bar offset of current ZigZag reversal from previous ZigZag extreme
+#define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  7: combined MODE_KNOWN_TREND (14) + MODE_UNKNOWN_TREND (15) buffers
 #define MODE_UPPER_BAND            8                           //  8: full upper Donchian channel band
 #define MODE_LOWER_BAND            9                           //  9: full lower Donchian channel band
 #define MODE_UPPER_CROSS_ENTRY     10                          // 10: entry points of upper channel crossings

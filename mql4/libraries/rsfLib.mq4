@@ -3699,44 +3699,6 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
 
 
 /**
- * Return the current account number (with and without a trade server connection).
- *
- * @return int - account number or NULL (0) in case of errors
- */
-int GetAccountNumber() {
-   static int testAccount;
-   if (testAccount != 0)
-      return(testAccount);
-
-   int account = AccountNumber();
-
-   if (account == 0x4000) {                                             // im Tester ohne Server-Verbindung
-      if (!__isTesting)           return(!catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR));
-      account = 0;
-   }
-
-   if (!account) {                                                      // Titelzeile des Hauptfensters auswerten
-      string title = GetInternalWindowTextA(GetTerminalMainWindow());
-      if (!StringLen(title))      return(!logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) = \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
-      int pos = StringFind(title, ":");
-      if (pos < 1)                return(!catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR));
-
-      string strValue = StrLeft(title, pos);
-      if (!StrIsDigits(strValue)) return(!catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR));
-
-      account = StrToInteger(strValue);
-   }
-
-   // Im Tester wird die Accountnummer gecacht, um UI-Deadlocks in deinit() caused by GetWindowText() calls zu vermeiden.
-   // Online wird nicht gecacht, da sonst ein Accountwechsel nicht erkannt werden würde.
-   if (__isTesting)
-      testAccount = account;
-   return(account);                                                     // nicht die statische Testervariable zurückgeben (ist online immer 0)
-}
-
-
-/**
  * Gibt den Rechnernamen des laufenden Systems zurück.
  *
  * @return string - Name oder Leerstring, falls ein Fehler auftrat
