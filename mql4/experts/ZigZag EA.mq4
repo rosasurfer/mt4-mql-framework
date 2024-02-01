@@ -1230,10 +1230,7 @@ bool StopInstance(int signal) {
    SS.StartStopConditions();
 
    if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !signal, "test ", "") +"instance stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sTotalProfit +" "+ sProfitStats);
-
-   debug("StopInstance(0.1)");
    SaveStatus();
-   debug("StopInstance(0.2)");
 
    // pause/stop the tester according to the debug configuration
    if (__isTesting) {
@@ -1805,7 +1802,7 @@ bool SaveStatus() {
    else {
       WriteIniString(file, section, "Test.Currency",   AccountCurrency());
       WriteIniString(file, section, "Test.Symbol",     Symbol());
-      WriteIniString(file, section, "Test.Timeframe",  TimeToStr(Tester_GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Tester_GetEndDate()-1*DAY, TIME_DATE));
+      WriteIniString(file, section, "Test.Timeframe",  TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
       WriteIniString(file, section, "Test.Period",     PeriodDescription());
       WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
       WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid) * pMultiplier, pDigits) +" "+ pUnit);

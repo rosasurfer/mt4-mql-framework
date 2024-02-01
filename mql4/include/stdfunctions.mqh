@@ -4527,8 +4527,8 @@ string InitReasonDescription(int reason) {
  * @return int - account number or NULL (0) in case of errors
  */
 int GetAccountNumber() {
-   // In tester the account number is cached, to prevent UI deadlocks caused by GetWindowText() if called in expert::deinit()
-   // (valid only if VisualMode=On; should be obsolete since use of GetInternalWindowText()).
+   // In tester the account number is cached to prevent UI deadlocks in expert::deinit() caused by GetWindowText()
+   // (only if VisualMode=On; should be obsolete since use of GetInternalWindowText()).
    // No cache if online, otherwise account changes wouldn't be recognised.
 
    static int testAccount;
