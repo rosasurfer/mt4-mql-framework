@@ -356,7 +356,7 @@ double icSelf(int iBuffer, int iBar) {
                           CLR_NONE,                               // color  Color.DownTrend
                           "current",                              // string MTF.Timeframe
                           StartDate,                              // string StartDate
-                          MaxBarsBack,                            // int    Max.Bars
+                          MaxBarsBack,                            // int    MaxBarsBack
                           "",                                     // string ________________
                           false,                                  // bool   AutoConfiguration
                           lpSuperContext,                         // int    __lpSuperContext
