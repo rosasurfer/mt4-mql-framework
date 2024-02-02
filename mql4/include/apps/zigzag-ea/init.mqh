@@ -38,7 +38,7 @@ int onInitUser() {
       if (ValidateInputs()) {
          instance.isTest  = __isTesting;
          instance.id      = CreateInstanceId();
-         Instance.ID      = ifString(instance.isTest, "T", "") + instance.id; SS.InstanceName();
+         Instance.ID      = ifString(instance.isTest, "T", "") + StrPadLeft(instance.id, 3, "0"); SS.InstanceName();
          instance.created = GetLocalTime();
          instance.status  = STATUS_WAITING;
          logInfo("onInitUser(2)  instance "+ instance.name +" created");

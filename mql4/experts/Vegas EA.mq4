@@ -1058,7 +1058,7 @@ bool SetInstanceId(string value, bool &error, string caller) {
 
    instance.isTest = isTest;
    instance.id     = iValue;
-   Instance.ID     = ifString(IsTestInstance(), "T", "") + StrPadLeft(""+ instance.id, 3, "0");
+   Instance.ID     = ifString(IsTestInstance(), "T", "") + StrPadLeft(instance.id, 3, "0");
    SS.InstanceName();
    return(true);
 }
@@ -2021,7 +2021,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "V."+ StrPadLeft(""+ instance.id, 3, "0");
+   instance.name = "V."+ StrPadLeft(instance.id, 3, "0");
 }
 
 
