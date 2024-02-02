@@ -548,7 +548,7 @@ bool IsDonchianSignal(int &signal) {
       signal = lastResult;
    }
    else {
-      if (!GetZigZagTrendData(0, trend, reversal)) return(false);
+      if (!GetZigZagData(0, trend, reversal)) return(false);
 
       if (Abs(trend)==reversal || !reversal) {     // reversal=0 denotes a double crossing, trend is +1 or -1
          if (trend > 0) {
@@ -575,7 +575,7 @@ bool IsDonchianSignal(int &signal) {
  *
  * @return bool - success status
  */
-bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
+bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
    combinedTrend = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_TREND,    bar));
    reversal      = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);

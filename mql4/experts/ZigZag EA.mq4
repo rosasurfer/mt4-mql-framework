@@ -700,7 +700,7 @@ bool IsZigZagSignal(int &signal) {
       signal = lastResult;
    }
    else {
-      if (!GetZigZagTrendData(0, trend, reversal)) return(false);
+      if (!GetZigZagData(0, trend, reversal)) return(false);
 
       if (Abs(trend)==reversal || !reversal) {     // reversal=0 denotes a double crossing, trend is +1 or -1
          if (trend > 0) {
@@ -735,7 +735,7 @@ bool IsZigZagSignal(int &signal) {
  *
  * @return bool - success status
  */
-bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
+bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
    combinedTrend = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
    reversal      = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
@@ -751,7 +751,7 @@ bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
  */
 int GetZigZagTrend(int bar) {
    int trend, iNull;
-   if (!GetZigZagTrendData(bar, trend, iNull)) return(NULL);
+   if (!GetZigZagData(bar, trend, iNull)) return(NULL);
    return(trend % 100000);
 }
 
