@@ -710,11 +710,13 @@ bool IsZigZagSignal(int &signal) {
             if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
          }
          if (signal != NULL) {
-            lastSignal = signal;
-
-            if (IsVisualMode()) {                  // pause the tester according to the debug configuration
-               if (test.onReversalPause) Tester.Pause("IsZigZagSignal(1)");
+            if (instance.status == STATUS_PROGRESSING) {
+               if (IsLogNotice()) logNotice("IsZigZagSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             }
+            if (IsVisualMode()) {                  // pause the tester according to the debug configuration
+               if (test.onReversalPause) Tester.Pause("IsZigZagSignal(2)");
+            }
+            lastSignal = signal;
          }
       }
       lastTick   = Ticks;
@@ -922,7 +924,7 @@ bool IsStartSignal(int &signal) {
 
    // ZigZag signal ---------------------------------------------------------------------------------------------------------
    if (IsZigZagSignal(signal)) {
-      logNotice("IsStartSignal(1)  "+ instance.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ instance.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -945,7 +947,7 @@ bool IsStopSignal(int &signal) {
       if (stop.profitAbs.condition) {
          if (instance.totalNetProfit >= stop.profitAbs.value) {
             signal = SIGNAL_TAKEPROFIT;
-            logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitAbs.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitAbs.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -957,7 +959,7 @@ bool IsStopSignal(int &signal) {
 
          if (instance.totalNetProfit >= stop.profitPct.absValue) {
             signal = SIGNAL_TAKEPROFIT;
-            logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPct.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPct.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -966,7 +968,7 @@ bool IsStopSignal(int &signal) {
       if (stop.profitPun.condition) {
          if (instance.totalNetProfitP >= stop.profitPun.value) {
             signal = SIGNAL_TAKEPROFIT;
-            logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -976,7 +978,7 @@ bool IsStopSignal(int &signal) {
    if (stop.time.condition) {
       if (!IsTradingTime()) {
          signal = SIGNAL_TIME;
-         logNotice("IsStopSignal(4)  "+ instance.name +" stop condition \"@"+ stop.time.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ instance.name +" stop condition \"@"+ stop.time.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          return(true);
       }
    }
@@ -1137,6 +1139,7 @@ bool ReverseInstance(int signal) {
    SS.TotalProfit();
    SS.ProfitStats();
 
+   if (IsLogInfo()) logInfo("ReverseInstance(4)  "+ instance.name +" instance reversed ("+ SignalToStr(signal) +")");
    return(SaveStatus());
 }
 
