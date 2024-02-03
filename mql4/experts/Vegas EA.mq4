@@ -500,7 +500,7 @@ bool IsTradeSignal(int &signal) {
       return(true);
    }
 
-   // Donchian signal -------------------------------------------------------------------------------------------------------
+   // ZigZag signal -------------------------------------------------------------------------------------------------------
    if (false) /*&&*/ if (IsZigZagSignal(signal)) {
       if (IsLogNotice()) logNotice("IsTradeSignal(2)  "+ instance.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);

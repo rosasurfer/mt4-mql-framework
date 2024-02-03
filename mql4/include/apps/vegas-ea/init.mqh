@@ -149,7 +149,7 @@ int afterInit() {                                  // open the log file (flushes
 bool CreateStatusBox() {
    if (!__isChart) return(true);
 
-   int x[]={2, 66, 125}, y=50, fontSize=54, sizeofX=ArraySize(x);
+   int x[]={2, 66, 136}, y=50, fontSize=54, sizeofX=ArraySize(x);
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {

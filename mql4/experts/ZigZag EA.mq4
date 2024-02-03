@@ -49,13 +49,18 @@
  *
  *
  * TODO:
+ *  - evaluate whether to rename *.virtProfit => *.synthProfit
  *  - fix tests with bar model MODE_BAROPEN
- *  - input TradingTimeframe
+ *     EveryTick:
+ *     ControlPoints:
+ *     BarOpen:
+ *
  *  - fix virtual trading
  *  - add ZigZag projections
+ *  - input TradingTimeframe
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - rewrite Test_GetCommission()
- *  - evaluate whether to rename *.virtProfit => *.synthProfit
+ *  - rewrite loglevel
  *  - fix ZigZag errors
  *  - document control scripts
  *
