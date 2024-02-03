@@ -541,25 +541,30 @@ bool IsDonchianSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
-   static int lastTick, lastResult, lastSignal;
+   static int lastTick, lastResult, lastSignal, lastSignalBar;
    int trend, reversal;
 
    if (Ticks == lastTick) {
       signal = lastResult;
    }
    else {
-      if (!GetZigZagData(0, trend, reversal)) return(false);
+      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsDonchianSignal(1)  GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
+      int absTrend = Abs(trend);
 
-      if (Abs(trend)==reversal || !reversal) {     // reversal=0 denotes a double crossing, trend is +1 or -1
-         if (trend > 0) {
-            if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
+      // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.
+      if (absTrend==reversal || (!reversal && absTrend==1)) {
+         if (trend > 0) signal = SIGNAL_LONG;
+         else           signal = SIGNAL_SHORT;
+
+         if (Time[0]==lastSignalBar && signal==lastSignal) {
+            signal = NULL;
          }
          else {
-            if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
+            lastSignal = signal;
+            lastSignalBar = Time[0];
          }
-         if (signal != NULL) lastSignal = signal;
       }
-      lastTick   = Ticks;
+      lastTick = Ticks;
       lastResult = signal;
    }
    return(signal != NULL);
@@ -567,18 +572,18 @@ bool IsDonchianSignal(int &signal) {
 
 
 /**
- * Get ZigZag trend data at the specified bar offset.
+ * Get ZigZag data at the specified bar offset.
  *
- * @param  _In_  int bar            - bar offset
- * @param  _Out_ int &combinedTrend - combined trend value (MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers)
- * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to the previous ZigZag semaphore
+ * @param  _In_  int bar       - bar offset
+ * @param  _Out_ int &trend    - combined trend value (buffers MODE_KNOWN_TREND + MODE_UNKNOWN_TREND)
+ * @param  _Out_ int &reversal - bar offset of current ZigZag reversal to previous ZigZag extreme
  *
  * @return bool - success status
  */
-bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
-   combinedTrend = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_TREND,    bar));
-   reversal      = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_REVERSAL, bar));
-   return(combinedTrend != 0);
+bool GetZigZagData(int bar, int &trend, int &reversal) {
+   trend    = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_TREND,    bar));
+   reversal = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_REVERSAL, bar));
+   return(!last_error && trend);
 }
 
 
