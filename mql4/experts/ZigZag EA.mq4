@@ -241,10 +241,10 @@ extern bool   ShowProfitInPercent = true;                   // whether PL is dis
 #define H_LOTS                      2
 #define H_OPENTIME                  3
 #define H_OPENPRICE                 4
-#define H_OPENPRICE_VIRT            5
+#define H_OPENPRICE_SYNTH           5
 #define H_CLOSETIME                 6
 #define H_CLOSEPRICE                7
-#define H_CLOSEPRICE_VIRT           8
+#define H_CLOSEPRICE_SYNTH          8
 #define H_SLIPPAGE                  9
 #define H_SWAP                     10
 #define H_COMMISSION               11
@@ -644,8 +644,8 @@ int ShowTradeHistory() {
       double   closePrice = history[i][H_CLOSEPRICE];
 
       if (status.activeMetric == METRIC_TOTAL_SYNTH_UNITS) {
-         openPrice  = history[i][H_OPENPRICE_VIRT ];
-         closePrice = history[i][H_CLOSEPRICE_VIRT];
+         openPrice  = history[i][H_OPENPRICE_SYNTH ];
+         closePrice = history[i][H_CLOSEPRICE_SYNTH];
       }
       if (!closeTime)                    continue;             // skip open tickets (should not happen)
       if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
@@ -1391,22 +1391,22 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    // add data to history
    int i = ArrayRange(history, 0);
    ArrayResize(history, i+1);
-   history[i][H_TICKET         ] = open.ticket;
-   history[i][H_OPENTYPE       ] = open.type;
-   history[i][H_LOTS           ] = open.lots;
-   history[i][H_OPENTIME       ] = open.time;
-   history[i][H_OPENPRICE      ] = open.price;
-   history[i][H_OPENPRICE_VIRT ] = open.priceVirt;
-   history[i][H_CLOSETIME      ] = closeTime;
-   history[i][H_CLOSEPRICE     ] = closePrice;
-   history[i][H_CLOSEPRICE_VIRT] = closePriceVirt;
-   history[i][H_SLIPPAGE       ] = open.slippage;
-   history[i][H_SWAP           ] = open.swap;
-   history[i][H_COMMISSION     ] = open.commission;
-   history[i][H_GROSSPROFIT    ] = open.grossProfit;
-   history[i][H_NETPROFIT      ] = open.netProfit;
-   history[i][H_NETPROFIT_P    ] = open.netProfitP;
-   history[i][H_VIRTPROFIT_P   ] = open.virtProfitP;
+   history[i][H_TICKET          ] = open.ticket;
+   history[i][H_OPENTYPE        ] = open.type;
+   history[i][H_LOTS            ] = open.lots;
+   history[i][H_OPENTIME        ] = open.time;
+   history[i][H_OPENPRICE       ] = open.price;
+   history[i][H_OPENPRICE_SYNTH ] = open.priceVirt;
+   history[i][H_CLOSETIME       ] = closeTime;
+   history[i][H_CLOSEPRICE      ] = closePrice;
+   history[i][H_CLOSEPRICE_SYNTH] = closePriceVirt;
+   history[i][H_SLIPPAGE        ] = open.slippage;
+   history[i][H_SWAP            ] = open.swap;
+   history[i][H_COMMISSION      ] = open.commission;
+   history[i][H_GROSSPROFIT     ] = open.grossProfit;
+   history[i][H_NETPROFIT       ] = open.netProfit;
+   history[i][H_NETPROFIT_P     ] = open.netProfitP;
+   history[i][H_VIRTPROFIT_P    ] = open.virtProfitP;
 
    // update PL numbers
    instance.openNetProfit   = 0;
@@ -1949,22 +1949,22 @@ bool SaveStatus() {
 string SaveStatus.HistoryToStr(int index) {
    // result: ticket,openType,lots,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,netProfit,netProfiP,virtProfitP
 
-   int      ticket         = history[index][H_TICKET         ];
-   int      openType       = history[index][H_OPENTYPE       ];
-   double   lots           = history[index][H_LOTS           ];
-   datetime openTime       = history[index][H_OPENTIME       ];
-   double   openPrice      = history[index][H_OPENPRICE      ];
-   double   openPriceVirt  = history[index][H_OPENPRICE_VIRT ];
-   datetime closeTime      = history[index][H_CLOSETIME      ];
-   double   closePrice     = history[index][H_CLOSEPRICE     ];
-   double   closePriceVirt = history[index][H_CLOSEPRICE_VIRT];
-   double   slippage       = history[index][H_SLIPPAGE       ];
-   double   swap           = history[index][H_SWAP           ];
-   double   commission     = history[index][H_COMMISSION     ];
-   double   grossProfit    = history[index][H_GROSSPROFIT    ];
-   double   netProfit      = history[index][H_NETPROFIT      ];
-   double   netProfitP     = history[index][H_NETPROFIT_P    ];
-   double   virtProfitP    = history[index][H_VIRTPROFIT_P   ];
+   int      ticket         = history[index][H_TICKET          ];
+   int      openType       = history[index][H_OPENTYPE        ];
+   double   lots           = history[index][H_LOTS            ];
+   datetime openTime       = history[index][H_OPENTIME        ];
+   double   openPrice      = history[index][H_OPENPRICE       ];
+   double   openPriceVirt  = history[index][H_OPENPRICE_SYNTH ];
+   datetime closeTime      = history[index][H_CLOSETIME       ];
+   double   closePrice     = history[index][H_CLOSEPRICE      ];
+   double   closePriceVirt = history[index][H_CLOSEPRICE_SYNTH];
+   double   slippage       = history[index][H_SLIPPAGE        ];
+   double   swap           = history[index][H_SWAP            ];
+   double   commission     = history[index][H_COMMISSION      ];
+   double   grossProfit    = history[index][H_GROSSPROFIT     ];
+   double   netProfit      = history[index][H_NETPROFIT       ];
+   double   netProfitP     = history[index][H_NETPROFIT_P     ];
+   double   virtProfitP    = history[index][H_VIRTPROFIT_P    ];
 
    return(StringConcatenate(ticket, ",", openType, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceVirt, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceVirt, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(virtProfitP, Digits)));
 }
@@ -2174,22 +2174,22 @@ int ReadStatus.RestoreHistory(string key, string value) {
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(_EMPTY(catch("ReadStatus.RestoreHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.RestoreHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT)));
 
-   int      ticket         = StrToInteger(values[H_TICKET         ]);
-   int      openType       = StrToInteger(values[H_OPENTYPE       ]);
-   double   lots           =  StrToDouble(values[H_LOTS           ]);
-   datetime openTime       = StrToInteger(values[H_OPENTIME       ]);
-   double   openPrice      =  StrToDouble(values[H_OPENPRICE      ]);
-   double   openPriceVirt  =  StrToDouble(values[H_OPENPRICE_VIRT ]);
-   datetime closeTime      = StrToInteger(values[H_CLOSETIME      ]);
-   double   closePrice     =  StrToDouble(values[H_CLOSEPRICE     ]);
-   double   closePriceVirt =  StrToDouble(values[H_CLOSEPRICE_VIRT]);
-   double   slippage       =  StrToDouble(values[H_SLIPPAGE       ]);
-   double   swap           =  StrToDouble(values[H_SWAP           ]);
-   double   commission     =  StrToDouble(values[H_COMMISSION     ]);
-   double   grossProfit    =  StrToDouble(values[H_GROSSPROFIT    ]);
-   double   netProfit      =  StrToDouble(values[H_NETPROFIT      ]);
-   double   netProfitP     =  StrToDouble(values[H_NETPROFIT_P    ]);
-   double   virtProfitP    =  StrToDouble(values[H_VIRTPROFIT_P   ]);
+   int      ticket         = StrToInteger(values[H_TICKET          ]);
+   int      openType       = StrToInteger(values[H_OPENTYPE        ]);
+   double   lots           =  StrToDouble(values[H_LOTS            ]);
+   datetime openTime       = StrToInteger(values[H_OPENTIME        ]);
+   double   openPrice      =  StrToDouble(values[H_OPENPRICE       ]);
+   double   openPriceVirt  =  StrToDouble(values[H_OPENPRICE_SYNTH ]);
+   datetime closeTime      = StrToInteger(values[H_CLOSETIME       ]);
+   double   closePrice     =  StrToDouble(values[H_CLOSEPRICE      ]);
+   double   closePriceVirt =  StrToDouble(values[H_CLOSEPRICE_SYNTH]);
+   double   slippage       =  StrToDouble(values[H_SLIPPAGE        ]);
+   double   swap           =  StrToDouble(values[H_SWAP            ]);
+   double   commission     =  StrToDouble(values[H_COMMISSION      ]);
+   double   grossProfit    =  StrToDouble(values[H_GROSSPROFIT     ]);
+   double   netProfit      =  StrToDouble(values[H_NETPROFIT       ]);
+   double   netProfitP     =  StrToDouble(values[H_NETPROFIT_P     ]);
+   double   virtProfitP    =  StrToDouble(values[H_VIRTPROFIT_P    ]);
 
    return(History.AddRecord(ticket, openType, lots, openTime, openPrice, openPriceVirt, closeTime, closePrice, closePriceVirt, slippage, swap, commission, grossProfit, netProfit, netProfitP, virtProfitP));
 }
@@ -2224,22 +2224,22 @@ int History.AddRecord(int ticket, int openType, double lots, datetime openTime, 
    }
 
    // insert the new data
-   history[i][H_TICKET         ] = ticket;
-   history[i][H_OPENTYPE       ] = openType;
-   history[i][H_LOTS           ] = lots;
-   history[i][H_OPENTIME       ] = openTime;
-   history[i][H_OPENPRICE      ] = openPrice;
-   history[i][H_OPENPRICE_VIRT ] = openPriceVirt;
-   history[i][H_CLOSETIME      ] = closeTime;
-   history[i][H_CLOSEPRICE     ] = closePrice;
-   history[i][H_CLOSEPRICE_VIRT] = closePriceVirt;
-   history[i][H_SLIPPAGE       ] = slippage;
-   history[i][H_SWAP           ] = swap;
-   history[i][H_COMMISSION     ] = commission;
-   history[i][H_GROSSPROFIT    ] = grossProfit;
-   history[i][H_NETPROFIT      ] = netProfit;
-   history[i][H_NETPROFIT_P    ] = netProfitP;
-   history[i][H_VIRTPROFIT_P   ] = virtProfitP;
+   history[i][H_TICKET          ] = ticket;
+   history[i][H_OPENTYPE        ] = openType;
+   history[i][H_LOTS            ] = lots;
+   history[i][H_OPENTIME        ] = openTime;
+   history[i][H_OPENPRICE       ] = openPrice;
+   history[i][H_OPENPRICE_SYNTH ] = openPriceVirt;
+   history[i][H_CLOSETIME       ] = closeTime;
+   history[i][H_CLOSEPRICE      ] = closePrice;
+   history[i][H_CLOSEPRICE_SYNTH] = closePriceVirt;
+   history[i][H_SLIPPAGE        ] = slippage;
+   history[i][H_SWAP            ] = swap;
+   history[i][H_COMMISSION      ] = commission;
+   history[i][H_GROSSPROFIT     ] = grossProfit;
+   history[i][H_NETPROFIT       ] = netProfit;
+   history[i][H_NETPROFIT_P     ] = netProfitP;
+   history[i][H_VIRTPROFIT_P    ] = virtProfitP;
 
    if (!catch("History.AddRecord(2)"))
       return(i);
