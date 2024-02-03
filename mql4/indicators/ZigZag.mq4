@@ -164,7 +164,6 @@ double   combinedTrend   [];                                   // combined known
 
 int      zigzagDrawType;
 int      crossingDrawType;
-double   tickSize;
 datetime lastTick;
 int      lastSound;
 datetime waitUntil;
@@ -495,7 +494,6 @@ int onTick() {
  * @return int - error status
  */
 int onAccountChange(int previous, int current) {
-   tickSize      = 0;
    lastTick      = 0;         // reset global non-input vars used by the various event handlers
    lastSound     = 0;
    waitUntil     = 0;
@@ -646,8 +644,7 @@ void UpdateLegend() {
    if (!ValidBars || combinedTrend[0]!=lastTrend || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
       string sKnown    = "   "+ NumberToStr(knownTrend[0], "+.");
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
-      if (!tickSize) tickSize = GetTickSize();
-      string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
+      string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
       string sSignal   = ifString(Signal.onReversal, "  "+ legendInfo, "");
       string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal);
 
@@ -666,26 +663,6 @@ void UpdateLegend() {
       lastTime    = Time[0];
       lastAccount = AccountNumber();
    }
-}
-
-
-/**
- * Resolve the current ticksize.
- *
- * @return double - ticksize value or NULL (0) in case of errors
- */
-double GetTickSize() {
-   double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);      // fails if there is no tick yet, e.g.
-                                                               // - symbol not yet subscribed (on start or account/template change), it shows up later
-   int error = GetLastError();                                 // - synthetic symbol in offline chart
-   if (IsError(error)) {
-      if (error == ERR_SYMBOL_NOT_AVAILABLE)
-         return(!logInfo("GetTickSize(1)  MarketInfo(MODE_TICKSIZE)", error));
-      return(!catch("GetTickSize(2)", error));
-   }
-   if (!tickSize) logInfo("GetTickSize(3)  MarketInfo(MODE_TICKSIZE=0)");
-
-   return(tickSize);
 }
 
 

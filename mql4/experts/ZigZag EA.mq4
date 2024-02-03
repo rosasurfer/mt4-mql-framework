@@ -55,7 +55,6 @@
  *     BarOpen:
  *
  *  - fix ZigZag errors
- *     drop obsolete var tickSize
  *
  *  - fix virtual trading
  *  - add ZigZag projections
