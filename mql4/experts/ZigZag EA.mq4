@@ -711,7 +711,7 @@ bool IsZigZagSignal(int &signal) {
    else {
       // TODO: error on triple-crossing at bar 0 or 1
       //  - extension down, then reversal up, then reversal down           e.g. ZigZag(20), GBPJPY,M5 2023.12.18 00:00
-      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
+      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
       int absTrend = Abs(trend);
 
       // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.
@@ -955,7 +955,7 @@ bool IsStopSignal(int &signal) {
    if (last_error || (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING)) return(false);
 
    if (instance.status == STATUS_PROGRESSING) {
-      // stop.profitAbs: ----------------------------------------------------------------------------------------------------
+      // stop.profitAbs -----------------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (instance.totalNetProfit >= stop.profitAbs.value) {
             signal = SIGNAL_TAKEPROFIT;
@@ -964,7 +964,7 @@ bool IsStopSignal(int &signal) {
          }
       }
 
-      // stop.profitPct: ----------------------------------------------------------------------------------------------------
+      // stop.profitPct -----------------------------------------------------------------------------------------------------
       if (stop.profitPct.condition) {
          if (stop.profitPct.absValue == INT_MAX)
             stop.profitPct.absValue = stop.profitPct.AbsValue();
@@ -976,7 +976,7 @@ bool IsStopSignal(int &signal) {
          }
       }
 
-      // stop.profitPun: ----------------------------------------------------------------------------------------------------
+      // stop.profitPun -----------------------------------------------------------------------------------------------------
       if (stop.profitPun.condition) {
          if (instance.totalNetProfitP >= stop.profitPun.value) {
             signal = SIGNAL_TAKEPROFIT;
@@ -986,7 +986,7 @@ bool IsStopSignal(int &signal) {
       }
    }
 
-   // stop.time: ------------------------------------------------------------------------------------------------------------
+   // stop.time -------------------------------------------------------------------------------------------------------------
    if (stop.time.condition) {
       if (!IsTradingTime()) {
          signal = SIGNAL_TIME;

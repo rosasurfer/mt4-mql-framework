@@ -496,13 +496,11 @@ bool IsTradeSignal(int &signal) {
 
    // MA Tunnel signal ------------------------------------------------------------------------------------------------------
    if (IsMaTunnelSignal(signal)) {
-      if (IsLogNotice()) logNotice("IsTradeSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
 
-   // ZigZag signal -------------------------------------------------------------------------------------------------------
+   // ZigZag signal ---------------------------------------------------------------------------------------------------------
    if (false) /*&&*/ if (IsZigZagSignal(signal)) {
-      if (IsLogNotice()) logNotice("IsTradeSignal(2)  "+ instance.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -520,11 +518,23 @@ bool IsMaTunnelSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
-   if (IsBarOpen()) {
-      int trend = icMaTunnel(NULL, Tunnel.Definition, MaTunnel.MODE_BAR_TREND, 1);
+   static int lastTick, lastResult;
 
-      if      (trend == +1) signal = SIGNAL_LONG;
-      else if (trend == -1) signal = SIGNAL_SHORT;
+   if (Ticks == lastTick) {
+      signal = lastResult;
+   }
+   else {
+      if (IsBarOpen()) {
+         int trend = icMaTunnel(NULL, Tunnel.Definition, MaTunnel.MODE_BAR_TREND, 1);
+         if      (trend == +1) signal = SIGNAL_LONG;
+         else if (trend == -1) signal = SIGNAL_SHORT;
+
+         if (signal != NULL) {
+            if (IsLogNotice()) logNotice("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         }
+      }
+      lastTick = Ticks;
+      lastResult = signal;
    }
    return(signal != NULL);
 }
@@ -550,7 +560,7 @@ bool IsZigZagSignal(int &signal) {
    else {
       // TODO: error on triple-crossing at bar 0 or 1
       //  - extension down, then reversal up, then reversal down           e.g. ZigZag(20), GBPJPY,M5 2023.12.18 00:00
-      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
+      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
       int absTrend = Abs(trend);
 
       // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.
@@ -562,6 +572,7 @@ bool IsZigZagSignal(int &signal) {
             signal = NULL;
          }
          else {
+            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             lastSignal = signal;
             lastSignalBar = Time[0];
          }
