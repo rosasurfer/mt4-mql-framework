@@ -274,14 +274,14 @@ bool     instance.isTest;                       // whether the instance is a tes
 int      instance.status;
 double   instance.startEquity;
 
-double   instance.openNetProfit;                // PnL after all costs in money (net)
+double   instance.openNetProfit;                // real PnL after all costs in money (net)
 double   instance.closedNetProfit;
 double   instance.totalNetProfit;
 double   instance.maxNetProfit;                 // max. observed profit:   0...+n
 double   instance.maxNetDrawdown;               // max. observed drawdown: -n...0
 double   instance.avgNetProfit = EMPTY_VALUE;
 
-double   instance.openNetProfitP;               // PnL after all costs in point (net)
+double   instance.openNetProfitP;               // real PnL after all costs in point (net)
 double   instance.closedNetProfitP;
 double   instance.totalNetProfitP;
 double   instance.maxNetProfitP;
