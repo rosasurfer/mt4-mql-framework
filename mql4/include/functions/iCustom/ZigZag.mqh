@@ -34,7 +34,7 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
 
                           "",                         // string ____________________________
                           false,                      // bool   Donchian.ShowChannel
-                          "off",                      // string Donchian.ShowCrossings
+                          "all",                      // string Donchian.ShowCrossings
                           1,                          // int    Donchian.Crossings.Width
                           161,                        // int    Donchian.Crossings.Wingdings
                           CLR_NONE,                   // color  Donchian.Upper.Color

@@ -560,7 +560,7 @@ bool IsZigZagSignal(int &signal) {
    else {
       // TODO: error on triple-crossing at bar 0 or 1
       //  - extension down, then reversal up, then reversal down           e.g. ZigZag(20), GBPJPY,M5 2023.12.18 00:00
-      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
+      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData(0) => FALSE", ERR_RUNTIME_ERROR));
       int absTrend = Abs(trend);
 
       // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.

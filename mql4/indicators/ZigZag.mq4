@@ -23,7 +23,7 @@
  *  • ZigZag.Semaphores.Wingdings:  WingDing symbol used for ZigZag semaphores.
  *  • ZigZag.Color:                 Color of ZigZag lines/semaphores.
  *
- *  • Donchian.ShowChannel:         Whether to display the internally used Donchian channel.
+ *  • Donchian.ShowChannel:         Whether to display the calculated Donchian channel.
  *  • Donchian.ShowCrossings:       Controls displayed Donchian channel crossings, one of:
  *                                   "off":   No crossings are displayed.
  *                                   "first": Only the first crossing per direction is displayed (the moment when ZigZag creates a new leg).
@@ -37,15 +37,15 @@
  *
  *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
  *  • Signal.onReversal.Sound:      Whether to signal ZigZag reversals by sound.
- *  • Signal.onReversal.SoundUp:    Sound file used for signaling ZigZag reversals to the upside.
- *  • Signal.onReversal.SoundDown:  Sound file used for signaling ZigZag reversals to the downside.
+ *  • Signal.onReversal.SoundUp:    Sound file to signal ZigZag reversals to the upside.
+ *  • Signal.onReversal.SoundDown:  Sound file to signal ZigZag reversals to the downside.
  *  • Signal.onReversal.Popup:      Whether to signal ZigZag reversals by popup (MetaTrader alert dialog).
  *  • Signal.onReversal.Mail:       Whether to signal ZigZag reversals by e-mail.
  *  • Signal.onReversal.SMS:        Whether to signal ZigZag reversals by text message.
  *
  *  • Sound.onCrossing:             Whether to signal Donchian channel crossings (channel widenings).
- *  • Sound.onCrossing.Up:          Sound file used for signaling a Donchian channel widening to the upside.
- *  • Sound.onCrossing.Down:        Sound file used for signaling a Donchian channel widening to the downside.
+ *  • Sound.onCrossing.Up:          Sound file to signal a Donchian channel widening to the upside.
+ *  • Sound.onCrossing.Down:        Sound file to signal a Donchian channel widening to the downside.
  *
  *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom framework config values.
  *
@@ -109,25 +109,23 @@ extern string Sound.onCrossing.Down          = "Price Decline.wav";
 // indicator buffer ids
 #define MODE_SEMAPHORE_OPEN        ZigZag.MODE_SEMAPHORE_OPEN  //  0: semaphore open price
 #define MODE_SEMAPHORE_CLOSE       ZigZag.MODE_SEMAPHORE_CLOSE //  1: semaphore close price
-#define MODE_UPPER_BAND_VISIBLE    ZigZag.MODE_UPPER_BAND      //  2: visible upper channel band segments
-#define MODE_LOWER_BAND_VISIBLE    ZigZag.MODE_LOWER_BAND      //  3: visible lower channel band segments
+#define MODE_UPPER_BAND            ZigZag.MODE_UPPER_BAND      //  2: upper channel band
+#define MODE_LOWER_BAND            ZigZag.MODE_LOWER_BAND      //  3: lower channel band
 #define MODE_UPPER_CROSS           ZigZag.MODE_UPPER_CROSS     //  4: upper channel crossings
 #define MODE_LOWER_CROSS           ZigZag.MODE_LOWER_CROSS     //  5: lower channel crossings
 #define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  6: bar offset of current ZigZag reversal from previous ZigZag extreme
 #define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  7: combined MODE_KNOWN_TREND (14) + MODE_UNKNOWN_TREND (15) buffers
-#define MODE_UPPER_BAND            8                           //  8: full upper Donchian channel band
-#define MODE_LOWER_BAND            9                           //  9: full lower Donchian channel band
-#define MODE_UPPER_CROSS_ENTRY     10                          // 10: entry points of upper channel crossings
-#define MODE_UPPER_CROSS_EXIT      11                          // 11: exit points of upper channel crossings
-#define MODE_LOWER_CROSS_ENTRY     12                          // 12: entry points of lower channel crossings
-#define MODE_LOWER_CROSS_EXIT      13                          // 13: exit points of lower channel crossings
-#define MODE_KNOWN_TREND           14                          // 14: known trend
-#define MODE_UNKNOWN_TREND         15                          // 15: not yet known trend
+#define MODE_UPPER_CROSS_ENTRY     8                           //  8: entry points of upper channel crossings
+#define MODE_UPPER_CROSS_EXIT      9                           //  9: exit points of upper channel crossings
+#define MODE_LOWER_CROSS_ENTRY     10                          // 10: entry points of lower channel crossings
+#define MODE_LOWER_CROSS_EXIT      11                          // 11: exit points of lower channel crossings
+#define MODE_KNOWN_TREND           12                          // 12: known trend
+#define MODE_UNKNOWN_TREND         13                          // 13: not yet known trend
 
 #property indicator_chart_window
 #property indicator_buffers   8                                // visible buffers
 int       terminal_buffers  = 8;                               // buffers managed by the terminal
-int       framework_buffers = 8;                               // buffers managed by the framework
+int       framework_buffers = 6;                               // buffers managed by the framework
 
 #property indicator_color1    Blue                             // the ZigZag line is built from two buffers using the color of the first buffer
 #property indicator_width1    1
@@ -148,10 +146,8 @@ int       framework_buffers = 8;                               // buffers manage
 
 double   semaphoreOpen   [];                                   // ZigZag semaphores (open prices of a vertical line segment)
 double   semaphoreClose  [];                                   // ZigZag semaphores (close prices of a vertical line segment)
-double   upperBand       [];                                   // full upper channel band
-double   lowerBand       [];                                   // full lower channel band
-double   upperBandVisible[];                                   // visible upper channel band segments
-double   lowerBandVisible[];                                   // visible lower channel band segments
+double   upperBand       [];                                   // upper channel band
+double   lowerBand       [];                                   // lower channel band
 double   upperCross      [];                                   // upper channel crossings (entry or exit points)
 double   upperCrossEntry [];                                   // entry points of upper channel crossings
 double   upperCrossExit  [];                                   // exit points of upper channel crossings
@@ -324,8 +320,6 @@ int onTick() {
    if (__isChart && ZigZag.Periods.Step) HandleCommands("ParameterStepper", false);
 
    // framework: manage additional buffers
-   ManageDoubleIndicatorBuffer(MODE_UPPER_BAND,        upperBand      );
-   ManageDoubleIndicatorBuffer(MODE_LOWER_BAND,        lowerBand      );
    ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_ENTRY, upperCrossEntry);
    ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_EXIT,  upperCrossExit );
    ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_ENTRY, lowerCrossEntry);
@@ -335,43 +329,39 @@ int onTick() {
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(semaphoreOpen,    0);
-      ArrayInitialize(semaphoreClose,   0);
-      ArrayInitialize(upperBand,        0);
-      ArrayInitialize(lowerBand,        0);
-      ArrayInitialize(upperBandVisible, 0);
-      ArrayInitialize(lowerBandVisible, 0);
-      ArrayInitialize(upperCross,       0);
-      ArrayInitialize(upperCrossEntry,  0);
-      ArrayInitialize(upperCrossExit,   0);
-      ArrayInitialize(lowerCross,       0);
-      ArrayInitialize(lowerCrossEntry,  0);
-      ArrayInitialize(lowerCrossExit,   0);
-      ArrayInitialize(reversal,        -1);
-      ArrayInitialize(knownTrend,       0);
-      ArrayInitialize(unknownTrend,     0);
-      ArrayInitialize(combinedTrend,    0);
+      ArrayInitialize(semaphoreOpen,   0);
+      ArrayInitialize(semaphoreClose,  0);
+      ArrayInitialize(upperBand,       0);
+      ArrayInitialize(lowerBand,       0);
+      ArrayInitialize(upperCross,      0);
+      ArrayInitialize(upperCrossEntry, 0);
+      ArrayInitialize(upperCrossExit,  0);
+      ArrayInitialize(lowerCross,      0);
+      ArrayInitialize(lowerCrossEntry, 0);
+      ArrayInitialize(lowerCrossExit,  0);
+      ArrayInitialize(reversal,       -1);
+      ArrayInitialize(knownTrend,      0);
+      ArrayInitialize(unknownTrend,    0);
+      ArrayInitialize(combinedTrend,   0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(semaphoreOpen,    Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(semaphoreClose,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperBand,        Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerBand,        Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperBandVisible, Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerBandVisible, Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCross,       Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCrossEntry,  Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCrossExit,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCross,       Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCrossEntry,  Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCrossExit,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(reversal,         Bars, ShiftedBars, -1);
-      ShiftIntIndicatorBuffer   (knownTrend,       Bars, ShiftedBars,  0);
-      ShiftIntIndicatorBuffer   (unknownTrend,     Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(combinedTrend,    Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(semaphoreOpen,   Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(semaphoreClose,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperBand,       Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerBand,       Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperCross,      Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperCrossEntry, Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperCrossExit,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerCross,      Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerCrossEntry, Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerCrossExit,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(reversal,        Bars, ShiftedBars, -1);
+      ShiftIntIndicatorBuffer   (knownTrend,      Bars, ShiftedBars,  0);
+      ShiftIntIndicatorBuffer   (unknownTrend,    Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(combinedTrend,   Bars, ShiftedBars,  0);
    }
 
    // check data pumping on every tick so the reversal handler can skip errornous signals
@@ -383,22 +373,20 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      semaphoreOpen   [bar] =  0;
-      semaphoreClose  [bar] =  0;
-      upperBand       [bar] =  0;
-      lowerBand       [bar] =  0;
-      upperBandVisible[bar] =  0;
-      lowerBandVisible[bar] =  0;
-      upperCross      [bar] =  0;
-      upperCrossEntry [bar] =  0;
-      upperCrossExit  [bar] =  0;
-      lowerCross      [bar] =  0;
-      lowerCrossEntry [bar] =  0;
-      lowerCrossExit  [bar] =  0;
-      knownTrend      [bar] =  0;
-      unknownTrend    [bar] =  0;
-      combinedTrend   [bar] =  0;
-      reversal        [bar] = -1;
+      semaphoreOpen  [bar] =  0;
+      semaphoreClose [bar] =  0;
+      upperBand      [bar] =  0;
+      lowerBand      [bar] =  0;
+      upperCross     [bar] =  0;
+      upperCrossEntry[bar] =  0;
+      upperCrossExit [bar] =  0;
+      lowerCross     [bar] =  0;
+      lowerCrossEntry[bar] =  0;
+      lowerCrossExit [bar] =  0;
+      knownTrend     [bar] =  0;
+      unknownTrend   [bar] =  0;
+      combinedTrend  [bar] =  0;
+      reversal       [bar] = -1;
 
       // recalculate Donchian channel
       if (bar > 0) {
@@ -464,12 +452,6 @@ int onTick() {
       // if a single band crossing
       else if (upperCrossExit[bar] != 0) ProcessUpperCross(bar);
       else                               ProcessLowerCross(bar);
-
-      // populate visible channel buffers
-      if (Donchian.ShowChannel) {
-         upperBandVisible[bar] = upperBand[bar];
-         lowerBandVisible[bar] = lowerBand[bar];
-      }
 
       // populate visible crossing buffers
       if (crossingDrawType == MODE_ALL_CROSSINGS) {
@@ -899,14 +881,14 @@ void SetIndicatorOptions() {
    IndicatorShortName(shortName);
 
    IndicatorBuffers(terminal_buffers);
-   SetIndexBuffer(MODE_SEMAPHORE_OPEN,     semaphoreOpen   ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,     0); SetIndexLabel(MODE_SEMAPHORE_OPEN,     NULL);
-   SetIndexBuffer(MODE_SEMAPHORE_CLOSE,    semaphoreClose  ); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE,    0); SetIndexLabel(MODE_SEMAPHORE_CLOSE,    NULL);
-   SetIndexBuffer(MODE_UPPER_BAND_VISIBLE, upperBandVisible); SetIndexEmptyValue(MODE_UPPER_BAND_VISIBLE, 0); SetIndexLabel(MODE_UPPER_BAND_VISIBLE, shortName +" upper band");
-   SetIndexBuffer(MODE_LOWER_BAND_VISIBLE, lowerBandVisible); SetIndexEmptyValue(MODE_LOWER_BAND_VISIBLE, 0); SetIndexLabel(MODE_LOWER_BAND_VISIBLE, shortName +" lower band");
-   SetIndexBuffer(MODE_UPPER_CROSS,        upperCross      ); SetIndexEmptyValue(MODE_UPPER_CROSS,        0); SetIndexLabel(MODE_UPPER_CROSS,        shortName +" cross up");
-   SetIndexBuffer(MODE_LOWER_CROSS,        lowerCross      ); SetIndexEmptyValue(MODE_LOWER_CROSS,        0); SetIndexLabel(MODE_LOWER_CROSS,        shortName +" cross down");
-   SetIndexBuffer(MODE_REVERSAL,           reversal        ); SetIndexEmptyValue(MODE_REVERSAL,          -1); SetIndexLabel(MODE_REVERSAL,           shortName +" reversal bar");
-   SetIndexBuffer(MODE_COMBINED_TREND,     combinedTrend   ); SetIndexEmptyValue(MODE_COMBINED_TREND,     0); SetIndexLabel(MODE_COMBINED_TREND,     shortName +" trend");
+   SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,  0); SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
+   SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE, 0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      shortName +" upper band"); if (!Donchian.ShowChannel) SetIndexLabel(MODE_UPPER_BAND, NULL);
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      shortName +" lower band"); if (!Donchian.ShowChannel) SetIndexLabel(MODE_LOWER_BAND, NULL);
+   SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,     0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" cross up");
+   SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,     0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" cross down");
+   SetIndexBuffer(MODE_REVERSAL,        reversal      ); SetIndexEmptyValue(MODE_REVERSAL,       -1); SetIndexLabel(MODE_REVERSAL,        shortName +" reversal bar");
+   SetIndexBuffer(MODE_COMBINED_TREND,  combinedTrend ); SetIndexEmptyValue(MODE_COMBINED_TREND,  0); SetIndexLabel(MODE_COMBINED_TREND,  shortName +" trend");
    IndicatorDigits(Digits);
 
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
@@ -915,8 +897,8 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SEMAPHORE_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_CLOSE, ZigZag.Semaphores.Wingdings);
 
    drawType = ifInt(Donchian.ShowChannel, DRAW_LINE, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.Upper.Color);
-   SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.Lower.Color);
+   SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, Donchian.Upper.Color);
+   SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, Donchian.Lower.Color);
 
    drawType  = ifInt(crossingDrawType && Donchian.Crossings.Width, DRAW_ARROW, DRAW_NONE);
    drawWidth = Donchian.Crossings.Width-1;                     // minus 1 to use the same scale as ZigZag.Semaphore.Width
