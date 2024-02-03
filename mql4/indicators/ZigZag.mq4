@@ -458,9 +458,13 @@ int onTick() {
          lowerCross[bar] = lowerCrossEntry[bar];
       }
       else if (crossingDrawType == MODE_FIRST_CROSSING) {
-         if (reversal[bar] == Abs(knownTrend[bar])) {
+         if (Abs(knownTrend[bar]) == reversal[bar]) {
             upperCross[bar] = upperCrossEntry[bar];
             lowerCross[bar] = lowerCrossEntry[bar];
+         }
+         else if (!reversal[bar]) {
+            if      (knownTrend[bar] == +1) upperCross[bar] = upperCrossEntry[bar];
+            else if (knownTrend[bar] == -1) lowerCross[bar] = lowerCrossEntry[bar];
          }
       }
    }
