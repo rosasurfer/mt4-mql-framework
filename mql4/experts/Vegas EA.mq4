@@ -501,8 +501,8 @@ bool IsTradeSignal(int &signal) {
    }
 
    // Donchian signal -------------------------------------------------------------------------------------------------------
-   if (false) /*&&*/ if (IsDonchianSignal(signal)) {
-      if (IsLogNotice()) logNotice("IsTradeSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   if (false) /*&&*/ if (IsZigZagSignal(signal)) {
+      if (IsLogNotice()) logNotice("IsTradeSignal(2)  "+ instance.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -531,13 +531,13 @@ bool IsMaTunnelSignal(int &signal) {
 
 
 /**
- * Whether a new Donchian channel reversal occurred.
+ * Whether a new ZigZag reversal occurred.
  *
  * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
  *
  * @return bool
  */
-bool IsDonchianSignal(int &signal) {
+bool IsZigZagSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
@@ -548,7 +548,9 @@ bool IsDonchianSignal(int &signal) {
       signal = lastResult;
    }
    else {
-      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsDonchianSignal(1)  GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
+      // TODO: error on triple-crossing at bar 0 or 1
+      //  - extension down, then reversal up, then reversal down           e.g. ZigZag(20), GBPJPY,M5 2023.12.18 00:00
+      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
       int absTrend = Abs(trend);
 
       // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.
@@ -2210,8 +2212,4 @@ string InputsToStr() {
                             "Donchian.Periods=",  Donchian.Periods,                  ";", NL,
                             "Lots=",              NumberToStr(Lots, ".1+"),          ";")
    );
-
-   // suppress compiler warnings
-   int signal;
-   IsDonchianSignal(signal);
 }

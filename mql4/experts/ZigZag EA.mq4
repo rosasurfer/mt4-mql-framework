@@ -49,7 +49,6 @@
  *
  *
  * TODO:
- *  - fix ZigZag errors
  *  - fix tests with bar model MODE_BAROPEN
  *  - input TradingTimeframe
  *  - fix virtual trading
@@ -57,12 +56,18 @@
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - rewrite Test_GetCommission()
  *  - evaluate whether to rename *.virtProfit => *.synthProfit
+ *  - fix ZigZag errors
  *  - document control scripts
  *
  *  - realtime metric charts
  *     on CreateRawSymbol() also create/update offline profile
  *     ChartInfos: read/display symbol description as long name
-
+ *
+ *  - performance
+ *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), EveryTick:     34.9 sec, 89 trades
+ *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), ControlPoints:  5.0 sec, 89 trades
+ *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), BarOpen:        0.3 sec,  3 trades
+ *
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
  *     TimeLocalEx()       check scripts/standalone-indicators in tester/offline charts in old/current terminals
@@ -699,6 +704,8 @@ bool IsZigZagSignal(int &signal) {
       signal = lastResult;
    }
    else {
+      // TODO: error on triple-crossing at bar 0 or 1
+      //  - extension down, then reversal up, then reversal down           e.g. ZigZag(20), GBPJPY,M5 2023.12.18 00:00
       if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
       int absTrend = Abs(trend);
 
