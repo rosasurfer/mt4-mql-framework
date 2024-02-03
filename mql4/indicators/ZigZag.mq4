@@ -399,12 +399,12 @@ int onTick() {
 
       // recalculate channel crossings
       if (upperBand[bar] > upperBand[bar+1]) {
-         upperCrossEntry[bar] = MathMax(Low[bar], upperBand[bar+1]);
+         upperCrossEntry[bar] = MathMax(Low[bar], upperBand[bar+1]+Point);
          upperCrossExit [bar] = upperBand[bar];
       }
 
       if (lowerBand[bar] < lowerBand[bar+1]) {
-         lowerCrossEntry[bar] = MathMin(High[bar], lowerBand[bar+1]);
+         lowerCrossEntry[bar] = MathMin(High[bar], lowerBand[bar+1]-Point);
          lowerCrossExit [bar] = lowerBand[bar];
       }
 
