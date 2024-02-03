@@ -116,7 +116,7 @@ extern double Lots                 = 1.0;
 #define H_GROSSPROFIT           12
 #define H_NETPROFIT             13
 #define H_NETPROFIT_P           14
-#define H_VIRTPROFIT_P          15
+#define H_SYNTHPROFIT_P         15
 
 #define METRIC_TOTAL_NET_MONEY   1                 // custom metrics
 #define METRIC_TOTAL_NET_UNITS   2
@@ -858,7 +858,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    history[i][H_GROSSPROFIT     ] = open.grossProfit;
    history[i][H_NETPROFIT       ] = open.netProfit;
    history[i][H_NETPROFIT_P     ] = open.netProfitP;
-   history[i][H_VIRTPROFIT_P    ] = open.synthProfitP;
+   history[i][H_SYNTHPROFIT_P   ] = open.synthProfitP;
 
    // update PL numbers
    instance.openNetProfit    = 0;
@@ -914,9 +914,9 @@ void CalculateTradeStats() {
 
    if (size > lastSize) {
       for (int i=lastSize; i < size; i++) {                 // speed-up by processing only new history entries
-         sumNetProfit    += history[i][H_NETPROFIT   ];
-         sumNetProfitP   += history[i][H_NETPROFIT_P ];
-         sumSynthProfitP += history[i][H_VIRTPROFIT_P];
+         sumNetProfit    += history[i][H_NETPROFIT    ];
+         sumNetProfitP   += history[i][H_NETPROFIT_P  ];
+         sumSynthProfitP += history[i][H_SYNTHPROFIT_P];
       }
       instance.avgNetProfit    = sumNetProfit/size;
       instance.avgNetProfitP   = sumNetProfitP/size;
@@ -1194,16 +1194,16 @@ bool ReadStatus() {
       int n = ReadStatus.RestoreHistory(sKeys[i], sOrder);
       if (n < 0) return(!catch("ReadStatus(8)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
 
-      netProfit    += history[n][H_NETPROFIT   ];
-      netProfitP   += history[n][H_NETPROFIT_P ];
-      synthProfitP += history[n][H_VIRTPROFIT_P];
+      netProfit    += history[n][H_NETPROFIT    ];
+      netProfitP   += history[n][H_NETPROFIT_P  ];
+      synthProfitP += history[n][H_SYNTHPROFIT_P];
    }
 
    // cross-check restored stats
    int precision = MathMax(Digits, 2) + 1;                      // required precision for fractional point values
-   if (NE(netProfit,    instance.closedNetProfit, 2))           return(!catch("ReadStatus(9)  "+  instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("      + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, precision))  return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("   + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
-   if (NE(synthProfitP, instance.closedSynthProfitP, Digits))   return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,    instance.closedNetProfit, 2))           return(!catch("ReadStatus(9)  "+  instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, precision))  return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
+   if (NE(synthProfitP, instance.closedSynthProfitP, Digits))   return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_SYNTHPROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("ReadStatus(12)"));
 }
@@ -1264,7 +1264,7 @@ bool ReadStatus.RestoreHistory(string key, string value) {
    double   grossProfit     =  StrToDouble(values[H_GROSSPROFIT     ]);
    double   netProfit       =  StrToDouble(values[H_NETPROFIT       ]);
    double   netProfitP      =  StrToDouble(values[H_NETPROFIT_P     ]);
-   double   synthProfitP    =  StrToDouble(values[H_VIRTPROFIT_P    ]);
+   double   synthProfitP    =  StrToDouble(values[H_SYNTHPROFIT_P   ]);
 
    return(History.AddRecord(ticket, openType, lots, openTime, openPrice, openPriceSynth, closeTime, closePrice, closePriceSynth, slippage, swap, commission, grossProfit, netProfit, netProfitP, synthProfitP));
 }
@@ -1314,7 +1314,7 @@ int History.AddRecord(int ticket, int openType, double lots, datetime openTime, 
    history[i][H_GROSSPROFIT     ] = grossProfit;
    history[i][H_NETPROFIT       ] = netProfit;
    history[i][H_NETPROFIT_P     ] = netProfitP;
-   history[i][H_VIRTPROFIT_P    ] = synthProfitP;
+   history[i][H_SYNTHPROFIT_P   ] = synthProfitP;
 
    if (!catch("History.AddRecord(2)"))
       return(i);
@@ -1525,16 +1525,16 @@ bool SaveStatus() {
 
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i));
-      netProfit    += history[i][H_NETPROFIT   ];
-      netProfitP   += history[i][H_NETPROFIT_P ];
-      synthProfitP += history[i][H_VIRTPROFIT_P];
+      netProfit    += history[i][H_NETPROFIT    ];
+      netProfitP   += history[i][H_NETPROFIT_P  ];
+      synthProfitP += history[i][H_SYNTHPROFIT_P];
    }
 
    // cross-check stored stats
    int precision = MathMax(Digits, 2) + 1;                     // required precision for fractional point values
-   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("      + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("   + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
-   if (NE(synthProfitP, instance.closedSynthProfitP, Digits))  return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
+   if (NE(synthProfitP, instance.closedSynthProfitP, Digits))  return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_SYNTHPROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("SaveStatus(5)"));
 }
@@ -1565,7 +1565,7 @@ string SaveStatus.HistoryToStr(int index) {
    double   grossProfit     = history[index][H_GROSSPROFIT     ];
    double   netProfit       = history[index][H_NETPROFIT       ];
    double   netProfitP      = history[index][H_NETPROFIT_P     ];
-   double   synthProfitP    = history[index][H_VIRTPROFIT_P    ];
+   double   synthProfitP    = history[index][H_SYNTHPROFIT_P   ];
 
    return(StringConcatenate(ticket, ",", openType, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSynth, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSynth, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(synthProfitP, Digits)));
 }
