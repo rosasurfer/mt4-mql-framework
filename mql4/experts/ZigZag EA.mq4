@@ -255,11 +255,11 @@ extern bool   ShowProfitInPercent = true;                   // whether PL is dis
 
 #define METRIC_TOTAL_NET_MONEY      1           // cumulated PnL metrics
 #define METRIC_TOTAL_NET_UNITS      2
-#define METRIC_TOTAL_VIRT_UNITS     3
+#define METRIC_TOTAL_SYNTH_UNITS    3
 
 #define METRIC_DAILY_NET_MONEY      4           // daily PnL metrics
 #define METRIC_DAILY_NET_UNITS      5
-#define METRIC_DAILY_VIRT_UNITS     6
+#define METRIC_DAILY_SYNTH_UNITS    6
 
 #define METRIC_NEXT                 1           // directions for toggling between metrics
 #define METRIC_PREVIOUS            -1
@@ -477,7 +477,7 @@ bool onCommand(string cmd, string params, int keys) {
 bool ToggleMetrics(int direction) {
    if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  "+ instance.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   bool virtualMetric = (status.activeMetric==METRIC_TOTAL_VIRT_UNITS || status.activeMetric==METRIC_DAILY_VIRT_UNITS);
+   bool syntheticMetric = (status.activeMetric==METRIC_TOTAL_SYNTH_UNITS || status.activeMetric==METRIC_DAILY_SYNTH_UNITS);
 
    status.activeMetric += direction;
    if (status.activeMetric < 1) status.activeMetric = 3;    // valid metrics: 1-3
@@ -485,9 +485,9 @@ bool ToggleMetrics(int direction) {
    StoreVolatileData();
    SS.All();
 
-   virtualMetric = (virtualMetric || status.activeMetric==METRIC_TOTAL_VIRT_UNITS || status.activeMetric==METRIC_DAILY_VIRT_UNITS);
+   syntheticMetric = (syntheticMetric || status.activeMetric==METRIC_TOTAL_SYNTH_UNITS || status.activeMetric==METRIC_DAILY_SYNTH_UNITS);
 
-   if (virtualMetric) {
+   if (syntheticMetric) {
       if (status.showOpenOrders) {
          ToggleOpenOrders(false);
          ToggleOpenOrders(false);
@@ -520,7 +520,7 @@ bool ToggleOpenOrders(bool soundOnNone = true) {
       color clrs[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
 
       if (open.ticket != NULL) {
-         double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_VIRT_UNITS, open.priceVirt, open.price);
+         double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_SYNTH_UNITS, open.priceVirt, open.price);
          string label = StringConcatenate("#", open.ticket, " ", types[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
 
          if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(!catch("ToggleOpenOrders(1)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
@@ -643,7 +643,7 @@ int ShowTradeHistory() {
       datetime closeTime  = history[i][H_CLOSETIME ];
       double   closePrice = history[i][H_CLOSEPRICE];
 
-      if (status.activeMetric == METRIC_TOTAL_VIRT_UNITS) {
+      if (status.activeMetric == METRIC_TOTAL_SYNTH_UNITS) {
          openPrice  = history[i][H_OPENPRICE_VIRT ];
          closePrice = history[i][H_CLOSEPRICE_VIRT];
       }
@@ -1620,7 +1620,7 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_TOTAL_VIRT_UNITS:             // OK
+      case METRIC_TOTAL_SYNTH_UNITS:            // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
          descrSuffix = ", "+ PeriodDescription() +", synthetic PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
@@ -1638,7 +1638,7 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          descrSuffix = ", "+ PeriodDescription() +", daily net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_DAILY_VIRT_UNITS:
+      case METRIC_DAILY_SYNTH_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
          descrSuffix = ", "+ PeriodDescription() +", daily synthetic PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
@@ -1660,9 +1660,9 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
 void RecordMetrics() {
    if (recorder.mode == RECORDER_CUSTOM) {
       int size = ArraySize(metric.ready);
-      if (size > METRIC_TOTAL_NET_MONEY ) metric.currValue[METRIC_TOTAL_NET_MONEY ] = instance.totalNetProfit;
-      if (size > METRIC_TOTAL_NET_UNITS ) metric.currValue[METRIC_TOTAL_NET_UNITS ] = instance.totalNetProfitP;
-      if (size > METRIC_TOTAL_VIRT_UNITS) metric.currValue[METRIC_TOTAL_VIRT_UNITS] = instance.totalVirtProfitP;
+      if (size > METRIC_TOTAL_NET_MONEY  ) metric.currValue[METRIC_TOTAL_NET_MONEY  ] = instance.totalNetProfit;
+      if (size > METRIC_TOTAL_NET_UNITS  ) metric.currValue[METRIC_TOTAL_NET_UNITS  ] = instance.totalNetProfitP;
+      if (size > METRIC_TOTAL_SYNTH_UNITS) metric.currValue[METRIC_TOTAL_SYNTH_UNITS] = instance.totalVirtProfitP;
    }
 }
 
@@ -3112,7 +3112,7 @@ void SS.Metric() {
       case METRIC_TOTAL_NET_UNITS:
          sMetric = "Net PnL after all costs in "+ pUnit + NL + "---------------------------------"+ ifString(pUnit=="point", "---", "");
          break;
-      case METRIC_TOTAL_VIRT_UNITS:
+      case METRIC_TOTAL_SYNTH_UNITS:
          sMetric = "Synthetic PnL before spread/any costs in "+ pUnit + NL + "------------------------------------------------------"+ ifString(pUnit=="point", "--", "");
          break;
 
@@ -3149,7 +3149,7 @@ void SS.ClosedTrades() {
          case METRIC_TOTAL_NET_UNITS:
             sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_VIRT_UNITS:
+         case METRIC_TOTAL_SYNTH_UNITS:
             sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgVirtProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
@@ -3176,7 +3176,7 @@ void SS.TotalProfit() {
          case METRIC_TOTAL_NET_UNITS:
             sTotalProfit = NumberToStr(instance.totalNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_VIRT_UNITS:
+         case METRIC_TOTAL_SYNTH_UNITS:
             sTotalProfit = NumberToStr(instance.totalVirtProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
@@ -3212,7 +3212,7 @@ void SS.ProfitStats() {
             sMaxProfit   = NumberToStr(instance.maxNetProfitP   * pMultiplier, "R+."+ pDigits);
             sMaxDrawdown = NumberToStr(instance.maxNetDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
-         case METRIC_TOTAL_VIRT_UNITS:
+         case METRIC_TOTAL_SYNTH_UNITS:
             sMaxProfit   = NumberToStr(instance.maxVirtProfitP   * pMultiplier, "R+."+ pDigits);
             sMaxDrawdown = NumberToStr(instance.maxVirtDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
