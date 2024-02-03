@@ -369,19 +369,18 @@ bool     test.reduceStatusWrites  = true;       // whether to reduce status file
 int onTick() {
    if (!instance.status) return(ERR_ILLEGAL_STATE);
 
-   if (__isChart) HandleCommands();                            // process incoming commands
+   if (__isChart) HandleCommands();             // process incoming commands
 
    if (instance.status != STATUS_STOPPED) {
-      int signal, zzSignal;
-      IsZigZagSignal(zzSignal);                                // check ZigZag on every tick (signals can occur anytime)
+      int signal;
 
       if (instance.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) StartInstance(signal);
       }
       else if (instance.status == STATUS_PROGRESSING) {
          if (UpdateStatus()) {
-            if (IsStopSignal(signal))  StopInstance(signal);
-            else if (zzSignal != NULL) ReverseInstance(zzSignal);
+            if      (IsStopSignal(signal))   StopInstance(signal);
+            else if (IsZigZagSignal(signal)) ReverseInstance(signal);
          }
       }
       RecordMetrics();
@@ -693,33 +692,35 @@ bool IsZigZagSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
-   static int lastTick, lastResult, lastSignal;
+   static int lastTick, lastResult, lastSignal, lastSignalBar;
    int trend, reversal;
 
    if (Ticks == lastTick) {
       signal = lastResult;
    }
    else {
-      if (!GetZigZagData(0, trend, reversal)) return(false);
+      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
+      int absTrend = Abs(trend);
 
-      if (Abs(trend)==reversal || !reversal) {     // reversal=0 denotes a double crossing, trend is +1 or -1
-         if (trend > 0) {
-            if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
+      // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.
+      if (absTrend==reversal || (!reversal && absTrend==1)) {
+         if (trend > 0) signal = SIGNAL_LONG;
+         else           signal = SIGNAL_SHORT;
+
+         if (Time[0]==lastSignalBar && signal==lastSignal) {
+            signal = NULL;
          }
          else {
-            if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
-         }
-         if (signal != NULL) {
-            if (instance.status == STATUS_PROGRESSING) {
-               if (IsLogNotice()) logNotice("IsZigZagSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-            }
-            if (IsVisualMode()) {                  // pause the tester according to the debug configuration
-               if (test.onReversalPause) Tester.Pause("IsZigZagSignal(2)");
-            }
+            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             lastSignal = signal;
+            lastSignalBar = Time[0];
+
+            if (IsVisualMode()) {
+               if (test.onReversalPause) Tester.Pause("IsZigZagSignal(3)");   // pause the tester according to the debug configuration
+            }
          }
       }
-      lastTick   = Ticks;
+      lastTick = Ticks;
       lastResult = signal;
    }
    return(signal != NULL);
@@ -727,18 +728,18 @@ bool IsZigZagSignal(int &signal) {
 
 
 /**
- * Get ZigZag trend data at the specified bar offset.
+ * Get ZigZag data at the specified bar offset.
  *
- * @param  _In_  int bar            - bar offset
- * @param  _Out_ int &combinedTrend - combined trend value (MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers)
- * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to previous ZigZag extreme
+ * @param  _In_  int bar       - bar offset
+ * @param  _Out_ int &trend    - combined trend value (buffers MODE_KNOWN_TREND + MODE_UNKNOWN_TREND)
+ * @param  _Out_ int &reversal - bar offset of current ZigZag reversal to previous ZigZag extreme
  *
  * @return bool - success status
  */
-bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
-   combinedTrend = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
-   reversal      = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
-   return(combinedTrend != 0);
+bool GetZigZagData(int bar, int &trend, int &reversal) {
+   trend    = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
+   reversal = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
+   return(!last_error && trend);
 }
 
 
@@ -924,7 +925,6 @@ bool IsStartSignal(int &signal) {
 
    // ZigZag signal ---------------------------------------------------------------------------------------------------------
    if (IsZigZagSignal(signal)) {
-      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ instance.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
