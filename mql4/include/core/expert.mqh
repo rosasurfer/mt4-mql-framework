@@ -600,9 +600,13 @@ string initMarketInfo() {
  */
 bool initTest() {
    if (!test.initialized) {
-      if (__isTesting && Test.ExternalReporting) {
-         datetime time = MarketInfo(Symbol(), MODE_TIME);
-         Test_InitReporting(__ExecutionContext, time, Bars);
+      if (__isTesting) {
+         if (Test.ExternalReporting) {
+            datetime time = MarketInfo(Symbol(), MODE_TIME);
+            Test_InitReporting(__ExecutionContext, time, Bars);
+         }
+         Test.GetStartDate();    // populate date cache to prevent UI deadlocks when called in expert:: deinit()
+         Test.GetEndDate();
       }
       else {
          Test.ExternalReporting = false;
@@ -610,6 +614,38 @@ bool initTest() {
       test.initialized = true;
    }
    return(true);
+}
+
+
+/**
+ * Get the test start date selected in the tester.
+ *
+ * @return datetime - start date or NaT (Not-a-Time) in case of errors
+ */
+datetime Test.GetStartDate() {
+   // The date is cached to prevent UI deadlocks in expert::deinit() if VisualMode=On, caused by Tester_GetStartDate()
+   // calling GetWindowText().
+   if (!__isTesting) return(_NaT(catch("Test.GetStartDate(1)  test-only function", ERR_FUNC_NOT_ALLOWED)));
+
+   static datetime startdate;
+   if (!startdate) startdate = Tester_GetStartDate();
+   return(startdate);
+}
+
+
+/**
+ * Get the test end date selected in the tester.
+ *
+ * @return datetime - end date or NaT (Not-a-Time) in case of errors
+ */
+datetime Test.GetEndDate() {
+   // The date is cached to prevent UI deadlocks in expert::deinit() if VisualMode=On, caused by Tester_GetStartDate()
+   // calling GetWindowText().
+   if (!__isTesting) return(_NaT(catch("Test.GetEndDate(1)  test-only function", ERR_FUNC_NOT_ALLOWED)));
+
+   static datetime enddate;
+   if (!enddate) enddate = Tester_GetEndDate();
+   return(enddate);
 }
 
 

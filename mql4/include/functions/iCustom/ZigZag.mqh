@@ -40,6 +40,7 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           CLR_NONE,                   // color  Donchian.Upper.Color
                           CLR_NONE,                   // color  Donchian.Lower.Color
                           -1,                         // int    MaxBarsBack
+                          false,                      // bool   ShowChartLegend
 
                           "",                         // string ____________________________
                           false,                      // bool   Signal.onReversal

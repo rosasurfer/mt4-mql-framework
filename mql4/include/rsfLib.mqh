@@ -136,6 +136,7 @@
 
 
    // strings
+   bool     DoubleQuoteStrings(string &array[]);
    bool     SortStrings(string &values[]);
    string   StringPad(string input, int length, string pad_string, int pad_type);
 
@@ -167,28 +168,6 @@
    bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);
 
 
-   // other
-   int      CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory = "");
-   bool     IsRawSymbol(string symbol, string directory = "");
-
-   string   GetSymbolName(string symbol);                               // alias of GetSymbolNameOrAlt(symbol, symbol)
-   string   GetSymbolNameOrAlt(string symbol, string altName);
-   string   GetSymbolNameStrict(string symbol);
-
-   string   GetLongSymbolName(string symbol);                           // alias of GetLongSymbolNameOrAlt(symbol, symbol)
-   string   GetLongSymbolNameOrAlt(string symbol, string altValue);
-   string   GetLongSymbolNameStrict(string symbol);
-
-   int      IncreasePeriod(int period);
-   int      DecreasePeriod(int period);
-
-   bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
-   int      DeleteRegisteredObjects();
-
-   bool     SortOpenTickets(int &keys[][]);
-   int      SortTicketsChronological(int &tickets[]);
-
-
    // toString helpers
    string   CharToHexStr(int chr);
    string   DoubleToStrEx(double value, int digits/*=0..16*/);
@@ -214,7 +193,26 @@
 
 
    // other
-   bool     DoubleQuoteStrings(string &array[]);
+   string   GetAccountServer();
+
+   int      CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory = "");
+   bool     IsRawSymbol(string symbol, string directory = "");
+   string   GetSymbolName(string symbol);                               // alias of GetSymbolNameOrAlt(symbol, symbol)
+   string   GetSymbolNameOrAlt(string symbol, string altName);
+   string   GetSymbolNameStrict(string symbol);
+   string   GetLongSymbolName(string symbol);                           // alias of GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolNameOrAlt(string symbol, string altValue);
+   string   GetLongSymbolNameStrict(string symbol);
+
+   int      IncreasePeriod(int period);
+   int      DecreasePeriod(int period);
+
+   bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
+   int      DeleteRegisteredObjects();
+
+   bool     SortOpenTickets(int &keys[][]);
+   int      SortTicketsChronological(int &tickets[]);
+
    string   GetWindowsShortcutTarget(string lnkFile);
    int      WinExecWait(string cmdLine, int cmdShow);
 #import

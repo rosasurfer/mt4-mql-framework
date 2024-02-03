@@ -8,7 +8,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods      = 20;                            // averaging periods
-extern int    MA.Periods.Step = 0;                             // step size for a stepped input parameter (hotkeys)
+extern int    MA.Periods.Step = 0;                             // step size for a stepped input parameter (hotkey)
 extern string MA.Method       = "SMA | LWMA* | EMA | SMMA";    // averaging type
 extern bool   TrueRange       = true;                          // whether to calculate the standard or true range
 

@@ -4522,56 +4522,106 @@ string InitReasonDescription(int reason) {
 
 
 /**
- * Get the configured value of an account's externally hold assets. The returned value can be negative to scale-down the
- * account size (e.g. for testing in a real account).
+ * Return the current account number (with and without a trade server connection).
  *
- * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
- * @param  int    account [optional] - account number (default: the current account number)
- * @param  bool   refresh [optional] - whether to refresh a cached value (default: no)
- *
- * @return double - asset value in account currency or EMPTY_VALUE in case of errors
+ * @return int - account number or NULL (0) in case of errors
  */
-double GetExternalAssets(string company="", int account=NULL, bool refresh=false) {
-   refresh = refresh!=0;
+int GetAccountNumber() {
+   // In tester the account number is cached to prevent UI deadlocks in expert::deinit() caused by GetWindowText()
+   // (only if VisualMode=On; should be obsolete since use of GetInternalWindowText()).
+   // No cache if online, otherwise account changes wouldn't be recognised.
 
-   if (!StringLen(company) || company=="0") {
-      company = GetAccountCompanyId();
-      if (!StringLen(company)) return(EMPTY_VALUE);
+   static int testAccount;
+   if (testAccount != 0) return(testAccount);
+
+   int account = AccountNumber();
+
+   if (account == 0x4000) {                                             // in tester without server connection
+      if (!__isTesting)           return(!catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x4000)", ERR_RUNTIME_ERROR));
+      account = 0;
    }
-   if (account <= 0) {
-      if (account < 0) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
-      account = GetAccountNumber();
-      if (!account) return(EMPTY_VALUE);
+
+   if (!account) {                                                      // evaluate title bar of the main window
+      string title = GetInternalWindowTextA(GetTerminalMainWindow());
+      if (!StringLen(title))      return(!logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) = \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
+      int pos = StringFind(title, ":");
+      if (pos < 1)                return(!catch("GetAccountNumber(3)  account number separator not found in main title bar \""+ title +"\"", ERR_RUNTIME_ERROR));
+
+      string strValue = StrLeft(title, pos);
+      if (!StrIsDigits(strValue)) return(!catch("GetAccountNumber(4)  account number in main title bar contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR));
+
+      account = StrToInteger(strValue);
    }
 
-   static string lastCompany = "";
-   static int    lastAccount = 0;
-   static double lastResult;
-
-   if (refresh || company!=lastCompany || account!=lastAccount) {
-      string file = GetAccountConfigPath(company, account);
-      if (!StringLen(file)) return(EMPTY_VALUE);
-
-      double value = GetIniDouble(file, "General", "ExternalAssets");
-      if (IsEmptyValue(value)) return(EMPTY_VALUE);
-
-      lastCompany = company;
-      lastAccount = account;
-      lastResult  = value;
-   }
-   return(lastResult);
+   if (__isTesting)
+      testAccount = account;
+   return(account);
 }
 
 
 /**
- * Return the full path of the current account/trade server directory. The function doesn't check whether the directory exists.
+ * Return the account number of an account alias.
  *
- * @return string - directory name or an empty string in case of errors
+ * @param  string company - account company
+ * @param  string alias   - account alias
+ *
+ * @return int - account number or NULL in case of errors or if the account alias is unknown
  */
-string GetAccountServerPath() {
-   string directory  = GetHistoryRootPathA(); if (directory == "")  return("");
-   string serverName = GetAccountServer();    if (serverName == "") return("");
-   return(StringConcatenate(directory, "\\", serverName));
+int GetAccountNumberFromAlias(string company, string alias) {
+   if (!StringLen(company)) return(!catch("GetAccountNumberFromAlias(1)  invalid parameter company: \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(alias))   return(!catch("GetAccountNumberFromAlias(2)  invalid parameter alias: \"\"", ERR_INVALID_PARAMETER));
+
+   string file = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
+   string section = "Accounts";
+   string keys[], value="", sAccount="";
+   int keysSize = GetIniKeys(file, section, keys);
+
+   for (int i=0; i < keysSize; i++) {
+      if (StrEndsWithI(keys[i], ".alias")) {
+         value = GetGlobalConfigString(section, keys[i]);
+         if (StrCompareI(value, alias)) {
+            sAccount = StringTrimRight(StrLeft(keys[i], -6));
+            value    = GetGlobalConfigString(section, sAccount +".company");
+            if (StrCompareI(value, company)) {
+               if (StrIsDigits(sAccount))
+                  return(StrToInteger(sAccount));
+            }
+         }
+      }
+   }
+   return(NULL);
+}
+
+
+/**
+ * Return the alias of an account. The alias is used in outbound messages (SMS, email, chat) to obfuscate the actual account
+ * number and is configurable via the framework configuration. If no alias is configured the function returns the account
+ * number with all characters except the last 4 replaced by wildcards.
+ *
+ * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
+ * @param  int    account [optional] - account number (default: the current account number)
+ *
+ * @return string - account alias or an empty string in case of errors
+ */
+string GetAccountAlias(string company="", int account=NULL) {
+   if (!StringLen(company) || company=="0") {
+      company = GetAccountCompanyId();
+      if (!StringLen(company)) return(EMPTY_STR);
+   }
+   if (account <= 0) {
+      if (account < 0) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+      account = GetAccountNumber();
+      if (!account) return(EMPTY_STR);
+   }
+
+   string result = GetGlobalConfigString("Accounts", account +".alias");
+   if (!StringLen(result)) {
+      logInfo("GetAccountAlias(2)  no account alias found for account "+ DoubleQuoteStr(company +":"+ account));
+      result = account;
+      result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
+   }
+   return(result);
 }
 
 
@@ -4624,67 +4674,56 @@ string GetAccountCompanyId() {
 
 
 /**
- * Return the alias of an account. The alias is used in outbound messages (SMS, email, chat) to obfuscate the actual account
- * number and is configurable via the framework configuration. If no alias is configured the function returns the account
- * number with all characters except the last 4 replaced by wildcards.
+ * Return the full path of the current account/trade server directory. The function doesn't check whether the directory exists.
  *
- * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
- * @param  int    account [optional] - account number (default: the current account number)
- *
- * @return string - account alias or an empty string in case of errors
+ * @return string - directory name or an empty string in case of errors
  */
-string GetAccountAlias(string company="", int account=NULL) {
-   if (!StringLen(company) || company=="0") {
-      company = GetAccountCompanyId();
-      if (!StringLen(company)) return(EMPTY_STR);
-   }
-   if (account <= 0) {
-      if (account < 0) return(_EMPTY_STR(catch("GetAccountAlias(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
-      account = GetAccountNumber();
-      if (!account) return(EMPTY_STR);
-   }
-
-   string result = GetGlobalConfigString("Accounts", account +".alias");
-   if (!StringLen(result)) {
-      logInfo("GetAccountAlias(2)  no account alias found for account "+ DoubleQuoteStr(company +":"+ account));
-      result = account;
-      result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
-   }
-   return(result);
+string GetAccountServerPath() {
+   string directory  = GetHistoryRootPathA(); if (directory == "")  return("");
+   string serverName = GetAccountServer();    if (serverName == "") return("");
+   return(StringConcatenate(directory, "\\", serverName));
 }
 
 
 /**
- * Return the account number of an account alias.
+ * Get the configured value of an account's externally hold assets. The returned value can be negative to scale-down the
+ * account size (e.g. for testing in a real account).
  *
- * @param  string company - account company
- * @param  string alias   - account alias
+ * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
+ * @param  int    account [optional] - account number (default: the current account number)
+ * @param  bool   refresh [optional] - whether to refresh a cached value (default: no)
  *
- * @return int - account number or NULL in case of errors or if the account alias is unknown
+ * @return double - asset value in account currency or EMPTY_VALUE in case of errors
  */
-int GetAccountNumberFromAlias(string company, string alias) {
-   if (!StringLen(company)) return(!catch("GetAccountNumberFromAlias(1)  invalid parameter company: \"\"", ERR_INVALID_PARAMETER));
-   if (!StringLen(alias))   return(!catch("GetAccountNumberFromAlias(2)  invalid parameter alias: \"\"", ERR_INVALID_PARAMETER));
+double GetExternalAssets(string company="", int account=NULL, bool refresh=false) {
+   refresh = refresh!=0;
 
-   string file = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
-   string section = "Accounts";
-   string keys[], value="", sAccount="";
-   int keysSize = GetIniKeys(file, section, keys);
-
-   for (int i=0; i < keysSize; i++) {
-      if (StrEndsWithI(keys[i], ".alias")) {
-         value = GetGlobalConfigString(section, keys[i]);
-         if (StrCompareI(value, alias)) {
-            sAccount = StringTrimRight(StrLeft(keys[i], -6));
-            value    = GetGlobalConfigString(section, sAccount +".company");
-            if (StrCompareI(value, company)) {
-               if (StrIsDigits(sAccount))
-                  return(StrToInteger(sAccount));
-            }
-         }
-      }
+   if (!StringLen(company) || company=="0") {
+      company = GetAccountCompanyId();
+      if (!StringLen(company)) return(EMPTY_VALUE);
    }
-   return(NULL);
+   if (account <= 0) {
+      if (account < 0) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+      account = GetAccountNumber();
+      if (!account) return(EMPTY_VALUE);
+   }
+
+   static string lastCompany = "";
+   static int    lastAccount = 0;
+   static double lastResult;
+
+   if (refresh || company!=lastCompany || account!=lastAccount) {
+      string file = GetAccountConfigPath(company, account);
+      if (!StringLen(file)) return(EMPTY_VALUE);
+
+      double value = GetIniDouble(file, "General", "ExternalAssets");
+      if (IsEmptyValue(value)) return(EMPTY_VALUE);
+
+      lastCompany = company;
+      lastAccount = account;
+      lastResult  = value;
+   }
+   return(lastResult);
 }
 
 
@@ -7099,6 +7138,7 @@ void __DummyCalls() {
    GetAccountAlias();
    GetAccountCompanyId();
    GetAccountConfigPath(NULL, NULL);
+   GetAccountNumber();
    GetAccountNumberFromAlias(NULL, NULL);
    GetAccountServerPath();
    GetCommission();
@@ -7312,7 +7352,6 @@ void __DummyCalls() {
    int      DeleteRegisteredObjects();
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
-   int      GetAccountNumber();
    int      GetFxtToGmtTimeOffset(datetime time);
    int      GetFxtToServerTimeOffset(datetime time);
    int      GetGmtToFxtTimeOffset(datetime time);

@@ -25,7 +25,7 @@ int __DeinitFlags[];
 
 extern string ___a__________________________ = "=== T3 settings ===";
 extern int    T3.Periods                     = 10;                // bar periods for alpha calculation
-extern int    T3.Periods.Step                = 0;                 // step size for a stepped input parameter (hotkeys)
+extern int    T3.Periods.Step                = 0;                 // step size for a stepped input parameter (hotkey)
 extern bool   T3.Periods.MatulichScale       = true;
 extern double T3.VolumeFactor                = 0.7;
 extern double T3.VolumeFactor.Step           = 0;                 // step size for a stepped input parameter (hotkeys + VK_LWIN)

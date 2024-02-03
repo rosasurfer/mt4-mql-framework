@@ -38,7 +38,7 @@ int onInitUser() {
       if (ValidateInputs()) {
          instance.isTest  = __isTesting;
          instance.id      = CreateInstanceId();
-         Instance.ID      = ifString(instance.isTest, "T", "") + instance.id; SS.InstanceName();
+         Instance.ID      = ifString(instance.isTest, "T", "") + StrPadLeft(instance.id, 3, "0"); SS.InstanceName();
          instance.created = GetLocalTime();
          instance.status  = STATUS_WAITING;
          logInfo("onInitUser(2)  instance "+ instance.name +" created");
@@ -149,7 +149,7 @@ int afterInit() {                                  // open the log file (flushes
 bool CreateStatusBox() {
    if (!__isChart) return(true);
 
-   int x[]={2, 66, 125}, y=50, fontSize=54, sizeofX=ArraySize(x);
+   int x[]={2, 66, 136}, y=50, fontSize=54, sizeofX=ArraySize(x);
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {

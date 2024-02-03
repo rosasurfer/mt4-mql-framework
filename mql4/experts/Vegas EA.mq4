@@ -39,11 +39,11 @@
  *  • Lots:               ...
  *  • EA.Recorder:        Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
- *     1: Records PnL in account currency after all costs (net, same as EA.Recorder="on" but custom symbol).
- *     2: Records PnL in price units after all costs (net).
- *     3: Records PnL in price units without spread and any costs (virtual, assumes exact execution).
+ *     1: Records PnL after all costs in account currency (net).
+ *     2: Records PnL after all costs in price units (net).
+ *     3: Records PnL before spread/any costs in price units (synthetic, exact execution).
  *
- *     Metrics in price units are recorded in the best matching unit. That's pip for Forex and full points otherwise.
+ *     Metrics in price units are recorded in the best matching unit. That's pip for Forex or full points otherwise.
  *
  *
  * External control
@@ -91,8 +91,8 @@ extern double Lots                 = 1.0;
 
 #define STRATEGY_ID            108                 // unique strategy id (used for magic order numbers)
 
-#define INSTANCE_ID_MIN        100                 // range of valid instance ids
-#define INSTANCE_ID_MAX        999                 // ...
+#define INSTANCE_ID_MIN          1                 // range of valid instance ids
+#define INSTANCE_ID_MAX        999                 //
 
 #define STATUS_WAITING           1                 // instance has no open positions and waits for trade signals
 #define STATUS_PROGRESSING       2                 // instance manages open positions
@@ -106,21 +106,21 @@ extern double Lots                 = 1.0;
 #define H_LOTS                   2
 #define H_OPENTIME               3
 #define H_OPENPRICE              4
-#define H_OPENPRICE_VIRT         5
+#define H_OPENPRICE_SYNTH        5
 #define H_CLOSETIME              6
 #define H_CLOSEPRICE             7
-#define H_CLOSEPRICE_VIRT        8
+#define H_CLOSEPRICE_SYNTH       8
 #define H_SLIPPAGE               9
 #define H_SWAP                  10
 #define H_COMMISSION            11
 #define H_GROSSPROFIT           12
 #define H_NETPROFIT             13
 #define H_NETPROFIT_P           14
-#define H_VIRTPROFIT_P          15
+#define H_SYNTHPROFIT_P         15
 
 #define METRIC_TOTAL_NET_MONEY   1                 // custom metrics
 #define METRIC_TOTAL_NET_UNITS   2
-#define METRIC_TOTAL_VIRT_UNITS  3
+#define METRIC_TOTAL_SYNTH_UNITS 3
 
 #define METRIC_NEXT              1                 // directions for toggling between metrics
 #define METRIC_PREVIOUS         -1
@@ -132,26 +132,26 @@ datetime instance.created;
 int      instance.status;
 bool     instance.isTest;
 
-double   instance.openNetProfit;                   // real PnL in money after all costs (net)
+double   instance.openNetProfit;                   // real PnL after all costs in money (net)
 double   instance.closedNetProfit;
 double   instance.totalNetProfit;
 double   instance.maxNetProfit;                    // max. observed profit:   0...+n
 double   instance.maxNetDrawdown;                  // max. observed drawdown: -n...0
 double   instance.avgNetProfit = EMPTY_VALUE;
 
-double   instance.openNetProfitP;                  // PnL in point after all costs (net)
+double   instance.openNetProfitP;                  // real PnL after all costs in point (net)
 double   instance.closedNetProfitP;
 double   instance.totalNetProfitP;
 double   instance.maxNetProfitP;
 double   instance.maxNetDrawdownP;
 double   instance.avgNetProfitP = EMPTY_VALUE;
 
-double   instance.openVirtProfitP;                 // virtual PnL in point without any costs (assumes exact execution)
-double   instance.closedVirtProfitP;
-double   instance.totalVirtProfitP;
-double   instance.maxVirtProfitP;
-double   instance.maxVirtDrawdownP;
-double   instance.avgVirtProfitP = EMPTY_VALUE;
+double   instance.openSynthProfitP;                // synthetic PnL before spread/any costs in point (exact execution)
+double   instance.closedSynthProfitP;
+double   instance.totalSynthProfitP;
+double   instance.maxSynthProfitP;
+double   instance.maxSynthDrawdownP;
+double   instance.avgSynthProfitP = EMPTY_VALUE;
 
 // order data
 int      open.ticket;                              // one open position
@@ -159,14 +159,14 @@ int      open.type;
 double   open.lots;
 datetime open.time;
 double   open.price;
-double   open.priceVirt;
+double   open.priceSynth;
 double   open.slippage;
 double   open.swap;
 double   open.commission;
 double   open.grossProfit;
 double   open.netProfit;
 double   open.netProfitP;
-double   open.virtProfitP;
+double   open.synthProfitP;
 double   history[][16];                            // multiple closed positions
 
 // volatile status data
@@ -270,7 +270,7 @@ bool onCommand(string cmd, string params, int keys) {
  * @return bool - success status
  */
 bool ToggleMetrics(int direction) {
-   if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  "+ instance.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    int lastMetric = status.activeMetric;
 
@@ -280,7 +280,7 @@ bool ToggleMetrics(int direction) {
    StoreVolatileData();
    SS.All();
 
-   if (lastMetric==METRIC_TOTAL_VIRT_UNITS || status.activeMetric==METRIC_TOTAL_VIRT_UNITS) {
+   if (lastMetric==METRIC_TOTAL_SYNTH_UNITS || status.activeMetric==METRIC_TOTAL_SYNTH_UNITS) {
       if (status.showOpenOrders) {
          ToggleOpenOrders(false);
          ToggleOpenOrders(false);
@@ -313,7 +313,7 @@ bool ToggleOpenOrders(bool soundOnNone = true) {
       color clrs[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
 
       if (open.ticket != NULL) {
-         double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_VIRT_UNITS, open.priceVirt, open.price);
+         double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_SYNTH_UNITS, open.priceSynth, open.price);
          string label = StringConcatenate("#", open.ticket, " ", types[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
 
          if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(!catch("ToggleOpenOrders(1)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
@@ -435,9 +435,9 @@ int ShowTradeHistory() {
       datetime closeTime  = history[i][H_CLOSETIME ];
       double   closePrice = history[i][H_CLOSEPRICE];
 
-      if (status.activeMetric == METRIC_TOTAL_VIRT_UNITS) {
-         openPrice  = history[i][H_OPENPRICE_VIRT ];
-         closePrice = history[i][H_CLOSEPRICE_VIRT];
+      if (status.activeMetric == METRIC_TOTAL_SYNTH_UNITS) {
+         openPrice  = history[i][H_OPENPRICE_SYNTH ];
+         closePrice = history[i][H_CLOSEPRICE_SYNTH];
       }
       if (!closeTime)                    continue;             // skip open tickets (should not happen)
       if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
@@ -496,13 +496,11 @@ bool IsTradeSignal(int &signal) {
 
    // MA Tunnel signal ------------------------------------------------------------------------------------------------------
    if (IsMaTunnelSignal(signal)) {
-      logNotice("IsTradeSignal(1)  "+ instance.name +" MA tunnel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
 
-   // Donchian signal -------------------------------------------------------------------------------------------------------
-   if (false) /*&&*/ if (IsDonchianSignal(signal)) {
-      logNotice("IsTradeSignal(2)  "+ instance.name +" Donchian channel "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   // ZigZag signal ---------------------------------------------------------------------------------------------------------
+   if (false) /*&&*/ if (IsZigZagSignal(signal)) {
       return(true);
    }
    return(false);
@@ -520,46 +518,22 @@ bool IsMaTunnelSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
-   if (IsBarOpen()) {
-      int trend = icMaTunnel(NULL, Tunnel.Definition, MaTunnel.MODE_BAR_TREND, 1);
-
-      if      (trend == +1) signal = SIGNAL_LONG;
-      else if (trend == -1) signal = SIGNAL_SHORT;
-   }
-   return(signal != NULL);
-}
-
-
-/**
- * Whether a new Donchian channel reversal occurred.
- *
- * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
- *
- * @return bool
- */
-bool IsDonchianSignal(int &signal) {
-   if (last_error != NULL) return(false);
-   signal = NULL;
-
-   static int lastTick, lastResult, lastSignal;
-   int trend, reversal;
+   static int lastTick, lastResult;
 
    if (Ticks == lastTick) {
       signal = lastResult;
    }
    else {
-      if (!GetZigZagTrendData(0, trend, reversal)) return(false);
+      if (IsBarOpen()) {
+         int trend = icMaTunnel(NULL, Tunnel.Definition, MaTunnel.MODE_BAR_TREND, 1);
+         if      (trend == +1) signal = SIGNAL_LONG;
+         else if (trend == -1) signal = SIGNAL_SHORT;
 
-      if (Abs(trend)==reversal || !reversal) {     // reversal=0 denotes a double crossing, trend is +1 or -1
-         if (trend > 0) {
-            if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
+         if (signal != NULL) {
+            if (IsLogNotice()) logNotice("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          }
-         else {
-            if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
-         }
-         if (signal != NULL) lastSignal = signal;
       }
-      lastTick   = Ticks;
+      lastTick = Ticks;
       lastResult = signal;
    }
    return(signal != NULL);
@@ -567,18 +541,62 @@ bool IsDonchianSignal(int &signal) {
 
 
 /**
- * Get ZigZag trend data at the specified bar offset.
+ * Whether a new ZigZag reversal occurred.
  *
- * @param  _In_  int bar            - bar offset
- * @param  _Out_ int &combinedTrend - combined trend value (MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers)
- * @param  _Out_ int &reversal      - bar offset of current ZigZag reversal to the previous ZigZag semaphore
+ * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
+ *
+ * @return bool
+ */
+bool IsZigZagSignal(int &signal) {
+   if (last_error != NULL) return(false);
+   signal = NULL;
+
+   static int lastTick, lastResult, lastSignal, lastSignalBar;
+   int trend, reversal;
+
+   if (Ticks == lastTick) {
+      signal = lastResult;
+   }
+   else {
+      // TODO: error on triple-crossing at bar 0 or 1
+      //  - extension down, then reversal up, then reversal down           e.g. ZigZag(20), GBPJPY,M5 2023.12.18 00:00
+      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
+      int absTrend = Abs(trend);
+
+      // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.
+      if (absTrend==reversal || (!reversal && absTrend==1)) {
+         if (trend > 0) signal = SIGNAL_LONG;
+         else           signal = SIGNAL_SHORT;
+
+         if (Time[0]==lastSignalBar && signal==lastSignal) {
+            signal = NULL;
+         }
+         else {
+            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            lastSignal = signal;
+            lastSignalBar = Time[0];
+         }
+      }
+      lastTick = Ticks;
+      lastResult = signal;
+   }
+   return(signal != NULL);
+}
+
+
+/**
+ * Get ZigZag data at the specified bar offset.
+ *
+ * @param  _In_  int bar       - bar offset
+ * @param  _Out_ int &trend    - combined trend value (buffers MODE_KNOWN_TREND + MODE_UNKNOWN_TREND)
+ * @param  _Out_ int &reversal - bar offset of current ZigZag reversal to previous ZigZag extreme
  *
  * @return bool - success status
  */
-bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
-   combinedTrend = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_TREND,    bar));
-   reversal      = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_REVERSAL, bar));
-   return(combinedTrend != 0);
+bool GetZigZagData(int bar, int &trend, int &reversal) {
+   trend    = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_TREND,    bar));
+   reversal = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_REVERSAL, bar));
+   return(!last_error && trend);
 }
 
 
@@ -597,12 +615,12 @@ bool UpdateStatus(int signal = NULL) {
    // update open position
    if (open.ticket != NULL) {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
-      open.swap        = NormalizeDouble(OrderSwap(), 2);
-      open.commission  = OrderCommission();
-      open.grossProfit = OrderProfit();
-      open.netProfit   = open.grossProfit + open.swap + open.commission;
-      open.netProfitP  = ifDouble(!open.type, Bid-open.price, open.price-Ask); if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-      open.virtProfitP = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
+      open.swap         = NormalizeDouble(OrderSwap(), 2);
+      open.commission   = OrderCommission();
+      open.grossProfit  = OrderProfit();
+      open.netProfit    = open.grossProfit + open.swap + open.commission;
+      open.netProfitP   = ifDouble(!open.type, Bid-open.price, open.price-Ask); if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+      open.synthProfitP = ifDouble(!open.type, Bid-open.priceSynth, open.priceSynth-Bid);
 
       if (OrderCloseTime() != NULL) {
          int error;
@@ -631,7 +649,7 @@ bool UpdateStatus(int signal = NULL) {
       double   price       = NULL;
       double   stopLoss    = NULL;
       double   takeProfit  = NULL;
-      string   comment     = "Vegas."+ instance.id;
+      string   comment     = "Vegas."+ StrPadLeft(instance.id, 3, "0");
       int      magicNumber = CalculateMagicNumber();
       datetime expires     = NULL;
       color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
@@ -641,40 +659,40 @@ bool UpdateStatus(int signal = NULL) {
       if (!ticket) return(!SetLastError(oe.Error(oe)));
 
       // store the new position
-      open.ticket      = ticket;
-      open.type        = type;
-      open.lots        = oe.Lots(oe); SS.OpenLots();
-      open.time        = oe.OpenTime(oe);
-      open.price       = oe.OpenPrice(oe);
-      open.priceVirt   = Bid;
-      open.slippage    = oe.Slippage(oe);
-      open.swap        = oe.Swap(oe);
-      open.commission  = oe.Commission(oe);
-      open.grossProfit = oe.Profit(oe);
-      open.netProfit   = open.grossProfit + open.swap + open.commission;
-      open.netProfitP  = ifDouble(!open.type, Bid-open.price, open.price-Ask); if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-      open.virtProfitP = 0;
+      open.ticket       = ticket;
+      open.type         = type;
+      open.lots         = oe.Lots(oe); SS.OpenLots();
+      open.time         = oe.OpenTime(oe);
+      open.price        = oe.OpenPrice(oe);
+      open.priceSynth   = Bid;
+      open.slippage     = oe.Slippage(oe);
+      open.swap         = oe.Swap(oe);
+      open.commission   = oe.Commission(oe);
+      open.grossProfit  = oe.Profit(oe);
+      open.netProfit    = open.grossProfit + open.swap + open.commission;
+      open.netProfitP   = ifDouble(!open.type, Bid-open.price, open.price-Ask); if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+      open.synthProfitP = 0;
    }
 
    // update PL numbers
-   instance.openNetProfit   = open.netProfit;
-   instance.openNetProfitP  = open.netProfitP;
-   instance.openVirtProfitP = open.virtProfitP;
+   instance.openNetProfit    = open.netProfit;
+   instance.openNetProfitP   = open.netProfitP;
+   instance.openSynthProfitP = open.synthProfitP;
 
-   instance.totalNetProfit   = instance.openNetProfit   + instance.closedNetProfit;
-   instance.totalNetProfitP  = instance.openNetProfitP  + instance.closedNetProfitP;
-   instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
+   instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
+   instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
+   instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
    SS.TotalProfit();
 
    bool updateStats = false;
-   if      (instance.totalNetProfit   > instance.maxNetProfit    ) { instance.maxNetProfit     = instance.totalNetProfit;   updateStats = true; }
-   else if (instance.totalNetProfit   < instance.maxNetDrawdown  ) { instance.maxNetDrawdown   = instance.totalNetProfit;   updateStats = true; }
+   if      (instance.totalNetProfit    > instance.maxNetProfit     ) { instance.maxNetProfit      = instance.totalNetProfit;    updateStats = true; }
+   else if (instance.totalNetProfit    < instance.maxNetDrawdown   ) { instance.maxNetDrawdown    = instance.totalNetProfit;    updateStats = true; }
 
-   if      (instance.totalNetProfitP  > instance.maxNetProfitP   ) { instance.maxNetProfitP    = instance.totalNetProfitP;  updateStats = true; }
-   else if (instance.totalNetProfitP  < instance.maxNetDrawdownP ) { instance.maxNetDrawdownP  = instance.totalNetProfitP;  updateStats = true; }
+   if      (instance.totalNetProfitP   > instance.maxNetProfitP    ) { instance.maxNetProfitP     = instance.totalNetProfitP;   updateStats = true; }
+   else if (instance.totalNetProfitP   < instance.maxNetDrawdownP  ) { instance.maxNetDrawdownP   = instance.totalNetProfitP;   updateStats = true; }
 
-   if      (instance.totalVirtProfitP > instance.maxVirtProfitP  ) { instance.maxVirtProfitP   = instance.totalVirtProfitP; updateStats = true; }
-   else if (instance.totalVirtProfitP < instance.maxVirtDrawdownP) { instance.maxVirtDrawdownP = instance.totalVirtProfitP; updateStats = true; }
+   if      (instance.totalSynthProfitP > instance.maxSynthProfitP  ) { instance.maxSynthProfitP   = instance.totalSynthProfitP; updateStats = true; }
+   else if (instance.totalSynthProfitP < instance.maxSynthDrawdownP) { instance.maxSynthDrawdownP = instance.totalSynthProfitP; updateStats = true; }
    if (updateStats) SS.ProfitStats();
 
    if (positionClosed || signal)
@@ -750,13 +768,13 @@ bool StopInstance() {
          int oeFlags, oe[];
          if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
-         open.slippage   += oe.Slippage  (oe);
-         open.swap        = oe.Swap      (oe);
-         open.commission  = oe.Commission(oe);
-         open.grossProfit = oe.Profit    (oe);
-         open.netProfit   = open.grossProfit + open.swap + open.commission;
-         open.netProfitP  = ifDouble(!open.type, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(open.lots);
-         open.virtProfitP = ifDouble(!open.type, Bid-open.priceVirt, open.priceVirt-Bid);
+         open.slippage    += oe.Slippage  (oe);
+         open.swap         = oe.Swap      (oe);
+         open.commission   = oe.Commission(oe);
+         open.grossProfit  = oe.Profit    (oe);
+         open.netProfit    = open.grossProfit + open.swap + open.commission;
+         open.netProfitP   = ifDouble(!open.type, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(open.lots);
+         open.synthProfitP = ifDouble(!open.type, Bid-open.priceSynth, open.priceSynth-Bid);
          if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), oe.ClosePrice(oe), Bid)) return(false);
 
          // update PL numbers
@@ -770,10 +788,10 @@ bool StopInstance() {
          instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
          instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
 
-         instance.openVirtProfitP  = open.virtProfitP;
-         instance.totalVirtProfitP = instance.openVirtProfitP + instance.closedVirtProfitP;
-         instance.maxVirtProfitP   = MathMax(instance.maxVirtProfitP,   instance.totalVirtProfitP);
-         instance.maxVirtDrawdownP = MathMin(instance.maxVirtDrawdownP, instance.totalVirtProfitP);
+         instance.openSynthProfitP  = open.synthProfitP;
+         instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
+         instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
+         instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
          SS.TotalProfit();
          SS.ProfitStats();
       }
@@ -808,63 +826,63 @@ bool RestartInstance() {
 /**
  * Move the current open position to the trade history. Assumes the position is closed.
  *
- * @param datetime closeTime      - close time
- * @param double   closePrice     - close price
- * @param double   closePriceVirt - virtual close price
+ * @param datetime closeTime       - close time
+ * @param double   closePrice      - close price
+ * @param double   closePriceSynth - synthetic close price
  *
  * @return bool - success status
  */
-bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double closePriceVirt) {
+bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double closePriceSynth) {
    if (last_error != NULL)                    return(false);
    if (instance.status != STATUS_PROGRESSING) return(!catch("MoveCurrentPositionToHistory(1)  "+ instance.name +" cannot process current position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (!open.ticket)                          return(!catch("MoveCurrentPositionToHistory(2)  "+ instance.name +" no open position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
 
    // update position data
-   open.virtProfitP = ifDouble(!open.type, closePriceVirt-open.priceVirt, open.priceVirt-closePriceVirt);
+   open.synthProfitP = ifDouble(!open.type, closePriceSynth-open.priceSynth, open.priceSynth-closePriceSynth);
 
    // add data to history
    int i = ArrayRange(history, 0);
    ArrayResize(history, i+1);
-   history[i][H_TICKET         ] = open.ticket;
-   history[i][H_OPENTYPE       ] = open.type;
-   history[i][H_LOTS           ] = open.lots;
-   history[i][H_OPENTIME       ] = open.time;
-   history[i][H_OPENPRICE      ] = open.price;
-   history[i][H_OPENPRICE_VIRT ] = open.priceVirt;
-   history[i][H_CLOSETIME      ] = closeTime;
-   history[i][H_CLOSEPRICE     ] = closePrice;
-   history[i][H_CLOSEPRICE_VIRT] = closePriceVirt;
-   history[i][H_SLIPPAGE       ] = open.slippage;
-   history[i][H_SWAP           ] = open.swap;
-   history[i][H_COMMISSION     ] = open.commission;
-   history[i][H_GROSSPROFIT    ] = open.grossProfit;
-   history[i][H_NETPROFIT      ] = open.netProfit;
-   history[i][H_NETPROFIT_P    ] = open.netProfitP;
-   history[i][H_VIRTPROFIT_P   ] = open.virtProfitP;
+   history[i][H_TICKET          ] = open.ticket;
+   history[i][H_OPENTYPE        ] = open.type;
+   history[i][H_LOTS            ] = open.lots;
+   history[i][H_OPENTIME        ] = open.time;
+   history[i][H_OPENPRICE       ] = open.price;
+   history[i][H_OPENPRICE_SYNTH ] = open.priceSynth;
+   history[i][H_CLOSETIME       ] = closeTime;
+   history[i][H_CLOSEPRICE      ] = closePrice;
+   history[i][H_CLOSEPRICE_SYNTH] = closePriceSynth;
+   history[i][H_SLIPPAGE        ] = open.slippage;
+   history[i][H_SWAP            ] = open.swap;
+   history[i][H_COMMISSION      ] = open.commission;
+   history[i][H_GROSSPROFIT     ] = open.grossProfit;
+   history[i][H_NETPROFIT       ] = open.netProfit;
+   history[i][H_NETPROFIT_P     ] = open.netProfitP;
+   history[i][H_SYNTHPROFIT_P   ] = open.synthProfitP;
 
    // update PL numbers
-   instance.openNetProfit   = 0;
-   instance.openNetProfitP  = 0;
-   instance.openVirtProfitP = 0;
+   instance.openNetProfit    = 0;
+   instance.openNetProfitP   = 0;
+   instance.openSynthProfitP = 0;
 
-   instance.closedNetProfit   += open.netProfit;
-   instance.closedNetProfitP  += open.netProfitP;
-   instance.closedVirtProfitP += open.virtProfitP;
+   instance.closedNetProfit    += open.netProfit;
+   instance.closedNetProfitP   += open.netProfitP;
+   instance.closedSynthProfitP += open.synthProfitP;
 
    // reset open position data
-   open.ticket      = NULL;
-   open.type        = NULL;
-   open.lots        = NULL;
-   open.time        = NULL;
-   open.price       = NULL;
-   open.priceVirt   = NULL;
-   open.slippage    = NULL;
-   open.swap        = NULL;
-   open.commission  = NULL;
-   open.grossProfit = NULL;
-   open.netProfit   = NULL;
-   open.netProfitP  = NULL;
-   open.virtProfitP = NULL;
+   open.ticket       = NULL;
+   open.type         = NULL;
+   open.lots         = NULL;
+   open.time         = NULL;
+   open.price        = NULL;
+   open.priceSynth   = NULL;
+   open.slippage     = NULL;
+   open.swap         = NULL;
+   open.commission   = NULL;
+   open.grossProfit  = NULL;
+   open.netProfit    = NULL;
+   open.netProfitP   = NULL;
+   open.synthProfitP = NULL;
    SS.OpenLots();
 
    // update trade stats
@@ -880,29 +898,29 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
  */
 void CalculateTradeStats() {
    static int lastSize = 0;
-   static double sumNetProfit=0, sumNetProfitP=0, sumVirtProfitP=0;
+   static double sumNetProfit=0, sumNetProfitP=0, sumSynthProfitP=0;
 
    int size = ArrayRange(history, 0);
 
    if (!size || size < lastSize) {
-      sumNetProfit   = 0;
-      sumNetProfitP  = 0;
-      sumVirtProfitP = 0;
-      instance.avgNetProfit   = EMPTY_VALUE;
-      instance.avgNetProfitP  = EMPTY_VALUE;
-      instance.avgVirtProfitP = EMPTY_VALUE;
+      sumNetProfit    = 0;
+      sumNetProfitP   = 0;
+      sumSynthProfitP = 0;
+      instance.avgNetProfit    = EMPTY_VALUE;
+      instance.avgNetProfitP   = EMPTY_VALUE;
+      instance.avgSynthProfitP = EMPTY_VALUE;
       lastSize = 0;
    }
 
    if (size > lastSize) {
       for (int i=lastSize; i < size; i++) {                 // speed-up by processing only new history entries
-         sumNetProfit   += history[i][H_NETPROFIT   ];
-         sumNetProfitP  += history[i][H_NETPROFIT_P ];
-         sumVirtProfitP += history[i][H_VIRTPROFIT_P];
+         sumNetProfit    += history[i][H_NETPROFIT    ];
+         sumNetProfitP   += history[i][H_NETPROFIT_P  ];
+         sumSynthProfitP += history[i][H_SYNTHPROFIT_P];
       }
-      instance.avgNetProfit   = sumNetProfit/size;
-      instance.avgNetProfitP  = sumNetProfitP/size;
-      instance.avgVirtProfitP = sumVirtProfitP/size;
+      instance.avgNetProfit    = sumNetProfit/size;
+      instance.avgNetProfitP   = sumNetProfitP/size;
+      instance.avgSynthProfitP = sumSynthProfitP/size;
       lastSize = size;
    }
 }
@@ -931,7 +949,7 @@ int CalculateMagicNumber(int instanceId = NULL) {
    if (id < INSTANCE_ID_MIN || id > INSTANCE_ID_MAX) return(!catch("CalculateMagicNumber(2)  "+ instance.name +" illegal instance id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                              // 101-1023 (10 bit)
-   int instance = id;                                       // 100-999  (14 bit, used to be 1000-9999)
+   int instance = id;                                       // 001-999  (14 bit, used to be 1000-9999)
 
    return((strategy<<22) + (instance<<8));                  // the remaining 8 bit are currently not used in this strategy
 }
@@ -957,38 +975,59 @@ bool IsMyOrder(int instanceId = NULL) {
 
 
 /**
- * Generate a new instance id. Must be unique for all instances of this strategy.
+ * Generate a new instance id. Unique for all instances per symbol (instances of different symbols may use the same id).
  *
- * @return int - instances id in the range of 100-999 or NULL in case of errors
+ * @return int - instance id in the range of 100-999 or NULL (0) in case of errors
  */
 int CreateInstanceId() {
-   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
    int instanceId, magicNumber;
+   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
 
-   while (!magicNumber) {
-      while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
-         instanceId = MathRand();                           // TODO: generate consecutive ids when in tester
-      }
-      magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
+   if (__isTesting) {
+      // generate next consecutive id from already recorded metrics
+      string nextSymbol = Recorder.GetNextMetricSymbol(); if (nextSymbol == "") return(NULL);
+      string sCounter = StrRightFrom(nextSymbol, ".", -1);
+      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  "+ instance.name +" illegal value for next symbol "+ DoubleQuoteStr(nextSymbol) +" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
+      int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
 
-      // test for uniqueness against open orders
-      int openOrders = OrdersTotal();
-      for (int i=0; i < openOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateInstanceId(1)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-         if (OrderMagicNumber() == magicNumber) {
-            magicNumber = NULL;
-            break;
+      if (recorder.mode == RECORDER_OFF) {
+         int minInstanceId = MathCeil(nextMetricId + 0.2*(INSTANCE_ID_MAX-nextMetricId)); // nextMetricId + 20% of remaining range (leave 20% of range empty for tests with metrics)
+         while (instanceId < minInstanceId || instanceId > INSTANCE_ID_MAX) {             // select random id between <minInstanceId> and ID_MAX
+            instanceId = MathRand();
          }
       }
-      if (!magicNumber) continue;
+      else {
+         instanceId = nextMetricId;                                                       // use next metric id
+      }
+   }
+   else {
+      // online: generate random id
+      while (!magicNumber) {
+         // generate a new instance id
+         while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
+            instanceId = MathRand();                                                      // select random id between ID_MIN and ID_MAX
+         }
+         magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
 
-      // test for uniqueness against closed orders
-      int closedOrders = OrdersHistoryTotal();
-      for (i=0; i < closedOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateInstanceIdId(2)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-         if (OrderMagicNumber() == magicNumber) {
-            magicNumber = NULL;
-            break;
+         // test for uniqueness against open orders
+         int openOrders = OrdersTotal();
+         for (int i=0; i < openOrders; i++) {
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateInstanceId(2)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (OrderMagicNumber() == magicNumber) {
+               magicNumber = NULL;
+               break;
+            }
+         }
+         if (!magicNumber) continue;
+
+         // test for uniqueness against closed orders
+         int closedOrders = OrdersHistoryTotal();
+         for (i=0; i < closedOrders; i++) {
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateInstanceId(3)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (OrderMagicNumber() == magicNumber) {
+               magicNumber = NULL;
+               break;
+            }
          }
       }
    }
@@ -1037,7 +1076,7 @@ bool SetInstanceId(string value, bool &error, string caller) {
 
    instance.isTest = isTest;
    instance.id     = iValue;
-   Instance.ID     = ifString(IsTestInstance(), "T", "") + instance.id;
+   Instance.ID     = ifString(IsTestInstance(), "T", "") + StrPadLeft(instance.id, 3, "0");
    SS.InstanceName();
    return(true);
 }
@@ -1102,52 +1141,52 @@ bool ReadStatus() {
 
    // [Runtime status]
    section = "Runtime status";
-   recorder.stdEquitySymbol   = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");   // string   recorder.stdEquitySymbol = GBPJPY.001
+   recorder.stdEquitySymbol    = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");   // string   recorder.stdEquitySymbol = GBPJPY.001
 
    // instance data
-   instance.id                = GetIniInt    (file, section, "instance.id"      );              // int      instance.id                = 123
-   instance.name              = GetIniStringA(file, section, "instance.name", "");              // string   instance.name              = V.123
-   instance.created           = GetIniInt    (file, section, "instance.created" );              // datetime instance.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
-   instance.isTest            = GetIniBool   (file, section, "instance.isTest"  );              // bool     instance.isTest            = 1
-   instance.status            = GetIniInt    (file, section, "instance.status"  );              // int      instance.status            = 1 (waiting)
+   instance.id                 = GetIniInt    (file, section, "instance.id"      );              // int      instance.id                 = 123
+   instance.name               = GetIniStringA(file, section, "instance.name", "");              // string   instance.name               = V.123
+   instance.created            = GetIniInt    (file, section, "instance.created" );              // datetime instance.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.isTest             = GetIniBool   (file, section, "instance.isTest"  );              // bool     instance.isTest             = 1
+   instance.status             = GetIniInt    (file, section, "instance.status"  );              // int      instance.status             = 1 (waiting)
 
-   instance.openNetProfit     = GetIniDouble (file, section, "instance.openNetProfit"  );       // double   instance.openNetProfit     = 23.45
-   instance.closedNetProfit   = GetIniDouble (file, section, "instance.closedNetProfit");       // double   instance.closedNetProfit   = 45.67
-   instance.totalNetProfit    = GetIniDouble (file, section, "instance.totalNetProfit" );       // double   instance.totalNetProfit    = 123.45
-   instance.maxNetProfit      = GetIniDouble (file, section, "instance.maxNetProfit"   );       // double   instance.maxNetProfit      = 23.45
-   instance.maxNetDrawdown    = GetIniDouble (file, section, "instance.maxNetDrawdown" );       // double   instance.maxNetDrawdown    = -11.23
+   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"  );       // double   instance.openNetProfit      = 23.45
+   instance.closedNetProfit    = GetIniDouble (file, section, "instance.closedNetProfit");       // double   instance.closedNetProfit    = 45.67
+   instance.totalNetProfit     = GetIniDouble (file, section, "instance.totalNetProfit" );       // double   instance.totalNetProfit     = 123.45
+   instance.maxNetProfit       = GetIniDouble (file, section, "instance.maxNetProfit"   );       // double   instance.maxNetProfit       = 23.45
+   instance.maxNetDrawdown     = GetIniDouble (file, section, "instance.maxNetDrawdown" );       // double   instance.maxNetDrawdown     = -11.23
 
-   instance.openNetProfitP    = GetIniDouble (file, section, "instance.openNetProfitP"  );      // double   instance.openNetProfitP    = 0.12345
-   instance.closedNetProfitP  = GetIniDouble (file, section, "instance.closedNetProfitP");      // double   instance.closedNetProfitP  = -0.23456
-   instance.totalNetProfitP   = GetIniDouble (file, section, "instance.totalNetProfitP" );      // double   instance.totalNetProfitP   = 1.23456
-   instance.maxNetProfitP     = GetIniDouble (file, section, "instance.maxNetProfitP"   );      // double   instance.maxNetProfitP     = 0.12345
-   instance.maxNetDrawdownP   = GetIniDouble (file, section, "instance.maxNetDrawdownP" );      // double   instance.maxNetDrawdownP   = -0.23456
+   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"  );      // double   instance.openNetProfitP     = 0.12345
+   instance.closedNetProfitP   = GetIniDouble (file, section, "instance.closedNetProfitP");      // double   instance.closedNetProfitP   = -0.23456
+   instance.totalNetProfitP    = GetIniDouble (file, section, "instance.totalNetProfitP" );      // double   instance.totalNetProfitP    = 1.23456
+   instance.maxNetProfitP      = GetIniDouble (file, section, "instance.maxNetProfitP"   );      // double   instance.maxNetProfitP      = 0.12345
+   instance.maxNetDrawdownP    = GetIniDouble (file, section, "instance.maxNetDrawdownP" );      // double   instance.maxNetDrawdownP    = -0.23456
 
-   instance.openVirtProfitP   = GetIniDouble (file, section, "instance.openVirtProfitP"  );     // double   instance.openVirtProfitP   = 0.12345
-   instance.closedVirtProfitP = GetIniDouble (file, section, "instance.closedVirtProfitP");     // double   instance.closedVirtProfitP = -0.23456
-   instance.totalVirtProfitP  = GetIniDouble (file, section, "instance.totalVirtProfitP" );     // double   instance.totalVirtProfitP  = 1.23456
-   instance.maxVirtProfitP    = GetIniDouble (file, section, "instance.maxVirtProfitP"   );     // double   instance.maxVirtProfitP    = 23.45
-   instance.maxVirtDrawdownP  = GetIniDouble (file, section, "instance.maxVirtDrawdownP" );     // double   instance.maxVirtDrawdownP  = -11.23
+   instance.openSynthProfitP   = GetIniDouble (file, section, "instance.openSynthProfitP"  );    // double   instance.openSynthProfitP   = 0.12345
+   instance.closedSynthProfitP = GetIniDouble (file, section, "instance.closedSynthProfitP");    // double   instance.closedSynthProfitP = -0.23456
+   instance.totalSynthProfitP  = GetIniDouble (file, section, "instance.totalSynthProfitP" );    // double   instance.totalSynthProfitP  = 1.23456
+   instance.maxSynthProfitP    = GetIniDouble (file, section, "instance.maxSynthProfitP"   );    // double   instance.maxSynthProfitP    = 23.45
+   instance.maxSynthDrawdownP  = GetIniDouble (file, section, "instance.maxSynthDrawdownP" );    // double   instance.maxSynthDrawdownP  = -11.23
    SS.InstanceName();
 
    // open order data
-   open.ticket                = GetIniInt    (file, section, "open.ticket"     );               // int      open.ticket      = 123456
-   open.type                  = GetIniInt    (file, section, "open.type"       );               // int      open.type        = 1
-   open.lots                  = GetIniDouble (file, section, "open.lots"       );               // double   open.lots        = 0.01
-   open.time                  = GetIniInt    (file, section, "open.time"       );               // datetime open.time        = 1624924800 (Mon, 2021.05.12 13:22:34)
-   open.price                 = GetIniDouble (file, section, "open.price"      );               // double   open.price       = 1.24363
-   open.priceVirt             = GetIniDouble (file, section, "open.priceVirt"  );               // double   open.priceVirt   = 1.24363
-   open.slippage              = GetIniDouble (file, section, "open.slippage"   );               // double   open.slippage    = 0.00003
-   open.swap                  = GetIniDouble (file, section, "open.swap"       );               // double   open.swap        = -1.23
-   open.commission            = GetIniDouble (file, section, "open.commission" );               // double   open.commission  = -5.50
-   open.grossProfit           = GetIniDouble (file, section, "open.grossProfit");               // double   open.grossProfit = 12.34
-   open.netProfit             = GetIniDouble (file, section, "open.netProfit"  );               // double   open.netProfit   = 12.56
-   open.netProfitP            = GetIniDouble (file, section, "open.netProfitP" );               // double   open.netProfitP  = 0.12345
-   open.virtProfitP           = GetIniDouble (file, section, "open.virtProfitP");               // double   open.virtProfitP = 0.12345
+   open.ticket                 = GetIniInt    (file, section, "open.ticket"      );              // int      open.ticket       = 123456
+   open.type                   = GetIniInt    (file, section, "open.type"        );              // int      open.type         = 1
+   open.lots                   = GetIniDouble (file, section, "open.lots"        );              // double   open.lots         = 0.01
+   open.time                   = GetIniInt    (file, section, "open.time"        );              // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
+   open.price                  = GetIniDouble (file, section, "open.price"       );              // double   open.price        = 1.24363
+   open.priceSynth             = GetIniDouble (file, section, "open.priceSynth"  );              // double   open.priceSynth   = 1.24363
+   open.slippage               = GetIniDouble (file, section, "open.slippage"    );              // double   open.slippage     = 0.00003
+   open.swap                   = GetIniDouble (file, section, "open.swap"        );              // double   open.swap         = -1.23
+   open.commission             = GetIniDouble (file, section, "open.commission"  );              // double   open.commission   = -5.50
+   open.grossProfit            = GetIniDouble (file, section, "open.grossProfit" );              // double   open.grossProfit  = 12.34
+   open.netProfit              = GetIniDouble (file, section, "open.netProfit"   );              // double   open.netProfit    = 12.56
+   open.netProfitP             = GetIniDouble (file, section, "open.netProfitP"  );              // double   open.netProfitP   = 0.12345
+   open.synthProfitP           = GetIniDouble (file, section, "open.synthProfitP");              // double   open.synthProfitP = 0.12345
 
    // history data
    string sKeys[], sOrder="";
-   double netProfit, netProfitP, virtProfitP;
+   double netProfit, netProfitP, synthProfitP;
    int size = ReadStatus.HistoryKeys(file, section, sKeys); if (size < 0) return(false);
 
    for (int i=0; i < size; i++) {
@@ -1155,16 +1194,16 @@ bool ReadStatus() {
       int n = ReadStatus.RestoreHistory(sKeys[i], sOrder);
       if (n < 0) return(!catch("ReadStatus(8)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
 
-      netProfit   += history[n][H_NETPROFIT   ];
-      netProfitP  += history[n][H_NETPROFIT_P ];
-      virtProfitP += history[n][H_VIRTPROFIT_P];
+      netProfit    += history[n][H_NETPROFIT    ];
+      netProfitP   += history[n][H_NETPROFIT_P  ];
+      synthProfitP += history[n][H_SYNTHPROFIT_P];
    }
 
    // cross-check restored stats
-   int precision = MathMax(Digits, 2) + 1;                    // required precision for fractional point values
-   if (NE(netProfit,   instance.closedNetProfit, 2))          return(!catch("ReadStatus(9)  "+  instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("     + NumberToStr(netProfit, ".2+")              +" != "+ NumberToStr(instance.closedNetProfit, ".2+")              +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,  instance.closedNetProfitP, precision)) return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("  + NumberToStr(netProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP, instance.closedVirtProfitP, Digits))   return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   int precision = MathMax(Digits, 2) + 1;                      // required precision for fractional point values
+   if (NE(netProfit,    instance.closedNetProfit, 2))           return(!catch("ReadStatus(9)  "+  instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, precision))  return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
+   if (NE(synthProfitP, instance.closedSynthProfitP, Digits))   return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_SYNTHPROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("ReadStatus(12)"));
 }
@@ -1205,29 +1244,29 @@ bool ReadStatus.RestoreHistory(string key, string value) {
    if (IsLastError())                    return(EMPTY);
    if (!StrStartsWithI(key, "history.")) return(_EMPTY(catch("ReadStatus.RestoreHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
 
-   // history.i=ticket,openType,lots,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,netProfit,netProfitP,virtProfitP
+   // history.i=ticket,openType,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,synthProfitP
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(_EMPTY(catch("ReadStatus.RestoreHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.RestoreHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT)));
 
-   int      ticket         = StrToInteger(values[H_TICKET         ]);
-   int      openType       = StrToInteger(values[H_OPENTYPE       ]);
-   double   lots           =  StrToDouble(values[H_LOTS           ]);
-   datetime openTime       = StrToInteger(values[H_OPENTIME       ]);
-   double   openPrice      =  StrToDouble(values[H_OPENPRICE      ]);
-   double   openPriceVirt  =  StrToDouble(values[H_OPENPRICE_VIRT ]);
-   datetime closeTime      = StrToInteger(values[H_CLOSETIME      ]);
-   double   closePrice     =  StrToDouble(values[H_CLOSEPRICE     ]);
-   double   closePriceVirt =  StrToDouble(values[H_CLOSEPRICE_VIRT]);
-   double   slippage       =  StrToDouble(values[H_SLIPPAGE       ]);
-   double   swap           =  StrToDouble(values[H_SWAP           ]);
-   double   commission     =  StrToDouble(values[H_COMMISSION     ]);
-   double   grossProfit    =  StrToDouble(values[H_GROSSPROFIT    ]);
-   double   netProfit      =  StrToDouble(values[H_NETPROFIT      ]);
-   double   netProfitP     =  StrToDouble(values[H_NETPROFIT_P    ]);
-   double   virtProfitP    =  StrToDouble(values[H_VIRTPROFIT_P   ]);
+   int      ticket          = StrToInteger(values[H_TICKET          ]);
+   int      openType        = StrToInteger(values[H_OPENTYPE        ]);
+   double   lots            =  StrToDouble(values[H_LOTS            ]);
+   datetime openTime        = StrToInteger(values[H_OPENTIME        ]);
+   double   openPrice       =  StrToDouble(values[H_OPENPRICE       ]);
+   double   openPriceSynth  =  StrToDouble(values[H_OPENPRICE_SYNTH ]);
+   datetime closeTime       = StrToInteger(values[H_CLOSETIME       ]);
+   double   closePrice      =  StrToDouble(values[H_CLOSEPRICE      ]);
+   double   closePriceSynth =  StrToDouble(values[H_CLOSEPRICE_SYNTH]);
+   double   slippage        =  StrToDouble(values[H_SLIPPAGE        ]);
+   double   swap            =  StrToDouble(values[H_SWAP            ]);
+   double   commission      =  StrToDouble(values[H_COMMISSION      ]);
+   double   grossProfit     =  StrToDouble(values[H_GROSSPROFIT     ]);
+   double   netProfit       =  StrToDouble(values[H_NETPROFIT       ]);
+   double   netProfitP      =  StrToDouble(values[H_NETPROFIT_P     ]);
+   double   synthProfitP    =  StrToDouble(values[H_SYNTHPROFIT_P   ]);
 
-   return(History.AddRecord(ticket, openType, lots, openTime, openPrice, openPriceVirt, closeTime, closePrice, closePriceVirt, slippage, swap, commission, grossProfit, netProfit, netProfitP, virtProfitP));
+   return(History.AddRecord(ticket, openType, lots, openTime, openPrice, openPriceSynth, closeTime, closePrice, closePriceSynth, slippage, swap, commission, grossProfit, netProfit, netProfitP, synthProfitP));
 }
 
 
@@ -1240,7 +1279,7 @@ bool ReadStatus.RestoreHistory(string key, string value) {
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int History.AddRecord(int ticket, int openType, double lots, datetime openTime, double openPrice, double openPriceVirt, datetime closeTime, double closePrice, double closePriceVirt, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double virtProfitP) {
+int History.AddRecord(int ticket, int openType, double lots, datetime openTime, double openPrice, double openPriceSynth, datetime closeTime, double closePrice, double closePriceSynth, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double synthProfitP) {
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
@@ -1260,22 +1299,22 @@ int History.AddRecord(int ticket, int openType, double lots, datetime openTime, 
    }
 
    // insert the new data
-   history[i][H_TICKET         ] = ticket;
-   history[i][H_OPENTYPE       ] = openType;
-   history[i][H_LOTS           ] = lots;
-   history[i][H_OPENTIME       ] = openTime;
-   history[i][H_OPENPRICE      ] = openPrice;
-   history[i][H_OPENPRICE_VIRT ] = openPriceVirt;
-   history[i][H_CLOSETIME      ] = closeTime;
-   history[i][H_CLOSEPRICE     ] = closePrice;
-   history[i][H_CLOSEPRICE_VIRT] = closePriceVirt;
-   history[i][H_SLIPPAGE       ] = slippage;
-   history[i][H_SWAP           ] = swap;
-   history[i][H_COMMISSION     ] = commission;
-   history[i][H_GROSSPROFIT    ] = grossProfit;
-   history[i][H_NETPROFIT      ] = netProfit;
-   history[i][H_NETPROFIT_P    ] = netProfitP;
-   history[i][H_VIRTPROFIT_P   ] = virtProfitP;
+   history[i][H_TICKET          ] = ticket;
+   history[i][H_OPENTYPE        ] = openType;
+   history[i][H_LOTS            ] = lots;
+   history[i][H_OPENTIME        ] = openTime;
+   history[i][H_OPENPRICE       ] = openPrice;
+   history[i][H_OPENPRICE_SYNTH ] = openPriceSynth;
+   history[i][H_CLOSETIME       ] = closeTime;
+   history[i][H_CLOSEPRICE      ] = closePrice;
+   history[i][H_CLOSEPRICE_SYNTH] = closePriceSynth;
+   history[i][H_SLIPPAGE        ] = slippage;
+   history[i][H_SWAP            ] = swap;
+   history[i][H_COMMISSION      ] = commission;
+   history[i][H_GROSSPROFIT     ] = grossProfit;
+   history[i][H_NETPROFIT       ] = netProfit;
+   history[i][H_NETPROFIT_P     ] = netProfitP;
+   history[i][H_SYNTHPROFIT_P   ] = synthProfitP;
 
    if (!catch("History.AddRecord(2)"))
       return(i);
@@ -1341,7 +1380,7 @@ string GetStatusFilename(bool relative = false) {
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = ProgramName() +", "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ instance.id +".set";
+      string baseName  = ProgramName() +", "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ StrPadLeft(instance.id, 3, "0") +".set";
       filename = directory + baseName;
    }
 
@@ -1365,7 +1404,7 @@ string FindStatusFile(int instanceId, bool isTest) {
 
    string sandboxDir  = GetMqlSandboxPath() +"/";
    string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
-   string basePattern = ProgramName() +", "+ Symbol() +",*id="+ instanceId +".set";
+   string basePattern = ProgramName() +", "+ Symbol() +",*id="+ StrPadLeft(""+ instanceId, 3, "0") +".set";
    string pathPattern = sandboxDir + statusDir + basePattern;
 
    string result[];
@@ -1409,7 +1448,7 @@ bool SaveStatus() {
    else {
       WriteIniString(file, section, "Test.Currency",   AccountCurrency());
       WriteIniString(file, section, "Test.Symbol",     Symbol());
-      WriteIniString(file, section, "Test.Timeframe",  TimeToStr(Tester_GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Tester_GetEndDate()-1*DAY, TIME_DATE));
+      WriteIniString(file, section, "Test.Timeframe",  TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
       WriteIniString(file, section, "Test.Period",     PeriodDescription());
       WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
       WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid) * pMultiplier, pDigits) +" "+ pUnit);
@@ -1426,76 +1465,76 @@ bool SaveStatus() {
 
    // [Inputs]
    section = "Inputs";
-   WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
-   WriteIniString(file, section, "Tunnel.Definition",          /*string  */ Tunnel.Definition);
-   WriteIniString(file, section, "Donchian.Periods",           /*int     */ Donchian.Periods);
-   WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);                // conditional section separator
+   WriteIniString(file, section, "Instance.ID",                 /*string  */ Instance.ID);
+   WriteIniString(file, section, "Tunnel.Definition",           /*string  */ Tunnel.Definition);
+   WriteIniString(file, section, "Donchian.Periods",            /*int     */ Donchian.Periods);
+   WriteIniString(file, section, "Lots",                        /*double  */ NumberToStr(Lots, ".+"));
+   WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder + separator);                // conditional section separator
 
    // [Runtime status]
-   section = "Runtime status";                                 // On deletion of pending orders (if any) the number of stored order records decreases.
-   EmptyIniSectionA(file, section);                            // To prevent orphaned status file records the section is emptied before writing to it.
-   WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + CRLF);
+   section = "Runtime status";                                  // On deletion of pending orders (if any) the number of stored order records decreases.
+   EmptyIniSectionA(file, section);                             // To prevent orphaned status file records the section is emptied before writing to it.
+   WriteIniString(file, section, "recorder.stdEquitySymbol",    /*string  */ recorder.stdEquitySymbol + CRLF);
 
    // instance data
-   WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
-   WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
-   WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ CRLF);
+   WriteIniString(file, section, "instance.id",                 /*int     */ instance.id);
+   WriteIniString(file, section, "instance.name",               /*string  */ instance.name);
+   WriteIniString(file, section, "instance.created",            /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.isTest",             /*bool    */ instance.isTest);
+   WriteIniString(file, section, "instance.status",             /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfit",     /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 17)        +" ; real PnL after all costs in "+ AccountCurrency() +" (net)");
-   WriteIniString(file, section, "instance.closedNetProfit",   /*double  */ DoubleToStr(instance.closedNetProfit, 2));
-   WriteIniString(file, section, "instance.totalNetProfit",    /*double  */ DoubleToStr(instance.totalNetProfit, 2));
-   WriteIniString(file, section, "instance.maxNetProfit",      /*double  */ DoubleToStr(instance.maxNetProfit, 2));
-   WriteIniString(file, section, "instance.maxNetDrawdown",    /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
-   WriteIniString(file, section, "instance.avgNetProfit",      /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgNetProfit), 0, instance.avgNetProfit), 2) + CRLF);
+   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 17)         +" ; real PnL after all costs in "+ AccountCurrency() +" (net)");
+   WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
+   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2));
+   WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
+   WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
+   WriteIniString(file, section, "instance.avgNetProfit",       /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgNetProfit), 0, instance.avgNetProfit), 2) + CRLF);
 
-   WriteIniString(file, section, "instance.openNetProfitP",    /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP, ".1+"), 16)    +" ; real PnL after all costs in point (net)");
-   WriteIniString(file, section, "instance.closedNetProfitP",  /*double  */ NumberToStr(instance.closedNetProfitP, ".1+"));
-   WriteIniString(file, section, "instance.totalNetProfitP",   /*double  */ NumberToStr(instance.totalNetProfitP, ".1+"));
-   WriteIniString(file, section, "instance.maxNetProfitP",     /*double  */ NumberToStr(instance.maxNetProfitP, ".1+"));
-   WriteIniString(file, section, "instance.maxNetDrawdownP",   /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
-   WriteIniString(file, section, "instance.avgNetProfitP",     /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + CRLF);
+   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP, ".1+"), 16)    +" ; real PnL after all costs in point (net)");
+   WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ NumberToStr(instance.closedNetProfitP, ".1+"));
+   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ NumberToStr(instance.totalNetProfitP, ".1+"));
+   WriteIniString(file, section, "instance.maxNetProfitP",      /*double  */ NumberToStr(instance.maxNetProfitP, ".1+"));
+   WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
+   WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + CRLF);
 
-   WriteIniString(file, section, "instance.openVirtProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openVirtProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (exact execution)");
-   WriteIniString(file, section, "instance.closedVirtProfitP", /*double  */ DoubleToStr(instance.closedVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.totalVirtProfitP",  /*double  */ DoubleToStr(instance.totalVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.maxVirtProfitP",    /*double  */ DoubleToStr(instance.maxVirtProfitP, Digits));
-   WriteIniString(file, section, "instance.maxVirtDrawdownP",  /*double  */ DoubleToStr(instance.maxVirtDrawdownP, Digits));
-   WriteIniString(file, section, "instance.avgVirtProfitP",    /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgVirtProfitP), 0, instance.avgVirtProfitP), Digits+1) + CRLF);
+   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (exact execution)");
+   WriteIniString(file, section, "instance.closedSynthProfitP", /*double  */ DoubleToStr(instance.closedSynthProfitP, Digits));
+   WriteIniString(file, section, "instance.totalSynthProfitP",  /*double  */ DoubleToStr(instance.totalSynthProfitP, Digits));
+   WriteIniString(file, section, "instance.maxSynthProfitP",    /*double  */ DoubleToStr(instance.maxSynthProfitP, Digits));
+   WriteIniString(file, section, "instance.maxSynthDrawdownP",  /*double  */ DoubleToStr(instance.maxSynthDrawdownP, Digits));
+   WriteIniString(file, section, "instance.avgSynthProfitP",    /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgSynthProfitP), 0, instance.avgSynthProfitP), Digits+1) + CRLF);
 
    // open order data
-   WriteIniString(file, section, "open.ticket",                /*int     */ open.ticket);
-   WriteIniString(file, section, "open.type",                  /*int     */ open.type);
-   WriteIniString(file, section, "open.lots",                  /*double  */ NumberToStr(open.lots, ".+"));
-   WriteIniString(file, section, "open.time",                  /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
-   WriteIniString(file, section, "open.price",                 /*double  */ DoubleToStr(open.price, Digits));
-   WriteIniString(file, section, "open.priceVirt",             /*double  */ DoubleToStr(open.priceVirt, Digits));
-   WriteIniString(file, section, "open.slippage",              /*double  */ DoubleToStr(open.slippage, Digits));
-   WriteIniString(file, section, "open.swap",                  /*double  */ DoubleToStr(open.swap, 2));
-   WriteIniString(file, section, "open.commission",            /*double  */ DoubleToStr(open.commission, 2));
-   WriteIniString(file, section, "open.grossProfit",           /*double  */ DoubleToStr(open.grossProfit, 2));
-   WriteIniString(file, section, "open.netProfit",             /*double  */ DoubleToStr(open.netProfit, 2));
-   WriteIniString(file, section, "open.netProfitP",            /*double  */ NumberToStr(open.netProfitP, ".1+"));
-   WriteIniString(file, section, "open.virtProfitP",           /*double  */ DoubleToStr(open.virtProfitP, Digits) + CRLF);
+   WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
+   WriteIniString(file, section, "open.type",                   /*int     */ open.type);
+   WriteIniString(file, section, "open.lots",                   /*double  */ NumberToStr(open.lots, ".+"));
+   WriteIniString(file, section, "open.time",                   /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
+   WriteIniString(file, section, "open.priceSynth",             /*double  */ DoubleToStr(open.priceSynth, Digits));
+   WriteIniString(file, section, "open.slippage",               /*double  */ DoubleToStr(open.slippage, Digits));
+   WriteIniString(file, section, "open.swap",                   /*double  */ DoubleToStr(open.swap, 2));
+   WriteIniString(file, section, "open.commission",             /*double  */ DoubleToStr(open.commission, 2));
+   WriteIniString(file, section, "open.grossProfit",            /*double  */ DoubleToStr(open.grossProfit, 2));
+   WriteIniString(file, section, "open.netProfit",              /*double  */ DoubleToStr(open.netProfit, 2));
+   WriteIniString(file, section, "open.netProfitP",             /*double  */ NumberToStr(open.netProfitP, ".1+"));
+   WriteIniString(file, section, "open.synthProfitP",           /*double  */ DoubleToStr(open.synthProfitP, Digits) + CRLF);
 
    // closed order data
-   double netProfit, netProfitP, virtProfitP;
+   double netProfit, netProfitP, synthProfitP;
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i));
-      netProfit   += history[i][H_NETPROFIT   ];
-      netProfitP  += history[i][H_NETPROFIT_P ];
-      virtProfitP += history[i][H_VIRTPROFIT_P];
+      netProfit    += history[i][H_NETPROFIT    ];
+      netProfitP   += history[i][H_NETPROFIT_P  ];
+      synthProfitP += history[i][H_SYNTHPROFIT_P];
    }
 
    // cross-check stored stats
-   int precision = MathMax(Digits, 2) + 1;                    // required precision for fractional point values
-   if (NE(netProfit,   instance.closedNetProfit, 2))          return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("     + NumberToStr(netProfit, ".2+")              +" != "+ NumberToStr(instance.closedNetProfit, ".2+")              +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,  instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("  + NumberToStr(netProfitP, "."+ Digits +"+")  +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")  +")", ERR_ILLEGAL_STATE));
-   if (NE(virtProfitP, instance.closedVirtProfitP, Digits))   return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_VIRTPROFIT_P]) != instance.closedVirtProfitP ("+ NumberToStr(virtProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedVirtProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   int precision = MathMax(Digits, 2) + 1;                     // required precision for fractional point values
+   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
+   if (NE(synthProfitP, instance.closedSynthProfitP, Digits))  return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_SYNTHPROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("SaveStatus(5)"));
 }
@@ -1509,26 +1548,26 @@ bool SaveStatus() {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int index) {
-   // result: ticket,openType,lots,openTime,openPrice,openPriceVirt,closeTime,closePrice,closePriceVirt,slippage,swap,commission,grossProfit,netProfit,netProfitP,virtProfitP
+   // result: ticket,openType,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,synthProfitP
 
-   int      ticket         = history[index][H_TICKET         ];
-   int      openType       = history[index][H_OPENTYPE       ];
-   double   lots           = history[index][H_LOTS           ];
-   datetime openTime       = history[index][H_OPENTIME       ];
-   double   openPrice      = history[index][H_OPENPRICE      ];
-   double   openPriceVirt  = history[index][H_OPENPRICE_VIRT ];
-   datetime closeTime      = history[index][H_CLOSETIME      ];
-   double   closePrice     = history[index][H_CLOSEPRICE     ];
-   double   closePriceVirt = history[index][H_CLOSEPRICE_VIRT];
-   double   slippage       = history[index][H_SLIPPAGE       ];
-   double   swap           = history[index][H_SWAP           ];
-   double   commission     = history[index][H_COMMISSION     ];
-   double   grossProfit    = history[index][H_GROSSPROFIT    ];
-   double   netProfit      = history[index][H_NETPROFIT      ];
-   double   netProfitP     = history[index][H_NETPROFIT_P    ];
-   double   virtProfitP    = history[index][H_VIRTPROFIT_P   ];
+   int      ticket          = history[index][H_TICKET          ];
+   int      openType        = history[index][H_OPENTYPE        ];
+   double   lots            = history[index][H_LOTS            ];
+   datetime openTime        = history[index][H_OPENTIME        ];
+   double   openPrice       = history[index][H_OPENPRICE       ];
+   double   openPriceSynth  = history[index][H_OPENPRICE_SYNTH ];
+   datetime closeTime       = history[index][H_CLOSETIME       ];
+   double   closePrice      = history[index][H_CLOSEPRICE      ];
+   double   closePriceSynth = history[index][H_CLOSEPRICE_SYNTH];
+   double   slippage        = history[index][H_SLIPPAGE        ];
+   double   swap            = history[index][H_SWAP            ];
+   double   commission      = history[index][H_COMMISSION      ];
+   double   grossProfit     = history[index][H_GROSSPROFIT     ];
+   double   netProfit       = history[index][H_NETPROFIT       ];
+   double   netProfitP      = history[index][H_NETPROFIT_P     ];
+   double   synthProfitP    = history[index][H_SYNTHPROFIT_P   ];
 
-   return(StringConcatenate(ticket, ",", openType, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceVirt, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceVirt, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(virtProfitP, Digits)));
+   return(StringConcatenate(ticket, ",", openType, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSynth, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSynth, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(synthProfitP, Digits)));
 }
 
 
@@ -1619,18 +1658,17 @@ bool ValidateInputs() {
 
    // Instance.ID
    if (isInitParameters) {                                        // otherwise the id was validated in ValidateInputs.ID()
-      string sValue = StrTrim(Instance.ID);
-      if (sValue == "") {                                         // the id was deleted or not yet set, restore the internal id
+      if (StrTrim(Instance.ID) == "") {                           // the id was deleted or not yet set, restore the internal id
          Instance.ID = prev.Instance.ID;
       }
-      else if (sValue != prev.Instance.ID) return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
+      else if (Instance.ID != prev.Instance.ID)    return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
    }
 
    // Tunnel.Definition
    if (isInitParameters && Tunnel.Definition!=prev.Tunnel.Definition) {
-      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input parameter Tunnel.Definition with open orders"));
+      if (hasOpenOrders)                           return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input parameter Tunnel.Definition with open orders"));
    }
-   string sValues[], sMAs[];
+   string sValue, sValues[], sMAs[];
    ArrayResize(sMAs, 0);
    int n=0, size=Explode(Tunnel.Definition, ",", sValues, NULL);
    for (int i=0; i < size; i++) {
@@ -1638,34 +1676,34 @@ bool ValidateInputs() {
       if (sValue == "") continue;
 
       string sMethod = StrLeftTo(sValue, "(");
-      if (sMethod == sValue)               return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      if (sMethod == sValue)                       return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
       int iMethod = StrToMaMethod(sMethod, F_ERR_INVALID_PARAMETER);
-      if (iMethod == -1)                   return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
-      if (iMethod > MODE_LWMA)             return(!onInputError("ValidateInputs(5)  "+ instance.name +" unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
+      if (iMethod == -1)                           return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
+      if (iMethod > MODE_LWMA)                     return(!onInputError("ValidateInputs(5)  "+ instance.name +" unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
 
       string sPeriods = StrRightFrom(sValue, "(");
-      if (!StrEndsWith(sPeriods, ")"))     return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      if (!StrEndsWith(sPeriods, ")"))             return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
       sPeriods = StrTrim(StrLeft(sPeriods, -1));
-      if (!StrIsDigits(sPeriods))          return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      if (!StrIsDigits(sPeriods))                  return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
       int iPeriods = StrToInteger(sPeriods);
-      if (iPeriods < 1)                    return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be > 0)"));
+      if (iPeriods < 1)                            return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be > 0)"));
 
       ArrayResize(sMAs, n+1);
       sMAs[n]  = MaMethodDescription(iMethod) +"("+ iPeriods +")";
       n++;
    }
-   if (!n)                                 return(!onInputError("ValidateInputs(9)  "+ instance.name +" missing input parameter Tunnel.Definition (empty)"));
+   if (!n)                                         return(!onInputError("ValidateInputs(9)  "+ instance.name +" missing input parameter Tunnel.Definition (empty)"));
    Tunnel.Definition = JoinStrings(sMAs);
 
    // Donchian.Periods
    if (isInitParameters && Donchian.Periods!=prev.Donchian.Periods) {
-      if (hasOpenOrders)                   return(!onInputError("ValidateInputs(10)  "+ instance.name +" cannot change input parameter Donchian.Periods with open orders"));
+      if (hasOpenOrders)                           return(!onInputError("ValidateInputs(10)  "+ instance.name +" cannot change input parameter Donchian.Periods with open orders"));
    }
-   if (Donchian.Periods < 2)               return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Donchian.Periods: "+ Donchian.Periods +" (must be > 1)"));
+   if (Donchian.Periods < 2)                       return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Donchian.Periods: "+ Donchian.Periods +" (must be > 1)"));
 
    // Lots
-   if (LT(Lots, 0))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
-   if (NE(Lots, NormalizeLots(Lots)))      return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
+   if (NE(Lots, NormalizeLots(Lots)))              return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
    if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
@@ -1706,7 +1744,7 @@ int onInputError(string message) {
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
 int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
-   string sId = ifString(!instance.id, "???", instance.id);
+   string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
    string descrSuffix = "";
 
    ready     = false;
@@ -1738,7 +1776,7 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          multiplier  = pMultiplier;
          break;
 
-      case METRIC_TOTAL_VIRT_UNITS:
+      case METRIC_TOTAL_SYNTH_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
          descrSuffix = ", "+ PeriodDescription() +", synthetic PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = pDigits;
@@ -1762,9 +1800,9 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
 void RecordMetrics() {
    if (recorder.mode == RECORDER_CUSTOM) {
       int size = ArraySize(metric.ready);
-      if (size > METRIC_TOTAL_NET_MONEY ) metric.currValue[METRIC_TOTAL_NET_MONEY ] = instance.totalNetProfit;
-      if (size > METRIC_TOTAL_NET_UNITS ) metric.currValue[METRIC_TOTAL_NET_UNITS ] = instance.totalNetProfitP;
-      if (size > METRIC_TOTAL_VIRT_UNITS) metric.currValue[METRIC_TOTAL_VIRT_UNITS] = instance.totalVirtProfitP;
+      if (size > METRIC_TOTAL_NET_MONEY  ) metric.currValue[METRIC_TOTAL_NET_MONEY  ] = instance.totalNetProfit;
+      if (size > METRIC_TOTAL_NET_UNITS  ) metric.currValue[METRIC_TOTAL_NET_UNITS  ] = instance.totalNetProfitP;
+      if (size > METRIC_TOTAL_SYNTH_UNITS) metric.currValue[METRIC_TOTAL_SYNTH_UNITS] = instance.totalSynthProfitP;
    }
 }
 
@@ -1778,7 +1816,7 @@ bool StoreVolatileData() {
    string name = ProgramName();
 
    // input string Instance.ID
-   string value = ifString(instance.isTest, "T", "") + instance.id;
+   string value = ifString(instance.isTest, "T", "") + StrPadLeft(instance.id, 3, "0");
    Instance.ID = value;
    if (__isChart) {
       string key = name +".Instance.ID";
@@ -2001,7 +2039,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "V."+ instance.id;
+   instance.name = "V."+ StrPadLeft(instance.id, 3, "0");
 }
 
 
@@ -2016,7 +2054,7 @@ void SS.Metric() {
       case METRIC_TOTAL_NET_UNITS:
          sMetric = "Net PnL after all costs in "+ pUnit + NL + "---------------------------------"+ ifString(pUnit=="point", "---", "");
          break;
-      case METRIC_TOTAL_VIRT_UNITS:
+      case METRIC_TOTAL_SYNTH_UNITS:
          sMetric = "Synthetic PnL before spread/any costs in "+ pUnit + NL + "------------------------------------------------------"+ ifString(pUnit=="point", "--", "");
          break;
 
@@ -2053,8 +2091,8 @@ void SS.ClosedTrades() {
          case METRIC_TOTAL_NET_UNITS:
             sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_VIRT_UNITS:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgVirtProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+         case METRIC_TOTAL_SYNTH_UNITS:
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgSynthProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
          default: return(!catch("SS.ClosedTrades(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
@@ -2079,8 +2117,8 @@ void SS.TotalProfit() {
          case METRIC_TOTAL_NET_UNITS:
             sTotalProfit = NumberToStr(instance.totalNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_VIRT_UNITS:
-            sTotalProfit = NumberToStr(instance.totalVirtProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+         case METRIC_TOTAL_SYNTH_UNITS:
+            sTotalProfit = NumberToStr(instance.totalSynthProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
          default: return(!catch("SS.TotalProfit(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
@@ -2109,9 +2147,9 @@ void SS.ProfitStats() {
             sMaxProfit   = NumberToStr(instance.maxNetProfitP   * pMultiplier, "R+."+ pDigits);
             sMaxDrawdown = NumberToStr(instance.maxNetDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
-         case METRIC_TOTAL_VIRT_UNITS:
-            sMaxProfit   = NumberToStr(instance.maxVirtProfitP   * pMultiplier, "R+."+ pDigits);
-            sMaxDrawdown = NumberToStr(instance.maxVirtDrawdownP * pMultiplier, "R+."+ pDigits);
+         case METRIC_TOTAL_SYNTH_UNITS:
+            sMaxProfit   = NumberToStr(instance.maxSynthProfitP   * pMultiplier, "R+."+ pDigits);
+            sMaxDrawdown = NumberToStr(instance.maxSynthDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
 
          default: return(!catch("SS.ProfitStats(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
@@ -2185,8 +2223,4 @@ string InputsToStr() {
                             "Donchian.Periods=",  Donchian.Periods,                  ";", NL,
                             "Lots=",              NumberToStr(Lots, ".1+"),          ";")
    );
-
-   // suppress compiler warnings
-   int signal;
-   IsDonchianSignal(signal);
 }

@@ -8,51 +8,51 @@
  * This indicator fixes those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores). Once
  * the ZigZag direction changed the semaphore will not change anymore. Like the MetaQuotes version the indicator uses a
  * Donchian channel for determining legs and reversals but this indicator draws vertical line segments if a large bar crosses
- * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it developes over
+ * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it develops over
  * time and supports manual period stepping via hotkey (keyboard). Finally the indicator supports signaling of Donchian
- * channel widening (new high/low) and ZigZag reversals.
+ * channel widenings (new highs/lows) and ZigZag reversals.
  *
  *
  * Input parameters
  * ----------------
- * • ZigZag.Periods:               Lookback periods of the Donchian channel.
- * • ZigZag.Periods.Step:          Controls parameter 'ZigZag.Periods' via the keyboard. If non-zero it enables the parameter
- *                                  stepper and defines its step size. If zero the parameter stepper is disabled.
- * • ZigZag.Type:                  Whether to display ZigZag lines or ZigZag semaphores. Can be shortened as long as distinct.
- * • ZigZag.Width:                 Controls the ZigZag's line width/semaphore size.
- * • ZigZag.Semaphores.Wingdings:  Controls the WingDing symbol used for ZigZag semaphores.
- * • ZigZag.Color:                 Controls the color of ZigZag lines/semaphores.
+ *  • ZigZag.Periods:               Lookback periods of the Donchian channel.
+ *  • ZigZag.Periods.Step:          Controls parameter 'ZigZag.Periods' via the keyboard. If non-zero it enables the parameter
+ *                                   stepper and defines its step size. If zero the parameter stepper is disabled.
+ *  • ZigZag.Type:                  Whether to display ZigZag lines or ZigZag semaphores. Can be shortened as long as distinct.
+ *  • ZigZag.Width:                 The ZigZag's line width/semaphore size.
+ *  • ZigZag.Semaphores.Wingdings:  WingDing symbol used for ZigZag semaphores.
+ *  • ZigZag.Color:                 Color of ZigZag lines/semaphores.
  *
- * • Donchian.ShowChannel:         Whether to display the internally used Donchian channel.
- * • Donchian.ShowCrossings:       Controls displayed Donchian channel price crossings.
- *                                  "Off":   No crossings are displayed.
- *                                  "First": Only the first crossing per direction is displayed (the moment when ZigZag creates a new leg).
- *                                  "All":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
- * • Donchian.Crossings.Width:     Controls the size of the displayed Donchian channel crossings.
- * • Donchian.Crossings.Wingdings: Controls the WingDing symbol used for displayed Donchian channel crossings.
- * • Donchian.Upper.Color:         Controls the color of upper Donchian channel band and displayed crossings.
- * • Donchian.Lower.Color:         Controls the color of lower Donchian channel band and displayed crossings.
+ *  • Donchian.ShowChannel:         Whether to display the internally used Donchian channel.
+ *  • Donchian.ShowCrossings:       Controls displayed Donchian channel crossings, one of:
+ *                                   "off":   No crossings are displayed.
+ *                                   "first": Only the first crossing per direction is displayed (the moment when ZigZag creates a new leg).
+ *                                   "all":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
+ *  • Donchian.Crossings.Width:     Size of displayed Donchian channel crossings.
+ *  • Donchian.Crossings.Wingdings: WingDing symbol used for displaying Donchian channel crossings.
+ *  • Donchian.Upper.Color:         Color of upper Donchian channel band and upper crossings.
+ *  • Donchian.Lower.Color:         Color of lower Donchian channel band and lower crossings.
  *
- * • Max.Bars:                     Maximum number of bars back to calculate the indicator (performance).
+ *  • MaxBarsBack:                  Maximum number of bars back to calculate the indicator (performance).
  *
- * • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
- * • Signal.onReversal.Sound:      Whether to signal ZigZag reversals by sound.
- * • Signal.onReversal.SoundUp:    Sound file used for signaling ZigZag reversals to the upside.
- * • Signal.onReversal.SoundDown:  Sound file used for signaling ZigZag reversals to the downside.
- * • Signal.onReversal.Popup:      Whether to signal ZigZag reversals by popup (MetaTrader alert dialog).
- * • Signal.onReversal.Mail:       Whether to signal ZigZag reversals by e-mail.
- * • Signal.onReversal.SMS:        Whether to signal ZigZag reversals by text message.
+ *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
+ *  • Signal.onReversal.Sound:      Whether to signal ZigZag reversals by sound.
+ *  • Signal.onReversal.SoundUp:    Sound file used for signaling ZigZag reversals to the upside.
+ *  • Signal.onReversal.SoundDown:  Sound file used for signaling ZigZag reversals to the downside.
+ *  • Signal.onReversal.Popup:      Whether to signal ZigZag reversals by popup (MetaTrader alert dialog).
+ *  • Signal.onReversal.Mail:       Whether to signal ZigZag reversals by e-mail.
+ *  • Signal.onReversal.SMS:        Whether to signal ZigZag reversals by text message.
  *
- * • Sound.onCrossing:             Whether to signal Donchian channel crossings (channel widenings).
- * • Sound.onCrossing.Up:          Sound file used for signaling a Donchian channel widening to the upside.
- * • Sound.onCrossing.Down:        Sound file used for signaling a Donchian channel widening to the downside.
+ *  • Sound.onCrossing:             Whether to signal Donchian channel crossings (channel widenings).
+ *  • Sound.onCrossing.Up:          Sound file used for signaling a Donchian channel widening to the upside.
+ *  • Sound.onCrossing.Down:        Sound file used for signaling a Donchian channel widening to the downside.
  *
- * • AutoConfiguration:            If enabled all input parameters can be overwritten with custom framework config values.
+ *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom framework config values.
+ *
  *
  *
  * TODO:
  *  - ShowCrossings=first: after retracement + new crossing all crossings are drawn
- *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - document usage of iCustom()
  */
 #include <stddefines.mqh>
@@ -63,20 +63,21 @@ int __DeinitFlags[];
 
 extern string ___a__________________________ = "=== ZigZag settings ===";
 extern int    ZigZag.Periods                 = 40;                      // lookback periods of the Donchian channel
-extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (keyboard)
+extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (hotkey)
 extern string ZigZag.Type                    = "Line | Semaphores*";    // a ZigZag line or reversal points (may be shortened)
-extern int    ZigZag.Width                   = 1;
-extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a narrow ring
-extern color  ZigZag.Color                   = Blue;
+extern int    ZigZag.Width                   = 2;
+extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a large point
+extern color  ZigZag.Color                   = DodgerBlue;
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
 extern string Donchian.ShowCrossings         = "off | first* | all";    // which channel crossings to display
 extern int    Donchian.Crossings.Width       = 1;
-extern int    Donchian.Crossings.Wingdings   = 163;                     // a bold ring
-extern color  Donchian.Upper.Color           = DodgerBlue;
+extern int    Donchian.Crossings.Wingdings   = 163;                     // a circle
+extern color  Donchian.Upper.Color           = Blue;
 extern color  Donchian.Lower.Color           = Magenta;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
+extern bool   ShowChartLegend                = true;
 
 extern string ___c__________________________ = "=== Reversal signaling ===";
 extern bool   Signal.onReversal              = false;                   // on ZigZag reversal (first channel crossing)
@@ -112,8 +113,8 @@ extern string Sound.onCrossing.Down          = "Price Decline.wav";
 #define MODE_LOWER_BAND_VISIBLE    ZigZag.MODE_LOWER_BAND      //  3: visible lower channel band segments
 #define MODE_UPPER_CROSS           ZigZag.MODE_UPPER_CROSS     //  4: upper channel crossings
 #define MODE_LOWER_CROSS           ZigZag.MODE_LOWER_CROSS     //  5: lower channel crossings
-#define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  6: bar offset of the current ZigZag reversal from the previous ZigZag extreme
-#define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  7: combined MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers
+#define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  6: bar offset of current ZigZag reversal from previous ZigZag extreme
+#define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  7: combined MODE_KNOWN_TREND (14) + MODE_UNKNOWN_TREND (15) buffers
 #define MODE_UPPER_BAND            8                           //  8: full upper Donchian channel band
 #define MODE_LOWER_BAND            9                           //  9: full lower Donchian channel band
 #define MODE_UPPER_CROSS_ENTRY     10                          // 10: entry points of upper channel crossings
@@ -142,8 +143,8 @@ int       framework_buffers = 8;                               // buffers manage
 #property indicator_color6    indicator_color4                 // lower channel crossings (entry or exit points)
 #property indicator_width6    0                                //
 
-#property indicator_color7    CLR_NONE                         // combined MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers
-#property indicator_color8    CLR_NONE                         // ZigZag leg reversal bar
+#property indicator_color7    CLR_NONE                         // ZigZag leg reversal bar
+#property indicator_color8    CLR_NONE                         // combined MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers
 
 double   semaphoreOpen   [];                                   // ZigZag semaphores (open prices of a vertical line segment)
 double   semaphoreClose  [];                                   // ZigZag semaphores (close prices of a vertical line segment)
@@ -253,6 +254,8 @@ int onInit() {
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)                   return(catch("onInit(11)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
+   // ShowChartLegend
+   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
 
    // signaling
    string signalId = "Signal.onReversal";
@@ -277,7 +280,7 @@ int onInit() {
 
    // buffer management and display options
    SetIndicatorOptions();
-   legendLabel = CreateChartLegend();
+   if (ShowChartLegend) legendLabel = CreateChartLegend();
 
    // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
    // invalid signals caused by ticks during data pumping.
@@ -320,7 +323,7 @@ int onTick() {
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
    if (__isChart && ZigZag.Periods.Step) HandleCommands("ParameterStepper", false);
 
-   // manage framework buffers
+   // framework: manage additional buffers
    ManageDoubleIndicatorBuffer(MODE_UPPER_BAND,        upperBand      );
    ManageDoubleIndicatorBuffer(MODE_LOWER_BAND,        lowerBand      );
    ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_ENTRY, upperCrossEntry);
@@ -481,7 +484,7 @@ int onTick() {
       }
    }
 
-   // sound alert on channel widenings (new high/low) except if a reversal occurred at the same tick (has separate signaling)
+   // sound alert on channel widening (new high/low) except if a reversal occurred at the same tick (has separate signaling)
    if (Sound.onCrossing && ChangedBars <= 2) {
       if (ChangedBars == 2) {
          prevUpperBand = upperBand[1];
@@ -494,7 +497,9 @@ int onTick() {
       prevLowerBand = lowerBand[0];
    }
 
-   if (__isChart && !__isSuperContext) UpdateLegend();
+   if (!__isSuperContext) {
+      if (__isChart && ShowChartLegend) UpdateLegend();
+   }
    return(catch("onTick(5)"));
 }
 
@@ -914,7 +919,7 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.Lower.Color);
 
    drawType  = ifInt(crossingDrawType && Donchian.Crossings.Width, DRAW_ARROW, DRAW_NONE);
-   drawWidth = Donchian.Crossings.Width-1;                                                   // -1 to use the same scale as ZigZag.Semaphore.Width
+   drawWidth = Donchian.Crossings.Width-1;                     // minus 1 to use the same scale as ZigZag.Semaphore.Width
    SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, drawWidth, Donchian.Upper.Color); SetIndexArrow(MODE_UPPER_CROSS, Donchian.Crossings.Wingdings);
    SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, drawWidth, Donchian.Lower.Color); SetIndexArrow(MODE_LOWER_CROSS, Donchian.Crossings.Wingdings);
 
@@ -931,7 +936,6 @@ void SetIndicatorOptions() {
 bool StoreStatus() {
    if (__isChart && ZigZag.Periods.Step) {
       string prefix = "rsf."+ WindowExpertName() +".";
-
       Chart.StoreInt(prefix +"ZigZag.Periods", ZigZag.Periods);
    }
    return(catch("StoreStatus(1)"));
@@ -947,7 +951,6 @@ bool StoreStatus() {
 bool RestoreStatus() {
    if (__isChart) {
       string prefix = "rsf."+ WindowExpertName() +".";
-
       int iValue;
       if (Chart.RestoreInt(prefix +"ZigZag.Periods", iValue)) {
          if (ZigZag.Periods.Step > 0) {
@@ -979,6 +982,7 @@ string InputsToStr() {
                             "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)            +";"+ NL,
                             "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)            +";"+ NL,
                             "MaxBarsBack=",                  MaxBarsBack                                 +";"+ NL,
+                            "ShowChartLegend=",              BoolToStr(ShowChartLegend)                  +";"+ NL,
 
                             "Signal.onReversal=",            BoolToStr(Signal.onReversal)                +";"+ NL,
                             "Signal.onReversal.Sound=",      BoolToStr(Signal.onReversal.Sound)          +";"+ NL,

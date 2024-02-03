@@ -267,7 +267,7 @@ bool Recorder.init() {
          if (Recorder_GetSymbolDefinition(NULL, ready, symbol, descr, group, digits, baseValue, multiplier) != NULL) return(false);
          if (ready) {
             if (symbol == "") {
-               symbol = Recorder.ComposeEquitySymbol(); if (!StringLen(symbol)) return(false);
+               symbol = Recorder.GetNextMetricSymbol(); if (!StringLen(symbol)) return(false);
             }
             if (descr == "") {
                suffix = ", "+ PeriodDescription() +", AccountEquity in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
@@ -466,39 +466,43 @@ void Recorder.ResetMetrics() {
 
 
 /**
- * Compose the next available MT4 symbol for standard recording of AccountEquity().
+ * Resolve the next available MT4 symbol for metric recordings.
  *
  * @return string - symbol or an empty string in case of errors
  */
-string Recorder.ComposeEquitySymbol() {
+string Recorder.GetNextMetricSymbol() {
+   if (recorder.hstDirectory == "") {
+      recorder.hstDirectory = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return("");
+   }
    string filename = recorder.hstDirectory +"/symbols.raw";
-   string prefix = StrLeft(Symbol(), 7) +".";
+   string prefix = StrLeft(Symbol(), 6) +".";
    int maxId = 0;
 
    if (IsFile(filename, MODE_MQL)) {
       // open "symbols.raw" and read existing symbols
       int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
-      if (hFile <= 0)                                      return(_EMPTY_STR(catch("Recorder.ComposeEquitySymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0)                                      return(_EMPTY_STR(catch("Recorder.GetNextMetricSymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR))));
 
       int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(_EMPTY_STR(catch("Recorder.ComposeEquitySymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
+      if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(_EMPTY_STR(catch("Recorder.GetNextMetricSymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
       int symbolsSize = fileSize/SYMBOL_size;
 
       int symbols[]; InitializeByteBuffer(symbols, fileSize);
       if (fileSize > 0) {
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-         if (ints!=fileSize/4) { FileClose(hFile);         return(_EMPTY_STR(catch("Recorder.ComposeEquitySymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
+         if (ints!=fileSize/4) { FileClose(hFile);         return(_EMPTY_STR(catch("Recorder.GetNextMetricSymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR)))); }
       }
       FileClose(hFile);
 
-      // iterate over all symbols and determine the max counter matching "<prefix>[0-9]+"
-      string symbol="", suffix="";
+      // iterate over all symbols and determine the max counter matching "<prefix>[0-9]{3}"
+      string symbol="", sId="";
       for (int i=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
          if (StrStartsWithI(symbol, prefix)) {
-            suffix = StrRight(symbol, -StringLen(prefix));
-            if (StrIsDigits(suffix)) {
-               maxId = MathMax(maxId, StrToInteger(suffix));
+            sId = StrRight(symbol, -StringLen(prefix));
+            sId = StrLeft(sId, 3);
+            if (StrIsDigits(sId)) {
+               maxId = MathMax(maxId, StrToInteger(sId));
             }
          }
       }
