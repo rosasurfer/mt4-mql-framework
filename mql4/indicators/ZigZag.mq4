@@ -54,7 +54,6 @@
  * TODO:
  *  - merge buffers MODE_ALL_UPPER_CROSS and MODE_VISIBLE_UPPER_CROSS
  *  - merge buffers MODE_ALL_LOWER_CROSS and MODE_VISIBLE_LOWER_CROSS
- *  - ignore gaps in MODE_VISIBLE_(UPPER|LOWER)_CROSSES
  *
  *  - ShowCrossings=first: after retracement + new crossing all crossings are drawn
  *  - document usage of iCustom()
@@ -131,11 +130,11 @@ extern string Sound.onCrossing.Down          = "Price Decline.wav";
 int       terminal_buffers  = 8;                               // buffers managed by the terminal
 int       framework_buffers = 6;                               // buffers managed by the framework
 
-#property indicator_color1    Blue                             // the ZigZag line is built from two buffers using the color of the first buffer
+#property indicator_color1    DodgerBlue                       // the ZigZag line is built from two buffers using the color of the first buffer
 #property indicator_width1    1                                //
 #property indicator_color2    CLR_NONE                         //
 
-#property indicator_color3    DodgerBlue                       // upper channel band
+#property indicator_color3    Blue                             // upper channel band
 #property indicator_style3    STYLE_DOT                        //
 #property indicator_color4    Magenta                          // lower channel band
 #property indicator_style4    STYLE_DOT                        //
@@ -154,8 +153,8 @@ double   upperBand        [];                                  // upper channel 
 double   lowerBand        [];                                  // lower channel band
 double   visibleUpperCross[];                                  // visible upper channel crossings
 double   visibleLowerCross[];                                  // visible lower channel crossings
-double   allUpperCrosses  [];                                  // all upper channel crossings
-double   allLowerCrosses  [];                                  // all lower channel crossings
+double   allUpperCross    [];                                  // all upper channel crossings
+double   allLowerCross    [];                                  // all lower channel crossings
 double   upperCrossExit   [];                                  // exit points of upper channel crossings
 double   lowerCrossExit   [];                                  // exit points of lower channel crossings
 double   reversal         [];                                  // offset of last ZigZag reversal to previous ZigZag semaphore
@@ -323,12 +322,12 @@ int onTick() {
    if (__isChart && ZigZag.Periods.Step) HandleCommands("ParameterStepper", false);
 
    // framework: manage additional buffers
-   ManageDoubleIndicatorBuffer(MODE_ALL_UPPER_CROSS,  allUpperCrosses);
-   ManageDoubleIndicatorBuffer(MODE_ALL_LOWER_CROSS,  allLowerCrosses);
-   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_EXIT, upperCrossExit );
-   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_EXIT, lowerCrossExit );
-   ManageIntIndicatorBuffer   (MODE_KNOWN_TREND,      knownTrend     );
-   ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND,    unknownTrend   );
+   ManageDoubleIndicatorBuffer(MODE_ALL_UPPER_CROSS,  allUpperCross );
+   ManageDoubleIndicatorBuffer(MODE_ALL_LOWER_CROSS,  allLowerCross );
+   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_EXIT, upperCrossExit);
+   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_EXIT, lowerCrossExit);
+   ManageIntIndicatorBuffer   (MODE_KNOWN_TREND,      knownTrend    );
+   ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND,    unknownTrend  );
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -338,8 +337,8 @@ int onTick() {
       ArrayInitialize(lowerBand,         0);
       ArrayInitialize(visibleUpperCross, 0);
       ArrayInitialize(visibleLowerCross, 0);
-      ArrayInitialize(allUpperCrosses,   0);
-      ArrayInitialize(allLowerCrosses,   0);
+      ArrayInitialize(allUpperCross,     0);
+      ArrayInitialize(allLowerCross,     0);
       ArrayInitialize(upperCrossExit,    0);
       ArrayInitialize(lowerCrossExit,    0);
       ArrayInitialize(reversal,         -1);
@@ -357,8 +356,8 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(lowerBand,         Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(visibleUpperCross, Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(visibleLowerCross, Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(allUpperCrosses,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(allLowerCrosses,   Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(allUpperCross,     Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(allLowerCross,     Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(upperCrossExit,    Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(lowerCrossExit,    Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(reversal,          Bars, ShiftedBars, -1);
@@ -382,8 +381,8 @@ int onTick() {
       lowerBand        [bar] =  0;
       visibleUpperCross[bar] =  0;
       visibleLowerCross[bar] =  0;
-      allUpperCrosses  [bar] =  0;
-      allLowerCrosses  [bar] =  0;
+      allUpperCross    [bar] =  0;
+      allLowerCross    [bar] =  0;
       upperCrossExit   [bar] =  0;
       lowerCrossExit   [bar] =  0;
       reversal         [bar] = -1;
@@ -403,13 +402,13 @@ int onTick() {
 
       // recalculate channel crossings
       if (upperBand[bar] > upperBand[bar+1]) {
-         allUpperCrosses[bar] = MathMax(Low[bar], upperBand[bar+1]+Point);
-         upperCrossExit [bar] = upperBand[bar];
+         allUpperCross [bar] = upperBand[bar+1]+Point;
+         upperCrossExit[bar] = upperBand[bar];
       }
 
       if (lowerBand[bar] < lowerBand[bar+1]) {
-         allLowerCrosses[bar] = MathMin(High[bar], lowerBand[bar+1]-Point);
-         lowerCrossExit [bar] = lowerBand[bar];
+         allLowerCross [bar] = lowerBand[bar+1]-Point;
+         lowerCrossExit[bar] = lowerBand[bar];
       }
 
       // recalculate ZigZag
@@ -458,17 +457,17 @@ int onTick() {
 
       // populate visible crossing buffers
       if (crossingDrawType == MODE_ALL_CROSSINGS) {
-         visibleUpperCross[bar] = allUpperCrosses[bar];
-         visibleLowerCross[bar] = allLowerCrosses[bar];
+         visibleUpperCross[bar] = allUpperCross[bar];
+         visibleLowerCross[bar] = allLowerCross[bar];
       }
       else if (crossingDrawType == MODE_FIRST_CROSSING) {
          if (Abs(knownTrend[bar]) == reversal[bar]) {
-            visibleUpperCross[bar] = allUpperCrosses[bar];
-            visibleLowerCross[bar] = allLowerCrosses[bar];
+            visibleUpperCross[bar] = allUpperCross[bar];
+            visibleLowerCross[bar] = allLowerCross[bar];
          }
          else if (!reversal[bar]) {
-            if      (knownTrend[bar] == +1) visibleUpperCross[bar] = allUpperCrosses[bar];
-            else if (knownTrend[bar] == -1) visibleLowerCross[bar] = allLowerCrosses[bar];
+            if      (knownTrend[bar] == +1) visibleUpperCross[bar] = allUpperCross[bar];
+            else if (knownTrend[bar] == -1) visibleLowerCross[bar] = allLowerCross[bar];
          }
       }
    }
