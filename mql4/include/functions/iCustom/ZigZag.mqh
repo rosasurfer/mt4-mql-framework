@@ -3,8 +3,8 @@
 #define ZigZag.MODE_SEMAPHORE_CLOSE    1              // semaphore close price
 #define ZigZag.MODE_UPPER_BAND         2              // upper channel band
 #define ZigZag.MODE_LOWER_BAND         3              // lower channel band
-#define ZigZag.MODE_UPPER_CROSS        4              // visible upper channel band crossings
-#define ZigZag.MODE_LOWER_CROSS        5              // visible lower channel band crossings
+#define ZigZag.MODE_UPPER_CROSS        4              // upper channel band crossings
+#define ZigZag.MODE_LOWER_CROSS        5              // lower channel band crossings
 #define ZigZag.MODE_REVERSAL           6              // offset of last ZigZag reversal to previous ZigZag semaphore
 #define ZigZag.MODE_TREND              7              // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 
