@@ -400,13 +400,12 @@ int onTick() {
          lowerCrossLow[bar] = lowerBand[bar];
       }
 
-      // recalculate ZigZag
+      // recalculate ZigZag data
       // if no channel crossing
       if (!upperCrossHigh[bar] && !lowerCrossLow[bar]) {
-         knownTrend   [bar] = knownTrend[bar+1];                  // keep known trend
-         unknownTrend [bar] = unknownTrend[bar+1] + 1;            // increase unknown trend
-         combinedTrend[bar] = Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar];
-         reversal     [bar] = reversal[bar+1];                    // keep previous reversal bar offset
+         knownTrend  [bar] = knownTrend[bar+1];                   // keep known trend
+         unknownTrend[bar] = unknownTrend[bar+1] + 1;             // increase unknown trend
+         reversal    [bar] = reversal[bar+1];                     // keep previous reversal bar offset
       }
 
       // if two channel crossings (upper and lower band crossed by the same bar)
@@ -440,9 +439,12 @@ int onTick() {
          reversal[bar] = 0;                                       // the 2nd crossing always defines a new reversal
       }
 
-      // if a single band crossing
+      // if a single channel crossing
       else if (upperCrossHigh[bar] != 0) ProcessUpperCross(bar);
       else                               ProcessLowerCross(bar);
+
+      // calculate combinedTrend[]
+      combinedTrend[bar] = Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar];
 
       // hide non-configured crossing buffers
       if (!crossingDrawType) {                                    // hide all
@@ -472,8 +474,8 @@ int onTick() {
          prevUpperBand = upperBand[1];
          prevLowerBand = lowerBand[1];
       }
-      if      (prevUpperBand && upperBand[0] > prevUpperBand) onChannelCrossing(D_LONG);
-      else if (prevLowerBand && lowerBand[0] < prevLowerBand) onChannelCrossing(D_SHORT);
+      if      (prevUpperBand && upperBand[0] > prevUpperBand) onChannelCross(D_LONG);
+      else if (prevLowerBand && lowerBand[0] < prevLowerBand) onChannelCross(D_SHORT);
 
       prevUpperBand = upperBand[0];
       prevLowerBand = lowerBand[0];
@@ -529,9 +531,8 @@ int ProcessUpperCross(int bar) {
          semaphoreClose[bar] = upperCrossHigh[bar];
       }
       else {                                                      // a lower high
-         knownTrend   [bar] = knownTrend[bar+1];                  // keep known trend
-         unknownTrend [bar] = unknownTrend[bar+1] + 1;            // increase unknown trend
-         combinedTrend[bar] = Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar];
+         knownTrend  [bar] = knownTrend[bar+1];                   // keep known trend
+         unknownTrend[bar] = unknownTrend[bar+1] + 1;             // increase unknown trend
       }
       reversal[bar] = reversal[bar+1];                            // keep previous reversal bar offset
    }
@@ -577,9 +578,8 @@ int ProcessLowerCross(int bar) {
          semaphoreClose[bar] = lowerCrossLow[bar];
       }
       else {                                                      // a higher low
-         knownTrend   [bar] = knownTrend[bar+1];                  // keep known trend
-         unknownTrend [bar] = unknownTrend[bar+1] + 1;            // increase unknown trend
-         combinedTrend[bar] = Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar];
+         knownTrend  [bar] = knownTrend[bar+1];                   // keep known trend
+         unknownTrend[bar] = unknownTrend[bar+1] + 1;             // increase unknown trend
       }
       reversal[bar] = reversal[bar+1];                            // keep previous reversal offset
    }
@@ -606,12 +606,12 @@ int ProcessLowerCross(int bar) {
  *
  * @param  int bar - startbar offset
  *
- * @return int - ZigZag point offset or the previous bar offset if no previous ZigZag point exists yet
+ * @return int - bar offset of the preceeding ZigZag point or (bar-1) if no preceeding ZigZag point exists (begin of chart)
  */
 int GetPreviousZigZagPoint(int bar) {
    int zzOffset, nextBar=bar + 1;
 
-   if (unknownTrend[nextBar] > 0)     zzOffset = nextBar + unknownTrend[nextBar];
+   if (unknownTrend[nextBar] != 0)    zzOffset = nextBar + unknownTrend[nextBar];
    else if (!semaphoreClose[nextBar]) zzOffset = nextBar + Abs(knownTrend[nextBar]);
    else                               zzOffset = nextBar;
    return(zzOffset);
@@ -619,12 +619,12 @@ int GetPreviousZigZagPoint(int bar) {
 
 
 /**
- * Update/count forward the 'knownTrend' counter and reset the 'unknownTrend' of the specified bar range.
+ * Update/count forward the 'knownTrend' and 'unknownTrend' counter of the specified bar range.
  *
  * @param  int  fromBar       - start bar of the range to update
  * @param  int  fromValue     - start value for the trend counter
  * @param  int  toBar         - end bar of the range to update
- * @param  bool resetReversal - whether to reset the reversal buffer in the bar range
+ * @param  bool resetReversal - whether to reset the reversal buffer of the bar range
  */
 void UpdateTrend(int fromBar, int fromValue, int toBar, bool resetReversalBuffer) {
    resetReversalBuffer = resetReversalBuffer!=0;
@@ -714,16 +714,16 @@ bool onReversal(int direction, int bar) {
  *
  * @return bool - success status
  */
-bool onChannelCrossing(int direction) {
+bool onChannelCross(int direction) {
    if (!Sound.onCrossing) return(false);
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelCrossing(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    if (lastSoundSignal+2000 < GetTickCount()) {                      // at least 2 sec pause between consecutive sound signals
       int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onCrossing.Up, Sound.onCrossing.Down));
       if      (!error)                      lastSoundSignal = GetTickCount();
       else if (error == ERR_FILE_NOT_FOUND) Sound.onCrossing = false;
    }
-   return(!catch("onChannelCrossing(2)"));
+   return(!catch("onChannelCross(2)"));
 }
 
 
