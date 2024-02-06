@@ -143,7 +143,7 @@ int onInit() {
    // names, labels and display options
    legendLabel = CreateChartLegend();
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   indicatorName = "2-Pole-Filter("+ Periods + sAppliedPrice +")";
+   indicatorName = WindowExpertName() +"("+ Periods + sAppliedPrice +")";
    string shortName = "2-Pole-Filter("+ Periods +")";
    IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      shortName);             // chart tooltips and "Data" window

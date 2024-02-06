@@ -198,10 +198,10 @@ int onInit() {
    if (fastMA.appliedPrice!=slowMA.appliedPrice || slowMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(slowMA.appliedPrice);
    string slowMA.name = SlowMA.Method +"("+ slowMA.periods + sAppliedPrice +")";
 
-   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
-   else                                                                          indicatorName = "MACD "+ fastMA.name +", "+ slowMA.name;
-   if (FastMA.Method==SlowMA.Method)                                             dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
-   else                                                                          dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
+   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = WindowExpertName() +" "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
+   else                                                                          indicatorName = WindowExpertName() +" "+ fastMA.name +", "+ slowMA.name;
+   if (FastMA.Method==SlowMA.Method)                                             dataName      = WindowExpertName() +" "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
+   else                                                                          dataName      = WindowExpertName() +" "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
    string signalInfo = ifString(Signal.onCross, "  onCross="+ StrLeft(ifString(Signal.onCross.Sound, "sound,", "") + ifString(Signal.onCross.Popup, "popup,", "") + ifString(Signal.onCross.Mail, "mail,", "") + ifString(Signal.onCross.SMS, "sms,", ""), -1), "");
 
    IndicatorShortName(indicatorName + signalInfo +"  ");                // chart subwindow and context menu

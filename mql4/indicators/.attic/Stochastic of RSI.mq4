@@ -127,7 +127,7 @@ int onInit() {
    string sStochMa1Periods="", sStochMa2Periods="";
    if (ma1Periods!=1) sStochMa1Periods = ", "+ ma1Periods;
    if (ma2Periods!=1) sStochMa2Periods = ", "+ ma2Periods;
-   string indicatorName  = "Stochastic("+ stochPeriods +" x RSI("+ rsiPeriods +")"+ sStochMa1Periods + sStochMa2Periods +")";
+   string indicatorName = WindowExpertName() +"("+ stochPeriods +" x RSI("+ rsiPeriods +")"+ sStochMa1Periods + sStochMa2Periods +")";
 
    IndicatorShortName(indicatorName +"  ");              // chart subwindow and context menu
    SetIndexLabel(MODE_RSI,       NULL);                  // chart tooltips and "Data" window

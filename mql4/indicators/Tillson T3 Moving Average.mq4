@@ -563,7 +563,7 @@ double GetPrice(int type, int i) {
 void SetIndicatorOptions() {
    string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   indicatorName        = "T3MA("+ ifString(T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step, "step:", "") + T3.Periods +","+ NumberToStr(T3.VolumeFactor, ".1+") + sMaFilter + sAppliedPrice +")";
+   indicatorName        = WindowExpertName() +"("+ ifString(T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step, "step:", "") + T3.Periods +","+ NumberToStr(T3.VolumeFactor, ".1+") + sMaFilter + sAppliedPrice +")";
    shortName            = "T3MA("+ T3.Periods +")";
    IndicatorShortName(shortName);
 
