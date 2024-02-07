@@ -54,14 +54,12 @@
  *     ControlPoints:
  *     BarOpen:
  *
- *  - fix ZigZag errors
- *
  *  - fix virtual trading
  *  - add ZigZag projections
  *  - input TradingTimeframe
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - rewrite Test_GetCommission()
- *  - rewrite loglevel
+ *  - rewrite loglevels to global vars
  *  - document control scripts
  *
  *  - realtime metric charts

@@ -53,9 +53,7 @@
  *
  * TODO:
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
- *  - reimplement signaling
- *
- *  - move reversal signaling behind UpdateLegend()
+ *  - keep bar status in IsUpperCrossLast()
  *  - document usage of iCustom()
  */
 #include <stddefines.mqh>
@@ -427,13 +425,19 @@ int onTick() {
       combinedTrend[bar] = Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar];
 
       // hide non-configured crossing buffers
-      if (!crossingDrawType) {                                    // hide all
+      if (!crossingDrawType) {                                    // hide all crossings
          upperCross[bar] = 0;
          lowerCross[bar] = 0;
       }
-      else if (crossingDrawType == MODE_FIRST_CROSSING) {
-         int absTrend = MathAbs(knownTrend[bar]);                 // hide all except the 1st
-         if (absTrend==reversal[bar] || (absTrend==1 && !reversal[bar])) {
+      else if (crossingDrawType == MODE_FIRST_CROSSING) {         // hide all crossings except the 1st
+         bool isReversal = false;
+
+         if (!unknownTrend[bar]) {
+            int absTrend = MathAbs(knownTrend[bar]);
+            if      (absTrend == reversal[bar])       isReversal = true;
+            else if (absTrend == 1 && !reversal[bar]) isReversal = true;
+         }
+         if (isReversal) {
             if (knownTrend[bar] > 0) lowerCross[bar] = 0;
             else                     upperCross[bar] = 0;
          }
@@ -447,8 +451,6 @@ int onTick() {
    if (!__isSuperContext) {
       if (__isChart && ShowChartLegend) UpdateLegend();
    }
-
-   // TODO: move reversal signaling behind this point
 
    // sound alert on channel widening (new high/low)
    if (Sound.onCrossing && ChangedBars <= 2) {
@@ -528,7 +530,6 @@ bool IsUpperCrossLast(int bar) {
    return(hc < cl);
 
    IsUpperCrossFirst(NULL);
-   onReversal(NULL, NULL);
 }
 
 
@@ -604,7 +605,8 @@ bool ProcessUpperCross(int bar) {
       }
       semaphoreClose[bar] = upperCrossHigh[bar];
       reversal      [bar] = prevSem-bar;                             // set new reversal offset
-      // TODO: queue reversal signaling: onReversal(D_LONG, bar);
+
+      if (Signal.onReversal && ChangedBars <= 2) onReversal(D_LONG, bar);
    }
    return(true);
 }
@@ -651,12 +653,13 @@ bool ProcessLowerCross(int bar) {
          UpdateTrend(prevSem, -1, bar, false);                       // flip trend on same bar, keep semaphoreOpen[]
       }
       else {
-         UpdateTrend(prevSem-1, -1, bar, true);                         // set the new trend, reset reversals
-         semaphoreOpen [bar] = lowerCrossLow[bar];                      // set new semaphore
+         UpdateTrend(prevSem-1, -1, bar, true);                      // set the new trend, reset reversals
+         semaphoreOpen[bar] = lowerCrossLow[bar];                    // set new semaphore
       }
       semaphoreClose[bar] = lowerCrossLow[bar];
       reversal      [bar] = prevSem-bar;                             // set the new reversal offset
-      // TODO: queue reversal signaling: onReversal(D_SHORT, bar);
+
+      if (Signal.onReversal && ChangedBars <= 2) onReversal(D_SHORT, bar);
    }
    return(true);
 }
@@ -714,8 +717,6 @@ int onAccountChange(int previous, int current) {
  * @return bool - success status
  */
 bool onReversal(int direction, int bar) {
-   if (!Signal.onReversal)                      return(false);
-   if (ChangedBars > 2)                         return(false);
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
