@@ -49,8 +49,7 @@
  *
  *
  * TODO:
- *  - fix tests with bar model MODE_BAROPEN
- *     EveryTick:
+ *  - fix tests with bar MODE_BAROPEN
  *     ControlPoints:
  *     BarOpen:
  *
@@ -1040,9 +1039,9 @@ bool StartInstance(double signal[]) {
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (!signal[SIGNAL_DIRECTION])                                          return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter SIGNAL_DIRECTION: "+ _int(signal[SIGNAL_DIRECTION]), ERR_INVALID_PARAMETER));
 
-   int    sigType      = signal[SIGNAL_TYPE     ];
-   int    sigDirection = signal[SIGNAL_DIRECTION];
-   double sigValue     = signal[SIGNAL_VALUE    ];
+   int sigType      = signal[SIGNAL_TYPE];
+   int sigDirection = signal[SIGNAL_DIRECTION];
+   double sigValue  = signal[SIGNAL_VALUE];
 
    instance.status = STATUS_PROGRESSING;
    if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
@@ -1066,14 +1065,14 @@ bool StartInstance(double signal[]) {
    open.lots         = oe.Lots(oe); SS.OpenLots();
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
-   open.priceSynth   = Bid;
+   open.priceSynth   = sigValue;
    open.slippage     = oe.Slippage(oe);
    open.swap         = oe.Swap(oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit(oe);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = ifDouble(!open.type, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
-   open.synthProfitP = 0;
+   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+   open.synthProfitP = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
 
    // update PL numbers
    instance.openNetProfit  = open.netProfit;
@@ -1086,8 +1085,8 @@ bool StartInstance(double signal[]) {
    instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
 
-   instance.openSynthProfitP  = 0;
-   instance.totalSynthProfitP = instance.closedSynthProfitP;
+   instance.openSynthProfitP  = open.synthProfitP;
+   instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
    instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
    instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
    SS.TotalProfit();
@@ -1119,9 +1118,9 @@ bool ReverseInstance(double signal[]) {
    if (!signal[SIGNAL_DIRECTION])             return(!catch("ReverseInstance(2)  "+ instance.name +" invalid parameter SIGNAL_DIRECTION: "+ _int(signal[SIGNAL_DIRECTION]), ERR_INVALID_PARAMETER));
    int ticket, oeFlags, oe[];
 
-   int    sigType      = signal[SIGNAL_TYPE     ];
-   int    sigDirection = signal[SIGNAL_DIRECTION];
-   double sigValue     = signal[SIGNAL_VALUE    ];
+   int sigType      = signal[SIGNAL_TYPE];
+   int sigDirection = signal[SIGNAL_DIRECTION];
+   double sigValue  = signal[SIGNAL_VALUE];
 
    if (open.ticket > 0) {
       // continue with an already reversed position
@@ -1140,8 +1139,8 @@ bool ReverseInstance(double signal[]) {
       open.commission  = oe.Commission(oe);
       open.grossProfit = oe.Profit(oe);
       open.netProfit   = open.grossProfit + open.swap + open.commission;
-      open.netProfitP  = ifDouble(!open.type, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
-      if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), oe.ClosePrice(oe), Bid)) return(false);
+      open.netProfitP  = ifDouble(open.type==OP_BUY, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
+      if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), oe.ClosePrice(oe), sigValue)) return(false);
    }
 
    // open a new position
@@ -1162,14 +1161,14 @@ bool ReverseInstance(double signal[]) {
    open.lots         = oe.Lots(oe); SS.OpenLots();
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
-   open.priceSynth   = Bid;
+   open.priceSynth   = sigValue;
    open.slippage     = oe.Slippage(oe);
    open.swap         = oe.Swap(oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit(oe);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = ifDouble(type==OP_BUY, oe.Bid(oe)-open.price, open.price-oe.Ask(oe)) + (open.swap + open.commission)/PointValue(open.lots);
-   open.synthProfitP = 0;
+   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+   open.synthProfitP = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
 
    // update PL numbers
    instance.openNetProfit  = open.netProfit;
@@ -1182,8 +1181,8 @@ bool ReverseInstance(double signal[]) {
    instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
 
-   instance.openSynthProfitP  = 0;
-   instance.totalSynthProfitP = instance.closedSynthProfitP;
+   instance.openSynthProfitP  = open.synthProfitP;
+   instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
    instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
    instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
    SS.TotalProfit();
@@ -1222,9 +1221,9 @@ bool StopInstance(double signal[]) {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   int    sigType      = signal[SIGNAL_TYPE     ];
-   int    sigDirection = signal[SIGNAL_DIRECTION];
-   double sigValue     = signal[SIGNAL_VALUE    ];
+   int sigType      = signal[SIGNAL_TYPE];
+   int sigDirection = signal[SIGNAL_DIRECTION];
+   double sigValue  = signal[SIGNAL_VALUE];
 
    // close an open position
    if (instance.status == STATUS_PROGRESSING) {
@@ -1240,7 +1239,7 @@ bool StopInstance(double signal[]) {
          open.commission  = oe.Commission(oe);
          open.grossProfit = oe.Profit(oe);
          open.netProfit   = open.grossProfit + open.swap + open.commission;
-         open.netProfitP  = ifDouble(!open.type, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
+         open.netProfitP  = ifDouble(open.type==OP_BUY, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
          if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), oe.ClosePrice(oe), Bid)) return(false);
 
          instance.openNetProfit  = open.netProfit;
@@ -1312,10 +1311,10 @@ bool UpdateStatus() {
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       open.swap         = 0;
       open.commission   = 0;
-      open.netProfitP   = ifDouble(!open.type, Bid-open.price, open.price-Ask);
+      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
       open.netProfit    = open.netProfitP * PointValue(open.lots);
       open.grossProfit  = open.netProfit;
-      open.synthProfitP = ifDouble(!open.type, Bid-open.priceSynth, open.priceSynth-Bid);
+      open.synthProfitP = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
    }
    else {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
@@ -1323,8 +1322,8 @@ bool UpdateStatus() {
       open.commission   = OrderCommission();
       open.grossProfit  = OrderProfit();
       open.netProfit    = open.grossProfit + open.swap + open.commission;
-      open.netProfitP   = ifDouble(!open.type, Bid-open.price, open.price-Ask); if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(OrderLots());
-      open.synthProfitP = ifDouble(!open.type, Bid-open.priceSynth, open.priceSynth-Bid);
+      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask); if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(OrderLots());
+      open.synthProfitP = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
 
       if (OrderCloseTime() != NULL) {
          int error;
@@ -1428,7 +1427,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    if (!open.ticket)                          return(!catch("MoveCurrentPositionToHistory(2)  "+ instance.name +" no open position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
 
    // update position data
-   open.synthProfitP = ifDouble(!open.type, closePriceSynth-open.priceSynth, open.priceSynth-closePriceSynth);
+   open.synthProfitP = ifDouble(open.type==OP_BUY, closePriceSynth-open.priceSynth, open.priceSynth-closePriceSynth);
 
    // add data to history
    int i = ArrayRange(history, 0);
@@ -3064,8 +3063,8 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
    ArrayInitialize(oe, 0);
 
    if (ticket != open.ticket) return(!catch("VirtualOrderClose(1)  "+ instance.name +" parameter ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, oe.setError(oe, ERR_INVALID_PARAMETER)));
-   double closePrice = ifDouble(!open.type, Bid, Ask);
-   double profit = NormalizeDouble(ifDouble(!open.type, closePrice-open.price, open.price-closePrice) * PointValue(lots), 2);
+   double closePrice = ifDouble(open.type==OP_BUY, Bid, Ask);
+   double profit = NormalizeDouble(ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice) * PointValue(lots), 2);
 
    // populate oe[]
    oe.setTicket    (oe, ticket);
