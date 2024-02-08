@@ -20,13 +20,13 @@
  * ----------------
  *  • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
- *     1: Records PnL after all costs in account currency (net).
- *     2: Records PnL after all costs in price units (net).
- *     3: Records PnL before spread/any costs in price units (synthetic, exact execution).
+ *     1: Records real PnL after all costs in account currency (net).
+ *     2: Records real PnL after all costs in price units (net).
+ *     3: Records synthetic PnL before spread/any costs in price units (signal levels).
  *
- *     4: Records daily PnL after all costs in account currency (net).                                                   TODO
- *     5: Records daily PnL after all costs in price units (net).                                                        TODO
- *     6: Records daily PnL before spread/any costs in price units (synthetic, exact execution).                         TODO
+ *     4: Records daily real PnL after all costs in account currency (net).                                              TODO
+ *     5: Records daily real PnL after all costs in price units (net).                                                   TODO
+ *     6: Records daily synthetic PnL before spread/any costs in price units (signal levels).                            TODO
  *
  *     Metrics in price units are recorded in the best matching unit. That's pip for Forex or full points otherwise.
  *
@@ -49,10 +49,7 @@
  *
  *
  * TODO:
- *  - fix tests with bar MODE_BAROPEN
- *     ControlPoints:
- *     BarOpen:
- *
+ *  - fix synthetic PnL in tests with bar mode "ControlPoints", "BarOpen"
  *  - fix virtual trading
  *  - add ZigZag projections
  *  - input TradingTimeframe
@@ -1931,7 +1928,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
    WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + CRLF);
 
-   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (exact execution)");
+   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (signal levels)");
    WriteIniString(file, section, "instance.closedSynthProfitP", /*double  */ DoubleToStr(instance.closedSynthProfitP, Digits));
    WriteIniString(file, section, "instance.totalSynthProfitP",  /*double  */ DoubleToStr(instance.totalSynthProfitP, Digits));
    WriteIniString(file, section, "instance.maxSynthProfitP",    /*double  */ DoubleToStr(instance.maxSynthProfitP, Digits));
