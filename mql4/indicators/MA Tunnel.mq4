@@ -166,7 +166,7 @@ int onInit() {
 
    // names, labels and display options
    if (ShowChartLegend) legendLabel = CreateChartLegend();
-   indicatorName = "Tunnel "+ JoinStrings(maDefinitions, ",");
+   indicatorName = WindowExpertName() +" "+ JoinStrings(maDefinitions, ",");
    IndicatorShortName(indicatorName);                             // chart tooltips and context menu
    SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper band");  // "Data" window and context menu
    SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower band");  // ...

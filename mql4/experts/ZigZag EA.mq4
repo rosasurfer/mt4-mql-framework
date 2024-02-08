@@ -20,13 +20,13 @@
  * ----------------
  *  • EA.Recorder: Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
- *     1: Records PnL after all costs in account currency (net).
- *     2: Records PnL after all costs in price units (net).
- *     3: Records PnL before spread/any costs in price units (synthetic, exact execution).
+ *     1: Records real PnL after all costs in account currency (net).
+ *     2: Records real PnL after all costs in price units (net).
+ *     3: Records synthetic PnL before spread/any costs in price units (signal levels).
  *
- *     4: Records daily PnL after all costs in account currency (net).                                                   TODO
- *     5: Records daily PnL after all costs in price units (net).                                                        TODO
- *     6: Records daily PnL before spread/any costs in price units (synthetic, exact execution).                         TODO
+ *     4: Records daily real PnL after all costs in account currency (net).                                              TODO
+ *     5: Records daily real PnL after all costs in price units (net).                                                   TODO
+ *     6: Records daily synthetic PnL before spread/any costs in price units (signal levels).                            TODO
  *
  *     Metrics in price units are recorded in the best matching unit. That's pip for Forex or full points otherwise.
  *
@@ -49,18 +49,13 @@
  *
  *
  * TODO:
- *  - fix tests with bar model MODE_BAROPEN
- *     EveryTick:
- *     ControlPoints:
- *     BarOpen:
- *
+ *  - fix synthetic PnL in tests with bar mode "ControlPoints", "BarOpen"
  *  - fix virtual trading
  *  - add ZigZag projections
  *  - input TradingTimeframe
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - rewrite Test_GetCommission()
- *  - rewrite loglevel
- *  - fix ZigZag errors
+ *  - rewrite loglevels to global vars
  *  - document control scripts
  *
  *  - realtime metric charts
@@ -213,29 +208,36 @@ extern bool   ShowProfitInPercent = true;                   // whether PL is dis
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
+#define STRATEGY_ID               107              // unique strategy id between 101-1023 (10 bit)
 
-#define INSTANCE_ID_MIN             1           // range of valid instance ids
-#define INSTANCE_ID_MAX           999           //
+#define INSTANCE_ID_MIN             1              // range of valid instance ids
+#define INSTANCE_ID_MAX           999              //
 
-#define STATUS_WAITING              1           // instance status values
+#define STATUS_WAITING              1              // instance status values
 #define STATUS_PROGRESSING          2
 #define STATUS_STOPPED              3
 
-#define TRADINGMODE_REGULAR         1           // trading modes
+#define TRADINGMODE_REGULAR         1              // trading modes
 #define TRADINGMODE_VIRTUAL         2
 
-#define SIGNAL_LONG  TRADE_DIRECTION_LONG       // 1 start/stop/resume signal types
-#define SIGNAL_SHORT TRADE_DIRECTION_SHORT      // 2
-#define SIGNAL_TIME                 3
-#define SIGNAL_TAKEPROFIT           4
+#define SIGNAL_TYPE                 0              // signal object fields
+#define SIGNAL_DIRECTION            1
+#define SIGNAL_VALUE                2
 
-#define TP_TYPE_MONEY               1           // TakeProfit types
+#define SIGTYPE_MANUAL              1              // signal types
+#define SIGTYPE_TIME                2
+#define SIGTYPE_ZIGZAG              3
+#define SIGTYPE_TAKEPROFIT          4
+
+#define SIGDIRECTION_LONG  TRADE_DIRECTION_LONG    // 1 signal directions
+#define SIGDIRECTION_SHORT TRADE_DIRECTION_SHORT   // 2
+
+#define TP_TYPE_MONEY               1              // TakeProfit types
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
 #define TP_TYPE_PRICEUNIT           4
 
-#define H_TICKET                    0           // trade history indexes
+#define H_TICKET                    0              // trade history indexes
 #define H_OPENTYPE                  1
 #define H_LOTS                      2
 #define H_OPENTIME                  3
@@ -252,43 +254,43 @@ extern bool   ShowProfitInPercent = true;                   // whether PL is dis
 #define H_NETPROFIT_P              14
 #define H_SYNTHPROFIT_P            15
 
-#define METRIC_TOTAL_NET_MONEY      1           // cumulated PnL metrics
+#define METRIC_TOTAL_NET_MONEY      1              // cumulated PnL metrics
 #define METRIC_TOTAL_NET_UNITS      2
 #define METRIC_TOTAL_SYNTH_UNITS    3
 
-#define METRIC_DAILY_NET_MONEY      4           // daily PnL metrics
+#define METRIC_DAILY_NET_MONEY      4              // daily PnL metrics
 #define METRIC_DAILY_NET_UNITS      5
 #define METRIC_DAILY_SYNTH_UNITS    6
 
-#define METRIC_NEXT                 1           // directions for toggling between metrics
+#define METRIC_NEXT                 1              // directions for toggling between metrics
 #define METRIC_PREVIOUS            -1
 
 // general
 int      tradingMode;
 
 // instance data
-int      instance.id;                           // used for magic order numbers
+int      instance.id;                              // used for magic order numbers
 string   instance.name = "";
 datetime instance.created;
-bool     instance.isTest;                       // whether the instance is a test
+bool     instance.isTest;                          // whether the instance is a test
 int      instance.status;
 double   instance.startEquity;
 
-double   instance.openNetProfit;                // real PnL after all costs in money (net)
+double   instance.openNetProfit;                   // real PnL after all costs in money (net)
 double   instance.closedNetProfit;
 double   instance.totalNetProfit;
-double   instance.maxNetProfit;                 // max. observed profit:   0...+n
-double   instance.maxNetDrawdown;               // max. observed drawdown: -n...0
+double   instance.maxNetProfit;                    // max. observed profit:   0...+n
+double   instance.maxNetDrawdown;                  // max. observed drawdown: -n...0
 double   instance.avgNetProfit = EMPTY_VALUE;
 
-double   instance.openNetProfitP;               // real PnL after all costs in point (net)
+double   instance.openNetProfitP;                  // real PnL after all costs in point (net)
 double   instance.closedNetProfitP;
 double   instance.totalNetProfitP;
 double   instance.maxNetProfitP;
 double   instance.maxNetDrawdownP;
 double   instance.avgNetProfitP = EMPTY_VALUE;
 
-double   instance.openSynthProfitP;             // synthetic PnL before spread/any costs in point (exact execution)
+double   instance.openSynthProfitP;                // synthetic PnL before spread/any costs in point (exact execution)
 double   instance.closedSynthProfitP;
 double   instance.totalSynthProfitP;
 double   instance.maxSynthProfitP;
@@ -296,7 +298,7 @@ double   instance.maxSynthDrawdownP;
 double   instance.avgSynthProfitP = EMPTY_VALUE;
 
 // order data
-int      open.ticket;                           // one open position
+int      open.ticket;                              // one open position
 int      open.type;
 double   open.lots;
 datetime open.time;
@@ -309,30 +311,30 @@ double   open.grossProfit;
 double   open.netProfit;
 double   open.netProfitP;
 double   open.synthProfitP;
-double   history[][16];                         // multiple closed positions
+double   history[][16];                            // multiple closed positions
 
 // start conditions
-bool     start.time.condition;                  // whether a time condition is active
+bool     start.time.condition;                     // whether a time condition is active
 datetime start.time.value;
 bool     start.time.isDaily;
 string   start.time.description = "";
 
 // stop conditions ("OR" combined)
-bool     stop.time.condition;                   // whether a time condition is active
+bool     stop.time.condition;                      // whether a time condition is active
 datetime stop.time.value;
 bool     stop.time.isDaily;
 string   stop.time.description = "";
 
-bool     stop.profitAbs.condition;              // whether a takeprofit condition in money is active
+bool     stop.profitAbs.condition;                 // whether a takeprofit condition in money is active
 double   stop.profitAbs.value;
 string   stop.profitAbs.description = "";
 
-bool     stop.profitPct.condition;              // whether a takeprofit condition in percent is active
+bool     stop.profitPct.condition;                 // whether a takeprofit condition in percent is active
 double   stop.profitPct.value;
 double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
 
-bool     stop.profitPun.condition;              // whether a takeprofit condition in price units is active (pip or full point)
+bool     stop.profitPun.condition;                 // whether a takeprofit condition in price units is active (pip or full point)
 int      stop.profitPun.type;
 double   stop.profitPun.value;
 string   stop.profitPun.description = "";
@@ -346,7 +348,7 @@ bool     status.showTradeHistory;
 string   pUnit = "";
 int      pDigits;
 int      pMultiplier;
-int      orders.acceptableSlippage = 1;         // in MQL points
+int      orders.acceptableSlippage = 1;            // in MQL points
 string   tradingModeDescriptions[] = {"", "regular", "virtual"};
 string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote currency", "index points"};
 
@@ -361,10 +363,10 @@ string   sTotalProfit         = "";
 string   sProfitStats         = "";
 
 // debug settings, configurable via framework config, see afterInit()
-bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
-bool     test.onSessionBreakPause = false;      // whether to pause a test after StopInstance(SIGNAL_TIME)
-bool     test.onStopPause         = false;      // whether to pause a test after a final StopInstance()
-bool     test.reduceStatusWrites  = true;       // whether to reduce status file I/O in tester
+bool     test.onReversalPause     = false;         // whether to pause a test after a ZigZag reversal
+bool     test.onSessionBreakPause = false;         // whether to pause a test after StopInstance(SIGNAL_TIME)
+bool     test.onStopPause         = false;         // whether to pause a test after a final StopInstance()
+bool     test.reduceStatusWrites  = true;          // whether to reduce status file I/O in tester
 
 #include <apps/zigzag-ea/init.mqh>
 #include <apps/zigzag-ea/deinit.mqh>
@@ -378,10 +380,10 @@ bool     test.reduceStatusWrites  = true;       // whether to reduce status file
 int onTick() {
    if (!instance.status) return(ERR_ILLEGAL_STATE);
 
-   if (__isChart) HandleCommands();             // process incoming commands
+   if (__isChart) HandleCommands();                // process incoming commands
 
    if (instance.status != STATUS_STOPPED) {
-      int signal;
+      double signal[3];
 
       if (instance.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) StartInstance(signal);
@@ -414,12 +416,16 @@ bool onCommand(string cmd, string params, int keys) {
       switch (instance.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
+            double signal[3];
             string sDetail = " ";
-            int signal, logLevel=LOG_INFO;
-            if      (params == "long")  signal = SIGNAL_LONG;
-            else if (params == "short") signal = SIGNAL_SHORT;
+            int logLevel = LOG_INFO;
+
+            signal[SIGNAL_TYPE ] = SIGTYPE_MANUAL;
+            signal[SIGNAL_VALUE] = NULL;
+            if      (params == "long")  signal[SIGNAL_DIRECTION] = SIGDIRECTION_LONG;
+            else if (params == "short") signal[SIGNAL_DIRECTION] = SIGDIRECTION_SHORT;
             else {
-               signal = ifInt(GetZigZagTrend(0) > 0, SIGNAL_LONG, SIGNAL_SHORT);
+               signal[SIGNAL_DIRECTION] = ifInt(GetZigZagTrend(0) > 0, SIGDIRECTION_LONG, SIGDIRECTION_SHORT);
                if (params != "") {
                   sDetail  = " skipping unsupported parameter in command ";
                   logLevel = LOG_NOTICE;
@@ -435,7 +441,8 @@ bool onCommand(string cmd, string params, int keys) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
             logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            return(StopInstance(NULL));
+            double manual[] = {SIGTYPE_MANUAL, 0, 0};
+            return(StopInstance(manual));
       }
    }
 
@@ -693,63 +700,74 @@ int ShowTradeHistory() {
 /**
  * Whether a new ZigZag reversal occurred.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
+ * @param  _Out_ double &signal[] - array receiving signal details
  *
  * @return bool
  */
-bool IsZigZagSignal(int &signal) {
+bool IsZigZagSignal(double &signal[]) {
    if (last_error != NULL) return(false);
-   signal = NULL;
 
-   static int lastTick, lastResult, lastSignal, lastSignalBar;
-   int trend, reversal;
+   static int lastTick, lastType, lastDirection, lastSigBar, lastSigDirection;
+   static double lastValue, reversalPrice;
+   int trend, reversalOffset;
 
    if (Ticks == lastTick) {
-      signal = lastResult;
+      signal[SIGNAL_TYPE     ] = lastType;
+      signal[SIGNAL_DIRECTION] = lastDirection;
+      signal[SIGNAL_VALUE    ] = lastValue;
    }
    else {
-      // TODO: error on triple-crossing at bar 0 or 1
-      //  - extension down, then reversal up, then reversal down           e.g. ZigZag(20), GBPJPY,M5 2023.12.18 00:00
-      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
-      int absTrend = Abs(trend);
+      signal[SIGNAL_TYPE] = NULL;
 
-      // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.
-      if (absTrend==reversal || (!reversal && absTrend==1)) {
-         if (trend > 0) signal = SIGNAL_LONG;
-         else           signal = SIGNAL_SHORT;
+      if (!GetZigZagData(0, trend, reversalOffset, reversalPrice)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData(0) => FALSE", ERR_RUNTIME_ERROR));
+      int absTrend = MathAbs(trend);
+      bool isReversal = false;
+      if      (absTrend == reversalOffset)     isReversal = true;             // regular reversal
+      else if (absTrend==1 && !reversalOffset) isReversal = true;             // reversal after double crossing
 
-         if (Time[0]==lastSignalBar && signal==lastSignal) {
-            signal = NULL;
-         }
-         else {
-            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-            lastSignal = signal;
-            lastSignalBar = Time[0];
+      if (isReversal) {
+         if (trend > 0) int direction = SIGDIRECTION_LONG;
+         else               direction = SIGDIRECTION_SHORT;
+
+         if (Time[0]!=lastSigBar || direction!=lastSigDirection) {
+            signal[SIGNAL_TYPE     ] = SIGTYPE_ZIGZAG;
+            signal[SIGNAL_DIRECTION] = direction;
+            signal[SIGNAL_VALUE    ] = reversalPrice;
+
+            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(direction==SIGDIRECTION_LONG, "long", "short") +" reversal at "+ NumberToStr(reversalPrice, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            lastSigBar       = Time[0];
+            lastSigDirection = direction;
 
             if (IsVisualMode()) {
                if (test.onReversalPause) Tester.Pause("IsZigZagSignal(3)");   // pause the tester according to the debug configuration
             }
          }
       }
-      lastTick = Ticks;
-      lastResult = signal;
+      lastTick      = Ticks;
+      lastType      = signal[SIGNAL_TYPE     ];
+      lastDirection = signal[SIGNAL_DIRECTION];
+      lastValue     = signal[SIGNAL_VALUE    ];
    }
-   return(signal != NULL);
+   return(signal[SIGNAL_TYPE] != NULL);
 }
 
 
 /**
- * Get ZigZag data at the specified bar offset.
+ * Get ZigZag buffer values at the specified bar offset. The returned values correspond to the documented indicator buffers.
  *
- * @param  _In_  int bar       - bar offset
- * @param  _Out_ int &trend    - combined trend value (buffers MODE_KNOWN_TREND + MODE_UNKNOWN_TREND)
- * @param  _Out_ int &reversal - bar offset of current ZigZag reversal to previous ZigZag extreme
+ * @param  _In_  int    bar             - bar offset
+ * @param  _Out_ int    &trend          - MODE_TREND: combined buffers MODE_KNOWN_TREND + MODE_UNKNOWN_TREND
+ * @param  _Out_ int    &reversalOffset - MODE_REVERSAL: bar offset of most recent ZigZag reversal to previous ZigZag semaphore
+ * @param  _Out_ double &reversalPrice  - MODE_(UPPER|LOWER)_CROSS: reversal price if the bar denotes a ZigZag reversal; otherwise 0
  *
  * @return bool - success status
  */
-bool GetZigZagData(int bar, int &trend, int &reversal) {
-   trend    = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
-   reversal = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
+bool GetZigZagData(int bar, int &trend, int &reversalOffset, double &reversalPrice) {
+   trend          = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
+   reversalOffset = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
+
+   if (trend > 0) reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
+   else           reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, bar);
    return(!last_error && trend);
 }
 
@@ -763,7 +781,8 @@ bool GetZigZagData(int bar, int &trend, int &reversal) {
  */
 int GetZigZagTrend(int bar) {
    int trend, iNull;
-   if (!GetZigZagData(bar, trend, iNull)) return(NULL);
+   double dNull;
+   if (!GetZigZagData(bar, trend, iNull, dNull)) return(NULL);
    return(trend % 100000);
 }
 
@@ -921,13 +940,13 @@ bool IsTradingTime() {
 /**
  * Whether a start condition is triggered.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of a triggered condition
+ * @param  _Out_ double &signal[] - array receiving signal infos of a triggered condition
  *
  * @return bool
  */
-bool IsStartSignal(int &signal) {
-   signal = NULL;
+bool IsStartSignal(double &signal[]) {
    if (last_error || instance.status!=STATUS_WAITING) return(false);
+   signal[SIGNAL_TYPE] = NULL;
 
    // start.time ------------------------------------------------------------------------------------------------------------
    if (!IsTradingTime()) {
@@ -945,19 +964,21 @@ bool IsStartSignal(int &signal) {
 /**
  * Whether a stop condition is triggered.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of a triggered condition
+ * @param  _Out_ double &signal[] - array receiving the stop signal infos (if any)
  *
  * @return bool
  */
-bool IsStopSignal(int &signal) {
-   signal = NULL;
+bool IsStopSignal(double &signal[]) {
+   signal[SIGNAL_TYPE] = NULL;
    if (last_error || (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING)) return(false);
 
    if (instance.status == STATUS_PROGRESSING) {
       // stop.profitAbs -----------------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (instance.totalNetProfit >= stop.profitAbs.value) {
-            signal = SIGNAL_TAKEPROFIT;
+            signal[SIGNAL_TYPE     ] = SIGTYPE_TAKEPROFIT;
+            signal[SIGNAL_DIRECTION] = NULL;
+            signal[SIGNAL_VALUE    ] = stop.profitAbs.value;
             if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitAbs.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
@@ -969,7 +990,9 @@ bool IsStopSignal(int &signal) {
             stop.profitPct.absValue = stop.profitPct.AbsValue();
 
          if (instance.totalNetProfit >= stop.profitPct.absValue) {
-            signal = SIGNAL_TAKEPROFIT;
+            signal[SIGNAL_TYPE     ] = SIGTYPE_TAKEPROFIT;
+            signal[SIGNAL_DIRECTION] = NULL;
+            signal[SIGNAL_VALUE    ] = stop.profitPct.value;
             if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPct.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
@@ -978,7 +1001,9 @@ bool IsStopSignal(int &signal) {
       // stop.profitPun -----------------------------------------------------------------------------------------------------
       if (stop.profitPun.condition) {
          if (instance.totalNetProfitP >= stop.profitPun.value) {
-            signal = SIGNAL_TAKEPROFIT;
+            signal[SIGNAL_TYPE     ] = SIGTYPE_TAKEPROFIT;
+            signal[SIGNAL_DIRECTION] = NULL;
+            signal[SIGNAL_VALUE    ] = stop.profitPun.value;
             if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
@@ -988,7 +1013,9 @@ bool IsStopSignal(int &signal) {
    // stop.time -------------------------------------------------------------------------------------------------------------
    if (stop.time.condition) {
       if (!IsTradingTime()) {
-         signal = SIGNAL_TIME;
+         signal[SIGNAL_TYPE     ] = SIGTYPE_TIME;
+         signal[SIGNAL_DIRECTION] = NULL;
+         signal[SIGNAL_VALUE    ] = NULL;
          if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ instance.name +" stop condition \"@"+ stop.time.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          return(true);
       }
@@ -1000,20 +1027,24 @@ bool IsStopSignal(int &signal) {
 /**
  * Start a waiting or restart a stopped instance.
  *
- * @param  int signal - trade signal causing the call
+ * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StartInstance(int signal) {
+bool StartInstance(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT)                        return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   if (!signal[SIGNAL_DIRECTION])                                          return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter SIGNAL_DIRECTION: "+ _int(signal[SIGNAL_DIRECTION]), ERR_INVALID_PARAMETER));
+
+   int sigType      = signal[SIGNAL_TYPE];
+   int sigDirection = signal[SIGNAL_DIRECTION];
+   double sigValue  = signal[SIGNAL_VALUE];
 
    instance.status = STATUS_PROGRESSING;
    if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
    // open a new position
-   int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
+   int      type        = ifInt(sigDirection==SIGDIRECTION_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
@@ -1031,14 +1062,14 @@ bool StartInstance(int signal) {
    open.lots         = oe.Lots(oe); SS.OpenLots();
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
-   open.priceSynth   = Bid;
+   open.priceSynth   = sigValue;
    open.slippage     = oe.Slippage(oe);
    open.swap         = oe.Swap(oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit(oe);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = ifDouble(!open.type, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
-   open.synthProfitP = 0;
+   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+   open.synthProfitP = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
 
    // update PL numbers
    instance.openNetProfit  = open.netProfit;
@@ -1051,8 +1082,8 @@ bool StartInstance(int signal) {
    instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
 
-   instance.openSynthProfitP  = 0;
-   instance.totalSynthProfitP = instance.closedSynthProfitP;
+   instance.openSynthProfitP  = open.synthProfitP;
+   instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
    instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
    instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
    SS.TotalProfit();
@@ -1066,7 +1097,7 @@ bool StartInstance(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalToStr(signal) +")");
+   if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalDirectionToStr(sigDirection) +")");
    return(SaveStatus());
 }
 
@@ -1074,20 +1105,24 @@ bool StartInstance(int signal) {
 /**
  * Reverse a progressing instance.
  *
- * @param  int signal - trade signal causing the call
+ * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool ReverseInstance(int signal) {
-   if (last_error != NULL)                          return(false);
-   if (instance.status != STATUS_PROGRESSING)       return(!catch("ReverseInstance(1)  "+ instance.name +" cannot reverse "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("ReverseInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+bool ReverseInstance(double signal[]) {
+   if (last_error != NULL)                    return(false);
+   if (instance.status != STATUS_PROGRESSING) return(!catch("ReverseInstance(1)  "+ instance.name +" cannot reverse "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!signal[SIGNAL_DIRECTION])             return(!catch("ReverseInstance(2)  "+ instance.name +" invalid parameter SIGNAL_DIRECTION: "+ _int(signal[SIGNAL_DIRECTION]), ERR_INVALID_PARAMETER));
    int ticket, oeFlags, oe[];
+
+   int sigType      = signal[SIGNAL_TYPE];
+   int sigDirection = signal[SIGNAL_DIRECTION];
+   double sigValue  = signal[SIGNAL_VALUE];
 
    if (open.ticket > 0) {
       // continue with an already reversed position
-      if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
-         return(_true(logWarn("ReverseInstance(3)  "+ instance.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(tradingMode==TRADINGMODE_VIRTUAL, "virtual ", "") + ifString(signal==SIGNAL_LONG, "long", "short") +" position #"+ open.ticket)));
+      if ((open.type==OP_BUY && sigDirection==SIGDIRECTION_LONG) || (open.type==OP_SELL && sigDirection==SIGDIRECTION_SHORT)) {
+         return(_true(logWarn("ReverseInstance(3)  "+ instance.name +" to "+ ifString(sigDirection==SIGDIRECTION_LONG, "long", "short") +": continuing with already open "+ ifString(tradingMode==TRADINGMODE_VIRTUAL, "virtual ", "") + ifString(sigDirection==SIGDIRECTION_LONG, "long", "short") +" position #"+ open.ticket)));
       }
 
       // close the existing position
@@ -1101,12 +1136,12 @@ bool ReverseInstance(int signal) {
       open.commission  = oe.Commission(oe);
       open.grossProfit = oe.Profit(oe);
       open.netProfit   = open.grossProfit + open.swap + open.commission;
-      open.netProfitP  = ifDouble(!open.type, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
-      if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), oe.ClosePrice(oe), Bid)) return(false);
+      open.netProfitP  = ifDouble(open.type==OP_BUY, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
+      if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), oe.ClosePrice(oe), sigValue)) return(false);
    }
 
    // open a new position
-   int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
+   int      type        = ifInt(sigDirection==SIGDIRECTION_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
@@ -1123,14 +1158,14 @@ bool ReverseInstance(int signal) {
    open.lots         = oe.Lots(oe); SS.OpenLots();
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
-   open.priceSynth   = Bid;
+   open.priceSynth   = sigValue;
    open.slippage     = oe.Slippage(oe);
    open.swap         = oe.Swap(oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit(oe);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = ifDouble(type==OP_BUY, oe.Bid(oe)-open.price, open.price-oe.Ask(oe)) + (open.swap + open.commission)/PointValue(open.lots);
-   open.synthProfitP = 0;
+   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+   open.synthProfitP = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
 
    // update PL numbers
    instance.openNetProfit  = open.netProfit;
@@ -1143,14 +1178,14 @@ bool ReverseInstance(int signal) {
    instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
 
-   instance.openSynthProfitP  = 0;
-   instance.totalSynthProfitP = instance.closedSynthProfitP;
+   instance.openSynthProfitP  = open.synthProfitP;
+   instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
    instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
    instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
    SS.TotalProfit();
    SS.ProfitStats();
 
-   if (IsLogInfo()) logInfo("ReverseInstance(4)  "+ instance.name +" instance reversed ("+ SignalToStr(signal) +")");
+   if (IsLogInfo()) logInfo("ReverseInstance(4)  "+ instance.name +" instance reversed ("+ SignalDirectionToStr(sigDirection) +")");
    return(SaveStatus());
 }
 
@@ -1175,13 +1210,17 @@ double stop.profitPct.AbsValue() {
 /**
  * Stop a waiting or progressing instance and close open positions (if any).
  *
- * @param  int signal - signal which triggered the stop condition or NULL on explicit stop (e.g. manual)
+ * @param  double signal[] - signal which triggered the stop condition
  *
  * @return bool - success status
  */
-bool StopInstance(int signal) {
+bool StopInstance(double signal[]) {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+
+   int sigType      = signal[SIGNAL_TYPE];
+   int sigDirection = signal[SIGNAL_DIRECTION];
+   double sigValue  = signal[SIGNAL_VALUE];
 
    // close an open position
    if (instance.status == STATUS_PROGRESSING) {
@@ -1197,7 +1236,7 @@ bool StopInstance(int signal) {
          open.commission  = oe.Commission(oe);
          open.grossProfit = oe.Profit(oe);
          open.netProfit   = open.grossProfit + open.swap + open.commission;
-         open.netProfitP  = ifDouble(!open.type, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
+         open.netProfitP  = ifDouble(open.type==OP_BUY, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
          if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), oe.ClosePrice(oe), Bid)) return(false);
 
          instance.openNetProfit  = open.netProfit;
@@ -1220,37 +1259,37 @@ bool StopInstance(int signal) {
    }
 
    // update stop conditions and status
-   switch (signal) {
-      case SIGNAL_TIME:
+   switch (sigType) {
+      case SIGTYPE_TIME:
          if (!stop.time.isDaily) {
             stop.time.condition = false;                    // see start/stop time variants
          }
          instance.status = ifInt(start.time.condition && start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
          break;
 
-      case SIGNAL_TAKEPROFIT:
+      case SIGTYPE_TAKEPROFIT:
          stop.profitAbs.condition = false;
          stop.profitPct.condition = false;
          stop.profitPun.condition = false;
          instance.status          = STATUS_STOPPED;
          break;
 
-      case NULL:                                            // explicit stop (manual) or end of test
+      case SIGTYPE_MANUAL:                                  // explicit stop (manual) or end of test
          instance.status = STATUS_STOPPED;
          break;
 
-      default: return(!catch("StopInstance(2)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopInstance(2)  "+ instance.name +" invalid parameter SIGNAL_TYPE: "+ sigType, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !signal, "test ", "") +"instance stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sTotalProfit +" "+ sProfitStats);
+   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && sigType==SIGTYPE_MANUAL, "test ", "") +"instance stopped"+ ifString(sigType==SIGTYPE_MANUAL, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ sTotalProfit +" "+ sProfitStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
    if (__isTesting) {
-      if      (!IsVisualMode())       { if (instance.status == STATUS_STOPPED) Tester.Stop ("StopInstance(4)"); }
-      else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopInstance(5)"); }
-      else                            { if (test.onStopPause)                  Tester.Pause("StopInstance(6)"); }
+      if      (!IsVisualMode())         { if (instance.status == STATUS_STOPPED) Tester.Stop ("StopInstance(4)"); }
+      else if (sigType == SIGTYPE_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopInstance(5)"); }
+      else                              { if (test.onStopPause)                  Tester.Pause("StopInstance(6)"); }
    }
    return(!catch("StopInstance(7)"));
 }
@@ -1269,10 +1308,10 @@ bool UpdateStatus() {
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       open.swap         = 0;
       open.commission   = 0;
-      open.netProfitP   = ifDouble(!open.type, Bid-open.price, open.price-Ask);
+      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
       open.netProfit    = open.netProfitP * PointValue(open.lots);
       open.grossProfit  = open.netProfit;
-      open.synthProfitP = ifDouble(!open.type, Bid-open.priceSynth, open.priceSynth-Bid);
+      open.synthProfitP = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
    }
    else {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
@@ -1280,8 +1319,8 @@ bool UpdateStatus() {
       open.commission   = OrderCommission();
       open.grossProfit  = OrderProfit();
       open.netProfit    = open.grossProfit + open.swap + open.commission;
-      open.netProfitP   = ifDouble(!open.type, Bid-open.price, open.price-Ask); if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(OrderLots());
-      open.synthProfitP = ifDouble(!open.type, Bid-open.priceSynth, open.priceSynth-Bid);
+      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask); if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(OrderLots());
+      open.synthProfitP = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
 
       if (OrderCloseTime() != NULL) {
          int error;
@@ -1385,7 +1424,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    if (!open.ticket)                          return(!catch("MoveCurrentPositionToHistory(2)  "+ instance.name +" no open position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
 
    // update position data
-   open.synthProfitP = ifDouble(!open.type, closePriceSynth-open.priceSynth, open.priceSynth-closePriceSynth);
+   open.synthProfitP = ifDouble(open.type==OP_BUY, closePriceSynth-open.priceSynth, open.priceSynth-closePriceSynth);
 
    // add data to history
    int i = ArrayRange(history, 0);
@@ -1767,21 +1806,38 @@ string StatusDescription(int status) {
 
 
 /**
- * Return a readable representation of a signal constant.
+ * Return a readable representation of a signal type constant.
  *
- * @param  int signal
+ * @param  int type
  *
  * @return string - readable constant or an empty string in case of errors
  */
-string SignalToStr(int signal) {
-   switch (signal) {
-      case NULL             : return("no signal"        );
-      case SIGNAL_LONG      : return("SIGNAL_LONG"      );
-      case SIGNAL_SHORT     : return("SIGNAL_SHORT"     );
-      case SIGNAL_TIME      : return("SIGNAL_TIME"      );
-      case SIGNAL_TAKEPROFIT: return("SIGNAL_TAKEPROFIT");
+string SignalTypeToStr(int type) {
+   switch (type) {
+      case NULL              : return("no type"           );
+      case SIGTYPE_MANUAL    : return("SIGTYPE_MANUAL"    );
+      case SIGTYPE_TIME      : return("SIGTYPE_TIME"      );
+      case SIGTYPE_ZIGZAG    : return("SIGTYPE_ZIGZAG"    );
+      case SIGTYPE_TAKEPROFIT: return("SIGTYPE_TAKEPROFIT");
    }
-   return(_EMPTY_STR(catch("SignalToStr(1)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("SignalTypeToStr(1)  "+ instance.name +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return a readable representation of a signal direction constant.
+ *
+ * @param  int direction
+ *
+ * @return string - readable constant or an empty string in case of errors
+ */
+string SignalDirectionToStr(int direction) {
+   switch (direction) {
+      case NULL              : return("no direction"      );
+      case SIGDIRECTION_LONG : return("SIGDIRECTION_LONG" );
+      case SIGDIRECTION_SHORT: return("SIGDIRECTION_SHORT");
+   }
+   return(_EMPTY_STR(catch("SignalDirectionToStr(1)  "+ instance.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -1872,7 +1928,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
    WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + CRLF);
 
-   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (exact execution)");
+   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (signal levels)");
    WriteIniString(file, section, "instance.closedSynthProfitP", /*double  */ DoubleToStr(instance.closedSynthProfitP, Digits));
    WriteIniString(file, section, "instance.totalSynthProfitP",  /*double  */ DoubleToStr(instance.totalSynthProfitP, Digits));
    WriteIniString(file, section, "instance.maxSynthProfitP",    /*double  */ DoubleToStr(instance.maxSynthProfitP, Digits));
@@ -3004,8 +3060,8 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
    ArrayInitialize(oe, 0);
 
    if (ticket != open.ticket) return(!catch("VirtualOrderClose(1)  "+ instance.name +" parameter ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, oe.setError(oe, ERR_INVALID_PARAMETER)));
-   double closePrice = ifDouble(!open.type, Bid, Ask);
-   double profit = NormalizeDouble(ifDouble(!open.type, closePrice-open.price, open.price-closePrice) * PointValue(lots), 2);
+   double closePrice = ifDouble(open.type==OP_BUY, Bid, Ask);
+   double profit = NormalizeDouble(ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice) * PointValue(lots), 2);
 
    // populate oe[]
    oe.setTicket    (oe, ticket);

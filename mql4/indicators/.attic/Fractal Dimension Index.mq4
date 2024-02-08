@@ -108,7 +108,7 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER, lower);                    // lower line:     visible (trending)
 
    // names, labels and display options
-   string indicatorName = "FDI("+ fdiPeriods +")";
+   string indicatorName = WindowExpertName() +"("+ fdiPeriods +")";
    IndicatorShortName(indicatorName +"  ");              // chart subwindow and context menu
    SetIndexLabel(MODE_MAIN,  indicatorName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_UPPER, NULL);

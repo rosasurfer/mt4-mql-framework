@@ -23,7 +23,7 @@
  *  • ZigZag.Semaphores.Wingdings:  WingDing symbol used for ZigZag semaphores.
  *  • ZigZag.Color:                 Color of ZigZag lines/semaphores.
  *
- *  • Donchian.ShowChannel:         Whether to display the internally used Donchian channel.
+ *  • Donchian.ShowChannel:         Whether to display the calculated Donchian channel.
  *  • Donchian.ShowCrossings:       Controls displayed Donchian channel crossings, one of:
  *                                   "off":   No crossings are displayed.
  *                                   "first": Only the first crossing per direction is displayed (the moment when ZigZag creates a new leg).
@@ -37,22 +37,23 @@
  *
  *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
  *  • Signal.onReversal.Sound:      Whether to signal ZigZag reversals by sound.
- *  • Signal.onReversal.SoundUp:    Sound file used for signaling ZigZag reversals to the upside.
- *  • Signal.onReversal.SoundDown:  Sound file used for signaling ZigZag reversals to the downside.
+ *  • Signal.onReversal.SoundUp:    Sound file to signal ZigZag reversals to the upside.
+ *  • Signal.onReversal.SoundDown:  Sound file to signal ZigZag reversals to the downside.
  *  • Signal.onReversal.Popup:      Whether to signal ZigZag reversals by popup (MetaTrader alert dialog).
  *  • Signal.onReversal.Mail:       Whether to signal ZigZag reversals by e-mail.
  *  • Signal.onReversal.SMS:        Whether to signal ZigZag reversals by text message.
  *
  *  • Sound.onCrossing:             Whether to signal Donchian channel crossings (channel widenings).
- *  • Sound.onCrossing.Up:          Sound file used for signaling a Donchian channel widening to the upside.
- *  • Sound.onCrossing.Down:        Sound file used for signaling a Donchian channel widening to the downside.
+ *  • Sound.onCrossing.Up:          Sound file to signal a Donchian channel widening to the upside.
+ *  • Sound.onCrossing.Down:        Sound file to signal a Donchian channel widening to the downside.
  *
  *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom framework config values.
  *
  *
  *
  * TODO:
- *  - ShowCrossings=first: after retracement + new crossing all crossings are drawn
+ *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
+ *  - keep bar status in IsUpperCrossLast()
  *  - document usage of iCustom()
  */
 #include <stddefines.mqh>
@@ -107,71 +108,62 @@ extern string Sound.onCrossing.Down          = "Price Decline.wav";
 #include <win32api.mqh>
 
 // indicator buffer ids
-#define MODE_SEMAPHORE_OPEN        ZigZag.MODE_SEMAPHORE_OPEN  //  0: semaphore open price
-#define MODE_SEMAPHORE_CLOSE       ZigZag.MODE_SEMAPHORE_CLOSE //  1: semaphore close price
-#define MODE_UPPER_BAND_VISIBLE    ZigZag.MODE_UPPER_BAND      //  2: visible upper channel band segments
-#define MODE_LOWER_BAND_VISIBLE    ZigZag.MODE_LOWER_BAND      //  3: visible lower channel band segments
-#define MODE_UPPER_CROSS           ZigZag.MODE_UPPER_CROSS     //  4: upper channel crossings
-#define MODE_LOWER_CROSS           ZigZag.MODE_LOWER_CROSS     //  5: lower channel crossings
-#define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  6: bar offset of current ZigZag reversal from previous ZigZag extreme
-#define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  7: combined MODE_KNOWN_TREND (14) + MODE_UNKNOWN_TREND (15) buffers
-#define MODE_UPPER_BAND            8                           //  8: full upper Donchian channel band
-#define MODE_LOWER_BAND            9                           //  9: full lower Donchian channel band
-#define MODE_UPPER_CROSS_ENTRY     10                          // 10: entry points of upper channel crossings
-#define MODE_UPPER_CROSS_EXIT      11                          // 11: exit points of upper channel crossings
-#define MODE_LOWER_CROSS_ENTRY     12                          // 12: entry points of lower channel crossings
-#define MODE_LOWER_CROSS_EXIT      13                          // 13: exit points of lower channel crossings
-#define MODE_KNOWN_TREND           14                          // 14: known trend
-#define MODE_UNKNOWN_TREND         15                          // 15: not yet known trend
+#define MODE_SEMAPHORE_OPEN      ZigZag.MODE_SEMAPHORE_OPEN    //  0: semaphore open price
+#define MODE_SEMAPHORE_CLOSE     ZigZag.MODE_SEMAPHORE_CLOSE   //  1: semaphore close price
+#define MODE_UPPER_BAND          ZigZag.MODE_UPPER_BAND        //  2: upper channel band
+#define MODE_LOWER_BAND          ZigZag.MODE_LOWER_BAND        //  3: lower channel band
+#define MODE_UPPER_CROSS         ZigZag.MODE_UPPER_CROSS       //  4: upper channel crossings
+#define MODE_LOWER_CROSS         ZigZag.MODE_LOWER_CROSS       //  5: lower channel crossings
+#define MODE_REVERSAL            ZigZag.MODE_REVERSAL          //  6: offset of last ZigZag reversal to previous ZigZag semaphore
+#define MODE_COMBINED_TREND      ZigZag.MODE_TREND             //  7: trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
+#define MODE_UPPER_CROSS_HIGH    8                             //  8: new High after an upper channel crossing (potential new semaphore)
+#define MODE_LOWER_CROSS_LOW     9                             //  9: new Low after a lower channel crossing (potential new semaphore)
+#define MODE_KNOWN_TREND         10                            // 10: known trend
+#define MODE_UNKNOWN_TREND       11                            // 11: not yet known trend
 
 #property indicator_chart_window
 #property indicator_buffers   8                                // visible buffers
 int       terminal_buffers  = 8;                               // buffers managed by the terminal
-int       framework_buffers = 8;                               // buffers managed by the framework
+int       framework_buffers = 4;                               // buffers managed by the framework
 
-#property indicator_color1    Blue                             // the ZigZag line is built from two buffers using the color of the first buffer
-#property indicator_width1    1
-#property indicator_color2    CLR_NONE
+#property indicator_color1    DodgerBlue                       // the ZigZag line is built from two buffers using the color of the first buffer
+#property indicator_width1    1                                //
+#property indicator_color2    CLR_NONE                         //
 
-#property indicator_color3    DodgerBlue                       // visible upper channel band segments
+#property indicator_color3    Blue                             // upper channel band
 #property indicator_style3    STYLE_DOT                        //
-#property indicator_color4    Magenta                          // visible lower channel band segments
+#property indicator_color4    Magenta                          // lower channel band
 #property indicator_style4    STYLE_DOT                        //
 
-#property indicator_color5    indicator_color3                 // upper channel crossings (entry or exit points)
+#property indicator_color5    indicator_color3                 // upper channel crossings
 #property indicator_width5    0                                //
-#property indicator_color6    indicator_color4                 // lower channel crossings (entry or exit points)
+#property indicator_color6    indicator_color4                 // lower channel crossings
 #property indicator_width6    0                                //
 
-#property indicator_color7    CLR_NONE                         // ZigZag leg reversal bar
-#property indicator_color8    CLR_NONE                         // combined MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers
+#property indicator_color7    CLR_NONE                         // offset of last ZigZag reversal to previous ZigZag semaphore
+#property indicator_color8    CLR_NONE                         // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 
-double   semaphoreOpen   [];                                   // ZigZag semaphores (open prices of a vertical line segment)
-double   semaphoreClose  [];                                   // ZigZag semaphores (close prices of a vertical line segment)
-double   upperBand       [];                                   // full upper channel band
-double   lowerBand       [];                                   // full lower channel band
-double   upperBandVisible[];                                   // visible upper channel band segments
-double   lowerBandVisible[];                                   // visible lower channel band segments
-double   upperCross      [];                                   // upper channel crossings (entry or exit points)
-double   upperCrossEntry [];                                   // entry points of upper channel crossings
-double   upperCrossExit  [];                                   // exit points of upper channel crossings
-double   lowerCross      [];                                   // lower channel crossings (entry or exit points)
-double   lowerCrossEntry [];                                   // entry points of lower channel crossings
-double   lowerCrossExit  [];                                   // exit points of lower channel crossings
-double   reversal        [];                                   // offset of the 1st bar crossing the opposite channel (thus forming a new ZigZag reversal)
-int      knownTrend      [];                                   // known direction and length of a ZigZag reversal
-int      unknownTrend    [];                                   // not yet known direction and length after a ZigZag reversal
-double   combinedTrend   [];                                   // combined knownTrend[] and unknownTrend[] buffers
+double   semaphoreOpen [];                                     // ZigZag semaphores (open prices of a vertical line segment)
+double   semaphoreClose[];                                     // ZigZag semaphores (close prices of a vertical line segment)
+double   upperBand     [];                                     // upper channel band
+double   lowerBand     [];                                     // lower channel band
+double   upperCross    [];                                     // upper channel crossings
+double   lowerCross    [];                                     // lower channel crossings
+double   upperCrossHigh[];                                     // new High after an upper channel crossing (potential new semaphore)
+double   lowerCrossLow [];                                     // new Low after a lower channel crossing (potential new semaphore)
+double   reversal      [];                                     // offset of last ZigZag reversal to previous ZigZag semaphore
+int      knownTrend    [];                                     // known direction and length of a ZigZag reversal
+int      unknownTrend  [];                                     // not yet known direction and length after a ZigZag reversal
+double   combinedTrend [];                                     // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 
 #define MODE_FIRST_CROSSING   1                                // crossing draw types
 #define MODE_ALL_CROSSINGS    2
 
 int      zigzagDrawType;
 int      crossingDrawType;
-double   tickSize;
 datetime lastTick;
-int      lastSound;
-datetime waitUntil;
+int      lastSoundSignal;                                      // GetTickCount() value of the last audible signal
+datetime skipSignals;                                          // skip signals until this time to account for possible data pumping
 double   prevUpperBand;
 double   prevLowerBand;
 
@@ -181,8 +173,8 @@ string   legendLabel   = "";
 string   legendInfo    = "";                                   // additional chart legend info
 
 // signal direction types
-#define D_LONG     TRADE_DIRECTION_LONG      // 1
-#define D_SHORT    TRADE_DIRECTION_SHORT     // 2
+#define D_LONG     TRADE_DIRECTION_LONG                        // 1
+#define D_SHORT    TRADE_DIRECTION_SHORT                       // 2
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -324,54 +316,42 @@ int onTick() {
    if (__isChart && ZigZag.Periods.Step) HandleCommands("ParameterStepper", false);
 
    // framework: manage additional buffers
-   ManageDoubleIndicatorBuffer(MODE_UPPER_BAND,        upperBand      );
-   ManageDoubleIndicatorBuffer(MODE_LOWER_BAND,        lowerBand      );
-   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_ENTRY, upperCrossEntry);
-   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_EXIT,  upperCrossExit );
-   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_ENTRY, lowerCrossEntry);
-   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_EXIT,  lowerCrossExit );
-   ManageIntIndicatorBuffer   (MODE_KNOWN_TREND,       knownTrend     );
-   ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND,     unknownTrend   );
+   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_HIGH, upperCrossHigh);
+   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_LOW,  lowerCrossLow );
+   ManageIntIndicatorBuffer   (MODE_KNOWN_TREND,      knownTrend    );
+   ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND,    unknownTrend  );
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(semaphoreOpen,    0);
-      ArrayInitialize(semaphoreClose,   0);
-      ArrayInitialize(upperBand,        0);
-      ArrayInitialize(lowerBand,        0);
-      ArrayInitialize(upperBandVisible, 0);
-      ArrayInitialize(lowerBandVisible, 0);
-      ArrayInitialize(upperCross,       0);
-      ArrayInitialize(upperCrossEntry,  0);
-      ArrayInitialize(upperCrossExit,   0);
-      ArrayInitialize(lowerCross,       0);
-      ArrayInitialize(lowerCrossEntry,  0);
-      ArrayInitialize(lowerCrossExit,   0);
-      ArrayInitialize(reversal,        -1);
-      ArrayInitialize(knownTrend,       0);
-      ArrayInitialize(unknownTrend,     0);
-      ArrayInitialize(combinedTrend,    0);
+      ArrayInitialize(semaphoreOpen,  0);
+      ArrayInitialize(semaphoreClose, 0);
+      ArrayInitialize(upperBand,      0);
+      ArrayInitialize(lowerBand,      0);
+      ArrayInitialize(upperCross,     0);
+      ArrayInitialize(lowerCross,     0);
+      ArrayInitialize(upperCrossHigh, 0);
+      ArrayInitialize(lowerCrossLow,  0);
+      ArrayInitialize(reversal,      -1);
+      ArrayInitialize(knownTrend,     0);
+      ArrayInitialize(unknownTrend,   0);
+      ArrayInitialize(combinedTrend,  0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(semaphoreOpen,    Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(semaphoreClose,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperBand,        Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerBand,        Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperBandVisible, Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerBandVisible, Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCross,       Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCrossEntry,  Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCrossExit,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCross,       Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCrossEntry,  Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCrossExit,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(reversal,         Bars, ShiftedBars, -1);
-      ShiftIntIndicatorBuffer   (knownTrend,       Bars, ShiftedBars,  0);
-      ShiftIntIndicatorBuffer   (unknownTrend,     Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(combinedTrend,    Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(semaphoreOpen,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(semaphoreClose, Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperBand,      Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerBand,      Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperCross,     Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerCross,     Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperCrossHigh, Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerCrossLow,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(reversal,       Bars, ShiftedBars, -1);
+      ShiftIntIndicatorBuffer   (knownTrend,     Bars, ShiftedBars,  0);
+      ShiftIntIndicatorBuffer   (unknownTrend,   Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(combinedTrend,  Bars, ShiftedBars,  0);
    }
 
    // check data pumping on every tick so the reversal handler can skip errornous signals
@@ -382,125 +362,331 @@ int onTick() {
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ ZigZag.Periods, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
+   if (startbar > 2) {
+      semaphoreOpen [startbar] =  0;
+      semaphoreClose[startbar] =  0;
+      upperBand     [startbar] =  0;
+      lowerBand     [startbar] =  0;
+      upperCross    [startbar] =  0;
+      lowerCross    [startbar] =  0;
+      upperCrossHigh[startbar] =  0;
+      lowerCrossLow [startbar] =  0;
+      reversal      [startbar] = -1;
+      knownTrend    [startbar] =  0;
+      unknownTrend  [startbar] =  0;
+      combinedTrend [startbar] =  0;
+   }
    for (int bar=startbar; bar >= 0; bar--) {
-      semaphoreOpen   [bar] =  0;
-      semaphoreClose  [bar] =  0;
-      upperBand       [bar] =  0;
-      lowerBand       [bar] =  0;
-      upperBandVisible[bar] =  0;
-      lowerBandVisible[bar] =  0;
-      upperCross      [bar] =  0;
-      upperCrossEntry [bar] =  0;
-      upperCrossExit  [bar] =  0;
-      lowerCross      [bar] =  0;
-      lowerCrossEntry [bar] =  0;
-      lowerCrossExit  [bar] =  0;
-      knownTrend      [bar] =  0;
-      unknownTrend    [bar] =  0;
-      combinedTrend   [bar] =  0;
-      reversal        [bar] = -1;
-
       // recalculate Donchian channel
-      if (bar > 0) {
-         upperBand[bar] = High[iHighest(NULL, NULL, MODE_HIGH, ZigZag.Periods, bar)];
-         lowerBand[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  ZigZag.Periods, bar)];
-      }
-      else {
+      if (bar == 0) {
          upperBand[bar] = MathMax(upperBand[1], High[0]);
          lowerBand[bar] = MathMin(lowerBand[1],  Low[0]);
+      }
+      else {
+         upperBand[bar] = High[iHighest(NULL, NULL, MODE_HIGH, ZigZag.Periods, bar)];
+         lowerBand[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  ZigZag.Periods, bar)];
       }
 
       // recalculate channel crossings
       if (upperBand[bar] > upperBand[bar+1]) {
-         upperCrossEntry[bar] = MathMax(Low[bar], upperBand[bar+1]);
-         upperCrossExit [bar] = upperBand[bar];
+         upperCross    [bar] = upperBand[bar+1]+Point;
+         upperCrossHigh[bar] = upperBand[bar];
       }
-
       if (lowerBand[bar] < lowerBand[bar+1]) {
-         lowerCrossEntry[bar] = MathMin(High[bar], lowerBand[bar+1]);
-         lowerCrossExit [bar] = lowerBand[bar];
+         lowerCross   [bar] = lowerBand[bar+1]-Point;
+         lowerCrossLow[bar] = lowerBand[bar];
       }
 
-      // recalculate ZigZag
-      // if no channel crossing (future direction is not yet known)
-      if (!upperCrossExit[bar] && !lowerCrossExit[bar]) {
-         knownTrend   [bar] = knownTrend[bar+1];                  // keep known trend:       in combinedTrend[] <  100'000
-         unknownTrend [bar] = unknownTrend[bar+1] + 1;            // increase unknown trend: in combinedTrend[] >= 100'000
-         combinedTrend[bar] = Round(Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar]);
-         reversal     [bar] = reversal[bar+1];                    // keep previous reversal bar offset
+      // recalculate ZigZag data
+      // if no channel crossing
+      if (!upperCross[bar] && !lowerCross[bar]) {
+         reversal    [bar] = reversal    [bar+1];                 // keep reversal offset (may be -1)
+         knownTrend  [bar] = knownTrend  [bar+1];                 // keep known trend
+         unknownTrend[bar] = unknownTrend[bar+1] + 1;             // increase unknown trend
       }
 
       // if two channel crossings (upper and lower band crossed by the same bar)
-      else if (upperCrossExit[bar] && lowerCrossExit[bar]) {
-         if (IsUpperCrossFirst(bar)) {
-            int prevZZ = ProcessUpperCross(bar);                  // first process the upper crossing
-
-            if (unknownTrend[bar] > 0) {                          // then process the lower crossing
-               SetTrend(prevZZ-1, bar, -1, false);                // it always marks a new down leg
-               semaphoreOpen[bar] = lowerCrossExit[bar];
-            }
-            else {
-               SetTrend(bar, bar, -1, false);                     // mark a new downtrend
-            }
-            semaphoreClose[bar] = lowerCrossExit[bar];
-            onReversal(D_SHORT, bar);                             // handle the reversal
+      else if (upperCross[bar] && lowerCross[bar]) {
+         if (IsUpperCrossLast(bar)) {
+            if (!knownTrend[bar]) ProcessLowerCross(bar);         // if bar not yet processed process both crossings
+            ProcessUpperCross(bar);                               // otherwise process only the last crossing
          }
          else {
-            prevZZ = ProcessLowerCross(bar);                      // first process the lower crossing
-
-            if (unknownTrend[bar] > 0) {                          // then process the upper crossing
-               SetTrend(prevZZ-1, bar, 1, false);                 // it always marks a new up leg
-               semaphoreOpen[bar] = upperCrossExit[bar];
-            }
-            else {
-               SetTrend(bar, bar, 1, false);                      // mark a new uptrend
-            }
-            semaphoreClose[bar] = upperCrossExit[bar];
-            onReversal(D_LONG, bar);                              // handle the reversal
-         }
-         reversal[bar] = 0;                                       // the 2nd crossing always defines a new reversal
-      }
-
-      // if a single band crossing
-      else if (upperCrossExit[bar] != 0) ProcessUpperCross(bar);
-      else                               ProcessLowerCross(bar);
-
-      // populate visible channel buffers
-      if (Donchian.ShowChannel) {
-         upperBandVisible[bar] = upperBand[bar];
-         lowerBandVisible[bar] = lowerBand[bar];
-      }
-
-      // populate visible crossing buffers
-      if (crossingDrawType == MODE_ALL_CROSSINGS) {
-         upperCross[bar] = upperCrossEntry[bar];
-         lowerCross[bar] = lowerCrossEntry[bar];
-      }
-      else if (crossingDrawType == MODE_FIRST_CROSSING) {
-         if (reversal[bar] == Abs(knownTrend[bar])) {
-            upperCross[bar] = upperCrossEntry[bar];
-            lowerCross[bar] = lowerCrossEntry[bar];
+            if (!knownTrend[bar]) ProcessUpperCross(bar);         // ...
+            ProcessLowerCross(bar);                               // ...
          }
       }
-   }
 
-   // sound alert on channel widening (new high/low) except if a reversal occurred at the same tick (has separate signaling)
-   if (Sound.onCrossing && ChangedBars <= 2) {
-      if (ChangedBars == 2) {
-         prevUpperBand = upperBand[1];
-         prevLowerBand = lowerBand[1];
+      // if a single channel crossing
+      else if (upperCross[bar] != 0) ProcessUpperCross(bar);
+      else                           ProcessLowerCross(bar);
+
+      // calculate combinedTrend[]
+      combinedTrend[bar] = Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar];
+
+      // hide non-configured crossing buffers
+      if (!crossingDrawType) {                                    // hide all crossings
+         upperCross[bar] = 0;
+         lowerCross[bar] = 0;
       }
-      if      (prevUpperBand && GT(upperBand[0], prevUpperBand)) onChannelCrossing(D_LONG);
-      else if (prevLowerBand && LT(lowerBand[0], prevLowerBand)) onChannelCrossing(D_SHORT);
+      else if (crossingDrawType == MODE_FIRST_CROSSING) {         // hide all crossings except the 1st
+         bool isReversal = false;
 
-      prevUpperBand = upperBand[0];
-      prevLowerBand = lowerBand[0];
+         if (!unknownTrend[bar]) {
+            int absTrend = MathAbs(knownTrend[bar]);
+            if      (absTrend == reversal[bar])       isReversal = true;
+            else if (absTrend == 1 && !reversal[bar]) isReversal = true;
+         }
+         if (isReversal) {
+            if (knownTrend[bar] > 0) lowerCross[bar] = 0;
+            else                     upperCross[bar] = 0;
+         }
+         else {
+            upperCross[bar] = 0;
+            lowerCross[bar] = 0;
+         }
+      }
    }
 
    if (!__isSuperContext) {
       if (__isChart && ShowChartLegend) UpdateLegend();
    }
-   return(catch("onTick(5)"));
+
+   // sound alert on channel widening (new high/low)
+   if (Sound.onCrossing && ChangedBars <= 2) {
+      if (ChangedBars == 2) {
+         prevUpperBand = upperBand[1];
+         prevLowerBand = lowerBand[1];
+      }
+      if      (prevUpperBand && upperBand[0] > prevUpperBand) onChannelCross(D_LONG);
+      else if (prevLowerBand && lowerBand[0] < prevLowerBand) onChannelCross(D_SHORT);
+
+      prevUpperBand = upperBand[0];
+      prevLowerBand = lowerBand[0];
+   }
+   return(catch("onTick(3)"));
+}
+
+
+/**
+ * Whether a bar crossing both channel bands crossed the upper band first. The returned result is only a "best guess".
+ *
+ * @param  int bar - bar offset
+ *
+ * @return bool
+ */
+bool IsUpperCrossFirst(int bar) {
+   static datetime lastBarTime;
+   static double lastBarHigh, lastBarLow;
+   static bool lastResult = -1;
+
+   if (ChangedBars==1 && bar==0) {                       // to minimze "guessing" errors and have consistent results when
+      if (Time[0]==lastBarTime && lastResult != -1) {    // a bar receives multiple ticks we cache the status of Bar[0]
+         if (EQ(High[0], lastBarHigh)) {                 // TODO: also cache result for Bar[1]
+            if (EQ(Low[0], lastBarLow)) {
+               return(lastResult);
+            }
+         }
+      }
+   }
+
+   double ho = High [bar] - Open [bar];
+   double ol = Open [bar] - Low  [bar];
+   double hc = High [bar] - Close[bar];
+   double cl = Close[bar] - Low  [bar];
+
+   double minOpen  = MathMin(ho, ol);
+   double minClose = MathMin(hc, cl);
+
+   if (minOpen < minClose) lastResult = (ho < ol);
+   else                    lastResult = (hc > cl);
+
+   lastBarTime = Time[bar];
+   lastBarHigh = High[bar];
+   lastBarLow  = Low [bar];
+
+   return(lastResult);
+}
+
+
+/**
+ * Whether a bar crossing both channel bands crossed the upper band last.  The returned result is only a "best guess".
+ *
+ * @param  int bar - bar offset
+ *
+ * @return bool
+ */
+bool IsUpperCrossLast(int bar) {
+   double ho = High [bar] - Open [bar];
+   double ol = Open [bar] - Low  [bar];
+   double hc = High [bar] - Close[bar];
+   double cl = Close[bar] - Low  [bar];
+
+   double minOpen  = MathMin(ho, ol);
+   double minClose = MathMin(hc, cl);
+
+   if (minOpen < minClose)
+      return(ho > ol);
+   return(hc < cl);
+
+   IsUpperCrossFirst(NULL);
+}
+
+
+/**
+ * Resolve the chart offset of the ZigZag semaphore preceeding the current tick at the specified bar. The bar may be part of
+ * a finished (historic) or unfinished (currently progressing) ZigZag leg. As bar 0 and 1 may receive multiple ticks the
+ * semaphore may be located at the current bar.
+ *
+ * @param  int bar - chart bar
+ *
+ * @return int - chart offset of the preceeding semaphore
+ */
+int FindPreceedingSemaphore(int bar) {
+   int semBar;
+
+   if (semaphoreClose[bar] != NULL) {                             // semaphore is located at the current bar
+      semBar = bar;
+   }
+   else {                                                         // semaphore is located at a previous bar
+      int nextBar = bar+1;
+      semBar = nextBar + unknownTrend[nextBar];                   // unknown[] (may be 0) points to the preceeding semaphore
+      if (!semaphoreClose[semBar]) {                              // if called for a historic bar before the first cross
+         semBar = nextBar + Abs(knownTrend[nextBar]);
+      }
+   }
+   return(semBar);
+}
+
+
+/**
+ * Update buffers after a SINGLE or DOUBLE upper band crossing at the specified bar offset. Resolves the preceeding ZigZag
+ * semaphore and counts the trend forward from there.
+ *
+ * @param  int bar - offset
+ *
+ * @return bool - success status
+ */
+bool ProcessUpperCross(int bar) {
+   int prevSem = FindPreceedingSemaphore(bar);                       // resolve the preceeding semaphore
+   int prevTrend = knownTrend[prevSem];                              // trend at the preceeding semaphore
+
+   if (prevTrend > 0) {
+      if (prevSem == bar) {                                          // trend buffers are already set
+         if (semaphoreOpen[bar] != lowerCrossLow[bar]) {             // update existing semaphore
+            semaphoreOpen[bar] = upperCrossHigh[bar];
+         }
+         semaphoreClose[bar] = upperCrossHigh[bar];
+      }
+      else {
+         if (upperCrossHigh[bar] > upperCrossHigh[prevSem]) {        // an uptrend continuation
+            UpdateTrend(prevSem, prevTrend, bar, false);             // update existing trend
+            if (semaphoreOpen[prevSem] == semaphoreClose[prevSem]) {
+               semaphoreOpen [prevSem] = 0;                          // reset previous semaphore
+            }
+            semaphoreClose[prevSem] = semaphoreOpen[prevSem];
+            semaphoreOpen [bar]     = upperCrossHigh[bar];           // set new semaphore
+            semaphoreClose[bar]     = upperCrossHigh[bar];
+         }
+         else {                                                      // a lower High (unknown direction)
+            knownTrend  [bar] = knownTrend  [bar+1];                 // keep known trend
+            unknownTrend[bar] = unknownTrend[bar+1] + 1;             // increase unknown trend
+         }
+         reversal[bar] = reversal[bar+1];                            // keep reversal offset
+      }
+   }
+   else {                                                            // a reversal from "short" to "long" (new uptrend)
+      if (prevSem == bar) {
+         UpdateTrend(prevSem, 1, bar, false);                        // flip trend on same bar, keep semaphoreOpen[]
+      }
+      else {
+         UpdateTrend(prevSem-1, 1, bar, true);                       // set the new trend range, reset reversals
+         semaphoreOpen[bar] = upperCrossHigh[bar];                   // set new semaphore
+      }
+      semaphoreClose[bar] = upperCrossHigh[bar];
+      reversal      [bar] = prevSem-bar;                             // set new reversal offset
+
+      if (Signal.onReversal && ChangedBars <= 2) onReversal(D_LONG, bar);
+   }
+   return(true);
+}
+
+
+/**
+ * Update buffers after a SINGLE or DOUBLE lower band crossing at the specified bar offset. Resolves the preceeding ZigZag
+ * semaphore and counts the trend forward from there.
+ *
+ * @param  int bar - offset
+ *
+ * @return bool - success status
+ */
+bool ProcessLowerCross(int bar) {
+   int prevSem = FindPreceedingSemaphore(bar);                       // resolve the preceeding semaphore
+   int prevTrend = knownTrend[prevSem];                              // trend at the preceeding semaphore
+
+   if (prevTrend < 0) {
+      if (prevSem == bar) {                                          // trend buffers are already set
+         if (semaphoreOpen[bar] != upperCrossHigh[bar]) {            // update existing semaphore
+            semaphoreOpen [bar] = lowerCrossLow[bar];
+         }
+         semaphoreClose[bar] = lowerCrossLow[bar];
+      }
+      else {
+         if (lowerCrossLow[bar] < lowerCrossLow[prevSem]) {          // a downtrend continuation
+            UpdateTrend(prevSem, prevTrend, bar, false);             // update existing trend
+            if (semaphoreOpen[prevSem] == semaphoreClose[prevSem]) {
+               semaphoreOpen [prevSem] = 0;                          // reset previous semaphore
+            }
+            semaphoreClose[prevSem] = semaphoreOpen[prevSem];
+            semaphoreOpen [bar]     = lowerCrossLow[bar];            // set new semaphore
+            semaphoreClose[bar]     = lowerCrossLow[bar];
+         }
+         else {                                                      // a higher Low (unknown direction)
+            knownTrend  [bar] = knownTrend  [bar+1];                 // keep known trend
+            unknownTrend[bar] = unknownTrend[bar+1] + 1;             // increase unknown trend
+         }
+         reversal[bar] = reversal[bar+1];                            // keep reversal offset
+      }
+   }
+   else {                                                            // a reversal from "long" to "short" (new downtrend)
+      if (prevSem == bar) {
+         UpdateTrend(prevSem, -1, bar, false);                       // flip trend on same bar, keep semaphoreOpen[]
+      }
+      else {
+         UpdateTrend(prevSem-1, -1, bar, true);                      // set the new trend, reset reversals
+         semaphoreOpen[bar] = lowerCrossLow[bar];                    // set new semaphore
+      }
+      semaphoreClose[bar] = lowerCrossLow[bar];
+      reversal      [bar] = prevSem-bar;                             // set the new reversal offset
+
+      if (Signal.onReversal && ChangedBars <= 2) onReversal(D_SHORT, bar);
+   }
+   return(true);
+}
+
+
+/**
+ * Update/count forward the 'knownTrend' and 'unknownTrend' counter of the specified bar range.
+ *
+ * @param  int  fromBar       - start bar of the range to update
+ * @param  int  fromValue     - start value for the trend counter
+ * @param  int  toBar         - end bar of the range to update
+ * @param  bool resetReversal - whether to reset the reversal buffer of the bar range
+ */
+void UpdateTrend(int fromBar, int fromValue, int toBar, bool resetReversalBuffer) {
+   resetReversalBuffer = resetReversalBuffer!=0;
+   int value = fromValue;
+
+   for (int i=fromBar; i >= toBar; i--) {
+      knownTrend   [i] = value;
+      unknownTrend [i] = 0;
+      combinedTrend[i] = Sign(knownTrend[i]) * unknownTrend[i] * 100000 + knownTrend[i];
+
+      if (resetReversalBuffer) reversal[i] = -1;
+
+      if (value > 0) value++;
+      else           value--;
+   }
 }
 
 
@@ -513,12 +699,11 @@ int onTick() {
  * @return int - error status
  */
 int onAccountChange(int previous, int current) {
-   tickSize      = 0;
-   lastTick      = 0;         // reset global non-input vars used by the various event handlers
-   lastSound     = 0;
-   waitUntil     = 0;
-   prevUpperBand = 0;
-   prevLowerBand = 0;
+   lastTick        = 0;             // reset global vars used by the various event handlers
+   lastSoundSignal = 0;
+   skipSignals     = 0;
+   prevUpperBand   = 0;
+   prevLowerBand   = 0;
    return(onInit());
 }
 
@@ -532,11 +717,9 @@ int onAccountChange(int previous, int current) {
  * @return bool - success status
  */
 bool onReversal(int direction, int bar) {
-   if (!Signal.onReversal)                      return(false);
-   if (ChangedBars > 2)                         return(false);
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
-   if (IsPossibleDataPumping())                 return(true);                 // skip signals during possible data pumping
+   if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
    // check wether the event was already signaled
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
@@ -553,9 +736,8 @@ bool onReversal(int direction, int bar) {
 
       if (Signal.onReversal.Sound) {
          error = PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
-         if (!error)                           lastSound = GetTickCount();
+         if (!error)                           lastSoundSignal = GetTickCount();
          else if (error == ERR_FILE_NOT_FOUND) Signal.onReversal.Sound = false;
-         else                                  error |= error;
       }
 
       message = Symbol() +","+ PeriodDescription() +": "+ shortName +" reversal "+ message;
@@ -564,29 +746,29 @@ bool onReversal(int direction, int bar) {
       if (Signal.onReversal.Popup)           Alert(message);
       if (Signal.onReversal.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
       if (Signal.onReversal.SMS)   error |= !SendSMS("", message + NL + accountTime);
-      if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark event as signaled
+      if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                       // mark event as signaled
    }
    return(!error);
 }
 
 
 /**
- * Event handler signaling Donchian channel widening.
+ * Event handler signaling Donchian channel widenings.
  *
  * @param  int direction - crossing direction: D_LONG | D_SHORT
  *
  * @return bool - success status
  */
-bool onChannelCrossing(int direction) {
+bool onChannelCross(int direction) {
    if (!Sound.onCrossing) return(false);
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelCrossing(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   if (lastSound+2000 < GetTickCount()) {                                  // at least 2 sec pause between sound signals
+   if (lastSoundSignal+2000 < GetTickCount()) {                      // at least 2 sec pause between consecutive sound signals
       int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onCrossing.Up, Sound.onCrossing.Down));
-      if      (!error)                      lastSound = GetTickCount();
+      if      (!error)                      lastSoundSignal = GetTickCount();
       else if (error == ERR_FILE_NOT_FOUND) Sound.onCrossing = false;
    }
-   return(!catch("onChannelCrossing(2)"));
+   return(!catch("onChannelCross(2)"));
 }
 
 
@@ -655,6 +837,28 @@ bool ParameterStepper(int direction, int keys) {
 
 
 /**
+ * Whether the current tick may have occurred during data pumping.
+ *
+ * @return bool
+ */
+bool IsPossibleDataPumping() {
+   if (__isTesting) return(false);
+
+   int waitPeriod = 20 * SECONDS;
+   datetime now = GetGmtTime();
+   bool result = true;
+
+   if (now > skipSignals) skipSignals = 0;
+   if (!skipSignals) {
+      if (now > lastTick + waitPeriod) skipSignals = now + waitPeriod;
+      else                             result = false;
+   }
+   lastTick = now;
+   return(result);
+}
+
+
+/**
  * Update the chart legend.
  */
 void UpdateLegend() {
@@ -664,8 +868,7 @@ void UpdateLegend() {
    if (!ValidBars || combinedTrend[0]!=lastTrend || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
       string sKnown    = "   "+ NumberToStr(knownTrend[0], "+.");
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
-      if (!tickSize) tickSize = GetTickSize();
-      string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
+      string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
       string sSignal   = ifString(Signal.onReversal, "  "+ legendInfo, "");
       string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal);
 
@@ -688,225 +891,24 @@ void UpdateLegend() {
 
 
 /**
- * Resolve the current ticksize.
- *
- * @return double - ticksize value or NULL (0) in case of errors
- */
-double GetTickSize() {
-   double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);      // fails if there is no tick yet, e.g.
-                                                               // - symbol not yet subscribed (on start or account/template change), it shows up later
-   int error = GetLastError();                                 // - synthetic symbol in offline chart
-   if (IsError(error)) {
-      if (error == ERR_SYMBOL_NOT_AVAILABLE)
-         return(!logInfo("GetTickSize(1)  MarketInfo(MODE_TICKSIZE)", error));
-      return(!catch("GetTickSize(2)", error));
-   }
-   if (!tickSize) logInfo("GetTickSize(3)  MarketInfo(MODE_TICKSIZE=0)");
-
-   return(tickSize);
-}
-
-
-/**
- * Whether a bar crossing both channel bands crossed the upper band first.
- *
- * @param  int bar - bar offset
- *
- * @return bool
- */
-bool IsUpperCrossFirst(int bar) {
-   double ho = High [bar] - Open [bar];
-   double ol = Open [bar] - Low  [bar];
-   double hc = High [bar] - Close[bar];
-   double cl = Close[bar] - Low  [bar];
-
-   double minOpen  = MathMin(ho, ol);
-   double minClose = MathMin(hc, cl);
-
-   if (minOpen < minClose)
-      return(ho < ol);
-   return(hc > cl);
-}
-
-
-/**
- * Get the bar offset of the last ZigZag point preceeding the specified startbar. If this is the chart's youngest ZigZag
- * point, then it's unfinished and subject to change.
- *
- * @param  int bar - startbar offset
- *
- * @return int - ZigZag point offset or the previous bar offset if no previous ZigZag point exists yet
- */
-int GetPreviousZigZagPoint(int bar) {
-   int zzOffset, nextBar=bar + 1;
-
-   if (unknownTrend[nextBar] > 0)     zzOffset = nextBar + unknownTrend[nextBar];
-   else if (!semaphoreClose[nextBar]) zzOffset = nextBar + Abs(knownTrend[nextBar]);
-   else                               zzOffset = nextBar;
-   return(zzOffset);
-}
-
-
-/**
- * Process an upper channel band crossing at the specified bar offset.
- *
- * @param  int  bar - offset
- *
- * @return int - bar offset of the previous ZigZag point
- */
-int ProcessUpperCross(int bar) {
-   int prevZZ    = GetPreviousZigZagPoint(bar);                   // bar offset of the previous ZigZag point
-   int prevTrend = knownTrend[prevZZ];                            // trend at the previous ZigZag point
-
-   if (prevTrend > 0) {                                           // an uptrend continuation
-      if (upperCrossExit[bar] > upperCrossExit[prevZZ]) {         // a new high
-         SetTrend(prevZZ, bar, prevTrend, false);                 // update existing trend
-         if (semaphoreOpen[prevZZ] == semaphoreClose[prevZZ]) {   // reset previous reversal marker
-            semaphoreOpen [prevZZ] = 0;
-            semaphoreClose[prevZZ] = 0;
-         }
-         else {
-            semaphoreClose[prevZZ] = semaphoreOpen[prevZZ];
-         }
-         semaphoreOpen [bar] = upperCrossExit[bar];               // set new reversal marker
-         semaphoreClose[bar] = upperCrossExit[bar];
-      }
-      else {                                                      // a lower high
-         knownTrend   [bar] = knownTrend[bar+1];                  // keep known trend
-         unknownTrend [bar] = unknownTrend[bar+1] + 1;            // increase unknown trend
-         combinedTrend[bar] = Round(Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar]);
-      }
-      reversal[bar] = reversal[bar+1];                            // keep previous reversal bar offset
-   }
-   else {                                                         // a new uptrend
-      if (knownTrend[bar+1] < 0) {
-         onReversal(D_LONG, bar);
-         SetTrend(prevZZ-1, bar, 1, true);                        // set the new trend and the new reversal bar offset
-         reversal[bar] = prevZZ-bar;
-      }
-      else {
-         SetTrend(prevZZ-1, bar, 1, false);                       // rewrite the existing trend and keep the previous reversal bar offset
-         reversal[bar] = ifInt(reversal[bar+1] < 0, prevZZ-bar, reversal[bar+1]);
-      }
-      semaphoreOpen [bar] = upperCrossExit[bar];
-      semaphoreClose[bar] = upperCrossExit[bar];
-   }
-   return(prevZZ);
-}
-
-
-/**
- * Process a lower channel band crossing at the specified bar offset.
- *
- * @param  int bar - offset
- *
- * @return int - bar offset of the previous ZigZag point
- */
-int ProcessLowerCross(int bar) {
-   int prevZZ    = GetPreviousZigZagPoint(bar);                   // bar offset of the previous ZigZag point
-   int prevTrend = knownTrend[prevZZ];                            // trend at the previous ZigZag point
-
-   if (prevTrend < 0) {                                           // a downtrend continuation
-      if (lowerCrossExit[bar] < lowerCrossExit[prevZZ]) {         // a new low
-         SetTrend(prevZZ, bar, prevTrend, false);                 // update existing trend
-         if (semaphoreOpen[prevZZ] == semaphoreClose[prevZZ]) {   // reset previous reversal marker
-            semaphoreOpen [prevZZ] = 0;
-            semaphoreClose[prevZZ] = 0;
-         }
-         else {
-            semaphoreClose[prevZZ] = semaphoreOpen[prevZZ];
-         }
-         semaphoreOpen [bar] = lowerCrossExit[bar];               // set new reversal marker
-         semaphoreClose[bar] = lowerCrossExit[bar];
-      }
-      else {                                                      // a higher low
-         knownTrend   [bar] = knownTrend[bar+1];                  // keep known trend
-         unknownTrend [bar] = unknownTrend[bar+1] + 1;            // increase unknown trend
-         combinedTrend[bar] = Round(Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar]);
-      }
-      reversal[bar] = reversal[bar+1];                            // keep previous reversal offset
-   }
-   else {                                                         // a new downtrend
-      if (knownTrend[bar+1] > 0) {
-         onReversal(D_SHORT, bar);
-         SetTrend(prevZZ-1, bar, -1, true);                       // set the new trend and the new reversal bar offset
-         reversal[bar] = prevZZ-bar;
-      }
-      else {
-         SetTrend(prevZZ-1, bar, -1, false);                      // rewrite the existing trend and keep the previous reversal bar offset
-         reversal[bar] = ifInt(reversal[bar+1] < 0, prevZZ-bar, reversal[bar+1]);
-      }
-      semaphoreOpen [bar] = lowerCrossExit[bar];
-      semaphoreClose[bar] = lowerCrossExit[bar];
-   }
-   return(prevZZ);
-}
-
-
-/**
- * Set the 'knownTrend' and reset the 'unknownTrend' counters of the specified bar range.
- *
- * @param  int  from          - start offset of the bar range
- * @param  int  to            - end offset of the bar range
- * @param  int  value         - trend start value
- * @param  bool resetReversal - whether to reset the reversal buffer
- */
-void SetTrend(int from, int to, int value, bool resetReversal) {
-   resetReversal = resetReversal!=0;
-
-   for (int i=from; i >= to; i--) {
-      knownTrend   [i] = value;
-      unknownTrend [i] = 0;
-      combinedTrend[i] = Round(Sign(knownTrend[i]) * unknownTrend[i] * 100000 + knownTrend[i]);
-
-      if (resetReversal) reversal[i] = -1;
-
-      if (value > 0) value++;
-      else           value--;
-   }
-}
-
-
-/**
- * Whether the current tick may have occurred during data pumping.
- *
- * @return bool
- */
-bool IsPossibleDataPumping() {
-   if (__isTesting) return(false);
-
-   int waitTime = 20 * SECONDS;
-   datetime now = GetGmtTime();
-   bool result = true;
-
-   if (now > waitUntil) waitUntil = 0;
-   if (!waitUntil) {
-      if (now > lastTick + waitTime) waitUntil = now + waitTime;
-      else                           result = false;
-   }
-   lastTick = now;
-   return(result);
-}
-
-
-/**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   indicatorName = "ZigZag("+ ifString(ZigZag.Periods.Step, "step:", "") + ZigZag.Periods +")";
-   shortName     = "ZigZag("+ ZigZag.Periods +")";
+   string name   = ProgramName();
+   indicatorName = name +"("+ ifString(ZigZag.Periods.Step, "step:", "") + ZigZag.Periods +")";
+   shortName     = name +"("+ ZigZag.Periods +")";
    IndicatorShortName(shortName);
 
    IndicatorBuffers(terminal_buffers);
-   SetIndexBuffer(MODE_SEMAPHORE_OPEN,     semaphoreOpen   ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,     0); SetIndexLabel(MODE_SEMAPHORE_OPEN,     NULL);
-   SetIndexBuffer(MODE_SEMAPHORE_CLOSE,    semaphoreClose  ); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE,    0); SetIndexLabel(MODE_SEMAPHORE_CLOSE,    NULL);
-   SetIndexBuffer(MODE_UPPER_BAND_VISIBLE, upperBandVisible); SetIndexEmptyValue(MODE_UPPER_BAND_VISIBLE, 0); SetIndexLabel(MODE_UPPER_BAND_VISIBLE, shortName +" upper band");
-   SetIndexBuffer(MODE_LOWER_BAND_VISIBLE, lowerBandVisible); SetIndexEmptyValue(MODE_LOWER_BAND_VISIBLE, 0); SetIndexLabel(MODE_LOWER_BAND_VISIBLE, shortName +" lower band");
-   SetIndexBuffer(MODE_UPPER_CROSS,        upperCross      ); SetIndexEmptyValue(MODE_UPPER_CROSS,        0); SetIndexLabel(MODE_UPPER_CROSS,        shortName +" cross up");
-   SetIndexBuffer(MODE_LOWER_CROSS,        lowerCross      ); SetIndexEmptyValue(MODE_LOWER_CROSS,        0); SetIndexLabel(MODE_LOWER_CROSS,        shortName +" cross down");
-   SetIndexBuffer(MODE_REVERSAL,           reversal        ); SetIndexEmptyValue(MODE_REVERSAL,          -1); SetIndexLabel(MODE_REVERSAL,           shortName +" reversal bar");
-   SetIndexBuffer(MODE_COMBINED_TREND,     combinedTrend   ); SetIndexEmptyValue(MODE_COMBINED_TREND,     0); SetIndexLabel(MODE_COMBINED_TREND,     shortName +" trend");
+   SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,  0); SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
+   SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE, 0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      shortName +" upper band"); if (!Donchian.ShowChannel) SetIndexLabel(MODE_UPPER_BAND,  NULL);
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      shortName +" lower band"); if (!Donchian.ShowChannel) SetIndexLabel(MODE_LOWER_BAND,  NULL);
+   SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,     0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" cross up");   if (!crossingDrawType)     SetIndexLabel(MODE_UPPER_CROSS, NULL);
+   SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,     0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" cross down"); if (!crossingDrawType)     SetIndexLabel(MODE_LOWER_CROSS, NULL);
+   SetIndexBuffer(MODE_REVERSAL,        reversal      ); SetIndexEmptyValue(MODE_REVERSAL,       -1); SetIndexLabel(MODE_REVERSAL,        shortName +" reversal");
+   SetIndexBuffer(MODE_COMBINED_TREND,  combinedTrend ); SetIndexEmptyValue(MODE_COMBINED_TREND,  0); SetIndexLabel(MODE_COMBINED_TREND,  shortName +" trend");
    IndicatorDigits(Digits);
 
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
@@ -915,8 +917,8 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SEMAPHORE_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_CLOSE, ZigZag.Semaphores.Wingdings);
 
    drawType = ifInt(Donchian.ShowChannel, DRAW_LINE, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.Upper.Color);
-   SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.Lower.Color);
+   SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, Donchian.Upper.Color);
+   SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, Donchian.Lower.Color);
 
    drawType  = ifInt(crossingDrawType && Donchian.Crossings.Width, DRAW_ARROW, DRAW_NONE);
    drawWidth = Donchian.Crossings.Width-1;                     // minus 1 to use the same scale as ZigZag.Semaphore.Width

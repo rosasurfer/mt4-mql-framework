@@ -11,7 +11,8 @@ int onDeinit() {
          if (instance.status == STATUS_PROGRESSING) {
             success = UpdateStatus();
          }
-         if (success) StopInstance(NULL);
+         double manual[] = {SIGTYPE_MANUAL, 0, 0};
+         if (success) StopInstance(manual);
          RecordMetrics();
          ShowStatus();
       }

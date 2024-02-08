@@ -39,9 +39,9 @@
  *  • Lots:               ...
  *  • EA.Recorder:        Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
  *
- *     1: Records PnL after all costs in account currency (net).
- *     2: Records PnL after all costs in price units (net).
- *     3: Records PnL before spread/any costs in price units (synthetic, exact execution).
+ *     1: Records real PnL after all costs in account currency (net).
+ *     2: Records real PnL after all costs in price units (net).
+ *     3: Records synthetic PnL before spread/any costs in price units (signal levels).
  *
  *     Metrics in price units are recorded in the best matching unit. That's pip for Forex or full points otherwise.
  *
@@ -560,7 +560,7 @@ bool IsZigZagSignal(int &signal) {
    else {
       // TODO: error on triple-crossing at bar 0 or 1
       //  - extension down, then reversal up, then reversal down           e.g. ZigZag(20), GBPJPY,M5 2023.12.18 00:00
-      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData() => FALSE", ERR_RUNTIME_ERROR));
+      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData(0) => FALSE", ERR_RUNTIME_ERROR));
       int absTrend = Abs(trend);
 
       // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.
@@ -1497,7 +1497,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
    WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + CRLF);
 
-   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (exact execution)");
+   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (signal levels)");
    WriteIniString(file, section, "instance.closedSynthProfitP", /*double  */ DoubleToStr(instance.closedSynthProfitP, Digits));
    WriteIniString(file, section, "instance.totalSynthProfitP",  /*double  */ DoubleToStr(instance.totalSynthProfitP, Digits));
    WriteIniString(file, section, "instance.maxSynthProfitP",    /*double  */ DoubleToStr(instance.maxSynthProfitP, Digits));

@@ -143,7 +143,7 @@ int onInit() {
    string sAtrMultiplier = ifString(atrMultiplier==1, "", NumberToStr(atrMultiplier, ".+") +"*");
    string sAtrTimeframe  = ifString(ATR.Timeframe=="current", "", "x"+ ATR.Timeframe);
    string sAtr           = sAtrMultiplier +"ATR("+ atrPeriods + sAtrTimeframe +")";
-   indicatorName         = "Keltner Channel "+ sMa +" ± "+ sAtr;
+   indicatorName         = WindowExpertName() +" "+ sMa +" ± "+ sAtr;
    IndicatorShortName(indicatorName);                 // chart tooltips and context menu
    SetIndexLabel(MODE_MA,    "KChannel MA"); if (MA.Color == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
    SetIndexLabel(MODE_UPPER, "KChannel Upper");       // chart tooltips and "Data" window

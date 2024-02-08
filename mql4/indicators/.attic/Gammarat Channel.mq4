@@ -132,8 +132,8 @@ int onInit() {
    // names, labels and display options
    legendLabel = CreateChartLegend();
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = "TMA("+ maPeriods + sAppliedPrice +") Gammarat Channel"+ ifString(RepaintingMode, " RP", " NRP");
-   string shortName = "TMA("+ maPeriods +") Gammarat Channel";
+   indicatorName = "TMA("+ maPeriods + sAppliedPrice +") "+ WindowExpertName() + ifString(RepaintingMode, " RP", " NRP");
+   string shortName = "TMA("+ maPeriods +") "+ WindowExpertName();
    IndicatorShortName(shortName);                           // chart tooltips and context menu
    SetIndexLabel(MODE_TMA_RP,          "TMA");              // chart tooltips and "Data" window
    SetIndexLabel(MODE_UPPER_BAND_RP,   "Gamma Upper Band");

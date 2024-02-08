@@ -155,7 +155,7 @@ int onInit() {
 
    // names, labels and display options
    legendLabel = CreateChartLegend();
-   indicatorName = "Heikin-Ashi";               // or  Heikin-Ashi(SMA(10))  or  EMA(Heikin-Ashi(SMA(10)), 5)
+   indicatorName = WindowExpertName();          // or  Heikin-Ashi(SMA(10))  or  EMA(Heikin-Ashi(SMA(10)), 5)
    if (!IsEmpty(inputMaMethod))  indicatorName = indicatorName +"("+ Input.MA.Method +"("+ inputMaPeriods +"))";
    if (!IsEmpty(outputMaMethod)) indicatorName = Output.MA.Method +"("+ indicatorName +", "+ outputMaPeriods +")";
 
