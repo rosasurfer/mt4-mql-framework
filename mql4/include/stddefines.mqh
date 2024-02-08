@@ -17,7 +17,7 @@ int      __ExecutionContext[EXECUTION_CONTEXT_intSize];           // EXECUTION_C
 bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only in tester with "VisualMode=Off" or "Optimization=On".
 bool     __isTesting;                                             // Whether the program runs in the tester or on a test chart (experts, indicators and scripts).
 bool     __isSuperContext;                                        // Whether the current program is an indicator loaded by iCustom().
-int      __Test.barModel;                                         // the bar model of a test
+int      __Test.barModel = -1;                                    // the bar model of a test
 
 bool     __STATUS_HISTORY_UPDATE;                                 // History-Update wurde getriggert
 bool     __STATUS_OFF;                                            // flag for user-land program termination, if TRUE the program's main functions are no longer executed: onInit|onTick|onStart|onDeinit

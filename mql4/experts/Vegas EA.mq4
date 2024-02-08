@@ -1745,7 +1745,13 @@ int onInputError(string message) {
  */
 int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
    string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
-   string descrSuffix = "";
+   string descrSuffix="", sBarModel="";
+   switch (__Test.barModel) {
+      case MODE_EVERYTICK:     sBarModel = "EveryTick"; break;
+      case MODE_CONTROLPOINTS: sBarModel = "ControlP";  break;
+      case MODE_BAROPEN:       sBarModel = "BarOpen";   break;
+      default:                 sBarModel = "Live";      break;
+   }
 
    ready     = false;
    group     = "";
@@ -1764,21 +1770,21 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
       // --- custom cumulated metrcis ---------------------------------------------------------------------------------------
       case METRIC_TOTAL_NET_MONEY:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";       // "US500.123A"
-         descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = 2;
          multiplier  = 1;
          break;
 
       case METRIC_TOTAL_NET_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         descrSuffix = ", "+ PeriodDescription() +", net PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = pDigits;
          multiplier  = pMultiplier;
          break;
 
       case METRIC_TOTAL_SYNTH_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
-         descrSuffix = ", "+ PeriodDescription() +", synthetic PnL in "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", synth PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = pDigits;
          multiplier  = pMultiplier;
          break;
