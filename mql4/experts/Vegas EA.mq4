@@ -1139,14 +1139,12 @@ bool ReadStatus() {
 
    // [Runtime status]
    section = "Runtime status";
-   recorder.stdEquitySymbol    = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");   // string   recorder.stdEquitySymbol = GBPJPY.001
-
-   // instance data
    instance.id                 = GetIniInt    (file, section, "instance.id"      );              // int      instance.id                 = 123
    instance.name               = GetIniStringA(file, section, "instance.name", "");              // string   instance.name               = V.123
    instance.created            = GetIniInt    (file, section, "instance.created" );              // datetime instance.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest             = GetIniBool   (file, section, "instance.isTest"  );              // bool     instance.isTest             = 1
    instance.status             = GetIniInt    (file, section, "instance.status"  );              // int      instance.status             = 1 (waiting)
+   SS.InstanceName();
 
    instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"  );       // double   instance.openNetProfit      = 23.45
    instance.closedNetProfit    = GetIniDouble (file, section, "instance.closedNetProfit");       // double   instance.closedNetProfit    = 45.67
@@ -1165,9 +1163,11 @@ bool ReadStatus() {
    instance.totalSynthProfitP  = GetIniDouble (file, section, "instance.totalSynthProfitP" );    // double   instance.totalSynthProfitP  = 1.23456
    instance.maxSynthProfitP    = GetIniDouble (file, section, "instance.maxSynthProfitP"   );    // double   instance.maxSynthProfitP    = 23.45
    instance.maxSynthDrawdownP  = GetIniDouble (file, section, "instance.maxSynthDrawdownP" );    // double   instance.maxSynthDrawdownP  = -11.23
-   SS.InstanceName();
 
-   // open order data
+   recorder.stdEquitySymbol    = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");   // string   recorder.stdEquitySymbol    = GBPJPY.001
+
+   // [Open positions]
+   section = "Open positions";
    open.ticket                 = GetIniInt    (file, section, "open.ticket"      );              // int      open.ticket       = 123456
    open.type                   = GetIniInt    (file, section, "open.type"        );              // int      open.type         = 1
    open.lots                   = GetIniDouble (file, section, "open.lots"        );              // double   open.lots         = 0.01
@@ -1182,13 +1182,14 @@ bool ReadStatus() {
    open.netProfitP             = GetIniDouble (file, section, "open.netProfitP"  );              // double   open.netProfitP   = 0.12345
    open.synthProfitP           = GetIniDouble (file, section, "open.synthProfitP");              // double   open.synthProfitP = 0.12345
 
-   // history data
+   // [Trade history]
+   section = "Trade history";
    string sKeys[], sOrder="";
    double netProfit, netProfitP, synthProfitP;
    int size = ReadStatus.HistoryKeys(file, section, sKeys); if (size < 0) return(false);
 
    for (int i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // history.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                       // history.{i} = {data}
       int n = ReadStatus.RestoreHistory(sKeys[i], sOrder);
       if (n < 0) return(!catch("ReadStatus(8)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
 
@@ -1433,7 +1434,7 @@ bool SaveStatus() {
    else if (IsTestInstance()) return(true);                    // don't change the status file of a finished test
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;           // an empty line as additional section separator
+   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;           // an empty line as additional separator
 
    // [General]
    section = "General";
@@ -1441,7 +1442,7 @@ bool SaveStatus() {
 
    if (!__isTesting) {
       WriteIniString(file, section, "AccountCurrency", AccountCurrency());
-      WriteIniString(file, section, "Symbol",          Symbol() + separator);                                        // conditional section separator
+      WriteIniString(file, section, "Symbol",          Symbol() + separator);
    }
    else {
       WriteIniString(file, section, "Test.Currency",   AccountCurrency());
@@ -1458,7 +1459,7 @@ bool SaveStatus() {
             double units     = MathDiv(commission, MathDiv(tickValue, tickSize));
             sCommission = sCommission +" ("+ DoubleToStr(units * pMultiplier, pDigits) +" "+ pUnit +")";
          }
-      WriteIniString(file, section, "Test.Commission", sCommission + separator);                                     // conditional section separator
+      WriteIniString(file, section, "Test.Commission", sCommission + separator);
    }
 
    // [Inputs]
@@ -1467,42 +1468,41 @@ bool SaveStatus() {
    WriteIniString(file, section, "Tunnel.Definition",           /*string  */ Tunnel.Definition);
    WriteIniString(file, section, "Donchian.Periods",            /*int     */ Donchian.Periods);
    WriteIniString(file, section, "Lots",                        /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder + separator);                // conditional section separator
+   WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder + separator);
 
    // [Runtime status]
-   section = "Runtime status";                                  // On deletion of pending orders (if any) the number of stored order records decreases.
-   EmptyIniSectionA(file, section);                             // To prevent orphaned status file records the section is emptied before writing to it.
-   WriteIniString(file, section, "recorder.stdEquitySymbol",    /*string  */ recorder.stdEquitySymbol + CRLF);
-
-   // instance data
+   section = "Runtime status";
    WriteIniString(file, section, "instance.id",                 /*int     */ instance.id);
    WriteIniString(file, section, "instance.name",               /*string  */ instance.name);
    WriteIniString(file, section, "instance.created",            /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",             /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.status",             /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ CRLF);
+   WriteIniString(file, section, "instance.status",             /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ separator);
 
-   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 17)         +" ; real PnL after all costs in "+ AccountCurrency() +" (net)");
+   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 16)         +" ; real PnL after all costs in "+ AccountCurrency() +" (net)");
    WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
    WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
-   WriteIniString(file, section, "instance.avgNetProfit",       /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgNetProfit), 0, instance.avgNetProfit), 2) + CRLF);
+   WriteIniString(file, section, "instance.avgNetProfit",       /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgNetProfit), 0, instance.avgNetProfit), 2) + separator);
 
-   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP, ".1+"), 16)    +" ; real PnL after all costs in point (net)");
+   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP, ".1+"), 15)    +" ; real PnL after all costs in point (net)");
    WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ NumberToStr(instance.closedNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ NumberToStr(instance.totalNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.maxNetProfitP",      /*double  */ NumberToStr(instance.maxNetProfitP, ".1+"));
    WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
-   WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + CRLF);
+   WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + separator);
 
-   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 14) +" ; synthetic PnL before spread/any costs in point (signal levels)");
+   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 13) +" ; synthetic PnL before spread/any costs in point (signal levels)");
    WriteIniString(file, section, "instance.closedSynthProfitP", /*double  */ DoubleToStr(instance.closedSynthProfitP, Digits));
    WriteIniString(file, section, "instance.totalSynthProfitP",  /*double  */ DoubleToStr(instance.totalSynthProfitP, Digits));
    WriteIniString(file, section, "instance.maxSynthProfitP",    /*double  */ DoubleToStr(instance.maxSynthProfitP, Digits));
    WriteIniString(file, section, "instance.maxSynthDrawdownP",  /*double  */ DoubleToStr(instance.maxSynthDrawdownP, Digits));
-   WriteIniString(file, section, "instance.avgSynthProfitP",    /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgSynthProfitP), 0, instance.avgSynthProfitP), Digits+1) + CRLF);
+   WriteIniString(file, section, "instance.avgSynthProfitP",    /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgSynthProfitP), 0, instance.avgSynthProfitP), Digits+1) + separator + separator);
 
-   // open order data
+   WriteIniString(file, section, "recorder.stdEquitySymbol",    /*string  */ recorder.stdEquitySymbol + separator);
+
+   // [Open positions]
+   section = "Open positions";
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
    WriteIniString(file, section, "open.type",                   /*int     */ open.type);
    WriteIniString(file, section, "open.lots",                   /*double  */ NumberToStr(open.lots, ".+"));
@@ -1515,9 +1515,10 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.grossProfit",            /*double  */ DoubleToStr(open.grossProfit, 2));
    WriteIniString(file, section, "open.netProfit",              /*double  */ DoubleToStr(open.netProfit, 2));
    WriteIniString(file, section, "open.netProfitP",             /*double  */ NumberToStr(open.netProfitP, ".1+"));
-   WriteIniString(file, section, "open.synthProfitP",           /*double  */ DoubleToStr(open.synthProfitP, Digits) + CRLF);
+   WriteIniString(file, section, "open.synthProfitP",           /*double  */ DoubleToStr(open.synthProfitP, Digits) + separator + separator);
 
-   // closed order data
+   // [Trade history]
+   section = "Trade history";
    double netProfit, netProfitP, synthProfitP;
    int size = ArrayRange(history, 0);
 
