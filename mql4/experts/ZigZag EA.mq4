@@ -49,23 +49,26 @@
  *
  *
  * TODO:
- *  - fix virtual trading
+ *  - rewrite status file and add trade statistics
  *  - add ZigZag projections
  *  - input TradingTimeframe
+ *  - fix virtual trading
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - rewrite Test_GetCommission()
  *  - rewrite loglevels to global vars
  *  - document control scripts
- *  - fix synthetic PnL in tests with bar mode "BarOpen"
+ *  - block tests with bar model MODE_BAROPEN
  *
  *  - realtime metric charts
  *     on CreateRawSymbol() also create/update offline profile
  *     ChartInfos: read/display symbol description as long name
  *
  *  - performance
- *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), EveryTick:     34.9 sec, 89 trades
- *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), ControlPoints:  5.0 sec, 89 trades
- *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), BarOpen:        0.3 sec,  3 trades
+ *     GBPJPY,M1 2024.01.15-2024.02.02, ZigZag(30), EveryTick:     21.5 sec, 432 trades, 1.737.000 ticks
+ *     GBPJPY,M1 2024.01.15-2024.02.02, ZigZag(30), ControlPoints:  3.6 sec, 432 trades,   247.000 ticks
+ *
+ *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), EveryTick:     20.4 sec,  93 trades, 1.732.000 ticks
+ *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), ControlPoints:  3.0 sec,  93 trades    243.000 ticks
  *
  *  - time functions
  *     TimeCurrentEx()     check scripts/standalone-indicators in tester/offline charts in old/current terminals
@@ -1253,8 +1256,6 @@ bool StopInstance(double signal[]) {
          instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
          instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
          instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
-         SS.TotalProfit();
-         SS.ProfitStats();
       }
    }
 
@@ -1281,6 +1282,8 @@ bool StopInstance(double signal[]) {
       default: return(!catch("StopInstance(2)  "+ instance.name +" invalid parameter SIGNAL_TYPE: "+ sigType, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
+   SS.TotalProfit();
+   SS.ProfitStats();
 
    if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && sigType==SIGTYPE_MANUAL, "test ", "") +"instance stopped"+ ifString(sigType==SIGTYPE_MANUAL, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ sTotalProfit +" "+ sProfitStats);
    SaveStatus();
@@ -1336,18 +1339,15 @@ bool UpdateStatus() {
    instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
    instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
    instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
-   SS.TotalProfit();
+   if (__isChart) SS.TotalProfit();
 
-   bool updateStats = false;
-   if      (instance.totalNetProfit    > instance.maxNetProfit     ) { instance.maxNetProfit      = instance.totalNetProfit;    updateStats = true; }
-   else if (instance.totalNetProfit    < instance.maxNetDrawdown   ) { instance.maxNetDrawdown    = instance.totalNetProfit;    updateStats = true; }
-
-   if      (instance.totalNetProfitP   > instance.maxNetProfitP    ) { instance.maxNetProfitP     = instance.totalNetProfitP;   updateStats = true; }
-   else if (instance.totalNetProfitP   < instance.maxNetDrawdownP  ) { instance.maxNetDrawdownP   = instance.totalNetProfitP;   updateStats = true; }
-
-   if      (instance.totalSynthProfitP > instance.maxSynthProfitP  ) { instance.maxSynthProfitP   = instance.totalSynthProfitP; updateStats = true; }
-   else if (instance.totalSynthProfitP < instance.maxSynthDrawdownP) { instance.maxSynthDrawdownP = instance.totalSynthProfitP; updateStats = true; }
-   if (updateStats) SS.ProfitStats();
+   instance.maxNetProfit      = MathMax(instance.maxNetProfit,      instance.totalNetProfit);
+   instance.maxNetDrawdown    = MathMin(instance.maxNetDrawdown,    instance.totalNetProfit);
+   instance.maxNetProfitP     = MathMax(instance.maxNetProfitP,     instance.totalNetProfitP);
+   instance.maxNetDrawdownP   = MathMin(instance.maxNetDrawdownP,   instance.totalNetProfitP);
+   instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
+   instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
+   if (__isChart) SS.ProfitStats();
 
    return(!catch("UpdateStatus(4)"));
 }
@@ -1934,7 +1934,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
    WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + CRLF);
 
-   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (signal levels)");
+   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 14) +" ; synthetic PnL before spread/any costs in point (signal levels)");
    WriteIniString(file, section, "instance.closedSynthProfitP", /*double  */ DoubleToStr(instance.closedSynthProfitP, Digits));
    WriteIniString(file, section, "instance.totalSynthProfitP",  /*double  */ DoubleToStr(instance.totalSynthProfitP, Digits));
    WriteIniString(file, section, "instance.maxSynthProfitP",    /*double  */ DoubleToStr(instance.maxSynthProfitP, Digits));

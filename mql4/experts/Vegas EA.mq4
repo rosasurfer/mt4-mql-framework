@@ -682,18 +682,15 @@ bool UpdateStatus(int signal = NULL) {
    instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
    instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
    instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
-   SS.TotalProfit();
+   if (__isChart) SS.TotalProfit();
 
-   bool updateStats = false;
-   if      (instance.totalNetProfit    > instance.maxNetProfit     ) { instance.maxNetProfit      = instance.totalNetProfit;    updateStats = true; }
-   else if (instance.totalNetProfit    < instance.maxNetDrawdown   ) { instance.maxNetDrawdown    = instance.totalNetProfit;    updateStats = true; }
-
-   if      (instance.totalNetProfitP   > instance.maxNetProfitP    ) { instance.maxNetProfitP     = instance.totalNetProfitP;   updateStats = true; }
-   else if (instance.totalNetProfitP   < instance.maxNetDrawdownP  ) { instance.maxNetDrawdownP   = instance.totalNetProfitP;   updateStats = true; }
-
-   if      (instance.totalSynthProfitP > instance.maxSynthProfitP  ) { instance.maxSynthProfitP   = instance.totalSynthProfitP; updateStats = true; }
-   else if (instance.totalSynthProfitP < instance.maxSynthDrawdownP) { instance.maxSynthDrawdownP = instance.totalSynthProfitP; updateStats = true; }
-   if (updateStats) SS.ProfitStats();
+   instance.maxNetProfit      = MathMax(instance.maxNetProfit,      instance.totalNetProfit);
+   instance.maxNetDrawdown    = MathMin(instance.maxNetDrawdown,    instance.totalNetProfit);
+   instance.maxNetProfitP     = MathMax(instance.maxNetProfitP,     instance.totalNetProfitP);
+   instance.maxNetDrawdownP   = MathMin(instance.maxNetDrawdownP,   instance.totalNetProfitP);
+   instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
+   instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
+   if (__isChart) SS.ProfitStats();
 
    if (positionClosed || signal)
       return(SaveStatus());
@@ -792,13 +789,14 @@ bool StopInstance() {
          instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
          instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
          instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
-         SS.TotalProfit();
-         SS.ProfitStats();
       }
    }
 
    // update status
    instance.status = STATUS_STOPPED;
+   SS.TotalProfit();
+   SS.ProfitStats();
+
    if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting, "test ", "") +"instance stopped, profit: "+ sTotalProfit +" "+ sProfitStats);
    SaveStatus();
 
@@ -1497,7 +1495,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
    WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + CRLF);
 
-   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 15) +" ; synthetic PnL before spread/any costs in point (signal levels)");
+   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 14) +" ; synthetic PnL before spread/any costs in point (signal levels)");
    WriteIniString(file, section, "instance.closedSynthProfitP", /*double  */ DoubleToStr(instance.closedSynthProfitP, Digits));
    WriteIniString(file, section, "instance.totalSynthProfitP",  /*double  */ DoubleToStr(instance.totalSynthProfitP, Digits));
    WriteIniString(file, section, "instance.maxSynthProfitP",    /*double  */ DoubleToStr(instance.maxSynthProfitP, Digits));
