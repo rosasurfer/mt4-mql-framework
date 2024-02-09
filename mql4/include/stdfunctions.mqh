@@ -2002,7 +2002,7 @@ int Div(int a, int b, int onZero = 0) {
  * @return double
  */
 double MathDiv(double a, double b, double onZero = 0) {
-   if (!b)
+   if (b == 0)
       return(onZero);
    return(a/b);
 }

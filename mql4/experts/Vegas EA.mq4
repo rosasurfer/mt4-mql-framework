@@ -125,6 +125,44 @@ extern double Lots                 = 1.0;
 #define METRIC_NEXT              1                 // directions for toggling between metrics
 #define METRIC_PREVIOUS         -1
 
+// trade statistics
+double stats[4][31];
+
+#define S_TRADES                    0              // indexes for trade statistics
+#define S_TRADES_LONG               1
+#define S_TRADES_LONG_PCT           2
+#define S_TRADES_SHORT              3
+#define S_TRADES_SHORT_PCT          4
+#define S_TRADES_SUM                5
+#define S_TRADES_AVG                6
+
+#define S_WINNERS                   7
+#define S_WINNERS_PCT               8
+#define S_WINNERS_LONG              9
+#define S_WINNERS_LONG_PCT         10
+#define S_WINNERS_SHORT            11
+#define S_WINNERS_SHORT_PCT        12
+#define S_WINNERS_SUM              13
+#define S_WINNERS_AVG              14
+
+#define S_LOSERS                   15
+#define S_LOSERS_PCT               16
+#define S_LOSERS_LONG              17
+#define S_LOSERS_LONG_PCT          18
+#define S_LOSERS_SHORT             19
+#define S_LOSERS_SHORT_PCT         20
+#define S_LOSERS_SUM               21
+#define S_LOSERS_AVG               22
+
+#define S_SCRATCH                  23
+#define S_SCRATCH_PCT              24
+#define S_SCRATCH_LONG             25
+#define S_SCRATCH_LONG_PCT         26
+#define S_SCRATCH_SHORT            27
+#define S_SCRATCH_SHORT_PCT        28
+#define S_SCRATCH_SUM              29
+#define S_SCRATCH_AVG              30
+
 // instance data
 int      instance.id;                              // used for magic order numbers
 string   instance.name = "";
@@ -137,21 +175,18 @@ double   instance.closedNetProfit;
 double   instance.totalNetProfit;
 double   instance.maxNetProfit;                    // max. observed profit:   0...+n
 double   instance.maxNetDrawdown;                  // max. observed drawdown: -n...0
-double   instance.avgNetProfit = EMPTY_VALUE;
 
 double   instance.openNetProfitP;                  // real PnL after all costs in point (net)
 double   instance.closedNetProfitP;
 double   instance.totalNetProfitP;
 double   instance.maxNetProfitP;
 double   instance.maxNetDrawdownP;
-double   instance.avgNetProfitP = EMPTY_VALUE;
 
 double   instance.openSynthProfitP;                // synthetic PnL before spread/any costs in point (exact execution)
 double   instance.closedSynthProfitP;
 double   instance.totalSynthProfitP;
 double   instance.maxSynthProfitP;
 double   instance.maxSynthDrawdownP;
-double   instance.avgSynthProfitP = EMPTY_VALUE;
 
 // order data
 int      open.ticket;                              // one open position
@@ -895,31 +930,108 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
  * Update trade statistics.
  */
 void CalculateTradeStats() {
-   static int lastSize = 0;
-   static double sumNetProfit=0, sumNetProfitP=0, sumSynthProfitP=0;
+   int trades = ArrayRange(history, 0);
+   int prevTrades = stats[0][S_TRADES];
 
-   int size = ArrayRange(history, 0);
-
-   if (!size || size < lastSize) {
-      sumNetProfit    = 0;
-      sumNetProfitP   = 0;
-      sumSynthProfitP = 0;
-      instance.avgNetProfit    = EMPTY_VALUE;
-      instance.avgNetProfitP   = EMPTY_VALUE;
-      instance.avgSynthProfitP = EMPTY_VALUE;
-      lastSize = 0;
+   if (!trades || trades < prevTrades) {
+      ArrayInitialize(stats, 0);
+      prevTrades = 0;
    }
 
-   if (size > lastSize) {
-      for (int i=lastSize; i < size; i++) {                 // speed-up by processing only new history entries
-         sumNetProfit    += history[i][H_NETPROFIT    ];
-         sumNetProfitP   += history[i][H_NETPROFIT_P  ];
-         sumSynthProfitP += history[i][H_SYNTHPROFIT_P];
+   if (trades > prevTrades) {
+      for (int i=prevTrades; i < trades; i++) {                   // speed-up by processing only new history entries
+         // all trades
+         if (history[i][H_OPENTYPE] == OP_LONG) {
+            stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_LONG]++;
+            stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_LONG]++;
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_LONG]++;
+         }
+         else {
+            stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SHORT]++;
+            stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SHORT]++;
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SHORT]++;
+         }
+         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM] += history[i][H_NETPROFIT    ];
+         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM] += history[i][H_NETPROFIT_P  ];
+         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM] += history[i][H_SYNTHPROFIT_P];
+
+         // after all costs in punits
+         if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {
+            // winners
+            stats[METRIC_TOTAL_NET_UNITS][S_WINNERS]++;
+            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_LONG ]++;
+            else                                   stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SHORT]++;
+            stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SUM] += history[i][H_NETPROFIT_P];
+         }
+         else if (LT(history[i][H_NETPROFIT_P], -0.5*Point)) {
+            // losers
+            stats[METRIC_TOTAL_NET_UNITS][S_LOSERS]++;
+            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_LONG ]++;
+            else                                   stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SHORT]++;
+            stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SUM] += history[i][H_NETPROFIT_P];
+         }
+         else {
+            // scratch
+            stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH]++;
+            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG ]++;
+            else                                   stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT]++;
+            stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM] += history[i][H_NETPROFIT_P];
+         }
+
+         // before spread/any costs (signal levels)
+         if (GT(history[i][H_SYNTHPROFIT_P], 0.5*Point)) {
+            // winners
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS]++;
+            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG ]++;
+            else                                   stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT]++;
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM] += history[i][H_SYNTHPROFIT_P];
+         }
+         else if (LT(history[i][H_SYNTHPROFIT_P], -0.5*Point)) {
+            // losers
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS]++;
+            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG ]++;
+            else                                   stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT]++;
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM] += history[i][H_SYNTHPROFIT_P];
+         }
+         else {
+            // scratch
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]++;
+            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG ]++;
+            else                                   stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]++;
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM] += history[i][H_SYNTHPROFIT_P];
+         }
       }
-      instance.avgNetProfit    = sumNetProfit/size;
-      instance.avgNetProfitP   = sumNetProfitP/size;
-      instance.avgSynthProfitP = sumSynthProfitP/size;
-      lastSize = size;
+      stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_AVG]  = stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM]/trades;
+      stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_AVG]  = stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM]/trades;
+      stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG]  = stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM]/trades;
+
+      stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_AVG]   = MathDiv(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SUM], MathRound(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS]));
+      stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_AVG ]   = MathDiv(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SUM ], MathRound(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS ]));
+      stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_AVG]   = MathDiv(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM], MathRound(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH]));
+
+      stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_AVG] = MathDiv(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM], MathRound(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS]));
+      stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_AVG ] = MathDiv(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM ], MathRound(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS ]));
+      stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_AVG] = MathDiv(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM], MathRound(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]));
+
+      // new number of total trades and trade percentages
+      for (i=ArrayRange(stats, 0)-1; i >= 0; i--) {
+         stats[i][S_TRADES] = trades;
+         stats[i][S_TRADES] = trades;
+         stats[i][S_TRADES] = trades;
+         stats[i][S_TRADES] = trades;
+
+         stats[i][S_TRADES_LONG_PCT  ] = MathDiv(stats[i][S_TRADES_LONG  ], stats[i][S_TRADES ]);
+         stats[i][S_TRADES_SHORT_PCT ] = MathDiv(stats[i][S_TRADES_SHORT ], stats[i][S_TRADES ]);
+         stats[i][S_WINNERS_PCT      ] = MathDiv(stats[i][S_WINNERS      ], stats[i][S_TRADES ]);
+         stats[i][S_WINNERS_LONG_PCT ] = MathDiv(stats[i][S_WINNERS_LONG ], stats[i][S_WINNERS]);
+         stats[i][S_WINNERS_SHORT_PCT] = MathDiv(stats[i][S_WINNERS_SHORT], stats[i][S_WINNERS]);
+         stats[i][S_LOSERS_PCT       ] = MathDiv(stats[i][S_LOSERS       ], stats[i][S_TRADES ]);
+         stats[i][S_LOSERS_LONG_PCT  ] = MathDiv(stats[i][S_LOSERS_LONG  ], stats[i][S_LOSERS ]);
+         stats[i][S_LOSERS_SHORT_PCT ] = MathDiv(stats[i][S_LOSERS_SHORT ], stats[i][S_LOSERS ]);
+         stats[i][S_SCRATCH_PCT      ] = MathDiv(stats[i][S_SCRATCH      ], stats[i][S_TRADES ]);
+         stats[i][S_SCRATCH_LONG_PCT ] = MathDiv(stats[i][S_SCRATCH_LONG ], stats[i][S_SCRATCH]);
+         stats[i][S_SCRATCH_SHORT_PCT] = MathDiv(stats[i][S_SCRATCH_SHORT], stats[i][S_SCRATCH]);
+      }
    }
 }
 
@@ -1139,48 +1251,53 @@ bool ReadStatus() {
 
    // [Runtime status]
    section = "Runtime status";
-   instance.id                 = GetIniInt    (file, section, "instance.id"      );              // int      instance.id                 = 123
-   instance.name               = GetIniStringA(file, section, "instance.name", "");              // string   instance.name               = V.123
-   instance.created            = GetIniInt    (file, section, "instance.created" );              // datetime instance.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
-   instance.isTest             = GetIniBool   (file, section, "instance.isTest"  );              // bool     instance.isTest             = 1
-   instance.status             = GetIniInt    (file, section, "instance.status"  );              // int      instance.status             = 1 (waiting)
+   instance.id                 = GetIniInt    (file, section, "instance.id"      );             // int      instance.id              = 123
+   instance.name               = GetIniStringA(file, section, "instance.name", "");             // string   instance.name            = V.123
+   instance.created            = GetIniInt    (file, section, "instance.created" );             // datetime instance.created         = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.isTest             = GetIniBool   (file, section, "instance.isTest"  );             // bool     instance.isTest          = 1
+   instance.status             = GetIniInt    (file, section, "instance.status"  );             // int      instance.status          = 1 (waiting)
+   recorder.stdEquitySymbol    = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");  // string   recorder.stdEquitySymbol = GBPJPY.001
    SS.InstanceName();
 
-   instance.openNetProfit      = GetIniDouble (file, section, "instance.openNetProfit"  );       // double   instance.openNetProfit      = 23.45
-   instance.closedNetProfit    = GetIniDouble (file, section, "instance.closedNetProfit");       // double   instance.closedNetProfit    = 45.67
-   instance.totalNetProfit     = GetIniDouble (file, section, "instance.totalNetProfit" );       // double   instance.totalNetProfit     = 123.45
-   instance.maxNetProfit       = GetIniDouble (file, section, "instance.maxNetProfit"   );       // double   instance.maxNetProfit       = 23.45
-   instance.maxNetDrawdown     = GetIniDouble (file, section, "instance.maxNetDrawdown" );       // double   instance.maxNetDrawdown     = -11.23
+   // [Stats: net in money]
+   section = "Stats: net in money";
+   instance.openNetProfit      = GetIniDouble (file, section, "openProfit"  );                  // double   openProfit   = 23.45
+   instance.closedNetProfit    = GetIniDouble (file, section, "closedProfit");                  // double   closedProfit = 45.67
+   instance.totalNetProfit     = GetIniDouble (file, section, "totalProfit" );                  // double   totalProfit  = 123.45
+   instance.maxNetDrawdown     = GetIniDouble (file, section, "minProfit"   );                  // double   minProfit    = -11.23
+   instance.maxNetProfit       = GetIniDouble (file, section, "maxProfit"   );                  // double   maxProfit    = 23.45
 
-   instance.openNetProfitP     = GetIniDouble (file, section, "instance.openNetProfitP"  );      // double   instance.openNetProfitP     = 0.12345
-   instance.closedNetProfitP   = GetIniDouble (file, section, "instance.closedNetProfitP");      // double   instance.closedNetProfitP   = -0.23456
-   instance.totalNetProfitP    = GetIniDouble (file, section, "instance.totalNetProfitP" );      // double   instance.totalNetProfitP    = 1.23456
-   instance.maxNetProfitP      = GetIniDouble (file, section, "instance.maxNetProfitP"   );      // double   instance.maxNetProfitP      = 0.12345
-   instance.maxNetDrawdownP    = GetIniDouble (file, section, "instance.maxNetDrawdownP" );      // double   instance.maxNetDrawdownP    = -0.23456
+   // [Stats: net in punits]
+   section = "Stats: net in "+ pUnit;
+   instance.openNetProfitP     = GetIniDouble (file, section, "openProfit"  )/pMultiplier;      // double   openProfit   = 1234.5
+   instance.closedNetProfitP   = GetIniDouble (file, section, "closedProfit")/pMultiplier;      // double   closedProfit = -2345.6
+   instance.totalNetProfitP    = GetIniDouble (file, section, "totalProfit" )/pMultiplier;      // double   totalProfit  = 12345.6
+   instance.maxNetDrawdownP    = GetIniDouble (file, section, "minProfit"   )/pMultiplier;      // double   minProfit    = -2345.6
+   instance.maxNetProfitP      = GetIniDouble (file, section, "maxProfit"   )/pMultiplier;      // double   maxProfit    = 1234.5
 
-   instance.openSynthProfitP   = GetIniDouble (file, section, "instance.openSynthProfitP"  );    // double   instance.openSynthProfitP   = 0.12345
-   instance.closedSynthProfitP = GetIniDouble (file, section, "instance.closedSynthProfitP");    // double   instance.closedSynthProfitP = -0.23456
-   instance.totalSynthProfitP  = GetIniDouble (file, section, "instance.totalSynthProfitP" );    // double   instance.totalSynthProfitP  = 1.23456
-   instance.maxSynthProfitP    = GetIniDouble (file, section, "instance.maxSynthProfitP"   );    // double   instance.maxSynthProfitP    = 23.45
-   instance.maxSynthDrawdownP  = GetIniDouble (file, section, "instance.maxSynthDrawdownP" );    // double   instance.maxSynthDrawdownP  = -11.23
-
-   recorder.stdEquitySymbol    = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");   // string   recorder.stdEquitySymbol    = GBPJPY.001
+   // [Stats: synthetic in punits]
+   section = "Stats: synthetic in "+ pUnit;
+   instance.openSynthProfitP   = GetIniDouble (file, section, "openProfit"  )/pMultiplier;      // double   openProfit   = 1234.5
+   instance.closedSynthProfitP = GetIniDouble (file, section, "closedProfit")/pMultiplier;      // double   closedProfit = -2345.6
+   instance.totalSynthProfitP  = GetIniDouble (file, section, "totalProfit" )/pMultiplier;      // double   totalProfit  = 12345.6
+   instance.maxSynthDrawdownP  = GetIniDouble (file, section, "minProfit"   )/pMultiplier;      // double   minProfit    = -2345.6
+   instance.maxSynthProfitP    = GetIniDouble (file, section, "maxProfit"   )/pMultiplier;      // double   maxProfit    = 1234.5
 
    // [Open positions]
    section = "Open positions";
-   open.ticket                 = GetIniInt    (file, section, "open.ticket"      );              // int      open.ticket       = 123456
-   open.type                   = GetIniInt    (file, section, "open.type"        );              // int      open.type         = 1
-   open.lots                   = GetIniDouble (file, section, "open.lots"        );              // double   open.lots         = 0.01
-   open.time                   = GetIniInt    (file, section, "open.time"        );              // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
-   open.price                  = GetIniDouble (file, section, "open.price"       );              // double   open.price        = 1.24363
-   open.priceSynth             = GetIniDouble (file, section, "open.priceSynth"  );              // double   open.priceSynth   = 1.24363
-   open.slippage               = GetIniDouble (file, section, "open.slippage"    );              // double   open.slippage     = 0.00003
-   open.swap                   = GetIniDouble (file, section, "open.swap"        );              // double   open.swap         = -1.23
-   open.commission             = GetIniDouble (file, section, "open.commission"  );              // double   open.commission   = -5.50
-   open.grossProfit            = GetIniDouble (file, section, "open.grossProfit" );              // double   open.grossProfit  = 12.34
-   open.netProfit              = GetIniDouble (file, section, "open.netProfit"   );              // double   open.netProfit    = 12.56
-   open.netProfitP             = GetIniDouble (file, section, "open.netProfitP"  );              // double   open.netProfitP   = 0.12345
-   open.synthProfitP           = GetIniDouble (file, section, "open.synthProfitP");              // double   open.synthProfitP = 0.12345
+   open.ticket                 = GetIniInt    (file, section, "open.ticket"      );             // int      open.ticket       = 123456
+   open.type                   = GetIniInt    (file, section, "open.type"        );             // int      open.type         = 1
+   open.lots                   = GetIniDouble (file, section, "open.lots"        );             // double   open.lots         = 0.01
+   open.time                   = GetIniInt    (file, section, "open.time"        );             // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
+   open.price                  = GetIniDouble (file, section, "open.price"       );             // double   open.price        = 1.24363
+   open.priceSynth             = GetIniDouble (file, section, "open.priceSynth"  );             // double   open.priceSynth   = 1.24363
+   open.slippage               = GetIniDouble (file, section, "open.slippage"    );             // double   open.slippage     = 0.00003
+   open.swap                   = GetIniDouble (file, section, "open.swap"        );             // double   open.swap         = -1.23
+   open.commission             = GetIniDouble (file, section, "open.commission"  );             // double   open.commission   = -5.50
+   open.grossProfit            = GetIniDouble (file, section, "open.grossProfit" );             // double   open.grossProfit  = 12.34
+   open.netProfit              = GetIniDouble (file, section, "open.netProfit"   );             // double   open.netProfit    = 12.56
+   open.netProfitP             = GetIniDouble (file, section, "open.netProfitP"  );             // double   open.netProfitP   = 0.12345
+   open.synthProfitP           = GetIniDouble (file, section, "open.synthProfitP");             // double   open.synthProfitP = 0.12345
 
    // [Trade history]
    section = "Trade history";
@@ -1189,7 +1306,7 @@ bool ReadStatus() {
    int size = ReadStatus.HistoryKeys(file, section, sKeys); if (size < 0) return(false);
 
    for (int i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                       // history.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // history.{i} = {data}
       int n = ReadStatus.RestoreHistory(sKeys[i], sOrder);
       if (n < 0) return(!catch("ReadStatus(8)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
 
@@ -1434,7 +1551,7 @@ bool SaveStatus() {
    else if (IsTestInstance()) return(true);                    // don't change the status file of a finished test
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;           // an empty line as additional separator
+   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;           // an empty line separator
 
    // [General]
    section = "General";
@@ -1447,7 +1564,7 @@ bool SaveStatus() {
    else {
       WriteIniString(file, section, "Test.Currency",   AccountCurrency());
       WriteIniString(file, section, "Test.Symbol",     Symbol());
-      WriteIniString(file, section, "Test.Timeframe",  TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
+      WriteIniString(file, section, "Test.TimeRange",  TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
       WriteIniString(file, section, "Test.Period",     PeriodDescription());
       WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
       WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid) * pMultiplier, pDigits) +" "+ pUnit);
@@ -1464,58 +1581,99 @@ bool SaveStatus() {
 
    // [Inputs]
    section = "Inputs";
-   WriteIniString(file, section, "Instance.ID",                 /*string  */ Instance.ID);
-   WriteIniString(file, section, "Tunnel.Definition",           /*string  */ Tunnel.Definition);
-   WriteIniString(file, section, "Donchian.Periods",            /*int     */ Donchian.Periods);
-   WriteIniString(file, section, "Lots",                        /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder + separator);
+   WriteIniString(file, section, "Instance.ID",              /*string  */ Instance.ID);
+   WriteIniString(file, section, "Tunnel.Definition",        /*string  */ Tunnel.Definition);
+   WriteIniString(file, section, "Donchian.Periods",         /*int     */ Donchian.Periods);
+   WriteIniString(file, section, "Lots",                     /*double  */ NumberToStr(Lots, ".+"));
+   WriteIniString(file, section, "EA.Recorder",              /*string  */ EA.Recorder + separator + separator);
+
+   // [Stats: net in money]
+   section = "Stats: net in money";
+   WriteIniString(file, section, "openProfit",               /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 21)                        +"; after all costs in "+ AccountCurrency());
+   WriteIniString(file, section, "closedProfit",             /*double  */ DoubleToStr(instance.closedNetProfit, 2));
+   WriteIniString(file, section, "totalProfit",              /*double  */ DoubleToStr(instance.totalNetProfit, 2));
+   WriteIniString(file, section, "minProfit",                /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
+   WriteIniString(file, section, "maxProfit",                /*double  */ DoubleToStr(instance.maxNetProfit, 2) + separator);
+
+   // [Stats: net in punits]
+   section = "Stats: net in "+ pUnit;
+   WriteIniString(file, section, "openProfit",               /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP * pMultiplier, ".1+"), 21)     +"; after all costs");
+   WriteIniString(file, section, "closedProfit",             /*double  */ NumberToStr(instance.closedNetProfitP * pMultiplier, ".1+"));
+   WriteIniString(file, section, "totalProfit",              /*double  */ NumberToStr(instance.totalNetProfitP * pMultiplier, ".1+"));
+   WriteIniString(file, section, "minProfit",                /*double  */ NumberToStr(instance.maxNetDrawdownP * pMultiplier, ".1+"));
+   WriteIniString(file, section, "maxProfit",                /*double  */ NumberToStr(instance.maxNetProfitP * pMultiplier, ".1+") + separator);
+
+   WriteIniString(file, section, "trades",                   /*double  */ Round(stats[METRIC_TOTAL_NET_UNITS][S_TRADES]));
+   WriteIniString(file, section, "trades.long",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_LONG]), 9)   + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_TRADES_LONG_PCT  ], 1) +"%)", 8));
+   WriteIniString(file, section, "trades.short",             /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_SHORT]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_TRADES_SHORT_PCT ], 1) +"%)", 8));
+   WriteIniString(file, section, "avgTrade",                 /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_AVG] * pMultiplier, pDigits) + separator);
+
+   WriteIniString(file, section, "winners",                  /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_PCT      ], 1) +"%)", 8));
+   WriteIniString(file, section, "winners.long",             /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_LONG_PCT ], 1) +"%)", 8));
+   WriteIniString(file, section, "winners.short",            /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SHORT_PCT], 1) +"%)", 8));
+   WriteIniString(file, section, "avgWinner",                /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_AVG] * pMultiplier, pDigits) + separator);
+
+   WriteIniString(file, section, "losers",                   /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS]), 14)       + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_PCT       ], 1) +"%)", 8));
+   WriteIniString(file, section, "losers.long",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_LONG]), 9)   + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_LONG_PCT  ], 1) +"%)", 8));
+   WriteIniString(file, section, "losers.short",             /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SHORT]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SHORT_PCT ], 1) +"%)", 8));
+   WriteIniString(file, section, "avgLoser",                 /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_AVG] * pMultiplier, pDigits) + separator);
+
+   WriteIniString(file, section, "scratch",                  /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_PCT      ], 1) +"%)", 8));
+   WriteIniString(file, section, "scratch.long",             /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG_PCT ], 1) +"%)", 8));
+   WriteIniString(file, section, "scratch.short",            /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8) + separator);
+
+   // [Stats: synthetic in punits]
+   section = "Stats: synthetic in "+ pUnit;
+   WriteIniString(file, section, "openProfit",               /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP * pMultiplier, pDigits), 21) +"; before spread/any costs (signal levels)");
+   WriteIniString(file, section, "closedProfit",             /*double  */ DoubleToStr(instance.closedSynthProfitP * pMultiplier, pDigits));
+   WriteIniString(file, section, "totalProfit",              /*double  */ DoubleToStr(instance.totalSynthProfitP * pMultiplier, pDigits));
+   WriteIniString(file, section, "minProfit",                /*double  */ DoubleToStr(instance.maxSynthDrawdownP * pMultiplier, pDigits));
+   WriteIniString(file, section, "maxProfit",                /*double  */ DoubleToStr(instance.maxSynthProfitP * pMultiplier, pDigits) + separator);
+
+   WriteIniString(file, section, "trades",                   /*double  */ Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES]));
+   WriteIniString(file, section, "trades.long",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_LONG]), 9)   + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_LONG_PCT  ], 1) +"%)", 8));
+   WriteIniString(file, section, "trades.short",             /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SHORT]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SHORT_PCT ], 1) +"%)", 8));
+   WriteIniString(file, section, "avgTrade",                 /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG] * pMultiplier, pDigits) + separator);
+
+   WriteIniString(file, section, "winners",                  /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_PCT      ], 1) +"%)", 8));
+   WriteIniString(file, section, "winners.long",             /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG_PCT ], 1) +"%)", 8));
+   WriteIniString(file, section, "winners.short",            /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT_PCT], 1) +"%)", 8));
+   WriteIniString(file, section, "avgWinner",                /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_AVG] * pMultiplier, pDigits) + separator);
+
+   WriteIniString(file, section, "losers",                   /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS]), 14)       + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_PCT       ], 1) +"%)", 8));
+   WriteIniString(file, section, "losers.long",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG]), 9)   + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG_PCT  ], 1) +"%)", 8));
+   WriteIniString(file, section, "losers.short",             /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT_PCT ], 1) +"%)", 8));
+   WriteIniString(file, section, "avgLoser",                 /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_AVG] * pMultiplier, pDigits) + separator);
+
+   WriteIniString(file, section, "scratch",                  /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_PCT      ], 1) +"%)", 8));
+   WriteIniString(file, section, "scratch.long",             /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG_PCT ], 1) +"%)", 8));
+   WriteIniString(file, section, "scratch.short",            /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8) + separator + separator);
 
    // [Runtime status]
    section = "Runtime status";
-   WriteIniString(file, section, "instance.id",                 /*int     */ instance.id);
-   WriteIniString(file, section, "instance.name",               /*string  */ instance.name);
-   WriteIniString(file, section, "instance.created",            /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "instance.isTest",             /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.status",             /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ separator);
+   WriteIniString(file, section, "instance.id",              /*int     */ instance.id);
+   WriteIniString(file, section, "instance.name",            /*string  */ instance.name);
+   WriteIniString(file, section, "instance.created",         /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.isTest",          /*bool    */ instance.isTest);
+   WriteIniString(file, section, "instance.status",          /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ separator);
 
-   WriteIniString(file, section, "instance.openNetProfit",      /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 16)         +" ; real PnL after all costs in "+ AccountCurrency() +" (net)");
-   WriteIniString(file, section, "instance.closedNetProfit",    /*double  */ DoubleToStr(instance.closedNetProfit, 2));
-   WriteIniString(file, section, "instance.totalNetProfit",     /*double  */ DoubleToStr(instance.totalNetProfit, 2));
-   WriteIniString(file, section, "instance.maxNetProfit",       /*double  */ DoubleToStr(instance.maxNetProfit, 2));
-   WriteIniString(file, section, "instance.maxNetDrawdown",     /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
-   WriteIniString(file, section, "instance.avgNetProfit",       /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgNetProfit), 0, instance.avgNetProfit), 2) + separator);
-
-   WriteIniString(file, section, "instance.openNetProfitP",     /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP, ".1+"), 15)    +" ; real PnL after all costs in point (net)");
-   WriteIniString(file, section, "instance.closedNetProfitP",   /*double  */ NumberToStr(instance.closedNetProfitP, ".1+"));
-   WriteIniString(file, section, "instance.totalNetProfitP",    /*double  */ NumberToStr(instance.totalNetProfitP, ".1+"));
-   WriteIniString(file, section, "instance.maxNetProfitP",      /*double  */ NumberToStr(instance.maxNetProfitP, ".1+"));
-   WriteIniString(file, section, "instance.maxNetDrawdownP",    /*double  */ NumberToStr(instance.maxNetDrawdownP, ".1+"));
-   WriteIniString(file, section, "instance.avgNetProfitP",      /*double  */ NumberToStr(ifDouble(IsEmptyValue(instance.avgNetProfitP), 0, instance.avgNetProfitP), ".1+") + separator);
-
-   WriteIniString(file, section, "instance.openSynthProfitP",   /*double  */ StrPadRight(DoubleToStr(instance.openSynthProfitP, Digits), 13) +" ; synthetic PnL before spread/any costs in point (signal levels)");
-   WriteIniString(file, section, "instance.closedSynthProfitP", /*double  */ DoubleToStr(instance.closedSynthProfitP, Digits));
-   WriteIniString(file, section, "instance.totalSynthProfitP",  /*double  */ DoubleToStr(instance.totalSynthProfitP, Digits));
-   WriteIniString(file, section, "instance.maxSynthProfitP",    /*double  */ DoubleToStr(instance.maxSynthProfitP, Digits));
-   WriteIniString(file, section, "instance.maxSynthDrawdownP",  /*double  */ DoubleToStr(instance.maxSynthDrawdownP, Digits));
-   WriteIniString(file, section, "instance.avgSynthProfitP",    /*double  */ DoubleToStr(ifDouble(IsEmptyValue(instance.avgSynthProfitP), 0, instance.avgSynthProfitP), Digits+1) + separator + separator);
-
-   WriteIniString(file, section, "recorder.stdEquitySymbol",    /*string  */ recorder.stdEquitySymbol + separator);
+   WriteIniString(file, section, "recorder.stdEquitySymbol", /*string  */ recorder.stdEquitySymbol + separator);
 
    // [Open positions]
    section = "Open positions";
-   WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
-   WriteIniString(file, section, "open.type",                   /*int     */ open.type);
-   WriteIniString(file, section, "open.lots",                   /*double  */ NumberToStr(open.lots, ".+"));
-   WriteIniString(file, section, "open.time",                   /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
-   WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
-   WriteIniString(file, section, "open.priceSynth",             /*double  */ DoubleToStr(open.priceSynth, Digits));
-   WriteIniString(file, section, "open.slippage",               /*double  */ DoubleToStr(open.slippage, Digits));
-   WriteIniString(file, section, "open.swap",                   /*double  */ DoubleToStr(open.swap, 2));
-   WriteIniString(file, section, "open.commission",             /*double  */ DoubleToStr(open.commission, 2));
-   WriteIniString(file, section, "open.grossProfit",            /*double  */ DoubleToStr(open.grossProfit, 2));
-   WriteIniString(file, section, "open.netProfit",              /*double  */ DoubleToStr(open.netProfit, 2));
-   WriteIniString(file, section, "open.netProfitP",             /*double  */ NumberToStr(open.netProfitP, ".1+"));
-   WriteIniString(file, section, "open.synthProfitP",           /*double  */ DoubleToStr(open.synthProfitP, Digits) + separator + separator);
+   WriteIniString(file, section, "open.ticket",              /*int     */ open.ticket);
+   WriteIniString(file, section, "open.type",                /*int     */ open.type);
+   WriteIniString(file, section, "open.lots",                /*double  */ NumberToStr(open.lots, ".+"));
+   WriteIniString(file, section, "open.time",                /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "open.price",               /*double  */ DoubleToStr(open.price, Digits));
+   WriteIniString(file, section, "open.priceSynth",          /*double  */ DoubleToStr(open.priceSynth, Digits));
+   WriteIniString(file, section, "open.slippage",            /*double  */ DoubleToStr(open.slippage, Digits));
+   WriteIniString(file, section, "open.swap",                /*double  */ DoubleToStr(open.swap, 2));
+   WriteIniString(file, section, "open.commission",          /*double  */ DoubleToStr(open.commission, 2));
+   WriteIniString(file, section, "open.grossProfit",         /*double  */ DoubleToStr(open.grossProfit, 2));
+   WriteIniString(file, section, "open.netProfit",           /*double  */ DoubleToStr(open.netProfit, 2));
+   WriteIniString(file, section, "open.netProfitP",          /*double  */ NumberToStr(open.netProfitP, ".1+"));
+   WriteIniString(file, section, "open.synthProfitP",        /*double  */ DoubleToStr(open.synthProfitP, Digits) + separator + separator);
 
    // [Trade history]
    section = "Trade history";
@@ -2087,17 +2245,17 @@ void SS.ClosedTrades() {
       sClosedTrades = "-";
    }
    else {
-      if (instance.avgNetProfit == EMPTY_VALUE) CalculateTradeStats();
+      if (!stats[0][S_TRADES]) CalculateTradeStats();
 
       switch (status.activeMetric) {
          case METRIC_TOTAL_NET_MONEY:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgNetProfit, "R+.2") +" "+ AccountCurrency();
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_NET_MONEY][S_TRADES_AVG], "R+.2") +" "+ AccountCurrency();
             break;
          case METRIC_TOTAL_NET_UNITS:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_AVG] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
          case METRIC_TOTAL_SYNTH_UNITS:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(instance.avgSynthProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
          default: return(!catch("SS.ClosedTrades(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
