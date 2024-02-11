@@ -102,7 +102,7 @@ extern double Lots                 = 1.0;
 #define SIGNAL_SHORT TRADE_DIRECTION_SHORT         // 2
 
 #define H_TICKET                 0                 // trade history indexes
-#define H_OPENTYPE               1
+#define H_TYPE                   1
 #define H_LOTS                   2
 #define H_OPENTIME               3
 #define H_OPENPRICE              4
@@ -463,7 +463,7 @@ int ShowTradeHistory() {
 
    for (int i=0; i < orders; i++) {
       int      ticket     = history[i][H_TICKET    ];
-      int      type       = history[i][H_OPENTYPE  ];
+      int      type       = history[i][H_TYPE      ];
       double   lots       = history[i][H_LOTS      ];
       datetime openTime   = history[i][H_OPENTIME  ];
       double   openPrice  = history[i][H_OPENPRICE ];
@@ -877,7 +877,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    int i = ArrayRange(history, 0);
    ArrayResize(history, i+1);
    history[i][H_TICKET          ] = open.ticket;
-   history[i][H_OPENTYPE        ] = open.type;
+   history[i][H_TYPE            ] = open.type;
    history[i][H_LOTS            ] = open.lots;
    history[i][H_OPENTIME        ] = open.time;
    history[i][H_OPENPRICE       ] = open.price;
@@ -941,7 +941,7 @@ void CalculateTradeStats() {
    if (trades > prevTrades) {
       for (int i=prevTrades; i < trades; i++) {                   // speed-up by processing only new history entries
          // all trades
-         if (history[i][H_OPENTYPE] == OP_LONG) {
+         if (history[i][H_TYPE] == OP_LONG) {
             stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_LONG]++;
             stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_LONG]++;
             stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_LONG]++;
@@ -959,22 +959,22 @@ void CalculateTradeStats() {
          if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {
             // winners
             stats[METRIC_TOTAL_NET_UNITS][S_WINNERS]++;
-            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_LONG ]++;
-            else                                   stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SHORT]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_LONG ]++;
+            else                               stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SHORT]++;
             stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SUM] += history[i][H_NETPROFIT_P];
          }
          else if (LT(history[i][H_NETPROFIT_P], -0.5*Point)) {
             // losers
             stats[METRIC_TOTAL_NET_UNITS][S_LOSERS]++;
-            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_LONG ]++;
-            else                                   stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SHORT]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_LONG ]++;
+            else                               stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SHORT]++;
             stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SUM] += history[i][H_NETPROFIT_P];
          }
          else {
             // scratch
             stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH]++;
-            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG ]++;
-            else                                   stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG ]++;
+            else                               stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT]++;
             stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM] += history[i][H_NETPROFIT_P];
          }
 
@@ -982,22 +982,22 @@ void CalculateTradeStats() {
          if (GT(history[i][H_SYNTHPROFIT_P], 0.5*Point)) {
             // winners
             stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS]++;
-            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG ]++;
-            else                                   stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG ]++;
+            else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT]++;
             stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM] += history[i][H_SYNTHPROFIT_P];
          }
          else if (LT(history[i][H_SYNTHPROFIT_P], -0.5*Point)) {
             // losers
             stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS]++;
-            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG ]++;
-            else                                   stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG ]++;
+            else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT]++;
             stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM] += history[i][H_SYNTHPROFIT_P];
          }
          else {
             // scratch
             stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]++;
-            if (history[i][H_OPENTYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG ]++;
-            else                                   stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG ]++;
+            else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]++;
             stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM] += history[i][H_SYNTHPROFIT_P];
          }
       }
@@ -1360,13 +1360,13 @@ bool ReadStatus.RestoreHistory(string key, string value) {
    if (IsLastError())                    return(EMPTY);
    if (!StrStartsWithI(key, "history.")) return(_EMPTY(catch("ReadStatus.RestoreHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
 
-   // history.i=ticket,openType,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,synthProfitP
+   // history.i=ticket,type,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,synthProfitP
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(_EMPTY(catch("ReadStatus.RestoreHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.RestoreHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT)));
 
    int      ticket          = StrToInteger(values[H_TICKET          ]);
-   int      openType        = StrToInteger(values[H_OPENTYPE        ]);
+   int      type            = StrToInteger(values[H_TYPE            ]);
    double   lots            =  StrToDouble(values[H_LOTS            ]);
    datetime openTime        = StrToInteger(values[H_OPENTIME        ]);
    double   openPrice       =  StrToDouble(values[H_OPENPRICE       ]);
@@ -1382,7 +1382,7 @@ bool ReadStatus.RestoreHistory(string key, string value) {
    double   netProfitP      =  StrToDouble(values[H_NETPROFIT_P     ]);
    double   synthProfitP    =  StrToDouble(values[H_SYNTHPROFIT_P   ]);
 
-   return(History.AddRecord(ticket, openType, lots, openTime, openPrice, openPriceSynth, closeTime, closePrice, closePriceSynth, slippage, swap, commission, grossProfit, netProfit, netProfitP, synthProfitP));
+   return(History.AddRecord(ticket, type, lots, openTime, openPrice, openPriceSynth, closeTime, closePrice, closePriceSynth, slippage, swap, commission, grossProfit, netProfit, netProfitP, synthProfitP));
 }
 
 
@@ -1395,7 +1395,7 @@ bool ReadStatus.RestoreHistory(string key, string value) {
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int History.AddRecord(int ticket, int openType, double lots, datetime openTime, double openPrice, double openPriceSynth, datetime closeTime, double closePrice, double closePriceSynth, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double synthProfitP) {
+int History.AddRecord(int ticket, int type, double lots, datetime openTime, double openPrice, double openPriceSynth, datetime closeTime, double closePrice, double closePriceSynth, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double synthProfitP) {
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
@@ -1416,7 +1416,7 @@ int History.AddRecord(int ticket, int openType, double lots, datetime openTime, 
 
    // insert the new data
    history[i][H_TICKET          ] = ticket;
-   history[i][H_OPENTYPE        ] = openType;
+   history[i][H_TYPE            ] = type;
    history[i][H_LOTS            ] = lots;
    history[i][H_OPENTIME        ] = openTime;
    history[i][H_OPENPRICE       ] = openPrice;
@@ -1705,10 +1705,10 @@ bool SaveStatus() {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int index) {
-   // result: ticket,openType,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,synthProfitP
+   // result: ticket,type,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,synthProfitP
 
    int      ticket          = history[index][H_TICKET          ];
-   int      openType        = history[index][H_OPENTYPE        ];
+   int      type            = history[index][H_TYPE            ];
    double   lots            = history[index][H_LOTS            ];
    datetime openTime        = history[index][H_OPENTIME        ];
    double   openPrice       = history[index][H_OPENPRICE       ];
@@ -1724,7 +1724,7 @@ string SaveStatus.HistoryToStr(int index) {
    double   netProfitP      = history[index][H_NETPROFIT_P     ];
    double   synthProfitP    = history[index][H_SYNTHPROFIT_P   ];
 
-   return(StringConcatenate(ticket, ",", openType, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSynth, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSynth, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(synthProfitP, Digits)));
+   return(StringConcatenate(ticket, ",", type, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSynth, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSynth, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(synthProfitP, Digits)));
 }
 
 
