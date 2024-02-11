@@ -21,8 +21,8 @@
  *    It allows the EA to be tested and adjusted under idealised conditions.
  *
  *  • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in tester).
- *    These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they
- *    can be displayed and analysed like regular MT4 symbols.
+ *    These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. They can be
+ *    displayed and analysed like regular MT4 symbols.
  *
  *
  * Requirements
@@ -1585,7 +1585,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "Tunnel.Definition",        /*string  */ Tunnel.Definition);
    WriteIniString(file, section, "Donchian.Periods",         /*int     */ Donchian.Periods);
    WriteIniString(file, section, "Lots",                     /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "EA.Recorder",              /*string  */ EA.Recorder + separator + separator);
+   WriteIniString(file, section, "EA.Recorder",              /*string  */ EA.Recorder + separator);
 
    // [Stats: net in money]
    section = "Stats: net in money";
@@ -1647,7 +1647,7 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "scratch",                  /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_PCT      ], 1) +"%)", 8));
    WriteIniString(file, section, "scratch.long",             /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG_PCT ], 1) +"%)", 8));
-   WriteIniString(file, section, "scratch.short",            /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8) + separator + separator);
+   WriteIniString(file, section, "scratch.short",            /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8) + separator);
 
    // [Runtime status]
    section = "Runtime status";
@@ -1673,7 +1673,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.grossProfit",         /*double  */ DoubleToStr(open.grossProfit, 2));
    WriteIniString(file, section, "open.netProfit",           /*double  */ DoubleToStr(open.netProfit, 2));
    WriteIniString(file, section, "open.netProfitP",          /*double  */ NumberToStr(open.netProfitP, ".1+"));
-   WriteIniString(file, section, "open.synthProfitP",        /*double  */ DoubleToStr(open.synthProfitP, Digits) + separator + separator);
+   WriteIniString(file, section, "open.synthProfitP",        /*double  */ DoubleToStr(open.synthProfitP, Digits) + separator);
 
    // [Trade history]
    section = "Trade history";

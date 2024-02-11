@@ -2016,7 +2016,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "TakeProfit",                 /*double  */ NumberToStr(TakeProfit, ".+"));
    WriteIniString(file, section, "TakeProfit.Type",            /*string  */ TakeProfit.Type);
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
-   WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator + separator);
+   WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
    // [Stats: net in money]
    section = "Stats: net in money";
@@ -2078,7 +2078,7 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "scratch",                    /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_PCT      ], 1) +"%)", 8));
    WriteIniString(file, section, "scratch.long",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG_PCT ], 1) +"%)", 8));
-   WriteIniString(file, section, "scratch.short",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8) + separator + separator);
+   WriteIniString(file, section, "scratch.short",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8) + separator);
 
    // [Runtime status]
    section = "Runtime status";
@@ -2112,7 +2112,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitPun.condition",   /*bool    */ stop.profitPun.condition);
    WriteIniString(file, section, "stop.profitPun.type",        /*int     */ stop.profitPun.type);
    WriteIniString(file, section, "stop.profitPun.value",       /*double  */ NumberToStr(stop.profitPun.value, ".1+"));
-   WriteIniString(file, section, "stop.profitPun.description", /*string  */ stop.profitPun.description + separator + separator);
+   WriteIniString(file, section, "stop.profitPun.description", /*string  */ stop.profitPun.description + separator);
 
    // [Open positions]
    section = "Open positions";
@@ -2128,7 +2128,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.grossProfit",           /*double  */ DoubleToStr(open.grossProfit, 2));
    WriteIniString(file, section, "open.netProfit",             /*double  */ DoubleToStr(open.netProfit, 2));
    WriteIniString(file, section, "open.netProfitP",            /*double  */ NumberToStr(open.netProfitP, ".1+"));
-   WriteIniString(file, section, "open.synthProfitP",          /*double  */ DoubleToStr(open.synthProfitP, Digits) + separator + separator);
+   WriteIniString(file, section, "open.synthProfitP",          /*double  */ DoubleToStr(open.synthProfitP, Digits) + separator);
 
    // [Trade history]
    section = "Trade history";
