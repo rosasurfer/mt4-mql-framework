@@ -57,6 +57,8 @@ int onDeinitChartChange() {
  */
 int onDeinitChartClose() {
    if (!__isTesting && instance.status!=STATUS_STOPPED) {
+      SS.TotalProfit();
+      SS.ProfitStats();
       logInfo("onDeinitChartClose(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ sTotalProfit +" "+ sProfitStats);
       SaveStatus();
    }
@@ -72,6 +74,8 @@ int onDeinitChartClose() {
  */
 int onDeinitTemplate() {
    if (!__isTesting && instance.status!=STATUS_STOPPED) {
+      SS.TotalProfit();
+      SS.ProfitStats();
       logInfo("onDeinitTemplate(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ sTotalProfit +" "+ sProfitStats);
       SaveStatus();
    }
@@ -86,6 +90,8 @@ int onDeinitTemplate() {
  */
 int onDeinitRemove() {
    if (instance.status != STATUS_STOPPED) {
+      SS.TotalProfit();
+      SS.ProfitStats();
       logInfo("onDeinitRemove(1)  "+ instance.name +" expert removed in status \""+ StatusDescription(instance.status) +"\", profit: "+ sTotalProfit +" "+ sProfitStats);
       SaveStatus();
    }
@@ -101,6 +107,8 @@ int onDeinitRemove() {
  */
 int onDeinitClose() {
    if (instance.status != STATUS_STOPPED) {
+      SS.TotalProfit();
+      SS.ProfitStats();
       logInfo("onDeinitClose(1)  "+ instance.name +" terminal shutdown in status \""+ StatusDescription(instance.status) +"\", profit: "+ sTotalProfit +" "+ sProfitStats);
       SaveStatus();
    }

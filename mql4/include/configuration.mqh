@@ -689,7 +689,7 @@ bool WriteIniString(string fileName, string section, string key, string value) {
             return(WriteIniString(fileName, section, key, value));
          }
       }
-      return(!catch("WriteIniString(2)->WritePrivateProfileString(fileName=\""+ fileName +"\")", ERR_WIN32_ERROR+error));
+      return(!catch("WriteIniString(2)->WritePrivateProfileStringA(fileName=\""+ fileName +"\")", ERR_WIN32_ERROR+error));
    }
    return(true);
 }
