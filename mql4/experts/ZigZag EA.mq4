@@ -49,7 +49,6 @@
  *
  *
  * TODO:
- *  - rewrite status file and add trade statistics
  *  - rename H_OPENTYPE => H_TYPE
  *  - add ZigZag projections
  *  - input TradingTimeframe
@@ -269,9 +268,6 @@ extern bool   ShowProfitInPercent = true;                   // whether PL is dis
 #define METRIC_NEXT                 1              // directions for toggling between metrics
 #define METRIC_PREVIOUS            -1
 
-// trade statistics
-double stats[4][31];
-
 #define S_TRADES                    0              // indexes for trade statistics
 #define S_TRADES_LONG               1
 #define S_TRADES_LONG_PCT           2
@@ -351,6 +347,9 @@ double   open.netProfit;
 double   open.netProfitP;
 double   open.synthProfitP;
 double   history[][16];                            // multiple closed positions
+
+// trade statistics
+double   stats[4][31];
 
 // start conditions
 bool     start.time.condition;                     // whether a time condition is active

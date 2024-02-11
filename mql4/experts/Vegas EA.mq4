@@ -125,43 +125,40 @@ extern double Lots                 = 1.0;
 #define METRIC_NEXT              1                 // directions for toggling between metrics
 #define METRIC_PREVIOUS         -1
 
-// trade statistics
-double stats[4][31];
+#define S_TRADES                 0                 // indexes for trade statistics
+#define S_TRADES_LONG            1
+#define S_TRADES_LONG_PCT        2
+#define S_TRADES_SHORT           3
+#define S_TRADES_SHORT_PCT       4
+#define S_TRADES_SUM             5
+#define S_TRADES_AVG             6
 
-#define S_TRADES                    0              // indexes for trade statistics
-#define S_TRADES_LONG               1
-#define S_TRADES_LONG_PCT           2
-#define S_TRADES_SHORT              3
-#define S_TRADES_SHORT_PCT          4
-#define S_TRADES_SUM                5
-#define S_TRADES_AVG                6
+#define S_WINNERS                7
+#define S_WINNERS_PCT            8
+#define S_WINNERS_LONG           9
+#define S_WINNERS_LONG_PCT      10
+#define S_WINNERS_SHORT         11
+#define S_WINNERS_SHORT_PCT     12
+#define S_WINNERS_SUM           13
+#define S_WINNERS_AVG           14
 
-#define S_WINNERS                   7
-#define S_WINNERS_PCT               8
-#define S_WINNERS_LONG              9
-#define S_WINNERS_LONG_PCT         10
-#define S_WINNERS_SHORT            11
-#define S_WINNERS_SHORT_PCT        12
-#define S_WINNERS_SUM              13
-#define S_WINNERS_AVG              14
+#define S_LOSERS                15
+#define S_LOSERS_PCT            16
+#define S_LOSERS_LONG           17
+#define S_LOSERS_LONG_PCT       18
+#define S_LOSERS_SHORT          19
+#define S_LOSERS_SHORT_PCT      20
+#define S_LOSERS_SUM            21
+#define S_LOSERS_AVG            22
 
-#define S_LOSERS                   15
-#define S_LOSERS_PCT               16
-#define S_LOSERS_LONG              17
-#define S_LOSERS_LONG_PCT          18
-#define S_LOSERS_SHORT             19
-#define S_LOSERS_SHORT_PCT         20
-#define S_LOSERS_SUM               21
-#define S_LOSERS_AVG               22
-
-#define S_SCRATCH                  23
-#define S_SCRATCH_PCT              24
-#define S_SCRATCH_LONG             25
-#define S_SCRATCH_LONG_PCT         26
-#define S_SCRATCH_SHORT            27
-#define S_SCRATCH_SHORT_PCT        28
-#define S_SCRATCH_SUM              29
-#define S_SCRATCH_AVG              30
+#define S_SCRATCH               23
+#define S_SCRATCH_PCT           24
+#define S_SCRATCH_LONG          25
+#define S_SCRATCH_LONG_PCT      26
+#define S_SCRATCH_SHORT         27
+#define S_SCRATCH_SHORT_PCT     28
+#define S_SCRATCH_SUM           29
+#define S_SCRATCH_AVG           30
 
 // instance data
 int      instance.id;                              // used for magic order numbers
@@ -203,6 +200,9 @@ double   open.netProfit;
 double   open.netProfitP;
 double   open.synthProfitP;
 double   history[][16];                            // multiple closed positions
+
+// trade statistics
+double   stats[4][31];
 
 // volatile status data
 int      status.activeMetric = 1;
