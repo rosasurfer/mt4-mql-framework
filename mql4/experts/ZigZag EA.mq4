@@ -3,12 +3,28 @@
  *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
  ****************************************************************************************************************************
  *
- * ZigZag EA
  *
  * A strategy inspired by the "Turtle Trading" system of Richard Dennis.
  *
  *  @see [Turtle Trading] https://analyzingalpha.com/turtle-trading
  *  @see [Turtle Trading] http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
+ *
+ *
+ * Features
+ * --------
+ *  • A finished test can be loaded into an online chart for trade inspection and further analysis.
+ *
+ *  • The EA constantly writes a status file with complete runtime data and detailed trade statistics (more detailed than
+ *    the tester). This status file can be used to move a running EA instance between different machines (e.g. from laptop
+ *    to VPS).
+ *
+ *  • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
+ *    trading related deviations that impact test or real results (tester bugs, spread, slippage, swap, commission).
+ *    It allows the EA to be tested and adjusted under idealised conditions.
+ *
+ *  • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in tester).
+ *    These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. They can be
+ *    displayed and analysed like regular MT4 symbols.
  *
  *
  * Requirements

@@ -3,7 +3,6 @@
  *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
  ****************************************************************************************************************************
  *
- * Channel Breakout
  *
  * A combination of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in/out.
  *
@@ -15,6 +14,10 @@
  * Features
  * --------
  *  • A finished test can be loaded into an online chart for trade inspection and further analysis.
+ *
+ *  • The EA constantly writes a status file with complete runtime data and detailed trade statistics (more detailed than
+ *    the tester). This status file can be used to move a running EA instance between different machines (e.g. from laptop
+ *    to VPS).
  *
  *  • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
  *    trading related deviations that impact test or real results (tester bugs, spread, slippage, swap, commission).
