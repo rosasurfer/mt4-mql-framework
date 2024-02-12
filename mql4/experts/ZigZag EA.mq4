@@ -1115,7 +1115,7 @@ bool StartInstance(double signal[]) {
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
    int      magicNumber = CalculateMagicNumber();
-   color    marker      = ifInt(!type, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+   color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    int ticket, oeFlags, oe[];
    if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, NULL, NULL, marker, oe);

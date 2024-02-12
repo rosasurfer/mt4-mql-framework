@@ -61,7 +61,7 @@
  *
  *
  * TODO:
- *  - track min/max/avg runup/down per position
+ *  - track runup/down per position
  *  - convert signal constants to array
  *  - add break-even stop
  *  - add exit strategies
@@ -675,10 +675,10 @@ bool UpdateStatus(int signal = NULL) {
       open.commission    = OrderCommission();
       open.grossProfit   = OrderProfit();
       open.netProfit     = open.grossProfit + open.swap + open.commission;
-      open.netProfitP    = ifDouble(!open.type, exitPrice-open.price, open.price-exitPrice);
+      open.netProfitP    = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
       open.runupP        = MathMax(open.runupP, open.netProfitP);
       open.rundownP      = MathMin(open.rundownP, open.netProfitP); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-      open.synthProfitP  = ifDouble(!open.type, exitPriceSynth-open.priceSynth, open.priceSynth-exitPriceSynth);
+      open.synthProfitP  = ifDouble(open.type==OP_BUY, exitPriceSynth-open.priceSynth, open.priceSynth-exitPriceSynth);
       open.synthRunupP   = MathMax(open.synthRunupP, open.synthProfitP);
       open.synthRundownP = MathMin(open.synthRundownP, open.synthProfitP);
 
@@ -741,8 +741,8 @@ bool UpdateStatus(int signal = NULL) {
       open.commission    = oe.Commission(oe);
       open.grossProfit   = oe.Profit(oe);
       open.netProfit     = open.grossProfit + open.swap + open.commission;
-      open.netProfitP    = ifDouble(!open.type, Bid-open.price, open.price-Ask); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-      open.runupP        = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
+      open.netProfitP    = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+      open.runupP        = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
       open.rundownP      = open.runupP;
       open.synthProfitP  = 0;
       open.synthRunupP   = open.synthProfitP;
@@ -846,10 +846,10 @@ bool StopInstance() {
          open.commission    = oe.Commission(oe);
          open.grossProfit   = oe.Profit    (oe);
          open.netProfit     = open.grossProfit + open.swap + open.commission;
-         open.netProfitP    = ifDouble(!open.type, closePrice-open.price, open.price-closePrice);
+         open.netProfitP    = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
          open.runupP        = MathMax(open.runupP, open.netProfitP);
          open.rundownP      = MathMin(open.rundownP, open.netProfitP); open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-         open.synthProfitP  = ifDouble(!open.type, Bid-open.priceSynth, open.priceSynth-Bid);
+         open.synthProfitP  = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
          open.synthRunupP   = MathMax(open.synthRunupP, open.synthProfitP);
          open.synthRundownP = MathMin(open.synthRundownP, open.synthProfitP);
 
