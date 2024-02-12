@@ -15,8 +15,8 @@
  *  • A finished test can be loaded into an online chart for trade inspection and further analysis.
  *
  *  • The EA constantly writes a status file with complete runtime data and detailed trade statistics (more detailed than
- *    the tester). This status file can be used to move a running EA instance between different machines (e.g. from laptop
- *    to VPS).
+ *    the built-in functionality). This status file can be used to move a running EA instance with all historic runtime data
+ *    between different machines (e.g. from laptop to VPS).
  *
  *  • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
  *    trading related deviations that impact test or real results (tester bugs, spread, slippage, swap, commission).
@@ -65,12 +65,17 @@
  *
  *
  * TODO:
+ *  - track runup per position
+ *     rewrite/update CalculateTradeStats()
+ *     update status file
+ *
+ *  - rename CalculateTradeStats() => CalculateStats()
  *  - add ZigZag projections
+ *  - rewrite loglevels to global vars
  *  - input TradingTimeframe
  *  - fix virtual trading
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - rewrite Test_GetCommission()
- *  - rewrite loglevels to global vars
  *  - document control scripts
  *  - block tests with bar model MODE_BAROPEN
  *
@@ -270,7 +275,11 @@ extern bool   ShowProfitInPercent = true;                   // whether PL is dis
 #define H_GROSSPROFIT              12
 #define H_NETPROFIT                13
 #define H_NETPROFIT_P              14
-#define H_SYNTHPROFIT_P            15
+#define H_RUNUP_P                  15
+#define H_RUNDOWN_P                16
+#define H_SYNTH_PROFIT_P           17
+#define H_SYNTH_RUNUP_P            18
+#define H_SYNTH_RUNDOWN_P          19
 
 #define METRIC_TOTAL_NET_MONEY      1              // cumulated PnL metrics
 #define METRIC_TOTAL_NET_UNITS      2
@@ -360,8 +369,12 @@ double   open.commission;
 double   open.grossProfit;
 double   open.netProfit;
 double   open.netProfitP;
+double   open.runupP;                              // max runup distance
+double   open.rundownP;                            // ...
 double   open.synthProfitP;
-double   history[][16];                            // multiple closed positions
+double   open.synthRunupP;                         // max synhetic runup distance
+double   open.synthRundownP;                       // ...
+double   history[][20];                            // multiple closed positions
 
 // trade statistics
 double   stats[4][31];
@@ -1110,19 +1123,23 @@ bool StartInstance(double signal[]) {
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
-   open.ticket       = ticket;
-   open.type         = type;
-   open.lots         = oe.Lots(oe); SS.OpenLots();
-   open.time         = oe.OpenTime(oe);
-   open.price        = oe.OpenPrice(oe);
-   open.priceSynth   = sigValue;
-   open.slippage     = oe.Slippage(oe);
-   open.swap         = oe.Swap(oe);
-   open.commission   = oe.Commission(oe);
-   open.grossProfit  = oe.Profit(oe);
-   open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
-   open.synthProfitP = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
+   open.ticket        = ticket;
+   open.type          = type;
+   open.lots          = oe.Lots(oe); SS.OpenLots();
+   open.time          = oe.OpenTime(oe);
+   open.price         = oe.OpenPrice(oe);
+   open.priceSynth    = sigValue;
+   open.slippage      = oe.Slippage(oe);
+   open.swap          = oe.Swap(oe);
+   open.commission    = oe.Commission(oe);
+   open.grossProfit   = oe.Profit(oe);
+   open.netProfit     = open.grossProfit + open.swap + open.commission;
+   open.netProfitP    = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+   open.runupP        = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
+   open.rundownP      = open.runupP;
+   open.synthProfitP  = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
+   open.synthRunupP   = open.synthProfitP;
+   open.synthRundownP = open.synthRunupP;
 
    // update PL numbers
    instance.openNetProfit  = open.netProfit;
@@ -1168,11 +1185,11 @@ bool ReverseInstance(double signal[]) {
    if (!signal[SIGNAL_DIRECTION])             return(!catch("ReverseInstance(2)  "+ instance.name +" invalid parameter SIGNAL_DIRECTION: "+ _int(signal[SIGNAL_DIRECTION]), ERR_INVALID_PARAMETER));
    int ticket, oeFlags, oe[];
 
-   int sigType      = signal[SIGNAL_TYPE];
-   int sigDirection = signal[SIGNAL_DIRECTION];
-   double sigValue  = signal[SIGNAL_VALUE];
+   int    sigType      = signal[SIGNAL_TYPE];
+   int    sigDirection = signal[SIGNAL_DIRECTION];
+   double sigValue     = signal[SIGNAL_VALUE];
 
-   if (open.ticket > 0) {
+   if (open.ticket != NULL) {
       // continue with an already reversed position
       if ((open.type==OP_BUY && sigDirection==SIGDIRECTION_LONG) || (open.type==OP_SELL && sigDirection==SIGDIRECTION_SHORT)) {
          return(_true(logWarn("ReverseInstance(3)  "+ instance.name +" to "+ ifString(sigDirection==SIGDIRECTION_LONG, "long", "short") +": continuing with already open "+ ifString(tradingMode==TRADINGMODE_VIRTUAL, "virtual ", "") + ifString(sigDirection==SIGDIRECTION_LONG, "long", "short") +" position #"+ open.ticket)));
@@ -1184,13 +1201,20 @@ bool ReverseInstance(double signal[]) {
       else                                    success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
       if (!success) return(!SetLastError(oe.Error(oe)));
 
-      open.slippage   += oe.Slippage(oe);
-      open.swap        = oe.Swap(oe);
-      open.commission  = oe.Commission(oe);
-      open.grossProfit = oe.Profit(oe);
-      open.netProfit   = open.grossProfit + open.swap + open.commission;
-      open.netProfitP  = ifDouble(open.type==OP_BUY, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
-      if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), oe.ClosePrice(oe), sigValue)) return(false);
+      double closePrice  = oe.ClosePrice(oe);
+      open.slippage     += oe.Slippage(oe);
+      open.swap          = oe.Swap(oe);
+      open.commission    = oe.Commission(oe);
+      open.grossProfit   = oe.Profit(oe);
+      open.netProfit     = open.grossProfit + open.swap + open.commission;
+      open.netProfitP    = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+      open.runupP        = MathMax(open.runupP, open.netProfitP);
+      open.rundownP      = MathMin(open.rundownP, open.netProfitP); open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+      open.synthProfitP  = ifDouble(open.type==OP_BUY, sigValue-open.priceSynth, open.priceSynth-sigValue);
+      open.synthRunupP   = MathMax(open.synthRunupP, open.synthProfitP);
+      open.synthRundownP = MathMin(open.synthRundownP, open.synthProfitP);
+
+      if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), closePrice, sigValue)) return(false);
    }
 
    // open a new position
@@ -1206,19 +1230,23 @@ bool ReverseInstance(double signal[]) {
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the new position data
-   open.ticket       = ticket;
-   open.type         = type;
-   open.lots         = oe.Lots(oe); SS.OpenLots();
-   open.time         = oe.OpenTime(oe);
-   open.price        = oe.OpenPrice(oe);
-   open.priceSynth   = sigValue;
-   open.slippage     = oe.Slippage(oe);
-   open.swap         = oe.Swap(oe);
-   open.commission   = oe.Commission(oe);
-   open.grossProfit  = oe.Profit(oe);
-   open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
-   open.synthProfitP = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
+   open.ticket        = ticket;
+   open.type          = type;
+   open.lots          = oe.Lots(oe); SS.OpenLots();
+   open.time          = oe.OpenTime(oe);
+   open.price         = oe.OpenPrice(oe);
+   open.priceSynth    = sigValue;
+   open.slippage      = oe.Slippage(oe);
+   open.swap          = oe.Swap(oe);
+   open.commission    = oe.Commission(oe);
+   open.grossProfit   = oe.Profit(oe);
+   open.netProfit     = open.grossProfit + open.swap + open.commission;
+   open.netProfitP    = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+   open.runupP        = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
+   open.rundownP      = open.runupP;
+   open.synthProfitP  = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
+   open.synthRunupP   = open.synthProfitP;
+   open.synthRundownP = open.synthProfitP;
 
    // update PL numbers
    instance.openNetProfit  = open.netProfit;
@@ -1271,9 +1299,9 @@ bool StopInstance(double signal[]) {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   int sigType      = signal[SIGNAL_TYPE];
-   int sigDirection = signal[SIGNAL_DIRECTION];
-   double sigValue  = signal[SIGNAL_VALUE];
+   int    sigType      = signal[SIGNAL_TYPE];
+   int    sigDirection = signal[SIGNAL_DIRECTION];
+   double sigValue     = signal[SIGNAL_VALUE];
 
    // close an open position
    if (instance.status == STATUS_PROGRESSING) {
@@ -1284,13 +1312,20 @@ bool StopInstance(double signal[]) {
          else                                    success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
          if (!success) return(!SetLastError(oe.Error(oe)));
 
-         open.slippage   += oe.Slippage(oe);
-         open.swap        = oe.Swap(oe);
-         open.commission  = oe.Commission(oe);
-         open.grossProfit = oe.Profit(oe);
-         open.netProfit   = open.grossProfit + open.swap + open.commission;
-         open.netProfitP  = ifDouble(open.type==OP_BUY, oe.ClosePrice(oe)-open.price, open.price-oe.ClosePrice(oe)) + (open.swap + open.commission)/PointValue(oe.Lots(oe));
-         if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), oe.ClosePrice(oe), Bid)) return(false);
+         double closePrice  = oe.ClosePrice(oe), closePriceSynth = doubleOr(sigValue, Bid);
+         open.slippage     += oe.Slippage(oe);
+         open.swap          = oe.Swap(oe);
+         open.commission    = oe.Commission(oe);
+         open.grossProfit   = oe.Profit(oe);
+         open.netProfit     = open.grossProfit + open.swap + open.commission;
+         open.netProfitP    = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+         open.runupP        = MathMax(open.runupP, open.netProfitP);
+         open.rundownP      = MathMin(open.rundownP, open.netProfitP); open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+         open.synthProfitP  = ifDouble(open.type==OP_BUY, closePriceSynth-open.priceSynth, open.priceSynth-closePriceSynth);
+         open.synthRunupP   = MathMax(open.synthRunupP, open.synthProfitP);
+         open.synthRundownP = MathMin(open.synthRundownP, open.synthProfitP);
+
+         if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), closePrice, closePriceSynth)) return(false);
 
          instance.openNetProfit  = open.netProfit;
          instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
@@ -1359,26 +1394,42 @@ bool UpdateStatus() {
    if (!open.ticket)                          return(true);
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
-      open.swap         = 0;
-      open.commission   = 0;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
-      open.netProfit    = open.netProfitP * PointValue(open.lots);
-      open.grossProfit  = open.netProfit;
-      open.synthProfitP = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
+      open.swap          = 0;
+      open.commission    = 0;
+      open.netProfitP    = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
+      open.runupP        = MathMax(open.runupP, open.netProfitP);
+      open.rundownP      = MathMin(open.rundownP, open.netProfitP);
+      open.netProfit     = open.netProfitP * PointValue(open.lots);
+      open.grossProfit   = open.netProfit;
+      open.synthProfitP  = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
+      open.synthRunupP   = MathMax(open.synthRunupP, open.synthProfitP);
+      open.synthRundownP = MathMin(open.synthRundownP, open.synthProfitP);
    }
    else {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
-      open.swap         = NormalizeDouble(OrderSwap(), 2);
-      open.commission   = OrderCommission();
-      open.grossProfit  = OrderProfit();
-      open.netProfit    = open.grossProfit + open.swap + open.commission;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask); if (open.swap!=0 || open.commission!=0) open.netProfitP += (open.swap + open.commission)/PointValue(OrderLots());
-      open.synthProfitP = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
+      bool isClosed = (OrderCloseTime() != NULL);
+      if (isClosed) {
+         double exitPrice=OrderClosePrice(), exitPriceSynth=exitPrice;
+      }
+      else {
+         exitPrice = ifDouble(open.type==OP_BUY, Bid, Ask);
+         exitPriceSynth = Bid;
+      }
+      open.swap          = NormalizeDouble(OrderSwap(), 2);
+      open.commission    = OrderCommission();
+      open.grossProfit   = OrderProfit();
+      open.netProfit     = open.grossProfit + open.swap + open.commission;
+      open.netProfitP    = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
+      open.runupP        = MathMax(open.runupP, open.netProfitP);
+      open.rundownP      = MathMin(open.rundownP, open.netProfitP); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+      open.synthProfitP  = ifDouble(open.type==OP_BUY, exitPriceSynth-open.priceSynth, open.priceSynth-exitPriceSynth);
+      open.synthRunupP   = MathMax(open.synthRunupP, open.synthProfitP);
+      open.synthRundownP = MathMin(open.synthRundownP, open.synthProfitP);
 
-      if (OrderCloseTime() != NULL) {
+      if (isClosed) {
          int error;
          if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!MoveCurrentPositionToHistory(OrderCloseTime(), OrderClosePrice(), OrderClosePrice()))                          return(false);
+         if (!MoveCurrentPositionToHistory(OrderCloseTime(), exitPrice, exitPriceSynth))                                     return(false);
       }
    }
 
@@ -1473,9 +1524,6 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    if (instance.status != STATUS_PROGRESSING) return(!catch("MoveCurrentPositionToHistory(1)  "+ instance.name +" cannot process current position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (!open.ticket)                          return(!catch("MoveCurrentPositionToHistory(2)  "+ instance.name +" no open position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
 
-   // update position data
-   open.synthProfitP = ifDouble(open.type==OP_BUY, closePriceSynth-open.priceSynth, open.priceSynth-closePriceSynth);
-
    // add data to history
    int i = ArrayRange(history, 0);
    ArrayResize(history, i+1);
@@ -1494,7 +1542,11 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    history[i][H_GROSSPROFIT     ] = open.grossProfit;
    history[i][H_NETPROFIT       ] = open.netProfit;
    history[i][H_NETPROFIT_P     ] = open.netProfitP;
-   history[i][H_SYNTHPROFIT_P   ] = open.synthProfitP;
+   history[i][H_RUNUP_P         ] = open.runupP;
+   history[i][H_RUNDOWN_P       ] = open.rundownP;
+   history[i][H_SYNTH_PROFIT_P  ] = open.synthProfitP;
+   history[i][H_SYNTH_RUNUP_P   ] = open.synthRunupP;
+   history[i][H_SYNTH_RUNDOWN_P ] = open.synthRundownP;
 
    // update PL numbers
    instance.openNetProfit    = 0;
@@ -1506,23 +1558,27 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    instance.closedSynthProfitP += open.synthProfitP;
 
    // reset open position data
-   open.ticket       = NULL;
-   open.type         = NULL;
-   open.lots         = NULL;
-   open.time         = NULL;
-   open.price        = NULL;
-   open.priceSynth   = NULL;
-   open.slippage     = NULL;
-   open.swap         = NULL;
-   open.commission   = NULL;
-   open.grossProfit  = NULL;
-   open.netProfit    = NULL;
-   open.netProfitP   = NULL;
-   open.synthProfitP = NULL;
-   SS.OpenLots();
+   open.ticket        = NULL;
+   open.type          = NULL;
+   open.lots          = NULL;
+   open.time          = NULL;
+   open.price         = NULL;
+   open.priceSynth    = NULL;
+   open.slippage      = NULL;
+   open.swap          = NULL;
+   open.commission    = NULL;
+   open.grossProfit   = NULL;
+   open.netProfit     = NULL;
+   open.netProfitP    = NULL;
+   open.runupP        = NULL;
+   open.rundownP      = NULL;
+   open.synthProfitP  = NULL;
+   open.synthRunupP   = NULL;
+   open.synthRundownP = NULL;
 
    // update trade stats
    CalculateTradeStats();
+   SS.OpenLots();
    SS.ClosedTrades();
 
    return(!catch("MoveCurrentPositionToHistory(3)"));
@@ -1554,9 +1610,9 @@ void CalculateTradeStats() {
             stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SHORT]++;
             stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SHORT]++;
          }
-         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM] += history[i][H_NETPROFIT    ];
-         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM] += history[i][H_NETPROFIT_P  ];
-         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM] += history[i][H_SYNTHPROFIT_P];
+         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM] += history[i][H_NETPROFIT     ];
+         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM] += history[i][H_NETPROFIT_P   ];
+         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM] += history[i][H_SYNTH_PROFIT_P];
 
          // after all costs in punits
          if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {
@@ -1582,26 +1638,26 @@ void CalculateTradeStats() {
          }
 
          // before spread/any costs (signal levels)
-         if (GT(history[i][H_SYNTHPROFIT_P], 0.5*Point)) {
+         if (GT(history[i][H_SYNTH_PROFIT_P], 0.5*Point)) {
             // winners
             stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG ]++;
             else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM] += history[i][H_SYNTHPROFIT_P];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM] += history[i][H_SYNTH_PROFIT_P];
          }
-         else if (LT(history[i][H_SYNTHPROFIT_P], -0.5*Point)) {
+         else if (LT(history[i][H_SYNTH_PROFIT_P], -0.5*Point)) {
             // losers
             stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG ]++;
             else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM] += history[i][H_SYNTHPROFIT_P];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM] += history[i][H_SYNTH_PROFIT_P];
          }
          else {
             // scratch
             stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG ]++;
             else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM] += history[i][H_SYNTHPROFIT_P];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM] += history[i][H_SYNTH_PROFIT_P];
          }
       }
       stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_AVG]  = stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM]/trades;
@@ -2152,16 +2208,16 @@ bool SaveStatus() {
 
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i));
-      netProfit    += history[i][H_NETPROFIT    ];
-      netProfitP   += history[i][H_NETPROFIT_P  ];
-      synthProfitP += history[i][H_SYNTHPROFIT_P];
+      netProfit    += history[i][H_NETPROFIT     ];
+      netProfitP   += history[i][H_NETPROFIT_P   ];
+      synthProfitP += history[i][H_SYNTH_PROFIT_P];
    }
 
    // cross-check stored stats
    int precision = MathMax(Digits, 2) + 1;                     // required precision for fractional point values
-   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
-   if (NE(synthProfitP, instance.closedSynthProfitP,  Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_SYNTHPROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("        + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("     + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
+   if (NE(synthProfitP, instance.closedSynthProfitP,  Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_SYNTH_PROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("SaveStatus(5)"));
 }
@@ -2175,7 +2231,7 @@ bool SaveStatus() {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int index) {
-   // result: ticket,type,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfiP,synthProfitP
+   // result: ticket,type,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,runupP,rundownP,synthProfitP,synthRunupP,synthRundownP
 
    int      ticket          = history[index][H_TICKET          ];
    int      type            = history[index][H_TYPE            ];
@@ -2192,9 +2248,13 @@ string SaveStatus.HistoryToStr(int index) {
    double   grossProfit     = history[index][H_GROSSPROFIT     ];
    double   netProfit       = history[index][H_NETPROFIT       ];
    double   netProfitP      = history[index][H_NETPROFIT_P     ];
-   double   synthProfitP    = history[index][H_SYNTHPROFIT_P   ];
+   double   runupP          = history[index][H_RUNUP_P         ];
+   double   rundownP        = history[index][H_RUNDOWN_P       ];
+   double   synthProfitP    = history[index][H_SYNTH_PROFIT_P  ];
+   double   synthRunupP     = history[index][H_SYNTH_RUNUP_P   ];
+   double   synthRundownP   = history[index][H_SYNTH_RUNDOWN_P ];
 
-   return(StringConcatenate(ticket, ",", type, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSynth, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSynth, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(synthProfitP, Digits)));
+   return(StringConcatenate(ticket, ",", type, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSynth, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSynth, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(runupP, Digits), ",", DoubleToStr(rundownP, Digits), ",", DoubleToStr(synthProfitP, Digits), ",", DoubleToStr(synthRunupP, Digits), ",", DoubleToStr(synthRundownP, Digits)));
 }
 
 
@@ -2353,16 +2413,16 @@ bool ReadStatus() {
       int n = ReadStatus.RestoreHistory(sKeys[i], sOrder);
       if (n < 0) return(!catch("ReadStatus(9)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
 
-      netProfit    += history[n][H_NETPROFIT    ];
-      netProfitP   += history[n][H_NETPROFIT_P  ];
-      synthProfitP += history[n][H_SYNTHPROFIT_P];
+      netProfit    += history[n][H_NETPROFIT     ];
+      netProfitP   += history[n][H_NETPROFIT_P   ];
+      synthProfitP += history[n][H_SYNTH_PROFIT_P];
    }
 
    // cross-check restored stats
    int precision = MathMax(Digits, 2) + 1;                     // required precision for fractional point values
-   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("       + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("    + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
-   if (NE(synthProfitP, instance.closedSynthProfitP, Digits))  return(!catch("ReadStatus(12)  "+ instance.name +" sum(history[H_SYNTHPROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("ReadStatus(10)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("        + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("ReadStatus(11)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("     + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
+   if (NE(synthProfitP, instance.closedSynthProfitP, Digits))  return(!catch("ReadStatus(12)  "+ instance.name +" sum(history[H_SYNTH_PROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("ReadStatus(13)"));
 }
@@ -2403,7 +2463,7 @@ int ReadStatus.RestoreHistory(string key, string value) {
    if (IsLastError())                    return(EMPTY);
    if (!StrStartsWithI(key, "history.")) return(_EMPTY(catch("ReadStatus.RestoreHistory(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
 
-   // history.i=ticket,type,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,synthProfitP
+   // history.i=ticket,type,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,runupP,rundownP,synthProfitP,synthRunupP,synthRundownP
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(_EMPTY(catch("ReadStatus.RestoreHistory(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.RestoreHistory(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT)));
@@ -2423,9 +2483,13 @@ int ReadStatus.RestoreHistory(string key, string value) {
    double   grossProfit     =  StrToDouble(values[H_GROSSPROFIT     ]);
    double   netProfit       =  StrToDouble(values[H_NETPROFIT       ]);
    double   netProfitP      =  StrToDouble(values[H_NETPROFIT_P     ]);
-   double   synthProfitP    =  StrToDouble(values[H_SYNTHPROFIT_P   ]);
+   double   runupP          =  StrToDouble(values[H_RUNUP_P         ]);
+   double   rundownP        =  StrToDouble(values[H_RUNDOWN_P       ]);
+   double   synthProfitP    =  StrToDouble(values[H_SYNTH_PROFIT_P  ]);
+   double   synthRunupP     =  StrToDouble(values[H_SYNTH_RUNUP_P   ]);
+   double   synthRundownP   =  StrToDouble(values[H_SYNTH_RUNDOWN_P ]);
 
-   return(History.AddRecord(ticket, type, lots, openTime, openPrice, openPriceSynth, closeTime, closePrice, closePriceSynth, slippage, swap, commission, grossProfit, netProfit, netProfitP, synthProfitP));
+   return(History.AddRecord(ticket, type, lots, openTime, openPrice, openPriceSynth, closeTime, closePrice, closePriceSynth, slippage, swap, commission, grossProfit, netProfit, netProfitP, runupP, rundownP, synthProfitP, synthRunupP, synthRundownP));
 }
 
 
@@ -2438,7 +2502,7 @@ int ReadStatus.RestoreHistory(string key, string value) {
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int History.AddRecord(int ticket, int type, double lots, datetime openTime, double openPrice, double openPriceSynth, datetime closeTime, double closePrice, double closePriceSynth, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double synthProfitP) {
+int History.AddRecord(int ticket, int type, double lots, datetime openTime, double openPrice, double openPriceSynth, datetime closeTime, double closePrice, double closePriceSynth, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double runupP, double rundownP, double synthProfitP, double synthRunupP, double synthRundownP) {
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
@@ -2473,7 +2537,11 @@ int History.AddRecord(int ticket, int type, double lots, datetime openTime, doub
    history[i][H_GROSSPROFIT     ] = grossProfit;
    history[i][H_NETPROFIT       ] = netProfit;
    history[i][H_NETPROFIT_P     ] = netProfitP;
-   history[i][H_SYNTHPROFIT_P   ] = synthProfitP;
+   history[i][H_RUNUP_P         ] = runupP;
+   history[i][H_RUNDOWN_P       ] = rundownP;
+   history[i][H_SYNTH_PROFIT_P  ] = synthProfitP;
+   history[i][H_SYNTH_RUNUP_P   ] = synthRunupP;
+   history[i][H_SYNTH_RUNDOWN_P ] = synthRundownP;
 
    if (!catch("History.AddRecord(2)"))
       return(i);
@@ -2543,7 +2611,7 @@ bool SynchronizeStatus() {
             double   netProfitP   = grossProfitP + MathDiv(swap + commission, PointValue(lots));
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" dangling closed position found: #"+ ticket +", adding to instance...");
-            if (IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP))) return(false);
+            if (IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
             instance.closedNetProfit    += netProfit;
