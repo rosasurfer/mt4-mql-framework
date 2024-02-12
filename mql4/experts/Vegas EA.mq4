@@ -969,7 +969,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    open.synthRundownP = NULL;
 
    // update trade stats
-   CalculateTradeStats();
+   CalculateStats();
    SS.OpenLots();
    SS.ClosedTrades();
 
@@ -980,7 +980,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
 /**
  * Update trade statistics.
  */
-void CalculateTradeStats() {
+void CalculateStats() {
    int trades = ArrayRange(history, 0);
    int prevTrades = stats[0][S_TRADES];
 
@@ -2308,7 +2308,7 @@ void SS.ClosedTrades() {
       sClosedTrades = "-";
    }
    else {
-      if (!stats[0][S_TRADES]) CalculateTradeStats();
+      if (!stats[0][S_TRADES]) CalculateStats();
 
       switch (status.activeMetric) {
          case METRIC_TOTAL_NET_MONEY:
