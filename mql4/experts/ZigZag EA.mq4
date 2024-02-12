@@ -65,9 +65,7 @@
  *
  *
  * TODO:
- *  - track runup per position
- *     rewrite/update CalculateStats()
- *     update status file
+ *  - add runup/drawdown stats to status file
  *
  *  - add ZigZag projections
  *  - rewrite loglevels to global vars
@@ -291,40 +289,59 @@ extern bool   ShowProfitInPercent = true;                   // whether PL is dis
 #define METRIC_NEXT                 1              // directions for toggling between metrics
 #define METRIC_PREVIOUS            -1
 
+// trade statistics
+double stats[4][47];
+
 #define S_TRADES                    0              // indexes for trade statistics
 #define S_TRADES_LONG               1
 #define S_TRADES_LONG_PCT           2
 #define S_TRADES_SHORT              3
 #define S_TRADES_SHORT_PCT          4
-#define S_TRADES_SUM                5
-#define S_TRADES_AVG                6
+#define S_TRADES_SUM_RUNUP          5
+#define S_TRADES_SUM_DRAWDOWN       6
+#define S_TRADES_SUM_PROFIT         7
+#define S_TRADES_AVG_RUNUP          8
+#define S_TRADES_AVG_DRAWDOWN       9
+#define S_TRADES_AVG_PROFIT        10
 
-#define S_WINNERS                   7
-#define S_WINNERS_PCT               8
-#define S_WINNERS_LONG              9
-#define S_WINNERS_LONG_PCT         10
-#define S_WINNERS_SHORT            11
-#define S_WINNERS_SHORT_PCT        12
-#define S_WINNERS_SUM              13
-#define S_WINNERS_AVG              14
+#define S_WINNERS                  11
+#define S_WINNERS_PCT              12
+#define S_WINNERS_LONG             13
+#define S_WINNERS_LONG_PCT         14
+#define S_WINNERS_SHORT            15
+#define S_WINNERS_SHORT_PCT        16
+#define S_WINNERS_SUM_RUNUP        17
+#define S_WINNERS_SUM_DRAWDOWN     18
+#define S_WINNERS_SUM_PROFIT       19
+#define S_WINNERS_AVG_RUNUP        20
+#define S_WINNERS_AVG_DRAWDOWN     21
+#define S_WINNERS_AVG_PROFIT       22
 
-#define S_LOSERS                   15
-#define S_LOSERS_PCT               16
-#define S_LOSERS_LONG              17
-#define S_LOSERS_LONG_PCT          18
-#define S_LOSERS_SHORT             19
-#define S_LOSERS_SHORT_PCT         20
-#define S_LOSERS_SUM               21
-#define S_LOSERS_AVG               22
+#define S_LOSERS                   23
+#define S_LOSERS_PCT               24
+#define S_LOSERS_LONG              25
+#define S_LOSERS_LONG_PCT          26
+#define S_LOSERS_SHORT             27
+#define S_LOSERS_SHORT_PCT         28
+#define S_LOSERS_SUM_RUNUP         29
+#define S_LOSERS_SUM_DRAWDOWN      30
+#define S_LOSERS_SUM_PROFIT        31
+#define S_LOSERS_AVG_RUNUP         32
+#define S_LOSERS_AVG_DRAWDOWN      33
+#define S_LOSERS_AVG_PROFIT        34
 
-#define S_SCRATCH                  23
-#define S_SCRATCH_PCT              24
-#define S_SCRATCH_LONG             25
-#define S_SCRATCH_LONG_PCT         26
-#define S_SCRATCH_SHORT            27
-#define S_SCRATCH_SHORT_PCT        28
-#define S_SCRATCH_SUM              29
-#define S_SCRATCH_AVG              30
+#define S_SCRATCH                  35
+#define S_SCRATCH_PCT              36
+#define S_SCRATCH_LONG             37
+#define S_SCRATCH_LONG_PCT         38
+#define S_SCRATCH_SHORT            39
+#define S_SCRATCH_SHORT_PCT        40
+#define S_SCRATCH_SUM_RUNUP        41
+#define S_SCRATCH_SUM_DRAWDOWN     42
+#define S_SCRATCH_SUM_PROFIT       43
+#define S_SCRATCH_AVG_RUNUP        44
+#define S_SCRATCH_AVG_DRAWDOWN     45
+#define S_SCRATCH_AVG_PROFIT       46
 
 // general
 int      tradingMode;
@@ -374,9 +391,6 @@ double   open.synthProfitP;
 double   open.synthRunupP;                         // max synhetic runup distance
 double   open.synthRundownP;                       // ...
 double   history[][20];                            // multiple closed positions
-
-// trade statistics
-double   stats[4][31];
 
 // start conditions
 bool     start.time.condition;                     // whether a time condition is active
@@ -1598,7 +1612,7 @@ void CalculateStats() {
 
    if (trades > prevTrades) {
       for (int i=prevTrades; i < trades; i++) {                   // speed-up by processing only new history entries
-         // all trades
+         // all metrics: all trades
          if (history[i][H_TYPE] == OP_LONG) {
             stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_LONG]++;
             stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_LONG]++;
@@ -1609,87 +1623,142 @@ void CalculateStats() {
             stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SHORT]++;
             stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SHORT]++;
          }
-         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM] += history[i][H_NETPROFIT     ];
-         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM] += history[i][H_NETPROFIT_P   ];
-         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM] += history[i][H_SYNTH_PROFIT_P];
+         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM_RUNUP   ] += history[i][H_RUNUP_P  ];
+         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P];
+         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM_PROFIT  ] += history[i][H_NETPROFIT];
 
-         // after all costs in punits
+         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
+         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
+         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
+
+         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM_RUNUP   ] += history[i][H_SYNTH_RUNUP_P  ];
+         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM_DRAWDOWN] += history[i][H_SYNTH_RUNDOWN_P];
+         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM_PROFIT  ] += history[i][H_SYNTH_PROFIT_P ];
+
+         // METRIC_TOTAL_NET_MONEY
+         if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {          // to simplify scratch limits we compare against H_NETPROFIT_P
+            // winners
+            stats[METRIC_TOTAL_NET_MONEY][S_WINNERS]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_MONEY][S_WINNERS_LONG ]++;
+            else                               stats[METRIC_TOTAL_NET_MONEY][S_WINNERS_SHORT]++;
+            stats[METRIC_TOTAL_NET_MONEY][S_WINNERS_SUM_RUNUP   ] += history[i][H_RUNUP_P  ];
+            stats[METRIC_TOTAL_NET_MONEY][S_WINNERS_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P];
+            stats[METRIC_TOTAL_NET_MONEY][S_WINNERS_SUM_PROFIT  ] += history[i][H_NETPROFIT];
+         }
+         else if (LT(history[i][H_NETPROFIT_P], -0.5*Point)) {
+            // losers
+            stats[METRIC_TOTAL_NET_MONEY][S_LOSERS]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_MONEY][S_LOSERS_LONG ]++;
+            else                               stats[METRIC_TOTAL_NET_MONEY][S_LOSERS_SHORT]++;
+            stats[METRIC_TOTAL_NET_MONEY][S_LOSERS_SUM_RUNUP   ] += history[i][H_RUNUP_P  ];
+            stats[METRIC_TOTAL_NET_MONEY][S_LOSERS_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P];
+            stats[METRIC_TOTAL_NET_MONEY][S_LOSERS_SUM_PROFIT  ] += history[i][H_NETPROFIT];
+         }
+         else {
+            // scratch
+            stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_LONG ]++;
+            else                               stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_SHORT]++;
+            stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_SUM_RUNUP   ] += history[i][H_RUNUP_P  ];
+            stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P];
+            stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_SUM_PROFIT  ] += history[i][H_NETPROFIT];
+         }
+
+         // METRIC_TOTAL_NET_UNITS
          if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {
             // winners
             stats[METRIC_TOTAL_NET_UNITS][S_WINNERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_LONG ]++;
             else                               stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SHORT]++;
-            stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SUM] += history[i][H_NETPROFIT_P];
+            stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
+            stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
+            stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
          }
          else if (LT(history[i][H_NETPROFIT_P], -0.5*Point)) {
             // losers
             stats[METRIC_TOTAL_NET_UNITS][S_LOSERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_LONG ]++;
             else                               stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SHORT]++;
-            stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SUM] += history[i][H_NETPROFIT_P];
+            stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
+            stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
+            stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
          }
          else {
             // scratch
             stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG ]++;
             else                               stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT]++;
-            stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM] += history[i][H_NETPROFIT_P];
+            stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
+            stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
+            stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
          }
 
-         // before spread/any costs (signal levels)
+         // METRIC_TOTAL_SYNTH_UNITS
          if (GT(history[i][H_SYNTH_PROFIT_P], 0.5*Point)) {
             // winners
             stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG ]++;
             else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM] += history[i][H_SYNTH_PROFIT_P];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM_RUNUP   ] += history[i][H_SYNTH_RUNUP_P  ];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM_DRAWDOWN] += history[i][H_SYNTH_RUNDOWN_P];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM_PROFIT  ] += history[i][H_SYNTH_PROFIT_P ];
          }
          else if (LT(history[i][H_SYNTH_PROFIT_P], -0.5*Point)) {
             // losers
             stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG ]++;
             else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM] += history[i][H_SYNTH_PROFIT_P];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM_RUNUP   ] += history[i][H_SYNTH_RUNUP_P  ];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM_DRAWDOWN] += history[i][H_SYNTH_RUNDOWN_P];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM_PROFIT  ] += history[i][H_SYNTH_PROFIT_P ];
          }
          else {
             // scratch
             stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG ]++;
             else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM] += history[i][H_SYNTH_PROFIT_P];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM_RUNUP   ] += history[i][H_SYNTH_RUNUP_P  ];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM_DRAWDOWN] += history[i][H_SYNTH_RUNDOWN_P];
+            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM_PROFIT  ] += history[i][H_SYNTH_PROFIT_P ];
          }
       }
-      stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_AVG]  = stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM]/trades;
-      stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_AVG]  = stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM]/trades;
-      stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG]  = stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM]/trades;
 
-      stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_AVG]   = MathDiv(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SUM], MathRound(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS]));
-      stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_AVG ]   = MathDiv(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SUM ], MathRound(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS ]));
-      stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_AVG]   = MathDiv(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM], MathRound(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH]));
-
-      stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_AVG] = MathDiv(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM], MathRound(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS]));
-      stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_AVG ] = MathDiv(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM ], MathRound(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS ]));
-      stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_AVG] = MathDiv(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM], MathRound(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]));
-
-      // new number of total trades and trade percentages
-      for (i=ArrayRange(stats, 0)-1; i >= 0; i--) {
+      // total number of trades, percentages and averages
+      for (i=ArrayRange(stats, 0)-1; i > 0; i--) {                // skip unused index 0
          stats[i][S_TRADES] = trades;
          stats[i][S_TRADES] = trades;
          stats[i][S_TRADES] = trades;
          stats[i][S_TRADES] = trades;
 
-         stats[i][S_TRADES_LONG_PCT  ] = MathDiv(stats[i][S_TRADES_LONG  ], stats[i][S_TRADES ]);
-         stats[i][S_TRADES_SHORT_PCT ] = MathDiv(stats[i][S_TRADES_SHORT ], stats[i][S_TRADES ]);
-         stats[i][S_WINNERS_PCT      ] = MathDiv(stats[i][S_WINNERS      ], stats[i][S_TRADES ]);
-         stats[i][S_WINNERS_LONG_PCT ] = MathDiv(stats[i][S_WINNERS_LONG ], stats[i][S_WINNERS]);
-         stats[i][S_WINNERS_SHORT_PCT] = MathDiv(stats[i][S_WINNERS_SHORT], stats[i][S_WINNERS]);
-         stats[i][S_LOSERS_PCT       ] = MathDiv(stats[i][S_LOSERS       ], stats[i][S_TRADES ]);
-         stats[i][S_LOSERS_LONG_PCT  ] = MathDiv(stats[i][S_LOSERS_LONG  ], stats[i][S_LOSERS ]);
-         stats[i][S_LOSERS_SHORT_PCT ] = MathDiv(stats[i][S_LOSERS_SHORT ], stats[i][S_LOSERS ]);
-         stats[i][S_SCRATCH_PCT      ] = MathDiv(stats[i][S_SCRATCH      ], stats[i][S_TRADES ]);
-         stats[i][S_SCRATCH_LONG_PCT ] = MathDiv(stats[i][S_SCRATCH_LONG ], stats[i][S_SCRATCH]);
-         stats[i][S_SCRATCH_SHORT_PCT] = MathDiv(stats[i][S_SCRATCH_SHORT], stats[i][S_SCRATCH]);
+         stats[i][S_TRADES_LONG_PCT     ] = MathDiv(stats[i][S_TRADES_LONG         ], stats[i][S_TRADES ]);
+         stats[i][S_TRADES_SHORT_PCT    ] = MathDiv(stats[i][S_TRADES_SHORT        ], stats[i][S_TRADES ]);
+         stats[i][S_WINNERS_PCT         ] = MathDiv(stats[i][S_WINNERS             ], stats[i][S_TRADES ]);
+         stats[i][S_WINNERS_LONG_PCT    ] = MathDiv(stats[i][S_WINNERS_LONG        ], stats[i][S_WINNERS]);
+         stats[i][S_WINNERS_SHORT_PCT   ] = MathDiv(stats[i][S_WINNERS_SHORT       ], stats[i][S_WINNERS]);
+         stats[i][S_LOSERS_PCT          ] = MathDiv(stats[i][S_LOSERS              ], stats[i][S_TRADES ]);
+         stats[i][S_LOSERS_LONG_PCT     ] = MathDiv(stats[i][S_LOSERS_LONG         ], stats[i][S_LOSERS ]);
+         stats[i][S_LOSERS_SHORT_PCT    ] = MathDiv(stats[i][S_LOSERS_SHORT        ], stats[i][S_LOSERS ]);
+         stats[i][S_SCRATCH_PCT         ] = MathDiv(stats[i][S_SCRATCH             ], stats[i][S_TRADES ]);
+         stats[i][S_SCRATCH_LONG_PCT    ] = MathDiv(stats[i][S_SCRATCH_LONG        ], stats[i][S_SCRATCH]);
+         stats[i][S_SCRATCH_SHORT_PCT   ] = MathDiv(stats[i][S_SCRATCH_SHORT       ], stats[i][S_SCRATCH]);
+
+         stats[i][S_TRADES_AVG_RUNUP    ] = MathDiv(stats[i][S_TRADES_SUM_RUNUP    ], stats[i][S_TRADES ]);
+         stats[i][S_TRADES_AVG_DRAWDOWN ] = MathDiv(stats[i][S_TRADES_SUM_DRAWDOWN ], stats[i][S_TRADES ]);
+         stats[i][S_TRADES_AVG_PROFIT   ] = MathDiv(stats[i][S_TRADES_SUM_PROFIT   ], stats[i][S_TRADES ]);
+
+         stats[i][S_WINNERS_AVG_RUNUP   ] = MathDiv(stats[i][S_WINNERS_SUM_RUNUP   ], stats[i][S_WINNERS]);
+         stats[i][S_WINNERS_AVG_DRAWDOWN] = MathDiv(stats[i][S_WINNERS_SUM_DRAWDOWN], stats[i][S_WINNERS]);
+         stats[i][S_WINNERS_AVG_PROFIT  ] = MathDiv(stats[i][S_WINNERS_SUM_PROFIT  ], stats[i][S_WINNERS]);
+
+         stats[i][S_LOSERS_AVG_RUNUP    ] = MathDiv(stats[i][S_LOSERS_SUM_RUNUP    ], stats[i][S_LOSERS ]);
+         stats[i][S_LOSERS_AVG_DRAWDOWN ] = MathDiv(stats[i][S_LOSERS_SUM_DRAWDOWN ], stats[i][S_LOSERS ]);
+         stats[i][S_LOSERS_AVG_PROFIT   ] = MathDiv(stats[i][S_LOSERS_SUM_PROFIT   ], stats[i][S_LOSERS ]);
+
+         stats[i][S_SCRATCH_AVG_RUNUP   ] = MathDiv(stats[i][S_SCRATCH_SUM_RUNUP   ], stats[i][S_SCRATCH]);
+         stats[i][S_SCRATCH_AVG_DRAWDOWN] = MathDiv(stats[i][S_SCRATCH_SUM_DRAWDOWN], stats[i][S_SCRATCH]);
+         stats[i][S_SCRATCH_AVG_PROFIT  ] = MathDiv(stats[i][S_SCRATCH_SUM_PROFIT  ], stats[i][S_SCRATCH]);
       }
+      stats[0][S_TRADES] = trades;                                // referenced at begin of this function only
    }
 }
 
@@ -2107,17 +2176,17 @@ bool SaveStatus() {
    WriteIniString(file, section, "trades",                     /*double  */ Round(stats[METRIC_TOTAL_NET_UNITS][S_TRADES]));
    WriteIniString(file, section, "trades.long",                /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_LONG]), 9)   + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_TRADES_LONG_PCT  ], 1) +"%)", 8));
    WriteIniString(file, section, "trades.short",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_SHORT]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_TRADES_SHORT_PCT ], 1) +"%)", 8));
-   WriteIniString(file, section, "avgTrade",                   /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_AVG] * pMultiplier, pDigits) + separator);
+   WriteIniString(file, section, "avgTrade",                   /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, pDigits) + separator);
 
    WriteIniString(file, section, "winners",                    /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_PCT      ], 1) +"%)", 8));
    WriteIniString(file, section, "winners.long",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_LONG_PCT ], 1) +"%)", 8));
    WriteIniString(file, section, "winners.short",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_SHORT_PCT], 1) +"%)", 8));
-   WriteIniString(file, section, "avgWinner",                  /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_AVG] * pMultiplier, pDigits) + separator);
+   WriteIniString(file, section, "avgWinner",                  /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_WINNERS_AVG_PROFIT] * pMultiplier, pDigits) + separator);
 
    WriteIniString(file, section, "losers",                     /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS]), 14)       + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_PCT       ], 1) +"%)", 8));
    WriteIniString(file, section, "losers.long",                /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_LONG]), 9)   + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_LONG_PCT  ], 1) +"%)", 8));
    WriteIniString(file, section, "losers.short",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SHORT]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_SHORT_PCT ], 1) +"%)", 8));
-   WriteIniString(file, section, "avgLoser",                   /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_AVG] * pMultiplier, pDigits) + separator);
+   WriteIniString(file, section, "avgLoser",                   /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_LOSERS_AVG_PROFIT] * pMultiplier, pDigits) + separator);
 
    WriteIniString(file, section, "scratch",                    /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_PCT      ], 1) +"%)", 8));
    WriteIniString(file, section, "scratch.long",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG_PCT ], 1) +"%)", 8));
@@ -2134,17 +2203,17 @@ bool SaveStatus() {
    WriteIniString(file, section, "trades",                     /*double  */ Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES]));
    WriteIniString(file, section, "trades.long",                /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_LONG]), 9)   + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_LONG_PCT  ], 1) +"%)", 8));
    WriteIniString(file, section, "trades.short",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SHORT]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SHORT_PCT ], 1) +"%)", 8));
-   WriteIniString(file, section, "avgTrade",                   /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG] * pMultiplier, pDigits) + separator);
+   WriteIniString(file, section, "avgTrade",                   /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, pDigits) + separator);
 
    WriteIniString(file, section, "winners",                    /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_PCT      ], 1) +"%)", 8));
    WriteIniString(file, section, "winners.long",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG_PCT ], 1) +"%)", 8));
    WriteIniString(file, section, "winners.short",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT]), 7) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT_PCT], 1) +"%)", 8));
-   WriteIniString(file, section, "avgWinner",                  /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_AVG] * pMultiplier, pDigits) + separator);
+   WriteIniString(file, section, "avgWinner",                  /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_AVG_PROFIT] * pMultiplier, pDigits) + separator);
 
    WriteIniString(file, section, "losers",                     /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS]), 14)       + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_PCT       ], 1) +"%)", 8));
    WriteIniString(file, section, "losers.long",                /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG]), 9)   + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG_PCT  ], 1) +"%)", 8));
    WriteIniString(file, section, "losers.short",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT_PCT ], 1) +"%)", 8));
-   WriteIniString(file, section, "avgLoser",                   /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_AVG] * pMultiplier, pDigits) + separator);
+   WriteIniString(file, section, "avgLoser",                   /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_AVG_PROFIT] * pMultiplier, pDigits) + separator);
 
    WriteIniString(file, section, "scratch",                    /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]), 13)      + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_PCT      ], 1) +"%)", 8));
    WriteIniString(file, section, "scratch.long",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG]), 8)  + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG_PCT ], 1) +"%)", 8));
@@ -3445,13 +3514,13 @@ void SS.ClosedTrades() {
 
       switch (status.activeMetric) {
          case METRIC_TOTAL_NET_MONEY:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_NET_MONEY][S_TRADES_AVG], "R+.2") +" "+ AccountCurrency();
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_NET_MONEY][S_TRADES_AVG_PROFIT], "R+.2") +" "+ AccountCurrency();
             break;
          case METRIC_TOTAL_NET_UNITS:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_AVG] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
          case METRIC_TOTAL_SYNTH_UNITS:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
          default: return(!catch("SS.ClosedTrades(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
