@@ -1,9 +1,9 @@
 //
 // During runtime an EA can record up to 21 different performance graphs (aka metrics; online and in tester). These recordings
-// are saved as regular chart symbols in the history directory of a second MT4 terminal. From there they can be displayed and
-// analysed like regular MT4 symbols.
+// are saved as regular chart symbols in the history directory of a second MT4 terminal. They can be displayed and analysed
+// like regular MT4 symbols.
 //
-// Metrics to record are declared using input parameter "EA.Recorder". Multiple declarations must be separated by comma.
+// Metrics to record are configured using input parameter "EA.Recorder". Multiple metric declarations are separated by comma.
 //
 //  Syntax:
 //   off:  Recording is disabled (default).
@@ -12,8 +12,8 @@
 //         an appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display
 //         negative values). Without a value the recorder queries the framework configuration.
 //
-// During EA initialization the function Recorder_GetSymbolDefinition() is called for each metric to retrieve the metric's
-// symbol definition (the function must be implemented by the EA). Signature:
+// During EA initialization the function Recorder_GetSymbolDefinition() is called for each configured metric to retrieve the
+// metric's symbol definition. That function must be implemented by the EA. It has the following signature:
 //
 // /**
 //  * Return a symbol definition for the specified metric to be recorded.
