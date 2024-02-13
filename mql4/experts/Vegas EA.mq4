@@ -701,7 +701,7 @@ bool UpdateStatus(int signal = NULL) {
       if (isClosed) {
          int error;
          if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!MoveCurrentPositionToHistory(OrderCloseTime(), exitPrice, exitPriceSynth))                                     return(false);
+         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSynth))                                            return(false);
          positionClosed = true;
       }
    }
@@ -730,7 +730,7 @@ bool UpdateStatus(int signal = NULL) {
          open.synthRunupP    = MathMax(open.synthRunupP, open.synthProfitP);
          open.synthDrawdownP = MathMin(open.synthDrawdownP, open.synthProfitP);
 
-         if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), closePrice, Bid)) return(false);
+         if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, Bid)) return(false);
       }
 
       // open new position
@@ -872,7 +872,7 @@ bool StopInstance() {
          open.synthRunupP    = MathMax(open.synthRunupP, open.synthProfitP);
          open.synthDrawdownP = MathMin(open.synthDrawdownP, open.synthProfitP);
 
-         if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), closePrice, Bid)) return(false);
+         if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, Bid)) return(false);
 
          // update PL numbers
          instance.openNetProfit  = open.netProfit;
@@ -922,7 +922,7 @@ bool RestartInstance() {
 
 
 /**
- * Move the current open position to the trade history. Assumes the position is closed.
+ * Move the position referenced in open.* to the trade history. Assumes the position is already closed.
  *
  * @param datetime closeTime       - close time
  * @param double   closePrice      - close price
@@ -930,10 +930,10 @@ bool RestartInstance() {
  *
  * @return bool - success status
  */
-bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double closePriceSynth) {
+bool MovePositionToHistory(datetime closeTime, double closePrice, double closePriceSynth) {
    if (last_error != NULL)                    return(false);
-   if (instance.status != STATUS_PROGRESSING) return(!catch("MoveCurrentPositionToHistory(1)  "+ instance.name +" cannot process current position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!open.ticket)                          return(!catch("MoveCurrentPositionToHistory(2)  "+ instance.name +" no open position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
+   if (instance.status != STATUS_PROGRESSING) return(!catch("MovePositionToHistory(1)  "+ instance.name +" cannot process position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!open.ticket)                          return(!catch("MovePositionToHistory(2)  "+ instance.name +" no position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
 
    // add data to history
    int i = ArrayRange(history, 0);
@@ -992,7 +992,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
       SS.OpenLots();
       SS.ClosedTrades();
    }
-   return(!catch("MoveCurrentPositionToHistory(3)"));
+   return(!catch("MovePositionToHistory(3)"));
 }
 
 
