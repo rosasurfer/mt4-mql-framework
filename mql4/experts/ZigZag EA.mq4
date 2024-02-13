@@ -66,7 +66,6 @@
  *
  * TODO:
  *  - add runup/drawdown stats to status file
- *
  *  - add ZigZag projections
  *  - rewrite loglevels to global vars
  *  - input TradingTimeframe
@@ -1138,7 +1137,7 @@ bool StartInstance(double signal[]) {
    // store the position data
    open.ticket         = ticket;
    open.type           = type;
-   open.lots           = oe.Lots(oe); SS.OpenLots();
+   open.lots           = oe.Lots(oe);
    open.time           = oe.OpenTime(oe);
    open.price          = oe.OpenPrice(oe);
    open.priceSynth     = sigValue;
@@ -1169,8 +1168,6 @@ bool StartInstance(double signal[]) {
    instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
    instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
    instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
-   SS.TotalProfit();
-   SS.ProfitStats();
 
    // update start conditions
    if (start.time.condition) {
@@ -1178,8 +1175,13 @@ bool StartInstance(double signal[]) {
          start.time.condition = false;
       }
    }
-   SS.StartStopConditions();
 
+   if (__isChart) {
+      SS.OpenLots();
+      SS.TotalProfit();
+      SS.ProfitStats();
+      SS.StartStopConditions();
+   }
    if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalDirectionToStr(sigDirection) +")");
    return(SaveStatus());
 }
@@ -1245,7 +1247,7 @@ bool ReverseInstance(double signal[]) {
    // store the new position data
    open.ticket         = ticket;
    open.type           = type;
-   open.lots           = oe.Lots(oe); SS.OpenLots();
+   open.lots           = oe.Lots(oe);
    open.time           = oe.OpenTime(oe);
    open.price          = oe.OpenPrice(oe);
    open.priceSynth     = sigValue;
@@ -1276,9 +1278,12 @@ bool ReverseInstance(double signal[]) {
    instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
    instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
    instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
-   SS.TotalProfit();
-   SS.ProfitStats();
 
+   if (__isChart) {
+      SS.OpenLots();
+      SS.TotalProfit();
+      SS.ProfitStats();
+   }
    if (IsLogInfo()) logInfo("ReverseInstance(4)  "+ instance.name +" instance reversed ("+ SignalDirectionToStr(sigDirection) +")");
    return(SaveStatus());
 }
@@ -1589,11 +1594,11 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    open.synthRunupP    = NULL;
    open.synthDrawdownP = NULL;
 
-   // update trade stats
-   CalculateStats();
-   SS.OpenLots();
-   SS.ClosedTrades();
-
+   if (__isChart) {
+      CalculateStats();                   // update trade stats
+      SS.OpenLots();
+      SS.ClosedTrades();
+   }
    return(!catch("MoveCurrentPositionToHistory(3)"));
 }
 
@@ -1603,7 +1608,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
  */
 void CalculateStats() {
    int trades = ArrayRange(history, 0);
-   int prevTrades = stats[0][S_TRADES];
+   int prevTrades = stats[1][S_TRADES];
 
    if (!trades || trades < prevTrades) {
       ArrayInitialize(stats, 0);
@@ -1726,9 +1731,6 @@ void CalculateStats() {
       // total number of trades, percentages and averages
       for (i=ArrayRange(stats, 0)-1; i > 0; i--) {                // skip unused index 0
          stats[i][S_TRADES] = trades;
-         stats[i][S_TRADES] = trades;
-         stats[i][S_TRADES] = trades;
-         stats[i][S_TRADES] = trades;
 
          stats[i][S_TRADES_LONG_PCT     ] = MathDiv(stats[i][S_TRADES_LONG         ], stats[i][S_TRADES ]);
          stats[i][S_TRADES_SHORT_PCT    ] = MathDiv(stats[i][S_TRADES_SHORT        ], stats[i][S_TRADES ]);
@@ -1758,7 +1760,6 @@ void CalculateStats() {
          stats[i][S_SCRATCH_AVG_DRAWDOWN] = MathDiv(stats[i][S_SCRATCH_SUM_DRAWDOWN], stats[i][S_SCRATCH]);
          stats[i][S_SCRATCH_AVG_PROFIT  ] = MathDiv(stats[i][S_SCRATCH_SUM_PROFIT  ], stats[i][S_SCRATCH]);
       }
-      stats[0][S_TRADES] = trades;                                // referenced at begin of this function only
    }
 }
 
@@ -2117,6 +2118,7 @@ bool SaveStatus() {
 
    string section="", separator="", file=GetStatusFilename();
    if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;              // an empty line separator
+   SS.All();                                                      // update trade stats and global string representations
 
    // [General]
    section = "General";
@@ -3510,7 +3512,7 @@ void SS.ClosedTrades() {
       sClosedTrades = "-";
    }
    else {
-      if (!stats[0][S_TRADES]) CalculateStats();
+      if (!stats[1][S_TRADES]) CalculateStats();
 
       switch (status.activeMetric) {
          case METRIC_TOTAL_NET_MONEY:

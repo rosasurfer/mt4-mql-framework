@@ -716,6 +716,7 @@ bool UpdateStatus(int signal = NULL) {
 
          int oeFlags, oe[];
          if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+
          double closePrice   = oe.ClosePrice(oe);
          open.slippage      += oe.Slippage(oe);
          open.swap           = oe.Swap(oe);
@@ -728,6 +729,7 @@ bool UpdateStatus(int signal = NULL) {
          open.synthProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
          open.synthRunupP    = MathMax(open.synthRunupP, open.synthProfitP);
          open.synthDrawdownP = MathMin(open.synthDrawdownP, open.synthProfitP);
+
          if (!MoveCurrentPositionToHistory(oe.CloseTime(oe), closePrice, Bid)) return(false);
       }
 
@@ -748,7 +750,7 @@ bool UpdateStatus(int signal = NULL) {
       // store the new position
       open.ticket         = ticket;
       open.type           = type;
-      open.lots           = oe.Lots(oe); SS.OpenLots();
+      open.lots           = oe.Lots(oe);
       open.time           = oe.OpenTime(oe);
       open.price          = oe.OpenPrice(oe);
       open.priceSynth     = Bid;
@@ -763,6 +765,7 @@ bool UpdateStatus(int signal = NULL) {
       open.synthProfitP   = 0;
       open.synthRunupP    = open.synthProfitP;
       open.synthDrawdownP = open.synthRunupP;
+      if (__isChart) SS.OpenLots();
    }
 
    // update PL numbers
@@ -984,11 +987,11 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
    open.synthRunupP    = NULL;
    open.synthDrawdownP = NULL;
 
-   // update trade stats
-   CalculateStats();
-   SS.OpenLots();
-   SS.ClosedTrades();
-
+   if (__isChart) {
+      CalculateStats();             // update trade stats
+      SS.OpenLots();
+      SS.ClosedTrades();
+   }
    return(!catch("MoveCurrentPositionToHistory(3)"));
 }
 
@@ -998,7 +1001,7 @@ bool MoveCurrentPositionToHistory(datetime closeTime, double closePrice, double 
  */
 void CalculateStats() {
    int trades = ArrayRange(history, 0);
-   int prevTrades = stats[0][S_TRADES];
+   int prevTrades = stats[1][S_TRADES];
 
    if (!trades || trades < prevTrades) {
       ArrayInitialize(stats, 0);
@@ -1121,9 +1124,6 @@ void CalculateStats() {
       // total number of trades, percentages and averages
       for (i=ArrayRange(stats, 0)-1; i > 0; i--) {                // skip unused index 0
          stats[i][S_TRADES] = trades;
-         stats[i][S_TRADES] = trades;
-         stats[i][S_TRADES] = trades;
-         stats[i][S_TRADES] = trades;
 
          stats[i][S_TRADES_LONG_PCT     ] = MathDiv(stats[i][S_TRADES_LONG         ], stats[i][S_TRADES ]);
          stats[i][S_TRADES_SHORT_PCT    ] = MathDiv(stats[i][S_TRADES_SHORT        ], stats[i][S_TRADES ]);
@@ -1153,7 +1153,6 @@ void CalculateStats() {
          stats[i][S_SCRATCH_AVG_DRAWDOWN] = MathDiv(stats[i][S_SCRATCH_SUM_DRAWDOWN], stats[i][S_SCRATCH]);
          stats[i][S_SCRATCH_AVG_PROFIT  ] = MathDiv(stats[i][S_SCRATCH_SUM_PROFIT  ], stats[i][S_SCRATCH]);
       }
-      stats[0][S_TRADES] = trades;                                // referenced at begin of this function only
    }
 }
 
@@ -1682,6 +1681,7 @@ bool SaveStatus() {
 
    string section="", separator="", file=GetStatusFilename();
    if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;           // an empty line separator
+   SS.All();                                                   // update trade stats and global string representations
 
    // [General]
    section = "General";
@@ -2379,7 +2379,7 @@ void SS.ClosedTrades() {
       sClosedTrades = "-";
    }
    else {
-      if (!stats[0][S_TRADES]) CalculateStats();
+      CalculateStats();
 
       switch (status.activeMetric) {
          case METRIC_TOTAL_NET_MONEY:
