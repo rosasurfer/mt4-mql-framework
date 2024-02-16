@@ -65,7 +65,7 @@ int __DeinitFlags[];
 extern string ___a__________________________ = "=== ZigZag settings ===";
 extern int    ZigZag.Periods                 = 40;                      // lookback periods of the Donchian channel
 extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (hotkey)
-extern string ZigZag.Type                    = "Line | Semaphores*";    // a ZigZag line or reversal points (may be shortened)
+extern string ZigZag.Type                    = "Lines | Semaphores*";   // ZigZag lines or reversal points (may be shortened)
 extern int    ZigZag.Width                   = 2;
 extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a large point
 extern color  ZigZag.Color                   = DodgerBlue;
@@ -204,7 +204,7 @@ int onInit() {
       sValue = sValues[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
-   if      (StrStartsWith("line",       sValue)) { zigzagDrawType = DRAW_ZIGZAG; ZigZag.Type = "Line";        }
+   if      (StrStartsWith("lines",      sValue)) { zigzagDrawType = DRAW_ZIGZAG; ZigZag.Type = "Lines";       }
    else if (StrStartsWith("semaphores", sValue)) { zigzagDrawType = DRAW_ARROW;  ZigZag.Type = "Semaphores";  }
    else                                    return(catch("onInit(3)  invalid input parameter ZigZag.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // ZigZag.Width
