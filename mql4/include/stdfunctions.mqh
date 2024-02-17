@@ -6568,7 +6568,7 @@ bool SendSMS(string receiver, string message) {
  * @return double - rounded lot value or EMPTY_VALUE (INT_MAX) in case of errors
  */
 double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
-   if (!StringLen(symbol)) symbol = Symbol();
+   if      (symbol == "")  symbol = Symbol();
    else if (symbol == "0") symbol = Symbol();            // (string) NULL
 
    double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
