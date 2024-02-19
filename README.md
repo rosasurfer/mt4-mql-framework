@@ -10,6 +10,9 @@ me via email and I may be able to locate it for you. New GitHub issues asking fo
 
 ### MetaTrader 4 News
 
+###### February 2024:
+- MetaQuotes stops supporting terminals older than build 1401.
+
 ###### January 2024:
 - MetaQuotes stops supporting terminals older than build 1400.
 
