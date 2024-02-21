@@ -242,7 +242,7 @@ bool     status.showTradeHistory;
 string   pUnit = "";
 int      pDigits;
 int      pMultiplier;
-int      orders.acceptableSlippage = 1;            // in MQL points
+int      order.slippage = 1;                       // in MQL points
 
 // cache vars to speed-up ShowStatus()
 string   sMetric       = "";
@@ -744,7 +744,7 @@ bool UpdateStatus(int signal = NULL) {
       color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
                oeFlags     = NULL;
 
-      int ticket = OrderSendEx(NULL, type, Lots, price, orders.acceptableSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+      int ticket = OrderSendEx(NULL, type, Lots, price, order.slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
       if (!ticket) return(!SetLastError(oe.Error(oe)));
 
       // store the new position

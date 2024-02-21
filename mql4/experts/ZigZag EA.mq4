@@ -425,7 +425,7 @@ bool     status.showTradeHistory;
 string   pUnit = "";
 int      pDigits;
 int      pMultiplier;
-int      orders.acceptableSlippage = 1;            // in MQL points
+int      order.slippage = 1;                       // in MQL points
 string   tradingModeDescriptions[] = {"", "regular", "virtual"};
 string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote currency", "index points"};
 
@@ -1130,7 +1130,7 @@ bool StartInstance(double signal[]) {
 
    int ticket, oeFlags, oe[];
    if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, NULL, NULL, marker, oe);
-   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
+   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
@@ -1212,7 +1212,7 @@ bool ReverseInstance(double signal[]) {
       // close the existing position
       bool success;
       if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_NONE, oe);
-      else                                    success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
+      else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_NONE, oeFlags, oe);
       if (!success) return(!SetLastError(oe.Error(oe)));
 
       double closePrice   = oe.ClosePrice(oe);
@@ -1240,7 +1240,7 @@ bool ReverseInstance(double signal[]) {
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, NULL, NULL, marker, oe);
-   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, orders.acceptableSlippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
+   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the new position data
@@ -1326,7 +1326,7 @@ bool StopInstance(double signal[]) {
          bool success;
          int oeFlags, oe[];
          if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_NONE, oe);
-         else                                    success = OrderCloseEx(open.ticket, NULL, orders.acceptableSlippage, CLR_NONE, oeFlags, oe);
+         else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_NONE, oeFlags, oe);
          if (!success) return(!SetLastError(oe.Error(oe)));
 
          double closePrice   = oe.ClosePrice(oe), closePriceSynth = doubleOr(sigValue, Bid);
