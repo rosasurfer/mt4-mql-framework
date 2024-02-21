@@ -599,7 +599,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet      (label, OBJPROP_COLOR, Blue);
       ObjectSet      (label, OBJPROP_RAY,   false);
-      ObjectSet      (label, OBJPROP_BACK,  true);
+      ObjectSet      (label, OBJPROP_BACK,  false);
       ArrayPushString(labels, label);
    } else debug("CreateInsideBar(1)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
 
