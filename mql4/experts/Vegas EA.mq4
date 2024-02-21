@@ -265,7 +265,7 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
  * @return int - error status
  */
 int onTick() {
-   if (!instance.status) return(ERR_ILLEGAL_STATE);
+   if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
 
    if (__isChart) HandleCommands();                // process incoming commands
 
@@ -275,7 +275,7 @@ int onTick() {
       UpdateStatus(signal);
       RecordMetrics();
    }
-   return(catch("onTick(1)"));
+   return(catch("onTick(2)"));
 }
 
 
@@ -665,7 +665,7 @@ bool GetZigZagData(int bar, int &trend, int &reversal) {
 
 
 /**
- * Update order status and PL stats.
+ * Update order status and PnL stats.
  *
  * @param  int signal [optional] - trade signal causing the call (default: none, update status only)
  *
@@ -1668,8 +1668,8 @@ string FindStatusFile(int instanceId, bool isTest) {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != NULL)               return(false);
-   if (!instance.id || Instance.ID=="")  return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)              return(false);
+   if (!instance.id || Instance.ID=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
    if (__isTesting) {
       if (test.reduceStatusWrites) {                           // in tester skip most writes except file creation, instance stop and test end
          static bool saved = false;

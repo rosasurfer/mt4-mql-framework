@@ -123,8 +123,8 @@ int onInitRecompile() {
  *
  * @return int - error status
  */
-int afterInit() {                                  // open the log file (flushes the log buffer) but don't touch the file
-   if (__isTesting || !IsTestInstance()) {         // of a finished test (i.e. a test loaded into an online chart)
+int afterInit() {
+   if (__isTesting || !IsTestInstance()) {         // open the log file (flushes the log buffer) except if a finished test
       if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));
    }
 
@@ -138,7 +138,7 @@ int afterInit() {                                  // open the log file (flushes
       test.reduceStatusWrites      = GetConfigBool(section, "ReduceStatusWrites",      true);
    }
 
-   StoreVolatileData();                            // store the instance id for templates changes/restart/recompilation etc.
+   StoreVolatileData();                            // store the instance id for template reload/restart/recompilation etc.
    return(catch("afterInit(2)"));
 }
 

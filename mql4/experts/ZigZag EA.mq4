@@ -214,7 +214,7 @@ extern string StopConditions      = "";                     // @time(datetime|ti
 extern double TakeProfit          = 0;                      // TP value
 extern string TakeProfit.Type     = "off* | money | percent | pip | quote-unit";       // can be shortened if distinct        // TODO: redefine point as index point
 
-extern bool   ShowProfitInPercent = true;                   // whether PL is displayed in money or percentage terms
+extern bool   ShowProfitInPercent = true;                   // whether PnL is displayed in money or percentage terms
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -455,7 +455,7 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
  * @return int - error status
  */
 int onTick() {
-   if (!instance.status) return(ERR_ILLEGAL_STATE);
+   if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
 
    if (__isChart) HandleCommands();                // process incoming commands
 
@@ -473,7 +473,7 @@ int onTick() {
       }
       RecordMetrics();
    }
-   return(catch("onTick(1)"));
+   return(catch("onTick(2)"));
 }
 
 
@@ -2104,8 +2104,8 @@ string SignalDirectionToStr(int direction) {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != NULL)               return(false);
-   if (!instance.id || Instance.ID=="")  return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)              return(false);
+   if (!instance.id || Instance.ID=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
    if (__isTesting) {
       if (test.reduceStatusWrites) {                              // in tester skip most writes except file creation, instance stop and test end
          static bool saved = false;
