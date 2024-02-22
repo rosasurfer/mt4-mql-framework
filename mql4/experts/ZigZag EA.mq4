@@ -450,15 +450,18 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <apps/zigzag-ea/init.mqh>
 #include <apps/zigzag-ea/deinit.mqh>
 
-#include <functions/ea/CalculateMagicNumber.mqh>
-#include <functions/ea/CreateInstanceId.mqh>
-#include <functions/ea/FindStatusFile.mqh>
-#include <functions/ea/GetLogFilename.mqh>
-#include <functions/ea/GetStatusFilename.mqh>
-#include <functions/ea/IsMyOrder.mqh>
-#include <functions/ea/IsTestInstance.mqh>
-#include <functions/ea/onInputError.mqh>
-#include <functions/ea/RestoreInstance.mqh>
+#include <ea/CalculateMagicNumber.mqh>
+#include <ea/CreateInstanceId.mqh>
+#include <ea/IsMyOrder.mqh>
+#include <ea/IsTestInstance.mqh>
+#include <ea/onInputError.mqh>
+#include <ea/RestoreInstance.mqh>
+#include <ea/file/FindStatusFile.mqh>
+#include <ea/file/GetStatusFilename.mqh>
+#include <ea/file/GetLogFilename.mqh>
+#include <ea/volatile/StoreVolatileData.mqh>
+#include <ea/volatile/RestoreVolatileData.mqh>
+#include <ea/volatile/RemoveVolatileData.mqh>
 
 
 /**
@@ -2920,168 +2923,6 @@ bool ValidateInputs() {
 
    SS.All();
    return(!catch("ValidateInputs(26)"));
-}
-
-
-/**
- * Store volatile runtime vars in chart and chart window (for template reload, terminal restart, recompilation etc).
- *
- * @return bool - success status
- */
-bool StoreVolatileData() {
-   string name = ProgramName();
-
-   // input string Instance.ID
-   string value = ifString(instance.isTest, "T", "") + StrPadLeft(instance.id, 3, "0");
-   Instance.ID = value;
-   if (__isChart) {
-      string key = name +".Instance.ID";
-      SetWindowStringA(__ExecutionContext[EC.hChart], key, value);
-      Chart.StoreString(key, value);
-   }
-
-   // int status.activeMetric
-   if (__isChart) {
-      key = name +".status.activeMetric";
-      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, status.activeMetric);
-      Chart.StoreInt(key, status.activeMetric);
-   }
-
-   // bool status.showOpenOrders
-   if (__isChart) {
-      key = name +".status.showOpenOrders";
-      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, ifInt(status.showOpenOrders, 1, -1));
-      Chart.StoreBool(key, status.showOpenOrders);
-   }
-
-   // bool status.showTradeHistory
-   if (__isChart) {
-      key = name +".status.showTradeHistory";
-      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, ifInt(status.showTradeHistory, 1, -1));
-      Chart.StoreBool(key, status.showTradeHistory);
-   }
-   return(!catch("StoreVolatileData(1)"));
-}
-
-
-/**
- * Restore volatile runtime data from chart or chart window (for template reload, terminal restart, recompilation etc).
- *
- * @return bool - whether an instance id was successfully restored
- */
-bool RestoreVolatileData() {
-   string name = ProgramName();
-
-   // input string Instance.ID
-   while (true) {
-      bool error = false;
-      if (SetInstanceId(Instance.ID, error, "RestoreVolatileData(1)")) break;
-      if (error) return(false);
-
-      if (__isChart) {
-         string key = name +".Instance.ID";
-         string sValue = GetWindowStringA(__ExecutionContext[EC.hChart], key);
-         if (SetInstanceId(sValue, error, "RestoreVolatileData(2)")) break;
-         if (error) return(false);
-
-         Chart.RestoreString(key, sValue, false);
-         if (SetInstanceId(sValue, error, "RestoreVolatileData(3)")) break;
-         return(false);
-      }
-   }
-
-   // int status.activeMetric
-   if (__isChart) {
-      key = name +".status.activeMetric";
-      while (true) {
-         int iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
-         if (iValue != 0) {
-            if (iValue > 0 && iValue <= 6) {                // valid metrics: 1-6
-               status.activeMetric = iValue;
-               break;
-            }
-         }
-         if (Chart.RestoreInt(key, iValue, false)) {
-            if (iValue > 0 && iValue <= 6) {
-               status.activeMetric = iValue;
-               break;
-            }
-         }
-         logWarn("RestoreVolatileData(4)  "+ instance.name +"  invalid data: status.activeMetric="+ iValue);
-         status.activeMetric = 1;                           // reset to default value
-         break;
-      }
-   }
-
-   // bool status.showOpenOrders
-   if (__isChart) {
-      key = name +".status.showOpenOrders";
-      iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
-      if (iValue != 0) {
-         status.showOpenOrders = (iValue > 0);
-      }
-      else if (!Chart.RestoreBool(key, status.showOpenOrders, false)) {
-         status.showOpenOrders = false;                     // reset to default value
-      }
-   }
-
-   // bool status.showTradeHistory
-   if (__isChart) {
-      key = name +".status.showTradeHistory";
-      iValue = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
-      if (iValue != 0) {
-         status.showTradeHistory = (iValue > 0);
-      }
-      else if (!Chart.RestoreBool(key, status.showTradeHistory, false)) {
-         status.showOpenOrders = false;                     // reset to default value
-      }
-   }
-   return(true);
-}
-
-
-/**
- * Remove stored volatile runtime data from chart and chart window.
- *
- * @return bool - success status
- */
-bool RemoveVolatileData() {
-   string name = ProgramName();
-
-   // input string Instance.ID
-   if (__isChart) {
-      string key = name +".Instance.ID";
-      string sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
-      Chart.RestoreString(key, sValue, true);
-   }
-
-   // int status.activeMetric
-   if (__isChart) {
-      key = name +".status.activeMetric";
-      int iValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
-      Chart.RestoreInt(key, iValue, true);
-   }
-
-   // bool status.showOpenOrders
-   if (__isChart) {
-      key = name +".status.showOpenOrders";
-      bool bValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
-      Chart.RestoreBool(key, bValue, true);
-   }
-
-   // bool status.showTradeHistory
-   if (__isChart) {
-      key = name +".status.showTradeHistory";
-      bValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);
-      Chart.RestoreBool(key, bValue, true);
-   }
-
-   // event object for chart commands
-   if (__isChart) {
-      key = "EA.status";
-      if (ObjectFind(key) != -1) ObjectDelete(key);
-   }
-   return(!catch("RemoveVolatileData(1)"));
 }
 
 

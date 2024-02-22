@@ -1,11 +1,16 @@
 /**
- * Generate a new instance id. Unique for all instances per symbol (instances of different symbols may use the same id).
+ * Generate a new instance id. Unique for all instances per symbol (instances on different symbols may have the same id).
  *
  * @return int - instance id in the range of INSTANCE_ID_MIN...INSTANCE_ID_MAX or NULL (0) in case of errors
+ *
+ *
+ * TODO:
+ *  - instances on different symbols can have the same id, so ticket symbol must be checked against, too
+ *  - fix error handling if OrderSelect() fails
  */
 int CreateInstanceId() {
    int instanceId, magicNumber;
-   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
+   MathSrand(GetTickCount() - __ExecutionContext[EC.hChartWindow]);
 
    if (__isTesting) {
       // generate next consecutive id from already recorded metrics
@@ -25,9 +30,8 @@ int CreateInstanceId() {
       }
    }
    else {
-      // online: generate random id
+      // online: generate a random id
       while (!magicNumber) {
-         // generate a new instance id
          while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
             instanceId = MathRand();                                                         // select random id between ID_MIN and ID_MAX
          }
