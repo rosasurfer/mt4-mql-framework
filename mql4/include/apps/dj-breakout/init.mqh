@@ -18,6 +18,12 @@ int onInit() {
       pDigits     = 2;
       pMultiplier = 1;
    }
+
+   // initializer: minute notation, runtime: seconds
+   if (bracket1Start <= 1440) bracket1Start *= MINUTES;
+   if (bracket1End   <= 1440) bracket1End   *= MINUTES;
+   if (bracket2Start <= 1440) bracket2Start *= MINUTES;
+   if (bracket2End   <= 1440) bracket2End   *= MINUTES;
    return(catch("onInit(1)"));
 }
 
@@ -125,7 +131,7 @@ int onInitRecompile() {
  */
 int afterInit() {
    if (__isTesting || !IsTestInstance()) {         // open the log file (flushes the log buffer) except if a finished test
-      if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));
+      if (false) if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));                                            // enable when ready for serious testing
    }
 
    // read debug config

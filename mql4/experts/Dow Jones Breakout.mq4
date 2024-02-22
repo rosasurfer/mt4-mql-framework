@@ -11,6 +11,8 @@
  *  - an News-Tagen statt NY-Open die 15:00-15:30 Range nehmen
  *  - wenn NY-Open an News-Tagen innerhalb der 15:00-15:30 Range, dann auch den Open-Breakout traden
  *  - wird viel Slippage geben, ich sehe aber kaum Loss-Tage
+ *
+ *  - track spread at range end time
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -20,8 +22,6 @@ int __virtualTicks = 0;
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID                    = "";          // instance to load from a status file (format "[T]123")
-
-extern string ___a__________________________ = "=== Trade settings ===";
 extern double Lots                           = 1.0;
 
 extern int    Initial.TakeProfit             = 100;         // in pip (0: partial targets only or no TP)
@@ -43,16 +43,14 @@ extern int    Target4                        = 0;           // ...
 extern int    Target4.ClosePercent           = 30;          // ...
 extern int    Target4.MoveStopTo             = 0;           // ...
 
-extern int    Target5                        = 0;           // ...
-extern int    Target5.ClosePercent           = 0;           // ...
-extern int    Target5.MoveStopTo             = 0;           // ...
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
 
 #define STRATEGY_ID         110              // unique strategy id (used for magic order numbers)
 
@@ -104,6 +102,12 @@ double   open.commission;
 double   open.grossProfit;
 double   open.netProfit;
 
+// bracket times
+int      bracket1Start = 900;                // 15:00 (minutes after Midnight)
+int      bracket1End   = 930;                // 15:30 ...
+int      bracket2Start = 960;                // 16:00 ...
+int      bracket2End   = 990;                // 16:30 ...
+
 // volatile status data
 bool     status.showOpenOrders;
 bool     status.showTradeHistory;
@@ -124,8 +128,18 @@ string   sProfitStats  = "";
 bool     test.onStopPause        = false;    // whether to pause a test after StopInstance()
 bool     test.reduceStatusWrites = true;     // whether to reduce status file I/O in tester
 
-#include <apps/dowjones-breakout/init.mqh>
-#include <apps/dowjones-breakout/deinit.mqh>
+#include <apps/dj-breakout/init.mqh>
+#include <apps/dj-breakout/deinit.mqh>
+
+#include <functions/ea/CalculateMagicNumber.mqh>
+#include <functions/ea/CreateInstanceId.mqh>
+#include <functions/ea/FindStatusFile.mqh>
+#include <functions/ea/GetLogFilename.mqh>
+#include <functions/ea/GetStatusFilename.mqh>
+#include <functions/ea/IsMyOrder.mqh>
+#include <functions/ea/IsTestInstance.mqh>
+#include <functions/ea/onInputError.mqh>
+#include <functions/ea/RestoreInstance.mqh>
 
 
 /**
@@ -136,12 +150,65 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 int onTick() {
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
 
-   if (__isChart) HandleCommands();                // process incoming commands
+   if (__isChart) HandleCommands();                      // process incoming commands
 
-   // calculate/draw ranges (like Bracket indicator)
-   // select current range
-   // send limit orders
-   // update status
+   datetime now = Tick.time % DAYS;                      // offset to Midnight
+
+   if (now >= bracket1Start && now <= bracket1End) {
+      debug("onTick(0.1)  inside bracket 1");
+      // calculate bracket range
+      // update visualization
+      // if (no-open-position) update limit orders
+   }
+   else if (now >= bracket2Start && now <= bracket2End) {
+      debug("onTick(0.2)  inside bracket 2");
+   }
+   return(catch("onTick(2)"));
+
+
+
+
+
+   // --- old ---------------------------------------------------------------------------------------------------------------
+   datetime midnight    = Tick.time - Tick.time % DAYS;
+   datetime range1Start = midnight + bracket1Start*MINUTES;
+   datetime range1End   = midnight + bracket1End*MINUTES;
+
+   if (Tick.time < range1End-15*SECONDS) {
+      return(NO_ERROR);
+   }
+   else {
+      //debug("onTick(0.1)  Tick="+ Ticks +"  range1Start="+ TimeToStr(range1Start, TIME_DATE|TIME_MINUTES) +"  range1End="+ TimeToStr(range1End, TIME_DATE|TIME_MINUTES));
+
+      int period = ifInt(__isTesting, NULL, PERIOD_M5);
+      int fromBar = iBarShiftNext    (NULL, period, range1Start); if (fromBar == -1) return(catch("onTick(2)  iBarShiftNext("+ TimeToStr(range1Start, TIME_FULL) +") => -1 no such data (rangeStart too young)", ERR_RUNTIME_ERROR));
+      int toBar   = iBarShiftPrevious(NULL, period, range1End-1); if (toBar   == -1) return(catch("onTick(3)  iBarShiftPrevious("+ TimeToStr(range1End-1, TIME_FULL) +") => -1 no such data (rangeEnd too old)", ERR_RUNTIME_ERROR));
+      if (fromBar < toBar)                                                           return(catch("onTick(4)  range from bar "+ fromBar +" to "+ toBar +" => no such data (gap in rates)", ERR_RUNTIME_ERROR));
+
+      double high = High[iHighest(NULL, period, MODE_HIGH, fromBar-toBar+1, toBar)];
+      double low  =  Low[iLowest (NULL, period, MODE_LOW,  fromBar-toBar+1, toBar)];
+
+      debug("onTick(0.2)  Tick="+ Ticks +"  bracket from["+ fromBar +"]="+ TimeToStr(Time[fromBar], TIME_MINUTES) +"  to["+ toBar +"]="+ TimeToStr(Time[toBar], TIME_MINUTES) +"  H/L="+ NumberToStr(high, PriceFormat) +"/"+ NumberToStr(low, PriceFormat));
+
+
+      static bool done = false;
+      if (IsVisualMode() && !done) {
+         Tester.Pause("onTick(0.2)");
+         done = true;
+      }
+   }
+
+   // -----------------------------------------------------------------------------------------------------------------------
+   // wait until 15:29:50
+   // calculate range and send limit order a few seconds before range end time
+
+   // -----------------------------------------------------------------------------------------------------------------------
+   // wait until 15:29, calculate and draw range (similar to Bracket indicator)
+   // enter limit orders
+   // manage position
+   // wait until 16:29, calculate and draw range
+   // enter limit orders
+   // manage position
 
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
@@ -226,116 +293,9 @@ bool StopInstance() {
    if (last_error != NULL)                                                     return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   return(!catch("StopInstance(2)  not implemented", ERR_NOT_IMPLEMENTED));
-}
+   logNotice("StopInstance(0.1)  not implemented", ERR_NOT_IMPLEMENTED);
 
-
-/**
- * Whether the current instance was created in the tester. Also returns TRUE if a finished test is loaded into an online chart.
- *
- * @return bool
- */
-bool IsTestInstance() {
-   return(instance.isTest || __isTesting);
-}
-
-
-/**
- * Calculate a magic order number for the strategy.
- *
- * @param  int instanceId [optional] - intance to calculate the magic number for (default: the current instance)
- *
- * @return int - magic number or NULL in case of errors
- */
-int CalculateMagicNumber(int instanceId = NULL) {
-   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023)      return(!catch("CalculateMagicNumber(1)  "+ instance.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
-   int id = intOr(instanceId, instance.id);
-   if (id < INSTANCE_ID_MIN || id > INSTANCE_ID_MAX) return(!catch("CalculateMagicNumber(2)  "+ instance.name +" illegal instance id: "+ id, ERR_ILLEGAL_STATE));
-
-   int strategy = STRATEGY_ID;                              // 101-1023 (10 bit)
-   int instance = id;                                       // 001-999  (14 bit, used to be 1000-9999)
-
-   return((strategy<<22) + (instance<<8));                  // the remaining 8 bit are currently not used in this strategy
-}
-
-
-/**
- * Whether the currently selected ticket belongs to the current strategy and optionally instance.
- *
- * @param  int instanceId [optional] - instance to check the ticket against (default: check for matching strategy only)
- *
- * @return bool
- */
-bool IsMyOrder(int instanceId = NULL) {
-   if (OrderSymbol() == Symbol()) {
-      int strategy = OrderMagicNumber() >> 22;
-      if (strategy == STRATEGY_ID) {
-         int instance = OrderMagicNumber() >> 8 & 0x3FFF;   // 14 bit starting at bit 8: instance id
-         return(!instanceId || instanceId==instance);
-      }
-   }
-   return(false);
-}
-
-
-/**
- * Generate a new instance id. Unique for all instances per symbol (instances of different symbols may use the same id).
- *
- * @return int - instance id in the range of 100-999 or NULL (0) in case of errors
- */
-int CreateInstanceId() {
-   int instanceId, magicNumber;
-   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
-
-   if (__isTesting) {
-      // generate next consecutive id from already recorded metrics
-      string nextSymbol = Recorder.GetNextMetricSymbol(); if (nextSymbol == "") return(NULL);
-      string sCounter = StrRightFrom(nextSymbol, ".", -1);
-      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  "+ instance.name +" illegal value for next symbol "+ DoubleQuoteStr(nextSymbol) +" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
-      int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
-
-      if (recorder.mode == RECORDER_OFF) {
-         int minInstanceId = MathCeil(nextMetricId + 0.2*(INSTANCE_ID_MAX-nextMetricId)); // nextMetricId + 20% of remaining range (leave 20% of range empty for tests with metrics)
-         while (instanceId < minInstanceId || instanceId > INSTANCE_ID_MAX) {             // select random id between <minInstanceId> and ID_MAX
-            instanceId = MathRand();
-         }
-      }
-      else {
-         instanceId = nextMetricId;                                                       // use next metric id
-      }
-   }
-   else {
-      // online: generate random id
-      while (!magicNumber) {
-         // generate a new instance id
-         while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
-            instanceId = MathRand();                                                      // select random id between ID_MIN and ID_MAX
-         }
-         magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
-
-         // test for uniqueness against open orders
-         int openOrders = OrdersTotal();
-         for (int i=0; i < openOrders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateInstanceId(2)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-            if (OrderMagicNumber() == magicNumber) {
-               magicNumber = NULL;
-               break;
-            }
-         }
-         if (!magicNumber) continue;
-
-         // test for uniqueness against closed orders
-         int closedOrders = OrdersHistoryTotal();
-         for (i=0; i < closedOrders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateInstanceId(3)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-            if (OrderMagicNumber() == magicNumber) {
-               magicNumber = NULL;
-               break;
-            }
-         }
-      }
-   }
-   return(instanceId);
+   return(!catch("StopInstance(2)"));
 }
 
 
@@ -382,20 +342,6 @@ bool SetInstanceId(string value, bool &error, string caller) {
    instance.id     = iValue;
    Instance.ID     = ifString(IsTestInstance(), "T", "") + StrPadLeft(instance.id, 3, "0");
    SS.InstanceName();
-   return(true);
-}
-
-
-/**
- * Restore the internal state of the EA from a status file. Requires 'instance.id' and 'instance.isTest' to be set.
- *
- * @return bool - success status
- */
-bool RestoreInstance() {
-   if (IsLastError())        return(false);
-   if (!ReadStatus())        return(false);              // read and apply the status file
-   if (!ValidateInputs())    return(false);              // validate restored input parameters
-   if (!SynchronizeStatus()) return(false);              // synchronize restored state with current order state
    return(true);
 }
 
@@ -494,70 +440,6 @@ bool SynchronizeStatus() {
 
    SS.All();
    return(!catch("SynchronizeStatus(1)"));
-}
-
-
-/**
- * Return the full name of the instance logfile.
- *
- * @return string - filename or an empty string in case of errors
- */
-string GetLogFilename() {
-   string name = GetStatusFilename();
-   if (!StringLen(name)) return("");
-   return(StrLeftTo(name, ".", -1) +".log");
-}
-
-
-/**
- * Return the name of the status file.
- *
- * @param  bool relative [optional] - whether to return an absolute path or a path relative to the MQL "files" directory
- *                                    (default: absolute path)
- *
- * @return string - filename or an empty string in case of errors
- */
-string GetStatusFilename(bool relative = false) {
-   relative = relative!=0;
-   if (!instance.id)      return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ instance.name +" illegal value of instance.id: 0", ERR_ILLEGAL_STATE)));
-   if (!instance.created) return(_EMPTY_STR(catch("GetStatusFilename(2)  "+ instance.name +" illegal value of instance.created: 0", ERR_ILLEGAL_STATE)));
-
-   static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = ProgramName() +", "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ StrPadLeft(instance.id, 3, "0") +".set";
-      filename = directory + baseName;
-   }
-
-   if (relative)
-      return(filename);
-   return(GetMqlSandboxPath() +"/"+ filename);
-}
-
-
-/**
- * Find an existing status file for the specified instance.
- *
- * @param  int  instanceId - instance id
- * @param  bool isTest     - whether the instance is a test instance
- *
- * @return string - absolute filename or an empty string in case of errors
- */
-string FindStatusFile(int instanceId, bool isTest) {
-   if (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) return(_EMPTY_STR(catch("FindStatusFile(1)  "+ instance.name +" invalid parameter instanceId: "+ instanceId, ERR_INVALID_PARAMETER)));
-   isTest = isTest!=0;
-
-   string sandboxDir  = GetMqlSandboxPath() +"/";
-   string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
-   string basePattern = ProgramName() +", "+ Symbol() +",*id="+ StrPadLeft(""+ instanceId, 3, "0") +".set";
-   string pathPattern = sandboxDir + statusDir + basePattern;
-
-   string result[];
-   int size = FindFileNames(pathPattern, result, FF_FILESONLY);
-
-   if (size != 1) {
-      if (size > 1) return(_EMPTY_STR(logError("FindStatusFile(2)  "+ instance.name +" multiple matching files found for pattern "+ DoubleQuoteStr(pathPattern), ERR_ILLEGAL_STATE)));
-   }
-   return(sandboxDir + statusDir + result[0]);
 }
 
 
@@ -741,22 +623,6 @@ bool ValidateInputs() {
 
 
 /**
- * Error handler for invalid input parameters. Depending on the execution context a non-/terminating error is set.
- *
- * @param  string message - error message
- *
- * @return int - error status
- */
-int onInputError(string message) {
-   int error = ERR_INVALID_PARAMETER;
-
-   if (ProgramInitReason() == IR_PARAMETERS)
-      return(logError(message, error));                           // non-terminating error
-   return(catch(message, error));                                 // terminating error
-}
-
-
-/**
  * Store volatile runtime vars in chart and chart window (for template reload, terminal restart, recompilation etc).
  *
  * @return bool - success status
@@ -933,7 +799,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "V."+ StrPadLeft(instance.id, 3, "0");
+   instance.name = "ID."+ StrPadLeft(instance.id, 3, "0");
 }
 
 
@@ -1065,9 +931,6 @@ string InputsToStr() {
                             "Target3.MoveStopTo=",   Target3.MoveStopTo,          ";"+ NL +
                             "Target4=",              Target4,                     ";"+ NL +
                             "Target4.ClosePercent=", Target4.ClosePercent,        ";"+ NL +
-                            "Target4.MoveStopTo=",   Target4.MoveStopTo,          ";"+ NL +
-                            "Target5=",              Target5,                     ";"+ NL +
-                            "Target5.ClosePercent=", Target5.ClosePercent,        ";"+ NL +
-                            "Target5.MoveStopTo=",   Target5.MoveStopTo,          ";")
+                            "Target4.MoveStopTo=",   Target4.MoveStopTo,          ";")
    );
 }

@@ -260,6 +260,16 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <apps/vegas-ea/init.mqh>
 #include <apps/vegas-ea/deinit.mqh>
 
+#include <functions/ea/CalculateMagicNumber.mqh>
+#include <functions/ea/CreateInstanceId.mqh>
+#include <functions/ea/FindStatusFile.mqh>
+#include <functions/ea/GetLogFilename.mqh>
+#include <functions/ea/GetStatusFilename.mqh>
+#include <functions/ea/IsMyOrder.mqh>
+#include <functions/ea/IsTestInstance.mqh>
+#include <functions/ea/onInputError.mqh>
+#include <functions/ea/RestoreInstance.mqh>
+
 
 /**
  * Main function
@@ -1160,115 +1170,6 @@ void CalculateStats() {
 
 
 /**
- * Whether the current instance was created in the tester. Also returns TRUE if a finished test is loaded into an online chart.
- *
- * @return bool
- */
-bool IsTestInstance() {
-   return(instance.isTest || __isTesting);
-}
-
-
-/**
- * Calculate a magic order number for the strategy.
- *
- * @param  int instanceId [optional] - intance to calculate the magic number for (default: the current instance)
- *
- * @return int - magic number or NULL in case of errors
- */
-int CalculateMagicNumber(int instanceId = NULL) {
-   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023)      return(!catch("CalculateMagicNumber(1)  "+ instance.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
-   int id = intOr(instanceId, instance.id);
-   if (id < INSTANCE_ID_MIN || id > INSTANCE_ID_MAX) return(!catch("CalculateMagicNumber(2)  "+ instance.name +" illegal instance id: "+ id, ERR_ILLEGAL_STATE));
-
-   int strategy = STRATEGY_ID;                              // 101-1023 (10 bit)
-   int instance = id;                                       // 001-999  (14 bit, used to be 1000-9999)
-
-   return((strategy<<22) + (instance<<8));                  // the remaining 8 bit are currently not used in this strategy
-}
-
-
-/**
- * Whether the currently selected ticket belongs to the current strategy and optionally instance.
- *
- * @param  int instanceId [optional] - instance to check the ticket against (default: check for matching strategy only)
- *
- * @return bool
- */
-bool IsMyOrder(int instanceId = NULL) {
-   if (OrderSymbol() == Symbol()) {
-      int strategy = OrderMagicNumber() >> 22;
-      if (strategy == STRATEGY_ID) {
-         int instance = OrderMagicNumber() >> 8 & 0x3FFF;   // 14 bit starting at bit 8: instance id
-         return(!instanceId || instanceId==instance);
-      }
-   }
-   return(false);
-}
-
-
-/**
- * Generate a new instance id. Unique for all instances per symbol (instances of different symbols may use the same id).
- *
- * @return int - instance id in the range of 100-999 or NULL (0) in case of errors
- */
-int CreateInstanceId() {
-   int instanceId, magicNumber;
-   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
-
-   if (__isTesting) {
-      // generate next consecutive id from already recorded metrics
-      string nextSymbol = Recorder.GetNextMetricSymbol(); if (nextSymbol == "") return(NULL);
-      string sCounter = StrRightFrom(nextSymbol, ".", -1);
-      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  "+ instance.name +" illegal value for next symbol "+ DoubleQuoteStr(nextSymbol) +" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
-      int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
-
-      if (recorder.mode == RECORDER_OFF) {
-         int minInstanceId = MathCeil(nextMetricId + 0.2*(INSTANCE_ID_MAX-nextMetricId)); // nextMetricId + 20% of remaining range (leave 20% of range empty for tests with metrics)
-         while (instanceId < minInstanceId || instanceId > INSTANCE_ID_MAX) {             // select random id between <minInstanceId> and ID_MAX
-            instanceId = MathRand();
-         }
-      }
-      else {
-         instanceId = nextMetricId;                                                       // use next metric id
-      }
-   }
-   else {
-      // online: generate random id
-      while (!magicNumber) {
-         // generate a new instance id
-         while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
-            instanceId = MathRand();                                                      // select random id between ID_MIN and ID_MAX
-         }
-         magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
-
-         // test for uniqueness against open orders
-         int openOrders = OrdersTotal();
-         for (int i=0; i < openOrders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateInstanceId(2)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-            if (OrderMagicNumber() == magicNumber) {
-               magicNumber = NULL;
-               break;
-            }
-         }
-         if (!magicNumber) continue;
-
-         // test for uniqueness against closed orders
-         int closedOrders = OrdersHistoryTotal();
-         for (i=0; i < closedOrders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateInstanceId(3)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-            if (OrderMagicNumber() == magicNumber) {
-               magicNumber = NULL;
-               break;
-            }
-         }
-      }
-   }
-   return(instanceId);
-}
-
-
-/**
  * Parse and set the passed instance id value. Format: "[T]123"
  *
  * @param  _In_    string value  - instance id value
@@ -1311,20 +1212,6 @@ bool SetInstanceId(string value, bool &error, string caller) {
    instance.id     = iValue;
    Instance.ID     = ifString(IsTestInstance(), "T", "") + StrPadLeft(instance.id, 3, "0");
    SS.InstanceName();
-   return(true);
-}
-
-
-/**
- * Restore the internal state of the EA from a status file. Requires 'instance.id' and 'instance.isTest' to be set.
- *
- * @return bool - success status
- */
-bool RestoreInstance() {
-   if (IsLastError())        return(false);
-   if (!ReadStatus())        return(false);              // read and apply the status file
-   if (!ValidateInputs())    return(false);              // validate restored input parameters
-   if (!SynchronizeStatus()) return(false);              // synchronize restored state with current order state
    return(true);
 }
 
@@ -1597,70 +1484,6 @@ bool SynchronizeStatus() {
 
    SS.All();
    return(!catch("SynchronizeStatus(1)"));
-}
-
-
-/**
- * Return the full name of the instance logfile.
- *
- * @return string - filename or an empty string in case of errors
- */
-string GetLogFilename() {
-   string name = GetStatusFilename();
-   if (!StringLen(name)) return("");
-   return(StrLeftTo(name, ".", -1) +".log");
-}
-
-
-/**
- * Return the name of the status file.
- *
- * @param  bool relative [optional] - whether to return an absolute path or a path relative to the MQL "files" directory
- *                                    (default: absolute path)
- *
- * @return string - filename or an empty string in case of errors
- */
-string GetStatusFilename(bool relative = false) {
-   relative = relative!=0;
-   if (!instance.id)      return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ instance.name +" illegal value of instance.id: 0", ERR_ILLEGAL_STATE)));
-   if (!instance.created) return(_EMPTY_STR(catch("GetStatusFilename(2)  "+ instance.name +" illegal value of instance.created: 0", ERR_ILLEGAL_STATE)));
-
-   static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets/"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"/";
-      string baseName  = ProgramName() +", "+ Symbol() +", "+ GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ StrPadLeft(instance.id, 3, "0") +".set";
-      filename = directory + baseName;
-   }
-
-   if (relative)
-      return(filename);
-   return(GetMqlSandboxPath() +"/"+ filename);
-}
-
-
-/**
- * Find an existing status file for the specified instance.
- *
- * @param  int  instanceId - instance id
- * @param  bool isTest     - whether the instance is a test instance
- *
- * @return string - absolute filename or an empty string in case of errors
- */
-string FindStatusFile(int instanceId, bool isTest) {
-   if (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) return(_EMPTY_STR(catch("FindStatusFile(1)  "+ instance.name +" invalid parameter instanceId: "+ instanceId, ERR_INVALID_PARAMETER)));
-   isTest = isTest!=0;
-
-   string sandboxDir  = GetMqlSandboxPath() +"/";
-   string statusDir   = "presets/"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"/";
-   string basePattern = ProgramName() +", "+ Symbol() +",*id="+ StrPadLeft(""+ instanceId, 3, "0") +".set";
-   string pathPattern = sandboxDir + statusDir + basePattern;
-
-   string result[];
-   int size = FindFileNames(pathPattern, result, FF_FILESONLY);
-
-   if (size != 1) {
-      if (size > 1) return(_EMPTY_STR(logError("FindStatusFile(2)  "+ instance.name +" multiple matching files found for pattern "+ DoubleQuoteStr(pathPattern), ERR_ILLEGAL_STATE)));
-   }
-   return(sandboxDir + statusDir + result[0]);
 }
 
 
@@ -2019,22 +1842,6 @@ bool ValidateInputs() {
 
    SS.All();
    return(!catch("ValidateInputs(14)"));
-}
-
-
-/**
- * Error handler for invalid input parameters. Depending on the execution context a non-/terminating error is set.
- *
- * @param  string message - error message
- *
- * @return int - error status
- */
-int onInputError(string message) {
-   int error = ERR_INVALID_PARAMETER;
-
-   if (ProgramInitReason() == IR_PARAMETERS)
-      return(logError(message, error));                           // non-terminating error
-   return(catch(message, error));                                 // terminating error
 }
 
 
