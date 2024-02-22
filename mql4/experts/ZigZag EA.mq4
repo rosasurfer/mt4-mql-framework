@@ -1137,7 +1137,7 @@ bool StartInstance(double signal[]) {
    double   price       = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
-   int      magicNumber = CalculateMagicNumber();
+   int      magicNumber = CalculateMagicNumber(instance.id);
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    int ticket, oeFlags, oe[];
@@ -1248,7 +1248,7 @@ bool ReverseInstance(double signal[]) {
    double   price       = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
-   int      magicNumber = CalculateMagicNumber();
+   int      magicNumber = CalculateMagicNumber(instance.id);
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, NULL, NULL, marker, oe);

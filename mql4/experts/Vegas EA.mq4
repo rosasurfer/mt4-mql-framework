@@ -751,7 +751,7 @@ bool UpdateStatus(int signal = NULL) {
       double   stopLoss    = NULL;
       double   takeProfit  = NULL;
       string   comment     = "Vegas."+ StrPadLeft(instance.id, 3, "0");
-      int      magicNumber = CalculateMagicNumber();
+      int      magicNumber = CalculateMagicNumber(instance.id);
       datetime expires     = NULL;
       color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
                oeFlags     = NULL;
