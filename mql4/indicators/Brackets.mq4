@@ -110,7 +110,7 @@ bool UpdateBrackets() {
    // re-calculate brackets
    if (changedRateBars > 2) {                                                                            // skip single ticks
       ArrayResize(brackets, maxBrackets);
-      ArrayInitialize(brackets, NULL);
+      ArrayInitialize(brackets, 0);
 
       int i=0, fromBar, toBar, highBar, lowBar;
       datetime opentime=rates[0][BAR.time], midnight=opentime - opentime%DAYS + 1*DAY, rangeStart, rangeEnd;
@@ -120,8 +120,8 @@ bool UpdateBrackets() {
          midnight  -= 1*DAY;
          rangeStart = midnight + bracketStart*MINUTES;
          rangeEnd   = midnight + bracketEnd*MINUTES;
-         fromBar    = iBarShiftNext    (NULL, ratesTimeframe, rangeStart); if (fromBar == -1) continue;  // no such data (rangeStart too young)
-         toBar      = iBarShiftPrevious(NULL, ratesTimeframe, rangeEnd-1); if (toBar   == -1) break;     // no such data (rangeEnd too old)
+         fromBar    = iBarShiftNext    (NULL, ratesTimeframe, rangeStart); if (fromBar == -1) continue;  // -1: no such data (rangeStart too young)
+         toBar      = iBarShiftPrevious(NULL, ratesTimeframe, rangeEnd-1); if (toBar   == -1) break;     // -1: no such data (rangeEnd too old)
          if (fromBar < toBar) continue;                                                                  // no such data (gap in rates)
 
          highBar = iHighest(NULL, ratesTimeframe, MODE_HIGH, fromBar-toBar+1, toBar);

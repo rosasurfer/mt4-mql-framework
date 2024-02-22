@@ -3,7 +3,6 @@
  *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
  ****************************************************************************************************************************
  *
- *
  * A combination of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in/out.
  *
  *  @see [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
@@ -61,10 +60,13 @@
  *
  *
  * TODO:
+ *  - implement partial profit taking
+ *     manage/track partial open/closed positions
+ *     add break-even stop
+ *     add exit strategies
+ *
  *  - track runup/down per position
  *  - convert signal constants to array
- *  - add break-even stop
- *  - add exit strategies
  *  - add entry strategies
  *  - add virtual trading
  *  - add input "TradingTimeframe"
@@ -2352,7 +2354,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "V."+ StrPadLeft(instance.id, 3, "0");
+   instance.name = "ID."+ StrPadLeft(instance.id, 3, "0");
 }
 
 

@@ -3,7 +3,6 @@
  *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
  ****************************************************************************************************************************
  *
- *
  * A strategy inspired by the "Turtle Trading" system of Richard Dennis.
  *
  *  @see [Turtle Trading] https://analyzingalpha.com/turtle-trading
@@ -65,6 +64,9 @@
  *
  *
  * TODO:
+ *  - implement partial profit taking
+ *     manage/track partial open/closed positions
+ *
  *  - rewrite loglevels to global vars
  *  - add ZigZag projections
  *  - input TradingTimeframe
@@ -3443,7 +3445,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "Z."+ StrPadLeft(instance.id, 3, "0");
+   instance.name = "ID."+ StrPadLeft(instance.id, 3, "0");
 
    switch (tradingMode) {
       case TRADINGMODE_REGULAR:

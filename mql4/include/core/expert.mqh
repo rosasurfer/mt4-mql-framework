@@ -122,7 +122,7 @@ int init() {
 
    if (__isTesting) {                                             // log MarketInfo() data
       if (IsLogInfo()) {
-         string title = "::: TEST (bar model: "+ BarModelDescription(__Test.barModel) +") :::";
+         string title = "::: TEST ("+ BarModelDescription(__Test.barModel) +") :::";
          string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ initMarketInfo();
          string separator = StrRepeat(":", StringLen(msg));
          if (__isTesting) separator = title + StrRight(separator, -StringLen(title));
