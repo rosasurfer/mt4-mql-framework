@@ -267,11 +267,13 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/onInputError.mqh>
 #include <ea/RestoreInstance.mqh>
 #include <ea/SetInstanceId.mqh>
+#include <ea/ToggleOpenOrders.mqh>
 #include <ea/ToggleTradeHistory.mqh>
 #include <ea/ValidateInputs.ID.mqh>
 #include <ea/file/FindStatusFile.mqh>
 #include <ea/file/GetStatusFilename.mqh>
 #include <ea/file/GetLogFilename.mqh>
+#include <ea/metric/ToggleMetrics.mqh>
 #include <ea/status/StatusToStr.mqh>
 #include <ea/status/StatusDescription.mqh>
 #include <ea/volatile/StoreVolatileData.mqh>
@@ -319,7 +321,6 @@ bool onCommand(string cmd, string params, int keys) {
             return(StopInstance());
       }
    }
-
    else if (cmd == "restart") {
       switch (instance.status) {
          case STATUS_STOPPED:
@@ -327,120 +328,19 @@ bool onCommand(string cmd, string params, int keys) {
             return(RestartInstance());
       }
    }
-
    else if (cmd == "toggle-metrics") {
       int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
-      return(ToggleMetrics(direction));
+      return(ToggleMetrics(direction, METRIC_TOTAL_NET_MONEY, METRIC_TOTAL_SYNTH_UNITS));
    }
-
    else if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());
    }
-
    else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
-}
-
-
-/**
- * Toggle EA status between displayed metrics.
- *
- * @param  int direction - METRIC_NEXT|METRIC_PREVIOUS
- *
- * @return bool - success status
- */
-bool ToggleMetrics(int direction) {
-   if (direction!=METRIC_NEXT && direction!=METRIC_PREVIOUS) return(!catch("ToggleMetrics(1)  "+ instance.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-
-   int lastMetric = status.activeMetric;
-
-   status.activeMetric += direction;
-   if (status.activeMetric < 1) status.activeMetric = 3;    // valid metrics: 1-3
-   if (status.activeMetric > 3) status.activeMetric = 1;
-   StoreVolatileData();
-   SS.All();
-
-   if (lastMetric==METRIC_TOTAL_SYNTH_UNITS || status.activeMetric==METRIC_TOTAL_SYNTH_UNITS) {
-      if (status.showOpenOrders) {
-         ToggleOpenOrders(false);
-         ToggleOpenOrders(false);
-      }
-      if (status.showTradeHistory) {
-         ToggleTradeHistory(false);
-         ToggleTradeHistory(false);
-      }
-   }
-   return(true);
-}
-
-
-/**
- * Toggle the display of open orders.
- *
- * @param  bool soundOnNone [optional] - whether to play a sound if no open orders exist (default: yes)
- *
- * @return bool - success status
- */
-bool ToggleOpenOrders(bool soundOnNone = true) {
-   soundOnNone = soundOnNone!=0;
-
-   // toggle current status
-   bool showOrders = !status.showOpenOrders;
-
-   // ON: display open orders
-   if (showOrders) {
-      string types[] = {"buy", "sell"};
-      color clrs[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
-
-      if (open.ticket != NULL) {
-         double openPrice = ifDouble(status.activeMetric == METRIC_TOTAL_SYNTH_UNITS, open.priceSynth, open.price);
-         string label = StringConcatenate("#", open.ticket, " ", types[open.type], " ", NumberToStr(open.lots, ".+"), " at ", NumberToStr(openPrice, PriceFormat));
-
-         if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(!catch("ToggleOpenOrders(1)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet    (label, OBJPROP_COLOR,  clrs[open.type]);
-         ObjectSet    (label, OBJPROP_TIME1,  open.time);
-         ObjectSet    (label, OBJPROP_PRICE1, openPrice);
-         ObjectSetText(label, instance.name);
-      }
-      else {
-         showOrders = false;                          // Without open orders status must be reset to have the "off" section
-         if (soundOnNone) PlaySoundEx("Plonk.wav");   // remove any existing open order markers.
-      }
-   }
-
-   // OFF: remove open order markers
-   if (!showOrders) {
-      for (int i=ObjectsTotal()-1; i >= 0; i--) {
-         label = ObjectName(i);
-
-         if (StringGetChar(label, 0) == '#') {
-            if (ObjectType(label) == OBJ_ARROW) {
-               int arrow = ObjectGet(label, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(label, OBJPROP_COLOR);
-
-               if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) continue;
-               }
-               else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) continue;
-               }
-               ObjectDelete(label);
-            }
-         }
-      }
-   }
-
-   // store current status
-   status.showOpenOrders = showOrders;
-   StoreVolatileData();
-
-   if (__isTesting) WindowRedraw();
-   return(!catch("ToggleOpenOrders(2)"));
 }
 
 

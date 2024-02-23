@@ -52,29 +52,36 @@ extern int    Target4.MoveStopTo             = 0;           // ...
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 
-#define STRATEGY_ID         110              // unique strategy id (used for magic order numbers)
+#define STRATEGY_ID            110           // unique strategy id (used for magic order numbers)
 
-#define INSTANCE_ID_MIN       1              // range of valid instance ids
-#define INSTANCE_ID_MAX     999              //
+#define INSTANCE_ID_MIN          1           // range of valid instance ids
+#define INSTANCE_ID_MAX        999           //
 
-#define STATUS_WAITING        1              // instance has no open positions and waits for signals
-#define STATUS_PROGRESSING    2              // instance manages open positions
-#define STATUS_STOPPED        3              // instance has no open positions and doesn't wait for signals
+#define STATUS_WAITING           1           // instance has no open positions and waits for signals
+#define STATUS_PROGRESSING       2           // instance manages open positions
+#define STATUS_STOPPED           3           // instance has no open positions and doesn't wait for signals
+
+#define METRIC_TOTAL_NET_MONEY   1           // custom metrics
+#define METRIC_TOTAL_NET_UNITS   2
+#define METRIC_TOTAL_SYNTH_UNITS 3
+
+#define METRIC_NEXT              1           // directions for toggling between metrics
+#define METRIC_PREVIOUS         -1
 
 double history[][12];                        // trade history
 
-#define H_TICKET              0              // indexes of trade history
-#define H_TYPE                1
-#define H_LOTS                2
-#define H_OPENTIME            3
-#define H_OPENPRICE           4
-#define H_CLOSETIME           5
-#define H_CLOSEPRICE          6
-#define H_SLIPPAGE            7
-#define H_SWAP                8
-#define H_COMMISSION          9
-#define H_GROSSPROFIT        10
-#define H_NETPROFIT          11
+#define H_TICKET                 0           // indexes of trade history
+#define H_TYPE                   1
+#define H_LOTS                   2
+#define H_OPENTIME               3
+#define H_OPENPRICE              4
+#define H_CLOSETIME              5
+#define H_CLOSEPRICE             6
+#define H_SLIPPAGE               7
+#define H_SWAP                   8
+#define H_COMMISSION             9
+#define H_GROSSPROFIT           10
+#define H_NETPROFIT             11
 
 // instance data
 int      instance.id;                        // used for magic order numbers
@@ -96,6 +103,7 @@ int      open.type;
 double   open.lots;
 datetime open.time;
 double   open.price;
+double   open.priceSynth;
 double   open.slippage;
 double   open.swap;
 double   open.commission;
@@ -139,11 +147,13 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/onInputError.mqh>
 #include <ea/RestoreInstance.mqh>
 #include <ea/SetInstanceId.mqh>
+#include <ea/ToggleOpenOrders.mqh>
 #include <ea/ToggleTradeHistory.mqh>
 #include <ea/ValidateInputs.ID.mqh>
 #include <ea/file/FindStatusFile.mqh>
 #include <ea/file/GetStatusFilename.mqh>
 #include <ea/file/GetLogFilename.mqh>
+#include <ea/metric/ToggleMetrics.mqh>
 #include <ea/status/StatusToStr.mqh>
 #include <ea/status/StatusDescription.mqh>
 #include <ea/volatile/StoreVolatileData.mqh>
@@ -242,7 +252,11 @@ int onTick() {
 bool onCommand(string cmd, string params, int keys) {
    string fullCmd = cmd +":"+ params +":"+ keys;
 
-   if (cmd == "toggle-open-orders") {
+   if (cmd == "toggle-metrics") {
+      int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
+      return(ToggleMetrics(direction, METRIC_TOTAL_NET_MONEY, METRIC_TOTAL_SYNTH_UNITS));
+   }
+   else if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());
    }
    else if (cmd == "toggle-trade-history") {
@@ -251,18 +265,6 @@ bool onCommand(string cmd, string params, int keys) {
    else return(!logNotice("onCommand(1)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(2)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
-}
-
-
-/**
- * Toggle the display of open orders.
- *
- * @param  bool soundOnNone [optional] - whether to play a sound if no open orders exist (default: yes)
- *
- * @return bool - success status
- */
-bool ToggleOpenOrders(bool soundOnNone = true) {
-   return(!catch("ToggleOpenOrders(1)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 
 
