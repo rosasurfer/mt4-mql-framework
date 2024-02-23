@@ -128,6 +128,8 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/IsTestInstance.mqh>
 #include <ea/onInputError.mqh>
 #include <ea/RestoreInstance.mqh>
+#include <ea/ToggleTradeHistory.mqh>
+#include <ea/ValidateInputs.ID.mqh>
 #include <ea/file/FindStatusFile.mqh>
 #include <ea/file/GetStatusFilename.mqh>
 #include <ea/file/GetLogFilename.mqh>
@@ -194,14 +196,12 @@ bool ToggleOpenOrders(bool soundOnNone = true) {
 
 
 /**
- * Toggle the display of closed trades.
+ * Display closed trades.
  *
- * @param  bool soundOnNone [optional] - whether to play a sound if no closed trades exist (default: yes)
- *
- * @return bool - success status
+ * @return int - number of displayed trades or EMPTY (-1) in case of errors
  */
-bool ToggleTradeHistory(bool soundOnNone = true) {
-   return(!catch("ToggleTradeHistory(1)  not implemented", ERR_NOT_IMPLEMENTED));
+int ShowTradeHistory() {
+   return(_EMPTY(catch("ShowTradeHistory(1)  not implemented", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -507,22 +507,6 @@ void RestoreInputs() {
    instance.status  = prev.instance.status;
 
    Recorder.RestoreInputs();
-}
-
-
-/**
- * Validate and apply input parameter "Instance.ID".
- *
- * @return bool - whether an instance id value was successfully restored (the status file is not checked)
- */
-bool ValidateInputs.ID() {
-   bool errorFlag = true;
-
-   if (!SetInstanceId(Instance.ID, errorFlag, "ValidateInputs.ID(1)")) {
-      if (errorFlag) onInputError("ValidateInputs.ID(2)  invalid input parameter Instance.ID: \""+ Instance.ID +"\"");
-      return(false);
-   }
-   return(true);
 }
 
 

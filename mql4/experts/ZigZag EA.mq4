@@ -456,6 +456,8 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/IsTestInstance.mqh>
 #include <ea/onInputError.mqh>
 #include <ea/RestoreInstance.mqh>
+#include <ea/ToggleTradeHistory.mqh>
+#include <ea/ValidateInputs.ID.mqh>
 #include <ea/file/FindStatusFile.mqh>
 #include <ea/file/GetStatusFilename.mqh>
 #include <ea/file/GetLogFilename.mqh>
@@ -662,61 +664,6 @@ bool ToggleOpenOrders(bool soundOnNone = true) {
 
    if (__isTesting) WindowRedraw();
    return(!catch("ToggleOpenOrders(2)"));
-}
-
-
-/**
- * Toggle the display of closed trades.
- *
- * @param  bool soundOnNone [optional] - whether to play a sound if no closed trades exist (default: yes)
- *
- * @return bool - success status
- */
-bool ToggleTradeHistory(bool soundOnNone = true) {
-   soundOnNone = soundOnNone!=0;
-
-   // toggle current status
-   bool showHistory = !status.showTradeHistory;
-
-   // ON: display closed trades
-   if (showHistory) {
-      int trades = ShowTradeHistory();
-      if (trades == -1) return(false);
-      if (!trades) {                                        // Without any closed trades the status must be reset to enable
-         showHistory = false;                               // the "off" section to clear existing markers.
-         if (soundOnNone) PlaySoundEx("Plonk.wav");
-      }
-   }
-
-   // OFF: remove all closed trade markers (from this EA or another program)
-   if (!showHistory) {
-      for (int i=ObjectsTotal()-1; i >= 0; i--) {
-         string name = ObjectName(i);
-
-         if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name) == OBJ_ARROW) {
-               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR);
-
-               if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
-               }
-               else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_CLOSED) continue;
-               }
-            }
-            else if (ObjectType(name) != OBJ_TREND) continue;
-            ObjectDelete(name);
-         }
-      }
-   }
-
-   // store current status
-   status.showTradeHistory = showHistory;
-   StoreVolatileData();
-
-   if (__isTesting) WindowRedraw();
-   return(!catch("ToggleTradeHistory(1)"));
 }
 
 
@@ -2719,22 +2666,6 @@ void RestoreInputs() {
    stop.profitPun.description = prev.stop.profitPun.description;
 
    Recorder.RestoreInputs();
-}
-
-
-/**
- * Validate and apply input parameter "Instance.ID".
- *
- * @return bool - whether an instance id value was successfully restored (the status file is not checked)
- */
-bool ValidateInputs.ID() {
-   bool errorFlag = true;
-
-   if (!SetInstanceId(Instance.ID, errorFlag, "ValidateInputs.ID(1)")) {
-      if (errorFlag) onInputError("ValidateInputs.ID(2)  invalid input parameter Instance.ID: \""+ Instance.ID +"\"");
-      return(false);
-   }
-   return(true);
 }
 
 
