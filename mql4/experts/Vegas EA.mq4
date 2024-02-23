@@ -266,11 +266,14 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/IsTestInstance.mqh>
 #include <ea/onInputError.mqh>
 #include <ea/RestoreInstance.mqh>
+#include <ea/SetInstanceId.mqh>
 #include <ea/ToggleTradeHistory.mqh>
 #include <ea/ValidateInputs.ID.mqh>
 #include <ea/file/FindStatusFile.mqh>
 #include <ea/file/GetStatusFilename.mqh>
 #include <ea/file/GetLogFilename.mqh>
+#include <ea/status/StatusToStr.mqh>
+#include <ea/status/StatusDescription.mqh>
 #include <ea/volatile/StoreVolatileData.mqh>
 #include <ea/volatile/RestoreVolatileData.mqh>
 #include <ea/volatile/RemoveVolatileData.mqh>
@@ -1121,53 +1124,6 @@ void CalculateStats() {
 
 
 /**
- * Parse and set the passed instance id value. Format: "[T]123"
- *
- * @param  _In_    string value  - instance id value
- * @param  _InOut_ bool   error  - in:  mute parse errors (TRUE) or trigger a fatal error (FALSE)
- *                                 out: whether parse errors occurred (stored in last_error)
- * @param  _In_    string caller - caller identification for error messages
- *
- * @return bool - whether the instance id value was successfully set
- */
-bool SetInstanceId(string value, bool &error, string caller) {
-   string valueBak = value;
-   bool muteErrors = error!=0;
-   error = false;
-
-   value = StrTrim(value);
-   if (!StringLen(value)) return(false);
-
-   bool isTest = false;
-   int instanceId = 0;
-
-   if (StrStartsWith(value, "T")) {
-      isTest = true;
-      value = StringTrimLeft(StrSubstr(value, 1));
-   }
-
-   if (!StrIsDigits(value)) {
-      error = true;
-      if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
-      return(!catch(caller +"->SetInstanceId(1)  invalid instance id value: \""+ valueBak +"\" (must be digits only)", ERR_INVALID_PARAMETER));
-   }
-
-   int iValue = StrToInteger(value);
-   if (iValue < INSTANCE_ID_MIN || iValue > INSTANCE_ID_MAX) {
-      error = true;
-      if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
-      return(!catch(caller +"->SetInstanceId(2)  invalid instance id value: \""+ valueBak +"\" (range error)", ERR_INVALID_PARAMETER));
-   }
-
-   instance.isTest = isTest;
-   instance.id     = iValue;
-   Instance.ID     = ifString(IsTestInstance(), "T", "") + StrPadLeft(instance.id, 3, "0");
-   SS.InstanceName();
-   return(true);
-}
-
-
-/**
  * Read the status file of an instance and restore inputs and runtime variables. Called only from RestoreInstance().
  *
  * @return bool - success status
@@ -1861,42 +1817,6 @@ void RecordMetrics() {
       if (size > METRIC_TOTAL_NET_UNITS  ) metric.currValue[METRIC_TOTAL_NET_UNITS  ] = instance.totalNetProfitP;
       if (size > METRIC_TOTAL_SYNTH_UNITS) metric.currValue[METRIC_TOTAL_SYNTH_UNITS] = instance.totalSynthProfitP;
    }
-}
-
-
-/**
- * Return a readable representation of an instance status code.
- *
- * @param  int status
- *
- * @return string
- */
-string StatusToStr(int status) {
-   switch (status) {
-      case NULL              : return("(null)"            );
-      case STATUS_WAITING    : return("STATUS_WAITING"    );
-      case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
-      case STATUS_STOPPED    : return("STATUS_STOPPED"    );
-   }
-   return(_EMPTY_STR(catch("StatusToStr(1)  "+ instance.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Return a description of an instance status code.
- *
- * @param  int status
- *
- * @return string - description or an empty string in case of errors
- */
-string StatusDescription(int status) {
-   switch (status) {
-      case NULL              : return("undefined"  );
-      case STATUS_WAITING    : return("waiting"    );
-      case STATUS_PROGRESSING: return("progressing");
-      case STATUS_STOPPED    : return("stopped"    );
-   }
-   return(_EMPTY_STR(catch("StatusDescription(1)  "+ instance.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
 }
 
 
