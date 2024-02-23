@@ -17160,13 +17160,13 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-TimeWindow=16:00-16:30
-NumberOfBrackets=3
-BracketsColor=16711680  ; Blue
+TimeWindow=08:00-09:00
+NumberOfBrackets=20
+BracketsColor=9639167   ; DeepPink
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=3
+period_flags=7
 show_data=0
 </indicator>
 
@@ -17177,13 +17177,13 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-TimeWindow=15:00-15:30
-NumberOfBrackets=3
-BracketsColor=9639167   ; DeepPink
+TimeWindow=09:00-10:00
+NumberOfBrackets=20
+BracketsColor=16711680  ; Blue
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=3
+period_flags=7
 show_data=0
 </indicator>
 
