@@ -447,28 +447,28 @@ bool     test.onSessionBreakPause = false;         // whether to pause a test af
 bool     test.onStopPause         = false;         // whether to pause a test after a final StopInstance()
 bool     test.reduceStatusWrites  = true;          // whether to reduce status file I/O in tester
 
-#include <apps/zigzag-ea/init.mqh>
-#include <apps/zigzag-ea/deinit.mqh>
+#include <ea/zigzag-ea/init.mqh>
+#include <ea/zigzag-ea/deinit.mqh>
 
-#include <ea/CalculateMagicNumber.mqh>
-#include <ea/CreateInstanceId.mqh>
-#include <ea/IsMyOrder.mqh>
-#include <ea/IsTestInstance.mqh>
-#include <ea/onInputError.mqh>
-#include <ea/RestoreInstance.mqh>
-#include <ea/SetInstanceId.mqh>
-#include <ea/ToggleOpenOrders.mqh>
-#include <ea/ToggleTradeHistory.mqh>
-#include <ea/ValidateInputs.ID.mqh>
-#include <ea/file/FindStatusFile.mqh>
-#include <ea/file/GetStatusFilename.mqh>
-#include <ea/file/GetLogFilename.mqh>
-#include <ea/metric/ToggleMetrics.mqh>
-#include <ea/status/StatusToStr.mqh>
-#include <ea/status/StatusDescription.mqh>
-#include <ea/volatile/StoreVolatileData.mqh>
-#include <ea/volatile/RestoreVolatileData.mqh>
-#include <ea/volatile/RemoveVolatileData.mqh>
+#include <ea/common/CalculateMagicNumber.mqh>
+#include <ea/common/CreateInstanceId.mqh>
+#include <ea/common/IsMyOrder.mqh>
+#include <ea/common/IsTestInstance.mqh>
+#include <ea/common/onInputError.mqh>
+#include <ea/common/RestoreInstance.mqh>
+#include <ea/common/SetInstanceId.mqh>
+#include <ea/common/ToggleOpenOrders.mqh>
+#include <ea/common/ToggleTradeHistory.mqh>
+#include <ea/common/ValidateInputs.ID.mqh>
+#include <ea/common/file/FindStatusFile.mqh>
+#include <ea/common/file/GetStatusFilename.mqh>
+#include <ea/common/file/GetLogFilename.mqh>
+#include <ea/common/metric/ToggleMetrics.mqh>
+#include <ea/common/status/StatusToStr.mqh>
+#include <ea/common/status/StatusDescription.mqh>
+#include <ea/common/volatile/StoreVolatileData.mqh>
+#include <ea/common/volatile/RestoreVolatileData.mqh>
+#include <ea/common/volatile/RemoveVolatileData.mqh>
 
 
 /**
