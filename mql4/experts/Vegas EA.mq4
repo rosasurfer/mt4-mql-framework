@@ -247,11 +247,11 @@ int      pMultiplier;
 int      order.slippage = 1;                       // in MQL points
 
 // cache vars to speed-up ShowStatus()
-string   sMetric       = "";
-string   sOpenLots     = "";
-string   sClosedTrades = "";
-string   sTotalProfit  = "";
-string   sProfitStats  = "";
+string   sMetricDescription = "";
+string   sOpenLots          = "";
+string   sClosedTrades      = "";
+string   sTotalProfit       = "";
+string   sProfitStats       = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause        = false;          // whether to pause a test after StopInstance()
@@ -267,15 +267,20 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/common/onInputError.mqh>
 #include <ea/common/RestoreInstance.mqh>
 #include <ea/common/SetInstanceId.mqh>
+#include <ea/common/ShowTradeHistory.mqh>
 #include <ea/common/ToggleOpenOrders.mqh>
 #include <ea/common/ToggleTradeHistory.mqh>
 #include <ea/common/ValidateInputs.ID.mqh>
 #include <ea/common/file/FindStatusFile.mqh>
 #include <ea/common/file/GetStatusFilename.mqh>
 #include <ea/common/file/GetLogFilename.mqh>
+#include <ea/common/metric/RecordMetrics.mqh>
 #include <ea/common/metric/ToggleMetrics.mqh>
 #include <ea/common/status/StatusToStr.mqh>
 #include <ea/common/status/StatusDescription.mqh>
+#include <ea/common/status/SS.ClosedTrades.mqh>
+#include <ea/common/status/SS.InstanceName.mqh>
+#include <ea/common/status/SS.MetricDescription.mqh>
 #include <ea/common/volatile/StoreVolatileData.mqh>
 #include <ea/common/volatile/RestoreVolatileData.mqh>
 #include <ea/common/volatile/RemoveVolatileData.mqh>
@@ -341,75 +346,6 @@ bool onCommand(string cmd, string params, int keys) {
    else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
-}
-
-
-/**
- * Display closed trades.
- *
- * @return int - number of displayed trades or EMPTY (-1) in case of errors
- */
-int ShowTradeHistory() {
-   string openLabel="", lineLabel="", closeLabel="", sOpenPrice="", sClosePrice="", sOperations[]={"buy", "sell"};
-   int iOpenColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, iLineColors[]={Blue, Red};
-
-   // process the local trade history
-   int orders = ArrayRange(history, 0), closedTrades = 0;
-
-   for (int i=0; i < orders; i++) {
-      int      ticket     = history[i][H_TICKET    ];
-      int      type       = history[i][H_TYPE      ];
-      double   lots       = history[i][H_LOTS      ];
-      datetime openTime   = history[i][H_OPENTIME  ];
-      double   openPrice  = history[i][H_OPENPRICE ];
-      datetime closeTime  = history[i][H_CLOSETIME ];
-      double   closePrice = history[i][H_CLOSEPRICE];
-
-      if (status.activeMetric == METRIC_TOTAL_SYNTH_UNITS) {
-         openPrice  = history[i][H_OPENPRICE_SYNTH ];
-         closePrice = history[i][H_CLOSEPRICE_SYNTH];
-      }
-      if (!closeTime)                    continue;             // skip open tickets (should not happen)
-      if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
-
-      sOpenPrice  = NumberToStr(openPrice, PriceFormat);
-      sClosePrice = NumberToStr(closePrice, PriceFormat);
-
-      // open marker
-      openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
-      if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
-      ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-      ObjectSet    (openLabel, OBJPROP_COLOR,  iOpenColors[type]);
-      ObjectSet    (openLabel, OBJPROP_TIME1,  openTime);
-      ObjectSet    (openLabel, OBJPROP_PRICE1, openPrice);
-      ObjectSetText(openLabel, instance.name);
-
-      // trend line
-      lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
-      if (ObjectFind(lineLabel) == -1) ObjectCreate(lineLabel, OBJ_TREND, 0, 0, 0, 0, 0);
-      ObjectSet(lineLabel, OBJPROP_RAY,    false);
-      ObjectSet(lineLabel, OBJPROP_STYLE,  STYLE_DOT);
-      ObjectSet(lineLabel, OBJPROP_COLOR,  iLineColors[type]);
-      ObjectSet(lineLabel, OBJPROP_BACK,   true);
-      ObjectSet(lineLabel, OBJPROP_TIME1,  openTime);
-      ObjectSet(lineLabel, OBJPROP_PRICE1, openPrice);
-      ObjectSet(lineLabel, OBJPROP_TIME2,  closeTime);
-      ObjectSet(lineLabel, OBJPROP_PRICE2, closePrice);
-
-      // close marker
-      closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-      if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
-      ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-      ObjectSet    (closeLabel, OBJPROP_COLOR,  CLR_CLOSED);
-      ObjectSet    (closeLabel, OBJPROP_TIME1,  closeTime);
-      ObjectSet    (closeLabel, OBJPROP_PRICE1, closePrice);
-      ObjectSetText(closeLabel, instance.name);
-      closedTrades++;
-   }
-
-   if (!catch("ShowTradeHistory(1)"))
-      return(closedTrades);
-   return(EMPTY);
 }
 
 
@@ -1708,19 +1644,6 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
 
 
 /**
- * Update the recorder with current metric values.
- */
-void RecordMetrics() {
-   if (recorder.mode == RECORDER_CUSTOM) {
-      int size = ArraySize(metric.ready);
-      if (size > METRIC_TOTAL_NET_MONEY  ) metric.currValue[METRIC_TOTAL_NET_MONEY  ] = instance.totalNetProfit;
-      if (size > METRIC_TOTAL_NET_UNITS  ) metric.currValue[METRIC_TOTAL_NET_UNITS  ] = instance.totalNetProfitP;
-      if (size > METRIC_TOTAL_SYNTH_UNITS) metric.currValue[METRIC_TOTAL_SYNTH_UNITS] = instance.totalSynthProfitP;
-   }
-}
-
-
-/**
  * Return a readable representation of a signal constant.
  *
  * @param  int signal
@@ -1742,39 +1665,11 @@ string SignalToStr(int signal) {
  */
 void SS.All() {
    SS.InstanceName();
-   SS.Metric();
+   SS.MetricDescription();
    SS.OpenLots();
    SS.ClosedTrades();
    SS.TotalProfit();
    SS.ProfitStats();
-}
-
-
-/**
- * ShowStatus: Update the string representation of the instance name.
- */
-void SS.InstanceName() {
-   instance.name = "ID."+ StrPadLeft(instance.id, 3, "0");
-}
-
-
-/**
- * ShowStatus: Update the description of the displayed metric.
- */
-void SS.Metric() {
-   switch (status.activeMetric) {
-      case METRIC_TOTAL_NET_MONEY:
-         sMetric = "Net PnL after all costs in "+ AccountCurrency() + NL + "-----------------------------------";
-         break;
-      case METRIC_TOTAL_NET_UNITS:
-         sMetric = "Net PnL after all costs in "+ pUnit + NL + "---------------------------------"+ ifString(pUnit=="point", "---", "");
-         break;
-      case METRIC_TOTAL_SYNTH_UNITS:
-         sMetric = "Synthetic PnL before spread/any costs in "+ pUnit + NL + "------------------------------------------------------"+ ifString(pUnit=="point", "--", "");
-         break;
-
-      default: return(!catch("SS.MetricDescription(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
-   }
 }
 
 
@@ -1785,34 +1680,6 @@ void SS.OpenLots() {
    if      (!open.lots)           sOpenLots = "-";
    else if (open.type == OP_LONG) sOpenLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
    else                           sOpenLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
-}
-
-
-/**
- * ShowStatus: Update the string summary of the closed trades.
- */
-void SS.ClosedTrades() {
-   int size = ArrayRange(history, 0);
-   if (!size) {
-      sClosedTrades = "-";
-   }
-   else {
-      CalculateStats();
-
-      switch (status.activeMetric) {
-         case METRIC_TOTAL_NET_MONEY:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_NET_MONEY][S_TRADES_AVG_PROFIT], "R+.2") +" "+ AccountCurrency();
-            break;
-         case METRIC_TOTAL_NET_UNITS:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
-            break;
-         case METRIC_TOTAL_SYNTH_UNITS:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
-            break;
-
-         default: return(!catch("SS.ClosedTrades(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
-      }
-   }
 }
 
 
@@ -1903,7 +1770,7 @@ int ShowStatus(int error = NO_ERROR) {
 
    string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,          NL,
                                                                                     NL,
-                                   sMetric,                                         NL,
+                                   sMetricDescription,                              NL,
                                    "Open:    ",   sOpenLots,                        NL,
                                    "Closed:  ",   sClosedTrades,                    NL,
                                    "Profit:    ", sTotalProfit, "  ", sProfitStats, NL
