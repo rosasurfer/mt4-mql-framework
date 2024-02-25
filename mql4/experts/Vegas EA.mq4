@@ -609,7 +609,7 @@ bool UpdateStatus(int signal = NULL) {
  * @return string - log message or an empty string in case of errors
  */
 string UpdateStatus.PositionCloseMsg(int &error) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("V.869") was [unexpectedly ]closed [by SL ]at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("ID.869") was [unexpectedly ]closed [by SL ]at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
    error = NO_ERROR;
 
    int    ticket      = OrderTicket();

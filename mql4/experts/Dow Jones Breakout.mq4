@@ -696,7 +696,7 @@ void SS.ProfitStats() {
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);
 
-   static bool isRecursion = false;                   // to prevent recursive calls a specified error is displayed only once
+   static bool isRecursion = false;             // to prevent recursive calls a specified error is displayed only once
    if (error != 0) {
       if (isRecursion) return(error);
       isRecursion = true;

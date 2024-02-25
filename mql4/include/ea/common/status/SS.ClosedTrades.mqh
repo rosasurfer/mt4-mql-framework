@@ -20,7 +20,8 @@ void SS.ClosedTrades() {
             sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
-         default: return(!catch("SS.ClosedTrades(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
+         default:
+            return(!catch("SS.ClosedTrades(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
       }
    }
 }
