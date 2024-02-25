@@ -195,26 +195,27 @@ double stats[4][47];                               // trade statistics
 int      instance.id;                              // used for magic order numbers
 string   instance.name = "";
 datetime instance.created;
-int      instance.status;
 bool     instance.isTest;
+int      instance.status;
+double   instance.startEquity;
 
 double   instance.openNetProfit;                   // real PnL after all costs in money (net)
-double   instance.closedNetProfit;
-double   instance.totalNetProfit;
+double   instance.closedNetProfit;                 //
+double   instance.totalNetProfit;                  //
 double   instance.maxNetProfit;                    // max. observed profit:   0...+n
 double   instance.maxNetDrawdown;                  // max. observed drawdown: -n...0
 
 double   instance.openNetProfitP;                  // real PnL after all costs in point (net)
-double   instance.closedNetProfitP;
-double   instance.totalNetProfitP;
-double   instance.maxNetProfitP;
-double   instance.maxNetDrawdownP;
+double   instance.closedNetProfitP;                //
+double   instance.totalNetProfitP;                 //
+double   instance.maxNetProfitP;                   //
+double   instance.maxNetDrawdownP;                 //
 
 double   instance.openSynthProfitP;                // synthetic PnL before spread/any costs in point (exact execution)
-double   instance.closedSynthProfitP;
-double   instance.totalSynthProfitP;
-double   instance.maxSynthProfitP;
-double   instance.maxSynthDrawdownP;
+double   instance.closedSynthProfitP;              //
+double   instance.totalSynthProfitP;               //
+double   instance.maxSynthProfitP;                 //
+double   instance.maxSynthDrawdownP;               //
 
 // order data
 int      open.ticket;                              // one open position
@@ -264,23 +265,29 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/common/CreateInstanceId.mqh>
 #include <ea/common/IsMyOrder.mqh>
 #include <ea/common/IsTestInstance.mqh>
-#include <ea/common/onInputError.mqh>
 #include <ea/common/RestoreInstance.mqh>
 #include <ea/common/SetInstanceId.mqh>
+#include <ea/common/ValidateInputs.ID.mqh>
+#include <ea/common/onInputError.mqh>
+
 #include <ea/common/ShowTradeHistory.mqh>
 #include <ea/common/ToggleOpenOrders.mqh>
 #include <ea/common/ToggleTradeHistory.mqh>
-#include <ea/common/ValidateInputs.ID.mqh>
+
 #include <ea/common/file/FindStatusFile.mqh>
 #include <ea/common/file/GetStatusFilename.mqh>
 #include <ea/common/file/GetLogFilename.mqh>
+
 #include <ea/common/metric/RecordMetrics.mqh>
 #include <ea/common/metric/ToggleMetrics.mqh>
+
 #include <ea/common/status/StatusToStr.mqh>
 #include <ea/common/status/StatusDescription.mqh>
-#include <ea/common/status/SS.ClosedTrades.mqh>
 #include <ea/common/status/SS.InstanceName.mqh>
 #include <ea/common/status/SS.MetricDescription.mqh>
+#include <ea/common/status/SS.ClosedTrades.mqh>
+#include <ea/common/status/SS.TotalProfit.mqh>
+
 #include <ea/common/volatile/StoreVolatileData.mqh>
 #include <ea/common/volatile/RestoreVolatileData.mqh>
 #include <ea/common/volatile/RemoveVolatileData.mqh>
@@ -1680,32 +1687,6 @@ void SS.OpenLots() {
    if      (!open.lots)           sOpenLots = "-";
    else if (open.type == OP_LONG) sOpenLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
    else                           sOpenLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
-}
-
-
-/**
- * ShowStatus: Update the string representation of the total instance PnL.
- */
-void SS.TotalProfit() {
-   // not before a position was opened
-   if (!open.ticket && !ArrayRange(history, 0)) {
-      sTotalProfit = "-";
-   }
-   else {
-      switch (status.activeMetric) {
-         case METRIC_TOTAL_NET_MONEY:
-            sTotalProfit = NumberToStr(instance.totalNetProfit, "R+.2") +" "+ AccountCurrency();
-            break;
-         case METRIC_TOTAL_NET_UNITS:
-            sTotalProfit = NumberToStr(instance.totalNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
-            break;
-         case METRIC_TOTAL_SYNTH_UNITS:
-            sTotalProfit = NumberToStr(instance.totalSynthProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
-            break;
-
-         default: return(!catch("SS.TotalProfit(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
-      }
-   }
 }
 
 
