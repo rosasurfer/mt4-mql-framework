@@ -214,6 +214,7 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/dj-breakout/deinit.mqh>
 
 #include <ea/common/CalculateMagicNumber.mqh>
+#include <ea/common/CalculateStats.mqh>
 #include <ea/common/CreateInstanceId.mqh>
 #include <ea/common/IsMyOrder.mqh>
 #include <ea/common/IsTestInstance.mqh>
@@ -232,11 +233,17 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 
 #include <ea/common/metric/ToggleMetrics.mqh>
 
+#include <ea/common/trade/History.AddRecord.mqh>
+
+#include <ea/common/status/ReadStatus.TradeHistory.mqh>
+#include <ea/common/status/ReadStatus.RestoreHistoryRecord.mqh>
 #include <ea/common/status/StatusToStr.mqh>
 #include <ea/common/status/StatusDescription.mqh>
 #include <ea/common/status/SS.InstanceName.mqh>
+#include <ea/common/status/SS.OpenLots.mqh>
 #include <ea/common/status/SS.ClosedTrades.mqh>
 #include <ea/common/status/SS.TotalProfit.mqh>
+#include <ea/common/status/SS.ProfitStats.mqh>
 
 #include <ea/common/volatile/StoreVolatileData.mqh>
 #include <ea/common/volatile/RestoreVolatileData.mqh>
@@ -381,14 +388,6 @@ bool StopInstance() {
 
 
 /**
- * Update trade statistics.
- */
-void CalculateStats() {
-   catch("CalculateStats(1)  not implemented", ERR_NOT_IMPLEMENTED);
-}
-
-
-/**
  * Read the status file of an instance and restore inputs and runtime variables. Called only from RestoreInstance().
  *
  * @return bool - success status
@@ -450,7 +449,9 @@ bool ReadStatus() {
    open.grossProfit            = GetIniDouble (file, section, "open.grossProfit" );             // double   open.grossProfit  = 12.34
    open.netProfit              = GetIniDouble (file, section, "open.netProfit"   );             // double   open.netProfit    = 12.56
 
-   return(!catch("ReadStatus(8)"));
+   // [Trade history]
+   section = "Trade history";
+   return(ReadStatus.TradeHistory(file, section));
 }
 
 
@@ -657,32 +658,6 @@ void SS.All() {
    SS.ClosedTrades();
    SS.TotalProfit();
    SS.ProfitStats();
-}
-
-
-/**
- * ShowStatus: Update the string representation of the open position size.
- */
-void SS.OpenLots() {
-   if      (!open.lots)           sOpenLots = "-";
-   else if (open.type == OP_LONG) sOpenLots = "+"+ NumberToStr(open.lots, ".+") +" lot";
-   else                           sOpenLots = "-"+ NumberToStr(open.lots, ".+") +" lot";
-}
-
-
-/**
- * ShowStatus: Update the string representaton of the PnL statistics.
- */
-void SS.ProfitStats() {
-   // not before a position was opened
-   if (!open.ticket && !ArrayRange(history, 0)) {
-      sProfitStats = "";
-   }
-   else {
-      string sMaxProfit   = NumberToStr(instance.maxNetProfit,   "R+.2");
-      string sMaxDrawdown = NumberToStr(instance.maxNetDrawdown, "R+.2");
-      sProfitStats = StringConcatenate("(", sMaxDrawdown, "/", sMaxProfit, ")");
-   }
 }
 
 

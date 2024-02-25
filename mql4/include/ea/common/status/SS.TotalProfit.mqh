@@ -1,9 +1,9 @@
 /**
  * ShowStatus: Update the string representation of the total instance PnL.
  *
- * @param  bool inPercent [optional] - whether to display money amounts in percent of strategy start equity (default: no)
+ * @param  bool moneyInPercent [optional] - whether to display moneys in percent of instance start equity (default: no)
  */
-void SS.TotalProfit(bool inPercent = false) {
+void SS.TotalProfit(bool moneyInPercent = false) {
    // not before a position was opened
    if (!open.ticket && !ArrayRange(history, 0)) {
       sTotalProfit = "-";
@@ -11,8 +11,8 @@ void SS.TotalProfit(bool inPercent = false) {
    else {
       switch (status.activeMetric) {
          case METRIC_TOTAL_NET_MONEY:
-            if (inPercent) sTotalProfit = NumberToStr(MathDiv(instance.totalNetProfit, instance.startEquity) * 100, "R+.2") +"%";
-            else           sTotalProfit = NumberToStr(instance.totalNetProfit, "R+.2") +" "+ AccountCurrency();
+            if (moneyInPercent) sTotalProfit = NumberToStr(MathDiv(instance.totalNetProfit, instance.startEquity) * 100, "R+.2") +"%";
+            else                sTotalProfit = NumberToStr(instance.totalNetProfit, "R+.2") +" "+ AccountCurrency();
             break;
          case METRIC_TOTAL_NET_UNITS:
             sTotalProfit = NumberToStr(instance.totalNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
