@@ -220,13 +220,13 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/common/file/FindStatusFile.mqh>
 #include <ea/common/file/GetStatusFilename.mqh>
 #include <ea/common/file/GetLogFilename.mqh>
+#include <ea/common/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/file/ReadStatus.HistoryRecord.mqh>
 
 #include <ea/common/metric/ToggleMetrics.mqh>
 
 #include <ea/common/trade/History.AddRecord.mqh>
 
-#include <ea/common/status/ReadStatus.TradeHistory.mqh>
-#include <ea/common/status/ReadStatus.RestoreHistoryRecord.mqh>
 #include <ea/common/status/StatusToStr.mqh>
 #include <ea/common/status/StatusDescription.mqh>
 #include <ea/common/status/SS.InstanceName.mqh>
@@ -361,7 +361,7 @@ bool ReadStatus() {
    // [Runtime status]
    section = "Runtime status";
    instance.id                 = GetIniInt    (file, section, "instance.id"      );             // int      instance.id              = 123
-   instance.name               = GetIniStringA(file, section, "instance.name", "");             // string   instance.name            = DJBO.123
+   instance.name               = GetIniStringA(file, section, "instance.name", "");             // string   instance.name            = ID.123
    instance.created            = GetIniInt    (file, section, "instance.created" );             // datetime instance.created         = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest             = GetIniBool   (file, section, "instance.isTest"  );             // bool     instance.isTest          = 1
    instance.status             = GetIniInt    (file, section, "instance.status"  );             // int      instance.status          = 1 (waiting)

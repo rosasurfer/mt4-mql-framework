@@ -24,7 +24,7 @@ bool ReadStatus.TradeHistory(string file, string section) {
    // restore found keys
    for (i=0; i < size; i++) {
       string sOrder = GetIniStringA(file, section, keys[i], "");     // history.{i} = {data}
-      int pos = ReadStatus.RestoreHistoryRecord(keys[i], sOrder);
+      int pos = ReadStatus.HistoryRecord(keys[i], sOrder);
       if (pos < 0) return(!catch("ReadStatus.TradeHistory(1)  "+ instance.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + keys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
 
       netProfit    += history[pos][H_NETPROFIT     ];

@@ -230,13 +230,13 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/common/file/FindStatusFile.mqh>
 #include <ea/common/file/GetStatusFilename.mqh>
 #include <ea/common/file/GetLogFilename.mqh>
+#include <ea/common/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/file/ReadStatus.HistoryRecord.mqh>
 
 #include <ea/common/metric/ToggleMetrics.mqh>
 
 #include <ea/common/trade/History.AddRecord.mqh>
 
-#include <ea/common/status/ReadStatus.TradeHistory.mqh>
-#include <ea/common/status/ReadStatus.RestoreHistoryRecord.mqh>
 #include <ea/common/status/StatusToStr.mqh>
 #include <ea/common/status/StatusDescription.mqh>
 #include <ea/common/status/SS.InstanceName.mqh>
