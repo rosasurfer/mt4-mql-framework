@@ -36,7 +36,7 @@ void CalculateStats() {
          stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM_PROFIT  ] += history[i][H_SYNTH_PROFIT_P  ];
 
          // METRIC_TOTAL_NET_MONEY
-         if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {          // to simplify scratch limits we compare against H_NETPROFIT_P
+         if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {          // compare against H_NETPROFIT_P to simplify scratch limits
             // winners
             stats[METRIC_TOTAL_NET_MONEY][S_WINNERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_MONEY][S_WINNERS_LONG ]++;

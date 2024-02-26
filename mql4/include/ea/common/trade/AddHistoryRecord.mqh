@@ -25,11 +25,11 @@
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int History.AddRecord(int ticket, int type, double lots, datetime openTime, double openPrice, double openPriceSynth, datetime closeTime, double closePrice, double closePriceSynth, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double runupP, double drawdownP, double synthProfitP, double synthRunupP, double synthDrawdownP) {
+int AddHistoryRecord(int ticket, int type, double lots, datetime openTime, double openPrice, double openPriceSynth, datetime closeTime, double closePrice, double closePriceSynth, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double runupP, double drawdownP, double synthProfitP, double synthRunupP, double synthDrawdownP) {
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {
-      if (EQ(ticket,   history[i][H_TICKET  ])) return(_EMPTY(catch("History.AddRecord(1)  "+ instance.name +" cannot add record, ticket #"+ ticket +" already exists (offset: "+ i +")", ERR_INVALID_PARAMETER)));
+      if (EQ(ticket,   history[i][H_TICKET  ])) return(_EMPTY(catch("AddHistoryRecord(1)  "+ instance.name +" cannot add record, ticket #"+ ticket +" already exists (offset: "+ i +")", ERR_INVALID_PARAMETER)));
       if (GT(openTime, history[i][H_OPENTIME])) continue;
       if (LT(openTime, history[i][H_OPENTIME])) break;
       if (LT(ticket,   history[i][H_TICKET  ])) break;
@@ -66,7 +66,7 @@ int History.AddRecord(int ticket, int type, double lots, datetime openTime, doub
    history[i][H_SYNTH_RUNUP_P   ] = synthRunupP;
    history[i][H_SYNTH_DRAWDOWN_P] = synthDrawdownP;
 
-   if (!catch("History.AddRecord(2)"))
+   if (!catch("AddHistoryRecord(2)"))
       return(i);
    return(EMPTY);
 }

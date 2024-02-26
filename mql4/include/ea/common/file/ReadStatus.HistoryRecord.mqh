@@ -36,5 +36,5 @@ int ReadStatus.HistoryRecord(string key, string value) {
    double   synthRunupP     =  StrToDouble(values[H_SYNTH_RUNUP_P   ]);
    double   synthDrawdownP  =  StrToDouble(values[H_SYNTH_DRAWDOWN_P]);
 
-   return(History.AddRecord(ticket, type, lots, openTime, openPrice, openPriceSynth, closeTime, closePrice, closePriceSynth, slippage, swap, commission, grossProfit, netProfit, netProfitP, runupP, drawdownP, synthProfitP, synthRunupP, synthDrawdownP));
+   return(AddHistoryRecord(ticket, type, lots, openTime, openPrice, openPriceSynth, closeTime, closePrice, closePriceSynth, slippage, swap, commission, grossProfit, netProfit, netProfitP, runupP, drawdownP, synthProfitP, synthRunupP, synthDrawdownP));
 }

@@ -389,7 +389,7 @@ double   open.netProfitP;
 double   open.runupP;                              // max runup distance
 double   open.drawdownP;                           // ...
 double   open.synthProfitP;
-double   open.synthRunupP;                         // max synhetic runup distance
+double   open.synthRunupP;                         // max synthetic runup distance
 double   open.synthDrawdownP;                      // ...
 
 // start conditions
@@ -467,13 +467,17 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/common/file/FindStatusFile.mqh>
 #include <ea/common/file/GetStatusFilename.mqh>
 #include <ea/common/file/GetLogFilename.mqh>
-#include <ea/common/file/ReadStatus.TradeHistory.mqh>
 #include <ea/common/file/ReadStatus.HistoryRecord.mqh>
+#include <ea/common/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/file/SaveStatus.OpenPosition.mqh>
+#include <ea/common/file/SaveStatus.TradeHistory.mqh>
 
 #include <ea/common/metric/RecordMetrics.mqh>
 #include <ea/common/metric/ToggleMetrics.mqh>
 
-#include <ea/common/trade/History.AddRecord.mqh>
+#include <ea/common/trade/AddHistoryRecord.mqh>
+#include <ea/common/trade/HistoryRecordToStr.mqh>
+#include <ea/common/trade/MovePositionToHistory.mqh>
 
 #include <ea/common/status/StatusToStr.mqh>
 #include <ea/common/status/StatusDescription.mqh>
@@ -1339,81 +1343,6 @@ int onPositionClose(string message, int error) {
 
 
 /**
- * Move the position referenced in open.* to the trade history. Assumes the position is already closed.
- *
- * @param datetime closeTime       - close time
- * @param double   closePrice      - close price
- * @param double   closePriceSynth - synthetic close price
- *
- * @return bool - success status
- */
-bool MovePositionToHistory(datetime closeTime, double closePrice, double closePriceSynth) {
-   if (last_error != NULL)                    return(false);
-   if (instance.status != STATUS_PROGRESSING) return(!catch("MovePositionToHistory(1)  "+ instance.name +" cannot process position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!open.ticket)                          return(!catch("MovePositionToHistory(2)  "+ instance.name +" no position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
-
-   // add data to history
-   int i = ArrayRange(history, 0);
-   ArrayResize(history, i+1);
-   history[i][H_TICKET          ] = open.ticket;
-   history[i][H_TYPE            ] = open.type;
-   history[i][H_LOTS            ] = open.lots;
-   history[i][H_OPENTIME        ] = open.time;
-   history[i][H_OPENPRICE       ] = open.price;
-   history[i][H_OPENPRICE_SYNTH ] = open.priceSynth;
-   history[i][H_CLOSETIME       ] = closeTime;
-   history[i][H_CLOSEPRICE      ] = closePrice;
-   history[i][H_CLOSEPRICE_SYNTH] = closePriceSynth;
-   history[i][H_SLIPPAGE        ] = open.slippage;
-   history[i][H_SWAP            ] = open.swap;
-   history[i][H_COMMISSION      ] = open.commission;
-   history[i][H_GROSSPROFIT     ] = open.grossProfit;
-   history[i][H_NETPROFIT       ] = open.netProfit;
-   history[i][H_NETPROFIT_P     ] = open.netProfitP;
-   history[i][H_RUNUP_P         ] = open.runupP;
-   history[i][H_DRAWDOWN_P      ] = open.drawdownP;
-   history[i][H_SYNTH_PROFIT_P  ] = open.synthProfitP;
-   history[i][H_SYNTH_RUNUP_P   ] = open.synthRunupP;
-   history[i][H_SYNTH_DRAWDOWN_P] = open.synthDrawdownP;
-
-   // update PL numbers
-   instance.openNetProfit    = 0;
-   instance.openNetProfitP   = 0;
-   instance.openSynthProfitP = 0;
-
-   instance.closedNetProfit    += open.netProfit;
-   instance.closedNetProfitP   += open.netProfitP;
-   instance.closedSynthProfitP += open.synthProfitP;
-
-   // reset open position data
-   open.ticket         = NULL;
-   open.type           = NULL;
-   open.lots           = NULL;
-   open.time           = NULL;
-   open.price          = NULL;
-   open.priceSynth     = NULL;
-   open.slippage       = NULL;
-   open.swap           = NULL;
-   open.commission     = NULL;
-   open.grossProfit    = NULL;
-   open.netProfit      = NULL;
-   open.netProfitP     = NULL;
-   open.runupP         = NULL;
-   open.drawdownP      = NULL;
-   open.synthProfitP   = NULL;
-   open.synthRunupP    = NULL;
-   open.synthDrawdownP = NULL;
-
-   if (__isChart) {
-      CalculateStats();                   // update trade stats
-      SS.OpenLots();
-      SS.ClosedTrades();
-   }
-   return(!catch("MovePositionToHistory(3)"));
-}
-
-
-/**
  * Return a symbol definition for the specified metric to be recorded.
  *
  * @param  _In_  int    id           - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
@@ -1554,7 +1483,8 @@ bool SaveStatus() {
    else if (IsTestInstance()) return(true);                       // don't change the status file of a finished test
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;              // an empty line separator
+   bool fileExists = IsFile(file, MODE_SYSTEM);
+   if (!fileExists) separator = CRLF;                             // an empty line separator
    SS.All();                                                      // update trade stats and global string representations
 
    // [General]
@@ -1635,9 +1565,7 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "scratch",                    /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH]),       23) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_PCT      ], 1) +"%)", 8));
    WriteIniString(file, section, "scratch.long",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG ]), 18) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG_PCT ], 1) +"%)", 8));
-   WriteIniString(file, section, "scratch.short",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT]), 17) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8));
-   WriteIniString(file, section, "scratch.avgRunup",           /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_AVG_RUNUP   ] * pMultiplier, pDigits));
-   WriteIniString(file, section, "scratch.avgDrawdown",        /*double  */ DoubleToStr(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_AVG_DRAWDOWN] * pMultiplier, pDigits) + separator);
+   WriteIniString(file, section, "scratch.short",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT]), 17) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8) + separator);
 
    // [Stats: synthetic in punits]
    section = "Stats: synthetic in "+ pUnit;
@@ -1670,9 +1598,7 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "scratch",                    /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]),       23) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_PCT      ], 1) +"%)", 8));
    WriteIniString(file, section, "scratch.long",               /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG ]), 18) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG_PCT ], 1) +"%)", 8));
-   WriteIniString(file, section, "scratch.short",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]), 17) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8));
-   WriteIniString(file, section, "scratch.avgRunup",           /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_AVG_RUNUP   ] * pMultiplier, pDigits));
-   WriteIniString(file, section, "scratch.avgDrawdown",        /*double  */ DoubleToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_AVG_DRAWDOWN] * pMultiplier, pDigits) + separator);
+   WriteIniString(file, section, "scratch.short",              /*double  */ StrPadRight(Round(stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]), 17) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8) + separator);
 
    // [Runtime status]
    section = "Runtime status";
@@ -1709,75 +1635,10 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitPun.description", /*string  */ stop.profitPun.description + separator);
 
    // [Open positions]
-   section = "Open positions";
-   WriteIniString(file, section, "open.ticket",                /*int     */ open.ticket);
-   WriteIniString(file, section, "open.type",                  /*int     */ open.type);
-   WriteIniString(file, section, "open.lots",                  /*double  */ NumberToStr(open.lots, ".+"));
-   WriteIniString(file, section, "open.time",                  /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
-   WriteIniString(file, section, "open.price",                 /*double  */ DoubleToStr(open.price, Digits));
-   WriteIniString(file, section, "open.priceSynth",            /*double  */ DoubleToStr(open.priceSynth, Digits));
-   WriteIniString(file, section, "open.slippage",              /*double  */ DoubleToStr(open.slippage, Digits));
-   WriteIniString(file, section, "open.swap",                  /*double  */ DoubleToStr(open.swap, 2));
-   WriteIniString(file, section, "open.commission",            /*double  */ DoubleToStr(open.commission, 2));
-   WriteIniString(file, section, "open.grossProfit",           /*double  */ DoubleToStr(open.grossProfit, 2));
-   WriteIniString(file, section, "open.netProfit",             /*double  */ DoubleToStr(open.netProfit, 2));
-   WriteIniString(file, section, "open.netProfitP",            /*double  */ NumberToStr(open.netProfitP, ".1+"));
-   WriteIniString(file, section, "open.synthProfitP",          /*double  */ DoubleToStr(open.synthProfitP, Digits) + separator);
+   if (SaveStatus.OpenPosition(file, fileExists, "Open positions")) return(false);
 
    // [Trade history]
-   section = "Trade history";
-   double netProfit, netProfitP, synthProfitP;
-   int size = ArrayRange(history, 0);
-
-   for (int i=0; i < size; i++) {
-      WriteIniString(file, section, "history."+ i, SaveStatus.HistoryToStr(i));
-      netProfit    += history[i][H_NETPROFIT     ];
-      netProfitP   += history[i][H_NETPROFIT_P   ];
-      synthProfitP += history[i][H_SYNTH_PROFIT_P];
-   }
-
-   // cross-check stored stats
-   int precision = MathMax(Digits, 2) + 1;                     // required precision for fractional point values
-   if (NE(netProfit,    instance.closedNetProfit, 2))          return(!catch("SaveStatus(2)  "+ instance.name +" sum(history[H_NETPROFIT]) != instance.closedNetProfit ("        + NumberToStr(netProfit, ".2+")               +" != "+ NumberToStr(instance.closedNetProfit, ".2+")               +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP,   instance.closedNetProfitP, precision)) return(!catch("SaveStatus(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP ("     + NumberToStr(netProfitP, "."+ Digits +"+")   +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+")   +")", ERR_ILLEGAL_STATE));
-   if (NE(synthProfitP, instance.closedSynthProfitP,  Digits)) return(!catch("SaveStatus(4)  "+ instance.name +" sum(history[H_SYNTH_PROFIT_P]) != instance.closedSynthProfitP ("+ NumberToStr(synthProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSynthProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-
-   return(!catch("SaveStatus(5)"));
-}
-
-
-/**
- * Return a string representation of a history record to be stored by SaveStatus().
- *
- * @param  int index - index of the history record
- *
- * @return string - string representation or an empty string in case of errors
- */
-string SaveStatus.HistoryToStr(int index) {
-   // result: ticket,type,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,runupP,drawdownP,synthProfitP,synthRunupP,synthDrawdownP
-
-   int      ticket          = history[index][H_TICKET          ];
-   int      type            = history[index][H_TYPE            ];
-   double   lots            = history[index][H_LOTS            ];
-   datetime openTime        = history[index][H_OPENTIME        ];
-   double   openPrice       = history[index][H_OPENPRICE       ];
-   double   openPriceSynth  = history[index][H_OPENPRICE_SYNTH ];
-   datetime closeTime       = history[index][H_CLOSETIME       ];
-   double   closePrice      = history[index][H_CLOSEPRICE      ];
-   double   closePriceSynth = history[index][H_CLOSEPRICE_SYNTH];
-   double   slippage        = history[index][H_SLIPPAGE        ];
-   double   swap            = history[index][H_SWAP            ];
-   double   commission      = history[index][H_COMMISSION      ];
-   double   grossProfit     = history[index][H_GROSSPROFIT     ];
-   double   netProfit       = history[index][H_NETPROFIT       ];
-   double   netProfitP      = history[index][H_NETPROFIT_P     ];
-   double   runupP          = history[index][H_RUNUP_P         ];
-   double   drawdownP        = history[index][H_DRAWDOWN_P      ];
-   double   synthProfitP    = history[index][H_SYNTH_PROFIT_P  ];
-   double   synthRunupP     = history[index][H_SYNTH_RUNUP_P   ];
-   double   synthDrawdownP  = history[index][H_SYNTH_DRAWDOWN_P];
-
-   return(StringConcatenate(ticket, ",", type, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSynth, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSynth, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(runupP, Digits), ",", DoubleToStr(drawdownP, Digits), ",", DoubleToStr(synthProfitP, Digits), ",", DoubleToStr(synthRunupP, Digits), ",", DoubleToStr(synthDrawdownP, Digits)));
+   return(SaveStatus.TradeHistory(file, fileExists, "Trade history"));
 }
 
 
@@ -1912,8 +1773,7 @@ bool ReadStatus() {
    open.synthProfitP           = GetIniDouble (file, section, "open.synthProfitP");                // double   open.synthProfitP = 0.12345
 
    // [Trade history]
-   section = "Trade history";
-   return(ReadStatus.TradeHistory(file, section));
+   return(ReadStatus.TradeHistory(file, "Trade history"));
 }
 
 
@@ -1979,7 +1839,7 @@ bool SynchronizeStatus() {
             double   netProfitP   = grossProfitP + MathDiv(swap + commission, PointValue(lots));
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" dangling closed position found: #"+ ticket +", adding to instance...");
-            if (IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
+            if (IsEmpty(AddHistoryRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
             instance.closedNetProfit    += netProfit;

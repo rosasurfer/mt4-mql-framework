@@ -178,6 +178,12 @@ double   open.swap;
 double   open.commission;
 double   open.grossProfit;
 double   open.netProfit;
+double   open.netProfitP;
+double   open.runupP;                        // max runup distance
+double   open.drawdownP;                     // ...
+double   open.synthProfitP;
+double   open.synthRunupP;                   // max synthetic runup distance
+double   open.synthDrawdownP;                // ...
 
 // volatile status data
 int      status.activeMetric = 1;
@@ -220,12 +226,15 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/common/file/FindStatusFile.mqh>
 #include <ea/common/file/GetStatusFilename.mqh>
 #include <ea/common/file/GetLogFilename.mqh>
-#include <ea/common/file/ReadStatus.TradeHistory.mqh>
 #include <ea/common/file/ReadStatus.HistoryRecord.mqh>
+#include <ea/common/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/file/SaveStatus.OpenPosition.mqh>
+#include <ea/common/file/SaveStatus.TradeHistory.mqh>
 
 #include <ea/common/metric/ToggleMetrics.mqh>
 
-#include <ea/common/trade/History.AddRecord.mqh>
+#include <ea/common/trade/AddHistoryRecord.mqh>
+#include <ea/common/trade/HistoryRecordToStr.mqh>
 
 #include <ea/common/status/StatusToStr.mqh>
 #include <ea/common/status/StatusDescription.mqh>
@@ -382,8 +391,7 @@ bool ReadStatus() {
    open.netProfit              = GetIniDouble (file, section, "open.netProfit"   );             // double   open.netProfit    = 12.56
 
    // [Trade history]
-   section = "Trade history";
-   return(ReadStatus.TradeHistory(file, section));
+   return(ReadStatus.TradeHistory(file, "Trade history"));
 }
 
 
@@ -436,7 +444,8 @@ bool SaveStatus() {
    else if (IsTestInstance()) return(true);                    // don't change the status file of a finished test
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;           // an empty line separator
+   bool fileExists = IsFile(file, MODE_SYSTEM);
+   if (!fileExists) separator = CRLF;                          // an empty line separator
    SS.All();                                                   // update trade stats and global string representations
 
    // [General]
@@ -482,19 +491,10 @@ bool SaveStatus() {
    WriteIniString(file, section, "recorder.stdEquitySymbol", /*string  */ recorder.stdEquitySymbol + separator);
 
    // [Open positions]
-   section = "Open positions";
-   WriteIniString(file, section, "open.ticket",              /*int     */ open.ticket);
-   WriteIniString(file, section, "open.type",                /*int     */ open.type);
-   WriteIniString(file, section, "open.lots",                /*double  */ NumberToStr(open.lots, ".+"));
-   WriteIniString(file, section, "open.time",                /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
-   WriteIniString(file, section, "open.price",               /*double  */ DoubleToStr(open.price, Digits));
-   WriteIniString(file, section, "open.slippage",            /*double  */ DoubleToStr(open.slippage, Digits));
-   WriteIniString(file, section, "open.swap",                /*double  */ DoubleToStr(open.swap, 2));
-   WriteIniString(file, section, "open.commission",          /*double  */ DoubleToStr(open.commission, 2));
-   WriteIniString(file, section, "open.grossProfit",         /*double  */ DoubleToStr(open.grossProfit, 2));
-   WriteIniString(file, section, "open.netProfit",           /*double  */ DoubleToStr(open.netProfit, 2) + separator);
+   if (SaveStatus.OpenPosition(file, fileExists, "Open positions")) return(false);
 
-   return(!catch("SaveStatus(2)"));
+   // [Trade history]
+   return(SaveStatus.TradeHistory(file, fileExists, "Trade history"));
 }
 
 
