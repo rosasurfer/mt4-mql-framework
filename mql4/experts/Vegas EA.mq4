@@ -1,8 +1,4 @@
 /**
- ****************************************************************************************************************************
- *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
- ****************************************************************************************************************************
- *
  * A combination of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in/out.
  *
  *  @see [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
@@ -266,6 +262,7 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/common/CalculateMagicNumber.mqh>
 #include <ea/common/CalculateStats.mqh>
 #include <ea/common/CreateInstanceId.mqh>
+#include <ea/common/GetLogFilename.mqh>
 #include <ea/common/IsMyOrder.mqh>
 #include <ea/common/IsTestInstance.mqh>
 #include <ea/common/RestoreInstance.mqh>
@@ -277,20 +274,8 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/common/ToggleOpenOrders.mqh>
 #include <ea/common/ToggleTradeHistory.mqh>
 
-#include <ea/common/file/FindStatusFile.mqh>
-#include <ea/common/file/GetStatusFilename.mqh>
-#include <ea/common/file/GetLogFilename.mqh>
-#include <ea/common/file/ReadStatus.HistoryRecord.mqh>
-#include <ea/common/file/ReadStatus.TradeHistory.mqh>
-#include <ea/common/file/SaveStatus.OpenPosition.mqh>
-#include <ea/common/file/SaveStatus.TradeHistory.mqh>
-
 #include <ea/common/metric/RecordMetrics.mqh>
 #include <ea/common/metric/ToggleMetrics.mqh>
-
-#include <ea/common/trade/AddHistoryRecord.mqh>
-#include <ea/common/trade/HistoryRecordToStr.mqh>
-#include <ea/common/trade/MovePositionToHistory.mqh>
 
 #include <ea/common/status/StatusToStr.mqh>
 #include <ea/common/status/StatusDescription.mqh>
@@ -300,6 +285,17 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/common/status/SS.ClosedTrades.mqh>
 #include <ea/common/status/SS.TotalProfit.mqh>
 #include <ea/common/status/SS.ProfitStats.mqh>
+
+#include <ea/common/status/file/FindStatusFile.mqh>
+#include <ea/common/status/file/GetStatusFilename.mqh>
+#include <ea/common/status/file/ReadStatus.HistoryRecord.mqh>
+#include <ea/common/status/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/status/file/SaveStatus.OpenPosition.mqh>
+#include <ea/common/status/file/SaveStatus.TradeHistory.mqh>
+
+#include <ea/common/trade/AddHistoryRecord.mqh>
+#include <ea/common/trade/HistoryRecordToStr.mqh>
+#include <ea/common/trade/MovePositionToHistory.mqh>
 
 #include <ea/common/volatile/StoreVolatileData.mqh>
 #include <ea/common/volatile/RestoreVolatileData.mqh>

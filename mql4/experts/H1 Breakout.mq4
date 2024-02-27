@@ -1,16 +1,15 @@
 /**
- ****************************************************************************************************************************
- *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
- ****************************************************************************************************************************
- *
  * H1 Morning Breakout
  *
  * A strategy for common H1 breakouts during Frankfurt or London Open (07:00-08:00, 08:00-09:00, 09:00-10:00).
- * Idea: Later the strategy could adjust itself by self-optimizing the best bracket hour (e.g. over the last few weeks).
  *
  *  @see  https://www.forexfactory.com/thread/902048-london-open-breakout-strategy-for-gbpusd#         [London Open Breakout]
  *  @see  https://nexusfi.com/trading-journals/36245-london-session-opening-range-breakout-gbp.html# [Asian session breakout]
  *  @see  GBPAUD, GBPUSD FF Opening Range Breakout (07:00-08:00, 08:00-09:00)
+ *
+ *
+ * TODO:
+ *  - self-optimize the best bracket hour over the last few weeks
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -212,6 +211,7 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/common/CalculateMagicNumber.mqh>
 #include <ea/common/CalculateStats.mqh>
 #include <ea/common/CreateInstanceId.mqh>
+#include <ea/common/GetLogFilename.mqh>
 #include <ea/common/IsMyOrder.mqh>
 #include <ea/common/IsTestInstance.mqh>
 #include <ea/common/RestoreInstance.mqh>
@@ -223,18 +223,7 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/common/ToggleOpenOrders.mqh>
 #include <ea/common/ToggleTradeHistory.mqh>
 
-#include <ea/common/file/FindStatusFile.mqh>
-#include <ea/common/file/GetStatusFilename.mqh>
-#include <ea/common/file/GetLogFilename.mqh>
-#include <ea/common/file/ReadStatus.HistoryRecord.mqh>
-#include <ea/common/file/ReadStatus.TradeHistory.mqh>
-#include <ea/common/file/SaveStatus.OpenPosition.mqh>
-#include <ea/common/file/SaveStatus.TradeHistory.mqh>
-
 #include <ea/common/metric/ToggleMetrics.mqh>
-
-#include <ea/common/trade/AddHistoryRecord.mqh>
-#include <ea/common/trade/HistoryRecordToStr.mqh>
 
 #include <ea/common/status/StatusToStr.mqh>
 #include <ea/common/status/StatusDescription.mqh>
@@ -243,6 +232,16 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/common/status/SS.ClosedTrades.mqh>
 #include <ea/common/status/SS.TotalProfit.mqh>
 #include <ea/common/status/SS.ProfitStats.mqh>
+
+#include <ea/common/status/file/FindStatusFile.mqh>
+#include <ea/common/status/file/GetStatusFilename.mqh>
+#include <ea/common/status/file/ReadStatus.HistoryRecord.mqh>
+#include <ea/common/status/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/status/file/SaveStatus.OpenPosition.mqh>
+#include <ea/common/status/file/SaveStatus.TradeHistory.mqh>
+
+#include <ea/common/trade/AddHistoryRecord.mqh>
+#include <ea/common/trade/HistoryRecordToStr.mqh>
 
 #include <ea/common/volatile/StoreVolatileData.mqh>
 #include <ea/common/volatile/RestoreVolatileData.mqh>
