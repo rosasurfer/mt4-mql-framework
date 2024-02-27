@@ -412,13 +412,9 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID = GetIniStringA(file, section, "Instance.ID","");                      // string Instance.ID = T123
-   string sLots       = GetIniStringA(file, section, "Lots",       "");                      // double Lots        = 0.1
-   string sEaRecorder = GetIniStringA(file, section, "EA.Recorder","");                      // string EA.Recorder = 1,2,4
-
-   Instance.ID = sInstanceID;
-   Lots        = StrToDouble(sLots);
-   EA.Recorder = sEaRecorder;
+   Instance.ID              = GetIniStringA(file, section, "Instance.ID", "");               // string   Instance.ID = T123
+   Lots                     = GetIniDouble (file, section, "Lots"           );               // double   Lots        = 0.1
+   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder", "");               // string   EA.Recorder = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";

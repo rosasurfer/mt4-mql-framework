@@ -757,17 +757,11 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID       = GetIniStringA(file, section, "Instance.ID",       "");         // string Instance.ID       = T123
-   string sTunnelDefinition = GetIniStringA(file, section, "Tunnel.Definition", "");         // string Tunnel.Definition = EMA(1), EMA(2), EMA(3)
-   int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods"     );         // int    Donchian.Periods  = 40
-   string sLots             = GetIniStringA(file, section, "Lots",              "");         // double Lots              = 0.1
-   string sEaRecorder       = GetIniStringA(file, section, "EA.Recorder",       "");         // string EA.Recorder       = 1,2,4
-
-   Instance.ID       = sInstanceID;
-   Tunnel.Definition = sTunnelDefinition;
-   Donchian.Periods  = iDonchianPeriods;
-   Lots              = StrToDouble(sLots);
-   EA.Recorder       = sEaRecorder;
+   Instance.ID              = GetIniStringA(file, section, "Instance.ID",       "");         // string   Instance.ID       = T123
+   Tunnel.Definition        = GetIniStringA(file, section, "Tunnel.Definition", "");         // string   Tunnel.Definition = EMA(1), EMA(2), EMA(3)
+   Donchian.Periods         = GetIniInt    (file, section, "Donchian.Periods"     );         // int      Donchian.Periods  = 40
+   Lots                     = GetIniDouble (file, section, "Lots"                 );         // double   Lots              = 0.1
+   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",       "");         // string   EA.Recorder       = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";

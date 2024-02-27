@@ -1561,27 +1561,16 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID          = GetIniStringA(file, section, "Instance.ID",         "");          // string Instance.ID         = T123
-   string sTradingMode         = GetIniStringA(file, section, "TradingMode",         "");          // string TradingMode         = regular
-   int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"         );          // int    ZigZag.Periods      = 40
-   string sLots                = GetIniStringA(file, section, "Lots",                "");          // double Lots                = 0.1
-   string sStartConditions     = GetIniStringA(file, section, "StartConditions",     "");          // string StartConditions     = @time(datetime|time)
-   string sStopConditions      = GetIniStringA(file, section, "StopConditions",      "");          // string StopConditions      = @time(datetime|time)
-   string sTakeProfit          = GetIniStringA(file, section, "TakeProfit",          "");          // double TakeProfit          = 3.0
-   string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",     "");          // string TakeProfit.Type     = off* | money | percent | pip
-   string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent", "");          // bool   ShowProfitInPercent = 1
-   string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",         "");          // string EA.Recorder         = 1,2,4
-
-   Instance.ID          = sInstanceID;
-   TradingMode          = sTradingMode;
-   Lots                 = StrToDouble(sLots);
-   ZigZag.Periods       = iZigZagPeriods;
-   StartConditions      = sStartConditions;
-   StopConditions       = sStopConditions;
-   TakeProfit           = StrToDouble(sTakeProfit);
-   TakeProfit.Type      = sTakeProfitType;
-   ShowProfitInPercent  = StrToBool(sShowProfitInPercent);
-   EA.Recorder          = sEaRecorder;
+   Instance.ID                = GetIniStringA(file, section, "Instance.ID",     "");               // string   Instance.ID                = T123
+   TradingMode                = GetIniStringA(file, section, "TradingMode",     "");               // string   TradingMode                = regular
+   Lots                       = GetIniDouble (file, section, "Lots"               );               // double   Lots                       = 0.1
+   ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"     );               // int      ZigZag.Periods             = 40
+   StartConditions            = GetIniStringA(file, section, "StartConditions", "");               // string   StartConditions            = @time(datetime|time)
+   StopConditions             = GetIniStringA(file, section, "StopConditions",  "");               // string   StopConditions             = @time(datetime|time)
+   TakeProfit                 = GetIniDouble (file, section, "TakeProfit"         );               // double   TakeProfit                 = 3.0
+   TakeProfit.Type            = GetIniStringA(file, section, "TakeProfit.Type", "");               // string   TakeProfit.Type            = off* | money | percent | pip
+   ShowProfitInPercent        = GetIniBool   (file, section, "ShowProfitInPercent");               // bool     ShowProfitInPercent        = 1
+   EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",     "");               // string   EA.Recorder                = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";
