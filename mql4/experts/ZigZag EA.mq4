@@ -471,6 +471,7 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 
 #include <ea/common/status/file/FindStatusFile.mqh>
 #include <ea/common/status/file/GetStatusFilename.mqh>
+#include <ea/common/status/file/ReadStatus.General.mqh>
 #include <ea/common/status/file/ReadStatus.OpenPosition.mqh>
 #include <ea/common/status/file/ReadStatus.HistoryRecord.mqh>
 #include <ea/common/status/file/ReadStatus.TradeHistory.mqh>
@@ -1551,23 +1552,12 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string file = FindStatusFile(instance.id, instance.isTest);
+   string section="", file=FindStatusFile(instance.id, instance.isTest);
    if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
    if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
-   string section      = "General";
-   string sAccount     = GetIniStringA(file, section, "Account",     "");                          // string Account     = ICMarkets:12345678 (demo)
-   string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
-   string sRealSymbol  = GetIniStringA(file, section, "Symbol",      "");                          // string Symbol      = EURUSD
-   string sTestSymbol  = GetIniStringA(file, section, "Test.Symbol", "");                          // string Test.Symbol = EURUSD
-   if (sTestSymbol == "") {
-      if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(4)  "+ instance.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
-      if (!StrCompareI(sRealSymbol, Symbol()))                   return(!catch("ReadStatus(5)  "+ instance.name +" symbol mis-match: "+ DoubleQuoteStr(Symbol()) +" vs. "+ DoubleQuoteStr(sRealSymbol) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
-   }
-   else {
-      if (!StrCompareI(sTestSymbol, Symbol()))                   return(!catch("ReadStatus(6)  "+ instance.name +" symbol mis-match: "+ DoubleQuoteStr(Symbol()) +" vs. "+ DoubleQuoteStr(sTestSymbol) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
-   }
+   if (!ReadStatus.General(file)) return(false);
 
    // [Inputs]
    section = "Inputs";
@@ -1634,7 +1624,7 @@ bool ReadStatus() {
    if (!ReadStatus.OpenPosition(file)) return(false);
    if (!ReadStatus.TradeHistory(file)) return(false);
 
-   return(!catch("ReadStatus(7)"));
+   return(!catch("ReadStatus(4)"));
 }
 
 
