@@ -471,8 +471,10 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 
 #include <ea/common/status/file/FindStatusFile.mqh>
 #include <ea/common/status/file/GetStatusFilename.mqh>
+#include <ea/common/status/file/ReadStatus.OpenPosition.mqh>
 #include <ea/common/status/file/ReadStatus.HistoryRecord.mqh>
 #include <ea/common/status/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/status/file/ReadStatus.TradeStats.mqh>
 #include <ea/common/status/file/SaveStatus.General.mqh>
 #include <ea/common/status/file/SaveStatus.OpenPosition.mqh>
 #include <ea/common/status/file/SaveStatus.TradeHistory.mqh>
@@ -1531,11 +1533,12 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitPun.value",       /*double  */ NumberToStr(stop.profitPun.value, ".1+"));
    WriteIniString(file, section, "stop.profitPun.description", /*string  */ stop.profitPun.description + separator);
 
-   // trades and stats
+   // open/closed trades and stats
    if (!SaveStatus.TradeStats  (file, fileExists)) return(false);
    if (!SaveStatus.OpenPosition(file, fileExists)) return(false);
    if (!SaveStatus.TradeHistory(file, fileExists)) return(false);
-   return(true);
+
+   return(!catch("SaveStatus(2)"));
 }
 
 
@@ -1579,9 +1582,6 @@ bool ReadStatus() {
    string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent", "");          // bool   ShowProfitInPercent = 1
    string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",         "");          // string EA.Recorder         = 1,2,4
 
-   if (!StrIsNumeric(sLots))       return(!catch("ReadStatus(7)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (!StrIsNumeric(sTakeProfit)) return(!catch("ReadStatus(8)  "+ instance.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-
    Instance.ID          = sInstanceID;
    TradingMode          = sTradingMode;
    Lots                 = StrToDouble(sLots);
@@ -1595,82 +1595,46 @@ bool ReadStatus() {
 
    // [Runtime status]
    section = "Runtime status";
-   instance.id                 = GetIniInt    (file, section, "instance.id"                );      // int      instance.id                 = 123
-   instance.name               = GetIniStringA(file, section, "instance.name",           "");      // string   instance.name               = Z.123
-   instance.created            = GetIniInt    (file, section, "instance.created"           );      // datetime instance.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
-   instance.isTest             = GetIniBool   (file, section, "instance.isTest"            );      // bool     instance.isTest             = 1
-   instance.status             = GetIniInt    (file, section, "instance.status"            );      // int      instance.status             = 1 (waiting)
-   instance.startEquity        = GetIniDouble (file, section, "instance.startEquity"       );      // double   instance.startEquity        = 1000.00
+   instance.id                = GetIniInt    (file, section, "instance.id"         );              // int      instance.id                = 123
+   instance.name              = GetIniStringA(file, section, "instance.name",    "");              // string   instance.name              = Z.123
+   instance.created           = GetIniInt    (file, section, "instance.created"    );              // datetime instance.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.isTest            = GetIniBool   (file, section, "instance.isTest"     );              // bool     instance.isTest            = 1
+   instance.status            = GetIniInt    (file, section, "instance.status"     );              // int      instance.status            = 1 (waiting)
+   instance.startEquity       = GetIniDouble (file, section, "instance.startEquity");              // double   instance.startEquity       = 1000.00
    SS.InstanceName();
 
-   tradingMode                 = GetIniInt    (file, section, "tradingMode");                      // int      tradingMode                 = 1
-   recorder.stdEquitySymbol    = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");     // string   recorder.stdEquitySymbol    = GBPJPY.001
+   tradingMode                = GetIniInt    (file, section, "tradingMode");                       // int      tradingMode                = 1
+   recorder.stdEquitySymbol   = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");      // string   recorder.stdEquitySymbol   = GBPJPY.001
 
-   start.time.condition        = GetIniBool   (file, section, "start.time.condition"      );       // bool     start.time.condition       = 1
-   start.time.value            = GetIniInt    (file, section, "start.time.value"          );       // datetime start.time.value           = 1624924800
-   start.time.isDaily          = GetIniBool   (file, section, "start.time.isDaily"        );       // bool     start.time.isDaily         = 0
-   start.time.description      = GetIniStringA(file, section, "start.time.description", "");       // string   start.time.description     = text
+   start.time.condition       = GetIniBool   (file, section, "start.time.condition"      );        // bool     start.time.condition       = 1
+   start.time.value           = GetIniInt    (file, section, "start.time.value"          );        // datetime start.time.value           = 1624924800
+   start.time.isDaily         = GetIniBool   (file, section, "start.time.isDaily"        );        // bool     start.time.isDaily         = 0
+   start.time.description     = GetIniStringA(file, section, "start.time.description", "");        // string   start.time.description     = text
 
-   stop.time.condition         = GetIniBool   (file, section, "stop.time.condition"      );        // bool     stop.time.condition        = 1
-   stop.time.value             = GetIniInt    (file, section, "stop.time.value"          );        // datetime stop.time.value            = 1624924800
-   stop.time.isDaily           = GetIniBool   (file, section, "stop.time.isDaily"        );        // bool     stop.time.isDaily          = 0
-   stop.time.description       = GetIniStringA(file, section, "stop.time.description", "");        // string   stop.time.description      = text
+   stop.time.condition        = GetIniBool   (file, section, "stop.time.condition"      );         // bool     stop.time.condition        = 1
+   stop.time.value            = GetIniInt    (file, section, "stop.time.value"          );         // datetime stop.time.value            = 1624924800
+   stop.time.isDaily          = GetIniBool   (file, section, "stop.time.isDaily"        );         // bool     stop.time.isDaily          = 0
+   stop.time.description      = GetIniStringA(file, section, "stop.time.description", "");         // string   stop.time.description      = text
 
-   stop.profitAbs.condition    = GetIniBool   (file, section, "stop.profitAbs.condition"        ); // bool     stop.profitAbs.condition   = 1
-   stop.profitAbs.value        = GetIniDouble (file, section, "stop.profitAbs.value"            ); // double   stop.profitAbs.value       = 10.00
-   stop.profitAbs.description  = GetIniStringA(file, section, "stop.profitAbs.description",   ""); // string   stop.profitAbs.description = text
-   stop.profitPct.condition    = GetIniBool   (file, section, "stop.profitPct.condition"        ); // bool     stop.profitPct.condition   = 0
-   stop.profitPct.value        = GetIniDouble (file, section, "stop.profitPct.value"            ); // double   stop.profitPct.value       = 0
-   stop.profitPct.absValue     = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX); // double   stop.profitPct.absValue    = 0.00
-   stop.profitPct.description  = GetIniStringA(file, section, "stop.profitPct.description",   ""); // string   stop.profitPct.description = text
+   stop.profitAbs.condition   = GetIniBool   (file, section, "stop.profitAbs.condition"        );  // bool     stop.profitAbs.condition   = 1
+   stop.profitAbs.value       = GetIniDouble (file, section, "stop.profitAbs.value"            );  // double   stop.profitAbs.value       = 10.00
+   stop.profitAbs.description = GetIniStringA(file, section, "stop.profitAbs.description",   "");  // string   stop.profitAbs.description = text
+   stop.profitPct.condition   = GetIniBool   (file, section, "stop.profitPct.condition"        );  // bool     stop.profitPct.condition   = 0
+   stop.profitPct.value       = GetIniDouble (file, section, "stop.profitPct.value"            );  // double   stop.profitPct.value       = 0
+   stop.profitPct.absValue    = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX);  // double   stop.profitPct.absValue    = 0.00
+   stop.profitPct.description = GetIniStringA(file, section, "stop.profitPct.description",   "");  // string   stop.profitPct.description = text
 
-   stop.profitPun.condition    = GetIniBool   (file, section, "stop.profitPun.condition"      );   // bool     stop.profitPun.condition   = 1
-   stop.profitPun.type         = GetIniInt    (file, section, "stop.profitPun.type"           );   // int      stop.profitPun.type        = 4
-   stop.profitPun.value        = GetIniDouble (file, section, "stop.profitPun.value"          );   // double   stop.profitPun.value       = 1.23456
-   stop.profitPun.description  = GetIniStringA(file, section, "stop.profitPun.description", "");   // string   stop.profitPun.description = text
+   stop.profitPun.condition   = GetIniBool   (file, section, "stop.profitPun.condition"      );    // bool     stop.profitPun.condition   = 1
+   stop.profitPun.type        = GetIniInt    (file, section, "stop.profitPun.type"           );    // int      stop.profitPun.type        = 4
+   stop.profitPun.value       = GetIniDouble (file, section, "stop.profitPun.value"          );    // double   stop.profitPun.value       = 1.23456
+   stop.profitPun.description = GetIniStringA(file, section, "stop.profitPun.description", "");    // string   stop.profitPun.description = text
 
-   // [Stats: net in money]
-   section = "Stats: net in money";
-   instance.openNetProfit      = GetIniDouble (file, section, "openProfit"  );                     // double   openProfit   = 23.45
-   instance.closedNetProfit    = GetIniDouble (file, section, "closedProfit");                     // double   closedProfit = 45.67
-   instance.totalNetProfit     = GetIniDouble (file, section, "totalProfit" );                     // double   totalProfit  = 123.45
-   instance.maxNetDrawdown     = GetIniDouble (file, section, "minProfit"   );                     // double   minProfit    = -11.23
-   instance.maxNetProfit       = GetIniDouble (file, section, "maxProfit"   );                     // double   maxProfit    = 23.45
+   // open/closed trades and stats
+   if (!ReadStatus.TradeStats(file))   return(false);
+   if (!ReadStatus.OpenPosition(file)) return(false);
+   if (!ReadStatus.TradeHistory(file)) return(false);
 
-   // [Stats: net in punits]
-   section = "Stats: net in "+ pUnit;
-   instance.openNetProfitP     = GetIniDouble (file, section, "openProfit"  )/pMultiplier;         // double   openProfit   = 1234.5
-   instance.closedNetProfitP   = GetIniDouble (file, section, "closedProfit")/pMultiplier;         // double   closedProfit = -2345.6
-   instance.totalNetProfitP    = GetIniDouble (file, section, "totalProfit" )/pMultiplier;         // double   totalProfit  = 12345.6
-   instance.maxNetDrawdownP    = GetIniDouble (file, section, "minProfit"   )/pMultiplier;         // double   minProfit    = -2345.6
-   instance.maxNetProfitP      = GetIniDouble (file, section, "maxProfit"   )/pMultiplier;         // double   maxProfit    = 1234.5
-
-   // [Stats: synthetic in punits]
-   section = "Stats: synthetic in "+ pUnit;
-   instance.openSynthProfitP   = GetIniDouble (file, section, "openProfit"  )/pMultiplier;         // double   openProfit   = 1234.5
-   instance.closedSynthProfitP = GetIniDouble (file, section, "closedProfit")/pMultiplier;         // double   closedProfit = -2345.6
-   instance.totalSynthProfitP  = GetIniDouble (file, section, "totalProfit" )/pMultiplier;         // double   totalProfit  = 12345.6
-   instance.maxSynthDrawdownP  = GetIniDouble (file, section, "minProfit"   )/pMultiplier;         // double   minProfit    = -2345.6
-   instance.maxSynthProfitP    = GetIniDouble (file, section, "maxProfit"   )/pMultiplier;         // double   maxProfit    = 1234.5
-
-   // [Open positions]
-   section = "Open positions";
-   open.ticket                 = GetIniInt    (file, section, "open.ticket"      );                // int      open.ticket       = 123456
-   open.type                   = GetIniInt    (file, section, "open.type"        );                // int      open.type         = 1
-   open.lots                   = GetIniDouble (file, section, "open.lots"        );                // double   open.lots         = 0.01
-   open.time                   = GetIniInt    (file, section, "open.time"        );                // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
-   open.price                  = GetIniDouble (file, section, "open.price"       );                // double   open.price        = 1.24363
-   open.priceSynth             = GetIniDouble (file, section, "open.priceSynth"  );                // double   open.priceSynth   = 1.24363
-   open.slippage               = GetIniDouble (file, section, "open.slippage"    );                // double   open.slippage     = 0.00002
-   open.swap                   = GetIniDouble (file, section, "open.swap"        );                // double   open.swap         = -1.23
-   open.commission             = GetIniDouble (file, section, "open.commission"  );                // double   open.commission   = -5.50
-   open.grossProfit            = GetIniDouble (file, section, "open.grossProfit" );                // double   open.grossProfit  = 12.34
-   open.netProfit              = GetIniDouble (file, section, "open.netProfit"   );                // double   open.netProfit    = 12.56
-   open.netProfitP             = GetIniDouble (file, section, "open.netProfitP"  );                // double   open.netProfitP   = 0.12345
-   open.synthProfitP           = GetIniDouble (file, section, "open.synthProfitP");                // double   open.synthProfitP = 0.12345
-
-   // [Trade history]
-   return(ReadStatus.TradeHistory(file, "Trade history"));
+   return(!catch("ReadStatus(7)"));
 }
 
 

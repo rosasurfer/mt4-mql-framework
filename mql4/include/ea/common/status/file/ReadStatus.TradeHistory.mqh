@@ -1,12 +1,13 @@
 /**
- * Read and restore the trade history stored in the status file.
+ * Read and restore the trade history from the status file.
  *
- * @param  string file    - status filename
- * @param  string section - status section
+ * @param  string file - status filename
  *
  * @return bool - success status
  */
-bool ReadStatus.TradeHistory(string file, string section) {
+bool ReadStatus.TradeHistory(string file) {
+   string section = "Trade history";
+
    // read history keys
    string keys[];
    int size = GetIniKeys(file, section, keys);

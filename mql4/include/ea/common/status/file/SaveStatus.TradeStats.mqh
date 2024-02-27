@@ -1,5 +1,5 @@
 /**
- * Write the trade history to the status file.
+ * Write trade statistics to the status file.
  *
  * @param  string file       - status filename
  * @param  bool   fileExists - whether the status file exists

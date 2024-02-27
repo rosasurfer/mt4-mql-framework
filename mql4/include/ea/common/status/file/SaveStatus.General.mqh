@@ -1,5 +1,5 @@
 /**
- * Write account and instrument infos to the status file section [General].
+ * Write account and instrument infos to the status file.
  *
  * @param  string file       - status filename
  * @param  bool   fileExists - whether the status file exists

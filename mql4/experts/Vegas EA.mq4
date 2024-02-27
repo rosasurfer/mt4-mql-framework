@@ -282,8 +282,10 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 
 #include <ea/common/status/file/FindStatusFile.mqh>
 #include <ea/common/status/file/GetStatusFilename.mqh>
+#include <ea/common/status/file/ReadStatus.OpenPosition.mqh>
 #include <ea/common/status/file/ReadStatus.HistoryRecord.mqh>
 #include <ea/common/status/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/status/file/ReadStatus.TradeStats.mqh>
 #include <ea/common/status/file/SaveStatus.General.mqh>
 #include <ea/common/status/file/SaveStatus.OpenPosition.mqh>
 #include <ea/common/status/file/SaveStatus.TradeHistory.mqh>
@@ -750,10 +752,10 @@ bool ReadStatus() {
 
    // [General]
    string section      = "General";
-   string sAccount     = GetIniStringA(file, section, "Account",     "");                       // string Account     = ICMarkets:12345678 (demo)
+   string sAccount     = GetIniStringA(file, section, "Account",     "");                    // string Account     = ICMarkets:12345678 (demo)
    string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
-   string sRealSymbol  = GetIniStringA(file, section, "Symbol",      "");                       // string Symbol      = EURUSD
-   string sTestSymbol  = GetIniStringA(file, section, "Test.Symbol", "");                       // string Test.Symbol = EURUSD
+   string sRealSymbol  = GetIniStringA(file, section, "Symbol",      "");                    // string Symbol      = EURUSD
+   string sTestSymbol  = GetIniStringA(file, section, "Test.Symbol", "");                    // string Test.Symbol = EURUSD
    if (sTestSymbol == "") {
       if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(4)  "+ instance.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
       if (!StrCompareI(sRealSymbol, Symbol()))                   return(!catch("ReadStatus(5)  "+ instance.name +" symbol mis-match: "+ DoubleQuoteStr(Symbol()) +" vs. "+ DoubleQuoteStr(sRealSymbol) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
@@ -764,13 +766,11 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sInstanceID         = GetIniStringA(file, section, "Instance.ID",       "");          // string Instance.ID       = T123
-   string sTunnelDefinition   = GetIniStringA(file, section, "Tunnel.Definition", "");          // string Tunnel.Definition = EMA(1), EMA(2), EMA(3)
-   int    iDonchianPeriods    = GetIniInt    (file, section, "Donchian.Periods"     );          // int    Donchian.Periods  = 40
-   string sLots               = GetIniStringA(file, section, "Lots",              "");          // double Lots              = 0.1
-   string sEaRecorder         = GetIniStringA(file, section, "EA.Recorder",       "");          // string EA.Recorder       = 1,2,4
-
-   if (!StrIsNumeric(sLots)) return(!catch("ReadStatus(7)  "+ instance.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   string sInstanceID       = GetIniStringA(file, section, "Instance.ID",       "");         // string Instance.ID       = T123
+   string sTunnelDefinition = GetIniStringA(file, section, "Tunnel.Definition", "");         // string Tunnel.Definition = EMA(1), EMA(2), EMA(3)
+   int    iDonchianPeriods  = GetIniInt    (file, section, "Donchian.Periods"     );         // int    Donchian.Periods  = 40
+   string sLots             = GetIniStringA(file, section, "Lots",              "");         // double Lots              = 0.1
+   string sEaRecorder       = GetIniStringA(file, section, "EA.Recorder",       "");         // string EA.Recorder       = 1,2,4
 
    Instance.ID       = sInstanceID;
    Tunnel.Definition = sTunnelDefinition;
@@ -780,56 +780,20 @@ bool ReadStatus() {
 
    // [Runtime status]
    section = "Runtime status";
-   instance.id                 = GetIniInt    (file, section, "instance.id"      );             // int      instance.id              = 123
-   instance.name               = GetIniStringA(file, section, "instance.name", "");             // string   instance.name            = V.123
-   instance.created            = GetIniInt    (file, section, "instance.created" );             // datetime instance.created         = 1624924800 (Mon, 2021.05.12 13:22:34)
-   instance.isTest             = GetIniBool   (file, section, "instance.isTest"  );             // bool     instance.isTest          = 1
-   instance.status             = GetIniInt    (file, section, "instance.status"  );             // int      instance.status          = 1 (waiting)
-   recorder.stdEquitySymbol    = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");  // string   recorder.stdEquitySymbol = GBPJPY.001
+   instance.id              = GetIniInt    (file, section, "instance.id"      );             // int      instance.id              = 123
+   instance.name            = GetIniStringA(file, section, "instance.name", "");             // string   instance.name            = V.123
+   instance.created         = GetIniInt    (file, section, "instance.created" );             // datetime instance.created         = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.isTest          = GetIniBool   (file, section, "instance.isTest"  );             // bool     instance.isTest          = 1
+   instance.status          = GetIniInt    (file, section, "instance.status"  );             // int      instance.status          = 1 (waiting)
+   recorder.stdEquitySymbol = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");  // string   recorder.stdEquitySymbol = GBPJPY.001
    SS.InstanceName();
 
-   // [Stats: net in money]
-   section = "Stats: net in money";
-   instance.openNetProfit      = GetIniDouble (file, section, "openProfit"  );                  // double   openProfit   = 23.45
-   instance.closedNetProfit    = GetIniDouble (file, section, "closedProfit");                  // double   closedProfit = 45.67
-   instance.totalNetProfit     = GetIniDouble (file, section, "totalProfit" );                  // double   totalProfit  = 123.45
-   instance.maxNetDrawdown     = GetIniDouble (file, section, "minProfit"   );                  // double   minProfit    = -11.23
-   instance.maxNetProfit       = GetIniDouble (file, section, "maxProfit"   );                  // double   maxProfit    = 23.45
+   // open/closed trades and stats
+   if (!ReadStatus.TradeStats(file))   return(false);
+   if (!ReadStatus.OpenPosition(file)) return(false);
+   if (!ReadStatus.TradeHistory(file)) return(false);
 
-   // [Stats: net in punits]
-   section = "Stats: net in "+ pUnit;
-   instance.openNetProfitP     = GetIniDouble (file, section, "openProfit"  )/pMultiplier;      // double   openProfit   = 1234.5
-   instance.closedNetProfitP   = GetIniDouble (file, section, "closedProfit")/pMultiplier;      // double   closedProfit = -2345.6
-   instance.totalNetProfitP    = GetIniDouble (file, section, "totalProfit" )/pMultiplier;      // double   totalProfit  = 12345.6
-   instance.maxNetDrawdownP    = GetIniDouble (file, section, "minProfit"   )/pMultiplier;      // double   minProfit    = -2345.6
-   instance.maxNetProfitP      = GetIniDouble (file, section, "maxProfit"   )/pMultiplier;      // double   maxProfit    = 1234.5
-
-   // [Stats: synthetic in punits]
-   section = "Stats: synthetic in "+ pUnit;
-   instance.openSynthProfitP   = GetIniDouble (file, section, "openProfit"  )/pMultiplier;      // double   openProfit   = 1234.5
-   instance.closedSynthProfitP = GetIniDouble (file, section, "closedProfit")/pMultiplier;      // double   closedProfit = -2345.6
-   instance.totalSynthProfitP  = GetIniDouble (file, section, "totalProfit" )/pMultiplier;      // double   totalProfit  = 12345.6
-   instance.maxSynthDrawdownP  = GetIniDouble (file, section, "minProfit"   )/pMultiplier;      // double   minProfit    = -2345.6
-   instance.maxSynthProfitP    = GetIniDouble (file, section, "maxProfit"   )/pMultiplier;      // double   maxProfit    = 1234.5
-
-   // [Open positions]
-   section = "Open positions";
-   open.ticket                 = GetIniInt    (file, section, "open.ticket"      );             // int      open.ticket       = 123456
-   open.type                   = GetIniInt    (file, section, "open.type"        );             // int      open.type         = 1
-   open.lots                   = GetIniDouble (file, section, "open.lots"        );             // double   open.lots         = 0.01
-   open.time                   = GetIniInt    (file, section, "open.time"        );             // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
-   open.price                  = GetIniDouble (file, section, "open.price"       );             // double   open.price        = 1.24363
-   open.priceSynth             = GetIniDouble (file, section, "open.priceSynth"  );             // double   open.priceSynth   = 1.24363
-   open.slippage               = GetIniDouble (file, section, "open.slippage"    );             // double   open.slippage     = 0.00003
-   open.swap                   = GetIniDouble (file, section, "open.swap"        );             // double   open.swap         = -1.23
-   open.commission             = GetIniDouble (file, section, "open.commission"  );             // double   open.commission   = -5.50
-   open.grossProfit            = GetIniDouble (file, section, "open.grossProfit" );             // double   open.grossProfit  = 12.34
-   open.netProfit              = GetIniDouble (file, section, "open.netProfit"   );             // double   open.netProfit    = 12.56
-   open.netProfitP             = GetIniDouble (file, section, "open.netProfitP"  );             // double   open.netProfitP   = 0.12345
-   open.synthProfitP           = GetIniDouble (file, section, "open.synthProfitP");             // double   open.synthProfitP = 0.12345
-
-   // [Trade history]
-   return(ReadStatus.TradeHistory(file, "Trade history"));
+   return(!catch("ReadStatus(7)"));
 }
 
 
@@ -907,11 +871,12 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
 
-   // trades and stats
+   // open/closed trades and stats
    if (!SaveStatus.TradeStats  (file, fileExists)) return(false);
    if (!SaveStatus.OpenPosition(file, fileExists)) return(false);
    if (!SaveStatus.TradeHistory(file, fileExists)) return(false);
-   return(true);
+
+   return(!catch("SaveStatus(2)"));
 }
 
 
