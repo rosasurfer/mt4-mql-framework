@@ -3,14 +3,14 @@
  *
  * @param  string file       - status filename
  * @param  bool   fileExists - whether the status file exists
- * @param  string section    - status file section
  *
  * @return bool - success status
  */
-bool SaveStatus.TradeHistory(string file, bool fileExists, string section) {
+bool SaveStatus.TradeHistory(string file, bool fileExists) {
    fileExists = fileExists!=0;
 
    double netProfit, netProfitP, synthProfitP;
+   string section = "Trade history";
    int size = ArrayRange(history, 0);
 
    for (int i=0; i < size; i++) {

@@ -3,16 +3,16 @@
  *
  * @param  string file       - status filename
  * @param  bool   fileExists - whether the status file exists
- * @param  string section    - status file section
  *
  * @return bool - success status
  */
-bool SaveStatus.OpenPosition(string file, bool fileExists, string section) {
+bool SaveStatus.OpenPosition(string file, bool fileExists) {
    fileExists = fileExists!=0;
 
    string separator = "";
-   if (!fileExists) separator = CRLF;     // an empty line separator
+   if (!fileExists) separator = CRLF;                   // an empty line separator
 
+   string section = "Open positions";
    WriteIniString(file, section, "open.ticket",         /*int     */ open.ticket);
    WriteIniString(file, section, "open.type",           /*int     */ open.type);
    WriteIniString(file, section, "open.lots",           /*double  */ NumberToStr(open.lots, ".+"));

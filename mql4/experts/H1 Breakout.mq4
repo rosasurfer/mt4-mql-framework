@@ -205,9 +205,11 @@ string   sProfitStats  = "";
 bool     test.onStopPause        = false;    // whether to pause a test after StopInstance()
 bool     test.reduceStatusWrites = true;     // whether to reduce status file I/O in tester
 
+// initialization/deinitialization
 #include <ea/h1-breakout/init.mqh>
 #include <ea/h1-breakout/deinit.mqh>
 
+// shared functions
 #include <ea/common/CalculateMagicNumber.mqh>
 #include <ea/common/CalculateStats.mqh>
 #include <ea/common/CreateInstanceId.mqh>
@@ -239,6 +241,7 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/common/status/file/ReadStatus.TradeHistory.mqh>
 #include <ea/common/status/file/SaveStatus.OpenPosition.mqh>
 #include <ea/common/status/file/SaveStatus.TradeHistory.mqh>
+#include <ea/common/status/file/SaveStatus.TradeStats.mqh>
 
 #include <ea/common/trade/AddHistoryRecord.mqh>
 #include <ea/common/trade/HistoryRecordToStr.mqh>
@@ -485,15 +488,15 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.name",            /*string  */ instance.name);
    WriteIniString(file, section, "instance.created",         /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",          /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.status",          /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")"+ separator);
+   WriteIniString(file, section, "instance.status",          /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")" + separator);
 
    WriteIniString(file, section, "recorder.stdEquitySymbol", /*string  */ recorder.stdEquitySymbol + separator);
 
-   // [Open positions]
-   if (SaveStatus.OpenPosition(file, fileExists, "Open positions")) return(false);
-
-   // [Trade history]
-   return(SaveStatus.TradeHistory(file, fileExists, "Trade history"));
+   // trades and stats
+   if (!SaveStatus.TradeStats  (file, fileExists)) return(false);
+   if (!SaveStatus.OpenPosition(file, fileExists)) return(false);
+   if (!SaveStatus.TradeHistory(file, fileExists)) return(false);
+   return(true);
 }
 
 
