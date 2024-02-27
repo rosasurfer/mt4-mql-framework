@@ -18,7 +18,7 @@ bool ToggleMetrics(int direction, int minId, int maxId) {
    StoreVolatileData();
    SS.All();
 
-   if (prevMetric==METRIC_TOTAL_SYNTH_UNITS || status.activeMetric==METRIC_TOTAL_SYNTH_UNITS) {
+   if (prevMetric==METRIC_TOTAL_SIG_UNITS || status.activeMetric==METRIC_TOTAL_SIG_UNITS) {
       if (status.showOpenOrders) {
          ToggleOpenOrders(false);
          ToggleOpenOrders(false);

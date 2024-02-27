@@ -58,7 +58,7 @@ extern int    Target4.MoveStopTo             = 0;           // ...
 
 #define METRIC_TOTAL_NET_MONEY   1           // custom metrics
 #define METRIC_TOTAL_NET_UNITS   2
-#define METRIC_TOTAL_SYNTH_UNITS 3
+#define METRIC_TOTAL_SIG_UNITS   3
 
 #define METRIC_NEXT              1           // directions for toggling between metrics
 #define METRIC_PREVIOUS         -1
@@ -70,10 +70,10 @@ double history[][20];                        // trade history
 #define H_LOTS                   2
 #define H_OPENTIME               3
 #define H_OPENPRICE              4
-#define H_OPENPRICE_SYNTH        5
+#define H_OPENPRICE_SIG          5
 #define H_CLOSETIME              6
 #define H_CLOSEPRICE             7
-#define H_CLOSEPRICE_SYNTH       8
+#define H_CLOSEPRICE_SIG         8
 #define H_SLIPPAGE               9
 #define H_SWAP                  10
 #define H_COMMISSION            11
@@ -82,9 +82,9 @@ double history[][20];                        // trade history
 #define H_NETPROFIT_P           14
 #define H_RUNUP_P               15
 #define H_DRAWDOWN_P            16
-#define H_SYNTH_PROFIT_P        17
-#define H_SYNTH_RUNUP_P         18
-#define H_SYNTH_DRAWDOWN_P      19
+#define H_SIG_PROFIT_P          17
+#define H_SIG_RUNUP_P           18
+#define H_SIG_DRAWDOWN_P        19
 
 double stats[4][41];                         // trade statistics
 
@@ -153,11 +153,11 @@ double   instance.totalNetProfitP;           //
 double   instance.maxNetProfitP;             //
 double   instance.maxNetDrawdownP;           //
 
-double   instance.openSynthProfitP;          // synthetic PnL before spread/any costs in point (exact execution)
-double   instance.closedSynthProfitP;        //
-double   instance.totalSynthProfitP;         //
-double   instance.maxSynthProfitP;           //
-double   instance.maxSynthDrawdownP;         //
+double   instance.openSigProfitP;            // signal PnL before spread/any costs in point
+double   instance.closedSigProfitP;          //
+double   instance.totalSigProfitP;           //
+double   instance.maxSigProfitP;             //
+double   instance.maxSigDrawdownP;           //
 
 // order data
 int      open.ticket;                        // one open position
@@ -165,7 +165,7 @@ int      open.type;
 double   open.lots;
 datetime open.time;
 double   open.price;
-double   open.priceSynth;
+double   open.priceSig;
 double   open.slippage;
 double   open.swap;
 double   open.commission;
@@ -174,9 +174,9 @@ double   open.netProfit;
 double   open.netProfitP;
 double   open.runupP;                        // max runup distance
 double   open.drawdownP;                     // ...
-double   open.synthProfitP;
-double   open.synthRunupP;                   // max synthetic runup distance
-double   open.synthDrawdownP;                // ...
+double   open.sigProfitP;
+double   open.sigRunupP;                     // max signal runup distance
+double   open.sigDrawdownP;                  // ...
 
 // volatile status data
 int      status.activeMetric = 1;
@@ -285,7 +285,7 @@ bool onCommand(string cmd, string params, int keys) {
 
    if (cmd == "toggle-metrics") {
       int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
-      return(ToggleMetrics(direction, METRIC_TOTAL_NET_MONEY, METRIC_TOTAL_SYNTH_UNITS));
+      return(ToggleMetrics(direction, METRIC_TOTAL_NET_MONEY, METRIC_TOTAL_SIG_UNITS));
    }
    else if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());

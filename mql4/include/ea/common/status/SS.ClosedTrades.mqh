@@ -16,8 +16,8 @@ void SS.ClosedTrades() {
          case METRIC_TOTAL_NET_UNITS:
             sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_NET_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_SYNTH_UNITS:
-            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+         case METRIC_TOTAL_SIG_UNITS:
+            sClosedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_TOTAL_SIG_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
          default:

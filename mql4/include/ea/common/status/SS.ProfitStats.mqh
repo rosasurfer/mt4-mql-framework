@@ -26,9 +26,9 @@ void SS.ProfitStats(bool moneyInPercent = false) {
             sMaxProfit   = NumberToStr(instance.maxNetProfitP   * pMultiplier, "R+."+ pDigits);
             sMaxDrawdown = NumberToStr(instance.maxNetDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
-         case METRIC_TOTAL_SYNTH_UNITS:
-            sMaxProfit   = NumberToStr(instance.maxSynthProfitP   * pMultiplier, "R+."+ pDigits);
-            sMaxDrawdown = NumberToStr(instance.maxSynthDrawdownP * pMultiplier, "R+."+ pDigits);
+         case METRIC_TOTAL_SIG_UNITS:
+            sMaxProfit   = NumberToStr(instance.maxSigProfitP   * pMultiplier, "R+."+ pDigits);
+            sMaxDrawdown = NumberToStr(instance.maxSigDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
 
          default:

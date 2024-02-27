@@ -9,8 +9,8 @@ void SS.MetricDescription() {
       case METRIC_TOTAL_NET_UNITS:
          sMetricDescription = "Net PnL after all costs in "+ pUnit + NL + "---------------------------------"+ ifString(pUnit=="point", "---", "");
          break;
-      case METRIC_TOTAL_SYNTH_UNITS:
-         sMetricDescription = "Synthetic PnL before spread/any costs in "+ pUnit + NL + "------------------------------------------------------"+ ifString(pUnit=="point", "--", "");
+      case METRIC_TOTAL_SIG_UNITS:
+         sMetricDescription = "Signal PnL before spread/any costs in "+ pUnit + NL + "----------------------------------------------------"+ ifString(pUnit=="point", "--", "");
          break;
 
       default:

@@ -33,11 +33,11 @@
  *
  *     1: Records real PnL after all costs in account currency (net).
  *     2: Records real PnL after all costs in price units (net).
- *     3: Records synthetic PnL before spread/any costs in price units (signal levels).
+ *     3: Records signal level PnL before spread/any costs in price units.
  *
  *     4: Records daily real PnL after all costs in account currency (net).                                              TODO
  *     5: Records daily real PnL after all costs in price units (net).                                                   TODO
- *     6: Records daily synthetic PnL before spread/any costs in price units (signal levels).                            TODO
+ *     6: Records daily signal level PnL before spread/any costs in price units.                                         TODO
  *
  *     Metrics in price units are recorded in the best matching unit. That's pip for Forex or full points otherwise.
  *
@@ -255,11 +255,11 @@ extern bool   ShowProfitInPercent = true;                   // whether PnL is di
 
 #define METRIC_TOTAL_NET_MONEY      1              // cumulated PnL metrics
 #define METRIC_TOTAL_NET_UNITS      2
-#define METRIC_TOTAL_SYNTH_UNITS    3
+#define METRIC_TOTAL_SIG_UNITS      3
 
 #define METRIC_DAILY_NET_MONEY      4              // daily PnL metrics
 #define METRIC_DAILY_NET_UNITS      5
-#define METRIC_DAILY_SYNTH_UNITS    6
+#define METRIC_DAILY_SIG_UNITS      6
 
 #define METRIC_NEXT                 1              // directions for toggling between metrics
 #define METRIC_PREVIOUS            -1
@@ -271,10 +271,10 @@ double history[][20];                              // trade history
 #define H_LOTS                      2
 #define H_OPENTIME                  3
 #define H_OPENPRICE                 4
-#define H_OPENPRICE_SYNTH           5
+#define H_OPENPRICE_SIG             5
 #define H_CLOSETIME                 6
 #define H_CLOSEPRICE                7
-#define H_CLOSEPRICE_SYNTH          8
+#define H_CLOSEPRICE_SIG            8
 #define H_SLIPPAGE                  9
 #define H_SWAP                     10
 #define H_COMMISSION               11
@@ -283,9 +283,9 @@ double history[][20];                              // trade history
 #define H_NETPROFIT_P              14
 #define H_RUNUP_P                  15
 #define H_DRAWDOWN_P               16
-#define H_SYNTH_PROFIT_P           17
-#define H_SYNTH_RUNUP_P            18
-#define H_SYNTH_DRAWDOWN_P         19
+#define H_SIG_PROFIT_P             17
+#define H_SIG_RUNUP_P              18
+#define H_SIG_DRAWDOWN_P           19
 
 double stats[4][41];                               // trade statistics
 
@@ -357,11 +357,11 @@ double   instance.totalNetProfitP;                 //
 double   instance.maxNetProfitP;                   //
 double   instance.maxNetDrawdownP;                 //
 
-double   instance.openSynthProfitP;                // synthetic PnL before spread/any costs in point (exact execution)
-double   instance.closedSynthProfitP;              //
-double   instance.totalSynthProfitP;               //
-double   instance.maxSynthProfitP;                 //
-double   instance.maxSynthDrawdownP;               //
+double   instance.openSigProfitP;                  // signal PnL before spread/any costs in point
+double   instance.closedSigProfitP;                //
+double   instance.totalSigProfitP;                 //
+double   instance.maxSigProfitP;                   //
+double   instance.maxSigDrawdownP;                 //
 
 // order data
 int      open.ticket;                              // one open position
@@ -369,7 +369,7 @@ int      open.type;
 double   open.lots;
 datetime open.time;
 double   open.price;
-double   open.priceSynth;
+double   open.priceSig;
 double   open.slippage;
 double   open.swap;
 double   open.commission;
@@ -378,9 +378,9 @@ double   open.netProfit;
 double   open.netProfitP;
 double   open.runupP;                              // max runup distance
 double   open.drawdownP;                           // ...
-double   open.synthProfitP;
-double   open.synthRunupP;                         // max synthetic runup distance
-double   open.synthDrawdownP;                      // ...
+double   open.sigProfitP;
+double   open.sigRunupP;                           // max signal runup distance
+double   open.sigDrawdownP;                        // ...
 
 // start conditions
 bool     start.time.condition;                     // whether a time condition is active
@@ -572,7 +572,7 @@ bool onCommand(string cmd, string params, int keys) {
    }
    else if (cmd == "toggle-metrics") {
       int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
-      return(ToggleMetrics(direction, METRIC_TOTAL_NET_MONEY, METRIC_TOTAL_SYNTH_UNITS));
+      return(ToggleMetrics(direction, METRIC_TOTAL_NET_MONEY, METRIC_TOTAL_SIG_UNITS));
    }
    else if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());
@@ -946,23 +946,23 @@ bool StartInstance(double signal[]) {
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
-   open.ticket         = ticket;
-   open.type           = type;
-   open.lots           = oe.Lots(oe);
-   open.time           = oe.OpenTime(oe);
-   open.price          = oe.OpenPrice(oe);
-   open.priceSynth     = sigValue;
-   open.slippage       = oe.Slippage(oe);
-   open.swap           = oe.Swap(oe);
-   open.commission     = oe.Commission(oe);
-   open.grossProfit    = oe.Profit(oe);
-   open.netProfit      = open.grossProfit + open.swap + open.commission;
-   open.netProfitP     = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
-   open.runupP         = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
-   open.drawdownP      = open.runupP;
-   open.synthProfitP   = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
-   open.synthRunupP    = open.synthProfitP;
-   open.synthDrawdownP = open.synthRunupP;
+   open.ticket       = ticket;
+   open.type         = type;
+   open.lots         = oe.Lots(oe);
+   open.time         = oe.OpenTime(oe);
+   open.price        = oe.OpenPrice(oe);
+   open.priceSig     = sigValue;
+   open.slippage     = oe.Slippage(oe);
+   open.swap         = oe.Swap(oe);
+   open.commission   = oe.Commission(oe);
+   open.grossProfit  = oe.Profit(oe);
+   open.netProfit    = open.grossProfit + open.swap + open.commission;
+   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+   open.runupP       = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
+   open.drawdownP    = open.runupP;
+   open.sigProfitP   = ifDouble(type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+   open.sigRunupP    = open.sigProfitP;
+   open.sigDrawdownP = open.sigRunupP;
 
    // update PL numbers
    instance.openNetProfit  = open.netProfit;
@@ -975,10 +975,10 @@ bool StartInstance(double signal[]) {
    instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
 
-   instance.openSynthProfitP  = open.synthProfitP;
-   instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
-   instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
-   instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
+   instance.openSigProfitP  = open.sigProfitP;
+   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
+   instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
+   instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
 
    // update start conditions
    if (start.time.condition) {
@@ -1027,18 +1027,18 @@ bool ReverseInstance(double signal[]) {
       else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_NONE, oeFlags, oe);
       if (!success) return(!SetLastError(oe.Error(oe)));
 
-      double closePrice   = oe.ClosePrice(oe);
-      open.slippage      += oe.Slippage(oe);
-      open.swap           = oe.Swap(oe);
-      open.commission     = oe.Commission(oe);
-      open.grossProfit    = oe.Profit(oe);
-      open.netProfit      = open.grossProfit + open.swap + open.commission;
-      open.netProfitP     = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
-      open.runupP         = MathMax(open.runupP, open.netProfitP);
-      open.drawdownP      = MathMin(open.drawdownP, open.netProfitP); open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-      open.synthProfitP   = ifDouble(open.type==OP_BUY, sigValue-open.priceSynth, open.priceSynth-sigValue);
-      open.synthRunupP    = MathMax(open.synthRunupP, open.synthProfitP);
-      open.synthDrawdownP = MathMin(open.synthDrawdownP, open.synthProfitP);
+      double closePrice = oe.ClosePrice(oe);
+      open.slippage    += oe.Slippage(oe);
+      open.swap         = oe.Swap(oe);
+      open.commission   = oe.Commission(oe);
+      open.grossProfit  = oe.Profit(oe);
+      open.netProfit    = open.grossProfit + open.swap + open.commission;
+      open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+      open.runupP       = MathMax(open.runupP, open.netProfitP);
+      open.drawdownP    = MathMin(open.drawdownP, open.netProfitP); open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+      open.sigProfitP   = ifDouble(open.type==OP_BUY, sigValue-open.priceSig, open.priceSig-sigValue);
+      open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
+      open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
 
       if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, sigValue)) return(false);
    }
@@ -1056,23 +1056,23 @@ bool ReverseInstance(double signal[]) {
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the new position data
-   open.ticket         = ticket;
-   open.type           = type;
-   open.lots           = oe.Lots(oe);
-   open.time           = oe.OpenTime(oe);
-   open.price          = oe.OpenPrice(oe);
-   open.priceSynth     = sigValue;
-   open.slippage       = oe.Slippage(oe);
-   open.swap           = oe.Swap(oe);
-   open.commission     = oe.Commission(oe);
-   open.grossProfit    = oe.Profit(oe);
-   open.netProfit      = open.grossProfit + open.swap + open.commission;
-   open.netProfitP     = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
-   open.runupP         = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
-   open.drawdownP      = open.runupP;
-   open.synthProfitP   = ifDouble(type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
-   open.synthRunupP    = open.synthProfitP;
-   open.synthDrawdownP = open.synthProfitP;
+   open.ticket       = ticket;
+   open.type         = type;
+   open.lots         = oe.Lots(oe);
+   open.time         = oe.OpenTime(oe);
+   open.price        = oe.OpenPrice(oe);
+   open.priceSig     = sigValue;
+   open.slippage     = oe.Slippage(oe);
+   open.swap         = oe.Swap(oe);
+   open.commission   = oe.Commission(oe);
+   open.grossProfit  = oe.Profit(oe);
+   open.netProfit    = open.grossProfit + open.swap + open.commission;
+   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+   open.runupP       = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
+   open.drawdownP    = open.runupP;
+   open.sigProfitP   = ifDouble(type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+   open.sigRunupP    = open.sigProfitP;
+   open.sigDrawdownP = open.sigProfitP;
 
    // update PL numbers
    instance.openNetProfit  = open.netProfit;
@@ -1085,10 +1085,10 @@ bool ReverseInstance(double signal[]) {
    instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
 
-   instance.openSynthProfitP  = open.synthProfitP;
-   instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
-   instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
-   instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
+   instance.openSigProfitP  = open.sigProfitP;
+   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
+   instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
+   instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
 
    if (__isChart) {
       SS.OpenLots();
@@ -1141,20 +1141,20 @@ bool StopInstance(double signal[]) {
          else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_NONE, oeFlags, oe);
          if (!success) return(!SetLastError(oe.Error(oe)));
 
-         double closePrice   = oe.ClosePrice(oe), closePriceSynth = doubleOr(sigValue, Bid);
-         open.slippage      += oe.Slippage(oe);
-         open.swap           = oe.Swap(oe);
-         open.commission     = oe.Commission(oe);
-         open.grossProfit    = oe.Profit(oe);
-         open.netProfit      = open.grossProfit + open.swap + open.commission;
-         open.netProfitP     = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
-         open.runupP         = MathMax(open.runupP, open.netProfitP);
-         open.drawdownP      = MathMin(open.drawdownP, open.netProfitP); open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-         open.synthProfitP   = ifDouble(open.type==OP_BUY, closePriceSynth-open.priceSynth, open.priceSynth-closePriceSynth);
-         open.synthRunupP    = MathMax(open.synthRunupP, open.synthProfitP);
-         open.synthDrawdownP = MathMin(open.synthDrawdownP, open.synthProfitP);
+         double closePrice = oe.ClosePrice(oe), closePriceSig = doubleOr(sigValue, Bid);
+         open.slippage    += oe.Slippage(oe);
+         open.swap         = oe.Swap(oe);
+         open.commission   = oe.Commission(oe);
+         open.grossProfit  = oe.Profit(oe);
+         open.netProfit    = open.grossProfit + open.swap + open.commission;
+         open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+         open.runupP       = MathMax(open.runupP, open.netProfitP);
+         open.drawdownP    = MathMin(open.drawdownP, open.netProfitP); open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+         open.sigProfitP   = ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
+         open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
+         open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
 
-         if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, closePriceSynth)) return(false);
+         if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, closePriceSig)) return(false);
 
          instance.openNetProfit  = open.netProfit;
          instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
@@ -1166,10 +1166,10 @@ bool StopInstance(double signal[]) {
          instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
          instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
 
-         instance.openSynthProfitP  = open.synthProfitP;
-         instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
-         instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
-         instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
+         instance.openSigProfitP  = open.sigProfitP;
+         instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
+         instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
+         instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
       }
    }
 
@@ -1223,60 +1223,60 @@ bool UpdateStatus() {
    if (!open.ticket)                          return(true);
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
-      open.swap           = 0;
-      open.commission     = 0;
-      open.netProfitP     = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
-      open.runupP         = MathMax(open.runupP, open.netProfitP);
-      open.drawdownP      = MathMin(open.drawdownP, open.netProfitP);
-      open.netProfit      = open.netProfitP * PointValue(open.lots);
-      open.grossProfit    = open.netProfit;
-      open.synthProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSynth, open.priceSynth-Bid);
-      open.synthRunupP    = MathMax(open.synthRunupP, open.synthProfitP);
-      open.synthDrawdownP = MathMin(open.synthDrawdownP, open.synthProfitP);
+      open.swap         = 0;
+      open.commission   = 0;
+      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
+      open.runupP       = MathMax(open.runupP, open.netProfitP);
+      open.drawdownP    = MathMin(open.drawdownP, open.netProfitP);
+      open.netProfit    = open.netProfitP * PointValue(open.lots);
+      open.grossProfit  = open.netProfit;
+      open.sigProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+      open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
+      open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
    }
    else {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
       bool isClosed = (OrderCloseTime() != NULL);
       if (isClosed) {
-         double exitPrice=OrderClosePrice(), exitPriceSynth=exitPrice;
+         double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
       }
       else {
          exitPrice = ifDouble(open.type==OP_BUY, Bid, Ask);
-         exitPriceSynth = Bid;
+         exitPriceSig = Bid;
       }
-      open.swap           = NormalizeDouble(OrderSwap(), 2);
-      open.commission     = OrderCommission();
-      open.grossProfit    = OrderProfit();
-      open.netProfit      = open.grossProfit + open.swap + open.commission;
-      open.netProfitP     = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
-      open.runupP         = MathMax(open.runupP, open.netProfitP);
-      open.drawdownP      = MathMin(open.drawdownP, open.netProfitP); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-      open.synthProfitP   = ifDouble(open.type==OP_BUY, exitPriceSynth-open.priceSynth, open.priceSynth-exitPriceSynth);
-      open.synthRunupP    = MathMax(open.synthRunupP, open.synthProfitP);
-      open.synthDrawdownP = MathMin(open.synthDrawdownP, open.synthProfitP);
+      open.swap         = NormalizeDouble(OrderSwap(), 2);
+      open.commission   = OrderCommission();
+      open.grossProfit  = OrderProfit();
+      open.netProfit    = open.grossProfit + open.swap + open.commission;
+      open.netProfitP   = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
+      open.runupP       = MathMax(open.runupP, open.netProfitP);
+      open.drawdownP    = MathMin(open.drawdownP, open.netProfitP); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+      open.sigProfitP   = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
+      open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
+      open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
 
       if (isClosed) {
          int error;
          if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSynth))                                            return(false);
+         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                              return(false);
       }
    }
 
-   instance.openNetProfit    = open.netProfit;
-   instance.openNetProfitP   = open.netProfitP;
-   instance.openSynthProfitP = open.synthProfitP;
+   instance.openNetProfit  = open.netProfit;
+   instance.openNetProfitP = open.netProfitP;
+   instance.openSigProfitP = open.sigProfitP;
 
-   instance.totalNetProfit    = instance.openNetProfit    + instance.closedNetProfit;
-   instance.totalNetProfitP   = instance.openNetProfitP   + instance.closedNetProfitP;
-   instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
+   instance.totalNetProfit  = instance.openNetProfit  + instance.closedNetProfit;
+   instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
+   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
    if (__isChart) SS.TotalProfit(ShowProfitInPercent);
 
-   instance.maxNetProfit      = MathMax(instance.maxNetProfit,      instance.totalNetProfit);
-   instance.maxNetDrawdown    = MathMin(instance.maxNetDrawdown,    instance.totalNetProfit);
-   instance.maxNetProfitP     = MathMax(instance.maxNetProfitP,     instance.totalNetProfitP);
-   instance.maxNetDrawdownP   = MathMin(instance.maxNetDrawdownP,   instance.totalNetProfitP);
-   instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
-   instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
+   instance.maxNetProfit    = MathMax(instance.maxNetProfit,    instance.totalNetProfit);
+   instance.maxNetDrawdown  = MathMin(instance.maxNetDrawdown,  instance.totalNetProfit);
+   instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
+   instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
+   instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
+   instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
    if (__isChart) SS.ProfitStats(ShowProfitInPercent);
 
    return(!catch("UpdateStatus(4)"));
@@ -1392,9 +1392,9 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_TOTAL_SYNTH_UNITS:            // OK
+      case METRIC_TOTAL_SIG_UNITS:              // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", synth PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       // --- custom daily metrics -------------------------------------------------------------------------------------------
@@ -1410,9 +1410,9 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL/day, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
-      case METRIC_DAILY_SYNTH_UNITS:
+      case METRIC_DAILY_SIG_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", synth PnL/day, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL/day, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       default:
@@ -1638,12 +1638,12 @@ bool SynchronizeStatus() {
          }
          if (!open.ticket) {
             logWarn("SynchronizeStatus(2)  "+ instance.name +" dangling open position found: #"+ OrderTicket() +", adding to instance...");
-            open.ticket     = OrderTicket();
-            open.type       = OrderType();
-            open.time       = OrderOpenTime();
-            open.price      = OrderOpenPrice();
-            open.priceSynth = open.price;
-            open.slippage   = NULL;                                   // open PnL numbers will auto-update in the following UpdateStatus() call
+            open.ticket   = OrderTicket();
+            open.type     = OrderType();
+            open.time     = OrderOpenTime();
+            open.price    = OrderOpenPrice();
+            open.priceSig = open.price;
+            open.slippage = NULL;                                     // open PnL numbers will auto-update in the following UpdateStatus() call
          }
          else if (OrderTicket() != open.ticket) {
             return(!catch("SynchronizeStatus(3)  "+ instance.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
@@ -1682,9 +1682,9 @@ bool SynchronizeStatus() {
             if (IsEmpty(AddHistoryRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
-            instance.closedNetProfit    += netProfit;
-            instance.closedNetProfitP   += netProfitP;
-            instance.closedSynthProfitP += grossProfitP;             // for orphaned positions same as grossProfitP
+            instance.closedNetProfit  += netProfit;
+            instance.closedNetProfitP += netProfitP;
+            instance.closedSigProfitP += grossProfitP;               // for orphaned positions same as grossProfitP
          }
       }
    }
@@ -1698,9 +1698,9 @@ bool SynchronizeStatus() {
    instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
 
-   instance.totalSynthProfitP = instance.openSynthProfitP + instance.closedSynthProfitP;
-   instance.maxSynthProfitP   = MathMax(instance.maxSynthProfitP,   instance.totalSynthProfitP);
-   instance.maxSynthDrawdownP = MathMin(instance.maxSynthDrawdownP, instance.totalSynthProfitP);
+   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
+   instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
+   instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
    SS.All();
 
    if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize)

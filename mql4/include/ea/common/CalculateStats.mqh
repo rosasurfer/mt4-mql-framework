@@ -14,26 +14,26 @@ void CalculateStats() {
       for (int i=prevTrades; i < trades; i++) {                   // speed-up by processing only new history entries
          // all metrics: all trades
          if (history[i][H_TYPE] == OP_LONG) {
-            stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_LONG]++;
-            stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_LONG]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_LONG]++;
+            stats[METRIC_TOTAL_NET_MONEY][S_TRADES_LONG]++;
+            stats[METRIC_TOTAL_NET_UNITS][S_TRADES_LONG]++;
+            stats[METRIC_TOTAL_SIG_UNITS][S_TRADES_LONG]++;
          }
          else {
-            stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SHORT]++;
-            stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SHORT]++;
+            stats[METRIC_TOTAL_NET_MONEY][S_TRADES_SHORT]++;
+            stats[METRIC_TOTAL_NET_UNITS][S_TRADES_SHORT]++;
+            stats[METRIC_TOTAL_SIG_UNITS][S_TRADES_SHORT]++;
          }
-         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM_RUNUP   ] += history[i][H_RUNUP_P   ];
-         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM_DRAWDOWN] += history[i][H_DRAWDOWN_P];
-         stats[METRIC_TOTAL_NET_MONEY  ][S_TRADES_SUM_PROFIT  ] += history[i][H_NETPROFIT ];
+         stats[METRIC_TOTAL_NET_MONEY][S_TRADES_SUM_RUNUP   ] += history[i][H_RUNUP_P   ];
+         stats[METRIC_TOTAL_NET_MONEY][S_TRADES_SUM_DRAWDOWN] += history[i][H_DRAWDOWN_P];
+         stats[METRIC_TOTAL_NET_MONEY][S_TRADES_SUM_PROFIT  ] += history[i][H_NETPROFIT ];
 
-         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
-         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM_DRAWDOWN] += history[i][H_DRAWDOWN_P ];
-         stats[METRIC_TOTAL_NET_UNITS  ][S_TRADES_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
+         stats[METRIC_TOTAL_NET_UNITS][S_TRADES_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
+         stats[METRIC_TOTAL_NET_UNITS][S_TRADES_SUM_DRAWDOWN] += history[i][H_DRAWDOWN_P ];
+         stats[METRIC_TOTAL_NET_UNITS][S_TRADES_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
 
-         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM_RUNUP   ] += history[i][H_SYNTH_RUNUP_P   ];
-         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM_DRAWDOWN] += history[i][H_SYNTH_DRAWDOWN_P];
-         stats[METRIC_TOTAL_SYNTH_UNITS][S_TRADES_SUM_PROFIT  ] += history[i][H_SYNTH_PROFIT_P  ];
+         stats[METRIC_TOTAL_SIG_UNITS][S_TRADES_SUM_RUNUP   ] += history[i][H_SIG_RUNUP_P   ];
+         stats[METRIC_TOTAL_SIG_UNITS][S_TRADES_SUM_DRAWDOWN] += history[i][H_SIG_DRAWDOWN_P];
+         stats[METRIC_TOTAL_SIG_UNITS][S_TRADES_SUM_PROFIT  ] += history[i][H_SIG_PROFIT_P  ];
 
          // METRIC_TOTAL_NET_MONEY
          if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {          // compare against H_NETPROFIT_P to simplify scratch limits
@@ -87,30 +87,30 @@ void CalculateStats() {
             else                               stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT]++;
          }
 
-         // METRIC_TOTAL_SYNTH_UNITS
-         if (GT(history[i][H_SYNTH_PROFIT_P], 0.5*Point)) {
+         // METRIC_TOTAL_SIG_UNITS
+         if (GT(history[i][H_SIG_PROFIT_P], 0.5*Point)) {
             // winners
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS]++;
-            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_LONG ]++;
-            else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM_RUNUP   ] += history[i][H_SYNTH_RUNUP_P   ];
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM_DRAWDOWN] += history[i][H_SYNTH_DRAWDOWN_P];
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_WINNERS_SUM_PROFIT  ] += history[i][H_SYNTH_PROFIT_P  ];
+            stats[METRIC_TOTAL_SIG_UNITS][S_WINNERS]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SIG_UNITS][S_WINNERS_LONG ]++;
+            else                               stats[METRIC_TOTAL_SIG_UNITS][S_WINNERS_SHORT]++;
+            stats[METRIC_TOTAL_SIG_UNITS][S_WINNERS_SUM_RUNUP   ] += history[i][H_SIG_RUNUP_P   ];
+            stats[METRIC_TOTAL_SIG_UNITS][S_WINNERS_SUM_DRAWDOWN] += history[i][H_SIG_DRAWDOWN_P];
+            stats[METRIC_TOTAL_SIG_UNITS][S_WINNERS_SUM_PROFIT  ] += history[i][H_SIG_PROFIT_P  ];
          }
-         else if (LT(history[i][H_SYNTH_PROFIT_P], -0.5*Point)) {
+         else if (LT(history[i][H_SIG_PROFIT_P], -0.5*Point)) {
             // losers
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS]++;
-            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_LONG ]++;
-            else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM_RUNUP   ] += history[i][H_SYNTH_RUNUP_P   ];
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM_DRAWDOWN] += history[i][H_SYNTH_DRAWDOWN_P];
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_LOSERS_SUM_PROFIT  ] += history[i][H_SYNTH_PROFIT_P  ];
+            stats[METRIC_TOTAL_SIG_UNITS][S_LOSERS]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SIG_UNITS][S_LOSERS_LONG ]++;
+            else                               stats[METRIC_TOTAL_SIG_UNITS][S_LOSERS_SHORT]++;
+            stats[METRIC_TOTAL_SIG_UNITS][S_LOSERS_SUM_RUNUP   ] += history[i][H_SIG_RUNUP_P   ];
+            stats[METRIC_TOTAL_SIG_UNITS][S_LOSERS_SUM_DRAWDOWN] += history[i][H_SIG_DRAWDOWN_P];
+            stats[METRIC_TOTAL_SIG_UNITS][S_LOSERS_SUM_PROFIT  ] += history[i][H_SIG_PROFIT_P  ];
          }
          else {
             // scratch
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]++;
-            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG ]++;
-            else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]++;
+            stats[METRIC_TOTAL_SIG_UNITS][S_SCRATCH]++;
+            if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SIG_UNITS][S_SCRATCH_LONG ]++;
+            else                               stats[METRIC_TOTAL_SIG_UNITS][S_SCRATCH_SHORT]++;
          }
       }
 

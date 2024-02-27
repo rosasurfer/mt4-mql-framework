@@ -17,8 +17,8 @@ void SS.TotalProfit(bool moneyInPercent = false) {
          case METRIC_TOTAL_NET_UNITS:
             sTotalProfit = NumberToStr(instance.totalNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_SYNTH_UNITS:
-            sTotalProfit = NumberToStr(instance.totalSynthProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+         case METRIC_TOTAL_SIG_UNITS:
+            sTotalProfit = NumberToStr(instance.totalSigProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 
          default:

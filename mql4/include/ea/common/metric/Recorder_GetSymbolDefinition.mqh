@@ -51,9 +51,9 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          multiplier  = pMultiplier;
          break;
 
-      case METRIC_TOTAL_SYNTH_UNITS:
+      case METRIC_TOTAL_SIG_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", synth PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = pDigits;
          multiplier  = pMultiplier;
          break;

@@ -19,9 +19,9 @@ int ShowTradeHistory() {
       datetime closeTime  = history[i][H_CLOSETIME ];
       double   closePrice = history[i][H_CLOSEPRICE];
 
-      if (status.activeMetric == METRIC_TOTAL_SYNTH_UNITS) {
-         openPrice  = history[i][H_OPENPRICE_SYNTH ];
-         closePrice = history[i][H_CLOSEPRICE_SYNTH];
+      if (status.activeMetric == METRIC_TOTAL_SIG_UNITS) {
+         openPrice  = history[i][H_OPENPRICE_SIG ];
+         closePrice = history[i][H_CLOSEPRICE_SIG];
       }
       if (!closeTime)                    continue;             // skip open tickets (should not happen)
       if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
