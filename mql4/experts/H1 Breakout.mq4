@@ -219,6 +219,7 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/common/ToggleOpenOrders.mqh>
 #include <ea/common/ToggleTradeHistory.mqh>
 
+#include <ea/common/metric/Recorder_GetSymbolDefinition.mqh>
 #include <ea/common/metric/ToggleMetrics.mqh>
 
 #include <ea/common/status/StatusToStr.mqh>
