@@ -5,8 +5,8 @@
  *
  *
  * TODO:
- *  - instances on different symbols can have the same id, so ticket symbol must be checked against, too
- *  - fix error handling if OrderSelect() fails
+ *  - instances on different symbols can have the same id, so the ticket symbol must be checked against, too
+ *  - use IsMyOrder() for checking tickets (magicNumber may be dynamic)
  */
 int CreateInstanceId() {
    int instanceId, magicNumber;
@@ -40,7 +40,7 @@ int CreateInstanceId() {
          // test for uniqueness against open orders
          int openOrders = OrdersTotal();
          for (int i=0; i < openOrders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateInstanceId(2)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                          // FALSE: an open order was closed/deleted in another thread
             if (OrderMagicNumber() == magicNumber) {
                magicNumber = NULL;
                break;
@@ -51,7 +51,7 @@ int CreateInstanceId() {
          // test for uniqueness against closed orders
          int closedOrders = OrdersHistoryTotal();
          for (i=0; i < closedOrders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateInstanceId(3)  "+ instance.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;                         // FALSE: the time range of the history was changed in another thread
             if (OrderMagicNumber() == magicNumber) {
                magicNumber = NULL;
                break;
