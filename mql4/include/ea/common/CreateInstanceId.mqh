@@ -16,7 +16,7 @@ int CreateInstanceId() {
       // generate next consecutive id from already recorded metrics
       string nextSymbol = Recorder.GetNextMetricSymbol(); if (nextSymbol == "") return(NULL);
       string sCounter = StrRightFrom(nextSymbol, ".", -1);
-      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  "+ instance.name +" illegal value for next symbol "+ DoubleQuoteStr(nextSymbol) +" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
+      if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  "+ instance.name +" illegal value for next symbol \""+ nextSymbol +"\" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
       int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
 
       if (recorder.mode == RECORDER_OFF) {

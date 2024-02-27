@@ -284,7 +284,7 @@ string StrReplace(string value, string search, string replace, bool recursive = 
          result = StrReplace(result, search, replace);
          counter++;
          if (counter >= 100) {
-            catch("StrReplace(1)  more than 100 replacements, breaking assumed infinite loop (search="+ DoubleQuoteStr(search) +", replace="+ DoubleQuoteStr(replace) +")", ERR_RUNTIME_ERROR);
+            catch("StrReplace(1)  more than 100 replacements, breaking assumed infinite loop (search=\""+ search +"\", replace=\""+ replace +"\")", ERR_RUNTIME_ERROR);
             result = "";
             break;
          }
@@ -590,7 +590,7 @@ string OrderLogMessage(int ticket) {
    int      digits      = MarketInfo(symbol, MODE_DIGITS);
    int      pipDigits   = digits & (~1);
    string   priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss!=0, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit!=0, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
+   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss!=0, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit!=0, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=\"", comment, "\"");
 
    if (OrderPop("OrderLogMessage(2)"))
       return(message);
@@ -944,7 +944,7 @@ string StdSymbol() {
  */
 string FindStandardSymbol(string symbol, bool strict = false) {
    strict = strict!=0;
-   if (!StringLen(symbol)) return(_EMPTY_STR(catch("FindStandardSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+   if (!StringLen(symbol)) return(_EMPTY_STR(catch("FindStandardSymbol(1)  invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
    string _symbol = StrToUpper(symbol);
    if      (StrStartsWith(_symbol, "." )) _symbol = StrRight(_symbol, -1);
@@ -2482,7 +2482,7 @@ int StrToLogLevel(string value, int flags = NULL) {
 
    if (flags & F_ERR_INVALID_PARAMETER && 1)
       return(!SetLastError(ERR_INVALID_PARAMETER));
-   return(!catch("StrToLogLevel(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER));
+   return(!catch("StrToLogLevel(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER));
 }
 
 
@@ -2512,7 +2512,7 @@ int StrToMaMethod(string value, int flags = NULL) {
    if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
 
    if (!flags & F_ERR_INVALID_PARAMETER)
-      return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+      return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER)));
    return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
 
@@ -3169,13 +3169,13 @@ bool StrToBool(string value, bool strict = false) {
    if (lValue == "yes"  ) return(true );
    if (lValue == "no"   ) return(false);
 
-   if (strict) return(!catch("StrToBool(1)  cannot convert string "+ DoubleQuoteStr(value) +" to boolean (strict mode enabled)", ERR_INVALID_PARAMETER));
+   if (strict) return(!catch("StrToBool(1)  cannot convert string \""+ value +"\" to boolean (strict mode enabled)", ERR_INVALID_PARAMETER));
 
    if (value  == ""   ) return( false);
-   if (value  == "O"  ) return(_false(logNotice("StrToBool(2)  string "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
-   if (lValue == "0n" ) return(_true (logNotice("StrToBool(3)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
-   if (lValue == "0ff") return(_false(logNotice("StrToBool(4)  string "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"Off\"")));
-   if (lValue == "n0" ) return(_false(logNotice("StrToBool(5)  string "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
+   if (value  == "O"  ) return(_false(logNotice("StrToBool(2)  string \""+ value +"\" is capital letter O, assumed to be zero")));
+   if (lValue == "0n" ) return(_true (logNotice("StrToBool(3)  string \""+ value +"\" starts with zero, assumed to be \"On\"")));
+   if (lValue == "0ff") return(_false(logNotice("StrToBool(4)  string \""+ value +"\" starts with zero, assumed to be \"Off\"")));
+   if (lValue == "n0" ) return(_false(logNotice("StrToBool(5)  string \""+ value +"\" ends with zero, assumed to be \"no\"")));
 
    if (StrIsNumeric(value))
       return(StrToDouble(value) != 0);
@@ -3520,7 +3520,7 @@ bool Chart.StoreBool(string key, bool value) {
    if (!__isChart)       return(!catch("Chart.StoreBool(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63) return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreBool(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -3542,7 +3542,7 @@ bool Chart.StoreInt(string key, int value) {
    if (!__isChart)       return(!catch("Chart.StoreInt(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63) return(!catch("Chart.StoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreInt(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -3564,7 +3564,7 @@ bool Chart.StoreColor(string key, color value) {
    if (!__isChart)       return(!catch("Chart.StoreColor(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63) return(!catch("Chart.StoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreColor(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -3586,7 +3586,7 @@ bool Chart.StoreDouble(string key, double value) {
    if (!__isChart)       return(!catch("Chart.StoreDouble(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63) return(!catch("Chart.StoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreDouble(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -3608,10 +3608,10 @@ bool Chart.StoreString(string key, string value) {
    if (!__isChart)       return(!catch("Chart.StoreString(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63) return(!catch("Chart.StoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreString(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    len = StringLen(value);
-   if (len > 63)         return(!catch("Chart.StoreString(3)  invalid parameter value: "+ DoubleQuoteStr(value) +" (max. 63 chars)", ERR_INVALID_PARAMETER));
+   if (len > 63)         return(!catch("Chart.StoreString(3)  invalid parameter value: \""+ value +"\" (max. 63 chars)", ERR_INVALID_PARAMETER));
 
    if (!len) value = "…(empty)…";                                 // mark empty strings with a magic value (0x85) as the terminal deserializes "" to "Text"
 
@@ -3637,11 +3637,11 @@ bool Chart.RestoreBool(string key, bool &var, bool remove = true) {
    if (!__isChart)                    return(!catch("Chart.RestoreBool(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63)              return(!catch("Chart.RestoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63)              return(!catch("Chart.RestoreBool(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
-      if (sValue!="0" && sValue!="1") return(!catch("Chart.RestoreBool(3)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
+      if (sValue!="0" && sValue!="1") return(!catch("Chart.RestoreBool(3)  illegal chart value \""+ key +"\" = \""+ sValue +"\"", ERR_RUNTIME_ERROR));
       if (remove) ObjectDelete(key);
       var = (sValue == "1");                               // (bool) string
 
@@ -3665,11 +3665,11 @@ bool Chart.RestoreInt(string key, int &var, bool remove = true) {
    if (!__isChart)               return(!catch("Chart.RestoreInt(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63)         return(!catch("Chart.RestoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63)         return(!catch("Chart.RestoreInt(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
-      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreInt(3)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
+      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreInt(3)  illegal chart value \""+ key +"\" = \""+ sValue +"\"", ERR_RUNTIME_ERROR));
       if (remove) ObjectDelete(key);
       var = StrToInteger(sValue);                          // (int) string
 
@@ -3693,14 +3693,14 @@ bool Chart.RestoreColor(string key, color &var, bool remove = true) {
    if (!__isChart)               return(!catch("Chart.RestoreColor(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63)         return(!catch("Chart.RestoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63)         return(!catch("Chart.RestoreColor(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
-      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreColor(3)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
+      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreColor(3)  illegal chart value \""+ key +"\" = \""+ sValue +"\"", ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
       if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                 return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue) +" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
+                                 return(!catch("Chart.RestoreColor(4)  illegal chart value \""+ key +"\" = \""+ sValue +"\" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
       if (remove) ObjectDelete(key);
       var = iValue;                                        // (color)(int) string
 
@@ -3724,11 +3724,11 @@ bool Chart.RestoreDouble(string key, double &var, bool remove = true) {
    if (!__isChart)               return(!catch("Chart.RestoreDouble(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63)         return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63)         return(!catch("Chart.RestoreDouble(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
-      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(3)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
+      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(3)  illegal chart value \""+ key +"\" = \""+ sValue +"\"", ERR_RUNTIME_ERROR));
       if (remove) ObjectDelete(key);
       var = StrToDouble(sValue);                            // (double) string
 
@@ -3752,7 +3752,7 @@ bool Chart.RestoreString(string key, string &var, bool remove = true) {
    if (!__isChart)       return(!catch("Chart.RestoreString(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63) return(!catch("Chart.RestoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.RestoreString(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
@@ -4617,7 +4617,7 @@ string GetAccountAlias(string company="", int account=NULL) {
 
    string result = GetGlobalConfigString("Accounts", account +".alias");
    if (!StringLen(result)) {
-      logInfo("GetAccountAlias(2)  no account alias found for account "+ DoubleQuoteStr(company +":"+ account));
+      logInfo("GetAccountAlias(2)  no account alias found for account \""+ company +":"+ account +"\"");
       result = account;
       result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
    }
@@ -4758,7 +4758,7 @@ bool StrCompareI(string string1, string string2) {
  */
 bool StrContains(string value, string substring) {
    if (!StringLen(substring))
-      return(!catch("StrContains(1)  illegal parameter substring: "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+      return(!catch("StrContains(1)  illegal parameter substring: \""+ substring +"\"", ERR_INVALID_PARAMETER));
    return(StringFind(value, substring) != -1);
 }
 
@@ -4773,7 +4773,7 @@ bool StrContains(string value, string substring) {
  */
 bool StrContainsI(string value, string substring) {
    if (!StringLen(substring))
-      return(!catch("StrContainsI(1)  illegal parameter substring: "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+      return(!catch("StrContainsI(1)  illegal parameter substring: \""+ substring +"\"", ERR_INVALID_PARAMETER));
    return(StringFind(StrToUpper(value), StrToUpper(substring)) != -1);
 }
 
@@ -5608,7 +5608,7 @@ int StrToTradeDirection(string value, int flags = NULL) {
    }
 
    if (flags & F_ERR_INVALID_PARAMETER && 1) SetLastError(ERR_INVALID_PARAMETER);
-   else                                      catch("StrToTradeDirection(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
+   else                                      catch("StrToTradeDirection(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER);
    return(-1);
 }
 
@@ -6107,7 +6107,7 @@ int StrToPriceType(string value, int flags = NULL) {
    }
 
    if (!(flags & F_ERR_INVALID_PARAMETER))
-      catch("StrToPriceType(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER);
+      catch("StrToPriceType(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER);
    return(-1);
 }
 
@@ -6269,7 +6269,7 @@ int StrToPeriod(string value, int flags = NULL) {
 
    if (flags & F_ERR_INVALID_PARAMETER && 1)
       return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
-   return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value: "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6401,9 +6401,9 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       string section = "Mail";
       string key     = "Sender";
       _sender = GetConfigString(section, key, "mt4@"+ GetHostName() +".localdomain");
-      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(1)  invalid configuration: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(1)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _sender +"\"", ERR_INVALID_CONFIG_VALUE));
    }
-   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(2)  invalid parameter sender: "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(2)  invalid parameter sender: \""+ sender +"\"", ERR_INVALID_PARAMETER));
    sender = _sender;
 
    // receiver
@@ -6412,15 +6412,15 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       section   = "Mail";
       key       = "Receiver";
       _receiver = GetConfigString(section, key);
-      if (!StringLen(_receiver))           return(!catch("SendEmail(3)  missing configuration: ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
-      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(4)  invalid configuration: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
+      if (!StringLen(_receiver))           return(!catch("SendEmail(3)  missing configuration: ["+ section +"]->"+ key,                           ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(4)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _receiver +"\"", ERR_INVALID_CONFIG_VALUE));
    }
-   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(5)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(5)  invalid parameter receiver: \""+ receiver +"\"", ERR_INVALID_PARAMETER));
    receiver = _receiver;
 
    // subject
    string _subject = StrTrim(subject);
-   if (!StringLen(_subject))               return(!catch("SendEmail(6)  invalid parameter subject: "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
+   if (!StringLen(_subject))               return(!catch("SendEmail(6)  invalid parameter subject: \""+ subject +"\"", ERR_INVALID_PARAMETER));
    _subject = StrReplace(StrReplace(StrReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " ");          // Linebreaks mit Leerzeichen ersetzen
    _subject = StrReplace(_subject, "\"", "\\\"");                                                        // Double-Quotes in email-Parametern escapen
    _subject = StrReplace(_subject, "'", "'\"'\"'");                                                      // Single-Quotes im bash-Parameter escapen
@@ -6439,7 +6439,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // benötigte Executables ermitteln: Bash und Mailclient
    string bash = GetConfigString("System", "Bash");
-   if (!IsFile(bash, MODE_SYSTEM)) return(!catch("SendEmail(9)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
+   if (!IsFile(bash, MODE_SYSTEM)) return(!catch("SendEmail(9)  bash executable not found: \""+ bash +"\"", ERR_FILE_NOT_FOUND));
    // TODO: absoluter Pfad => direkt testen
    // TODO: relativer Pfad => Systemverzeichnisse und $PATH durchsuchen
 
@@ -6494,7 +6494,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 bool SendSMS(string receiver, string message) {
    if (!StringLen(receiver)) {
       string sValue = GetConfigString("SMS", "Receiver");
-      if (!StrIsPhoneNumber(sValue)) return(!catch("SendSMS(1)  invalid configuration: [SMS]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsPhoneNumber(sValue)) return(!catch("SendSMS(1)  invalid configuration: [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
       receiver = sValue;
    }
    string receiverBak = receiver;
@@ -6502,7 +6502,7 @@ bool SendSMS(string receiver, string message) {
 
    if      (StrStartsWith(receiver, "+" )) receiver = StrSubstr(receiver, 1);
    else if (StrStartsWith(receiver, "00")) receiver = StrSubstr(receiver, 2);
-   if (!StrIsDigits(receiver)) return(!catch("SendSMS(2)  invalid parameter receiver: "+ DoubleQuoteStr(receiverBak), ERR_INVALID_PARAMETER));
+   if (!StrIsDigits(receiver)) return(!catch("SendSMS(2)  invalid parameter receiver: \""+ receiverBak +"\"", ERR_INVALID_PARAMETER));
 
    // get SMS gateway details
    // service
@@ -6539,7 +6539,7 @@ bool SendSMS(string receiver, string message) {
 
    // execute shell command
    int result = WinExec(cmdLine, SW_HIDE);
-   if (result < 32) return(!catch("SendSMS(9)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendSMS(9)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    // TODO: analyse the response
    // --------------------------

@@ -29,7 +29,7 @@ int onInit() {
    if      (sValue == "bid"   ) displayedPrice = PRICE_BID;
    else if (sValue == "ask"   ) displayedPrice = PRICE_ASK;
    else if (sValue == "median") displayedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
+   else return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
    // init labels, status and used trade account
    if (!CreateLabels())         return(last_error);
@@ -215,7 +215,7 @@ bool ValidateUnitSizeConfigValue(string section, string key, string &value) {
    string sValue = GetConfigString(section, key), sValueBak = sValue;
 
    if (StrEndsWithI(key, ".RiskPercent") || StrEndsWithI(key, ".Leverage")) {
-      if (!StrIsNumeric(sValue))    return(!catch("GetUnitSizeConfigValue(1)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValueBak) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsNumeric(sValue))    return(!catch("GetUnitSizeConfigValue(1)  invalid configuration value ["+ section +"]->"+ key +": \""+ sValueBak +"\" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
       double dValue = StrToDouble(sValue);
       if (dValue < 0)               return(!catch("GetUnitSizeConfigValue(2)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
       value = sValue;
@@ -228,19 +228,19 @@ bool ValidateUnitSizeConfigValue(string section, string key, string &value) {
          return(true);
       }
       if (!StrEndsWith(sValue, "pip")) {
-         if (!StrIsNumeric(sValue)) return(!catch("GetUnitSizeConfigValue(3)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValueBak) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
+         if (!StrIsNumeric(sValue)) return(!catch("GetUnitSizeConfigValue(3)  invalid configuration value ["+ section +"]->"+ key +": \""+ sValueBak +"\" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
          dValue = StrToDouble(sValue);
          if (dValue < 0)            return(!catch("GetUnitSizeConfigValue(4)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
          value = sValue;
          return(true);
       }
       sValue = StrTrim(StrLeft(sValue, -3));
-      if (!StrIsNumeric(sValue))    return(!catch("GetUnitSizeConfigValue(5)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValueBak) +" (non-numeric pip value)", ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsNumeric(sValue))    return(!catch("GetUnitSizeConfigValue(5)  invalid configuration value ["+ section +"]->"+ key +": \""+ sValueBak +"\" (non-numeric pip value)", ERR_INVALID_CONFIG_VALUE));
       dValue = StrToDouble(sValue);
       if (dValue < 0)               return(!catch("GetUnitSizeConfigValue(6)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
       value = dValue * Pip;
       return(true);
    }
 
-   return(!catch("GetUnitSizeConfigValue(7)  unsupported [UnitSize] config key: "+ DoubleQuoteStr(key), ERR_INVALID_PARAMETER));
+   return(!catch("GetUnitSizeConfigValue(7)  unsupported [UnitSize] config key: \""+ key +"\"", ERR_INVALID_PARAMETER));
 }

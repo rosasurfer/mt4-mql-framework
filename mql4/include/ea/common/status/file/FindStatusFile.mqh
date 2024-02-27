@@ -19,7 +19,7 @@ string FindStatusFile(int instanceId, bool isTest) {
    int size = FindFileNames(pathPattern, result, FF_FILESONLY);
 
    if (size != 1) {
-      if (size > 1) return(_EMPTY_STR(catch("FindStatusFile(2)  "+ instance.name +" multiple matching files found for pattern "+ DoubleQuoteStr(pathPattern), ERR_ILLEGAL_STATE)));
+      if (size > 1) return(_EMPTY_STR(catch("FindStatusFile(2)  "+ instance.name +" multiple matching files found for pattern \""+ pathPattern +"\"", ERR_ILLEGAL_STATE)));
    }
    return(sandboxDir + statusDir + result[0]);
 }

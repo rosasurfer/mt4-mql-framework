@@ -8,11 +8,11 @@
  */
 int ReadStatus.HistoryRecord(string key, string value) {
    if (IsLastError())                    return(EMPTY);
-   if (!StrStartsWithI(key, "history.")) return(_EMPTY(catch("ReadStatus.HistoryRecord(1)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
+   if (!StrStartsWithI(key, "history.")) return(_EMPTY(catch("ReadStatus.HistoryRecord(1)  "+ instance.name +" illegal history record key \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
 
    // history.i=ticket,type,lots,openTime,openPrice,openPriceSynth,closeTime,closePrice,closePriceSynth,slippage,swap,commission,grossProfit,netProfit,netProfitP,runupP,drawdownP,synthProfitP,synthRunupP,synthDrawdownP
    string values[];
-   string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(_EMPTY(catch("ReadStatus.HistoryRecord(2)  "+ instance.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT)));
+   string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(_EMPTY(catch("ReadStatus.HistoryRecord(2)  "+ instance.name +" illegal history record key \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.HistoryRecord(3)  "+ instance.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT)));
 
    int      ticket          = StrToInteger(values[H_TICKET          ]);

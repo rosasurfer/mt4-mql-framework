@@ -61,9 +61,9 @@ bool InitTradeAccount(string accountId = "") {
 
    if (StringLen(accountId) > 0) {
       // resolve the specified trade account
-      _accountCompany = StrLeftTo(accountId, ":");  if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigits(sValue))        return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      _accountNumber = StrToInteger(sValue);        if (!_accountNumber)             return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      _accountCompany = StrLeftTo(accountId, ":");  if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: \""+ accountId +"\""));
+      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigits(sValue))        return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: \""+ accountId +"\""));
+      _accountNumber = StrToInteger(sValue);        if (!_accountNumber)             return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: \""+ accountId +"\""));
    }
    else {
       // use the current account and resolve a configured trade account
@@ -75,8 +75,8 @@ bool InitTradeAccount(string accountId = "") {
       string key     = "TradeAccount"+ ifString(__isTesting, ".Tester", "");
       sValue = GetIniStringA(file, section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StrIsDigits(sValue))                                                  return(!logWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
-         _accountNumber = StrToInteger(sValue); if (!_accountNumber)                return(!logWarn("InitTradeAccount(5)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+         if (!StrIsDigits(sValue))                                                  return(!logWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
+         _accountNumber = StrToInteger(sValue); if (!_accountNumber)                return(!logWarn("InitTradeAccount(5)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
          section = "Accounts";
          key     = _accountNumber +".company";
          sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))     return(!logWarn("InitTradeAccount(6)  missing global account setting ["+ section +"]->"+ key));
@@ -99,7 +99,7 @@ bool InitTradeAccount(string accountId = "") {
       section = "Accounts";
       key     = _accountNumber +".currency";
       sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(7)  missing global account setting ["+ section +"]->"+ key));
-      if (!IsCurrency(sValue))                                                      return(!logWarn("InitTradeAccount(8)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+      if (!IsCurrency(sValue))                                                      return(!logWarn("InitTradeAccount(8)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
       _accountCurrency = StrToUpper(sValue);
 
       // account type
@@ -108,7 +108,7 @@ bool InitTradeAccount(string accountId = "") {
       sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(9)  missing global account setting ["+ section +"]->"+ key));
       if      (StrCompareI(sValue, "demo")) _accountType = ACCOUNT_TYPE_DEMO;
       else if (StrCompareI(sValue, "real")) _accountType = ACCOUNT_TYPE_REAL;
-      else                                                                          return(!logWarn("InitTradeAccount(10)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+      else                                                                          return(!logWarn("InitTradeAccount(10)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
 
       // account name
       section = "Accounts";
@@ -469,8 +469,8 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       if (!LFX.SaveOrder(orders, i)) return(false);         // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon verarbeitet wurde (z.B. von anderem Terminal)
 
                                                             // "LfxOrder{Type}Command {ticket:12345, trigger:"trigger"}"
-      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StrReplace(StrReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
-      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StrReplace(StrReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
+      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", trigger:\""+ StrReplace(StrReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE) +\""}";
+      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", trigger:\""+ StrReplace(StrReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE) +\""}";
 
       if (!QC.SendTradeCommand(tradeCmd)) {
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
@@ -992,7 +992,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
  * @return bool - success status
  */
 bool QC.SendTradeCommand(string cmd) {
-   if (!StringLen(cmd)) return(!catch("QC.SendTradeCommand(1)  invalid parameter cmd: "+ DoubleQuoteStr(cmd), ERR_INVALID_PARAMETER));
+   if (!StringLen(cmd)) return(!catch("QC.SendTradeCommand(1)  invalid parameter cmd: \""+ cmd +"\"", ERR_INVALID_PARAMETER));
 
    cmd = StrReplace(cmd, TAB, HTML_TAB);
 
@@ -1052,7 +1052,7 @@ bool QC.StartTradeCmdSender() {
       }
    }
    if (i >= keysSize) {                                            // break wurde nicht getriggert
-      logWarn("QC.StartTradeCmdSender(4)  No TradeCommand receiver for account "+ DoubleQuoteStr(tradeAccount.company +":"+ tradeAccount.number) +" account found (keys="+ keysSize +"). Is the trade terminal running?");
+      logWarn("QC.StartTradeCmdSender(4)  No TradeCommand receiver for account \""+ tradeAccount.company +":"+ tradeAccount.number +"\" account found (keys="+ keysSize +"). Is the trade terminal running?");
       return(false);
    }
 
@@ -1134,9 +1134,9 @@ bool QC.StopTradeCmdReceiver() {
       int hTmp = hQC.TradeCmdReceiver;
                  hQC.TradeCmdReceiver = NULL;                        // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
 
-      if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopTradeCmdReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel="+ DoubleQuoteStr(qc.TradeCmdChannel) +")  error stopping receiver", ERR_WIN32_ERROR));
+      if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopTradeCmdReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ qc.TradeCmdChannel +"\")  error stopping receiver", ERR_WIN32_ERROR));
 
-      //debug("QC.StopTradeCmdReceiver()  receiver on "+ DoubleQuoteStr(qc.TradeCmdChannel) +" stopped");
+      //debug("QC.StopTradeCmdReceiver()  receiver on \""+ qc.TradeCmdChannel +"\" stopped");
    }
    return(true);
 }
@@ -1180,9 +1180,9 @@ bool QC.StartLfxSender(int cid) {
    qc.TradeToLfxChannels[cid] = tradeAccount.company +":"+ tradeAccount.number +":LFX.Profit."+ GetCurrency(cid);
    hQC.TradeToLfxSenders[cid] = QC_StartSender(qc.TradeToLfxChannels[cid]);
    if (!hQC.TradeToLfxSenders[cid])
-      return(!catch("QC.StartLfxSender(2)->MT4iQuickChannel::QC_StartSender(channel="+ DoubleQuoteStr(qc.TradeToLfxChannels[cid]) +")", ERR_WIN32_ERROR));
+      return(!catch("QC.StartLfxSender(2)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.TradeToLfxChannels[cid] +"\")", ERR_WIN32_ERROR));
 
-   //debug("QC.StartLfxSender(3)  sender on "+ DoubleQuoteStr(qc.TradeToLfxChannels[cid]) +" started");
+   //debug("QC.StartLfxSender(3)  sender on \""+ qc.TradeToLfxChannels[cid] +"\" started");
    return(true);
 }
 
@@ -1198,7 +1198,7 @@ bool QC.StopLfxSenders() {
          int hTmp = hQC.TradeToLfxSenders[i];
                     hQC.TradeToLfxSenders[i] = NULL;                 // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
 
-         if (!QC_ReleaseSender(hTmp)) return(!catch("QC.StopLfxSenders()->MT4iQuickChannel::QC_ReleaseSender(channel="+ DoubleQuoteStr(qc.TradeToLfxChannels[i]) +")  error stopping sender", ERR_WIN32_ERROR));
+         if (!QC_ReleaseSender(hTmp)) return(!catch("QC.StopLfxSenders()->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ qc.TradeToLfxChannels[i] +"\")  error stopping sender", ERR_WIN32_ERROR));
       }
    }
    return(true);
@@ -1220,8 +1220,8 @@ bool QC.StartLfxReceiver() {
 
    hQC.TradeToLfxReceiver = QC_StartReceiver(qc.TradeToLfxChannel, hWnd);
    if (!hQC.TradeToLfxReceiver)
-      return(!catch("QC.StartLfxReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel="+ DoubleQuoteStr(qc.TradeToLfxChannel) +", hWnd="+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
-   //debug("QC.StartLfxReceiver(2)  receiver on "+ DoubleQuoteStr(qc.TradeToLfxChannel) +" started");
+      return(!catch("QC.StartLfxReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel=\""+ qc.TradeToLfxChannel +"\", hWnd="+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
+   //debug("QC.StartLfxReceiver(2)  receiver on \""+ qc.TradeToLfxChannel +"\" started");
    return(true);
 }
 
@@ -1235,8 +1235,8 @@ bool QC.StopLfxReceiver() {
    if (hQC.TradeToLfxReceiver != NULL) {
       int hTmp = hQC.TradeToLfxReceiver;
                  hQC.TradeToLfxReceiver = NULL;                      // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
-      if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopLfxReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel="+ DoubleQuoteStr(qc.TradeToLfxChannel) +")  error stopping receiver", ERR_WIN32_ERROR));
-      //debug("QC.StopLfxReceiver(2)  receiver on "+ DoubleQuoteStr(qc.TradeToLfxChannel) +" stopped");
+      if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopLfxReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ qc.TradeToLfxChannel +"\")  error stopping receiver", ERR_WIN32_ERROR));
+      //debug("QC.StopLfxReceiver(2)  receiver on \""+ qc.TradeToLfxChannel +"\" stopped");
    }
    return(true);
 }

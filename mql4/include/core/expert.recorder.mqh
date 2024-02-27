@@ -182,23 +182,23 @@ bool Recorder.ValidateInputs(bool isTest) {
             if (sValue == "...") continue;
             string sId = StrTrim(StrLeftTo(sValue, "="));
             int iValue = StrToInteger(sId);
-            if (!StrIsDigits(sId) || !iValue)            return(!Recorder.onInputError("Recorder.ValidateInputs(1)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (metric ids must be positive integers)"));
+            if (!StrIsDigits(sId) || !iValue)            return(!Recorder.onInputError("Recorder.ValidateInputs(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric ids must be positive integers)"));
             int metricId = iValue;
             if (ArraySize(metric.enabled) > metricId) {
-               if (metric.enabled[metricId])             return(!Recorder.onInputError("Recorder.ValidateInputs(2)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (duplicate metric id "+ metricId +")"));
+               if (metric.enabled[metricId])             return(!Recorder.onInputError("Recorder.ValidateInputs(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate metric id "+ metricId +")"));
             }
             double dValue = 0;
             if (StrContains(sValue, "=")) {
                string sBase = StrTrim(StrRightFrom(sValue, "="));
                dValue = StrToDouble(sBase);
-               if (!StrIsNumeric(sBase) || dValue <= 0)  return(!Recorder.onInputError("Recorder.ValidateInputs(3)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (base values must be positive numbers)"));
+               if (!StrIsNumeric(sBase) || dValue <= 0)  return(!Recorder.onInputError("Recorder.ValidateInputs(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (base values must be positive numbers)"));
             }
 
             // logical metric validation
             bool ready;
             int error = Recorder_GetSymbolDefinition(metricId, ready, symbol, description, group, digits, baseValue, multiplier);
             if (error != NULL) {
-               if (error == ERR_INVALID_INPUT_PARAMETER) return(!Recorder.onInputError("Recorder.ValidateInputs(4)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric id "+ metricId +")"));
+               if (error == ERR_INVALID_INPUT_PARAMETER) return(!Recorder.onInputError("Recorder.ValidateInputs(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id "+ metricId +")"));
                return(false);                            // a runtime error (already raised)
             }
             if (dValue > 0) baseValue = dValue;
