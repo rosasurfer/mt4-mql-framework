@@ -87,7 +87,7 @@ double history[][20];                        // trade history
 #define H_SYNTH_RUNUP_P         18
 #define H_SYNTH_DRAWDOWN_P      19
 
-double stats[4][47];                         // trade statistics
+double stats[4][41];                         // trade statistics
 
 #define S_TRADES                 0           // indexes of trade statistics
 #define S_TRADES_LONG            1
@@ -133,12 +133,6 @@ double stats[4][47];                         // trade statistics
 #define S_SCRATCH_LONG_PCT      38
 #define S_SCRATCH_SHORT         39
 #define S_SCRATCH_SHORT_PCT     40
-#define S_SCRATCH_SUM_RUNUP     41
-#define S_SCRATCH_SUM_DRAWDOWN  42
-#define S_SCRATCH_SUM_PROFIT    43
-#define S_SCRATCH_AVG_RUNUP     44
-#define S_SCRATCH_AVG_DRAWDOWN  45
-#define S_SCRATCH_AVG_PROFIT    46
 
 // instance data
 int      instance.id;                        // used for magic order numbers

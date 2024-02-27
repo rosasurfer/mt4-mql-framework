@@ -59,9 +59,6 @@ void CalculateStats() {
             stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_LONG ]++;
             else                               stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_SHORT]++;
-            stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_SUM_RUNUP   ] += history[i][H_RUNUP_P   ];
-            stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_SUM_DRAWDOWN] += history[i][H_DRAWDOWN_P];
-            stats[METRIC_TOTAL_NET_MONEY][S_SCRATCH_SUM_PROFIT  ] += history[i][H_NETPROFIT ];
          }
 
          // METRIC_TOTAL_NET_UNITS
@@ -88,9 +85,6 @@ void CalculateStats() {
             stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_LONG ]++;
             else                               stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SHORT]++;
-            stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
-            stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM_DRAWDOWN] += history[i][H_DRAWDOWN_P ];
-            stats[METRIC_TOTAL_NET_UNITS][S_SCRATCH_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
          }
 
          // METRIC_TOTAL_SYNTH_UNITS
@@ -117,9 +111,6 @@ void CalculateStats() {
             stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_LONG ]++;
             else                               stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SHORT]++;
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM_RUNUP   ] += history[i][H_SYNTH_RUNUP_P   ];
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM_DRAWDOWN] += history[i][H_SYNTH_DRAWDOWN_P];
-            stats[METRIC_TOTAL_SYNTH_UNITS][S_SCRATCH_SUM_PROFIT  ] += history[i][H_SYNTH_PROFIT_P  ];
          }
       }
 
@@ -150,10 +141,6 @@ void CalculateStats() {
          stats[i][S_LOSERS_AVG_RUNUP    ] = MathDiv(stats[i][S_LOSERS_SUM_RUNUP    ], stats[i][S_LOSERS ]);
          stats[i][S_LOSERS_AVG_DRAWDOWN ] = MathDiv(stats[i][S_LOSERS_SUM_DRAWDOWN ], stats[i][S_LOSERS ]);
          stats[i][S_LOSERS_AVG_PROFIT   ] = MathDiv(stats[i][S_LOSERS_SUM_PROFIT   ], stats[i][S_LOSERS ]);
-
-         stats[i][S_SCRATCH_AVG_RUNUP   ] = MathDiv(stats[i][S_SCRATCH_SUM_RUNUP   ], stats[i][S_SCRATCH]);
-         stats[i][S_SCRATCH_AVG_DRAWDOWN] = MathDiv(stats[i][S_SCRATCH_SUM_DRAWDOWN], stats[i][S_SCRATCH]);
-         stats[i][S_SCRATCH_AVG_PROFIT  ] = MathDiv(stats[i][S_SCRATCH_SUM_PROFIT  ], stats[i][S_SCRATCH]);
       }
    }
 }
