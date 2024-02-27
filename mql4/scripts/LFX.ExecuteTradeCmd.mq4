@@ -536,7 +536,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    int orders = OrdersTotal();
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: in einem anderen Thread wurde eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: an open order was closed/deleted in another thread
          break;
       if (OrderType() > OP_SELL)
          continue;

@@ -23,7 +23,7 @@ bool ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread
    double orderProfits[]; ArrayResize(orderProfits, orders);
 
    for (int n, si, i=0; i < orders; i++) {                           // si => current symbol index in _symbols[]
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: an open order was closed/deleted in another thread
       if (OrderType() > OP_SELL) continue;
       if (!n) {
          si = ArrayPushString(_symbols, OrderSymbol()) - 1;

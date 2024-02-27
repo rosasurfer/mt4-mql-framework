@@ -843,7 +843,7 @@ bool SynchronizeStatus() {
 
    // detect & handle dangling open positions
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;     // FALSE: an open order was closed/deleted in another thread
       if (IsMyOrder(instance.id)) {
          // TODO
       }

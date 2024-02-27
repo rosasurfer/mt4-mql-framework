@@ -6085,7 +6085,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
                string sValue = StringConcatenate("from #", smaller);
 
                for (int i=OrdersTotal()-1; i >= 0; i--) {
-                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;     // FALSE: during iteration a ticket was closed in another thread
+                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;     // FALSE: an open order was closed/deleted in another thread
                   if (OrderComment() != sValue)                    continue;
                   remainder = OrderTicket();
                   break;
@@ -6992,7 +6992,7 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
    if (size > 0) {
       OrderPush("DeletePendingOrders(1)");
       for (int i=size-1; i >= 0; i--) {                                 // offene Tickets
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: an open order was closed/deleted in another thread
             continue;
          if (IsPendingOrderType(OrderType())) {
             if (!OrderDeleteEx(OrderTicket(), CLR_NONE, oeFlags, oe))

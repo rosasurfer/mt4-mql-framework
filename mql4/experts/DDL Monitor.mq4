@@ -258,7 +258,7 @@ datetime GetPositionStartTime(string symbol) {
    datetime time = INT_MAX;
 
    for (int n, i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;     // FALSE: a ticket was closed/deleted elsewhere (another thread)
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;     // FALSE: an open order was closed/deleted in another thread
       if (OrderType() > OP_SELL)                       continue;
       if (OrderSymbol() != symbol)                     continue;
       time = MathMin(time, OrderOpenTime());
@@ -397,7 +397,7 @@ bool CloseOpenOrders(string symbol = "") {
    ArrayResize(positions, 0);
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;           // FALSE: an open order was closed/deleted in another thread
       if (OrderType() > OP_SELLSTOP)                   continue;
       if (symbol != "") {
          if (!StrCompareI(OrderSymbol(), symbol))      continue;

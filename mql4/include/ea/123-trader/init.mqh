@@ -13,7 +13,7 @@ int onInit() {
          // find and select an open position
          int orders = OrdersTotal();
          for (int i=0; i < orders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;     // FALSE: another thread closed/deleted an open order
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;     // FALSE: an open order was closed/deleted in another thread
             if (OrderType() > OP_SELL || OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
             if (open.ticket > 0) return(catch("onInit(1)  illegal second position detected: #"+ OrderTicket(), ERR_ILLEGAL_STATE));
             open.ticket     = OrderTicket();

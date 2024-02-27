@@ -418,7 +418,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (customTickets[i] <= 3)                                continue;     // skip virtual positions
             if (!SelectTicket(customTickets[i], "ShowOpenOrders(1)")) break;
          }
-         else if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
+         else if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;               // FALSE: an open order was closed/deleted in another thread
          if (OrderSymbol() != Symbol()) continue;
 
          // read order data
@@ -1688,7 +1688,7 @@ bool UpdateStopoutLevel() {
 
       // Sortierschlüssel auslesen und dabei PL von LFX-Positionen erfassen (alle Symbole).
       for (int n, i=0; i < orders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                 // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                 // FALSE: an open order was closed/deleted in another thread
          if (OrderType() > OP_SELL) {
             if (!isPendings) /*&&*/ if (OrderSymbol()==Symbol())
                isPendings = true;
@@ -4419,7 +4419,7 @@ bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], in
       int ordersTotal = OrdersTotal();
 
       for (i=0; i < ordersTotal; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                // FALSE: während des Auslesens wurde von dritter Seite eine Order geschlossen oder gelöscht
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                // FALSE: an open order was closed/deleted in another thread
             ordersTotal = -1;                                              // Abbruch und via while-Schleife alles nochmal verarbeiten, bis for() fehlerfrei durchläuft
             break;
          }

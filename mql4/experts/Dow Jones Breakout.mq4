@@ -432,7 +432,7 @@ bool ReadStatus() {
    // [Runtime status]
    section = "Runtime status";
    instance.id                 = GetIniInt    (file, section, "instance.id"      );             // int      instance.id              = 123
-   instance.name               = GetIniStringA(file, section, "instance.name", "");             // string   instance.name            = DJBO.123
+   instance.name               = GetIniStringA(file, section, "instance.name", "");             // string   instance.name            = ID.123
    instance.created            = GetIniInt    (file, section, "instance.created" );             // datetime instance.created         = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest             = GetIniBool   (file, section, "instance.isTest"  );             // bool     instance.isTest          = 1
    instance.status             = GetIniInt    (file, section, "instance.status"  );             // int      instance.status          = 1 (waiting)
@@ -467,7 +467,7 @@ bool SynchronizeStatus() {
 
    // detect & handle dangling open positions
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;     // FALSE: an open order was closed/deleted in another thread
       if (IsMyOrder(instance.id)) {
          // TODO
       }

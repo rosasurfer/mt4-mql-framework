@@ -1687,7 +1687,7 @@ bool SynchronizeStatus() {
 
    // detect dangling open positions
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;      // FALSE: an open order was closed/deleted in another thread
       if (IsMyOrder(instance.id)) {
          if (IsPendingOrderType(OrderType())) {
             logWarn("SynchronizeStatus(1)  "+ instance.name +" unsupported pending order found: #"+ OrderTicket() +", ignoring it...");

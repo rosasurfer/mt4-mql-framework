@@ -83,7 +83,7 @@ int onStart() {
 
    // (1) zu schlieﬂende Positionen selektieren
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: w‰hrend des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: an open order was closed/deleted in another thread
          break;
       if (LFX.IsMyOrder()) {
          if (OrderType() > OP_SELL)
