@@ -479,6 +479,7 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/common/status/file/GetStatusFilename.mqh>
 #include <ea/common/status/file/ReadStatus.HistoryRecord.mqh>
 #include <ea/common/status/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/status/file/SaveStatus.General.mqh>
 #include <ea/common/status/file/SaveStatus.OpenPosition.mqh>
 #include <ea/common/status/file/SaveStatus.TradeHistory.mqh>
 #include <ea/common/status/file/SaveStatus.TradeStats.mqh>
@@ -1473,44 +1474,21 @@ bool SaveStatus() {
    if (last_error != NULL)              return(false);
    if (!instance.id || Instance.ID=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
    if (__isTesting) {
-      if (test.reduceStatusWrites) {                              // in tester skip most writes except file creation, instance stop and test end
+      if (test.reduceStatusWrites) {                           // in tester skip most writes except file creation, instance stop and test end
          static bool saved = false;
          if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
          saved = true;
       }
    }
-   else if (IsTestInstance()) return(true);                       // don't change the status file of a finished test
+   else if (IsTestInstance()) return(true);                    // don't change the status file of a finished test
 
    string section="", separator="", file=GetStatusFilename();
    bool fileExists = IsFile(file, MODE_SYSTEM);
-   if (!fileExists) separator = CRLF;                             // an empty line separator
-   SS.All();                                                      // update trade stats and global string representations
+   if (!fileExists) separator = CRLF;                          // an empty line separator
+   SS.All();                                                   // update trade stats and global string representations
 
    // [General]
-   section = "General";
-   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber() +" ("+ ifString(IsDemoFix(), "demo", "real") +")"+ ifString(__isTesting, separator, ""));
-
-   if (!__isTesting) {
-      WriteIniString(file, section, "AccountCurrency", AccountCurrency());
-      WriteIniString(file, section, "Symbol",          Symbol() + separator);
-   }
-   else {
-      WriteIniString(file, section, "Test.Currency",   AccountCurrency());
-      WriteIniString(file, section, "Test.Symbol",     Symbol());
-      WriteIniString(file, section, "Test.TimeRange",  TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
-      WriteIniString(file, section, "Test.Period",     PeriodDescription());
-      WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
-      WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid) * pMultiplier, pDigits) +" "+ pUnit);
-         double commission  = GetCommission();
-         string sCommission = DoubleToStr(commission, 2);
-         if (NE(commission, 0)) {
-            double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-            double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
-            double units     = MathDiv(commission, MathDiv(tickValue, tickSize));
-            sCommission = sCommission +" ("+ DoubleToStr(units * pMultiplier, pDigits) +" "+ pUnit +")";
-         }
-      WriteIniString(file, section, "Test.Commission", sCommission + separator);
-   }
+   if (!SaveStatus.General(file, fileExists)) return(false);   // account and instrument infos
 
    // [Inputs]
    section = "Inputs";

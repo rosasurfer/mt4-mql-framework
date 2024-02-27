@@ -290,6 +290,7 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/common/status/file/GetStatusFilename.mqh>
 #include <ea/common/status/file/ReadStatus.HistoryRecord.mqh>
 #include <ea/common/status/file/ReadStatus.TradeHistory.mqh>
+#include <ea/common/status/file/SaveStatus.General.mqh>
 #include <ea/common/status/file/SaveStatus.OpenPosition.mqh>
 #include <ea/common/status/file/SaveStatus.TradeHistory.mqh>
 #include <ea/common/status/file/SaveStatus.TradeStats.mqh>
@@ -892,48 +893,25 @@ bool SaveStatus() {
    SS.All();                                                   // update trade stats and global string representations
 
    // [General]
-   section = "General";
-   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber() +" ("+ ifString(IsDemoFix(), "demo", "real") +")"+ ifString(__isTesting, separator, ""));
-
-   if (!__isTesting) {
-      WriteIniString(file, section, "AccountCurrency", AccountCurrency());
-      WriteIniString(file, section, "Symbol",          Symbol() + separator);
-   }
-   else {
-      WriteIniString(file, section, "Test.Currency",   AccountCurrency());
-      WriteIniString(file, section, "Test.Symbol",     Symbol());
-      WriteIniString(file, section, "Test.TimeRange",  TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
-      WriteIniString(file, section, "Test.Period",     PeriodDescription());
-      WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
-      WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid) * pMultiplier, pDigits) +" "+ pUnit);
-         double commission  = GetCommission();
-         string sCommission = DoubleToStr(commission, 2);
-         if (NE(commission, 0)) {
-            double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-            double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
-            double units     = MathDiv(commission, MathDiv(tickValue, tickSize));
-            sCommission = sCommission +" ("+ DoubleToStr(units * pMultiplier, pDigits) +" "+ pUnit +")";
-         }
-      WriteIniString(file, section, "Test.Commission", sCommission + separator);
-   }
+   if (!SaveStatus.General(file, fileExists)) return(false);   // account and instrument infos
 
    // [Inputs]
    section = "Inputs";
-   WriteIniString(file, section, "Instance.ID",              /*string  */ Instance.ID);
-   WriteIniString(file, section, "Tunnel.Definition",        /*string  */ Tunnel.Definition);
-   WriteIniString(file, section, "Donchian.Periods",         /*int     */ Donchian.Periods);
-   WriteIniString(file, section, "Lots",                     /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "EA.Recorder",              /*string  */ EA.Recorder + separator);
+   WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
+   WriteIniString(file, section, "Tunnel.Definition",          /*string  */ Tunnel.Definition);
+   WriteIniString(file, section, "Donchian.Periods",           /*int     */ Donchian.Periods);
+   WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
+   WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
    // [Runtime status]
    section = "Runtime status";
-   WriteIniString(file, section, "instance.id",              /*int     */ instance.id);
-   WriteIniString(file, section, "instance.name",            /*string  */ instance.name);
-   WriteIniString(file, section, "instance.created",         /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "instance.isTest",          /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.status",          /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")" + separator);
+   WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
+   WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
+   WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
+   WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")" + separator);
 
-   WriteIniString(file, section, "recorder.stdEquitySymbol", /*string  */ recorder.stdEquitySymbol + separator);
+   WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
 
    // trades and stats
    if (!SaveStatus.TradeStats  (file, fileExists)) return(false);
