@@ -26,15 +26,12 @@ extern int    Initial.StopLoss               = 50;          // in pip (0: moving
 extern int    Target1                        = 0;           // in pip
 extern int    Target1.ClosePercent           = 0;           // size to close (0: nothing)
 extern int    Target1.MoveStopTo             = 1;           // in pip (0: don't move stop)
-
 extern int    Target2                        = 0;           // ...
 extern int    Target2.ClosePercent           = 30;          // ...
 extern int    Target2.MoveStopTo             = 0;           // ...
-
 extern int    Target3                        = 0;           // ...
 extern int    Target3.ClosePercent           = 30;          // ...
 extern int    Target3.MoveStopTo             = 0;           // ...
-
 extern int    Target4                        = 0;           // ...
 extern int    Target4.ClosePercent           = 30;          // ...
 extern int    Target4.MoveStopTo             = 0;           // ...
@@ -143,8 +140,6 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/functions/IsTestInstance.mqh>
 #include <ea/functions/RestoreInstance.mqh>
 #include <ea/functions/SetInstanceId.mqh>
-#include <ea/functions/ValidateInputs.ID.mqh>
-#include <ea/functions/onInputError.mqh>
 
 #include <ea/functions/ShowTradeHistory.mqh>
 #include <ea/functions/ToggleOpenOrders.mqh>
@@ -175,14 +170,16 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/functions/status/file/SaveStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeStats.mqh>
 
+#include <ea/functions/status/volatile/StoreVolatileData.mqh>
+#include <ea/functions/status/volatile/RestoreVolatileData.mqh>
+#include <ea/functions/status/volatile/RemoveVolatileData.mqh>
+
 #include <ea/functions/trade/AddHistoryRecord.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
-
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
-#include <ea/functions/volatile/StoreVolatileData.mqh>
-#include <ea/functions/volatile/RestoreVolatileData.mqh>
-#include <ea/functions/volatile/RemoveVolatileData.mqh>
+#include <ea/functions/validation/ValidateInputs.ID.mqh>
+#include <ea/functions/validation/onInputError.mqh>
 
 
 /**

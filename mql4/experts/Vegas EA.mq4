@@ -185,8 +185,6 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/functions/IsTestInstance.mqh>
 #include <ea/functions/RestoreInstance.mqh>
 #include <ea/functions/SetInstanceId.mqh>
-#include <ea/functions/ValidateInputs.ID.mqh>
-#include <ea/functions/onInputError.mqh>
 
 #include <ea/functions/ShowTradeHistory.mqh>
 #include <ea/functions/ToggleOpenOrders.mqh>
@@ -219,15 +217,17 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/functions/status/file/SaveStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeStats.mqh>
 
+#include <ea/functions/status/volatile/StoreVolatileData.mqh>
+#include <ea/functions/status/volatile/RestoreVolatileData.mqh>
+#include <ea/functions/status/volatile/RemoveVolatileData.mqh>
+
 #include <ea/functions/trade/AddHistoryRecord.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
-
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
-#include <ea/functions/volatile/StoreVolatileData.mqh>
-#include <ea/functions/volatile/RestoreVolatileData.mqh>
-#include <ea/functions/volatile/RemoveVolatileData.mqh>
+#include <ea/functions/validation/ValidateInputs.ID.mqh>
+#include <ea/functions/validation/onInputError.mqh>
 
 
 /**

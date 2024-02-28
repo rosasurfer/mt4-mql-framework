@@ -59,16 +59,28 @@
  *
  *
  *
- * TODO:
+ * TODO: main objective is faster implementation and testing of new EAs
+ *
  *  - re-usable exit management
  *     breakeven stop
- *     trailing stop
  *     partial profit taking
+ *     1st: distances in static pips
+ *     2nd: dynamic distances (multiple of range)
+ *
+ *     steps:
+ *      input validation
+ *      convert inputs to array
+ *      runtime:
+ *       monitor executed limits
+ *       process stops and targets
+ *        handle limit execution during processing
+ *
+ *
  *
  *  - tests
  *     storage in folder per strategy
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
- *
+ *  - trailing stop
  *  - self-optimization
  *  - money management
  *
@@ -219,7 +231,8 @@ extern string TradingMode         = "regular* | virtual";   // may be shortened
 extern int    ZigZag.Periods      = 30;
 extern double Lots                = 1.0;
 extern string StartConditions     = "";                     // @time(datetime|time)
-extern string StopConditions      = "";                     // @time(datetime|time)    // TODO: @signal([long|short]), @breakeven(on-profit), @trail([on-profit:]stepsize)
+extern string StopConditions      = "";                     // @time(datetime|time)
+
 extern double TakeProfit          = 0;                      // TP value
 extern string TakeProfit.Type     = "off* | money | percent | pip | quote-unit";       // can be shortened if distinct        // TODO: redefine point as index point
 
@@ -385,8 +398,6 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/functions/IsTestInstance.mqh>
 #include <ea/functions/RestoreInstance.mqh>
 #include <ea/functions/SetInstanceId.mqh>
-#include <ea/functions/ValidateInputs.ID.mqh>
-#include <ea/functions/onInputError.mqh>
 
 #include <ea/functions/ShowTradeHistory.mqh>
 #include <ea/functions/ToggleOpenOrders.mqh>
@@ -418,15 +429,17 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/functions/status/file/SaveStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeStats.mqh>
 
+#include <ea/functions/status/volatile/StoreVolatileData.mqh>
+#include <ea/functions/status/volatile/RestoreVolatileData.mqh>
+#include <ea/functions/status/volatile/RemoveVolatileData.mqh>
+
 #include <ea/functions/trade/AddHistoryRecord.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
-
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
-#include <ea/functions/volatile/StoreVolatileData.mqh>
-#include <ea/functions/volatile/RestoreVolatileData.mqh>
-#include <ea/functions/volatile/RemoveVolatileData.mqh>
+#include <ea/functions/validation/ValidateInputs.ID.mqh>
+#include <ea/functions/validation/onInputError.mqh>
 
 
 /**
