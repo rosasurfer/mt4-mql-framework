@@ -1479,7 +1479,7 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_PROFIT_MARKER_PCT], 1), "+.+") +"%";
+            pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_PROFIT_MARKER_PCT], 2), "+.+") +"%";
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet    (label, OBJPROP_COLOR,      ifInt(positions.data[i][I_PROFIT_MARKER_PCT] < 0, OrangeRed, DodgerBlue));
@@ -1493,7 +1493,7 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_LOSS_MARKER_PCT], 1), "+.+") +"%";
+            pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_LOSS_MARKER_PCT], 2), "+.+") +"%";
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet    (label, OBJPROP_COLOR,      ifInt(positions.data[i][I_LOSS_MARKER_PCT] < 0, OrangeRed, DodgerBlue));
@@ -2251,7 +2251,7 @@ bool CustomPositions.ReadConfig() {
                   containsEquityValue = true;
                }
 
-               else if (StrStartsWith(values[n], "PM")) {            // profit marker: PM=3[%]
+               else if (StrStartsWith(values[n], "PM")) {            // profit marker: PM=3.0[%]
                   sValue = StrTrim(StrSubstr(values[n], 2));
                   if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(sValue, 1));
@@ -2270,7 +2270,7 @@ bool CustomPositions.ReadConfig() {
                   containsProfitMarker = true;
                }
 
-               else if (StrStartsWith(values[n], "LM")) {            // loss marker: LM=-5[%]
+               else if (StrStartsWith(values[n], "LM")) {            // loss marker: LM=-5.0[%]
                   sValue = StrTrim(StrSubstr(values[n], 2));
                   if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(sValue, 1));
