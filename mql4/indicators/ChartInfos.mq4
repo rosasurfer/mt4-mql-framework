@@ -210,8 +210,9 @@ string  orderTracker.positionStepSize = "MarginLow.wav";          // position in
 #define CLOSE_STOPLOSS     2
 #define CLOSE_STOPOUT      3
 
-#include <indicator/chartinfos/init.mqh>
-#include <indicator/chartinfos/deinit.mqh>
+// initialization/deinitialization
+#include <chartinfos/init.mqh>
+#include <chartinfos/deinit.mqh>
 
 
 /**
