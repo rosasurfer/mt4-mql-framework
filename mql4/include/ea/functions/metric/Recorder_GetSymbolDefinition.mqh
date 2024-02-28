@@ -37,21 +37,21 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
          return(NO_ERROR);
 
       // --- default metrics ------------------------------------------------------------------------------------------------
-      case METRIC_TOTAL_NET_MONEY:
+      case METRIC_NET_MONEY:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";       // "US500.123A"
          descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = 2;
          multiplier  = 1;
          break;
 
-      case METRIC_TOTAL_NET_UNITS:
+      case METRIC_NET_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
          descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = pDigits;
          multiplier  = pMultiplier;
          break;
 
-      case METRIC_TOTAL_SIG_UNITS:
+      case METRIC_SIG_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
          descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = pDigits;

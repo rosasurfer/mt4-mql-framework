@@ -10,14 +10,14 @@ void SS.TotalProfit(bool moneyInPercent = false) {
    }
    else {
       switch (status.activeMetric) {
-         case METRIC_TOTAL_NET_MONEY:
+         case METRIC_NET_MONEY:
             if (moneyInPercent) sTotalProfit = NumberToStr(MathDiv(instance.totalNetProfit, instance.startEquity) * 100, "R+.2") +"%";
             else                sTotalProfit = NumberToStr(instance.totalNetProfit, "R+.2") +" "+ AccountCurrency();
             break;
-         case METRIC_TOTAL_NET_UNITS:
+         case METRIC_NET_UNITS:
             sTotalProfit = NumberToStr(instance.totalNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
-         case METRIC_TOTAL_SIG_UNITS:
+         case METRIC_SIG_UNITS:
             sTotalProfit = NumberToStr(instance.totalSigProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
             break;
 

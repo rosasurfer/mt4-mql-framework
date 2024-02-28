@@ -91,6 +91,9 @@ extern double Lots                 = 1.0;
 #include <functions/iCustom/MaTunnel.mqh>
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
+#include <ea/functions/metric/defines.mqh>
+#include <ea/functions/trade/defines.mqh>
+#include <ea/functions/trade/stats/defines.mqh>
 
 #define STRATEGY_ID            108                 // unique strategy id (used for magic order numbers)
 
@@ -103,83 +106,6 @@ extern double Lots                 = 1.0;
 
 #define SIGNAL_LONG  TRADE_DIRECTION_LONG          // 1 signal types
 #define SIGNAL_SHORT TRADE_DIRECTION_SHORT         // 2
-
-#define METRIC_TOTAL_NET_MONEY   1                 // custom metrics
-#define METRIC_TOTAL_NET_UNITS   2
-#define METRIC_TOTAL_SIG_UNITS   3
-
-#define METRIC_NEXT              1                 // directions for toggling between metrics
-#define METRIC_PREVIOUS         -1
-
-double history[][20];                              // trade history
-
-#define H_TICKET                 0                 // indexes of trade history
-#define H_TYPE                   1
-#define H_LOTS                   2
-#define H_OPENTIME               3
-#define H_OPENPRICE              4
-#define H_OPENPRICE_SIG          5
-#define H_CLOSETIME              6
-#define H_CLOSEPRICE             7
-#define H_CLOSEPRICE_SIG         8
-#define H_SLIPPAGE               9
-#define H_SWAP                  10
-#define H_COMMISSION            11
-#define H_GROSSPROFIT           12
-#define H_NETPROFIT             13
-#define H_NETPROFIT_P           14
-#define H_RUNUP_P               15
-#define H_DRAWDOWN_P            16
-#define H_SIG_PROFIT_P          17
-#define H_SIG_RUNUP_P           18
-#define H_SIG_DRAWDOWN_P        19
-
-double stats[4][41];                               // trade statistics
-
-#define S_TRADES                 0                 // indexes of trade statistics
-#define S_TRADES_LONG            1
-#define S_TRADES_LONG_PCT        2
-#define S_TRADES_SHORT           3
-#define S_TRADES_SHORT_PCT       4
-#define S_TRADES_SUM_RUNUP       5
-#define S_TRADES_SUM_DRAWDOWN    6
-#define S_TRADES_SUM_PROFIT      7
-#define S_TRADES_AVG_RUNUP       8
-#define S_TRADES_AVG_DRAWDOWN    9
-#define S_TRADES_AVG_PROFIT     10
-
-#define S_WINNERS               11
-#define S_WINNERS_PCT           12
-#define S_WINNERS_LONG          13
-#define S_WINNERS_LONG_PCT      14
-#define S_WINNERS_SHORT         15
-#define S_WINNERS_SHORT_PCT     16
-#define S_WINNERS_SUM_RUNUP     17
-#define S_WINNERS_SUM_DRAWDOWN  18
-#define S_WINNERS_SUM_PROFIT    19
-#define S_WINNERS_AVG_RUNUP     20
-#define S_WINNERS_AVG_DRAWDOWN  21
-#define S_WINNERS_AVG_PROFIT    22
-
-#define S_LOSERS                23
-#define S_LOSERS_PCT            24
-#define S_LOSERS_LONG           25
-#define S_LOSERS_LONG_PCT       26
-#define S_LOSERS_SHORT          27
-#define S_LOSERS_SHORT_PCT      28
-#define S_LOSERS_SUM_RUNUP      29
-#define S_LOSERS_SUM_DRAWDOWN   30
-#define S_LOSERS_SUM_PROFIT     31
-#define S_LOSERS_AVG_RUNUP      32
-#define S_LOSERS_AVG_DRAWDOWN   33
-#define S_LOSERS_AVG_PROFIT     34
-
-#define S_SCRATCH               35
-#define S_SCRATCH_PCT           36
-#define S_SCRATCH_LONG          37
-#define S_SCRATCH_LONG_PCT      38
-#define S_SCRATCH_SHORT         39
-#define S_SCRATCH_SHORT_PCT     40
 
 // instance data
 int      instance.id;                              // used for magic order numbers
@@ -254,7 +180,6 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 
 // shared functions
 #include <ea/functions/CalculateMagicNumber.mqh>
-#include <ea/functions/CalculateStats.mqh>
 #include <ea/functions/CreateInstanceId.mqh>
 #include <ea/functions/IsMyOrder.mqh>
 #include <ea/functions/IsTestInstance.mqh>
@@ -297,6 +222,8 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 #include <ea/functions/trade/AddHistoryRecord.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
+
+#include <ea/functions/trade/stats/CalculateStats.mqh>
 
 #include <ea/functions/volatile/StoreVolatileData.mqh>
 #include <ea/functions/volatile/RestoreVolatileData.mqh>
@@ -352,7 +279,7 @@ bool onCommand(string cmd, string params, int keys) {
    }
    else if (cmd == "toggle-metrics") {
       int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
-      return(ToggleMetrics(direction, METRIC_TOTAL_NET_MONEY, METRIC_TOTAL_SIG_UNITS));
+      return(ToggleMetrics(direction, METRIC_NET_MONEY, METRIC_SIG_UNITS));
    }
    else if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());

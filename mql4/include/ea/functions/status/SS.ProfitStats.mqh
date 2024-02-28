@@ -12,7 +12,7 @@ void SS.ProfitStats(bool moneyInPercent = false) {
       string sMaxProfit="", sMaxDrawdown="";
 
       switch (status.activeMetric) {
-         case METRIC_TOTAL_NET_MONEY:
+         case METRIC_NET_MONEY:
             if (moneyInPercent) {
                sMaxProfit   = NumberToStr(MathDiv(instance.maxNetProfit,   instance.startEquity) * 100, "R+.2");
                sMaxDrawdown = NumberToStr(MathDiv(instance.maxNetDrawdown, instance.startEquity) * 100, "R+.2");
@@ -22,11 +22,11 @@ void SS.ProfitStats(bool moneyInPercent = false) {
                sMaxDrawdown = NumberToStr(instance.maxNetDrawdown, "R+.2");
             }
             break;
-         case METRIC_TOTAL_NET_UNITS:
+         case METRIC_NET_UNITS:
             sMaxProfit   = NumberToStr(instance.maxNetProfitP   * pMultiplier, "R+."+ pDigits);
             sMaxDrawdown = NumberToStr(instance.maxNetDrawdownP * pMultiplier, "R+."+ pDigits);
             break;
-         case METRIC_TOTAL_SIG_UNITS:
+         case METRIC_SIG_UNITS:
             sMaxProfit   = NumberToStr(instance.maxSigProfitP   * pMultiplier, "R+."+ pDigits);
             sMaxDrawdown = NumberToStr(instance.maxSigDrawdownP * pMultiplier, "R+."+ pDigits);
             break;

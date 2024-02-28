@@ -19,7 +19,7 @@ int ShowTradeHistory() {
       datetime closeTime  = history[i][H_CLOSETIME ];
       double   closePrice = history[i][H_CLOSEPRICE];
 
-      if (status.activeMetric == METRIC_TOTAL_SIG_UNITS) {
+      if (status.activeMetric == METRIC_SIG_UNITS) {
          openPrice  = history[i][H_OPENPRICE_SIG ];
          closePrice = history[i][H_CLOSEPRICE_SIG];
       }
