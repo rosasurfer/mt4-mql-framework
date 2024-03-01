@@ -59,7 +59,7 @@ int onInit() {
    for (i=0; i < size; i++) {
       sValue = StrTrim(sValues[i]);
       if (StringLen(sValue) > 0) {
-         if (sValue == "pending") {
+         if (StrStartsWith("pendings", sValue)) {
             ArrayPushInt(closeTypes, OP_BUYLIMIT );
             ArrayPushInt(closeTypes, OP_SELLLIMIT);
             ArrayPushInt(closeTypes, OP_BUYSTOP  );

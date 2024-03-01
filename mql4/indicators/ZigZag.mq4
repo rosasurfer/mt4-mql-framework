@@ -68,7 +68,7 @@ extern int    ZigZag.Periods.Step            = 0;                       // step 
 extern string ZigZag.Type                    = "Lines | Semaphores*";   // ZigZag lines or reversal points (may be shortened)
 extern int    ZigZag.Width                   = 2;
 extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a large point
-extern color  ZigZag.Color                   = DodgerBlue;
+extern color  ZigZag.Color                   = Blue;
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
