@@ -79,11 +79,10 @@ extern string Instance.ID          = "";                             // instance
 extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MA definitions separated by comma
 extern string Supported.MA.Methods = "SMA, LWMA, EMA, SMMA";
 extern int    Donchian.Periods     = 30;
-extern double Lots                 = 1.0;
 
+extern double Lots                 = 1.0;
 extern int    Initial.TakeProfit   = 100;                            // in pip (0: partial targets only or no TP)
 extern int    Initial.StopLoss     = 50;                             // in pip (0: moving stops only or no SL
-
 extern int    Target1              = 0;                              // in pip
 extern int    Target1.ClosePercent = 0;                              // size to close (0: nothing)
 extern int    Target1.MoveStopTo   = 1;                              // in pip (0: don't move stop)
@@ -708,8 +707,8 @@ bool ReadStatus() {
    Tunnel.Definition        = GetIniStringA(file, section, "Tunnel.Definition", "");         // string   Tunnel.Definition = EMA(1), EMA(2), EMA(3)
    Donchian.Periods         = GetIniInt    (file, section, "Donchian.Periods"     );         // int      Donchian.Periods  = 40
    Lots                     = GetIniDouble (file, section, "Lots"                 );         // double   Lots              = 0.1
-   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",       "");         // string   EA.Recorder       = 1,2,4
    if (!ReadStatus.Targets(file)) return(false);
+   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",       "");         // string   EA.Recorder       = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";

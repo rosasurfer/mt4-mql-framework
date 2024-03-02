@@ -17,24 +17,23 @@ int __virtualTicks = 0;
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID                    = "";          // instance to load from a status file (format "[T]123")
-extern double Lots                           = 1.0;
+extern string Instance.ID          = "";     // instance to load from a status file (format "[T]123")
 
-extern int    Initial.TakeProfit             = 100;         // in pip (0: partial targets only or no TP)
-extern int    Initial.StopLoss               = 50;          // in pip (0: moving stops only or no SL
-
-extern int    Target1                        = 0;           // in pip
-extern int    Target1.ClosePercent           = 0;           // size to close (0: nothing)
-extern int    Target1.MoveStopTo             = 1;           // in pip (0: don't move stop)
-extern int    Target2                        = 0;           // ...
-extern int    Target2.ClosePercent           = 30;          //
-extern int    Target2.MoveStopTo             = 0;           //
-extern int    Target3                        = 0;           //
-extern int    Target3.ClosePercent           = 30;          //
-extern int    Target3.MoveStopTo             = 0;           //
-extern int    Target4                        = 0;           //
-extern int    Target4.ClosePercent           = 30;          //
-extern int    Target4.MoveStopTo             = 0;           //
+extern double Lots                 = 1.0;
+extern int    Initial.TakeProfit   = 100;    // in pip (0: partial targets only or no TP)
+extern int    Initial.StopLoss     = 50;     // in pip (0: moving stops only or no SL
+extern int    Target1              = 0;      // in pip
+extern int    Target1.ClosePercent = 0;      // size to close (0: nothing)
+extern int    Target1.MoveStopTo   = 1;      // in pip (0: don't move stop)
+extern int    Target2              = 0;      // ...
+extern int    Target2.ClosePercent = 30;     //
+extern int    Target2.MoveStopTo   = 0;      //
+extern int    Target3              = 0;      //
+extern int    Target3.ClosePercent = 30;     //
+extern int    Target3.MoveStopTo   = 0;      //
+extern int    Target4              = 0;      //
+extern int    Target4.ClosePercent = 30;     //
+extern int    Target4.MoveStopTo   = 0;      //
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -48,14 +47,14 @@ extern int    Target4.MoveStopTo             = 0;           //
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-#define STRATEGY_ID            110           // unique strategy id (used for magic order numbers)
+#define STRATEGY_ID         110              // unique strategy id (used for magic order numbers)
 
-#define INSTANCE_ID_MIN          1           // range of valid instance ids
-#define INSTANCE_ID_MAX        999           //
+#define INSTANCE_ID_MIN       1              // range of valid instance ids
+#define INSTANCE_ID_MAX     999              //
 
-#define STATUS_WAITING           1           // instance has no open positions and waits for signals
-#define STATUS_PROGRESSING       2           // instance manages open positions
-#define STATUS_STOPPED           3           // instance has no open positions and doesn't wait for signals
+#define STATUS_WAITING        1              // instance has no open positions and waits for signals
+#define STATUS_PROGRESSING    2              // instance manages open positions
+#define STATUS_STOPPED        3              // instance has no open positions and doesn't wait for signals
 
 // instance data
 int      instance.id;                        // used for magic order numbers
@@ -342,8 +341,8 @@ bool ReadStatus() {
    section = "Inputs";
    Instance.ID              = GetIniStringA(file, section, "Instance.ID", "");               // string   Instance.ID = T123
    Lots                     = GetIniDouble (file, section, "Lots"           );               // double   Lots        = 0.1
-   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder", "");               // string   EA.Recorder = 1,2,4
    if (!ReadStatus.Targets(file)) return(false);
+   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder", "");               // string   EA.Recorder = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";

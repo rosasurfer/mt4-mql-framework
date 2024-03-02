@@ -68,21 +68,21 @@ extern int    Target4.MoveStopTo             = 0;           // ...              
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID        109         // unique strategy id (used for magic order numbers)
+#define STRATEGY_ID      109           // unique strategy id (used for magic order numbers)
 
-#define INSTANCE_ID_MIN      1         // range of valid instance ids
-#define INSTANCE_ID_MAX    999         //
+#define INSTANCE_ID_MIN    1           // range of valid instance ids
+#define INSTANCE_ID_MAX  999           //
 
-#define SIGNAL_LONG     1              // signal flags, can be combined
-#define SIGNAL_SHORT    2
-#define SIGNAL_CLOSE    4
+#define SIGNAL_LONG        1           // signal flags, can be combined
+#define SIGNAL_SHORT       2
+#define SIGNAL_CLOSE       4
 
 double targets[4][4];                  // profit targets and stop configurations
 
-#define T_LEVEL         0              // indexes of converted targets
-#define T_CLOSE_PCT     1
-#define T_REMAINDER     2
-#define T_MOVE_STOP     3
+#define T_LEVEL            0           // indexes of converted targets
+#define T_CLOSE_PCT        1
+#define T_REMAINDER        2
+#define T_MOVE_STOP        3
 
 // instance data
 int      instance.id;                  // used for magic order numbers
