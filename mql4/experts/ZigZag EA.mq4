@@ -239,7 +239,7 @@ extern string ___a__________________________ = "=== Instance settings ===";
 extern string StartConditions                = "";                      // @time(datetime|time)
 extern string StopConditions                 = "";                      // @time(datetime|time)
 extern double TakeProfit                     = 0;                       // TP value
-extern string TakeProfit.Type                = "off* | percent | pip | quote-unit";  // can be shortened if distinct        // TODO: redefine point as punit
+extern string TakeProfit.Type                = "off* | percent | pip | point";                                                // TODO: redefine point as punit
 
 extern string ___b__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 30;
@@ -288,6 +288,8 @@ extern bool   ShowProfitInPercent            = true;                    // wheth
 
 #define TRADINGMODE_REGULAR         1              // trading modes
 #define TRADINGMODE_VIRTUAL         2
+
+string tradingModeDescriptions[] = {"", "regular", "virtual"};
 
 #define SIGNAL_TYPE                 0              // signal object fields
 #define SIGNAL_DIRECTION            1
@@ -389,8 +391,6 @@ string   pUnit = "";
 int      pDigits;
 int      pMultiplier;
 int      order.slippage = 1;                       // in MQL points
-string   tradingModeDescriptions[] = {"", "regular", "virtual"};
-string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote currency", "index points"};
 
 // cache vars to speed-up ShowStatus()
 string   sTradingModeStatus[] = {"", "", "Virtual "};
@@ -1941,25 +1941,24 @@ bool ValidateInputs() {
 
    // TakeProfit (nothing to do)
 
-   // TakeProfit.Type: "off* | money | percent | pip | quote-unit"
+   // TakeProfit.Type: "off* | percent | pip | point"
    sValue = StrToLower(TakeProfit.Type);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (StrStartsWith("off",        sValue)) stop.profitPun.type = NULL;
-   else if (StrStartsWith("quote-unit", sValue)) stop.profitPun.type = TP_TYPE_PRICEUNIT;
-   else if (StringLen(sValue) < 2)                      return(!onInputError("ValidateInputs(19)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
-   else if (StrStartsWith("percent", sValue))    stop.profitPun.type = TP_TYPE_PERCENT;
-   else if (StrStartsWith("pip",     sValue))    stop.profitPun.type = TP_TYPE_PIP;
-   else                                                 return(!onInputError("ValidateInputs(20)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   if      (sValue == "off"    ) int stopType = NULL;
+   else if (sValue == "percent")     stopType = TP_TYPE_PERCENT;
+   else if (sValue == "pip"    )     stopType = TP_TYPE_PIP;
+   else if (sValue == "point"  )     stopType = TP_TYPE_PRICEUNIT;
+   else return(!onInputError("ValidateInputs(19)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitPct.condition   = false;
    stop.profitPct.description = "";
    stop.profitPun.condition   = false;
    stop.profitPun.description = "";
 
-   switch (stop.profitPun.type) {
+   switch (stopType) {
       case TP_TYPE_PERCENT:
          stop.profitPct.condition   = true;
          stop.profitPct.value       = TakeProfit;
@@ -1969,30 +1968,32 @@ bool ValidateInputs() {
 
       case TP_TYPE_PIP:
          stop.profitPun.condition   = true;
+         stop.profitPun.type        = stopType;
          stop.profitPun.value       = NormalizeDouble(TakeProfit*Pip, Digits);
          stop.profitPun.description = "profit("+ NumberToStr(TakeProfit, ".+") +" pip)";
          break;
 
       case TP_TYPE_PRICEUNIT:
          stop.profitPun.condition   = true;
+         stop.profitPun.type        = stopType;
          stop.profitPun.value       = NormalizeDouble(TakeProfit, Digits);
          stop.profitPun.description = "profit("+ NumberToStr(stop.profitPun.value, PriceFormat) +" point)";
          break;
    }
-   TakeProfit.Type = tpTypeDescriptions[stop.profitPun.type];
+   TakeProfit.Type = sValue;
 
    // ZigZag.Periods
    if (isInitParameters && ZigZag.Periods!=prev.ZigZag.Periods) {
-      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(21)  "+ instance.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(instance.status) +" instance"));
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(20)  "+ instance.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(instance.status) +" instance"));
    }
-   if (ZigZag.Periods < 2)                              return(!onInputError("ValidateInputs(22)  "+ instance.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
+   if (ZigZag.Periods < 2)                              return(!onInputError("ValidateInputs(21)  "+ instance.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
 
    // Lots
    if (isInitParameters && NE(Lots, prev.Lots)) {
-      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(23)  "+ instance.name +" cannot change input parameter Lots of "+ StatusDescription(instance.status) +" instance"));
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(22)  "+ instance.name +" cannot change input parameter Lots of "+ StatusDescription(instance.status) +" instance"));
    }
-   if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
-   if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(25)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
+   if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    // Targets
    if (!ValidateInputs.Targets()) return(false);
@@ -2001,7 +2002,7 @@ bool ValidateInputs() {
    if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(26)"));
+   return(!catch("ValidateInputs(25)"));
 }
 
 
