@@ -608,8 +608,8 @@ int ShowStatus(int error = NO_ERROR) {
  */
 string InputsToStr() {
    return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID), ";"+ NL +
-                            "Lots=",                 NumberToStr(Lots, ".1+"),    ";"+ NL +
 
+                            "Lots=",                 NumberToStr(Lots, ".1+"),    ";"+ NL +
                             "Initial.TakeProfit=",   Initial.TakeProfit,          ";"+ NL +
                             "Initial.StopLoss=",     Initial.StopLoss,            ";"+ NL +
                             "Target1=",              Target1,                     ";"+ NL +

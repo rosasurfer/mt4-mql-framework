@@ -1040,8 +1040,8 @@ string InputsToStr() {
    return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),       ";"+ NL +
                             "Tunnel.Definition=",    DoubleQuoteStr(Tunnel.Definition), ";"+ NL +
                             "Donchian.Periods=",     Donchian.Periods,                  ";"+ NL +
-                            "Lots=",                 NumberToStr(Lots, ".1+"),          ";"+ NL +
 
+                            "Lots=",                 NumberToStr(Lots, ".1+"),          ";"+ NL +
                             "Initial.TakeProfit=",   Initial.TakeProfit,                ";"+ NL +
                             "Initial.StopLoss=",     Initial.StopLoss,                  ";"+ NL +
                             "Target1=",              Target1,                           ";"+ NL +
