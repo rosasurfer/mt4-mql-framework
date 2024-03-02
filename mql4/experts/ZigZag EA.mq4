@@ -239,8 +239,8 @@ extern int    ZigZag.Periods                 = 30;
 
 extern string ___c__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
-extern int    Initial.TakeProfit             = 100;                     // in pip (0: partial targets only or no TP)
-extern int    Initial.StopLoss               = 50;                      // in pip (0: moving stops only or no SL
+extern int    Initial.TakeProfit             = 0;                       // in pip (0: partial targets only or no TP)
+extern int    Initial.StopLoss               = 0;                       // in pip (0: moving stops only or no SL
 extern int    Target1                        = 0;                       // in pip
 extern int    Target1.ClosePercent           = 0;                       // size to close (0: nothing)
 extern int    Target1.MoveStopTo             = 1;                       // in pip (0: don't move stop)
@@ -419,7 +419,6 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 
 #include <ea/functions/status/StatusToStr.mqh>
 #include <ea/functions/status/StatusDescription.mqh>
-#include <ea/functions/status/SS.InstanceName.mqh>
 #include <ea/functions/status/SS.MetricDescription.mqh>
 #include <ea/functions/status/SS.OpenLots.mqh>
 #include <ea/functions/status/SS.ClosedTrades.mqh>
@@ -1451,6 +1450,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
+   // trade stats
+   if (!SaveStatus.TradeStats(file, fileExists)) return(false);
+
    // [Runtime status]
    section = "Runtime status";
    WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
@@ -1476,13 +1478,13 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitPct.condition",   /*bool    */ stop.profitPct.condition);
    WriteIniString(file, section, "stop.profitPct.value",       /*double  */ NumberToStr(stop.profitPct.value, ".1+"));
    WriteIniString(file, section, "stop.profitPct.absValue",    /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
-   WriteIniString(file, section, "stop.profitPct.description", /*string  */ stop.profitPct.description);
+   WriteIniString(file, section, "stop.profitPct.description", /*string  */ stop.profitPct.description + separator);
+
    WriteIniString(file, section, "stop.profitPun.condition",   /*bool    */ stop.profitPun.condition);
    WriteIniString(file, section, "stop.profitPun.value",       /*double  */ NumberToStr(stop.profitPun.value, ".1+"));
    WriteIniString(file, section, "stop.profitPun.description", /*string  */ stop.profitPun.description + separator);
 
-   // open/closed trades and stats
-   if (!SaveStatus.TradeStats  (file, fileExists)) return(false);
+   // open/closed trades
    if (!SaveStatus.OpenPosition(file, fileExists)) return(false);
    if (!SaveStatus.TradeHistory(file, fileExists)) return(false);
 
@@ -1907,12 +1909,12 @@ bool ValidateInputs() {
          }
 
          else if (key == "@profit") {
-            if (isProfitCondition)                      return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple profit conditions)"));
+            if (isProfitCondition)                      return(!onInputError("ValidateInputs(18)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple profit conditions)"));
             isProfitCondition = true;
 
             if (StrEndsWith(sValue, "%")) {
                sValue = StrTrim(StrLeft(sValue, -1));
-               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(19)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
                double dValue = StrToDouble(sValue);
                descr  = "profit("+ NumberToStr(NormalizeDouble(dValue, 2), ".+") +"%)";
                if (descr != stop.profitPct.description) {   // enable condition only if it changed
@@ -1923,7 +1925,7 @@ bool ValidateInputs() {
                }
             }
             else {
-               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(20)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
                dValue = StrToDouble(sValue);
                descr  = "profit("+ NumberToStr(dValue * pMultiplier, "R+."+ pDigits) +" "+ pUnit +")";
                if (descr != stop.profitPun.description) {   // enable condition only if changed
@@ -1933,7 +1935,7 @@ bool ValidateInputs() {
                }
             }
          }
-         else                                           return(!onInputError("ValidateInputs(18)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         else                                           return(!onInputError("ValidateInputs(21)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
       }
       if (!isTimeCondition && stop.time.condition) {
          stop.time.condition = false;
@@ -1942,16 +1944,16 @@ bool ValidateInputs() {
 
    // ZigZag.Periods
    if (isInitParameters && ZigZag.Periods!=prev.ZigZag.Periods) {
-      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(20)  "+ instance.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(instance.status) +" instance"));
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(22)  "+ instance.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(instance.status) +" instance"));
    }
-   if (ZigZag.Periods < 2)                              return(!onInputError("ValidateInputs(21)  "+ instance.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
+   if (ZigZag.Periods < 2)                              return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
 
    // Lots
    if (isInitParameters && NE(Lots, prev.Lots)) {
-      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(22)  "+ instance.name +" cannot change input parameter Lots of "+ StatusDescription(instance.status) +" instance"));
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(24)  "+ instance.name +" cannot change input parameter Lots of "+ StatusDescription(instance.status) +" instance"));
    }
-   if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
-   if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(25)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
+   if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    // Targets
    if (!ValidateInputs.Targets()) return(false);
@@ -1960,7 +1962,7 @@ bool ValidateInputs() {
    if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(25)"));
+   return(!catch("ValidateInputs(27)"));
 }
 
 
@@ -2077,6 +2079,14 @@ void SS.All() {
    SS.ClosedTrades();
    SS.TotalProfit(ShowProfitInPercent);
    SS.ProfitStats(ShowProfitInPercent);
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the instance name.
+ */
+void SS.InstanceName() {
+   instance.name = "Z."+ StrPadLeft(instance.id, 3, "0");
 }
 
 

@@ -213,7 +213,6 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 
 #include <ea/functions/status/StatusToStr.mqh>
 #include <ea/functions/status/StatusDescription.mqh>
-#include <ea/functions/status/SS.InstanceName.mqh>
 #include <ea/functions/status/SS.MetricDescription.mqh>
 #include <ea/functions/status/SS.OpenLots.mqh>
 #include <ea/functions/status/SS.ClosedTrades.mqh>
@@ -794,6 +793,9 @@ bool SaveStatus() {
    if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
+   // trade stats
+   if (!SaveStatus.TradeStats(file, fileExists)) return(false);
+
    // [Runtime status]
    section = "Runtime status";
    WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
@@ -804,8 +806,7 @@ bool SaveStatus() {
 
    WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
 
-   // open/closed trades and stats
-   if (!SaveStatus.TradeStats  (file, fileExists)) return(false);
+   // open/closed trades
    if (!SaveStatus.OpenPosition(file, fileExists)) return(false);
    if (!SaveStatus.TradeHistory(file, fileExists)) return(false);
 
@@ -975,6 +976,14 @@ void SS.All() {
    SS.ClosedTrades();
    SS.TotalProfit();
    SS.ProfitStats();
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the instance name.
+ */
+void SS.InstanceName() {
+   instance.name = "V."+ StrPadLeft(instance.id, 3, "0");
 }
 
 
