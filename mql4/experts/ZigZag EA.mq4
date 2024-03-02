@@ -76,6 +76,7 @@
  *     storage in folder per strategy
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
  *  - trailing stop
+ *
  *  - self-optimization
  *     13.07.2008: @tdion, inspiration for @rraygun   https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool#    statt MACD(16,18) MACD(ALMA(38,46))
  *     16.12.2009: @rraygun                           https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks#
@@ -88,7 +89,7 @@
  *  -------------------------------------------------------------------------------------------------------------------------
  *  - reproduce/validate tests with original EAs
  *     terminal with Dukascopy data
- *     fast generation of old test data (e.g. 2007)
+ *     fast generation of old test data (e.g. from 2007)
  *     visualize existing account statements
  *
  *
@@ -157,8 +158,6 @@
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
- *  - widen SL on manual positions in opposite direction
- *  - manage an existing manual order
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
@@ -168,11 +167,9 @@
  *
  *  - trading functionality
  *     support command "wait" in status "progressing"
- *     rewrite and test all @profit() conditions
  *     breakeven stop
  *     trailing stop
  *     reverse trading and command EA.Reverse
- *     support multiple units and targets (add new metrics)
  *
  *  - ChartInfos
  *     CustomPosition() weekend configuration/timespans don't work
@@ -218,7 +215,6 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701979#  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981#  [Query execution mode in MQL]
  *
- *  - fix log messages in ValidateInputs (conditionally display the instance name)
  *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
  *  - VPS: monitor and notify of incoming emails
