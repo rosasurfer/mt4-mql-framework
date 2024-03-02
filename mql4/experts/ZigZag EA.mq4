@@ -218,7 +218,6 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701979#  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981#  [Query execution mode in MQL]
  *
- *  - merge inputs TakeProfit and StopConditions
  *  - fix log messages in ValidateInputs (conditionally display the instance name)
  *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
@@ -236,10 +235,8 @@ extern string Instance.ID                    = "";                      // insta
 extern string TradingMode                    = "regular* | virtual";    // can be shortened
 
 extern string ___a__________________________ = "=== Instance settings ===";
-extern string StartConditions                = "";                      // @time(datetime|time)
-extern string StopConditions                 = "";                      // @time(datetime|time)
-extern double TakeProfit                     = 0;                       // TP value
-extern string TakeProfit.Type                = "off* | percent | pip | point";                                                // TODO: redefine point as punit
+extern string Instance.StartAt               = "";                      // @time(datetime|time)
+extern string Instance.StopAt                = "";                      // @time(datetime|time) | @profit(numeric[%])
 
 extern string ___b__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 30;
@@ -302,10 +299,6 @@ string tradingModeDescriptions[] = {"", "regular", "virtual"};
 
 #define SIGDIRECTION_LONG  TRADE_DIRECTION_LONG    // 1 signal directions
 #define SIGDIRECTION_SHORT TRADE_DIRECTION_SHORT   // 2
-
-#define TP_TYPE_PERCENT             1              // instance stop-at-profit types
-#define TP_TYPE_PIP                 2
-#define TP_TYPE_PRICEUNIT           3
 
 #define METRIC_DAILY_NET_MONEY      4              // non-standard PnL metrics
 #define METRIC_DAILY_NET_UNITS      5
@@ -377,7 +370,6 @@ double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
 
 bool     stop.profitPun.condition;                 // whether a takeprofit condition in price units is active (pip or full point)
-int      stop.profitPun.type;
 double   stop.profitPun.value;
 string   stop.profitPun.description = "";
 
@@ -1455,10 +1447,8 @@ bool SaveStatus() {
    section = "Inputs";
    WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
    WriteIniString(file, section, "TradingMode",                /*string  */ TradingMode);
-   WriteIniString(file, section, "StartConditions",            /*string  */ StartConditions);
-   WriteIniString(file, section, "StopConditions",             /*string  */ StopConditions);
-   WriteIniString(file, section, "TakeProfit",                 /*double  */ NumberToStr(TakeProfit, ".+"));
-   WriteIniString(file, section, "TakeProfit.Type",            /*string  */ TakeProfit.Type);
+   WriteIniString(file, section, "Instance.StartAt",           /*string  */ Instance.StartAt);
+   WriteIniString(file, section, "Instance.StopAt",            /*string  */ Instance.StopAt);
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
    if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
@@ -1492,7 +1482,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitPct.absValue",    /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
    WriteIniString(file, section, "stop.profitPct.description", /*string  */ stop.profitPct.description);
    WriteIniString(file, section, "stop.profitPun.condition",   /*bool    */ stop.profitPun.condition);
-   WriteIniString(file, section, "stop.profitPun.type",        /*int     */ stop.profitPun.type);
    WriteIniString(file, section, "stop.profitPun.value",       /*double  */ NumberToStr(stop.profitPun.value, ".1+"));
    WriteIniString(file, section, "stop.profitPun.description", /*string  */ stop.profitPun.description + separator);
 
@@ -1523,14 +1512,12 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   Instance.ID                = GetIniStringA(file, section, "Instance.ID",     "");               // string   Instance.ID                = T123
-   TradingMode                = GetIniStringA(file, section, "TradingMode",     "");               // string   TradingMode                = regular
-   StartConditions            = GetIniStringA(file, section, "StartConditions", "");               // string   StartConditions            = @time(datetime|time)
-   StopConditions             = GetIniStringA(file, section, "StopConditions",  "");               // string   StopConditions             = @time(datetime|time)
-   TakeProfit                 = GetIniDouble (file, section, "TakeProfit"         );               // double   TakeProfit                 = 3.0
-   TakeProfit.Type            = GetIniStringA(file, section, "TakeProfit.Type", "");               // string   TakeProfit.Type            = off* | money | percent | pip
-   ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"     );               // int      ZigZag.Periods             = 40
-   Lots                       = GetIniDouble (file, section, "Lots"               );               // double   Lots                       = 0.1
+   Instance.ID                = GetIniStringA(file, section, "Instance.ID",      "");              // string   Instance.ID                = T123
+   TradingMode                = GetIniStringA(file, section, "TradingMode",      "");              // string   TradingMode                = regular
+   Instance.StartAt           = GetIniStringA(file, section, "Instance.StartAt", "");              // string   Instance.StartAt           = @time(datetime|time)
+   Instance.StopAt            = GetIniStringA(file, section, "Instance.StopAt",  "");              // string   Instance.StopAt            = @time(datetime|time) | @profit(numeric[%])
+   ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"      );              // int      ZigZag.Periods             = 40
+   Lots                       = GetIniDouble (file, section, "Lots"                );              // double   Lots                       = 0.1
    if (!ReadStatus.Targets(file)) return(false);
    ShowProfitInPercent        = GetIniBool   (file, section, "ShowProfitInPercent");               // bool     ShowProfitInPercent        = 1
    EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",     "");               // string   EA.Recorder                = 1,2,4
@@ -1564,7 +1551,6 @@ bool ReadStatus() {
    stop.profitPct.description = GetIniStringA(file, section, "stop.profitPct.description",   "");  // string   stop.profitPct.description = text
 
    stop.profitPun.condition   = GetIniBool   (file, section, "stop.profitPun.condition"      );    // bool     stop.profitPun.condition   = 1
-   stop.profitPun.type        = GetIniInt    (file, section, "stop.profitPun.type"           );    // int      stop.profitPun.type        = 4
    stop.profitPun.value       = GetIniDouble (file, section, "stop.profitPun.value"          );    // double   stop.profitPun.value       = 1.23456
    stop.profitPun.description = GetIniStringA(file, section, "stop.profitPun.description", "");    // string   stop.profitPun.description = text
 
@@ -1688,10 +1674,8 @@ bool IsLocalClosedPosition(int ticket) {
 // backed-up input parameters
 string   prev.Instance.ID = "";
 string   prev.TradingMode = "";
-string   prev.StartConditions = "";
-string   prev.StopConditions = "";
-double   prev.TakeProfit;
-string   prev.TakeProfit.Type = "";
+string   prev.Instance.StartAt = "";
+string   prev.Instance.StopAt = "";
 int      prev.ZigZag.Periods;
 double   prev.Lots;
 bool     prev.ShowProfitInPercent;
@@ -1719,7 +1703,6 @@ double   prev.stop.profitPct.value;
 double   prev.stop.profitPct.absValue;
 string   prev.stop.profitPct.description = "";
 bool     prev.stop.profitPun.condition;
-int      prev.stop.profitPun.type;
 double   prev.stop.profitPun.value;
 string   prev.stop.profitPun.description = "";
 
@@ -1736,10 +1719,8 @@ void BackupInputs() {
    // input parameters, used for comparison in ValidateInputs()
    prev.Instance.ID         = StringConcatenate(Instance.ID, "");       // string inputs are references to internal C literals
    prev.TradingMode         = StringConcatenate(TradingMode, "");       // and must be copied to break the reference
-   prev.StartConditions     = StringConcatenate(StartConditions, "");
-   prev.StopConditions      = StringConcatenate(StopConditions, "");
-   prev.TakeProfit          = TakeProfit;
-   prev.TakeProfit.Type     = StringConcatenate(TakeProfit.Type, "");
+   prev.Instance.StartAt    = StringConcatenate(Instance.StartAt, "");
+   prev.Instance.StopAt     = StringConcatenate(Instance.StopAt, "");
    prev.ZigZag.Periods      = ZigZag.Periods;
    prev.Lots                = Lots;
    prev.ShowProfitInPercent = ShowProfitInPercent;
@@ -1767,7 +1748,6 @@ void BackupInputs() {
    prev.stop.profitPct.absValue    = stop.profitPct.absValue;
    prev.stop.profitPct.description = stop.profitPct.description;
    prev.stop.profitPun.condition   = stop.profitPun.condition;
-   prev.stop.profitPun.type        = stop.profitPun.type;
    prev.stop.profitPun.value       = stop.profitPun.value;
    prev.stop.profitPun.description = stop.profitPun.description;
 
@@ -1783,10 +1763,8 @@ void RestoreInputs() {
    // input parameters
    Instance.ID         = prev.Instance.ID;
    TradingMode         = prev.TradingMode;
-   StartConditions     = prev.StartConditions;
-   StopConditions      = prev.StopConditions;
-   TakeProfit          = prev.TakeProfit;
-   TakeProfit.Type     = prev.TakeProfit.Type;
+   Instance.StartAt    = prev.Instance.StartAt;
+   Instance.StopAt     = prev.Instance.StopAt;
    ZigZag.Periods      = prev.ZigZag.Periods;
    Lots                = prev.Lots;
    ShowProfitInPercent = prev.ShowProfitInPercent;
@@ -1814,7 +1792,6 @@ void RestoreInputs() {
    stop.profitPct.absValue    = prev.stop.profitPct.absValue;
    stop.profitPct.description = prev.stop.profitPct.description;
    stop.profitPun.condition   = prev.stop.profitPun.condition;
-   stop.profitPun.type        = prev.stop.profitPun.type;
    stop.profitPun.value       = prev.stop.profitPun.value;
    stop.profitPun.description = prev.stop.profitPun.description;
 
@@ -1858,28 +1835,28 @@ bool ValidateInputs() {
    }
    TradingMode = tradingModeDescriptions[tradingMode];
 
-   // StartConditions: @time(datetime|time)
-   if (!isInitParameters || StartConditions!=prev.StartConditions) {
+   // Instance.StartAt: "@time(datetime|time)"
+   if (!isInitParameters || Instance.StartAt!=prev.Instance.StartAt) {
       string exprs[], expr="", key="", descr="";        // split conditions
-      int sizeOfExprs = Explode(StartConditions, "|", exprs, NULL), iValue, time, pt[];
+      int sizeOfExprs = Explode(Instance.StartAt, "|", exprs, NULL), iValue, time, pt[];
       datetime dtValue;
-      bool isDaily, containsTimeCondition = false;
+      bool isDaily, isTimeCondition = false;
 
       for (int i=0; i < sizeOfExprs; i++) {             // validate each expression
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr)) continue;
-         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
 
          if (key == "@time") {
-            if (containsTimeCondition)                  return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
-            containsTimeCondition = true;
+            if (isTimeCondition)                        return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt) +" (multiple time conditions)"));
+            isTimeCondition = true;
 
-            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(9)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(9)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
             dtValue = DateTime2(pt, DATE_OF_ERA);
             isDaily = !pt[PT_HAS_DATE];
             descr   = "time("+ TimeToStr(dtValue, ifInt(isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
@@ -1891,96 +1868,81 @@ bool ValidateInputs() {
                start.time.description = descr;
             }
          }
-         else                                           return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         else                                           return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
       }
-      if (!containsTimeCondition && start.time.condition) {
+      if (!isTimeCondition && start.time.condition) {
          start.time.condition = false;
       }
    }
 
-   // StopConditions: @time(datetime|time)
-   if (!isInitParameters || StopConditions!=prev.StopConditions) {
-      sizeOfExprs = Explode(StopConditions, "|", exprs, NULL);
-      containsTimeCondition = false;
+   // Instance.StopAt: "@time(datetime|time) | @profit(numeric[%])"        // logical OR
+   if (!isInitParameters || Instance.StopAt!=prev.Instance.StopAt) {
+      sizeOfExprs = Explode(Instance.StopAt, "|", exprs, NULL);
+      isTimeCondition = false;
+      bool isProfitCondition = false;
 
       for (i=0; i < sizeOfExprs; i++) {                 // validate each expression
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) continue;
-         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StringLen(expr)) continue;                // support both OR operators "||" and "|"
+         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(14)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(14)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
 
          if (key == "@time") {
-            if (containsTimeCondition)                  return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            containsTimeCondition = true;
+            if (isTimeCondition)                        return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple time conditions)"));
+            isTimeCondition = true;
 
-            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
             dtValue = DateTime2(pt, DATE_OF_ERA);
             isDaily = !pt[PT_HAS_DATE];
             descr   = "time("+ TimeToStr(dtValue, ifInt(isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
-
-            if (descr != stop.time.description) {       // enable condition only if changed
+            if (descr != stop.time.description) {           // enable condition only if it changed
                stop.time.condition   = true;
                stop.time.value       = dtValue;
                stop.time.isDaily     = isDaily;
                stop.time.description = descr;
             }
             if (start.time.condition && !start.time.isDaily && !stop.time.isDaily) {
-               if (start.time.value >= stop.time.value) return(!onInputError("ValidateInputs(17)  "+ instance.name +" invalid times in Start/StopConditions: "+ start.time.description +" / "+ stop.time.description +" (start time must preceed stop time)"));
+               if (start.time.value >= stop.time.value) return(!onInputError("ValidateInputs(17)  "+ instance.name +" invalid times in Instance.Start/StopAt: "+ start.time.description +" / "+ stop.time.description +" (start time must preceed stop time)"));
             }
          }
-         else                                           return(!onInputError("ValidateInputs(18)  "+ instance.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+
+         else if (key == "@profit") {
+            if (isProfitCondition)                      return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple profit conditions)"));
+            isProfitCondition = true;
+
+            if (StrEndsWith(sValue, "%")) {
+               sValue = StrTrim(StrLeft(sValue, -1));
+               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+               double dValue = StrToDouble(sValue);
+               descr  = "profit("+ NumberToStr(NormalizeDouble(dValue, 2), ".+") +"%)";
+               if (descr != stop.profitPct.description) {   // enable condition only if it changed
+                  stop.profitPct.condition   = true;
+                  stop.profitPct.value       = dValue;
+                  stop.profitPct.absValue    = INT_MAX;
+                  stop.profitPct.description = descr;
+               }
+            }
+            else {
+               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+               dValue = StrToDouble(sValue);
+               descr  = "profit("+ NumberToStr(dValue * pMultiplier, "R+."+ pDigits) +" "+ pUnit +")";
+               if (descr != stop.profitPun.description) {   // enable condition only if changed
+                  stop.profitPun.condition   = true;
+                  stop.profitPun.value       = NormalizeDouble(dValue * pMultiplier, Digits);
+                  stop.profitPun.description = descr;
+               }
+            }
+         }
+         else                                           return(!onInputError("ValidateInputs(18)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
       }
-      if (!containsTimeCondition && stop.time.condition) {
+      if (!isTimeCondition && stop.time.condition) {
          stop.time.condition = false;
       }
    }
-
-   // TakeProfit (nothing to do)
-
-   // TakeProfit.Type: "off* | percent | pip | point"
-   sValue = StrToLower(TakeProfit.Type);
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   sValue = StrTrim(sValue);
-   if      (sValue == "off"    ) int stopType = NULL;
-   else if (sValue == "percent")     stopType = TP_TYPE_PERCENT;
-   else if (sValue == "pip"    )     stopType = TP_TYPE_PIP;
-   else if (sValue == "point"  )     stopType = TP_TYPE_PRICEUNIT;
-   else return(!onInputError("ValidateInputs(19)  "+ instance.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
-   stop.profitPct.condition   = false;
-   stop.profitPct.description = "";
-   stop.profitPun.condition   = false;
-   stop.profitPun.description = "";
-
-   switch (stopType) {
-      case TP_TYPE_PERCENT:
-         stop.profitPct.condition   = true;
-         stop.profitPct.value       = TakeProfit;
-         stop.profitPct.absValue    = INT_MAX;
-         stop.profitPct.description = "profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)";
-         break;
-
-      case TP_TYPE_PIP:
-         stop.profitPun.condition   = true;
-         stop.profitPun.type        = stopType;
-         stop.profitPun.value       = NormalizeDouble(TakeProfit*Pip, Digits);
-         stop.profitPun.description = "profit("+ NumberToStr(TakeProfit, ".+") +" pip)";
-         break;
-
-      case TP_TYPE_PRICEUNIT:
-         stop.profitPun.condition   = true;
-         stop.profitPun.type        = stopType;
-         stop.profitPun.value       = NormalizeDouble(TakeProfit, Digits);
-         stop.profitPun.description = "profit("+ NumberToStr(stop.profitPun.value, PriceFormat) +" point)";
-         break;
-   }
-   TakeProfit.Type = sValue;
 
    // ZigZag.Periods
    if (isInitParameters && ZigZag.Periods!=prev.ZigZag.Periods) {
@@ -2214,30 +2176,29 @@ int ShowStatus(int error = NO_ERROR) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),     ";"+ NL +
-                            "TradingMode=",          DoubleQuoteStr(TradingMode),     ";"+ NL +
-                            "ZigZag.Periods=",       ZigZag.Periods,                  ";"+ NL +
-                            "Lots=",                 NumberToStr(Lots, ".1+"),        ";"+ NL +
-                            "StartConditions=",      DoubleQuoteStr(StartConditions), ";"+ NL +
-                            "StopConditions=",       DoubleQuoteStr(StopConditions),  ";"+ NL +
-                            "TakeProfit=",           NumberToStr(TakeProfit, ".1+"),  ";"+ NL +
-                            "TakeProfit.Type=",      DoubleQuoteStr(TakeProfit.Type), ";"+ NL +
+   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),      ";"+ NL +
+                            "TradingMode=",          DoubleQuoteStr(TradingMode),      ";"+ NL +
+                            "Instance.StartAt=",     DoubleQuoteStr(Instance.StartAt), ";"+ NL +
+                            "Instance.StopAt=",      DoubleQuoteStr(Instance.StopAt),  ";"+ NL +
 
-                            "Initial.TakeProfit=",   Initial.TakeProfit,              ";"+ NL +
-                            "Initial.StopLoss=",     Initial.StopLoss,                ";"+ NL +
-                            "Target1=",              Target1,                         ";"+ NL +
-                            "Target1.ClosePercent=", Target1.ClosePercent,            ";"+ NL +
-                            "Target1.MoveStopTo=",   Target1.MoveStopTo,              ";"+ NL +
-                            "Target2=",              Target2,                         ";"+ NL +
-                            "Target2.ClosePercent=", Target2.ClosePercent,            ";"+ NL +
-                            "Target2.MoveStopTo=",   Target2.MoveStopTo,              ";"+ NL +
-                            "Target3=",              Target3,                         ";"+ NL +
-                            "Target3.ClosePercent=", Target3.ClosePercent,            ";"+ NL +
-                            "Target3.MoveStopTo=",   Target3.MoveStopTo,              ";"+ NL +
-                            "Target4=",              Target4,                         ";"+ NL +
-                            "Target4.ClosePercent=", Target4.ClosePercent,            ";"+ NL +
-                            "Target4.MoveStopTo=",   Target4.MoveStopTo,              ";"+ NL +
+                            "ZigZag.Periods=",       ZigZag.Periods,                   ";"+ NL +
 
-                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),  ";")
+                            "Lots=",                 NumberToStr(Lots, ".1+"),         ";"+ NL +
+                            "Initial.TakeProfit=",   Initial.TakeProfit,               ";"+ NL +
+                            "Initial.StopLoss=",     Initial.StopLoss,                 ";"+ NL +
+                            "Target1=",              Target1,                          ";"+ NL +
+                            "Target1.ClosePercent=", Target1.ClosePercent,             ";"+ NL +
+                            "Target1.MoveStopTo=",   Target1.MoveStopTo,               ";"+ NL +
+                            "Target2=",              Target2,                          ";"+ NL +
+                            "Target2.ClosePercent=", Target2.ClosePercent,             ";"+ NL +
+                            "Target2.MoveStopTo=",   Target2.MoveStopTo,               ";"+ NL +
+                            "Target3=",              Target3,                          ";"+ NL +
+                            "Target3.ClosePercent=", Target3.ClosePercent,             ";"+ NL +
+                            "Target3.MoveStopTo=",   Target3.MoveStopTo,               ";"+ NL +
+                            "Target4=",              Target4,                          ";"+ NL +
+                            "Target4.ClosePercent=", Target4.ClosePercent,             ";"+ NL +
+                            "Target4.MoveStopTo=",   Target4.MoveStopTo,               ";"+ NL +
+
+                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),   ";")
    );
 }
