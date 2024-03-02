@@ -13,9 +13,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
+scroll=1
 shift=1
-shift_size=50
+shift_size=10
 
 fixed_pos=620
 window_left=0
@@ -37,7 +37,6 @@ stops_color=17919
 
 <window>
 height=118
-
 <indicator>
 name=main
 <object>
@@ -17136,15 +17135,52 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ALMA
+name=Inside Bars
+flags=339
+window_num=0
+<inputs>
+Timeframe=H1
+NumberOfInsideBars=2
+</inputs>
+</expert>
+period_flags=3
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Moving Average
 flags=339
 window_num=0
 <inputs>
 MA.Periods=38
-Color.UpTrend=16711680
+MA.Method=ALMA
+Color.UpTrend=255
 Color.DownTrend=255
-Draw.Type=Line | Dot*
-Draw.Width=3
+Draw.Type=Line
+Draw.Width=2
+AutoConfiguration=0
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
+MA.Periods=46
+MA.Method=ALMA
+Color.UpTrend=16711680
+Color.DownTrend=16711680
+Draw.Type=Line
+Draw.Width=2
+AutoConfiguration=0
 </inputs>
 </expert>
 period_flags=0
@@ -17162,11 +17198,11 @@ name=MACD
 flags=339
 window_num=1
 <inputs>
-FastMA.Periods=12
+FastMA.Periods=38
 FastMA.Method=ALMA
-SlowMA.Periods=38
+SlowMA.Periods=46
 SlowMA.Method=ALMA
-MainLine.Width=2
+MainLine.Width=0
 </inputs>
 </expert>
 period_flags=0
