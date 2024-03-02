@@ -27,14 +27,14 @@ extern int    Target1                        = 0;           // in pip
 extern int    Target1.ClosePercent           = 0;           // size to close (0: nothing)
 extern int    Target1.MoveStopTo             = 1;           // in pip (0: don't move stop)
 extern int    Target2                        = 0;           // ...
-extern int    Target2.ClosePercent           = 30;          // ...
-extern int    Target2.MoveStopTo             = 0;           // ...
-extern int    Target3                        = 0;           // ...
-extern int    Target3.ClosePercent           = 30;          // ...
-extern int    Target3.MoveStopTo             = 0;           // ...
-extern int    Target4                        = 0;           // ...
-extern int    Target4.ClosePercent           = 30;          // ...
-extern int    Target4.MoveStopTo             = 0;           // ...
+extern int    Target2.ClosePercent           = 30;          //
+extern int    Target2.MoveStopTo             = 0;           //
+extern int    Target3                        = 0;           //
+extern int    Target3.ClosePercent           = 30;          //
+extern int    Target3.MoveStopTo             = 0;           //
+extern int    Target4                        = 0;           //
+extern int    Target4.ClosePercent           = 30;          //
+extern int    Target4.MoveStopTo             = 0;           //
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -161,11 +161,13 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>
 #include <ea/functions/status/file/ReadStatus.General.mqh>
+#include <ea/functions/status/file/ReadStatus.Targets.mqh>
 #include <ea/functions/status/file/ReadStatus.OpenPosition.mqh>
 #include <ea/functions/status/file/ReadStatus.HistoryRecord.mqh>
 #include <ea/functions/status/file/ReadStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/ReadStatus.TradeStats.mqh>
 #include <ea/functions/status/file/SaveStatus.General.mqh>
+#include <ea/functions/status/file/SaveStatus.Targets.mqh>
 #include <ea/functions/status/file/SaveStatus.OpenPosition.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeStats.mqh>
@@ -179,6 +181,7 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
 #include <ea/functions/validation/ValidateInputs.ID.mqh>
+#include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
 
 
@@ -340,6 +343,7 @@ bool ReadStatus() {
    Instance.ID              = GetIniStringA(file, section, "Instance.ID", "");               // string   Instance.ID = T123
    Lots                     = GetIniDouble (file, section, "Lots"           );               // double   Lots        = 0.1
    EA.Recorder              = GetIniStringA(file, section, "EA.Recorder", "");               // string   EA.Recorder = 1,2,4
+   if (!ReadStatus.Targets(file)) return(false);
 
    // [Runtime status]
    section = "Runtime status";
@@ -420,6 +424,7 @@ bool SaveStatus() {
    section = "Inputs";
    WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
+   if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
    // [Runtime status]
@@ -454,22 +459,27 @@ int      prev.instance.status;
 
 
 /**
- * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
- * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
+ * When input parameters are changed at runtime, input errors must be handled gracefully. To enable the EA to continue in
+ * case of input errors, it must be possible to restore previous valid inputs. This also applies to programmatic changes to
+ * input parameters which do not survive init cycles. The previous input parameters are therefore backed up in deinit() and
+ * can be restored in init() if necessary.
+ *
+ * Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backup input parameters, used for comparison in ValidateInputs()
+   // input parameters, used for comparison in ValidateInputs()
    prev.Instance.ID = StringConcatenate(Instance.ID, "");            // string inputs are references to internal C literals
    prev.Lots        = Lots;
 
-   // backup runtime variables affected by changing input parameters
+   // affected runtime variables
    prev.instance.id      = instance.id;
    prev.instance.created = instance.created;
    prev.instance.isTest  = instance.isTest;
    prev.instance.name    = instance.name;
    prev.instance.status  = instance.status;
 
-   Recorder.BackupInputs();
+   BackupInputs.Targets();
+   BackupInputs.Recorder();
 }
 
 
@@ -477,18 +487,19 @@ void BackupInputs() {
  * Restore backed-up input parameters and runtime variables. Called from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs() {
-   // restore input parameters
+   // input parameters
    Instance.ID = prev.Instance.ID;
    Lots        = prev.Lots;
 
-   // restore runtime variables
+   // affected runtime variables
    instance.id      = prev.instance.id;
    instance.created = prev.instance.created;
    instance.isTest  = prev.instance.isTest;
    instance.name    = prev.instance.name;
    instance.status  = prev.instance.status;
 
-   Recorder.RestoreInputs();
+   RestoreInputs.Targets();
+   RestoreInputs.Recorder();
 }
 
 
@@ -515,6 +526,9 @@ bool ValidateInputs() {
    // Lots
    if (LT(Lots, 0))                                return(!onInputError("ValidateInputs(2)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
    if (NE(Lots, NormalizeLots(Lots)))              return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+
+   // Targets
+   if (!ValidateInputs.Targets()) return(false);
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
    if (!Recorder.ValidateInputs(IsTestInstance())) return(false);

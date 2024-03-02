@@ -59,30 +59,37 @@
  *
  *
  *
- * TODO: main objective is faster implementation and testing of new EAs
+ * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - re-usable exit management
  *     breakeven stop
  *     partial profit taking
  *     1st: distances in static pips
- *     2nd: dynamic distances (multiple of range)
+ *     2nd: dynamic distances (multiples of range)
  *
- *     steps:
- *      input validation
- *      convert inputs to array
  *      runtime:
  *       monitor executed limits
  *       process stops and targets
  *        handle limit execution during processing
- *
- *
  *
  *  - tests
  *     storage in folder per strategy
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
  *  - trailing stop
  *  - self-optimization
+ *     13.07.2008: @tdion, inspiration for @rraygun   https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool#    statt MACD(16,18) MACD(ALMA(38,46))
+ *     16.12.2009: @rraygun                           https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks#
+ *     16.11.2017: @john-davis, 100%/month on H1      https://www.mql5.com/en/blogs/post/714509#
+ *                                                    https://www.mql5.com/en/market/product/26332#
+ *                                                    https://www.mql5.com/en/code/19392#         (comments by @alphatrading)
  *  - money management
+ *
+ *
+ *  -------------------------------------------------------------------------------------------------------------------------
+ *  - reproduce/validate tests with original EAs
+ *     terminal with Dukascopy data
+ *     fast generation of old test data (e.g. 2007)
+ *     visualize existing account statements
  *
  *
  *  -------------------------------------------------------------------------------------------------------------------------
@@ -225,16 +232,32 @@ int __virtualTicks = 10000;                                 // every 10 seconds 
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID         = "";                     // instance to load from a status file, format "[T]123"
-extern string TradingMode         = "regular* | virtual";   // may be shortened
+extern string Instance.ID          = "";                    // instance to load from a status file, format "[T]123"
+extern string TradingMode          = "regular* | virtual";  // may be shortened
 
-extern int    ZigZag.Periods      = 30;
-extern double Lots                = 1.0;
-extern string StartConditions     = "";                     // @time(datetime|time)
-extern string StopConditions      = "";                     // @time(datetime|time)
+extern int    ZigZag.Periods       = 30;
+extern double Lots                 = 1.0;
+extern string StartConditions      = "";                    // @time(datetime|time)
+extern string StopConditions       = "";                    // @time(datetime|time)
 
-extern double TakeProfit          = 0;                      // TP value
-extern string TakeProfit.Type     = "off* | money | percent | pip | quote-unit";       // can be shortened if distinct        // TODO: redefine point as index point
+extern double TakeProfit           = 0;                     // TP value
+extern string TakeProfit.Type      = "off* | money | percent | pip | quote-unit";       // can be shortened if distinct        // TODO: redefine point as index point
+
+extern int    Initial.TakeProfit   = 100;                   // in pip (0: partial targets only or no TP)
+extern int    Initial.StopLoss     = 50;                    // in pip (0: moving stops only or no SL
+
+extern int    Target1              = 0;                     // in pip
+extern int    Target1.ClosePercent = 0;                     // size to close (0: nothing)
+extern int    Target1.MoveStopTo   = 1;                     // in pip (0: don't move stop)
+extern int    Target2              = 0;                     // ...
+extern int    Target2.ClosePercent = 30;                    //
+extern int    Target2.MoveStopTo   = 0;                     //
+extern int    Target3              = 0;                     //
+extern int    Target3.ClosePercent = 30;                    //
+extern int    Target3.MoveStopTo   = 0;                     //
+extern int    Target4              = 0;                     //
+extern int    Target4.ClosePercent = 30;                    //
+extern int    Target4.MoveStopTo   = 0;                     //
 
 extern bool   ShowProfitInPercent = true;                   // whether PnL is displayed in money or percentage terms
 
@@ -420,11 +443,13 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>
 #include <ea/functions/status/file/ReadStatus.General.mqh>
+#include <ea/functions/status/file/ReadStatus.Targets.mqh>
 #include <ea/functions/status/file/ReadStatus.OpenPosition.mqh>
 #include <ea/functions/status/file/ReadStatus.HistoryRecord.mqh>
 #include <ea/functions/status/file/ReadStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/ReadStatus.TradeStats.mqh>
 #include <ea/functions/status/file/SaveStatus.General.mqh>
+#include <ea/functions/status/file/SaveStatus.Targets.mqh>
 #include <ea/functions/status/file/SaveStatus.OpenPosition.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeStats.mqh>
@@ -439,6 +464,7 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
 #include <ea/functions/validation/ValidateInputs.ID.mqh>
+#include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
 
 
@@ -1449,6 +1475,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "StopConditions",             /*string  */ StopConditions);
    WriteIniString(file, section, "TakeProfit",                 /*double  */ NumberToStr(TakeProfit, ".+"));
    WriteIniString(file, section, "TakeProfit.Type",            /*string  */ TakeProfit.Type);
+   if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
@@ -1523,6 +1550,7 @@ bool ReadStatus() {
    TakeProfit.Type            = GetIniStringA(file, section, "TakeProfit.Type", "");               // string   TakeProfit.Type            = off* | money | percent | pip
    ShowProfitInPercent        = GetIniBool   (file, section, "ShowProfitInPercent");               // bool     ShowProfitInPercent        = 1
    EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",     "");               // string   EA.Recorder                = 1,2,4
+   if (!ReadStatus.Targets(file)) return(false);
 
    // [Runtime status]
    section = "Runtime status";
@@ -1720,11 +1748,15 @@ string   prev.stop.profitPun.description = "";
 
 
 /**
- * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
- * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
+ * When input parameters are changed at runtime, input errors must be handled gracefully. To enable the EA to continue in
+ * case of input errors, it must be possible to restore previous valid inputs. This also applies to programmatic changes to
+ * input parameters which do not survive init cycles. The previous input parameters are therefore backed up in deinit() and
+ * can be restored in init() if necessary.
+ *
+ * Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backup input parameters, used for comparison in ValidateInputs()
+   // input parameters, used for comparison in ValidateInputs()
    prev.Instance.ID         = StringConcatenate(Instance.ID, "");       // string inputs are references to internal C literals
    prev.TradingMode         = StringConcatenate(TradingMode, "");       // and must be copied to break the reference
    prev.ZigZag.Periods      = ZigZag.Periods;
@@ -1735,7 +1767,7 @@ void BackupInputs() {
    prev.TakeProfit.Type     = StringConcatenate(TakeProfit.Type, "");
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
-   // backup runtime variables affected by changing input parameters
+   // affected runtime variables
    prev.tradingMode                = tradingMode;
 
    prev.instance.id                = instance.id;
@@ -1760,12 +1792,13 @@ void BackupInputs() {
    prev.stop.profitPct.value       = stop.profitPct.value;
    prev.stop.profitPct.absValue    = stop.profitPct.absValue;
    prev.stop.profitPct.description = stop.profitPct.description;
-   prev.stop.profitPun.condition    = stop.profitPun.condition;
-   prev.stop.profitPun.type         = stop.profitPun.type;
-   prev.stop.profitPun.value        = stop.profitPun.value;
-   prev.stop.profitPun.description  = stop.profitPun.description;
+   prev.stop.profitPun.condition   = stop.profitPun.condition;
+   prev.stop.profitPun.type        = stop.profitPun.type;
+   prev.stop.profitPun.value       = stop.profitPun.value;
+   prev.stop.profitPun.description = stop.profitPun.description;
 
-   Recorder.BackupInputs();
+   BackupInputs.Targets();
+   BackupInputs.Recorder();
 }
 
 
@@ -1773,19 +1806,19 @@ void BackupInputs() {
  * Restore backed-up input parameters and runtime variables. Called from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs() {
-   // restore input parameters
-   Instance.ID          = prev.Instance.ID;
-   TradingMode          = prev.TradingMode;
-   ZigZag.Periods       = prev.ZigZag.Periods;
-   Lots                 = prev.Lots;
-   StartConditions      = prev.StartConditions;
-   StopConditions       = prev.StopConditions;
-   TakeProfit           = prev.TakeProfit;
-   TakeProfit.Type      = prev.TakeProfit.Type;
-   ShowProfitInPercent  = prev.ShowProfitInPercent;
-   EA.Recorder          = prev.EA.Recorder;
+   // input parameters
+   Instance.ID         = prev.Instance.ID;
+   TradingMode         = prev.TradingMode;
+   ZigZag.Periods      = prev.ZigZag.Periods;
+   Lots                = prev.Lots;
+   StartConditions     = prev.StartConditions;
+   StopConditions      = prev.StopConditions;
+   TakeProfit          = prev.TakeProfit;
+   TakeProfit.Type     = prev.TakeProfit.Type;
+   ShowProfitInPercent = prev.ShowProfitInPercent;
+   EA.Recorder         = prev.EA.Recorder;
 
-   // restore runtime variables
+   // affected runtime variables
    tradingMode                = prev.tradingMode;
 
    instance.id                = prev.instance.id;
@@ -1815,7 +1848,8 @@ void RestoreInputs() {
    stop.profitPun.value       = prev.stop.profitPun.value;
    stop.profitPun.description = prev.stop.profitPun.description;
 
-   Recorder.RestoreInputs();
+   RestoreInputs.Targets();
+   RestoreInputs.Recorder();
 }
 
 
@@ -1998,6 +2032,9 @@ bool ValidateInputs() {
          break;
    }
    TakeProfit.Type = tpTypeDescriptions[stop.profitPun.type];
+
+   // Targets
+   if (!ValidateInputs.Targets()) return(false);
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
    if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
@@ -2218,14 +2255,30 @@ int ShowStatus(int error = NO_ERROR) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),     ";", NL,
-                            "TradingMode=",          DoubleQuoteStr(TradingMode),     ";", NL,
-                            "ZigZag.Periods=",       ZigZag.Periods,                  ";", NL,
-                            "Lots=",                 NumberToStr(Lots, ".1+"),        ";", NL,
-                            "StartConditions=",      DoubleQuoteStr(StartConditions), ";", NL,
-                            "StopConditions=",       DoubleQuoteStr(StopConditions),  ";", NL,
-                            "TakeProfit=",           NumberToStr(TakeProfit, ".1+"),  ";", NL,
-                            "TakeProfit.Type=",      DoubleQuoteStr(TakeProfit.Type), ";", NL,
+   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),     ";"+ NL +
+                            "TradingMode=",          DoubleQuoteStr(TradingMode),     ";"+ NL +
+                            "ZigZag.Periods=",       ZigZag.Periods,                  ";"+ NL +
+                            "Lots=",                 NumberToStr(Lots, ".1+"),        ";"+ NL +
+                            "StartConditions=",      DoubleQuoteStr(StartConditions), ";"+ NL +
+                            "StopConditions=",       DoubleQuoteStr(StopConditions),  ";"+ NL +
+                            "TakeProfit=",           NumberToStr(TakeProfit, ".1+"),  ";"+ NL +
+                            "TakeProfit.Type=",      DoubleQuoteStr(TakeProfit.Type), ";"+ NL +
+
+                            "Initial.TakeProfit=",   Initial.TakeProfit,              ";"+ NL +
+                            "Initial.StopLoss=",     Initial.StopLoss,                ";"+ NL +
+                            "Target1=",              Target1,                         ";"+ NL +
+                            "Target1.ClosePercent=", Target1.ClosePercent,            ";"+ NL +
+                            "Target1.MoveStopTo=",   Target1.MoveStopTo,              ";"+ NL +
+                            "Target2=",              Target2,                         ";"+ NL +
+                            "Target2.ClosePercent=", Target2.ClosePercent,            ";"+ NL +
+                            "Target2.MoveStopTo=",   Target2.MoveStopTo,              ";"+ NL +
+                            "Target3=",              Target3,                         ";"+ NL +
+                            "Target3.ClosePercent=", Target3.ClosePercent,            ";"+ NL +
+                            "Target3.MoveStopTo=",   Target3.MoveStopTo,              ";"+ NL +
+                            "Target4=",              Target4,                         ";"+ NL +
+                            "Target4.ClosePercent=", Target4.ClosePercent,            ";"+ NL +
+                            "Target4.MoveStopTo=",   Target4.MoveStopTo,              ";"+ NL +
+
                             "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),  ";")
    );
 }

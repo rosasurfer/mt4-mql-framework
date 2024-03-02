@@ -80,15 +80,21 @@ int    prev.metric.hSet       [];
 
 
 /**
- * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
- * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
+ * When input parameters are changed at runtime, input errors must be handled gracefully. To enable the EA to continue in
+ * case of input errors, it must be possible to restore previous valid inputs. This also applies to programmatic changes to
+ * input parameters which do not survive init cycles. The previous input parameters are therefore backed up in deinit() and
+ * can be restored in init() if necessary.
+ *
+ * Called in onDeinitParameters() and onDeinitChartChange().
  */
-void Recorder.BackupInputs() {
-   if (!catch("Recorder.BackupInputs(1)")) {
+void BackupInputs.Recorder() {
+   if (!catch("BackupInputs.Recorder(1)")) {
+      // input parameters
       prev.EA.Recorder          = StringConcatenate(EA.Recorder, "");   // string inputs are references to internal C literals
       prev.recorder.mode        = recorder.mode;                        // and must be copied to break the reference
       prev.recorder.initialized = recorder.initialized;
 
+      // affected runtime variables
       ArrayResize(prev.metric.enabled,     ArrayCopy(prev.metric.enabled,     metric.enabled    ));
       ArrayResize(prev.metric.ready,       ArrayCopy(prev.metric.ready,       metric.ready      ));
       ArrayResize(prev.metric.symbol,      ArrayCopy(prev.metric.symbol,      metric.symbol     ));
@@ -102,7 +108,7 @@ void Recorder.BackupInputs() {
 
       // we didn't check ArraySize(source), instead we handle a generated error
       int error = GetLastError();
-      if (error && error!=ERR_INVALID_PARAMETER) catch("Recorder.BackupInputs(2)", error);
+      if (error && error!=ERR_INVALID_PARAMETER) catch("BackupInputs.Recorder(2)", error);
    }
 }
 
@@ -110,12 +116,14 @@ void Recorder.BackupInputs() {
 /**
  * Restore backed-up input parameters and runtime variables. Called from onInitParameters() and onInitTimeframeChange().
  */
-void Recorder.RestoreInputs() {
-   if (!catch("Recorder.RestoreInputs(1)")) {
+void RestoreInputs.Recorder() {
+   if (!catch("RestoreInputs.Recorder(1)")) {
+      // input parameters
       EA.Recorder          = prev.EA.Recorder;
       recorder.mode        = prev.recorder.mode;
       recorder.initialized = prev.recorder.initialized;
 
+      // affected runtime variables
       ArrayResize(metric.enabled,     ArrayCopy(metric.enabled,     prev.metric.enabled    ));
       ArrayResize(metric.ready,       ArrayCopy(metric.ready,       prev.metric.ready      ));
       ArrayResize(metric.symbol,      ArrayCopy(metric.symbol,      prev.metric.symbol     ));
@@ -129,7 +137,7 @@ void Recorder.RestoreInputs() {
 
       // we didn't check ArraySize(source), instead we handle a generated error
       int error = GetLastError();
-      if (error && error!=ERR_INVALID_PARAMETER) catch("Recorder.RestoreInputs(2)", error);
+      if (error && error!=ERR_INVALID_PARAMETER) catch("RestoreInputs.Recorder(2)", error);
    }
 }
 
@@ -556,8 +564,8 @@ int Recorder.GetHstFormat() {
    return(iValue);
 
    // suppress compiler warnings
-   Recorder.BackupInputs();
-   Recorder.RestoreInputs();
+   BackupInputs.Recorder();
+   RestoreInputs.Recorder();
    Recorder.ResetMetrics();
    Recorder.ValidateInputs(NULL);
 }
