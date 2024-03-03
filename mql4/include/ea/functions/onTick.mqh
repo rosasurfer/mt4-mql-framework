@@ -28,5 +28,5 @@ int onTick() {
       }
       RecordMetrics();
    }
-   return(catch("onTick(2)"));
+   return(last_error);
 }

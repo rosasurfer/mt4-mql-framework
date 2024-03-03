@@ -1,9 +1,9 @@
 /**
- * Remove stored volatile runtime data from chart and chart window.
+ * Remove stored volatile runtime vars from chart and chart window.
  *
  * @return bool - success status
  */
-bool RemoveVolatileData() {
+bool RemoveVolatileStatus() {
    string name = ProgramName();
 
    // input string Instance.ID
@@ -39,5 +39,5 @@ bool RemoveVolatileData() {
       key = "EA.status";
       if (ObjectFind(key) != -1) ObjectDelete(key);
    }
-   return(!catch("RemoveVolatileData(1)"));
+   return(!catch("RemoveVolatileStatus(1)"));
 }

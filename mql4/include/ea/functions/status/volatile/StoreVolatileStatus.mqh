@@ -3,7 +3,7 @@
  *
  * @return bool - success status
  */
-bool StoreVolatileData() {
+bool StoreVolatileStatus() {
    string name = ProgramName();
 
    // input string Instance.ID
@@ -35,5 +35,5 @@ bool StoreVolatileData() {
       SetWindowIntegerA(__ExecutionContext[EC.hChart], key, ifInt(status.showTradeHistory, 1, -1));
       Chart.StoreBool(key, status.showTradeHistory);
    }
-   return(!catch("StoreVolatileData(1)"));
+   return(!catch("StoreVolatileStatus(1)"));
 }

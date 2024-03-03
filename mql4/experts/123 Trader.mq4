@@ -142,7 +142,7 @@ int onTick() {
          open.takeprofit = tp;
       }
    }
-   return(catch("onTick(1)"));
+   return(last_error);
 }
 
 

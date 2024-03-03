@@ -1,25 +1,25 @@
 /**
- * Restore volatile runtime data from chart or chart window (for template reload, terminal restart, recompilation etc).
+ * Restore volatile runtime vars from chart or chart window (for template reload, terminal restart, recompilation etc).
  *
  * @return bool - whether an instance id was successfully restored
  */
-bool RestoreVolatileData() {
+bool RestoreVolatileStatus() {
    string name = ProgramName();
 
    // input string Instance.ID
    while (true) {
       bool error = false;
-      if (SetInstanceId(Instance.ID, error, "RestoreVolatileData(1)")) break;
+      if (SetInstanceId(Instance.ID, error, "RestoreVolatileStatus(1)")) break;
       if (error) return(false);
 
       if (__isChart) {
          string key = name +".Instance.ID";
          string sValue = GetWindowStringA(__ExecutionContext[EC.hChart], key);
-         if (SetInstanceId(sValue, error, "RestoreVolatileData(2)")) break;
+         if (SetInstanceId(sValue, error, "RestoreVolatileStatus(2)")) break;
          if (error) return(false);
 
          Chart.RestoreString(key, sValue, false);
-         if (SetInstanceId(sValue, error, "RestoreVolatileData(3)")) break;
+         if (SetInstanceId(sValue, error, "RestoreVolatileStatus(3)")) break;
          return(false);
       }
    }
@@ -41,7 +41,7 @@ bool RestoreVolatileData() {
                break;
             }
          }
-         logWarn("RestoreVolatileData(4)  "+ instance.name +"  invalid data: status.activeMetric="+ iValue);
+         logWarn("RestoreVolatileStatus(4)  "+ instance.name +"  invalid data: status.activeMetric="+ iValue);
          status.activeMetric = 1;                           // reset to default value
          break;
       }

@@ -92,7 +92,7 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   if (RestoreVolatileData()) {                    // an instance id was found and restored
+   if (RestoreVolatileStatus()) {                  // an instance id was found and restored
       if (RestoreInstance()) {                     // the instance was restored
          logInfo("onInitTemplate(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
@@ -108,7 +108,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitRecompile() {
-   if (RestoreVolatileData()) {                    // same as for onInitTemplate()
+   if (RestoreVolatileStatus()) {                  // same as for onInitTemplate()
       if (RestoreInstance()) {
          logInfo("onInitRecompile(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
@@ -135,7 +135,7 @@ int afterInit() {
       test.onStopPause             = GetConfigBool(section, "OnStopPause",             true);
       test.reduceStatusWrites      = GetConfigBool(section, "ReduceStatusWrites",      true);
    }
-   StoreVolatileData();                            // store the instance id for template reload/restart/recompilation etc.
+   StoreVolatileStatus();                          // store the instance id for template reload/restart/recompilation etc.
    return(catch("afterInit(2)"));
 }
 

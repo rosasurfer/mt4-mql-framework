@@ -95,7 +95,7 @@ int onDeinitRemove() {
       logInfo("onDeinitRemove(1)  "+ instance.name +" expert removed in status \""+ StatusDescription(instance.status) +"\", profit: "+ sTotalProfit +" "+ sProfitStats);
       SaveStatus();
    }
-   RemoveVolatileData();                                             // remove a stored instance id
+   RemoveVolatileStatus();                                           // remove a stored instance id
    return(NO_ERROR);
 }
 

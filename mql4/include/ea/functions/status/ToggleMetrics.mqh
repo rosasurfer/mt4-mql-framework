@@ -15,7 +15,7 @@ bool ToggleMetrics(int direction, int minId, int maxId) {
    status.activeMetric += direction;
    if (status.activeMetric < minId) status.activeMetric = maxId;
    if (status.activeMetric > maxId) status.activeMetric = minId;
-   StoreVolatileData();
+   StoreVolatileStatus();
    SS.All();
 
    if (prevMetric==METRIC_SIG_UNITS || status.activeMetric==METRIC_SIG_UNITS) {

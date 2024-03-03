@@ -46,7 +46,7 @@ bool ToggleTradeHistory(bool soundOnNone = true) {
 
    // store current status
    status.showTradeHistory = showHistory;
-   StoreVolatileData();
+   StoreVolatileStatus();
 
    if (__isTesting) WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));

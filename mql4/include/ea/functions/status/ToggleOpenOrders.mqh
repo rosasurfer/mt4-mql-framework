@@ -57,7 +57,7 @@ bool ToggleOpenOrders(bool soundOnNone = true) {
 
    // store current status
    status.showOpenOrders = showOrders;
-   StoreVolatileData();
+   StoreVolatileStatus();
 
    if (__isTesting) WindowRedraw();
    return(!catch("ToggleOpenOrders(2)"));

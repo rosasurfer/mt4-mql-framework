@@ -17,8 +17,8 @@
  * -----------------
  * • PermittedSymbols:   Comma-separated list of symbols allowed to trade ("*" allows all available symbols).
  * • PermittedTimeRange: Time range when trading is allowed. Format: "00:00-23:59" in server time (empty: no limitation).
- * • DrawdownLimit:      Either an absolute money value or a percentage value describing the drawdown limit of an open position.
- * • IgnoreSpread:       Whether to ignore the spread of a floating position when calculating PnL. Enabling this setting
+ * • DrawdownLimit:      Either an absolute money amount or a percentage value describing the drawdown limit of an open position.
+ * • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
  *                       prevents DDL triggering by spread widening/spikes.
  */
 #include <stddefines.mqh>
@@ -30,7 +30,7 @@ int __virtualTicks = 800;                             // milliseconds (must be s
 
 extern string PermittedSymbols   = "";                // symbols allowed to trade ("*": all symbols)
 extern string PermittedTimeRange = "";                // time range trading is allowed (empty: no limitation)
-extern string DrawdownLimit      = "200.00 | 5%*";    // absolute or percentage drawdown limit
+extern string DrawdownLimit      = "200.00 | 5%*";    // absolute money amount or percentage drawdown limit
 extern bool   IgnoreSpread       = true;              // whether to ignore the spread of floating positions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

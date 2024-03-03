@@ -370,21 +370,14 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/zigzag-ea/deinit.mqh>
 
 // shared functions
-#include <ea/functions/CalculateMagicNumber.mqh>
-#include <ea/functions/CreateInstanceId.mqh>
-#include <ea/functions/IsMyOrder.mqh>
-#include <ea/functions/IsTestInstance.mqh>
-#include <ea/functions/RestoreInstance.mqh>
-#include <ea/functions/SetInstanceId.mqh>
-
-#include <ea/functions/ShowTradeHistory.mqh>
-#include <ea/functions/ToggleOpenOrders.mqh>
-#include <ea/functions/ToggleTradeHistory.mqh>
+#include <ea/functions/instance/CreateInstanceId.mqh>
+#include <ea/functions/instance/IsTestInstance.mqh>
+#include <ea/functions/instance/RestoreInstance.mqh>
+#include <ea/functions/instance/SetInstanceId.mqh>
 
 #include <ea/functions/log/GetLogFilename.mqh>
 
 #include <ea/functions/metric/RecordMetrics.mqh>
-#include <ea/functions/metric/ToggleMetrics.mqh>
 
 #include <ea/functions/status/StatusToStr.mqh>
 #include <ea/functions/status/StatusDescription.mqh>
@@ -393,6 +386,10 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/functions/status/SS.ClosedTrades.mqh>
 #include <ea/functions/status/SS.TotalProfit.mqh>
 #include <ea/functions/status/SS.ProfitStats.mqh>
+#include <ea/functions/status/ShowTradeHistory.mqh>
+#include <ea/functions/status/ToggleOpenOrders.mqh>
+#include <ea/functions/status/ToggleTradeHistory.mqh>
+#include <ea/functions/status/ToggleMetrics.mqh>
 
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>
@@ -408,13 +405,16 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/functions/status/file/SaveStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeStats.mqh>
 
-#include <ea/functions/status/volatile/StoreVolatileData.mqh>
-#include <ea/functions/status/volatile/RestoreVolatileData.mqh>
-#include <ea/functions/status/volatile/RemoveVolatileData.mqh>
+#include <ea/functions/status/volatile/StoreVolatileStatus.mqh>
+#include <ea/functions/status/volatile/RestoreVolatileStatus.mqh>
+#include <ea/functions/status/volatile/RemoveVolatileStatus.mqh>
 
+#include <ea/functions/trade/CalculateMagicNumber.mqh>
+#include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/AddHistoryRecord.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
+
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
 #include <ea/functions/validation/ValidateInputs.ID.mqh>
@@ -452,7 +452,7 @@ int onTick() {
       }
       RecordMetrics();
    }
-   return(catch("onTick(2)"));
+   return(last_error);
 }
 
 
