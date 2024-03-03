@@ -20,9 +20,11 @@ int __virtualTicks = 0;
 extern string Instance.ID          = "";     // instance to load from a status file (format "[T]123")
 
 extern double Lots                 = 1.0;
+
 extern int    Initial.TakeProfit   = 100;    // in pip (0: partial targets only or no TP)
 extern int    Initial.StopLoss     = 50;     // in pip (0: moving stops only or no SL
-extern int    Target1              = 0;      // in pip
+
+extern int    Target1              = 0;      // in pip (0: no target)
 extern int    Target1.ClosePercent = 0;      // size to close (0: nothing)
 extern int    Target1.MoveStopTo   = 1;      // in pip (0: don't move stop)
 extern int    Target2              = 0;      // ...
@@ -43,6 +45,7 @@ extern int    Target4.MoveStopTo   = 0;      //
 #include <functions/HandleCommands.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
+
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
 #include <ea/functions/trade/defines.mqh>

@@ -43,7 +43,7 @@ extern double Lots                           = 0.1;                             
 extern int    Initial.TakeProfit             = 100;         // in pip (0: partial targets only or no TP)                   //  |  off (60)   |  on (100)   |  on (400)   |
 extern int    Initial.StopLoss               = 50;          // in pip (0: moving stops only or no SL                       //  |  on (100)   |  on (100)   |  on (100)   |
                                                                                                                            //  +-------------+-------------+-------------+
-extern int    Target1                        = 0;           // in pip                                                      //  |      50     |      10     |      20     |
+extern int    Target1                        = 0;           // in pip (0: no target)                                       //  |      50     |      10     |      20     |
 extern int    Target1.ClosePercent           = 0;           // size to close (0: nothing)                                  //  |      0%     |     10%     |     25%     |
 extern int    Target1.MoveStopTo             = 1;           // in pip (0: don't move stop)                                 //  |       1     |       1     |     -50     | 1: Breakeven-Stop (OpenPrice + 1 pip)
                                                                                                                            //  +-------------+-------------+-------------+
