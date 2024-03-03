@@ -8,7 +8,7 @@ int onDeinit() {
    if (__isTesting) {
       if (!last_error && instance.status!=STATUS_STOPPED) {
          bool success = true;
-         if (instance.status == STATUS_PROGRESSING) {
+         if (instance.status == STATUS_TRADING) {
             success = UpdateStatus();
          }
          if (success) StopInstance();

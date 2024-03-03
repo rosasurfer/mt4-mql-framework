@@ -62,20 +62,22 @@
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - re-usable exit management
+ *     monitor executed limits
+ *     process stops and targets
+ *      handle limit execution during processing
+ *
+ *
  *     breakeven stop
  *     partial profit taking
+ *     trailing stop
  *     1st: distances in static pips
  *     2nd: dynamic distances (multiples of range)
  *
- *      runtime:
- *       monitor executed limits
- *       process stops and targets
- *        handle limit execution during processing
+ *
  *
  *  - tests
  *     storage in folder per strategy
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
- *  - trailing stop
  *
  *  - self-optimization
  *     13.07.2008: @tdion, inspiration for @rraygun   https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool#    statt MACD(16,18) MACD(ALMA(38,46))
@@ -267,6 +269,7 @@ extern bool   ShowProfitInPercent            = true;                    // wheth
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 #include <ea/functions/metric/defines.mqh>
+#include <ea/functions/status/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
@@ -274,10 +277,6 @@ extern bool   ShowProfitInPercent            = true;                    // wheth
 
 #define INSTANCE_ID_MIN             1              // range of valid instance ids
 #define INSTANCE_ID_MAX           999              //
-
-#define STATUS_WAITING              1              // instance status values
-#define STATUS_PROGRESSING          2
-#define STATUS_STOPPED              3
 
 #define TRADINGMODE_REGULAR         1              // trading modes
 #define TRADINGMODE_VIRTUAL         2
@@ -461,7 +460,7 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 int onTick() {
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
 
-   if (__isChart) HandleCommands();                // process incoming commands
+   if (__isChart) HandleCommands();                // process incoming commands, may switch on/off the instance
 
    if (instance.status != STATUS_STOPPED) {
       double signal[3];
@@ -469,7 +468,7 @@ int onTick() {
       if (instance.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) StartInstance(signal);
       }
-      else if (instance.status == STATUS_PROGRESSING) {
+      else if (instance.status == STATUS_TRADING) {
          if (UpdateStatus()) {
             if      (IsStopSignal(signal))   StopInstance(signal);
             else if (IsZigZagSignal(signal)) ReverseInstance(signal);
@@ -519,7 +518,7 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "stop") {
       switch (instance.status) {
          case STATUS_WAITING:
-         case STATUS_PROGRESSING:
+         case STATUS_TRADING:
             logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
             double manual[] = {SIGTYPE_MANUAL, 0, 0};
             return(StopInstance(manual));
@@ -822,9 +821,9 @@ bool IsStartSignal(double &signal[]) {
  */
 bool IsStopSignal(double &signal[]) {
    signal[SIGNAL_TYPE] = NULL;
-   if (last_error || (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING)) return(false);
+   if (last_error || (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING)) return(false);
 
-   if (instance.status == STATUS_PROGRESSING) {
+   if (instance.status == STATUS_TRADING) {
       // stop.profitPct -----------------------------------------------------------------------------------------------------
       if (stop.profitPct.condition) {
          if (stop.profitPct.absValue == INT_MAX)
@@ -881,7 +880,7 @@ bool StartInstance(double signal[]) {
    int sigDirection = signal[SIGNAL_DIRECTION];
    double sigValue  = signal[SIGNAL_VALUE];
 
-   instance.status = STATUS_PROGRESSING;
+   instance.status = STATUS_TRADING;
    if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
    // open a new position
@@ -958,9 +957,9 @@ bool StartInstance(double signal[]) {
  * @return bool - success status
  */
 bool ReverseInstance(double signal[]) {
-   if (last_error != NULL)                    return(false);
-   if (instance.status != STATUS_PROGRESSING) return(!catch("ReverseInstance(1)  "+ instance.name +" cannot reverse "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!signal[SIGNAL_DIRECTION])             return(!catch("ReverseInstance(2)  "+ instance.name +" invalid parameter SIGNAL_DIRECTION: "+ _int(signal[SIGNAL_DIRECTION]), ERR_INVALID_PARAMETER));
+   if (last_error != NULL)                return(false);
+   if (instance.status != STATUS_TRADING) return(!catch("ReverseInstance(1)  "+ instance.name +" cannot reverse "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!signal[SIGNAL_DIRECTION])         return(!catch("ReverseInstance(2)  "+ instance.name +" invalid parameter SIGNAL_DIRECTION: "+ _int(signal[SIGNAL_DIRECTION]), ERR_INVALID_PARAMETER));
    int ticket, oeFlags, oe[];
 
    int    sigType      = signal[SIGNAL_TYPE];
@@ -1077,15 +1076,15 @@ double stop.profitPct.AbsValue() {
  * @return bool - success status
  */
 bool StopInstance(double signal[]) {
-   if (last_error != NULL)                                                     return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)                                                 return(false);
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
    int    sigType      = signal[SIGNAL_TYPE];
    int    sigDirection = signal[SIGNAL_DIRECTION];
    double sigValue     = signal[SIGNAL_VALUE];
 
    // close an open position
-   if (instance.status == STATUS_PROGRESSING) {
+   if (instance.status == STATUS_TRADING) {
       if (open.ticket > 0) {
          bool success;
          int oeFlags, oe[];
@@ -1169,9 +1168,9 @@ bool StopInstance(double signal[]) {
  * @return bool - success status
  */
 bool UpdateStatus() {
-   if (last_error != NULL)                    return(false);
-   if (instance.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ instance.name +" cannot update order status of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!open.ticket)                          return(true);
+   if (last_error != NULL)                return(false);
+   if (instance.status != STATUS_TRADING) return(!catch("UpdateStatus(1)  "+ instance.name +" cannot update order status of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!open.ticket)                      return(true);
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       open.swap         = 0;
@@ -2138,10 +2137,10 @@ int ShowStatus(int error = NO_ERROR) {
    string sStatus="", sError="";
 
    switch (instance.status) {
-      case NULL:               sStatus = StringConcatenate(instance.name, "  not initialized"); break;
-      case STATUS_WAITING:     sStatus = StringConcatenate(instance.name, "  waiting");         break;
-      case STATUS_PROGRESSING: sStatus = StringConcatenate(instance.name, "  progressing");     break;
-      case STATUS_STOPPED:     sStatus = StringConcatenate(instance.name, "  stopped");         break;
+      case NULL:           sStatus = StringConcatenate(instance.name, "  not initialized"); break;
+      case STATUS_WAITING: sStatus = StringConcatenate(instance.name, "  waiting");         break;
+      case STATUS_TRADING: sStatus = StringConcatenate(instance.name, "  trading");         break;
+      case STATUS_STOPPED: sStatus = StringConcatenate(instance.name, "  stopped");         break;
       default:
          return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
    }

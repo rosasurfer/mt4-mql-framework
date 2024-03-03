@@ -107,6 +107,7 @@ extern int    Target4.MoveStopTo   = 0;                              //
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 #include <ea/functions/metric/defines.mqh>
+#include <ea/functions/status/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
@@ -114,10 +115,6 @@ extern int    Target4.MoveStopTo   = 0;                              //
 
 #define INSTANCE_ID_MIN          1                 // range of valid instance ids
 #define INSTANCE_ID_MAX        999                 //
-
-#define STATUS_WAITING           1                 // instance has no open positions and waits for trade signals
-#define STATUS_PROGRESSING       2                 // instance manages open positions
-#define STATUS_STOPPED           3                 // instance has no open positions and doesn't wait for trade signals
 
 #define SIGNAL_LONG  TRADE_DIRECTION_LONG          // 1 signal types
 #define SIGNAL_SHORT TRADE_DIRECTION_SHORT         // 2
@@ -255,7 +252,7 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
 int onTick() {
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
 
-   if (__isChart) HandleCommands();                // process incoming commands
+   if (__isChart) HandleCommands();                // process incoming commands, may switch on/off the instance
 
    if (instance.status != STATUS_STOPPED) {
       int signal;
@@ -282,7 +279,7 @@ bool onCommand(string cmd, string params, int keys) {
    if (cmd == "stop") {
       switch (instance.status) {
          case STATUS_WAITING:
-         case STATUS_PROGRESSING:
+         case STATUS_TRADING:
             logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
             return(StopInstance());
       }
@@ -435,8 +432,8 @@ bool GetZigZagData(int bar, int &trend, int &reversal) {
  * @return bool - success status
  */
 bool UpdateStatus(int signal = NULL) {
-   if (last_error != NULL)                                                     return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ instance.name +" illegal instance status "+ StatusToStr(instance.status), ERR_ILLEGAL_STATE));
+   if (last_error != NULL)                                                 return(false);
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("UpdateStatus(1)  "+ instance.name +" illegal instance status "+ StatusToStr(instance.status), ERR_ILLEGAL_STATE));
    bool positionClosed = false;
 
    // update open position
@@ -471,7 +468,7 @@ bool UpdateStatus(int signal = NULL) {
 
    // process signal
    if (signal != NULL) {
-      instance.status = STATUS_PROGRESSING;
+      instance.status = STATUS_TRADING;
 
       // close an existing open position
       if (open.ticket != NULL) {
@@ -612,11 +609,11 @@ int onPositionClose(string message, int error) {
  * @return bool - success status
  */
 bool StopInstance() {
-   if (last_error != NULL)                                                     return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_PROGRESSING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)                                                 return(false);
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
    // close an open position
-   if (instance.status == STATUS_PROGRESSING) {
+   if (instance.status == STATUS_TRADING) {
       if (open.ticket > 0) {
          if (IsLogInfo()) logInfo("StopInstance(2)  "+ instance.name +" stopping");
          int oeFlags, oe[];
@@ -1005,10 +1002,10 @@ int ShowStatus(int error = NO_ERROR) {
    string sStatus="", sError="";
 
    switch (instance.status) {
-      case NULL:               sStatus = StringConcatenate(instance.name, "  not initialized"); break;
-      case STATUS_WAITING:     sStatus = StringConcatenate(instance.name, "  waiting");         break;
-      case STATUS_PROGRESSING: sStatus = StringConcatenate(instance.name, "  progressing");     break;
-      case STATUS_STOPPED:     sStatus = StringConcatenate(instance.name, "  stopped");         break;
+      case NULL:           sStatus = StringConcatenate(instance.name, "  not initialized"); break;
+      case STATUS_WAITING: sStatus = StringConcatenate(instance.name, "  waiting");         break;
+      case STATUS_TRADING: sStatus = StringConcatenate(instance.name, "  trading");         break;
+      case STATUS_STOPPED: sStatus = StringConcatenate(instance.name, "  stopped");         break;
       default:
          return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
    }

@@ -113,7 +113,7 @@ int      order.slippage = 1;           // in MQL point
 int onTick() {
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
 
-   if (__isChart) HandleCommands();    // process incoming commands
+   if (__isChart) HandleCommands();                   // process incoming commands, may switch on/off the instance
    int signal, oe[];
 
    // manage an open position
