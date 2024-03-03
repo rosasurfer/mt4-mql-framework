@@ -95,9 +95,6 @@ int      bracket2Start = 960;                // 16:00
 int      bracket2End   = 990;                // 16:30
 
 // other
-string   pUnit = "";
-int      pDigits;
-int      pMultiplier;
 int      order.slippage = 1;                 // in MQL points
 
 // cache vars to speed-up ShowStatus()

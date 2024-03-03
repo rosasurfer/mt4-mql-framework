@@ -155,9 +155,6 @@ bool     status.showOpenOrders;
 bool     status.showTradeHistory;
 
 // other
-string   pUnit = "";
-int      pDigits;
-int      pMultiplier;
 int      order.slippage = 1;                    // in MQL points
 
 // cache vars to speed-up ShowStatus()
