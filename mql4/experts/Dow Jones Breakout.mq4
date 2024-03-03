@@ -94,9 +94,6 @@ int      bracket1End   = 930;                // 15:30
 int      bracket2Start = 960;                // 16:00
 int      bracket2End   = 990;                // 16:30
 
-// other
-int      order.slippage = 1;                 // in MQL points
-
 // cache vars to speed-up ShowStatus()
 string   sOpenLots     = "";
 string   sClosedTrades = "";
@@ -128,9 +125,6 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/functions/status/SS.TotalProfit.mqh>
 #include <ea/functions/status/SS.ProfitStats.mqh>
 #include <ea/functions/status/ShowTradeHistory.mqh>
-#include <ea/functions/status/ToggleOpenOrders.mqh>
-#include <ea/functions/status/ToggleTradeHistory.mqh>
-#include <ea/functions/status/ToggleMetrics.mqh>
 
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>
@@ -149,6 +143,9 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/functions/status/volatile/StoreVolatileStatus.mqh>
 #include <ea/functions/status/volatile/RestoreVolatileStatus.mqh>
 #include <ea/functions/status/volatile/RemoveVolatileStatus.mqh>
+#include <ea/functions/status/volatile/ToggleOpenOrders.mqh>
+#include <ea/functions/status/volatile/ToggleTradeHistory.mqh>
+#include <ea/functions/status/volatile/ToggleMetrics.mqh>
 
 #include <ea/functions/trade/CalculateMagicNumber.mqh>
 #include <ea/functions/trade/IsMyOrder.mqh>

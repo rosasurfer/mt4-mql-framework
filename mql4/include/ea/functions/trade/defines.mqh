@@ -2,6 +2,9 @@
  * Trade related constants and global vars.
  */
 
+int order.slippage = 1;                // in MQL points
+
+
 // open order data
 int      open.ticket;
 int      open.type;
