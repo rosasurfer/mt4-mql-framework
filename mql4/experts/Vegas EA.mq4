@@ -111,58 +111,39 @@ extern int    Target4.MoveStopTo   = 0;                              //
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-#define STRATEGY_ID            108                 // unique strategy id (used for magic order numbers)
+#define STRATEGY_ID         108                 // unique strategy id (used for magic order numbers)
 
-#define INSTANCE_ID_MIN          1                 // range of valid instance ids
-#define INSTANCE_ID_MAX        999                 //
+#define INSTANCE_ID_MIN       1                 // range of valid instance ids
+#define INSTANCE_ID_MAX     999                 //
 
-#define SIGNAL_LONG  TRADE_DIRECTION_LONG          // 1 signal types
-#define SIGNAL_SHORT TRADE_DIRECTION_SHORT         // 2
+#define SIGNAL_LONG           1                 // signal types
+#define SIGNAL_SHORT          2                 //
 
 // instance data
-int      instance.id;                              // used for magic order numbers
+int      instance.id;                           // used for magic order numbers
 string   instance.name = "";
 datetime instance.created;
 bool     instance.isTest;
 int      instance.status;
 double   instance.startEquity;
 
-double   instance.openNetProfit;                   // real PnL after all costs in money (net)
-double   instance.closedNetProfit;                 //
-double   instance.totalNetProfit;                  //
-double   instance.maxNetProfit;                    // max. observed profit:   0...+n
-double   instance.maxNetDrawdown;                  // max. observed drawdown: -n...0
+double   instance.openNetProfit;                // real PnL after all costs in money (net)
+double   instance.closedNetProfit;              //
+double   instance.totalNetProfit;               //
+double   instance.maxNetProfit;                 // max. observed profit:   0...+n
+double   instance.maxNetDrawdown;               // max. observed drawdown: -n...0
 
-double   instance.openNetProfitP;                  // real PnL after all costs in point (net)
-double   instance.closedNetProfitP;                //
-double   instance.totalNetProfitP;                 //
-double   instance.maxNetProfitP;                   //
-double   instance.maxNetDrawdownP;                 //
+double   instance.openNetProfitP;               // real PnL after all costs in point (net)
+double   instance.closedNetProfitP;             //
+double   instance.totalNetProfitP;              //
+double   instance.maxNetProfitP;                //
+double   instance.maxNetDrawdownP;              //
 
-double   instance.openSigProfitP;                  // signal PnL before spread/any costs in point
-double   instance.closedSigProfitP;                //
-double   instance.totalSigProfitP;                 //
-double   instance.maxSigProfitP;                   //
-double   instance.maxSigDrawdownP;                 //
-
-// order data
-int      open.ticket;                              // one open position
-int      open.type;
-double   open.lots;
-datetime open.time;
-double   open.price;
-double   open.priceSig;
-double   open.slippage;
-double   open.swap;
-double   open.commission;
-double   open.grossProfit;
-double   open.netProfit;
-double   open.netProfitP;
-double   open.runupP;                              // max runup distance
-double   open.drawdownP;                           // ...
-double   open.sigProfitP;
-double   open.sigRunupP;                           // max signal runup distance
-double   open.sigDrawdownP;                        // ...
+double   instance.openSigProfitP;               // signal PnL before spread/any costs in point
+double   instance.closedSigProfitP;             //
+double   instance.totalSigProfitP;              //
+double   instance.maxSigProfitP;                //
+double   instance.maxSigDrawdownP;              //
 
 // volatile status data
 int      status.activeMetric = 1;
@@ -173,7 +154,7 @@ bool     status.showTradeHistory;
 string   pUnit = "";
 int      pDigits;
 int      pMultiplier;
-int      order.slippage = 1;                       // in MQL points
+int      order.slippage = 1;                    // in MQL points
 
 // cache vars to speed-up ShowStatus()
 string   sMetricDescription = "";
@@ -182,9 +163,9 @@ string   sClosedTrades      = "";
 string   sTotalProfit       = "";
 string   sProfitStats       = "";
 
-// debug settings                                  // configurable via framework config, see afterInit()
-bool     test.onStopPause        = false;          // whether to pause a test after StopInstance()
-bool     test.reduceStatusWrites = true;           // whether to reduce status file I/O in tester
+// debug settings                               // configurable via framework config, see afterInit()
+bool     test.onStopPause        = false;       // whether to pause a test after StopInstance()
+bool     test.reduceStatusWrites = true;        // whether to reduce status file I/O in tester
 
 // initialization/deinitialization
 #include <ea/vegas-ea/init.mqh>
@@ -425,20 +406,19 @@ bool GetZigZagData(int bar, int &trend, int &reversal) {
 
 
 /**
- * Update order status and PnL stats.
+ * Update client-side order status and PnL.
  *
  * @param  int signal [optional] - trade signal causing the call (default: none, update status only)
  *
  * @return bool - success status
  */
 bool UpdateStatus(int signal = NULL) {
-   if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("UpdateStatus(1)  "+ instance.name +" illegal instance status "+ StatusToStr(instance.status), ERR_ILLEGAL_STATE));
+   if (last_error || instance.status!=STATUS_TRADING) return(false);
    bool positionClosed = false;
 
    // update open position
    if (open.ticket != NULL) {
-      if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
+      if (!SelectTicket(open.ticket, "UpdateStatus(1)")) return(false);
       bool isClosed = (OrderCloseTime() != NULL);
       if (isClosed) {
          double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
@@ -460,7 +440,7 @@ bool UpdateStatus(int signal = NULL) {
 
       if (isClosed) {
          int error;
-         if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
+         if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                              return(false);
          positionClosed = true;
       }
@@ -472,7 +452,7 @@ bool UpdateStatus(int signal = NULL) {
 
       // close an existing open position
       if (open.ticket != NULL) {
-         if (open.type != ifInt(signal==SIGNAL_SHORT, OP_LONG, OP_SHORT)) return(!catch("UpdateStatus(4)  "+ instance.name +" cannot process "+ SignalToStr(signal) +" with open "+ OperationTypeToStr(open.type) +" position", ERR_ILLEGAL_STATE));
+         if (open.type != ifInt(signal==SIGNAL_SHORT, OP_LONG, OP_SHORT)) return(!catch("UpdateStatus(3)  "+ instance.name +" cannot process "+ SignalToStr(signal) +" with open "+ OperationTypeToStr(open.type) +" position", ERR_ILLEGAL_STATE));
 
          int oeFlags, oe[];
          if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
@@ -548,7 +528,7 @@ bool UpdateStatus(int signal = NULL) {
 
    if (positionClosed || signal)
       return(SaveStatus());
-   return(!catch("UpdateStatus(5)"));
+   return(!catch("UpdateStatus(4)"));
 }
 
 

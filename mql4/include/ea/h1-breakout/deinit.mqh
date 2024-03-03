@@ -11,7 +11,8 @@ int onDeinit() {
          if (instance.status == STATUS_TRADING) {
             success = UpdateStatus();
          }
-         if (success) StopInstance();
+         double signal[] = {0,0,0};
+         if (success) StopInstance(signal);
          ShowStatus();
       }
       return(last_error);

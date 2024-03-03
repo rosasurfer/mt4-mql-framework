@@ -79,35 +79,16 @@ double   instance.totalSigProfitP;           //
 double   instance.maxSigProfitP;             //
 double   instance.maxSigDrawdownP;           //
 
-// order data
-int      open.ticket;                        // one open position
-int      open.type;
-double   open.lots;
-datetime open.time;
-double   open.price;
-double   open.priceSig;
-double   open.slippage;
-double   open.swap;
-double   open.commission;
-double   open.grossProfit;
-double   open.netProfit;
-double   open.netProfitP;
-double   open.runupP;                        // max runup distance
-double   open.drawdownP;                     // ...
-double   open.sigProfitP;
-double   open.sigRunupP;                     // max signal runup distance
-double   open.sigDrawdownP;                  // ...
-
-// bracket times
-int      bracket1Start = 900;                // 15:00 (minutes after Midnight)
-int      bracket1End   = 930;                // 15:30 ...
-int      bracket2Start = 960;                // 16:00 ...
-int      bracket2End   = 990;                // 16:30 ...
-
 // volatile status data
 int      status.activeMetric = 1;
 bool     status.showOpenOrders;
 bool     status.showTradeHistory;
+
+// bracket times
+int      bracket1Start = 900;                // 15:00 (minutes after Midnight)
+int      bracket1End   = 930;                // 15:30
+int      bracket2Start = 960;                // 16:00
+int      bracket2End   = 990;                // 16:30
 
 // other
 string   pUnit = "";
@@ -288,21 +269,6 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Update order status and PnL stats.
- *
- * @param  int signal [optional] - trade signal causing the call (default: none, update status only)
- *
- * @return bool - success status
- */
-bool UpdateStatus(int signal = NULL) {
-   if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("UpdateStatus(1)  "+ instance.name +" illegal instance status "+ StatusToStr(instance.status), ERR_ILLEGAL_STATE));
-
-   return(!catch("UpdateStatus(2)  not implemented", ERR_NOT_IMPLEMENTED));
-}
-
-
-/**
  * Stop a waiting or progressing instance and close open positions (if any).
  *
  * @return bool - success status
@@ -314,6 +280,18 @@ bool StopInstance() {
    logNotice("StopInstance(0.1)  not implemented", ERR_NOT_IMPLEMENTED);
 
    return(!catch("StopInstance(2)"));
+}
+
+
+/**
+ * Update client-side order status and PnL.
+ *
+ * @return bool - success status
+ */
+bool UpdateStatus() {
+   if (last_error || instance.status!=STATUS_TRADING) return(false);
+
+   return(!catch("UpdateStatus(1)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 
 

@@ -47,10 +47,20 @@ extern int    Target4.MoveStopTo   = 0;      //
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-#define STRATEGY_ID         111              // unique strategy id (used for magic order numbers)
+#define STRATEGY_ID            111           // unique strategy id (used for magic order numbers)
 
-#define INSTANCE_ID_MIN       1              // range of valid instance ids
-#define INSTANCE_ID_MAX     999              //
+#define INSTANCE_ID_MIN          1           // range of valid instance ids
+#define INSTANCE_ID_MAX        999           //
+
+#define SIG_TYPE                 0           // signal array fields
+#define SIG_VALUE                1
+#define SIG_TRADE                2
+
+#define SIG_TRADE_LONG           1           // signal trade flags, can be combined
+#define SIG_TRADE_SHORT          2
+#define SIG_TRADE_CLOSE_LONG     4
+#define SIG_TRADE_CLOSE_SHORT    8
+#define SIG_TRADE_CLOSE_ALL     12           // SIG_TRADE_CLOSE_LONG | SIG_TRADE_CLOSE_SHORT
 
 // instance data
 int      instance.id;                        // used for magic order numbers
@@ -77,25 +87,6 @@ double   instance.closedSigProfitP;          //
 double   instance.totalSigProfitP;           //
 double   instance.maxSigProfitP;             //
 double   instance.maxSigDrawdownP;           //
-
-// order data
-int      open.ticket;                        // one open position
-int      open.type;
-double   open.lots;
-datetime open.time;
-double   open.price;
-double   open.priceSig;
-double   open.slippage;
-double   open.swap;
-double   open.commission;
-double   open.grossProfit;
-double   open.netProfit;
-double   open.netProfitP;
-double   open.runupP;                        // max runup distance
-double   open.drawdownP;                     // ...
-double   open.sigProfitP;
-double   open.sigRunupP;                     // max signal runup distance
-double   open.sigDrawdownP;                  // ...
 
 // volatile status data
 int      status.activeMetric = 1;
@@ -137,6 +128,7 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
 #include <ea/functions/log/GetLogFilename.mqh>
 
 #include <ea/functions/metric/Recorder_GetSymbolDefinition.mqh>
+#include <ea/functions/metric/RecordMetrics.mqh>
 #include <ea/functions/metric/ToggleMetrics.mqh>
 
 #include <ea/functions/status/StatusToStr.mqh>
@@ -180,38 +172,27 @@ bool     test.reduceStatusWrites = true;     // whether to reduce status file I/
  */
 int onTick() {
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
+   double signal[3];
 
-   if (__isChart) HandleCommands();                // process incoming commands, may switch on a stopped instance
-
-
-
-   if (instance.status == STATUS_STOPPED) {
-      // do nothing
-   }
-   else {
-      // operation
-   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+   if (__isChart) HandleCommands();                   // process incoming commands, may switch on/off the instance
 
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
+         if (IsStartSignal(signal)) {
+            StartInstance(signal);
+         }
       }
       else if (instance.status == STATUS_TRADING) {
          UpdateStatus();
+
+         if (IsStopSignal(signal)) {
+            StopInstance(signal);
+         }
+         else {
+            UpdateOpenOrders();
+         }
       }
+      RecordMetrics();
    }
    return(catch("onTick(2)"));
 }
@@ -246,32 +227,84 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Update order status and PnL stats.
+ * Whether an instance start condition evalutes to TRUE.
  *
- * @param  int signal [optional] - trade signal causing the call (default: none, update status only)
+ * @param  _Out_ double &signal[] - array receiving the signal infos
  *
- * @return bool - success status
+ * @return bool
  */
-bool UpdateStatus(int signal = NULL) {
-   if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("UpdateStatus(1)  "+ instance.name +" illegal instance status "+ StatusToStr(instance.status), ERR_ILLEGAL_STATE));
-
-   return(!catch("UpdateStatus(2)  not implemented", ERR_NOT_IMPLEMENTED));
+bool IsStartSignal(double &signal[]) {
+   if (last_error || instance.status!=STATUS_WAITING) return(false);
+   return(!logNotice("IsStartSignal(1)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 
 
 /**
- * Stop a waiting or progressing instance and close open positions (if any).
+ * Whether an instance stop condition evaluates to TRUE.
+ *
+ * @param  _Out_ double &signal[] - array receiving the signal infos
+ *
+ * @return bool
+ */
+bool IsStopSignal(double &signal[]) {
+   if (last_error || (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING)) return(false);
+   return(!logNotice("IsStopSignal(1)  not implemented", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Start a waiting or restart a stopped instance.
+ *
+ * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StopInstance() {
+bool StartInstance(double signal[]) {
+   if (last_error != NULL)                                                 return(false);
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!signal[SIG_TRADE])                                                 return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter SIG_TRADE: "+ _int(signal[SIG_TRADE]), ERR_INVALID_PARAMETER));
+
+   return(SaveStatus());
+}
+
+
+/**
+ * Stop a running instance and close open positions (if any).
+ *
+ * @param  double signal[] - signal infos causing the call
+ *
+ * @return bool - success status
+ */
+bool StopInstance(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   logNotice("StopInstance(0.1)  not implemented", ERR_NOT_IMPLEMENTED);
+   return(!logNotice("StopInstance(2)  not implemented", ERR_NOT_IMPLEMENTED));
+}
 
-   return(!catch("StopInstance(2)"));
+
+/**
+ * Update client-side order status and PnL.
+ *
+ * @return bool - success status
+ */
+bool UpdateStatus() {
+   if (last_error || instance.status!=STATUS_TRADING) return(false);
+
+   return(!catch("UpdateStatus(1)  not implemented", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Manage server-side entry/exit limits, open positions and partial profits.
+ *
+ * @return bool - success status
+ */
+bool UpdateOpenOrders() {
+   if (last_error != NULL) return(false);
+   if (instance.status != STATUS_TRADING) return(!catch("UpdateOpenOrders(1)  "+ instance.name +" cannot update orders of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+
+   return(!catch("UpdateOpenOrders(1)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 
 

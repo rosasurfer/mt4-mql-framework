@@ -11,8 +11,8 @@ int onDeinit() {
          if (instance.status == STATUS_TRADING) {
             success = UpdateStatus();
          }
-         double manual[] = {SIGTYPE_MANUAL, 0, 0};
-         if (success) StopInstance(manual);
+         double signal[] = {0,0,0};
+         if (success) StopInstance(signal);
          RecordMetrics();
          ShowStatus();
       }

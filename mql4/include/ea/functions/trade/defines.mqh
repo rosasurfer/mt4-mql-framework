@@ -1,10 +1,31 @@
 /**
- * Trade history related constants and global vars.
+ * Trade related constants and global vars.
  */
 
-double history[][20];                  // trade history data
+// open order data
+int      open.ticket;
+int      open.type;
+double   open.lots;
+datetime open.time;
+double   open.price;
+double   open.priceSig;                // signal price
+double   open.slippage;
+double   open.swap;
+double   open.commission;
+double   open.grossProfit;
+double   open.netProfit;
+double   open.netProfitP;
+double   open.runupP;                  // max runup distance
+double   open.drawdownP;               //
+double   open.sigProfitP;
+double   open.sigRunupP;               // max signal runup distance
+double   open.sigDrawdownP;            //
 
-#define H_TICKET            0          // indexes of trade history
+
+// trade history data
+double history[][20];
+
+#define H_TICKET            0          // indexes of history[][]
 #define H_TYPE              1
 #define H_LOTS              2
 #define H_OPENTIME          3

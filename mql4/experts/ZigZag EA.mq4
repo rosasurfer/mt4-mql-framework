@@ -283,17 +283,19 @@ extern bool   ShowProfitInPercent            = true;                    // wheth
 
 string tradingModeDescriptions[] = {"", "regular", "virtual"};
 
-#define SIGNAL_TYPE                 0              // signal object fields
-#define SIGNAL_DIRECTION            1
-#define SIGNAL_VALUE                2
+#define SIG_TYPE                    0              // signal array fields
+#define SIG_VALUE                   1
+#define SIG_TRADE                   2
 
-#define SIGTYPE_MANUAL              1              // signal types
-#define SIGTYPE_TIME                2
-#define SIGTYPE_ZIGZAG              3
-#define SIGTYPE_TAKEPROFIT          4
+#define SIG_TYPE_TIME               1              // signal types
+#define SIG_TYPE_ZIGZAG             2
+#define SIG_TYPE_TAKEPROFIT         3
 
-#define SIGDIRECTION_LONG  TRADE_DIRECTION_LONG    // 1 signal directions
-#define SIGDIRECTION_SHORT TRADE_DIRECTION_SHORT   // 2
+#define SIG_TRADE_LONG              1              // signal trade flags, can be combined
+#define SIG_TRADE_SHORT             2
+#define SIG_TRADE_CLOSE_LONG        4
+#define SIG_TRADE_CLOSE_SHORT       8
+#define SIG_TRADE_CLOSE_ALL        12              // SIG_TRADE_CLOSE_LONG | SIG_TRADE_CLOSE_SHORT
 
 #define METRIC_DAILY_NET_MONEY      4              // non-standard PnL metrics
 #define METRIC_DAILY_NET_UNITS      5
@@ -327,25 +329,6 @@ double   instance.closedSigProfitP;                //
 double   instance.totalSigProfitP;                 //
 double   instance.maxSigProfitP;                   //
 double   instance.maxSigDrawdownP;                 //
-
-// order data
-int      open.ticket;                              // one open position
-int      open.type;
-double   open.lots;
-datetime open.time;
-double   open.price;
-double   open.priceSig;
-double   open.slippage;
-double   open.swap;
-double   open.commission;
-double   open.grossProfit;
-double   open.netProfit;
-double   open.netProfitP;
-double   open.runupP;                              // max runup distance
-double   open.drawdownP;                           // ...
-double   open.sigProfitP;
-double   open.sigRunupP;                           // max signal runup distance
-double   open.sigDrawdownP;                        // ...
 
 // instance start conditions
 bool     start.time.condition;                     // whether a time condition is active
@@ -459,19 +442,25 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
  */
 int onTick() {
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
+   double signal[3];
 
    if (__isChart) HandleCommands();                // process incoming commands, may switch on/off the instance
 
    if (instance.status != STATUS_STOPPED) {
-      double signal[3];
 
       if (instance.status == STATUS_WAITING) {
-         if (IsStartSignal(signal)) StartInstance(signal);
+         if (IsStartSignal(signal)) {
+            StartInstance(signal);
+         }
       }
       else if (instance.status == STATUS_TRADING) {
-         if (UpdateStatus()) {
-            if      (IsStopSignal(signal))   StopInstance(signal);
-            else if (IsZigZagSignal(signal)) ReverseInstance(signal);
+         UpdateStatus();
+
+         if (IsStopSignal(signal)) {
+            StopInstance(signal);
+         }
+         else if (IsZigZagSignal(signal)) {
+            ReversePosition(signal);
          }
       }
       RecordMetrics();
@@ -496,16 +485,16 @@ bool onCommand(string cmd, string params, int keys) {
       switch (instance.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            double signal[3];
             string sDetail = " ";
             int logLevel = LOG_INFO;
 
-            signal[SIGNAL_TYPE ] = SIGTYPE_MANUAL;
-            signal[SIGNAL_VALUE] = NULL;
-            if      (params == "long")  signal[SIGNAL_DIRECTION] = SIGDIRECTION_LONG;
-            else if (params == "short") signal[SIGNAL_DIRECTION] = SIGDIRECTION_SHORT;
+            double signal[3];
+            signal[SIG_TYPE ] = NULL;
+            signal[SIG_VALUE] = NULL;
+            if      (params == "long")  signal[SIG_TRADE] = SIG_TRADE_LONG;
+            else if (params == "short") signal[SIG_TRADE] = SIG_TRADE_SHORT;
             else {
-               signal[SIGNAL_DIRECTION] = ifInt(GetZigZagTrend(0) > 0, SIGDIRECTION_LONG, SIGDIRECTION_SHORT);
+               signal[SIG_TRADE] = ifInt(GetZigZagTrend(0) > 0, SIG_TRADE_LONG, SIG_TRADE_SHORT);
                if (params != "") {
                   sDetail  = " skipping unsupported parameter in command ";
                   logLevel = LOG_NOTICE;
@@ -520,8 +509,8 @@ bool onCommand(string cmd, string params, int keys) {
          case STATUS_WAITING:
          case STATUS_TRADING:
             logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            double manual[] = {SIGTYPE_MANUAL, 0, 0};
-            return(StopInstance(manual));
+            double dNull[] = {0,0,0};
+            return(StopInstance(dNull));
       }
    }
    else if (cmd == "wait") {
@@ -558,17 +547,19 @@ bool onCommand(string cmd, string params, int keys) {
 bool IsZigZagSignal(double &signal[]) {
    if (last_error != NULL) return(false);
 
-   static int lastTick, lastType, lastDirection, lastSigBar, lastSigDirection;
-   static double lastValue, reversalPrice;
+   static int lastTick, lastSigType, lastSigTrade, lastSigBar, lastSigBarTrade;
+   static double lastSigValue, reversalPrice;
    int trend, reversalOffset;
 
    if (Ticks == lastTick) {
-      signal[SIGNAL_TYPE     ] = lastType;
-      signal[SIGNAL_DIRECTION] = lastDirection;
-      signal[SIGNAL_VALUE    ] = lastValue;
+      signal[SIG_TYPE ] = lastSigType;
+      signal[SIG_VALUE] = lastSigValue;
+      signal[SIG_TRADE] = lastSigTrade;
    }
    else {
-      signal[SIGNAL_TYPE] = NULL;
+      signal[SIG_TYPE ] = 0;
+      signal[SIG_VALUE] = 0;
+      signal[SIG_TRADE] = 0;
 
       if (!GetZigZagData(0, trend, reversalOffset, reversalPrice)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData(0) => FALSE", ERR_RUNTIME_ERROR));
       int absTrend = MathAbs(trend);
@@ -577,29 +568,29 @@ bool IsZigZagSignal(double &signal[]) {
       else if (absTrend==1 && !reversalOffset) isReversal = true;             // reversal after double crossing
 
       if (isReversal) {
-         if (trend > 0) int direction = SIGDIRECTION_LONG;
-         else               direction = SIGDIRECTION_SHORT;
+         if (trend > 0) int sigTrade = SIG_TRADE_CLOSE_SHORT|SIG_TRADE_LONG;
+         else               sigTrade = SIG_TRADE_CLOSE_LONG|SIG_TRADE_SHORT;
 
-         if (Time[0]!=lastSigBar || direction!=lastSigDirection) {
-            signal[SIGNAL_TYPE     ] = SIGTYPE_ZIGZAG;
-            signal[SIGNAL_DIRECTION] = direction;
-            signal[SIGNAL_VALUE    ] = reversalPrice;
+         if (Time[0]!=lastSigBar || sigTrade!=lastSigBarTrade) {
+            signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
+            signal[SIG_VALUE] = reversalPrice;
+            signal[SIG_TRADE] = sigTrade;
 
-            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(direction==SIGDIRECTION_LONG, "long", "short") +" reversal at "+ NumberToStr(reversalPrice, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-            lastSigBar       = Time[0];
-            lastSigDirection = direction;
+            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(sigTrade & SIG_TRADE_LONG, "long", "short") +" reversal at "+ NumberToStr(reversalPrice, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            lastSigBar      = Time[0];
+            lastSigBarTrade = sigTrade;
 
             if (IsVisualMode()) {
                if (test.onReversalPause) Tester.Pause("IsZigZagSignal(3)");   // pause the tester according to the debug configuration
             }
          }
       }
-      lastTick      = Ticks;
-      lastType      = signal[SIGNAL_TYPE     ];
-      lastDirection = signal[SIGNAL_DIRECTION];
-      lastValue     = signal[SIGNAL_VALUE    ];
+      lastTick     = Ticks;
+      lastSigType  = signal[SIG_TYPE ];
+      lastSigValue = signal[SIG_VALUE];
+      lastSigTrade = signal[SIG_TRADE];
    }
-   return(signal[SIGNAL_TYPE] != NULL);
+   return(signal[SIG_TYPE] != NULL);
 }
 
 
@@ -797,7 +788,9 @@ bool IsTradingTime() {
  */
 bool IsStartSignal(double &signal[]) {
    if (last_error || instance.status!=STATUS_WAITING) return(false);
-   signal[SIGNAL_TYPE] = NULL;
+   signal[SIG_TYPE ] = 0;
+   signal[SIG_VALUE] = 0;
+   signal[SIG_TRADE] = 0;
 
    // start.time ------------------------------------------------------------------------------------------------------------
    if (!IsTradingTime()) {
@@ -815,13 +808,15 @@ bool IsStartSignal(double &signal[]) {
 /**
  * Whether a stop condition is triggered.
  *
- * @param  _Out_ double &signal[] - array receiving the stop signal infos (if any)
+ * @param  _Out_ double &signal[] - array receiving stop signal infos
  *
  * @return bool
  */
 bool IsStopSignal(double &signal[]) {
-   signal[SIGNAL_TYPE] = NULL;
    if (last_error || (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING)) return(false);
+   signal[SIG_TYPE ] = 0;
+   signal[SIG_VALUE] = 0;
+   signal[SIG_TRADE] = 0;
 
    if (instance.status == STATUS_TRADING) {
       // stop.profitPct -----------------------------------------------------------------------------------------------------
@@ -830,9 +825,9 @@ bool IsStopSignal(double &signal[]) {
             stop.profitPct.absValue = stop.profitPct.AbsValue();
 
          if (instance.totalNetProfit >= stop.profitPct.absValue) {
-            signal[SIGNAL_TYPE     ] = SIGTYPE_TAKEPROFIT;
-            signal[SIGNAL_DIRECTION] = NULL;
-            signal[SIGNAL_VALUE    ] = stop.profitPct.value;
+            signal[SIG_TYPE ] = SIG_TYPE_TAKEPROFIT;
+            signal[SIG_VALUE] = stop.profitPct.value;
+            signal[SIG_TRADE] = SIG_TRADE_CLOSE_ALL;
             if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitPct.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
@@ -841,9 +836,9 @@ bool IsStopSignal(double &signal[]) {
       // stop.profitPun -----------------------------------------------------------------------------------------------------
       if (stop.profitPun.condition) {
          if (instance.totalNetProfitP >= stop.profitPun.value) {
-            signal[SIGNAL_TYPE     ] = SIGTYPE_TAKEPROFIT;
-            signal[SIGNAL_DIRECTION] = NULL;
-            signal[SIGNAL_VALUE    ] = stop.profitPun.value;
+            signal[SIG_TYPE ] = SIG_TYPE_TAKEPROFIT;
+            signal[SIG_VALUE] = stop.profitPun.value;
+            signal[SIG_TRADE] = SIG_TRADE_CLOSE_ALL;
             if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             return(true);
          }
@@ -853,9 +848,9 @@ bool IsStopSignal(double &signal[]) {
    // stop.time -------------------------------------------------------------------------------------------------------------
    if (stop.time.condition) {
       if (!IsTradingTime()) {
-         signal[SIGNAL_TYPE     ] = SIGTYPE_TIME;
-         signal[SIGNAL_DIRECTION] = NULL;
-         signal[SIGNAL_VALUE    ] = NULL;
+         signal[SIG_TYPE ] = SIG_TYPE_TIME;
+         signal[SIG_VALUE] = Tick.time;
+         signal[SIG_TRADE] = SIG_TRADE_CLOSE_ALL;
          if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.time.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          return(true);
       }
@@ -874,17 +869,17 @@ bool IsStopSignal(double &signal[]) {
 bool StartInstance(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!signal[SIGNAL_DIRECTION])                                          return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter SIGNAL_DIRECTION: "+ _int(signal[SIGNAL_DIRECTION]), ERR_INVALID_PARAMETER));
+   if (!signal[SIG_TRADE])                                                 return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter SIG_TRADE: 0", ERR_INVALID_PARAMETER));
 
-   int sigType      = signal[SIGNAL_TYPE];
-   int sigDirection = signal[SIGNAL_DIRECTION];
-   double sigValue  = signal[SIGNAL_VALUE];
+   int    sigType  = signal[SIG_TYPE ];
+   double sigValue = signal[SIG_VALUE];
+   int    sigTrade = signal[SIG_TRADE]; sigTrade &= (SIG_TRADE_LONG|SIG_TRADE_SHORT);
 
    instance.status = STATUS_TRADING;
    if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
    // open a new position
-   int      type        = ifInt(sigDirection==SIGDIRECTION_LONG, OP_BUY, OP_SELL);
+   int      type        = ifInt(sigTrade==SIG_TRADE_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
@@ -944,32 +939,32 @@ bool StartInstance(double signal[]) {
       SS.ProfitStats(ShowProfitInPercent);
       SS.StartStopConditions();
    }
-   if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalDirectionToStr(sigDirection) +")");
+   if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalTradeToStr(sigTrade) +")");
    return(SaveStatus());
 }
 
 
 /**
- * Reverse a progressing instance.
+ * Reverse the current position of the instance.
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool ReverseInstance(double signal[]) {
+bool ReversePosition(double signal[]) {
    if (last_error != NULL)                return(false);
-   if (instance.status != STATUS_TRADING) return(!catch("ReverseInstance(1)  "+ instance.name +" cannot reverse "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!signal[SIGNAL_DIRECTION])         return(!catch("ReverseInstance(2)  "+ instance.name +" invalid parameter SIGNAL_DIRECTION: "+ _int(signal[SIGNAL_DIRECTION]), ERR_INVALID_PARAMETER));
+   if (instance.status != STATUS_TRADING) return(!catch("ReversePosition(1)  "+ instance.name +" cannot reverse "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!signal[SIG_TRADE])                return(!catch("ReversePosition(2)  "+ instance.name +" invalid parameter SIG_TRADE: 0", ERR_INVALID_PARAMETER));
    int ticket, oeFlags, oe[];
 
-   int    sigType      = signal[SIGNAL_TYPE];
-   int    sigDirection = signal[SIGNAL_DIRECTION];
-   double sigValue     = signal[SIGNAL_VALUE];
+   int    sigType  = signal[SIG_TYPE ];
+   double sigValue = signal[SIG_VALUE];
+   int    sigTrade = signal[SIG_TRADE]; sigTrade &= (SIG_TRADE_LONG|SIG_TRADE_SHORT);
 
    if (open.ticket != NULL) {
       // continue with an already reversed position
-      if ((open.type==OP_BUY && sigDirection==SIGDIRECTION_LONG) || (open.type==OP_SELL && sigDirection==SIGDIRECTION_SHORT)) {
-         return(_true(logWarn("ReverseInstance(3)  "+ instance.name +" to "+ ifString(sigDirection==SIGDIRECTION_LONG, "long", "short") +": continuing with already open "+ ifString(tradingMode==TRADINGMODE_VIRTUAL, "virtual ", "") + ifString(sigDirection==SIGDIRECTION_LONG, "long", "short") +" position #"+ open.ticket)));
+      if ((open.type==OP_BUY && sigTrade==SIG_TRADE_LONG) || (open.type==OP_SELL && sigTrade==SIG_TRADE_SHORT)) {
+         return(_true(logWarn("ReversePosition(3)  "+ instance.name +" to "+ ifString(sigTrade==SIG_TRADE_LONG, "long", "short") +": continuing with already open "+ ifString(tradingMode==TRADINGMODE_VIRTUAL, "virtual ", "") + ifString(sigTrade==SIG_TRADE_LONG, "long", "short") +" position #"+ open.ticket)));
       }
 
       // close the existing position
@@ -995,7 +990,7 @@ bool ReverseInstance(double signal[]) {
    }
 
    // open a new position
-   int      type        = ifInt(sigDirection==SIGDIRECTION_LONG, OP_BUY, OP_SELL);
+   int      type        = ifInt(sigTrade==SIG_TRADE_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
@@ -1046,7 +1041,7 @@ bool ReverseInstance(double signal[]) {
       SS.TotalProfit(ShowProfitInPercent);
       SS.ProfitStats(ShowProfitInPercent);
    }
-   if (IsLogInfo()) logInfo("ReverseInstance(4)  "+ instance.name +" instance reversed ("+ SignalDirectionToStr(sigDirection) +")");
+   if (IsLogInfo()) logInfo("ReversePosition(4)  "+ instance.name +" position reversed ("+ SignalTradeToStr(sigTrade) +")");
    return(SaveStatus());
 }
 
@@ -1069,7 +1064,7 @@ double stop.profitPct.AbsValue() {
 
 
 /**
- * Stop a waiting or progressing instance and close open positions (if any).
+ * Stop a running instance and close open positions (if any).
  *
  * @param  double signal[] - signal which triggered the stop condition
  *
@@ -1079,9 +1074,9 @@ bool StopInstance(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   int    sigType      = signal[SIGNAL_TYPE];
-   int    sigDirection = signal[SIGNAL_DIRECTION];
-   double sigValue     = signal[SIGNAL_VALUE];
+   int    sigType  = signal[SIG_TYPE ];
+   double sigValue = signal[SIG_VALUE];
+   int    sigTrade = signal[SIG_TRADE];
 
    // close an open position
    if (instance.status == STATUS_TRADING) {
@@ -1126,51 +1121,50 @@ bool StopInstance(double signal[]) {
 
    // update stop conditions and status
    switch (sigType) {
-      case SIGTYPE_TIME:
+      case SIG_TYPE_TIME:
          if (!stop.time.isDaily) {
             stop.time.condition = false;                    // see start/stop time variants
          }
          instance.status = ifInt(start.time.condition && start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
          break;
 
-      case SIGTYPE_TAKEPROFIT:
+      case SIG_TYPE_TAKEPROFIT:
          stop.profitPct.condition = false;
          stop.profitPun.condition = false;
          instance.status          = STATUS_STOPPED;
          break;
 
-      case SIGTYPE_MANUAL:                                  // explicit stop (manual) or end of test
+      case NULL:                                            // explicit stop (manual) or end of test
          instance.status = STATUS_STOPPED;
          break;
 
-      default: return(!catch("StopInstance(2)  "+ instance.name +" invalid parameter SIGNAL_TYPE: "+ sigType, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopInstance(2)  "+ instance.name +" invalid parameter SIG_TYPE: "+ sigType, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
    SS.TotalProfit(ShowProfitInPercent);
    SS.ProfitStats(ShowProfitInPercent);
 
-   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && sigType==SIGTYPE_MANUAL, "test ", "") +"instance stopped"+ ifString(sigType==SIGTYPE_MANUAL, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ sTotalProfit +" "+ sProfitStats);
+   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"instance stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ sTotalProfit +" "+ sProfitStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
    if (__isTesting) {
-      if      (!IsVisualMode())         { if (instance.status == STATUS_STOPPED) Tester.Stop ("StopInstance(4)"); }
-      else if (sigType == SIGTYPE_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopInstance(5)"); }
-      else                              { if (test.onStopPause)                  Tester.Pause("StopInstance(6)"); }
+      if      (!IsVisualMode())          { if (instance.status == STATUS_STOPPED) Tester.Stop ("StopInstance(4)"); }
+      else if (sigType == SIG_TYPE_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopInstance(5)"); }
+      else                               { if (test.onStopPause)                  Tester.Pause("StopInstance(6)"); }
    }
    return(!catch("StopInstance(7)"));
 }
 
 
 /**
- * Update order status and PL.
+ * Update client-side order status and PnL.
  *
  * @return bool - success status
  */
 bool UpdateStatus() {
-   if (last_error != NULL)                return(false);
-   if (instance.status != STATUS_TRADING) return(!catch("UpdateStatus(1)  "+ instance.name +" cannot update order status of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!open.ticket)                      return(true);
+   if (last_error || instance.status!=STATUS_TRADING) return(false);
+   if (!open.ticket)                                  return(true);
 
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       open.swap         = 0;
@@ -1185,7 +1179,7 @@ bool UpdateStatus() {
       open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
    }
    else {
-      if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
+      if (!SelectTicket(open.ticket, "UpdateStatus(1)")) return(false);
       bool isClosed = (OrderCloseTime() != NULL);
       if (isClosed) {
          double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
@@ -1207,7 +1201,7 @@ bool UpdateStatus() {
 
       if (isClosed) {
          int error;
-         if (IsError(onPositionClose("UpdateStatus(3)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
+         if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                              return(false);
       }
    }
@@ -1229,7 +1223,7 @@ bool UpdateStatus() {
    instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
    if (__isChart) SS.ProfitStats(ShowProfitInPercent);
 
-   return(!catch("UpdateStatus(4)"));
+   return(!catch("UpdateStatus(3)"));
 }
 
 
@@ -1385,30 +1379,32 @@ int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &de
  */
 string SignalTypeToStr(int type) {
    switch (type) {
-      case NULL              : return("no type"           );
-      case SIGTYPE_MANUAL    : return("SIGTYPE_MANUAL"    );
-      case SIGTYPE_TIME      : return("SIGTYPE_TIME"      );
-      case SIGTYPE_ZIGZAG    : return("SIGTYPE_ZIGZAG"    );
-      case SIGTYPE_TAKEPROFIT: return("SIGTYPE_TAKEPROFIT");
+      case NULL               : return("(undefined)"        );
+      case SIG_TYPE_TIME      : return("SIG_TYPE_TIME"      );
+      case SIG_TYPE_ZIGZAG    : return("SIG_TYPE_ZIGZAG"    );
+      case SIG_TYPE_TAKEPROFIT: return("SIG_TYPE_TAKEPROFIT");
    }
    return(_EMPTY_STR(catch("SignalTypeToStr(1)  "+ instance.name +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Return a readable representation of a signal direction constant.
+ * Return a readable representation of a signal trade flag.
  *
- * @param  int direction
+ * @param  int trade
  *
- * @return string - readable constant or an empty string in case of errors
+ * @return string - readable flag or an empty string in case of errors
  */
-string SignalDirectionToStr(int direction) {
-   switch (direction) {
-      case NULL              : return("no direction"      );
-      case SIGDIRECTION_LONG : return("SIGDIRECTION_LONG" );
-      case SIGDIRECTION_SHORT: return("SIGDIRECTION_SHORT");
+string SignalTradeToStr(int trade) {
+   switch (trade) {
+      case NULL:                  return("(undefined)");
+      case SIG_TRADE_LONG:        return("SIG_TRADE_LONG");
+      case SIG_TRADE_SHORT:       return("SIG_TRADE_SHORT");
+      case SIG_TRADE_CLOSE_ALL:   return("SIG_TRADE_CLOSE_ALL");
+      case SIG_TRADE_CLOSE_LONG:  return("SIG_TRADE_CLOSE_LONG");
+      case SIG_TRADE_CLOSE_SHORT: return("SIG_TRADE_CLOSE_SHORT");
    }
-   return(_EMPTY_STR(catch("SignalDirectionToStr(1)  "+ instance.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("SignalTradeToStr(1)  "+ instance.name +" invalid parameter trade: "+ trade, ERR_INVALID_PARAMETER)));
 }
 
 
