@@ -45,22 +45,13 @@ extern int    Target4.MoveStopTo   = 0;      //
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
+#include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
 #define STRATEGY_ID            111           // unique strategy id (used for magic order numbers)
 
 #define INSTANCE_ID_MIN          1           // range of valid instance ids
 #define INSTANCE_ID_MAX        999           //
-
-#define SIG_TYPE                 0           // signal array fields
-#define SIG_VALUE                1
-#define SIG_TRADE                2
-
-#define SIG_TRADE_LONG           1           // signal trade flags, can be combined
-#define SIG_TRADE_SHORT          2
-#define SIG_TRADE_CLOSE_LONG     4
-#define SIG_TRADE_CLOSE_SHORT    8
-#define SIG_TRADE_CLOSE_ALL     12           // SIG_TRADE_CLOSE_LONG | SIG_TRADE_CLOSE_SHORT
 
 // instance data
 int      instance.id;                        // used for magic order numbers

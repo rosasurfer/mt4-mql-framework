@@ -271,6 +271,7 @@ extern bool   ShowProfitInPercent            = true;                    // wheth
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
+#include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
 #define STRATEGY_ID               107              // unique strategy id between 101-1023 (10 bit)
@@ -282,20 +283,6 @@ extern bool   ShowProfitInPercent            = true;                    // wheth
 #define TRADINGMODE_VIRTUAL         2
 
 string tradingModeDescriptions[] = {"", "regular", "virtual"};
-
-#define SIG_TYPE                    0              // signal array fields
-#define SIG_VALUE                   1
-#define SIG_TRADE                   2
-
-#define SIG_TYPE_TIME               1              // signal types
-#define SIG_TYPE_ZIGZAG             2
-#define SIG_TYPE_TAKEPROFIT         3
-
-#define SIG_TRADE_LONG              1              // signal trade flags, can be combined
-#define SIG_TRADE_SHORT             2
-#define SIG_TRADE_CLOSE_LONG        4
-#define SIG_TRADE_CLOSE_SHORT       8
-#define SIG_TRADE_CLOSE_ALL        12              // SIG_TRADE_CLOSE_LONG | SIG_TRADE_CLOSE_SHORT
 
 #define METRIC_DAILY_NET_MONEY      4              // non-standard PnL metrics
 #define METRIC_DAILY_NET_UNITS      5

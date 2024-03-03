@@ -109,6 +109,7 @@ extern int    Target4.MoveStopTo   = 0;                              //
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
+#include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
 #define STRATEGY_ID         108                 // unique strategy id (used for magic order numbers)
