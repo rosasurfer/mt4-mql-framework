@@ -275,6 +275,7 @@ extern bool   ShowProfitInPercent            = true;                    // wheth
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
+#include <ea/functions/instance/defines.mqh>
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
@@ -282,9 +283,6 @@ extern bool   ShowProfitInPercent            = true;                    // wheth
 #include <ea/functions/trade/stats/defines.mqh>
 
 #define STRATEGY_ID               107              // unique strategy id between 101-1023 (10 bit)
-
-#define INSTANCE_ID_MIN             1              // range of valid instance ids
-#define INSTANCE_ID_MAX           999              //
 
 #define TRADINGMODE_REGULAR         1              // trading modes
 #define TRADINGMODE_VIRTUAL         2

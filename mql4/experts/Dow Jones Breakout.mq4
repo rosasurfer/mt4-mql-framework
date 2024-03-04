@@ -46,16 +46,14 @@ extern int    Target4.MoveStopTo   = 0;      //
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 
+#include <ea/functions/instance/defines.mqh>
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-#define STRATEGY_ID         110              // unique strategy id (used for magic order numbers)
-
-#define INSTANCE_ID_MIN       1              // range of valid instance ids
-#define INSTANCE_ID_MAX     999              //
+#define STRATEGY_ID  110                     // unique strategy id (used for magic order numbers)
 
 // instance data
 int      instance.id;                        // used for magic order numbers

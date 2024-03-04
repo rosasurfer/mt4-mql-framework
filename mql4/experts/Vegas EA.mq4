@@ -109,49 +109,47 @@ extern int    Target4.MoveStopTo   = 0;                              //
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
+#include <ea/functions/instance/defines.mqh>
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-#define STRATEGY_ID         108                 // unique strategy id (used for magic order numbers)
+#define STRATEGY_ID     108                  // unique strategy id (used for magic order numbers)
 
-#define INSTANCE_ID_MIN       1                 // range of valid instance ids
-#define INSTANCE_ID_MAX     999                 //
-
-#define SIGNAL_LONG           1                 // signal types
-#define SIGNAL_SHORT          2                 //
+#define SIGNAL_LONG       1                  // signal types
+#define SIGNAL_SHORT      2                  //
 
 // instance data
-int      instance.id;                           // used for magic order numbers
+int      instance.id;                        // used for magic order numbers
 string   instance.name = "";
 datetime instance.created;
 bool     instance.isTest;
 int      instance.status;
 double   instance.startEquity;
 
-double   instance.openNetProfit;                // real PnL after all costs in money (net)
-double   instance.closedNetProfit;              //
-double   instance.totalNetProfit;               //
-double   instance.maxNetProfit;                 // max. observed profit:   0...+n
-double   instance.maxNetDrawdown;               // max. observed drawdown: -n...0
+double   instance.openNetProfit;             // real PnL after all costs in money (net)
+double   instance.closedNetProfit;           //
+double   instance.totalNetProfit;            //
+double   instance.maxNetProfit;              // max. observed profit:   0...+n
+double   instance.maxNetDrawdown;            // max. observed drawdown: -n...0
 
-double   instance.openNetProfitP;               // real PnL after all costs in point (net)
-double   instance.closedNetProfitP;             //
-double   instance.totalNetProfitP;              //
-double   instance.maxNetProfitP;                //
-double   instance.maxNetDrawdownP;              //
+double   instance.openNetProfitP;            // real PnL after all costs in point (net)
+double   instance.closedNetProfitP;          //
+double   instance.totalNetProfitP;           //
+double   instance.maxNetProfitP;             //
+double   instance.maxNetDrawdownP;           //
 
-double   instance.openSigProfitP;               // signal PnL before spread/any costs in point
-double   instance.closedSigProfitP;             //
-double   instance.totalSigProfitP;              //
-double   instance.maxSigProfitP;                //
-double   instance.maxSigDrawdownP;              //
+double   instance.openSigProfitP;            // signal PnL before spread/any costs in point
+double   instance.closedSigProfitP;          //
+double   instance.totalSigProfitP;           //
+double   instance.maxSigProfitP;             //
+double   instance.maxSigDrawdownP;           //
 
-// debug settings                               // configurable via framework config, see afterInit()
-bool     test.onStopPause        = false;       // whether to pause a test after StopInstance()
-bool     test.reduceStatusWrites = true;        // whether to reduce status file I/O in tester
+// debug settings                            // configurable via framework config, see afterInit()
+bool     test.onStopPause        = false;    // whether to pause a test after StopInstance()
+bool     test.reduceStatusWrites = true;     // whether to reduce status file I/O in tester
 
 // initialization/deinitialization
 #include <ea/vegas-ea/init.mqh>
