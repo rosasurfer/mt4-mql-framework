@@ -82,12 +82,6 @@ double   instance.totalSigProfitP;           //
 double   instance.maxSigProfitP;             //
 double   instance.maxSigDrawdownP;           //
 
-// cache vars to speed-up ShowStatus()
-string   sOpenLots     = "";
-string   sClosedTrades = "";
-string   sTotalProfit  = "";
-string   sProfitStats  = "";
-
 // debug settings                            // configurable via framework config, see afterInit()
 bool     test.onStopPause        = false;    // whether to pause a test after StopInstance()
 bool     test.reduceStatusWrites = true;     // whether to reduce status file I/O in tester
@@ -556,11 +550,11 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,          NL,
-                                                                                    NL,
-                                   "Open:    ",   sOpenLots,                        NL,
-                                   "Closed:  ",   sClosedTrades,                    NL,
-                                   "Profit:    ", sTotalProfit, "  ", sProfitStats, NL
+   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                      NL,
+                                                                                                NL,
+                                   "Open:    ",   status.openLots,                              NL,
+                                   "Closed:  ",   status.closedTrades,                          NL,
+                                   "Profit:    ", status.totalProfit, "  ", status.profitStats, NL
    );
 
    // 3 lines margin-top for instrument and indicator legends

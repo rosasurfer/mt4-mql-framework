@@ -349,11 +349,6 @@ string   stop.profitPun.description = "";
 string   sTradingModeStatus[] = {"", "", "Virtual "};
 string   sStartConditions     = "";
 string   sStopConditions      = "";
-string   sMetricDescription   = "";
-string   sOpenLots            = "";
-string   sClosedTrades        = "";
-string   sTotalProfit         = "";
-string   sProfitStats         = "";
 
 // debug settings, configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;         // whether to pause a test after a ZigZag reversal
@@ -1127,7 +1122,7 @@ bool StopInstance(double signal[]) {
    SS.TotalProfit(ShowProfitInPercent);
    SS.ProfitStats(ShowProfitInPercent);
 
-   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"instance stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ sTotalProfit +" "+ sProfitStats);
+   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"instance stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
@@ -2130,10 +2125,10 @@ int ShowStatus(int error = NO_ERROR) {
                                   "Start:    ",  sStartConditions,                                          NL,
                                   "Stop:     ",  sStopConditions,                                           NL,
                                                                                                             NL,
-                                   sMetricDescription,                                                      NL,
-                                  "Open:    ",   sOpenLots,                                                 NL,
-                                  "Closed:  ",   sClosedTrades,                                             NL,
-                                  "Profit:    ", sTotalProfit, "  ", sProfitStats,                          NL
+                                  status.metricDescription,                                                 NL,
+                                  "Open:    ",   status.openLots,                                           NL,
+                                  "Closed:  ",   status.closedTrades,                                       NL,
+                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,              NL
    );
 
    // 3 lines margin-top for instrument and indicator legends

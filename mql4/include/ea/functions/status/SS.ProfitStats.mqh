@@ -6,7 +6,7 @@
 void SS.ProfitStats(bool moneyInPercent = false) {
    // not before a position was opened
    if (!open.ticket && !ArrayRange(history, 0)) {
-      sProfitStats = "";
+      status.profitStats = "";
    }
    else {
       string sMaxProfit="", sMaxDrawdown="";
@@ -34,6 +34,6 @@ void SS.ProfitStats(bool moneyInPercent = false) {
          default:
             return(!catch("SS.ProfitStats(1)  "+ instance.name +" illegal value of status.activeMetric: "+ status.activeMetric, ERR_ILLEGAL_STATE));
       }
-      sProfitStats = StringConcatenate("(", sMaxDrawdown, "/", sMaxProfit, ")");
+      status.profitStats = StringConcatenate("(", sMaxDrawdown, "/", sMaxProfit, ")");
    }
 }

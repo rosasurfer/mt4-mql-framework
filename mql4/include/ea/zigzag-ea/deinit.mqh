@@ -59,7 +59,7 @@ int onDeinitChartClose() {
    if (!__isTesting && instance.status!=STATUS_STOPPED) {
       SS.TotalProfit(ShowProfitInPercent);
       SS.ProfitStats(ShowProfitInPercent);
-      logInfo("onDeinitChartClose(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ sTotalProfit +" "+ sProfitStats);
+      logInfo("onDeinitChartClose(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
    return(NO_ERROR);
@@ -76,7 +76,7 @@ int onDeinitTemplate() {
    if (!__isTesting && instance.status!=STATUS_STOPPED) {
       SS.TotalProfit(ShowProfitInPercent);
       SS.ProfitStats(ShowProfitInPercent);
-      logInfo("onDeinitTemplate(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ sTotalProfit +" "+ sProfitStats);
+      logInfo("onDeinitTemplate(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
    return(NO_ERROR);
@@ -92,7 +92,7 @@ int onDeinitRemove() {
    if (instance.status != STATUS_STOPPED) {
       SS.TotalProfit(ShowProfitInPercent);
       SS.ProfitStats(ShowProfitInPercent);
-      logInfo("onDeinitRemove(1)  "+ instance.name +" expert removed in status \""+ StatusDescription(instance.status) +"\", profit: "+ sTotalProfit +" "+ sProfitStats);
+      logInfo("onDeinitRemove(1)  "+ instance.name +" expert removed in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
    RemoveVolatileStatus();                                           // remove a stored instance id
@@ -109,7 +109,7 @@ int onDeinitClose() {
    if (instance.status != STATUS_STOPPED) {
       SS.TotalProfit(ShowProfitInPercent);
       SS.ProfitStats(ShowProfitInPercent);
-      logInfo("onDeinitClose(1)  "+ instance.name +" terminal shutdown in status \""+ StatusDescription(instance.status) +"\", profit: "+ sTotalProfit +" "+ sProfitStats);
+      logInfo("onDeinitClose(1)  "+ instance.name +" terminal shutdown in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
    return(NO_ERROR);
