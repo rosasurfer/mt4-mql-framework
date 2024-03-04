@@ -1,8 +1,4 @@
 /**
- ****************************************************************************************************************************
- *                                           WORK-IN-PROGRESS, DO NOT YET USE                                               *
- ****************************************************************************************************************************
- *
  * Rewritten version of "Opto123 EA" v1.1 (USDBot). The original trade logic is unchanged.
  *
  *  @source  https://www.forexfactory.com/thread/210023-123-pattern-ea
@@ -23,10 +19,12 @@
  *  - log execution of limits
  *  - optimize ManagePosition(): precalculate target prices, track processing status of levels
  */
+#define STRATEGY_ID  109                     // unique strategy id (used for generation of magic order numbers)
+
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks = 0;
+int __virtualTicks = 10000;                  // every 10 seconds to continue operation on a stalled data feed
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
                                                                                                                            //
@@ -61,6 +59,22 @@ extern int    Target4.MoveStopTo             = 0;           // ...              
                                                                                                                            //  +-------------+-------------+-------------+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define SIGNAL_LONG        1                 // signal flags, can be combined
+#define SIGNAL_SHORT       2
+#define SIGNAL_CLOSE       4
+
+// order data
+int    open.ticket;
+int    open.type;
+double open.lots;
+double open.price;
+double open.stoploss;
+double open.takeprofit;
+
+// other
+int order.slippage = 1;                      // in MQL point
+
+// framework
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
@@ -68,40 +82,14 @@ extern int    Target4.MoveStopTo             = 0;           // ...              
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID      109           // unique strategy id (used for magic order numbers)
+// EA definitions
+#include <ea/functions/instance/defines.mqh>
 
-#define INSTANCE_ID_MIN    1           // range of valid instance ids
-#define INSTANCE_ID_MAX  999           //
+// EA functions
+#include <ea/functions/validation/ValidateInputs.Targets.mqh>
+#include <ea/functions/validation/onInputError.mqh>
 
-#define SIGNAL_LONG        1           // signal flags, can be combined
-#define SIGNAL_SHORT       2
-#define SIGNAL_CLOSE       4
-
-double targets[4][4];                  // profit targets and stop configurations
-
-#define T_LEVEL            0           // indexes of converted targets
-#define T_CLOSE_PCT        1
-#define T_REMAINDER        2
-#define T_MOVE_STOP        3
-
-// instance data
-int      instance.id;                  // used for magic order numbers
-string   instance.name = "";
-datetime instance.created;
-int      instance.status = -1;
-bool     instance.isTest;
-
-// order data
-int      open.ticket;
-int      open.type;
-double   open.lots;
-double   open.price;
-double   open.stoploss;
-double   open.takeprofit;
-
-// other
-int      order.slippage = 1;           // in MQL point
-
+// initialization/deinitialization
 #include <ea/123-trader/init.mqh>
 
 

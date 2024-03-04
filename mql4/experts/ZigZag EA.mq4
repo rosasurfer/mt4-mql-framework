@@ -226,12 +226,12 @@
  *  - VPS: monitor and notify of incoming emails
  *  - CLI tools to rename/update/delete symbols
  */
-#define STRATEGY_ID  107            // unique strategy id (also used to generate magic order numbers)
+#define STRATEGY_ID  107                     // unique strategy id (used for generation of magic order numbers)
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks = 10000;         // every 10 seconds to continue operation on a stalled data feed
+int __virtualTicks = 10000;                  // every 10 seconds to continue operation on a stalled data feed
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -269,6 +269,52 @@ extern bool   ShowProfitInPercent            = true;                 // whether 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// virtual trading
+#define TRADINGMODE_REGULAR         1
+#define TRADINGMODE_VIRTUAL         2
+
+int    tradingMode;
+string tradingModeDescriptions[] = {"", "regular", "virtual"};
+
+// custom PnL metrics
+#define METRIC_DAILY_NET_MONEY      4
+#define METRIC_DAILY_NET_UNITS      5
+#define METRIC_DAILY_SIG_UNITS      6
+
+// instance start conditions
+bool     start.time.condition;               // whether a time condition is active
+datetime start.time.value;
+bool     start.time.isDaily;
+string   start.time.description = "";
+
+// instance stop conditions ("OR" combined)
+bool     stop.time.condition;                // whether a time condition is active
+datetime stop.time.value;
+bool     stop.time.isDaily;
+string   stop.time.description = "";
+
+bool     stop.profitPct.condition;           // whether a takeprofit condition in percent is active
+double   stop.profitPct.value;
+double   stop.profitPct.absValue    = INT_MAX;
+string   stop.profitPct.description = "";
+
+bool     stop.profitPun.condition;           // whether a takeprofit condition in price units is active (pip or full point)
+double   stop.profitPun.value;
+string   stop.profitPun.description = "";
+
+// debug settings, configurable via framework config, see afterInit()
+bool     test.onReversalPause     = false;   // whether to pause a test after a ZigZag reversal
+bool     test.onSessionBreakPause = false;   // whether to pause a test after StopInstance(SIGNAL_TIME)
+bool     test.onStopPause         = false;   // whether to pause a test after a final StopInstance()
+bool     test.reduceStatusWrites  = true;    // whether to reduce status file I/O in tester
+
+// cache vars to speed-up ShowStatus()
+string   status.tradingModeStatus[] = {"", "", "Virtual "};
+string   status.startConditions     = "";
+string   status.stopConditions      = "";
+
+
+// framework
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
@@ -277,6 +323,7 @@ extern bool   ShowProfitInPercent            = true;                 // whether 
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
+// EA definitions
 #include <ea/functions/instance/defines.mqh>
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
@@ -284,70 +331,7 @@ extern bool   ShowProfitInPercent            = true;                 // whether 
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-#define TRADINGMODE_REGULAR         1              // trading modes
-#define TRADINGMODE_VIRTUAL         2
-
-string tradingModeDescriptions[] = {"", "regular", "virtual"};
-
-#define METRIC_DAILY_NET_MONEY      4              // EA specific PnL metrics
-#define METRIC_DAILY_NET_UNITS      5
-#define METRIC_DAILY_SIG_UNITS      6
-
-// general
-int      tradingMode;
-
-// PnL stats
-double   instance.openNetProfit;                   // real PnL after all costs in money (net)
-double   instance.closedNetProfit;                 //
-double   instance.totalNetProfit;                  //
-double   instance.maxNetProfit;                    // max. observed profit:   0...+n
-double   instance.maxNetDrawdown;                  // max. observed drawdown: -n...0
-
-double   instance.openNetProfitP;                  // real PnL after all costs in point (net)
-double   instance.closedNetProfitP;                //
-double   instance.totalNetProfitP;                 //
-double   instance.maxNetProfitP;                   //
-double   instance.maxNetDrawdownP;                 //
-
-double   instance.openSigProfitP;                  // signal PnL before spread/any costs in point
-double   instance.closedSigProfitP;                //
-double   instance.totalSigProfitP;                 //
-double   instance.maxSigProfitP;                   //
-double   instance.maxSigDrawdownP;                 //
-
-// instance start conditions
-bool     start.time.condition;                     // whether a time condition is active
-datetime start.time.value;
-bool     start.time.isDaily;
-string   start.time.description = "";
-
-// instance stop conditions ("OR" combined)
-bool     stop.time.condition;                      // whether a time condition is active
-datetime stop.time.value;
-bool     stop.time.isDaily;
-string   stop.time.description = "";
-
-bool     stop.profitPct.condition;                 // whether a takeprofit condition in percent is active
-double   stop.profitPct.value;
-double   stop.profitPct.absValue    = INT_MAX;
-string   stop.profitPct.description = "";
-
-bool     stop.profitPun.condition;                 // whether a takeprofit condition in price units is active (pip or full point)
-double   stop.profitPun.value;
-string   stop.profitPun.description = "";
-
-// cache vars to speed-up ShowStatus()
-string   status.tradingModeStatus[] = {"", "", "Virtual "};
-string   status.startConditions     = "";
-string   status.stopConditions      = "";
-
-// debug settings, configurable via framework config, see afterInit()
-bool     test.onReversalPause     = false;         // whether to pause a test after a ZigZag reversal
-bool     test.onSessionBreakPause = false;         // whether to pause a test after StopInstance(SIGNAL_TIME)
-bool     test.onStopPause         = false;         // whether to pause a test after a final StopInstance()
-bool     test.reduceStatusWrites  = true;          // whether to reduce status file I/O in tester
-
-// shared functions
+// EA functions
 #include <ea/functions/instance/CreateInstanceId.mqh>
 #include <ea/functions/instance/IsTestInstance.mqh>
 #include <ea/functions/instance/RestoreInstance.mqh>
@@ -1266,7 +1250,7 @@ int onPositionClose(string message, int error) {
  *
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
-int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
+int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
    string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
    string descrSuffix="", sBarModel="";
    switch (__Test.barModel) {

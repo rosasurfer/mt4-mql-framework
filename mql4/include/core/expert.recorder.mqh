@@ -12,7 +12,7 @@
 //         an appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display
 //         negative values). Without a value the recorder queries the framework configuration.
 //
-// During EA initialization the function Recorder_GetSymbolDefinition() is called for each configured metric to retrieve the
+// During EA initialization the function GetMT4SymbolDefinition() is called for each configured metric to retrieve the
 // metric's symbol definition. That function must be implemented by the EA. It has the following signature:
 //
 // /**
@@ -29,7 +29,7 @@
 //  *
 //  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
 //  */
-// int Recorder_GetSymbolDefinition(int metricId, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
+// int GetMT4SymbolDefinition(int metricId, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
 //
 
 // recorder modes
@@ -204,7 +204,7 @@ bool Recorder.ValidateInputs(bool isTest) {
 
             // logical metric validation
             bool ready;
-            int error = Recorder_GetSymbolDefinition(metricId, ready, symbol, description, group, digits, baseValue, multiplier);
+            int error = GetMT4SymbolDefinition(metricId, ready, symbol, description, group, digits, baseValue, multiplier);
             if (error != NULL) {
                if (error == ERR_INVALID_INPUT_PARAMETER) return(!Recorder.onInputError("Recorder.ValidateInputs(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id "+ metricId +")"));
                return(false);                            // a runtime error (already raised)
@@ -272,7 +272,7 @@ bool Recorder.init() {
 
       // create an internal metric for AccountEquity()
       if (recorder.mode == RECORDER_ON) {
-         if (Recorder_GetSymbolDefinition(NULL, ready, symbol, descr, group, digits, baseValue, multiplier) != NULL) return(false);
+         if (GetMT4SymbolDefinition(NULL, ready, symbol, descr, group, digits, baseValue, multiplier) != NULL) return(false);
          if (ready) {
             if (symbol == "") {
                symbol = Recorder.GetNextMetricSymbol(); if (!StringLen(symbol)) return(false);
@@ -296,7 +296,7 @@ bool Recorder.init() {
          if (!metric.enabled[id]) continue;
 
          if (!metric.ready[id]) {
-            if (Recorder_GetSymbolDefinition(id, ready, symbol, descr, group, digits, baseValue, multiplier) != NULL) return(false);
+            if (GetMT4SymbolDefinition(id, ready, symbol, descr, group, digits, baseValue, multiplier) != NULL) return(false);
             if (!ready) continue;
             metric.ready      [id] = true;
             metric.symbol     [id] = symbol;
@@ -572,5 +572,5 @@ int Recorder.GetHstFormat() {
 
 
 #import "rsfMT4Expander.dll"
-   int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
+   int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
 #import

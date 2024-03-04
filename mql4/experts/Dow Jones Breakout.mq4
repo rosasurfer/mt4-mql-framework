@@ -10,7 +10,7 @@
  *
  *  - track spread at range end time
  */
-#define STRATEGY_ID  110                     // unique strategy id (also used to generate magic order numbers)
+#define STRATEGY_ID  110                     // unique strategy id (used for generation of magic order numbers)
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -41,6 +41,18 @@ extern int    Target4.MoveStopTo   = 0;      //
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// bracket times
+int  bracket1Start = 900;                    // 15:00 (minutes after Midnight)
+int  bracket1End   = 930;                    // 15:30
+int  bracket2Start = 960;                    // 16:00
+int  bracket2End   = 990;                    // 16:30
+
+// debug settings                            // configurable via framework config, see afterInit()
+bool test.onStopPause        = false;        // whether to pause a test after StopInstance()
+bool test.reduceStatusWrites = true;         // whether to reduce status file I/O in tester
+
+
+// framework
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
@@ -48,6 +60,7 @@ extern int    Target4.MoveStopTo   = 0;      //
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 
+// EA definitions
 #include <ea/functions/instance/defines.mqh>
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
@@ -55,36 +68,7 @@ extern int    Target4.MoveStopTo   = 0;      //
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-// PnL stats
-double instance.openNetProfit;               // real PnL after all costs in money (net)
-double instance.closedNetProfit;             //
-double instance.totalNetProfit;              //
-double instance.maxNetProfit;                // max. observed profit:   0...+n
-double instance.maxNetDrawdown;              // max. observed drawdown: -n...0
-
-double instance.openNetProfitP;              // real PnL after all costs in point (net)
-double instance.closedNetProfitP;            //
-double instance.totalNetProfitP;             //
-double instance.maxNetProfitP;               //
-double instance.maxNetDrawdownP;             //
-
-double instance.openSigProfitP;              // signal PnL before spread/any costs in point
-double instance.closedSigProfitP;            //
-double instance.totalSigProfitP;             //
-double instance.maxSigProfitP;               //
-double instance.maxSigDrawdownP;             //
-
-// bracket times
-int    bracket1Start = 900;                  // 15:00 (minutes after Midnight)
-int    bracket1End   = 930;                  // 15:30
-int    bracket2Start = 960;                  // 16:00
-int    bracket2End   = 990;                  // 16:30
-
-// debug settings                            // configurable via framework config, see afterInit()
-bool   test.onStopPause        = false;      // whether to pause a test after StopInstance()
-bool   test.reduceStatusWrites = true;       // whether to reduce status file I/O in tester
-
-// shared functions
+// EA functions
 #include <ea/functions/instance/CreateInstanceId.mqh>
 #include <ea/functions/instance/IsTestInstance.mqh>
 #include <ea/functions/instance/RestoreInstance.mqh>
@@ -92,7 +76,7 @@ bool   test.reduceStatusWrites = true;       // whether to reduce status file I/
 
 #include <ea/functions/log/GetLogFilename.mqh>
 
-#include <ea/functions/metric/Recorder_GetSymbolDefinition.mqh>
+#include <ea/functions/metric/GetMT4SymbolDefinition.mqh>
 
 #include <ea/functions/status/StatusToStr.mqh>
 #include <ea/functions/status/StatusDescription.mqh>

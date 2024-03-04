@@ -12,7 +12,7 @@
  *
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
-int Recorder_GetSymbolDefinition(int id, bool &ready, string &symbol, string &descr, string &group, int &digits, double &baseValue, int &multiplier) {
+int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descr, string &group, int &digits, double &baseValue, int &multiplier) {
    string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
    string descrSuffix="", sBarModel="";
    switch (__Test.barModel) {
