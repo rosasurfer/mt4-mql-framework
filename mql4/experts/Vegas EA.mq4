@@ -68,14 +68,16 @@
  *  - add input "TradingTimeframe"
  *  - document input params, control scripts and general usage
  */
+#define STRATEGY_ID  108            // unique strategy id (also used to generate magic order numbers)
+
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks = 0;
+int __virtualTicks = 10000;         // every 10 seconds to continue operation on a stalled data feed
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID          = "";                             // instance to load from a status file, format "[T]123"
+extern string Instance.ID          = "";                             // instance to load from a status file, format: "[T]123"
 extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MA definitions separated by comma
 extern string Supported.MA.Methods = "SMA, LWMA, EMA, SMMA";
 extern int    Donchian.Periods     = 30;
@@ -116,8 +118,6 @@ extern int    Target4.MoveStopTo   = 0;                              //
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-#define STRATEGY_ID     108                  // unique strategy id (used for magic order numbers)
-
 #define SIGNAL_LONG       1                  // signal types
 #define SIGNAL_SHORT      2                  //
 
@@ -143,10 +143,6 @@ double instance.maxSigDrawdownP;             //
 // debug settings                            // configurable via framework config, see afterInit()
 bool   test.onStopPause        = false;      // whether to pause a test after StopInstance()
 bool   test.reduceStatusWrites = true;       // whether to reduce status file I/O in tester
-
-// initialization/deinitialization
-#include <ea/vegas-ea/init.mqh>
-#include <ea/vegas-ea/deinit.mqh>
 
 // shared functions
 #include <ea/functions/instance/CreateInstanceId.mqh>
@@ -200,6 +196,10 @@ bool   test.reduceStatusWrites = true;       // whether to reduce status file I/
 #include <ea/functions/validation/ValidateInputs.ID.mqh>
 #include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
+
+// initialization/deinitialization
+#include <ea/vegas-ea/init.mqh>
+#include <ea/vegas-ea/deinit.mqh>
 
 
 /**

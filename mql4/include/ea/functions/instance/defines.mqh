@@ -6,7 +6,7 @@
 #define INSTANCE_ID_MAX     999        //
 
 
-int      instance.id;                  // actual instance id
+int      instance.id;                  // actual instance id (also used to generate magic order numbers)
 string   instance.name = "";
 datetime instance.created;
 bool     instance.isTest;              // whether the instance is a test

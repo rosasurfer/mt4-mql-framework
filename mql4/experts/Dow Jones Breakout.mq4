@@ -10,14 +10,16 @@
  *
  *  - track spread at range end time
  */
+#define STRATEGY_ID  110                     // unique strategy id (also used to generate magic order numbers)
+
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks = 0;
+int __virtualTicks = 10000;                  // every 10 seconds to continue operation on a stalled data feed
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID          = "";     // instance to load from a status file (format "[T]123")
+extern string Instance.ID          = "";     // instance to load from a status file, format: "[T]123"
 
 extern double Lots                 = 1.0;
 
@@ -53,8 +55,6 @@ extern int    Target4.MoveStopTo   = 0;      //
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-#define STRATEGY_ID  110                     // unique strategy id (used for magic order numbers)
-
 // PnL stats
 double instance.openNetProfit;               // real PnL after all costs in money (net)
 double instance.closedNetProfit;             //
@@ -83,10 +83,6 @@ int    bracket2End   = 990;                  // 16:30
 // debug settings                            // configurable via framework config, see afterInit()
 bool   test.onStopPause        = false;      // whether to pause a test after StopInstance()
 bool   test.reduceStatusWrites = true;       // whether to reduce status file I/O in tester
-
-// initialization/deinitialization
-#include <ea/dj-breakout/init.mqh>
-#include <ea/dj-breakout/deinit.mqh>
 
 // shared functions
 #include <ea/functions/instance/CreateInstanceId.mqh>
@@ -137,6 +133,10 @@ bool   test.reduceStatusWrites = true;       // whether to reduce status file I/
 #include <ea/functions/validation/ValidateInputs.ID.mqh>
 #include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
+
+// initialization/deinitialization
+#include <ea/dj-breakout/init.mqh>
+#include <ea/dj-breakout/deinit.mqh>
 
 
 /**

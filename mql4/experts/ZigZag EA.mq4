@@ -226,6 +226,8 @@
  *  - VPS: monitor and notify of incoming emails
  *  - CLI tools to rename/update/delete symbols
  */
+#define STRATEGY_ID  107            // unique strategy id (also used to generate magic order numbers)
+
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
@@ -233,12 +235,12 @@ int __virtualTicks = 10000;         // every 10 seconds to continue operation on
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID                    = "";                      // instance to load from a status file, format "[T]123"
-extern string TradingMode                    = "regular* | virtual";    // can be shortened
+extern string Instance.ID                    = "";                   // instance to load from a status file, format "[T]123"
+extern string TradingMode                    = "regular* | virtual"; // can be shortened
 
 extern string ___a__________________________ = "=== Instance settings ===";
-extern string Instance.StartAt               = "";                      // @time(datetime|time)
-extern string Instance.StopAt                = "";                      // @time(datetime|time) | @profit(numeric[%])
+extern string Instance.StartAt               = "";                   // @time(datetime|time)
+extern string Instance.StopAt                = "";                   // @time(datetime|time) | @profit(numeric[%])
 
 extern string ___b__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 30;
@@ -246,24 +248,24 @@ extern int    ZigZag.Periods                 = 30;
 extern string ___c__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
 
-extern int    Initial.TakeProfit             = 0;                       // in pip (0: partial targets only or no TP)
-extern int    Initial.StopLoss               = 0;                       // in pip (0: moving stops only or no SL
+extern int    Initial.TakeProfit             = 0;                    // in pip (0: partial targets only or no TP)
+extern int    Initial.StopLoss               = 0;                    // in pip (0: moving stops only or no SL
 
-extern int    Target1                        = 0;                       // in pip (0: no target)
-extern int    Target1.ClosePercent           = 0;                       // size to close (0: nothing)
-extern int    Target1.MoveStopTo             = 1;                       // in pip (0: don't move stop)
-extern int    Target2                        = 0;                       // ...
-extern int    Target2.ClosePercent           = 30;                      //
-extern int    Target2.MoveStopTo             = 0;                       //
-extern int    Target3                        = 0;                       //
-extern int    Target3.ClosePercent           = 30;                      //
-extern int    Target3.MoveStopTo             = 0;                       //
-extern int    Target4                        = 0;                       //
-extern int    Target4.ClosePercent           = 30;                      //
-extern int    Target4.MoveStopTo             = 0;                       //
+extern int    Target1                        = 0;                    // in pip (0: no target)
+extern int    Target1.ClosePercent           = 0;                    // size to close (0: nothing)
+extern int    Target1.MoveStopTo             = 1;                    // in pip (0: don't move stop)
+extern int    Target2                        = 0;                    // ...
+extern int    Target2.ClosePercent           = 30;                   //
+extern int    Target2.MoveStopTo             = 0;                    //
+extern int    Target3                        = 0;                    //
+extern int    Target3.ClosePercent           = 30;                   //
+extern int    Target3.MoveStopTo             = 0;                    //
+extern int    Target4                        = 0;                    //
+extern int    Target4.ClosePercent           = 30;                   //
+extern int    Target4.MoveStopTo             = 0;                    //
 
 extern string ___d__________________________ = "=== Other ===";
-extern bool   ShowProfitInPercent            = true;                    // whether PnL is displayed in money or percentage terms
+extern bool   ShowProfitInPercent            = true;                 // whether PnL is displayed in money or percentage terms
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -282,14 +284,12 @@ extern bool   ShowProfitInPercent            = true;                    // wheth
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
 
-#define STRATEGY_ID               107              // unique strategy id between 101-1023 (10 bit)
-
 #define TRADINGMODE_REGULAR         1              // trading modes
 #define TRADINGMODE_VIRTUAL         2
 
 string tradingModeDescriptions[] = {"", "regular", "virtual"};
 
-#define METRIC_DAILY_NET_MONEY      4              // non-standard PnL metrics
+#define METRIC_DAILY_NET_MONEY      4              // EA specific PnL metrics
 #define METRIC_DAILY_NET_UNITS      5
 #define METRIC_DAILY_SIG_UNITS      6
 
@@ -337,19 +337,15 @@ double   stop.profitPun.value;
 string   stop.profitPun.description = "";
 
 // cache vars to speed-up ShowStatus()
-string   sTradingModeStatus[] = {"", "", "Virtual "};
-string   sStartConditions     = "";
-string   sStopConditions      = "";
+string   status.tradingModeStatus[] = {"", "", "Virtual "};
+string   status.startConditions     = "";
+string   status.stopConditions      = "";
 
 // debug settings, configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;         // whether to pause a test after a ZigZag reversal
 bool     test.onSessionBreakPause = false;         // whether to pause a test after StopInstance(SIGNAL_TIME)
 bool     test.onStopPause         = false;         // whether to pause a test after a final StopInstance()
 bool     test.reduceStatusWrites  = true;          // whether to reduce status file I/O in tester
-
-// initialization/deinitialization
-#include <ea/zigzag-ea/init.mqh>
-#include <ea/zigzag-ea/deinit.mqh>
 
 // shared functions
 #include <ea/functions/instance/CreateInstanceId.mqh>
@@ -402,6 +398,10 @@ bool     test.reduceStatusWrites  = true;          // whether to reduce status f
 #include <ea/functions/validation/ValidateInputs.ID.mqh>
 #include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
+
+// initialization/deinitialization
+#include <ea/zigzag-ea/init.mqh>
+#include <ea/zigzag-ea/deinit.mqh>
 
 
 /**
@@ -2064,8 +2064,8 @@ void SS.StartStopConditions() {
       if (start.time.description != "") {
          sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition, "@", "!") + start.time.description;
       }
-      if (sValue == "") sStartConditions = "-";
-      else              sStartConditions = sValue;
+      if (sValue == "") status.startConditions = "-";
+      else              status.startConditions = sValue;
 
       // stop conditions
       sValue = "";
@@ -2078,8 +2078,8 @@ void SS.StartStopConditions() {
       if (stop.profitPun.description != "") {
          sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPun.condition, "@", "!") + stop.profitPun.description;
       }
-      if (sValue == "") sStopConditions = "-";
-      else              sStopConditions = sValue;
+      if (sValue == "") status.stopConditions = "-";
+      else              status.stopConditions = sValue;
    }
 }
 
@@ -2111,15 +2111,15 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(sTradingModeStatus[tradingMode], ProgramName(), "    ", sStatus, sError, NL,
-                                                                                                            NL,
-                                  "Start:    ",  sStartConditions,                                          NL,
-                                  "Stop:     ",  sStopConditions,                                           NL,
-                                                                                                            NL,
-                                  status.metricDescription,                                                 NL,
-                                  "Open:    ",   status.openLots,                                           NL,
-                                  "Closed:  ",   status.closedTrades,                                       NL,
-                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,              NL
+   string text = StringConcatenate(status.tradingModeStatus[tradingMode], ProgramName(), "    ", sStatus, sError, NL,
+                                                                                                                  NL,
+                                  "Start:    ",  status.startConditions,                                          NL,
+                                  "Stop:     ",  status.stopConditions,                                           NL,
+                                                                                                                  NL,
+                                  status.metricDescription,                                                       NL,
+                                  "Open:    ",   status.openLots,                                                 NL,
+                                  "Closed:  ",   status.closedTrades,                                             NL,
+                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,                    NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
