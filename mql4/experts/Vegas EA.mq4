@@ -149,11 +149,6 @@ double   instance.totalSigProfitP;              //
 double   instance.maxSigProfitP;                //
 double   instance.maxSigDrawdownP;              //
 
-// volatile status data
-int      status.activeMetric = 1;
-bool     status.showOpenOrders;
-bool     status.showTradeHistory;
-
 // cache vars to speed-up ShowStatus()
 string   sMetricDescription = "";
 string   sOpenLots          = "";

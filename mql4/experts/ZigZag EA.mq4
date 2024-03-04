@@ -85,6 +85,10 @@
  *     16.11.2017: @john-davis, 100%/month on H1      https://www.mql5.com/en/blogs/post/714509#
  *                                                    https://www.mql5.com/en/market/product/26332#
  *                                                    https://www.mql5.com/en/code/19392#         (comments by @alphatrading)
+ *
+ *     heat maps: https://www.forexfactory.com/thread/post/13834307#post13834307
+ *     ML:        https://www.forexfactory.com/thread/516785-machine-learning-with-algotraderjo
+ *
  *  - money management
  *
  *
@@ -340,11 +344,6 @@ string   stop.profitPct.description = "";
 bool     stop.profitPun.condition;                 // whether a takeprofit condition in price units is active (pip or full point)
 double   stop.profitPun.value;
 string   stop.profitPun.description = "";
-
-// volatile status data
-int      status.activeMetric = 1;
-bool     status.showOpenOrders;
-bool     status.showTradeHistory;
 
 // cache vars to speed-up ShowStatus()
 string   sTradingModeStatus[] = {"", "", "Virtual "};

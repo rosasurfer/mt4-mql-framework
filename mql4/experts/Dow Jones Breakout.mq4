@@ -83,11 +83,6 @@ double   instance.totalSigProfitP;           //
 double   instance.maxSigProfitP;             //
 double   instance.maxSigDrawdownP;           //
 
-// volatile status data
-int      status.activeMetric = 1;
-bool     status.showOpenOrders;
-bool     status.showTradeHistory;
-
 // bracket times
 int      bracket1Start = 900;                // 15:00 (minutes after Midnight)
 int      bracket1End   = 930;                // 15:30
