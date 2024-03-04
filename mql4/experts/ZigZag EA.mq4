@@ -296,14 +296,7 @@ string tradingModeDescriptions[] = {"", "regular", "virtual"};
 // general
 int      tradingMode;
 
-// instance data
-int      instance.id;                              // used for magic order numbers
-string   instance.name = "";
-datetime instance.created;
-bool     instance.isTest;                          // whether the instance is a test
-int      instance.status;
-double   instance.startEquity;
-
+// PnL stats
 double   instance.openNetProfit;                   // real PnL after all costs in money (net)
 double   instance.closedNetProfit;                 //
 double   instance.totalNetProfit;                  //

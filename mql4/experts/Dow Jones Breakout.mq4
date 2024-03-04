@@ -55,41 +55,34 @@ extern int    Target4.MoveStopTo   = 0;      //
 
 #define STRATEGY_ID  110                     // unique strategy id (used for magic order numbers)
 
-// instance data
-int      instance.id;                        // used for magic order numbers
-string   instance.name = "";
-datetime instance.created;
-bool     instance.isTest;                    // whether the instance is a test
-int      instance.status;
-double   instance.startEquity;
+// PnL stats
+double instance.openNetProfit;               // real PnL after all costs in money (net)
+double instance.closedNetProfit;             //
+double instance.totalNetProfit;              //
+double instance.maxNetProfit;                // max. observed profit:   0...+n
+double instance.maxNetDrawdown;              // max. observed drawdown: -n...0
 
-double   instance.openNetProfit;             // real PnL after all costs in money (net)
-double   instance.closedNetProfit;           //
-double   instance.totalNetProfit;            //
-double   instance.maxNetProfit;              // max. observed profit:   0...+n
-double   instance.maxNetDrawdown;            // max. observed drawdown: -n...0
+double instance.openNetProfitP;              // real PnL after all costs in point (net)
+double instance.closedNetProfitP;            //
+double instance.totalNetProfitP;             //
+double instance.maxNetProfitP;               //
+double instance.maxNetDrawdownP;             //
 
-double   instance.openNetProfitP;            // real PnL after all costs in point (net)
-double   instance.closedNetProfitP;          //
-double   instance.totalNetProfitP;           //
-double   instance.maxNetProfitP;             //
-double   instance.maxNetDrawdownP;           //
-
-double   instance.openSigProfitP;            // signal PnL before spread/any costs in point
-double   instance.closedSigProfitP;          //
-double   instance.totalSigProfitP;           //
-double   instance.maxSigProfitP;             //
-double   instance.maxSigDrawdownP;           //
+double instance.openSigProfitP;              // signal PnL before spread/any costs in point
+double instance.closedSigProfitP;            //
+double instance.totalSigProfitP;             //
+double instance.maxSigProfitP;               //
+double instance.maxSigDrawdownP;             //
 
 // bracket times
-int      bracket1Start = 900;                // 15:00 (minutes after Midnight)
-int      bracket1End   = 930;                // 15:30
-int      bracket2Start = 960;                // 16:00
-int      bracket2End   = 990;                // 16:30
+int    bracket1Start = 900;                  // 15:00 (minutes after Midnight)
+int    bracket1End   = 930;                  // 15:30
+int    bracket2Start = 960;                  // 16:00
+int    bracket2End   = 990;                  // 16:30
 
 // debug settings                            // configurable via framework config, see afterInit()
-bool     test.onStopPause        = false;    // whether to pause a test after StopInstance()
-bool     test.reduceStatusWrites = true;     // whether to reduce status file I/O in tester
+bool   test.onStopPause        = false;      // whether to pause a test after StopInstance()
+bool   test.reduceStatusWrites = true;       // whether to reduce status file I/O in tester
 
 // initialization/deinitialization
 #include <ea/dj-breakout/init.mqh>
