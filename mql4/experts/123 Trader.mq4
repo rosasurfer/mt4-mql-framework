@@ -89,7 +89,7 @@ int order.slippage = 1;                      // in MQL point
 #include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
 
-// initialization/deinitialization
+// init/deinit
 #include <ea/123-trader/init.mqh>
 
 

@@ -20,18 +20,23 @@ bool HandleCommands(string channel="", bool remove=true) {
    int size = ArraySize(commands);
 
    for (int i=0; i < size && !last_error; i++) {
-      string cmd="", params="", values[];
+      string cmd="", params="", values[], modifier="";
 
-      int elems = Explode(commands[i], ":", values, NULL), keys=0;
-      if (elems > 0) cmd       = StrTrim(values[0]);
-      if (elems > 1) params    = StrTrim(values[1]);
-      if (elems > 2) {
-         elems = Explode(values[2], ",", values, NULL);
-         for (int n=0; n < elems; n++) {
-            string modifier = StrTrim(values[n]);
-            if      (modifier == "VK_CAPITAL")    keys |= F_VK_CAPITAL;
-            else if (modifier == "VK_SHIFT")      keys |= F_VK_SHIFT;
-            else if (modifier == "VK_LWIN")       keys |= F_VK_LWIN;
+      int parts = Explode(commands[i], ":", values, NULL), virtKeys=0;
+      if (parts > 0) cmd    = StrTrim(values[0]);
+      if (parts > 1) params = StrTrim(values[1]);
+      if (parts > 2) {
+         parts = Explode(values[2], ",", values, NULL);
+         for (int n=0; n < parts; n++) {
+            modifier = StrTrim(values[n]);
+            if      (modifier == "VK_ESCAPE")  virtKeys |= F_VK_ESCAPE;
+            else if (modifier == "VK_TAB")     virtKeys |= F_VK_TAB;
+            else if (modifier == "VK_CAPITAL") virtKeys |= F_VK_CAPITAL;   // CAPSLOCK key
+            else if (modifier == "VK_SHIFT")   virtKeys |= F_VK_SHIFT;
+            else if (modifier == "VK_CONTROL") virtKeys |= F_VK_CONTROL;
+            else if (modifier == "VK_MENU")    virtKeys |= F_VK_MENU;      // ALT key
+            else if (modifier == "VK_LWIN")    virtKeys |= F_VK_LWIN;      // left Windows key
+            else if (modifier == "VK_RWIN")    virtKeys |= F_VK_RWIN;      // right Windows key
             else if (modifier != "") logNotice("HandleCommands(1)  skipping unsupported command modifier: "+ modifier);
          }
       }
@@ -40,7 +45,7 @@ bool HandleCommands(string channel="", bool remove=true) {
          logNotice("HandleCommands(2)  skipping empty command: \""+ commands[i] +"\"");
          continue;
       }
-      onCommand(cmd, params, keys);
+      onCommand(cmd, params, virtKeys);
    }
    return(!last_error);
 }
@@ -51,7 +56,7 @@ bool HandleCommands(string channel="", bool remove=true) {
  *
  * @param  _In_    string channel     - channel id to check for incoming commands
  * @param  _In_    bool   remove      - whether to remove received commands from the channel
- * @param  _InOut_ string &commands[] - target array received commands are appended to
+ * @param  _InOut_ string &commands[] - array received commands are appended to
  *
  * @return bool - whether a command was successfully retrieved
  */

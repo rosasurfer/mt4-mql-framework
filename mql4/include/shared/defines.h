@@ -183,9 +183,14 @@
 
 
 // virtual key code flags, see HandleCommands()
-#define F_VK_CAPITAL                            1        // VK_CAPITAL (capslock)
-#define F_VK_SHIFT                              2        // VK_SHIFT
-#define F_VK_LWIN                               4        // VK_LWIN (left Windows key)
+#define F_VK_ESCAPE                             1
+#define F_VK_TAB                                2
+#define F_VK_CAPITAL                            4        // CAPSLOCK key
+#define F_VK_SHIFT                              8
+#define F_VK_CONTROL                           16
+#define F_VK_MENU                              32        // ALT key
+#define F_VK_LWIN                              64        // left Windows key
+#define F_VK_RWIN                             128        // right Windows key
 
 
 // order and operation types
