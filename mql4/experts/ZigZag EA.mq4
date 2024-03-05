@@ -384,7 +384,7 @@ string   status.stopConditions      = "";
 #include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
 
-// initialization/deinitialization
+// init/deinit
 #include <ea/init.mqh>
 #include <ea/deinit.mqh>
 

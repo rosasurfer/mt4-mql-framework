@@ -100,16 +100,12 @@ extern int    Target4              = 0;                              //
 extern int    Target4.ClosePercent = 30;                             //
 extern int    Target4.MoveStopTo   = 0;                              //
 
-extern bool   ShowProfitInPercent  = true;                           // whether PnL is displayed in money amounts or percent
+extern bool   ShowProfitInPercent  = false;                          // whether PnL is displayed in money amounts or percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define SIGNAL_LONG     1                    // signal types
 #define SIGNAL_SHORT    2                    //
-
-// debug settings                            // configurable via framework config, see afterInit()
-bool test.onStopPause        = false;        // whether to pause a test after StopInstance()
-bool test.reduceStatusWrites = true;         // whether to reduce status file I/O in tester
 
 
 // framework
@@ -126,6 +122,7 @@ bool test.reduceStatusWrites = true;         // whether to reduce status file I/
 #include <ea/functions/instance/defines.mqh>
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
+#include <ea/functions/test/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
@@ -171,6 +168,8 @@ bool test.reduceStatusWrites = true;         // whether to reduce status file I/
 #include <ea/functions/status/volatile/ToggleTradeHistory.mqh>
 #include <ea/functions/status/volatile/ToggleMetrics.mqh>
 
+#include <ea/functions/test/ReadTestConfiguration.mqh>
+
 #include <ea/functions/trade/CalculateMagicNumber.mqh>
 #include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/AddHistoryRecord.mqh>
@@ -183,8 +182,8 @@ bool test.reduceStatusWrites = true;         // whether to reduce status file I/
 #include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
 
-// initialization/deinitialization
-#include <ea/vegas-ea/init.mqh>
+// init/deinit
+#include <ea/init.mqh>
 #include <ea/deinit.mqh>
 
 
@@ -922,8 +921,8 @@ void SS.All() {
    SS.MetricDescription();
    SS.OpenLots();
    SS.ClosedTrades();
-   SS.TotalProfit(ShowProfitInPercent);
-   SS.ProfitStats(ShowProfitInPercent);
+   SS.TotalProfit();
+   SS.ProfitStats();
 }
 
 

@@ -40,12 +40,9 @@ extern int    Target4              = 0;      //
 extern int    Target4.ClosePercent = 30;     //
 extern int    Target4.MoveStopTo   = 0;      //
 
+extern bool   ShowProfitInPercent  = false;  // whether PnL is displayed in money amounts or percent
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// debug settings                            // configurable via framework config, see afterInit()
-bool test.onStopPause        = false;        // whether to pause a test after StopInstance()
-bool test.reduceStatusWrites = true;         // whether to reduce status file I/O in tester
-
 
 // framework
 #include <core/expert.mqh>
@@ -57,6 +54,7 @@ bool test.reduceStatusWrites = true;         // whether to reduce status file I/
 #include <ea/functions/instance/defines.mqh>
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
+#include <ea/functions/test/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
@@ -101,6 +99,8 @@ bool test.reduceStatusWrites = true;         // whether to reduce status file I/
 #include <ea/functions/status/volatile/ToggleTradeHistory.mqh>
 #include <ea/functions/status/volatile/ToggleMetrics.mqh>
 
+#include <ea/functions/test/ReadTestConfiguration.mqh>
+
 #include <ea/functions/trade/CalculateMagicNumber.mqh>
 #include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/AddHistoryRecord.mqh>
@@ -112,9 +112,9 @@ bool test.reduceStatusWrites = true;         // whether to reduce status file I/
 #include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
 
-// initialization/deinitialization
-#include <ea/h1-breakout/init.mqh>
-#include <ea/h1-breakout/deinit.mqh>
+// init/deinit
+#include <ea/init.mqh>
+#include <ea/deinit.mqh>
 
 
 /**
@@ -278,10 +278,11 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   Instance.ID              = GetIniStringA(file, section, "Instance.ID", "");               // string   Instance.ID = T123
-   Lots                     = GetIniDouble (file, section, "Lots"           );               // double   Lots        = 0.1
+   Instance.ID              = GetIniStringA(file, section, "Instance.ID",     "");           // string   Instance.ID         = T123
+   Lots                     = GetIniDouble (file, section, "Lots"               );           // double   Lots                = 0.1
    if (!ReadStatus.Targets(file)) return(false);
-   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder", "");               // string   EA.Recorder = 1,2,4
+   ShowProfitInPercent      = GetIniBool   (file, section, "ShowProfitInPercent");           // bool     ShowProfitInPercent = 1
+   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",     "");           // string   EA.Recorder         = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";
@@ -363,6 +364,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
    if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
+   WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
    // trade stats
@@ -389,6 +391,7 @@ bool SaveStatus() {
 // backed-up input parameters
 string   prev.Instance.ID = "";
 double   prev.Lots;
+bool     prev.ShowProfitInPercent;
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.instance.id;
@@ -408,8 +411,9 @@ int      prev.instance.status;
  */
 void BackupInputs() {
    // input parameters, used for comparison in ValidateInputs()
-   prev.Instance.ID = StringConcatenate(Instance.ID, "");            // string inputs are references to internal C literals
-   prev.Lots        = Lots;
+   prev.Instance.ID         = StringConcatenate(Instance.ID, "");    // string inputs are references to internal C literals
+   prev.Lots                = Lots;
+   prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
    prev.instance.id      = instance.id;
@@ -428,8 +432,9 @@ void BackupInputs() {
  */
 void RestoreInputs() {
    // input parameters
-   Instance.ID = prev.Instance.ID;
-   Lots        = prev.Lots;
+   Instance.ID         = prev.Instance.ID;
+   Lots                = prev.Lots;
+   ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
    instance.id      = prev.instance.id;
@@ -551,27 +556,53 @@ int ShowStatus(int error = NO_ERROR) {
 
 
 /**
+ * Create the status display box. Consists of overlapping rectangles made of font "Webdings", char "g".
+ * Called from onInit() only.
+ *
+ * @return bool - success status
+ */
+bool CreateStatusBox() {
+   if (!__isChart) return(true);
+
+   int x[]={2, 66, 136}, y=50, fontSize=54, sizeofX=ArraySize(x);
+   color bgColor = LemonChiffon;
+
+   for (int i=0; i < sizeofX; i++) {
+      string label = ProgramName() +".statusbox."+ (i+1);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
+      ObjectSet(label, OBJPROP_YDISTANCE, y);
+      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
+   }
+   return(!catch("CreateStatusBox(1)"));
+}
+
+
+/**
  * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID), ";"+ NL +
+   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),    ";"+ NL +
 
-                            "Lots=",                 NumberToStr(Lots, ".1+"),    ";"+ NL +
-                            "Initial.TakeProfit=",   Initial.TakeProfit,          ";"+ NL +
-                            "Initial.StopLoss=",     Initial.StopLoss,            ";"+ NL +
-                            "Target1=",              Target1,                     ";"+ NL +
-                            "Target1.ClosePercent=", Target1.ClosePercent,        ";"+ NL +
-                            "Target1.MoveStopTo=",   Target1.MoveStopTo,          ";"+ NL +
-                            "Target2=",              Target2,                     ";"+ NL +
-                            "Target2.ClosePercent=", Target2.ClosePercent,        ";"+ NL +
-                            "Target2.MoveStopTo=",   Target2.MoveStopTo,          ";"+ NL +
-                            "Target3=",              Target3,                     ";"+ NL +
-                            "Target3.ClosePercent=", Target3.ClosePercent,        ";"+ NL +
-                            "Target3.MoveStopTo=",   Target3.MoveStopTo,          ";"+ NL +
-                            "Target4=",              Target4,                     ";"+ NL +
-                            "Target4.ClosePercent=", Target4.ClosePercent,        ";"+ NL +
-                            "Target4.MoveStopTo=",   Target4.MoveStopTo,          ";")
+                            "Lots=",                 NumberToStr(Lots, ".1+"),       ";"+ NL +
+                            "Initial.TakeProfit=",   Initial.TakeProfit,             ";"+ NL +
+                            "Initial.StopLoss=",     Initial.StopLoss,               ";"+ NL +
+                            "Target1=",              Target1,                        ";"+ NL +
+                            "Target1.ClosePercent=", Target1.ClosePercent,           ";"+ NL +
+                            "Target1.MoveStopTo=",   Target1.MoveStopTo,             ";"+ NL +
+                            "Target2=",              Target2,                        ";"+ NL +
+                            "Target2.ClosePercent=", Target2.ClosePercent,           ";"+ NL +
+                            "Target2.MoveStopTo=",   Target2.MoveStopTo,             ";"+ NL +
+                            "Target3=",              Target3,                        ";"+ NL +
+                            "Target3.ClosePercent=", Target3.ClosePercent,           ";"+ NL +
+                            "Target3.MoveStopTo=",   Target3.MoveStopTo,             ";"+ NL +
+                            "Target4=",              Target4,                        ";"+ NL +
+                            "Target4.ClosePercent=", Target4.ClosePercent,           ";"+ NL +
+                            "Target4.MoveStopTo=",   Target4.MoveStopTo,             ";"+ NL +
+
+                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent), ";")
    );
 }

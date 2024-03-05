@@ -22,7 +22,7 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
 
    // [Stats: net in punits]
    section = "Stats: net in "+ pUnit;
-   WriteIniString(file, section, "openProfit",          /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP * pMultiplier, ".1+"), 21)     +"; after all costs");
+   WriteIniString(file, section, "openProfit",          /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP * pMultiplier, ".1+"), 21)     +"; after all costs in "+ pUnit);
    WriteIniString(file, section, "closedProfit",        /*double  */ NumberToStr(instance.closedNetProfitP * pMultiplier, ".1+"));
    WriteIniString(file, section, "totalProfit",         /*double  */ NumberToStr(instance.totalNetProfitP * pMultiplier, ".1+"));
    WriteIniString(file, section, "minProfit",           /*double  */ NumberToStr(instance.maxNetDrawdownP * pMultiplier, ".1+"));
@@ -55,7 +55,7 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
 
    // [Stats: signal in punits]
    section = "Stats: signal in "+ pUnit;
-   WriteIniString(file, section, "openProfit",          /*double  */ StrPadRight(DoubleToStr(instance.openSigProfitP * pMultiplier, pDigits), 21) +"; before spread/any costs");
+   WriteIniString(file, section, "openProfit",          /*double  */ StrPadRight(DoubleToStr(instance.openSigProfitP * pMultiplier, pDigits), 21) +"; before spread/any costs in "+ pUnit);
    WriteIniString(file, section, "closedProfit",        /*double  */ DoubleToStr(instance.closedSigProfitP * pMultiplier, pDigits));
    WriteIniString(file, section, "totalProfit",         /*double  */ DoubleToStr(instance.totalSigProfitP * pMultiplier, pDigits));
    WriteIniString(file, section, "minProfit",           /*double  */ DoubleToStr(instance.maxSigDrawdownP * pMultiplier, pDigits));

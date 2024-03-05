@@ -1,5 +1,5 @@
 /**
- * Standard init() functions for EAs.
+ * Default init() functions for standard EAs.
  */
 
 
