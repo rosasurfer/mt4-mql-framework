@@ -131,15 +131,7 @@ int afterInit() {
    if (__isTesting || !IsTestInstance()) {         // open the log file (flushes the log buffer) except if a finished test
       if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));
    }
-
-   // read test configuration
-   if (__isTesting) {
-      string section = "Tester."+ ProgramName();
-      test.disableTickValueWarning = GetConfigBool(section, "DisableTickValueWarning", test.disableTickValueWarning);
-      test.onStopPause             = GetConfigBool(section, "OnStopPause",             test.onStopPause);
-      test.reduceStatusWrites      = GetConfigBool(section, "ReduceStatusWrites",      test.reduceStatusWrites);
-      ReadCustomTestConfiguration();               // call user function to read additional config values
-   }
+   if (__isTesting) ReadTestConfiguration();
 
    StoreVolatileStatus();                          // store the instance id for template reload/restart/recompilation etc.
    return(catch("afterInit(2)"));

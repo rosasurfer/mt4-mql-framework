@@ -303,10 +303,10 @@ bool     stop.profitPun.condition;           // whether a takeprofit condition i
 double   stop.profitPun.value;
 string   stop.profitPun.description = "";
 
-// test debug settings, configurable via framework config, see afterInit()
-bool     test.onReversalPause     = false;   // whether to pause a test after a ZigZag reversal
-bool     test.onSessionBreakPause = false;   // whether to pause a test after StopInstance(SIGNAL_TIME)
-bool     test.onStopPause         = true;    // whether to pause a test after a final StopInstance()
+// test debug settings, configurable via framework config, see ReadTestConfiguration()
+bool     test.onReversalPause     = false;   // whether to pause a visual test after a ZigZag reversal
+bool     test.onSessionBreakPause = false;   // whether to pause a visual test after StopInstance(SIGNAL_TIME)
+bool     test.onStopPause         = true;    // whether to pause a visual test after a final StopInstance()
 bool     test.reduceStatusWrites  = true;    // whether to reduce status file I/O in tester
 
 // cache vars to speed-up ShowStatus()
@@ -1511,16 +1511,21 @@ bool ReadStatus() {
 
 
 /**
- * Read additional test configuration values.
+ * Read the test configuration.
  *
  * @return bool - success status
  */
-bool ReadCustomTestConfiguration() {
+bool ReadTestConfiguration() {
    if (__isTesting) {
       string section = "Tester."+ ProgramName();
-      test.onReversalPause     = GetConfigBool(section, "OnReversalPause",     test.onReversalPause);
-      test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", test.onSessionBreakPause);
+      test.disableTickValueWarning = GetConfigBool(section, "DisableTickValueWarning", test.disableTickValueWarning);
+      test.reduceStatusWrites      = GetConfigBool(section, "ReduceStatusWrites",      test.reduceStatusWrites);
+
+      test.onReversalPause         = GetConfigBool(section, "OnReversalPause",         test.onReversalPause);
+      test.onSessionBreakPause     = GetConfigBool(section, "OnSessionBreakPause",     test.onSessionBreakPause);
+      test.onStopPause             = GetConfigBool(section, "OnStopPause",             test.onStopPause);
    }
+   return(!catch("ReadTestConfiguration(1)"));
 }
 
 
