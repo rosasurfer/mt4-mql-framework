@@ -108,6 +108,7 @@
  *  - rewrite Test_GetCommission()
  *  - document control scripts
  *  - block tests with bar model MODE_BAROPEN
+ *  - fatal error if a test starts with Instance.ID="T001" and EA.Recorder="off"
  *
  *  - realtime metric charts
  *     on CreateRawSymbol() also create/update offline profile
@@ -1040,7 +1041,7 @@ bool StopInstance(double signal[]) {
          else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_NONE, oeFlags, oe);
          if (!success) return(!SetLastError(oe.Error(oe)));
 
-         double closePrice = oe.ClosePrice(oe), closePriceSig = doubleOr(sigValue, Bid);
+         double closePrice = oe.ClosePrice(oe), closePriceSig = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigValue, Bid);
          open.slippage    += oe.Slippage(oe);
          open.swap         = oe.Swap(oe);
          open.commission   = oe.Commission(oe);
