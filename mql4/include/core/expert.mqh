@@ -688,6 +688,8 @@ datetime Test.GetEndDate() {
    bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
    bool   Test_StopReporting  (int ec[], datetime to, int bars);
 
+   bool   ReadCustomTestConfiguration();
+
 #import "user32.dll"
    int    SendMessageA(int hWnd, int msg, int wParam, int lParam);
 #import

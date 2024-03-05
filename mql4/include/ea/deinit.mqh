@@ -1,3 +1,7 @@
+/**
+ * Standard deinit() functions for EAs.
+ */
+
 
 /**
  * Deinitialization
@@ -29,7 +33,7 @@ int onDeinit() {
  */
 int onDeinitParameters() {
    BackupInputs();
-   return(-1);                                                    // -1: skip all other deinit tasks
+   return(-1);                   // -1: skip all other deinit tasks
 }
 
 
@@ -40,7 +44,7 @@ int onDeinitParameters() {
  */
 int onDeinitChartChange() {
    BackupInputs();
-   return(-1);                                                    // -1: skip all other deinit tasks
+   return(-1);                   // -1: skip all other deinit tasks
 }
 
 
@@ -57,8 +61,8 @@ int onDeinitChartChange() {
  */
 int onDeinitChartClose() {
    if (!__isTesting && instance.status!=STATUS_STOPPED) {
-      SS.TotalProfit(ShowProfitInPercent);
-      SS.ProfitStats(ShowProfitInPercent);
+      SS.TotalProfit();
+      SS.ProfitStats();
       logInfo("onDeinitChartClose(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
@@ -74,8 +78,8 @@ int onDeinitChartClose() {
  */
 int onDeinitTemplate() {
    if (!__isTesting && instance.status!=STATUS_STOPPED) {
-      SS.TotalProfit(ShowProfitInPercent);
-      SS.ProfitStats(ShowProfitInPercent);
+      SS.TotalProfit();
+      SS.ProfitStats();
       logInfo("onDeinitTemplate(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
@@ -90,12 +94,12 @@ int onDeinitTemplate() {
  */
 int onDeinitRemove() {
    if (instance.status != STATUS_STOPPED) {
-      SS.TotalProfit(ShowProfitInPercent);
-      SS.ProfitStats(ShowProfitInPercent);
+      SS.TotalProfit();
+      SS.ProfitStats();
       logInfo("onDeinitRemove(1)  "+ instance.name +" expert removed in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
-   RemoveVolatileStatus();                                           // remove a stored instance id
+   RemoveVolatileStatus();       // remove a stored instance id
    return(NO_ERROR);
 }
 
@@ -107,8 +111,8 @@ int onDeinitRemove() {
  */
 int onDeinitClose() {
    if (instance.status != STATUS_STOPPED) {
-      SS.TotalProfit(ShowProfitInPercent);
-      SS.ProfitStats(ShowProfitInPercent);
+      SS.TotalProfit();
+      SS.ProfitStats();
       logInfo("onDeinitClose(1)  "+ instance.name +" terminal shutdown in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }

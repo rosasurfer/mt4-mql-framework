@@ -1,9 +1,7 @@
 /**
  * ShowStatus: Update the string representaton of the PnL statistics.
- *
- * @param  bool moneyInPercent [optional] - whether to display moneys in percent of instance start equity (default: no)
  */
-void SS.ProfitStats(bool moneyInPercent = false) {
+void SS.ProfitStats() {
    // not before a position was opened
    if (!open.ticket && !ArrayRange(history, 0)) {
       status.profitStats = "";
@@ -13,7 +11,7 @@ void SS.ProfitStats(bool moneyInPercent = false) {
 
       switch (status.activeMetric) {
          case METRIC_NET_MONEY:
-            if (moneyInPercent) {
+            if (ShowProfitInPercent) {
                sMaxProfit   = NumberToStr(MathDiv(instance.maxNetProfit,   instance.startEquity) * 100, "R+.2");
                sMaxDrawdown = NumberToStr(MathDiv(instance.maxNetDrawdown, instance.startEquity) * 100, "R+.2");
             }

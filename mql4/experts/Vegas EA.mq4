@@ -100,6 +100,8 @@ extern int    Target4              = 0;                              //
 extern int    Target4.ClosePercent = 30;                             //
 extern int    Target4.MoveStopTo   = 0;                              //
 
+extern bool   ShowProfitInPercent  = true;                           // whether PnL is displayed in money amounts or percent
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define SIGNAL_LONG     1                    // signal types
@@ -183,7 +185,7 @@ bool test.reduceStatusWrites = true;         // whether to reduce status file I/
 
 // initialization/deinitialization
 #include <ea/vegas-ea/init.mqh>
-#include <ea/vegas-ea/deinit.mqh>
+#include <ea/deinit.mqh>
 
 
 /**
@@ -223,7 +225,8 @@ bool onCommand(string cmd, string params, int keys) {
          case STATUS_WAITING:
          case STATUS_TRADING:
             logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            return(StopInstance());
+            double dNull[] = {0,0,0};
+            return(StopInstance(dNull));
       }
    }
    else if (cmd == "restart") {
@@ -545,11 +548,13 @@ int onPositionClose(string message, int error) {
 
 
 /**
- * Stop a waiting or progressing instance and close open positions (if any).
+ * Stop an instance and close open positions (if any).
+ *
+ * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StopInstance() {
+bool StopInstance(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
@@ -640,12 +645,13 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   Instance.ID              = GetIniStringA(file, section, "Instance.ID",       "");         // string   Instance.ID       = T123
-   Tunnel.Definition        = GetIniStringA(file, section, "Tunnel.Definition", "");         // string   Tunnel.Definition = EMA(1), EMA(2), EMA(3)
-   Donchian.Periods         = GetIniInt    (file, section, "Donchian.Periods"     );         // int      Donchian.Periods  = 40
-   Lots                     = GetIniDouble (file, section, "Lots"                 );         // double   Lots              = 0.1
+   Instance.ID              = GetIniStringA(file, section, "Instance.ID",       "");         // string   Instance.ID         = T123
+   Tunnel.Definition        = GetIniStringA(file, section, "Tunnel.Definition", "");         // string   Tunnel.Definition   = EMA(1), EMA(2), EMA(3)
+   Donchian.Periods         = GetIniInt    (file, section, "Donchian.Periods"     );         // int      Donchian.Periods    = 40
+   Lots                     = GetIniDouble (file, section, "Lots"                 );         // double   Lots                = 0.1
    if (!ReadStatus.Targets(file)) return(false);
-   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",       "");         // string   EA.Recorder       = 1,2,4
+   ShowProfitInPercent      = GetIniBool   (file, section, "ShowProfitInPercent"  );         // bool     ShowProfitInPercent = 1
+   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",       "");         // string   EA.Recorder         = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";
@@ -729,6 +735,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "Donchian.Periods",           /*int     */ Donchian.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
    if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
+   WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
    // trade stats
@@ -757,12 +764,13 @@ string   prev.Instance.ID = "";
 string   prev.Tunnel.Definition = "";
 int      prev.Donchian.Periods;
 double   prev.Lots;
+bool     prev.ShowProfitInPercent;
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.instance.id;
+string   prev.instance.name = "";
 datetime prev.instance.created;
 bool     prev.instance.isTest;
-string   prev.instance.name = "";
 int      prev.instance.status;
 
 
@@ -776,16 +784,17 @@ int      prev.instance.status;
  */
 void BackupInputs() {
    // input parameters, used for comparison in ValidateInputs()
-   prev.Instance.ID       = StringConcatenate(Instance.ID, "");         // string inputs are references to internal C literals
-   prev.Tunnel.Definition = StringConcatenate(Tunnel.Definition, "");   // and must be copied to break the reference
-   prev.Donchian.Periods  = Donchian.Periods;
-   prev.Lots              = Lots;
+   prev.Instance.ID         = StringConcatenate(Instance.ID, "");       // string inputs are references to internal C literals
+   prev.Tunnel.Definition   = StringConcatenate(Tunnel.Definition, ""); // and must be copied to break the reference
+   prev.Donchian.Periods    = Donchian.Periods;
+   prev.Lots                = Lots;
+   prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
    prev.instance.id      = instance.id;
+   prev.instance.name    = instance.name;
    prev.instance.created = instance.created;
    prev.instance.isTest  = instance.isTest;
-   prev.instance.name    = instance.name;
    prev.instance.status  = instance.status;
 
    BackupInputs.Targets();
@@ -798,16 +807,17 @@ void BackupInputs() {
  */
 void RestoreInputs() {
    // input parameters
-   Instance.ID       = prev.Instance.ID;
-   Tunnel.Definition = prev.Tunnel.Definition;
-   Donchian.Periods  = prev.Donchian.Periods;
-   Lots              = prev.Lots;
+   Instance.ID         = prev.Instance.ID;
+   Tunnel.Definition   = prev.Tunnel.Definition;
+   Donchian.Periods    = prev.Donchian.Periods;
+   Lots                = prev.Lots;
+   ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
    instance.id      = prev.instance.id;
+   instance.name    = prev.instance.name;
    instance.created = prev.instance.created;
    instance.isTest  = prev.instance.isTest;
-   instance.name    = prev.instance.name;
    instance.status  = prev.instance.status;
 
    RestoreInputs.Targets();
@@ -912,8 +922,8 @@ void SS.All() {
    SS.MetricDescription();
    SS.OpenLots();
    SS.ClosedTrades();
-   SS.TotalProfit();
-   SS.ProfitStats();
+   SS.TotalProfit(ShowProfitInPercent);
+   SS.ProfitStats(ShowProfitInPercent);
 }
 
 
@@ -979,6 +989,30 @@ int ShowStatus(int error = NO_ERROR) {
 
 
 /**
+ * Create the status display box. Consists of overlapping rectangles made of font "Webdings", char "g".
+ * Called from onInit() only.
+ *
+ * @return bool - success status
+ */
+bool CreateStatusBox() {
+   if (!__isChart) return(true);
+
+   int x[]={2, 66, 136}, y=50, fontSize=54, sizeofX=ArraySize(x);
+   color bgColor = LemonChiffon;
+
+   for (int i=0; i < sizeofX; i++) {
+      string label = ProgramName() +".statusbox."+ (i+1);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
+      ObjectSet(label, OBJPROP_YDISTANCE, y);
+      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
+   }
+   return(!catch("CreateStatusBox(1)"));
+}
+
+
+/**
  * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
@@ -1002,6 +1036,8 @@ string InputsToStr() {
                             "Target3.MoveStopTo=",   Target3.MoveStopTo,                ";"+ NL +
                             "Target4=",              Target4,                           ";"+ NL +
                             "Target4.ClosePercent=", Target4.ClosePercent,              ";"+ NL +
-                            "Target4.MoveStopTo=",   Target4.MoveStopTo,                ";")
+                            "Target4.MoveStopTo=",   Target4.MoveStopTo,                ";"+ NL +
+
+                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),    ";")
    );
 }

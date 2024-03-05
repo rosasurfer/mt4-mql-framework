@@ -265,9 +265,14 @@ extern int    Target4.ClosePercent           = 30;                   //
 extern int    Target4.MoveStopTo             = 0;                    //
 
 extern string ___d__________________________ = "=== Other ===";
-extern bool   ShowProfitInPercent            = true;                 // whether PnL is displayed in money or percentage terms
+extern bool   ShowProfitInPercent            = false;                // whether PnL is displayed in money amounts or percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// custom PnL metrics
+#define METRIC_DAILY_NET_MONEY      4
+#define METRIC_DAILY_NET_UNITS      5
+#define METRIC_DAILY_SIG_UNITS      6
 
 // virtual trading
 #define TRADINGMODE_REGULAR         1
@@ -275,11 +280,6 @@ extern bool   ShowProfitInPercent            = true;                 // whether 
 
 int    tradingMode;
 string tradingModeDescriptions[] = {"", "regular", "virtual"};
-
-// custom PnL metrics
-#define METRIC_DAILY_NET_MONEY      4
-#define METRIC_DAILY_NET_UNITS      5
-#define METRIC_DAILY_SIG_UNITS      6
 
 // instance start conditions
 bool     start.time.condition;               // whether a time condition is active
@@ -302,10 +302,10 @@ bool     stop.profitPun.condition;           // whether a takeprofit condition i
 double   stop.profitPun.value;
 string   stop.profitPun.description = "";
 
-// debug settings, configurable via framework config, see afterInit()
+// test debug settings, configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;   // whether to pause a test after a ZigZag reversal
 bool     test.onSessionBreakPause = false;   // whether to pause a test after StopInstance(SIGNAL_TIME)
-bool     test.onStopPause         = false;   // whether to pause a test after a final StopInstance()
+bool     test.onStopPause         = true;    // whether to pause a test after a final StopInstance()
 bool     test.reduceStatusWrites  = true;    // whether to reduce status file I/O in tester
 
 // cache vars to speed-up ShowStatus()
@@ -384,8 +384,8 @@ string   status.stopConditions      = "";
 #include <ea/functions/validation/onInputError.mqh>
 
 // initialization/deinitialization
-#include <ea/zigzag-ea/init.mqh>
-#include <ea/zigzag-ea/deinit.mqh>
+#include <ea/init.mqh>
+#include <ea/deinit.mqh>
 
 
 /**
@@ -888,8 +888,8 @@ bool StartInstance(double signal[]) {
 
    if (__isChart) {
       SS.OpenLots();
-      SS.TotalProfit(ShowProfitInPercent);
-      SS.ProfitStats(ShowProfitInPercent);
+      SS.TotalProfit();
+      SS.ProfitStats();
       SS.StartStopConditions();
    }
    if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalTradeToStr(sigTrade) +")");
@@ -991,8 +991,8 @@ bool ReversePosition(double signal[]) {
 
    if (__isChart) {
       SS.OpenLots();
-      SS.TotalProfit(ShowProfitInPercent);
-      SS.ProfitStats(ShowProfitInPercent);
+      SS.TotalProfit();
+      SS.ProfitStats();
    }
    if (IsLogInfo()) logInfo("ReversePosition(4)  "+ instance.name +" position reversed ("+ SignalTradeToStr(sigTrade) +")");
    return(SaveStatus());
@@ -1017,9 +1017,9 @@ double stop.profitPct.AbsValue() {
 
 
 /**
- * Stop a running instance and close open positions (if any).
+ * Stop an instance and close open positions (if any).
  *
- * @param  double signal[] - signal which triggered the stop condition
+ * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
@@ -1094,8 +1094,8 @@ bool StopInstance(double signal[]) {
       default: return(!catch("StopInstance(2)  "+ instance.name +" invalid parameter SIG_TYPE: "+ sigType, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
-   SS.TotalProfit(ShowProfitInPercent);
-   SS.ProfitStats(ShowProfitInPercent);
+   SS.TotalProfit();
+   SS.ProfitStats();
 
    if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"instance stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
    SaveStatus();
@@ -1166,7 +1166,7 @@ bool UpdateStatus() {
    instance.totalNetProfit  = instance.openNetProfit  + instance.closedNetProfit;
    instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
    instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
-   if (__isChart) SS.TotalProfit(ShowProfitInPercent);
+   if (__isChart) SS.TotalProfit();
 
    instance.maxNetProfit    = MathMax(instance.maxNetProfit,    instance.totalNetProfit);
    instance.maxNetDrawdown  = MathMin(instance.maxNetDrawdown,  instance.totalNetProfit);
@@ -1174,7 +1174,7 @@ bool UpdateStatus() {
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
    instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
    instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
-   if (__isChart) SS.ProfitStats(ShowProfitInPercent);
+   if (__isChart) SS.ProfitStats();
 
    return(!catch("UpdateStatus(3)"));
 }
@@ -1510,6 +1510,20 @@ bool ReadStatus() {
 
 
 /**
+ * Read additional test configuration values.
+ *
+ * @return bool - success status
+ */
+bool ReadCustomTestConfiguration() {
+   if (__isTesting) {
+      string section = "Tester."+ ProgramName();
+      test.onReversalPause     = GetConfigBool(section, "OnReversalPause",     test.onReversalPause);
+      test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", test.onSessionBreakPause);
+   }
+}
+
+
+/**
  * Synchronize runtime state and vars with current order status on the trade server. Called only from RestoreInstance().
  *
  * @return bool - success status
@@ -1630,9 +1644,9 @@ bool     prev.ShowProfitInPercent;
 int      prev.tradingMode;
 
 int      prev.instance.id;
+string   prev.instance.name = "";
 datetime prev.instance.created;
 bool     prev.instance.isTest;
-string   prev.instance.name = "";
 int      prev.instance.status;
 
 bool     prev.start.time.condition;
@@ -1675,9 +1689,9 @@ void BackupInputs() {
    prev.tradingMode                = tradingMode;
 
    prev.instance.id                = instance.id;
+   prev.instance.name              = instance.name;
    prev.instance.created           = instance.created;
    prev.instance.isTest            = instance.isTest;
-   prev.instance.name              = instance.name;
    prev.instance.status            = instance.status;
 
    prev.start.time.condition       = start.time.condition;
@@ -1719,9 +1733,9 @@ void RestoreInputs() {
    tradingMode                = prev.tradingMode;
 
    instance.id                = prev.instance.id;
+   instance.name              = prev.instance.name;
    instance.created           = prev.instance.created;
    instance.isTest            = prev.instance.isTest;
-   instance.name              = prev.instance.name;
    instance.status            = prev.instance.status;
 
    start.time.condition       = prev.start.time.condition;
@@ -2025,8 +2039,8 @@ void SS.All() {
    SS.MetricDescription();
    SS.OpenLots();
    SS.ClosedTrades();
-   SS.TotalProfit(ShowProfitInPercent);
-   SS.ProfitStats(ShowProfitInPercent);
+   SS.TotalProfit();
+   SS.ProfitStats();
 }
 
 
@@ -2121,6 +2135,30 @@ int ShowStatus(int error = NO_ERROR) {
    error = intOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
    return(error);
+}
+
+
+/**
+ * Create the status display box. Consists of overlapping rectangles made of font "Webdings", char "g".
+ * Called from onInit() only.
+ *
+ * @return bool - success status
+ */
+bool CreateStatusBox() {
+   if (!__isChart) return(true);
+
+   int x[]={2, 102}, y=50, fontSize=76, sizeofX=ArraySize(x);
+   color bgColor = LemonChiffon;
+
+   for (int i=0; i < sizeofX; i++) {
+      string label = ProgramName() +".statusbox."+ (i+1);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
+      ObjectSet(label, OBJPROP_YDISTANCE, y);
+      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
+   }
+   return(!catch("CreateStatusBox(1)"));
 }
 
 
