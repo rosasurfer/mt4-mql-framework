@@ -109,10 +109,10 @@ int  bracket2End   = 990;                    // 16:30
 
 #include <ea/functions/test/ReadTestConfiguration.mqh>
 
-#include <ea/functions/trade/CalculateMagicNumber.mqh>
-#include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/AddHistoryRecord.mqh>
+#include <ea/functions/trade/CalculateMagicNumber.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
+#include <ea/functions/trade/IsMyOrder.mqh>
 
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
@@ -311,25 +311,27 @@ bool ReadStatus() {
 
 
 /**
- * Synchronize runtime state and vars with current order status on the trade server. Called only from RestoreInstance().
+ * Synchronize local status with current status on the trade server. Called from RestoreInstance() only.
  *
  * @return bool - success status
  */
 bool SynchronizeStatus() {
    if (IsLastError()) return(false);
 
-   // detect & handle dangling open positions
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;     // FALSE: an open order was closed/deleted in another thread
+   // detect and handle orphaned open positions
+   int orders = OrdersTotal();
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: an open order was closed/deleted in another thread
       if (IsMyOrder(instance.id)) {
          // TODO
       }
    }
 
-   // detect & handle dangling closed positions
-   for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) continue;
-      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders (atm not supported)
+   // detect and handle orphaned open positions
+   orders = OrdersHistoryTotal();
+   for (i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;       // FALSE: the visible history range was modified in another thread
+      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders
 
       if (IsMyOrder(instance.id)) {
          // TODO
@@ -515,7 +517,7 @@ void SS.InstanceName() {
  *
  * @param  int error [optional] - error to display (default: none)
  *
- * @return int - the same error or the current error status if no error was specified
+ * @return int - the same error
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);

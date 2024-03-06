@@ -1,7 +1,7 @@
 /**
- * H1 Morning Breakout
+ * H1 Breakout
  *
- * A strategy for common H1 breakouts during Frankfurt or London Open (07:00-08:00, 08:00-09:00, 09:00-10:00).
+ * A strategy for breakouts from a time range.
  *
  *  @see  https://www.forexfactory.com/thread/902048-london-open-breakout-strategy-for-gbpusd#         [London Open Breakout]
  *  @see  https://nexusfi.com/trading-journals/36245-london-session-opening-range-breakout-gbp.html# [Asian session breakout]
@@ -22,7 +22,7 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 
 extern string Instance.ID          = "";     // instance to load from a status file, format: "[T]123"
 
-extern double Lots                 = 1.0;
+extern double Lots                 = 0.1;
 
 extern int    Initial.TakeProfit   = 100;    // in pip (0: partial targets only or no TP)
 extern int    Initial.StopLoss     = 50;     // in pip (0: moving stops only or no SL
@@ -101,10 +101,10 @@ extern bool   ShowProfitInPercent  = false;  // whether PnL is displayed in mone
 
 #include <ea/functions/test/ReadTestConfiguration.mqh>
 
-#include <ea/functions/trade/CalculateMagicNumber.mqh>
-#include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/AddHistoryRecord.mqh>
+#include <ea/functions/trade/CalculateMagicNumber.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
+#include <ea/functions/trade/IsMyOrder.mqh>
 
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
@@ -304,25 +304,27 @@ bool ReadStatus() {
 
 
 /**
- * Synchronize runtime state and vars with current order status on the trade server. Called only from RestoreInstance().
+ * Synchronize local status with current status on the trade server. Called from RestoreInstance() only.
  *
  * @return bool - success status
  */
 bool SynchronizeStatus() {
    if (IsLastError()) return(false);
 
-   // detect & handle dangling open positions
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;     // FALSE: an open order was closed/deleted in another thread
+   // detect and handle orphaned open positions
+   int orders = OrdersTotal();
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: an open order was closed/deleted in another thread
       if (IsMyOrder(instance.id)) {
          // TODO
       }
    }
 
-   // detect & handle dangling closed positions
-   for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) continue;
-      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders (atm not supported)
+   // detect and handle orphaned open positions
+   orders = OrdersHistoryTotal();
+   for (i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;       // FALSE: the visible history range was modified in another thread
+      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders
 
       if (IsMyOrder(instance.id)) {
          // TODO
@@ -508,7 +510,7 @@ void SS.InstanceName() {
  *
  * @param  int error [optional] - error to display (default: none)
  *
- * @return int - the same error or the current error status if no error was specified
+ * @return int - the same error
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);

@@ -5732,7 +5732,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
             else                              dSlippage = OrderClosePrice() - oe.Ask(oe);
          oe.setSlippage(oe, NormalizeDouble(dSlippage, digits));
 
-         // find the remaining position
+         // find a remaining position
          if (NE(lots, openLots, 2)) {
             string sValue1="", sValue2="";
             if (__isTesting) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behavior if current terminal builds fixed the comment issue

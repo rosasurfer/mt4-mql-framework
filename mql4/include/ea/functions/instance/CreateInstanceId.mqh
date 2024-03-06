@@ -51,7 +51,7 @@ int CreateInstanceId() {
          // test for uniqueness against closed orders
          int closedOrders = OrdersHistoryTotal();
          for (i=0; i < closedOrders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;                         // FALSE: the time range of the history was changed in another thread
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;                         // FALSE: the visible history range was modified in another thread
             if (OrderMagicNumber() == magicNumber) {
                magicNumber = NULL;
                break;

@@ -22,7 +22,7 @@ int onTick() {
             StopInstance(signal);
          }
          else {                                       // update server-side status
-            UpdateOpenPosition();                     // add/reduce/reverse position, take (partial) profits
+            UpdateOpenPositions();                    // add/reduce/reverse position, take (partial) profits
             UpdatePendingOrders();                    // update entry and/or exit limits
          }
       }

@@ -732,7 +732,7 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
       for (i=0, n=0; i < orders; i++) {
          if (customTicketsSize > 0) success = SelectTicket(customTickets[i], "ShowTradeHistory(1)");
          else                       success = OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
-         if (!success)                  break;                          // während des Auslesens wurde der Anzeigezeitraum der History verkürzt
+         if (!success)                  break;                          // FALSE: the visible history range was modified in another thread
          if (OrderSymbol() != Symbol()) continue;
          if (OrderType() > OP_SELL)     continue;
          if (!OrderCloseTime())         continue;
@@ -3268,7 +3268,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          ArrayResize(sortKeys, orders);
 
          for (i=0; i < orders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;             // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;             // FALSE: the visible history range was modified in another thread
 
             // wenn OrderType()==OP_BALANCE, dann OrderSymbol()==Leerstring
             if (OrderType() == OP_BALANCE) {

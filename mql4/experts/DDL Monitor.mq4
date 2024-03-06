@@ -292,7 +292,7 @@ double CalculateHistory(string symbol, datetime from) {
    ArrayResize(sortKeys, orders);
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;       // FALSE: the history range was modified
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;       // FALSE: the visible history range was modified in another thread
       if (OrderType() > OP_SELL)                        continue;    // intentionally ignore dividends and rollover adjustments
       if (OrderSymbol() != symbol)                      continue;
 
