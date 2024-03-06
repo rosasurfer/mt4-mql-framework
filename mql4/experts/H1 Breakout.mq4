@@ -181,7 +181,7 @@ bool onCommand(string cmd, string params, int keys) {
 /**
  * Whether an instance start condition evalutes to TRUE.
  *
- * @param  _Out_ double &signal[] - array receiving the signal infos
+ * @param  _Out_ double &signal[] - array receiving signal details
  *
  * @return bool
  */
@@ -194,7 +194,7 @@ bool IsStartSignal(double &signal[]) {
 /**
  * Whether an instance stop condition evaluates to TRUE.
  *
- * @param  _Out_ double &signal[] - array receiving the signal infos
+ * @param  _Out_ double &signal[] - array receiving signal details
  *
  * @return bool
  */

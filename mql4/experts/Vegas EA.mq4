@@ -61,7 +61,6 @@
  *     add break-even stop
  *     add exit strategies
  *
- *  - track runup/down per position
  *  - convert signal constants to array
  *  - add entry strategies
  *  - add virtual trading
@@ -78,11 +77,12 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID          = "";                             // instance to load from a status file, format: "[T]123"
+
 extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MA definitions separated by comma
 extern string Supported.MA.Methods = "SMA, LWMA, EMA, SMMA";
 extern int    Donchian.Periods     = 30;
 
-extern double Lots                 = 1.0;
+extern double Lots                 = 0.1;
 
 extern int    Initial.TakeProfit   = 100;                            // in pip (0: partial targets only or no TP)
 extern int    Initial.StopLoss     = 50;                             // in pip (0: moving stops only or no SL
@@ -170,11 +170,13 @@ extern bool   ShowProfitInPercent  = false;                          // whether 
 
 #include <ea/functions/test/ReadTestConfiguration.mqh>
 
-#include <ea/functions/trade/CalculateMagicNumber.mqh>
-#include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/AddHistoryRecord.mqh>
+#include <ea/functions/trade/CalculateMagicNumber.mqh>
+#include <ea/functions/trade/ComposePositionCloseMsg.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
+#include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
+#include <ea/functions/trade/onPositionClose.mqh>
 
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
@@ -403,8 +405,8 @@ bool UpdateStatus(int signal = NULL) {
 
       if (isClosed) {
          int error;
-         if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                              return(false);
+         if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ ComposePositionCloseMsg(error), error))) return(false);
+         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                        return(false);
          positionClosed = true;
       }
    }
@@ -437,17 +439,12 @@ bool UpdateStatus(int signal = NULL) {
       }
 
       // open new position
-      int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
-      double   price       = NULL;
-      double   stopLoss    = NULL;
-      double   takeProfit  = NULL;
-      string   comment     = "Vegas."+ StrPadLeft(instance.id, 3, "0");
-      int      magicNumber = CalculateMagicNumber(instance.id);
-      datetime expires     = NULL;
-      color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
-               oeFlags     = NULL;
+      int    type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
+      string comment     = instance.name;
+      int    magicNumber = CalculateMagicNumber(instance.id);
+      color  markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-      int ticket = OrderSendEx(NULL, type, Lots, price, order.slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+      int ticket = OrderSendEx(NULL, type, Lots, NULL, order.slippage, NULL, NULL, comment, magicNumber, NULL, markerColor, NULL, oe);
       if (!ticket) return(!SetLastError(oe.Error(oe)));
 
       // store the new position
@@ -471,7 +468,7 @@ bool UpdateStatus(int signal = NULL) {
       if (__isChart) SS.OpenLots();
    }
 
-   // update PL numbers
+   // update PnL numbers
    instance.openNetProfit  = open.netProfit;
    instance.openNetProfitP = open.netProfitP;
    instance.openSigProfitP = open.sigProfitP;
@@ -492,57 +489,6 @@ bool UpdateStatus(int signal = NULL) {
    if (positionClosed || signal)
       return(SaveStatus());
    return(!catch("UpdateStatus(4)"));
-}
-
-
-/**
- * Compose a log message for a closed position. The ticket must be selected.
- *
- * @param  _Out_ int error - error code to be returned from the call (if any)
- *
- * @return string - log message or an empty string in case of errors
- */
-string UpdateStatus.PositionCloseMsg(int &error) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("ID.869") was [unexpectedly ]closed [by SL ]at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
-   error = NO_ERROR;
-
-   int    ticket      = OrderTicket();
-   double lots        = OrderLots();
-   string sType       = OperationTypeDescription(OrderType());
-   string sOpenPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
-   string sClosePrice = NumberToStr(OrderClosePrice(), PriceFormat);
-   string sUnexpected = ifString(__isTesting && __CoreFunction==CF_DEINIT, "", "unexpectedly ");
-   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ instance.name +"\") was "+ sUnexpected +"closed at "+ sClosePrice;
-
-   string sStopout = "";
-   if (StrStartsWithI(OrderComment(), "so:")) {       error = ERR_MARGIN_STOPOUT; sStopout = ", "+ OrderComment(); }
-   else if (__isTesting && __CoreFunction==CF_DEINIT) error = NO_ERROR;
-   else                                               error = ERR_CONCURRENT_MODIFICATION;
-
-   return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
-}
-
-
-/**
- * Event handler for an unexpectedly closed position.
- *
- * @param  string message - error message
- * @param  int    error   - error code
- *
- * @return int - error status, i.e. whether to interrupt program execution
- */
-int onPositionClose(string message, int error) {
-   if (!error) return(logInfo(message));                    // no error
-
-   if (error == ERR_ORDER_CHANGED)                          // expected in a fast market: a SL was triggered
-      return(!logNotice(message, error));                   // continue
-
-   if (__isTesting) return(catch(message, error));          // in tester treat everything else as terminating
-
-   logWarn(message, error);                                 // online
-   if (error == ERR_CONCURRENT_MODIFICATION)                // unexpected: most probably manually closed
-      return(NO_ERROR);                                     // continue
-   return(error);
 }
 
 
@@ -672,25 +618,27 @@ bool ReadStatus() {
 
 
 /**
- * Synchronize runtime state and vars with current order status on the trade server. Called only from RestoreInstance().
+ * Synchronize local status with current status on the trade server. Called from RestoreInstance() only.
  *
  * @return bool - success status
  */
 bool SynchronizeStatus() {
    if (IsLastError()) return(false);
 
-   // detect & handle dangling open positions
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;     // FALSE: an open order was closed/deleted in another thread
+   // detect and handle orphaned open positions
+   int orders = OrdersTotal();
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: an open order was closed/deleted in another thread
       if (IsMyOrder(instance.id)) {
          // TODO
       }
    }
 
-   // detect & handle dangling closed positions
-   for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) continue;
-      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders (atm not supported)
+   // detect and handle orphaned open positions
+   orders = OrdersHistoryTotal();
+   for (i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;       // FALSE: the visible history range was modified in another thread
+      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders
 
       if (IsMyOrder(instance.id)) {
          // TODO
@@ -939,7 +887,7 @@ void SS.InstanceName() {
  *
  * @param  int error [optional] - error to display (default: none)
  *
- * @return int - the same error or the current error status if no error was specified
+ * @return int - the same error
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);

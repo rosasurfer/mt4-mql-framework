@@ -36,7 +36,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    history[i][H_SIG_RUNUP_P   ] = open.sigRunupP;
    history[i][H_SIG_DRAWDOWN_P] = open.sigDrawdownP;
 
-   // update PL numbers
+   // update PnL stats
    instance.openNetProfit  = 0;
    instance.openNetProfitP = 0;
    instance.openSigProfitP = 0;
@@ -52,6 +52,8 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    open.time         = NULL;
    open.price        = NULL;
    open.priceSig     = NULL;
+   open.stoploss     = NULL;
+   open.takeprofit   = NULL;
    open.slippage     = NULL;
    open.swap         = NULL;
    open.commission   = NULL;
@@ -65,7 +67,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    open.sigDrawdownP = NULL;
 
    if (__isChart) {
-      CalculateStats();                   // update trade stats
+      CalculateStats();
       SS.OpenLots();
       SS.ClosedTrades();
    }

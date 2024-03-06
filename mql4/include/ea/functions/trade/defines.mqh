@@ -12,6 +12,8 @@ double   open.lots;
 datetime open.time;
 double   open.price;
 double   open.priceSig;                // signal price
+double   open.stoploss;
+double   open.takeprofit;
 double   open.slippage;
 double   open.swap;
 double   open.commission;

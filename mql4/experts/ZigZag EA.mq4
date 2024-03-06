@@ -66,7 +66,6 @@
  *     process stops and targets
  *      handle limit execution during processing
  *
- *
  *     breakeven stop
  *     partial profit taking
  *     trailing stop
@@ -372,11 +371,16 @@ string   status.stopConditions      = "";
 #include <ea/functions/status/volatile/ToggleTradeHistory.mqh>
 #include <ea/functions/status/volatile/ToggleMetrics.mqh>
 
-#include <ea/functions/trade/CalculateMagicNumber.mqh>
-#include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/AddHistoryRecord.mqh>
+#include <ea/functions/trade/CalculateMagicNumber.mqh>
+#include <ea/functions/trade/ComposePositionCloseMsg.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
+#include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
+#include <ea/functions/trade/onPositionClose.mqh>
+
+#include <ea/functions/trade/signal/SignalTradeToStr.mqh>
+#include <ea/functions/trade/signal/SignalTypeToStr.mqh>
 
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
@@ -544,7 +548,7 @@ bool IsZigZagSignal(double &signal[]) {
       lastSigValue = signal[SIG_VALUE];
       lastSigTrade = signal[SIG_TRADE];
    }
-   return(signal[SIG_TYPE] != NULL);
+   return(lastSigType != NULL);
 }
 
 
@@ -736,7 +740,7 @@ bool IsTradingTime() {
 /**
  * Whether a start condition is triggered.
  *
- * @param  _Out_ double &signal[] - array receiving signal infos of a triggered condition
+ * @param  _Out_ double &signal[] - array receiving signal details
  *
  * @return bool
  */
@@ -762,7 +766,7 @@ bool IsStartSignal(double &signal[]) {
 /**
  * Whether a stop condition is triggered.
  *
- * @param  _Out_ double &signal[] - array receiving stop signal infos
+ * @param  _Out_ double &signal[] - array receiving signal details
  *
  * @return bool
  */
@@ -836,7 +840,7 @@ bool StartInstance(double signal[]) {
    int      type        = ifInt(sigTrade==SIG_TRADE_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    datetime expires     = NULL;
-   string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
+   string   comment     = instance.name;
    int      magicNumber = CalculateMagicNumber(instance.id);
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
@@ -851,7 +855,7 @@ bool StartInstance(double signal[]) {
    open.lots         = oe.Lots(oe);
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
-   open.priceSig     = sigValue;
+   open.priceSig     = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigValue, Bid);
    open.slippage     = oe.Slippage(oe);
    open.swap         = oe.Swap(oe);
    open.commission   = oe.Commission(oe);
@@ -864,7 +868,7 @@ bool StartInstance(double signal[]) {
    open.sigRunupP    = open.sigProfitP;
    open.sigDrawdownP = open.sigRunupP;
 
-   // update PL numbers
+   // update PnL stats
    instance.openNetProfit  = open.netProfit;
    instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
@@ -1120,6 +1124,7 @@ bool UpdateStatus() {
    if (last_error || instance.status!=STATUS_TRADING) return(false);
    if (!open.ticket)                                  return(true);
 
+   // update open position
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       open.swap         = 0;
       open.commission   = 0;
@@ -1155,85 +1160,31 @@ bool UpdateStatus() {
 
       if (isClosed) {
          int error;
-         if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                              return(false);
+         if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ ComposePositionCloseMsg(error), error))) return(false);
+         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                        return(false);
       }
    }
 
+   // update PnL stats
    instance.openNetProfit  = open.netProfit;
-   instance.openNetProfitP = open.netProfitP;
-   instance.openSigProfitP = open.sigProfitP;
+   instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
+   instance.maxNetProfit   = MathMax(instance.maxNetProfit,    instance.totalNetProfit);
+   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown,  instance.totalNetProfit);
 
-   instance.totalNetProfit  = instance.openNetProfit  + instance.closedNetProfit;
+   instance.openNetProfitP  = open.netProfitP;
    instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
-   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
-   if (__isChart) SS.TotalProfit();
-
-   instance.maxNetProfit    = MathMax(instance.maxNetProfit,    instance.totalNetProfit);
-   instance.maxNetDrawdown  = MathMin(instance.maxNetDrawdown,  instance.totalNetProfit);
    instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
+
+   instance.openSigProfitP  = open.sigProfitP;
+   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
    instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
    instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
-   if (__isChart) SS.ProfitStats();
-
+   if (__isChart) {
+      SS.TotalProfit();
+      SS.ProfitStats();
+   }
    return(!catch("UpdateStatus(3)"));
-}
-
-
-/**
- * Compose a log message for a closed position. The ticket must be selected.
- *
- * @param  _Out_ int error - error code to be returned from the call (if any)
- *
- * @return string - log message or an empty string in case of errors
- */
-string UpdateStatus.PositionCloseMsg(int &error) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("Z.869") was [unexpectedly ]closed at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
-   error = NO_ERROR;
-
-   int    ticket     = OrderTicket();
-   int    type       = OrderType();
-   double lots       = OrderLots();
-   double openPrice  = OrderOpenPrice();
-   double closePrice = OrderClosePrice();
-
-   string sType       = OperationTypeDescription(type);
-   string sOpenPrice  = NumberToStr(openPrice, PriceFormat);
-   string sClosePrice = NumberToStr(closePrice, PriceFormat);
-   string sUnexpected = ifString(__CoreFunction==CF_INIT || (__CoreFunction==CF_DEINIT && __isTesting), "", "unexpectedly ");
-   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ instance.name +"\") was "+ sUnexpected +"closed at "+ sClosePrice;
-
-   string sStopout = "";
-   if (StrStartsWithI(OrderComment(), "so:")) {       error = ERR_MARGIN_STOPOUT; sStopout = ", "+ OrderComment(); }
-   else if (__CoreFunction==CF_INIT)                  error = NO_ERROR;
-   else if (__CoreFunction==CF_DEINIT && __isTesting) error = NO_ERROR;
-   else                                               error = ERR_CONCURRENT_MODIFICATION;
-
-   return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
-}
-
-
-/**
- * Event handler for an unexpectedly closed position.
- *
- * @param  string message - error message
- * @param  int    error   - error code
- *
- * @return int - error status, i.e. whether to interrupt program execution
- */
-int onPositionClose(string message, int error) {
-   if (!error) return(logInfo(message));                    // no error
-
-   if (error == ERR_ORDER_CHANGED)                          // expected in a fast market: a SL was triggered
-      return(!logNotice(message, error));                   // continue
-
-   if (__isTesting) return(catch(message, error));          // in tester treat everything else as terminating
-
-   logWarn(message, error);                                 // online
-   if (error == ERR_CONCURRENT_MODIFICATION)                // unexpected: most probably manually closed
-      return(NO_ERROR);                                     // continue
-   return(error);
 }
 
 
@@ -1321,44 +1272,6 @@ int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descript
    ready = (instance.id > 0);
 
    return(NO_ERROR);
-}
-
-
-/**
- * Return a readable representation of a signal type constant.
- *
- * @param  int type
- *
- * @return string - readable constant or an empty string in case of errors
- */
-string SignalTypeToStr(int type) {
-   switch (type) {
-      case NULL               : return("(undefined)"        );
-      case SIG_TYPE_TIME      : return("SIG_TYPE_TIME"      );
-      case SIG_TYPE_ZIGZAG    : return("SIG_TYPE_ZIGZAG"    );
-      case SIG_TYPE_TAKEPROFIT: return("SIG_TYPE_TAKEPROFIT");
-   }
-   return(_EMPTY_STR(catch("SignalTypeToStr(1)  "+ instance.name +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Return a readable representation of a signal trade flag.
- *
- * @param  int trade
- *
- * @return string - readable flag or an empty string in case of errors
- */
-string SignalTradeToStr(int trade) {
-   switch (trade) {
-      case NULL:                  return("(undefined)");
-      case SIG_TRADE_LONG:        return("SIG_TRADE_LONG");
-      case SIG_TRADE_SHORT:       return("SIG_TRADE_SHORT");
-      case SIG_TRADE_CLOSE_ALL:   return("SIG_TRADE_CLOSE_ALL");
-      case SIG_TRADE_CLOSE_LONG:  return("SIG_TRADE_CLOSE_LONG");
-      case SIG_TRADE_CLOSE_SHORT: return("SIG_TRADE_CLOSE_SHORT");
-   }
-   return(_EMPTY_STR(catch("SignalTradeToStr(1)  "+ instance.name +" invalid parameter trade: "+ trade, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -1530,7 +1443,7 @@ bool ReadTestConfiguration() {
 
 
 /**
- * Synchronize runtime state and vars with current order status on the trade server. Called only from RestoreInstance().
+ * Synchronize local status with current status on the trade server. Called from RestoreInstance() only.
  *
  * @return bool - success status
  */
@@ -1540,9 +1453,10 @@ bool SynchronizeStatus() {
    int prevOpenTicket  = open.ticket;
    int prevHistorySize = ArrayRange(history, 0);
 
-   // detect dangling open positions
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;      // FALSE: an open order was closed/deleted in another thread
+   // detect and handle orphaned open positions
+   int orders = OrdersTotal();
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: an open order was closed/deleted in another thread
       if (IsMyOrder(instance.id)) {
          if (IsPendingOrderType(OrderType())) {
             logWarn("SynchronizeStatus(1)  "+ instance.name +" unsupported pending order found: #"+ OrderTicket() +", ignoring it...");
@@ -1568,10 +1482,11 @@ bool SynchronizeStatus() {
       if (!UpdateStatus()) return(false);
    }
 
-   // detect orphaned closed positions
-   for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) continue;
-      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders (atm not supported)
+   // detect and handle orphaned open positions
+   orders = OrdersHistoryTotal();
+   for (i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;       // FALSE: the visible history range was modified in another thread
+      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders
 
       if (IsMyOrder(instance.id)) {
          if (!IsLocalClosedPosition(OrderTicket())) {
@@ -2093,7 +2008,7 @@ void SS.StartStopConditions() {
  *
  * @param  int error [optional] - error to display (default: none)
  *
- * @return int - the same error or the current error status if no error was specified
+ * @return int - the same error
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(error);
