@@ -5038,7 +5038,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
  * Notes: Typical trade operation errors returned in oe.Error are:
  *        - ERR_INVALID_TRADE_VOLUME:   the trade volume is not supported by the broker
  *        - ERR_INVALID_STOP:           the pending order price violates the current market
- *        - ERR_STOP_DISTANCE_VIOLATED: SL or TP violates the broker's stop distance
+ *        - ERR_STOP_DISTANCE_VIOLATED: SL or TP violate the broker's stop distance
  */
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
@@ -5071,17 +5071,17 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    if (MathModFix(lots, lotStep) != 0)                         return(!Order.HandleError("OrderSendEx(7)  illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME, oeFlags, oe));
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))                                           return(!Order.HandleError("OrderSendEx(8)  illegal parameter price: "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
-   if (isPendingType) /*&&*/ if (EQ(price, 0))                 return(!Order.HandleError("OrderSendEx(9)  illegal "+ OperationTypeDescription(type) +" price: "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    price = NormalizeDouble(price, digits);
+   if (price < 0)                                              return(!Order.HandleError("OrderSendEx(8)  illegal parameter price: "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
+   if (isPendingType && !price)                                return(!Order.HandleError("OrderSendEx(9)  illegal "+ OperationTypeDescription(type) +" price: "+ NumberToStr(price, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    // slippage
    if (slippage < 0)                                           return(!Order.HandleError("OrderSendEx(10)  illegal parameter slippage: "+ slippage, ERR_INVALID_PARAMETER, oeFlags, oe));
    // stopLoss
-   if (LT(stopLoss, 0))                                        return(!Order.HandleError("OrderSendEx(11)  illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    stopLoss = NormalizeDouble(stopLoss, digits);
+   if (stopLoss < 0)                                           return(!Order.HandleError("OrderSendEx(11)  illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    // takeProfit
-   if (LT(takeProfit, 0))                                      return(!Order.HandleError("OrderSendEx(12)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    takeProfit = NormalizeDouble(takeProfit, digits);
+   if (takeProfit < 0)                                         return(!Order.HandleError("OrderSendEx(12)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    // comment
    if (comment == "0") comment = "";                           // (string) NULL
    else if (StringLen(comment) > MAX_ORDER_COMMENT_LENGTH)     return(!Order.HandleError("OrderSendEx(13)  illegal parameter comment: "+ DoubleQuoteStr(comment) +" (max. "+ MAX_ORDER_COMMENT_LENGTH +" chars)", ERR_INVALID_PARAMETER, oeFlags, oe));
@@ -5134,7 +5134,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          oe.setBid(oe, bid);
          oe.setAsk(oe, ask);
       }
-      if      (type == OP_BUY ) price = ask;
+      if      (type == OP_BUY)  price = ask;
       else if (type == OP_SELL) price = bid;
       price = NormalizeDouble(price, digits);
       oe.setOpenPrice(oe, price);
@@ -5162,9 +5162,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          oe.setCommission(oe, ifDouble(isPendingType, 0, OrderCommission()));
          oe.setProfit    (oe, 0              );
          oe.setRequotes  (oe, requotes       );
-            if      (type == OP_BUY ) double dSlippage = ask - OrderOpenPrice();
-            else if (type == OP_SELL)        dSlippage = OrderOpenPrice() - bid;
-            else                             dSlippage = 0;
+            if      (type == OP_BUY) double dSlippage = ask - OrderOpenPrice();
+            else if (type == OP_SELL)       dSlippage = OrderOpenPrice() - bid;
+            else                            dSlippage = 0;
          oe.setSlippage(oe, NormalizeDouble(dSlippage, digits));           // total slippage after requotes
 
          if (IsLogDebug()) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
@@ -5377,7 +5377,7 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
  *        - ERR_INVALID_STOP:             the request violates the current market
  *        - ERR_STOP_DISTANCE_VIOLATED:   the request violates the broker's stop distance
  *        - ERR_TRADE_MODIFY_DENIED:      the request violates the broker's freeze level
- *        - ERR_INVALID_TRADE_PARAMETERS: order status changed (order limit already executed or position already closed)
+ *        - ERR_INVALID_TRADE_PARAMETERS: order status has changed (limit already executed or position already closed)
  */
 bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
@@ -5388,9 +5388,10 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    ArrayInitialize(oe, 0);
    // ticket
    if (!SelectTicket(ticket, "OrderModifyEx(2)", O_PUSH))        return(!oe.setError(oe, ERR_INVALID_TICKET));
-   if (!IsOrderType(OrderType()))                                return(_false(Order.HandleError("OrderModifyEx(3)  #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, oeFlags, oe), OrderPop("OrderModifyEx(4)")));
+   int orderType = OrderType();
+   if (!IsOrderType(orderType))                                  return(_false(Order.HandleError("OrderModifyEx(3)  #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, oeFlags, oe), OrderPop("OrderModifyEx(4)")));
    if (OrderCloseTime() != 0)                                    return(_false(Order.HandleError("OrderModifyEx(5)  ticket #"+ ticket +" is already closed", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(6)")));
-   bool   isPendingOrder = IsPendingOrderType(OrderType());
+   bool   isPendingOrder = IsPendingOrderType(orderType);
    int    digits         = MarketInfo(OrderSymbol(), MODE_DIGITS);
    int    pipDigits      = digits & (~1);
    int    pipPoints      = MathRound(MathPow(10, digits & 1));
@@ -5401,17 +5402,17 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (IsError(error))                                           return(_false(Order.HandleError("OrderModifyEx(7)  symbol=\""+ OrderSymbol() +"\"", error, oeFlags, oe), OrderPop("OrderModifyEx(8)")));
    // openPrice
    openPrice = NormalizeDouble(openPrice, digits);
-   if (LT(openPrice, 0, digits))                                 return(_false(Order.HandleError("OrderModifyEx(9)  illegal parameter openPrice: "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(10)")));
-   if (EQ(openPrice, 0, digits)) openPrice = NormalizeDouble(OrderOpenPrice(), digits);
+   if (openPrice < 0)                                            return(_false(Order.HandleError("OrderModifyEx(9)  illegal parameter openPrice: "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(10)")));
+   if (!openPrice) openPrice = NormalizeDouble(OrderOpenPrice(), digits);
    if (!isPendingOrder) {
       if (NE(openPrice, OrderOpenPrice(), digits))               return(_false(Order.HandleError("OrderModifyEx(11)  cannot modify entry price of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(12)")));
    }
    // stopLoss
    stopLoss = NormalizeDouble(stopLoss, digits);
-   if (LT(stopLoss, 0, digits))                                  return(_false(Order.HandleError("OrderModifyEx(13)  illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
+   if (stopLoss < 0)                                             return(_false(Order.HandleError("OrderModifyEx(13)  illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
    // takeProfit
    takeProfit = NormalizeDouble(takeProfit, digits);
-   if (LT(takeProfit, 0, digits))                                return(_false(Order.HandleError("OrderModifyEx(15)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(16)")));
+   if (takeProfit < 0)                                           return(_false(Order.HandleError("OrderModifyEx(15)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(16)")));
    // expires
    if (expires && expires <= TimeCurrentEx("OrderModifyEx(17)")) return(_false(Order.HandleError("OrderModifyEx(18)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(19)")));
    if (expires!=OrderExpiration() && !isPendingOrder)            return(_false(Order.HandleError("OrderModifyEx(20)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(21)")));
@@ -5426,7 +5427,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    oe.setBid           (oe, MarketInfo(OrderSymbol(), MODE_BID));
    oe.setAsk           (oe, MarketInfo(OrderSymbol(), MODE_ASK));
    oe.setTicket        (oe, ticket           );
-   oe.setType          (oe, OrderType()      );
+   oe.setType          (oe, orderType        );
    oe.setLots          (oe, OrderLots()      );
    oe.setOpenPrice     (oe, openPrice        );
    oe.setStopLoss      (oe, stopLoss         );
@@ -5506,7 +5507,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
             break;
 
          case ERR_INVALID_STOP:
-            logWarn("OrderModifyEx(37)  detection of ERR_STOP_DISTANCE_VIOLATED not yet implemented", ERR_NOT_IMPLEMENTED);
+            if (oe.StopDistance(oe) != 0) {
+               logWarn("OrderModifyEx(37)  passing on returned ERR_INVALID_STOP (distinction to possible ERR_STOP_DISTANCE_VIOLATED not yet implemented)", ERR_NOT_IMPLEMENTED);
+            }
             break;
 
          case NO_ERROR:
