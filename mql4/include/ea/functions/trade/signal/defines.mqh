@@ -9,8 +9,9 @@
 #define SIG_TRADE                   2
 
 #define SIG_TYPE_TIME               1              // signal types
-#define SIG_TYPE_TAKEPROFIT         2
-#define SIG_TYPE_ZIGZAG             3
+#define SIG_TYPE_STOPLOSS           2
+#define SIG_TYPE_TAKEPROFIT         3
+#define SIG_TYPE_ZIGZAG             4
 
 #define SIG_TRADE_LONG              1              // signal trade flags, can be combined
 #define SIG_TRADE_SHORT             2

@@ -466,6 +466,8 @@ bool UpdateStatus(int signal = NULL) {
       open.sigRunupP    = open.sigProfitP;
       open.sigDrawdownP = open.sigRunupP;
       if (__isChart) SS.OpenLots();
+
+      if (test.onEntrySignalPause) Tester.Pause("UpdateStatus(4)");
    }
 
    // update PnL numbers
@@ -488,7 +490,7 @@ bool UpdateStatus(int signal = NULL) {
 
    if (positionClosed || signal)
       return(SaveStatus());
-   return(!catch("UpdateStatus(4)"));
+   return(!catch("UpdateStatus(5)"));
 }
 
 

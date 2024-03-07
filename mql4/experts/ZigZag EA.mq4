@@ -302,12 +302,6 @@ bool     stop.profitPun.condition;           // whether a takeprofit condition i
 double   stop.profitPun.value;
 string   stop.profitPun.description = "";
 
-// test debug settings, configurable via framework config, see ReadTestConfiguration()
-bool     test.onReversalPause     = false;   // whether to pause a visual test after a ZigZag reversal
-bool     test.onSessionBreakPause = false;   // whether to pause a visual test after StopInstance(SIGNAL_TIME)
-bool     test.onStopPause         = true;    // whether to pause a visual test after a final StopInstance()
-bool     test.reduceStatusWrites  = true;    // whether to reduce status file I/O in tester
-
 // cache vars to speed-up ShowStatus()
 string   status.tradingModeStatus[] = {"", "", "Virtual "};
 string   status.startConditions     = "";
@@ -327,6 +321,7 @@ string   status.stopConditions      = "";
 #include <ea/functions/instance/defines.mqh>
 #include <ea/functions/metric/defines.mqh>
 #include <ea/functions/status/defines.mqh>
+#include <ea/functions/test/defines.mqh>
 #include <ea/functions/trade/defines.mqh>
 #include <ea/functions/trade/signal/defines.mqh>
 #include <ea/functions/trade/stats/defines.mqh>
@@ -539,10 +534,6 @@ bool IsZigZagSignal(double &signal[]) {
             if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(sigTrade & SIG_TRADE_LONG, "long", "short") +" reversal at "+ NumberToStr(reversalPrice, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             lastSigBar      = Time[0];
             lastSigBarTrade = sigTrade;
-
-            if (IsVisualMode()) {
-               if (test.onReversalPause) Tester.Pause("IsZigZagSignal(3)");   // pause the tester according to the debug configuration
-            }
          }
       }
       lastTick     = Ticks;
@@ -900,6 +891,8 @@ bool StartInstance(double signal[]) {
       SS.StartStopConditions();
    }
    if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalTradeToStr(sigTrade) +")");
+
+   if (test.onEntrySignalPause) Tester.Pause("StartInstance(4)");
    return(SaveStatus());
 }
 
@@ -1002,6 +995,8 @@ bool ReversePosition(double signal[]) {
       SS.ProfitStats();
    }
    if (IsLogInfo()) logInfo("ReversePosition(4)  "+ instance.name +" position reversed ("+ SignalTradeToStr(sigTrade) +")");
+
+   if (test.onEntrySignalPause) Tester.Pause("ReversePosition(5)");
    return(SaveStatus());
 }
 
@@ -1422,25 +1417,6 @@ bool ReadStatus() {
    if (!ReadStatus.TradeHistory(file)) return(false);
 
    return(!catch("ReadStatus(4)"));
-}
-
-
-/**
- * Read the test configuration.
- *
- * @return bool - success status
- */
-bool ReadTestConfiguration() {
-   if (__isTesting) {
-      string section = "Tester."+ ProgramName();
-      test.disableTickValueWarning = GetConfigBool(section, "DisableTickValueWarning", test.disableTickValueWarning);
-      test.reduceStatusWrites      = GetConfigBool(section, "ReduceStatusWrites",      test.reduceStatusWrites);
-
-      test.onReversalPause         = GetConfigBool(section, "OnReversalPause",         test.onReversalPause);
-      test.onSessionBreakPause     = GetConfigBool(section, "OnSessionBreakPause",     test.onSessionBreakPause);
-      test.onStopPause             = GetConfigBool(section, "OnStopPause",             test.onStopPause);
-   }
-   return(!catch("ReadTestConfiguration(1)"));
 }
 
 
