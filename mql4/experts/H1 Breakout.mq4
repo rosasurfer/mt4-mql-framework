@@ -523,16 +523,16 @@ int ShowStatus(int error = NO_ERROR) {
    string sStatus="", sError="";
 
    switch (instance.status) {
-      case NULL:           sStatus = StringConcatenate(instance.name, "  not initialized"); break;
-      case STATUS_WAITING: sStatus = StringConcatenate(instance.name, "  waiting");         break;
-      case STATUS_TRADING: sStatus = StringConcatenate(instance.name, "  trading");         break;
-      case STATUS_STOPPED: sStatus = StringConcatenate(instance.name, "  stopped");         break;
+      case NULL:           sStatus = "  not initialized"; break;
+      case STATUS_WAITING: sStatus = "  waiting";         break;
+      case STATUS_TRADING: sStatus = "  trading";         break;
+      case STATUS_STOPPED: sStatus = "  stopped";         break;
       default:
          return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                      NL,
+   string text = StringConcatenate(WindowExpertName(), "    ID.", instance.id, sStatus, sError, NL,
                                                                                                 NL,
                                    "Open:    ",   status.openLots,                              NL,
                                    "Closed:  ",   status.closedTrades,                          NL,

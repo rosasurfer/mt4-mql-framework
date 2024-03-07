@@ -371,6 +371,8 @@ string   status.stopConditions      = "";
 #include <ea/functions/status/volatile/ToggleTradeHistory.mqh>
 #include <ea/functions/status/volatile/ToggleMetrics.mqh>
 
+#include <ea/functions/test/ReadTestConfiguration.mqh>
+
 #include <ea/functions/trade/AddHistoryRecord.mqh>
 #include <ea/functions/trade/CalculateMagicNumber.mqh>
 #include <ea/functions/trade/ComposePositionCloseMsg.mqh>
@@ -927,8 +929,8 @@ bool ReversePosition(double signal[]) {
 
       // close the existing position
       bool success;
-      if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_NONE, oe);
-      else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_NONE, oeFlags, oe);
+      if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_CLOSED, oe);
+      else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe);
       if (!success) return(!SetLastError(oe.Error(oe)));
 
       double closePrice = oe.ClosePrice(oe);
@@ -1041,8 +1043,8 @@ bool StopInstance(double signal[]) {
       if (open.ticket > 0) {
          bool success;
          int oeFlags, oe[];
-         if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_NONE, oe);
-         else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_NONE, oeFlags, oe);
+         if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_CLOSED, oe);
+         else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe);
          if (!success) return(!SetLastError(oe.Error(oe)));
 
          double closePrice = oe.ClosePrice(oe), closePriceSig = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigValue, Bid);
@@ -2021,24 +2023,24 @@ int ShowStatus(int error = NO_ERROR) {
    string sStatus="", sError="";
 
    switch (instance.status) {
-      case NULL:           sStatus = StringConcatenate(instance.name, "  not initialized"); break;
-      case STATUS_WAITING: sStatus = StringConcatenate(instance.name, "  waiting");         break;
-      case STATUS_TRADING: sStatus = StringConcatenate(instance.name, "  trading");         break;
-      case STATUS_STOPPED: sStatus = StringConcatenate(instance.name, "  stopped");         break;
+      case NULL:           sStatus = "  not initialized"; break;
+      case STATUS_WAITING: sStatus = "  waiting";         break;
+      case STATUS_TRADING: sStatus = "  trading";         break;
+      case STATUS_STOPPED: sStatus = "  stopped";         break;
       default:
          return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(status.tradingModeStatus[tradingMode], ProgramName(), "    ", sStatus, sError, NL,
-                                                                                                                  NL,
-                                  "Start:    ",  status.startConditions,                                          NL,
-                                  "Stop:     ",  status.stopConditions,                                           NL,
-                                                                                                                  NL,
-                                  status.metricDescription,                                                       NL,
-                                  "Open:    ",   status.openLots,                                                 NL,
-                                  "Closed:  ",   status.closedTrades,                                             NL,
-                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,                    NL
+   string text = StringConcatenate(status.tradingModeStatus[tradingMode], WindowExpertName(), "    ID.", instance.id, sStatus, sError, NL,
+                                                                                                                                       NL,
+                                  "Start:    ",  status.startConditions,                                                               NL,
+                                  "Stop:     ",  status.stopConditions,                                                                NL,
+                                                                                                                                       NL,
+                                  status.metricDescription,                                                                            NL,
+                                  "Open:    ",   status.openLots,                                                                      NL,
+                                  "Closed:  ",   status.closedTrades,                                                                  NL,
+                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,                                         NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
