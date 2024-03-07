@@ -14,6 +14,8 @@ bool ReadStatus.OpenPosition(string file) {
    open.time         = GetIniInt   (file, section, "open.time"        );     // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
    open.price        = GetIniDouble(file, section, "open.price"       );     // double   open.price        = 1.24363
    open.priceSig     = GetIniDouble(file, section, "open.priceSig"    );     // double   open.priceSig     = 1.24363
+   open.stoploss     = GetIniDouble(file, section, "open.stoploss"    );     // double   open.stoploss     = 1.24363
+   open.takeprofit   = GetIniDouble(file, section, "open.takeprofit"  );     // double   open.takeprofit   = 1.24363
    open.slippage     = GetIniDouble(file, section, "open.slippage"    );     // double   open.slippage     = 0.00002
    open.swap         = GetIniDouble(file, section, "open.swap"        );     // double   open.swap         = -1.23
    open.commission   = GetIniDouble(file, section, "open.commission"  );     // double   open.commission   = -5.50
