@@ -14,9 +14,14 @@
 #define MAX_SYMBOL_GROUP_LENGTH                15
 #define MAX_SYMBOL_LENGTH                      11
 
-#define NL                                   "\n"        // Linux line separator:   0x0A (in text mode MQL/Win32 file functions auto-convert 0x0A to 0x0D0A)
-#define CRLF                               "\r\n"        // Windows line separator: 0x0D0A
-#define TAB                                  "\t"        // tab: 0x09
+#define EOL_MAC                              "\r"        // old MacOS line separator: 0x0D
+#define EOL_NETSCAPE                     "\r\r\n"        // Netscape line separator:  0x0D0D0A
+#define EOL_UNIX                             "\n"        // Unix line separator:      0x0A (MQL/Win32 file functions in text mode auto-convert EOL_UNIX to EOL_WINDOWS)
+#define EOL_WINDOWS                        "\r\n"        // Windows line separator:   0x0D0A
+
+#define NL                                   "\n"        // MQL4 bug: string constants cannot reference each other
+#define CRLF                               "\r\n"
+#define TAB                                  "\t"        // tabulator: 0x09
 
 
 // log levels

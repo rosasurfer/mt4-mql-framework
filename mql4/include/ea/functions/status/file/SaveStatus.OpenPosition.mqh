@@ -19,8 +19,8 @@ bool SaveStatus.OpenPosition(string file, bool fileExists) {
    WriteIniString(file, section, "open.time",         /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "open.price",        /*double  */ DoubleToStr(open.price, Digits));
    WriteIniString(file, section, "open.priceSig",     /*double  */ DoubleToStr(open.priceSig, Digits));
-   WriteIniString(file, section, "open.stoploss",     /*double  */ DoubleToStr(open.stoploss, Digits));
-   WriteIniString(file, section, "open.takeprofit",   /*double  */ DoubleToStr(open.takeprofit, Digits));
+   WriteIniString(file, section, "open.stopLoss",     /*double  */ DoubleToStr(open.stopLoss, Digits));
+   WriteIniString(file, section, "open.takeProfit",   /*double  */ DoubleToStr(open.takeProfit, Digits));
    WriteIniString(file, section, "open.slippage",     /*double  */ DoubleToStr(open.slippage, Digits));
    WriteIniString(file, section, "open.swap",         /*double  */ DoubleToStr(open.swap, 2));
    WriteIniString(file, section, "open.commission",   /*double  */ DoubleToStr(open.commission, 2));

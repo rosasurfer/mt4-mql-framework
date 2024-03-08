@@ -6,7 +6,7 @@
  * @return string
  */
 string HistoryRecordToStr(int index) {
-   // result: ticket,type,lots,openTime,openPrice,openPriceSig,closeTime,closePrice,closePriceSig,slippage,swap,commission,grossProfit,netProfit,netProfitP,runupP,drawdownP,sigProfitP,sigRunupP,sigDrawdownP
+   // result: ticket,type,lots,openTime,openPrice,openPriceSig,stopLoss,takeProfit,closeTime,closePrice,closePriceSig,slippage,swap,commission,grossProfit,netProfit,netProfitP,runupP,drawdownP,sigProfitP,sigRunupP,sigDrawdownP
 
    int      ticket        = history[index][H_TICKET        ];
    int      type          = history[index][H_TYPE          ];
@@ -14,6 +14,8 @@ string HistoryRecordToStr(int index) {
    datetime openTime      = history[index][H_OPENTIME      ];
    double   openPrice     = history[index][H_OPENPRICE     ];
    double   openPriceSig  = history[index][H_OPENPRICE_SIG ];
+   double   stopLoss      = history[index][H_STOPLOSS      ];
+   double   takeProfit    = history[index][H_TAKEPROFIT    ];
    datetime closeTime     = history[index][H_CLOSETIME     ];
    double   closePrice    = history[index][H_CLOSEPRICE    ];
    double   closePriceSig = history[index][H_CLOSEPRICE_SIG];
@@ -29,7 +31,7 @@ string HistoryRecordToStr(int index) {
    double   sigRunupP     = history[index][H_SIG_RUNUP_P   ];
    double   sigDrawdownP  = history[index][H_SIG_DRAWDOWN_P];
 
-   return(StringConcatenate(ticket, ",", type, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSig, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSig, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(runupP, Digits), ",", DoubleToStr(drawdownP, Digits), ",", DoubleToStr(sigProfitP, Digits), ",", DoubleToStr(sigRunupP, Digits), ",", DoubleToStr(sigDrawdownP, Digits)));
+   return(StringConcatenate(ticket, ",", type, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSig, Digits), ",", DoubleToStr(stopLoss, Digits), ",", DoubleToStr(takeProfit, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSig, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(runupP, Digits), ",", DoubleToStr(drawdownP, Digits), ",", DoubleToStr(sigProfitP, Digits), ",", DoubleToStr(sigRunupP, Digits), ",", DoubleToStr(sigDrawdownP, Digits)));
 }
 
 

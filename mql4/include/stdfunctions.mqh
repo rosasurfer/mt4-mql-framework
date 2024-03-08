@@ -2280,13 +2280,11 @@ bool StrIsDigits(string value) {
       catch("StrIsDigits(1)", error);
    }
 
-   int chr, len=StringLen(value);
-
-   if (len == 0)
-      return(false);
+   int len = StringLen(value);
+   if (!len) return(false);
 
    for (int i=0; i < len; i++) {
-      chr = StringGetChar(value, i);
+      int chr = StringGetChar(value, i);
       if (chr < '0') return(false);
       if (chr > '9') return(false);
    }
@@ -2616,8 +2614,8 @@ datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0,
  * - If the passed data contains no time part the returned datetime value is set to Midnight (00:00:00).
  */
 datetime DateTime2(int parsed[], int flags = DATE_OF_TODAY) {
-   if (ArrayDimension(parsed) > 1)      return(_NaT(catch("DateTime2(1)  too many dimensions of parameter parsed: "+ ArrayDimension(parsed), ERR_INCOMPATIBLE_ARRAY)));
-   if (ArraySize(parsed) != PT_ERROR+1) return(_NaT(catch("DateTime2(2)  invalid size of parameter parsed: "+ ArraySize(parsed), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArrayDimension(parsed) > 1)      return(_NaT(catch("DateTime2(1)  too many dimensions of parameter parsed[]: "+ ArrayDimension(parsed), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArraySize(parsed) != PT_ERROR+1) return(_NaT(catch("DateTime2(2)  invalid size of parameter parsed[]: "+ ArraySize(parsed), ERR_INCOMPATIBLE_ARRAY)));
 
    int pt[]; ArrayCopy(pt, parsed);
 
@@ -3189,6 +3187,9 @@ bool StrToBool(string value, bool strict = false) {
  * @param  string value
  *
  * @return string
+ *
+ * TODO:
+ *  - move to DLL (for longer strings way to slow)
  */
 string StrToLower(string value) {
    string result = value;
@@ -3232,6 +3233,9 @@ string StrToLower(string value) {
  * @param  string value
  *
  * @return string
+ *
+ * TODO:
+ *  - move to DLL (for longer strings way to slow)
  */
 string StrToUpper(string value) {
    string result = value;
@@ -6421,16 +6425,16 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    // subject
    string _subject = StrTrim(subject);
    if (!StringLen(_subject))               return(!catch("SendEmail(6)  invalid parameter subject: \""+ subject +"\"", ERR_INVALID_PARAMETER));
-   _subject = StrReplace(StrReplace(StrReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " ");          // Linebreaks mit Leerzeichen ersetzen
-   _subject = StrReplace(_subject, "\"", "\\\"");                                                        // Double-Quotes in email-Parametern escapen
-   _subject = StrReplace(_subject, "'", "'\"'\"'");                                                      // Single-Quotes im bash-Parameter escapen
+   _subject = StrReplace(StrReplace(StrReplace(_subject, EOL_WINDOWS, " "), EOL_MAC, " "), EOL_UNIX, " ");  // Linebreaks mit Leerzeichen ersetzen
+   _subject = StrReplace(_subject, "\"", "\\\"");                                                           // Double-Quotes in email-Parametern escapen
+   _subject = StrReplace(_subject, "'", "'\"'\"'");                                                         // Single-Quotes im bash-Parameter escapen
    // bash -lc 'email -subject "single-quote:'"'"' double-quote:\" pipe:|" ...'
 
    // Message (kann leer sein): in temporärer Datei speichern, wenn nicht leer
    message = StrTrim(message);
    string message.txt = CreateTempFile(filesDir, "msg");
    if (StringLen(message) > 0) {
-      int hFile = FileOpen(StrRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                    // FileOpen() benötigt einen MQL-Pfad
+      int hFile = FileOpen(StrRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                       // FileOpen() benötigt einen MQL-Pfad
       if (hFile < 0)  return(!catch("SendEmail(7)->FileOpen()"));
       int bytes = FileWriteString(hFile, message, StringLen(message));
       FileClose(hFile);

@@ -2863,7 +2863,7 @@ int WinExecWait(string cmdLine, int cmdShow) {
  * @param  string result[]                  - array receiving the read lines
  * @param  bool   skipEmptyLines [optional] - whether to skip empty lines (default: no)
  *
- * @return int - number of lines returned in result[] or EMPTY (-1) in case of errors
+ * @return int - number of lines stored in result[] or EMPTY (-1) in case of errors
  */
 int FileReadLines(string filename, string result[], bool skipEmptyLines = false) {
    skipEmptyLines = skipEmptyLines!=0;
@@ -2883,36 +2883,34 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
 
    // read file line by line
    bool newLine=true, blankLine=false, lineEnd=true, wasSeparator;
-   string line="", value="", lines[]; ArrayResize(lines, 0);               // cache for read lines
-   int i, len, fPointer;                                                   // line counter and length of the read string
+   string line="", value="", lines[]; ArrayResize(lines, 0);      // cache for read lines
+   int i, len, fPointer;                                          // line counter and length of the read string
 
    while (!FileIsEnding(hFile)) {
       newLine = false;
-      if (lineEnd) {                                                       // if the last loop reached EOF
-         newLine   = true;                                                 // mark begin of a new line = BOL
+      if (lineEnd) {                                              // if the last loop reached EOF
+         newLine   = true;                                        // mark begin of a new line = BOL
          blankLine = false;
          lineEnd   = false;
-         fPointer  = FileTell(hFile);                                      // points to the start of the current line
+         fPointer  = FileTell(hFile);                             // points to the start of the current line
       }
 
       // read line
-      value = FileReadString(hFile);                                       // MQL4 bug: FileReadString() stops reading after 4095 chars
+      value = FileReadString(hFile);                              // MQL4 bug: FileReadString() stops reading after 4095 chars
 
       // check for EOL and EOF
       if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
          lineEnd  = true;
          if (newLine) {
             if (!StringLen(value)) {
-               if (FileIsEnding(hFile))                                    // BOL + EOF => not a line => break
-                  break;
-               blankLine = true;                                           // BOL + EOL => empty line
+               if (FileIsEnding(hFile)) break;                    // BOL + EOF => not a line => break
+               blankLine = true;                                  // BOL + EOL => empty line
             }
          }
       }
 
       // skip empty lines if configured
-      if (blankLine) /*&&*/ if (skipEmptyLines)
-         continue;
+      if (blankLine && skipEmptyLines) continue;
 
       // store the read string in a new line or append it to the previously read line
       if (newLine) {
@@ -2951,8 +2949,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
    int error = GetLastError();
    if (error && error!=ERR_END_OF_FILE) {
       FileClose(hFile);
-      if (hFileBin != 0)
-         FileClose(hFileBin);
+      if (hFileBin != 0) FileClose(hFileBin);
       return(_EMPTY(catch("FileReadLines(5)", error)));
    }
 
@@ -2963,10 +2960,11 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
    // copy read lines into result[] array
    ArrayResize(result, i);
    if (i > 0) ArrayCopy(result, lines);
+   if (ArraySize(lines) > 0) ArrayResize(lines, 0);               // free allocated memory
 
-   if (ArraySize(lines) > 0)
-      ArrayResize(lines, 0);
-   return(ifInt(!catch("FileReadLines(6)"), i, EMPTY));
+   if (!catch("FileReadLines(6)"))
+      return(i);
+   return(EMPTY);
 }
 
 

@@ -21,6 +21,8 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    history[i][H_OPENTIME      ] = open.time;
    history[i][H_OPENPRICE     ] = open.price;
    history[i][H_OPENPRICE_SIG ] = open.priceSig;
+   history[i][H_STOPLOSS      ] = open.stopLoss;
+   history[i][H_TAKEPROFIT    ] = open.takeProfit;
    history[i][H_CLOSETIME     ] = closeTime;
    history[i][H_CLOSEPRICE    ] = closePrice;
    history[i][H_CLOSEPRICE_SIG] = closePriceSig;
@@ -52,8 +54,8 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    open.time         = NULL;
    open.price        = NULL;
    open.priceSig     = NULL;
-   open.stoploss     = NULL;
-   open.takeprofit   = NULL;
+   open.stopLoss     = NULL;
+   open.takeProfit   = NULL;
    open.slippage     = NULL;
    open.swap         = NULL;
    open.commission   = NULL;

@@ -71,7 +71,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
    string sError = "";
    if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
-   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(), "  ", ModuleName(true), "::", StrReplace(StrReplace(message, NL+NL, NL, true), NL, " "), sError));
+   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(), "  ", ModuleName(true), "::", StrReplace(StrReplace(message, EOL_WINDOWS, " "), EOL_UNIX, " "), sError));
 
    isRecursion = false;
    return(error);
@@ -503,7 +503,7 @@ int log2Mail(string message, int error, int level) {
       ec_SetLoglevelMail(__ExecutionContext, LOG_OFF);                              // prevent recursive calls
 
       message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
-      string subject = StrReplace(message, NL, " ");
+      string subject = StrReplace(StrReplace(message, EOL_WINDOWS, " "), EOL_UNIX, " ");
       string body    = message + NL +"("+ TimeToStr(TimeLocalEx("log2Mail(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (SendEmail("", "", subject, body)) {
@@ -595,7 +595,7 @@ int log2Terminal(string message, int error, int level) {
       string sLoglevel = ""; if (level != LOG_DEBUG) sLoglevel = LoglevelDescription(level) +"  ";
       string sError    = ""; if (error != NO_ERROR)  sError    = " ["+ ErrorToStr(error) +"]";
 
-      Print(sLoglevel, StrReplace(message, NL, " "), sError);
+      Print(sLoglevel, StrReplace(StrReplace(message, EOL_WINDOWS, " "), EOL_UNIX, " "), sError);
 
       ec_SetLoglevelTerminal(__ExecutionContext, configLevel);                      // restore the configuration
       isRecursion = false;

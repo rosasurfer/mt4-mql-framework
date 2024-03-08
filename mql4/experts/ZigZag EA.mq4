@@ -88,6 +88,9 @@
  *     heat maps: https://www.forexfactory.com/thread/post/13834307#post13834307
  *     ML:        https://www.forexfactory.com/thread/516785-machine-learning-with-algotraderjo
  *
+ *     separate optimization of long|short trades
+ *     consider max holding period
+ *
  *  - money management
  *
  *
