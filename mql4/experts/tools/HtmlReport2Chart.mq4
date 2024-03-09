@@ -158,7 +158,6 @@ string ReadFile(string filename) {
    if (error && error!=ERR_END_OF_FILE) return(_EMPTY_STR(catch("ReadFile(3)", error)));
    if (fileSize != StringLen(content))  return(_EMPTY_STR(catch("ReadFile(4)  error reading file, size: "+ fileSize +" vs. read bytes: "+ StringLen(content), ERR_FILE_READ_ERROR)));
 
-   debug("ReadFile(0.1)  file: "+ DoubleQuoteStr(filename) +" (size: "+ fileSize +")");
    return(content);
 }
 
@@ -171,10 +170,6 @@ string ReadFile(string filename) {
  * @return bool - success status
  */
 bool ParseFileContent(string content) {
-   // remove line breaks
-   content = StrReplace(content, EOL_WINDOWS, " ");
-   content = StrReplace(content, EOL_UNIX, " ");
-
    // detect file type
    string title = StrRightFrom(content, "<title>");
    if (title == "") return(!catch("ParseFileContent(1)  HtmlFile: \"<title>\" tag not found", ERR_INVALID_FILE_FORMAT));
@@ -183,7 +178,6 @@ bool ParseFileContent(string content) {
    if      (StrStartsWith(title, "Strategy Tester:")) int fileType = TYPE_TEST_REPORT;
    else if (StrStartsWith(title, "Statement:"))           fileType = TYPE_ACCOUNT_STATEMENT;
    else             return(!catch("ParseFileContent(2)  HtmlFile: unsupported \"<title>\" tag: "+ DoubleQuoteStr(StrLeft(title, 10) +"..."), ERR_INVALID_FILE_FORMAT));
-   debug("ParseFileContent(0.1)  file type: "+ ifString(fileType==TYPE_TEST_REPORT, "test report", "account statement"));
 
    // parse file types
    if (fileType == TYPE_ACCOUNT_STATEMENT) ParseAccountStatement(content);
@@ -223,13 +217,11 @@ bool ParseTestReport(string content) {
    string lastCell = StrRightFrom(row1, "<td", -1);      // <td colspan=4>GBPJPY (Great Britain Pound vs Japanese Yen)</td>
    string symbol   = StrTrim(StrLeftTo(StrLeftTo(StrRightFrom(lastCell, ">"), "<"), "("));
    if (!StrCompareI(symbol, Symbol()))                 return(!catch("ParseTestReport(2)  HtmlFile: symbol mis-match in report: "+ DoubleQuoteStr(symbol), ERR_INVALID_FILE_FORMAT));
-   debug("ParseTestReport(0.1)  report symbol: "+ symbol);
 
    // split table2 into data rows
    table2 = StrLeftTo(StrRightFrom(table2, "<tr"), "</tr>", -1) +"</tr>";
    int sizeOfRows = Explode(table2, "<tr", rows, NULL);
    if (sizeOfRows < 2)                                 return(!catch("ParseTestReport(3)  HtmlFile: no trade records found in trade history", ERR_INVALID_FILE_FORMAT));
-   debug("ParseTestReport(0.2)  report data rows: "+ (sizeOfRows-1));
 
    #define I_LINE          0  // #
    #define I_TIME          1  // Time

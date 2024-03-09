@@ -17143,7 +17143,7 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=320
+ZigZag.Periods=20
 ZigZag.Type=Line* | Semaphores
 ZigZag.Width=2
 Donchian.ShowChannel=0
