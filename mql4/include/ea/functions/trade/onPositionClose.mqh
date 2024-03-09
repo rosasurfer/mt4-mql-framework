@@ -7,7 +7,7 @@
  * @return int - error status (if set the program will be terminated)
  */
 int onPositionClose(string message, int error) {
-   if (!error) return(logInfo(message));              // no error
+   if (!error) return(logDebug(message));             // no error
 
    if (__isTesting) return(catch(message, error));    // tester: terminate on every error
 

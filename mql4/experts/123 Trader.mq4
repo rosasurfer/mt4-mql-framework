@@ -20,9 +20,12 @@
  *
  *
  * TODO:
- *  - add input CloseOnOppositeBreakout = false
  *  - reproduce test results of "Opto123 v1.1"
+ *     add input CloseOnOppositeBreakout
+ *
  *     ZigZag.rsf(20) matches ZigZag.mq(20,1,1) in 95% of cases
+ *
+ *  - bug: immediately after TP the entry signal triggers again
  *
  *  - test/optimize ManagePositions()
  *     track processing status of levels
@@ -53,15 +56,15 @@ extern int    Target1.ClosePercent           = 0;           // size to close (0:
 extern int    Target1.MoveStopTo             = 1;           // in pip (0: don't move stop)                                 //  |       1     |       1     |     -50     | 1: Breakeven-Stop (OpenPrice + 1 pip)
 extern string ___d__________________________ = "";                                                                         //  +-------------+-------------+-------------+
 extern int    Target2                        = 0;           // ...                                                         //  |             |      20     |      40     |
-extern int    Target2.ClosePercent           = 30;          // ...                                                         //  |             |     10%     |     25%     |
+extern int    Target2.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     25%     |
 extern int    Target2.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |     -30     |
 extern string ___e__________________________ = "";                                                                         //  +-------------+-------------+-------------+
 extern int    Target3                        = 0;           // ...                                                         //  |             |      40     |     100     |
-extern int    Target3.ClosePercent           = 30;          // ...                                                         //  |             |     10%     |     20%     |
+extern int    Target3.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target3.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      20     |
 extern string ___f__________________________ = "";                                                                         //  +-------------+-------------+-------------+
 extern int    Target4                        = 0;           // ...                                                         //  |             |      60     |     200     |
-extern int    Target4.ClosePercent           = 30;          // ...                                                         //  |             |     10%     |     20%     |
+extern int    Target4.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target4.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      -      |
                                                                                                                            //  +-------------+-------------+-------------+
 extern string ___g__________________________ = "=== Other ===";                                                            //
@@ -108,6 +111,7 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/functions/status/SS.ClosedTrades.mqh>
 #include <ea/functions/status/SS.TotalProfit.mqh>
 #include <ea/functions/status/SS.ProfitStats.mqh>
+#include <ea/functions/status/ShowTradeHistory.mqh>
 
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>
@@ -126,6 +130,9 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/functions/status/volatile/StoreVolatileStatus.mqh>
 #include <ea/functions/status/volatile/RestoreVolatileStatus.mqh>
 #include <ea/functions/status/volatile/RemoveVolatileStatus.mqh>
+#include <ea/functions/status/volatile/ToggleOpenOrders.mqh>
+#include <ea/functions/status/volatile/ToggleTradeHistory.mqh>
+#include <ea/functions/status/volatile/ToggleMetrics.mqh>
 
 #include <ea/functions/test/ReadTestConfiguration.mqh>
 
@@ -196,24 +203,19 @@ int onTick() {
 bool onCommand(string cmd, string params, int keys) {
    string fullCmd = cmd +":"+ params +":"+ keys;
 
-   if (cmd == "toggle-open-orders") {
+   if (cmd == "toggle-metrics") {
+      int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
+      return(ToggleMetrics(direction, METRIC_NET_MONEY, METRIC_SIG_UNITS));
+   }
+   else if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());
+   }
+   else if (cmd == "toggle-trade-history") {
+      return(ToggleTradeHistory());
    }
    else return(!logNotice("onCommand(1)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
    return(!logWarn("onCommand(2)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
-}
-
-
-/**
- * Toggle the display of open orders.
- *
- * @param  bool soundOnNone [optional] - whether to play a sound if no open orders exist (default: yes)
- *
- * @return bool - success status
- */
-bool ToggleOpenOrders(bool soundOnNone = true) {
-   return(!catch("ToggleOpenOrders(1)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -597,7 +599,7 @@ bool OpenPosition(double signal[]) {
       SS.ProfitStats();
    }
 
-   if (test.onEntrySignalPause) Tester.Pause("OpenPosition(3)");
+   if (test.onPositionOpenPause) Tester.Pause("OpenPosition(3)");
    return(SaveStatus());
 }
 
@@ -658,6 +660,7 @@ bool ClosePosition(double signal[]) {
       SS.TotalProfit();
       SS.ProfitStats();
    }
+   if (test.onPositionClosePause) Tester.Pause("ClosePosition(2)");
    return(SaveStatus());
 }
 
@@ -1098,7 +1101,13 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(WindowExpertName(), "    ID.", instance.id, sStatus, sError, NL);
+   string text = StringConcatenate(WindowExpertName(), "    ID.", instance.id, sStatus, sError, NL,
+                                                                                                NL,
+                                   status.metricDescription,                                    NL,
+                                   "Open:    ",   status.openLots,                              NL,
+                                   "Closed:  ",   status.closedTrades,                          NL,
+                                   "Profit:    ", status.totalProfit, "  ", status.profitStats, NL
+   );
 
    // 3 lines margin-top for instrument and indicator legends
    Comment(NL, NL, NL, text);

@@ -10,9 +10,10 @@ bool ReadTestConfiguration() {
       test.reduceStatusWrites      = GetConfigBool(section, "ReduceStatusWrites",      test.reduceStatusWrites);
 
       if (IsVisualMode()) {
-         test.onEntrySignalPause  = GetConfigBool(section, "OnEntrySignalPause",  test.onEntrySignalPause);
-         test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", test.onSessionBreakPause);
-         test.onStopPause         = GetConfigBool(section, "OnStopPause",         test.onStopPause);
+         test.onPositionOpenPause  = GetConfigBool(section, "OnPositionOpenPause",  test.onPositionOpenPause);
+         test.onPositionClosePause = GetConfigBool(section, "OnPositionClosePause", test.onPositionClosePause);
+         test.onSessionBreakPause  = GetConfigBool(section, "OnSessionBreakPause",  test.onSessionBreakPause);
+         test.onStopPause          = GetConfigBool(section, "OnStopPause",          test.onStopPause);
       }
    }
    return(!catch("ReadTestConfiguration(1)"));

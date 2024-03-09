@@ -10,7 +10,7 @@ void SS.MetricDescription() {
          status.metricDescription = "Net PnL after all costs in "+ pUnit + NL + "---------------------------------"+ ifString(pUnit=="point", "--", "");
          break;
       case METRIC_SIG_UNITS:
-         status.metricDescription = "Signal PnL before spread/any costs in "+ pUnit + NL + "--------------------------------------------------"+ ifString(pUnit=="point", "--", "");
+         status.metricDescription = "Signal PnL before spread/any costs in "+ pUnit + NL + "-------------------------------------------------"+ ifString(pUnit=="point", "--", "");
          break;
 
       default:

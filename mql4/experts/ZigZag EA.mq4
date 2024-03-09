@@ -62,7 +62,15 @@
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - re-usable exit management (on 123 Trader)
- *     target management testen/validieren
+ *
+ *     test/validate target management
+ *      Initial.TakeProfit
+ *      Initial.StopLoss
+ *      BreakevenStop
+ *      TargetStops
+ *      PartialTakeProfit
+ *
+ *
  *     monitor executed limits
  *     process stops and targets
  *      handle limit execution during processing
