@@ -50,7 +50,7 @@ int onInitUser() {
       }
    }
    //else {}                                       // an invalid instance id was specified
-   return(last_error);
+   return(catch("onInitUser(3)"));
 }
 
 
@@ -76,7 +76,7 @@ int onInitParameters() {
  */
 int onInitTimeframeChange() {
    RestoreInputs();
-   return(NO_ERROR);
+   return(last_error);
 }
 
 

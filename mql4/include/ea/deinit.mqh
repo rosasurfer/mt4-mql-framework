@@ -20,9 +20,8 @@ int onDeinit() {
          RecordMetrics();
          ShowStatus();
       }
-      return(last_error);
    }
-   return(NO_ERROR);
+   return(last_error);
 }
 
 
@@ -66,7 +65,7 @@ int onDeinitChartClose() {
       logInfo("onDeinitChartClose(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
-   return(NO_ERROR);
+   return(last_error);
 }
 
 
@@ -83,7 +82,7 @@ int onDeinitTemplate() {
       logInfo("onDeinitTemplate(1)  "+ instance.name +" expert unloaded in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
-   return(NO_ERROR);
+   return(last_error);
 }
 
 
@@ -100,7 +99,7 @@ int onDeinitRemove() {
       SaveStatus();
    }
    RemoveVolatileStatus();       // remove a stored instance id
-   return(NO_ERROR);
+   return(last_error);
 }
 
 
@@ -116,5 +115,5 @@ int onDeinitClose() {
       logInfo("onDeinitClose(1)  "+ instance.name +" terminal shutdown in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);
       SaveStatus();
    }
-   return(NO_ERROR);
+   return(last_error);
 }

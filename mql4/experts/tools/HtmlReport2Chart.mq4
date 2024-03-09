@@ -1,5 +1,5 @@
 /**
- * Helper EA to visualize the trade history of an MT4 account statement or MT4 test report.
+ * Helper EA to visualize the trade history of an exported MT4 account statement or tester report.
  *
  *
  * TODO:
@@ -25,7 +25,7 @@ extern string HtmlFilename = "report.html";
 #define TYPE_TEST_REPORT         1
 #define TYPE_ACCOUNT_STATEMENT   2
 
-string Instance.ID = "123";
+string Instance.ID = "999";            // dummy, needed by StoreVolatileStatus()
 
 
 // EA definitions
@@ -38,6 +38,7 @@ string Instance.ID = "123";
 #include <ea/functions/status/ShowTradeHistory.mqh>
 
 #include <ea/functions/status/volatile/StoreVolatileStatus.mqh>
+#include <ea/functions/status/volatile/RemoveVolatileStatus.mqh>
 #include <ea/functions/status/volatile/ToggleOpenOrders.mqh>
 #include <ea/functions/status/volatile/ToggleTradeHistory.mqh>
 
@@ -84,16 +85,13 @@ int afterInit() {
 
 
 /**
- * Deinitialization
+ * Called when the expert is manually removed (Chart->Expert->Remove) or replaced.
  *
  * @return int - error status
  */
-int onDeinit() {
-   if (__isChart) {
-      string label = "EA.status";
-      if (ObjectFind(label) != -1) ObjectDelete(label);
-   }
-   return(catch("onDeinit(1)"));
+int onDeinitRemove() {
+   RemoveVolatileStatus();
+   return(last_error);
 }
 
 
