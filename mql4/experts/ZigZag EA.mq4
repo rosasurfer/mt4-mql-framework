@@ -61,7 +61,8 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - re-usable exit management
+ *  - re-usable exit management (on 123 Trader)
+ *     target management testen/validieren
  *     monitor executed limits
  *     process stops and targets
  *      handle limit execution during processing
@@ -72,11 +73,10 @@
  *     1st: distances in static pips
  *     2nd: dynamic distances (multiples of range)
  *
- *
- *
  *  - tests
  *     storage in folder per strategy
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
+ *     read/respect enabled trade directions at test start
  *
  *  - self-optimization
  *     13.07.2008: @tdion, inspiration for @rraygun   https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool#    statt MACD(16,18) MACD(ALMA(38,46))
@@ -98,10 +98,10 @@
  *  - reproduce/validate tests with original EAs
  *     terminal with Dukascopy data
  *     fast generation of old test data (e.g. from 2007)
- *     visualize existing account statements
- *
+ *     visualize account statements
  *
  *  -------------------------------------------------------------------------------------------------------------------------
+ *  - drop input Test.ExternalReporting
  *  - rewrite loglevels to global vars
  *  - add ZigZag projections
  *  - input TradingTimeframe
