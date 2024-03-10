@@ -7,10 +7,10 @@ void SS.MetricDescription() {
          status.metricDescription = "Net PnL after all costs in "+ AccountCurrency() + NL + "-----------------------------------";
          break;
       case METRIC_NET_UNITS:
-         status.metricDescription = "Net PnL after all costs in "+ pUnit + NL + "---------------------------------"+ ifString(pUnit=="point", "--", "");
+         status.metricDescription = "Net PnL after all costs in "+ spUnit + NL + "---------------------------------"+ ifString(spUnit=="point", "--", "");
          break;
       case METRIC_SIG_UNITS:
-         status.metricDescription = "Signal PnL before spread/any costs in "+ pUnit + NL + "-------------------------------------------------"+ ifString(pUnit=="point", "--", "");
+         status.metricDescription = "Signal PnL before spread/any costs in "+ spUnit + NL + "-------------------------------------------------"+ ifString(spUnit=="point", "--", "");
          break;
 
       default:

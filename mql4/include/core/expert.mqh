@@ -540,9 +540,21 @@ bool initGlobals() {
    PipPriceFormat = ",'R."+ PipDigits;
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
 
-   N_INF = MathLog(0);                                                        // negative infinity
-   P_INF = -N_INF;                                                            // positive infinity
-   NaN   =  N_INF - N_INF;                                                    // not-a-number
+   int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
+   if (digits > 2) {
+      pUnit   = Pip;
+      pDigits = 1;                                          // always represent pips with subpips
+      spUnit  = "pip";
+   }
+   else {
+      pUnit   = 1.00;
+      pDigits = 2;
+      spUnit  = "point";
+   }
+
+   N_INF = MathLog(0);                                      // negative infinity
+   P_INF = -N_INF;                                          // positive infinity
+   NaN   =  N_INF - N_INF;                                  // not-a-number
 
    return(!catch("initGlobals(1)"));
 }
@@ -567,24 +579,20 @@ string initMarketInfo() {
    double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
    double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
    double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
-   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;          message = message +" Account="     + NumberToStr(AccountBalance(), ",'.0R") +" "+ AccountCurrency()                                                            +";";
-   double   leverage       = MathDiv(lotValue, marginRequired);                message = message +" Leverage=1:"  + Round(leverage)                                                                                                           +";";
+   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;          message = message +" Account="     + NumberToStr(AccountBalance(), ",'.0R") +" "+ AccountCurrency() +";";
+   double   leverage       = MathDiv(lotValue, marginRequired);                message = message +" Leverage=1:"  + Round(leverage) +";";
    int      stopoutLevel   = AccountStopoutLevel();                            message = message +" Stopout="     + ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", NumberToStr(stopoutLevel, ",,.0") +" "+ AccountCurrency()) +";";
    double   lotSize        = MarketInfo(Symbol(), MODE_LOTSIZE);
    double   marginHedged   = MarketInfo(Symbol(), MODE_MARGINHEDGED);
-            marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%")                                                                 +";";
+            marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%") +";";
    double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
-   double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R")                                                                                             +";";
+   double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R") +";";
    double   commission     = GetCommission();                                  message = message +" Commission="  + ifString(!commission, "0.00;", DoubleToStr(commission, 2));
    if (NE(commission, 0)) {
-      int    digits      = MathMax(Digits, 2);                                 // transform Digits=1 to 2 (for some indices)
-      string pUnit       = ifString(digits > 2, "pip", "point");
-      int    pDigits     = ifInt(digits > 2, 1, 2);
-      int    pMultiplier = ifInt(digits > 2, MathRound(1/Pip), 1);
-      double pComm       = MathDiv(commission, MathDiv(tickValue, tickSize));  message = message +" ("            + DoubleToStr(pComm * pMultiplier, pDigits) +" "+ pUnit +")"                                                                +";";
+      double pComm = MathDiv(commission, MathDiv(tickValue, tickSize));        message = message +" ("            + DoubleToStr(pComm/pUnit, pDigits) +" "+ spUnit +");";
    }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
-   double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0")                        +";";
+   double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0") +";";
 
    if (!catch("initMarketInfo(1)"))
       return(message);

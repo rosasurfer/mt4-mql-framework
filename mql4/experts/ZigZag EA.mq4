@@ -64,10 +64,10 @@
  *  - re-usable exit management (on 123 Trader)
  *
  *     test/validate target management
- *      Initial.TakeProfit
- *      Initial.StopLoss
- *      BreakevenStop
- *      TargetStops
+ *      Initial.TakeProfit       OK
+ *      Initial.StopLoss         OK
+ *      BreakevenStop            OK
+ *      TargetStops              OK
  *      PartialTakeProfit
  *
  *
@@ -85,6 +85,7 @@
  *     storage in folder per strategy
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
  *     read/respect enabled trade directions at test start
+ *     on no connection/old terminal: indicator of the same name to load test into chart
  *
  *  - self-optimization
  *     13.07.2008: @tdion, inspiration for @rraygun   https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool#    statt MACD(16,18) MACD(ALMA(38,46))
@@ -903,7 +904,7 @@ bool StartInstance(double signal[]) {
    }
    if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalTradeToStr(sigTrade) +")");
 
-   if (test.onEntrySignalPause) Tester.Pause("StartInstance(4)");
+   if (test.onPositionOpenPause) Tester.Pause("StartInstance(4)");
    return(SaveStatus());
 }
 
@@ -1007,7 +1008,7 @@ bool ReversePosition(double signal[]) {
    }
    if (IsLogInfo()) logInfo("ReversePosition(4)  "+ instance.name +" position reversed ("+ SignalTradeToStr(sigTrade) +")");
 
-   if (test.onEntrySignalPause) Tester.Pause("ReversePosition(5)");
+   if (test.onPositionOpenPause) Tester.Pause("ReversePosition(5)");
    return(SaveStatus());
 }
 
@@ -1224,7 +1225,7 @@ int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descript
    group      = "";
    baseValue  = EMPTY;
    digits     = pDigits;
-   multiplier = pMultiplier;
+   multiplier = MathRound(1/pUnit);
 
    switch (id) {
       // --- standard AccountEquity() symbol for recorder.mode = RECORDER_ON ------------------------------------------------
@@ -1246,12 +1247,12 @@ int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descript
 
       case METRIC_NET_UNITS:              // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_SIG_UNITS:              // OK
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       // --- custom daily metrics -------------------------------------------------------------------------------------------
@@ -1264,12 +1265,12 @@ int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descript
 
       case METRIC_DAILY_NET_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"E";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL/day, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL/day, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       case METRIC_DAILY_SIG_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL/day, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL/day, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          break;
 
       default:
@@ -1292,13 +1293,13 @@ bool SaveStatus() {
    if (last_error != NULL)              return(false);
    if (!instance.id || Instance.ID=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
    if (__isTesting) {
-      if (test.reduceStatusWrites) {                           // in tester skip most writes except file creation, instance stop and test end
+      if (test.reduceStatusWrites) {                           // in tester skip all writes except file creation, instance stop and test end
          static bool saved = false;
          if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
          saved = true;
       }
    }
-   else if (IsTestInstance()) return(true);                    // don't change the status file of a finished test
+   else if (IsTestInstance()) return(true);                    // don't modify the status file of a finished test
 
    string section="", separator="", file=GetStatusFilename();
    bool fileExists = IsFile(file, MODE_SYSTEM);
@@ -1484,6 +1485,8 @@ bool SynchronizeStatus() {
             int      openType     = OrderType();
             datetime openTime     = OrderOpenTime();
             double   openPrice    = OrderOpenPrice();
+            double   stopLoss     = OrderStopLoss();
+            double   takeProfit   = OrderTakeProfit();
             datetime closeTime    = OrderCloseTime();
             double   closePrice   = OrderClosePrice();
             double   slippage     = 0;
@@ -1494,8 +1497,8 @@ bool SynchronizeStatus() {
             double   netProfit    = grossProfit + swap + commission;
             double   netProfitP   = grossProfitP + MathDiv(swap + commission, PointValue(lots));
 
-            logWarn("SynchronizeStatus(4)  "+ instance.name +" dangling closed position found: #"+ ticket +", adding to instance...");
-            if (IsEmpty(AddHistoryRecord(ticket, lots, openType, openTime, openPrice, openPrice, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
+            logWarn("SynchronizeStatus(4)  "+ instance.name +" orphaned closed position found: #"+ ticket +", adding to instance...");
+            if (IsEmpty(AddHistoryRecord(ticket, lots, openType, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
             instance.closedNetProfit  += netProfit;
@@ -1799,10 +1802,10 @@ bool ValidateInputs() {
             else {
                if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(20)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
                dValue = StrToDouble(sValue);
-               descr  = "profit("+ NumberToStr(dValue * pMultiplier, "R+."+ pDigits) +" "+ pUnit +")";
+               descr  = "profit("+ NumberToStr(dValue, "R+."+ pDigits) +" "+ spUnit +")";
                if (descr != stop.profitPun.description) {   // enable condition only if changed
                   stop.profitPun.condition   = true;
-                  stop.profitPun.value       = NormalizeDouble(dValue * pMultiplier, Digits);
+                  stop.profitPun.value       = NormalizeDouble(dValue * pUnit, Digits);
                   stop.profitPun.description = descr;
                }
             }

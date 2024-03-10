@@ -86,6 +86,18 @@ bool initGlobals() {
    PipPriceFormat = ",'R."+ PipDigits;
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
 
+   int digits = MathMax(Digits, 2);                                  // treat Digits=1 as 2 (for some indices)
+   if (digits > 2) {
+      pUnit   = Pip;
+      pDigits = 1;                                                   // always represent pips with subpips
+      spUnit  = "pip";
+   }
+   else {
+      pUnit   = 1.00;
+      pDigits = 2;
+      spUnit  = "point";
+   }
+
    N_INF = MathLog(0);                                               // negative infinity
    P_INF = -N_INF;                                                   // positive infinity
    NaN   =  N_INF - N_INF;                                           // not-a-number

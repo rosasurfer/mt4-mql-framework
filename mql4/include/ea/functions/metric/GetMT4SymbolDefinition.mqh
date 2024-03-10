@@ -46,16 +46,16 @@ int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descr, s
 
       case METRIC_NET_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = pDigits;
-         multiplier  = pMultiplier;
+         multiplier  = MathRound(1/pUnit);
          break;
 
       case METRIC_SIG_UNITS:
          symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL, "+ pUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
          digits      = pDigits;
-         multiplier  = pMultiplier;
+         multiplier  = MathRound(1/pUnit);
          break;
 
       default:

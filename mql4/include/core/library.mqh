@@ -35,27 +35,39 @@ int init() {
    __isTesting      = (__ExecutionContext[EC.testing] || IsTesting());
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
-   PipDigits        = Digits & (~1);
-   PipPoints        = MathRound(MathPow(10, Digits & 1));
-   Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
-   PipPriceFormat   = ",'R."+ PipDigits;                                                  // TODO: lost in deinit()
-   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");   // ...
+   PipDigits      = Digits & (~1);
+   PipPoints      = MathRound(MathPow(10, Digits & 1));
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
+   PipPriceFormat = ",'R."+ PipDigits;                                                 // TODO: in libraries strings are lost when in deinit()
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");  // ...
+
+   int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
+   if (digits > 2) {
+      pUnit   = Pip;
+      pDigits = 1;                                          // always represent pips with subpips
+      spUnit  = "pip";
+   }
+   else {
+      pUnit   = 1.00;
+      pDigits = 2;
+      spUnit  = "point";
+   }
 
    prev_error       = NO_ERROR;
    last_error       = NO_ERROR;
 
-   N_INF = MathLog(0);                                               // negative infinity
-   P_INF = -N_INF;                                                   // positive infinity
-   NaN   =  N_INF - N_INF;                                           // not-a-number
+   N_INF = MathLog(0);                                      // negative infinity
+   P_INF = -N_INF;                                          // positive infinity
+   NaN   =  N_INF - N_INF;                                  // not-a-number
 
    // EA-Tasks
    if (IsExpert()) {
-      OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
+      OrderSelect(0, SELECT_BY_TICKET);                     // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       error = GetLastError();
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
-      if (__isTesting) {                                             // Im Tester globale Variablen der Library zurücksetzen.
-         ArrayResize(__orderStack, 0);                               // in stdfunctions global definierte Variable
+      if (__isTesting) {                                    // Im Tester globale Variablen der Library zurücksetzen.
+         ArrayResize(__orderStack, 0);                      // in stdfunctions global definierte Variable
          onLibraryInit();
       }
    }

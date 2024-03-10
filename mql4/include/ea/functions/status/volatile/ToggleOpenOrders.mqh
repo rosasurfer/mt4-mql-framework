@@ -1,12 +1,12 @@
 /**
  * Toggle the display of open orders.
  *
- * @param  bool soundOnNone [optional] - whether to play a sound if no open orders exist (default: yes)
+ * @param  bool soundOnNoOrders [optional] - whether to play a sound if no open orders exist (default: yes)
  *
  * @return bool - success status
  */
-bool ToggleOpenOrders(bool soundOnNone = true) {
-   soundOnNone = soundOnNone!=0;
+bool ToggleOpenOrders(bool soundOnNoOrders = true) {
+   soundOnNoOrders = soundOnNoOrders!=0;
 
    // toggle current status
    bool showOrders = !status.showOpenOrders;
@@ -28,8 +28,8 @@ bool ToggleOpenOrders(bool soundOnNone = true) {
          ObjectSetText(label, instance.name);
       }
       else {
-         showOrders = false;                          // Without open orders status must be reset to have the "off" section
-         if (soundOnNone) PlaySoundEx("Plonk.wav");   // remove any existing open order markers.
+         showOrders = false;                                // Without open orders status must be reset to have the "off"
+         if (soundOnNoOrders) PlaySoundEx("Plonk.wav");     // section remove any existing open order markers.
       }
    }
 

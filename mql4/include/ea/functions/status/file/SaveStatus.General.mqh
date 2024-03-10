@@ -25,14 +25,14 @@ bool SaveStatus.General(string file, bool fileExists) {
       WriteIniString(file, section, "Test.TimeRange",  TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
       WriteIniString(file, section, "Test.Period",     PeriodDescription());
       WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
-      WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid) * pMultiplier, pDigits) +" "+ pUnit);
+      WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid)/pUnit, pDigits) +" "+ spUnit);
          double commission  = GetCommission();
          string sCommission = DoubleToStr(commission, 2);
          if (NE(commission, 0)) {
             double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
             double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
-            double units     = MathDiv(commission, MathDiv(tickValue, tickSize));
-            sCommission = sCommission +" ("+ DoubleToStr(units * pMultiplier, pDigits) +" "+ pUnit +")";
+            double price     = MathDiv(commission, MathDiv(tickValue, tickSize));
+            sCommission = sCommission +" ("+ DoubleToStr(price/pUnit, pDigits) +" "+ spUnit +")";
          }
       WriteIniString(file, section, "Test.Commission", sCommission + separator);
    }

@@ -10,18 +10,6 @@
  */
 int onInit() {
    CreateStatusBox();
-
-   int digits = MathMax(Digits, 2);                // transform Digits=1 to 2 (for some indices)
-   if (digits > 2) {
-      pUnit       = "pip";
-      pDigits     = 1;
-      pMultiplier = MathRound(1/Pip);
-   }
-   else {
-      pUnit       = "point";
-      pDigits     = 2;
-      pMultiplier = 1;
-   }
    return(catch("onInit(1)"));
 }
 
@@ -129,7 +117,9 @@ int onInitRecompile() {
  */
 int afterInit() {
    if (__isTesting || !IsTestInstance()) {         // open the log file (flushes the log buffer) except if a finished test
-      if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));
+      string filename = GetLogFilename();
+      if (filename == "")        return(last_error);
+      if (!SetLogfile(filename)) return(catch("afterInit(1)"));
    }
    if (__isTesting) ReadTestConfiguration();
 

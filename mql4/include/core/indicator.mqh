@@ -183,12 +183,25 @@ bool initGlobals() {
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PipPriceFormat = ",'R."+ PipDigits;
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
-   Ticks          = __ExecutionContext[EC.ticks       ];
-   Tick.time      = __ExecutionContext[EC.currTickTime];
 
-   N_INF = MathLog(0);                                               // negative infinity
-   P_INF = -N_INF;                                                   // positive infinity
-   NaN   =  N_INF - N_INF;                                           // not-a-number
+   int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
+   if (digits > 2) {
+      pUnit   = Pip;
+      pDigits = 1;                                          // always represent pips with subpips
+      spUnit  = "pip";
+   }
+   else {
+      pUnit   = 1.00;
+      pDigits = 2;
+      spUnit  = "point";
+   }
+
+   Ticks     = __ExecutionContext[EC.ticks];
+   Tick.time = __ExecutionContext[EC.currTickTime];
+
+   N_INF = MathLog(0);                                      // negative infinity
+   P_INF = -N_INF;                                          // positive infinity
+   NaN   =  N_INF - N_INF;                                  // not-a-number
 
    return(!catch("initGlobals(1)"));
 }

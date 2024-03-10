@@ -138,14 +138,16 @@ extern bool   ShowProfitInPercent  = false;                          // whether 
 #include <ea/functions/metric/GetMT4SymbolDefinition.mqh>
 #include <ea/functions/metric/RecordMetrics.mqh>
 
-#include <ea/functions/status/StatusToStr.mqh>
-#include <ea/functions/status/StatusDescription.mqh>
+#include <ea/functions/status/ShowStatus.mqh>
+#include <ea/functions/status/ShowTradeHistory.mqh>
+#include <ea/functions/status/SS.All.mqh>
 #include <ea/functions/status/SS.MetricDescription.mqh>
 #include <ea/functions/status/SS.OpenLots.mqh>
 #include <ea/functions/status/SS.ClosedTrades.mqh>
 #include <ea/functions/status/SS.TotalProfit.mqh>
 #include <ea/functions/status/SS.ProfitStats.mqh>
-#include <ea/functions/status/ShowTradeHistory.mqh>
+#include <ea/functions/status/StatusToStr.mqh>
+#include <ea/functions/status/StatusDescription.mqh>
 
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>
@@ -467,7 +469,7 @@ bool UpdateStatus(int signal = NULL) {
       open.sigDrawdownP = open.sigRunupP;
       if (__isChart) SS.OpenLots();
 
-      if (test.onEntrySignalPause) Tester.Pause("UpdateStatus(4)");
+      if (test.onPositionOpenPause) Tester.Pause("UpdateStatus(4)");
    }
 
    // update PnL numbers
@@ -661,13 +663,13 @@ bool SaveStatus() {
    if (last_error != NULL)              return(false);
    if (!instance.id || Instance.ID=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
    if (__isTesting) {
-      if (test.reduceStatusWrites) {                           // in tester skip most writes except file creation, instance stop and test end
+      if (test.reduceStatusWrites) {                           // in tester skip all writes except file creation, instance stop and test end
          static bool saved = false;
          if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
          saved = true;
       }
    }
-   else if (IsTestInstance()) return(true);                    // don't change the status file of a finished test
+   else if (IsTestInstance()) return(true);                    // don't modify the status file of a finished test
 
    string section="", separator="", file=GetStatusFilename();
    bool fileExists = IsFile(file, MODE_SYSTEM);
@@ -864,76 +866,10 @@ string SignalToStr(int signal) {
 
 
 /**
- * ShowStatus: Update all string representations.
- */
-void SS.All() {
-   SS.InstanceName();
-   SS.MetricDescription();
-   SS.OpenLots();
-   SS.ClosedTrades();
-   SS.TotalProfit();
-   SS.ProfitStats();
-}
-
-
-/**
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
    instance.name = "V."+ StrPadLeft(instance.id, 3, "0");
-}
-
-
-/**
- * Display the current runtime status.
- *
- * @param  int error [optional] - error to display (default: none)
- *
- * @return int - the same error
- */
-int ShowStatus(int error = NO_ERROR) {
-   if (!__isChart) return(error);
-
-   static bool isRecursion = false;                   // to prevent recursive calls a specified error is displayed only once
-   if (error != 0) {
-      if (isRecursion) return(error);
-      isRecursion = true;
-   }
-   string sStatus="", sError="";
-
-   switch (instance.status) {
-      case NULL:           sStatus = "  not initialized"; break;
-      case STATUS_WAITING: sStatus = "  waiting";         break;
-      case STATUS_TRADING: sStatus = "  trading";         break;
-      case STATUS_STOPPED: sStatus = "  stopped";         break;
-      default:
-         return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
-   }
-   if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
-
-   string text = StringConcatenate(WindowExpertName(), "    ID.", instance.id, sStatus, sError, NL,
-                                                                                                NL,
-                                   status.metricDescription,                                    NL,
-                                   "Open:    ",   status.openLots,                              NL,
-                                   "Closed:  ",   status.closedTrades,                          NL,
-                                   "Profit:    ", status.totalProfit, "  ", status.profitStats, NL
-   );
-
-   // 3 lines margin-top for instrument and indicator legends
-   Comment(NL, NL, NL, text);
-   if (__CoreFunction == CF_INIT) WindowRedraw();
-
-   // store status in the chart to enable sending of chart commands
-   string label = "EA.status";
-   if (ObjectFind(label) != 0) {
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   }
-   ObjectSetText(label, StringConcatenate(Instance.ID, "|", StatusDescription(instance.status)));
-
-   error = intOr(catch("ShowStatus(2)"), error);
-   isRecursion = false;
-   return(error);
 }
 
 

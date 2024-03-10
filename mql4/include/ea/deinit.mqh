@@ -18,7 +18,7 @@ int onDeinit() {
          double signal[] = {0,0,0};
          if (success) StopInstance(signal);
          RecordMetrics();
-         ShowStatus();
+         ShowStatus(last_error);
       }
    }
    return(last_error);

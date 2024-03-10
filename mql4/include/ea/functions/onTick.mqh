@@ -1,5 +1,5 @@
 /**
- * Generic template for the onTick() function.
+ * Generic template/example for the onTick() function.
  *
  * @return int - error status
  */

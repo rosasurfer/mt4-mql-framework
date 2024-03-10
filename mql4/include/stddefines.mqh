@@ -23,10 +23,15 @@ bool     __STATUS_HISTORY_UPDATE;                                 // History-Upd
 bool     __STATUS_OFF;                                            // flag for user-land program termination, if TRUE the program's main functions are no longer executed: onInit|onTick|onStart|onDeinit
 int      __STATUS_OFF.reason;                                     // reason of program termination (error code)
 
-double   Pip;                                                     // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
-int      PipDigits;                                               // Digits eines Pips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
-int      PipPoints;                                               // Dezimale Auflösung eines Pips des aktuellen Symbols (mögliche Werte: 1 oder 10)
-string   PriceFormat="", PipPriceFormat="";                       // Preisformate des aktuellen Symbols für NumberToStr()
+double   Pip;                                                     // 1 pip of the current symbol (e.g. 0.0001)
+int      PipDigits;                                               // digits (number of decimal places) of 1 pip, always even (in above case 4)
+int      PipPoints;                                               // number of MQL Points of 1 pip (1 or 10)
+string   PriceFormat="", PipPriceFormat="";                       // price format strings of the current symbol for NumberToStr()
+
+double   pUnit;                                                   // 1 price unit of the current symbol (1 pip for Forex or 1 full point otherwise, e.g. 1.00 for DAX)
+int      pDigits;                                                 // digits (number of decimal places) to represent a unit amount (1 or 2, in above case 2)
+string   spUnit = "";                                             // string representation of the unit ("pip" or "point")
+
 int      Ticks;                                                   // number of times MQL::start() was called (value survives init cycles, also in indicators)
 datetime Tick.time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
@@ -34,7 +39,7 @@ int      ChangedBars;                                             // in indicato
 int      ValidBars;                                               // in indicators: ValidBars = IndicatorCounted()           (in experts and scripts always -1)
 int      ShiftedBars;                                             // in indicators: non-zero in offline charts only          (in experts and scripts always -1)
 
-int      last_error;                                              // last error of the current execution
+int      last_error;                                              // last error of the current start() call
 int      prev_error;                                              // last error of the previous start() call
 
 int      __orderStack[];                                          // FIFO stack of selected orders (per MQL module)
@@ -45,15 +50,15 @@ int      __orderStack[];                                          // FIFO stack 
 #define EMPTY_STR                   ""
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 
-#define HTML_TAB                    "&Tab;"                       // tab                        \t
-#define HTML_BRVBAR                 "&brvbar;"                    // broken vertical bar        |
-#define HTML_PIPE                   HTML_BRVBAR                   // pipe (alias)               |
-#define HTML_LCUB                   "&lcub;"                      // left curly brace           {
-#define HTML_RCUB                   "&rcub;"                      // right curly brace          }
-#define HTML_APOS                   "&apos;"                      // apostrophe                 '
-#define HTML_DQUOTE                 "&quot;"                      // double quote               "
-#define HTML_SQUOTE                 HTML_APOS                     // single quote (alias)       '
-#define HTML_COMMA                  "&comma;"                     // comma                      ,
+#define HTML_TAB                    "&Tab;"                       // tab                                 \t
+#define HTML_BRVBAR                 "&brvbar;"                    // broken vertical bar                 |
+#define HTML_PIPE                   "&brvbar;"                    // pipe (alias of HTML_BRVBAR)         |        // MQL4 bug: string constants cannot reference each other
+#define HTML_LCUB                   "&lcub;"                      // left curly brace                    {        //
+#define HTML_RCUB                   "&rcub;"                      // right curly brace                   }        //
+#define HTML_APOS                   "&apos;"                      // apostrophe                          '        //
+#define HTML_SQUOTE                 "&apos;"                      // single quote (alias of HTML_APOS)   '        // ...
+#define HTML_DQUOTE                 "&quot;"                      // double quote                        "
+#define HTML_COMMA                  "&comma;"                     // comma                               ,
 
 
 // Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar

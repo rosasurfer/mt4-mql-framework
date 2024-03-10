@@ -13,10 +13,10 @@ void SS.TotalProfit() {
             else                     status.totalProfit = NumberToStr(instance.totalNetProfit, "R+.2") +" "+ AccountCurrency();
             break;
          case METRIC_NET_UNITS:
-            status.totalProfit = NumberToStr(instance.totalNetProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            status.totalProfit = NumberToStr(instance.totalNetProfitP/pUnit, "R+."+ pDigits) +" "+ spUnit;
             break;
          case METRIC_SIG_UNITS:
-            status.totalProfit = NumberToStr(instance.totalSigProfitP * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            status.totalProfit = NumberToStr(instance.totalSigProfitP/pUnit, "R+."+ pDigits) +" "+ spUnit;
             break;
 
          default:

@@ -14,21 +14,19 @@
  * Changes
  * -------
  *  - replaced ZigZag.mq with ZigZag.rsf
- *  - added close on opposite breakout
+ *  - added optional close on opposite breakout
  *  - removed dynamic position sizing
  *  - removed TrailingStop (may be re-added later)
  *
  *
  * TODO:
- *  - reproduce test results of "Opto123 v1.1"
- *     add input CloseOnOppositeBreakout
- *
- *     ZigZag.rsf(20) matches ZigZag.mq(20,1,1) in 95% of cases
- *
- *  - bug: immediately after TP the entry signal triggers again
- *
  *  - test/optimize ManagePositions()
  *     track processing status of levels
+ *
+ *  - test results GBPJPY,M5 + ZigZag(20)
+ *     Initial.TakeProfit=70; Initial.StopLoss=50; no targets:                            around breakeven
+ *     Initial.TakeProfit=70; Initial.StopLoss=50; Target1=30; Target1.MoveStopTo=1:      small chops, always below breakeven (BE stop kicks in too early)
+ *     Initial.TakeProfit=80; Initial.StopLoss=50; Target1=40; Target1.MoveStopTo=1:      significantly better (more room for TP and BE stop)
  */
 #define STRATEGY_ID  109                     // unique strategy id (used for generation of magic order numbers)
 
@@ -50,6 +48,7 @@ extern double Lots                           = 0.1;                             
                                                                                                                            //  +-------------+-------------+-------------+
 extern int    Initial.TakeProfit             = 100;         // in pip (0: partial targets only or no TP)                   //  |  off (60)   |  on (100)   |  on (400)   |
 extern int    Initial.StopLoss               = 50;          // in pip (0: moving stops only or no SL                       //  |  on (100)   |  on (100)   |  on (100)   |
+extern bool   CloseOnOppositeBreakout        = false;                                                                      //  |   off (0)   |   off (0)   |   off (0)   |
 extern string ___c__________________________ = "";                                                                         //  +-------------+-------------+-------------+
 extern int    Target1                        = 0;           // in pip (0: no target)                                       //  |      50     |      10     |      20     |
 extern int    Target1.ClosePercent           = 0;           // size to close (0: nothing)                                  //  |      0%     |     10%     |     25%     |
@@ -67,7 +66,7 @@ extern int    Target4                        = 0;           // ...              
 extern int    Target4.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target4.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      -      |
                                                                                                                            //  +-------------+-------------+-------------+
-extern string ___g__________________________ = "=== Other ===";                                                            //
+extern string ___g__________________________ = "=== Other settings ===";                                                   //
 extern bool   ShowProfitInPercent            = false;  // whether PnL is displayed in money amounts or percent             //
                                                                                                                            //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +94,8 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/functions/trade/stats/defines.mqh>
 
 // EA functions
+#include <ea/functions/onCommand.mqh>
+
 #include <ea/functions/instance/CreateInstanceId.mqh>
 #include <ea/functions/instance/IsTestInstance.mqh>
 #include <ea/functions/instance/RestoreInstance.mqh>
@@ -104,14 +105,16 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 
 #include <ea/functions/metric/RecordMetrics.mqh>
 
-#include <ea/functions/status/StatusToStr.mqh>
-#include <ea/functions/status/StatusDescription.mqh>
+#include <ea/functions/status/ShowStatus.mqh>
+#include <ea/functions/status/ShowTradeHistory.mqh>
+#include <ea/functions/status/SS.All.mqh>
 #include <ea/functions/status/SS.MetricDescription.mqh>
 #include <ea/functions/status/SS.OpenLots.mqh>
 #include <ea/functions/status/SS.ClosedTrades.mqh>
 #include <ea/functions/status/SS.TotalProfit.mqh>
 #include <ea/functions/status/SS.ProfitStats.mqh>
-#include <ea/functions/status/ShowTradeHistory.mqh>
+#include <ea/functions/status/StatusToStr.mqh>
+#include <ea/functions/status/StatusDescription.mqh>
 
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>
@@ -182,40 +185,12 @@ int onTick() {
             StopInstance(signal);
          }
          else {
-            UpdateOpenPositions();                    // update server-side status
+            UpdatePositions();                        // update server-side status
          }
       }
       RecordMetrics();
    }
    return(last_error);
-}
-
-
-/**
- * Process an incoming command.
- *
- * @param  string cmd    - command name
- * @param  string params - command parameters
- * @param  int    keys   - pressed modifier keys
- *
- * @return bool - success status of the executed command
- */
-bool onCommand(string cmd, string params, int keys) {
-   string fullCmd = cmd +":"+ params +":"+ keys;
-
-   if (cmd == "toggle-metrics") {
-      int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
-      return(ToggleMetrics(direction, METRIC_NET_MONEY, METRIC_SIG_UNITS));
-   }
-   else if (cmd == "toggle-open-orders") {
-      return(ToggleOpenOrders());
-   }
-   else if (cmd == "toggle-trade-history") {
-      return(ToggleTradeHistory());
-   }
-   else return(!logNotice("onCommand(1)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
-
-   return(!logWarn("onCommand(2)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
 }
 
 
@@ -253,19 +228,23 @@ bool IsEntrySignal(double &signal[]) {
       // check for entry signal for a new position
       if (!open.ticket) {
          if (trend == OP_LONG) {
-            entryLevel = s2Level + MinBreakoutDistance*Pip;
-            if (s1Level < s3Level && Bid > entryLevel) {
-               signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
-               signal[SIG_VALUE] = NormalizeDouble(entryLevel + 1*Point, Digits);
-               signal[SIG_TRADE] = SIG_TRADE_LONG;
+            if (s1Level <= s3Level && Bid == High[0] && Bid > s2Level) {
+               entryLevel = NormalizeDouble(s2Level + MinBreakoutDistance*Pip, Digits);
+               if (Bid >= entryLevel) /*&&*/ if (High[iHighest(NULL, NULL, MODE_LOW, s3Bar-1, 1)] < entryLevel) {
+                  signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
+                  signal[SIG_VALUE] = NormalizeDouble(entryLevel + 1*Point, Digits);
+                  signal[SIG_TRADE] = SIG_TRADE_LONG;
+               }
             }
          }
          else {
-            entryLevel = s2Level - MinBreakoutDistance*Pip;
-            if (s1Level > s3Level && Bid < entryLevel) {
-               signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
-               signal[SIG_VALUE] = NormalizeDouble(entryLevel - 1*Point, Digits);
-               signal[SIG_TRADE] = SIG_TRADE_SHORT;
+            if (s1Level >= s3Level && Bid==Low[0] && Bid < s2Level) {
+               entryLevel = NormalizeDouble(s2Level - MinBreakoutDistance*Pip, Digits);
+               if (Bid <= entryLevel) /*&&*/ if (Low[iLowest(NULL, NULL, MODE_LOW, s3Bar-1, 1)] > entryLevel) {
+                  signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
+                  signal[SIG_VALUE] = NormalizeDouble(entryLevel - 1*Point, Digits);
+                  signal[SIG_TRADE] = SIG_TRADE_SHORT;
+               }
             }
          }
          if (signal[SIG_TYPE] != NULL) {
@@ -292,7 +271,7 @@ bool IsEntrySignal(double &signal[]) {
  * @return bool
  */
 bool IsExitSignal(double &signal[]) {
-   if (last_error != NULL) return(false);
+   if (last_error || !CloseOnOppositeBreakout) return(false);
 
    static int lastTick, lastOpenTicket=-1, lastResultType, lastResultTrade;
    static double lastResultValue;
@@ -338,7 +317,6 @@ bool IsExitSignal(double &signal[]) {
             if (IsLogNotice()) logNotice("IsExitSignal(1)  "+ instance.name +" close "+ ifString(sigTrade & SIG_TRADE_CLOSE_LONG, "long", "short") +" signal at "+ NumberToStr(signal[SIG_VALUE], PriceFormat) +" (opposite breakout, market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          }
       }
-
       lastTick        = Ticks;
       lastOpenTicket  = open.ticket;
       lastResultType  = signal[SIG_TYPE ];
@@ -515,18 +493,18 @@ bool UpdateStatus() {
  *
  * @return bool - success status
  */
-bool UpdateOpenPositions() {
+bool UpdatePositions() {
    if (last_error || instance.status!=STATUS_TRADING) return(false);
    double signal[3];
 
    if (open.ticket > 0) {
       if (IsExitSignal(signal)) ClosePosition(signal);   // close an existing position or...
-      else                      ManagePositions();       // take partial profits and update stop limits
+      else                      ProcessTargets();        // take partial profits and update stop limits
    }
    if (!open.ticket) {
       if (IsEntrySignal(signal)) OpenPosition(signal);   // open a new position
    }
-   return(!catch("UpdateOpenPositions(1)"));
+   return(!catch("UpdatePositions(1)"));
 }
 
 
@@ -670,25 +648,25 @@ bool ClosePosition(double signal[]) {
  *
  * @return bool - success status
  */
-bool ManagePositions() {
+bool ProcessTargets() {
    if (last_error != NULL)                return(false);
-   if (instance.status != STATUS_TRADING) return(!catch("ManagePositions(1)  "+ instance.name +" cannot manage positions of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (instance.status != STATUS_TRADING) return(!catch("ProcessTargets(1)  "+ instance.name +" cannot manage positions of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (!open.ticket)                      return(true);
 
    int sizeTargets = ArrayRange(targets, 0);
 
    // process configured profit targets
    for (int i=sizeTargets-1; i >= 0; i--) {
-      if (targets[i][T_LEVEL] && targets[i][T_CLOSE_PCT]) {
+      if (targets[i][T_DISTANCE] && targets[i][T_CLOSE_PCT]) {
          if (open.type == OP_BUY) {
-            if (Bid >= open.price + targets[i][T_LEVEL]*Pip) {
-               debug("ManagePositions(0.1)  target "+ (i+1) +" reached, taking partial profit...");
+            if (Bid >= open.price + targets[i][T_DISTANCE] * pUnit) {
+               debug("ProcessTargets(2)  target "+ (i+1) +" reached, taking partial profit...");
                if (!TakePartialProfit(targets[i][T_REMAINDER])) return(false);
                break;
             }
          }
-         else if (Ask <= open.price - targets[i][T_LEVEL]*Pip) {
-            debug("ManagePositions(0.2)  target "+ (i+1) +" reached, taking partial profit...");
+         else if (Ask <= open.price - targets[i][T_DISTANCE] * pUnit) {
+            debug("ProcessTargets(3)  target "+ (i+1) +" reached, taking partial profit...");
             if (!TakePartialProfit(targets[i][T_REMAINDER])) return(false);
             break;
          }
@@ -698,19 +676,29 @@ bool ManagePositions() {
 
    // process configured stops
    if (open.ticket > 0) {
+      double stopPrice;
+
       for (i=sizeTargets-1; i >= 0; i--) {
-         if (targets[i][T_LEVEL] && targets[i][T_MOVE_STOP]) {
+         if (targets[i][T_DISTANCE] && targets[i][T_MOVE_STOP]) {
             if (open.type == OP_BUY) {
-               if (Bid >= open.price + targets[i][T_LEVEL]*Pip) {
-                  debug("ManagePositions(0.3)  target "+ (i+1) +" reached, moving stop...");
-                  if (!MoveStop(targets[i][T_MOVE_STOP])) return(false);
+               if (Bid >= open.price + targets[i][T_DISTANCE] * pUnit) {
+                  stopPrice = NormalizeDouble(open.price + targets[i][T_MOVE_STOP] * pUnit, Digits);
+                  if (open.stopLoss < stopPrice) {
+                     if (IsLogDebug()) logDebug("ProcessTargets(4)  target "+ (i+1) +" (+"+ DoubleToStr(targets[i][T_DISTANCE], pDigits) +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
+                     if (!MoveStop(stopPrice)) return(false);
+                  }
                   break;
                }
             }
-            else if (Ask <= open.price - targets[i][T_LEVEL]*Pip) {
-               debug("ManagePositions(0.4)  target "+ (i+1) +" reached, moving stop...");
-               if (!MoveStop(targets[i][T_MOVE_STOP])) return(false);
-               break;
+            else {
+               if (Ask <= open.price - targets[i][T_DISTANCE] * pUnit) {
+                  stopPrice = NormalizeDouble(open.price - targets[i][T_MOVE_STOP] * pUnit, Digits);
+                  if (open.stopLoss > stopPrice) {
+                     if (IsLogDebug()) logDebug("ProcessTargets(5)  target "+ (i+1) +" (+"+ DoubleToStr(targets[i][T_DISTANCE], pDigits) +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
+                     if (!MoveStop(stopPrice)) return(false);
+                  }
+                  break;
+               }
             }
          }
       }
@@ -718,7 +706,7 @@ bool ManagePositions() {
    }
 
    if (saveStatus) SaveStatus();
-   return(!catch("ManagePositions(2)"));
+   return(!catch("ProcessTargets(6)"));
 }
 
 
@@ -747,23 +735,19 @@ bool TakePartialProfit(double remainder) {
 
 
 /**
- * Move the StopLoss of the open position the specified distance away from the open price.
+ * Move the StopLoss of the open position.
  *
- * @param  int distFromOpen - distance from open price in pip
+ * @param  int newStop - new StopLoss price
  *
  * @return bool - success status
  */
-bool MoveStop(int distFromOpen) {
+bool MoveStop(double newStop) {
    if (!open.ticket) return(!catch("MoveStop(1)  no open position found: open.ticket=0", ERR_ILLEGAL_STATE));
 
-   if (open.type == OP_BUY) double newStop = open.price + distFromOpen*Pip;
-   else                            newStop = open.price - distFromOpen*Pip;
+   int oe[];
+   if (!OrderModifyEx(open.ticket, open.price, newStop, open.takeProfit, NULL, CLR_OPEN_STOPLOSS, NULL, oe)) return(!SetLastError(oe.Error(oe)));
+   open.stopLoss = newStop;
 
-   if (NE(newStop, open.stopLoss, Digits)) {
-      int oe[];
-      if (!OrderModifyEx(open.ticket, open.price, newStop, open.takeProfit, NULL, CLR_OPEN_STOPLOSS, NULL, oe)) return(!SetLastError(oe.Error(oe)));
-      open.stopLoss = newStop;
-   }
    return(true);
 }
 
@@ -779,8 +763,8 @@ double CalculateInitialStopLoss(int direction) {
    double sl = 0;
 
    if (Initial.StopLoss > 0) {
-      if (direction == OP_LONG) sl = Bid - Initial.StopLoss*Pip;
-      else                      sl = Ask + Initial.StopLoss*Pip;
+      if (direction == OP_LONG) sl = Bid - Initial.StopLoss * pUnit;
+      else                      sl = Ask + Initial.StopLoss * pUnit;
    }
    return(NormalizeDouble(sl, Digits));
 }
@@ -797,8 +781,8 @@ double CalculateInitialTakeProfit(int direction) {
    double tp = 0;
 
    if (Initial.TakeProfit > 0) {
-      if      (direction == OP_LONG)  tp = Ask + Initial.TakeProfit*Pip;
-      else if (direction == OP_SHORT) tp = Bid - Initial.TakeProfit*Pip;
+      if      (direction == OP_LONG)  tp = Ask + Initial.TakeProfit * pUnit;
+      else if (direction == OP_SHORT) tp = Bid - Initial.TakeProfit * pUnit;
    }
    return(NormalizeDouble(tp, Digits));
 }
@@ -822,13 +806,14 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   Instance.ID              = GetIniStringA(file, section, "Instance.ID",     "");           // string   Instance.ID         = T123
-   ZigZag.Periods           = GetIniInt    (file, section, "ZigZag.Periods"     );           // int      ZigZag.Periods      = 6
-   MinBreakoutDistance      = GetIniInt    (file, section, "MinBreakoutDistance");           // int      MinBreakoutDistance = 1
-   Lots                     = GetIniDouble (file, section, "Lots"               );           // double   Lots                = 0.1
+   Instance.ID              = GetIniStringA(file, section, "Instance.ID",         "");       // string   Instance.ID             = T123
+   ZigZag.Periods           = GetIniInt    (file, section, "ZigZag.Periods"         );       // int      ZigZag.Periods          = 6
+   MinBreakoutDistance      = GetIniInt    (file, section, "MinBreakoutDistance"    );       // int      MinBreakoutDistance     = 1
+   Lots                     = GetIniDouble (file, section, "Lots"                   );       // double   Lots                    = 0.1
    if (!ReadStatus.Targets(file)) return(false);
-   ShowProfitInPercent      = GetIniBool   (file, section, "ShowProfitInPercent");           // bool     ShowProfitInPercent = 1
-   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",     "");           // string   EA.Recorder         = 1,2,4
+   CloseOnOppositeBreakout  = GetIniBool   (file, section, "CloseOnOppositeBreakout");       // bool     CloseOnOppositeBreakout = 0
+   ShowProfitInPercent      = GetIniBool   (file, section, "ShowProfitInPercent"    );       // bool     ShowProfitInPercent     = 1
+   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",         "");       // string   EA.Recorder             = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";
@@ -896,13 +881,13 @@ bool SaveStatus() {
    if (last_error != NULL)              return(false);
    if (!instance.id || Instance.ID=="") return(!catch("SaveStatus(1)  illegal instance id: "+ instance.id +" (Instance.ID="+ DoubleQuoteStr(Instance.ID) +")", ERR_ILLEGAL_STATE));
    if (__isTesting) {
-      if (test.reduceStatusWrites) {                           // in tester skip most writes except file creation, instance stop and test end
+      if (test.reduceStatusWrites) {                           // in tester skip all writes except file creation, instance stop and test end
          static bool saved = false;
          if (saved && instance.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
          saved = true;
       }
    }
-   else if (IsTestInstance()) return(true);                    // don't change the status file of a finished test
+   else if (IsTestInstance()) return(true);                    // don't modify the status file of a finished test
 
    string section="", separator="", file=GetStatusFilename();
    bool fileExists = IsFile(file, MODE_SYSTEM);
@@ -919,6 +904,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "MinBreakoutDistance",        /*int     */ MinBreakoutDistance);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
    if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
+   WriteIniString(file, section, "CloseOnOppositeBreakout",    /*bool    */ CloseOnOppositeBreakout);
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
@@ -948,6 +934,7 @@ string   prev.Instance.ID = "";
 int      prev.ZigZag.Periods;
 int      prev.MinBreakoutDistance;
 double   prev.Lots;
+bool     prev.CloseOnOppositeBreakout;
 bool     prev.ShowProfitInPercent;
 
 // backed-up runtime variables affected by changing input parameters
@@ -968,11 +955,12 @@ int      prev.instance.status;
  */
 void BackupInputs() {
    // input parameters, used for comparison in ValidateInputs()
-   prev.Instance.ID         = StringConcatenate(Instance.ID, "");       // string inputs are references to internal C literals
-   prev.ZigZag.Periods      = ZigZag.Periods;                           // and must be copied to break the reference
-   prev.MinBreakoutDistance = MinBreakoutDistance;
-   prev.Lots                = Lots;
-   prev.ShowProfitInPercent = ShowProfitInPercent;
+   prev.Instance.ID             = StringConcatenate(Instance.ID, "");   // string inputs are references to internal C literals
+   prev.ZigZag.Periods          = ZigZag.Periods;                       // and must be copied to break the reference
+   prev.MinBreakoutDistance     = MinBreakoutDistance;
+   prev.Lots                    = Lots;
+   prev.CloseOnOppositeBreakout = CloseOnOppositeBreakout;
+   prev.ShowProfitInPercent     = ShowProfitInPercent;
 
    // affected runtime variables
    prev.instance.id      = instance.id;
@@ -991,11 +979,12 @@ void BackupInputs() {
  */
 void RestoreInputs() {
    // input parameters
-   Instance.ID         = prev.Instance.ID;
-   ZigZag.Periods      = prev.ZigZag.Periods;
-   MinBreakoutDistance = prev.MinBreakoutDistance;
-   Lots                = prev.Lots;
-   ShowProfitInPercent = prev.ShowProfitInPercent;
+   Instance.ID             = prev.Instance.ID;
+   ZigZag.Periods          = prev.ZigZag.Periods;
+   MinBreakoutDistance     = prev.MinBreakoutDistance;
+   Lots                    = prev.Lots;
+   CloseOnOppositeBreakout = prev.CloseOnOppositeBreakout;
+   ShowProfitInPercent     = prev.ShowProfitInPercent;
 
    // affected runtime variables
    instance.id      = prev.instance.id;
@@ -1026,43 +1015,35 @@ bool ValidateInputs() {
       if (StrTrim(Instance.ID) == "") {                           // the id was deleted or not yet set, restore the internal id
          Instance.ID = prev.Instance.ID;
       }
-      else if (Instance.ID != prev.Instance.ID)    return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
+      else if (Instance.ID != prev.Instance.ID)       return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
    }
 
    // ZigZag.Periods
    if (isInitParameters && ZigZag.Periods!=prev.ZigZag.Periods) {
-      if (hasOpenOrders)                           return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input parameter ZigZag.Periods with open orders"));
+      if (hasOpenOrders)                              return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input ZigZag.Periods with open orders"));
    }
-   if (ZigZag.Periods < 2)                         return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods +" (must be > 1)"));
+   if (ZigZag.Periods < 2)                            return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input ZigZag.Periods: "+ ZigZag.Periods +" (must be > 1)"));
 
    // MinBreakoutDistance
-   if (MinBreakoutDistance < 0)                    return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter MinBreakoutDistance: "+ MinBreakoutDistance +" (must be >= 0)"));
+   if (MinBreakoutDistance < 0)                       return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input MinBreakoutDistance: "+ MinBreakoutDistance +" (must be >= 0)"));
 
    // Lots
-   if (LT(Lots, 0))                                return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
-   if (NE(Lots, NormalizeLots(Lots)))              return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                   return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
+   if (NE(Lots, NormalizeLots(Lots)))                 return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid input Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    // Targets
-   if (!ValidateInputs.Targets()) return(false);
+   if (!ValidateInputs.Targets())                     return(false);
+
+   // CloseOnOppositeBreakout
+   if (!CloseOnOppositeBreakout && !Initial.StopLoss) return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid combination Initial.StopLoss=0 and CloseOnOppositeBreakout=FALSE (one must be set)"));
+
+   // ShowProfitInPercent (nothing to do)
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
-   if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
+   if (!Recorder.ValidateInputs(IsTestInstance()))    return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(7)"));
-}
-
-
-/**
- * ShowStatus: Update all string representations.
- */
-void SS.All() {
-   SS.InstanceName();
-   SS.MetricDescription();
-   SS.OpenLots();
-   SS.ClosedTrades();
-   SS.TotalProfit();
-   SS.ProfitStats();
+   return(!catch("ValidateInputs(8)"));
 }
 
 
@@ -1071,59 +1052,6 @@ void SS.All() {
  */
 void SS.InstanceName() {
    instance.name = "123T."+ StrPadLeft(instance.id, 3, "0");
-}
-
-
-/**
- * Display the current runtime status.
- *
- * @param  int error [optional] - error to display (default: none)
- *
- * @return int - the same error
- */
-int ShowStatus(int error = NO_ERROR) {
-   if (!__isChart) return(error);
-
-   static bool isRecursion = false;          // to prevent recursive calls a specified error is displayed only once
-   if (error != 0) {
-      if (isRecursion) return(error);
-      isRecursion = true;
-   }
-   string sStatus="", sError="";
-
-   switch (instance.status) {
-      case NULL:           sStatus = "  not initialized"; break;
-      case STATUS_WAITING: sStatus = "  waiting";         break;
-      case STATUS_TRADING: sStatus = "  trading";         break;
-      case STATUS_STOPPED: sStatus = "  stopped";         break;
-      default:
-         return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
-   }
-   if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
-
-   string text = StringConcatenate(WindowExpertName(), "    ID.", instance.id, sStatus, sError, NL,
-                                                                                                NL,
-                                   status.metricDescription,                                    NL,
-                                   "Open:    ",   status.openLots,                              NL,
-                                   "Closed:  ",   status.closedTrades,                          NL,
-                                   "Profit:    ", status.totalProfit, "  ", status.profitStats, NL
-   );
-
-   // 3 lines margin-top for instrument and indicator legends
-   Comment(NL, NL, NL, text);
-   if (__CoreFunction == CF_INIT) WindowRedraw();
-
-   // store status in the chart to enable sending of chart commands
-   string label = "EA.status";
-   if (ObjectFind(label) != 0) {
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   }
-   ObjectSetText(label, StringConcatenate(Instance.ID, "|", StatusDescription(instance.status)));
-
-   error = intOr(catch("ShowStatus(2)"), error);
-   isRecursion = false;
-   return(error);
 }
 
 
@@ -1157,27 +1085,29 @@ bool CreateStatusBox() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),    ";"+ NL +
+   return(StringConcatenate("Instance.ID=",             DoubleQuoteStr(Instance.ID),        ";"+ NL +
 
-                            "ZigZag.Periods=",       ZigZag.Periods,                 ";"+ NL +
-                            "MinBreakoutDistance=",  MinBreakoutDistance,            ";"+ NL +
+                            "ZigZag.Periods=",          ZigZag.Periods,                     ";"+ NL +
+                            "MinBreakoutDistance=",     MinBreakoutDistance,                ";"+ NL +
 
-                            "Lots=",                 NumberToStr(Lots, ".1+"),       ";"+ NL +
-                            "Initial.TakeProfit=",   Initial.TakeProfit,             ";"+ NL +
-                            "Initial.StopLoss=",     Initial.StopLoss,               ";"+ NL +
-                            "Target1=",              Target1,                        ";"+ NL +
-                            "Target1.ClosePercent=", Target1.ClosePercent,           ";"+ NL +
-                            "Target1.MoveStopTo=",   Target1.MoveStopTo,             ";"+ NL +
-                            "Target2=",              Target2,                        ";"+ NL +
-                            "Target2.ClosePercent=", Target2.ClosePercent,           ";"+ NL +
-                            "Target2.MoveStopTo=",   Target2.MoveStopTo,             ";"+ NL +
-                            "Target3=",              Target3,                        ";"+ NL +
-                            "Target3.ClosePercent=", Target3.ClosePercent,           ";"+ NL +
-                            "Target3.MoveStopTo=",   Target3.MoveStopTo,             ";"+ NL +
-                            "Target4=",              Target4,                        ";"+ NL +
-                            "Target4.ClosePercent=", Target4.ClosePercent,           ";"+ NL +
-                            "Target4.MoveStopTo=",   Target4.MoveStopTo,             ";"+ NL +
+                            "Lots=",                    NumberToStr(Lots, ".1+"),           ";"+ NL +
+                            "Initial.TakeProfit=",      Initial.TakeProfit,                 ";"+ NL +
+                            "Initial.StopLoss=",        Initial.StopLoss,                   ";"+ NL +
+                            "CloseOnOppositeBreakout=", BoolToStr(CloseOnOppositeBreakout), ";"+ NL +
 
-                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent), ";")
+                            "Target1=",                 Target1,                            ";"+ NL +
+                            "Target1.ClosePercent=",    Target1.ClosePercent,               ";"+ NL +
+                            "Target1.MoveStopTo=",      Target1.MoveStopTo,                 ";"+ NL +
+                            "Target2=",                 Target2,                            ";"+ NL +
+                            "Target2.ClosePercent=",    Target2.ClosePercent,               ";"+ NL +
+                            "Target2.MoveStopTo=",      Target2.MoveStopTo,                 ";"+ NL +
+                            "Target3=",                 Target3,                            ";"+ NL +
+                            "Target3.ClosePercent=",    Target3.ClosePercent,               ";"+ NL +
+                            "Target3.MoveStopTo=",      Target3.MoveStopTo,                 ";"+ NL +
+                            "Target4=",                 Target4,                            ";"+ NL +
+                            "Target4.ClosePercent=",    Target4.ClosePercent,               ";"+ NL +
+                            "Target4.MoveStopTo=",      Target4.MoveStopTo,                 ";"+ NL +
+
+                            "ShowProfitInPercent=",     BoolToStr(ShowProfitInPercent),     ";")
    );
 }

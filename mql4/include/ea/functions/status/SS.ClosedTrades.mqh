@@ -14,10 +14,10 @@ void SS.ClosedTrades() {
             status.closedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_NET_MONEY][S_TRADES_AVG_PROFIT], "R+.2") +" "+ AccountCurrency();
             break;
          case METRIC_NET_UNITS:
-            status.closedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_NET_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            status.closedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_NET_UNITS][S_TRADES_AVG_PROFIT]/pUnit, "R+."+ pDigits) +" "+ spUnit;
             break;
          case METRIC_SIG_UNITS:
-            status.closedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_SIG_UNITS][S_TRADES_AVG_PROFIT] * pMultiplier, "R+."+ pDigits) +" "+ pUnit;
+            status.closedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_SIG_UNITS][S_TRADES_AVG_PROFIT]/pUnit, "R+."+ pDigits) +" "+ spUnit;
             break;
 
          default:

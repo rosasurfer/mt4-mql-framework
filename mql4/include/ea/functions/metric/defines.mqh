@@ -27,8 +27,3 @@ double instance.closedSigProfitP;      //
 double instance.totalSigProfitP;       //
 double instance.maxSigProfitP;         //
 double instance.maxSigDrawdownP;       //
-
-// other
-string pUnit = "";                     // "pip" or "point"
-int    pDigits;                        // digits of pUnit
-int    pMultiplier;                    // quote-price = multiplier * pUnit

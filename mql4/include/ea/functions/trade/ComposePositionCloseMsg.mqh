@@ -48,7 +48,7 @@ string ComposePositionCloseMsg(int &error) {
    string sUnexpected = ifString(closedBySL || closedByTP || (__isTesting && __CoreFunction==CF_DEINIT), "", "unexpectedly ");
    string sBySL       = ifString(closedBySL, "by SL ", "");
    string sByTP       = ifString(closedByTP, "by TP ", "");
-   string sSlippage   = ifString(slippage==NULL, "", "slippage: "+ NumberToStr(slippage * pMultiplier, "+."+ pDigits) + ifString(pUnit=="pip", " pip", "") +", ");
+   string sSlippage   = ifString(slippage==NULL, "", "slippage: "+ NumberToStr(slippage/pUnit, "R+."+ pDigits) + ifString(spUnit=="pip", " pip", "") +", ");
    string sComment    = ifString(comment==instance.name, "", " "+ comment);
 
    string msg = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" was "+ sUnexpected +"closed "+ sBySL + sByTP +"at "+ sClosePrice;

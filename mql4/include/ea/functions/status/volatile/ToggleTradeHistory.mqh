@@ -1,12 +1,12 @@
 /**
  * Toggle the display of closed trades.
  *
- * @param  bool soundOnNone [optional] - whether to play a sound if no closed trades exist (default: yes)
+ * @param  bool soundOnNoTrades [optional] - whether to play a sound if no closed trades exist (default: yes)
  *
  * @return bool - success status
  */
-bool ToggleTradeHistory(bool soundOnNone = true) {
-   soundOnNone = soundOnNone!=0;
+bool ToggleTradeHistory(bool soundOnNoTrades = true) {
+   soundOnNoTrades = soundOnNoTrades!=0;
 
    // toggle current status
    bool showHistory = !status.showTradeHistory;
@@ -17,7 +17,7 @@ bool ToggleTradeHistory(bool soundOnNone = true) {
       if (trades == -1) return(false);
       if (!trades) {                                        // Without any closed trades the status must be reset to enable
          showHistory = false;                               // the "off" section to clear existing markers.
-         if (soundOnNone) PlaySoundEx("Plonk.wav");
+         if (soundOnNoTrades) PlaySoundEx("Plonk.wav");
       }
    }
 

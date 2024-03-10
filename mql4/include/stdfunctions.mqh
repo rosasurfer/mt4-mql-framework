@@ -1293,38 +1293,6 @@ string stringOr(string value, string altValue) {
 
 
 /**
- * Correct comparison of two doubles for "Lower-Than".
- *
- * @param  double double1           - first value
- * @param  double double2           - second value
- * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
- *
- * @return bool
- */
-bool LT(double double1, double double2, int digits = 8) {
-   if (EQ(double1, double2, digits))
-      return(false);
-   return(double1 < double2);
-}
-
-
-/**
- * Correct comparison of two doubles for "Lower-Or-Equal".
- *
- * @param  double double1           - first value
- * @param  double double2           - second value
- * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
- *
- * @return bool
- */
-bool LE(double double1, double double2, int digits = 8) {
-   if (double1 < double2)
-      return(true);
-   return(EQ(double1, double2, digits));
-}
-
-
-/**
  * Correct comparison of two doubles for "Equal".
  *
  * @param  double double1           - first value
@@ -1382,6 +1350,22 @@ bool NE(double double1, double double2, int digits = 8) {
 
 
 /**
+ * Correct comparison of two doubles for "Greater-Than".
+ *
+ * @param  double double1           - first value
+ * @param  double double2           - second value
+ * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
+ *
+ * @return bool
+ */
+bool GT(double double1, double double2, int digits = 8) {
+   if (EQ(double1, double2, digits))
+      return(false);
+   return(double1 > double2);
+}
+
+
+/**
  * Correct comparison of two doubles for "Greater-Or-Equal".
  *
  * @param  double double1           - first value
@@ -1398,7 +1382,7 @@ bool GE(double double1, double double2, int digits = 8) {
 
 
 /**
- * Correct comparison of two doubles for "Greater-Than".
+ * Correct comparison of two doubles for "Lower-Than".
  *
  * @param  double double1           - first value
  * @param  double double2           - second value
@@ -1406,10 +1390,26 @@ bool GE(double double1, double double2, int digits = 8) {
  *
  * @return bool
  */
-bool GT(double double1, double double2, int digits = 8) {
+bool LT(double double1, double double2, int digits = 8) {
    if (EQ(double1, double2, digits))
       return(false);
-   return(double1 > double2);
+   return(double1 < double2);
+}
+
+
+/**
+ * Correct comparison of two doubles for "Lower-Or-Equal".
+ *
+ * @param  double double1           - first value
+ * @param  double double2           - second value
+ * @param  int    digits [optional] - number of decimal digits to consider (default: 8)
+ *
+ * @return bool
+ */
+bool LE(double double1, double double2, int digits = 8) {
+   if (double1 < double2)
+      return(true);
+   return(EQ(double1, double2, digits));
 }
 
 

@@ -4,7 +4,7 @@
 
 double targets[4][4];               // partial profit targets and stops
 
-#define T_LEVEL         0           // indexes of targets[][]
+#define T_DISTANCE      0           // indexes of targets[][]
 #define T_CLOSE_PCT     1
 #define T_REMAINDER     2
 #define T_MOVE_STOP     3
@@ -65,22 +65,22 @@ bool ValidateInputs.Targets() {
    double t4Remainder = NormalizeDouble(t3Remainder - t4Close, 2);
 
    // convert targets to array to optimize later processing
-   targets[0][T_LEVEL    ] = Target1;
+   targets[0][T_DISTANCE ] = Target1;
    targets[0][T_CLOSE_PCT] = Target1.ClosePercent;
    targets[0][T_REMAINDER] = t1Remainder;
    targets[0][T_MOVE_STOP] = Target1.MoveStopTo;
 
-   targets[1][T_LEVEL    ] = Target2;
+   targets[1][T_DISTANCE ] = Target2;
    targets[1][T_CLOSE_PCT] = Target2.ClosePercent;
    targets[1][T_REMAINDER] = t2Remainder;
    targets[1][T_MOVE_STOP] = Target2.MoveStopTo;
 
-   targets[2][T_LEVEL    ] = Target3;
+   targets[2][T_DISTANCE ] = Target3;
    targets[2][T_CLOSE_PCT] = Target3.ClosePercent;
    targets[2][T_REMAINDER] = t3Remainder;
    targets[2][T_MOVE_STOP] = Target3.MoveStopTo;
 
-   targets[3][T_LEVEL    ] = Target4;
+   targets[3][T_DISTANCE ] = Target4;
    targets[3][T_CLOSE_PCT] = Target4.ClosePercent;
    targets[3][T_REMAINDER] = t4Remainder;
    targets[3][T_MOVE_STOP] = Target4.MoveStopTo;

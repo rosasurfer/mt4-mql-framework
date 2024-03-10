@@ -21,12 +21,12 @@ void SS.ProfitStats() {
             }
             break;
          case METRIC_NET_UNITS:
-            sMaxProfit   = NumberToStr(instance.maxNetProfitP   * pMultiplier, "R+."+ pDigits);
-            sMaxDrawdown = NumberToStr(instance.maxNetDrawdownP * pMultiplier, "R+."+ pDigits);
+            sMaxProfit   = NumberToStr(instance.maxNetProfitP  /pUnit, "R+."+ pDigits);
+            sMaxDrawdown = NumberToStr(instance.maxNetDrawdownP/pUnit, "R+."+ pDigits);
             break;
          case METRIC_SIG_UNITS:
-            sMaxProfit   = NumberToStr(instance.maxSigProfitP   * pMultiplier, "R+."+ pDigits);
-            sMaxDrawdown = NumberToStr(instance.maxSigDrawdownP * pMultiplier, "R+."+ pDigits);
+            sMaxProfit   = NumberToStr(instance.maxSigProfitP  /pUnit, "R+."+ pDigits);
+            sMaxDrawdown = NumberToStr(instance.maxSigDrawdownP/pUnit, "R+."+ pDigits);
             break;
 
          default:
