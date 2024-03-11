@@ -12,25 +12,31 @@
 //         an appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display
 //         negative values). Without a value the recorder queries the framework configuration.
 //
-// During EA initialization the function GetMT4SymbolDefinition() is called for each configured metric to retrieve the
-// metric's symbol definition. That function must be implemented by the EA. It has the following signature:
+// To enable the recorder the function Recorder.ValidateInputs(bool isTest) must be called. If not called input parameter
+// "EA.Recorder" is simply ignored.
 //
-// /**
-//  * Return a symbol definition for the specified metric to be recorded.
-//  *
-//  * @param  _In_  int    metricId     - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
-//  * @param  _Out_ bool   &ready       - whether metric details are complete and the metric is ready to be recorded
-//  * @param  _Out_ string &symbol      - unique MT4 timeseries symbol
-//  * @param  _Out_ string &description - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
-//  * @param  _Out_ string &group       - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
-//  * @param  _Out_ int    &digits      - symbol digits value
-//  * @param  _Out_ double &baseValue   - quotes base value (if EMPTY default settings are used)
-//  * @param  _Out_ int    &multiplier  - quotes multiplier
-//  *
-//  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
-//  */
-// int GetMT4SymbolDefinition(int metricId, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
+// If input parameter "EA.Recorder" is valid the recorder calls function GetMT4SymbolDefinition() for each configured metric.
+// The function must be implemented by the EA, using the following signature:
 //
+#import "rsfMT4Expander.dll"
+   /**
+    * Return a symbol definition for the specified metric to be recorded. Implement this function in your EA to override the
+    * DLL's no-op.
+    *
+    * @param  _In_  int    metricId    - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
+    * @param  _Out_ bool   &ready      - whether metric details are complete and the metric is ready to be recorded
+    * @param  _Out_ string &symbol     - unique MT4 timeseries symbol
+    * @param  _Out_ string &descr      - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
+    * @param  _Out_ string &group      - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
+    * @param  _Out_ int    &digits     - symbol digits value
+    * @param  _Out_ double &baseValue  - base value to prevent negative quotes (if EMPTY default settings are used)
+    * @param  _Out_ int    &multiplier - quotes multiplier
+    *
+    * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
+    */
+   int GetMT4SymbolDefinition(int metricId, bool &ready, string &symbol, string &descr, string &group, int &digits, double &baseValue, int &multiplier);
+#import
+
 
 // recorder modes
 #define RECORDER_OFF          0              // recording off
@@ -248,97 +254,86 @@ int Recorder.onInputError(string message) {
 
 
 /**
- * Initialize the recorder. Completes metric definitions and creates/updates a raw symbol for each metric.
+ * Initialize the recorder. Completes metric definitions and creates a raw MT4 symbol for each metric.
  *
  * @return bool - success status
  */
 bool Recorder.init() {
-   if (recorder.mode == RECORDER_OFF || IsOptimization()) {
-      recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
-      return(false);
+   if (recorder.mode == RECORDER_OFF) return(false);
+   if (recorder.initialized)          return(true);
+
+   bool ready;
+   int digits, multiplier;
+   double baseValue;
+   string symbol="", descr="", group="", suffix="";
+
+   suffix                      = ", "+ PeriodDescription() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+   recorder.defaultDescription = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                           // sizeof(SYMBOL.description) = 64 chars (szchar)
+   recorder.defaultGroup       = StrTrimRight(StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH));
+   recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
+   recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               return(false);
+
+   if (recorder.mode == RECORDER_ON) {
+      // create an internal metric for AccountEquity()
+      int error = GetMT4SymbolDefinition(NULL, ready, symbol, descr, group, digits, baseValue, multiplier);
+      if (IsError(error)) {
+         if (error == ERR_INVALID_INPUT_PARAMETER) catch("Recorder.init(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id \"on\")", error);
+         return(false);
+      }
+
+      if (ready) {
+         if (symbol == "") {
+            symbol = Recorder.GetNextMetricSymbol(); if (!StringLen(symbol)) return(false);
+         }
+         if (descr == "") {
+            suffix = ", "+ PeriodDescription() +", AccountEquity in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+            descr  = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;
+         }
+         if (group == "") {
+            group = recorder.defaultGroup;
+         }
+         if (!Recorder.AddMetric(1, true, symbol, descr, group, 2, 0, 1)) return(false);
+         recorder.stdEquitySymbol = symbol;
+      }
    }
 
-   if (!recorder.initialized) {
-      bool ready;
-      int digits, multiplier;
-      double baseValue;
-      string symbol="", descr="", group="", suffix="";
+   // update metric details and create raw MT4 symbols
+   int size = ArraySize(metric.enabled);
 
-      suffix                      = ", "+ PeriodDescription() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-      recorder.defaultDescription = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                           // sizeof(SYMBOL.description) = 64 chars (szchar)
-      recorder.defaultGroup       = StrTrimRight(StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH));
-      recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) { recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF); return(false); }
-      recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               { recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF); return(false); }
+   for (int id=1; id < size; id++) {
+      if (!metric.enabled[id]) continue;
 
-      if (recorder.mode == RECORDER_ON) {
-         // create an internal metric for AccountEquity()
-         int error = GetMT4SymbolDefinition(NULL, ready, symbol, descr, group, digits, baseValue, multiplier);
+      if (!metric.ready[id]) {
+         error = GetMT4SymbolDefinition(id, ready, symbol, descr, group, digits, baseValue, multiplier);
          if (IsError(error)) {
-            if (error == ERR_INVALID_INPUT_PARAMETER) catch("Recorder.init(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id \"on\")", error);
-            recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
+            if (error == ERR_INVALID_INPUT_PARAMETER) catch("Recorder.init(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id "+ id +")", error);
             return(false);
          }
-
-         if (ready) {
-            if (symbol == "") {
-               symbol = Recorder.GetNextMetricSymbol(); if (!StringLen(symbol)) { recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF); return(false); }
-            }
-            if (descr == "") {
-               suffix = ", "+ PeriodDescription() +", AccountEquity in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-               descr  = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;
-            }
-            if (group == "") {
-               group = recorder.defaultGroup;
-            }
-            if (!Recorder.AddMetric(1, true, symbol, descr, group, 2, 0, 1)) { recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF); return(false); }
-            recorder.stdEquitySymbol = symbol;
-         }
+         if (!ready) continue;
+         metric.ready      [id] = true;
+         metric.symbol     [id] = symbol;
+         metric.description[id] = descr;
+         metric.group      [id] = group;
+         metric.digits     [id] = digits;
+         metric.currValue  [id] = NULL;
+         metric.baseValue  [id] = baseValue;
+         metric.multiplier [id] = multiplier;
       }
+      if (!StringLen(metric.description[id])) metric.description[id] = recorder.defaultDescription;
+      if (!StringLen(metric.group      [id])) metric.group      [id] = recorder.defaultGroup;
+      if (   IsEmpty(metric.baseValue  [id])) metric.baseValue  [id] = recorder.defaultBaseValue;
+      if (          !metric.multiplier [id])  metric.multiplier [id] = 1;
 
-      // update metric details and create raw MT4 symbols
-      int size = ArraySize(metric.enabled);
-
-      for (int id=1; id < size; id++) {
-         if (!metric.enabled[id]) continue;
-
-         if (!metric.ready[id]) {
-            error = GetMT4SymbolDefinition(id, ready, symbol, descr, group, digits, baseValue, multiplier);
-            if (IsError(error)) {
-               if (error == ERR_INVALID_INPUT_PARAMETER) catch("Recorder.init(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id "+ id +")", error);
-               recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
-               return(false);
-            }
-            if (!ready) continue;
-            metric.ready      [id] = true;
-            metric.symbol     [id] = symbol;
-            metric.description[id] = descr;
-            metric.group      [id] = group;
-            metric.digits     [id] = digits;
-            metric.currValue  [id] = NULL;
-            metric.baseValue  [id] = baseValue;
-            metric.multiplier [id] = multiplier;
-         }
-         if (!StringLen(metric.description[id])) metric.description[id] = recorder.defaultDescription;
-         if (!StringLen(metric.group      [id])) metric.group      [id] = recorder.defaultGroup;
-         if (   IsEmpty(metric.baseValue  [id])) metric.baseValue  [id] = recorder.defaultBaseValue;
-         if (          !metric.multiplier [id])  metric.multiplier [id] = 1;
-
-         if (IsRawSymbol(metric.symbol[id], recorder.hstDirectory)) {
-            if (__isTesting) {
-               recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);                                            // TODO: instead update existing properties
-               return(!catch("Recorder.init(3)  symbol \""+ metric.symbol[id] +"\" already exists", ERR_ILLEGAL_STATE));
-            }
-         }
-         else {
-            int symbolId = CreateRawSymbol(metric.symbol[id], metric.description[id], metric.group[id], metric.digits[id], AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
-            if (symbolId < 0) {
-               recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
-               return(false);
-            }
-         }
+      if (IsRawSymbol(metric.symbol[id], recorder.hstDirectory)) {
+         if (__isTesting) return(!catch("Recorder.init(3)  symbol \""+ metric.symbol[id] +"\" already exists", ERR_ILLEGAL_STATE));       // TODO: update existing properties instead
       }
-      recorder.initialized = true;
+      else {
+         int symbolId = CreateRawSymbol(metric.symbol[id], metric.description[id], metric.group[id], metric.digits[id], AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
+         if (symbolId < 0) return(false);
+      }
    }
+
+   recorder.initialized = true;
    return(true);
 }
 
@@ -350,7 +345,9 @@ bool Recorder.init() {
  */
 bool Recorder.start() {
    if (!recorder.initialized) {
-      if (!Recorder.init()) return(recorder.mode == RECORDER_OFF);
+      if (recorder.mode == RECORDER_OFF) return(_true(Recorder.off()));
+      if (IsOptimization())              return(_true(Recorder.off()));
+      if (!Recorder.init())              return(_false(Recorder.off()));
    }
    /*
     Speed test SnowRoller EURUSD,M15  04.10.2012, Long, GridSize=18
@@ -372,13 +369,13 @@ bool Recorder.start() {
       if (!metric.ready[i]) continue;
 
       if (!metric.hSet[i]) {
-         // online: prefer to continue an existing history
          if (!__isTesting) {
+            // online: prefer to continue an existing history
             if      (i <  7) metric.hSet[i] = HistorySet1.Get(metric.symbol[i], recorder.hstDirectory);
             else if (i < 14) metric.hSet[i] = HistorySet2.Get(metric.symbol[i], recorder.hstDirectory);
             else             metric.hSet[i] = HistorySet3.Get(metric.symbol[i], recorder.hstDirectory);
             if      (metric.hSet[i] == -1) metric.hSet[i] = NULL;
-            else if (metric.hSet[i] <=  0) return(false);
+            else if (metric.hSet[i] <=  0) return(_false(Recorder.off()));
          }
 
          // tester or no existing history
@@ -386,7 +383,7 @@ bool Recorder.start() {
             if      (i <  7) metric.hSet[i] = HistorySet1.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
             else if (i < 14) metric.hSet[i] = HistorySet2.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
             else             metric.hSet[i] = HistorySet3.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
-            if (!metric.hSet[i]) return(false);
+            if (!metric.hSet[i]) return(_false(Recorder.off()));
          }
       }
 
@@ -398,6 +395,8 @@ bool Recorder.start() {
       else             success = HistorySet3.AddTick(metric.hSet[i], Tick.time, value, flags);
       if (!success) break;
    }
+
+   if (!success) Recorder.off();
    return(success);
 }
 
@@ -414,12 +413,23 @@ bool Recorder.deinit() {
       if (metric.hSet[i] > 0) {
          int tmp = metric.hSet[i];
          metric.hSet[i] = NULL;
-         if      (i <  7) { if (!HistorySet1.Close(tmp)) return(false); }
-         else if (i < 14) { if (!HistorySet2.Close(tmp)) return(false); }
-         else             { if (!HistorySet3.Close(tmp)) return(false); }
+         if      (i <  7) { if (!HistorySet1.Close(tmp)) return(_false(Recorder.off())); }
+         else if (i < 14) { if (!HistorySet2.Close(tmp)) return(_false(Recorder.off())); }
+         else             { if (!HistorySet3.Close(tmp)) return(_false(Recorder.off())); }
       }
    }
    return(true);
+}
+
+
+/**
+ * Switches recording variables in EA and DLL off. Helper to simplify return logic.
+ *
+ * @return int - NULL
+ */
+int Recorder.off() {
+   recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
+   return(NULL);
 }
 
 
@@ -585,8 +595,3 @@ int Recorder.GetHstFormat() {
    Recorder.ResetMetrics();
    Recorder.ValidateInputs(NULL);
 }
-
-
-#import "rsfMT4Expander.dll"
-   int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier);
-#import
