@@ -530,47 +530,14 @@ bool IsTicket(int ticket) {
 
 
 /**
- * Select a ticket.
- *
- * @param  int    ticket                      - ticket
- * @param  string caller           [optional] - location identifier of the caller (default: none)
- * @param  bool   pushTicket       [optional] - whether to push the selection onto the order selection stack (default: no)
- * @param  bool   onErrorPopTicket [optional] - whether to restore the previously selected ticket in case of errors
- *                                              (default: yes if pushTicket=TRUE, no if pushTicket=FALSE)
- * @return bool - success status
- */
-bool SelectTicket(int ticket, string caller="", bool pushTicket=false, bool onErrorPopTicket=false) {
-   pushTicket       = pushTicket!=0;
-   onErrorPopTicket = onErrorPopTicket!=0;
-   if (caller != "") caller = caller +"->";
-
-   if (pushTicket) {
-      if (!OrderPush(caller +"SelectTicket(1)")) return(false);
-      onErrorPopTicket = true;
-   }
-
-   if (OrderSelect(ticket, SELECT_BY_TICKET))
-      return(true);                                   // success
-
-   if (onErrorPopTicket)                              // error
-      if (!OrderPop(caller +"SelectTicket(2)")) return(false);
-
-   int error = GetLastError();
-   if (!error) error = ERR_INVALID_TICKET;
-   return(!catch(caller +"SelectTicket(3)   ticket="+ ticket, error));
-}
-
-
-/**
- * Generate a log message with all order data of a ticket. Replacement for the limited built-in function OrderPrint().
+ * Generate a log message with all data of a ticket. Replacement for the limited built-in function OrderPrint().
  *
  * @param  int  ticket
  *
  * @return string - log message or an empty string in case of errors
  */
 string OrderLogMessage(int ticket) {
-   if (!SelectTicket(ticket, "OrderLogMessage(1)", O_PUSH))
-      return("");
+   if (!SelectTicket(ticket, "OrderLogMessage(1)", O_SAVE_CURRENT)) return("");
 
    int      type        = OrderType();
    double   lots        = OrderLots();
@@ -599,6 +566,40 @@ string OrderLogMessage(int ticket) {
 
 
 /**
+ * Select an order ticket.
+ *
+ * @param  int    ticket                    - order ticket
+ * @param  string caller         [optional] - location identifier of the caller (default: none)
+ * @param  bool   saveCurrent    [optional] - whether to save the current selection (default: no)
+ * @param  bool   onErrorRestore [optional] - whether to restore the last stored selection in case of errors
+ *                                            (default: yes if saveCurrent=TRUE, otherwise no)
+ * @return bool - success status
+ */
+bool SelectTicket(int ticket, string caller="", bool saveCurrent=false, bool onErrorRestore=-1) {
+   saveCurrent = saveCurrent!=0;
+   if (caller != "") caller = caller +"->";
+
+   if (saveCurrent) {
+      if (!OrderPush(caller +"SelectTicket(1)")) return(false);
+      if (onErrorRestore == -1) onErrorRestore = true;
+   }
+
+   if (OrderSelect(ticket, SELECT_BY_TICKET)) return(true);       // success
+
+   if (onErrorRestore == -1) onErrorRestore = false;              // default
+   else                      onErrorRestore = onErrorRestore!=0;
+
+   if (onErrorRestore) {                                          // error
+      if (!OrderPop(caller +"SelectTicket(2)")) return(false);
+   }
+
+   int error = GetLastError();
+   if (!error) error = ERR_INVALID_TICKET;
+   return(!catch(caller +"SelectTicket(3)   ticket="+ ticket, error));
+}
+
+
+/**
  * Append the currently selected order ticket to the order stack.
  *
  * @param  string caller [optional] - location identifier of the caller (default: none)
@@ -609,8 +610,9 @@ bool OrderPush(string caller = "") {
    int ticket = OrderTicket();
 
    int error = GetLastError();
-   if (error && error!=ERR_NO_TICKET_SELECTED)
+   if (error && error!=ERR_NO_TICKET_SELECTED) {
       return(!catch(caller +"->OrderPush(1)", error));
+   }
 
    ArrayPushInt(__orderStack, ticket);
    return(true);
@@ -626,8 +628,7 @@ bool OrderPush(string caller = "") {
  */
 bool OrderPop(string caller = "") {
    int ticket = ArrayPopInt(__orderStack);
-   if (ticket > 0)
-      return(SelectTicket(ticket, caller +"->OrderPop(1)"));
+   if (ticket > 0) return(SelectTicket(ticket, caller +"->OrderPop(1)"));
 
    OrderSelect(0, SELECT_BY_TICKET);
 
@@ -2033,7 +2034,7 @@ double MathModFix(double a, double b) {
  */
 int CountDecimals(double number) {
    string str = number;
-   int dot    = StringFind(str, ".");
+   int dot = StringFind(str, ".");
 
    for (int i=StringLen(str)-1; i > dot; i--) {
       if (StringGetChar(str, i) != '0')
@@ -5752,8 +5753,7 @@ string NumberToStr(double value, string mask) {
 
    // --- Beginn Wertverarbeitung ---------------------
    // runden
-   if (round)
-      value = RoundEx(value, nRight);
+   if (round) value = RoundEx(value, nRight);
    string outStr = value;
 
    // negatives Vorzeichen entfernen (ist in leadSign gespeichert)
@@ -6577,12 +6577,17 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
       return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", intOr(error, ERR_SYMBOL_NOT_AVAILABLE))));
    }
 
+   lots = NormalizeDouble(lots, 2);
+
    switch (mode) {
-      case MODE_FLOOR:   return(NormalizeDouble(MathFloor(lots/lotstep) * lotstep, 2));
-      case MODE_DEFAULT: return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, 2));
-      case MODE_CEIL:    return(NormalizeDouble(MathCeil (lots/lotstep) * lotstep, 2));
+      case MODE_FLOOR:   lots = MathFloor(lots/lotstep) * lotstep; break;
+      case MODE_DEFAULT: lots = MathRound(lots/lotstep) * lotstep; break;
+      case MODE_CEIL:    lots = MathCeil (lots/lotstep) * lotstep; break;
+
+      default:
+         return(_EMPTY_VALUE(catch("NormalizeLots(2)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
    }
-   return(_EMPTY_VALUE(catch("NormalizeLots(2)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
+   return(NormalizeDouble(lots, 2));
 }
 
 

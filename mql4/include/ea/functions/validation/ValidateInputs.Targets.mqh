@@ -48,21 +48,21 @@ bool ValidateInputs.Targets() {
    if (Target4 && Target4.MoveStopTo > Target4)                return(!onInputError("ValidateInputs.Targets(20)  "+ instance.name +" invalid input parameter Target4.MoveStopTo: "+ Target4.MoveStopTo +" (must be < Target4)"));
 
    // pre-calculate partial profits
-   int closedPercent  = ifInt(Target1, Target1.ClosePercent, 0);
-   double t1Close     = MathMin(Lots, Lots * closedPercent/100);
-   double t1Remainder = NormalizeLots(NormalizeDouble(Lots - t1Close, 2), "", MODE_CEIL);
+   int closePercent   = ifInt(Target1, Target1.ClosePercent, 0);
+   double t1Close     = Lots * closePercent/100;
+   double t1Remainder = NormalizeLots(Lots - t1Close, "", MODE_CEIL);
 
-   closedPercent     += ifInt(Target2, Target2.ClosePercent, 0);
-   double t2Close     = MathMin(t1Remainder, Lots * closedPercent/100 - t1Close);
-   double t2Remainder = NormalizeLots(NormalizeDouble(Lots - t1Close - t2Close, 2), "", MODE_CEIL);
+   closePercent       = ifInt(Target2, Target2.ClosePercent, 0);
+   double t2Close     = Lots * closePercent/100;
+   double t2Remainder = NormalizeLots(MathMax(0, Lots - t1Close - t2Close), "", MODE_CEIL);
 
-   closedPercent     += ifInt(Target3, Target3.ClosePercent, 0);
-   double t3Close     = MathMin(t2Remainder, Lots * closedPercent/100 - t1Close - t2Close);
-   double t3Remainder = NormalizeLots(NormalizeDouble(Lots - t1Close - t2Close - t3Close, 2), "", MODE_CEIL);
+   closePercent       = ifInt(Target3, Target3.ClosePercent, 0);
+   double t3Close     = Lots * closePercent/100;
+   double t3Remainder = NormalizeLots(MathMax(0, Lots - t1Close - t2Close - t3Close), "", MODE_CEIL);
 
-   closedPercent     += ifInt(Target4, Target4.ClosePercent, 0);
-   double t4Close     = MathMin(t3Remainder, Lots * closedPercent/100 - t1Close - t2Close - t3Close);
-   double t4Remainder = NormalizeLots(NormalizeDouble(Lots - t1Close - t2Close - t3Close - t4Close, 2), "", MODE_CEIL);
+   closePercent       = ifInt(Target4, Target4.ClosePercent, 0);
+   double t4Close     = Lots * closePercent/100;
+   double t4Remainder = NormalizeLots(MathMax(0, Lots - t1Close - t2Close - t3Close - t4Close), "", MODE_CEIL);
 
    // convert targets to array to optimize later processing
    targets[0][T_DISTANCE ] = Target1;

@@ -251,7 +251,7 @@ int      Round(double value);;
 double   RoundCeil(double number, int decimals=0);;
 double   RoundEx(double number, int decimals=0);;
 double   RoundFloor(double number, int decimals=0);;
-bool     SelectTicket(int ticket, string caller, bool pushTicket=false, bool onErrorPopTicket=false);;
+bool     SelectTicket(int ticket, string caller, bool saveCurrent=false, bool onErrorRestore=false);;
 bool     SendChartCommand(string cmdObject, string cmd, string mutex="");;
 bool     SendEmail(string sender, string receiver, string subject, string message);;
 bool     SendSMS(string receiver, string message);;

@@ -604,8 +604,9 @@ bool ClosePosition(double signal[]) {
    int oeFlags, oe[];
    if (!OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
-   double closePrice    = oe.ClosePrice(oe);
-   double closePriceSig = ifDouble(sigType==SIG_TYPE_STOPLOSS || sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid);
+   datetime closeTime     = oe.CloseTime(oe);
+   double   closePrice    = oe.ClosePrice(oe);
+   double   closePriceSig = ifDouble(sigType==SIG_TYPE_STOPLOSS || sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid);
 
    open.slippage    += oe.Slippage(oe);
    open.swap         = oe.Swap(oe);
@@ -619,8 +620,9 @@ bool ClosePosition(double signal[]) {
    open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
    open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
 
-   if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, closePriceSig)) return(false);
+   if (!MovePositionToHistory(closeTime, closePrice, closePriceSig)) return(false);
 
+   // update PnL stats
    instance.openNetProfit  = open.netProfit;
    instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
@@ -655,23 +657,28 @@ bool ProcessTargets() {
    if (instance.status != STATUS_TRADING) return(!catch("ProcessTargets(1)  "+ instance.name +" cannot manage positions of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (!open.ticket)                      return(true);
 
-   int sizeTargets = ArrayRange(targets, 0);
+   double closeLots, remainingLots, stopPrice;
+   int sizeTargets = ArrayRange(targets, 0), distance, moveStop;
 
    // process configured profit targets
    for (int i=sizeTargets-1; i >= 0; i--) {
-      if (targets[i][T_DISTANCE] && targets[i][T_CLOSE_PCT]) {
-         if (open.lots <= targets[i][T_REMAINDER]) break;
+      distance      = targets[i][T_DISTANCE ];
+      remainingLots = targets[i][T_REMAINDER];
+
+      if (distance && targets[i][T_CLOSE_PCT]) {
+         if (open.lots <= remainingLots) break;
+         closeLots = NormalizeDouble(open.lots - remainingLots, 2);
 
          if (open.type == OP_BUY) {
-            if (Bid >= open.price + targets[i][T_DISTANCE] * pUnit) {
-               if (IsLogDebug()) logDebug("ProcessTargets(2)  target "+ (i+1) +" (+"+ _int(targets[i][T_DISTANCE]) +") reached, taking "+ NumberToStr(NormalizeDouble(open.lots-targets[i][T_REMAINDER], 2), ".+")  +" lot partial profit");
-               if (!TakePartialProfit(targets[i][T_REMAINDER])) return(false);
+            if (Bid >= open.price + distance * pUnit) {
+               if (IsLogDebug()) logDebug("ProcessTargets(2)  target "+ (i+1) +" (+"+ distance +") reached, taking "+ NumberToStr(closeLots, ".+")  +" lot partial profit");
+               if (!TakePartialProfit(closeLots)) return(false);
                break;
             }
          }
-         else if (Ask <= open.price - targets[i][T_DISTANCE] * pUnit) {
-            if (IsLogDebug()) logDebug("ProcessTargets(3)  target "+ (i+1) +" (+"+ _int(targets[i][T_DISTANCE]) +") reached, taking "+ NumberToStr(NormalizeDouble(open.lots-targets[i][T_REMAINDER], 2), ".+")  +" lot partial profit");
-            if (!TakePartialProfit(targets[i][T_REMAINDER])) return(false);
+         else if (Ask <= open.price - distance * pUnit) {
+            if (IsLogDebug()) logDebug("ProcessTargets(3)  target "+ (i+1) +" (+"+ distance +") reached, taking "+ NumberToStr(closeLots, ".+")  +" lot partial profit");
+            if (!TakePartialProfit(closeLots)) return(false);
             break;
          }
       }
@@ -680,24 +687,25 @@ bool ProcessTargets() {
 
    // process configured stops
    if (open.ticket > 0) {
-      double stopPrice;
-
       for (i=sizeTargets-1; i >= 0; i--) {
-         if (targets[i][T_DISTANCE] && targets[i][T_MOVE_STOP]) {
+         distance = targets[i][T_DISTANCE ];
+         moveStop = targets[i][T_MOVE_STOP];
+
+         if (distance && moveStop) {
             if (open.type == OP_BUY) {
-               if (Bid >= open.price + targets[i][T_DISTANCE] * pUnit) {
-                  stopPrice = NormalizeDouble(open.price + targets[i][T_MOVE_STOP] * pUnit, Digits);
+               if (Bid >= open.price + distance * pUnit) {
+                  stopPrice = NormalizeDouble(open.price + moveStop * pUnit, Digits);
                   if (open.stopLoss < stopPrice) {
-                     if (IsLogDebug()) logDebug("ProcessTargets(4)  target "+ (i+1) +" (+"+ _int(targets[i][T_DISTANCE]) +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
+                     if (IsLogDebug()) logDebug("ProcessTargets(4)  target "+ (i+1) +" (+"+ distance +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
                      if (!MoveStop(stopPrice)) return(false);
                   }
                   break;
                }
             }
-            else if (Ask <= open.price - targets[i][T_DISTANCE] * pUnit) {
-               stopPrice = NormalizeDouble(open.price - targets[i][T_MOVE_STOP] * pUnit, Digits);
+            else if (Ask <= open.price - distance * pUnit) {
+               stopPrice = NormalizeDouble(open.price - moveStop * pUnit, Digits);
                if (open.stopLoss > stopPrice) {
-                  if (IsLogDebug()) logDebug("ProcessTargets(5)  target "+ (i+1) +" (+"+ _int(targets[i][T_DISTANCE]) +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
+                  if (IsLogDebug()) logDebug("ProcessTargets(5)  target "+ (i+1) +" (+"+ distance +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
                   if (!MoveStop(stopPrice)) return(false);
                }
                break;
@@ -715,24 +723,75 @@ bool ProcessTargets() {
 /**
  * Close a partial amount of the open position.
  *
- * @param  double remainder - required remaining open lotsize
+ * @param  double lots - lots to close
  *
  * @return bool - success status
  */
-bool TakePartialProfit(double remainder) {
-   if (!open.ticket)                return(!catch("TakePartialProfit(1)  no open position found: open.ticket=0", ERR_ILLEGAL_STATE));
-   if (LE(open.lots, remainder, 2)) return(!catch("TakePartialProfit(2)  cannot take profit of ticket #"+ open.ticket +": open-lots="+ NumberToStr(open.lots, ".+") +" <= required remaining-lots="+ NumberToStr(remainder, ".+"), ERR_RUNTIME_ERROR));
+bool TakePartialProfit(double lots) {
+   if (last_error != NULL) return(false);
+   if (!open.ticket)       return(!catch("TakePartialProfit(1)  no open position found: open.ticket=0", ERR_ILLEGAL_STATE));
+   if (open.lots < lots)   return(!catch("TakePartialProfit(2)  cannot close "+ NumberToStr(lots, ".+") +" lots of ticket #"+ open.ticket +" with "+ NumberToStr(open.lots, ".+") +" open lots", ERR_INVALID_PARAMETER));
 
+   // close the specified lot size
    int oe[];
-   if (!OrderCloseEx(open.ticket, open.lots-remainder, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
+   if (!OrderCloseEx(open.ticket, lots, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
 
-   open.ticket = oe.RemainingTicket(oe);
-   if (open.ticket > 0) {
-      open.lots = oe.RemainingLots(oe);
+   datetime closeTime       = oe.CloseTime(oe);
+   double   closePrice      = oe.ClosePrice(oe);
+   int      remainingTicket = oe.RemainingTicket(oe);
+   double   origSlippage    = open.slippage;
+
+   // update the original ticket
+   open.lots        = lots;
+   open.slippage   += oe.Slippage(oe);
+   open.swap        = oe.Swap(oe);
+   open.commission  = oe.Commission(oe);
+   open.grossProfit = oe.Profit(oe);
+   open.netProfit   = open.grossProfit + open.swap + open.commission;
+   open.netProfitP  = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+   open.runupP      = MathMax(open.runupP, open.netProfitP);
+   open.drawdownP   = MathMin(open.drawdownP, open.netProfitP);
+   open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+
+   if (!MovePositionToHistory(closeTime, closePrice, Bid, !remainingTicket)) return(false);
+
+   // track/update a remaining new ticket
+   if (remainingTicket > 0) {
+      SelectTicket(remainingTicket, "TakePartialProfit(3)");
+      open.ticket      = remainingTicket;
+      open.lots        = OrderLots();
+      open.slippage    = origSlippage;
+      open.swap        = NormalizeDouble(OrderSwap(), 2);
+      open.commission  = OrderCommission();
+      open.grossProfit = OrderProfit();
+      open.netProfit   = open.grossProfit + open.swap + open.commission;
+      open.netProfitP  = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
    }
 
-   if (test.onPartialClosePause) Tester.Pause("TakePartialProfit(3)");
-   return(true);
+   // update PnL stats
+   instance.openNetProfit  = open.netProfit;
+   instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
+   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
+   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+
+   instance.openNetProfitP  = open.netProfitP;
+   instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
+   instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
+   instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
+
+   instance.openSigProfitP  = open.sigProfitP;
+   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
+   instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
+   instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
+
+   if (__isChart) {
+      SS.OpenLots();
+      SS.TotalProfit();
+      SS.ProfitStats();
+   }
+
+   if (test.onPartialClosePause) Tester.Pause("TakePartialProfit(4)");
+   return(!catch("TakePartialProfit(5)"));
 }
 
 
@@ -744,7 +803,8 @@ bool TakePartialProfit(double remainder) {
  * @return bool - success status
  */
 bool MoveStop(double newStop) {
-   if (!open.ticket) return(!catch("MoveStop(1)  no open position found: open.ticket=0", ERR_ILLEGAL_STATE));
+   if (last_error != NULL) return(false);
+   if (!open.ticket)       return(!catch("MoveStop(1)  no open position found: open.ticket=0", ERR_ILLEGAL_STATE));
 
    int oe[];
    if (!OrderModifyEx(open.ticket, open.price, newStop, open.takeProfit, NULL, CLR_OPEN_STOPLOSS, NULL, oe)) return(!SetLastError(oe.Error(oe)));

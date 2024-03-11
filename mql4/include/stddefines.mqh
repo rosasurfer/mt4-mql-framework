@@ -267,9 +267,9 @@ double  N_INF;                                                    // -1.#INF: ne
 #define MODE_HISTORY           1
 
 
-// ids to control the order selection stack; see OrderPush(), OrderPop()
-#define O_PUSH                 1
-#define O_POP                  2
+// flags to control order selection; see SelectTicket()
+#define O_SAVE_CURRENT         1                // TRUE (MQL4 doesn't support constant booleans)
+#define O_RESTORE              1                // TRUE
 
 
 // default order display colors
