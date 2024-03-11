@@ -171,7 +171,7 @@ bool Recorder.ValidateInputs(bool isTest) {
          recorder.mode = RECORDER_OFF;
          EA.Recorder   = sValue;
       }
-      else if (sValue == "on" ) {
+      else if (sValue == "on") {
          recorder.mode = RECORDER_ON;
          EA.Recorder   = sValue;
       }
@@ -205,7 +205,7 @@ bool Recorder.ValidateInputs(bool isTest) {
             // logical metric validation
             bool ready;
             int error = GetMT4SymbolDefinition(metricId, ready, symbol, description, group, digits, baseValue, multiplier);
-            if (error != NULL) {
+            if (IsError(error)) {
                if (error == ERR_INVALID_INPUT_PARAMETER) return(!Recorder.onInputError("Recorder.ValidateInputs(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id "+ metricId +")"));
                return(false);                            // a runtime error (already raised)
             }
@@ -267,15 +267,21 @@ bool Recorder.init() {
       suffix                      = ", "+ PeriodDescription() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
       recorder.defaultDescription = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                           // sizeof(SYMBOL.description) = 64 chars (szchar)
       recorder.defaultGroup       = StrTrimRight(StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH));
-      recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
-      recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               return(false);
+      recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) { recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF); return(false); }
+      recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               { recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF); return(false); }
 
-      // create an internal metric for AccountEquity()
       if (recorder.mode == RECORDER_ON) {
-         if (GetMT4SymbolDefinition(NULL, ready, symbol, descr, group, digits, baseValue, multiplier) != NULL) return(false);
+         // create an internal metric for AccountEquity()
+         int error = GetMT4SymbolDefinition(NULL, ready, symbol, descr, group, digits, baseValue, multiplier);
+         if (IsError(error)) {
+            if (error == ERR_INVALID_INPUT_PARAMETER) catch("Recorder.init(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id \"on\")", error);
+            recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
+            return(false);
+         }
+
          if (ready) {
             if (symbol == "") {
-               symbol = Recorder.GetNextMetricSymbol(); if (!StringLen(symbol)) return(false);
+               symbol = Recorder.GetNextMetricSymbol(); if (!StringLen(symbol)) { recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF); return(false); }
             }
             if (descr == "") {
                suffix = ", "+ PeriodDescription() +", AccountEquity in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
@@ -284,7 +290,7 @@ bool Recorder.init() {
             if (group == "") {
                group = recorder.defaultGroup;
             }
-            if (!Recorder.AddMetric(1, true, symbol, descr, group, 2, 0, 1)) return(false);
+            if (!Recorder.AddMetric(1, true, symbol, descr, group, 2, 0, 1)) { recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF); return(false); }
             recorder.stdEquitySymbol = symbol;
          }
       }
@@ -296,7 +302,12 @@ bool Recorder.init() {
          if (!metric.enabled[id]) continue;
 
          if (!metric.ready[id]) {
-            if (GetMT4SymbolDefinition(id, ready, symbol, descr, group, digits, baseValue, multiplier) != NULL) return(false);
+            error = GetMT4SymbolDefinition(id, ready, symbol, descr, group, digits, baseValue, multiplier);
+            if (IsError(error)) {
+               if (error == ERR_INVALID_INPUT_PARAMETER) catch("Recorder.init(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id "+ id +")", error);
+               recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
+               return(false);
+            }
             if (!ready) continue;
             metric.ready      [id] = true;
             metric.symbol     [id] = symbol;
@@ -313,12 +324,17 @@ bool Recorder.init() {
          if (          !metric.multiplier [id])  metric.multiplier [id] = 1;
 
          if (IsRawSymbol(metric.symbol[id], recorder.hstDirectory)) {
-            if (__isTesting) return(!catch("Recorder.init(2)  symbol \""+ metric.symbol[id] +"\" already exists", ERR_ILLEGAL_STATE));
-            // TODO: update existing properties
+            if (__isTesting) {
+               recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);                                            // TODO: instead update existing properties
+               return(!catch("Recorder.init(3)  symbol \""+ metric.symbol[id] +"\" already exists", ERR_ILLEGAL_STATE));
+            }
          }
          else {
             int symbolId = CreateRawSymbol(metric.symbol[id], metric.description[id], metric.group[id], metric.digits[id], AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
-            if (symbolId < 0) return(false);
+            if (symbolId < 0) {
+               recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
+               return(false);
+            }
          }
       }
       recorder.initialized = true;

@@ -103,6 +103,7 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 
 #include <ea/functions/log/GetLogFilename.mqh>
 
+#include <ea/functions/metric/GetMT4SymbolDefinition.mqh>
 #include <ea/functions/metric/RecordMetrics.mqh>
 
 #include <ea/functions/status/ShowStatus.mqh>

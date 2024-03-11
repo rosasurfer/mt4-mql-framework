@@ -15,6 +15,7 @@
 int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descr, string &group, int &digits, double &baseValue, int &multiplier) {
    string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
    string descrSuffix="", sBarModel="";
+
    switch (__Test.barModel) {
       case MODE_EVERYTICK:     sBarModel = "EveryTick"; break;
       case MODE_CONTROLPOINTS: sBarModel = "ControlP";  break;
