@@ -373,7 +373,7 @@ bool GetZigZagData(int bar, int &trend, int &reversal) {
 
 
 /**
- * Update client-side order status and PnL.
+ * Update order status and PnL.
  *
  * @param  int signal [optional] - trade signal causing the call (default: none, update status only)
  *

@@ -217,7 +217,7 @@ bool IsStopSignal(double &signal[]) {
 bool StartInstance(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!signal[SIG_TRADE])                                                 return(!catch("StartInstance(2)  "+ instance.name +" invalid parameter SIG_TRADE: "+ _int(signal[SIG_TRADE]), ERR_INVALID_PARAMETER));
+   if (!signal[SIG_OP])                                                    return(!catch("StartInstance(2)  "+ instance.name +" invalid signal parameter SIG_OP: 0", ERR_INVALID_PARAMETER));
 
    return(SaveStatus());
 }
