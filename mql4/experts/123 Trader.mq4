@@ -42,27 +42,27 @@ extern string Instance.ID                    = "";          // instance to load 
                                                                                                                            //  +-------------+-------------+-------------+
 extern string ___a__________________________ = "=== Signal settings ===";                                                  //  |  @rraygun   | @matrixebiz |  @optojay   |
 extern int    ZigZag.Periods                 = 6;                                                                          //  +-------------+-------------+-------------+
-extern int    MinBreakoutDistance            = 0;           // in pip (0: breakout at semaphore level)                     //  |   off (0)   |   off (0)   |   off (0)   |
+extern int    MinBreakoutDistance            = 0;           // in punits (0: breakout at semaphore level)                  //  |   off (0)   |   off (0)   |   off (0)   |
                                                                                                                            //  +-------------+-------------+-------------+
 extern string ___b__________________________ = "=== Trade settings ===";                                                   //  |             |             |             |
 extern double Lots                           = 0.1;                                                                        //  |             |             |             |
                                                                                                                            //  +-------------+-------------+-------------+
-extern int    Initial.TakeProfit             = 100;         // in pip (0: partial targets only or no TP)                   //  |  off (60)   |  on (100)   |  on (400)   |
-extern int    Initial.StopLoss               = 50;          // in pip (0: moving stops only or no SL                       //  |  on (100)   |  on (100)   |  on (100)   |
+extern int    Initial.TakeProfit             = 100;         // in punits (0: partial targets only or no TP)                //  |  off (60)   |  on (100)   |  on (400)   |
+extern int    Initial.StopLoss               = 50;          // in punits (0: moving stops only or no SL                    //  |  on (100)   |  on (100)   |  on (100)   |
 extern bool   CloseOnOppositeBreakout        = false;                                                                      //  |   off (0)   |   off (0)   |   off (0)   |
-extern string ___c__________________________ = "";                                                                         //  +-------------+-------------+-------------+
-extern int    Target1                        = 0;           // in pip (0: no target)                                       //  |      50     |      10     |      20     |
+                                                                                                                           //  +-------------+-------------+-------------+
+extern int    Target1                        = 0;           // in punits (0: no target)                                    //  |      50     |      10     |      20     |
 extern int    Target1.ClosePercent           = 0;           // size to close (0: nothing)                                  //  |      0%     |     10%     |     25%     |
-extern int    Target1.MoveStopTo             = 1;           // in pip (0: don't move stop)                                 //  |       1     |       1     |     -50     | 1: Breakeven-Stop (OpenPrice + 1 pip)
-extern string ___d__________________________ = "";                                                                         //  +-------------+-------------+-------------+
+extern int    Target1.MoveStopTo             = 1;           // in punits (0: don't move stop)                              //  |       1     |       1     |     -50     | 1: Breakeven-Stop (OpenPrice + 1 pip)
+                                                                                                                           //  +-------------+-------------+-------------+
 extern int    Target2                        = 0;           // ...                                                         //  |             |      20     |      40     |
 extern int    Target2.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     25%     |
 extern int    Target2.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |     -30     |
-extern string ___e__________________________ = "";                                                                         //  +-------------+-------------+-------------+
+                                                                                                                           //  +-------------+-------------+-------------+
 extern int    Target3                        = 0;           // ...                                                         //  |             |      40     |     100     |
 extern int    Target3.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target3.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      20     |
-extern string ___f__________________________ = "";                                                                         //  +-------------+-------------+-------------+
+                                                                                                                           //  +-------------+-------------+-------------+
 extern int    Target4                        = 0;           // ...                                                         //  |             |      60     |     200     |
 extern int    Target4.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target4.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      -      |
@@ -231,7 +231,7 @@ bool IsEntrySignal(double &signal[]) {
       if (!open.ticket) {
          if (trend == OP_LONG) {
             if (s1Level <= s3Level && Bid == High[0] && Bid > s2Level) {
-               entryLevel = NormalizeDouble(s2Level + MinBreakoutDistance*Pip, Digits);
+               entryLevel = NormalizeDouble(s2Level + MinBreakoutDistance * pUnit, Digits);
                if (Bid >= entryLevel) /*&&*/ if (High[iHighest(NULL, NULL, MODE_LOW, s3Bar-1, 1)] < entryLevel) {
                   signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
                   signal[SIG_PRICE] = NormalizeDouble(entryLevel + 1*Point, Digits);
@@ -241,7 +241,7 @@ bool IsEntrySignal(double &signal[]) {
          }
          else {
             if (s1Level >= s3Level && Bid==Low[0] && Bid < s2Level) {
-               entryLevel = NormalizeDouble(s2Level - MinBreakoutDistance*Pip, Digits);
+               entryLevel = NormalizeDouble(s2Level - MinBreakoutDistance * pUnit, Digits);
                if (Bid <= entryLevel) /*&&*/ if (Low[iLowest(NULL, NULL, MODE_LOW, s3Bar-1, 1)] > entryLevel) {
                   signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
                   signal[SIG_PRICE] = NormalizeDouble(entryLevel - 1*Point, Digits);
@@ -660,15 +660,17 @@ bool ProcessTargets() {
    // process configured profit targets
    for (int i=sizeTargets-1; i >= 0; i--) {
       if (targets[i][T_DISTANCE] && targets[i][T_CLOSE_PCT]) {
+         if (open.lots <= targets[i][T_REMAINDER]) break;
+
          if (open.type == OP_BUY) {
             if (Bid >= open.price + targets[i][T_DISTANCE] * pUnit) {
-               debug("ProcessTargets(2)  target "+ (i+1) +" reached, taking partial profit...");
+               if (IsLogDebug()) logDebug("ProcessTargets(2)  target "+ (i+1) +" (+"+ _int(targets[i][T_DISTANCE]) +") reached, taking "+ NumberToStr(NormalizeDouble(open.lots-targets[i][T_REMAINDER], 2), ".+")  +" lot partial profit");
                if (!TakePartialProfit(targets[i][T_REMAINDER])) return(false);
                break;
             }
          }
          else if (Ask <= open.price - targets[i][T_DISTANCE] * pUnit) {
-            debug("ProcessTargets(3)  target "+ (i+1) +" reached, taking partial profit...");
+            if (IsLogDebug()) logDebug("ProcessTargets(3)  target "+ (i+1) +" (+"+ _int(targets[i][T_DISTANCE]) +") reached, taking "+ NumberToStr(NormalizeDouble(open.lots-targets[i][T_REMAINDER], 2), ".+")  +" lot partial profit");
             if (!TakePartialProfit(targets[i][T_REMAINDER])) return(false);
             break;
          }
@@ -686,21 +688,19 @@ bool ProcessTargets() {
                if (Bid >= open.price + targets[i][T_DISTANCE] * pUnit) {
                   stopPrice = NormalizeDouble(open.price + targets[i][T_MOVE_STOP] * pUnit, Digits);
                   if (open.stopLoss < stopPrice) {
-                     if (IsLogDebug()) logDebug("ProcessTargets(4)  target "+ (i+1) +" (+"+ DoubleToStr(targets[i][T_DISTANCE], pDigits) +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
+                     if (IsLogDebug()) logDebug("ProcessTargets(4)  target "+ (i+1) +" (+"+ _int(targets[i][T_DISTANCE]) +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
                      if (!MoveStop(stopPrice)) return(false);
                   }
                   break;
                }
             }
-            else {
-               if (Ask <= open.price - targets[i][T_DISTANCE] * pUnit) {
-                  stopPrice = NormalizeDouble(open.price - targets[i][T_MOVE_STOP] * pUnit, Digits);
-                  if (open.stopLoss > stopPrice) {
-                     if (IsLogDebug()) logDebug("ProcessTargets(5)  target "+ (i+1) +" (+"+ DoubleToStr(targets[i][T_DISTANCE], pDigits) +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
-                     if (!MoveStop(stopPrice)) return(false);
-                  }
-                  break;
+            else if (Ask <= open.price - targets[i][T_DISTANCE] * pUnit) {
+               stopPrice = NormalizeDouble(open.price - targets[i][T_MOVE_STOP] * pUnit, Digits);
+               if (open.stopLoss > stopPrice) {
+                  if (IsLogDebug()) logDebug("ProcessTargets(5)  target "+ (i+1) +" (+"+ _int(targets[i][T_DISTANCE]) +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
+                  if (!MoveStop(stopPrice)) return(false);
                }
+               break;
             }
          }
       }
@@ -713,25 +713,25 @@ bool ProcessTargets() {
 
 
 /**
- * Close a partial amount of the open position. If the position is smaller then the required open lotsize after profit
- * taking, then this function does nothing.
+ * Close a partial amount of the open position.
  *
  * @param  double remainder - required remaining open lotsize
  *
  * @return bool - success status
  */
 bool TakePartialProfit(double remainder) {
-   if (!open.ticket) return(!catch("TakePartialProfit(1)  no open position found: open.ticket=0", ERR_ILLEGAL_STATE));
+   if (!open.ticket)                return(!catch("TakePartialProfit(1)  no open position found: open.ticket=0", ERR_ILLEGAL_STATE));
+   if (LE(open.lots, remainder, 2)) return(!catch("TakePartialProfit(2)  cannot take profit of ticket #"+ open.ticket +": open-lots="+ NumberToStr(open.lots, ".+") +" <= required remaining-lots="+ NumberToStr(remainder, ".+"), ERR_RUNTIME_ERROR));
 
-   if (open.lots > remainder) {
-      int oe[];
-      if (!OrderCloseEx(open.ticket, open.lots-remainder, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
+   int oe[];
+   if (!OrderCloseEx(open.ticket, open.lots-remainder, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
 
-      open.ticket = oe.RemainingTicket(oe);
-      if (open.ticket > 0) {
-         open.lots = oe.RemainingLots(oe);
-      }
+   open.ticket = oe.RemainingTicket(oe);
+   if (open.ticket > 0) {
+      open.lots = oe.RemainingLots(oe);
    }
+
+   if (test.onPartialClosePause) Tester.Pause("TakePartialProfit(3)");
    return(true);
 }
 

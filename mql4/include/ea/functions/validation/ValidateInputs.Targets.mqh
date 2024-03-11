@@ -49,20 +49,20 @@ bool ValidateInputs.Targets() {
 
    // pre-calculate partial profits
    int closedPercent  = ifInt(Target1, Target1.ClosePercent, 0);
-   double t1Close     = MathMin(Lots, NormalizeLots(Lots * closedPercent/100));
-   double t1Remainder = NormalizeDouble(Lots - t1Close, 2);
+   double t1Close     = MathMin(Lots, Lots * closedPercent/100);
+   double t1Remainder = NormalizeLots(NormalizeDouble(Lots - t1Close, 2), "", MODE_CEIL);
 
    closedPercent     += ifInt(Target2, Target2.ClosePercent, 0);
-   double t2Close     = MathMin(t1Remainder, NormalizeLots(Lots * closedPercent/100 - t1Close));
-   double t2Remainder = NormalizeDouble(t1Remainder - t2Close, 2);
+   double t2Close     = MathMin(t1Remainder, Lots * closedPercent/100 - t1Close);
+   double t2Remainder = NormalizeLots(NormalizeDouble(Lots - t1Close - t2Close, 2), "", MODE_CEIL);
 
    closedPercent     += ifInt(Target3, Target3.ClosePercent, 0);
-   double t3Close     = MathMin(t2Remainder, NormalizeLots(Lots * closedPercent/100 - t1Close - t2Close));
-   double t3Remainder = NormalizeDouble(t2Remainder - t3Close, 2);
+   double t3Close     = MathMin(t2Remainder, Lots * closedPercent/100 - t1Close - t2Close);
+   double t3Remainder = NormalizeLots(NormalizeDouble(Lots - t1Close - t2Close - t3Close, 2), "", MODE_CEIL);
 
    closedPercent     += ifInt(Target4, Target4.ClosePercent, 0);
-   double t4Close     = MathMin(t3Remainder, NormalizeLots(Lots * closedPercent/100 - t1Close - t2Close - t3Close));
-   double t4Remainder = NormalizeDouble(t3Remainder - t4Close, 2);
+   double t4Close     = MathMin(t3Remainder, Lots * closedPercent/100 - t1Close - t2Close - t3Close);
+   double t4Remainder = NormalizeLots(NormalizeDouble(Lots - t1Close - t2Close - t3Close - t4Close, 2), "", MODE_CEIL);
 
    // convert targets to array to optimize later processing
    targets[0][T_DISTANCE ] = Target1;
