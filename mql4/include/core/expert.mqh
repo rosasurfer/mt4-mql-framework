@@ -535,7 +535,6 @@ bool initGlobals() {
    __Test.barModel = ec_TestBarModel(__ExecutionContext);
 
    PipDigits      = Digits & (~1);
-   PipPoints      = MathRound(MathPow(10, Digits & 1));
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PipPriceFormat = ",'R."+ PipDigits;
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
@@ -570,12 +569,12 @@ string initMarketInfo() {
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message + "Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
                                                                                message = message +" Bars="        + Bars                                      +";";
-   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)/PipPoints;      message = message +" Spread="      + DoubleToStr(spread, 1)                    +";";
+   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)*Point/Pip;      message = message +" Spread="      + DoubleToStr(spread, 1)                    +";";
                                                                                message = message +" Digits="      + Digits                                    +";";
    double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")                 +";";
    double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")                +";";
-   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)/PipPoints;   message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")              +";";
-   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +" FreezeLevel=" + NumberToStr(freezeLevel, ".+")            +";";
+   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)*Point/Pip;   message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")              +";";
+   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)*Point/Pip; message = message +" FreezeLevel=" + NumberToStr(freezeLevel, ".+")            +";";
    double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
    double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
    double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
@@ -585,8 +584,7 @@ string initMarketInfo() {
    double   lotSize        = MarketInfo(Symbol(), MODE_LOTSIZE);
    double   marginHedged   = MarketInfo(Symbol(), MODE_MARGINHEDGED);
             marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%") +";";
-   double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
-   double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R") +";";
+   double   pipValue       = MathDiv(tickValue, MathDiv(tickSize, Pip));       message = message +" PipValue="    + NumberToStr(pipValue, "R.2+") +";";
    double   commission     = GetCommission();                                  message = message +" Commission="  + ifString(!commission, "0.00;", DoubleToStr(commission, 2));
    if (NE(commission, 0)) {
       double pComm = MathDiv(commission, MathDiv(tickValue, tickSize));        message = message +" ("            + DoubleToStr(pComm/pUnit, pDigits) +" "+ spUnit +");";

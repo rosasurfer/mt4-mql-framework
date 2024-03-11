@@ -4,7 +4,6 @@
  *
  * TODO:
  *  - rewrite "Margin hedged" display: from 0% (full reduction) to 100% (no reduction)
- *  - replace usage of PipPoints by PipTicks
  *  - implement MarketInfoEx()
  *  - change "Pip value" to "Pip/Point/Tick value"
  *  - normalize quote prices to best-matching unit (pip/index point)
@@ -210,10 +209,9 @@ int UpdateInstrumentInfos() {
    // calculate required values
    double tickSize    = MarketInfo(symbol, MODE_TICKSIZE);
    double tickValue   = MarketInfo(symbol, MODE_TICKVALUE);
-   double pointValue  = MathDiv(tickValue, MathDiv(tickSize, Point));
-   double pipValue    = PipPoints * pointValue;
-   double stopLevel   = MarketInfo(symbol, MODE_STOPLEVEL)  /PipPoints;
-   double freezeLevel = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints;
+   double pipValue    = MathDiv(tickValue, MathDiv(tickSize, Pip));
+   double stopLevel   = MarketInfo(symbol, MODE_STOPLEVEL)   * Point/Pip;
+   double freezeLevel = MarketInfo(symbol, MODE_FREEZELEVEL) * Point/Pip;
 
    double adr         = GetADR(); if (!adr && last_error && last_error!=ERS_TERMINAL_NOT_YET_READY) return(last_error);
    double volaPerADR  = adr/Close[0] * 100;                   // instrument volatility per ADR move in percent
@@ -232,7 +230,7 @@ int UpdateInstrumentInfos() {
    double maintncLeverage = MathDiv(lotValue, marginMaintnc);
    double marginHedged    = MathDiv(MarketInfo(symbol, MODE_MARGINHEDGED), lotSize) * 100;
 
-   double spreadPip       = MarketInfo(symbol, MODE_SPREAD)/PipPoints;
+   double spreadPip       = MarketInfo(symbol, MODE_SPREAD) * Point/Pip;
    double commission      = GetCommission();
    double commissionPip   = NormalizeDouble(MathDiv(commission, pipValue), Max(Digits+1, 2));
 

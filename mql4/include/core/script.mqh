@@ -81,7 +81,6 @@ bool initGlobals() {
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
    PipDigits      = Digits & (~1);
-   PipPoints      = MathRound(MathPow(10, Digits & 1));
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PipPriceFormat = ",'R."+ PipDigits;
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");

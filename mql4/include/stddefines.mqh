@@ -23,14 +23,13 @@ bool     __STATUS_HISTORY_UPDATE;                                 // History-Upd
 bool     __STATUS_OFF;                                            // flag for user-land program termination, if TRUE the program's main functions are no longer executed: onInit|onTick|onStart|onDeinit
 int      __STATUS_OFF.reason;                                     // reason of program termination (error code)
 
-double   Pip;                                                     // 1 pip of the current symbol (e.g. 0.0001)
-int      PipDigits;                                               // digits (number of decimal places) of 1 pip, always even (in above case 4)
-int      PipPoints;                                               // number of MQL Points of 1 pip (1 or 10)
+double   Pip;                                                     // 1 pip of the current symbol (e.g. 0.0001 for EURUSD, 0.01 for DAX)
+int      PipDigits;                                               // number of decimal places of 1 pip, always even (e.g. 4 for EURUSD, 2 for DAX)
 string   PriceFormat="", PipPriceFormat="";                       // price format strings of the current symbol for NumberToStr()
 
-double   pUnit;                                                   // 1 price unit of the current symbol (1 pip for Forex or 1 full point otherwise, e.g. 1.00 for DAX)
-int      pDigits;                                                 // digits (number of decimal places) to represent a unit amount (1 or 2, in above case 2)
-string   spUnit = "";                                             // string representation of the unit ("pip" or "point")
+double   pUnit;                                                   // 1 price unit of the current symbol (1 pip for Forex or 1 full point otherwise, e.g. 0.0001 for EURUSD, 1.00 for DAX)
+int      pDigits;                                                 // number of decimal places to represent a unit amount (1 or 2, e.g. 1 for EURUSD, 2 for DAX)
+string   spUnit = "";                                             // string representation of the unit (e.g. "pip" for EURUSD, "point" for DAX)
 
 int      Ticks;                                                   // number of times MQL::start() was called (value survives init cycles, also in indicators)
 datetime Tick.time;                                               // server time of the last received tick
@@ -52,16 +51,16 @@ int      __orderStack[];                                          // FIFO stack 
 
 #define HTML_TAB                    "&Tab;"                       // tab                                 \t
 #define HTML_BRVBAR                 "&brvbar;"                    // broken vertical bar                 |
-#define HTML_PIPE                   "&brvbar;"                    // pipe (alias of HTML_BRVBAR)         |        // MQL4 bug: string constants cannot reference each other
-#define HTML_LCUB                   "&lcub;"                      // left curly brace                    {        //
-#define HTML_RCUB                   "&rcub;"                      // right curly brace                   }        //
-#define HTML_APOS                   "&apos;"                      // apostrophe                          '        //
-#define HTML_SQUOTE                 "&apos;"                      // single quote (alias of HTML_APOS)   '        // ...
+#define HTML_PIPE                   "&brvbar;"                    // pipe (alias of HTML_BRVBAR)         |        MQL4 bug: string constants cannot reference each other
+#define HTML_LCUB                   "&lcub;"                      // left curly brace                    {
+#define HTML_RCUB                   "&rcub;"                      // right curly brace                   }
+#define HTML_APOS                   "&apos;"                      // apostrophe                          '
+#define HTML_SQUOTE                 "&apos;"                      // single quote (alias of HTML_APOS)   '        MQL4 bug: string constants cannot reference each other
 #define HTML_DQUOTE                 "&quot;"                      // double quote                        "
 #define HTML_COMMA                  "&comma;"                     // comma                               ,
 
 
-// Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar
+// Special math variables, defined in init()
 double  NaN;                                                      // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPUs immer negativ)
 double  P_INF;                                                    //  1.#INF: positive infinity
 double  N_INF;                                                    // -1.#INF: negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
