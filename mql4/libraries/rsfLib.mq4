@@ -5607,8 +5607,8 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
  *
  * @return bool - success status
  *
- * Notes: (1) On partial close the final values for swap, commission and profit may be spread by the trade server over both
- *            the partially closed and the remaining ticket.
+ * Notes: (1) On partial close swap and commission values may be split by the trade server between both partially closed and
+ *            remaining ticket.
  *
  *        (2) Typical trade operation errors returned in oe.Error are:
  *            - ERR_INVALID_TICKET:           the specified ticket is not an order ticket

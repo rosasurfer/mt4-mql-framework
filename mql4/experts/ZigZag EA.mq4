@@ -254,12 +254,12 @@ extern int    ZigZag.Periods                 = 30;
 extern string ___c__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
 
-extern int    Initial.TakeProfit             = 0;                    // in pip (0: partial targets only or no TP)
-extern int    Initial.StopLoss               = 0;                    // in pip (0: moving stops only or no SL
+extern int    Initial.TakeProfit             = 0;                    // in punits (0: partial targets only or no TP)
+extern int    Initial.StopLoss               = 0;                    // in punits (0: moving stops only or no SL
 
-extern int    Target1                        = 0;                    // in pip (0: no target)
+extern int    Target1                        = 0;                    // in punits (0: no target)
 extern int    Target1.ClosePercent           = 0;                    // size to close (0: nothing)
-extern int    Target1.MoveStopTo             = 1;                    // in pip (0: don't move stop)
+extern int    Target1.MoveStopTo             = 1;                    // in punits (0: don't move stop)
 extern int    Target2                        = 0;                    // ...
 extern int    Target2.ClosePercent           = 30;                   //
 extern int    Target2.MoveStopTo             = 0;                    //
