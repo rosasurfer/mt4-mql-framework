@@ -11,7 +11,7 @@ string OpenPositionDescr() {
    sValues[ 2] = "toTicket="    + open.toTicket;
    sValues[ 3] = "type="        + OperationTypeDescription(open.type);
    sValues[ 4] = "lots="        + NumberToStr(open.lots, ".+");
-   sValues[ 5] = "part="        + NumberToStr(open.part, ".+");
+   sValues[ 5] = "part="        + NumberToStr(open.part, ".1+");
    sValues[ 6] = "openTime="    +   ifString(!open.time, "0", TimeToStr(open.time, TIME_FULL));
    sValues[ 7] = "openPrice="   + NumberToStr(open.price, PriceFormat);
    sValues[ 8] = "openPriceSig="+   ifString(!open.priceSig,     "0", NumberToStr(open.priceSig,   PriceFormat));

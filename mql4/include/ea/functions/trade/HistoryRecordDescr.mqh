@@ -23,9 +23,9 @@ string HistoryRecordDescr(int index) {
    sValues[H_CLOSETIME     ] = "closeTime="    +   TimeToStr(StrToInteger(sValues[H_CLOSETIME     ]), TIME_FULL);
    sValues[H_CLOSEPRICE    ] = "closePrice="   +  NumberToStr(StrToDouble(sValues[H_CLOSEPRICE    ]), PriceFormat);
    sValues[H_CLOSEPRICE_SIG] = "closePriceSig="+  NumberToStr(StrToDouble(sValues[H_CLOSEPRICE_SIG]), PriceFormat);
-   sValues[H_SLIPPAGE      ] = "slippage="     +                          sValues[H_SLIPPAGE      ];
-   sValues[H_SWAP          ] = "swap="         +                          sValues[H_SWAP          ];
-   sValues[H_COMMISSION    ] = "commission="   +                          sValues[H_COMMISSION    ];
+   sValues[H_SLIPPAGE      ] = "slippage="     +  NumberToStr(StrToDouble(sValues[H_SLIPPAGE      ]), ".+");
+   sValues[H_SWAP          ] = "swap="         +  NumberToStr(StrToDouble(sValues[H_SWAP          ]), ".+");
+   sValues[H_COMMISSION    ] = "commission="   +  NumberToStr(StrToDouble(sValues[H_COMMISSION    ]), ".+");
    sValues[H_GROSSPROFIT   ] = "grossProfit="  +                          sValues[H_GROSSPROFIT   ];
    sValues[H_NETPROFIT     ] = "netProfit="    +                          sValues[H_NETPROFIT     ];
    sValues[H_NETPROFIT_P   ] = "netProfitP="   +                          sValues[H_NETPROFIT_P   ];

@@ -32,7 +32,7 @@ bool SaveStatus.OpenPosition(string file, bool fileExists) {
    WriteIniString(file, section, "open.netProfitP",   /*double  */ NumberToStr(open.netProfitP, ".1+"));
    WriteIniString(file, section, "open.runupP",       /*double  */ DoubleToStr(open.runupP, Digits));
    WriteIniString(file, section, "open.drawdownP",    /*double  */ DoubleToStr(open.drawdownP, Digits));
-   WriteIniString(file, section, "open.sigProfitP",   /*double  */ DoubleToStr(open.sigProfitP, Digits));
+   WriteIniString(file, section, "open.sigProfitP",   /*double  */ NumberToStr(open.sigProfitP, ".1+"));
    WriteIniString(file, section, "open.sigRunupP",    /*double  */ DoubleToStr(open.sigRunupP, Digits));
    WriteIniString(file, section, "open.sigDrawdownP", /*double  */ DoubleToStr(open.sigDrawdownP, Digits) + separator);
 

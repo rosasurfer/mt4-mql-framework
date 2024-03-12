@@ -557,7 +557,7 @@ string OrderLogMessage(int ticket) {
    int      digits      = MarketInfo(symbol, MODE_DIGITS);
    int      pipDigits   = digits & (~1);
    string   priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss!=0, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit!=0, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=\"", comment, "\"");
+   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(!stopLoss, "0", NumberToStr(stopLoss, priceFormat)), ", tp=", ifString(!takeProfit, "0", NumberToStr(takeProfit, priceFormat)), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", NumberToStr(commission, ".2+"), ", swap=", NumberToStr(swap, ".2+"), ", profit=", NumberToStr(profit, ".2+"), ", magicNumber=", magic, ", comment=\"", comment, "\"");
 
    if (OrderPop("OrderLogMessage(2)"))
       return(message);
