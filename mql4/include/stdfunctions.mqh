@@ -6577,12 +6577,13 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
       return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", intOr(error, ERR_SYMBOL_NOT_AVAILABLE))));
    }
 
-   lots = NormalizeDouble(lots, 2);
+   lots = NormalizeDouble(lots, 2);                      // prevent precision errors if parameter 'lots' is the result of a math operation
+   double multiple = NormalizeDouble(lots/lotstep, 8);   // prevent precision errors: 0.07/0.01 => 7.000000000000001 => MathCeil() returns 8.0
 
    switch (mode) {
-      case MODE_FLOOR:   lots = MathFloor(lots/lotstep) * lotstep; break;
-      case MODE_DEFAULT: lots = MathRound(lots/lotstep) * lotstep; break;
-      case MODE_CEIL:    lots = MathCeil (lots/lotstep) * lotstep; break;
+      case MODE_FLOOR:   lots = MathFloor(multiple) * lotstep; break;
+      case MODE_DEFAULT: lots = MathRound(multiple) * lotstep; break;
+      case MODE_CEIL:    lots = MathCeil (multiple) * lotstep; break;
 
       default:
          return(_EMPTY_VALUE(catch("NormalizeLots(2)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
