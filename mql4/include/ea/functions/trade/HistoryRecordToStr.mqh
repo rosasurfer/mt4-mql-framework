@@ -1,7 +1,7 @@
 /**
  * Return a string representation of a history record suitable for SaveStatus().
  *
- * @param  int index - index of the history record
+ * @param  int index - index of the record
  *
  * @return string
  */
@@ -35,5 +35,3 @@ string HistoryRecordToStr(int index) {
 
    return(StringConcatenate(ticket, ",", fromTicket, ",", toTicket, ",", type, ",", DoubleToStr(lots, 2), ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", DoubleToStr(openPriceSig, Digits), ",", DoubleToStr(stopLoss, Digits), ",", DoubleToStr(takeProfit, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(closePriceSig, Digits), ",", DoubleToStr(slippage, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2), ",", NumberToStr(netProfitP, ".1+"), ",", DoubleToStr(runupP, Digits), ",", DoubleToStr(drawdownP, Digits), ",", DoubleToStr(sigProfitP, Digits), ",", DoubleToStr(sigRunupP, Digits), ",", DoubleToStr(sigDrawdownP, Digits)));
 }
-
-
