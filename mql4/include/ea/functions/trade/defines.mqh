@@ -11,7 +11,7 @@ int      open.fromTicket;              // if partial position: the partially clo
 int      open.toTicket;                // if partial position: a remaining ticket from partially closing this ticket
 int      open.type;
 double   open.lots;
-double   open.part = 1;                // if partial position: this part's fractional size of the original size (value between 0..1)
+double   open.part = 1;                // if a partial position: the percentage size of the original size (between 0..1)
 datetime open.time;
 double   open.price;
 double   open.priceSig;                // signal price

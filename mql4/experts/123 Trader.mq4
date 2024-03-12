@@ -145,9 +145,11 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/functions/trade/CalculateMagicNumber.mqh>
 #include <ea/functions/trade/ComposePositionCloseMsg.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
+#include <ea/functions/trade/HistoryRecordDescr.mqh>
 #include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
 #include <ea/functions/trade/onPositionClose.mqh>
+#include <ea/functions/trade/OpenPositionDescr.mqh>
 
 #include <ea/functions/trade/signal/SignalOperationToStr.mqh>
 #include <ea/functions/trade/signal/SignalTypeToStr.mqh>
@@ -193,6 +195,9 @@ int onTick() {
       RecordMetrics();
    }
    return(last_error);
+
+   OpenPositionDescr();
+   HistoryRecordDescr(NULL);
 }
 
 
@@ -556,10 +561,10 @@ bool OpenPosition(double signal[]) {
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit(oe);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
-   open.runupP       = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
+   open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+   open.runupP       = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
    open.drawdownP    = open.runupP;
-   open.sigProfitP   = ifDouble(type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+   open.sigProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
    open.sigRunupP    = open.sigProfitP;
    open.sigDrawdownP = open.sigRunupP;
 
@@ -748,7 +753,7 @@ bool TakePartialProfit(double lots) {
    double   closePrice   = oe.ClosePrice(oe);
    double   origSlippage = open.slippage, openCloseRange;
 
-   // update the original ticket
+   // update the original ticket and move it to the history
    open.toTicket    = oe.RemainingTicket(oe);
    open.lots        = lots;
    open.part        = NormalizeDouble(open.lots/Lots, 8);
@@ -762,12 +767,11 @@ bool TakePartialProfit(double lots) {
    open.runupP      = MathMax(open.runupP, openCloseRange);
    open.drawdownP   = MathMin(open.drawdownP, openCloseRange);
    open.sigProfitP *= open.part;
-
    if (!MovePositionToHistory(closeTime, closePrice, Bid)) return(false);
 
    // track/update a remaining new ticket
    if (open.toTicket > 0) {
-      SelectTicket(open.toTicket, "TakePartialProfit(3)");
+      SelectTicket(open.toTicket, "TakePartialProfit(3)", O_SAVE_CURRENT);
       open.fromTicket  = open.ticket;
       open.ticket      = open.toTicket;
       open.toTicket    = NULL;
@@ -779,7 +783,8 @@ bool TakePartialProfit(double lots) {
       open.grossProfit = OrderProfit();
       open.netProfit   = open.grossProfit + open.swap + open.commission;
       open.netProfitP  = open.part * ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
-      open.sigProfitP *= open.part;
+      open.sigProfitP  = open.part * ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+      OrderPop("TakePartialProfit(4)");
    }
 
    // update PnL stats
@@ -803,9 +808,8 @@ bool TakePartialProfit(double lots) {
       SS.TotalProfit();
       SS.ProfitStats();
    }
-
-   if (test.onPartialClosePause) Tester.Pause("TakePartialProfit(4)");
-   return(!catch("TakePartialProfit(5)"));
+   if (test.onPartialClosePause) Tester.Pause("TakePartialProfit(5)");
+   return(!catch("TakePartialProfit(6)"));
 }
 
 
