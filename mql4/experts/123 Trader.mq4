@@ -442,9 +442,12 @@ bool UpdateStatus() {
 
    // update open position
    if (!SelectTicket(open.ticket, "UpdateStatus(1)")) return(false);
+   double exitPrice, exitPriceSig, openCloseRange;
+
    bool isClosed = (OrderCloseTime() != NULL);
    if (isClosed) {
-      double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
+      exitPrice = OrderClosePrice();
+      exitPriceSig = exitPrice;
    }
    else {
       exitPrice = ifDouble(open.type==OP_BUY, Bid, Ask);
@@ -454,12 +457,14 @@ bool UpdateStatus() {
    open.commission   = OrderCommission();
    open.grossProfit  = OrderProfit();
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
-   open.runupP       = MathMax(open.runupP, open.netProfitP);
-   open.drawdownP    = MathMin(open.drawdownP, open.netProfitP); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-   open.sigProfitP   = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
-   open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
-   open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
+   openCloseRange    = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
+   open.netProfitP   = open.part * openCloseRange; if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+   open.runupP       = MathMax(open.runupP, openCloseRange);
+   open.drawdownP    = MathMin(open.drawdownP, openCloseRange);
+   openCloseRange    = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
+   open.sigProfitP   = open.part * openCloseRange;
+   open.sigRunupP    = MathMax(open.sigRunupP, openCloseRange);
+   open.sigDrawdownP = MathMin(open.sigDrawdownP, openCloseRange);
 
    if (isClosed) {
       int error;
@@ -540,6 +545,7 @@ bool OpenPosition(double signal[]) {
    open.ticket       = ticket;
    open.type         = type;
    open.lots         = oe.Lots(oe);
+   open.part         = 1;
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
    open.priceSig     = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid);
@@ -606,19 +612,21 @@ bool ClosePosition(double signal[]) {
 
    datetime closeTime     = oe.CloseTime(oe);
    double   closePrice    = oe.ClosePrice(oe);
-   double   closePriceSig = ifDouble(sigType==SIG_TYPE_STOPLOSS || sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid);
+   double   closePriceSig = ifDouble(sigType==SIG_TYPE_STOPLOSS || sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid), openCloseRange;
 
    open.slippage    += oe.Slippage(oe);
    open.swap         = oe.Swap(oe);
    open.commission   = oe.Commission(oe);
    open.grossProfit  = oe.Profit(oe);
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
-   open.runupP       = MathMax(open.runupP, open.netProfitP);
-   open.drawdownP    = MathMin(open.drawdownP, open.netProfitP); open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
-   open.sigProfitP   = ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
-   open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
-   open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
+   openCloseRange    = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+   open.netProfitP   = open.part * openCloseRange + (open.swap + open.commission)/PointValue(open.lots);
+   open.runupP       = MathMax(open.runupP, openCloseRange);
+   open.drawdownP    = MathMin(open.drawdownP, openCloseRange);
+   openCloseRange    = ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
+   open.sigProfitP   = open.part * openCloseRange;
+   open.sigRunupP    = MathMax(open.sigRunupP, openCloseRange);
+   open.sigDrawdownP = MathMin(open.sigDrawdownP, openCloseRange);
 
    if (!MovePositionToHistory(closeTime, closePrice, closePriceSig)) return(false);
 
@@ -738,7 +746,7 @@ bool TakePartialProfit(double lots) {
 
    datetime closeTime    = oe.CloseTime(oe);
    double   closePrice   = oe.ClosePrice(oe);
-   double   origSlippage = open.slippage;
+   double   origSlippage = open.slippage, openCloseRange;
 
    // update the original ticket
    open.toTicket    = oe.RemainingTicket(oe);
@@ -749,10 +757,11 @@ bool TakePartialProfit(double lots) {
    open.commission  = oe.Commission(oe);
    open.grossProfit = oe.Profit(oe);
    open.netProfit   = open.grossProfit + open.swap + open.commission;
-   open.netProfitP  = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
-   open.runupP      = MathMax(open.runupP, open.netProfitP);
-   open.drawdownP   = MathMin(open.drawdownP, open.netProfitP);
-   open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+   openCloseRange   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+   open.netProfitP  = open.part * openCloseRange + (open.swap + open.commission)/PointValue(open.lots);
+   open.runupP      = MathMax(open.runupP, openCloseRange);
+   open.drawdownP   = MathMin(open.drawdownP, openCloseRange);
+   open.sigProfitP *= open.part;
 
    if (!MovePositionToHistory(closeTime, closePrice, Bid)) return(false);
 
@@ -769,7 +778,8 @@ bool TakePartialProfit(double lots) {
       open.commission  = OrderCommission();
       open.grossProfit = OrderProfit();
       open.netProfit   = open.grossProfit + open.swap + open.commission;
-      open.netProfitP  = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+      open.netProfitP  = open.part * ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swap + open.commission)/PointValue(open.lots);
+      open.sigProfitP *= open.part;
    }
 
    // update PnL stats
