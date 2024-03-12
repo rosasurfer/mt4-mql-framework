@@ -18,6 +18,8 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    int i = ArrayRange(history, 0);
    ArrayResize(history, i+1);
    history[i][H_TICKET        ] = open.ticket;
+   history[i][H_FROM_TICKET   ] = open.fromTicket;
+   history[i][H_TO_TICKET     ] = open.toTicket;
    history[i][H_TYPE          ] = open.type;
    history[i][H_LOTS          ] = open.lots;
    history[i][H_OPENTIME      ] = open.time;
@@ -52,6 +54,8 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
       instance.openSigProfitP = 0;
 
       open.ticket       = NULL;
+      open.fromTicket   = NULL;
+      open.toTicket     = NULL;
       open.type         = NULL;
       open.lots         = NULL;
       open.time         = NULL;

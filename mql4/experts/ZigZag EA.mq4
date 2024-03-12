@@ -61,17 +61,17 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - re-usable exit management (on 123 Trader)
+ *  - re-usable exit management
+ *     Partial Closes: stats are messed up
+ *      number of trades count partial closes as single trade
+ *      punit stats are about 10 times higher, e.g. sigTotalProfit is 1219.0 instead of -119.2
  *
- *     test/validate target management
- *      Initial.TakeProfit       OK
- *      Initial.StopLoss         OK
- *      BreakevenStop            OK
- *      TargetStops              OK
- *      PartialTakeProfit
+ *      separate storage for partial closes
+ *
+ *
  *
  *     implement open.nextTarget
- *
+ *     store order comments for more better reading of from/toTicket
  *     dynamic distances (multiples of ranges)
  *     trailing stop
  *
@@ -1490,7 +1490,7 @@ bool SynchronizeStatus() {
             double   netProfitP   = grossProfitP + MathDiv(swap + commission, PointValue(lots));
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" orphaned closed position found: #"+ ticket +", adding to instance...");
-            if (IsEmpty(AddHistoryRecord(ticket, lots, openType, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
+            if (IsEmpty(AddHistoryRecord(ticket, 0, 0, lots, openType, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
             instance.closedNetProfit  += netProfit;

@@ -3,6 +3,8 @@
  * inserted at the correct position. No data is overwritten.
  *
  * @param  int      ticket
+ * @param  int      fromTicket
+ * @param  int      toTicket
  * @param  int      type
  * @param  double   lots
  * @param  datetime openTime
@@ -27,7 +29,7 @@
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int AddHistoryRecord(int ticket, int type, double lots, datetime openTime, double openPrice, double openPriceSig, double stopLoss, double takeProfit, datetime closeTime, double closePrice, double closePriceSig, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double runupP, double drawdownP, double sigProfitP, double sigRunupP, double sigDrawdownP) {
+int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double lots, datetime openTime, double openPrice, double openPriceSig, double stopLoss, double takeProfit, datetime closeTime, double closePrice, double closePriceSig, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double runupP, double drawdownP, double sigProfitP, double sigRunupP, double sigDrawdownP) {
    int size = ArrayRange(history, 0);
 
    // resolve the array index to insert at
@@ -56,6 +58,8 @@ int AddHistoryRecord(int ticket, int type, double lots, datetime openTime, doubl
 
    // insert the new data
    history[i][H_TICKET        ] = ticket;
+   history[i][H_FROM_TICKET   ] = fromTicket;
+   history[i][H_TO_TICKET     ] = toTicket;
    history[i][H_TYPE          ] = type;
    history[i][H_LOTS          ] = lots;
    history[i][H_OPENTIME      ] = openTime;

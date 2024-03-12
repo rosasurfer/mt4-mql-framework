@@ -54,6 +54,7 @@ int onInit() {
    if (IsLastError()) return(last_error);
    if (__isTesting)   return(catch("onInit(1)  you can't test me", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
+   // parse the specified file
    int initReason = ProgramInitReason();
    if (initReason==IR_USER || initReason==IR_PARAMETERS || initReason==IR_TEMPLATE) {
       if (ValidateInputs()) {
@@ -63,16 +64,7 @@ int onInit() {
          ParseFileContent(content);
       }
    }
-   return(last_error);
-}
 
-
-/**
- * Initialization postprocessing. Not called if the init handler returned an error.
- *
- * @return int - error status
- */
-int afterInit() {
    // enable routing of chart commands
    string label = "EA.status";
    if (ObjectFind(label) != 0) {
@@ -80,7 +72,7 @@ int afterInit() {
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       ObjectSetText(label, "1|");
    }
-   return(catch("afterInit(1)"));
+   return(catch("onInit(1)"));
 }
 
 
@@ -289,7 +281,7 @@ bool ParseTestReport(string content) {
 
       if (sType=="buy" || sType=="sell") {               // position open: add new history record
          iType = ifInt(sType=="buy", OP_BUY, OP_SELL);
-         if (AddHistoryRecord(iTicket, iType, dLots, dtTime, dPrice, 0, dStopLoss, dTakeProfit, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == EMPTY) return(false);
+         if (AddHistoryRecord(iTicket, 0, 0, iType, dLots, dtTime, dPrice, 0, dStopLoss, dTakeProfit, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == EMPTY) return(false);
       }
       else {                                             // position close: update existing history record
          if (!UpdateHistoryRecord(iTicket, dStopLoss, dTakeProfit, dtTime, dPrice, dProfit)) return(false);
