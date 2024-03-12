@@ -29,10 +29,13 @@ double   open.sigRunupP;               // max signal runup distance
 double   open.sigDrawdownP;            //
 
 
-// trade history data
+// fully closed trades
 double history[][24];
 
-#define H_TICKET            0          // indexes of history[]
+// partially closed trades: when all parts of a position are closed a single aggregated trade is added to history[]
+double partialClose[][24];
+
+#define H_TICKET            0          // indexes of history[] and partialClose[]
 #define H_FROM_TICKET       1
 #define H_TO_TICKET         2
 #define H_TYPE              3

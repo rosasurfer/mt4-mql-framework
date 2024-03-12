@@ -1,18 +1,17 @@
 /**
- * Move the position referenced in 'open.*' to the trade history. Assumes the position is now closed.
+ * Move the position referenced in 'open.*' to the trade history. The position must be closed. If the position is fully
+ * closed open order data is reset. If the position is partially closed open order data is not reset.
  *
- * @param  datetime closeTime            - close time
- * @param  double   closePrice           - close price
- * @param  double   closePriceSig        - signal close price
- * @param  bool     resetOpen [optional] - whether to reset open position data (default: yes)
+ * @param  datetime closeTime     - close time
+ * @param  double   closePrice    - close price
+ * @param  double   closePriceSig - signal close price
  *
  * @return bool - success status
  */
-bool MovePositionToHistory(datetime closeTime, double closePrice, double closePriceSig, bool resetOpen = true) {
-   resetOpen = resetOpen!=0;
+bool MovePositionToHistory(datetime closeTime, double closePrice, double closePriceSig) {
    if (last_error != NULL)                return(false);
    if (instance.status != STATUS_TRADING) return(!catch("MovePositionToHistory(1)  "+ instance.name +" cannot process position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!open.ticket)                      return(!catch("MovePositionToHistory(2)  "+ instance.name +" no position found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
+   if (!open.ticket)                      return(!catch("MovePositionToHistory(2)  "+ instance.name +" position not found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
 
    // add data to history
    int i = ArrayRange(history, 0);
@@ -44,15 +43,12 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
 
    // update PnL stats
    instance.closedNetProfit  += open.netProfit;
-   instance.closedNetProfitP += open.netProfitP;
-   instance.closedSigProfitP += open.sigProfitP;
+   instance.closedNetProfitP += open.netProfitP;         // TODO: if partial close these p-values are incorrect/too large
+   instance.closedSigProfitP += open.sigProfitP;         // ...
 
    // reset open position data
+   bool resetOpen = !open.toTicket;
    if (resetOpen) {
-      instance.openNetProfit  = 0;
-      instance.openNetProfitP = 0;
-      instance.openSigProfitP = 0;
-
       open.ticket       = NULL;
       open.fromTicket   = NULL;
       open.toTicket     = NULL;

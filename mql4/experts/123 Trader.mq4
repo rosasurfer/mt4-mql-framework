@@ -736,13 +736,12 @@ bool TakePartialProfit(double lots) {
    int oe[];
    if (!OrderCloseEx(open.ticket, lots, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
 
-   datetime closeTime       = oe.CloseTime(oe);
-   double   closePrice      = oe.ClosePrice(oe);
-   int      remainingTicket = oe.RemainingTicket(oe);
-   double   origSlippage    = open.slippage;
+   datetime closeTime    = oe.CloseTime(oe);
+   double   closePrice   = oe.ClosePrice(oe);
+   double   origSlippage = open.slippage;
 
    // update the original ticket
-   open.toTicket    = remainingTicket;
+   open.toTicket    = oe.RemainingTicket(oe);
    open.lots        = lots;
    open.slippage   += oe.Slippage(oe);
    open.swap        = oe.Swap(oe);
@@ -754,13 +753,14 @@ bool TakePartialProfit(double lots) {
    open.drawdownP   = MathMin(open.drawdownP, open.netProfitP);
    open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
 
-   if (!MovePositionToHistory(closeTime, closePrice, Bid, !remainingTicket)) return(false);
+   if (!MovePositionToHistory(closeTime, closePrice, Bid)) return(false);
 
    // track/update a remaining new ticket
-   if (remainingTicket > 0) {
-      SelectTicket(remainingTicket, "TakePartialProfit(3)");
+   if (open.toTicket > 0) {
+      SelectTicket(open.toTicket, "TakePartialProfit(3)");
       open.fromTicket  = open.ticket;
-      open.ticket      = remainingTicket;
+      open.ticket      = open.toTicket;
+      open.toTicket    = NULL;
       open.lots        = OrderLots();
       open.slippage    = origSlippage;
       open.swap        = NormalizeDouble(OrderSwap(), 2);

@@ -1169,8 +1169,8 @@ bool UpdateStatus() {
    // update PnL stats
    instance.openNetProfit  = open.netProfit;
    instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
-   instance.maxNetProfit   = MathMax(instance.maxNetProfit,    instance.totalNetProfit);
-   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown,  instance.totalNetProfit);
+   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
+   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
    instance.openNetProfitP  = open.netProfitP;
    instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;

@@ -474,21 +474,23 @@ bool UpdateStatus(int signal = NULL) {
 
    // update PnL numbers
    instance.openNetProfit  = open.netProfit;
-   instance.openNetProfitP = open.netProfitP;
-   instance.openSigProfitP = open.sigProfitP;
+   instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
+   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
+   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
 
-   instance.totalNetProfit  = instance.openNetProfit  + instance.closedNetProfit;
+   instance.openNetProfitP  = open.netProfitP;
    instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
-   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
-   if (__isChart) SS.TotalProfit();
-
-   instance.maxNetProfit    = MathMax(instance.maxNetProfit,    instance.totalNetProfit);
-   instance.maxNetDrawdown  = MathMin(instance.maxNetDrawdown,  instance.totalNetProfit);
    instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
    instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
+
+   instance.openSigProfitP  = open.sigProfitP;
+   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
    instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
    instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
-   if (__isChart) SS.ProfitStats();
+   if (__isChart) {
+      SS.TotalProfit();
+      SS.ProfitStats();
+   }
 
    if (positionClosed || signal)
       return(SaveStatus());
