@@ -7,10 +7,11 @@ int order.slippage = 1;                // in MQL points
 
 // open order data
 int      open.ticket;
-int      open.fromTicket;              // a partially closed ticket this ticket is a remainder from, if the case
-int      open.toTicket;                // a remaining ticket from partially closing this ticket, if the case
+int      open.fromTicket;              // if partial position: the partially closed ticket this ticket is a remainder from
+int      open.toTicket;                // if partial position: a remaining ticket from partially closing this ticket
 int      open.type;
 double   open.lots;
+double   open.part = 1;                // if partial position: this part's fractional size of the original size (value between 0..1)
 datetime open.time;
 double   open.price;
 double   open.priceSig;                // signal price

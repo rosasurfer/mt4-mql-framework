@@ -9,10 +9,11 @@ bool ReadStatus.OpenPosition(string file) {
 
    string section = "Open positions";
    open.ticket       = GetIniInt   (file, section, "open.ticket"      );     // int      open.ticket       = 123456
-   open.fromTicket   = GetIniInt   (file, section, "open.fromTicket"  );     // int      open.fromTicket   = 0
+   open.fromTicket   = GetIniInt   (file, section, "open.fromTicket"  );     // int      open.fromTicket   = 123457
    open.toTicket     = GetIniInt   (file, section, "open.toTicket"    );     // int      open.toTicket     = 0
    open.type         = GetIniInt   (file, section, "open.type"        );     // int      open.type         = 1
    open.lots         = GetIniDouble(file, section, "open.lots"        );     // double   open.lots         = 0.01
+   open.part         = GetIniDouble(file, section, "open.part",      1);     // double   open.part         = 0.33333333
    open.time         = GetIniInt   (file, section, "open.time"        );     // datetime open.time         = 1624924800 (Mon, 2021.05.12 13:22:34)
    open.price        = GetIniDouble(file, section, "open.price"       );     // double   open.price        = 1.24363
    open.priceSig     = GetIniDouble(file, section, "open.priceSig"    );     // double   open.priceSig     = 1.24363

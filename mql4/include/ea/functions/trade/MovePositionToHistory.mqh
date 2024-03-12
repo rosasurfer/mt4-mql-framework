@@ -13,6 +13,8 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    if (instance.status != STATUS_TRADING) return(!catch("MovePositionToHistory(1)  "+ instance.name +" cannot process position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (!open.ticket)                      return(!catch("MovePositionToHistory(2)  "+ instance.name +" position not found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
 
+   bool isPartialClose = (open.toTicket > 0);
+
    // add data to history
    int i = ArrayRange(history, 0);
    ArrayResize(history, i+1);
@@ -47,13 +49,13 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    instance.closedSigProfitP += open.sigProfitP;         // ...
 
    // reset open position data
-   bool resetOpen = !open.toTicket;
-   if (resetOpen) {
+   if (!isPartialClose) {
       open.ticket       = NULL;
       open.fromTicket   = NULL;
       open.toTicket     = NULL;
       open.type         = NULL;
       open.lots         = NULL;
+      open.part         = 1;
       open.time         = NULL;
       open.price        = NULL;
       open.priceSig     = NULL;
@@ -73,7 +75,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    }
 
    if (__isChart) {
-      if (resetOpen) SS.OpenLots();
+      if (!isPartialClose) SS.OpenLots();
       CalculateStats();
       SS.ClosedTrades();
    }

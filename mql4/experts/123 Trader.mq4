@@ -743,6 +743,7 @@ bool TakePartialProfit(double lots) {
    // update the original ticket
    open.toTicket    = oe.RemainingTicket(oe);
    open.lots        = lots;
+   open.part        = NormalizeDouble(open.lots/Lots, 8);
    open.slippage   += oe.Slippage(oe);
    open.swap        = oe.Swap(oe);
    open.commission  = oe.Commission(oe);
@@ -762,6 +763,7 @@ bool TakePartialProfit(double lots) {
       open.ticket      = open.toTicket;
       open.toTicket    = NULL;
       open.lots        = OrderLots();
+      open.part        = NormalizeDouble(open.lots/Lots, 8);
       open.slippage    = origSlippage;
       open.swap        = NormalizeDouble(OrderSwap(), 2);
       open.commission  = OrderCommission();
