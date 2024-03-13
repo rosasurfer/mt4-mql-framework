@@ -45,8 +45,8 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
 
    // update PnL stats
    instance.closedNetProfit  += open.netProfit;
-   instance.closedNetProfitP += open.netProfitP;         // TODO: if partial close these p-values are incorrect/too large
-   instance.closedSigProfitP += open.sigProfitP;         // ...
+   instance.closedNetProfitP += open.netProfitP;
+   instance.closedSigProfitP += open.sigProfitP;
 
    // reset open position data
    if (!isPartialClose) {

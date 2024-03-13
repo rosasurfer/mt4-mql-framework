@@ -50,19 +50,19 @@ bool ValidateInputs.Targets() {
    // pre-calculate partial profits
    int closePercent   = ifInt(Target1, Target1.ClosePercent, 0);
    double t1Close     = Lots * closePercent/100;
-   double t1Remainder = NormalizeLots(Lots - t1Close, "", MODE_CEIL);
+   double t1Remainder = NormalizeLots(Lots - t1Close);
 
    closePercent       = ifInt(Target2, Target2.ClosePercent, 0);
    double t2Close     = Lots * closePercent/100;
-   double t2Remainder = NormalizeLots(MathMax(0, Lots - t1Close - t2Close), "", MODE_CEIL);
+   double t2Remainder = NormalizeLots(MathMax(0, Lots - t1Close - t2Close));
 
    closePercent       = ifInt(Target3, Target3.ClosePercent, 0);
    double t3Close     = Lots * closePercent/100;
-   double t3Remainder = NormalizeLots(MathMax(0, Lots - t1Close - t2Close - t3Close), "", MODE_CEIL);
+   double t3Remainder = NormalizeLots(MathMax(0, Lots - t1Close - t2Close - t3Close));
 
    closePercent       = ifInt(Target4, Target4.ClosePercent, 0);
    double t4Close     = Lots * closePercent/100;
-   double t4Remainder = NormalizeLots(MathMax(0, Lots - t1Close - t2Close - t3Close - t4Close), "", MODE_CEIL);
+   double t4Remainder = NormalizeLots(MathMax(0, Lots - t1Close - t2Close - t3Close - t4Close));
 
    // convert targets to array to optimize later processing
    targets[0][T_DISTANCE ] = Target1;
