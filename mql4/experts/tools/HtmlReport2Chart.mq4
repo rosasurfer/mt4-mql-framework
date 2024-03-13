@@ -282,7 +282,7 @@ bool ParseTestReport(string content) {
 
       if (sType=="buy" || sType=="sell") {               // position open: add new history record
          iType = ifInt(sType=="buy", OP_BUY, OP_SELL);
-         if (AddHistoryRecord(iTicket, 0, 0, iType, dLots, dtTime, dPrice, 0, dStopLoss, dTakeProfit, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == EMPTY) return(false);
+         if (AddHistoryRecord(iTicket, 0, 0, iType, dLots, 1, dtTime, dPrice, 0, dStopLoss, dTakeProfit, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == EMPTY) return(false);
       }
       else {                                             // position close: update existing history record
          if (!UpdateHistoryRecord(iTicket, dStopLoss, dTakeProfit, dtTime, dPrice, dProfit)) return(false);

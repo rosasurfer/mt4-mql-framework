@@ -8,44 +8,21 @@
 bool ToggleTradeHistory(bool soundOnNoTrades = true) {
    soundOnNoTrades = soundOnNoTrades!=0;
 
-   // toggle current status
-   bool showHistory = !status.showTradeHistory;
+   // toggle status
+   bool show = !status.showTradeHistory;
 
-   // ON: display closed trades
-   if (showHistory) {
-      int trades = ShowTradeHistory();
-      if (trades == -1) return(false);
-      if (!trades) {                                        // Without any closed trades the status must be reset to enable
-         showHistory = false;                               // the "off" section to clear existing markers.
+   if (show) {
+      int trades = ShowTradeHistory(true);
+      if (!trades) {                                        // Without any closed trades status must be set to 'off'
+         show = false;                                      // and existing markers are cleared.
          if (soundOnNoTrades) PlaySoundEx("Plonk.wav");
       }
    }
+   if (!show) trades = ShowTradeHistory(false);
+   if (trades < 0) return(false);
 
-   // OFF: remove all closed trade markers (from this EA or another program)
-   if (!showHistory) {
-      for (int i=ObjectsTotal()-1; i >= 0; i--) {
-         string name = ObjectName(i);
-
-         if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name) == OBJ_ARROW) {
-               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR);
-
-               if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
-               }
-               else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_CLOSED) continue;
-               }
-            }
-            else if (ObjectType(name) != OBJ_TREND) continue;
-            ObjectDelete(name);
-         }
-      }
-   }
-
-   // store current status
-   status.showTradeHistory = showHistory;
+   // store status
+   status.showTradeHistory = show;
    StoreVolatileStatus();
 
    if (__isTesting) WindowRedraw();

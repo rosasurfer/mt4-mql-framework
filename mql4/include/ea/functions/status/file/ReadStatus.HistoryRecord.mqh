@@ -1,25 +1,30 @@
 /**
- * Parse the string representation of a closed order record and store the parsed data.
+ * Parse the string representation of a closed trade record and store the parsed data.
  *
- * @param  string key   - order key
- * @param  string value - order string to parse
+ * @param  string key   - trade key
+ * @param  string value - the string representation to parse
  *
- * @return int - index the data record was inserted at or EMPTY (-1) in case of errors
+ * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
 int ReadStatus.HistoryRecord(string key, string value) {
-   if (IsLastError())                    return(EMPTY);
-   if (!StrStartsWithI(key, "history.")) return(_EMPTY(catch("ReadStatus.HistoryRecord(1)  "+ instance.name +" illegal history record key \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
+   if (last_error != NULL) return(EMPTY);
 
-   // history.i=ticket,fromTicket,toTicket,type,lots,openTime,openPrice,openPriceSig,stopLoss,takeProfit,closeTime,closePrice,closePriceSig,slippage,swap,commission,grossProfit,netProfit,netProfitP,runupP,drawdownP,sigProfitP,sigRunupP,sigDrawdownP
+   bool isPartial;
+   if      (StrStartsWith(key, "full.")) isPartial = false;
+   else if (StrStartsWith(key, "part.")) isPartial = true;
+   else return(_EMPTY(catch("ReadStatus.HistoryRecord(1)  "+ instance.name +" illegal history key \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
+
+   // [full|part].i=ticket,fromTicket,toTicket,type,lots,part,openTime,openPrice,openPriceSig,stopLoss,takeProfit,closeTime,closePrice,closePriceSig,slippage,swap,commission,grossProfit,netProfit,netProfitP,runupP,drawdownP,sigProfitP,sigRunupP,sigDrawdownP
    string values[];
-   string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(_EMPTY(catch("ReadStatus.HistoryRecord(2)  "+ instance.name +" illegal key of history record: \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
-   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.HistoryRecord(3)  "+ instance.name +" illegal number of fields in history record: "+ ArraySize(values), ERR_INVALID_FILE_FORMAT)));
+   string sId = StrRightFrom(key, "."); if (!StrIsDigits(sId))      return(_EMPTY(catch("ReadStatus.HistoryRecord(2)  "+ instance.name +" illegal key format of history record: \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
+   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.HistoryRecord(3)  "+ instance.name +" illegal number of fields in history record \""+ key +"\": "+ ArraySize(values), ERR_INVALID_FILE_FORMAT)));
 
    int      ticket        = StrToInteger(values[H_TICKET        ]);
    int      fromTicket    = StrToInteger(values[H_FROM_TICKET   ]);
    int      toTicket      = StrToInteger(values[H_TO_TICKET     ]);
    int      type          = StrToInteger(values[H_TYPE          ]);
    double   lots          =  StrToDouble(values[H_LOTS          ]);
+   double   part          =  StrToDouble(values[H_PART          ]);
    datetime openTime      = StrToInteger(values[H_OPENTIME      ]);
    double   openPrice     =  StrToDouble(values[H_OPENPRICE     ]);
    double   openPriceSig  =  StrToDouble(values[H_OPENPRICE_SIG ]);
@@ -40,5 +45,5 @@ int ReadStatus.HistoryRecord(string key, string value) {
    double   sigRunupP     =  StrToDouble(values[H_SIG_RUNUP_P   ]);
    double   sigDrawdownP  =  StrToDouble(values[H_SIG_DRAWDOWN_P]);
 
-   return(AddHistoryRecord(ticket, fromTicket, toTicket, type, lots, openTime, openPrice, openPriceSig, stopLoss, takeProfit, closeTime, closePrice, closePriceSig, slippage, swap, commission, grossProfit, netProfit, netProfitP, runupP, drawdownP, sigProfitP, sigRunupP, sigDrawdownP));
+   return(AddHistoryRecord(ticket, fromTicket, toTicket, type, lots, part, openTime, openPrice, openPriceSig, stopLoss, takeProfit, closeTime, closePrice, closePriceSig, slippage, swap, commission, grossProfit, netProfit, netProfitP, runupP, drawdownP, sigProfitP, sigRunupP, sigDrawdownP));
 }

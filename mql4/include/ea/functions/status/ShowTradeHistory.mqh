@@ -1,31 +1,83 @@
 /**
  * Display closed trades.
  *
+ * @param  bool show - display status:
+ *                      TRUE  - show history
+ *                      FALSE - hide displayed history
+ *
  * @return int - number of displayed trades or EMPTY (-1) in case of errors
  */
-int ShowTradeHistory() {
+int ShowTradeHistory(bool show) {
+   show = show!=0;
+   int displayedTrades = 0;
+
+   if (show) {
+      int trades1 = _ShowTradeHistory(history);      if (IsEmpty(trades1)) return(EMPTY);
+      int trades2 = _ShowTradeHistory(partialClose); if (IsEmpty(trades2)) return(EMPTY);
+      displayedTrades = trades1 + trades2;
+   }
+   else {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_CLOSED) continue;
+               }
+            }
+            else if (ObjectType(name) != OBJ_TREND) continue;
+            ObjectDelete(name);
+         }
+      }
+   }
+
+   if (!catch("ShowTradeHistory(1)"))
+      return(displayedTrades);
+   return(EMPTY);
+}
+
+
+/**
+ * Helper function. Displays closed trades from the specified trade array.
+ *
+ * @param  double array[] - closed trades
+ *
+ * @return int - number of displayed trades or EMPTY (-1) in case of errors
+ */
+int _ShowTradeHistory(double array[][]) {
+   int displayedTrades = 0;
+
    string openLabel="", lineLabel="", closeLabel="", sOpenPrice="", sClosePrice="", sOperations[]={"buy", "sell"};
    int iOpenColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, iLineColors[]={Blue, Red};
 
-   // process the local trade history
-   int orders = ArrayRange(history, 0), closedTrades = 0;
-
+   // process array[]
+   int orders = ArrayRange(array, 0);
    for (int i=0; i < orders; i++) {
-      int      ticket     = history[i][H_TICKET    ];
-      int      type       = history[i][H_TYPE      ];
-      double   lots       = history[i][H_LOTS      ];
-      datetime openTime   = history[i][H_OPENTIME  ];
-      double   openPrice  = history[i][H_OPENPRICE ];
-      datetime closeTime  = history[i][H_CLOSETIME ];
-      double   closePrice = history[i][H_CLOSEPRICE];
+      int      ticket     = array[i][H_TICKET    ];
+      int      toTicket   = array[i][H_TO_TICKET ];
+      int      type       = array[i][H_TYPE      ];
+      double   lots       = array[i][H_LOTS      ];
+      double   part       = array[i][H_PART      ];
+      datetime openTime   = array[i][H_OPENTIME  ];
+      double   openPrice  = array[i][H_OPENPRICE ];
+      datetime closeTime  = array[i][H_CLOSETIME ];
+      double   closePrice = array[i][H_CLOSEPRICE];
 
-      if (status.activeMetric == METRIC_SIG_UNITS) {
-         openPrice  = history[i][H_OPENPRICE_SIG ];
-         closePrice = history[i][H_CLOSEPRICE_SIG];
-      }
+      if (part==1 && toTicket)           continue;             // skip history[] trades aggregated from partialClose[]
       if (!closeTime)                    continue;             // skip open tickets (should not happen)
       if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
 
+      if (status.activeMetric == METRIC_SIG_UNITS) {
+         openPrice  = array[i][H_OPENPRICE_SIG ];
+         closePrice = array[i][H_CLOSEPRICE_SIG];
+      }
       sOpenPrice  = NumberToStr(openPrice, PriceFormat);
       sClosePrice = NumberToStr(closePrice, PriceFormat);
 
@@ -58,10 +110,10 @@ int ShowTradeHistory() {
       ObjectSet    (closeLabel, OBJPROP_TIME1,  closeTime);
       ObjectSet    (closeLabel, OBJPROP_PRICE1, closePrice);
       ObjectSetText(closeLabel, instance.name);
-      closedTrades++;
+      displayedTrades++;
    }
 
-   if (!catch("ShowTradeHistory(1)"))
-      return(closedTrades);
+   if (!catch("_ShowTradeHistory(1)"))
+      return(displayedTrades);
    return(EMPTY);
 }

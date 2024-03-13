@@ -687,7 +687,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "Tunnel.Definition",          /*string  */ Tunnel.Definition);
    WriteIniString(file, section, "Donchian.Periods",           /*int     */ Donchian.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
+   if (!SaveStatus.Targets(file, fileExists)) return(false);   // StopLoss and TakeProfit targets
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
@@ -700,8 +700,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
    WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")" + separator);
-
+   WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
 
    // open/closed trades

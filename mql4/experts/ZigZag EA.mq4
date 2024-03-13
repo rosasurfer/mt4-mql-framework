@@ -62,18 +62,21 @@
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - re-usable exit management
- *     Partial Closes: stats are messed up
- *      number of trades count partial closes as single trade
- *      punit stats are about 10 times higher, e.g. sigTotalProfit is 1219.0 instead of -119.2
+ *     Partial Closes
+ *      fix stats
+ *       p-stats are wrong (about 10 times higher)
  *
- *      separate storage for partial closes
- *
+ *      merge HistoryRecordToStr() and HistoryRecordDescr()
  *
  *
  *     implement open.nextTarget
- *     store order comments for more better reading of from/toTicket
  *     dynamic distances (multiples of ranges)
  *     trailing stop
+ *
+ *  - can the recorder be made optional?
+ *     yes: remove GetMT4SymbolDefinition() from Expander
+ *  - remove test reporting to the Expander
+ *
  *
  *  - tests
  *     storage in folder per strategy
@@ -82,11 +85,13 @@
  *     on no connection/old terminal: indicator of the same name to load test into chart
  *
  *  - self-optimization
- *     13.07.2008: @tdion, inspiration for @rraygun   https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool#    statt MACD(16,18) MACD(ALMA(38,46))
- *     16.12.2009: @rraygun                           https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks#
- *     16.11.2017: @john-davis, 100%/month on H1      https://www.mql5.com/en/blogs/post/714509#
- *                                                    https://www.mql5.com/en/market/product/26332#
- *                                                    https://www.mql5.com/en/code/19392#         (comments by @alphatrading)
+ *     04.10.2007 Self-Optimization in MT4               https://www.mql5.com/en/articles/1467
+ *     13.07.2008: @tdion, inspiration for @rraygun      https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool#    statt MACD(16,18) MACD(ALMA(38,46))
+ *     16.12.2009: @rraygun                              https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks#
+ *     16.11.2017: @john-davis, 100%/month on H1         https://www.mql5.com/en/blogs/post/714509#
+ *                                                       https://www.mql5.com/en/market/product/26332#
+ *                                                       https://www.mql5.com/en/code/19392#         (comments by @alphatrading)
+ *     05.10.2018 Self-Optimization in MT5               https://www.mql5.com/en/articles/4917
  *
  *     heat maps: https://www.forexfactory.com/thread/post/13834307#post13834307
  *     ML:        https://www.forexfactory.com/thread/516785-machine-learning-with-algotraderjo
@@ -1309,7 +1314,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.StopAt",            /*string  */ Instance.StopAt);
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
+   if (!SaveStatus.Targets(file, fileExists)) return(false);   // StopLoss and TakeProfit targets
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
@@ -1464,7 +1469,7 @@ bool SynchronizeStatus() {
       if (!UpdateStatus()) return(false);
    }
 
-   // detect and handle orphaned open positions
+   // detect and handle orphaned closed trades
    orders = OrdersHistoryTotal();
    for (i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;       // FALSE: the visible history range was modified in another thread
@@ -1490,7 +1495,7 @@ bool SynchronizeStatus() {
             double   netProfitP   = grossProfitP + MathDiv(swap + commission, PointValue(lots));
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" orphaned closed position found: #"+ ticket +", adding to instance...");
-            if (IsEmpty(AddHistoryRecord(ticket, 0, 0, lots, openType, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
+            if (IsEmpty(AddHistoryRecord(ticket, 0, 0, lots, 1, openType, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippage, swap, commission, grossProfit, netProfit, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
             instance.closedNetProfit  += netProfit;

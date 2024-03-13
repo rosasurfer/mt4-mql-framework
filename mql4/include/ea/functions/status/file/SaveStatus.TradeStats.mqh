@@ -14,7 +14,7 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
 
    // [Stats: net in money]
    string section = "Stats: net in money";
-   WriteIniString(file, section, "openProfit",          /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 21)                        +"; after all costs in "+ AccountCurrency());
+   WriteIniString(file, section, "openProfit",          /*double  */ StrPadRight(DoubleToStr(instance.openNetProfit, 2), 21)              +"; after all costs in "+ AccountCurrency());
    WriteIniString(file, section, "closedProfit",        /*double  */ DoubleToStr(instance.closedNetProfit, 2));
    WriteIniString(file, section, "totalProfit",         /*double  */ DoubleToStr(instance.totalNetProfit, 2));
    WriteIniString(file, section, "minProfit",           /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
@@ -22,11 +22,11 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
 
    // [Stats: net in punits]
    section = "Stats: net in "+ spUnit;
-   WriteIniString(file, section, "openProfit",          /*double  */ StrPadRight(NumberToStr(instance.openNetProfitP/pUnit, ".1+"), 21)     +"; after all costs in "+ spUnit);
-   WriteIniString(file, section, "closedProfit",        /*double  */ NumberToStr(instance.closedNetProfitP/pUnit, ".1+"));
-   WriteIniString(file, section, "totalProfit",         /*double  */ NumberToStr(instance.totalNetProfitP /pUnit, ".1+"));
-   WriteIniString(file, section, "minProfit",           /*double  */ NumberToStr(instance.maxNetDrawdownP /pUnit, ".1+"));
-   WriteIniString(file, section, "maxProfit",           /*double  */ NumberToStr(instance.maxNetProfitP   /pUnit, ".1+") + separator);
+   WriteIniString(file, section, "openProfit",          /*double  */ StrPadRight(DoubleToStr(instance.openNetProfitP/pUnit, pDigits), 21) +"; after all costs in "+ spUnit);
+   WriteIniString(file, section, "closedProfit",        /*double  */ DoubleToStr(instance.closedNetProfitP/pUnit, pDigits));
+   WriteIniString(file, section, "totalProfit",         /*double  */ DoubleToStr(instance.totalNetProfitP /pUnit, pDigits));
+   WriteIniString(file, section, "minProfit",           /*double  */ DoubleToStr(instance.maxNetDrawdownP /pUnit, pDigits));
+   WriteIniString(file, section, "maxProfit",           /*double  */ DoubleToStr(instance.maxNetProfitP   /pUnit, pDigits) + separator);
 
    WriteIniString(file, section, "trades",              /*double  */ Round(stats[METRIC_NET_UNITS][S_TRADES]));
    WriteIniString(file, section, "trades.long",         /*double  */ StrPadRight(Round(stats[METRIC_NET_UNITS][S_TRADES_LONG ]), 19) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_NET_UNITS][S_TRADES_LONG_PCT  ], 1) +"%)", 8));

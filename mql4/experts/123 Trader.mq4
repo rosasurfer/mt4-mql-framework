@@ -14,7 +14,7 @@
  * Changes
  * -------
  *  - replaced ZigZag.mq with ZigZag.rsf
- *  - added optional close on opposite breakout
+ *  - added input option CloseOnOppositeBreakout
  *  - removed dynamic position sizing
  *  - removed TrailingStop (may be re-added later)
  *
@@ -40,11 +40,11 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
                                                                                                                            //
 extern string Instance.ID                    = "";          // instance to load from a status file (format "[T]123")       //
                                                                                                                            //  +-------------+-------------+-------------+
-extern string ___a__________________________ = "=== Signal settings ===";                                                  //  |  @rraygun   | @matrixebiz |  @optojay   |
+extern string ___a__________________________ = "=== Signal settings ============";                                         //  |  @rraygun   | @matrixebiz |  @optojay   |
 extern int    ZigZag.Periods                 = 6;                                                                          //  +-------------+-------------+-------------+
 extern int    MinBreakoutDistance            = 0;           // in punits (0: breakout at semaphore level)                  //  |   off (0)   |   off (0)   |   off (0)   |
                                                                                                                            //  +-------------+-------------+-------------+
-extern string ___b__________________________ = "=== Trade settings ===";                                                   //  |             |             |             |
+extern string ___b__________________________ = "=== Trade settings ============";                                          //  |             |             |             |
 extern double Lots                           = 0.1;                                                                        //  |             |             |             |
                                                                                                                            //  +-------------+-------------+-------------+
 extern int    Initial.TakeProfit             = 100;         // in punits (0: partial targets only or no TP)                //  |  off (60)   |  on (100)   |  on (400)   |
@@ -67,7 +67,7 @@ extern int    Target4                        = 0;           // ...              
 extern int    Target4.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target4.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      -      |
                                                                                                                            //  +-------------+-------------+-------------+
-extern string ___g__________________________ = "=== Other settings ===";                                                   //
+extern string ___g__________________________ = "=== Other settings ============";                                          //
 extern bool   ShowProfitInPercent            = false;  // whether PnL is displayed in money amounts or percent             //
                                                                                                                            //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -447,26 +447,26 @@ bool UpdateStatus() {
 
    // update open position
    if (!SelectTicket(open.ticket, "UpdateStatus(1)")) return(false);
-   double exitPrice, exitPriceSig, openCloseRange;
+   double closePrice, closePriceSig, openCloseRange;
 
    bool isClosed = (OrderCloseTime() != NULL);
    if (isClosed) {
-      exitPrice = OrderClosePrice();
-      exitPriceSig = exitPrice;
+      closePrice = OrderClosePrice();
+      closePriceSig = closePrice;
    }
    else {
-      exitPrice = ifDouble(open.type==OP_BUY, Bid, Ask);
-      exitPriceSig = Bid;
+      closePrice = ifDouble(open.type==OP_BUY, Bid, Ask);
+      closePriceSig = Bid;
    }
    open.swap         = NormalizeDouble(OrderSwap(), 2);
    open.commission   = OrderCommission();
    open.grossProfit  = OrderProfit();
    open.netProfit    = open.grossProfit + open.swap + open.commission;
-   openCloseRange    = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
+   openCloseRange    = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
    open.netProfitP   = open.part * openCloseRange; if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
    open.runupP       = MathMax(open.runupP, openCloseRange);
    open.drawdownP    = MathMin(open.drawdownP, openCloseRange);
-   openCloseRange    = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
+   openCloseRange    = ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
    open.sigProfitP   = open.part * openCloseRange;
    open.sigRunupP    = MathMax(open.sigRunupP, openCloseRange);
    open.sigDrawdownP = MathMin(open.sigDrawdownP, openCloseRange);
@@ -474,7 +474,7 @@ bool UpdateStatus() {
    if (isClosed) {
       int error;
       if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ ComposePositionCloseMsg(error), error))) return(false);
-      if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                        return(false);
+      if (!MovePositionToHistory(OrderCloseTime(), closePrice, closePriceSig))                                      return(false);
    }
 
    // update PnL stats
@@ -749,9 +749,10 @@ bool TakePartialProfit(double lots) {
    int oe[];
    if (!OrderCloseEx(open.ticket, lots, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
 
-   datetime closeTime    = oe.CloseTime(oe);
-   double   closePrice   = oe.ClosePrice(oe);
-   double   origSlippage = open.slippage, openCloseRange;
+   datetime closeTime     = oe.CloseTime(oe);
+   double   closePrice    = oe.ClosePrice(oe);
+   double   closePriceSig = Bid;
+   double   origSlippage  = open.slippage;
 
    // update the original ticket and move it to the history
    open.toTicket    = oe.RemainingTicket(oe);
@@ -762,12 +763,9 @@ bool TakePartialProfit(double lots) {
    open.commission  = oe.Commission(oe);
    open.grossProfit = oe.Profit(oe);
    open.netProfit   = open.grossProfit + open.swap + open.commission;
-   openCloseRange   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
-   open.netProfitP  = open.part * openCloseRange + (open.swap + open.commission)/PointValue(open.lots);
-   open.runupP      = MathMax(open.runupP, openCloseRange);
-   open.drawdownP   = MathMin(open.drawdownP, openCloseRange);
-   open.sigProfitP *= open.part;
-   if (!MovePositionToHistory(closeTime, closePrice, Bid)) return(false);
+   open.netProfitP  = open.part * ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice) + (open.swap + open.commission)/PointValue(open.lots);
+   open.sigProfitP  = open.part * ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
+   if (!MovePositionToHistory(closeTime, closePrice, closePriceSig)) return(false);
 
    // track/update a remaining new ticket
    if (open.toTicket > 0) {
@@ -983,7 +981,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "MinBreakoutDistance",        /*int     */ MinBreakoutDistance);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   if (!SaveStatus.Targets(file, true)) return(false);         // StopLoss and TakeProfit targets
+   if (!SaveStatus.Targets(file, fileExists)) return(false);   // StopLoss and TakeProfit targets
    WriteIniString(file, section, "CloseOnOppositeBreakout",    /*bool    */ CloseOnOppositeBreakout);
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
@@ -997,8 +995,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
    WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
-   WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")" + separator);
-
+   WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
 
    // open/closed trades

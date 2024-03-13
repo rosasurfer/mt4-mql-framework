@@ -17160,7 +17160,7 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-TimeWindow=08:00-09:00
+TimeWindow=09:00-10:00
 NumberOfBrackets=20
 BracketsColor=9639167   ; DeepPink
 AutoConfiguration=0
@@ -17177,7 +17177,7 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-TimeWindow=09:00-10:00
+TimeWindow=10:00-11:00
 NumberOfBrackets=20
 BracketsColor=16711680  ; Blue
 AutoConfiguration=0

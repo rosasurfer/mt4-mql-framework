@@ -322,7 +322,10 @@ int start() {
 
    // record performance metrics
    if (recorder.mode != RECORDER_OFF) {
-      if (!Recorder.start()) return(_last_error(CheckErrors("start(9)")));
+      if (!Recorder.start()) {
+         recorder.mode = RECORDER_OFF;
+         return(_last_error(CheckErrors("start(9)")));
+      }
    }
 
    // check all errors
