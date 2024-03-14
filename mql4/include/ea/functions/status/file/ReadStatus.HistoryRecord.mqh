@@ -14,7 +14,7 @@ int ReadStatus.HistoryRecord(string key, string value) {
    else if (StrStartsWith(key, "part.")) isPartial = true;
    else return(_EMPTY(catch("ReadStatus.HistoryRecord(1)  "+ instance.name +" illegal history key \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
 
-   // [full|part].i=ticket,fromTicket,toTicket,type,lots,part,openTime,openPrice,openPriceSig,stopLoss,takeProfit,closeTime,closePrice,closePriceSig,slippage,swap,commission,grossProfit,netProfit,netProfitP,runupP,drawdownP,sigProfitP,sigRunupP,sigDrawdownP
+   // [full|part].i=ticket,fromTicket,toTicket,type,lots,part,openTime,openPrice,openPriceSig,stopLoss,takeProfit,closeTime,closePrice,closePriceSig,slippageP,swapM,commissionM,grossProfitM,netProfitM,netProfitP,runupP,rundownP,sigProfitP,sigRunupP,sigRundownP
    string values[];
    string sId = StrRightFrom(key, "."); if (!StrIsDigits(sId))      return(_EMPTY(catch("ReadStatus.HistoryRecord(2)  "+ instance.name +" illegal key format of history record: \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.HistoryRecord(3)  "+ instance.name +" illegal number of fields in history record \""+ key +"\": "+ ArraySize(values), ERR_INVALID_FILE_FORMAT)));
@@ -33,17 +33,17 @@ int ReadStatus.HistoryRecord(string key, string value) {
    datetime closeTime     = StrToInteger(values[H_CLOSETIME     ]);
    double   closePrice    =  StrToDouble(values[H_CLOSEPRICE    ]);
    double   closePriceSig =  StrToDouble(values[H_CLOSEPRICE_SIG]);
-   double   slippage      =  StrToDouble(values[H_SLIPPAGE      ]);
-   double   swap          =  StrToDouble(values[H_SWAP          ]);
-   double   commission    =  StrToDouble(values[H_COMMISSION    ]);
-   double   grossProfit   =  StrToDouble(values[H_GROSSPROFIT   ]);
-   double   netProfit     =  StrToDouble(values[H_NETPROFIT     ]);
+   double   slippageP     =  StrToDouble(values[H_SLIPPAGE_P    ]);
+   double   swapM         =  StrToDouble(values[H_SWAP_M        ]);
+   double   commissionM   =  StrToDouble(values[H_COMMISSION_M  ]);
+   double   grossProfitM  =  StrToDouble(values[H_GROSSPROFIT_M ]);
+   double   netProfitM    =  StrToDouble(values[H_NETPROFIT_M   ]);
    double   netProfitP    =  StrToDouble(values[H_NETPROFIT_P   ]);
    double   runupP        =  StrToDouble(values[H_RUNUP_P       ]);
-   double   drawdownP     =  StrToDouble(values[H_DRAWDOWN_P    ]);
+   double   rundownP      =  StrToDouble(values[H_RUNDOWN_P     ]);
    double   sigProfitP    =  StrToDouble(values[H_SIG_PROFIT_P  ]);
    double   sigRunupP     =  StrToDouble(values[H_SIG_RUNUP_P   ]);
-   double   sigDrawdownP  =  StrToDouble(values[H_SIG_DRAWDOWN_P]);
+   double   sigRundownP   =  StrToDouble(values[H_SIG_RUNDOWN_P ]);
 
-   return(AddHistoryRecord(ticket, fromTicket, toTicket, type, lots, part, openTime, openPrice, openPriceSig, stopLoss, takeProfit, closeTime, closePrice, closePriceSig, slippage, swap, commission, grossProfit, netProfit, netProfitP, runupP, drawdownP, sigProfitP, sigRunupP, sigDrawdownP));
+   return(AddHistoryRecord(ticket, fromTicket, toTicket, type, lots, part, openTime, openPrice, openPriceSig, stopLoss, takeProfit, closeTime, closePrice, closePriceSig, slippageP, swapM, commissionM, grossProfitM, netProfitM, netProfitP, runupP, rundownP, sigProfitP, sigRunupP, sigRundownP));
 }

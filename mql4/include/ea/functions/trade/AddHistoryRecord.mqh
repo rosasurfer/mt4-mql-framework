@@ -16,21 +16,21 @@
  * @param  datetime closeTime
  * @param  double   closePrice
  * @param  double   closePriceSig
- * @param  double   slippage
- * @param  double   swap
- * @param  double   commission
- * @param  double   grossProfit
- * @param  double   netProfit
+ * @param  double   slippageP
+ * @param  double   swapM
+ * @param  double   commissionM
+ * @param  double   grossProfitM
+ * @param  double   netProfitM
  * @param  double   netProfitP
  * @param  double   runupP
- * @param  double   drawdownP
+ * @param  double   rundownP
  * @param  double   sigProfitP
  * @param  double   sigRunupP
- * @param  double   sigDrawdownP
+ * @param  double   sigRundownP
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double lots, double part, datetime openTime, double openPrice, double openPriceSig, double stopLoss, double takeProfit, datetime closeTime, double closePrice, double closePriceSig, double slippage, double swap, double commission, double grossProfit, double netProfit, double netProfitP, double runupP, double drawdownP, double sigProfitP, double sigRunupP, double sigDrawdownP) {
+int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double lots, double part, datetime openTime, double openPrice, double openPriceSig, double stopLoss, double takeProfit, datetime closeTime, double closePrice, double closePriceSig, double slippageP, double swapM, double commissionM, double grossProfitM, double netProfitM, double netProfitP, double runupP, double rundownP, double sigProfitP, double sigRunupP, double sigRundownP) {
    bool isPartial = NE(part, 1);
 
    if (isPartial) {
@@ -76,17 +76,17 @@ int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double 
       partialClose[i][H_CLOSETIME     ] = closeTime;
       partialClose[i][H_CLOSEPRICE    ] = closePrice;
       partialClose[i][H_CLOSEPRICE_SIG] = closePriceSig;
-      partialClose[i][H_SLIPPAGE      ] = slippage;
-      partialClose[i][H_SWAP          ] = swap;
-      partialClose[i][H_COMMISSION    ] = commission;
-      partialClose[i][H_GROSSPROFIT   ] = grossProfit;
-      partialClose[i][H_NETPROFIT     ] = netProfit;
+      partialClose[i][H_SLIPPAGE_P    ] = slippageP;
+      partialClose[i][H_SWAP_M        ] = swapM;
+      partialClose[i][H_COMMISSION_M  ] = commissionM;
+      partialClose[i][H_GROSSPROFIT_M ] = grossProfitM;
+      partialClose[i][H_NETPROFIT_M   ] = netProfitM;
       partialClose[i][H_NETPROFIT_P   ] = netProfitP;
       partialClose[i][H_RUNUP_P       ] = runupP;
-      partialClose[i][H_DRAWDOWN_P    ] = drawdownP;
+      partialClose[i][H_RUNDOWN_P     ] = rundownP;
       partialClose[i][H_SIG_PROFIT_P  ] = sigProfitP;
       partialClose[i][H_SIG_RUNUP_P   ] = sigRunupP;
-      partialClose[i][H_SIG_DRAWDOWN_P] = sigDrawdownP;
+      partialClose[i][H_SIG_RUNDOWN_P ] = sigRundownP;
    }
 
    else {
@@ -132,17 +132,17 @@ int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double 
       history[i][H_CLOSETIME     ] = closeTime;
       history[i][H_CLOSEPRICE    ] = closePrice;
       history[i][H_CLOSEPRICE_SIG] = closePriceSig;
-      history[i][H_SLIPPAGE      ] = slippage;
-      history[i][H_SWAP          ] = swap;
-      history[i][H_COMMISSION    ] = commission;
-      history[i][H_GROSSPROFIT   ] = grossProfit;
-      history[i][H_NETPROFIT     ] = netProfit;
+      history[i][H_SLIPPAGE_P    ] = slippageP;
+      history[i][H_SWAP_M        ] = swapM;
+      history[i][H_COMMISSION_M  ] = commissionM;
+      history[i][H_GROSSPROFIT_M ] = grossProfitM;
+      history[i][H_NETPROFIT_M   ] = netProfitM;
       history[i][H_NETPROFIT_P   ] = netProfitP;
       history[i][H_RUNUP_P       ] = runupP;
-      history[i][H_DRAWDOWN_P    ] = drawdownP;
+      history[i][H_RUNDOWN_P     ] = rundownP;
       history[i][H_SIG_PROFIT_P  ] = sigProfitP;
       history[i][H_SIG_RUNUP_P   ] = sigRunupP;
-      history[i][H_SIG_DRAWDOWN_P] = sigDrawdownP;
+      history[i][H_SIG_RUNDOWN_P ] = sigRundownP;
    }
 
    if (!catch("AddHistoryRecord(3)"))

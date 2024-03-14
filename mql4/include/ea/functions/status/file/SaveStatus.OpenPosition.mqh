@@ -24,17 +24,17 @@ bool SaveStatus.OpenPosition(string file, bool fileExists) {
    WriteIniString(file, section, "open.priceSig",     /*double  */ DoubleToStr(open.priceSig, Digits));
    WriteIniString(file, section, "open.stopLoss",     /*double  */ DoubleToStr(open.stopLoss, Digits));
    WriteIniString(file, section, "open.takeProfit",   /*double  */ DoubleToStr(open.takeProfit, Digits));
-   WriteIniString(file, section, "open.slippage",     /*double  */ DoubleToStr(open.slippage, Digits));
-   WriteIniString(file, section, "open.swap",         /*double  */ DoubleToStr(open.swap, 2));
-   WriteIniString(file, section, "open.commission",   /*double  */ DoubleToStr(open.commission, 2));
-   WriteIniString(file, section, "open.grossProfit",  /*double  */ DoubleToStr(open.grossProfit, 2));
-   WriteIniString(file, section, "open.netProfit",    /*double  */ DoubleToStr(open.netProfit, 2));
-   WriteIniString(file, section, "open.netProfitP",   /*double  */ NumberToStr(open.netProfitP, ".1+"));
+   WriteIniString(file, section, "open.slippageP",    /*double  */ DoubleToStr(open.slippageP, Digits));
+   WriteIniString(file, section, "open.swapM",        /*double  */ DoubleToStr(open.swapM, 2));
+   WriteIniString(file, section, "open.commissionM",  /*double  */ DoubleToStr(open.commissionM, 2));
+   WriteIniString(file, section, "open.grossProfitM", /*double  */ DoubleToStr(open.grossProfitM, 2));
+   WriteIniString(file, section, "open.netProfitM",   /*double  */ DoubleToStr(open.netProfitM, 2));
+   WriteIniString(file, section, "open.netProfitP",   /*double  */ NumberToStr(open.netProfitP, "."+ Digits +"+"));
    WriteIniString(file, section, "open.runupP",       /*double  */ DoubleToStr(open.runupP, Digits));
-   WriteIniString(file, section, "open.drawdownP",    /*double  */ DoubleToStr(open.drawdownP, Digits));
-   WriteIniString(file, section, "open.sigProfitP",   /*double  */ NumberToStr(open.sigProfitP, ".1+"));
+   WriteIniString(file, section, "open.rundownP",     /*double  */ DoubleToStr(open.rundownP, Digits));
+   WriteIniString(file, section, "open.sigProfitP",   /*double  */ NumberToStr(open.sigProfitP, "."+ Digits +"+"));
    WriteIniString(file, section, "open.sigRunupP",    /*double  */ DoubleToStr(open.sigRunupP, Digits));
-   WriteIniString(file, section, "open.sigDrawdownP", /*double  */ DoubleToStr(open.sigDrawdownP, Digits) + separator);
+   WriteIniString(file, section, "open.sigRundownP",  /*double  */ DoubleToStr(open.sigRundownP, Digits) + separator);
 
    return(!catch("SaveStatus.OpenPosition(1)"));
 }

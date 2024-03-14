@@ -33,17 +33,17 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
       partialClose[i][H_CLOSETIME     ] = closeTime;
       partialClose[i][H_CLOSEPRICE    ] = closePrice;
       partialClose[i][H_CLOSEPRICE_SIG] = closePriceSig;
-      partialClose[i][H_SLIPPAGE      ] = open.slippage;
-      partialClose[i][H_SWAP          ] = open.swap;
-      partialClose[i][H_COMMISSION    ] = open.commission;
-      partialClose[i][H_GROSSPROFIT   ] = open.grossProfit;
-      partialClose[i][H_NETPROFIT     ] = open.netProfit;
+      partialClose[i][H_SLIPPAGE_P    ] = open.slippageP;
+      partialClose[i][H_SWAP_M        ] = open.swapM;
+      partialClose[i][H_COMMISSION_M  ] = open.commissionM;
+      partialClose[i][H_GROSSPROFIT_M ] = open.grossProfitM;
+      partialClose[i][H_NETPROFIT_M   ] = open.netProfitM;
       partialClose[i][H_NETPROFIT_P   ] = open.netProfitP;
       partialClose[i][H_RUNUP_P       ] = open.runupP;
-      partialClose[i][H_DRAWDOWN_P    ] = open.drawdownP;
+      partialClose[i][H_RUNDOWN_P     ] = open.rundownP;
       partialClose[i][H_SIG_PROFIT_P  ] = open.sigProfitP;
       partialClose[i][H_SIG_RUNUP_P   ] = open.sigRunupP;
-      partialClose[i][H_SIG_DRAWDOWN_P] = open.sigDrawdownP;
+      partialClose[i][H_SIG_RUNDOWN_P ] = open.sigRundownP;
    }
    else {
       // add trade to history[]
@@ -63,21 +63,21 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
       history[i][H_CLOSETIME     ] = closeTime;
       history[i][H_CLOSEPRICE    ] = closePrice;
       history[i][H_CLOSEPRICE_SIG] = closePriceSig;
-      history[i][H_SLIPPAGE      ] = open.slippage;
-      history[i][H_SWAP          ] = open.swap;
-      history[i][H_COMMISSION    ] = open.commission;
-      history[i][H_GROSSPROFIT   ] = open.grossProfit;
-      history[i][H_NETPROFIT     ] = open.netProfit;
+      history[i][H_SLIPPAGE_P    ] = open.slippageP;
+      history[i][H_SWAP_M        ] = open.swapM;
+      history[i][H_COMMISSION_M  ] = open.commissionM;
+      history[i][H_GROSSPROFIT_M ] = open.grossProfitM;
+      history[i][H_NETPROFIT_M   ] = open.netProfitM;
       history[i][H_NETPROFIT_P   ] = open.netProfitP;
       history[i][H_RUNUP_P       ] = open.runupP;
-      history[i][H_DRAWDOWN_P    ] = open.drawdownP;
+      history[i][H_RUNDOWN_P     ] = open.rundownP;
       history[i][H_SIG_PROFIT_P  ] = open.sigProfitP;
       history[i][H_SIG_RUNUP_P   ] = open.sigRunupP;
-      history[i][H_SIG_DRAWDOWN_P] = open.sigDrawdownP;
+      history[i][H_SIG_RUNDOWN_P ] = open.sigRundownP;
    }
 
    // update PnL stats
-   instance.closedNetProfit  += open.netProfit;
+   instance.closedNetProfit  += open.netProfitM;
    instance.closedNetProfitP += open.netProfitP;
    instance.closedSigProfitP += open.sigProfitP;
 
@@ -98,48 +98,48 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
          datetime a.closeTime     = closeTime;                 // last closeTime
          double   a.closePrice    = closePrice;                // last closePrice
          double   a.closePriceSig = closePriceSig;             // last closePriceSig
-         double   a.slippage;                                  // sum of all partials
-         double   a.swap;                                      // sum of all partials
-         double   a.commission;                                // sum of all partials
-         double   a.grossProfit;                               // sum of all partials
-         double   a.netProfit;                                 // sum of all partials
+         double   a.slippageP;                                 // sum of all partials
+         double   a.swapM;                                     // sum of all partials
+         double   a.commissionM;                               // sum of all partials
+         double   a.grossProfitM;                              // sum of all partials
+         double   a.netProfitM;                                // sum of all partials
          double   a.netProfitP;                                // sum of all partials
          double   a.runupP        = open.runupP;               // last runupP
-         double   a.drawdownP     = open.drawdownP;            // last drawdownP
+         double   a.rundownP      = open.rundownP;             // last rundownP
          double   a.sigProfitP;                                // sum of all partials
          double   a.sigRunupP     = open.sigRunupP;            // last sigRunupP
-         double   a.sigDrawdownP  = open.sigDrawdownP;         // last sigDrawdownP
+         double   a.sigRundownP   = open.sigRundownP;          // last sigRundownP
 
          // collect/aggregate values
          for (; i >= 0; i--) {                                 // start at the last part
             if (partialClose[i][H_TICKET] != a.fromTicket) continue;
             //logDebug("MovePositionToHistory(0.1)  part="+ HistoryRecordDescr(i, true));
 
-            a.ticket       = partialClose[i][H_TICKET      ];
-            a.fromTicket   = partialClose[i][H_FROM_TICKET ];
-            a.toTicket     = partialClose[i][H_TO_TICKET   ];
-            a.lots        += partialClose[i][H_LOTS        ];
-            a.part        += partialClose[i][H_PART        ];
-            a.slippage    += partialClose[i][H_SLIPPAGE    ];
-            a.swap        += partialClose[i][H_SWAP        ];
-            a.commission  += partialClose[i][H_COMMISSION  ];
-            a.grossProfit += partialClose[i][H_GROSSPROFIT ];
-            a.netProfit   += partialClose[i][H_NETPROFIT   ];
-            a.netProfitP  += partialClose[i][H_NETPROFIT_P ];
-            a.sigProfitP  += partialClose[i][H_SIG_PROFIT_P];
+            a.ticket        = partialClose[i][H_TICKET       ];
+            a.fromTicket    = partialClose[i][H_FROM_TICKET  ];
+            a.toTicket      = partialClose[i][H_TO_TICKET    ];
+            a.lots         += partialClose[i][H_LOTS         ];
+            a.part         += partialClose[i][H_PART         ];
+            a.slippageP    += partialClose[i][H_SLIPPAGE_P   ];
+            a.swapM        += partialClose[i][H_SWAP_M       ];
+            a.commissionM  += partialClose[i][H_COMMISSION_M ];
+            a.grossProfitM += partialClose[i][H_GROSSPROFIT_M];
+            a.netProfitM   += partialClose[i][H_NETPROFIT_M  ];
+            a.netProfitP   += partialClose[i][H_NETPROFIT_P  ];
+            a.sigProfitP   += partialClose[i][H_SIG_PROFIT_P ];
             if (!a.fromTicket) break;                          // stop at the first part
          }
 
          // validate the aggregated record and add it to history[]
          if (a.fromTicket != 0) return(!catch("MovePositionToHistory(3)  "+ instance.name +" fromTicket #"+ a.fromTicket +" not found in partialClose[]", ERR_ILLEGAL_STATE));
          if (NE(a.part, 1.0))   return(!catch("MovePositionToHistory(4)  "+ instance.name +" not all partial closes from ticket #"+ open.ticket +" found (found "+ NumberToStr(a.part, ".1+") +" of 1.0)", ERR_ILLEGAL_STATE));
-         a.lots        = NormalizeDouble(a.lots, 2);           // normalize calculated fields
-         a.part        = 1;
-         a.slippage    = NormalizeDouble(a.slippage, Digits);
-         a.swap        = NormalizeDouble(a.swap,        2);
-         a.commission  = NormalizeDouble(a.commission,  2);
-         a.grossProfit = NormalizeDouble(a.grossProfit, 2);
-         a.netProfit   = NormalizeDouble(a.netProfit,   2);
+         a.lots         = NormalizeDouble(a.lots, 2);           // normalize calculated fields
+         a.part         = 1;
+         a.slippageP    = NormalizeDouble(a.slippageP, Digits);
+         a.swapM        = NormalizeDouble(a.swapM,        2);
+         a.commissionM  = NormalizeDouble(a.commissionM,  2);
+         a.grossProfitM = NormalizeDouble(a.grossProfitM, 2);
+         a.netProfitM   = NormalizeDouble(a.netProfitM,   2);
 
          // we can't use AddHistoryRecord() as it invalidates the cache used by CalculateStats(), thus negatively impacting test speed
          i = ArrayRange(history, 0);
@@ -158,17 +158,17 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
          history[i][H_CLOSETIME     ] = a.closeTime;
          history[i][H_CLOSEPRICE    ] = a.closePrice;
          history[i][H_CLOSEPRICE_SIG] = a.closePriceSig;
-         history[i][H_SLIPPAGE      ] = a.slippage;
-         history[i][H_SWAP          ] = a.swap;
-         history[i][H_COMMISSION    ] = a.commission;
-         history[i][H_GROSSPROFIT   ] = a.grossProfit;
-         history[i][H_NETPROFIT     ] = a.netProfit;
+         history[i][H_SLIPPAGE_P    ] = a.slippageP;
+         history[i][H_SWAP_M        ] = a.swapM;
+         history[i][H_COMMISSION_M  ] = a.commissionM;
+         history[i][H_GROSSPROFIT_M ] = a.grossProfitM;
+         history[i][H_NETPROFIT_M   ] = a.netProfitM;
          history[i][H_NETPROFIT_P   ] = a.netProfitP;
          history[i][H_RUNUP_P       ] = a.runupP;
-         history[i][H_DRAWDOWN_P    ] = a.drawdownP;
+         history[i][H_RUNDOWN_P     ] = a.rundownP;
          history[i][H_SIG_PROFIT_P  ] = a.sigProfitP;
          history[i][H_SIG_RUNUP_P   ] = a.sigRunupP;
-         history[i][H_SIG_DRAWDOWN_P] = a.sigDrawdownP;
+         history[i][H_SIG_RUNDOWN_P ] = a.sigRundownP;
 
          //logDebug("MovePositionToHistory(0.2)  hist="+ HistoryRecordDescr(i));
       }
@@ -185,17 +185,17 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
       open.priceSig     = NULL;
       open.stopLoss     = NULL;
       open.takeProfit   = NULL;
-      open.slippage     = NULL;
-      open.swap         = NULL;
-      open.commission   = NULL;
-      open.grossProfit  = NULL;
-      open.netProfit    = NULL;
+      open.slippageP    = NULL;
+      open.swapM        = NULL;
+      open.commissionM  = NULL;
+      open.grossProfitM = NULL;
+      open.netProfitM   = NULL;
       open.netProfitP   = NULL;
       open.runupP       = NULL;
-      open.drawdownP    = NULL;
+      open.rundownP     = NULL;
       open.sigProfitP   = NULL;
       open.sigRunupP    = NULL;
-      open.sigDrawdownP = NULL;
+      open.sigRundownP  = NULL;
    }
 
    if (__isChart) {

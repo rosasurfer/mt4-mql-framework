@@ -26,17 +26,17 @@ string HistoryRecordDescr(int index, bool partial = false) {
    sValues[H_CLOSETIME     ] = "closeTime="    +   TimeToStr(StrToInteger(sValues[H_CLOSETIME     ]), TIME_FULL);
    sValues[H_CLOSEPRICE    ] = "closePrice="   +  NumberToStr(StrToDouble(sValues[H_CLOSEPRICE    ]), PriceFormat);
    sValues[H_CLOSEPRICE_SIG] = "closePriceSig="+  NumberToStr(StrToDouble(sValues[H_CLOSEPRICE_SIG]), PriceFormat);
-   sValues[H_SLIPPAGE      ] = "slippage="     +  NumberToStr(StrToDouble(sValues[H_SLIPPAGE      ]), ".+");
-   sValues[H_SWAP          ] = "swap="         +                          sValues[H_SWAP          ];
-   sValues[H_COMMISSION    ] = "commission="   +                          sValues[H_COMMISSION    ];
-   sValues[H_GROSSPROFIT   ] = "grossProfit="  +                          sValues[H_GROSSPROFIT   ];
-   sValues[H_NETPROFIT     ] = "netProfit="    +                          sValues[H_NETPROFIT     ];
+   sValues[H_SLIPPAGE_P    ] = "slippageP="    +  NumberToStr(StrToDouble(sValues[H_SLIPPAGE_P    ]), ".+");
+   sValues[H_SWAP_M        ] = "swapP="        +                          sValues[H_SWAP_M        ];
+   sValues[H_COMMISSION_M  ] = "commissionM="  +                          sValues[H_COMMISSION_M  ];
+   sValues[H_GROSSPROFIT_M ] = "grossProfitM=" +                          sValues[H_GROSSPROFIT_M ];
+   sValues[H_NETPROFIT_M   ] = "netProfitM="   +                          sValues[H_NETPROFIT_M   ];
    sValues[H_NETPROFIT_P   ] = "netProfitP="   +                          sValues[H_NETPROFIT_P   ];
    sValues[H_RUNUP_P       ] = "runupP="       +                          sValues[H_RUNUP_P       ];
-   sValues[H_DRAWDOWN_P    ] = "drawdownP="    +                          sValues[H_DRAWDOWN_P    ];
+   sValues[H_RUNDOWN_P     ] = "rundownP="     +                          sValues[H_RUNDOWN_P     ];
    sValues[H_SIG_PROFIT_P  ] = "sigProfitP="   +                          sValues[H_SIG_PROFIT_P  ];
    sValues[H_SIG_RUNUP_P   ] = "sigRunupP="    +                          sValues[H_SIG_RUNUP_P   ];
-   sValues[H_SIG_DRAWDOWN_P] = "sigDrawdownP=" +                          sValues[H_SIG_DRAWDOWN_P];
+   sValues[H_SIG_RUNDOWN_P ] = "sigRundownP="  +                          sValues[H_SIG_RUNDOWN_P ];
 
    return("{"+ JoinStrings(sValues) +"}");
 }

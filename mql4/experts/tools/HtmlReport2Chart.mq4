@@ -314,11 +314,11 @@ bool UpdateHistoryRecord(int ticket, double stopLoss, double takeProfit, datetim
    if (i < 0) return(!catch("UpdateHistoryRecord(1)  ticket #"+ ticket +" not found", ERR_INVALID_PARAMETER));
 
    // update the record
-   history[i][H_STOPLOSS  ] = stopLoss;
-   history[i][H_TAKEPROFIT] = takeProfit;
-   history[i][H_CLOSETIME ] = closeTime;
-   history[i][H_CLOSEPRICE] = closePrice;
-   history[i][H_NETPROFIT ] = netProfit;
+   history[i][H_STOPLOSS   ] = stopLoss;
+   history[i][H_TAKEPROFIT ] = takeProfit;
+   history[i][H_CLOSETIME  ] = closeTime;
+   history[i][H_CLOSEPRICE ] = closePrice;
+   history[i][H_NETPROFIT_M] = netProfit;
    return(true);
 }
 

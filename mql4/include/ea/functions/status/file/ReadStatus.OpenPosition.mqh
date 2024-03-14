@@ -19,17 +19,17 @@ bool ReadStatus.OpenPosition(string file) {
    open.priceSig     = GetIniDouble(file, section, "open.priceSig"    );     // double   open.priceSig     = 1.24363
    open.stopLoss     = GetIniDouble(file, section, "open.stopLoss"    );     // double   open.stopLoss     = 1.24363
    open.takeProfit   = GetIniDouble(file, section, "open.takeProfit"  );     // double   open.takeProfit   = 1.24363
-   open.slippage     = GetIniDouble(file, section, "open.slippage"    );     // double   open.slippage     = 0.00002
-   open.swap         = GetIniDouble(file, section, "open.swap"        );     // double   open.swap         = -1.23
-   open.commission   = GetIniDouble(file, section, "open.commission"  );     // double   open.commission   = -5.50
-   open.grossProfit  = GetIniDouble(file, section, "open.grossProfit" );     // double   open.grossProfit  = 12.34
-   open.netProfit    = GetIniDouble(file, section, "open.netProfit"   );     // double   open.netProfit    = 12.56
+   open.slippageP    = GetIniDouble(file, section, "open.slippageP"   );     // double   open.slippageP    = 0.00002
+   open.swapM        = GetIniDouble(file, section, "open.swapM"       );     // double   open.swapM        = -1.23
+   open.commissionM  = GetIniDouble(file, section, "open.commissionM" );     // double   open.commissionM  = -5.50
+   open.grossProfitM = GetIniDouble(file, section, "open.grossProfitM");     // double   open.grossProfitM = 12.34
+   open.netProfitM   = GetIniDouble(file, section, "open.netProfitM"  );     // double   open.netProfitM   = 12.56
    open.netProfitP   = GetIniDouble(file, section, "open.netProfitP"  );     // double   open.netProfitP   = 0.12345
    open.runupP       = GetIniDouble(file, section, "open.runupP"      );     // double   open.runupP       = 0.12345
-   open.drawdownP    = GetIniDouble(file, section, "open.drawdownP"   );     // double   open.drawdownP    = 0.12345
+   open.rundownP     = GetIniDouble(file, section, "open.rundownP"    );     // double   open.rundownP     = 0.12345
    open.sigProfitP   = GetIniDouble(file, section, "open.sigProfitP"  );     // double   open.sigProfitP   = 0.12345
    open.sigRunupP    = GetIniDouble(file, section, "open.sigRunupP"   );     // double   open.sigRunupP    = 0.12345
-   open.sigDrawdownP = GetIniDouble(file, section, "open.sigDrawdownP");     // double   open.sigDrawdownP = 0.12345
+   open.sigRundownP  = GetIniDouble(file, section, "open.sigRundownP" );     // double   open.sigRundownP  = 0.12345
 
    return(!catch("ReadStatus.OpenPosition(1)"));
 }

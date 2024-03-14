@@ -394,16 +394,16 @@ bool UpdateStatus(int signal = NULL) {
          exitPrice = ifDouble(open.type==OP_BUY, Bid, Ask);
          exitPriceSig = Bid;
       }
-      open.swap         = NormalizeDouble(OrderSwap(), 2);
-      open.commission   = OrderCommission();
-      open.grossProfit  = OrderProfit();
-      open.netProfit    = open.grossProfit + open.swap + open.commission;
+      open.swapM        = NormalizeDouble(OrderSwap(), 2);
+      open.commissionM  = OrderCommission();
+      open.grossProfitM = OrderProfit();
+      open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
       open.netProfitP   = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
       open.runupP       = MathMax(open.runupP, open.netProfitP);
-      open.drawdownP    = MathMin(open.drawdownP, open.netProfitP); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+      open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
       open.sigProfitP   = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
       open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
-      open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
+      open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
 
       if (isClosed) {
          int error;
@@ -425,17 +425,17 @@ bool UpdateStatus(int signal = NULL) {
          if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
          double closePrice = oe.ClosePrice(oe);
-         open.slippage    += oe.Slippage(oe);
-         open.swap         = oe.Swap(oe);
-         open.commission   = oe.Commission(oe);
-         open.grossProfit  = oe.Profit(oe);
-         open.netProfit    = open.grossProfit + open.swap + open.commission;
+         open.slippageP   += oe.Slippage(oe);
+         open.swapM        = oe.Swap(oe);
+         open.commissionM  = oe.Commission(oe);
+         open.grossProfitM = oe.Profit(oe);
+         open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
          open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
          open.runupP       = MathMax(open.runupP, open.netProfitP);
-         open.drawdownP    = MathMin(open.drawdownP, open.netProfitP); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+         open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
          open.sigProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
          open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
-         open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
+         open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
 
          if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, Bid)) return(false);
       }
@@ -456,24 +456,24 @@ bool UpdateStatus(int signal = NULL) {
       open.time         = oe.OpenTime(oe);
       open.price        = oe.OpenPrice(oe);
       open.priceSig     = Bid;
-      open.slippage     = oe.Slippage(oe);
-      open.swap         = oe.Swap(oe);
-      open.commission   = oe.Commission(oe);
-      open.grossProfit  = oe.Profit(oe);
-      open.netProfit    = open.grossProfit + open.swap + open.commission;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask); if (open.swap || open.commission) open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+      open.slippageP    = oe.Slippage(oe);
+      open.swapM        = oe.Swap(oe);
+      open.commissionM  = oe.Commission(oe);
+      open.grossProfitM = oe.Profit(oe);
+      open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
+      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
       open.runupP       = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
-      open.drawdownP    = open.runupP;
+      open.rundownP     = open.runupP;
       open.sigProfitP   = 0;
       open.sigRunupP    = open.sigProfitP;
-      open.sigDrawdownP = open.sigRunupP;
+      open.sigRundownP  = open.sigRunupP;
       if (__isChart) SS.OpenLots();
 
       if (test.onPositionOpenPause) Tester.Pause("UpdateStatus(4)");
    }
 
    // update PnL numbers
-   instance.openNetProfit  = open.netProfit;
+   instance.openNetProfit  = open.netProfitM;
    instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
    instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
    instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
@@ -517,22 +517,22 @@ bool StopInstance(double signal[]) {
          if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
          double closePrice = oe.ClosePrice(oe);
-         open.slippage    += oe.Slippage  (oe);
-         open.swap         = oe.Swap      (oe);
-         open.commission   = oe.Commission(oe);
-         open.grossProfit  = oe.Profit    (oe);
-         open.netProfit    = open.grossProfit + open.swap + open.commission;
+         open.slippageP   += oe.Slippage  (oe);
+         open.swapM        = oe.Swap      (oe);
+         open.commissionM  = oe.Commission(oe);
+         open.grossProfitM = oe.Profit    (oe);
+         open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
          open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
          open.runupP       = MathMax(open.runupP, open.netProfitP);
-         open.drawdownP    = MathMin(open.drawdownP, open.netProfitP); open.netProfitP += (open.swap + open.commission)/PointValue(open.lots);
+         open.rundownP     = MathMin(open.rundownP, open.netProfitP); open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
          open.sigProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
          open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
-         open.sigDrawdownP = MathMin(open.sigDrawdownP, open.sigProfitP);
+         open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
 
          if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, Bid)) return(false);
 
          // update PL numbers
-         instance.openNetProfit  = open.netProfit;
+         instance.openNetProfit  = open.netProfitM;
          instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
          instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
          instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);

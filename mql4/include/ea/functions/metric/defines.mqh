@@ -16,13 +16,13 @@ double instance.totalNetProfit;        //
 double instance.maxNetProfit;          // 0...+n
 double instance.maxNetDrawdown;        // -n...0
 
-double instance.openNetProfitP;        // real PnL after all costs in point (net)
+double instance.openNetProfitP;        // real PnL after all costs in full points (net)
 double instance.closedNetProfitP;      //
 double instance.totalNetProfitP;       //
 double instance.maxNetProfitP;         //
 double instance.maxNetDrawdownP;       //
 
-double instance.openSigProfitP;        // signal PnL before spread/any costs in point
+double instance.openSigProfitP;        // signal PnL before spread/any costs in full points
 double instance.closedSigProfitP;      //
 double instance.totalSigProfitP;       //
 double instance.maxSigProfitP;         //
