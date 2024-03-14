@@ -17,12 +17,12 @@ string HistoryRecordDescr(int index, bool partial = false) {
    sValues[H_TO_TICKET     ] = "toTicket="     +                          sValues[H_TO_TICKET     ];
    sValues[H_TYPE          ] = "type="         + OperationTypeDescription(sValues[H_TYPE          ]);
    sValues[H_LOTS          ] = "lots="         +                          sValues[H_LOTS          ];
-   sValues[H_PART          ] = "part="         +  NumberToStr(StrToDouble(sValues[H_PART          ]), ".1+");
+   sValues[H_PART          ] = "part="         +                          sValues[H_PART          ];
    sValues[H_OPENTIME      ] = "openTime="     +   TimeToStr(StrToInteger(sValues[H_OPENTIME      ]), TIME_FULL);
    sValues[H_OPENPRICE     ] = "openPrice="    +  NumberToStr(StrToDouble(sValues[H_OPENPRICE     ]), PriceFormat);
    sValues[H_OPENPRICE_SIG ] = "openPriceSig=" +  NumberToStr(StrToDouble(sValues[H_OPENPRICE_SIG ]), PriceFormat);
    sValues[H_STOPLOSS      ] = "stopLoss="     +  NumberToStr(StrToDouble(sValues[H_STOPLOSS      ]), PriceFormat);
-   sValues[H_TAKEPROFIT    ] = "takeProfit"    +  NumberToStr(StrToDouble(sValues[H_TAKEPROFIT    ]), PriceFormat);
+   sValues[H_TAKEPROFIT    ] = "takeProfit="   +  NumberToStr(StrToDouble(sValues[H_TAKEPROFIT    ]), PriceFormat);
    sValues[H_CLOSETIME     ] = "closeTime="    +   TimeToStr(StrToInteger(sValues[H_CLOSETIME     ]), TIME_FULL);
    sValues[H_CLOSEPRICE    ] = "closePrice="   +  NumberToStr(StrToDouble(sValues[H_CLOSEPRICE    ]), PriceFormat);
    sValues[H_CLOSEPRICE_SIG] = "closePriceSig="+  NumberToStr(StrToDouble(sValues[H_CLOSEPRICE_SIG]), PriceFormat);

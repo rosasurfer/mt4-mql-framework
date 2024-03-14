@@ -52,7 +52,7 @@ int ShowTradeHistory(bool show) {
  * @return int - number of displayed trades or EMPTY (-1) in case of errors
  */
 int _ShowTradeHistory(double array[][]) {
-   int displayedTrades = 0;
+   int trades = 0;
 
    string openLabel="", lineLabel="", closeLabel="", sOpenPrice="", sClosePrice="", sOperations[]={"buy", "sell"};
    int iOpenColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, iLineColors[]={Blue, Red};
@@ -70,9 +70,9 @@ int _ShowTradeHistory(double array[][]) {
       datetime closeTime  = array[i][H_CLOSETIME ];
       double   closePrice = array[i][H_CLOSEPRICE];
 
-      if (part==1 && toTicket)           continue;             // skip history[] trades aggregated from partialClose[]
-      if (!closeTime)                    continue;             // skip open tickets (should not happen)
-      if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
+      if (!closeTime)                    continue;    // skip open tickets (should not happen)
+      if (type!=OP_BUY && type!=OP_SELL) continue;    // skip non-trades   (should not happen)
+      trades++;
 
       if (status.activeMetric == METRIC_SIG_UNITS) {
          openPrice  = array[i][H_OPENPRICE_SIG ];
@@ -83,12 +83,17 @@ int _ShowTradeHistory(double array[][]) {
 
       // open marker
       openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
-      if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
-      ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-      ObjectSet    (openLabel, OBJPROP_COLOR,  iOpenColors[type]);
-      ObjectSet    (openLabel, OBJPROP_TIME1,  openTime);
-      ObjectSet    (openLabel, OBJPROP_PRICE1, openPrice);
-      ObjectSetText(openLabel, instance.name);
+      if (part == 1) {                                // history[]
+         if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR,  iOpenColors[type]);
+         ObjectSet    (openLabel, OBJPROP_TIME1,  openTime);
+         ObjectSet    (openLabel, OBJPROP_PRICE1, openPrice);
+         ObjectSetText(openLabel, instance.name);
+
+         if (toTicket > 0) continue;                  // aggregated trade: no trend line, no close marker
+      }
+      //else partialClose[]: no open marker
 
       // trend line
       lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
@@ -110,10 +115,9 @@ int _ShowTradeHistory(double array[][]) {
       ObjectSet    (closeLabel, OBJPROP_TIME1,  closeTime);
       ObjectSet    (closeLabel, OBJPROP_PRICE1, closePrice);
       ObjectSetText(closeLabel, instance.name);
-      displayedTrades++;
    }
 
    if (!catch("_ShowTradeHistory(1)"))
-      return(displayedTrades);
+      return(trades);
    return(EMPTY);
 }

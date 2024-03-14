@@ -63,8 +63,6 @@
  *
  *  - re-usable exit management
  *     Partial Closes
- *      fix p-stats (about 10 times higher)
- *
  *      rewrite ShowOpenOrders()
  *      merge HistoryRecordToStr() and HistoryRecordDescr()
  *
@@ -171,6 +169,10 @@
  *     ETH/RTH separation for Frankfurt session
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "Today 09:00"  [ERR_INVALID_CONFIG_VALUE]
+ *
+ *  -                             INFO   US30,M5  ChartInfos::AnalyzePositions(2)  position 13 => 14 (unitsize 0.95)
+ *    sound.cpp::PlaySoundW(171)  ERROR: mciSendString(play "E:\Trading\MetaTrader\S5\sounds\MarginLow.wav" from 0) => MCIERR_WAVE_OUTPUTSINUSE  [ERR_RUNTIME_ERROR]
+ *                                FATAL  US30,M5  ChartInfos::start(8)  DLL error  [ERR_RUNTIME_ERROR]
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT

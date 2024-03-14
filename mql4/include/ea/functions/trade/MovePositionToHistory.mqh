@@ -44,6 +44,8 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
       partialClose[i][H_SIG_PROFIT_P  ] = open.sigProfitP;
       partialClose[i][H_SIG_RUNUP_P   ] = open.sigRunupP;
       partialClose[i][H_SIG_RUNDOWN_P ] = open.sigRundownP;
+
+      //logNotice("MovePositionToHistory(0.1)  oc="+ DoubleToStr(ifDouble(!open.type, closePrice-open.price, open.price-closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!open.type, closePriceSig-open.priceSig, open.priceSig-closePriceSig)/pUnit, pDigits) +"  part="+ HistoryRecordDescr(i, true));
    }
    else {
       // add trade to history[]
@@ -74,6 +76,8 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
       history[i][H_SIG_PROFIT_P  ] = open.sigProfitP;
       history[i][H_SIG_RUNUP_P   ] = open.sigRunupP;
       history[i][H_SIG_RUNDOWN_P ] = open.sigRundownP;
+
+      //logNotice("MovePositionToHistory(0.2)  oc="+ DoubleToStr(ifDouble(!open.type, closePrice-open.price, open.price-closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!open.type, closePriceSig-open.priceSig, open.priceSig-closePriceSig)/pUnit, pDigits) +"  hist="+ HistoryRecordDescr(i));
    }
 
    // update PnL stats
@@ -82,11 +86,11 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    instance.closedSigProfitP += open.sigProfitP;
 
    if (!open.toTicket) {
-      // inspect partial closes and add a single aggregated trade to history[]
       if (open.fromTicket > 0) {
-         int      a.ticket;                                    // ticket of first partial close
-         int      a.fromTicket    = open.ticket;               // fromTicket of first partial close (zero)
-         int      a.toTicket;                                  // remainder of first partial close, link between history[] and partialClose[]
+         // iterate over partial closes and aggregate a single trade for history[]
+         int      a.ticket;                                    // first ticket
+         int      a.fromTicket    = open.ticket;               // first fromTicket (zero)
+         int      a.toTicket;                                  // first toTicket, link between history[] and partialClose[]
          int      a.type          = open.type;
          double   a.lots;                                      // sum of all partials
          double   a.part;                                      // sum of all partials
@@ -113,8 +117,6 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
          // collect/aggregate values
          for (; i >= 0; i--) {                                 // start at the last part
             if (partialClose[i][H_TICKET] != a.fromTicket) continue;
-            //logDebug("MovePositionToHistory(0.1)  part="+ HistoryRecordDescr(i, true));
-
             a.ticket        = partialClose[i][H_TICKET       ];
             a.fromTicket    = partialClose[i][H_FROM_TICKET  ];
             a.toTicket      = partialClose[i][H_TO_TICKET    ];
@@ -132,7 +134,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
 
          // validate the aggregated record and add it to history[]
          if (a.fromTicket != 0) return(!catch("MovePositionToHistory(3)  "+ instance.name +" fromTicket #"+ a.fromTicket +" not found in partialClose[]", ERR_ILLEGAL_STATE));
-         if (NE(a.part, 1.0))   return(!catch("MovePositionToHistory(4)  "+ instance.name +" not all partial closes from ticket #"+ open.ticket +" found (found "+ NumberToStr(a.part, ".1+") +" of 1.0)", ERR_ILLEGAL_STATE));
+         if (NE(a.part, 1, 2))  return(!catch("MovePositionToHistory(4)  "+ instance.name +" not all partial closes from ticket #"+ open.ticket +" found (found "+ NumberToStr(a.part, ".1+") +" of 1.0)", ERR_ILLEGAL_STATE));
          a.lots         = NormalizeDouble(a.lots, 2);           // normalize calculated fields
          a.part         = 1;
          a.slippageP    = NormalizeDouble(a.slippageP, Digits);
@@ -170,7 +172,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
          history[i][H_SIG_RUNUP_P   ] = a.sigRunupP;
          history[i][H_SIG_RUNDOWN_P ] = a.sigRundownP;
 
-         //logDebug("MovePositionToHistory(0.2)  hist="+ HistoryRecordDescr(i));
+         //logNotice("MovePositionToHistory(0.3)  oc="+ DoubleToStr(ifDouble(!a.type, a.closePrice-a.openPrice, a.openPrice-a.closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!a.type, a.closePriceSig-a.openPriceSig, a.openPriceSig-a.closePriceSig)/pUnit, pDigits) +"  hist="+ HistoryRecordDescr(i));
       }
 
       // reset open position data

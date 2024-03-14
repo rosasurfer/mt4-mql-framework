@@ -411,6 +411,7 @@ bool StartInstance(double signal[]) {
 bool StopInstance(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   int sigType = signal[SIG_TYPE];
 
    // close an open position
    if (instance.status==STATUS_TRADING && open.ticket) {
@@ -420,7 +421,6 @@ bool StopInstance(double signal[]) {
    // update status
    instance.status = STATUS_STOPPED;
    if (IsLogInfo()) {
-      int sigType = signal[SIG_TYPE];
       SS.TotalProfit();
       SS.ProfitStats();
       logInfo("StopInstance(2)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"instance stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
@@ -463,7 +463,7 @@ bool UpdateStatus() {
    open.grossProfitM = OrderProfit();
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
    openCloseRange    = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
-   open.netProfitP   = open.part * openCloseRange; if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
+   open.netProfitP   = open.part * openCloseRange; if (open.swapM || open.commissionM) open.netProfitP += open.part * (open.swapM + open.commissionM)/PointValue(open.lots);
    open.runupP       = MathMax(open.runupP, openCloseRange);
    open.rundownP     = MathMin(open.rundownP, openCloseRange);
    openCloseRange    = ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
@@ -625,11 +625,11 @@ bool ClosePosition(double signal[]) {
    open.grossProfitM = oe.Profit(oe);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
    openCloseRange    = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
-   open.netProfitP   = open.part * openCloseRange + (open.swapM + open.commissionM)/PointValue(open.lots);
+   open.netProfitP   = open.part * (openCloseRange + (open.swapM + open.commissionM)/PointValue(open.lots));
    open.runupP       = MathMax(open.runupP, openCloseRange);
    open.rundownP     = MathMin(open.rundownP, openCloseRange);
    openCloseRange    = ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
-   open.sigProfitP    = open.part * openCloseRange;
+   open.sigProfitP   = open.part * openCloseRange;
    open.sigRunupP    = MathMax(open.sigRunupP, openCloseRange);
    open.sigRundownP  = MathMin(open.sigRundownP, openCloseRange);
 
@@ -763,7 +763,7 @@ bool TakePartialProfit(double lots) {
    open.commissionM  = oe.Commission(oe);
    open.grossProfitM = oe.Profit(oe);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitP   = open.part * ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice) + (open.swapM + open.commissionM)/PointValue(open.lots);
+   open.netProfitP   = open.part * (ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice) + (open.swapM + open.commissionM)/PointValue(open.lots));
    open.sigProfitP   = open.part * ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
    if (!MovePositionToHistory(closeTime, closePrice, closePriceSig)) return(false);
 
@@ -780,7 +780,7 @@ bool TakePartialProfit(double lots) {
       open.commissionM  = OrderCommission();
       open.grossProfitM = OrderProfit();
       open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitP   = open.part * ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
+      open.netProfitP   = open.part * (ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swapM + open.commissionM)/PointValue(open.lots));
       open.sigProfitP   = open.part * ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
       OrderPop("TakePartialProfit(4)");
    }
