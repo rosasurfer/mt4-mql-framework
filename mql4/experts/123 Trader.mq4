@@ -3,12 +3,22 @@
  *
  *  @see  https://www.forexfactory.com/thread/210023-123-pattern-ea
  *
- *
  * Rules
  * -----
  *  - Entry:      on 1-2-3 ZigZag breakout with ZigZag semaphore-3 between semaphore-1 and semaphore-2
  *  - StopLoss:   arbitrary, optionally on opposite ZigZag breakout (not necessarily an opposite entry signal)
  *  - TakeProfit: arbitrary, ensure that TakeProfit > StopLoss
+ *
+ * Notes
+ * -----
+ *  - Signals represent a basic bar pattern und have no predictive power. The pattern is not related to the current market
+ *    scheme/trend and there no distinction between micro and macro patterns. In effect signal outcome is random and results
+ *    merely reflect the used exit management. Worse, signals are not able to catch big trends where exit management could
+ *    play out its strengths and makes a difference.
+ *
+ *  - Solutions: One idea is to combine the signal with the "XARD 2nd Dot" system. It would put signals into the context of
+ *    the greater trend and nests two 1-2-3 signals into each other. Such a combination looks very reliable. Also it filters
+ *    most of the invalid micro signals.
  *
  *
  * Changes
@@ -16,7 +26,7 @@
  *  - replaced ZigZag.mq with ZigZag.rsf
  *  - added input option CloseOnOppositeBreakout
  *  - removed dynamic position sizing
- *  - removed TrailingStop (may be re-added later)
+ *  - removed TrailingStop
  *
  *
  * TODO:
@@ -26,7 +36,7 @@
  *
  *  - test results GBPJPY,M5 + ZigZag(20)
  *     Initial.TakeProfit=70; Initial.StopLoss=50; no targets:                            around breakeven
- *     Initial.TakeProfit=70; Initial.StopLoss=50; Target1=30; Target1.MoveStopTo=1:      small chops, always below breakeven (BE stop kicks in too early)
+ *     Initial.TakeProfit=70; Initial.StopLoss=50; Target1=30; Target1.MoveStopTo=1:      choppy, always below breakeven (BE stop kicks in too early)
  *     Initial.TakeProfit=80; Initial.StopLoss=50; Target1=40; Target1.MoveStopTo=1:      significantly better (more room for TP and BE stop)
  */
 #define STRATEGY_ID  109                     // unique strategy id (used for generation of magic order numbers)
@@ -50,19 +60,19 @@ extern double Lots                           = 0.1;                             
 extern int    Initial.TakeProfit             = 100;         // in punits (0: partial targets only or no TP)                //  |  off (60)   |  on (100)   |  on (400)   |
 extern int    Initial.StopLoss               = 50;          // in punits (0: moving stops only or no SL                    //  |  on (100)   |  on (100)   |  on (100)   |
 extern bool   CloseOnOppositeBreakout        = false;                                                                      //  |   off (0)   |   off (0)   |   off (0)   |
-                                                                                                                           //  +-------------+-------------+-------------+
+extern string ___c__________________________;                                                                              //  +-------------+-------------+-------------+
 extern int    Target1                        = 0;           // in punits (0: no target)                                    //  |      50     |      10     |      20     |
 extern int    Target1.ClosePercent           = 0;           // size to close (0: nothing)                                  //  |      0%     |     10%     |     25%     |
 extern int    Target1.MoveStopTo             = 1;           // in punits (0: don't move stop)                              //  |       1     |       1     |     -50     | 1: Breakeven-Stop (OpenPrice + 1 pip)
-                                                                                                                           //  +-------------+-------------+-------------+
+extern string ___d__________________________;                                                                              //  +-------------+-------------+-------------+
 extern int    Target2                        = 0;           // ...                                                         //  |             |      20     |      40     |
 extern int    Target2.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     25%     |
 extern int    Target2.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |     -30     |
-                                                                                                                           //  +-------------+-------------+-------------+
+extern string ___e__________________________;                                                                              //  +-------------+-------------+-------------+
 extern int    Target3                        = 0;           // ...                                                         //  |             |      40     |     100     |
 extern int    Target3.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target3.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      20     |
-                                                                                                                           //  +-------------+-------------+-------------+
+extern string ___f__________________________;                                                                              //  +-------------+-------------+-------------+
 extern int    Target4                        = 0;           // ...                                                         //  |             |      60     |     200     |
 extern int    Target4.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target4.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      -      |
@@ -107,8 +117,9 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/functions/metric/GetMT4SymbolDefinition.mqh>
 #include <ea/functions/metric/RecordMetrics.mqh>
 
-#include <ea/functions/status/ShowStatus.mqh>
+#include <ea/functions/status/ShowOpenOrders.mqh>
 #include <ea/functions/status/ShowTradeHistory.mqh>
+#include <ea/functions/status/ShowStatus.mqh>
 #include <ea/functions/status/SS.All.mqh>
 #include <ea/functions/status/SS.MetricDescription.mqh>
 #include <ea/functions/status/SS.OpenLots.mqh>

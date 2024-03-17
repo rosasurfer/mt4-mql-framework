@@ -138,8 +138,9 @@ extern bool   ShowProfitInPercent  = false;                          // whether 
 #include <ea/functions/metric/GetMT4SymbolDefinition.mqh>
 #include <ea/functions/metric/RecordMetrics.mqh>
 
-#include <ea/functions/status/ShowStatus.mqh>
+#include <ea/functions/status/ShowOpenOrders.mqh>
 #include <ea/functions/status/ShowTradeHistory.mqh>
+#include <ea/functions/status/ShowStatus.mqh>
 #include <ea/functions/status/SS.All.mqh>
 #include <ea/functions/status/SS.MetricDescription.mqh>
 #include <ea/functions/status/SS.OpenLots.mqh>

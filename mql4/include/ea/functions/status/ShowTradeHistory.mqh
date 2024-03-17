@@ -70,8 +70,8 @@ int _ShowTradeHistory(double array[][]) {
       datetime closeTime  = array[i][H_CLOSETIME ];
       double   closePrice = array[i][H_CLOSEPRICE];
 
-      if (!closeTime)                    continue;    // skip open tickets (should not happen)
-      if (type!=OP_BUY && type!=OP_SELL) continue;    // skip non-trades   (should not happen)
+      if (!closeTime)                    continue;       // skip open tickets (should not happen)
+      if (type!=OP_BUY && type!=OP_SELL) continue;       // skip non-trades (should not happen)
       trades++;
 
       if (status.activeMetric == METRIC_SIG_UNITS) {
@@ -91,7 +91,7 @@ int _ShowTradeHistory(double array[][]) {
          ObjectSet    (openLabel, OBJPROP_PRICE1, openPrice);
          ObjectSetText(openLabel, instance.name);
 
-         if (toTicket > 0) continue;                  // aggregated trade: no trend line, no close marker
+         if (toTicket > 0) continue;                     // aggregated trade: no trend line, no close marker
       }
       //else partialClose[]: no open marker
 

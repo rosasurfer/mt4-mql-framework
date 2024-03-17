@@ -62,12 +62,14 @@
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - re-usable exit management
- *     Partial Closes
- *      rewrite ShowOpenOrders()
- *      merge HistoryRecordToStr() and HistoryRecordDescr()
  *
- *     implement open.nextTarget
- *     dynamic distances (multiples of ranges)
+ *     rewrite ShowOpenOrders()
+ *     merge HistoryRecordToStr() and HistoryRecordDescr()
+ *
+ *     partial close
+ *      live: fix closedProfit after 1 partial-close (+ error loading status file)
+ *      implement open.nextTarget
+ *     dynamic SL/TP distances (multiples of ranges)
  *     trailing stop
  *
  *  - can the recorder be made optional?
@@ -76,19 +78,22 @@
  *
  *
  *  - tests
+ *     read enabled trade directions at test start
  *     storage in folder per strategy
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
- *     read/respect enabled trade directions at test start
  *     on no connection/old terminal: indicator of the same name to load test into chart
  *
- *  - self-optimization
- *     04.10.2007 Self-Optimization in MT4               https://www.mql5.com/en/articles/1467
+ *  - optimization/self-optimization
+ *     04.10.2007 Automated re-Optimization in MT4       https://www.mql5.com/en/articles/1467
+ *     05.10.2018 Automated re-Optimization in MT5       https://www.mql5.com/en/articles/4917
+ *
  *     13.07.2008: @tdion, inspiration for @rraygun      https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool#    statt MACD(16,18) MACD(ALMA(38,46))
  *     16.12.2009: @rraygun                              https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks#
- *     16.11.2017: @john-davis, 100%/month on H1         https://www.mql5.com/en/blogs/post/714509#
- *                                                       https://www.mql5.com/en/market/product/26332#
- *                                                       https://www.mql5.com/en/code/19392#         (comments by @alphatrading)
- *     05.10.2018 Self-Optimization in MT5               https://www.mql5.com/en/articles/4917
+ *     16.11.2017: @john-davis, 100%/month on H1         https://www.mql5.com/en/blogs/post/714509#                           Ich kann die Ergebnisse tatsächlich reproduzieren.
+ *                                                       https://www.mql5.com/en/market/product/26332#                        Betrug: Er hat den einzigen profitablen Monat in
+ *                                                       https://www.mql5.com/en/code/19392#                                  einem Zeitraum von 12 Monaten gepostet.
+ *
+ *     01.08.2018 MACD Twister                           https://www.mql5.com/en/market/product/23557
  *
  *     heat maps: https://www.forexfactory.com/thread/post/13834307#post13834307
  *     ML:        https://www.forexfactory.com/thread/516785-machine-learning-with-algotraderjo
@@ -348,14 +353,15 @@ string   status.stopConditions      = "";
 
 #include <ea/functions/metric/RecordMetrics.mqh>
 
-#include <ea/functions/status/StatusToStr.mqh>
-#include <ea/functions/status/StatusDescription.mqh>
+#include <ea/functions/status/ShowOpenOrders.mqh>
+#include <ea/functions/status/ShowTradeHistory.mqh>
 #include <ea/functions/status/SS.MetricDescription.mqh>
 #include <ea/functions/status/SS.OpenLots.mqh>
 #include <ea/functions/status/SS.ClosedTrades.mqh>
 #include <ea/functions/status/SS.TotalProfit.mqh>
 #include <ea/functions/status/SS.ProfitStats.mqh>
-#include <ea/functions/status/ShowTradeHistory.mqh>
+#include <ea/functions/status/StatusToStr.mqh>
+#include <ea/functions/status/StatusDescription.mqh>
 
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>

@@ -13,8 +13,8 @@ bool ToggleTradeHistory(bool soundOnNoTrades = true) {
 
    if (show) {
       int trades = ShowTradeHistory(true);
-      if (!trades) {                                        // Without any closed trades status must be set to 'off'
-         show = false;                                      // and existing markers are cleared.
+      if (!trades) {                                           // Without any closed trades status must be set to 'off'
+         show = false;                                         // and existing markers cleared.
          if (soundOnNoTrades) PlaySoundEx("Plonk.wav");
       }
    }
