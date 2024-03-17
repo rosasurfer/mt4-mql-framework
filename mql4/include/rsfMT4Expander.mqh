@@ -23,7 +23,7 @@
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
    int      MT4InternalMsg();
    bool     ReopenAlertDialog(int sound);
-   //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime tickTime, double bid, double ask);
    //int    SyncMainContext_deinit(int ec[], int uninitReason);
    //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
@@ -38,10 +38,6 @@
    datetime Tester_GetStartDate();
    datetime Tester_GetEndDate();
    double   Test_GetCommission(int ec[], double lots);
-   //bool   Test_InitReporting  (int ec[], datetime from, int bars);
-   //bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
-   //bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
-   //bool   Test_StopReporting  (int ec[], datetime to,   int bars);
 
    // charts and timeframes
    bool     IsCustomTimeframe(int timeframe);

@@ -61,18 +61,8 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - re-usable exit management
- *
- *     partial close
- *      live: fix closedProfit after 1 partial-close (error loading status file)
- *      implement open.nextTarget
- *     dynamic SL/TP distances (multiples of ranges)
- *     trailing stop
- *
  *  - can the recorder be made optional?
  *     if so remove GetMT4SymbolDefinition() from Expander
- *  - remove test reporting to the Expander
- *
  *
  *  - tests
  *     read enabled trade directions at test start
@@ -100,6 +90,13 @@
  *
  *  - money management
  *
+ *  - partial close
+ *     live: fix closedProfit after 1 partial-close (error loading status file)
+ *     implement open.nextTarget
+ *
+ *  - exit management
+ *     dynamic SL/TP distances (multiples of ranges)
+ *     trailing stop
  *
  *  -------------------------------------------------------------------------------------------------------------------------
  *  - reproduce/validate tests with original EAs
@@ -108,7 +105,6 @@
  *     visualize account statements
  *
  *  -------------------------------------------------------------------------------------------------------------------------
- *  - drop input Test.ExternalReporting
  *  - rewrite loglevels to global vars
  *  - add ZigZag projections
  *  - input TradingTimeframe

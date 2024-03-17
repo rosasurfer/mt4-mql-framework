@@ -5166,13 +5166,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          oe.setSlippage(oe, NormalizeDouble(dSlippage, digits));           // total slippage after requotes
 
          if (IsLogDebug()) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
-
-         if (__isTesting) {
-            if (type<=OP_SELL && __ExecutionContext[EC.externalReporting]) {
-               Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
-            }
-         }
-         else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+         if (!__isTesting) PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
          OrderPop("OrderSendEx(22)");
          if (IsError(Order.HandleError("OrderSendEx(23)", GetLastError(), oeFlags, oe)))
@@ -5771,9 +5765,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
             oe.setRemainingLots  (oe, openLots-lots);
          }
          if (IsLogDebug()) logDebug("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
-
-         if (!__isTesting)                                       PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
-         else if (__ExecutionContext[EC.externalReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
+         if (!__isTesting) PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
       }
@@ -7943,9 +7935,6 @@ void onLibraryInit() {
    int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);
    bool   SortMqlStringsA(string values[], int size);
    bool   SortSymbols(int symbols[], int size);
-
-   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
-   bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
 
    int    symbol_Id  (int symbol[]);
    string symbol_Name(int symbol[]);

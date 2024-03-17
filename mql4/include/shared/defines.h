@@ -373,7 +373,6 @@
 #define INIT_BARS_ON_HIST_UPDATE                4        //
 #define INIT_NO_BARS_REQUIRED                   8        // executable without price history (scripts only)
 #define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
-#define INIT_NO_EXTERNAL_REPORTING             32        // disable external test reporting (experts only)
 
 
 // MT4 internal messages

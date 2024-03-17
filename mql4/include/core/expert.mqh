@@ -2,11 +2,10 @@
 //////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern string   EA.Recorder            = "on | off* | 1,2,3,..."; // @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
+extern string   EA.Recorder     = "on | off* | 1,2,3,...";        // @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
 
-extern datetime Test.StartTime         = 0;                       // time to start a test
-extern double   Test.StartPrice        = 0;                       // price to start a test
-extern bool     Test.ExternalReporting = false;                   // whether to send PositionOpen/Close events to the MT4Expander
+extern datetime Test.StartTime  = 0;                              // time to start a test
+extern double   Test.StartPrice = 0;                              // price to start a test
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -17,9 +16,6 @@ extern bool     Test.ExternalReporting = false;                   // whether to 
 int     __CoreFunction = NULL;                                    // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double  __rates[][6];                                             // current price series
 int     __tickTimerId;                                            // timer id for virtual ticks
-
-// test management
-bool test.initialized = false;
 
 
 /**
@@ -62,10 +58,8 @@ int init() {
        hChart = WindowHandle(Symbol(), NULL);
    }
    int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
-   if (initFlags & INIT_NO_EXTERNAL_REPORTING && 1) {
-      Test.ExternalReporting = false;                             // the input must be reset before SyncMainContext_init()
-   }
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recorder.mode, IsTesting(), IsVisualMode(), IsOptimization(), Test.ExternalReporting, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recorder.mode, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                            // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -120,9 +114,11 @@ int init() {
    int account = GetAccountNumber(); if (!account) return(_last_error(CheckErrors("init(12)")));
    string initHandlers[] = {"", "initUser", "initTemplate", "", "", "initParameters", "initTimeframeChange", "initSymbolChange", "initRecompile"};
 
-   if (__isTesting) {                                             // log MarketInfo() data
-      if (IsLogInfo()) {
-         string title = "::: TEST ("+ BarModelDescription(__Test.barModel) +") :::";
+   if (__isTesting) {
+      Test.GetStartDate();                                        // populate date caches to prevent UI deadlocks if called in deinit()
+      Test.GetEndDate();
+      if (IsLogInfo()) {                                          // log MarketInfo() data
+         string title = " ::: TEST ("+ BarModelDescription(__Test.barModel) +") :::";
          string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ initMarketInfo();
          string separator = StrRepeat(":", StringLen(msg));
          if (__isTesting) separator = title + StrRight(separator, -StringLen(title));
@@ -142,10 +138,9 @@ int init() {
       if (IsLogInfo()) {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
-            sInputs = StringConcatenate(sInputs,     NL, "EA.Recorder=\"", EA.Recorder, "\"",                           ";",
-               ifString(!Test.StartTime,         "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
-               ifString(!Test.StartPrice,        "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
-               ifString(!Test.ExternalReporting, "", NL +"Test.ExternalReporting=TRUE"                                 +";"));
+            sInputs = StringConcatenate(sInputs, NL, "EA.Recorder=\"", EA.Recorder, "\"",                           ";",
+               ifString(!Test.StartTime,     "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
+               ifString(!Test.StartPrice,    "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
             logInfo(initHandlers[initReason] +"(0)  inputs: "+ sInputs);
          }
       }
@@ -311,27 +306,22 @@ int start() {
       if (CheckErrors("start(6)->SyncMainContext_start()")) return(last_error);
    }
 
-   // initialize test
-   if (!test.initialized) {
-      if (!initTest()) return(_last_error(CheckErrors("start(7)")));
-   }
-
    // call the userland main function
    error = onTick();
-   if (error && error!=last_error) CheckErrors("start(8)", error);
+   if (error && error!=last_error) CheckErrors("start(7)", error);
 
    // record performance metrics
    if (recorder.mode != RECORDER_OFF) {
       if (!Recorder.start()) {
          recorder.mode = RECORDER_OFF;
-         return(_last_error(CheckErrors("start(9)")));
+         return(_last_error(CheckErrors("start(8)")));
       }
    }
 
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      return(_last_error(CheckErrors("start(10)", error)));
+      return(_last_error(CheckErrors("start(9)", error)));
    return(ShowStatus(NO_ERROR));
 }
 
@@ -371,9 +361,6 @@ int deinit() {
 
    // close the recorder
    if (recorder.mode != RECORDER_OFF) Recorder.deinit();
-
-   // stop external reporting
-   if (Test.ExternalReporting) Test_StopReporting(__ExecutionContext, Tick.time, Bars);
 
    // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
    //
@@ -602,30 +589,6 @@ string initMarketInfo() {
 
 
 /**
- * Called at the first tick of a test. Initializes external reporting.
- *
- * @return bool - success status
- */
-bool initTest() {
-   if (!test.initialized) {
-      if (__isTesting) {
-         if (Test.ExternalReporting) {
-            datetime time = MarketInfo(Symbol(), MODE_TIME);
-            Test_InitReporting(__ExecutionContext, time, Bars);
-         }
-         Test.GetStartDate();    // populate date cache to prevent UI deadlocks when called in expert:: deinit()
-         Test.GetEndDate();
-      }
-      else {
-         Test.ExternalReporting = false;
-      }
-      test.initialized = true;
-   }
-   return(true);
-}
-
-
-/**
  * Get the test start date selected in the tester.
  *
  * @return datetime - start date or NaT (Not-a-Time) in case of errors
@@ -687,14 +650,9 @@ datetime Test.GetEndDate() {
 
    string symbols_Name(int symbols[], int i);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
-
-   bool   Test_InitReporting  (int ec[], datetime from, int bars);
-   bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
-   bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
-   bool   Test_StopReporting  (int ec[], datetime to, int bars);
 
 #import "user32.dll"
    int    SendMessageA(int hWnd, int msg, int wParam, int lParam);

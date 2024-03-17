@@ -22,7 +22,7 @@
  *                       prevents DDL triggering by spread widening/spikes.
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
+int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
 int __virtualTicks = 800;                             // milliseconds (must be short as the EA watches all symbols)
 
