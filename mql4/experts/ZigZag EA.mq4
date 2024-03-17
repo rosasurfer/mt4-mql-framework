@@ -61,9 +61,6 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - can the recorder be made optional?
- *     if so remove GetMT4SymbolDefinition() from Expander
- *
  *  - tests
  *     read enabled trade directions at test start
  *     storage in folder per strategy
@@ -71,14 +68,11 @@
  *     on no connection/old terminal: indicator of the same name to load test into chart
  *
  *  - optimization/self-optimization
- *     04.10.2007 Automated re-Optimization in MT4       https://www.mql5.com/en/articles/1467
- *     05.10.2018 Automated re-Optimization in MT5       https://www.mql5.com/en/articles/4917
+ *     04.10.2007 Automated re-optimization in MT4       https://www.mql5.com/en/articles/1467
+ *     05.10.2018 Automated re-optimization in MT5       https://www.mql5.com/en/articles/4917
  *
  *     13.07.2008: @tdion, inspiration for @rraygun      https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool#    statt MACD(16,18) MACD(ALMA(38,46))
  *     16.12.2009: @rraygun                              https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks#
- *     16.11.2017: @john-davis, 100%/month on H1         https://www.mql5.com/en/blogs/post/714509#                           Ich kann die Ergebnisse tatsächlich reproduzieren.
- *                                                       https://www.mql5.com/en/market/product/26332#                        Betrug: Er hat den einzigen profitablen Monat in
- *                                                       https://www.mql5.com/en/code/19392#                                  einem Zeitraum von 12 Monaten gepostet.
  *
  *     01.08.2018 MACD Twister                           https://www.mql5.com/en/market/product/23557
  *
@@ -168,8 +162,7 @@
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "Today 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *
- *  -                             INFO   US30,M5  ChartInfos::AnalyzePositions(2)  position 13 => 14 (unitsize 0.95)
- *    sound.cpp::PlaySoundW(171)  ERROR: mciSendString(play "E:\Trading\MetaTrader\S5\sounds\MarginLow.wav" from 0) => MCIERR_WAVE_OUTPUTSINUSE  [ERR_RUNTIME_ERROR]
+ *  - sound.cpp::PlaySoundW(171)  ERROR: mciSendString(play "E:\Trading\MetaTrader\S5\sounds\MarginLow.wav" from 0) => MCIERR_WAVE_OUTPUTSINUSE  [ERR_RUNTIME_ERROR]
  *                                FATAL  US30,M5  ChartInfos::start(8)  DLL error  [ERR_RUNTIME_ERROR]
  *
  *  - stop on reverse signal
@@ -183,8 +176,6 @@
  *
  *  - trading functionality
  *     support command "wait" in status "progressing"
- *     breakeven stop
- *     trailing stop
  *     reverse trading and command EA.Reverse
  *
  *  - ChartInfos
@@ -320,9 +311,11 @@ string   status.stopConditions      = "";
 
 // framework
 #include <core/expert.mqh>
+#include <core/expert.recorder.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 #include <functions/ParseDateTime.mqh>
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>

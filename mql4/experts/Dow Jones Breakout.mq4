@@ -52,11 +52,13 @@ int  bracket2End   = 990;                    // 16:30
 
 // framework
 #include <core/expert.mqh>
+#include <core/expert.recorder.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 
 // EA definitions
 #include <ea/functions/instance/defines.mqh>

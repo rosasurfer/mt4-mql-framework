@@ -14,12 +14,12 @@ int CreateInstanceId() {
 
    if (__isTesting) {
       // generate next consecutive id from already recorded metrics
-      string nextSymbol = Recorder.GetNextMetricSymbol(); if (nextSymbol == "") return(NULL);
+      string nextSymbol = Recorder_GetNextMetricSymbol(); if (nextSymbol == "") return(NULL);
       string sCounter = StrRightFrom(nextSymbol, ".", -1);
       if (!StrIsDigits(sCounter)) return(!catch("CreateInstanceId(1)  "+ instance.name +" illegal value for next symbol \""+ nextSymbol +"\" (doesn't end with 3 digits)", ERR_ILLEGAL_STATE));
       int nextMetricId = MathMax(INSTANCE_ID_MIN, StrToInteger(sCounter));
 
-      if (recorder.mode == RECORDER_OFF) {
+      if (recorder.mode == NULL) {
          int minInstanceId = MathCeil(nextMetricId + 0.2*(INSTANCE_ID_MAX-nextMetricId));    // nextMetricId + 20% of remaining range (leave 20% of range empty for tests with metrics)
          while (instanceId < minInstanceId || instanceId > INSTANCE_ID_MAX) {                // select random id between <minInstanceId> and ID_MAX
             instanceId = MathRand();

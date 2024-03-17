@@ -81,16 +81,13 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
                                                                                                                            //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define SIGNAL_LONG        1                 // signal flags, can be combined
-#define SIGNAL_SHORT       2
-#define SIGNAL_CLOSE       4
-
-
 // framework
 #include <core/expert.mqh>
+#include <core/expert.recorder.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 

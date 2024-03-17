@@ -46,9 +46,11 @@ extern bool   ShowProfitInPercent  = false;  // whether PnL is displayed in mone
 
 // framework
 #include <core/expert.mqh>
+#include <core/expert.recorder.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 
 // EA definitions
 #include <ea/functions/instance/defines.mqh>

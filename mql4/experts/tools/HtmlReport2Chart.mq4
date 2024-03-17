@@ -36,6 +36,7 @@ string Instance.ID = "999";            // dummy, needed by StoreVolatileStatus()
 #include <ea/functions/trade/defines.mqh>
 
 // EA functions
+#include <ea/functions/status/ShowOpenOrders.mqh>
 #include <ea/functions/status/ShowTradeHistory.mqh>
 
 #include <ea/functions/status/volatile/StoreVolatileStatus.mqh>

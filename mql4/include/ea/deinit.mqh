@@ -17,7 +17,10 @@ int onDeinit() {
          }
          double signal[] = {0,0,0};
          if (success) StopInstance(signal);
-         RecordMetrics();
+         int error = RecordMetrics();
+         if (recorder.mode && error) {
+            catch("onDeinit(1)->RecordMetrics()", error);
+         }
          ShowStatus(last_error);
       }
    }

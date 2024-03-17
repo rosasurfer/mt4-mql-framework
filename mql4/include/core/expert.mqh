@@ -9,13 +9,11 @@ extern double   Test.StartPrice = 0;                              // price to st
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/expert.recorder.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;                                    // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double  __rates[][6];                                             // current price series
 int     __tickTimerId;                                            // timer id for virtual ticks
+int     recorder.mode;                                            // EA recorder settings
 
 
 /**
@@ -59,7 +57,9 @@ int init() {
    }
    int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recorder.mode, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int recorderMode = NULL;
+
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recorderMode, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                            // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -311,10 +311,10 @@ int start() {
    if (error && error!=last_error) CheckErrors("start(7)", error);
 
    // record performance metrics
-   if (recorder.mode != RECORDER_OFF) {
-      if (!Recorder.start()) {
-         recorder.mode = RECORDER_OFF;
-         return(_last_error(CheckErrors("start(8)")));
+   if (recorder.mode != NULL) {
+      if (!Recorder_start()) {
+         recorder.mode = NULL;
+         return(_last_error(CheckErrors("start(8)->Recorder_start()")));
       }
    }
 
@@ -359,8 +359,8 @@ int deinit() {
       if (!ReleaseTickTimer(tmp)) logError("deinit(3)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
    }
 
-   // close the recorder
-   if (recorder.mode != RECORDER_OFF) Recorder.deinit();
+   // close a running recorder
+   if (recorder.mode != NULL) Recorder_deinit();
 
    // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
    //
@@ -647,6 +647,11 @@ datetime Test.GetEndDate() {
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
    int    ec_SetRecordMode         (int ec[], int mode    );
+
+   bool   Recorder_start();
+   bool   Recorder_deinit();
+   string Recorder_GetNextMetricSymbol();
+   int    RecordMetrics();
 
    string symbols_Name(int symbols[], int i);
 

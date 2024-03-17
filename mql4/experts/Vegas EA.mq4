@@ -110,9 +110,11 @@ extern bool   ShowProfitInPercent  = false;                          // whether 
 
 // framework
 #include <core/expert.mqh>
+#include <core/expert.recorder.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/iCustom/MaTunnel.mqh>
 #include <functions/iCustom/ZigZag.mqh>
