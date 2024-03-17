@@ -11,14 +11,13 @@
  *
  * Notes
  * -----
- *  - Signals represent a basic bar pattern und have no predictive power. The pattern is not related to the current market
- *    scheme/trend and there no distinction between micro and macro patterns. In effect signal outcome is random and results
- *    merely reflect the used exit management. Worse, signals are not able to catch big trends where exit management could
- *    play out its strengths and makes a difference.
+ *  - Signals represent a basic bar pattern. The pattern is not related to the current market scheme/trend and there no
+ *    distinction between micro and macro patterns. In effect signal outcome is random and results merely reflect the used
+ *    exit management. Worse, signals are not able to catch big trends where exit management could play out its strengths.
  *
- *  - Solutions: One idea is to combine the signal with the "XARD 2nd Dot" system. It would put signals into the context of
- *    the greater trend and nests two 1-2-3 signals into each other. Such a combination looks very reliable. Also it filters
- *    most of the invalid micro signals.
+ *  - Solutions: One idea is to combine the signal with the "XARD 2nd Dot" system. By nesting two 1-2-3 signals into each
+ *    other it would put signals into the context of the greater trend. Such combination looks very reliable. Also it filters
+ *    many of the invalid micro signals.
  *
  *
  * Changes
@@ -156,7 +155,6 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/functions/trade/CalculateMagicNumber.mqh>
 #include <ea/functions/trade/ComposePositionCloseMsg.mqh>
 #include <ea/functions/trade/HistoryRecordToStr.mqh>
-#include <ea/functions/trade/HistoryRecordDescr.mqh>
 #include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
 #include <ea/functions/trade/onPositionClose.mqh>
@@ -208,7 +206,6 @@ int onTick() {
    return(last_error);
 
    OpenPositionDescr();
-   HistoryRecordDescr(NULL);
 }
 
 

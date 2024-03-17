@@ -45,7 +45,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
       partialClose[i][H_SIG_RUNUP_P   ] = open.sigRunupP;
       partialClose[i][H_SIG_RUNDOWN_P ] = open.sigRundownP;
 
-      //logNotice("MovePositionToHistory(0.1)  oc="+ DoubleToStr(ifDouble(!open.type, closePrice-open.price, open.price-closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!open.type, closePriceSig-open.priceSig, open.priceSig-closePriceSig)/pUnit, pDigits) +"  part="+ HistoryRecordDescr(i, true));
+      //logNotice("MovePositionToHistory(0.1)  oc="+ DoubleToStr(ifDouble(!open.type, closePrice-open.price, open.price-closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!open.type, closePriceSig-open.priceSig, open.priceSig-closePriceSig)/pUnit, pDigits) +"  part="+ HistoryRecordToStr(i, true, false));
    }
    else {
       // add trade to history[]
@@ -77,7 +77,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
       history[i][H_SIG_RUNUP_P   ] = open.sigRunupP;
       history[i][H_SIG_RUNDOWN_P ] = open.sigRundownP;
 
-      //logNotice("MovePositionToHistory(0.2)  oc="+ DoubleToStr(ifDouble(!open.type, closePrice-open.price, open.price-closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!open.type, closePriceSig-open.priceSig, open.priceSig-closePriceSig)/pUnit, pDigits) +"  hist="+ HistoryRecordDescr(i));
+      logNotice("MovePositionToHistory(0.2)  oc="+ DoubleToStr(ifDouble(!open.type, closePrice-open.price, open.price-closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!open.type, closePriceSig-open.priceSig, open.priceSig-closePriceSig)/pUnit, pDigits) +"  hist="+ HistoryRecordToStr(i, false, false));
    }
 
    // update PnL stats
@@ -172,7 +172,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
          history[i][H_SIG_RUNUP_P   ] = a.sigRunupP;
          history[i][H_SIG_RUNDOWN_P ] = a.sigRundownP;
 
-         //logNotice("MovePositionToHistory(0.3)  oc="+ DoubleToStr(ifDouble(!a.type, a.closePrice-a.openPrice, a.openPrice-a.closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!a.type, a.closePriceSig-a.openPriceSig, a.openPriceSig-a.closePriceSig)/pUnit, pDigits) +"  hist="+ HistoryRecordDescr(i));
+         //logNotice("MovePositionToHistory(0.3)  oc="+ DoubleToStr(ifDouble(!a.type, a.closePrice-a.openPrice, a.openPrice-a.closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!a.type, a.closePriceSig-a.openPriceSig, a.openPriceSig-a.closePriceSig)/pUnit, pDigits) +"  hist="+ HistoryRecordToStr(i, false, false));
       }
 
       // reset open position data

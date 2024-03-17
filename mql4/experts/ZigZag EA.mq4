@@ -63,17 +63,14 @@
  *
  *  - re-usable exit management
  *
- *     rewrite ShowOpenOrders()
- *     merge HistoryRecordToStr() and HistoryRecordDescr()
- *
  *     partial close
- *      live: fix closedProfit after 1 partial-close (+ error loading status file)
+ *      live: fix closedProfit after 1 partial-close (error loading status file)
  *      implement open.nextTarget
  *     dynamic SL/TP distances (multiples of ranges)
  *     trailing stop
  *
  *  - can the recorder be made optional?
- *     yes: remove GetMT4SymbolDefinition() from Expander
+ *     if so remove GetMT4SymbolDefinition() from Expander
  *  - remove test reporting to the Expander
  *
  *

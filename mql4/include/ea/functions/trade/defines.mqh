@@ -72,5 +72,4 @@ double history[][25];
 //  ea/functions/status/file/ReadStatus.HistoryRecord.mqh
 //  ea/functions/trade/AddHistoryRecord.mqh + every usage of AddHistoryRecord() elsewhere
 //  ea/functions/trade/HistoryRecordToStr.mqh
-//  ea/functions/trade/HistoryRecordDescr.mqh
 //  ea/functions/trade/MovePositionToHistory.mqh
