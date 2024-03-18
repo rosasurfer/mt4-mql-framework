@@ -61,10 +61,16 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
+ *  - optimization
+ *     better statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
+ *
+ *
+ *  - money management
+ *
+ *
  *  - tests
  *     read enabled trade directions at test start
  *     storage in folder per strategy
- *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
  *     on no connection/old terminal: indicator of the same name to load test into chart
  *
  *  - optimization/self-optimization
@@ -81,8 +87,6 @@
  *
  *     separate optimization of long|short trades
  *     consider max holding period
- *
- *  - money management
  *
  *  - partial close
  *     live: fix closedProfit after 1 partial-close (error loading status file)
