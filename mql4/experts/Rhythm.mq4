@@ -85,65 +85,96 @@ extern int    Slippage          = 5;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define MAX_CNT 120  // 1 minute
-
 
 /**
  *
  */
 int start() {
-   static int dir = -1;
-   static int reverse = 0;
+   static int entryDirection = -1;
+   static double entryLevel = 0;
 
    // Find trend (override possible and skip Sundays for Monday trend)
-   if (dir < 0) {
+   if (entryDirection < 0) {
       if (OverruleDirection) {
-         if (DirectionLong) dir = OP_BUY;
-         else               dir = OP_SELL;
+         if (DirectionLong) entryDirection = OP_BUY;
+         else               entryDirection = OP_SELL;
       }
       else {
          if (DayOfWeek() == 1) int bs = iBarShift(NULL, PERIOD_D1, TimeCurrent()-72*3600);
          else                  bs = 1;
-         if (iOpen(NULL, PERIOD_D1, bs) < iClose(NULL, PERIOD_D1, bs)) dir = OP_BUY;
-         else                                                          dir = OP_SELL;
+         if (iOpen(NULL, PERIOD_D1, bs) < iClose(NULL, PERIOD_D1, bs)) entryDirection = OP_BUY;
+         else                                                          entryDirection = OP_SELL;
       }
-      if (dir == OP_BUY) reverse = MathRound(Ask/Point);
-      else               reverse = MathRound(Bid/Point);
+      if (entryDirection == OP_BUY) entryLevel = Ask;
+      else                          entryLevel = Bid;
    }
 
    if (IsTradingTime()) {
       Comment("Trading time");
 
-      // check for open position && count today's trades and whether one was closed by TP
-      if (!IsOpenPosition() && Rhythm_CanTrade()) {
-         double sl = CalculateStopLoss(dir);
-         double tp = CalculateTakeProfit(dir);
+      // check for open position & whether the daily stop limit is reached
+      if (!IsOpenPosition() && !IsDailyStop()) {
+         double sl = CalculateStopLoss(entryDirection);
+         double tp = CalculateTakeProfit(entryDirection);
 
-         if (dir == OP_BUY) {
-            if (MathRound(Ask/Point) >= reverse) {
-               OrderSend(Symbol(), dir, Lots, Ask, Slippage, sl, tp, "Rhythm", MagicNumber, 0, Blue);
+         if (entryDirection == OP_BUY) {
+            if (Ask >= entryLevel) {
+               OrderSend(Symbol(), entryDirection, Lots, Ask, Slippage, sl, tp, "Rhythm", MagicNumber, 0, Blue);
             }
          }
          else {
-            if (MathRound(Bid/Point) <= reverse) {
-               OrderSend(Symbol(), dir, Lots, Bid, Slippage, sl, tp, "Rhythm", MagicNumber, 0, Red);
+            if (Bid <= entryLevel) {
+               OrderSend(Symbol(), entryDirection, Lots, Bid, Slippage, sl, tp, "Rhythm", MagicNumber, 0, Red);
             }
          }
       }
 
-      // find reverse
       if (IsOpenPosition()) {                         // selects the ticket
-         reverse = MathRound(OrderStopLoss()/Point);
-         if (OrderType() == OP_BUY) dir = OP_SELL;
-         else                       dir = OP_BUY;
+         // find opposite entry level
+         entryLevel = OrderStopLoss();
+         if (OrderType() == OP_BUY) entryDirection = OP_SELL;
+         else                       entryDirection = OP_BUY;
+         Comment("Trading time. Reverse at ", DoubleToStr(entryLevel, Digits));
+
+         // manage StopLoss
+         if (TrailingStop) {
+            if (OrderType() == OP_BUY) {
+               double newSL = NormalizeDouble(OrderClosePrice() - StopLoss*Point, Digits);
+               if (newSL > OrderStopLoss()) {
+                  OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
+                  entryLevel = newSL;
+               }
+            }
+            else {
+               newSL = NormalizeDouble(OrderClosePrice() + StopLoss*Point, Digits);
+               if (newSL < OrderStopLoss()) {
+                  OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Red);
+                  entryLevel = newSL;
+               }
+            }
+         }
+         else if (TrailOnceStop) {
+            newSL = OrderOpenPrice();
+            if (OrderStopLoss() != newSL) {
+               if (OrderType() == OP_BUY) {
+                  if (Bid > OrderOpenPrice() + StopLoss*Point) {
+                     OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
+                     entryLevel = newSL;
+                  }
+               }
+               else {
+                  if (Ask < OrderOpenPrice() - StopLoss*Point) {
+                     OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
+                     entryLevel = newSL;
+                  }
+               }
+            }
+         }
       }
-      Comment("Trading time. Reverse at ", DoubleToStr(reverse*Point, Digits));
    }
 
    else {
       Comment("No trading time");
-      reverse = 0;
-      dir     = -1;
 
       // close open positions
       for (int i=OrdersTotal()-1; i >= 0; i--) {
@@ -152,45 +183,8 @@ int start() {
          if (OrderMagicNumber() != MagicNumber)           continue;
          OrderClose(OrderTicket(), OrderLots(), OrderClosePrice(), 1);
       }
-   }
-
-   if (IsOpenPosition()) {                            // selects the ticket
-      // manage StopLoss
-      if (TrailingStop) {
-         if (OrderType() == OP_BUY) {
-            double nsl = OrderClosePrice() - StopLoss*Point;
-            if (MathRound((Bid-OrderStopLoss())/Point) - StopLoss > 0) {
-               OrderModify(OrderTicket(), OrderOpenPrice(), nsl, OrderTakeProfit(), OrderExpiration(), Blue);
-               reverse = MathRound(nsl/Point);
-            }
-         }
-         else {
-            nsl = OrderClosePrice() + StopLoss*Point;
-            if (MathRound((OrderStopLoss()-Ask)/Point) - StopLoss > 0) {
-               OrderModify(OrderTicket(), OrderOpenPrice(), nsl, OrderTakeProfit(), OrderExpiration(), Red);
-               reverse = MathRound(nsl/Point);
-            }
-         }
-      }
-      else if (TrailOnceStop) {
-         nsl = OrderOpenPrice();
-         if (OrderType() == OP_BUY) {
-            if (MathRound((Bid-nsl)/Point) - StopLoss > 0) {
-               if (MathRound((nsl-OrderStopLoss())/Point) != 0) {
-                  OrderModify(OrderTicket(), OrderOpenPrice(), nsl, OrderTakeProfit(), OrderExpiration(), Blue);
-                  reverse = MathRound(nsl/Point);
-               }
-            }
-         }
-         else {
-            if (MathRound((nsl-Ask)/Point) - StopLoss > 0) {
-               if (MathRound((nsl-OrderStopLoss())/Point) != 0) {
-                  OrderModify(OrderTicket(), OrderOpenPrice(), nsl, OrderTakeProfit(), OrderExpiration(), Blue);
-                  reverse = MathRound(nsl/Point);
-               }
-            }
-         }
-      }
+      entryDirection = -1;
+      entryLevel = 0;
    }
    return(0);
 }
@@ -199,7 +193,7 @@ int start() {
 /**
  *
  */
-bool Rhythm_CanTrade() {
+bool IsDailyStop() {
    int today_trades = 0;
    datetime today = iTime(NULL, PERIOD_D1, 0);
 
@@ -210,12 +204,12 @@ bool Rhythm_CanTrade() {
       if (OrderOpenTime() < today)           continue;
       today_trades++;
 
-      if (MaxTrades > 0 && today_trades >= MaxTrades) return(false);
+      if (MaxTrades > 0 && today_trades >= MaxTrades) return(true);
       if (TakeProfit > 0) {
-         if (StringFind(OrderComment(), "[tp]") >= 0) return(false);
+         if (StringFind(OrderComment(), "[tp]") >= 0) return(true);
       }
    }
-   return(true);
+   return(false);
 }
 
 
