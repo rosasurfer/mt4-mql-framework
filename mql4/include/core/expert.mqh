@@ -1,7 +1,7 @@
 
 //////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
 
-extern string   ______________________________;
+extern string   ______________________________ = "";
 extern string   EA.Recorder     = "on | off* | 1,2,3,...";        // @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
 
 extern datetime Test.StartTime  = 0;                              // time to start a test
