@@ -13,7 +13,7 @@
  *
  *
  * TODO:
- *  - resolve difference between "1-GBPJPY,M1 4 months" und "StrategyTester3"
+ *
  */
 
 /**
@@ -119,12 +119,12 @@ int start() {
          double tp = CalculateTakeProfit(entryDirection);
 
          if (entryDirection == OP_BUY) {
-            if (Ask >= entryLevel) {
+            if (NormalizeDouble(Ask, Digits) >= NormalizeDouble(entryLevel, Digits)) {                               // TODO: Ask may not be normalized
                OrderSend(Symbol(), entryDirection, Lots, Ask, Slippage, sl, tp, "Rhythm", MagicNumber, 0, Blue);
             }
          }
          else {
-            if (Bid <= entryLevel) {
+            if (NormalizeDouble(Bid, Digits) <= NormalizeDouble(entryLevel, Digits)) {                               // TODO: Bid may not be normalized
                OrderSend(Symbol(), entryDirection, Lots, Bid, Slippage, sl, tp, "Rhythm", MagicNumber, 0, Red);
             }
          }
@@ -159,14 +159,14 @@ int start() {
             if (OrderStopLoss() != newSL) {
                if (OrderType() == OP_BUY) {
                   double triggerPrice = NormalizeDouble(OrderOpenPrice() + StopLoss*Point, Digits);
-                  if (Bid > triggerPrice) {                                                                             // TODO: it tests for "greater than" trigger price instead of >=
+                  if (Bid > triggerPrice) {                                                                             // TODO: it tests for "greater than" instead of >=
                      OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
                      entryLevel = newSL;
                   }
                }
                else {
                   triggerPrice = NormalizeDouble(OrderOpenPrice() - StopLoss*Point, Digits);
-                  if (Ask < triggerPrice) {                                                                             // TODO: it tests for "lower than" trigger price instead of <=
+                  if (Ask < triggerPrice) {                                                                             // TODO: it tests for "lower than" instead of <=
                      OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
                      entryLevel = newSL;
                   }
