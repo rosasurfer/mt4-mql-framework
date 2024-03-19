@@ -13,6 +13,7 @@
  *
  *
  * TODO:
+ *  - resolve difference between "1-GBPJPY,M1 4 months" und "StrategyTester3"
  */
 
 /**
@@ -157,13 +158,15 @@ int start() {
             newSL = OrderOpenPrice();
             if (OrderStopLoss() != newSL) {
                if (OrderType() == OP_BUY) {
-                  if (Bid > OrderOpenPrice() + StopLoss*Point) {
+                  double triggerPrice = NormalizeDouble(OrderOpenPrice() + StopLoss*Point, Digits);
+                  if (Bid > triggerPrice) {                                                                             // TODO: it tests for "greater than" trigger price instead of >=
                      OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
                      entryLevel = newSL;
                   }
                }
                else {
-                  if (Ask < OrderOpenPrice() - StopLoss*Point) {
+                  triggerPrice = NormalizeDouble(OrderOpenPrice() - StopLoss*Point, Digits);
+                  if (Ask < triggerPrice) {                                                                             // TODO: it tests for "lower than" trigger price instead of <=
                      OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
                      entryLevel = newSL;
                   }

@@ -61,9 +61,6 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - HtmlReport2Chart für Rhythm reparieren
- *     Habe entryLevel und Stop-Handling neu geschrieben.
- *     Unterschied zwischen "1-GBPJPY,M1 4 months" und "StrategyTester2" finden
  *
  *  - optimization
  *     better statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
