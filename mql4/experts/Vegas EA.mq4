@@ -305,7 +305,7 @@ bool IsMaTunnelSignal(int &signal) {
          else if (trend == -1) signal = SIGNAL_SHORT;
 
          if (signal != NULL) {
-            if (IsLogNotice()) logNotice("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
          }
       }
       lastTick = Ticks;
@@ -347,7 +347,7 @@ bool IsZigZagSignal(int &signal) {
             signal = NULL;
          }
          else {
-            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
             lastSignal = signal;
             lastSignalBar = Time[0];
          }
@@ -394,8 +394,8 @@ bool UpdateStatus(int signal = NULL) {
          double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
       }
       else {
-         exitPrice = ifDouble(open.type==OP_BUY, Bid, Ask);
-         exitPriceSig = Bid;
+         exitPrice = ifDouble(open.type==OP_BUY, _Bid, _Ask);
+         exitPriceSig = _Bid;
       }
       open.swapM        = NormalizeDouble(OrderSwap(), 2);
       open.commissionM  = OrderCommission();
@@ -436,11 +436,11 @@ bool UpdateStatus(int signal = NULL) {
          open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
          open.runupP       = MathMax(open.runupP, open.netProfitP);
          open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-         open.sigProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+         open.sigProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
          open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
          open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
 
-         if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, Bid)) return(false);
+         if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, _Bid)) return(false);
       }
 
       // open new position
@@ -458,14 +458,14 @@ bool UpdateStatus(int signal = NULL) {
       open.lots         = oe.Lots(oe);
       open.time         = oe.OpenTime(oe);
       open.price        = oe.OpenPrice(oe);
-      open.priceSig     = Bid;
+      open.priceSig     = _Bid;
       open.slippageP    = oe.Slippage(oe);
       open.swapM        = oe.Swap(oe);
       open.commissionM  = oe.Commission(oe);
       open.grossProfitM = oe.Profit(oe);
       open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-      open.runupP       = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
+      open.netProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
+      open.runupP       = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask);
       open.rundownP     = open.runupP;
       open.sigProfitP   = 0;
       open.sigRunupP    = open.sigProfitP;
@@ -528,11 +528,11 @@ bool StopInstance(double signal[]) {
          open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
          open.runupP       = MathMax(open.runupP, open.netProfitP);
          open.rundownP     = MathMin(open.rundownP, open.netProfitP); open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-         open.sigProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+         open.sigProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
          open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
          open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
 
-         if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, Bid)) return(false);
+         if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, _Bid)) return(false);
 
          // update PL numbers
          instance.openNetProfit  = open.netProfitM;

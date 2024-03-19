@@ -14,6 +14,8 @@ int     __CoreFunction = NULL;                                    // currently e
 double  __rates[][6];                                             // current price series
 int     __tickTimerId;                                            // timer id for virtual ticks
 int     recorder.mode;                                            // EA recorder settings
+double  _Bid;                                                     // always normalized versions of predefined vars Bid/Ask
+double  _Ask;                                                     // ...
 
 
 /**
@@ -29,6 +31,8 @@ int init() {
          ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
    }
+   _Bid = NormalizeDouble(Bid, Digits);                           // always normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                           //
 
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this expert.");
@@ -215,6 +219,8 @@ int start() {
       }
       return(last_error);
    }
+   _Bid = NormalizeDouble(Bid, Digits);                                    // always normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                                    //
 
    // resolve tick status
    Ticks++;                                                                // simple counter, the value is meaningless
@@ -342,6 +348,8 @@ int start() {
  */
 int deinit() {
    __CoreFunction = CF_DEINIT;
+   _Bid = NormalizeDouble(Bid, Digits);            // always normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);            //
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
       return(last_error);

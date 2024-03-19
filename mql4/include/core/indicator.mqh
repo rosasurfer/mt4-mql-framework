@@ -13,6 +13,8 @@ int    __tickTimerId;                                                // timer id
 bool   __trackExecutionTime = false;                                 // whether to track the execution time of a full recalculation (if ValidBars = 0)
 bool   __isAccountChange    = false;
 bool   __isOfflineChart     = -1;                                    // initialized in start(), not before
+double  _Bid;                                                        // always normalized versions of predefined vars Bid/Ask
+double  _Ask;                                                        // ...
 
 
 /**
@@ -225,6 +227,8 @@ int start() {
       }
       return(__STATUS_OFF.reason);
    }
+   _Bid = NormalizeDouble(Bid, Digits);                                          // always normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                                          //
 
    // check chart initialization: Without history (i.e. no bars) Indicator::start() is never called.
    // However on older builds Bars=0 used to be a spurious issue which was sometimes observed on terminal start.

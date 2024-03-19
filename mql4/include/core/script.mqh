@@ -2,6 +2,8 @@
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double  __rates[][6];                                                // current price series
+double  _Bid;                                                        // always normalized versions of predefined vars Bid/Ask
+double  _Ask;                                                        // ...
 
 
 /**
@@ -120,6 +122,8 @@ int start() {
       return(__STATUS_OFF.reason);
    }
    __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
+   _Bid = NormalizeDouble(Bid, Digits);                                       // always normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                                       //
 
    Ticks++;                                                                   // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im Tester- und Offline-Chart falsch !!!

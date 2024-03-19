@@ -1303,8 +1303,7 @@ string stringOr(string value, string altValue) {
  * @return bool
  */
 bool EQ(double double1, double double2, int digits = 8) {
-   if (digits < 0 || digits > 8)
-      return(!catch("EQ()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER));
+   if (digits < 0 || digits > 8) return(!catch("EQ(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER));
 
    double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
    if (diff < 0)

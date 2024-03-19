@@ -240,9 +240,9 @@ bool IsEntrySignal(double &signal[]) {
       // check for entry signal for a new position
       if (!open.ticket) {
          if (trend == OP_LONG) {
-            if (s1Level <= s3Level && Bid == High[0] && Bid > s2Level) {
+            if (s1Level <= s3Level && _Bid == High[0] && _Bid > s2Level) {
                entryLevel = NormalizeDouble(s2Level + MinBreakoutDistance * pUnit, Digits);
-               if (Bid >= entryLevel) /*&&*/ if (High[iHighest(NULL, NULL, MODE_LOW, s3Bar-1, 1)] < entryLevel) {
+               if (_Bid >= entryLevel) /*&&*/ if (High[iHighest(NULL, NULL, MODE_LOW, s3Bar-1, 1)] < entryLevel) {
                   signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
                   signal[SIG_PRICE] = NormalizeDouble(entryLevel + 1*Point, Digits);
                   signal[SIG_OP   ] = SIG_OP_LONG;
@@ -250,9 +250,9 @@ bool IsEntrySignal(double &signal[]) {
             }
          }
          else {
-            if (s1Level >= s3Level && Bid==Low[0] && Bid < s2Level) {
+            if (s1Level >= s3Level && _Bid==Low[0] && _Bid < s2Level) {
                entryLevel = NormalizeDouble(s2Level - MinBreakoutDistance * pUnit, Digits);
-               if (Bid <= entryLevel) /*&&*/ if (Low[iLowest(NULL, NULL, MODE_LOW, s3Bar-1, 1)] > entryLevel) {
+               if (_Bid <= entryLevel) /*&&*/ if (Low[iLowest(NULL, NULL, MODE_LOW, s3Bar-1, 1)] > entryLevel) {
                   signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
                   signal[SIG_PRICE] = NormalizeDouble(entryLevel - 1*Point, Digits);
                   signal[SIG_OP   ] = SIG_OP_SHORT;
@@ -310,7 +310,7 @@ bool IsExitSignal(double &signal[]) {
       if (open.ticket > 0) {
          if (open.type == OP_LONG) {
             if (trend == OP_SHORT) {
-               if (Bid < s2Level) {
+               if (_Bid < s2Level) {
                   signal[SIG_TYPE ] = SIG_TYPE_STOPLOSS;
                   signal[SIG_PRICE] = NormalizeDouble(s2Level - 1*Point, Digits);
                   signal[SIG_OP   ] = SIG_OP_CLOSE_LONG;
@@ -318,7 +318,7 @@ bool IsExitSignal(double &signal[]) {
             }
          }
          else if (trend == OP_LONG) {
-            if (Bid > s2Level) {                         // using Bid prevents the signal to be triggered by spread widening
+            if (_Bid > s2Level) {                        // using Bid prevents the signal to be triggered by spread widening
                signal[SIG_TYPE ] = SIG_TYPE_STOPLOSS;
                signal[SIG_PRICE] = NormalizeDouble(s2Level + 1*Point, Digits);
                signal[SIG_OP   ] = SIG_OP_CLOSE_SHORT;
@@ -460,8 +460,8 @@ bool UpdateStatus() {
       closePriceSig = closePrice;
    }
    else {
-      closePrice = ifDouble(open.type==OP_BUY, Bid, Ask);
-      closePriceSig = Bid;
+      closePrice = ifDouble(open.type==OP_BUY, _Bid, _Ask);
+      closePriceSig = _Bid;
    }
    open.swapM        = NormalizeDouble(OrderSwap(), 2);
    open.commissionM  = OrderCommission();
@@ -558,7 +558,7 @@ bool OpenPosition(double signal[]) {
    open.part         = 1;
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
-   open.priceSig     = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid);
+   open.priceSig     = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid);
    open.stopLoss     = stopLoss;
    open.takeProfit   = takeProfit;
    open.slippageP    = oe.Slippage(oe);
@@ -566,10 +566,10 @@ bool OpenPosition(double signal[]) {
    open.commissionM  = oe.Commission(oe);
    open.grossProfitM = oe.Profit(oe);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
-   open.runupP       = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
+   open.netProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
+   open.runupP       = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask);
    open.rundownP     = open.runupP;
-   open.sigProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+   open.sigProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
    open.sigRunupP    = open.sigProfitP;
    open.sigRundownP  = open.sigRunupP;
 
@@ -622,7 +622,7 @@ bool ClosePosition(double signal[]) {
 
    datetime closeTime     = oe.CloseTime(oe);
    double   closePrice    = oe.ClosePrice(oe);
-   double   closePriceSig = ifDouble(sigType==SIG_TYPE_STOPLOSS || sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid), openCloseRange;
+   double   closePriceSig = ifDouble(sigType==SIG_TYPE_STOPLOSS || sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid), openCloseRange;
 
    open.slippageP   += oe.Slippage(oe);
    open.swapM        = oe.Swap(oe);
@@ -688,13 +688,13 @@ bool ProcessTargets() {
          closeLots = NormalizeDouble(open.lots - remainingLots, 2);
 
          if (open.type == OP_BUY) {
-            if (Bid >= open.price + distance * pUnit) {
+            if (_Bid >= open.price + distance * pUnit) {
                if (IsLogDebug()) logDebug("ProcessTargets(2)  "+ instance.name +" target "+ (i+1) +" (+"+ distance +") reached, taking "+ NumberToStr(closeLots, ".+")  +" lot partial profit");
                if (!TakePartialProfit(closeLots)) return(false);
                break;
             }
          }
-         else if (Ask <= open.price - distance * pUnit) {
+         else if (_Ask <= open.price - distance * pUnit) {
             if (IsLogDebug()) logDebug("ProcessTargets(3)  "+ instance.name +" target "+ (i+1) +" (+"+ distance +") reached, taking "+ NumberToStr(closeLots, ".+")  +" lot partial profit");
             if (!TakePartialProfit(closeLots)) return(false);
             break;
@@ -711,7 +711,7 @@ bool ProcessTargets() {
 
          if (distance && moveStop) {
             if (open.type == OP_BUY) {
-               if (Bid >= open.price + distance * pUnit) {
+               if (_Bid >= open.price + distance * pUnit) {
                   stopPrice = NormalizeDouble(open.price + moveStop * pUnit, Digits);
                   if (open.stopLoss < stopPrice) {
                      if (IsLogDebug()) logDebug("ProcessTargets(4)  "+ instance.name +" target "+ (i+1) +" (+"+ distance +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
@@ -720,7 +720,7 @@ bool ProcessTargets() {
                   break;
                }
             }
-            else if (Ask <= open.price - distance * pUnit) {
+            else if (_Ask <= open.price - distance * pUnit) {
                stopPrice = NormalizeDouble(open.price - moveStop * pUnit, Digits);
                if (open.stopLoss > stopPrice) {
                   if (IsLogDebug()) logDebug("ProcessTargets(5)  "+ instance.name +" target "+ (i+1) +" (+"+ distance +") reached, moving stop to "+ NumberToStr(stopPrice, PriceFormat));
@@ -756,7 +756,7 @@ bool TakePartialProfit(double lots) {
 
    datetime closeTime     = oe.CloseTime(oe);
    double   closePrice    = oe.ClosePrice(oe);
-   double   closePriceSig = Bid;
+   double   closePriceSig = _Bid;
    double   origSlippageP = open.slippageP;
 
    // update the original ticket and move it to the history
@@ -785,8 +785,8 @@ bool TakePartialProfit(double lots) {
       open.commissionM  = OrderCommission();
       open.grossProfitM = OrderProfit();
       open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitP   = open.part * (ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swapM + open.commissionM)/PointValue(open.lots));
-      open.sigProfitP   = open.part * ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+      open.netProfitP   = open.part * (ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots));
+      open.sigProfitP   = open.part * ifDouble(open.type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
       OrderPop("TakePartialProfit(4)");
    }
 
@@ -846,8 +846,8 @@ double CalculateInitialStopLoss(int direction) {
    double sl = 0;
 
    if (Initial.StopLoss > 0) {
-      if (direction == OP_LONG) sl = Bid - Initial.StopLoss * pUnit;
-      else                      sl = Ask + Initial.StopLoss * pUnit;
+      if (direction == OP_LONG) sl = _Bid - Initial.StopLoss * pUnit;
+      else                      sl = _Ask + Initial.StopLoss * pUnit;
    }
    return(NormalizeDouble(sl, Digits));
 }
@@ -864,8 +864,8 @@ double CalculateInitialTakeProfit(int direction) {
    double tp = 0;
 
    if (Initial.TakeProfit > 0) {
-      if      (direction == OP_LONG)  tp = Ask + Initial.TakeProfit * pUnit;
-      else if (direction == OP_SHORT) tp = Bid - Initial.TakeProfit * pUnit;
+      if      (direction == OP_LONG)  tp = _Ask + Initial.TakeProfit * pUnit;
+      else if (direction == OP_SHORT) tp = _Bid - Initial.TakeProfit * pUnit;
    }
    return(NormalizeDouble(tp, Digits));
 }

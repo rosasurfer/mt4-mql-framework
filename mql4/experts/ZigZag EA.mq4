@@ -539,7 +539,7 @@ bool IsZigZagSignal(double &signal[]) {
             signal[SIG_PRICE] = reversalPrice;
             signal[SIG_OP   ] = sigOp;
 
-            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(sigOp & SIG_OP_LONG, "long", "short") +" reversal at "+ NumberToStr(reversalPrice, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(sigOp & SIG_OP_LONG, "long", "short") +" reversal at "+ NumberToStr(reversalPrice, PriceFormat) +" (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
             lastSigBar   = Time[0];
             lastSigBarOp = sigOp;
          }
@@ -786,7 +786,7 @@ bool IsStopSignal(double &signal[]) {
          if (instance.totalNetProfit >= stop.profitPct.absValue) {
             signal[SIG_TYPE] = SIG_TYPE_TAKEPROFIT;
             signal[SIG_OP  ] = SIG_OP_CLOSE_ALL;
-            if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitPct.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitPct.description +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -796,7 +796,7 @@ bool IsStopSignal(double &signal[]) {
          if (instance.totalNetProfitP >= stop.profitPun.value) {
             signal[SIG_TYPE] = SIG_TYPE_TAKEPROFIT;
             signal[SIG_OP  ] = SIG_OP_CLOSE_ALL;
-            if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -807,7 +807,7 @@ bool IsStopSignal(double &signal[]) {
       if (!IsTradingTime()) {
          signal[SIG_TYPE] = SIG_TYPE_TIME;
          signal[SIG_OP  ] = SIG_OP_CLOSE_ALL;
-         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.time.description +"\" triggered (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.time.description +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
          return(true);
       }
    }
@@ -853,16 +853,16 @@ bool StartInstance(double signal[]) {
    open.lots         = oe.Lots(oe);
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
-   open.priceSig     = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid);
+   open.priceSig     = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid);
    open.slippageP    = oe.Slippage(oe);
    open.swapM        = oe.Swap(oe);
    open.commissionM  = oe.Commission(oe);
    open.grossProfitM = oe.Profit(oe);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
-   open.runupP       = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
+   open.netProfitP   = ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
+   open.runupP       = ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask);
    open.rundownP     = open.runupP;
-   open.sigProfitP   = ifDouble(type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+   open.sigProfitP   = ifDouble(type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
    open.sigRunupP    = open.sigProfitP;
    open.sigRundownP  = open.sigRunupP;
 
@@ -972,10 +972,10 @@ bool ReversePosition(double signal[]) {
    open.commissionM  = oe.Commission(oe);
    open.grossProfitM = oe.Profit(oe);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitP   = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
-   open.runupP       = ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask);
+   open.netProfitP   = ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
+   open.runupP       = ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask);
    open.rundownP     = open.runupP;
-   open.sigProfitP   = ifDouble(type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+   open.sigProfitP   = ifDouble(type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
    open.sigRunupP    = open.sigProfitP;
    open.sigRundownP  = open.sigProfitP;
 
@@ -1048,7 +1048,7 @@ bool StopInstance(double signal[]) {
          else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe);
          if (!success) return(!SetLastError(oe.Error(oe)));
 
-         double closePrice = oe.ClosePrice(oe), closePriceSig = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid);
+         double closePrice = oe.ClosePrice(oe), closePriceSig = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid);
          open.slippageP   += oe.Slippage(oe);
          open.swapM        = oe.Swap(oe);
          open.commissionM  = oe.Commission(oe);
@@ -1131,12 +1131,12 @@ bool UpdateStatus() {
    if (tradingMode == TRADINGMODE_VIRTUAL) {
       open.swapM        = 0;
       open.commissionM  = 0;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
+      open.netProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask);
       open.runupP       = MathMax(open.runupP, open.netProfitP);
       open.rundownP     = MathMin(open.rundownP, open.netProfitP);
       open.netProfitM   = open.netProfitP * PointValue(open.lots);
       open.grossProfitM = open.netProfitM;
-      open.sigProfitP   = ifDouble(open.type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid);
+      open.sigProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
       open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
       open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
    }
@@ -1147,8 +1147,8 @@ bool UpdateStatus() {
          double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
       }
       else {
-         exitPrice = ifDouble(open.type==OP_BUY, Bid, Ask);
-         exitPriceSig = Bid;
+         exitPrice = ifDouble(open.type==OP_BUY, _Bid, _Ask);
+         exitPriceSig = _Bid;
       }
       open.swapM        = NormalizeDouble(OrderSwap(), 2);
       open.commissionM  = OrderCommission();
@@ -1852,7 +1852,7 @@ int VirtualOrderSend(int type, double lots, double stopLoss, double takeProfit, 
    ArrayInitialize(oe, 0);
 
    if (type!=OP_BUY && type!=OP_SELL) return(!catch("VirtualOrderSend(1)  "+ instance.name +" invalid parameter type: "+ type, oe.setError(oe, ERR_INVALID_PARAMETER)));
-   double openPrice = ifDouble(type, Bid, Ask);
+   double openPrice = ifDouble(type, _Bid, _Ask);
    string comment = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
 
    // generate a new ticket
@@ -1865,8 +1865,8 @@ int VirtualOrderSend(int type, double lots, double stopLoss, double takeProfit, 
    oe.setTicket    (oe, ticket);
    oe.setSymbol    (oe, Symbol());
    oe.setDigits    (oe, Digits);
-   oe.setBid       (oe, Bid);
-   oe.setAsk       (oe, Ask);
+   oe.setBid       (oe, _Bid);
+   oe.setAsk       (oe, _Ask);
    oe.setType      (oe, type);
    oe.setLots      (oe, lots);
    oe.setOpenTime  (oe, Tick.time);
@@ -1878,8 +1878,8 @@ int VirtualOrderSend(int type, double lots, double stopLoss, double takeProfit, 
       string sType  = OperationTypeDescription(type);
       string sLots  = NumberToStr(lots, ".+");
       string sPrice = NumberToStr(openPrice, PriceFormat);
-      string sBid   = NumberToStr(Bid, PriceFormat);
-      string sAsk   = NumberToStr(Ask, PriceFormat);
+      string sBid   = NumberToStr(_Bid, PriceFormat);
+      string sAsk   = NumberToStr(_Ask, PriceFormat);
       logDebug("VirtualOrderSend(2)  "+ instance.name +" opened virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"."+ comment +"\" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")");
    }
    if (__isChart && marker!=CLR_NONE) ChartMarker.OrderSent_B(ticket, Digits, marker, type, lots, Symbol(), Tick.time, openPrice, stopLoss, takeProfit, comment);
@@ -1904,15 +1904,15 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
    ArrayInitialize(oe, 0);
 
    if (ticket != open.ticket) return(!catch("VirtualOrderClose(1)  "+ instance.name +" parameter ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, oe.setError(oe, ERR_INVALID_PARAMETER)));
-   double closePrice = ifDouble(open.type==OP_BUY, Bid, Ask);
+   double closePrice = ifDouble(open.type==OP_BUY, _Bid, _Ask);
    double profit = NormalizeDouble(ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice) * PointValue(lots), 2);
 
    // populate oe[]
    oe.setTicket    (oe, ticket);
    oe.setSymbol    (oe, Symbol());
    oe.setDigits    (oe, Digits);
-   oe.setBid       (oe, Bid);
-   oe.setAsk       (oe, Ask);
+   oe.setBid       (oe, _Bid);
+   oe.setAsk       (oe, _Ask);
    oe.setType      (oe, open.type);
    oe.setLots      (oe, lots);
    oe.setOpenTime  (oe, open.time);
@@ -1926,8 +1926,8 @@ bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
       string sLots       = NumberToStr(lots, ".+");
       string sOpenPrice  = NumberToStr(open.price, PriceFormat);
       string sClosePrice = NumberToStr(closePrice, PriceFormat);
-      string sBid        = NumberToStr(Bid, PriceFormat);
-      string sAsk        = NumberToStr(Ask, PriceFormat);
+      string sBid        = NumberToStr(_Bid, PriceFormat);
+      string sAsk        = NumberToStr(_Ask, PriceFormat);
       logDebug("VirtualOrderClose(2)  "+ instance.name +" closed virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ StrPadLeft(instance.id, 3, "0") +"\" from "+ sOpenPrice +" at "+ sClosePrice +" (market: "+ sBid +"/"+ sAsk +")");
    }
    if (__isChart && marker!=CLR_NONE) ChartMarker.PositionClosed_B(ticket, Digits, marker, open.type, lots, Symbol(), open.time, open.price, Tick.time, closePrice);

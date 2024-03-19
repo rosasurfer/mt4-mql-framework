@@ -52,7 +52,7 @@ string ComposePositionCloseMsg(int &error) {
    string sComment    = ifString(comment==instance.name, "", " "+ comment);
 
    string msg = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" was "+ sUnexpected +"closed "+ sBySL + sByTP +"at "+ sClosePrice;
-          msg = msg +" ("+ sSlippage +"market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")"+ sComment;
+          msg = msg +" ("+ sSlippage +"market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")"+ sComment;
 
    if (closedBySO)                                    error = ERR_MARGIN_STOPOUT;
    else if (closedBySL || closedByTP)                 error = NO_ERROR;
