@@ -111,20 +111,18 @@ int start() {
    }
 
    if (IsTradingTime()) {
-      Comment("Trading time");
-
       // check for open position & whether the daily stop limit is reached
       if (!IsOpenPosition() && !IsDailyStop()) {
          double sl = CalculateStopLoss(entryDirection);
          double tp = CalculateTakeProfit(entryDirection);
 
          if (entryDirection == OP_BUY) {
-            if (NormalizeDouble(Ask, Digits) >= NormalizeDouble(entryLevel, Digits)) {                               // TODO: Ask may not be normalized
+            if (NormalizeDouble(Ask, Digits) >= NormalizeDouble(entryLevel, Digits)) {                                  // TODO: Ask may not always be normalized
                OrderSend(Symbol(), entryDirection, Lots, Ask, Slippage, sl, tp, "Rhythm", MagicNumber, 0, Blue);
             }
          }
          else {
-            if (NormalizeDouble(Bid, Digits) <= NormalizeDouble(entryLevel, Digits)) {                               // TODO: Bid may not be normalized
+            if (NormalizeDouble(Bid, Digits) <= NormalizeDouble(entryLevel, Digits)) {                                  // TODO: Bid may not always be normalized
                OrderSend(Symbol(), entryDirection, Lots, Bid, Slippage, sl, tp, "Rhythm", MagicNumber, 0, Red);
             }
          }
@@ -132,10 +130,9 @@ int start() {
 
       if (IsOpenPosition()) {                         // selects the ticket
          // find opposite entry level
-         entryLevel = OrderStopLoss();
          if (OrderType() == OP_BUY) entryDirection = OP_SELL;
          else                       entryDirection = OP_BUY;
-         Comment("Trading time. Reverse at ", DoubleToStr(entryLevel, Digits));
+         entryLevel = OrderStopLoss();
 
          // manage StopLoss
          if (TrailingStop) {
@@ -177,8 +174,6 @@ int start() {
    }
 
    else {
-      Comment("No trading time");
-
       // close open positions
       for (int i=OrdersTotal()-1; i >= 0; i--) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
@@ -246,11 +241,12 @@ bool IsTradingTime() {
  *
  */
 double CalculateStopLoss(int type) {
+   double sl = 0;
    if (StopLoss > 0) {
-      if (type == OP_BUY)  return(Bid - StopLoss*Point);
-      if (type == OP_SELL) return(Ask + StopLoss*Point);
+      if      (type == OP_BUY)  sl = Bid - StopLoss*Point;
+      else if (type == OP_SELL) sl = Ask + StopLoss*Point;
    }
-   return(0);
+   return(NormalizeDouble(sl, Digits));
 }
 
 
@@ -258,9 +254,10 @@ double CalculateStopLoss(int type) {
  *
  */
 double CalculateTakeProfit(int type) {
+   double tp = 0;
    if (TakeProfit > 0) {
-      if (type == OP_BUY)  return(Bid + TakeProfit*Point);
-      if (type == OP_SELL) return(Ask - TakeProfit*Point);
+      if      (type == OP_BUY)  tp = Bid + TakeProfit*Point;
+      else if (type == OP_SELL) tp = Ask - TakeProfit*Point;
    }
-   return(0);
+   return(NormalizeDouble(tp, Digits));
 }
