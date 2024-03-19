@@ -14,6 +14,18 @@
  *
  * TODO:
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *  - performance
+ *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick:  8.2 sec, 56 trades        Rhythm
+ *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick: 13.6 sec, 56 trades        Rhythm-v2 2007.11.28 @rraygun
  */
 
 /**
@@ -153,7 +165,7 @@ int start() {
          }
          else if (TrailOnceStop) {
             newSL = OrderOpenPrice();
-            if (OrderStopLoss() != newSL) {
+            if (NormalizeDouble(newSL, Digits) != NormalizeDouble(OrderStopLoss(), Digits)) {
                if (OrderType() == OP_BUY) {
                   double triggerPrice = NormalizeDouble(OrderOpenPrice() + StopLoss*Point, Digits);
                   if (Bid > triggerPrice) {                                                                             // TODO: it tests for "greater than" instead of >=
