@@ -72,18 +72,20 @@ double  longPosition;
 double  shortPosition;
 
 // configuration of custom positions
-string  config.sData[][2];                                        // config entry details: [Key, Comment]
-double  config.dData[][6];                                        //                       [BemEnabled, MfeEnabled, MFE, MAE, MaxLots, MaxRisk]
+string  config.sData[][2];                                        // config line details: [Key, Comment]
+double  config.dData[][8];                                        // ...                  [BemEnabled, MfeEnabled, MfeSignal, MfeLastSignal, MfeValueM, MaeValueM, MaxLots, MaxRisk]
 
 #define I_CONFIG_KEY                    0                         // indexes of config.sData[]
 #define I_CONFIG_COMMENT                1                         //
 
 #define I_BEM_ENABLED                   0                         // indexes of config.dData[]
 #define I_MFE_ENABLED                   1                         //
-#define I_PROFIT_MFE                    2                         //
-#define I_PROFIT_MAE                    3                         //
-#define I_MAX_LOTS                      4                         //
-#define I_MAX_RISK                      5                         //
+#define I_MFE_SIGNAL                    2                         //
+#define I_MFE_LAST_SIGNAL               3                         //
+#define I_PROFIT_MFE                    4                         //
+#define I_PROFIT_MAE                    5                         //
+#define I_MAX_LOTS                      6                         //
+#define I_MAX_RISK                      7                         //
 
 double  configTerms[][5];                                         // parsed custom position configuration, @see CustomPositions.ReadConfig() for format
 
@@ -102,7 +104,7 @@ double  configTerms[][5];                                         // parsed cust
 #define TERM_PL_ADJUSTMENT              7                         //
 #define TERM_EQUITY                     8                         //
 #define TERM_MFE                        9                         //
-#define TERM_MAE                       10                         //
+#define TERM_MFE_SIGNAL                10                         //
 #define TERM_BE_MARKER                 11                         //
 #define TERM_PROFIT_MARKER             12                         //
 #define TERM_LOSS_MARKER               13                         //
@@ -1799,13 +1801,13 @@ bool UpdateStopoutLevel() {
 
    // individuelle Positionen aus offenen Positionen extrahieren und in positions.data[] speichern
    int    line, termType, termsSize = ArrayRange(configTerms, 0);
-   double termValue1, termValue2, termResult1, termResult2, customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent=EMPTY_VALUE, lossMarkerPrice, lossMarkerPercent=EMPTY_VALUE, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
+   double termValue1, termValue2, termResult1, termResult2, customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct=EMPTY_VALUE, lossMarkerPrice, lossMarkerPct=EMPTY_VALUE, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
    int    customTickets[], customTypes[];
    double customLots[], customOpenPrices[], customCommissions[], customSwaps[], customProfits[];
    bool   lineSkipped, isCustomVirtual;
 
    ArrayResize(positions.data, 0);
-   positions.showMfe = false;
+   positions.showMfe = false;                                                    // global var to control positioning/display width of chart objects
 
    for (i=0, line=0; i < termsSize; i++) {
       termType    = configTerms[i][I_TERM_TYPE   ];
@@ -1820,7 +1822,7 @@ bool UpdateStopoutLevel() {
          if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
 
          // store CustomPosition for display
-         if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent, lossMarkerPrice, lossMarkerPercent, line, lineSkipped)) {
+         if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct, line, lineSkipped)) {
             return(false);
          }
          if (line > -1) {
@@ -1843,9 +1845,9 @@ bool UpdateStopoutLevel() {
          adjustedProfit      = 0;
          customEquity        = 0;
          profitMarkerPrice   = 0;
-         profitMarkerPercent = EMPTY_VALUE;
+         profitMarkerPct     = EMPTY_VALUE;
          lossMarkerPrice     = 0;
-         lossMarkerPercent   = EMPTY_VALUE;
+         lossMarkerPct       = EMPTY_VALUE;
          ArrayResize(customTickets,     0);
          ArrayResize(customTypes,       0);
          ArrayResize(customLots,        0);
@@ -1860,7 +1862,7 @@ bool UpdateStopoutLevel() {
       // individuelle Position extrahieren
       if (!ExtractPosition(termType, termValue1, termValue2, termResult1, termResult2,
                            _longPosition,      _shortPosition,      _totalPosition,      tickets,       types,       lots, openTimes, openPrices,       commissions,       swaps,       profits,
-                           customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,      customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent, lossMarkerPrice, lossMarkerPercent,
+                           customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,      customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct,
                            isCustomVirtual, flags)) {
          return(false);
       }
@@ -2078,9 +2080,6 @@ int SearchLfxTicket(int ticket) {
  * | LM=-5%                                          | draw a loss marker at a PL of the specified percent amount                    | [TERM_LOSS_MARKER,   ...,              -5.0,             ..., ...] |
  * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
  * | MFE                                             | enables tracking of MFE/MAE                                                   | TERM_MFE, stored in config.dData[]                                 |
- * | MAE                                             | enables tracking of MFE/MAE                                                   | TERM_MAE, stored in config.dData[]                                 |
- * | MFE=0                                           | enables tracking of MFE/MAE and sets MFE to the specified value (8)           | ...                                                                |
- * | MAE=0                                           | enables tracking of MFE/MAE and sets MAE to the specified value (8)           | ...                                                                |
  * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
  * | any text after a semicolon ";" aka .ini comment | displayed as position description                                             | stored in config.sData[]                                           |
  * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                                |                                                                    |
@@ -2130,14 +2129,14 @@ int SearchLfxTicket(int ticket) {
 bool CustomPositions.ReadConfig() {
    double confTerms[][5]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(configTerms,  1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match configTerms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
    string confsData[][2]; ArrayResize(confsData, 0); if (ArrayRange(confsData, 1) != ArrayRange(config.sData, 1)) return(!catch("CustomPositions.ReadConfig(2)  array mis-match config.sData[] / confsData[]", ERR_INCOMPATIBLE_ARRAY));
-   double confdData[][6]; ArrayResize(confdData, 0); if (ArrayRange(confdData, 1) != ArrayRange(config.dData, 1)) return(!catch("CustomPositions.ReadConfig(3)  array mis-match config.dData[] / confdData[]", ERR_INCOMPATIBLE_ARRAY));
+   double confdData[][8]; ArrayResize(confdData, 0); if (ArrayRange(confdData, 1) != ArrayRange(config.dData, 1)) return(!catch("CustomPositions.ReadConfig(3)  array mis-match config.dData[] / confdData[]", ERR_INCOMPATIBLE_ARRAY));
 
    // parse configuration
    string   keys[], values[], iniValue="", sValue="", comment="", confComment="", openComment="", hstComment="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   termType, termValue1, termValue2, termResult1, termResult2, dValue, lotSize, minLotSize=MarketInfo(symbol, MODE_MINLOT), lotStep=MarketInfo(symbol, MODE_LOTSTEP);
    int      valuesSize, termsSize, pos, ticket, nextPositionStartOffset;
    datetime from, to;
-   bool     isEmptyPosition, isVirtualPosition, isGroupedPosition, containsEquityValue, containsProfitMarker, containsLossMarker, isBemEnabled, isMfeEnabled, isTotal, isPercent;
+   bool     isEmptyPosition, isVirtualPosition, isGroupedPosition, containsEquityValue, containsProfitMarker, containsLossMarker, isBemEnabled, isMfeEnabled, isMfeSignal, isTotal, isPercent;
 
    if (!minLotSize || !lotStep) return(false);                       // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(4)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
@@ -2177,6 +2176,7 @@ bool CustomPositions.ReadConfig() {
             containsLossMarker   = false;                            // whether the position entry contains a SL marker
             isBemEnabled         = false;                            // whether to display the BE marker for the position entry
             isMfeEnabled         = false;                            // whether to enable the MFE/MAE tracker for the position entry
+            isMfeSignal          = false;                            // whether the MFE/MAE tracker signals new highs
             valuesSize           = Explode(StrToUpper(iniValue), ",", values, NULL);
 
             for (int n=0; n < valuesSize; n++) {
@@ -2189,13 +2189,9 @@ bool CustomPositions.ReadConfig() {
                   continue;
                }
                if (StrStartsWith(values[n], "MFE")) {                // flag: enable MFE/MAE tracker
-                  if (values[n] != "MFE")                            return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrStartsWith("MFES", values[n]))             return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isMfeEnabled = true;
-                  continue;
-               }
-               if (StrStartsWith(values[n], "MAE")) {                // flag: enable MFE/MAE tracker
-                  if (values[n] != "MAE")                            return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  isMfeEnabled = true;
+                  isMfeSignal = (values[n] == "MFES");
                   continue;
                }
 
@@ -2423,6 +2419,7 @@ bool CustomPositions.ReadConfig() {
                ArrayResize(confdData, lines+1);
                if (isBemEnabled) confdData[lines][I_BEM_ENABLED] = 1;
                if (isMfeEnabled) confdData[lines][I_MFE_ENABLED] = 1;
+               if (isMfeSignal)  confdData[lines][I_MFE_SIGNAL ] = 1;
 
                nextPositionStartOffset = termsSize + 1;              // Start-Offset der nächsten Custom-Position merken (falls eine weitere Position folgt)
             }
@@ -3104,22 +3101,22 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * @param  _InOut_ double termResult1  |
  * @param  _InOut_ double termResult2 -+
  *
- * @param  _InOut_ mixed  fromVars            - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
+ * @param  _InOut_ mixed  fromVars          - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
  *                 ....
- * @param  _InOut_ mixed  customVars          - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
+ * @param  _InOut_ mixed  customVars        - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
  *                 ....
- * @param  _Out_   double profitMarkerPrice   - PL marker price level (if configured)
- * @param  _Out_   double profitMarkerPercent - PL marker percent level (if configured)
- * @param  _Out_   double lossMarkerPrice     - PL marker price level (if configured)
- * @param  _Out_   double lossMarkerPercent   - PL marker percent level (if configured)
- * @param  _InOut_ bool   isCustomVirtual     - ob die resultierende CustomPosition virtuell ist
- * @param  _In_    int    flags [optional]    - control flags, supported values:
- *                                               F_SHOW_CUSTOM_HISTORY: call ShowTradeHistory() for the configured history
+ * @param  _Out_   double profitMarkerPrice - PL marker price level (if configured)
+ * @param  _Out_   double profitMarkerPct   - PL marker percent level (if configured)
+ * @param  _Out_   double lossMarkerPrice   - PL marker price level (if configured)
+ * @param  _Out_   double lossMarkerPct     - PL marker percent level (if configured)
+ * @param  _InOut_ bool   isCustomVirtual   - ob die resultierende CustomPosition virtuell ist
+ * @param  _In_    int    flags [optional]  - control flags, supported values:
+ *                                             F_SHOW_CUSTOM_HISTORY: call ShowTradeHistory() for the configured history
  * @return bool - success status
  */
 bool ExtractPosition(int termType, double termValue1, double termValue2, double &termResult1, double &termResult2,
                      double &lLongPosition,      double &lShortPosition,      double &lTotalPosition,      int &tickets[],       int &types[],       double &lots[],       datetime &openTimes[], double &openPrices[],       double &commissions[],       double &swaps[],       double &profits[],
-                     double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[], int &customTypes[], double &customLots[],                        double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &closedProfit, double &adjustedProfit, double &customEquity, double &profitMarkerPrice, double &profitMarkerPercent, double &lossMarkerPrice, double &lossMarkerPercent,
+                     double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[], int &customTypes[], double &customLots[],                        double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &closedProfit, double &adjustedProfit, double &customEquity, double &profitMarkerPrice, double &profitMarkerPct, double &lossMarkerPrice, double &lossMarkerPct,
                      bool   &isCustomVirtual, int flags = NULL) {
    isCustomVirtual = isCustomVirtual!=0;
 
@@ -3403,17 +3400,17 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
    }
 
    else if (termType == TERM_PROFIT_MARKER) {
-      profitMarkerPrice   = termValue1;
-      profitMarkerPercent = termValue2;
+      profitMarkerPrice = termValue1;
+      profitMarkerPct = termValue2;
    }
 
    else if (termType == TERM_LOSS_MARKER) {
-      lossMarkerPrice   = termValue1;
-      lossMarkerPercent = termValue2;
+      lossMarkerPrice = termValue1;
+      lossMarkerPct = termValue2;
    }
 
    else if (termType == TERM_TICKET) {
-      ticket  = termValue1;
+      ticket = termValue1;
       lotsize = termValue2;
 
       if (lotsize == EMPTY) {
@@ -3450,7 +3447,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(TERM_TICKET, ticket, EMPTY, termResult1, termResult2,
                                        lLongPosition,      lShortPosition,      lTotalPosition,      tickets,       types,       lots,       openTimes, openPrices,       commissions,       swaps,       profits,
-                                       customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,            customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent, lossMarkerPrice, lossMarkerPercent,
+                                       customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,            customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct,
                                        isCustomVirtual))
                      return(false);
                }
@@ -3479,7 +3476,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       }
    }
 
-   else if (termType==TERM_MFE || termType==TERM_MAE || termType==TERM_BE_MARKER) {
+   else if (termType==TERM_MFE || termType==TERM_MFE_SIGNAL || termType==TERM_BE_MARKER) {
       // flags: nothing to do
    }
    else return(!catch("ExtractPosition(6)  illegal or unknown termType: "+ termType, ERR_RUNTIME_ERROR));
@@ -3509,19 +3506,20 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
  * @param  _In_    double adjustedProfit
  * @param  _In_    double customEquity
  * @param  _In_    double profitMarkerPrice
- * @param  _In_    double profitMarkerPercent
+ * @param  _In_    double profitMarkerPct
  * @param  _In_    double lossMarkerPrice
- * @param  _In_    double lossMarkerPercent
+ * @param  _In_    double lossMarkerPct
  *
  * @param  _In_    int    configLine -
  * @param  _Out_   bool   skipped    - whether the custom position is empty (nothing to display) and the line is skipped
  *
  * @return bool - success status
  */
-bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, double lTotalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerPercent, double lossMarkerPrice, double lossMarkerPercent, int configLine, bool &skipped) {
+bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, double lTotalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerPct, double lossMarkerPrice, double lossMarkerPct, int configLine, bool &skipped) {
    isVirtual = isVirtual!=0;
 
    double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, swap, commission, openProfit, floatingProfit, hedgedProfit, totalProfit, terminalProfit, totalProfitMT4, equity, equity100Pct, pipValue, pipDistance;
+   bool isNewProfitHigh;
    int ticketsSize = ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit (History) noch AdjustedProfit, wird sie übersprungen.
@@ -3623,6 +3621,7 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
          positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitMT4 = terminalProfit + closedProfit + adjustedProfit;
          positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct   = equity - ifDouble(!customEquity && equity > totalProfitMT4, totalProfitMT4, 0);
          positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
+         totalProfit = NormalizeDouble(totalProfit, 2);
 
          if (configLine >= 0) {
             config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
@@ -3690,13 +3689,18 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
       positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitMT4 = terminalProfit + closedProfit + adjustedProfit;
       positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct   = equity - ifDouble(!customEquity && equity > totalProfitMT4, totalProfitMT4, 0);
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
+      totalProfit = NormalizeDouble(totalProfit, 2);
 
       if (configLine >= 0) {
-         config.dData[configLine][I_MAX_LOTS  ] = MathMax(lTotalPosition, config.dData[configLine][I_MAX_LOTS]);
-         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
-         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
+         isNewProfitHigh = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+
+         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,    config.dData[configLine][I_PROFIT_MFE]);
+         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,    config.dData[configLine][I_PROFIT_MAE]);
+         config.dData[configLine][I_MAX_LOTS  ] = MathMax(lTotalPosition, config.dData[configLine][I_MAX_LOTS  ]);
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
          positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+
+         if (isNewProfitHigh) onNewProfitHigh(configLine);
       }
 
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
@@ -3712,18 +3716,18 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
             positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (openPrice/lTotalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
          }
-         else if (!IsEmptyValue(profitMarkerPercent)) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPercent;
+         else if (!IsEmptyValue(profitMarkerPct)) {
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-profitMarkerPct/100*equity100Pct)/pipValue*Pip, Digits);
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
          }
 
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
             positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit + (lossMarkerPrice-openPrice/lTotalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
-         else if (!IsEmptyValue(lossMarkerPercent)) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
-            positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPercent;
+         else if (!IsEmptyValue(lossMarkerPct)) {
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-lossMarkerPct/100*equity100Pct)/pipValue*Pip, Digits);
+            positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPct;
          }
       }
       //debug("StorePosition(0.2)  long:    realPL="+ NumberToStr(totalProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2") +"  fullTerminalPL="+ NumberToStr(fullTerminalProfit, "R.2"));
@@ -3778,13 +3782,18 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
       positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitMT4 = terminalProfit + closedProfit + adjustedProfit;
       positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct   = equity - ifDouble(!customEquity && equity > totalProfitMT4, totalProfitMT4, 0);
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
+      totalProfit = NormalizeDouble(totalProfit, 2);
 
       if (configLine >= 0) {
-         config.dData[configLine][I_MAX_LOTS  ] = MathMax(-lTotalPosition, config.dData[configLine][I_MAX_LOTS]);
-         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
-         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
+         isNewProfitHigh = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+
+         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,     config.dData[configLine][I_PROFIT_MFE]);
+         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,     config.dData[configLine][I_PROFIT_MAE]);
+         config.dData[configLine][I_MAX_LOTS  ] = MathMax(-lTotalPosition, config.dData[configLine][I_MAX_LOTS  ]);
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
          positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+
+         if (isNewProfitHigh) onNewProfitHigh(configLine);
       }
 
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
@@ -3800,18 +3809,18 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
             positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (profitMarkerPrice + openPrice/lTotalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
-         else if (!IsEmptyValue(profitMarkerPercent)) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, Digits);
-            positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPercent;
+         else if (!IsEmptyValue(profitMarkerPct)) {
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-profitMarkerPct/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, Digits);
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
          }
 
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
             positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (lossMarkerPrice + openPrice/lTotalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
-         else if (!IsEmptyValue(lossMarkerPercent)) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, Digits);
-            positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPercent;
+         else if (!IsEmptyValue(lossMarkerPct)) {
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-lossMarkerPct/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, Digits);
+            positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPct;
          }
       }
       //debug("StorePosition(0.3)  short:   realPL="+ NumberToStr(totalProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2") +"  fullTerminalPL="+ NumberToStr(fullTerminalProfit, "R.2"));
@@ -3829,6 +3838,7 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
    positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfit  = closedProfit + adjustedProfit;
    positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct = equity - ifDouble(!customEquity && equity > totalProfit, totalProfit, 0);
    positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
+   totalProfit = NormalizeDouble(totalProfit, 2);
 
    if (configLine >= 0) {
       config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
@@ -4603,6 +4613,24 @@ bool onOrderFail(int tickets[]) {
 
 
 /**
+ * Event handler signaling new PnL highs of custom positions.
+ *
+ * @param  int i - index of the custom position making a new high
+ *
+ * @return bool - success status
+ */
+bool onNewProfitHigh(int i) {
+
+   debug("onNewProfitHigh(0.1)  "+ config.sData[i][I_CONFIG_KEY] +": new profit high = "+ DoubleToStr(config.dData[i][I_PROFIT_MFE], 2));
+   return(true);
+
+   // TODO: sound signal
+   // @see ZigZag::onChannelCross(int direction)
+   //int lastSoundSignal;                      // GetTickCount() value of the last signal
+}
+
+
+/**
  * Whether there is a registered order event listener for the specified account and symbol. Supports multiple terminals
  * running in parallel.
  *
@@ -4688,7 +4716,7 @@ string ConfigTermTypeToStr(int type) {
       case TERM_PL_ADJUSTMENT: return("TERM_PL_ADJUSTMENT");
       case TERM_EQUITY       : return("TERM_EQUITY"       );
       case TERM_MFE          : return("TERM_MFE"          );
-      case TERM_MAE          : return("TERM_MAE"          );
+      case TERM_MFE_SIGNAL   : return("TERM_MFE_SIGNAL"   );
       case TERM_BE_MARKER    : return("TERM_BE_MARKER"    );
       case TERM_PROFIT_MARKER: return("TERM_PROFIT_MARKER");
       case TERM_LOSS_MARKER  : return("TERM_LOSS_MARKER"  );
