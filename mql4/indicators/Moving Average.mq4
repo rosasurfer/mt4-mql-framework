@@ -1,11 +1,12 @@
 /**
- * A Moving Average with support for non-standard calculation methods.
+ * A "Moving Average" with more features than the built-in version.
  *
  *
  * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
+ *  • SMMA - Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes)
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  * Indicator buffers for iCustom():
@@ -14,10 +15,12 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * Note: The SMMA is not supported as SMMA(n) = EMA(2*n-1).  @see https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
+ * Notes:
+ *  (1) EMA calculation:
+ *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
  *
- * EMA calculation:
- *  https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+ *  (2) The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
+ *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -26,7 +29,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods                     = 100;
-extern string MA.Method                      = "SMA* | LWMA | EMA | ALMA";
+extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend                  = Blue;
@@ -94,17 +97,24 @@ int    drawType;
 int onInit() {
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1)        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1) return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.Method
-   string sValues[], sValue = MA.Method;
+   string sValues[], sValue=MA.Method;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
+   sValue = StrToUpper(StrTrim(sValue));
+   if      (StrStartsWith("ALMA", sValue)) sValue = "ALMA";
+   else if (StrStartsWith("EMA",  sValue)) sValue = "EMA";
+   else if (StrStartsWith("LWMA", sValue)) sValue = "LWMA";
+   else if (StringLen(sValue) > 2) {
+      if      (StrStartsWith("SMA",  sValue)) sValue = "SMA";
+      else if (StrStartsWith("SMMA", sValue)) sValue = "SMMA";
+   }
    maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)        return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   if (maMethod == MODE_SMMA) return(catch("onInit(3)  unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1) return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
 
    // MA.AppliedPrice
@@ -115,7 +125,7 @@ int onInit() {
    }
    if (StrTrim(sValue) == "") sValue = "close";               // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -131,13 +141,13 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                return(catch("onInit(5)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                return(catch("onInit(4)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.Width
-   if (Draw.Width < 0) return(catch("onInit(6)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0) return(catch("onInit(5)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // MaxBarsBack
-   if (MaxBarsBack < -1) return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1) return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
@@ -182,7 +192,7 @@ int onInit() {
       double almaOffset=0.85, almaSigma=6.0;
       ALMA.CalculateWeights(MA.Periods, almaOffset, almaSigma, almaWeights);
    }
-   return(catch("onInit(8)"));
+   return(catch("onInit(7)"));
 }
 
 
