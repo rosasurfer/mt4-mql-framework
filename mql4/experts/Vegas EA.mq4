@@ -140,6 +140,7 @@ extern bool   ShowProfitInPercent  = false;                          // whether 
 #include <ea/functions/metric/GetMT4SymbolDefinition.mqh>
 #include <ea/functions/metric/RecordMetrics.mqh>
 
+#include <ea/functions/status/CreateStatusBox_6.mqh>
 #include <ea/functions/status/ShowOpenOrders.mqh>
 #include <ea/functions/status/ShowTradeHistory.mqh>
 #include <ea/functions/status/ShowStatus.mqh>
@@ -874,30 +875,6 @@ string SignalToStr(int signal) {
  */
 void SS.InstanceName() {
    instance.name = "V."+ StrPadLeft(instance.id, 3, "0");
-}
-
-
-/**
- * Create the status display box. Consists of overlapping rectangles made of font "Webdings", char "g".
- * Called from onInit() only.
- *
- * @return bool - success status
- */
-bool CreateStatusBox() {
-   if (!__isChart) return(true);
-
-   int x[]={2, 66, 136}, y=50, fontSize=54, sizeofX=ArraySize(x);
-   color bgColor = LemonChiffon;
-
-   for (int i=0; i < sizeofX; i++) {
-      string label = ProgramName() +".statusbox."+ (i+1);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
-      ObjectSet(label, OBJPROP_YDISTANCE, y);
-      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
-   }
-   return(!catch("CreateStatusBox(1)"));
 }
 
 

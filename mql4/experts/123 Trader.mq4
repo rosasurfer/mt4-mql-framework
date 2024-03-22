@@ -16,8 +16,8 @@
  *    exit management. Worse, signals are not able to catch big trends where exit management could play out its strengths.
  *
  *  - Solutions: One idea is to combine the signal with the "XARD 2nd Dot" system. By nesting two 1-2-3 signals into each
- *    other it would put signals into the context of the greater trend. Such combination looks very reliable. Also it filters
- *    many of the invalid micro signals.
+ *    other it would put signals into the context of the greater trend. Such a combination looks robust and reliable. Also
+ *    it filters many of the easily mis-leading micro signals.
  *
  *
  * Changes
@@ -113,6 +113,7 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/functions/metric/GetMT4SymbolDefinition.mqh>
 #include <ea/functions/metric/RecordMetrics.mqh>
 
+#include <ea/functions/status/CreateStatusBox_6.mqh>
 #include <ea/functions/status/ShowOpenOrders.mqh>
 #include <ea/functions/status/ShowTradeHistory.mqh>
 #include <ea/functions/status/ShowStatus.mqh>
@@ -951,7 +952,7 @@ bool SynchronizeStatus() {
    }
 
    SS.All();
-   return(!catch("SynchronizeStatus(1)"));
+   return(!catch("SynchronizeStatus(2)"));
 }
 
 
@@ -1134,30 +1135,6 @@ bool ValidateInputs() {
  */
 void SS.InstanceName() {
    instance.name = "123T."+ StrPadLeft(instance.id, 3, "0");
-}
-
-
-/**
- * Create the status display box. Consists of overlapping rectangles made of font "Webdings", char "g".
- * Called from onInit() only.
- *
- * @return bool - success status
- */
-bool CreateStatusBox() {
-   if (!__isChart) return(true);
-
-   int x[]={2, 66, 136}, y=50, fontSize=54, sizeofX=ArraySize(x);
-   color bgColor = LemonChiffon;
-
-   for (int i=0; i < sizeofX; i++) {
-      string label = ProgramName() +".statusbox."+ (i+1);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
-      ObjectSet(label, OBJPROP_YDISTANCE, y);
-      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
-   }
-   return(!catch("CreateStatusBox(1)"));
 }
 
 
