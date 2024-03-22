@@ -34,6 +34,7 @@
  *  • Donchian.Lower.Color:         Color of lower Donchian channel band and lower crossings.
  *
  *  • MaxBarsBack:                  Maximum number of bars back to calculate the indicator (performance).
+ *  • ShowChartLegend:              Whether do display the chart legend.
  *
  *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
  *  • Signal.onReversal.Sound:      Whether to signal ZigZag reversals by sound.
