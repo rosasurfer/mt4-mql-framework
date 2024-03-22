@@ -13,63 +13,11 @@
  *
  *
  * TODO:
- *
- *
- *
- *
- *
- *
  *  - performance
  *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick: 12.4 sec, 56 trades        Rhythm w/ framework, built-in order functions
  *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick:  8.2 sec, 56 trades        Rhythm w/o framework
  *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick: 13.6 sec, 56 trades        Rhythm-v2 2007.11.28 @rraygun
  */
-
-/**
-Alan Strawbridge [strawstock2@yahoo.com]
-
-Name: Rhythm    Pair: Any Pair You like.
-
-This is a simple Stop @ Reverse system. It should be able to be used with daily and weekly trading.
-
-Once a trade is initiated stoploss and reversals are equal.
-Example: the stop is placed at 40 PIPs and the reversal is likewise placed at 40 PIPs.
-When the stop is activated, the reversal is simultaneously activated.  There is no limit on how
-many reversals there can be in a day unless Max Trades variable is used
-
-Inputs:
-Overrule Direction: = True/False EA makes next day trade decision on the basis of the previous Days trend
-(i.e.; previous day up, Place "Buy" market order, previous day down, enter "Sell" market order)
-Example: Yesterdays open/close positive = LongEntry) (Yesterdays open/close negative = ShortEntry)
-00:00 >< 23:55  Set it to False if you want to choose your own initial entry direction
-
-Direction Long: =True/False  this is the manual way to either go Long or Short for your opening trade.
-If using this variable Overrule Direction should be set to True
-
-EntryTime Hour: = Entry will execute on the Open of the hour chosen. 00:00 thru 23:00
-
-ExitTime Hour: =  00:00 thru 23:00 Exit will execute on the Open of the preceding bar from exit hour chosen
-Example: exit set for 17:00 exit will execute on the open of the 18:00 bar.
-
-Max Trades: = 0=False or 1,2,3,4 etc  Set this variable if you want to limit on how many whipsaws you want in a day or week.
-EA will not take anymore trades for current day or week once variable is reached
-
-TrailStop Once: = True/False (If set to True, Stop and Reverse order will move positive one time at
-the value of the Stop loss variable)  Example: I am long at 1.2000 and I have my stop set at 1.1960 (-40)
-If price was to advance to 1.2040 then my Stop & Reverse orders would move positive to 1.2000 This would be
-the only positive move they would make.
-
-Trailing Stop: = True/False (If set to True, Stop and Reverse order will move
-every time price moves positive at the value of the Stop loss variable)
-
-Stoploss: = Default 40  "Very important". It is the Value that all Stops will use.
-(i.e.; TrailStop Once, Trailing Stop) It is the value that all Stop and Reverse orders are placed.
-
-ProfitTarget: = 0=False, Default 120  If Profit Target or Time exit is not used than trade will remain
-open until manually closed or when Profit Target or Time exit is initiated and executed in the future.
-
-Lots = 0.1
-*/
 #define STRATEGY_ID  112                     // unique strategy id (used for generation of magic order numbers)
 
 #include <stddefines.mqh>
