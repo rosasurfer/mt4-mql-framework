@@ -307,7 +307,7 @@ int start() {
    //
    static int prevBars;
    static datetime prevFirstBarTime, prevLastBarTime;
-   if (__isOfflineChart == -1) {                                                    // cannot be initialize in init()
+   if (__isOfflineChart == -1) {                                                    // cannot be initialized in init()
       if      (__isTesting)                 __isOfflineChart = false;
       else if (IsCustomTimeframe(Period())) __isOfflineChart = true;
       else {

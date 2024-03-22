@@ -17414,7 +17414,6 @@ window_num=0
 ZigZag.Periods=30
 ZigZag.Type=Line* | Semaphores
 ZigZag.Width=0
-ZigZag.Color=16711680
 Donchian.ShowChannel=1
 Donchian.Crossings.Wingdings=163
 Donchian.Upper.Color=16711680
@@ -17429,6 +17428,25 @@ weight_4=0
 weight_5=0
 color_6=4294967295
 color_7=4294967295
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ZigZag
+flags=339
+window_num=0
+<inputs>
+ZigZag.Periods=6
+ZigZag.Type=Line* | Semaphores
+ZigZag.Width=1
+Donchian.ShowChannel=0
+Donchian.ShowCrossings=off* | first | all
+Signal.onReversal=0
+</inputs>
+</expert>
 period_flags=0
 show_data=1
 </indicator>
