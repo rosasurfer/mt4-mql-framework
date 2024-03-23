@@ -31,13 +31,13 @@ int __virtualTicks = 0;
 
 extern string Instance.ID                    = "";       // instance to load from a status file (format "[T]123")
 
-extern int    EntryTimeHour                  = 0;
-extern int    ExitTimeHour                   = 23;
+extern int    EntryTimeHour                  = 1;        // server time
+extern int    ExitTimeHour                   = 23;       // ...
 extern int    MaxDailyTrades                 = 0;
 
 extern double Lots                           = 0.1;
-extern int    StopLoss                       = 40;
-extern int    TakeProfit                     = 100;
+extern int    StopLoss                       = 30;       // in punits
+extern int    TakeProfit                     = 60;       // ...
 extern bool   BreakevenStop                  = true;
 extern bool   TrailingStop                   = false;
 
@@ -205,14 +205,14 @@ int start_old() {
          // manage StopLoss
          if (TrailingStop) {
             if (OrderType() == OP_BUY) {
-               double newSL = NormalizeDouble(OrderClosePrice() - StopLoss*Point, Digits);
+               double newSL = NormalizeDouble(OrderClosePrice() - StopLoss*pUnit, Digits);
                if (newSL > sl) {
                   OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
                   entryLevel = newSL;
                }
             }
             else {
-               newSL = NormalizeDouble(OrderClosePrice() + StopLoss*Point, Digits);
+               newSL = NormalizeDouble(OrderClosePrice() + StopLoss*pUnit, Digits);
                if (newSL < sl) {
                   OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Red);
                   entryLevel = newSL;
@@ -223,15 +223,15 @@ int start_old() {
             newSL = NormalizeDouble(OrderOpenPrice(), Digits);
             if (newSL != sl) {
                if (OrderType() == OP_BUY) {
-                  double triggerPrice = NormalizeDouble(OrderOpenPrice() + StopLoss*Point, Digits);
-                  if (_Bid > triggerPrice) {                                                                            // TODO: it tests for ">" instead of ">="
+                  double triggerPrice = NormalizeDouble(OrderOpenPrice() + StopLoss*pUnit, Digits);
+                  if (_Bid > triggerPrice) {                                                                            // TODO: original tests for ">" instead of ">="
                      OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
                      entryLevel = newSL;
                   }
                }
                else {
-                  triggerPrice = NormalizeDouble(OrderOpenPrice() - StopLoss*Point, Digits);
-                  if (_Ask < triggerPrice) {                                                                            // TODO: it tests for "<" instead of "<="
+                  triggerPrice = NormalizeDouble(OrderOpenPrice() - StopLoss*pUnit, Digits);
+                  if (_Ask < triggerPrice) {                                                                            // TODO: original tests for "<" instead of "<="
                      OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
                      entryLevel = newSL;
                   }
@@ -332,8 +332,8 @@ bool IsTradingTime() {
 double CalculateStopLoss(int type) {
    double sl = 0;
    if (StopLoss > 0) {
-      if      (type == OP_BUY)  sl = _Bid - StopLoss*Point;
-      else if (type == OP_SELL) sl = _Ask + StopLoss*Point;
+      if      (type == OP_BUY)  sl = _Bid - StopLoss*pUnit;
+      else if (type == OP_SELL) sl = _Ask + StopLoss*pUnit;
    }
    return(NormalizeDouble(sl, Digits));
 }
@@ -345,8 +345,8 @@ double CalculateStopLoss(int type) {
 double CalculateTakeProfit(int type) {
    double tp = 0;
    if (TakeProfit > 0) {
-      if      (type == OP_BUY)  tp = _Bid + TakeProfit*Point;
-      else if (type == OP_SELL) tp = _Ask - TakeProfit*Point;
+      if      (type == OP_BUY)  tp = _Bid + TakeProfit*pUnit;
+      else if (type == OP_SELL) tp = _Ask - TakeProfit*pUnit;
    }
    return(NormalizeDouble(tp, Digits));
 }
