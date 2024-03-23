@@ -52,9 +52,9 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           false,                      // bool   Signal.onReversal.SMS
 
                           "",                         // string ____________________________
-                          false,                      // bool   Sound.onCrossing
-                          "",                         // string Sound.onCrossing.Up
-                          "",                         // string Sound.onCrossing.Down
+                          false,                      // bool   Sound.onChannelCrossing
+                          "",                         // string Sound.onNewHigh
+                          "",                         // string Sound.onNewLow
 
                           "",                         // string ____________________________
                           false,                      // bool   AutoConfiguration

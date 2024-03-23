@@ -44,9 +44,9 @@
  *  • Signal.onReversal.Mail:       Whether to signal ZigZag reversals by e-mail.
  *  • Signal.onReversal.SMS:        Whether to signal ZigZag reversals by text message.
  *
- *  • Sound.onCrossing:             Whether to signal Donchian channel crossings (channel widenings).
- *  • Sound.onCrossing.Up:          Sound file to signal a Donchian channel widening to the upside.
- *  • Sound.onCrossing.Down:        Sound file to signal a Donchian channel widening to the downside.
+ *  • Sound.onChannelCrossing:      Whether to signal Donchian channel crossings (channel widenings).
+ *  • Sound.onNewHigh:              Sound file to signal a Donchian channel widening to the upside.
+ *  • Sound.onNewLow:               Sound file to signal a Donchian channel widening to the downside.
  *
  *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom framework config values.
  *
@@ -82,7 +82,7 @@ extern int    MaxBarsBack                    = 10000;                   // max. 
 extern bool   ShowChartLegend                = true;
 
 extern string ___c__________________________ = "=== Reversal signaling ===";
-extern bool   Signal.onReversal              = false;                   // on ZigZag reversal (first channel crossing)
+extern bool   Signal.onReversal              = false;                   // signal ZigZag reversals (first channel crossing)
 extern bool   Signal.onReversal.Sound        = true;
 extern string Signal.onReversal.SoundUp      = "Signal Up.wav";
 extern string Signal.onReversal.SoundDown    = "Signal Down.wav";
@@ -91,9 +91,9 @@ extern bool   Signal.onReversal.Mail         = false;
 extern bool   Signal.onReversal.SMS          = false;
 
 extern string ___d__________________________ = "=== New high/low sound alerts ===";
-extern bool   Sound.onCrossing               = false;                   // on channel widening (all channel crossings)
-extern string Sound.onCrossing.Up            = "Price Advance.wav";
-extern string Sound.onCrossing.Down          = "Price Decline.wav";
+extern bool   Sound.onChannelCrossing        = false;                   // signal new ZigZag highs/lows (Donchian channel widenings)
+extern string Sound.onNewHigh                = "Price Advance.wav";
+extern string Sound.onNewLow                 = "Price Decline.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -265,8 +265,8 @@ int onInit() {
       }
       else Signal.onReversal = false;
    }
-   // Sound.onCrossing
-   if (AutoConfiguration) Sound.onCrossing = GetConfigBool(indicator, "Sound.onCrossing", Sound.onCrossing);
+   // Sound.onChannelCrossing
+   if (AutoConfiguration) Sound.onChannelCrossing = GetConfigBool(indicator, "Sound.onChannelCrossing", Sound.onChannelCrossing);
 
    // restore a stored runtime status
    RestoreStatus();
@@ -454,13 +454,13 @@ int onTick() {
    }
 
    // sound alert on channel widening (new high/low)
-   if (Sound.onCrossing && ChangedBars <= 2) {
+   if (Sound.onChannelCrossing && ChangedBars <= 2) {
       if (ChangedBars == 2) {
          prevUpperBand = upperBand[1];
          prevLowerBand = lowerBand[1];
       }
-      if      (prevUpperBand && upperBand[0] > prevUpperBand) onChannelCross(D_LONG);
-      else if (prevLowerBand && lowerBand[0] < prevLowerBand) onChannelCross(D_SHORT);
+      if      (prevUpperBand && upperBand[0] > prevUpperBand) onChannelWidening(D_LONG);
+      else if (prevLowerBand && lowerBand[0] < prevLowerBand) onChannelWidening(D_SHORT);
 
       prevUpperBand = upperBand[0];
       prevLowerBand = lowerBand[0];
@@ -760,16 +760,16 @@ bool onReversal(int direction, int bar) {
  *
  * @return bool - success status
  */
-bool onChannelCross(int direction) {
-   if (!Sound.onCrossing) return(false);
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+bool onChannelWidening(int direction) {
+   if (!Sound.onChannelCrossing) return(false);
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelWidening(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    if (lastSoundSignal+2000 < GetTickCount()) {                      // at least 2 sec pause between consecutive sound signals
-      int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onCrossing.Up, Sound.onCrossing.Down));
+      int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onNewHigh, Sound.onNewLow));
       if      (!error)                      lastSoundSignal = GetTickCount();
-      else if (error == ERR_FILE_NOT_FOUND) Sound.onCrossing = false;
+      else if (error == ERR_FILE_NOT_FOUND) Sound.onChannelCrossing = false;
    }
-   return(!catch("onChannelCross(2)"));
+   return(!catch("onChannelWidening(2)"));
 }
 
 
@@ -995,9 +995,9 @@ string InputsToStr() {
                             "Signal.onReversal.Mail=",       BoolToStr(Signal.onReversal.Mail)           +";"+ NL,
                             "Signal.onReversal.SMS=",        BoolToStr(Signal.onReversal.SMS)            +";"+ NL,
 
-                            "Sound.onCrossing=",             BoolToStr(Sound.onCrossing)                 +";"+ NL,
-                            "Sound.onCrossing.Up=",          DoubleQuoteStr(Sound.onCrossing.Up)         +";"+ NL,
-                            "Sound.onCrossing.Down=",        DoubleQuoteStr(Sound.onCrossing.Down)       +";")
+                            "Sound.onChannelCrossing=",      BoolToStr(Sound.onChannelCrossing)          +";"+ NL,
+                            "Sound.onNewHigh=",              DoubleQuoteStr(Sound.onNewHigh)             +";"+ NL,
+                            "Sound.onNewLow=",               DoubleQuoteStr(Sound.onNewLow)              +";")
    );
 
    // suppress compiler warnings
