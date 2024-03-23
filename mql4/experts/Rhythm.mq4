@@ -53,6 +53,7 @@ extern bool   ShowProfitInPercent            = false;    // whether PnL is displ
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <structs/rsf/OrderExecution.mqh>
 
 // EA definitions
 #include <ea/functions/instance/defines.mqh>
@@ -128,6 +129,9 @@ extern bool   ShowProfitInPercent            = false;    // whether PnL is displ
  * @return int - error status
  */
 int onTick() {
+   if (true) return(start_old());
+
+   // --- new ---------------------------------------------------------------------------------------------------------------
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
    double signal[3];
 
@@ -153,19 +157,18 @@ int onTick() {
       RecordMetrics();
    }
    return(last_error);
-
-   start_old();
 }
 
 
 /**
- * Old start() function
+ * Old main logic.
  *
  * @return int - error status
  */
 int start_old() {
    static int entryDirection = -1;
    static double entryLevel = 0;
+   int ticket, oe[];
 
    // find trend (override possible and skip Sundays for Monday trend)
    if (entryDirection < 0) {
@@ -179,18 +182,20 @@ int start_old() {
    if (IsTradingTime()) {
       // check for open position & whether the daily stop limit is reached
       if (!IsOpenPosition() && !IsDailyStop()) {
-         double sl = CalculateStopLoss(entryDirection);
-         double tp = CalculateTakeProfit(entryDirection);
-         int magicNumber = CalculateMagicNumber(instance.id);
+         double stoploss   = CalculateStopLoss(entryDirection);
+         double takeprofit = CalculateTakeProfit(entryDirection);
+         int magicNumber   = CalculateMagicNumber(instance.id);
 
          if (entryDirection == OP_BUY) {
             if (_Ask >= entryLevel) {
-               OrderSend(Symbol(), entryDirection, Lots, _Ask, order.slippage, sl, tp, "Rhythm", magicNumber, 0, Blue);
+               ticket = OrderSendEx(Symbol(), entryDirection, Lots, NULL, order.slippage, stoploss, takeprofit, "Rhythm", magicNumber, NULL, Blue, NULL, oe);
+               if (!ticket) return(!SetLastError(oe.Error(oe)));
             }
          }
          else {
             if (_Bid <= entryLevel) {
-               OrderSend(Symbol(), entryDirection, Lots, _Bid, order.slippage, sl, tp, "Rhythm", magicNumber, 0, Red);
+               ticket = OrderSendEx(Symbol(), entryDirection, Lots, NULL, order.slippage, stoploss, takeprofit, "Rhythm", magicNumber, NULL, Red, NULL, oe);
+               if (!ticket) return(!SetLastError(oe.Error(oe)));
             }
          }
       }
@@ -199,41 +204,41 @@ int start_old() {
          // find opposite entry level
          if (OrderType() == OP_BUY) entryDirection = OP_SELL;
          else                       entryDirection = OP_BUY;
-         sl = NormalizeDouble(OrderStopLoss(), Digits);
-         entryLevel = sl;
+         stoploss = NormalizeDouble(OrderStopLoss(), Digits);
+         entryLevel = stoploss;
 
          // manage StopLoss
          if (TrailingStop) {
             if (OrderType() == OP_BUY) {
-               double newSL = NormalizeDouble(OrderClosePrice() - StopLoss*pUnit, Digits);
-               if (newSL > sl) {
-                  OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
-                  entryLevel = newSL;
+               double newStop = NormalizeDouble(OrderClosePrice() - StopLoss*pUnit, Digits);
+               if (newStop > stoploss) {
+                  if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), newStop, OrderTakeProfit(), NULL, CLR_OPEN_STOPLOSS, NULL, oe)) return(!SetLastError(oe.Error(oe)));
+                  entryLevel = newStop;
                }
             }
             else {
-               newSL = NormalizeDouble(OrderClosePrice() + StopLoss*pUnit, Digits);
-               if (newSL < sl) {
-                  OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Red);
-                  entryLevel = newSL;
+               newStop = NormalizeDouble(OrderClosePrice() + StopLoss*pUnit, Digits);
+               if (newStop < stoploss) {
+                  if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), newStop, OrderTakeProfit(), NULL, CLR_OPEN_STOPLOSS, NULL, oe)) return(!SetLastError(oe.Error(oe)));
+                  entryLevel = newStop;
                }
             }
          }
          else if (BreakevenStop) {
-            newSL = NormalizeDouble(OrderOpenPrice(), Digits);
-            if (newSL != sl) {
+            newStop = NormalizeDouble(OrderOpenPrice(), Digits);
+            if (newStop != stoploss) {
                if (OrderType() == OP_BUY) {
                   double triggerPrice = NormalizeDouble(OrderOpenPrice() + StopLoss*pUnit, Digits);
                   if (_Bid > triggerPrice) {                                                                            // TODO: original tests for ">" instead of ">="
-                     OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
-                     entryLevel = newSL;
+                     if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), newStop, OrderTakeProfit(), NULL, CLR_OPEN_STOPLOSS, NULL, oe)) return(!SetLastError(oe.Error(oe)));
+                     entryLevel = newStop;
                   }
                }
                else {
                   triggerPrice = NormalizeDouble(OrderOpenPrice() - StopLoss*pUnit, Digits);
                   if (_Ask < triggerPrice) {                                                                            // TODO: original tests for "<" instead of "<="
-                     OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
-                     entryLevel = newSL;
+                     if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), newStop, OrderTakeProfit(), NULL, CLR_OPEN_STOPLOSS, NULL, oe)) return(!SetLastError(oe.Error(oe)));
+                     entryLevel = newStop;
                   }
                }
             }
@@ -246,7 +251,7 @@ int start_old() {
       for (int i=OrdersTotal()-1; i >= 0; i--) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
          if (!IsMyOrder(instance.id))                     continue;
-         OrderClose(OrderTicket(), OrderLots(), OrderClosePrice(), 1);
+         if (!OrderCloseEx(OrderTicket(), NULL, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
       }
       entryDirection = -1;
       entryLevel = 0;
