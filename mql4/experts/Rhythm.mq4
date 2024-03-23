@@ -31,8 +31,6 @@ int __virtualTicks = 0;
 
 extern string Instance.ID                    = "";       // instance to load from a status file (format "[T]123")
 
-extern bool   OverruleDirection              = false;
-extern bool   DirectionLong                  = false;
 extern int    EntryTimeHour                  = 0;
 extern int    ExitTimeHour                   = 23;
 extern int    MaxTrades                      = 0;
@@ -53,6 +51,7 @@ extern bool   ShowProfitInPercent            = false;    // whether PnL is displ
 #include <core/expert.recorder.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 
 // EA definitions
@@ -64,6 +63,8 @@ extern bool   ShowProfitInPercent            = false;    // whether PnL is displ
 #include <ea/functions/trade/stats/defines.mqh>
 
 // EA functions
+#include <ea/functions/onCommand.mqh>
+
 #include <ea/functions/instance/CreateInstanceId.mqh>
 #include <ea/functions/instance/IsTestInstance.mqh>
 #include <ea/functions/instance/RestoreInstance.mqh>
@@ -74,12 +75,15 @@ extern bool   ShowProfitInPercent            = false;    // whether PnL is displ
 #include <ea/functions/metric/GetMT4SymbolDefinition.mqh>
 
 #include <ea/functions/status/CreateStatusBox_6.mqh>
+#include <ea/functions/status/ShowOpenOrders.mqh>
+#include <ea/functions/status/ShowTradeHistory.mqh>
 #include <ea/functions/status/SS.All.mqh>
 #include <ea/functions/status/SS.MetricDescription.mqh>
 #include <ea/functions/status/SS.OpenLots.mqh>
 #include <ea/functions/status/SS.ClosedTrades.mqh>
 #include <ea/functions/status/SS.TotalProfit.mqh>
 #include <ea/functions/status/SS.ProfitStats.mqh>
+#include <ea/functions/status/StatusToStr.mqh>
 #include <ea/functions/status/StatusDescription.mqh>
 
 #include <ea/functions/status/file/FindStatusFile.mqh>
@@ -97,6 +101,9 @@ extern bool   ShowProfitInPercent            = false;    // whether PnL is displ
 #include <ea/functions/status/volatile/StoreVolatileStatus.mqh>
 #include <ea/functions/status/volatile/RestoreVolatileStatus.mqh>
 #include <ea/functions/status/volatile/RemoveVolatileStatus.mqh>
+#include <ea/functions/status/volatile/ToggleOpenOrders.mqh>
+#include <ea/functions/status/volatile/ToggleTradeHistory.mqh>
+#include <ea/functions/status/volatile/ToggleMetrics.mqh>
 
 #include <ea/functions/test/ReadTestConfiguration.mqh>
 
@@ -121,23 +128,52 @@ extern bool   ShowProfitInPercent            = false;    // whether PnL is displ
  * @return int - error status
  */
 int onTick() {
+   if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
+   double signal[3];
+
+   if (__isChart) HandleCommands();                   // process incoming commands, may switch on/off the instance
+
+   if (instance.status != STATUS_STOPPED) {
+      if (instance.status == STATUS_WAITING) {
+         //if (IsStartSignal(signal)) {                                                                                    // trading-time
+         //   StartInstance(signal);                                                                                       // keep existing or open new position => STATUS_TRADING
+         //}
+      }
+      else if (instance.status == STATUS_TRADING) {
+         UpdateStatus();                              // update client-side status
+
+         //if (IsStopSignal(signal)) {                                                                                     // no-trading-time || daily-stop-limit || total-profit-target
+         //   StopInstance(signal);                                                                                        // close all positions => STATUS_WAITING|STATUS_STOPPED
+         //}
+         //else {                                     // update server-side status
+         //   UpdateOpenPositions();                  // add/reduce/reverse position, take (partial) profits
+         //   UpdatePendingOrders();                  // update entry and/or exit limits
+         //}
+      }
+      RecordMetrics();
+   }
+   return(last_error);
+
+   start_old();
+}
+
+
+/**
+ * Old start() function
+ *
+ * @return int - error status
+ */
+int start_old() {
    static int entryDirection = -1;
    static double entryLevel = 0;
 
    // find trend (override possible and skip Sundays for Monday trend)
    if (entryDirection < 0) {
-      if (OverruleDirection) {
-         if (DirectionLong) entryDirection = OP_BUY;
-         else               entryDirection = OP_SELL;
-      }
-      else {
-         if (DayOfWeek() == MONDAY) int bs = iBarShift(NULL, PERIOD_D1, TimeCurrent()-72*HOURS);
-         else                           bs = 1;
-         if (iOpen(NULL, PERIOD_D1, bs) < iClose(NULL, PERIOD_D1, bs)) entryDirection = OP_BUY;
-         else                                                          entryDirection = OP_SELL;
-      }
-      if (entryDirection == OP_BUY) entryLevel = _Ask;
-      else                          entryLevel = _Bid;
+      if (DayOfWeek() == MONDAY) int bs = iBarShift(NULL, PERIOD_D1, TimeCurrent()-3*DAYS);
+      else                           bs = 1;
+      if (iOpen(NULL, PERIOD_D1, bs) < iClose(NULL, PERIOD_D1, bs)) entryDirection = OP_BUY;
+      else                                                          entryDirection = OP_SELL;
+      entryLevel = ifDouble(entryDirection==OP_SELL, _Bid, _Ask);
    }
 
    if (IsTradingTime()) {
@@ -148,12 +184,12 @@ int onTick() {
          int magicNumber = CalculateMagicNumber(instance.id);
 
          if (entryDirection == OP_BUY) {
-            if (GE(_Ask, entryLevel)) {
+            if (_Ask >= entryLevel) {
                OrderSend(Symbol(), entryDirection, Lots, _Ask, order.slippage, sl, tp, "Rhythm", magicNumber, 0, Blue);
             }
          }
          else {
-            if (LE(_Bid, entryLevel)) {
+            if (_Bid <= entryLevel) {
                OrderSend(Symbol(), entryDirection, Lots, _Bid, order.slippage, sl, tp, "Rhythm", magicNumber, 0, Red);
             }
          }
@@ -163,28 +199,29 @@ int onTick() {
          // find opposite entry level
          if (OrderType() == OP_BUY) entryDirection = OP_SELL;
          else                       entryDirection = OP_BUY;
-         entryLevel = OrderStopLoss();
+         sl = NormalizeDouble(OrderStopLoss(), Digits);
+         entryLevel = sl;
 
          // manage StopLoss
          if (TrailingStop) {
             if (OrderType() == OP_BUY) {
                double newSL = NormalizeDouble(OrderClosePrice() - StopLoss*Point, Digits);
-               if (GT(newSL, OrderStopLoss())) {
+               if (newSL > sl) {
                   OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Blue);
                   entryLevel = newSL;
                }
             }
             else {
                newSL = NormalizeDouble(OrderClosePrice() + StopLoss*Point, Digits);
-               if (LT(newSL, OrderStopLoss())) {
+               if (newSL < sl) {
                   OrderModify(OrderTicket(), OrderOpenPrice(), newSL, OrderTakeProfit(), OrderExpiration(), Red);
                   entryLevel = newSL;
                }
             }
          }
          else if (TrailOnceStop) {
-            newSL = OrderOpenPrice();
-            if (NE(newSL, OrderStopLoss())) {
+            newSL = NormalizeDouble(OrderOpenPrice(), Digits);
+            if (newSL != sl) {
                if (OrderType() == OP_BUY) {
                   double triggerPrice = NormalizeDouble(OrderOpenPrice() + StopLoss*Point, Digits);
                   if (_Bid > triggerPrice) {                                                                            // TODO: it tests for ">" instead of ">="
@@ -332,8 +369,6 @@ bool ReadStatus() {
    // [Inputs]
    section = "Inputs";
    Instance.ID              = GetIniStringA(file, section, "Instance.ID",     "");           // string   Instance.ID         = T123
-   OverruleDirection        = GetIniBool   (file, section, "OverruleDirection"  );           // bool     OverruleDirection   = 0
-   DirectionLong            = GetIniBool   (file, section, "DirectionLong"      );           // bool     DirectionLong       = 1
    EntryTimeHour            = GetIniInt    (file, section, "EntryTimeHour"      );           // int      EntryTimeHour       = 1
    ExitTimeHour             = GetIniInt    (file, section, "ExitTimeHour"       );           // int      ExitTimeHour        = 23
    MaxTrades                = GetIniInt    (file, section, "MaxTrades"          );           // int      MaxTrades           = 5
@@ -430,8 +465,6 @@ bool SaveStatus() {
    // [Inputs]
    section = "Inputs";
    WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
-   WriteIniString(file, section, "OverruleDirection",          /*bool    */ OverruleDirection);
-   WriteIniString(file, section, "DirectionLong",              /*bool    */ DirectionLong);
    WriteIniString(file, section, "EntryTimeHour",              /*int     */ EntryTimeHour);
    WriteIniString(file, section, "ExitTimeHour",               /*int     */ ExitTimeHour);
    WriteIniString(file, section, "MaxTrades",                  /*int     */ MaxTrades);
@@ -465,8 +498,6 @@ bool SaveStatus() {
 
 // backed-up input parameters
 string   prev.Instance.ID = "";
-bool     prev.OverruleDirection;
-bool     prev.DirectionLong;
 int      prev.EntryTimeHour;
 int      prev.ExitTimeHour;
 int      prev.MaxTrades;
@@ -496,9 +527,7 @@ int      prev.instance.status;
 void BackupInputs() {
    // input parameters, used for comparison in ValidateInputs()
    prev.Instance.ID         = StringConcatenate(Instance.ID, "");    // string inputs are references to internal C literals
-   prev.OverruleDirection   = OverruleDirection;                     // and must be copied to break the reference
-   prev.DirectionLong       = DirectionLong;
-   prev.EntryTimeHour       = EntryTimeHour;
+   prev.EntryTimeHour       = EntryTimeHour;                         // and must be copied to break the reference
    prev.ExitTimeHour        = ExitTimeHour;
    prev.MaxTrades           = MaxTrades;
    prev.TrailOnceStop       = TrailOnceStop;
@@ -525,8 +554,6 @@ void BackupInputs() {
 void RestoreInputs() {
    // input parameters
    Instance.ID         = prev.Instance.ID;
-   OverruleDirection   = prev.OverruleDirection;
-   DirectionLong       = prev.DirectionLong;
    EntryTimeHour       = prev.EntryTimeHour;
    ExitTimeHour        = prev.ExitTimeHour;
    MaxTrades           = prev.MaxTrades;
@@ -611,8 +638,6 @@ void SS.InstanceName() {
 string InputsToStr() {
    return(StringConcatenate("Instance.ID=",         DoubleQuoteStr(Instance.ID),    ";", NL,
 
-                            "OverruleDirection=",   BoolToStr(OverruleDirection),   ";", NL,
-                            "DirectionLong=",       BoolToStr(DirectionLong),       ";", NL,
                             "EntryTimeHour=",       EntryTimeHour,                  ";", NL,
                             "ExitTimeHour=",        ExitTimeHour,                   ";", NL,
                             "MaxTrades=",           MaxTrades,                      ";", NL,
