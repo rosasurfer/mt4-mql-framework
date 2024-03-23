@@ -33,7 +33,7 @@ extern string Instance.ID                    = "";       // instance to load fro
 
 extern int    EntryTimeHour                  = 0;
 extern int    ExitTimeHour                   = 23;
-extern int    MaxTrades                      = 0;
+extern int    MaxDailyTrades                 = 0;
 
 extern double Lots                           = 0.1;
 extern int    StopLoss                       = 40;
@@ -281,18 +281,20 @@ bool UpdateStatus() {
  *
  */
 bool IsDailyStop() {
-   int today_trades = 0;
+   int todayTrades;
    datetime today = iTime(NULL, PERIOD_D1, 0);
 
    for (int i=OrdersHistoryTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
       if (!IsMyOrder(instance.id)) continue;
       if (OrderOpenTime() < today) continue;
-      today_trades++;
+      todayTrades++;
 
-      if (MaxTrades > 0 && today_trades >= MaxTrades) return(true);
+      if (MaxDailyTrades && todayTrades >= MaxDailyTrades) {
+         return(true);
+      }
       if (TakeProfit > 0) {
-         if (StringFind(OrderComment(), "[tp]") >= 0) return(true);
+         if (StrContains(OrderComment(), "[tp]")) return(true);
       }
    }
    return(false);
@@ -371,7 +373,7 @@ bool ReadStatus() {
    Instance.ID              = GetIniStringA(file, section, "Instance.ID",     "");           // string   Instance.ID         = T123
    EntryTimeHour            = GetIniInt    (file, section, "EntryTimeHour"      );           // int      EntryTimeHour       = 1
    ExitTimeHour             = GetIniInt    (file, section, "ExitTimeHour"       );           // int      ExitTimeHour        = 23
-   MaxTrades                = GetIniInt    (file, section, "MaxTrades"          );           // int      MaxTrades           = 5
+   MaxDailyTrades           = GetIniInt    (file, section, "MaxDailyTrades"     );           // int      MaxDailyTrades      = 5
    Lots                     = GetIniDouble (file, section, "Lots"               );           // double   Lots                = 0.1
    StopLoss                 = GetIniInt    (file, section, "StopLoss"           );           // int      StopLoss            = 400
    TakeProfit               = GetIniInt    (file, section, "TakeProfit"         );           // int      TakeProfit          = 800
@@ -467,7 +469,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
    WriteIniString(file, section, "EntryTimeHour",              /*int     */ EntryTimeHour);
    WriteIniString(file, section, "ExitTimeHour",               /*int     */ ExitTimeHour);
-   WriteIniString(file, section, "MaxTrades",                  /*int     */ MaxTrades);
+   WriteIniString(file, section, "MaxDailyTrades",             /*int     */ MaxDailyTrades);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
    WriteIniString(file, section, "StopLoss",                   /*int     */ StopLoss);
    WriteIniString(file, section, "TakeProfit",                 /*int     */ TakeProfit);
@@ -500,7 +502,7 @@ bool SaveStatus() {
 string   prev.Instance.ID = "";
 int      prev.EntryTimeHour;
 int      prev.ExitTimeHour;
-int      prev.MaxTrades;
+int      prev.MaxDailyTrades;
 double   prev.Lots;
 int      prev.StopLoss;
 int      prev.TakeProfit;
@@ -529,7 +531,7 @@ void BackupInputs() {
    prev.Instance.ID         = StringConcatenate(Instance.ID, "");    // string inputs are references to internal C literals
    prev.EntryTimeHour       = EntryTimeHour;                         // and must be copied to break the reference
    prev.ExitTimeHour        = ExitTimeHour;
-   prev.MaxTrades           = MaxTrades;
+   prev.MaxDailyTrades      = MaxDailyTrades;
    prev.Lots                = Lots;
    prev.StopLoss            = StopLoss;
    prev.TakeProfit          = TakeProfit;
@@ -556,7 +558,7 @@ void RestoreInputs() {
    Instance.ID         = prev.Instance.ID;
    EntryTimeHour       = prev.EntryTimeHour;
    ExitTimeHour        = prev.ExitTimeHour;
-   MaxTrades           = prev.MaxTrades;
+   MaxDailyTrades      = prev.MaxDailyTrades;
    Lots                = prev.Lots;
    StopLoss            = prev.StopLoss;
    TakeProfit          = prev.TakeProfit;
@@ -637,7 +639,7 @@ string InputsToStr() {
 
                             "EntryTimeHour=",       EntryTimeHour,                  ";", NL,
                             "ExitTimeHour=",        ExitTimeHour,                   ";", NL,
-                            "MaxTrades=",           MaxTrades,                      ";", NL,
+                            "MaxDailyTrades=",      MaxDailyTrades,                 ";", NL,
 
                             "Lots=",                NumberToStr(Lots, ".1+"),       ";", NL,
                             "StopLoss=",            StopLoss,                       ";", NL,
