@@ -34,12 +34,12 @@ extern string Instance.ID                    = "";       // instance to load fro
 extern int    EntryTimeHour                  = 0;
 extern int    ExitTimeHour                   = 23;
 extern int    MaxTrades                      = 0;
-extern bool   TrailOnceStop                  = true;
-extern bool   TrailingStop                   = false;
 
 extern double Lots                           = 0.1;
 extern int    StopLoss                       = 40;
 extern int    TakeProfit                     = 100;
+extern bool   BreakevenStop                  = true;
+extern bool   TrailingStop                   = false;
 
 extern string ___a__________________________ = "=== Other settings ============";
 extern bool   ShowProfitInPercent            = false;    // whether PnL is displayed in money amounts or percent
@@ -219,7 +219,7 @@ int start_old() {
                }
             }
          }
-         else if (TrailOnceStop) {
+         else if (BreakevenStop) {
             newSL = NormalizeDouble(OrderOpenPrice(), Digits);
             if (newSL != sl) {
                if (OrderType() == OP_BUY) {
@@ -372,11 +372,11 @@ bool ReadStatus() {
    EntryTimeHour            = GetIniInt    (file, section, "EntryTimeHour"      );           // int      EntryTimeHour       = 1
    ExitTimeHour             = GetIniInt    (file, section, "ExitTimeHour"       );           // int      ExitTimeHour        = 23
    MaxTrades                = GetIniInt    (file, section, "MaxTrades"          );           // int      MaxTrades           = 5
-   TrailOnceStop            = GetIniBool   (file, section, "TrailOnceStop"      );           // bool     TrailOnceStop       = 1
-   TrailingStop             = GetIniBool   (file, section, "TrailingStop"       );           // bool     Trailin             = 0
    Lots                     = GetIniDouble (file, section, "Lots"               );           // double   Lots                = 0.1
    StopLoss                 = GetIniInt    (file, section, "StopLoss"           );           // int      StopLoss            = 400
    TakeProfit               = GetIniInt    (file, section, "TakeProfit"         );           // int      TakeProfit          = 800
+   BreakevenStop            = GetIniBool   (file, section, "BreakevenStop"      );           // bool     BreakevenStop       = 1
+   TrailingStop             = GetIniBool   (file, section, "TrailingStop"       );           // bool     Trailin             = 0
    ShowProfitInPercent      = GetIniBool   (file, section, "ShowProfitInPercent");           // bool     ShowProfitInPercent = 1
    EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",     "");           // string   EA.Recorder         = 1,2,4
 
@@ -468,11 +468,11 @@ bool SaveStatus() {
    WriteIniString(file, section, "EntryTimeHour",              /*int     */ EntryTimeHour);
    WriteIniString(file, section, "ExitTimeHour",               /*int     */ ExitTimeHour);
    WriteIniString(file, section, "MaxTrades",                  /*int     */ MaxTrades);
-   WriteIniString(file, section, "TrailOnceStop",              /*bool    */ TrailOnceStop);
-   WriteIniString(file, section, "TrailingStop",               /*bool    */ TrailingStop);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
    WriteIniString(file, section, "StopLoss",                   /*int     */ StopLoss);
    WriteIniString(file, section, "TakeProfit",                 /*int     */ TakeProfit);
+   WriteIniString(file, section, "BreakevenStop",              /*bool    */ BreakevenStop);
+   WriteIniString(file, section, "TrailingStop",               /*bool    */ TrailingStop);
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
@@ -501,11 +501,11 @@ string   prev.Instance.ID = "";
 int      prev.EntryTimeHour;
 int      prev.ExitTimeHour;
 int      prev.MaxTrades;
-bool     prev.TrailOnceStop;
-bool     prev.TrailingStop;
 double   prev.Lots;
 int      prev.StopLoss;
 int      prev.TakeProfit;
+bool     prev.BreakevenStop;
+bool     prev.TrailingStop;
 bool     prev.ShowProfitInPercent;
 
 // backed-up runtime variables affected by changing input parameters
@@ -530,11 +530,11 @@ void BackupInputs() {
    prev.EntryTimeHour       = EntryTimeHour;                         // and must be copied to break the reference
    prev.ExitTimeHour        = ExitTimeHour;
    prev.MaxTrades           = MaxTrades;
-   prev.TrailOnceStop       = TrailOnceStop;
-   prev.TrailingStop        = TrailingStop;
    prev.Lots                = Lots;
    prev.StopLoss            = StopLoss;
    prev.TakeProfit          = TakeProfit;
+   prev.BreakevenStop       = BreakevenStop;
+   prev.TrailingStop        = TrailingStop;
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
@@ -557,11 +557,11 @@ void RestoreInputs() {
    EntryTimeHour       = prev.EntryTimeHour;
    ExitTimeHour        = prev.ExitTimeHour;
    MaxTrades           = prev.MaxTrades;
-   TrailOnceStop       = prev.TrailOnceStop;
-   TrailingStop        = prev.TrailingStop;
    Lots                = prev.Lots;
    StopLoss            = prev.StopLoss;
    TakeProfit          = prev.TakeProfit;
+   BreakevenStop       = prev.BreakevenStop;
+   TrailingStop        = prev.TrailingStop;
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
@@ -595,15 +595,9 @@ bool ValidateInputs() {
       else if (Instance.ID != prev.Instance.ID) return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
    }
 
-   // OverruleDirection (nothing to do)
-   // DirectionLong (nothing to do)
-
    // EntryTimeHour
    // ExitTimeHour
    // MaxTrades
-
-   // TrailOnceStop (nothing to do)
-   // TrailingStop (nothing to do)
 
    // Lots
    if (LT(Lots, 0))                             return(!onInputError("ValidateInputs(2)  "+ instance.name +" invalid input Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
@@ -611,6 +605,9 @@ bool ValidateInputs() {
 
    // StopLoss
    // TakeProfit
+
+   // BreakevenStop (nothing to do)
+   // TrailingStop (nothing to do)
 
    // ShowProfitInPercent (nothing to do)
 
@@ -641,12 +638,12 @@ string InputsToStr() {
                             "EntryTimeHour=",       EntryTimeHour,                  ";", NL,
                             "ExitTimeHour=",        ExitTimeHour,                   ";", NL,
                             "MaxTrades=",           MaxTrades,                      ";", NL,
-                            "TrailOnceStop=",       BoolToStr(TrailOnceStop),       ";", NL,
-                            "TrailingStop=",        BoolToStr(TrailingStop),        ";", NL,
 
                             "Lots=",                NumberToStr(Lots, ".1+"),       ";", NL,
                             "StopLoss=",            StopLoss,                       ";", NL,
                             "TakeProfit=",          TakeProfit,                     ";", NL,
+                            "BreakevenStop=",       BoolToStr(BreakevenStop),       ";", NL,
+                            "TrailingStop=",        BoolToStr(TrailingStop),        ";", NL,
 
                             "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent), ";")
    );
