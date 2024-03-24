@@ -141,7 +141,7 @@ extern bool   Signal.onTrendChange           = false;
 extern bool   Signal.onTrendChange.Sound     = true;
 extern string Signal.onTrendChange.SoundUp   = "Signal Up.wav";
 extern string Signal.onTrendChange.SoundDown = "Signal Down.wav";
-extern bool   Signal.onTrendChange.Popup     = false;
+extern bool   Signal.onTrendChange.Alert     = false;
 extern bool   Signal.onTrendChange.Mail      = false;
 extern bool   Signal.onTrendChange.SMS       = false;
 
@@ -231,11 +231,11 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
       if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onTrendChange.Sound)) return(last_error);
-      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onTrendChange.Popup)) return(last_error);
+      if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onTrendChange.Alert)) return(last_error);
       if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onTrendChange.Mail))  return(last_error);
       if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onTrendChange.SMS))   return(last_error);
-      if (Signal.onTrendChange.Sound || Signal.onTrendChange.Popup || Signal.onTrendChange.Mail || Signal.onTrendChange.SMS) {
-         legendInfo = StrLeft(ifString(Signal.onTrendChange.Sound, "sound,", "") + ifString(Signal.onTrendChange.Popup, "popup,", "") + ifString(Signal.onTrendChange.Mail, "mail,", "") + ifString(Signal.onTrendChange.SMS, "sms,", ""), -1);
+      if (Signal.onTrendChange.Sound || Signal.onTrendChange.Alert || Signal.onTrendChange.Mail || Signal.onTrendChange.SMS) {
+         legendInfo = StrLeft(ifString(Signal.onTrendChange.Sound, "sound,", "") + ifString(Signal.onTrendChange.Alert, "alert,", "") + ifString(Signal.onTrendChange.Mail, "mail,", "") + ifString(Signal.onTrendChange.SMS, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
       }
       else Signal.onTrendChange = false;
@@ -340,7 +340,7 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onTrendChange.Popup)          Alert(message);
+      if (Signal.onTrendChange.Alert)          Alert(message);
       if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
       if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
       if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
@@ -352,7 +352,7 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onTrendChange.Popup)          Alert(message);
+      if (Signal.onTrendChange.Alert)          Alert(message);
       if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
       if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
       if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
@@ -396,7 +396,7 @@ string InputsToStr() {
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";", NL,
                             "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";", NL,
                             "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";", NL,
-                            "Signal.onTrendChange.Popup=",     BoolToStr(Signal.onTrendChange.Popup),          ";", NL,
+                            "Signal.onTrendChange.Alert=",     BoolToStr(Signal.onTrendChange.Alert),          ";", NL,
                             "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";", NL,
                             "Signal.onTrendChange.SMS=",       BoolToStr(Signal.onTrendChange.SMS),            ";")
    );

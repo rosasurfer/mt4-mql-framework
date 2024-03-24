@@ -40,13 +40,13 @@
  *  • Signal.onReversal.Sound:      Whether to signal ZigZag reversals by sound.
  *  • Signal.onReversal.SoundUp:    Sound file to signal ZigZag reversals to the upside.
  *  • Signal.onReversal.SoundDown:  Sound file to signal ZigZag reversals to the downside.
- *  • Signal.onReversal.Popup:      Whether to signal ZigZag reversals by popup (MetaTrader alert dialog).
+ *  • Signal.onReversal.Alert:      Whether to signal ZigZag reversals by the MT4 alert dialog.
  *  • Signal.onReversal.Mail:       Whether to signal ZigZag reversals by e-mail.
  *  • Signal.onReversal.SMS:        Whether to signal ZigZag reversals by text message.
  *
  *  • Sound.onChannelWidening:      Whether to signal Donchian channel widenings (channel crossings).
- *  • Sound.onNewHigh:              Sound file to signal a Donchian channel widening to the upside.
- *  • Sound.onNewLow:               Sound file to signal a Donchian channel widening to the downside.
+ *  • Sound.onNewChannelHigh:       Sound file to signal a Donchian channel widening to the upside.
+ *  • Sound.onNewChannelLow:        Sound file to signal a Donchian channel widening to the downside.
  *
  *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom framework config values.
  *
@@ -81,19 +81,21 @@ extern color  Donchian.Lower.Color           = Magenta;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 extern bool   ShowChartLegend                = true;
 
-extern string ___c__________________________ = "=== Reversal signaling ===";
-extern bool   Signal.onReversal              = false;                   // signal ZigZag reversals (first channel crossing)
-extern bool   Signal.onReversal.Sound        = true;
-extern string Signal.onReversal.SoundUp      = "Signal Up.wav";
-extern string Signal.onReversal.SoundDown    = "Signal Down.wav";
-extern bool   Signal.onReversal.Popup        = false;
-extern bool   Signal.onReversal.Mail         = false;
-extern bool   Signal.onReversal.SMS          = false;
+extern string ___c__________________________ = "=== Signal settings ===";
+extern bool   Signal.onReversal              = false;                   // signal ZigZag reversals (first Donchian channel crossing)
+extern string Signal.onReversal.Types        = "sound* | alert | mail | sms";
 
-extern string ___d__________________________ = "=== New high/low sound alerts ===";
-extern bool   Sound.onChannelWidening        = false;                   // signal new ZigZag highs/lows (Donchian channel widenings)
-extern string Sound.onNewHigh                = "Price Advance.wav";
-extern string Sound.onNewLow                 = "Price Decline.wav";
+extern bool   Signal.onBreakout              = false;                   // signal ZigZag breakouts
+extern bool   Signal.onBreakout.123Only      = false;                   // signal valid 1-2-3 breakouts only
+extern string Signal.onBreakout.Types        = "sound* | alert | mail | sms";
+
+extern string Signal.Sound.Up                = "Signal Up.wav";
+extern string Signal.Sound.Down              = "Signal Down.wav";
+
+extern string ___d__________________________ = "=== Other ===";
+extern bool   Sound.onChannelWidening        = false;                   // signal Donchian channel widenings
+extern string Sound.onNewChannelHigh         = "Price Advance.wav";
+extern string Sound.onNewChannelLow          = "Price Decline.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -162,9 +164,6 @@ double   combinedTrend [];                                     // trend (combine
 
 int      zigzagDrawType;
 int      crossingDrawType;
-datetime lastTick;
-int      lastSoundSignal;                                      // GetTickCount() value of the last audible signal
-datetime skipSignals;                                          // skip signals until this time to account for possible data pumping
 double   prevUpperBand;
 double   prevLowerBand;
 
@@ -172,6 +171,21 @@ string   indicatorName = "";
 string   shortName     = "";
 string   legendLabel   = "";
 string   legendInfo    = "";                                   // additional chart legend info
+
+bool     signal.onReversal.sound;
+bool     signal.onReversal.alert;
+bool     signal.onReversal.mail;
+bool     signal.onReversal.sms;
+
+bool     signal.onBreakout.sound;
+bool     signal.onBreakout.alert;
+bool     signal.onBreakout.mail;
+bool     signal.onBreakout.sms;
+
+datetime lastTick;
+int      lastSoundSignal;                                      // GetTickCount() value of the last audible signal
+datetime skipSignals;                                          // skip signals until this time to wait for possible data pumping
+
 
 // signal direction types
 #define D_LONG     TRADE_DIRECTION_LONG                        // 1
@@ -250,20 +264,29 @@ int onInit() {
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
 
-   // signaling
+   // Signal.onReversal
    string signalId = "Signal.onReversal";
    legendInfo = "";
-   if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onReversal)) return(last_error);
+   ConfigureSignals(signalId, AutoConfiguration, Signal.onReversal);
    if (Signal.onReversal) {
-      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onReversal.Sound)) return(last_error);
-      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onReversal.Popup)) return(last_error);
-      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onReversal.Mail))  return(last_error);
-      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onReversal.SMS))   return(last_error);
-      if (Signal.onReversal.Sound || Signal.onReversal.Popup || Signal.onReversal.Mail || Signal.onReversal.SMS) {
-         legendInfo = StrLeft(ifString(Signal.onReversal.Sound, "sound,", "") + ifString(Signal.onReversal.Popup, "popup,", "") + ifString(Signal.onReversal.Mail, "mail,", "") + ifString(Signal.onReversal.SMS, "sms,", ""), -1);
+      if (!ConfigureSignalTypes(signalId, Signal.onReversal.Types, AutoConfiguration, signal.onReversal.sound, signal.onReversal.alert, signal.onReversal.mail, signal.onReversal.sms)) {
+         return(catch("onInit(12)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
+      }
+      if (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail || signal.onReversal.sms) {
+         legendInfo = StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", "") + ifString(signal.onReversal.sms, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
       }
       else Signal.onReversal = false;
+   }
+   // Signal.onBreakout
+   signalId = "Signal.onBreakout";
+   ConfigureSignals(signalId, AutoConfiguration, Signal.onBreakout);
+   if (Signal.onBreakout) {
+      if (!ConfigureSignalTypes(signalId, Signal.onBreakout.Types, AutoConfiguration, signal.onBreakout.sound, signal.onBreakout.alert, signal.onBreakout.mail, signal.onBreakout.sms)) {
+         return(catch("onInit(13)  invalid input parameter Signal.onBreakout.Types: "+ DoubleQuoteStr(Signal.onBreakout.Types), ERR_INVALID_INPUT_PARAMETER));
+      }
+      // Signal.onBreakout.123Only
+      if (AutoConfiguration) Signal.onBreakout.123Only = GetConfigBool(indicator, "Signal.onBreakout.123Only", Signal.onBreakout.123Only);
    }
    // Sound.onChannelWidening
    if (AutoConfiguration) Sound.onChannelWidening = GetConfigBool(indicator, "Sound.onChannelWidening", Sound.onChannelWidening);
@@ -281,9 +304,9 @@ int onInit() {
       int hWnd = __ExecutionContext[EC.hChart];
       int millis = 2000;                                         // a virtual tick every 2 seconds
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!__tickTimerId) return(catch("onInit(12)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
+      if (!__tickTimerId) return(catch("onInit(14)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
    }
-   return(catch("onInit(13)"));
+   return(catch("onInit(15)"));
 }
 
 
@@ -735,18 +758,18 @@ bool onReversal(int direction, int bar) {
       string message = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")", accountTime="";
       if (IsLogInfo()) logInfo("onReversal("+ ZigZag.Periods +"x"+ sPeriod +")  "+ message);
 
-      if (Signal.onReversal.Sound) {
-         error = PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
+      if (signal.onReversal.sound) {
+         error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
          if (!error)                           lastSoundSignal = GetTickCount();
-         else if (error == ERR_FILE_NOT_FOUND) Signal.onReversal.Sound = false;
+         else if (error == ERR_FILE_NOT_FOUND) signal.onReversal.sound = false;
       }
 
       message = Symbol() +","+ PeriodDescription() +": "+ shortName +" reversal "+ message;
-      if (Signal.onReversal.Mail || Signal.onReversal.SMS) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+      if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-      if (Signal.onReversal.Popup)           Alert(message);
-      if (Signal.onReversal.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (Signal.onReversal.SMS)   error |= !SendSMS("", message + NL + accountTime);
+      if (signal.onReversal.alert)           Alert(message);
+      if (signal.onReversal.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
+      if (signal.onReversal.sms)   error |= !SendSMS("", message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                       // mark event as signaled
    }
    return(!error);
@@ -765,7 +788,7 @@ bool onChannelWidening(int direction) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelWidening(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    if (lastSoundSignal+2000 < GetTickCount()) {                      // at least 2 sec pause between consecutive sound signals
-      int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onNewHigh, Sound.onNewLow));
+      int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onNewChannelHigh, Sound.onNewChannelLow));
       if      (!error)                      lastSoundSignal = GetTickCount();
       else if (error == ERR_FILE_NOT_FOUND) Sound.onChannelWidening = false;
    }
@@ -971,33 +994,33 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",               ZigZag.Periods                              +";"+ NL,
-                            "ZigZag.Periods.Step=",          ZigZag.Periods.Step                         +";"+ NL,
-                            "ZigZag.Type=",                  DoubleQuoteStr(ZigZag.Type)                 +";"+ NL,
-                            "ZigZag.Width=",                 ZigZag.Width                                +";"+ NL,
-                            "ZigZag.Semaphores.Wingdings=",  ZigZag.Semaphores.Wingdings                 +";"+ NL,
-                            "ZigZag.Color=",                 ColorToStr(ZigZag.Color)                    +";"+ NL,
+   return(StringConcatenate("ZigZag.Periods=",               ZigZag.Periods                          +";"+ NL,
+                            "ZigZag.Periods.Step=",          ZigZag.Periods.Step                     +";"+ NL,
+                            "ZigZag.Type=",                  DoubleQuoteStr(ZigZag.Type)             +";"+ NL,
+                            "ZigZag.Width=",                 ZigZag.Width                            +";"+ NL,
+                            "ZigZag.Semaphores.Wingdings=",  ZigZag.Semaphores.Wingdings             +";"+ NL,
+                            "ZigZag.Color=",                 ColorToStr(ZigZag.Color)                +";"+ NL,
 
-                            "Donchian.ShowChannel=",         BoolToStr(Donchian.ShowChannel)             +";"+ NL,
-                            "Donchian.ShowCrossings=",       DoubleQuoteStr(Donchian.ShowCrossings)      +";"+ NL,
-                            "Donchian.Crossings.Width=",     Donchian.Crossings.Width                    +";"+ NL,
-                            "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings                +";"+ NL,
-                            "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)            +";"+ NL,
-                            "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)            +";"+ NL,
-                            "MaxBarsBack=",                  MaxBarsBack                                 +";"+ NL,
-                            "ShowChartLegend=",              BoolToStr(ShowChartLegend)                  +";"+ NL,
+                            "Donchian.ShowChannel=",         BoolToStr(Donchian.ShowChannel)         +";"+ NL,
+                            "Donchian.ShowCrossings=",       DoubleQuoteStr(Donchian.ShowCrossings)  +";"+ NL,
+                            "Donchian.Crossings.Width=",     Donchian.Crossings.Width                +";"+ NL,
+                            "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings            +";"+ NL,
+                            "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)        +";"+ NL,
+                            "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)        +";"+ NL,
+                            "MaxBarsBack=",                  MaxBarsBack                             +";"+ NL,
+                            "ShowChartLegend=",              BoolToStr(ShowChartLegend)              +";"+ NL,
 
-                            "Signal.onReversal=",            BoolToStr(Signal.onReversal)                +";"+ NL,
-                            "Signal.onReversal.Sound=",      BoolToStr(Signal.onReversal.Sound)          +";"+ NL,
-                            "Signal.onReversal.SoundUp=",    DoubleQuoteStr(Signal.onReversal.SoundUp)   +";"+ NL,
-                            "Signal.onReversal.SoundDown=",  DoubleQuoteStr(Signal.onReversal.SoundDown) +";"+ NL,
-                            "Signal.onReversal.Popup=",      BoolToStr(Signal.onReversal.Popup)          +";"+ NL,
-                            "Signal.onReversal.Mail=",       BoolToStr(Signal.onReversal.Mail)           +";"+ NL,
-                            "Signal.onReversal.SMS=",        BoolToStr(Signal.onReversal.SMS)            +";"+ NL,
+                            "Signal.onReversal=",            BoolToStr(Signal.onReversal)            +";"+ NL,
+                            "Signal.onReversal.Types=",      DoubleQuoteStr(Signal.onReversal.Types) +";"+ NL,
+                            "Signal.onBreakout=",            BoolToStr(Signal.onBreakout)            +";"+ NL,
+                            "Signal.onBreakout.123Only=",    BoolToStr(Signal.onBreakout.123Only)    +";"+ NL,
+                            "Signal.onBreakout.Types=",      DoubleQuoteStr(Signal.onBreakout.Types) +";"+ NL,
+                            "Signal.Sound.Up=",              DoubleQuoteStr(Signal.Sound.Up)         +";"+ NL,
+                            "Signal.Sound.Down=",            DoubleQuoteStr(Signal.Sound.Down)       +";"+ NL,
 
-                            "Sound.onChannelWidening=",      BoolToStr(Sound.onChannelWidening)          +";"+ NL,
-                            "Sound.onNewHigh=",              DoubleQuoteStr(Sound.onNewHigh)             +";"+ NL,
-                            "Sound.onNewLow=",               DoubleQuoteStr(Sound.onNewLow)              +";")
+                            "Sound.onChannelWidening=",      BoolToStr(Sound.onChannelWidening)      +";"+ NL,
+                            "Sound.onNewChannelHigh=",       DoubleQuoteStr(Sound.onNewChannelHigh)  +";"+ NL,
+                            "Sound.onNewChannelLow=",        DoubleQuoteStr(Sound.onNewChannelLow)   +";")
    );
 
    // suppress compiler warnings

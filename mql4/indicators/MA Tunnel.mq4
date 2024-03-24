@@ -24,7 +24,7 @@ extern bool   Signal.onBarCross              = false;             // on channel 
 extern bool   Signal.onBarCross.Sound        = true;
 extern string Signal.onBarCross.SoundUp      = "Signal Up.wav";
 extern string Signal.onBarCross.SoundDown    = "Signal Down.wav";
-extern bool   Signal.onBarCross.Popup        = false;
+extern bool   Signal.onBarCross.Alert        = false;
 extern bool   Signal.onBarCross.Mail         = false;
 extern bool   Signal.onBarCross.SMS          = false;
 extern string ___b__________________________;
@@ -138,10 +138,10 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onBarCross)) return(last_error);
    if (Signal.onBarCross) {
       if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onBarCross.Sound)) return(last_error);
-      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onBarCross.Popup)) return(last_error);
+      if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onBarCross.Alert)) return(last_error);
       if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onBarCross.Mail))  return(last_error);
       if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onBarCross.SMS))   return(last_error);
-      Signal.onBarCross = (Signal.onBarCross.Sound || Signal.onBarCross.Popup || Signal.onBarCross.Mail || Signal.onBarCross.SMS);
+      Signal.onBarCross = (Signal.onBarCross.Sound || Signal.onBarCross.Alert || Signal.onBarCross.Mail || Signal.onBarCross.SMS);
    }
    signal.barCross = Signal.onBarCross;
    if (AutoConfiguration) Signal.onBarCross.SoundUp   = GetConfigString(indicator, "Signal.onBarCross.SoundUp",   Signal.onBarCross.SoundUp);
@@ -154,7 +154,7 @@ int onInit() {
 
    signalInfo = "";
    if (signal.barCross) {
-      signalInfo = ifString(Signal.onBarCross.Sound, "sound,", "") + ifString(Signal.onBarCross.Popup, "popup,", "") + ifString(Signal.onBarCross.Mail, "mail,", "") + ifString(Signal.onBarCross.SMS, "sms,", "");
+      signalInfo = ifString(Signal.onBarCross.Sound, "sound,", "") + ifString(Signal.onBarCross.Alert, "alert,", "") + ifString(Signal.onBarCross.Mail, "mail,", "") + ifString(Signal.onBarCross.SMS, "sms,", "");
       signalInfo = "("+ StrLeft(signalInfo, -1) +")";
    }
 
@@ -298,7 +298,7 @@ bool onCross(int direction, int bar) {
          if (IsLogInfo()) logInfo("onCross(5)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-         if (Signal.onBarCross.Popup)          Alert(message);
+         if (Signal.onBarCross.Alert)          Alert(message);
          if (Signal.onBarCross.Sound) error |= PlaySoundEx(Signal.onBarCross.SoundUp);
          if (Signal.onBarCross.Mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
          if (Signal.onBarCross.SMS)   error |= !SendSMS("", message +NL+ accountTime);
@@ -308,7 +308,7 @@ bool onCross(int direction, int bar) {
          if (IsLogInfo()) logInfo("onCross(6)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-         if (Signal.onBarCross.Popup)          Alert(message);
+         if (Signal.onBarCross.Alert)          Alert(message);
          if (Signal.onBarCross.Sound) error |= PlaySoundEx(Signal.onBarCross.SoundDown);
          if (Signal.onBarCross.Mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
          if (Signal.onBarCross.SMS)   error |= !SendSMS("", message +NL+ accountTime);
@@ -349,7 +349,7 @@ string InputsToStr() {
                             "Signal.onBarCross.Sound",       BoolToStr(Signal.onBarCross.Sound),           ";", NL,
                             "Signal.onBarCross.SoundUp=",    DoubleQuoteStr(Signal.onBarCross.SoundUp),    ";", NL,
                             "Signal.onBarCross.SoundDown=",  DoubleQuoteStr(Signal.onBarCross.SoundDown),  ";", NL,
-                            "Signal.onBarCross.Popup",       BoolToStr(Signal.onBarCross.Popup),           ";", NL,
+                            "Signal.onBarCross.Alert",       BoolToStr(Signal.onBarCross.Alert),           ";", NL,
                             "Signal.onBarCross.Mail",        BoolToStr(Signal.onBarCross.Mail),            ";", NL,
                             "Signal.onBarCross.SMS",         BoolToStr(Signal.onBarCross.SMS),             ";", NL,
 

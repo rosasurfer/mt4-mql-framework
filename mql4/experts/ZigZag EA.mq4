@@ -103,7 +103,7 @@
  *     visualize account statements
  *
  *  -------------------------------------------------------------------------------------------------------------------------
- *  - rewrite loglevels to global vars
+ *  - ZigZag Twister
  *  - add ZigZag projections
  *  - input TradingTimeframe
  *  - fix virtual trading
@@ -112,6 +112,7 @@
  *  - document control scripts
  *  - block tests with bar model MODE_BAROPEN
  *  - fatal error if a test starts with Instance.ID="T001" and EA.Recorder="off"
+ *  - rewrite loglevels to global vars
  *
  *  - realtime metric charts
  *     on CreateRawSymbol() also create/update offline profile

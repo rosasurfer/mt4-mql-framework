@@ -17149,6 +17149,7 @@ ZigZag.Width=2
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off* | first | all
 MaxBarsBack=20000
+Signal.onReversal=1
 </inputs>
 </expert>
 style_2=2

@@ -6627,7 +6627,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           false,                            // bool   Signal.onTrendChange.Sound
                           "",                               // string Signal.onTrendChange.SoundUp
                           "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
                           "",                               // string ______________________________
@@ -6677,7 +6677,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           false,                            // bool   Signal.onTrendChange.Sound
                           "",                               // string Signal.onTrendChange.SoundUp
                           "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
                           "",                               // string ______________________________
@@ -6729,7 +6729,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           false,                            // bool   Signal.onTrendChange.Sound
                           "",                               // string Signal.onTrendChange.SoundUp
                           "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
                           "",                               // string ______________________________
@@ -6789,7 +6789,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           false,                            // bool   Signal.onCross.Sound
                           "",                               // string Signal.onCross.SoundUp
                           "",                               // string Signal.onCross.SoundDown
-                          false,                            // bool   Signal.onCross.Popup
+                          false,                            // bool   Signal.onCross.Alert
                           false,                            // bool   Signal.onCross.Mail
                           false,                            // bool   Signal.onCross.SMS
                           "",                               // string ________________________
@@ -6842,7 +6842,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           false,                            // bool   Signal.onTrendChange.Sound
                           "",                               // string Signal.onTrendChange.SoundUp
                           "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
                           "",                               // string ______________________________
@@ -6897,7 +6897,7 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           false,                            // bool   Signal.onTrendChange.Sound
                           "",                               // string Signal.onTrendChange.SoundUp
                           "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
                           "",                               // string ______________________________
@@ -6948,7 +6948,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
                           false,                            // bool   Signal.onTrendChange.Sound
                           "",                               // string Signal.onTrendChange.SoundUp
                           "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
                           "",                               // string ______________________________
@@ -7001,7 +7001,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           false,                            // bool   Signal.onTrendChange.Sound
                           "",                               // string Signal.onTrendChange.SoundUp
                           "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
                           "",                               // string ______________________________

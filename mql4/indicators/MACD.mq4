@@ -44,7 +44,7 @@ extern bool   Signal.onCross                 = false;
 extern bool   Signal.onCross.Sound           = true;
 extern string Signal.onCross.SoundUp         = "Signal Up.wav";
 extern string Signal.onCross.SoundDown       = "Signal Down.wav";
-extern bool   Signal.onCross.Popup           = false;
+extern bool   Signal.onCross.Alert           = false;
 extern bool   Signal.onCross.Mail            = false;
 extern bool   Signal.onCross.SMS             = false;
 
@@ -178,10 +178,10 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
    if (Signal.onCross) {
       if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onCross.Sound)) return(last_error);
-      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onCross.Popup)) return(last_error);
+      if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onCross.Alert)) return(last_error);
       if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onCross.Mail))  return(last_error);
       if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onCross.SMS))   return(last_error);
-      Signal.onCross = (Signal.onCross.Sound || Signal.onCross.Popup || Signal.onCross.Mail || Signal.onCross.SMS);
+      Signal.onCross = (Signal.onCross.Sound || Signal.onCross.Alert || Signal.onCross.Mail || Signal.onCross.SMS);
    }
 
    // buffer management
@@ -202,7 +202,7 @@ int onInit() {
    else                                                                          indicatorName = WindowExpertName() +" "+ fastMA.name +", "+ slowMA.name;
    if (FastMA.Method==SlowMA.Method)                                             dataName      = WindowExpertName() +" "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
    else                                                                          dataName      = WindowExpertName() +" "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
-   string signalInfo = ifString(Signal.onCross, "  onCross="+ StrLeft(ifString(Signal.onCross.Sound, "sound,", "") + ifString(Signal.onCross.Popup, "popup,", "") + ifString(Signal.onCross.Mail, "mail,", "") + ifString(Signal.onCross.SMS, "sms,", ""), -1), "");
+   string signalInfo = ifString(Signal.onCross, "  onCross="+ StrLeft(ifString(Signal.onCross.Sound, "sound,", "") + ifString(Signal.onCross.Alert, "alert,", "") + ifString(Signal.onCross.Mail, "mail,", "") + ifString(Signal.onCross.SMS, "sms,", ""), -1), "");
 
    IndicatorShortName(indicatorName + signalInfo +"  ");                // chart subwindow and context menu
    SetIndexLabel(MODE_MAIN,          dataName);                         // chart tooltips and "Data" window
@@ -327,7 +327,7 @@ bool onCross(int section) {
       if (IsLogInfo()) logInfo("onCross(1)  "+ StrRightFrom(message, "MACD ", -1));    // -1 makes sure on error the whole string is returned
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onCross.Popup)          Alert(message);
+      if (Signal.onCross.Alert)          Alert(message);
       if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundUp);
       if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
       if (Signal.onCross.SMS)   error |= !SendSMS("", message);
@@ -339,7 +339,7 @@ bool onCross(int section) {
       if (IsLogInfo()) logInfo("onCross(2)  "+ StrRightFrom(message, "MACD ", -1));
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onCross.Popup)          Alert(message);
+      if (Signal.onCross.Alert)          Alert(message);
       if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundDown);
       if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
       if (Signal.onCross.SMS)   error |= !SendSMS("", message);
@@ -390,7 +390,7 @@ string InputsToStr() {
                             "Signal.onCross.Sound=",     BoolToStr(Signal.onCross.Sound),          ";", NL,
                             "Signal.onCross.SoundUp=",   DoubleQuoteStr(Signal.onCross.SoundUp),   ";", NL,
                             "Signal.onCross.SoundDown=", DoubleQuoteStr(Signal.onCross.SoundDown), ";", NL,
-                            "Signal.onCross.Popup=",     BoolToStr(Signal.onCross.Popup),          ";", NL,
+                            "Signal.onCross.Alert=",     BoolToStr(Signal.onCross.Alert),          ";", NL,
                             "Signal.onCross.Mail=",      BoolToStr(Signal.onCross.Mail),           ";", NL,
                             "Signal.onCross.SMS=",       BoolToStr(Signal.onCross.SMS),            ";")
    );

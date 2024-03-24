@@ -1172,8 +1172,9 @@ string ArrayPopString(string array[]) {
    if (ArrayDimension(array) > 1) return(_EMPTY_STR(catch("ArrayPopString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    int size = ArraySize(array);
-   if (size == 0)
+   if (size == 0) {
       return(_EMPTY_STR(catch("ArrayPopString(2)  cannot pop element from empty array = {}", ERR_ARRAY_ERROR)));
+   }
 
    string popped = array[size-1];
    ArrayResize(array, size-1);

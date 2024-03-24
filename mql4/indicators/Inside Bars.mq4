@@ -21,7 +21,7 @@ extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onInsideBar             = false;
 extern bool   Signal.onInsideBar.Sound       = true;
 extern string Signal.onInsideBar.SoundFile   = "Inside Bar.wav";
-extern bool   Signal.onInsideBar.Popup       = false;
+extern bool   Signal.onInsideBar.Alert       = false;
 extern bool   Signal.onInsideBar.Mail        = false;
 extern bool   Signal.onInsideBar.SMS         = false;
 
@@ -75,11 +75,11 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onInsideBar)) return(last_error);
    if (Signal.onInsideBar) {
       if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onInsideBar.Sound)) return(last_error);
-      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onInsideBar.Popup)) return(last_error);
+      if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onInsideBar.Alert)) return(last_error);
       if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onInsideBar.Mail))  return(last_error);
       if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onInsideBar.SMS))   return(last_error);
-      if (Signal.onInsideBar.Sound || Signal.onInsideBar.Popup || Signal.onInsideBar.Mail || Signal.onInsideBar.SMS) {
-         signalInfo = "  ("+ StrLeft(ifString(Signal.onInsideBar.Sound, "sound,", "") + ifString(Signal.onInsideBar.Popup, "popup,", "") + ifString(Signal.onInsideBar.Mail, "mail,", "") + ifString(Signal.onInsideBar.SMS, "sms,", ""), -1) +")";
+      if (Signal.onInsideBar.Sound || Signal.onInsideBar.Alert || Signal.onInsideBar.Mail || Signal.onInsideBar.SMS) {
+         signalInfo = "  ("+ StrLeft(ifString(Signal.onInsideBar.Sound, "sound,", "") + ifString(Signal.onInsideBar.Alert, "alert,", "") + ifString(Signal.onInsideBar.Mail, "mail,", "") + ifString(Signal.onInsideBar.SMS, "sms,", ""), -1) +")";
       }
       else Signal.onInsideBar = false;
    }
@@ -659,7 +659,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    message = Symbol() +": "+ message;
 
    int error = NO_ERROR;
-   if (Signal.onInsideBar.Popup)          Alert(message);
+   if (Signal.onInsideBar.Alert)          Alert(message);
    if (Signal.onInsideBar.Sound) error |= PlaySoundEx(Signal.onInsideBar.SoundFile);
    if (Signal.onInsideBar.Mail)  error |= !SendEmail("", "", message, message + NL + sLocalTime);
    if (Signal.onInsideBar.SMS)   error |= !SendSMS("", message + NL + sLocalTime);
@@ -725,7 +725,7 @@ string InputsToStr() {
                             "Signal.onInsideBar=",           BoolToStr(Signal.onInsideBar),                ";", NL,
                             "Signal.onInsideBar.Sound=",     BoolToStr(Signal.onInsideBar.Sound),          ";", NL,
                             "Signal.onInsideBar.SoundFile=", DoubleQuoteStr(Signal.onInsideBar.SoundFile), ";", NL,
-                            "Signal.onInsideBar.Popup=",     BoolToStr(Signal.onInsideBar.Popup),          ";", NL,
+                            "Signal.onInsideBar.Alert=",     BoolToStr(Signal.onInsideBar.Alert),          ";", NL,
                             "Signal.onInsideBar.Mail=",      BoolToStr(Signal.onInsideBar.Mail),           ";", NL,
                             "Signal.onInsideBar.SMS=",       BoolToStr(Signal.onInsideBar.SMS),            ";")
    );

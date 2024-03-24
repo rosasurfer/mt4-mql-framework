@@ -17166,12 +17166,10 @@ ZigZag.Periods=30
 ZigZag.Type=Line* | Semaphores
 ZigZag.Width=0
 ZigZag.Color=16711680
-Donchian.ShowChannel=1
-Donchian.Crossings.Wingdings=163
 Donchian.Upper.Color=16711680
 Donchian.Lower.Color=16711935
 Signal.onReversal=1
-Signal.onReversal.Sound=1
+Signal.onReversal.Types=sound
 </inputs>
 </expert>
 style_2=2

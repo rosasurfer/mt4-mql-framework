@@ -30,7 +30,7 @@ double icMaTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar)
                           false,                      // bool   Signal.onBarCross.Sound
                           "",                         // string Signal.onBarCross.SoundUp
                           "",                         // string Signal.onBarCross.SoundDown
-                          false,                      // bool   Signal.onBarCross.Popup
+                          false,                      // bool   Signal.onBarCross.Alert
                           false,                      // bool   Signal.onBarCross.Mail
                           false,                      // bool   Signal.onBarCross.SMS
                           "",                         // string ____________________________

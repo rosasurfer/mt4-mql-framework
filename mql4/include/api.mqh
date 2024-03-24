@@ -332,9 +332,10 @@ double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int 
 bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false);;
 bool     ConfigureSignals(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalsByPopup(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalsByAlert(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsBySMS(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled, bool &smsEnabled);;
 
 int      ExplodeStrings(int &buffer[], string &results[]);;
 bool     HandleCommands(string channel="", bool remove=true);;

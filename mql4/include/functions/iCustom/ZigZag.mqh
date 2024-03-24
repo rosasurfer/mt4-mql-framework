@@ -44,17 +44,19 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
 
                           "",                         // string ____________________________
                           false,                      // bool   Signal.onReversal
-                          false,                      // bool   Signal.onReversal.Sound
-                          "",                         // string Signal.onReversal.SoundUp
-                          "",                         // string Signal.onReversal.SoundDown
-                          false,                      // bool   Signal.onReversal.Popup
-                          false,                      // bool   Signal.onReversal.Mail
-                          false,                      // bool   Signal.onReversal.SMS
+                          "",                         // string Signal.onReversal.Types
+
+                          false,                      // bool   Signal.onBreakout
+                          false,                      // bool   Signal.onBreakout.123Only
+                          "",                         // string Signal.onBreakout.Types
+
+                          "",                         // string Signal.Sound.Up
+                          "",                         // string Signal.Sound.Down
 
                           "",                         // string ____________________________
                           false,                      // bool   Sound.onChannelWidening
-                          "",                         // string Sound.onNewHigh
-                          "",                         // string Sound.onNewLow
+                          "",                         // string Sound.onNewChannelHigh
+                          "",                         // string Sound.onNewChannelLow
 
                           "",                         // string ____________________________
                           false,                      // bool   AutoConfiguration
