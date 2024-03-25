@@ -17443,6 +17443,9 @@ ZigZag.Width=1
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off* | first | all
 Signal.onReversal=0
+Signal.onBreakout=1
+Signal.onBreakout.123Only=1
+Signal.onBreakout.Types=sound, alert
 </inputs>
 </expert>
 period_flags=0

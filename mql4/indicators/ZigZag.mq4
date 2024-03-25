@@ -164,8 +164,13 @@ double   combinedTrend [];                                     // trend (combine
 
 int      zigzagDrawType;
 int      crossingDrawType;
+
+double   prevBid;
 double   prevUpperBand;
 double   prevLowerBand;
+double   sema1;                                                // last 3 semaphores for breakout tracking
+double   sema2;
+double   sema3;
 
 string   indicatorName = "";
 string   shortName     = "";
@@ -474,19 +479,41 @@ int onTick() {
 
    if (!__isSuperContext) {
       if (__isChart && ShowChartLegend) UpdateLegend();
-   }
 
-   // sound alert on channel widening (new high/low)
-   if (Sound.onChannelWidening && ChangedBars <= 2) {
-      if (ChangedBars == 2) {
-         prevUpperBand = upperBand[1];
-         prevLowerBand = lowerBand[1];
+      // signaling
+      if (ChangedBars < 3) {
+         if (ChangedBars == 2) {
+            prevUpperBand = upperBand[1];
+            prevLowerBand = lowerBand[1];
+         }
+
+         if (prevUpperBand && upperBand[0] > prevUpperBand+Point/2) {
+            if (Signal.onBreakout) {                                       // ZigZag breakout
+               if (prevBid < sema2+Point/2 && _Bid > sema2+Point/2) {
+                  bool is123Pattern = (sema3 < sema1+Point/2);
+                  if (!Signal.onBreakout.123Only || is123Pattern) {
+                     onBreakout(D_LONG, ChangedBars-1, is123Pattern);
+                  }
+               }
+            }
+            if (Sound.onChannelWidening) onChannelWidening(D_LONG);        // Donchian channel widening
+         }
+
+         else if (prevLowerBand && lowerBand[0] < prevLowerBand-Point/2) {
+            if (Signal.onBreakout) {                                       // ZigZag breakout
+               if (prevBid > sema2-Point/2 && _Bid < sema2-Point/2) {
+                  is123Pattern = (sema3 > sema1-Point/2);
+                  if (!Signal.onBreakout.123Only || is123Pattern) {
+                     onBreakout(D_SHORT, ChangedBars-1, is123Pattern);
+                  }
+               }
+            }
+            if (Sound.onChannelWidening) onChannelWidening(D_SHORT);       // Donchian channel widening
+         }
+         prevBid       = _Bid;
+         prevUpperBand = upperBand[0];
+         prevLowerBand = lowerBand[0];
       }
-      if      (prevUpperBand && upperBand[0] > prevUpperBand) onChannelWidening(D_LONG);
-      else if (prevLowerBand && lowerBand[0] < prevLowerBand) onChannelWidening(D_SHORT);
-
-      prevUpperBand = upperBand[0];
-      prevLowerBand = lowerBand[0];
    }
    return(catch("onTick(3)"));
 }
@@ -630,6 +657,10 @@ bool ProcessUpperCross(int bar) {
       semaphoreClose[bar] = upperCrossHigh[bar];
       reversal      [bar] = prevSem-bar;                             // set new reversal offset
 
+      sema3 = sema2;                                                 // update last 3 semaphores
+      sema2 = sema1;
+      sema1 = Low[bar+knownTrend[bar]];
+
       if (Signal.onReversal && ChangedBars <= 2) onReversal(D_LONG, bar);
    }
    return(true);
@@ -683,6 +714,10 @@ bool ProcessLowerCross(int bar) {
       semaphoreClose[bar] = lowerCrossLow[bar];
       reversal      [bar] = prevSem-bar;                             // set the new reversal offset
 
+      sema3 = sema2;                                                 // update last 3 semaphores
+      sema2 = sema1;
+      sema1 = High[bar-knownTrend[bar]];
+
       if (Signal.onReversal && ChangedBars <= 2) onReversal(D_SHORT, bar);
    }
    return(true);
@@ -733,45 +768,83 @@ int onAccountChange(int previous, int current) {
 
 
 /**
- * Event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple parallel running terminals.
+ * Event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple running instances.
  *
  * @param  int direction - reversal direction: D_LONG | D_SHORT
- * @param  int bar       - bar of the reversal (the current or the closed bar)
+ * @param  int bar       - reversal bar (the current or the closed bar)
  *
  * @return bool - success status
  */
 bool onReversal(int direction, int bar) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
+   if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
-   // check wether the event was already signaled
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
+   // skip the signal if it already was signaled before
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow()), error;
    string sPeriod = PeriodDescription();
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"("+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
-   bool isSignaled = false;
-   if (hWnd > 0) isSignaled = (GetPropA(hWnd, sEvent) != 0);
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[bar]);
+   if (GetPropA(hWnd, sEvent) != 0) return(true);
+   SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals with slow CPU)
 
-   int error = NO_ERROR;
+   string message = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")", accountTime="";
+   if (IsLogInfo()) logInfo("onReversal(P="+ ZigZag.Periods +")  "+ message);
 
-   if (!isSignaled) {
-      string message = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")", accountTime="";
-      if (IsLogInfo()) logInfo("onReversal("+ ZigZag.Periods +"x"+ sPeriod +")  "+ message);
-
-      if (signal.onReversal.sound) {
-         error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
-         if (!error)                           lastSoundSignal = GetTickCount();
-         else if (error == ERR_FILE_NOT_FOUND) signal.onReversal.sound = false;
-      }
-
-      message = Symbol() +","+ PeriodDescription() +": "+ shortName +" reversal "+ message;
-      if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-
-      if (signal.onReversal.alert)           Alert(message);
-      if (signal.onReversal.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (signal.onReversal.sms)   error |= !SendSMS("", message + NL + accountTime);
-      if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                       // mark event as signaled
+   if (signal.onReversal.sound) {
+      error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
+      if (!error)                           lastSoundSignal = GetTickCount();
+      else if (error == ERR_FILE_NOT_FOUND) signal.onReversal.sound = false;
    }
+
+   message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"(P="+ ZigZag.Periods +") reversal "+ message;
+   if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+
+   if (signal.onReversal.alert)          Alert(message);
+   if (signal.onReversal.mail) error |= !SendEmail("", "", message, message + NL + accountTime);
+   if (signal.onReversal.sms)  error |= !SendSMS("", message + NL + accountTime);
+   return(!error);
+}
+
+
+/**
+ * Event handler signaling new ZigZag breakouts. Prevents duplicate signals triggered by multiple running instances.
+ *
+ * @param  int  direction    - breakout direction: D_LONG | D_SHORT
+ * @param  int  bar          - breakout bar (the current or the closed bar)
+ * @param  bool is123Pattern - whether the breakout represents a valid 1-2-3 pattern
+ *
+ * @return bool - success status
+ */
+bool onBreakout(int direction, int bar, bool is123Pattern) {
+   is123Pattern = is123Pattern!=0;
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onBreakout(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (bar > 1)                                 return(!catch("onBreakout(2)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
+   if (!__isChart)                              return(true);
+   if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
+
+   // skip the signal if it already was signaled before
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow()), error;
+   string sPeriod = PeriodDescription();
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[bar]);
+   if (GetPropA(hWnd, sEvent) != 0) return(true);
+   SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals with slow CPU)
+
+   string message = ifString(direction==D_LONG, "long", "short") + ifString(is123Pattern, ", 1-2-3 pattern", "") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")", accountTime="";
+   if (IsLogInfo()) logInfo("onBreakout(P="+ ZigZag.Periods +")  "+ message);
+
+   if (signal.onBreakout.sound) {
+      error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
+      if (!error)                           lastSoundSignal = GetTickCount();
+      else if (error == ERR_FILE_NOT_FOUND) signal.onBreakout.sound = false;
+   }
+
+   message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"(P="+ ZigZag.Periods +") breakout "+ message;
+   if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+
+   if (signal.onBreakout.alert)          Alert(message);
+   if (signal.onBreakout.mail) error |= !SendEmail("", "", message, message + NL + accountTime);
+   if (signal.onBreakout.sms)  error |= !SendSMS("", message + NL + accountTime);
    return(!error);
 }
 
@@ -784,12 +857,11 @@ bool onReversal(int direction, int bar) {
  * @return bool - success status
  */
 bool onChannelWidening(int direction) {
-   if (!Sound.onChannelWidening) return(false);
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelWidening(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    if (lastSoundSignal+2000 < GetTickCount()) {                      // at least 2 sec pause between consecutive sound signals
       int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onNewChannelHigh, Sound.onNewChannelLow));
-      if      (!error)                      lastSoundSignal = GetTickCount();
+      if (!error)                           lastSoundSignal = GetTickCount();
       else if (error == ERR_FILE_NOT_FOUND) Sound.onChannelWidening = false;
    }
    return(!catch("onChannelWidening(2)"));
