@@ -174,7 +174,7 @@ int onTick() {
       return(NO_ERROR);
    }
    else {
-      //debug("onTick(0.1)  Tick="+ Ticks +"  range1Start="+ TimeToStr(range1Start, TIME_DATE|TIME_MINUTES) +"  range1End="+ TimeToStr(range1End, TIME_DATE|TIME_MINUTES));
+      //debug("onTick(0.1)  Tick="+ Ticks +"  range1Start="+ TimeToStr(range1Start) +"  range1End="+ TimeToStr(range1End));
 
       int period = ifInt(__isTesting, NULL, PERIOD_M5);
       int fromBar = iBarShiftNext    (NULL, period, range1Start); if (fromBar == -1) return(catch("onTick(2)  iBarShiftNext("+ TimeToStr(range1Start, TIME_FULL) +") => -1 no such data (rangeStart too young)", ERR_RUNTIME_ERROR));

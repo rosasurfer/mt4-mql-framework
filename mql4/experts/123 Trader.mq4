@@ -378,7 +378,7 @@ bool FindNextSemaphore(int startbar, int &offset, int &type, double &price) {
       type = MODE_LOW;
       price = Low[offset];
    }
-   //debug("FindNextSemaphore(1)  Tick="+ Ticks +"  startbar="+ startbar +"  trend="+ trend +"  semaphore["+ offset +"]="+ TimeToStr(Time[offset], TIME_DATE|TIME_MINUTES) +"  "+ PriceTypeDescription(type));
+   //debug("FindNextSemaphore(1)  Tick="+ Ticks +"  startbar="+ startbar +"  trend="+ trend +"  semaphore["+ offset +"]="+ TimeToStr(Time[offset]) +"  "+ PriceTypeDescription(type));
    return(true);
 }
 

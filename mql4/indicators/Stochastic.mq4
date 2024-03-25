@@ -193,7 +193,7 @@ bool UpdateSignalMarker(int bar) {
    static string prefix = ""; if (!StringLen(prefix)) {
       prefix = StringConcatenate(ProgramName(), "[", __ExecutionContext[EC.pid], "] Signal ");
    }
-   string label = StringConcatenate(prefix, TimeToStr(Time[bar]+Period()*MINUTES, TIME_DATE|TIME_MINUTES));
+   string label = StringConcatenate(prefix, TimeToStr(Time[bar]+Period()*MINUTES));
    bool objExists = (ObjectFind(label) != -1);
    double price;
 
