@@ -6,11 +6,13 @@
  * past ZigZag semaphores and can't be used for automation.
  *
  * This indicator fixes those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores). Once
- * the ZigZag direction changed the semaphore will not change anymore. Like the MetaQuotes version the indicator uses a
- * Donchian channel for determining legs and reversals but this indicator draws vertical line segments if a large bar crosses
- * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it develops over
- * time and supports manual period stepping via hotkey (keyboard). Finally the indicator supports signaling of Donchian
- * channel widenings (new highs/lows) and ZigZag reversals.
+ * the ZigZag direction changed the semaphore will not change anymore. Similar to the MetaQuotes version this indicator uses
+ * a Donchian channel for calculating legs and reversals. Additionally this indicator can draw vertical line segments if a
+ * large bar crosses both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it
+ * develops over time. Also it supports manual period stepping via hotkey (keyboard). Finally the indicator supports multiple
+ * signaling and sound options.
+ *
+ * For the signaled ZigZag 1-2-3 pattern see https://www.forexfactory.com/thread/210023-123-pattern-ea#
  *
  *
  * Input parameters
@@ -18,35 +20,37 @@
  *  • ZigZag.Periods:               Lookback periods of the Donchian channel.
  *  • ZigZag.Periods.Step:          Controls parameter 'ZigZag.Periods' via the keyboard. If non-zero it enables the parameter
  *                                   stepper and defines its step size. If zero the parameter stepper is disabled.
- *  • ZigZag.Type:                  Whether to display ZigZag lines or ZigZag semaphores. Can be shortened as long as distinct.
+ *  • ZigZag.Type:                  Whether to display the ZigZag line or ZigZag semaphores. Can be shortened as long as distinct.
  *  • ZigZag.Width:                 The ZigZag's line width/semaphore size.
  *  • ZigZag.Semaphores.Wingdings:  WingDing symbol used for ZigZag semaphores.
- *  • ZigZag.Color:                 Color of ZigZag lines/semaphores.
+ *  • ZigZag.Color:                 Color of ZigZag line/semaphores.
  *
- *  • Donchian.ShowChannel:         Whether to display the calculated Donchian channel.
- *  • Donchian.ShowCrossings:       Controls displayed Donchian channel crossings, one of:
+ *  • Donchian.ShowChannel:         Whether to display the internal Donchian channel.
+ *  • Donchian.ShowCrossings:       Which Donchian channel crossings to display, one of:
  *                                   "off":   No crossings are displayed.
  *                                   "first": Only the first crossing per direction is displayed (the moment when ZigZag creates a new leg).
  *                                   "all":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
  *  • Donchian.Crossings.Width:     Size of displayed Donchian channel crossings.
- *  • Donchian.Crossings.Wingdings: WingDing symbol used for displaying Donchian channel crossings.
- *  • Donchian.Upper.Color:         Color of upper Donchian channel band and upper crossings.
- *  • Donchian.Lower.Color:         Color of lower Donchian channel band and lower crossings.
+ *  • Donchian.Crossings.Wingdings: WingDing symbol used for Donchian channel crossings.
+ *  • Donchian.Upper.Color:         Color of upper Donchian channel band/upper crossings.
+ *  • Donchian.Lower.Color:         Color of lower Donchian channel band/lower crossings.
  *
  *  • MaxBarsBack:                  Maximum number of bars back to calculate the indicator (performance).
  *  • ShowChartLegend:              Whether do display the chart legend.
  *
  *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
- *  • Signal.onReversal.Sound:      Whether to signal ZigZag reversals by sound.
- *  • Signal.onReversal.SoundUp:    Sound file to signal ZigZag reversals to the upside.
- *  • Signal.onReversal.SoundDown:  Sound file to signal ZigZag reversals to the downside.
- *  • Signal.onReversal.Alert:      Whether to signal ZigZag reversals by the MT4 alert dialog.
- *  • Signal.onReversal.Mail:       Whether to signal ZigZag reversals by e-mail.
- *  • Signal.onReversal.SMS:        Whether to signal ZigZag reversals by text message.
+ *  • Signal.onReversal.Types:      Signaling methods, can be a combination of "sound", "alert", "mail", "sms".
  *
- *  • Sound.onChannelWidening:      Whether to signal Donchian channel widenings (channel crossings).
- *  • Sound.onNewChannelHigh:       Sound file to signal a Donchian channel widening to the upside.
- *  • Sound.onNewChannelLow:        Sound file to signal a Donchian channel widening to the downside.
+ *  • Signal.onBreakout:            Whether to signal ZigZag breakouts (price exceeding the previous swing's ZigZag semaphore).
+ *  • Signal.onBreakout.123Only:    Whether to signal valid 1-2-3 pattern breakouts only.
+ *  • Signal.onBreakout.Types:      Signaling methods, can be a combination of "sound", "alert", "mail", "sms".
+ *
+ *  • Signal.Sound.Up:              Sound file to use for signal type "sound".
+ *  • Signal.Sound.Down:            Sound file to use for signal type "sound".
+ *
+ *  • Sound.onChannelWidening:      Whether to play a sound on Donchian channel widenings (channel crossings).
+ *  • Sound.onNewChannelHigh:       Sound file to use for Donchian channel widenings to the upside.
+ *  • Sound.onNewChannelLow:        Sound file to use for Donchian channel widenings to the downside.
  *
  *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom framework config values.
  *
@@ -61,7 +65,7 @@
 int   __InitFlags[];
 int __DeinitFlags[];
 
-////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
+///////////////////////////////////////////////////// Input parameters //////////////////////////////////////////////////////
 
 extern string ___a__________________________ = "=== ZigZag settings ===";
 extern int    ZigZag.Periods                 = 40;                      // lookback periods of the Donchian channel
@@ -168,9 +172,7 @@ int      crossingDrawType;
 double   prevBid;
 double   prevUpperBand;
 double   prevLowerBand;
-double   sema1;                                                // last 3 semaphores for breakout tracking
-double   sema2;
-double   sema3;
+double   sema1, sema2, sema3;                                  // last 3 semaphores for breakout tracking
 
 string   indicatorName = "";
 string   shortName     = "";
@@ -478,7 +480,7 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      if (__isChart && ShowChartLegend) UpdateLegend();
+      if (__isChart && ShowChartLegend) UpdateChartLegend();
 
       // signaling
       if (ChangedBars < 3) {
@@ -488,27 +490,33 @@ int onTick() {
          }
 
          if (prevUpperBand && upperBand[0] > prevUpperBand+Point/2) {
-            if (Signal.onBreakout) {                                       // ZigZag breakout
-               if (prevBid < sema2+Point/2 && _Bid > sema2+Point/2) {
-                  bool is123Pattern = (sema3 < sema1+Point/2);
-                  if (!Signal.onBreakout.123Only || is123Pattern) {
-                     onBreakout(D_LONG, ChangedBars-1, is123Pattern);
+            if (Signal.onBreakout && sema3) {                                    // ZigZag breakout
+               if (prevBid < sema2+Point/2) /*&&*/ if (_Bid > sema2+Point/2) /*&&*/ if (_Bid > High[0]-Point/2) {
+                  // the current bar needs to be the highest point since the last semaphore
+                  if (iHighest(NULL, NULL, MODE_HIGH, 1+knownTrend[0]) == 0) {
+                     bool is123Pattern = (sema3 < sema1+Point/2);
+                     if (!Signal.onBreakout.123Only || is123Pattern) {
+                        onBreakout(D_LONG, ChangedBars-1, is123Pattern);
+                     }
                   }
                }
             }
-            if (Sound.onChannelWidening) onChannelWidening(D_LONG);        // Donchian channel widening
+            if (Sound.onChannelWidening) onChannelWidening(D_LONG);              // Donchian channel widening
          }
 
          else if (prevLowerBand && lowerBand[0] < prevLowerBand-Point/2) {
-            if (Signal.onBreakout) {                                       // ZigZag breakout
-               if (prevBid > sema2-Point/2 && _Bid < sema2-Point/2) {
-                  is123Pattern = (sema3 > sema1-Point/2);
-                  if (!Signal.onBreakout.123Only || is123Pattern) {
-                     onBreakout(D_SHORT, ChangedBars-1, is123Pattern);
+            if (Signal.onBreakout && sema3) {                                    // ZigZag breakout
+               if (prevBid > sema2-Point/2) /*&&*/ if (_Bid < sema2-Point/2) /*&&*/ if (_Bid < Low[0]+Point/2) {
+                  // the current bar needs to be the lowest point since the last semaphore
+                  if (iLowest(NULL, NULL, MODE_LOW, 1-knownTrend[0]) == 0) {
+                     is123Pattern = (sema3 > sema1-Point/2);
+                     if (!Signal.onBreakout.123Only || is123Pattern) {
+                        onBreakout(D_SHORT, ChangedBars-1, is123Pattern);
+                     }
                   }
                }
             }
-            if (Sound.onChannelWidening) onChannelWidening(D_SHORT);       // Donchian channel widening
+            if (Sound.onChannelWidening) onChannelWidening(D_SHORT);             // Donchian channel widening
          }
          prevBid       = _Bid;
          prevUpperBand = upperBand[0];
@@ -657,7 +665,7 @@ bool ProcessUpperCross(int bar) {
       semaphoreClose[bar] = upperCrossHigh[bar];
       reversal      [bar] = prevSem-bar;                             // set new reversal offset
 
-      sema3 = sema2;                                                 // update last 3 semaphores
+      sema3 = sema2;                                                 // update the last 3 semaphores
       sema2 = sema1;
       sema1 = Low[bar+knownTrend[bar]];
 
@@ -714,7 +722,7 @@ bool ProcessLowerCross(int bar) {
       semaphoreClose[bar] = lowerCrossLow[bar];
       reversal      [bar] = prevSem-bar;                             // set the new reversal offset
 
-      sema3 = sema2;                                                 // update last 3 semaphores
+      sema3 = sema2;                                                 // update the last 3 semaphores
       sema2 = sema1;
       sema1 = High[bar-knownTrend[bar]];
 
@@ -957,7 +965,7 @@ bool IsPossibleDataPumping() {
 /**
  * Update the chart legend.
  */
-void UpdateLegend() {
+void UpdateChartLegend() {
    static int lastTrend, lastTime, lastAccount;
 
    // update on full recalculation or if indicator name, trend, current bar or the account changed
@@ -977,7 +985,7 @@ void UpdateLegend() {
 
       ObjectSetText(legendLabel, text, 9, "Arial Fett", clr);
       int error = GetLastError();
-      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateLegend(1)", error);     // on ObjectDrag or opened "Properties" dialog
+      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateChartLegend(1)", error);     // on ObjectDrag or opened "Properties" dialog
 
       lastTrend   = combinedTrend[0];
       lastTime    = Time[0];

@@ -7392,6 +7392,7 @@ void __DummyCalls() {
 #import "user32.dll"
    int      GetAncestor(int hWnd, int cmd);
    int      GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
+   int      GetDesktopWindow();
    int      GetDlgCtrlID(int hWndCtl);
    int      GetDlgItem(int hDlg, int itemId);
    int      GetParent(int hWnd);
