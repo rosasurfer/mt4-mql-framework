@@ -13,9 +13,6 @@
  *
  *
  * TODO:
- *  - ZigZag
- *     include sound files
- *
  *  - rewrite to standard EA structure
  *
  *  - performance
