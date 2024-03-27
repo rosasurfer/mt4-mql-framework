@@ -1,9 +1,9 @@
 /**
- * A ZigZag indicator with non-repainting price reversals suitable for automation.
+ * A ZigZag indicator with non-repainting reversal points suitable for automation.
  *
  *
- * The ZigZag indicator provided by MetaQuotes is flawed and the implementation performes badly. Also the indicator repaints
- * past ZigZag semaphores and can't be used for automation.
+ * The ZigZag indicator provided by MetaQuotes is flawed and the implementation performes badly. The indicator repaints past
+ * ZigZag semaphores and can't be used for automation.
  *
  * This indicator fixes those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores). Once
  * the ZigZag direction changed the semaphore will not change anymore. Similar to the MetaQuotes version this indicator uses
@@ -39,11 +39,11 @@
  *  • ShowChartLegend:              Whether do display the chart legend.
  *
  *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
- *  • Signal.onReversal.Types:      Signaling methods, can be a combination of "sound", "alert", "mail", "sms".
+ *  • Signal.onReversal.Types:      Reversal signaling methods, can be a combination of "sound", "alert", "mail", "sms".
  *
  *  • Signal.onBreakout:            Whether to signal ZigZag breakouts (price exceeding the previous swing's ZigZag semaphore).
  *  • Signal.onBreakout.123Only:    Whether to signal valid 1-2-3 pattern breakouts only.
- *  • Signal.onBreakout.Types:      Signaling methods, can be a combination of "sound", "alert", "mail", "sms".
+ *  • Signal.onBreakout.Types:      Breakout signaling methods, can be a combination of "sound", "alert", "mail", "sms".
  *
  *  • Signal.Sound.Up:              Sound file to use for signal type "sound".
  *  • Signal.Sound.Down:            Sound file to use for signal type "sound".
@@ -52,7 +52,7 @@
  *  • Sound.onNewChannelHigh:       Sound file to use for Donchian channel widenings to the upside.
  *  • Sound.onNewChannelLow:        Sound file to use for Donchian channel widenings to the downside.
  *
- *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom framework config values.
+ *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom default values.
  *
  *
  *
@@ -150,8 +150,8 @@ int       framework_buffers = 4;                               // buffers manage
 #property indicator_color7    CLR_NONE                         // offset of last ZigZag reversal to previous ZigZag semaphore
 #property indicator_color8    CLR_NONE                         // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 
-double   semaphoreOpen [];                                     // ZigZag semaphores (open prices of a vertical line segment)
-double   semaphoreClose[];                                     // ZigZag semaphores (close prices of a vertical line segment)
+double   semaphoreOpen [];                                     // ZigZag semaphore open price (a vertical line if open != close)
+double   semaphoreClose[];                                     // ZigZag semaphore close price (a vertical line if open != close)
 double   upperBand     [];                                     // upper channel band
 double   lowerBand     [];                                     // lower channel band
 double   upperCross    [];                                     // upper channel crossings
@@ -189,9 +189,9 @@ bool     signal.onBreakout.alert;
 bool     signal.onBreakout.mail;
 bool     signal.onBreakout.sms;
 
+datetime skipSignals;                                          // skip signals until this time to wait for possible data pumping
 datetime lastTick;
 int      lastSoundSignal;                                      // GetTickCount() value of the last audible signal
-datetime skipSignals;                                          // skip signals until this time to wait for possible data pumping
 
 
 // signal direction types
@@ -366,6 +366,11 @@ int onTick() {
       ArrayInitialize(knownTrend,     0);
       ArrayInitialize(unknownTrend,   0);
       ArrayInitialize(combinedTrend,  0);
+      prevUpperBand = 0;
+      prevLowerBand = 0;
+      sema1 = 0;
+      sema2 = 0;
+      sema3 = 0;
       SetIndicatorOptions();
    }
 
@@ -482,45 +487,46 @@ int onTick() {
    if (!__isSuperContext) {
       if (__isChart && ShowChartLegend) UpdateChartLegend();
 
-      // signaling
-      if (ChangedBars < 3) {
-         if (ChangedBars == 2) {
-            prevUpperBand = upperBand[1];
-            prevLowerBand = lowerBand[1];
-         }
-
-         if (prevUpperBand && upperBand[0] > prevUpperBand+Point/2) {
-            if (Signal.onBreakout && sema3) {                                    // ZigZag breakout
-               if (prevBid < sema2+Point/2) /*&&*/ if (_Bid > sema2+Point/2) /*&&*/ if (_Bid > High[0]-Point/2) {
-                  // the current bar needs to be the highest point since the last semaphore
-                  if (iHighest(NULL, NULL, MODE_HIGH, 1+knownTrend[0]) == 0) {
-                     bool is123Pattern = (sema3 < sema1+Point/2);
-                     if (!Signal.onBreakout.123Only || is123Pattern) {
-                        onBreakout(D_LONG, ChangedBars-1, is123Pattern);
-                     }
-                  }
+      if (ChangedBars > 2) {
+         // get last 3 semaphores
+         bar   = Abs(knownTrend[0]) + unknownTrend[0];
+         sema1 = semaphoreClose[bar];
+         bar   = FindPreceedingSemaphore(bar+1);
+         sema2 = semaphoreClose[bar];
+         bar   = FindPreceedingSemaphore(bar+1);
+         sema3 = semaphoreClose[bar];
+      }
+      else {
+         // signal ZigZag breakouts
+         if (Signal.onBreakout && sema3) {
+            if (prevBid < sema2+Point/2) /*&&*/ if (_Bid > sema2+Point/2) /*&&*/ if (_Bid > High[0]-Point/2) {
+               if (iHighest(NULL, NULL, MODE_HIGH, 1+knownTrend[0]) == 0) {   // the current bar must be the High since sema1
+                  bool is123Pattern = (sema3 < sema1+Point/2);
+                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_LONG, ChangedBars-1, is123Pattern);
                }
             }
-            if (Sound.onChannelWidening) onChannelWidening(D_LONG);              // Donchian channel widening
-         }
-
-         else if (prevLowerBand && lowerBand[0] < prevLowerBand-Point/2) {
-            if (Signal.onBreakout && sema3) {                                    // ZigZag breakout
-               if (prevBid > sema2-Point/2) /*&&*/ if (_Bid < sema2-Point/2) /*&&*/ if (_Bid < Low[0]+Point/2) {
-                  // the current bar needs to be the lowest point since the last semaphore
-                  if (iLowest(NULL, NULL, MODE_LOW, 1-knownTrend[0]) == 0) {
-                     is123Pattern = (sema3 > sema1-Point/2);
-                     if (!Signal.onBreakout.123Only || is123Pattern) {
-                        onBreakout(D_SHORT, ChangedBars-1, is123Pattern);
-                     }
-                  }
+            if (prevBid > sema2-Point/2) /*&&*/ if (_Bid < sema2-Point/2) /*&&*/ if (_Bid < Low[0]+Point/2) {
+               if (iLowest(NULL, NULL, MODE_LOW, 1-knownTrend[0]) == 0) {     // the current bar must be the Low since sema1
+                  is123Pattern = (sema3 > sema1-Point/2);
+                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_SHORT, ChangedBars-1, is123Pattern);
                }
             }
-            if (Sound.onChannelWidening) onChannelWidening(D_SHORT);             // Donchian channel widening
+            prevBid = _Bid;
          }
-         prevBid       = _Bid;
-         prevUpperBand = upperBand[0];
-         prevLowerBand = lowerBand[0];
+
+         // signal Donchian channel widenings
+         if (Sound.onChannelWidening) {
+            if (ChangedBars == 2) {
+               prevUpperBand = upperBand[1];
+               prevLowerBand = lowerBand[1];
+            }
+            if (prevUpperBand && prevLowerBand) {
+               if      (upperBand[0] > prevUpperBand+Point/2) onChannelWidening(D_LONG);
+               else if (lowerBand[0] < prevLowerBand-Point/2) onChannelWidening(D_SHORT);
+            }
+            prevUpperBand = upperBand[0];
+            prevLowerBand = lowerBand[0];
+         }
       }
    }
    return(catch("onTick(3)"));
@@ -594,7 +600,7 @@ bool IsUpperCrossLast(int bar) {
 
 /**
  * Resolve the chart offset of the ZigZag semaphore preceeding the current tick at the specified bar. The bar may be part of
- * a finished (historic) or unfinished (currently progressing) ZigZag leg. As bar 0 and 1 may receive multiple ticks the
+ * a finished (historic) or unfinished (currently progressing) ZigZag leg. As bar 0 and 1 can receive multiple ticks the
  * semaphore may be located at the current bar.
  *
  * @param  int bar - chart bar
@@ -769,8 +775,6 @@ int onAccountChange(int previous, int current) {
    lastTick        = 0;             // reset global vars used by the various event handlers
    lastSoundSignal = 0;
    skipSignals     = 0;
-   prevUpperBand   = 0;
-   prevLowerBand   = 0;
    return(onInit());
 }
 
@@ -819,12 +823,12 @@ bool onReversal(int direction, int bar) {
  * Event handler signaling new ZigZag breakouts. Prevents duplicate signals triggered by multiple running instances.
  *
  * @param  int  direction    - breakout direction: D_LONG | D_SHORT
- * @param  int  bar          - breakout bar (the current or the closed bar)
  * @param  bool is123Pattern - whether the breakout represents a valid 1-2-3 pattern
+ * @param  int  bar          - breakout bar (the current or the closed bar)
  *
  * @return bool - success status
  */
-bool onBreakout(int direction, int bar, bool is123Pattern) {
+bool onBreakout(int direction, bool is123Pattern, int bar) {
    is123Pattern = is123Pattern!=0;
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onBreakout(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (bar > 1)                                 return(!catch("onBreakout(2)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
@@ -948,17 +952,17 @@ bool ParameterStepper(int direction, int keys) {
 bool IsPossibleDataPumping() {
    if (__isTesting) return(false);
 
-   int waitPeriod = 20 * SECONDS;
+   int waitPeriod = 20*SECONDS;
    datetime now = GetGmtTime();
-   bool result = true;
+   bool pumping = true;
 
    if (now > skipSignals) skipSignals = 0;
    if (!skipSignals) {
       if (now > lastTick + waitPeriod) skipSignals = now + waitPeriod;
-      else                             result = false;
+      else                             pumping = false;
    }
    lastTick = now;
-   return(result);
+   return(pumping);
 }
 
 

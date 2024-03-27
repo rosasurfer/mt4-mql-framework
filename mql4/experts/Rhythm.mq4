@@ -13,14 +13,17 @@
  *
  *
  * TODO:
+ *  - ZigZag
+ *     add sound files
+ *
  *  - rewrite to standard EA structure
  *
  *  - performance
- *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick: 12.4 sec, 56 trades        Rhythm with framework, built-in order functions
- *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick:  8.2 sec, 56 trades        Rhythm w/o framework
- *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick: 13.6 sec, 56 trades        Rhythm-v2 2007.11.28 @rraygun
+ *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick: 14.4 sec, 56 trades, LOG_WARN, Rhythm with framework
+ *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick:  8.2 sec, 56 trades            Rhythm w/o framework
+ *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick: 13.6 sec, 56 trades            Rhythm-v2 2007.11.28 @rraygun
  */
-#define STRATEGY_ID  112                     // unique strategy id (used for generation of magic order numbers)
+#define STRATEGY_ID  112                                 // unique strategy id (used for generation of magic order numbers)
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
