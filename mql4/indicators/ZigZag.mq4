@@ -123,8 +123,8 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #define MODE_LOWER_CROSS         ZigZag.MODE_LOWER_CROSS       //  5: lower channel band crossings
 #define MODE_REVERSAL            ZigZag.MODE_REVERSAL          //  6: offset of last ZigZag reversal to previous ZigZag semaphore
 #define MODE_COMBINED_TREND      ZigZag.MODE_TREND             //  7: trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
-#define MODE_UPPER_CROSS_HIGH    8                             //  8: new High after an upper channel band crossing (potential new semaphore)
-#define MODE_LOWER_CROSS_LOW     9                             //  9: new Low after a lower channel band crossing (potential new semaphore)
+#define MODE_HIGHER_HIGH         8                             //  8: new High after an upper channel band crossing (potential new semaphore)
+#define MODE_LOWER_LOW           9                             //  9: new Low after a lower channel band crossing (potential new semaphore)
 #define MODE_KNOWN_TREND         10                            // 10: known trend
 #define MODE_UNKNOWN_TREND       11                            // 11: not yet known trend
 
@@ -150,14 +150,14 @@ int       framework_buffers = 4;                               // buffers manage
 #property indicator_color7    CLR_NONE                         // offset of last ZigZag reversal to previous ZigZag semaphore
 #property indicator_color8    CLR_NONE                         // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 
-double   semaphoreOpen [];                                     // ZigZag semaphore open price (a vertical line if open != close)
-double   semaphoreClose[];                                     // ZigZag semaphore close price (a vertical line if open != close)
+double   semaphoreOpen [];                                     // ZigZag semaphore open price (draws a vertical line if open != close)
+double   semaphoreClose[];                                     // ZigZag semaphore close price (draws a vertical line if open != close)
 double   upperBand     [];                                     // upper channel band
 double   lowerBand     [];                                     // lower channel band
 double   upperCross    [];                                     // upper channel band crossings
 double   lowerCross    [];                                     // lower channel band crossings
-double   upperCrossHigh[];                                     // new High after an upper channel band crossing (potential new semaphore)
-double   lowerCrossLow [];                                     // new Low after a lower channel band crossing (potential new semaphore)
+double   higherHigh    [];                                     // new High after an upper channel band crossing (potential new semaphore)
+double   lowerLow      [];                                     // new Low after a lower channel band crossing (potential new semaphore)
 double   reversal      [];                                     // offset of last ZigZag reversal to previous ZigZag semaphore
 int      knownTrend    [];                                     // known direction and length of a ZigZag reversal
 int      unknownTrend  [];                                     // not yet known direction and length after a ZigZag reversal
@@ -347,10 +347,10 @@ int onTick() {
    if (__isChart && ZigZag.Periods.Step) HandleCommands("ParameterStepper", false);
 
    // framework: manage additional buffers
-   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_HIGH, upperCrossHigh);
-   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_LOW,  lowerCrossLow );
-   ManageIntIndicatorBuffer   (MODE_KNOWN_TREND,      knownTrend    );
-   ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND,    unknownTrend  );
+   ManageDoubleIndicatorBuffer(MODE_HIGHER_HIGH,   higherHigh  );
+   ManageDoubleIndicatorBuffer(MODE_LOWER_LOW,     lowerLow    );
+   ManageIntIndicatorBuffer   (MODE_KNOWN_TREND,   knownTrend  );
+   ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND, unknownTrend);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -360,8 +360,8 @@ int onTick() {
       ArrayInitialize(lowerBand,      0);
       ArrayInitialize(upperCross,     0);
       ArrayInitialize(lowerCross,     0);
-      ArrayInitialize(upperCrossHigh, 0);
-      ArrayInitialize(lowerCrossLow,  0);
+      ArrayInitialize(higherHigh,     0);
+      ArrayInitialize(lowerLow,       0);
       ArrayInitialize(reversal,      -1);
       ArrayInitialize(knownTrend,     0);
       ArrayInitialize(unknownTrend,   0);
@@ -382,8 +382,8 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(lowerBand,      Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(upperCross,     Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(lowerCross,     Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCrossHigh, Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCrossLow,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(higherHigh,     Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerLow,       Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(reversal,       Bars, ShiftedBars, -1);
       ShiftIntIndicatorBuffer   (knownTrend,     Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (unknownTrend,   Bars, ShiftedBars,  0);
@@ -405,8 +405,8 @@ int onTick() {
       lowerBand     [startbar] =  0;
       upperCross    [startbar] =  0;
       lowerCross    [startbar] =  0;
-      upperCrossHigh[startbar] =  0;
-      lowerCrossLow [startbar] =  0;
+      higherHigh    [startbar] =  0;
+      lowerLow      [startbar] =  0;
       reversal      [startbar] = -1;
       knownTrend    [startbar] =  0;
       unknownTrend  [startbar] =  0;
@@ -425,12 +425,12 @@ int onTick() {
 
       // recalculate channel crossings
       if (upperBand[bar] > upperBand[bar+1]) {
-         upperCross    [bar] = upperBand[bar+1]+Point;
-         upperCrossHigh[bar] = upperBand[bar];
+         upperCross[bar] = upperBand[bar+1]+Point;
+         higherHigh[bar] = upperBand[bar];
       }
       if (lowerBand[bar] < lowerBand[bar+1]) {
-         lowerCross   [bar] = lowerBand[bar+1]-Point;
-         lowerCrossLow[bar] = lowerBand[bar];
+         lowerCross[bar] = lowerBand[bar+1]-Point;
+         lowerLow  [bar] = lowerBand[bar];
       }
 
       // recalculate ZigZag data
@@ -489,12 +489,14 @@ int onTick() {
 
       if (ChangedBars > 2) {
          // refresh the last 3 semaphores
-         bar   = Abs(knownTrend[0]) + unknownTrend[0];
-         sema1 = semaphoreClose[bar];
-         bar   = FindPreceedingSemaphore(bar+1);
-         sema2 = semaphoreClose[bar];
-         bar   = FindPreceedingSemaphore(bar+1);
-         sema3 = semaphoreClose[bar];
+         int type = NULL;
+         bar   = FindPrevSemaphore(0, type);
+         bar   = FindPrevSemaphore(bar, type);
+         sema1 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
+         bar   = FindPrevSemaphore(bar, type);
+         sema2 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
+         bar   = FindPrevSemaphore(bar, type);
+         sema3 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
       }
       else {
          // detect ZigZag breakouts (comparing against High/Low instead of Bid detect breakouts on missed ticks)
@@ -605,28 +607,76 @@ bool IsUpperCrossLast(int bar) {
 
 
 /**
- * Resolve the chart offset of the ZigZag semaphore preceeding the current tick at the specified bar. The bar may be part of
- * a finished (historic) or unfinished (currently progressing) ZigZag leg. As bar 0 and 1 can receive multiple ticks the
- * semaphore may be located at the current bar.
+ * Find the chart offset of the ZigZag semaphore preceeding the specified semaphore. The found semaphore may be located at
+ * the same bar.
  *
- * @param  int bar - chart bar
+ * @param  _In_    int bar  - chart bar
+ * @param  _InOut_ int type - semaphore type, on of: MODE_HIGH|MODE_LOW|NULL
+ *                             In:  type of semaphore to start searching from (NULL: any type)
+ *                             Out: type of the found semaphore (MODE_HIGH|MODE_LOW)
  *
- * @return int - chart offset of the preceeding semaphore
+ * @return int - chart offset of the found semaphore
  */
-int FindPreceedingSemaphore(int bar) {
-   int semBar;
-
-   if (semaphoreClose[bar] != NULL) {                             // semaphore is located at the current bar
-      semBar = bar;
+int FindPrevSemaphore(int bar, int &type) {
+   if (type != NULL) {
+      if (type!=MODE_HIGH && type!=MODE_LOW) return(_EMPTY(catch("FindPrevSemaphore(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
    }
-   else {                                                         // semaphore is located at a previous bar
-      int nextBar = bar+1;
-      semBar = nextBar + unknownTrend[nextBar];                   // unknown[] (may be 0) points to the preceeding semaphore
-      if (!semaphoreClose[semBar]) {                              // if called for a historic bar before the first cross
-         semBar = nextBar + Abs(knownTrend[nextBar]);
+
+   if (!type || !semaphoreClose[bar]) {
+      if (semaphoreClose[bar] != NULL) {                             // semaphore is located at the current bar
+         int semBar = bar;
+      }
+      else {                                                         // semaphore is located at a previous bar
+         int nextBar = bar+1;
+         semBar = nextBar + unknownTrend[nextBar];                   // unknown[] (may be 0) points to the preceeding semaphore
+         if (!semaphoreClose[semBar]) {                              // if called for a historic bar before the first cross
+            semBar = nextBar + Abs(knownTrend[nextBar]);
+         }
+      }
+      if      (!higherHigh[semBar])                                      type = MODE_LOW;
+      else if (!lowerLow[semBar])                                        type = MODE_HIGH;
+      else if (semaphoreOpen[semBar] > semaphoreClose[semBar]+HalfPoint) type = MODE_LOW;
+      else                                                               type = MODE_HIGH;
+      return(semBar);
+   }
+
+   if (semaphoreOpen[bar] == semaphoreClose[bar]) {
+      bool isHigh = (!lowerLow[bar]);
+
+      if (type == MODE_HIGH) {
+         if (isHigh) {
+            type = NULL;
+            return(FindPrevSemaphore(bar+1, type));
+         }
+         type = MODE_LOW;
+      }
+      else /*type == MODE_LOW*/ {
+         if (!isHigh) {
+            type = NULL;
+            return(FindPrevSemaphore(bar+1, type));
+         }
+         type = MODE_HIGH;
       }
    }
-   return(semBar);
+   else {
+      bool high2Low = (semaphoreOpen[bar] > semaphoreClose[bar]+HalfPoint);
+
+      if (type == MODE_HIGH) {
+         if (high2Low) {
+            type = NULL;
+            return(FindPrevSemaphore(bar+1, type));
+         }
+         type = MODE_LOW;
+      }
+      else /*type == MODE_LOW*/ {
+         if (!high2Low) {
+            type = NULL;
+            return(FindPrevSemaphore(bar+1, type));
+         }
+         type = MODE_HIGH;
+      }
+   }
+   return(bar);
 }
 
 
@@ -639,25 +689,25 @@ int FindPreceedingSemaphore(int bar) {
  * @return bool - success status
  */
 bool ProcessUpperCross(int bar) {
-   int prevSem = FindPreceedingSemaphore(bar);                       // resolve the preceeding semaphore
-   int prevTrend = knownTrend[prevSem];                              // trend at the preceeding semaphore
+   int iNull, prevSem=FindPrevSemaphore(bar, iNull);                 // resolve the previous semaphore
+   int prevTrend = knownTrend[prevSem];                              // trend at the previous semaphore
 
    if (prevTrend > 0) {
       if (prevSem == bar) {                                          // trend buffers are already set
-         if (semaphoreOpen[bar] != lowerCrossLow[bar]) {             // update existing semaphore
-            semaphoreOpen[bar] = upperCrossHigh[bar];
+         if (semaphoreOpen[bar] != lowerLow[bar]) {                  // update existing semaphore
+            semaphoreOpen[bar] = higherHigh[bar];
          }
-         semaphoreClose[bar] = upperCrossHigh[bar];
+         semaphoreClose[bar] = higherHigh[bar];
       }
       else {
-         if (upperCrossHigh[bar] > upperCrossHigh[prevSem]) {        // an uptrend continuation
+         if (higherHigh[bar] > higherHigh[prevSem]) {                // an uptrend continuation
             UpdateTrend(prevSem, prevTrend, bar, false);             // update existing trend
             if (semaphoreOpen[prevSem] == semaphoreClose[prevSem]) {
                semaphoreOpen [prevSem] = 0;                          // reset previous semaphore
             }
             semaphoreClose[prevSem] = semaphoreOpen[prevSem];
-            semaphoreOpen [bar]     = upperCrossHigh[bar];           // set new semaphore
-            semaphoreClose[bar]     = upperCrossHigh[bar];
+            semaphoreOpen [bar]     = higherHigh[bar];               // set new semaphore
+            semaphoreClose[bar]     = higherHigh[bar];
          }
          else {                                                      // a lower High (unknown direction)
             knownTrend  [bar] = knownTrend  [bar+1];                 // keep known trend
@@ -672,9 +722,9 @@ bool ProcessUpperCross(int bar) {
       }
       else {
          UpdateTrend(prevSem-1, 1, bar, true);                       // set the new trend range, reset reversals
-         semaphoreOpen[bar] = upperCrossHigh[bar];                   // set new semaphore
+         semaphoreOpen[bar] = higherHigh[bar];                       // set new semaphore
       }
-      semaphoreClose[bar] = upperCrossHigh[bar];
+      semaphoreClose[bar] = higherHigh[bar];
       reversal      [bar] = prevSem-bar;                             // set new reversal offset
 
       sema3 = sema2;                                                 // update the last 3 semaphores
@@ -696,25 +746,25 @@ bool ProcessUpperCross(int bar) {
  * @return bool - success status
  */
 bool ProcessLowerCross(int bar) {
-   int prevSem = FindPreceedingSemaphore(bar);                       // resolve the preceeding semaphore
-   int prevTrend = knownTrend[prevSem];                              // trend at the preceeding semaphore
+   int iNull, prevSem=FindPrevSemaphore(bar, iNull);                 // resolve the previous semaphore
+   int prevTrend = knownTrend[prevSem];                              // trend at the previous semaphore
 
    if (prevTrend < 0) {
       if (prevSem == bar) {                                          // trend buffers are already set
-         if (semaphoreOpen[bar] != upperCrossHigh[bar]) {            // update existing semaphore
-            semaphoreOpen [bar] = lowerCrossLow[bar];
+         if (semaphoreOpen[bar] != higherHigh[bar]) {                // update existing semaphore
+            semaphoreOpen [bar] = lowerLow[bar];
          }
-         semaphoreClose[bar] = lowerCrossLow[bar];
+         semaphoreClose[bar] = lowerLow[bar];
       }
       else {
-         if (lowerCrossLow[bar] < lowerCrossLow[prevSem]) {          // a downtrend continuation
+         if (lowerLow[bar] < lowerLow[prevSem]) {                    // a downtrend continuation
             UpdateTrend(prevSem, prevTrend, bar, false);             // update existing trend
             if (semaphoreOpen[prevSem] == semaphoreClose[prevSem]) {
                semaphoreOpen [prevSem] = 0;                          // reset previous semaphore
             }
             semaphoreClose[prevSem] = semaphoreOpen[prevSem];
-            semaphoreOpen [bar]     = lowerCrossLow[bar];            // set new semaphore
-            semaphoreClose[bar]     = lowerCrossLow[bar];
+            semaphoreOpen [bar]     = lowerLow[bar];                 // set new semaphore
+            semaphoreClose[bar]     = lowerLow[bar];
          }
          else {                                                      // a higher Low (unknown direction)
             knownTrend  [bar] = knownTrend  [bar+1];                 // keep known trend
@@ -729,9 +779,9 @@ bool ProcessLowerCross(int bar) {
       }
       else {
          UpdateTrend(prevSem-1, -1, bar, true);                      // set the new trend, reset reversals
-         semaphoreOpen[bar] = lowerCrossLow[bar];                    // set new semaphore
+         semaphoreOpen[bar] = lowerLow[bar];                         // set new semaphore
       }
-      semaphoreClose[bar] = lowerCrossLow[bar];
+      semaphoreClose[bar] = lowerLow[bar];
       reversal      [bar] = prevSem-bar;                             // set the new reversal offset
 
       sema3 = sema2;                                                 // update the last 3 semaphores
