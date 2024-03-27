@@ -502,13 +502,13 @@ int onTick() {
             if (prevBid < sema2+Point/2) /*&&*/ if (_Bid > sema2+Point/2) /*&&*/ if (_Bid > High[0]-Point/2) {
                if (iHighest(NULL, NULL, MODE_HIGH, 1+knownTrend[0]) == 0) {   // the current bar must be the High since sema1
                   bool is123Pattern = (sema3 < sema1+Point/2);
-                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_LONG, ChangedBars-1, is123Pattern);
+                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_LONG, is123Pattern, ChangedBars-1);
                }
             }
             if (prevBid > sema2-Point/2) /*&&*/ if (_Bid < sema2-Point/2) /*&&*/ if (_Bid < Low[0]+Point/2) {
                if (iLowest(NULL, NULL, MODE_LOW, 1-knownTrend[0]) == 0) {     // the current bar must be the Low since sema1
                   is123Pattern = (sema3 > sema1-Point/2);
-                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_SHORT, ChangedBars-1, is123Pattern);
+                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_SHORT, is123Pattern, ChangedBars-1);
                }
             }
             prevBid = _Bid;
