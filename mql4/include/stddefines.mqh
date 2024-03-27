@@ -23,6 +23,7 @@ bool     __STATUS_HISTORY_UPDATE;                                 // History-Upd
 bool     __STATUS_OFF;                                            // flag for user-land program termination, if TRUE the program's main functions are no longer executed: onInit|onTick|onStart|onDeinit
 int      __STATUS_OFF.reason;                                     // reason of program termination (error code)
 
+double   HalfPoint;                                               // 1/2 Point of the current symbol (e.g. 0.00005 for EURUSD, 0.005 for DAX)
 double   Pip;                                                     // 1 pip of the current symbol (e.g. 0.0001 for EURUSD, 0.01 for DAX)
 int      PipDigits;                                               // number of decimal places of 1 pip, always even (e.g. 4 for EURUSD, 2 for DAX)
 string   PriceFormat="", PipPriceFormat="";                       // price format strings of the current symbol for NumberToStr()

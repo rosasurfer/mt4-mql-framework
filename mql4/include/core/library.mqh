@@ -35,6 +35,7 @@ int init() {
    __isTesting      = (__ExecutionContext[EC.testing] || IsTesting());
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
+   HalfPoint      = Point/2;
    PipDigits      = Digits & (~1);
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PipPriceFormat = ",'R."+ PipDigits;                                                 // TODO: in libraries strings are lost when in deinit()
@@ -52,8 +53,8 @@ int init() {
       spUnit  = "point";
    }
 
-   prev_error       = NO_ERROR;
-   last_error       = NO_ERROR;
+   prev_error = NO_ERROR;
+   last_error = NO_ERROR;
 
    N_INF = MathLog(0);                                      // negative infinity
    P_INF = -N_INF;                                          // positive infinity

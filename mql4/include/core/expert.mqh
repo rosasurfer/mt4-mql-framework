@@ -14,7 +14,7 @@ int     __CoreFunction = NULL;                                    // currently e
 double  __rates[][6];                                             // current price series
 int     __tickTimerId;                                            // timer id for virtual ticks
 int     recorder.mode;                                            // EA recorder settings
-double  _Bid;                                                     // always normalized versions of predefined vars Bid/Ask
+double  _Bid;                                                     // normalized versions of predefined vars Bid/Ask
 double  _Ask;                                                     // ...
 
 
@@ -31,8 +31,6 @@ int init() {
          ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
    }
-   _Bid = NormalizeDouble(Bid, Digits);                           // always normalized versions of Bid/Ask
-   _Ask = NormalizeDouble(Ask, Digits);                           //
 
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this expert.");
@@ -54,6 +52,8 @@ int init() {
       prev_error   = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
+   _Bid = NormalizeDouble(Bid, Digits);                           // normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                           //
 
    // initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode()) {       // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
@@ -219,7 +219,7 @@ int start() {
       }
       return(last_error);
    }
-   _Bid = NormalizeDouble(Bid, Digits);                                    // always normalized versions of Bid/Ask
+   _Bid = NormalizeDouble(Bid, Digits);                                    // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                                    //
 
    // resolve tick status
@@ -348,7 +348,7 @@ int start() {
  */
 int deinit() {
    __CoreFunction = CF_DEINIT;
-   _Bid = NormalizeDouble(Bid, Digits);            // always normalized versions of Bid/Ask
+   _Bid = NormalizeDouble(Bid, Digits);            // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);            //
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
@@ -532,6 +532,7 @@ bool initGlobals() {
    __isTesting     = IsTesting();
    __Test.barModel = ec_TestBarModel(__ExecutionContext);
 
+   HalfPoint      = Point/2;
    PipDigits      = Digits & (~1);
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PipPriceFormat = ",'R."+ PipDigits;

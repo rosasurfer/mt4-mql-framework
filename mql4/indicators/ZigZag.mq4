@@ -119,12 +119,12 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #define MODE_SEMAPHORE_CLOSE     ZigZag.MODE_SEMAPHORE_CLOSE   //  1: semaphore close price
 #define MODE_UPPER_BAND          ZigZag.MODE_UPPER_BAND        //  2: upper channel band
 #define MODE_LOWER_BAND          ZigZag.MODE_LOWER_BAND        //  3: lower channel band
-#define MODE_UPPER_CROSS         ZigZag.MODE_UPPER_CROSS       //  4: upper channel crossings
-#define MODE_LOWER_CROSS         ZigZag.MODE_LOWER_CROSS       //  5: lower channel crossings
+#define MODE_UPPER_CROSS         ZigZag.MODE_UPPER_CROSS       //  4: upper channel band crossings
+#define MODE_LOWER_CROSS         ZigZag.MODE_LOWER_CROSS       //  5: lower channel band crossings
 #define MODE_REVERSAL            ZigZag.MODE_REVERSAL          //  6: offset of last ZigZag reversal to previous ZigZag semaphore
 #define MODE_COMBINED_TREND      ZigZag.MODE_TREND             //  7: trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
-#define MODE_UPPER_CROSS_HIGH    8                             //  8: new High after an upper channel crossing (potential new semaphore)
-#define MODE_LOWER_CROSS_LOW     9                             //  9: new Low after a lower channel crossing (potential new semaphore)
+#define MODE_UPPER_CROSS_HIGH    8                             //  8: new High after an upper channel band crossing (potential new semaphore)
+#define MODE_LOWER_CROSS_LOW     9                             //  9: new Low after a lower channel band crossing (potential new semaphore)
 #define MODE_KNOWN_TREND         10                            // 10: known trend
 #define MODE_UNKNOWN_TREND       11                            // 11: not yet known trend
 
@@ -142,9 +142,9 @@ int       framework_buffers = 4;                               // buffers manage
 #property indicator_color4    Magenta                          // lower channel band
 #property indicator_style4    STYLE_DOT                        //
 
-#property indicator_color5    indicator_color3                 // upper channel crossings
+#property indicator_color5    indicator_color3                 // upper channel band crossings
 #property indicator_width5    0                                //
-#property indicator_color6    indicator_color4                 // lower channel crossings
+#property indicator_color6    indicator_color4                 // lower channel band crossings
 #property indicator_width6    0                                //
 
 #property indicator_color7    CLR_NONE                         // offset of last ZigZag reversal to previous ZigZag semaphore
@@ -154,10 +154,10 @@ double   semaphoreOpen [];                                     // ZigZag semapho
 double   semaphoreClose[];                                     // ZigZag semaphore close price (a vertical line if open != close)
 double   upperBand     [];                                     // upper channel band
 double   lowerBand     [];                                     // lower channel band
-double   upperCross    [];                                     // upper channel crossings
-double   lowerCross    [];                                     // lower channel crossings
-double   upperCrossHigh[];                                     // new High after an upper channel crossing (potential new semaphore)
-double   lowerCrossLow [];                                     // new Low after a lower channel crossing (potential new semaphore)
+double   upperCross    [];                                     // upper channel band crossings
+double   lowerCross    [];                                     // lower channel band crossings
+double   upperCrossHigh[];                                     // new High after an upper channel band crossing (potential new semaphore)
+double   lowerCrossLow [];                                     // new Low after a lower channel band crossing (potential new semaphore)
 double   reversal      [];                                     // offset of last ZigZag reversal to previous ZigZag semaphore
 int      knownTrend    [];                                     // known direction and length of a ZigZag reversal
 int      unknownTrend  [];                                     // not yet known direction and length after a ZigZag reversal
@@ -169,7 +169,7 @@ double   combinedTrend [];                                     // trend (combine
 int      zigzagDrawType;
 int      crossingDrawType;
 
-double   prevBid;
+double   prevHigh, prevLow;
 double   prevUpperBand;
 double   prevLowerBand;
 double   sema1, sema2, sema3;                                  // last 3 semaphores for breakout tracking
@@ -484,11 +484,11 @@ int onTick() {
       }
    }
 
-   if (!__isSuperContext) {
-      if (__isChart && ShowChartLegend) UpdateChartLegend();
+   if (__isChart && !__isSuperContext) {
+      if (ShowChartLegend) UpdateChartLegend();
 
       if (ChangedBars > 2) {
-         // get last 3 semaphores
+         // refresh the last 3 semaphores
          bar   = Abs(knownTrend[0]) + unknownTrend[0];
          sema1 = semaphoreClose[bar];
          bar   = FindPreceedingSemaphore(bar+1);
@@ -497,32 +497,38 @@ int onTick() {
          sema3 = semaphoreClose[bar];
       }
       else {
-         // signal ZigZag breakouts
-         if (Signal.onBreakout && sema3) {
-            if (prevBid < sema2+Point/2) /*&&*/ if (_Bid > sema2+Point/2) /*&&*/ if (_Bid > High[0]-Point/2) {
-               if (iHighest(NULL, NULL, MODE_HIGH, 1+knownTrend[0]) == 0) {   // the current bar must be the High since sema1
-                  bool is123Pattern = (sema3 < sema1+Point/2);
-                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_LONG, is123Pattern, ChangedBars-1);
+         // detect ZigZag breakouts (comparing against High/Low instead of Bid detect breakouts on missed ticks)
+         if (Signal.onBreakout) {
+            if (sema3 && prevHigh) {
+               double currHigh = MathMax(High[ChangedBars-1], High[0]);
+               if (prevHigh < sema2+HalfPoint && currHigh > sema2+HalfPoint) {
+                  if (iHighest(NULL, NULL, MODE_HIGH, 1+knownTrend[0]) <= ChangedBars-1) {   // currHigh must be the High since sema1
+                     bool is123Pattern = (sema3 < sema1+HalfPoint);
+                     if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_LONG, is123Pattern);
+                  }
+               }
+               double currLow = MathMin(Low[ChangedBars-1], Low[0]);
+               if (prevLow > sema2-HalfPoint && currLow < sema2-HalfPoint) {
+                  if (iLowest(NULL, NULL, MODE_LOW, 1-knownTrend[0]) <= ChangedBars-1) {     // currLow must be the Low since sema1
+                     is123Pattern = (sema3 > sema1-HalfPoint);
+                     if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_SHORT, is123Pattern);
+                  }
+
                }
             }
-            if (prevBid > sema2-Point/2) /*&&*/ if (_Bid < sema2-Point/2) /*&&*/ if (_Bid < Low[0]+Point/2) {
-               if (iLowest(NULL, NULL, MODE_LOW, 1-knownTrend[0]) == 0) {     // the current bar must be the Low since sema1
-                  is123Pattern = (sema3 > sema1-Point/2);
-                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_SHORT, is123Pattern, ChangedBars-1);
-               }
-            }
-            prevBid = _Bid;
+            prevHigh = High[0];
+            prevLow  = Low [0];
          }
 
-         // signal Donchian channel widenings
+         // detect Donchian channel widenings
          if (Sound.onChannelWidening) {
             if (ChangedBars == 2) {
                prevUpperBand = upperBand[1];
                prevLowerBand = lowerBand[1];
             }
             if (prevUpperBand && prevLowerBand) {
-               if      (upperBand[0] > prevUpperBand+Point/2) onChannelWidening(D_LONG);
-               else if (lowerBand[0] < prevLowerBand-Point/2) onChannelWidening(D_SHORT);
+               if      (upperBand[0] > prevUpperBand+HalfPoint) onChannelWidening(D_LONG);
+               else if (lowerBand[0] < prevLowerBand-HalfPoint) onChannelWidening(D_SHORT);
             }
             prevUpperBand = upperBand[0];
             prevLowerBand = lowerBand[0];
@@ -675,7 +681,7 @@ bool ProcessUpperCross(int bar) {
       sema2 = sema1;
       sema1 = Low[bar+knownTrend[bar]];
 
-      if (Signal.onReversal && ChangedBars <= 2) onReversal(D_LONG, bar);
+      if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_LONG);
    }
    return(true);
 }
@@ -732,7 +738,7 @@ bool ProcessLowerCross(int bar) {
       sema2 = sema1;
       sema1 = High[bar-knownTrend[bar]];
 
-      if (Signal.onReversal && ChangedBars <= 2) onReversal(D_SHORT, bar);
+      if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_SHORT);
    }
    return(true);
 }
@@ -783,20 +789,18 @@ int onAccountChange(int previous, int current) {
  * Event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple running instances.
  *
  * @param  int direction - reversal direction: D_LONG | D_SHORT
- * @param  int bar       - reversal bar (the current or the closed bar)
  *
  * @return bool - success status
  */
-bool onReversal(int direction, int bar) {
+bool onReversal(int direction) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
    // skip the signal if it already was signaled before
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow()), error;
    string sPeriod = PeriodDescription();
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[bar]);
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
    SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals with slow CPU)
 
@@ -824,21 +828,19 @@ bool onReversal(int direction, int bar) {
  *
  * @param  int  direction    - breakout direction: D_LONG | D_SHORT
  * @param  bool is123Pattern - whether the breakout represents a valid 1-2-3 pattern
- * @param  int  bar          - breakout bar (the current or the closed bar)
  *
  * @return bool - success status
  */
-bool onBreakout(int direction, bool is123Pattern, int bar) {
+bool onBreakout(int direction, bool is123Pattern) {
    is123Pattern = is123Pattern!=0;
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onBreakout(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (bar > 1)                                 return(!catch("onBreakout(2)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
    // skip the signal if it already was signaled before
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow()), error;
    string sPeriod = PeriodDescription();
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[bar]);
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
    SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals with slow CPU)
 

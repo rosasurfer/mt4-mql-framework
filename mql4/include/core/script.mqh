@@ -2,7 +2,7 @@
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double  __rates[][6];                                                // current price series
-double  _Bid;                                                        // always normalized versions of predefined vars Bid/Ask
+double  _Bid;                                                        // normalized versions of predefined vars Bid/Ask
 double  _Ask;                                                        // ...
 
 
@@ -30,6 +30,8 @@ int init() {
       __STATUS_OFF.reason = last_error;
       return(last_error);
    }
+   _Bid = NormalizeDouble(Bid, Digits);                              // normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                              //
 
    int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, NULL, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
@@ -82,6 +84,7 @@ bool initGlobals() {
    __isTesting = (__ExecutionContext[EC.testing] != 0);
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
+   HalfPoint      = Point/2;
    PipDigits      = Digits & (~1);
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PipPriceFormat = ",'R."+ PipDigits;
@@ -122,7 +125,7 @@ int start() {
       return(__STATUS_OFF.reason);
    }
    __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
-   _Bid = NormalizeDouble(Bid, Digits);                                       // always normalized versions of Bid/Ask
+   _Bid = NormalizeDouble(Bid, Digits);                                       // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                                       //
 
    Ticks++;                                                                   // einfache Zähler, die konkreten Werte haben keine Bedeutung
@@ -170,6 +173,8 @@ int start() {
  */
 int deinit() {
    __CoreFunction = CF_DEINIT;
+   _Bid = NormalizeDouble(Bid, Digits);               // normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);               //
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
       return(last_error);

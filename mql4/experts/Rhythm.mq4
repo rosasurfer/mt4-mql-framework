@@ -14,7 +14,8 @@
  *
  * TODO:
  *  - ZigZag
- *     add sound files
+ *     FindPrevSemaphore(int bar, int semaphore)
+ *     include sound files
  *
  *  - rewrite to standard EA structure
  *
