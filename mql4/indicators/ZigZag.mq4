@@ -57,6 +57,7 @@
  *
  *
  * TODO:
+ *  - fix Signal.onBreakout bug: if bar[0] crosses sema2 and the next bar falls below sema2, then a *large* tick can trigger the breakout signal again
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
  *  - keep bar status in IsUpperCrossLast()
  *  - document usage of iCustom()
@@ -518,7 +519,7 @@ int onTick() {
 
                }
             }
-            prevHigh = High[0];
+            prevHigh = High[0];           // TODO: bug if bar[0] crosses sema2 and the next bar falls below sema2: a *large* tick can trigger the signal again
             prevLow  = Low [0];
          }
 
@@ -863,7 +864,7 @@ bool onReversal(int direction) {
       else if (error == ERR_FILE_NOT_FOUND) signal.onReversal.sound = false;
    }
 
-   message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"(P="+ ZigZag.Periods +") reversal "+ message;
+   message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message;
    if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
    if (signal.onReversal.alert)          Alert(message);
@@ -903,7 +904,7 @@ bool onBreakout(int direction, bool is123Pattern) {
       else if (error == ERR_FILE_NOT_FOUND) signal.onBreakout.sound = false;
    }
 
-   message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"(P="+ ZigZag.Periods +") breakout "+ message;
+   message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") breakout "+ message;
    if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
    if (signal.onBreakout.alert)          Alert(message);

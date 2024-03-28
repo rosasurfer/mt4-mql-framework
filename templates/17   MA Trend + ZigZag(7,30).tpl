@@ -1,16 +1,11 @@
-<!--
-The original Vegas Tunnel is built from EMA(144) + EMA(169) and is too narrow. 
-Here it's replaced by an "MA Tunnel(144)" which is wider and produces less noise.
--->
-
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=2
-graph=1
+scale=4
+graph=0
 fore=0
 grid=0
 volume=0
@@ -17158,6 +17153,81 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
+MA.Periods=144
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.AppliedPrice=Open | High | Low | Close | Median* | Typical | Weighted
+UpTrend.Color=16760576
+DownTrend.Color=55295
+Draw.Type=Line* | Dot
+Draw.Width=4
+Background.Color=6908265
+Background.Width=2
+ShowChartLegend=0
+Signal.onTrendChange=0
+AutoConfiguration=0
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
+MA.Periods=36
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.AppliedPrice=Open | High | Low | Close | Median* | Typical | Weighted
+UpTrend.Color=16760576
+DownTrend.Color=55295
+Draw.Type=Line* | Dot
+Draw.Width=4
+Background.Color=6908265
+Background.Width=2
+ShowChartLegend=0
+Signal.onTrendChange=0
+AutoConfiguration=0
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
+MA.Periods=9
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.AppliedPrice=Open | High | Low | Close | Median* | Typical | Weighted
+UpTrend.Color=16760576
+DownTrend.Color=55295
+Draw.Type=Line* | Dot
+Draw.Width=3
+Background.Color=6908265
+Background.Width=2
+ShowChartLegend=0
+Signal.onTrendChange=0
+AutoConfiguration=0
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=ZigZag
 flags=339
 window_num=0
@@ -17185,16 +17255,21 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=MA Tunnel
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
-Tunnel.Definition=EMA(144)
-Tunnel.Color=16711680
+ZigZag.Periods=7
+ZigZag.Type=Line* | Semaphores
+ZigZag.Width=2
+Donchian.ShowChannel=0
+Donchian.ShowCrossings=off* | first | all
+Signal.onReversal=0
+Signal.onBreakout=1
+Signal.onBreakout.123Only=1
+Signal.onBreakout.Types=sound, alert
 </inputs>
 </expert>
-weight_0=2
-weight_1=2
 period_flags=0
 show_data=1
 </indicator>
