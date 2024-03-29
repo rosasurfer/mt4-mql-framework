@@ -57,7 +57,6 @@
  *
  *
  * TODO:
- *  - fix Signal.onBreakout bug: if bar[0] crosses sema2 and the next bar falls below sema2, then a *large* tick can trigger the breakout signal again
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
  *  - keep bar status in IsUpperCrossLast()
  *  - document usage of iCustom()
@@ -170,10 +169,10 @@ double   combinedTrend [];                                     // trend (combine
 int      zigzagDrawType;
 int      crossingDrawType;
 
-double   prevHigh, prevLow;
+double   sema1, sema2, sema3;                                  // last 3 semaphores for breakout tracking
+double   prevLegHigh, prevLegLow;                              // leg high/low at the previous tick
 double   prevUpperBand;
 double   prevLowerBand;
-double   sema1, sema2, sema3;                                  // last 3 semaphores for breakout tracking
 
 string   indicatorName = "";
 string   shortName     = "";
@@ -500,27 +499,22 @@ int onTick() {
          sema3 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
       }
       else {
-         // detect ZigZag breakouts (comparing against High/Low instead of Bid detect breakouts on missed ticks)
-         if (Signal.onBreakout) {
-            if (sema3 && prevHigh) {
-               double currHigh = MathMax(High[ChangedBars-1], High[0]);
-               if (prevHigh < sema2+HalfPoint && currHigh > sema2+HalfPoint) {
-                  if (iHighest(NULL, NULL, MODE_HIGH, 1+knownTrend[0]) <= ChangedBars-1) {   // currHigh must be the High since sema1
-                     bool is123Pattern = (sema3 < sema1+HalfPoint);
-                     if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_LONG, is123Pattern);
-                  }
+         // detect ZigZag breakouts (comparing leg high/low against bands also detect breakouts on missed ticks)
+         if (Signal.onBreakout && sema3) {
+            if (knownTrend[0] > 0) {
+               if (prevLegHigh < sema2+HalfPoint && upperBand[0] > sema2+HalfPoint) {
+                  bool is123Pattern = (sema3 < sema1+HalfPoint);
+                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_LONG, is123Pattern);
                }
-               double currLow = MathMin(Low[ChangedBars-1], Low[0]);
-               if (prevLow > sema2-HalfPoint && currLow < sema2-HalfPoint) {
-                  if (iLowest(NULL, NULL, MODE_LOW, 1-knownTrend[0]) <= ChangedBars-1) {     // currLow must be the Low since sema1
-                     is123Pattern = (sema3 > sema1-HalfPoint);
-                     if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_SHORT, is123Pattern);
-                  }
-
-               }
+               prevLegHigh = High[0+unknownTrend[0]];                   // leg high at the previous tick
             }
-            prevHigh = High[0];           // TODO: bug if bar[0] crosses sema2 and the next bar falls below sema2: a *large* tick can trigger the signal again
-            prevLow  = Low [0];
+            else if (knownTrend[0] < 0) {
+               if ((!prevLegLow || prevLegLow > sema2-HalfPoint) && lowerBand[0] < sema2-HalfPoint) {
+                  is123Pattern = (sema3 > sema1-HalfPoint);
+                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_SHORT, is123Pattern);
+               }
+               prevLegLow = Low[0+unknownTrend[0]];                     // leg low at the previous tick
+            }
          }
 
          // detect Donchian channel widenings
@@ -731,6 +725,7 @@ bool ProcessUpperCross(int bar) {
       sema3 = sema2;                                                 // update the last 3 semaphores
       sema2 = sema1;
       sema1 = Low[bar+knownTrend[bar]];
+      prevLegHigh = 0;                                               // leg high at the previous tick
 
       if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_LONG);
    }
@@ -788,6 +783,7 @@ bool ProcessLowerCross(int bar) {
       sema3 = sema2;                                                 // update the last 3 semaphores
       sema2 = sema1;
       sema1 = High[bar-knownTrend[bar]];
+      prevLegLow = 0;                                                // leg low at the previous tick
 
       if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_SHORT);
    }
