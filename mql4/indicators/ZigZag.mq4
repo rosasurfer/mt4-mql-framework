@@ -35,8 +35,9 @@
  *  • Donchian.Upper.Color:         Color of upper Donchian channel band/upper crossings.
  *  • Donchian.Lower.Color:         Color of lower Donchian channel band/lower crossings.
  *
- *  • MaxBarsBack:                  Maximum number of bars back to calculate the indicator (performance).
  *  • ShowChartLegend:              Whether do display the chart legend.
+ *  • Show123Projections            Number of 1-2-3 projections to display.
+ *  • MaxBarsBack:                  Maximum number of bars back to calculate the indicator (performance).
  *
  *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
  *  • Signal.onReversal.Types:      Reversal signaling methods, can be a combination of "sound", "alert", "mail", "sms".
@@ -82,10 +83,13 @@ extern int    Donchian.Crossings.Width       = 1;
 extern int    Donchian.Crossings.Wingdings   = 163;                     // a circle
 extern color  Donchian.Upper.Color           = Blue;
 extern color  Donchian.Lower.Color           = Magenta;
-extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
-extern bool   ShowChartLegend                = true;
 
-extern string ___c__________________________ = "=== Signal settings ===";
+extern string ___c__________________________ = "=== Display settings ===";
+extern bool   ShowChartLegend                = true;
+extern int    Show123Projections             = 0;                       // number of 1-2-3 projections to display
+extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
+
+extern string ___d__________________________ = "=== Signaling ===";
 extern bool   Signal.onReversal              = false;                   // signal ZigZag reversals (first Donchian channel crossing)
 extern string Signal.onReversal.Types        = "sound* | alert | mail | sms";
 
@@ -96,7 +100,6 @@ extern string Signal.onBreakout.Types        = "sound* | alert | mail | sms";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
-extern string ___d__________________________ = "=== Other ===";
 extern bool   Sound.onChannelWidening        = false;                   // signal Donchian channel widenings
 extern string Sound.onNewChannelHigh         = "Price Advance.wav";
 extern string Sound.onNewChannelLow          = "Price Decline.wav";
@@ -170,14 +173,15 @@ int      zigzagDrawType;
 int      crossingDrawType;
 
 double   sema1, sema2, sema3;                                  // last 3 semaphores for breakout tracking
-double   prevLegHigh, prevLegLow;                              // leg high/low at the previous tick
-double   prevUpperBand;
-double   prevLowerBand;
+double   lastLegHigh, lastLegLow;                              // leg high/low at the previous tick
+double   lastUpperBand;
+double   lastLowerBand;
 
 string   indicatorName = "";
 string   shortName     = "";
 string   legendLabel   = "";
 string   legendInfo    = "";                                   // additional chart legend info
+string   labels[];                                             // chart object labels
 
 bool     signal.onReversal.sound;
 bool     signal.onReversal.alert;
@@ -264,12 +268,16 @@ int onInit() {
    if (ZigZag.Color         == 0xFF000000) ZigZag.Color         = CLR_NONE;
    if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
    if (Donchian.Lower.Color == 0xFF000000) Donchian.Lower.Color = CLR_NONE;
-   // MaxBarsBack
-   if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)                   return(catch("onInit(11)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
-   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
+   // Show123Projections
+   if (AutoConfiguration) Show123Projections = GetConfigInt(indicator, "Show123Projections", Show123Projections);
+   if (Show123Projections < -1)            return(catch("onInit(11)  invalid input parameter Show123Projections: "+ Show123Projections, ERR_INVALID_INPUT_PARAMETER));
+   if (Show123Projections == -1) Show123Projections = INT_MAX;
+   // MaxBarsBack
+   if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
+   if (MaxBarsBack < -1)                   return(catch("onInit(12)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // Signal.onReversal
    string signalId = "Signal.onReversal";
@@ -277,7 +285,7 @@ int onInit() {
    ConfigureSignals(signalId, AutoConfiguration, Signal.onReversal);
    if (Signal.onReversal) {
       if (!ConfigureSignalTypes(signalId, Signal.onReversal.Types, AutoConfiguration, signal.onReversal.sound, signal.onReversal.alert, signal.onReversal.mail, signal.onReversal.sms)) {
-         return(catch("onInit(12)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(13)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       if (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail || signal.onReversal.sms) {
          legendInfo = StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", "") + ifString(signal.onReversal.sms, "sms,", ""), -1);
@@ -290,7 +298,7 @@ int onInit() {
    ConfigureSignals(signalId, AutoConfiguration, Signal.onBreakout);
    if (Signal.onBreakout) {
       if (!ConfigureSignalTypes(signalId, Signal.onBreakout.Types, AutoConfiguration, signal.onBreakout.sound, signal.onBreakout.alert, signal.onBreakout.mail, signal.onBreakout.sms)) {
-         return(catch("onInit(13)  invalid input parameter Signal.onBreakout.Types: "+ DoubleQuoteStr(Signal.onBreakout.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(14)  invalid input parameter Signal.onBreakout.Types: "+ DoubleQuoteStr(Signal.onBreakout.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       // Signal.onBreakout.123Only
       if (AutoConfiguration) Signal.onBreakout.123Only = GetConfigBool(indicator, "Signal.onBreakout.123Only", Signal.onBreakout.123Only);
@@ -311,9 +319,9 @@ int onInit() {
       int hWnd = __ExecutionContext[EC.hChart];
       int millis = 2000;                                         // a virtual tick every 2 seconds
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!__tickTimerId) return(catch("onInit(14)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
+      if (!__tickTimerId) return(catch("onInit(15)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
    }
-   return(catch("onInit(15)"));
+   return(catch("onInit(16)"));
 }
 
 
@@ -366,11 +374,13 @@ int onTick() {
       ArrayInitialize(knownTrend,     0);
       ArrayInitialize(unknownTrend,   0);
       ArrayInitialize(combinedTrend,  0);
-      prevUpperBand = 0;
-      prevLowerBand = 0;
-      sema1 = 0;
-      sema2 = 0;
-      sema3 = 0;
+      lastUpperBand = 0;
+      lastLowerBand = 0;
+      lastLegHigh   = 0;
+      lastLegLow    = 0;
+      sema1         = 0;
+      sema2         = 0;
+      sema3         = 0;
       SetIndicatorOptions();
    }
 
@@ -488,47 +498,61 @@ int onTick() {
       if (ShowChartLegend) UpdateChartLegend();
 
       if (ChangedBars > 2) {
-         // refresh the last 3 semaphores
+         // resolve leg high/low
          int type = NULL;
-         bar   = FindPrevSemaphore(0, type);
+         bar = FindPrevSemaphore(0, type);
+
+         if (type == MODE_HIGH) {
+            lastLegHigh = High[bar];
+            lastLegLow = 0;
+         }
+         else {
+            lastLegHigh = 0;
+            lastLegLow = Low[bar];
+         }
+
+         // resolve the last 3 semaphores
          bar   = FindPrevSemaphore(bar, type);
          sema1 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
          bar   = FindPrevSemaphore(bar, type);
          sema2 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
          bar   = FindPrevSemaphore(bar, type);
          sema3 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
+
+         // draw 123 projections
+         if (Show123Projections > 0) Draw123Projections();
       }
       else {
          // detect ZigZag breakouts (comparing leg high/low against bands also detect breakouts on missed ticks)
          if (Signal.onBreakout && sema3) {
             if (knownTrend[0] > 0) {
-               if (prevLegHigh < sema2+HalfPoint && upperBand[0] > sema2+HalfPoint) {
+               if (lastLegHigh < sema2+HalfPoint && upperBand[0] > sema2+HalfPoint) {
                   bool is123Pattern = (sema3 < sema1+HalfPoint);
                   if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_LONG, is123Pattern);
                }
-               prevLegHigh = High[0+unknownTrend[0]];                   // leg high at the previous tick
+               lastLegHigh = High[unknownTrend[0]];                     // leg high for comparison at the nex tick
             }
             else if (knownTrend[0] < 0) {
-               if ((!prevLegLow || prevLegLow > sema2-HalfPoint) && lowerBand[0] < sema2-HalfPoint) {
+               if ((!lastLegLow || lastLegLow > sema2-HalfPoint) && lowerBand[0] < sema2-HalfPoint) {
                   is123Pattern = (sema3 > sema1-HalfPoint);
                   if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_SHORT, is123Pattern);
                }
-               prevLegLow = Low[0+unknownTrend[0]];                     // leg low at the previous tick
+               lastLegLow = Low[unknownTrend[0]];                       // leg low for comparison at the nex tick
             }
          }
 
          // detect Donchian channel widenings
          if (Sound.onChannelWidening) {
             if (ChangedBars == 2) {
-               prevUpperBand = upperBand[1];
-               prevLowerBand = lowerBand[1];
+               lastUpperBand = upperBand[1];
+               lastLowerBand = lowerBand[1];
             }
-            if (prevUpperBand && prevLowerBand) {
-               if      (upperBand[0] > prevUpperBand+HalfPoint) onChannelWidening(D_LONG);
-               else if (lowerBand[0] < prevLowerBand-HalfPoint) onChannelWidening(D_SHORT);
+            if (lastUpperBand && lastLowerBand) {
+               if      (upperBand[0] > lastUpperBand+HalfPoint) onChannelWidening(D_LONG);
+               else if (lowerBand[0] < lastLowerBand-HalfPoint) onChannelWidening(D_SHORT);
             }
-            prevUpperBand = upperBand[0];
-            prevLowerBand = lowerBand[0];
+            lastUpperBand = upperBand[0];
+            lastLowerBand = lowerBand[0];
          }
       }
    }
@@ -605,7 +629,7 @@ bool IsUpperCrossLast(int bar) {
  * Find the chart offset of the ZigZag semaphore preceeding the specified semaphore. The found semaphore may be located at
  * the same bar.
  *
- * @param  _In_    int bar  - chart bar
+ * @param  _In_    int bar  - start bar
  * @param  _InOut_ int type - semaphore type, on of: MODE_HIGH|MODE_LOW|NULL
  *                             In:  type of semaphore to start searching from (NULL: any type)
  *                             Out: type of the found semaphore (MODE_HIGH|MODE_LOW)
@@ -628,10 +652,12 @@ int FindPrevSemaphore(int bar, int &type) {
             semBar = nextBar + Abs(knownTrend[nextBar]);
          }
       }
-      if      (!higherHigh[semBar])                                      type = MODE_LOW;
-      else if (!lowerLow[semBar])                                        type = MODE_HIGH;
-      else if (semaphoreOpen[semBar] > semaphoreClose[semBar]+HalfPoint) type = MODE_LOW;
-      else                                                               type = MODE_HIGH;
+      if      (!lowerLow     [semBar])                                    type = MODE_HIGH;
+      else if (!higherHigh   [semBar])                                    type = MODE_LOW;
+      else if (semaphoreOpen [semBar] < semaphoreClose[semBar]-HalfPoint) type = MODE_HIGH;
+      else if (semaphoreOpen [semBar] > semaphoreClose[semBar]+HalfPoint) type = MODE_LOW;
+      else if (semaphoreClose[semBar] == higherHigh[semBar])              type = MODE_HIGH;  // semaphoreOpen == semaphoreClose
+      else                                                                type = MODE_LOW;   // semaphoreOpen == semaphoreClose
       return(semBar);
    }
 
@@ -725,7 +751,7 @@ bool ProcessUpperCross(int bar) {
       sema3 = sema2;                                                 // update the last 3 semaphores
       sema2 = sema1;
       sema1 = Low[bar+knownTrend[bar]];
-      prevLegHigh = 0;                                               // leg high at the previous tick
+      lastLegHigh = 0;                                               // reset last leg high
 
       if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_LONG);
    }
@@ -783,7 +809,7 @@ bool ProcessLowerCross(int bar) {
       sema3 = sema2;                                                 // update the last 3 semaphores
       sema2 = sema1;
       sema1 = High[bar-knownTrend[bar]];
-      prevLegLow = 0;                                                // leg low at the previous tick
+      lastLegLow = 0;                                                // reset last leg low
 
       if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_SHORT);
    }
@@ -813,6 +839,120 @@ void UpdateTrend(int fromBar, int fromValue, int toBar, bool resetReversalBuffer
       if (value > 0) value++;
       else           value--;
    }
+}
+
+
+/**
+ * Draw 1-2-3 breakout projections.
+ *
+ * @return bool - success status
+ */
+bool Draw123Projections() {
+   Delete123Projections();                      // delete all existing projections
+
+   int type = NULL;
+   int    bar1 = FindPrevSemaphore(0, type);
+   double sem1 = ifDouble(type==MODE_HIGH, higherHigh[bar1], lowerLow[bar1]);
+   int    bar2 = FindPrevSemaphore(bar1, type);
+   double sem2 = ifDouble(type==MODE_HIGH, higherHigh[bar2], lowerLow[bar2]);
+   int    bar3 = FindPrevSemaphore(bar2, type);
+   double sem3 = ifDouble(type==MODE_HIGH, higherHigh[bar3], lowerLow[bar3]);
+   int    bar4 = FindPrevSemaphore(bar3, type);
+   double sem4 = ifDouble(type==MODE_HIGH, higherHigh[bar4], lowerLow[bar4]);
+
+   // find and redraw 123 projections
+   int foundPatterns = 0;
+   while (foundPatterns < Show123Projections) {
+      if (type == MODE_HIGH) {
+         if (sem2 < sem4+HalfPoint && sem1 < sem3-HalfPoint) {
+            foundPatterns++;
+            Create123Projection(bar2, sem2, bar3, sem3);
+         }
+      }
+      else /*type==MODE_LOW*/ {
+         if (sem2 > sem4-HalfPoint && sem1 > sem3+HalfPoint) {
+            foundPatterns++;
+            Create123Projection(bar2, sem2, bar3, sem3);
+         }
+      }
+      bar1=bar2; bar2=bar3; bar3=bar4; bar4=FindPrevSemaphore(bar4, type);
+      sem1=sem2; sem2=sem3; sem3=sem4; sem4=ifDouble(type==MODE_HIGH, higherHigh[bar4], lowerLow[bar4]);
+   }
+   return(!catch("Draw123Projections(1)"));
+}
+
+
+/**
+ * Delete all 1-2-3 projections created by this indicator from the chart.
+ *
+ * @return bool - success status
+ */
+bool Delete123Projections() {
+   int size = ArraySize(labels);
+
+   for (int i=0; i < size; i++) {
+      if (!ObjectDelete(labels[i])) {
+         int error = GetLastError();
+         if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("Delete123Projections(1)->ObjectDelete(label=\""+ labels[i] +"\")", intOr(error, ERR_RUNTIME_ERROR)));
+      }
+   }
+   ArrayResize(labels, 0);
+   return(true);
+}
+
+
+/**
+ * Draw a new inside bar for the specified data.
+ *
+ * @param  int      stopBar      - bar offset of the stop semaphore
+ * @param  double   stopLevel    - price level of the stop semaphore
+ * @param  int      triggerBar   - bar offset of the trigger semaphore
+ * @param  double   triggerLevel - price level of the trigger semaphore
+ *
+ * @return bool - success status
+ */
+bool Create123Projection(int stopBar, double stopLevel, int breakoutBar, double breakoutLevel) {
+   static int counter = 0;
+   int pid = __ExecutionContext[EC.pid];
+   double targetLevel = breakoutLevel - (stopLevel-breakoutLevel);
+
+   // vertical line
+   counter++;
+   string label = "123 projection: "+ NumberToStr(targetLevel, PriceFormat) +"-"+ NumberToStr(breakoutLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
+   if (ObjectFind(label) != -1) ObjectDelete(label);
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], targetLevel, Time[stopBar], breakoutLevel, 0, 0)) {
+      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet(label, OBJPROP_WIDTH, 2);
+      ObjectSet(label, OBJPROP_COLOR, Red);
+      ObjectSet(label, OBJPROP_RAY,   false);
+      ObjectSet(label, OBJPROP_BACK,  true);
+      ArrayPushString(labels, label);
+   }
+
+   // horizontal marker at breakout level
+   label = "123 projection: BO = "+ NumberToStr(breakoutLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
+   datetime toTime = Time[stopBar] + 3*Period()*MINUTES;
+   if (ObjectFind(label) != -1) ObjectDelete(label);
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], breakoutLevel, toTime, breakoutLevel, 0, 0)) {
+      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet(label, OBJPROP_COLOR, Red);
+      ObjectSet(label, OBJPROP_RAY,   false);
+      ObjectSet(label, OBJPROP_BACK,  true);
+      ArrayPushString(labels, label);
+   }
+
+   // horizontal marker at target level
+   label = "123 projection: TP = "+ NumberToStr(targetLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
+   toTime = Time[stopBar] + 3*Period()*MINUTES;
+   if (ObjectFind(label) != -1) ObjectDelete(label);
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], targetLevel, toTime, targetLevel, 0, 0)) {
+      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet(label, OBJPROP_COLOR, Red);
+      ObjectSet(label, OBJPROP_RAY,   false);
+      ObjectSet(label, OBJPROP_BACK,  true);
+      ArrayPushString(labels, label);
+   }
+   return(!catch("Create123Projection(1)"));
 }
 
 
@@ -1140,8 +1280,10 @@ string InputsToStr() {
                             "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings            +";"+ NL,
                             "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)        +";"+ NL,
                             "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)        +";"+ NL,
-                            "MaxBarsBack=",                  MaxBarsBack                             +";"+ NL,
+
                             "ShowChartLegend=",              BoolToStr(ShowChartLegend)              +";"+ NL,
+                            "Show123Projections=",           Show123Projections                      +";"+ NL,
+                            "MaxBarsBack=",                  MaxBarsBack                             +";"+ NL,
 
                             "Signal.onReversal=",            BoolToStr(Signal.onReversal)            +";"+ NL,
                             "Signal.onReversal.Types=",      DoubleQuoteStr(Signal.onReversal.Types) +";"+ NL,

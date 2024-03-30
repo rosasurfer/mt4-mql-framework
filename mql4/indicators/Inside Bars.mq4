@@ -601,7 +601,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
       ObjectSet      (label, OBJPROP_RAY,   false);
       ObjectSet      (label, OBJPROP_BACK,  false);
       ArrayPushString(labels, label);
-   } else debug("CreateInsideBar(1)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
+   }
 
    // horizontal line at long projection
    label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
@@ -613,7 +613,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
       ObjectSet      (label, OBJPROP_BACK,  true);
       ObjectSetText  (label, " "+ sTimeframe);
       ArrayPushString(labels, label);
-   } else debug("CreateInsideBar(2)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
+   }
 
    // horizontal line at short projection
    label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
@@ -624,13 +624,13 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
       ObjectSet      (label, OBJPROP_RAY,   false);
       ObjectSet      (label, OBJPROP_BACK,  true);
       ArrayPushString(labels, label);
-   } else debug("CreateInsideBar(3)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
+   }
 
    // signal new inside bars
    if (!__isSuperContext && Signal.onInsideBar) /*&&*/ if (IsBarOpen(timeframe)) {
       return(onInsideBar(timeframe, closeTime, high, low));
    }
-   return(true);
+   return(!catch("CreateInsideBar(1)"));
 }
 
 
@@ -684,7 +684,7 @@ bool DeleteInsideBars(int timeframe) {
       if (StrStartsWith(labels[i], prefix)) {
          if (!ObjectDelete(labels[i])) {
             int error = GetLastError();
-            if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("DeleteInsideBars(2)->ObjectDelete(label="+ DoubleQuoteStr(labels[i]) +")", intOr(error, ERR_RUNTIME_ERROR)));
+            if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("DeleteInsideBars(1)->ObjectDelete(label=\""+ labels[i] +"\")", intOr(error, ERR_RUNTIME_ERROR)));
          }
          ArraySpliceStrings(labels, i, 1);
       }

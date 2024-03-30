@@ -39,8 +39,11 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           161,                        // int    Donchian.Crossings.Wingdings
                           CLR_NONE,                   // color  Donchian.Upper.Color
                           CLR_NONE,                   // color  Donchian.Lower.Color
-                          -1,                         // int    MaxBarsBack
+
+                          "",                         // string ____________________________
                           false,                      // bool   ShowChartLegend
+                          0,                          // int    Show123Projections
+                          -1,                         // int    MaxBarsBack
 
                           "",                         // string ____________________________
                           false,                      // bool   Signal.onReversal
@@ -53,7 +56,6 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           "",                         // string Signal.Sound.Up
                           "",                         // string Signal.Sound.Down
 
-                          "",                         // string ____________________________
                           false,                      // bool   Sound.onChannelWidening
                           "",                         // string Sound.onNewChannelHigh
                           "",                         // string Sound.onNewChannelLow

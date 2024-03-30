@@ -141,7 +141,7 @@ int afterInit() {
 
       // setup a chart ticker
       int hWnd = __ExecutionContext[EC.hChart];
-      int millis = 1000;                                          // once every second
+      int millis = 2000;                                          // once every 2 seconds
 
       if (StrStartsWithI(GetAccountServer(), "XTrade-")) {
          // offline ticker to update chart data in synthetic charts
