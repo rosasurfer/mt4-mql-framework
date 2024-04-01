@@ -526,7 +526,7 @@ int onTick() {
          sema3 = ifDouble(type==MODE_HIGH, High[bar], Low[bar]);
 
          // draw 123 projections
-         Draw123Projections();
+         if (!Draw123Projections()) return(logWarn("onTick(3)->Draw123Projections() failed", last_error));
 
          doDebug = true;
          type = NULL;
@@ -567,7 +567,7 @@ int onTick() {
          }
       }
    }
-   return(catch("onTick(3)"));
+   return(catch("onTick(4)"));
 }
 
 
@@ -1142,23 +1142,23 @@ bool ParameterStepper(int direction, int keys) {
          return(false);
       }
       Show123Projections += direction;
-      Draw123Projections();
+      if (!Draw123Projections())
+         return(!logWarn("ParameterStepper(2)->Draw123Projections() failed", last_error));
+      return(true);
    }
 
    // w/o VK_SHIFT: control parameter ZigZag.Periods
-   else {
-      int step = ZigZag.Periods.Step;
-      if (!step || ZigZag.Periods + direction*step < 2) {      // stop if parameter limit reached
-         PlaySoundEx("Plonk.wav");
-         return(false);
-      }
-      if (direction == STEP_UP) ZigZag.Periods += step;
-      else                      ZigZag.Periods -= step;
-      ChangedBars = Bars;
-      ValidBars   = 0;
-      ShiftedBars = 0;
-      PlaySoundEx("Parameter Step.wav");
+   int step = ZigZag.Periods.Step;
+   if (!step || ZigZag.Periods + direction*step < 2) {         // stop if parameter limit reached
+      PlaySoundEx("Plonk.wav");
+      return(false);
    }
+   if (direction == STEP_UP) ZigZag.Periods += step;
+   else                      ZigZag.Periods -= step;
+   ChangedBars = Bars;
+   ValidBars   = 0;
+   ShiftedBars = 0;
+   PlaySoundEx("Parameter Step.wav");
    return(true);
 }
 
