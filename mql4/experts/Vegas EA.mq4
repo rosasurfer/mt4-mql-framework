@@ -231,7 +231,7 @@ bool onCommand(string cmd, string params, int keys) {
       switch (instance.status) {
          case STATUS_WAITING:
          case STATUS_TRADING:
-            logInfo("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            logInfo("onCommand(1)  "+ instance.name +" \""+ fullCmd +"\"");
             double dNull[] = {0,0,0};
             return(StopInstance(dNull));
       }
@@ -239,7 +239,7 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "restart") {
       switch (instance.status) {
          case STATUS_STOPPED:
-            logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            logInfo("onCommand(2)  "+ instance.name +" \""+ fullCmd +"\"");
             return(RestartInstance());
       }
    }
@@ -253,9 +253,9 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
-   else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
+   else return(!logNotice("onCommand(3)  "+ instance.name +" unsupported command: \""+ fullCmd +"\""));
 
-   return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
+   return(!logWarn("onCommand(4)  "+ instance.name +" cannot execute command \""+ fullCmd +"\" in status "+ StatusToStr(instance.status)));
 }
 
 

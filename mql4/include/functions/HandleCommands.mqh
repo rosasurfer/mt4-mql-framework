@@ -5,18 +5,17 @@
  *  params:    one or more command parameters separated by comma "," (optional)
  *  modifiers: one or more virtual key modifiers separated by comma "," (optional)
  *
- * @param  string channel [optional] - id of the channel to check for commands (default: the program's standard channel id)
- * @param  bool   remove  [optional] - Whether to remove received commands from the channel (default: yes). If this parameter
- *                                     is FALSE a command may be processed by multiple receivers.
+ * @param  string channel [optional] - channel to check for commands (default: the program's standard command channel)
+ *
  * @return bool - success status
  */
-bool HandleCommands(string channel="", bool remove=true) {
+bool HandleCommands(string channel = "") {
    if (__isSuperContext) return(true);
 
    string commands[];
    ArrayResize(commands, 0);
 
-   IsChartCommand(channel, remove, commands);
+   IsChartCommand(channel, commands);
    int size = ArraySize(commands);
 
    for (int i=0; i < size && !last_error; i++) {
@@ -37,7 +36,7 @@ bool HandleCommands(string channel="", bool remove=true) {
             else if (modifier == "VK_MENU")    virtKeys |= F_VK_MENU;      // ALT key
             else if (modifier == "VK_LWIN")    virtKeys |= F_VK_LWIN;      // left Windows key
             else if (modifier == "VK_RWIN")    virtKeys |= F_VK_RWIN;      // right Windows key
-            else if (modifier != "") logNotice("HandleCommands(1)  skipping unsupported command modifier: "+ modifier);
+            else if (modifier != "") logNotice("HandleCommands(1)  skipping unsupported key modifier: "+ modifier);
          }
       }
 
@@ -54,13 +53,12 @@ bool HandleCommands(string channel="", bool remove=true) {
 /**
  * Checks for and retrieves commands sent to the chart.
  *
- * @param  _In_    string channel     - channel id to check for incoming commands
- * @param  _In_    bool   remove      - whether to remove received commands from the channel
- * @param  _InOut_ string &commands[] - array received commands are appended to
+ * @param  _In_    string channel     - channel to check for incoming commands
+ * @param  _InOut_ string &commands[] - array commands are appended to
  *
  * @return bool - whether a command was successfully retrieved
  */
-bool IsChartCommand(string channel, bool remove, string &commands[]) {
+bool IsChartCommand(string channel, string &commands[]) {
    if (!__isChart) return(false);
 
    static string stdChannel = ""; if (stdChannel == "") {
@@ -76,7 +74,7 @@ bool IsChartCommand(string channel, bool remove, string &commands[]) {
    if (ObjectFind(label) != -1) {                              // check non-synchronized (read-only access) to prevent locking on every tick
       if (AquireLock(mutex)) {                                 // aquire the lock and process command synchronized (read-write access)
          ArrayPushString(commands, ObjectDescription(label));
-         if (remove) ObjectDelete(label);
+         ObjectDelete(label);
          return(ReleaseLock(mutex));
       }
    }

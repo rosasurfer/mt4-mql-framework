@@ -6349,11 +6349,11 @@ string ShellExecuteErrorDescription(int error) {
 
 
 /**
- * Send a chart command. Modifies the specified chart object using the specified mutex.
+ * Send a chart command. Modifies the specified object using the specified mutex.
  *
- * @param  string cmdObject        - label of the chart object transmitting the command
+ * @param  string cmdObject        - label of the chart object holding the command
  * @param  string cmd              - command to send
- * @param  string mutex [optional] - label of the chart object used for synchronizing writes on cmdObject
+ * @param  string mutex [optional] - label of the chart object used for synchronizing access to cmdObject
  *                                   (default: generated from cmdObject)
  * @return bool - success status
  */

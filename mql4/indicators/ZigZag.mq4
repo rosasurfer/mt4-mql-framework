@@ -352,7 +352,9 @@ int onTick() {
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  sizeof(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && ZigZag.Periods.Step) HandleCommands("ParameterStepper", false);
+   if (__isChart) {
+      if (ZigZag.Periods.Step || Show123Projections) HandleCommands("ParameterStepper");
+   }
 
    // framework: manage additional buffers
    ManageDoubleIndicatorBuffer(MODE_HIGHER_HIGH,   higherHigh  );
@@ -513,17 +515,17 @@ int onTick() {
 
          // resolve the last 3 semaphores
          bar   = FindPrevSemaphore(bar, type);
-         sema1 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
+         sema1 = ifDouble(type==MODE_HIGH, High[bar], Low[bar]);
          bar   = FindPrevSemaphore(bar, type);
-         sema2 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
+         sema2 = ifDouble(type==MODE_HIGH, High[bar], Low[bar]);
          bar   = FindPrevSemaphore(bar, type);
-         sema3 = ifDouble(type==MODE_HIGH, higherHigh[bar], lowerLow[bar]);
+         sema3 = ifDouble(type==MODE_HIGH, High[bar], Low[bar]);
 
          // draw 123 projections
-         if (Show123Projections > 0) Draw123Projections();
+         Draw123Projections();
       }
       else {
-         // detect ZigZag breakouts (comparing leg high/low against bands also detect breakouts on missed ticks)
+         // detect ZigZag breakouts (comparing legs against bands also detect breakouts on missed ticks)
          if (Signal.onBreakout && sema3) {
             if (knownTrend[0] > 0) {
                if (lastLegHigh < sema2+HalfPoint && upperBand[0] > sema2+HalfPoint) {
@@ -634,7 +636,7 @@ bool IsUpperCrossLast(int bar) {
  *                             In:  type of semaphore to start searching from (NULL: any type)
  *                             Out: type of the found semaphore (MODE_HIGH|MODE_LOW)
  *
- * @return int - chart offset of the found semaphore
+ * @return int - chart offset of the found semaphore or EMPTY (-1) in case of errors
  */
 int FindPrevSemaphore(int bar, int &type) {
    if (type != NULL) {
@@ -645,11 +647,15 @@ int FindPrevSemaphore(int bar, int &type) {
       if (semaphoreClose[bar] != NULL) {                             // semaphore is located at the current bar
          int semBar = bar;
       }
-      else {                                                         // semaphore is located at a previous bar
-         int nextBar = bar+1;
-         semBar = nextBar + unknownTrend[nextBar];                   // unknown[] (may be 0) points to the preceeding semaphore
-         if (!semaphoreClose[semBar]) {                              // if called for a historic bar before the first cross
-            semBar = nextBar + Abs(knownTrend[nextBar]);
+      else {                                                         // semaphore is located somewhere before
+         bar++;
+         semBar = bar + unknownTrend[bar];                           // if unknown[bar] != 0 it points to the preceeding semaphore; if = 0 it doesn't change a thing
+         if (!semaphoreClose[semBar]) {
+            // a semaphore on a regular bar is located at:                                    bar + trend
+            // a semaphore on a large bar (semaphore + reversal to other side) is located at: bar + trend - 1     // Abs(knownTrend[semBar]) = 1 = new trend
+            int trend = Abs(knownTrend[bar]);
+            semBar = bar + trend - 1;
+            if (!semaphoreClose[semBar]) semBar++;
          }
       }
       if      (!lowerLow     [semBar])                                    type = MODE_HIGH;
@@ -657,7 +663,7 @@ int FindPrevSemaphore(int bar, int &type) {
       else if (semaphoreOpen [semBar] < semaphoreClose[semBar]-HalfPoint) type = MODE_HIGH;
       else if (semaphoreOpen [semBar] > semaphoreClose[semBar]+HalfPoint) type = MODE_LOW;
       else if (semaphoreClose[semBar] == higherHigh[semBar])              type = MODE_HIGH;  // semaphoreOpen == semaphoreClose
-      else                                                                type = MODE_LOW;   // semaphoreOpen == semaphoreClose
+      else                                                                type = MODE_LOW;   // ...
       return(semBar);
    }
 
@@ -697,7 +703,10 @@ int FindPrevSemaphore(int bar, int &type) {
          type = MODE_HIGH;
       }
    }
-   return(bar);
+
+   if (!catch("FindPrevSemaphore(2)"))
+      return(bar);
+   return(EMPTY);
 }
 
 
@@ -710,7 +719,7 @@ int FindPrevSemaphore(int bar, int &type) {
  * @return bool - success status
  */
 bool ProcessUpperCross(int bar) {
-   int iNull, prevSem=FindPrevSemaphore(bar, iNull);                 // resolve the previous semaphore
+   int type, prevSem=FindPrevSemaphore(bar, type);                   // resolve the previous semaphore
    int prevTrend = knownTrend[prevSem];                              // trend at the previous semaphore
 
    if (prevTrend > 0) {
@@ -750,9 +759,8 @@ bool ProcessUpperCross(int bar) {
 
       sema3 = sema2;                                                 // update the last 3 semaphores
       sema2 = sema1;
-      sema1 = Low[bar+knownTrend[bar]];
+      sema1 = Low[prevSem];
       lastLegHigh = 0;                                               // reset last leg high
-
       if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_LONG);
    }
    return(true);
@@ -768,7 +776,7 @@ bool ProcessUpperCross(int bar) {
  * @return bool - success status
  */
 bool ProcessLowerCross(int bar) {
-   int iNull, prevSem=FindPrevSemaphore(bar, iNull);                 // resolve the previous semaphore
+   int type, prevSem=FindPrevSemaphore(bar, type);                   // resolve the previous semaphore
    int prevTrend = knownTrend[prevSem];                              // trend at the previous semaphore
 
    if (prevTrend < 0) {
@@ -808,7 +816,7 @@ bool ProcessLowerCross(int bar) {
 
       sema3 = sema2;                                                 // update the last 3 semaphores
       sema2 = sema1;
-      sema1 = High[bar-knownTrend[bar]];
+      sema1 = High[prevSem];
       lastLegLow = 0;                                                // reset last leg low
 
       if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_SHORT);
@@ -849,16 +857,17 @@ void UpdateTrend(int fromBar, int fromValue, int toBar, bool resetReversalBuffer
  */
 bool Draw123Projections() {
    Delete123Projections();                      // delete all existing projections
+   if (!Show123Projections) return(true);
 
    int type = NULL;
    int    bar1 = FindPrevSemaphore(0, type);
-   double sem1 = ifDouble(type==MODE_HIGH, higherHigh[bar1], lowerLow[bar1]);
+   double sem1 = ifDouble(type==MODE_HIGH, High[bar1], Low[bar1]);
    int    bar2 = FindPrevSemaphore(bar1, type);
-   double sem2 = ifDouble(type==MODE_HIGH, higherHigh[bar2], lowerLow[bar2]);
+   double sem2 = ifDouble(type==MODE_HIGH, High[bar2], Low[bar2]);
    int    bar3 = FindPrevSemaphore(bar2, type);
-   double sem3 = ifDouble(type==MODE_HIGH, higherHigh[bar3], lowerLow[bar3]);
+   double sem3 = ifDouble(type==MODE_HIGH, High[bar3], Low[bar3]);
    int    bar4 = FindPrevSemaphore(bar3, type);
-   double sem4 = ifDouble(type==MODE_HIGH, higherHigh[bar4], lowerLow[bar4]);
+   double sem4 = ifDouble(type==MODE_HIGH, High[bar4], Low[bar4]);
 
    // find and redraw 123 projections
    int foundPatterns = 0;
@@ -876,7 +885,7 @@ bool Draw123Projections() {
          }
       }
       bar1=bar2; bar2=bar3; bar3=bar4; bar4=FindPrevSemaphore(bar4, type);
-      sem1=sem2; sem2=sem3; sem3=sem4; sem4=ifDouble(type==MODE_HIGH, higherHigh[bar4], lowerLow[bar4]);
+      sem1=sem2; sem2=sem3; sem3=sem4; sem4=ifDouble(type==MODE_HIGH, High[bar4], Low[bar4]);
    }
    return(!catch("Draw123Projections(1)"));
 }
@@ -929,9 +938,12 @@ bool Create123Projection(int stopBar, double stopLevel, int breakoutBar, double 
       ArrayPushString(labels, label);
    }
 
+   int toBar = stopBar-3;
+   if (toBar >= 0) datetime toTime = Time[toBar];
+   else                     toTime = Time[stopBar] + 3*Period()*MINUTES;
+
    // horizontal marker at breakout level
    label = "123 projection: BO = "+ NumberToStr(breakoutLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
-   datetime toTime = Time[stopBar] + 3*Period()*MINUTES;
    if (ObjectFind(label) != -1) ObjectDelete(label);
    if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], breakoutLevel, toTime, breakoutLevel, 0, 0)) {
       ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
@@ -943,7 +955,6 @@ bool Create123Projection(int stopBar, double stopLevel, int breakoutBar, double 
 
    // horizontal marker at target level
    label = "123 projection: TP = "+ NumberToStr(targetLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
-   toTime = Time[stopBar] + 3*Period()*MINUTES;
    if (ObjectFind(label) != -1) ObjectDelete(label);
    if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], targetLevel, toTime, targetLevel, 0, 0)) {
       ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
@@ -1079,56 +1090,49 @@ bool onChannelWidening(int direction) {
  * @return bool - success status of the executed command
  */
 bool onCommand(string cmd, string params, int keys) {
-   static int lastTickcount = 0;
-   int tickcount = StrToInteger(params);
-
-   // stepper cmds are not removed from the queue: compare tickcount with last processed command and skip if old
-   if (__isChart) {
-      string label = "rsf."+ WindowExpertName() +".cmd.tickcount";
-      bool objExists = (ObjectFind(label) != -1);
-
-      if (objExists) lastTickcount = StrToInteger(ObjectDescription(label));
-      if (tickcount <= lastTickcount) return(false);
-
-      if (!objExists) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      ObjectSetText(label, ""+ tickcount);
+   if (cmd == "parameter") {
+      if (params == "up")   return(ParameterStepper(STEP_UP, keys));
+      if (params == "down") return(ParameterStepper(STEP_DOWN, keys));
    }
-   else if (tickcount <= lastTickcount) return(false);
-   lastTickcount = tickcount;
-
-   if (cmd == "parameter-up")   return(ParameterStepper(STEP_UP, keys));
-   if (cmd == "parameter-down") return(ParameterStepper(STEP_DOWN, keys));
-
-   return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(cmd +":"+ params +":"+ keys)));
 }
 
 
 /**
- * Step up/down the input parameter "ZigZag.Periods".
+ * Step up/down input parameters "ZigZag.Periods" or "Show123Projections".
  *
  * @param  int direction - STEP_UP | STEP_DOWN
- * @param  int keys      - modifier keys (not used by this indicator)
+ * @param  int keys      - modifier keys
  *
  * @return bool - success status
  */
 bool ParameterStepper(int direction, int keys) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   double step = ZigZag.Periods.Step;
-
-   if (!step || ZigZag.Periods + direction*step < 2) {      // no stepping if parameter limit reached
-      PlaySoundEx("Plonk.wav");
-      return(false);
+   // with VK_SHIFT: control parameter Show123Projections
+   if (keys & F_VK_SHIFT && 1) {
+      if (Show123Projections + direction < 0) {                // stop if parameter limit reached
+         PlaySoundEx("Plonk.wav");
+         return(false);
+      }
+      Show123Projections += direction;
+      Draw123Projections();
    }
-   if (direction == STEP_UP) ZigZag.Periods += step;
-   else                      ZigZag.Periods -= step;
 
-   ChangedBars = Bars;
-   ValidBars   = 0;
-   ShiftedBars = 0;
-
-   PlaySoundEx("Parameter Step.wav");
+   // w/o VK_SHIFT: control parameter ZigZag.Periods
+   else {
+      int step = ZigZag.Periods.Step;
+      if (!step || ZigZag.Periods + direction*step < 2) {      // stop if parameter limit reached
+         PlaySoundEx("Plonk.wav");
+         return(false);
+      }
+      if (direction == STEP_UP) ZigZag.Periods += step;
+      else                      ZigZag.Periods -= step;
+      ChangedBars = Bars;
+      ValidBars   = 0;
+      ShiftedBars = 0;
+      PlaySoundEx("Parameter Step.wav");
+   }
    return(true);
 }
 

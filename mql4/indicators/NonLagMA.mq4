@@ -220,7 +220,7 @@ int onTick() {
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper", false);
+   if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper");
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -347,28 +347,11 @@ bool onTrendChange(int trend) {
  * @return bool - success status of the executed command
  */
 bool onCommand(string cmd, string params, int keys) {
-   static int lastTickcount = 0;
-   int tickcount = StrToInteger(params);
-
-   // stepper cmds are not removed from the queue: compare tickcount with last processed command and skip if old
-   if (__isChart) {
-      string label = "rsf."+ WindowExpertName() +".cmd.tickcount";
-      bool objExists = (ObjectFind(label) != -1);
-
-      if (objExists) lastTickcount = StrToInteger(ObjectDescription(label));
-      if (tickcount <= lastTickcount) return(false);
-
-      if (!objExists) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      ObjectSetText(label, ""+ tickcount);
+   if (cmd == "parameter") {
+      if (params == "up")   return(ParameterStepper(STEP_UP, keys));
+      if (params == "down") return(ParameterStepper(STEP_DOWN, keys));
    }
-   else if (tickcount <= lastTickcount) return(false);
-   lastTickcount = tickcount;
-
-   if (cmd == "parameter-up")   return(ParameterStepper(STEP_UP, keys));
-   if (cmd == "parameter-down") return(ParameterStepper(STEP_DOWN, keys));
-
-   return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(cmd +":"+ params +":"+ keys)));
 }
 
 
