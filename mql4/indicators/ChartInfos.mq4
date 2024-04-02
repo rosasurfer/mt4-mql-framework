@@ -1373,12 +1373,15 @@ bool UpdatePositions() {
    }
 
    // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
-   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMinMax="", sMaxRisk="", sComment="", pmText="";
+   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMinMax="", sMaxRisk="", sComment="", pmText="", priceFormat="";
    color fontColor;
    int line, configLine, index;
 
    // update display of internal custom positions
    if (mode.intern) {
+      if (Digits==2 && Close[0] < 500) priceFormat = PriceFormat +"'";
+      else                             priceFormat = PriceFormat;
+
       for (int i=positions-1; i >= 0; i--) {
          line++;
          if      (positions.data[i][I_CUSTOM_TYPE  ] == CUSTOM_VIRTUAL_POSITION) fontColor = positions.fontColor.virtual;
@@ -1432,7 +1435,7 @@ bool UpdatePositions() {
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"), NumberToStr(positions.data[i][I_HEDGED_LOTS  ], ".+") +" lot", positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "Dist:",                                                       positions.fontSize, positions.fontName, fontColor);
                   if (!positions.data[i][I_PIP_DISTANCE]) sDistance = "...";
-                  else                                     sDistance = PipToStr(positions.data[i][I_PIP_DISTANCE], true, true);
+                  else                                    sDistance = PipToStr(positions.data[i][I_PIP_DISTANCE], true, true);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sDistance,                                                     positions.fontSize, positions.fontName, fontColor);
             }
 
@@ -1444,7 +1447,7 @@ bool UpdatePositions() {
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"), sLotSize +" lot",                                              positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "BE:",                                                         positions.fontSize, positions.fontName, fontColor);
                   if (!positions.data[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
-                  else                                       sBreakeven = NumberToStr(positions.data[i][I_BREAKEVEN_PRICE], PriceFormat);
+                  else                                       sBreakeven = NumberToStr(positions.data[i][I_BREAKEVEN_PRICE], priceFormat);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sBreakeven,                                                    positions.fontSize, positions.fontName, fontColor);
             }
 
@@ -3711,14 +3714,14 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
 
       pipValue = PipValue(lTotalPosition, true);                        // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
-         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit)/pipValue*Pip, Digits);
+         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit)/pipValue*Pip, 8);
 
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
             positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (openPrice/lTotalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(profitMarkerPct)) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-profitMarkerPct/100*equity100Pct)/pipValue*Pip, Digits);
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-profitMarkerPct/100*equity100Pct)/pipValue*Pip, 8);
             positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
          }
 
@@ -3727,7 +3730,7 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
             positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit + (lossMarkerPrice-openPrice/lTotalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(lossMarkerPct)) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-lossMarkerPct/100*equity100Pct)/pipValue*Pip, Digits);
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/lTotalPosition - (totalProfit-floatingProfit-lossMarkerPct/100*equity100Pct)/pipValue*Pip, 8);
             positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPct;
          }
       }
@@ -3804,14 +3807,14 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
 
       pipValue = PipValue(-lTotalPosition, true);                       // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
-         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble((totalProfit-floatingProfit)/pipValue*Pip - openPrice/lTotalPosition, Digits);
+         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble((totalProfit-floatingProfit)/pipValue*Pip - openPrice/lTotalPosition, 8);
 
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
             positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (profitMarkerPrice + openPrice/lTotalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(profitMarkerPct)) {
-            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-profitMarkerPct/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, Digits);
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-profitMarkerPct/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, 8);
             positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
          }
 
@@ -3820,7 +3823,7 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
             positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (lossMarkerPrice + openPrice/lTotalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(lossMarkerPct)) {
-            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-lossMarkerPct/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, Digits);
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-lossMarkerPct/100*equity100Pct)/pipValue*Pip - openPrice/lTotalPosition, 8);
             positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPct;
          }
       }

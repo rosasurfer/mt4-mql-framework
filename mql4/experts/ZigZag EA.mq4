@@ -61,6 +61,7 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
+ *  - trailing stop
  *
  *  - optimization
  *     better statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
@@ -69,6 +70,7 @@
  *
  *
  *  - tests
+ *     remove obsolete inputs "Test.StartTime", "Test.StartPrice"
  *     read enabled trade directions at test start
  *     storage in folder per strategy
  *     on no connection/old terminal: indicator of the same name to load test into chart

@@ -5816,11 +5816,11 @@ string PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=f
 
    if (thousandsSeparator) sSeparator = ",'";
 
-   if (Digits==2 && Close[0]>=500) {
+   if (Digits<=2 && Close[0]>=500) {
       sValue = NumberToStr(value/100, sSeparator +"R.2");            // 123 pip => 1.23 quote units
    }
    else {
-      sValue = NumberToStr(value, sSeparator +"R."+ (Digits & 1));   // 123 pip
+      sValue = NumberToStr(value, sSeparator +"R."+ (Digits & 1));   // 123.4 pip (always with subpips)
       if (appendSuffix) sValue = StringConcatenate(sValue, " pip");
    }
    return(sValue);
