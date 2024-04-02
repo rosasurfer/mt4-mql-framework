@@ -77,6 +77,11 @@ int onInit() {
    if (AutoConfiguration) Line.Color = GetConfigColor(indicator, "Line.Color", Line.Color);
    if (Line.Color == 0xFF000000) Line.Color = CLR_NONE;
 
+   // reset an active command handler
+   if (__isChart && MA.Periods.Step) {
+      GetChartCommand("ParameterStepper", sValues);
+   }
+
    // restore a stored runtime status
    RestoreStatus();
 
@@ -189,7 +194,6 @@ bool ParameterStepper(int direction, int keys) {
 
    ChangedBars = Bars;
    ValidBars   = 0;
-   ShiftedBars = 0;
 
    PlaySoundEx("Parameter Step.wav");
    return(true);

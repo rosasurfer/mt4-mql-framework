@@ -126,6 +126,12 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
+   // reset the command handler
+   if (__isChart) {
+      string sValues[];
+      GetChartCommand("", sValues);
+   }
+
    if (__isTesting) {
       positions.showAbsProfits = true;
    }

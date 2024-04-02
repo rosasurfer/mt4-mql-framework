@@ -307,6 +307,12 @@ int onInit() {
    CreateLabels();
    SetIndicatorOptions();
 
+   // reset the command handler
+   if (__isChart) {
+      string sValues[];
+      GetChartCommand("", sValues);
+   }
+
    // only online
    if (!__isTesting) {
       // restore a configured trade account and initialize order/limit monitoring

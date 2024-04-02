@@ -338,6 +338,7 @@ bool     ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled
 bool     ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled, bool &smsEnabled);;
 
 int      ExplodeStrings(int &buffer[], string &results[]);;
+bool     GetChartCommand(string channel, string &commands[]);;
 bool     HandleCommands(string channel = "");;
 int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int mute=NULL);;
 int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int mute=NULL);;
@@ -346,7 +347,6 @@ int      iCopyRates(double target[][6], string symbol=NULL, int timeframe=NULL);
 int      InitializeByteBuffer(int &buffer[], int bytes);;
 bool     iPreviousPeriod(int timeframe=NULL, datetime &openTimeFxt, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv, bool skipWeekends=true);;
 bool     IsBarOpen(int timeframe=NULL);;
-bool     IsChartCommand(string channel, string &commands[]);;
 string   JoinBools(bool &values[], string separator=", ");;
 string   JoinDoubles(double &values[], string separator=", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator=", ");;

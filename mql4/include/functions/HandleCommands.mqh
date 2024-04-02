@@ -15,50 +15,51 @@ bool HandleCommands(string channel = "") {
    string commands[];
    ArrayResize(commands, 0);
 
-   IsChartCommand(channel, commands);
-   int size = ArraySize(commands);
+   if (GetChartCommand(channel, commands)) {
+      int size = ArraySize(commands);
 
-   for (int i=0; i < size && !last_error; i++) {
-      string cmd="", params="", values[], modifier="";
+      for (int i=0; i < size && !last_error; i++) {
+         string cmd="", params="", modifier="", values[];
 
-      int parts = Explode(commands[i], ":", values, NULL), virtKeys=0;
-      if (parts > 0) cmd    = StrTrim(values[0]);
-      if (parts > 1) params = StrTrim(values[1]);
-      if (parts > 2) {
-         parts = Explode(values[2], ",", values, NULL);
-         for (int n=0; n < parts; n++) {
-            modifier = StrTrim(values[n]);
-            if      (modifier == "VK_ESCAPE")  virtKeys |= F_VK_ESCAPE;
-            else if (modifier == "VK_TAB")     virtKeys |= F_VK_TAB;
-            else if (modifier == "VK_CAPITAL") virtKeys |= F_VK_CAPITAL;   // CAPSLOCK key
-            else if (modifier == "VK_SHIFT")   virtKeys |= F_VK_SHIFT;
-            else if (modifier == "VK_CONTROL") virtKeys |= F_VK_CONTROL;
-            else if (modifier == "VK_MENU")    virtKeys |= F_VK_MENU;      // ALT key
-            else if (modifier == "VK_LWIN")    virtKeys |= F_VK_LWIN;      // left Windows key
-            else if (modifier == "VK_RWIN")    virtKeys |= F_VK_RWIN;      // right Windows key
-            else if (modifier != "") logNotice("HandleCommands(1)  skipping unsupported key modifier: "+ modifier);
+         int parts = Explode(commands[i], ":", values, NULL), virtKeys=0;
+         if (parts > 0) cmd    = StrTrim(values[0]);
+         if (parts > 1) params = StrTrim(values[1]);
+         if (parts > 2) {
+            parts = Explode(values[2], ",", values, NULL);
+            for (int n=0; n < parts; n++) {
+               modifier = StrTrim(values[n]);
+               if      (modifier == "VK_ESCAPE")  virtKeys |= F_VK_ESCAPE;
+               else if (modifier == "VK_TAB")     virtKeys |= F_VK_TAB;
+               else if (modifier == "VK_CAPITAL") virtKeys |= F_VK_CAPITAL;   // CAPSLOCK key
+               else if (modifier == "VK_SHIFT")   virtKeys |= F_VK_SHIFT;
+               else if (modifier == "VK_CONTROL") virtKeys |= F_VK_CONTROL;
+               else if (modifier == "VK_MENU")    virtKeys |= F_VK_MENU;      // ALT key
+               else if (modifier == "VK_LWIN")    virtKeys |= F_VK_LWIN;      // left Windows key
+               else if (modifier == "VK_RWIN")    virtKeys |= F_VK_RWIN;      // right Windows key
+               else if (modifier != "") logNotice("HandleCommands(1)  skipping unsupported key modifier: "+ modifier);
+            }
          }
-      }
 
-      if (cmd == "") {
-         logNotice("HandleCommands(2)  skipping empty command: \""+ commands[i] +"\"");
-         continue;
+         if (cmd == "") {
+            logNotice("HandleCommands(2)  skipping empty command: \""+ commands[i] +"\"");
+            continue;
+         }
+         onCommand(cmd, params, virtKeys);
       }
-      onCommand(cmd, params, virtKeys);
    }
    return(!last_error);
 }
 
 
 /**
- * Checks for and retrieves commands sent to the chart.
+ * Retrieve a chart command sent to the specified channel.
  *
- * @param  _In_    string channel     - channel to check for incoming commands
- * @param  _InOut_ string &commands[] - array commands are appended to
+ * @param  _In_    string channel     - channel to check for commands
+ * @param  _InOut_ string &commands[] - array the command is appended to
  *
- * @return bool - whether a command was successfully retrieved
+ * @return bool - whether a command was found and successfully retrieved
  */
-bool IsChartCommand(string channel, string &commands[]) {
+bool GetChartCommand(string channel, string &commands[]) {
    if (!__isChart) return(false);
 
    static string stdChannel = ""; if (stdChannel == "") {

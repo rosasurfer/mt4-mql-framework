@@ -20,7 +20,7 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
-   else return(!logNotice("onCommand(1)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
+   else return(!logNotice("onCommand(1)  "+ instance.name +" unsupported command: \""+ fullCmd +"\""));
 
-   return(!logWarn("onCommand(2)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
+   return(!logWarn("onCommand(2)  "+ instance.name +" cannot execute command \""+ fullCmd +"\" in status "+ StatusToStr(instance.status)));
 }

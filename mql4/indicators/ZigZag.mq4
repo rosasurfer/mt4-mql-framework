@@ -306,6 +306,11 @@ int onInit() {
    // Sound.onChannelWidening
    if (AutoConfiguration) Sound.onChannelWidening = GetConfigBool(indicator, "Sound.onChannelWidening", Sound.onChannelWidening);
 
+   // reset an active command handler
+   if (__isChart && (ZigZag.Periods.Step || Show123Projections)) {
+      GetChartCommand("ParameterStepper", sValues);
+   }
+
    // restore a stored runtime status
    RestoreStatus();
 
@@ -1144,7 +1149,6 @@ bool ParameterStepper(int direction, int keys) {
       Show123Projections += direction;
       ChangedBars = Bars;                                   // Draw123Projections() can't be called directly. It must be called
       ValidBars   = 0;                                      // by onTick() after buffers have been updated.
-      ShiftedBars = 0;
       return(true);
    }
 
@@ -1158,7 +1162,6 @@ bool ParameterStepper(int direction, int keys) {
    else                      ZigZag.Periods -= step;
    ChangedBars = Bars;
    ValidBars   = 0;
-   ShiftedBars = 0;
    PlaySoundEx("Parameter Step.wav");
    return(true);
 }

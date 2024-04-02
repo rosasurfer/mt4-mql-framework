@@ -207,6 +207,11 @@ int onInit() {
       else Signal.onTrendChange = false;
    }
 
+   // reset an active command handler
+   if (__isChart && (T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step)) {
+      GetChartCommand("ParameterStepper", sValues);
+   }
+
    // restore a stored runtime status
    RestoreStatus();
 
@@ -508,7 +513,6 @@ bool ParameterStepper(int direction, int keys) {
 
    ChangedBars = Bars;
    ValidBars   = 0;
-   ShiftedBars = 0;
 
    PlaySoundEx("Parameter Step.wav");
    return(true);

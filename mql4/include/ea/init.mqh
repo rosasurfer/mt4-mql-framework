@@ -123,6 +123,10 @@ int afterInit() {
    }
    if (__isTesting) ReadTestConfiguration();
 
+   // reset the command handler
+   string sValues[];
+   GetChartCommand("", sValues);
+
    StoreVolatileStatus();                          // store the instance id for template reload/restart/recompilation etc.
    return(catch("afterInit(2)"));
 }

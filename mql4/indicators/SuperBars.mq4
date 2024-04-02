@@ -135,6 +135,9 @@ int onInit() {
    SetIndexLabel(0, NULL);                               // no entries in "Data" window
    legendLabel = CreateStatusLabel();
 
+   // reset the command handler
+   if (__isChart) GetChartCommand("", sValues);
+
    // restore a stored runtime status
    if (!RestoreStatus()) return(last_error);
 

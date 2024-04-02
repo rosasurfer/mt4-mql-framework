@@ -74,6 +74,11 @@ int onInit() {
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       ObjectSetText(label, "1|");
    }
+
+   // reset the command handler
+   string sValues[];
+   GetChartCommand("", sValues);
+
    return(catch("onInit(1)"));
 }
 
