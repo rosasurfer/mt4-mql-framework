@@ -347,10 +347,6 @@ int onDeinit() {
 }
 
 
-#include <functions/iBarShiftNext.mqh>
-bool doDebug = false;
-
-
 /**
  * Main function
  *
@@ -532,11 +528,6 @@ int onTick() {
 
          // draw 123 projections
          if (!Draw123Projections()) return(last_error);
-
-         doDebug = true;
-         type = NULL;
-         if (false) FindPrevSemaphore(iBarShiftNext(NULL, NULL, D'2024.04.01 13:00'), type);
-         doDebug = false;
       }
       else {
          // detect ZigZag breakouts (comparing legs against bands also detect breakouts on missed ticks)
@@ -657,7 +648,6 @@ int FindPrevSemaphore(int bar, int &type) {
    if (type != NULL) {
       if (type!=MODE_HIGH && type!=MODE_LOW) return(_EMPTY(catch("FindPrevSemaphore(2)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
    }
-   if (doDebug) debug("FindPrevSemaphore(0.1)  enter   from="+ TimeToStr(Time[bar], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
 
    if (!type || !semaphoreClose[bar]) {
       if (semaphoreClose[bar] != NULL) {                             // semaphore is located at the current bar
@@ -680,11 +670,7 @@ int FindPrevSemaphore(int bar, int &type) {
       else if (semaphoreOpen [semBar] > semaphoreClose[semBar]+HalfPoint) type = MODE_LOW;
       else if (semaphoreClose[semBar] == higherHigh[semBar])              type = MODE_HIGH;  // semaphoreOpen == semaphoreClose
       else                                                                type = MODE_LOW;   // ...
-      if (doDebug) debug("FindPrevSemaphore(0.2)  leave, found="+ TimeToStr(Time[semBar], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
-
-      if (!catch("FindPrevSemaphore(3)"))
-         return(semBar);
-      return(EMPTY);
+      return(semBar);
    }
 
    if (semaphoreOpen[bar] == semaphoreClose[bar]) {
@@ -693,7 +679,6 @@ int FindPrevSemaphore(int bar, int &type) {
       if (type == MODE_HIGH) {
          if (isHigh) {
             type = NULL;
-            if (doDebug) debug("FindPrevSemaphore(0.3)  recurse  for="+ TimeToStr(Time[bar+1], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
             return(FindPrevSemaphore(bar+1, type));
          }
          type = MODE_LOW;
@@ -701,7 +686,6 @@ int FindPrevSemaphore(int bar, int &type) {
       else /*type == MODE_LOW*/ {
          if (!isHigh) {
             type = NULL;
-            if (doDebug) debug("FindPrevSemaphore(0.4)  recurse  for="+ TimeToStr(Time[bar+1], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
             return(FindPrevSemaphore(bar+1, type));
          }
          type = MODE_HIGH;
@@ -713,7 +697,6 @@ int FindPrevSemaphore(int bar, int &type) {
       if (type == MODE_HIGH) {
          if (high2Low) {
             type = NULL;
-            if (doDebug) debug("FindPrevSemaphore(0.5)  recurse  for="+ TimeToStr(Time[bar+1], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
             return(FindPrevSemaphore(bar+1, type));
          }
          type = MODE_LOW;
@@ -721,17 +704,12 @@ int FindPrevSemaphore(int bar, int &type) {
       else /*type == MODE_LOW*/ {
          if (!high2Low) {
             type = NULL;
-            if (doDebug) debug("FindPrevSemaphore(0.6)  recurse  for="+ TimeToStr(Time[bar+1], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
             return(FindPrevSemaphore(bar+1, type));
          }
          type = MODE_HIGH;
       }
    }
-   if (doDebug) debug("FindPrevSemaphore(0.7)  leave, found="+ TimeToStr(Time[bar], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
-
-   if (!catch("FindPrevSemaphore(4)"))
-      return(bar);
-   return(EMPTY);
+   return(bar);
 }
 
 
@@ -897,10 +875,6 @@ bool Draw123Projections() {
    // find and redraw 123 projections
    int foundPatterns = 0;
    while (foundPatterns < Show123Projections) {
-      //doDebug = (Time[bar4] >= D'2024.04.01 15:15' && Time[bar4] < D'2024.04.01 17:15');
-      if (doDebug) debug("Draw123Projections(0.1)  "+ TimeToStr(Time[bar4]) +"  "+ ifString(type==MODE_HIGH, "H", "L"));
-      doDebug = false;
-
       if (type == MODE_HIGH) {
          if (sem2 < sem4+HalfPoint && sem1 < sem3-HalfPoint) {
             foundPatterns++;
@@ -913,11 +887,9 @@ bool Draw123Projections() {
             if (!Create123Projection(bar2, sem2, bar3, sem3)) return(false);
          }
       }
-      bar1=bar2; bar2=bar3; bar3=bar4; bar4=FindPrevSemaphore(bar4, type); if (IsEmpty(bar4)) return(false);
+      bar1=bar2; bar2=bar3; bar3=bar4; bar4=FindPrevSemaphore(bar4, type);
       sem1=sem2; sem2=sem3; sem3=sem4; sem4=ifDouble(type==MODE_HIGH, High[bar4], Low[bar4]);
    }
-   doDebug = false;
-
    return(!catch("Draw123Projections(1)"));
 }
 
