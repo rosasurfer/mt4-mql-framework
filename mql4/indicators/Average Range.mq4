@@ -111,7 +111,9 @@ int onTick() {
    if (!ArraySize(ranges)) return(logInfo("onTick(1)  sizeof(ranges) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && MA.Periods.Step) HandleCommands("ParameterStepper");
+   if (__isChart && MA.Periods.Step) {
+      if (!HandleCommands("ParameterStepper")) return(last_error);
+   }
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {

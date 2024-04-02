@@ -356,8 +356,8 @@ int onTick() {
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  sizeof(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart) {
-      if (ZigZag.Periods.Step || Show123Projections) HandleCommands("ParameterStepper");
+   if (__isChart && (ZigZag.Periods.Step || Show123Projections)) {
+      if (!HandleCommands("ParameterStepper")) return(last_error);
    }
 
    // framework: manage additional buffers
@@ -526,7 +526,7 @@ int onTick() {
          sema3 = ifDouble(type==MODE_HIGH, High[bar], Low[bar]);
 
          // draw 123 projections
-         if (!Draw123Projections()) return(logWarn("onTick(3)->Draw123Projections() failed", last_error));
+         if (!Draw123Projections()) return(last_error);
 
          doDebug = true;
          type = NULL;
@@ -648,13 +648,13 @@ bool IsUpperCrossLast(int bar) {
  * @return int - chart offset of the found semaphore or EMPTY (-1) in case of errors
  */
 int FindPrevSemaphore(int bar, int &type) {
+   if (bar < 0 || bar >= Bars)               return(_EMPTY(catch("FindPrevSemaphore(1)  invalid parameter bar: "+ bar +" (out of range)", ERR_INVALID_PARAMETER)));
    if (type != NULL) {
-      if (type!=MODE_HIGH && type!=MODE_LOW) return(_EMPTY(catch("FindPrevSemaphore(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+      if (type!=MODE_HIGH && type!=MODE_LOW) return(_EMPTY(catch("FindPrevSemaphore(2)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
    }
    if (doDebug) debug("FindPrevSemaphore(0.1)  enter   from="+ TimeToStr(Time[bar], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
 
    if (!type || !semaphoreClose[bar]) {
-      if (doDebug) debug("FindPrevSemaphore(0.1.1)");
       if (semaphoreClose[bar] != NULL) {                             // semaphore is located at the current bar
          int semBar = bar;
       }
@@ -676,11 +676,13 @@ int FindPrevSemaphore(int bar, int &type) {
       else if (semaphoreClose[semBar] == higherHigh[semBar])              type = MODE_HIGH;  // semaphoreOpen == semaphoreClose
       else                                                                type = MODE_LOW;   // ...
       if (doDebug) debug("FindPrevSemaphore(0.2)  leave, found="+ TimeToStr(Time[semBar], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
-      return(semBar);
+
+      if (!catch("FindPrevSemaphore(3)"))
+         return(semBar);
+      return(EMPTY);
    }
 
    if (semaphoreOpen[bar] == semaphoreClose[bar]) {
-      if (doDebug) debug("FindPrevSemaphore(0.2.1)");
       bool isHigh = (semaphoreClose[bar] == higherHigh[bar]);
 
       if (type == MODE_HIGH) {
@@ -701,7 +703,6 @@ int FindPrevSemaphore(int bar, int &type) {
       }
    }
    else {
-      if (doDebug) debug("FindPrevSemaphore(0.4.1)");
       bool high2Low = (semaphoreOpen[bar] > semaphoreClose[bar]+HalfPoint);
 
       if (type == MODE_HIGH) {
@@ -723,7 +724,7 @@ int FindPrevSemaphore(int bar, int &type) {
    }
    if (doDebug) debug("FindPrevSemaphore(0.7)  leave, found="+ TimeToStr(Time[bar], TIME_MINUTES) +"  type="+ ifString(!type, "-", ifString(type==MODE_HIGH, "H", "L")));
 
-   if (!catch("FindPrevSemaphore(2)"))
+   if (!catch("FindPrevSemaphore(4)"))
       return(bar);
    return(EMPTY);
 }
@@ -891,7 +892,6 @@ bool Draw123Projections() {
    // find and redraw 123 projections
    int foundPatterns = 0;
    while (foundPatterns < Show123Projections) {
-
       //doDebug = (Time[bar4] >= D'2024.04.01 15:15' && Time[bar4] < D'2024.04.01 17:15');
       if (doDebug) debug("Draw123Projections(0.1)  "+ TimeToStr(Time[bar4]) +"  "+ ifString(type==MODE_HIGH, "H", "L"));
       doDebug = false;
@@ -899,16 +899,16 @@ bool Draw123Projections() {
       if (type == MODE_HIGH) {
          if (sem2 < sem4+HalfPoint && sem1 < sem3-HalfPoint) {
             foundPatterns++;
-            Create123Projection(bar2, sem2, bar3, sem3);
+            if (!Create123Projection(bar2, sem2, bar3, sem3)) return(false);
          }
       }
       else /*type==MODE_LOW*/ {
          if (sem2 > sem4-HalfPoint && sem1 > sem3+HalfPoint) {
             foundPatterns++;
-            Create123Projection(bar2, sem2, bar3, sem3);
+            if (!Create123Projection(bar2, sem2, bar3, sem3)) return(false);
          }
       }
-      bar1=bar2; bar2=bar3; bar3=bar4; bar4=FindPrevSemaphore(bar4, type);
+      bar1=bar2; bar2=bar3; bar3=bar4; bar4=FindPrevSemaphore(bar4, type); if (IsEmpty(bar4)) return(false);
       sem1=sem2; sem2=sem3; sem3=sem4; sem4=ifDouble(type==MODE_HIGH, High[bar4], Low[bar4]);
    }
    doDebug = false;
@@ -932,7 +932,7 @@ bool Delete123Projections() {
       }
    }
    ArrayResize(labels, 0);
-   return(true);
+   return(!catch("Delete123Projections(2)"));
 }
 
 
@@ -1137,19 +1137,20 @@ bool ParameterStepper(int direction, int keys) {
 
    // with VK_SHIFT: control parameter Show123Projections
    if (keys & F_VK_SHIFT && 1) {
-      if (Show123Projections + direction < 0) {                // stop if parameter limit reached
+      if (Show123Projections + direction < 0) {             // stop if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
       Show123Projections += direction;
-      if (!Draw123Projections())
-         return(!logWarn("ParameterStepper(2)->Draw123Projections() failed", last_error));
+      ChangedBars = Bars;                                   // Draw123Projections() can't be called directly. It must be called
+      ValidBars   = 0;                                      // by onTick() after buffers have been updated.
+      ShiftedBars = 0;
       return(true);
    }
 
    // w/o VK_SHIFT: control parameter ZigZag.Periods
    int step = ZigZag.Periods.Step;
-   if (!step || ZigZag.Periods + direction*step < 2) {         // stop if parameter limit reached
+   if (!step || ZigZag.Periods + direction*step < 2) {      // stop if parameter limit reached
       PlaySoundEx("Plonk.wav");
       return(false);
    }

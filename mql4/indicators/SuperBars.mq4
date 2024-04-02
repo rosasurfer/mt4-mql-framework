@@ -161,11 +161,14 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   if (!__isChart) return(last_error);
+
    serverTime = TimeServer("onTick(1)", true);
    if (!serverTime) return(last_error);
 
-   HandleCommands();                                     // process incoming commands
-   UpdateSuperBars();                                    // update superbars
+   if (HandleCommands()) {                               // process incoming commands
+      UpdateSuperBars();                                 // update superbars
+   }
    return(last_error);
 }
 

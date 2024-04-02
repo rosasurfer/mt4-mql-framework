@@ -95,7 +95,7 @@ int onDeinitRemove() {
  * @return int - error status
  */
 int onTick() {
-   if (__isChart) HandleCommands();
+   if (__isChart) if (!HandleCommands()) return(last_error);
    return(catch("onTick(1)"));
 }
 

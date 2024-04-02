@@ -280,7 +280,9 @@ int onTick() {
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && (T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper");
+   if (__isChart && (T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step)) {
+      if (!HandleCommands("ParameterStepper")) return(last_error);
+   }
 
    ManageDoubleIndicatorBuffer(MODE_EMA1, ema1);
    ManageDoubleIndicatorBuffer(MODE_EMA2, ema2);

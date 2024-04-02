@@ -140,7 +140,9 @@ int  bracket2End   = 990;                    // 16:30
 int onTick() {
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
 
-   if (__isChart) HandleCommands();                // process incoming commands, may switch on/off the instance
+   if (__isChart) {
+      if (!HandleCommands()) return(last_error);   // process incoming commands, may switch on/off the instance
+   }
 
    // init: minutes, runtime: seconds
    if (bracket1Start <= 1440) bracket1Start *= MINUTES;

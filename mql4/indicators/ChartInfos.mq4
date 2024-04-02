@@ -223,12 +223,13 @@ string  orderTracker.positionStepSize = "MarginLow.wav";          // position in
  * @return int - error status
  */
 int onTick() {
+   if (!__isChart) return(last_error);
+
    mm.done = false;
    positions.analyzed = false;
 
-   if (__isChart) HandleCommands();                                                 // process incoming commands
-
-   if (!UpdatePrice())                     if (IsLastError()) return(last_error);   // update the current price (top-right)
+   if (!HandleCommands())                  return(last_error);                      // process incoming commands
+   if (!UpdatePrice())                     return(last_error);                      // update the current price (top-right)
 
    if (mode.extern) {
       if (!QC.HandleLfxTerminalMessages()) if (IsLastError()) return(last_error);   // process incoming LFX commands
@@ -248,9 +249,9 @@ int onTick() {
          int    failedOrders   [];    ArrayResize(failedOrders,    0);              // {ticket}
 
          if (!MonitorOpenOrders(openedPositions, closedPositions, failedOrders)) return(last_error);
-         if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
+         if (ArraySize(openedPositions) > 0) onPositionOpen(openedPositions);
          if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
-         if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders);
+         if (ArraySize(failedOrders   ) > 0) onOrderFail(failedOrders);
       }
    }
    return(last_error);

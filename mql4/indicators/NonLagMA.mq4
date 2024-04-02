@@ -220,7 +220,9 @@ int onTick() {
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper");
+   if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) {
+      if (!HandleCommands("ParameterStepper")) return(last_error);
+   }
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {

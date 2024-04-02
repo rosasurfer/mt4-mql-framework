@@ -362,7 +362,7 @@ int onDeinit() {
 int onTick() {
    if (!ValidBars) SetIndicatorOptions();                   // reset indicator options
 
-   HandleCommands();                                        // process incoming commands
+   if (!HandleCommands()) return(last_error);               // process incoming commands
 
    ArrayResize(missingSymbols, 0);
    staleLimit = GetServerTime() - 10*MINUTES;               // exotic instruments may show rather large pauses between ticks
