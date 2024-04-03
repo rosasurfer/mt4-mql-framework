@@ -4,9 +4,6 @@
 extern string   ______________________________ = "";
 extern string   EA.Recorder     = "on | off* | 1,2,3,...";        // @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
 
-extern datetime Test.StartTime  = 0;                              // time to start a test
-extern double   Test.StartPrice = 0;                              // price to start a test
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define __lpSuperContext NULL
@@ -141,12 +138,7 @@ int init() {
    if (UninitializeReason() != UR_CHARTCHANGE) {                  // log input parameters
       if (IsLogInfo()) {
          string sInputs = InputsToStr();
-         if (StringLen(sInputs) > 0) {
-            sInputs = StringConcatenate(sInputs, NL, "EA.Recorder=\"", EA.Recorder, "\"",                           ";",
-               ifString(!Test.StartTime,     "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
-               ifString(!Test.StartPrice,    "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
-            logInfo(initHandlers[initReason] +"(0)  inputs: "+ sInputs);
-         }
+         if (sInputs != "") logInfo(initHandlers[initReason] +"(0)  inputs: "+ sInputs + NL +"EA.Recorder=\""+ EA.Recorder +"\";");
       }
    }
 
@@ -262,47 +254,14 @@ int start() {
    // check a finished chart initialization (spurious issue which was observed on older terminals at terminal start)
    if (!Bars) return(ShowStatus(SetLastError(logInfo("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
-   // tester: wait until a configured start time/price is reached
-   if (__isTesting) {
-      if (Test.StartTime != 0) {
-         static string startTime=""; if (!StringLen(startTime)) startTime = TimeToStr(Test.StartTime, TIME_FULL);
-         if (Tick.time < Test.StartTime) {
-            Comment(NL, NL, NL, "Test: starting at ", startTime);
-            return(last_error);
+   // check tick value if configured
+   if (__ExecutionContext[EC.programInitFlags] & INIT_PIPVALUE && 1) {     // on "Market Watch" -> "Context menu" -> "Hide all" all symbols are unsubscribed
+      if (!MarketInfo(Symbol(), MODE_TICKVALUE)) {                         // and the used ones re-subscribed (for a moment: tickvalue = 0 and no error)
+         error = GetLastError();
+         if (error != NO_ERROR) {
+            if (CheckErrors("start(4)", error)) return(last_error);
          }
-         Test.StartTime = 0;
-      }
-      if (Test.StartPrice != 0) {
-         static string startPrice=""; if (!StringLen(startPrice)) startPrice = NumberToStr(Test.StartPrice, PriceFormat);
-         static double test.lastPrice; if (!test.lastPrice) {
-            test.lastPrice = Bid;
-            Comment(NL, NL, NL, "Test: starting at ", startPrice);
-            return(last_error);
-         }
-         if (LT(test.lastPrice, Test.StartPrice)) /*&&*/ if (LT(Bid, Test.StartPrice)) {
-            test.lastPrice = Bid;
-            Comment(NL, NL, NL, "Test: starting at ", startPrice);
-            return(last_error);
-         }
-         if (GT(test.lastPrice, Test.StartPrice)) /*&&*/ if (GT(Bid, Test.StartPrice)) {
-            test.lastPrice = Bid;
-            Comment(NL, NL, NL, "Test: starting at ", startPrice);
-            return(last_error);
-         }
-         Test.StartPrice = 0;
-      }
-   }
-
-   // online: check tick value if INIT_PIPVALUE is configured
-   else {
-      if (__ExecutionContext[EC.programInitFlags] & INIT_PIPVALUE && 1) {  // on "Market Watch" -> "Context menu" -> "Hide all" all symbols are unsubscribed
-         if (!MarketInfo(Symbol(), MODE_TICKVALUE)) {                      // and the used ones re-subscribed (for a moment: tickvalue = 0 and no error)
-            error = GetLastError();
-            if (error != NO_ERROR) {
-               if (CheckErrors("start(4)", error)) return(last_error);
-            }
-            return(ShowStatus(SetLastError(logInfo("start(5)  MarketInfo("+ Symbol() +", MODE_TICKVALUE=0)", ERS_TERMINAL_NOT_YET_READY))));
-         }
+         return(ShowStatus(SetLastError(logInfo("start(5)  MarketInfo("+ Symbol() +", MODE_TICKVALUE=0)", ERS_TERMINAL_NOT_YET_READY))));
       }
    }
 

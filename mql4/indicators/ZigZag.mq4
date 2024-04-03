@@ -80,7 +80,7 @@ extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
 extern string Donchian.ShowCrossings         = "off | first* | all";    // which channel crossings to display
 extern int    Donchian.Crossings.Width       = 1;
-extern int    Donchian.Crossings.Wingdings   = 163;                     // a circle
+extern int    Donchian.Crossings.Wingdings   = 163;                     // a small circle
 extern color  Donchian.Upper.Color           = Blue;
 extern color  Donchian.Lower.Color           = Magenta;
 
@@ -1015,7 +1015,7 @@ bool onReversal(int direction) {
    }
 
    message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message;
-   if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
    if (signal.onReversal.alert)          Alert(message);
    if (signal.onReversal.mail) error |= !SendEmail("", "", message, message + NL + accountTime);
@@ -1045,8 +1045,9 @@ bool onBreakout(int direction, bool is123Pattern) {
    if (GetPropA(hWnd, sEvent) != 0) return(true);
    SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals with slow CPU)
 
-   string message = ifString(direction==D_LONG, "long", "short") + ifString(is123Pattern, ", 1-2-3 pattern", "") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")", accountTime="";
-   if (IsLogInfo()) logInfo("onBreakout(P="+ ZigZag.Periods +")  "+ message);
+   string sDirection = ifString(direction==D_LONG, "long", "short");
+   string sBid       = NumberToStr(_Bid, PriceFormat);
+   if (IsLogInfo()) logInfo("onBreakout(P="+ ZigZag.Periods +")  "+ ifString(is123Pattern, "1-2-3 breakout ", "") + sDirection +" (bid: "+ sBid +")");
 
    if (signal.onBreakout.sound) {
       error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
@@ -1054,12 +1055,13 @@ bool onBreakout(int direction, bool is123Pattern) {
       else if (error == ERR_FILE_NOT_FOUND) signal.onBreakout.sound = false;
    }
 
-   message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") breakout "+ message;
-   if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   string message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +")"+ ifString(is123Pattern, " 1-2-3", "") +" breakout "+ sDirection +" (bid: "+ sBid +")";
+   string sAccount = "";
+   if (signal.onReversal.mail || signal.onReversal.sms) sAccount = "("+ TimeToStr(TimeLocalEx("onBreakout(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
    if (signal.onBreakout.alert)          Alert(message);
-   if (signal.onBreakout.mail) error |= !SendEmail("", "", message, message + NL + accountTime);
-   if (signal.onBreakout.sms)  error |= !SendSMS("", message + NL + accountTime);
+   if (signal.onBreakout.mail) error |= !SendEmail("", "", message, message + NL + sAccount);
+   if (signal.onBreakout.sms)  error |= !SendSMS("", message + NL + sAccount);
    return(!error);
 }
 
