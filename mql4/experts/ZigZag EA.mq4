@@ -74,8 +74,6 @@
  *     storage in folder per strategy
  *     on no connection/old terminal: indicator of the same name to load test into chart
  *
- *  - replace PipToStr() by using pUnit/pDigits/spUnit
- *
  *  - optimization/self-optimization
  *     04.10.2007 Automated re-optimization in MT4       https://www.mql5.com/en/articles/1467
  *     05.10.2018 Automated re-optimization in MT5       https://www.mql5.com/en/articles/4917

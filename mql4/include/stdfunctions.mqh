@@ -5797,37 +5797,6 @@ string NumberToStr(double value, string mask) {
 
 
 /**
- * Format a pip value of the current symbol. Depending on symbol and price the resulting string represents pip, subpip or
- * quote units (e.g. index points).
- *
- * @param  double value                         - pip value
- * @param  bool   thousandsSeparator [optional] - whether to format using thousands separators "'" (default: no)
- * @param  bool   appendSuffix       [optional] - whether to append suffix " pip" to the formatted value (default: no)
- *
- * @return string
- */
-string PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=false) {
-   thousandsSeparator = thousandsSeparator!=0;
-   appendSuffix       = appendSuffix!=0;
-   string sSeparator="", sValue=value;
-
-   if (StringGetChar(sValue, 3) == '#')                              // "-1.#IND0000" => NaN
-      return(sValue);                                                // "-1.#INF0000" => Infinite
-
-   if (thousandsSeparator) sSeparator = ",'";
-
-   if (Digits<=2 && Close[0]>=500) {
-      sValue = NumberToStr(value/100, sSeparator +"R.2");            // 123 pip => 1.23 quote units
-   }
-   else {
-      sValue = NumberToStr(value, sSeparator +"R."+ (Digits & 1));   // 123 pip
-      if (appendSuffix) sValue = StringConcatenate(sValue, " pip");
-   }
-   return(sValue);
-}
-
-
-/**
  * Return the description of a loglevel constant.
  *
  * @param  int level - loglevel
@@ -7253,7 +7222,6 @@ void __DummyCalls() {
    PeriodDescription();
    PeriodFlag();
    PeriodFlagToStr(NULL);
-   PipToStr(NULL);
    PipValue();
    PipValueEx(NULL, NULL, iNull);
    PlaySoundEx(NULL);

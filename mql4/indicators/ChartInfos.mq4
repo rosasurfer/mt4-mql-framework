@@ -1173,9 +1173,10 @@ bool UpdatePrice() {
  * @return bool - success status
  */
 bool UpdateSpread() {
-   string sSpread = " ";
-   if (Bid > 0) {                                        // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
-      sSpread = PipToStr((Ask-Bid)/Pip);                 // no display if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
+   string sSpread = " ";                                 // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
+   if (_Bid > 0) {                                       // no display if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
+      if (pUnit == 1) sSpread = NumberToStr(_Ask-_Bid, "R.2");
+      else            sSpread = NumberToStr((_Ask-_Bid)/pUnit, "R."+ (Digits & 1));
    }
    ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
@@ -1435,7 +1436,7 @@ bool UpdatePositions() {
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"), NumberToStr(positions.data[i][I_HEDGED_LOTS  ], ".+") +" lot", positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "Dist:",                                                       positions.fontSize, positions.fontName, fontColor);
                   if (!positions.data[i][I_PIP_DISTANCE]) sDistance = "...";
-                  else                                    sDistance = PipToStr(positions.data[i][I_PIP_DISTANCE], true, true);
+                  else                                    sDistance = DoubleToStr(positions.data[i][I_PIP_DISTANCE]*Pip/pUnit, pDigits) + ifString(spUnit=="pip", " pip", "");
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sDistance,                                                     positions.fontSize, positions.fontName, fontColor);
             }
 
@@ -3610,7 +3611,7 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
       // BE-Distance und Profit berechnen
       pipValue = PipValue(hedgedLots, true);                                           // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0) {
-         pipDistance  = NormalizeDouble((closePrice-openPrice)/hedgedLots/Pip + (swap+commission)/pipValue, 8);
+         pipDistance  = (closePrice-openPrice)/hedgedLots/Pip + (swap+commission)/pipValue;
          hedgedProfit = pipDistance * pipValue;
       }
 
