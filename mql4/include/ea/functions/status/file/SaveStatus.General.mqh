@@ -25,7 +25,7 @@ bool SaveStatus.General(string file, bool fileExists) {
       WriteIniString(file, section, "Test.TimeRange",  TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
       WriteIniString(file, section, "Test.Period",     PeriodDescription());
       WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
-      WriteIniString(file, section, "Test.Spread",     DoubleToStr((Ask-Bid)/pUnit, pDigits) +" "+ spUnit);
+      WriteIniString(file, section, "Test.Spread",     DoubleToStr((_Ask-_Bid)/pUnit, pDigits) +" "+ spUnit);
          double commission  = GetCommission();
          string sCommission = DoubleToStr(commission, 2);
          if (NE(commission, 0)) {

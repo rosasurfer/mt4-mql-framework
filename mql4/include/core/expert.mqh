@@ -491,14 +491,14 @@ bool initGlobals() {
    __isTesting     = IsTesting();
    __Test.barModel = ec_TestBarModel(__ExecutionContext);
 
+   int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
    HalfPoint      = Point/2;
-   PipDigits      = Digits & (~1);
+   PipDigits      = digits & (~1);
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PipPriceFormat = ",'R."+ PipDigits;
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
+   PriceFormat    = ifString(digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
 
-   int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
-   if (digits > 2) {
+   if (digits > 2 || Close[0] < 1000) {
       pUnit   = Pip;
       pDigits = 1;                                          // always represent pips with subpips
       spUnit  = "pip";
@@ -545,7 +545,7 @@ string initMarketInfo() {
    double   pipValue       = MathDiv(tickValue, MathDiv(tickSize, Pip));       message = message +" PipValue="    + NumberToStr(pipValue, "R.2+") +";";
    double   commission     = GetCommission();                                  message = message +" Commission="  + ifString(!commission, "0.00;", DoubleToStr(commission, 2));
    if (NE(commission, 0)) {
-      double pComm = MathDiv(commission, MathDiv(tickValue, tickSize));        message = message +" ("            + DoubleToStr(pComm/pUnit, pDigits) +" "+ spUnit +");";
+      double commissionP = MathDiv(commission, MathDiv(tickValue, tickSize));  message = message +" ("            + DoubleToStr(commissionP/pUnit, pDigits) +" "+ spUnit +");";
    }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0") +";";

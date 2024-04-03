@@ -6,7 +6,6 @@
  * @return bool - success status
  */
 bool ReadStatus.TradeStats(string file) {
-
    // [Stats: net in money]
    string section = "Stats: net in money";
    instance.openNetProfit    = GetIniDouble(file, section, "openProfit"  );                     // double openProfit   = 23.45

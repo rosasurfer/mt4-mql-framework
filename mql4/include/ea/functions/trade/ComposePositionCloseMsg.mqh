@@ -48,11 +48,11 @@ string ComposePositionCloseMsg(int &error) {
    string sUnexpected = ifString(closedBySL || closedByTP || (__isTesting && __CoreFunction==CF_DEINIT), "", "unexpectedly ");
    string sBySL       = ifString(closedBySL, "by SL ", "");
    string sByTP       = ifString(closedByTP, "by TP ", "");
-   string sSlippage   = ifString(slippage==NULL, "", "slippage: "+ NumberToStr(slippage/pUnit, "R+."+ pDigits) + ifString(spUnit=="pip", " pip", "") +", ");
+   string sSlippage   = ifString(!slippage, "", "slippage: "+ NumberToStr(slippage/pUnit, "R+."+ pDigits) + ifString(pUnit==1, "", " "+ spUnit) +", ");
    string sComment    = ifString(comment==instance.name, "", " "+ comment);
 
    string msg = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" was "+ sUnexpected +"closed "+ sBySL + sByTP +"at "+ sClosePrice;
-          msg = msg +" ("+ sSlippage +"market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")"+ sComment;
+          msg = msg +" ("+ sSlippage +"market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")"+ sComment;
 
    if (closedBySO)                                    error = ERR_MARGIN_STOPOUT;
    else if (closedBySL || closedByTP)                 error = NO_ERROR;

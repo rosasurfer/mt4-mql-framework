@@ -182,14 +182,14 @@ bool initGlobals() {
    __isTesting    = (__ExecutionContext[EC.testing] || IsTesting());
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
+   int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
    HalfPoint      = Point/2;
-   PipDigits      = Digits & (~1);
+   PipDigits      = digits & (~1);
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PipPriceFormat = ",'R."+ PipDigits;
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
+   PriceFormat    = ifString(digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
 
-   int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
-   if (digits > 2) {
+   if (digits > 2 || Close[0] < 1000) {
       pUnit   = Pip;
       pDigits = 1;                                          // always represent pips with subpips
       spUnit  = "pip";

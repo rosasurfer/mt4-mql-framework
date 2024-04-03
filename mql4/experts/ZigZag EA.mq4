@@ -61,13 +61,18 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - trailing stop
+ *  - partial close
+ *     online: fix closedProfit after 1 partial-close (error loading status file)
+ *     implement open.nextTarget
+ *
+ *  - exit management
+ *     trailing stop
+ *     dynamic SL/TP distances (multiples of ranges)
  *
  *  - optimization
  *     better statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
  *
  *  - money management
- *
  *
  *  - tests
  *     read enabled trade directions at test start
@@ -89,13 +94,6 @@
  *     separate optimization of long|short trades
  *     consider max holding period
  *
- *  - partial close
- *     live: fix closedProfit after 1 partial-close (error loading status file)
- *     implement open.nextTarget
- *
- *  - exit management
- *     dynamic SL/TP distances (multiples of ranges)
- *     trailing stop
  *
  *  -------------------------------------------------------------------------------------------------------------------------
  *  - reproduce/validate tests with original EAs
@@ -1198,20 +1196,21 @@ bool UpdateStatus() {
 /**
  * Return a symbol definition for the specified metric to be recorded.
  *
- * @param  _In_  int    id           - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
- * @param  _Out_ bool   &ready       - whether metric details are complete and the metric is ready to be recorded
- * @param  _Out_ string &symbol      - unique MT4 timeseries symbol
- * @param  _Out_ string &description - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
- * @param  _Out_ string &group       - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
- * @param  _Out_ int    &digits      - symbol digits value
- * @param  _Out_ double &baseValue   - quotes base value (if EMPTY recorder default settings are used)
- * @param  _Out_ int    &multiplier  - quotes multiplier
+ * @param  _In_  int    id          - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
+ * @param  _Out_ bool   &ready      - whether metric details are complete and the metric is ready to be recorded
+ * @param  _Out_ string &symbol     - unique MT4 timeseries symbol
+ * @param  _Out_ string &descr      - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
+ * @param  _Out_ string &group      - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
+ * @param  _Out_ int    &digits     - symbol digits value
+ * @param  _Out_ double &baseValue  - quotes base value (if EMPTY recorder default settings are used)
+ * @param  _Out_ int    &multiplier - quotes multiplier
  *
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */
-int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &description, string &group, int &digits, double &baseValue, int &multiplier) {
+int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descr, string &group, int &digits, double &baseValue, int &multiplier) {
    string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
    string descrSuffix="", sBarModel="";
+
    switch (__Test.barModel) {
       case MODE_EVERYTICK:     sBarModel = "EveryTick"; break;
       case MODE_CONTROLPOINTS: sBarModel = "ControlP";  break;
@@ -1228,11 +1227,11 @@ int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descript
    switch (id) {
       // --- standard AccountEquity() symbol for recorder.mode = RECORDER_ON ------------------------------------------------
       case NULL:
-         symbol      = recorder.stdEquitySymbol;
-         description = "";
-         digits      = 2;
-         multiplier  = 1;
-         ready       = true;
+         symbol     = recorder.stdEquitySymbol;
+         descr      = "";
+         digits     = 2;
+         multiplier = 1;
+         ready      = true;
          return(NO_ERROR);
 
       // --- custom cumulated metrcis ---------------------------------------------------------------------------------------
@@ -1275,9 +1274,8 @@ int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descript
          return(ERR_INVALID_INPUT_PARAMETER);
    }
 
-   description = StrLeft(ProgramName(), 63-StringLen(descrSuffix )) + descrSuffix;
+   descr = StrLeft(ProgramName(), 63-StringLen(descrSuffix )) + descrSuffix;
    ready = (instance.id > 0);
-
    return(NO_ERROR);
 }
 
