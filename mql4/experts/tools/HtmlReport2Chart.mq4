@@ -13,8 +13,8 @@ int __virtualTicks = 0;
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 //extern string HtmlFilename = "report.html";
-extern string HtmlFilename = "report-with-partials.html";
-//extern string HtmlFilename = "statement.html";
+//extern string HtmlFilename = "report-with-partials.html";
+extern string HtmlFilename = "statement.html";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26,7 +26,7 @@ extern string HtmlFilename = "report-with-partials.html";
 #define TYPE_TEST_REPORT         1
 #define TYPE_ACCOUNT_STATEMENT   2
 
-string Instance.ID = "999";            // dummy, needed by StoreVolatileStatus()
+string Instance.ID = "999";                  // dummy, needed by StoreVolatileStatus()
 
 
 // EA definitions
@@ -56,17 +56,6 @@ int onInit() {
    if (IsLastError()) return(last_error);
    if (__isTesting)   return(catch("onInit(1)  you can't test me", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
-   // parse the specified file
-   int initReason = ProgramInitReason();
-   if (initReason==IR_USER || initReason==IR_PARAMETERS || initReason==IR_TEMPLATE) {
-      if (ValidateInputs()) {
-         ArrayResize(history, 0);
-         string content = ReadFile(HtmlFilename);
-         if (content == "") return(last_error);
-         ParseFileContent(content);
-      }
-   }
-
    // enable routing of chart commands
    string label = "EA.status";
    if (ObjectFind(label) != 0) {
@@ -79,6 +68,16 @@ int onInit() {
    string sValues[];
    GetChartCommand("", sValues);
 
+   // parse the specified file
+   int initReason = ProgramInitReason();
+   if (initReason==IR_USER || initReason==IR_PARAMETERS || initReason==IR_TEMPLATE) {
+      if (ValidateInputs()) {
+         ArrayResize(history, 0);
+         string content = ReadFile(HtmlFilename);
+         if (content == "") return(last_error);
+         ParseFileContent(content);
+      }
+   }
    return(catch("onInit(1)"));
 }
 
@@ -193,7 +192,136 @@ bool ParseFileContent(string content) {
  * @return bool - success status
  */
 bool ParseAccountStatement(string content) {
-   return(!catch("ParseAccountStatement(1)  not yet implemented", ERR_NOT_IMPLEMENTED));
+   // extract HTML table
+   string tables[], rows[], cells[];
+   if (Explode(content, "<table ", tables, NULL) != 2)      return(!catch("ParseAccountStatement(1)  HtmlFile: unsupported number of \"<table>\" tags: "+ (ArraySize(tables)-1), ERR_INVALID_FILE_FORMAT));
+   string table = "<table "+ StrLeftTo(tables[1], "</table>") +"</table>";
+
+   // split table into rows
+   table = StrLeftTo(StrRightFrom(table, "<tr"), "</tr>", -1) +"</tr>";
+   int sizeOfRows = Explode(table, "<tr", rows, NULL);
+   if (sizeOfRows < 2)                                      return(!catch("ParseAccountStatement(2)  HtmlFile: no rows found in HTML table", ERR_INVALID_FILE_FORMAT));
+
+   // extract rows with closed transactions
+   if (!StrContains(rows[1], "Closed Transactions:"))       return(!catch("ParseAccountStatement(3)  HtmlFile: begin of section \"Closed Transactions\" not found in HTML table", ERR_INVALID_FILE_FORMAT));
+   for (int i=2; i < sizeOfRows; i++) {
+      if (StrContains(rows[i], "Closed P/L:")) break;
+   }
+   if (i == sizeOfRows)                                     return(!catch("ParseAccountStatement(4)  HtmlFile: end of section \"Closed Transactions\" not found in HTML table", ERR_INVALID_FILE_FORMAT));
+   if (ArraySpliceStrings(rows, i-1, sizeOfRows-i+1) == -1) return(false);    // discard summary rows at the end
+   if (ArraySpliceStrings(rows, 0, 2)                == -1) return(false);    // discard intro rows at the beginning
+   sizeOfRows = ArraySize(rows);
+
+   debug("ParseAccountStatement(0.1)  data rows: "+ sizeOfRows);
+
+   #define AS_TICKET        0    // Ticket
+   #define AS_OPENTIME      1    // Open Time
+   #define AS_TYPE          2    // Type
+   #define AS_LOTS          3    // Size
+   #define AS_SYMBOL        4    // Item
+   #define AS_OPENPRICE     5    // Price
+   #define AS_STOPLOSS      6    // S / L
+   #define AS_TAKEPROFIT    7    // T / P
+   #define AS_CLOSETIME     8    // Close Time
+   #define AS_CLOSEPRICE    9    // Price
+   #define AS_COMMISSION   10    // Commission
+   #define AS_TAX          11    // Taxes
+   #define AS_SWAP         12    // Swap
+   #define AS_PROFIT       13    // Profit
+
+   // parse/validate above header fields
+   if (Explode(StrRightFrom(rows[0], "<td"), "<td", cells, NULL) != 14)                                                    return(!catch("ParseAccountStatement(5)  trade history: found "+ ArraySize(cells) +" header cells (expected 14)",                                               ERR_INVALID_FILE_FORMAT));
+   string sTicket     = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TICKET    ], ">"), "<")); if (sTicket     != "Ticket"    ) return(!catch("ParseAccountStatement(6)  trade history: unexpected header of column " + (AS_TICKET    +1) +": \""+ sTicket     +"\" (expected \"Ticket\")",     ERR_INVALID_FILE_FORMAT));
+   string sOpenTime   = StrTrim(StrLeftTo(StrRightFrom(cells[AS_OPENTIME  ], ">"), "<")); if (sOpenTime   != "Open Time" ) return(!catch("ParseAccountStatement(7)  trade history: unexpected header of column " + (AS_OPENTIME  +1) +": \""+ sOpenTime   +"\" (expected \"Open Time\")",  ERR_INVALID_FILE_FORMAT));
+   string sType       = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TYPE      ], ">"), "<")); if (sType       != "Type"      ) return(!catch("ParseAccountStatement(8)  trade history: unexpected header of column " + (AS_TYPE      +1) +": \""+ sType       +"\" (expected \"Type\")",       ERR_INVALID_FILE_FORMAT));
+   string sLots       = StrTrim(StrLeftTo(StrRightFrom(cells[AS_LOTS      ], ">"), "<")); if (sLots       != "Size"      ) return(!catch("ParseAccountStatement(9)  trade history: unexpected header of column " + (AS_LOTS      +1) +": \""+ sLots       +"\" (expected \"Size\")",       ERR_INVALID_FILE_FORMAT));
+   string sSymbol     = StrTrim(StrLeftTo(StrRightFrom(cells[AS_SYMBOL    ], ">"), "<")); if (sSymbol     != "Item"      ) return(!catch("ParseAccountStatement(10)  trade history: unexpected header of column "+ (AS_SYMBOL    +1) +": \""+ sSymbol     +"\" (expected \"Item\")",       ERR_INVALID_FILE_FORMAT));
+   string sOpenPrice  = StrTrim(StrLeftTo(StrRightFrom(cells[AS_OPENPRICE ], ">"), "<")); if (sOpenPrice  != "Price"     ) return(!catch("ParseAccountStatement(11)  trade history: unexpected header of column "+ (AS_OPENPRICE +1) +": \""+ sOpenPrice  +"\" (expected \"Price\")",      ERR_INVALID_FILE_FORMAT));
+   string sStopLoss   = StrTrim(StrLeftTo(StrRightFrom(cells[AS_STOPLOSS  ], ">"), "<")); if (sStopLoss   != "S / L"     ) return(!catch("ParseAccountStatement(12)  trade history: unexpected header of column "+ (AS_STOPLOSS  +1) +": \""+ sStopLoss   +"\" (expected \"S / L\")",      ERR_INVALID_FILE_FORMAT));
+   string sTakeProfit = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TAKEPROFIT], ">"), "<")); if (sTakeProfit != "T / P"     ) return(!catch("ParseAccountStatement(13)  trade history: unexpected header of column "+ (AS_TAKEPROFIT+1) +": \""+ sTakeProfit +"\" (expected \"T / P\")",      ERR_INVALID_FILE_FORMAT));
+   string sCloseTime  = StrTrim(StrLeftTo(StrRightFrom(cells[AS_CLOSETIME ], ">"), "<")); if (sCloseTime  != "Close Time") return(!catch("ParseAccountStatement(14)  trade history: unexpected header of column "+ (AS_CLOSETIME +1) +": \""+ sCloseTime  +"\" (expected \"Close Time\")", ERR_INVALID_FILE_FORMAT));
+   string sClosePrice = StrTrim(StrLeftTo(StrRightFrom(cells[AS_CLOSEPRICE], ">"), "<")); if (sClosePrice != "Price"     ) return(!catch("ParseAccountStatement(15)  trade history: unexpected header of column "+ (AS_CLOSEPRICE+1) +": \""+ sClosePrice +"\" (expected \"Price\")",      ERR_INVALID_FILE_FORMAT));
+   string sCommission = StrTrim(StrLeftTo(StrRightFrom(cells[AS_COMMISSION], ">"), "<")); if (sCommission != "Commission") return(!catch("ParseAccountStatement(16)  trade history: unexpected header of column "+ (AS_COMMISSION+1) +": \""+ sCommission +"\" (expected \"Commission\")", ERR_INVALID_FILE_FORMAT));
+   string sTax        = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TAX       ], ">"), "<")); if (sTax        != "Taxes"     ) return(!catch("ParseAccountStatement(17)  trade history: unexpected header of column "+ (AS_TAX       +1) +": \""+ sTax        +"\" (expected \"Taxes\")",      ERR_INVALID_FILE_FORMAT));
+   string sSwap       = StrTrim(StrLeftTo(StrRightFrom(cells[AS_SWAP      ], ">"), "<")); if (sSwap       != "Swap"      ) return(!catch("ParseAccountStatement(18)  trade history: unexpected header of column "+ (AS_SWAP      +1) +": \""+ sSwap       +"\" (expected \"Swap\")",       ERR_INVALID_FILE_FORMAT));
+   string sProfit     = StrTrim(StrLeftTo(StrRightFrom(cells[AS_PROFIT    ], ">"), "<")); if (sProfit     != "Profit"    ) return(!catch("ParseAccountStatement(19)  trade history: unexpected header of column "+ (AS_PROFIT    +1) +": \""+ sProfit     +"\" (expected \"Profit\")",     ERR_INVALID_FILE_FORMAT));
+
+   int iCells, iTicket, iType;
+   bool closedByTP, closedBySL, cancelled;
+   datetime dtOpenTime, dtCloseTime;
+   double dLots, dOpenPrice, dClosePrice, dStopLoss, dTakeProfit, dCommission, dTax, dSwap, dProfit;
+   string sValue="", sTypes[] = {"buy", "sell"};
+
+   // process all data rows
+   for (i=1; i < sizeOfRows; i++) {
+      iCells = Explode(StrRightFrom(rows[i], "<td"), "<td", cells, NULL);
+
+      // validate non-trade rows
+      if (iCells == 3) {
+         sType = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TYPE], ">"), "<"));
+         if (sType=="[sl]" && closedBySL) continue;
+         if (sType=="[tp]" && closedByTP) continue;
+         return(!catch("ParseAccountStatement(20)  trade history: unsupported type value \""+ sType +"\" in row "+ (i+1), ERR_INVALID_FILE_FORMAT));
+      }
+      else if (iCells == 5) {
+         sType = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TYPE], ">"), "<"));
+         if (sType == "balance") continue;
+         return(!catch("ParseAccountStatement(21)  trade history: unsupported type value \""+ sType +"\" in row "+ (i+1), ERR_INVALID_FILE_FORMAT));
+      }
+      else if (iCells == 11) {
+         cancelled = StrContains(cells[AS_TICKET], " title=\"cancelled\"");
+         sValue = StrTrim(StrLeftTo(StrRightFrom(cells[AS_COMMISSION], ">"), "<"));
+         if (cancelled && sValue=="cancelled") continue;
+         return(!catch("ParseAccountStatement(22)  trade history: unsupported commission value \""+ sValue +"\" in row "+ (i+1), ERR_INVALID_FILE_FORMAT));
+      }
+      if (iCells != 14) return(!catch("ParseAccountStatement(23)  trade history: found "+ ArraySize(cells) +" data cells in row "+ (i+1) +" (expected 14)", ERR_INVALID_FILE_FORMAT));
+
+      // validate a single trade row
+      sTicket    = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TICKET], ">"), "<")); if (!StrIsDigits(sTicket))           return(!catch("ParseAccountStatement(24)  trade history: unexpected \"Ticket\" value in row "+ (i+1) +", col "+ (AS_TICKET+1) +": \""+ sTicket +"\" (expected digits only)", ERR_INVALID_FILE_FORMAT));
+      iTicket    = StrToInteger(sTicket);                                        if (!iTicket)                        return(!catch("ParseAccountStatement(25)  trade history: invalid \"Ticket\" value in row "+ (i+1) +", col "+ (AS_TICKET+1) +": \""+ sTicket +"\" (expected positive integer)", ERR_INVALID_FILE_FORMAT));
+      closedBySL = StrContains(cells[AS_TICKET], " title=\"[sl]\"");
+      closedByTP = StrContains(cells[AS_TICKET], " title=\"[tp]\"");
+
+      sOpenTime  = StrTrim(StrLeftTo(StrRightFrom(cells[AS_OPENTIME], ">"), "<"));
+      dtOpenTime = StrToTime(sOpenTime); if (TimeToStr(dtOpenTime) != sOpenTime)                                      return(!catch("ParseAccountStatement(26)  trade history: unexpected \"Open Time\" value in row "+ (i+1) +", col "+ (AS_OPENTIME+1) +": \""+ sOpenTime +"\" (expected datetime)", ERR_INVALID_FILE_FORMAT));
+
+      sType = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TYPE], ">"), "<")); if (!StringInArray(sTypes, sType))          return(!catch("ParseAccountStatement(27)  trade history: unsupported \"Type\" value in row "+ (i+1) +", col "+ (AS_TYPE+1) +": \""+ sType +"\"", ERR_INVALID_FILE_FORMAT));
+      iType = ifInt(sType=="buy", OP_BUY, OP_SELL);
+
+      sLots = StrTrim(StrLeftTo(StrRightFrom(cells[AS_LOTS], ">"), "<")); if (!StrIsNumeric(sLots))                   return(!catch("ParseAccountStatement(28)  trade history: unexpected \"Size\" value in row "+ (i+1) +", col "+ (AS_LOTS+1) +": \""+ sLots +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      dLots = StrToDouble(sLots);                                         if (dLots <= 0)                             return(!catch("ParseAccountStatement(29)  trade history: unexpected \"Size\" value in row "+ (i+1) +", col "+ (AS_LOTS+1) +": \""+ sLots +"\" (expected positive value)", ERR_INVALID_FILE_FORMAT));
+
+      sOpenPrice = StrTrim(StrLeftTo(StrRightFrom(cells[AS_OPENPRICE], ">"), "<")); if (!StrIsNumeric(sOpenPrice))    return(!catch("ParseAccountStatement(30)  trade history: unexpected \"Price\" value in row "+ (i+1) +", col "+ (AS_OPENPRICE+1) +": \""+ sOpenPrice +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      dOpenPrice = StrToDouble(sOpenPrice);                                         if (dOpenPrice <= 0)              return(!catch("ParseAccountStatement(31)  trade history: unexpected \"Price\" value in row "+ (i+1) +", col "+ (AS_OPENPRICE+1) +": \""+ sOpenPrice +"\" (expected positive value)", ERR_INVALID_FILE_FORMAT));
+
+      sStopLoss = StrTrim(StrLeftTo(StrRightFrom(cells[AS_STOPLOSS], ">"), "<")); if (!StrIsNumeric(sStopLoss))       return(!catch("ParseAccountStatement(32)  trade history: unexpected \"S/L\" value in row "+ (i+1) +", col "+ (AS_STOPLOSS+1) +": \""+ sStopLoss +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      dStopLoss = StrToDouble(sStopLoss);                                         if (dStopLoss < 0)                  return(!catch("ParseAccountStatement(33)  trade history: unexpected \"S/L\" value in row "+ (i+1) +", col "+ (AS_STOPLOSS+1) +": \""+ sStopLoss +"\" (expected non-negative value)", ERR_INVALID_FILE_FORMAT));
+
+      sTakeProfit = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TAKEPROFIT], ">"), "<")); if (!StrIsNumeric(sTakeProfit)) return(!catch("ParseAccountStatement(34)  trade history: unexpected \"T/P\" value in row "+ (i+1) +", col "+ (AS_TAKEPROFIT+1) +": \""+ sTakeProfit +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      dTakeProfit = StrToDouble(sTakeProfit);                                         if (dTakeProfit < 0)            return(!catch("ParseAccountStatement(35)  trade history: unexpected \"T/P\" value in row "+ (i+1) +", col "+ (AS_TAKEPROFIT+1) +": \""+ sTakeProfit +"\" (expected non-negative value)", ERR_INVALID_FILE_FORMAT));
+
+      sCloseTime  = StrTrim(StrLeftTo(StrRightFrom(cells[AS_CLOSETIME], ">"), "<"));
+      dtCloseTime = StrToTime(sCloseTime); if (TimeToStr(dtCloseTime) != sCloseTime)                                  return(!catch("ParseAccountStatement(36)  trade history: unexpected \"Close Time\" value in row "+ (i+1) +", col "+ (AS_CLOSETIME+1) +": \""+ sCloseTime +"\" (expected datetime)", ERR_INVALID_FILE_FORMAT));
+
+      sClosePrice = StrTrim(StrLeftTo(StrRightFrom(cells[AS_CLOSEPRICE], ">"), "<")); if (!StrIsNumeric(sClosePrice)) return(!catch("ParseAccountStatement(37)  trade history: unexpected \"Price\" value in row "+ (i+1) +", col "+ (AS_CLOSEPRICE+1) +": \""+ sClosePrice +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      dClosePrice = StrToDouble(sClosePrice);                                         if (dClosePrice <= 0)           return(!catch("ParseAccountStatement(38)  trade history: unexpected \"Price\" value in row "+ (i+1) +", col "+ (AS_CLOSEPRICE+1) +": \""+ sClosePrice +"\" (expected positive value)", ERR_INVALID_FILE_FORMAT));
+
+      sCommission = StrTrim(StrLeftTo(StrRightFrom(cells[AS_COMMISSION], ">"), "<")); if (!StrIsNumeric(sCommission)) return(!catch("ParseAccountStatement(39)  trade history: unexpected \"Commission\" value in row "+ (i+1) +", col "+ (AS_COMMISSION+1) +": \""+ sCommission +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      dCommission = StrToDouble(sCommission);                                         if (dCommission > 0)            return(!catch("ParseAccountStatement(40)  trade history: unexpected \"Commission\" value in row "+ (i+1) +", col "+ (AS_COMMISSION+1) +": \""+ sCommission +"\" (expected non-positive value)", ERR_INVALID_FILE_FORMAT));
+
+      sTax = StrTrim(StrLeftTo(StrRightFrom(cells[AS_TAX], ">"), "<")); if (!StrIsNumeric(sTax))                      return(!catch("ParseAccountStatement(41)  trade history: unexpected \"Taxes\" value in row "+ (i+1) +", col "+ (AS_TAX+1) +": \""+ sTax +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      dTax = StrToDouble(sTax);                                         if (dTax != 0)                                return(!catch("ParseAccountStatement(42)  trade history: unexpected \"Taxes\" value in row "+ (i+1) +", col "+ (AS_TAX+1) +": \""+ sTax +"\" (expected 0.00)", ERR_INVALID_FILE_FORMAT));
+
+      sSwap = StrTrim(StrLeftTo(StrRightFrom(cells[AS_SWAP], ">"), "<")); if (!StrIsNumeric(sSwap))                   return(!catch("ParseAccountStatement(43)  trade history: unexpected \"Swap\" value in row "+ (i+1) +", col "+ (AS_SWAP+1) +": \""+ sSwap +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      dSwap = StrToDouble(sSwap);
+
+      sProfit = StrTrim(StrLeftTo(StrRightFrom(cells[AS_PROFIT], ">"), "<")); if (!StrIsNumeric(sProfit))             return(!catch("ParseAccountStatement(44)  trade history: unexpected \"Profit\" value in row "+ (i+1) +", col "+ (AS_PROFIT+1) +": \""+ sProfit +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      dProfit = StrToDouble(sProfit);
+
+      // add new history record
+      if (AddHistoryRecord(iTicket, 0, 0, iType, dLots, 1, dtOpenTime, dOpenPrice, 0, dStopLoss, dTakeProfit, dtCloseTime, dClosePrice, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == EMPTY) return(false);
+   }
+   return(!catch("ParseAccountStatement(45)"));
 }
 
 
@@ -222,29 +350,29 @@ bool ParseTestReport(string content) {
    int sizeOfRows = Explode(table2, "<tr", rows, NULL);
    if (sizeOfRows < 2)                                 return(!catch("ParseTestReport(3)  HtmlFile: no trade records found in trade history", ERR_INVALID_FILE_FORMAT));
 
-   #define I_LINE          0  // #
-   #define I_TIME          1  // Time
-   #define I_TYPE          2  // Type
-   #define I_TICKET        3  // Order
-   #define I_LOTS          4  // Size
-   #define I_PRICE         5  // Price
-   #define I_STOPLOSS      6  // S / L
-   #define I_TAKEPROFIT    7  // T / P
-   #define I_PROFIT        8  // Profit
-   #define I_BALANCE       9  // Balance
+   #define TR_LINE          0    // #
+   #define TR_TIME          1    // Time
+   #define TR_TYPE          2    // Type
+   #define TR_TICKET        3    // Order
+   #define TR_LOTS          4    // Size
+   #define TR_PRICE         5    // Price
+   #define TR_STOPLOSS      6    // S / L
+   #define TR_TAKEPROFIT    7    // T / P
+   #define TR_PROFIT        8    // Profit
+   #define TR_BALANCE       9    // Balance
 
    // validate above header fields
-   if (Explode(StrRightFrom(rows[0], "<td"), "<td", cells, NULL) != 10)                                                return(!catch("ParseTestReport(4)  trade history: found "+ ArraySize(cells) +" header cells (expected 10)",                                           ERR_INVALID_FILE_FORMAT));
-   string sLine       = StrTrim(StrLeftTo(StrRightFrom(cells[I_LINE      ], ">"), "<")); if (sLine       != "#"      ) return(!catch("ParseTestReport(5)  trade history: unexpected header of column " + (I_LINE      +1) +": \""+ sLine       +"\" (expected \"#\")",       ERR_INVALID_FILE_FORMAT));
-   string sTime       = StrTrim(StrLeftTo(StrRightFrom(cells[I_TIME      ], ">"), "<")); if (sTime       != "Time"   ) return(!catch("ParseTestReport(6)  trade history: unexpected header of column " + (I_TIME      +1) +": \""+ sTime       +"\" (expected \"Time\")",    ERR_INVALID_FILE_FORMAT));
-   string sType       = StrTrim(StrLeftTo(StrRightFrom(cells[I_TYPE      ], ">"), "<")); if (sType       != "Type"   ) return(!catch("ParseTestReport(7)  trade history: unexpected header of column " + (I_TYPE      +1) +": \""+ sType       +"\" (expected \"Type\")",    ERR_INVALID_FILE_FORMAT));
-   string sTicket     = StrTrim(StrLeftTo(StrRightFrom(cells[I_TICKET    ], ">"), "<")); if (sTicket     != "Order"  ) return(!catch("ParseTestReport(8)  trade history: unexpected header of column " + (I_TICKET    +1) +": \""+ sTicket     +"\" (expected \"Order\")",   ERR_INVALID_FILE_FORMAT));
-   string sLots       = StrTrim(StrLeftTo(StrRightFrom(cells[I_LOTS      ], ">"), "<")); if (sLots       != "Size"   ) return(!catch("ParseTestReport(9)  trade history: unexpected header of column " + (I_LOTS      +1) +": \""+ sLots       +"\" (expected \"Size\")",    ERR_INVALID_FILE_FORMAT));
-   string sPrice      = StrTrim(StrLeftTo(StrRightFrom(cells[I_PRICE     ], ">"), "<")); if (sPrice      != "Price"  ) return(!catch("ParseTestReport(10)  trade history: unexpected header of column "+ (I_PRICE     +1) +": \""+ sPrice      +"\" (expected \"Price\")",   ERR_INVALID_FILE_FORMAT));
-   string sStopLoss   = StrTrim(StrLeftTo(StrRightFrom(cells[I_STOPLOSS  ], ">"), "<")); if (sStopLoss   != "S / L"  ) return(!catch("ParseTestReport(11)  trade history: unexpected header of column "+ (I_STOPLOSS  +1) +": \""+ sStopLoss   +"\" (expected \"S / L\")",   ERR_INVALID_FILE_FORMAT));
-   string sTakeProfit = StrTrim(StrLeftTo(StrRightFrom(cells[I_TAKEPROFIT], ">"), "<")); if (sTakeProfit != "T / P"  ) return(!catch("ParseTestReport(12)  trade history: unexpected header of column "+ (I_TAKEPROFIT+1) +": \""+ sTakeProfit +"\" (expected \"T / P\")",   ERR_INVALID_FILE_FORMAT));
-   string sProfit     = StrTrim(StrLeftTo(StrRightFrom(cells[I_PROFIT    ], ">"), "<")); if (sProfit     != "Profit" ) return(!catch("ParseTestReport(13)  trade history: unexpected header of column "+ (I_PROFIT    +1) +": \""+ sProfit     +"\" (expected \"Profit\")",  ERR_INVALID_FILE_FORMAT));
-   string sBalance    = StrTrim(StrLeftTo(StrRightFrom(cells[I_BALANCE   ], ">"), "<")); if (sBalance    != "Balance") return(!catch("ParseTestReport(14)  trade history: unexpected header of column "+ (I_BALANCE   +1) +": \""+ sBalance    +"\" (expected \"Balance\")", ERR_INVALID_FILE_FORMAT));
+   if (Explode(StrRightFrom(rows[0], "<td"), "<td", cells, NULL) != 10)                                                 return(!catch("ParseTestReport(4)  trade history: found "+ ArraySize(cells) +" header cells (expected 10)",                                            ERR_INVALID_FILE_FORMAT));
+   string sLine       = StrTrim(StrLeftTo(StrRightFrom(cells[TR_LINE      ], ">"), "<")); if (sLine       != "#"      ) return(!catch("ParseTestReport(5)  trade history: unexpected header of column " + (TR_LINE      +1) +": \""+ sLine       +"\" (expected \"#\")",       ERR_INVALID_FILE_FORMAT));
+   string sTime       = StrTrim(StrLeftTo(StrRightFrom(cells[TR_TIME      ], ">"), "<")); if (sTime       != "Time"   ) return(!catch("ParseTestReport(6)  trade history: unexpected header of column " + (TR_TIME      +1) +": \""+ sTime       +"\" (expected \"Time\")",    ERR_INVALID_FILE_FORMAT));
+   string sType       = StrTrim(StrLeftTo(StrRightFrom(cells[TR_TYPE      ], ">"), "<")); if (sType       != "Type"   ) return(!catch("ParseTestReport(7)  trade history: unexpected header of column " + (TR_TYPE      +1) +": \""+ sType       +"\" (expected \"Type\")",    ERR_INVALID_FILE_FORMAT));
+   string sTicket     = StrTrim(StrLeftTo(StrRightFrom(cells[TR_TICKET    ], ">"), "<")); if (sTicket     != "Order"  ) return(!catch("ParseTestReport(8)  trade history: unexpected header of column " + (TR_TICKET    +1) +": \""+ sTicket     +"\" (expected \"Order\")",   ERR_INVALID_FILE_FORMAT));
+   string sLots       = StrTrim(StrLeftTo(StrRightFrom(cells[TR_LOTS      ], ">"), "<")); if (sLots       != "Size"   ) return(!catch("ParseTestReport(9)  trade history: unexpected header of column " + (TR_LOTS      +1) +": \""+ sLots       +"\" (expected \"Size\")",    ERR_INVALID_FILE_FORMAT));
+   string sPrice      = StrTrim(StrLeftTo(StrRightFrom(cells[TR_PRICE     ], ">"), "<")); if (sPrice      != "Price"  ) return(!catch("ParseTestReport(10)  trade history: unexpected header of column "+ (TR_PRICE     +1) +": \""+ sPrice      +"\" (expected \"Price\")",   ERR_INVALID_FILE_FORMAT));
+   string sStopLoss   = StrTrim(StrLeftTo(StrRightFrom(cells[TR_STOPLOSS  ], ">"), "<")); if (sStopLoss   != "S / L"  ) return(!catch("ParseTestReport(11)  trade history: unexpected header of column "+ (TR_STOPLOSS  +1) +": \""+ sStopLoss   +"\" (expected \"S / L\")",   ERR_INVALID_FILE_FORMAT));
+   string sTakeProfit = StrTrim(StrLeftTo(StrRightFrom(cells[TR_TAKEPROFIT], ">"), "<")); if (sTakeProfit != "T / P"  ) return(!catch("ParseTestReport(12)  trade history: unexpected header of column "+ (TR_TAKEPROFIT+1) +": \""+ sTakeProfit +"\" (expected \"T / P\")",   ERR_INVALID_FILE_FORMAT));
+   string sProfit     = StrTrim(StrLeftTo(StrRightFrom(cells[TR_PROFIT    ], ">"), "<")); if (sProfit     != "Profit" ) return(!catch("ParseTestReport(13)  trade history: unexpected header of column "+ (TR_PROFIT    +1) +": \""+ sProfit     +"\" (expected \"Profit\")",  ERR_INVALID_FILE_FORMAT));
+   string sBalance    = StrTrim(StrLeftTo(StrRightFrom(cells[TR_BALANCE   ], ">"), "<")); if (sBalance    != "Balance") return(!catch("ParseTestReport(14)  trade history: unexpected header of column "+ (TR_BALANCE   +1) +": \""+ sBalance    +"\" (expected \"Balance\")", ERR_INVALID_FILE_FORMAT));
 
    datetime dtTime;
    int iLine, iTicket, iType;
@@ -254,37 +382,37 @@ bool ParseTestReport(string content) {
    // process all data rows
    for (int i=1; i < sizeOfRows; i++) {
       rows[i] = StrReplace(rows[i], " colspan=2>", "></td><td>");
-      if (Explode(StrRightFrom(rows[i], "<td"), "<td", cells, NULL) != 10)                                                  return(!catch("ParseTestReport(15)  trade history: found "+ ArraySize(cells) +" cells in row "+ i +" (expected 10)", ERR_INVALID_FILE_FORMAT));
+      if (Explode(StrRightFrom(rows[i], "<td"), "<td", cells, NULL) != 10)                                                   return(!catch("ParseTestReport(15)  trade history: found "+ ArraySize(cells) +" data cells in row "+ i +" (expected 10)", ERR_INVALID_FILE_FORMAT));
 
-      // parse and validate a single row
-      sLine = StrTrim(StrLeftTo(StrRightFrom(cells[I_LINE], ">"), "<")); if (!StrIsDigits(sLine))                           return(!catch("ParseTestReport(16)  trade history: unexpected \"Line\" number in row "+ i +", col "+ (I_LINE+1) +": \""+ sLine +"\" (expected digits only)", ERR_INVALID_FILE_FORMAT));
+      // parse/validate a single row
+      sLine = StrTrim(StrLeftTo(StrRightFrom(cells[TR_LINE], ">"), "<")); if (!StrIsDigits(sLine))                           return(!catch("ParseTestReport(16)  trade history: unexpected \"Line\" number in row "+ i +", col "+ (TR_LINE+1) +": \""+ sLine +"\" (expected digits only)", ERR_INVALID_FILE_FORMAT));
       iLine = StrToInteger(sLine);
 
-      sTime = StrTrim(StrLeftTo(StrRightFrom(cells[I_TIME], ">"), "<"));
-      dtTime = StrToTime(sTime); if (TimeToStr(dtTime) != sTime)                                                            return(!catch("ParseTestReport(17)  trade history: unexpected \"Time\" value in row "+ i +", col "+ (I_TIME+1) +": \""+ sTime +"\" (expected datetime)", ERR_INVALID_FILE_FORMAT));
+      sTime = StrTrim(StrLeftTo(StrRightFrom(cells[TR_TIME], ">"), "<"));
+      dtTime = StrToTime(sTime); if (TimeToStr(dtTime) != sTime)                                                             return(!catch("ParseTestReport(17)  trade history: unexpected \"Time\" value in row "+ i +", col "+ (TR_TIME+1) +": \""+ sTime +"\" (expected datetime)", ERR_INVALID_FILE_FORMAT));
 
-      sType = StrTrim(StrLeftTo(StrRightFrom(cells[I_TYPE], ">"), "<")); if (!StringInArray(sTypes, sType))                 return(!catch("ParseTestReport(18)  trade history: unsupported \"Type\" value in row "+ i +", col "+ (I_TYPE+1) +": \""+ sType +"\"", ERR_INVALID_FILE_FORMAT));
+      sType = StrTrim(StrLeftTo(StrRightFrom(cells[TR_TYPE], ">"), "<")); if (!StringInArray(sTypes, sType))                 return(!catch("ParseTestReport(18)  trade history: unsupported \"Type\" value in row "+ i +", col "+ (TR_TYPE+1) +": \""+ sType +"\"", ERR_INVALID_FILE_FORMAT));
 
-      sTicket = StrTrim(StrLeftTo(StrRightFrom(cells[I_TICKET], ">"), "<")); if (!StrIsDigits(sTicket))                     return(!catch("ParseTestReport(19)  trade history: unexpected \"Order\" value in row "+ i +", col "+ (I_TICKET+1) +": \""+ sTicket +"\" (expected digits only)", ERR_INVALID_FILE_FORMAT));
-      iTicket = StrToInteger(sTicket);                                       if (!iTicket)                                  return(!catch("ParseTestReport(20)  trade history: invalid \"Order\" value in row "+ i +", col "+ (I_TICKET+1) +": \""+ sTicket +"\" (expected positive integer)", ERR_INVALID_FILE_FORMAT));
+      sTicket = StrTrim(StrLeftTo(StrRightFrom(cells[TR_TICKET], ">"), "<")); if (!StrIsDigits(sTicket))                     return(!catch("ParseTestReport(19)  trade history: unexpected \"Order\" value in row "+ i +", col "+ (TR_TICKET+1) +": \""+ sTicket +"\" (expected digits only)", ERR_INVALID_FILE_FORMAT));
+      iTicket = StrToInteger(sTicket);                                        if (!iTicket)                                  return(!catch("ParseTestReport(20)  trade history: invalid \"Order\" value in row "+ i +", col "+ (TR_TICKET+1) +": \""+ sTicket +"\" (expected positive integer)", ERR_INVALID_FILE_FORMAT));
 
-      sLots = StrTrim(StrLeftTo(StrRightFrom(cells[I_LOTS], ">"), "<")); if (!StrIsNumeric(sLots))                          return(!catch("ParseTestReport(21)  trade history: unexpected \"Size\" value in row "+ i +", col "+ (I_LOTS+1) +": \""+ sLots +"\" (expected positive numeric value)", ERR_INVALID_FILE_FORMAT));
-      dLots = StrToDouble(sLots);                                        if (dLots <= 0)                                    return(!catch("ParseTestReport(22)  trade history: unexpected \"Size\" value in row "+ i +", col "+ (I_LOTS+1) +": \""+ sLots +"\" (expected positive numeric value)", ERR_INVALID_FILE_FORMAT));
+      sLots = StrTrim(StrLeftTo(StrRightFrom(cells[TR_LOTS], ">"), "<")); if (!StrIsNumeric(sLots))                          return(!catch("ParseTestReport(21)  trade history: unexpected \"Size\" value in row "+ i +", col "+ (TR_LOTS+1) +": \""+ sLots +"\" (expected positive numeric value)", ERR_INVALID_FILE_FORMAT));
+      dLots = StrToDouble(sLots);                                         if (dLots <= 0)                                    return(!catch("ParseTestReport(22)  trade history: unexpected \"Size\" value in row "+ i +", col "+ (TR_LOTS+1) +": \""+ sLots +"\" (expected positive numeric value)", ERR_INVALID_FILE_FORMAT));
 
-      sPrice = StrTrim(StrLeftTo(StrRightFrom(cells[I_PRICE], ">"), "<")); if (!StrIsNumeric(sPrice))                       return(!catch("ParseTestReport(23)  trade history: unexpected \"Price\" value in row "+ i +", col "+ (I_PRICE+1) +": \""+ sPrice +"\" (expected positive price value)", ERR_INVALID_FILE_FORMAT));
-      dPrice = StrToDouble(sPrice);                                        if (dPrice <= 0)                                 return(!catch("ParseTestReport(24)  trade history: unexpected \"Price\" value in row "+ i +", col "+ (I_PRICE+1) +": \""+ sPrice +"\" (expected positive price value)", ERR_INVALID_FILE_FORMAT));
+      sPrice = StrTrim(StrLeftTo(StrRightFrom(cells[TR_PRICE], ">"), "<")); if (!StrIsNumeric(sPrice))                       return(!catch("ParseTestReport(23)  trade history: unexpected \"Price\" value in row "+ i +", col "+ (TR_PRICE+1) +": \""+ sPrice +"\" (expected positive price value)", ERR_INVALID_FILE_FORMAT));
+      dPrice = StrToDouble(sPrice);                                         if (dPrice <= 0)                                 return(!catch("ParseTestReport(24)  trade history: unexpected \"Price\" value in row "+ i +", col "+ (TR_PRICE+1) +": \""+ sPrice +"\" (expected positive price value)", ERR_INVALID_FILE_FORMAT));
 
-      sStopLoss = StrTrim(StrLeftTo(StrRightFrom(cells[I_STOPLOSS], ">"), "<")); if (!StrIsNumeric(sStopLoss))              return(!catch("ParseTestReport(25)  trade history: unexpected \"S/L\" value in row "+ i +", col "+ (I_STOPLOSS+1) +": \""+ sStopLoss +"\" (expected stoploss value)", ERR_INVALID_FILE_FORMAT));
-      dStopLoss = StrToDouble(sStopLoss);                                        if (dStopLoss <= 0)                        return(!catch("ParseTestReport(26)  trade history: unexpected \"S/L\" value in row "+ i +", col "+ (I_STOPLOSS+1) +": \""+ sStopLoss +"\" (expected stoploss value)", ERR_INVALID_FILE_FORMAT));
+      sStopLoss = StrTrim(StrLeftTo(StrRightFrom(cells[TR_STOPLOSS], ">"), "<")); if (!StrIsNumeric(sStopLoss))              return(!catch("ParseTestReport(25)  trade history: unexpected \"S/L\" value in row "+ i +", col "+ (TR_STOPLOSS+1) +": \""+ sStopLoss +"\" (expected stoploss value)", ERR_INVALID_FILE_FORMAT));
+      dStopLoss = StrToDouble(sStopLoss);                                         if (dStopLoss <= 0)                        return(!catch("ParseTestReport(26)  trade history: unexpected \"S/L\" value in row "+ i +", col "+ (TR_STOPLOSS+1) +": \""+ sStopLoss +"\" (expected stoploss value)", ERR_INVALID_FILE_FORMAT));
 
-      sTakeProfit = StrTrim(StrLeftTo(StrRightFrom(cells[I_TAKEPROFIT], ">"), "<")); if (!StrIsNumeric(sTakeProfit))        return(!catch("ParseTestReport(27)  trade history: unexpected \"T/P\" value in row "+ i +", col "+ (I_TAKEPROFIT+1) +": \""+ sTakeProfit +"\" (expected takeprofit value)", ERR_INVALID_FILE_FORMAT));
-      dTakeProfit = StrToDouble(sTakeProfit);                                        if (dTakeProfit <= 0)                  return(!catch("ParseTestReport(28)  trade history: unexpected \"T/P\" value in row "+ i +", col "+ (I_TAKEPROFIT+1) +": \""+ sTakeProfit +"\" (expected takeprofit value)", ERR_INVALID_FILE_FORMAT));
+      sTakeProfit = StrTrim(StrLeftTo(StrRightFrom(cells[TR_TAKEPROFIT], ">"), "<")); if (!StrIsNumeric(sTakeProfit))        return(!catch("ParseTestReport(27)  trade history: unexpected \"T/P\" value in row "+ i +", col "+ (TR_TAKEPROFIT+1) +": \""+ sTakeProfit +"\" (expected takeprofit value)", ERR_INVALID_FILE_FORMAT));
+      dTakeProfit = StrToDouble(sTakeProfit);                                         if (dTakeProfit <= 0)                  return(!catch("ParseTestReport(28)  trade history: unexpected \"T/P\" value in row "+ i +", col "+ (TR_TAKEPROFIT+1) +": \""+ sTakeProfit +"\" (expected takeprofit value)", ERR_INVALID_FILE_FORMAT));
 
-      sProfit = StrTrim(StrLeftTo(StrRightFrom(cells[I_PROFIT], ">"), "<")); if (sProfit!="" && !StrIsNumeric(sProfit))     return(!catch("ParseTestReport(29)  trade history: unexpected \"Profit\" value in row "+ i +", col "+ (I_PROFIT+1) +": \""+ sProfit +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
+      sProfit = StrTrim(StrLeftTo(StrRightFrom(cells[TR_PROFIT], ">"), "<")); if (sProfit!="" && !StrIsNumeric(sProfit))     return(!catch("ParseTestReport(29)  trade history: unexpected \"Profit\" value in row "+ i +", col "+ (TR_PROFIT+1) +": \""+ sProfit +"\" (expected numeric value)", ERR_INVALID_FILE_FORMAT));
       dProfit = StrToDouble(sProfit);
 
-      sBalance = StrTrim(StrLeftTo(StrRightFrom(cells[I_BALANCE], ">"), "<")); if (sBalance!="" && !StrIsNumeric(sBalance)) return(!catch("ParseTestReport(30)  trade history: unexpected \"Balance\" value in row "+ i +", col "+ (I_BALANCE+1) +": \""+ sBalance +"\" (expected positive numeric value)", ERR_INVALID_FILE_FORMAT));
-      dBalance = StrToDouble(sBalance);                                        if (dBalance < 0)                            return(!catch("ParseTestReport(31)  trade history: unexpected \"Balance\" value in row "+ i +", col "+ (I_BALANCE+1) +": \""+ sBalance +"\" (expected positive numeric value)", ERR_INVALID_FILE_FORMAT));
+      sBalance = StrTrim(StrLeftTo(StrRightFrom(cells[TR_BALANCE], ">"), "<")); if (sBalance!="" && !StrIsNumeric(sBalance)) return(!catch("ParseTestReport(30)  trade history: unexpected \"Balance\" value in row "+ i +", col "+ (TR_BALANCE+1) +": \""+ sBalance +"\" (expected positive numeric value)", ERR_INVALID_FILE_FORMAT));
+      dBalance = StrToDouble(sBalance);                                         if (dBalance < 0)                            return(!catch("ParseTestReport(31)  trade history: unexpected \"Balance\" value in row "+ i +", col "+ (TR_BALANCE+1) +": \""+ sBalance +"\" (expected positive numeric value)", ERR_INVALID_FILE_FORMAT));
 
       if (sType=="buy" || sType=="sell") {               // position open: add new history record
          iType = ifInt(sType=="buy", OP_BUY, OP_SELL);
