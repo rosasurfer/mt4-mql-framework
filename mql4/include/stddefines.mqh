@@ -458,7 +458,7 @@ double  N_INF;                                                    // -1.#INF: ne
 #define MCM_CFD                        1
 #define MCM_CFD_FUTURES                2
 #define MCM_CFD_INDEX                  3
-#define MCM_CFD_LEVERAGE               4        // nur MetaTrader 5
+#define MCM_CFD_LEVERAGE               4        // available in MT5
 
 
 // Free margin calculation modes, siehe AccountFreeMarginMode()

@@ -700,15 +700,15 @@ string JoinStrings(string values[], string separator = ", ") {
 
 
 /**
- * Return the current symbol's full point value for the specified lot amount.
+ * Return the full point value of the current symbol for the specified lot amount.
  *
- * @param  double lots           [optional] - lot amount (default: 1 lot)
- * @param  bool   suppressErrors [optional] - whether to suppress runtime errors (default: no)
+ * @param  double lots       [optional] - lot amount (default: 1 lot)
+ * @param  bool   muteErrors [optional] - whether to mute MarketInfo() errors (default: no)
  *
  * @return double - point value or NULL (0) in case of errors
  */
-double PointValue(double lots=1.0, bool suppressErrors=false) {
-   return(PipValue(lots, suppressErrors)/Pip);
+double PointValue(double lots=1.0, bool muteErrors=false) {
+   return(PipValue(lots, muteErrors)/Pip);
 }
 
 
@@ -717,22 +717,22 @@ bool test.disableTickValueWarning = false;
 
 
 /**
- * Return the current symbol's pip value for the specified lot amount.
+ * Return the pip value of the current symbol for the specified lot amount.
  *
- * @param  double lots           [optional] - lot amount (default: 1 lot)
- * @param  bool   suppressErrors [optional] - whether to suppress runtime errors (default: no)
+ * @param  double lots       [optional] - lot amount (default: 1 lot)
+ * @param  bool   muteErrors [optional] - whether to mute MarketInfo() errors (default: no)
  *
  * @return double - pip value or NULL (0) in case of errors
  */
-double PipValue(double lots=1.0, bool suppressErrors=false) {
-   suppressErrors = suppressErrors!=0;
+double PipValue(double lots=1.0, bool muteErrors=false) {
+   muteErrors = muteErrors!=0;
 
    static double tickSize;
    if (!tickSize) {
       int error;
       tickSize = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "PipValue(1)");             // fails if there's no tick yet (may arrive later), e.g.
       if (error != NO_ERROR) {                                                            // symbol not yet subscribed, terminal start, account/template change
-         if (!suppressErrors) catch("PipValue(2)", error);                                // ERR_SYMBOL_NOT_AVAILABLE: synthetic symbol in offline chart
+         if (!muteErrors) catch("PipValue(2)", error);                                    // ERR_SYMBOL_NOT_AVAILABLE: synthetic symbol in offline chart
          return(0);
       }
    }
@@ -744,7 +744,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       if (StrEndsWith(Symbol(), AccountCurrency())) {                                     // TickValue is constant and can be cached
          staticTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(3)");
          if (error != NO_ERROR) {
-            if (!suppressErrors) catch("PipValue(4)", error);
+            if (!muteErrors) catch("PipValue(4)", error);
             return(0);
          }
          isConstant = true;
@@ -774,7 +774,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    if (!isInaccurate) {
       double dynamicTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(5)");
       if (error != NO_ERROR) {
-         if (!suppressErrors) catch("PipValue(6)", error);
+         if (!muteErrors) catch("PipValue(6)", error);
          return(0);
       }
       return(Pip/tickSize * dynamicTickValue * lots);
@@ -806,7 +806,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    // dynamic and inaccurate value: warn if in tester and continue with inaccurate value
    dynamicTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(8)");
    if (error != NO_ERROR) {
-      if (!suppressErrors) catch("PipValue(9)", error);
+      if (!muteErrors) catch("PipValue(9)", error);
       return(0);
    }
    return(Pip/tickSize * dynamicTickValue * lots);
@@ -814,7 +814,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 
 
 /**
- * Return any symbol's pip value for the specified lot amount. Errors are returned and optionally logged.
+ * Return the pip value for the specified symbol and lot amount.
  *
  * @param  _In_  string symbol            - symbol
  * @param  _In_  double lots              - lot amount
@@ -854,60 +854,53 @@ double PipValueEx(string symbol, double lots, int &error, string caller = "") {
 double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
    static double baseCommission = EMPTY_VALUE;
    if (baseCommission == EMPTY_VALUE) {
-      bool isCFD = false;
-      double value = 0;
+      double dValue = 0;
 
       if (__isTesting) {
-         value = Test_GetCommission(__ExecutionContext, 1);
+         dValue = Test_GetCommission(__ExecutionContext, 1);
       }
       else {
-         string section="Commissions", key=Symbol();
+         string section="Commissions", key="", symbol=Symbol(), stdSymbol=StdSymbol();
+         bool isCFD = (MarketInfo(Symbol(), MODE_PROFITCALCMODE) == PCM_CFD);
 
-         if (IsConfigKey(section, key)) {                         // check exact symbol
-            value = GetConfigDouble(section, key);
-            if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
-         }
+         // check for an explicitly configured symbol override
+         if      (IsConfigKey(section, symbol))    key = symbol;
+         else if (IsConfigKey(section, stdSymbol)) key = stdSymbol;
+         else if (isCFD)                           dValue = 0;
          else {
-            key = StdSymbol();
-            if (IsConfigKey(section, key)) {                      // check mapped symbol
-               value = GetConfigDouble(section, key);
-               if (value < 0) return(_EMPTY(catch("GetCommission(2)  invalid config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
-            }
-            else if (isCFD) {
-               value = 0;                                         // TODO: implement isCFD
-            }
-            else {
-               // query global config
-               string company  = GetAccountCompanyId(); if (!StringLen(company)) return(EMPTY);
-               int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
-               string currency = AccountCurrency();
+            // check general account configuration
+            string company  = GetAccountCompanyId(); if (company == "") return(EMPTY);
+            int    account  = GetAccountNumber();    if (!account)      return(EMPTY);
+            string currency = AccountCurrency();
+            if (currency == "") currency = GetGlobalConfigString("Accounts", account +".currency");
+            if (currency == "") return(_EMPTY(catch("GetCommission(1)  cannot resolve account currency (account configuration \""+ account +"\" not found)", ERR_ILLEGAL_STATE)));
 
-               if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
-               else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
-               else if (IsGlobalConfigKeyA(section, company))                              key = company;
+            if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
+            else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
+            else if (IsGlobalConfigKeyA(section, company))                              key = company;
+            else if (IsLogInfo()) logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default commission (0.00)");
+         }
 
-               if (StringLen(key) > 0) {
-                  value = GetGlobalConfigDouble(section, key);    // use global config
-                  if (value < 0) return(_EMPTY(catch("GetCommission(3)  invalid global config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
-               }
-               else if (IsLogInfo()) logInfo("GetCommission(4)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
-            }
+         // read a found configuration
+         if (key != "") {
+            dValue = GetConfigDouble(section, key);
+            if (dValue < 0) return(_EMPTY(catch("GetCommission(3)  invalid config value ["+ section +"] "+ key +" = "+ NumberToStr(dValue, ".+"), ERR_INVALID_CONFIG_VALUE)));
          }
       }
-      baseCommission = value;
+      baseCommission = dValue;
    }
 
    switch (mode) {
       case MODE_MONEY:
          if (lots == 1)
-            return(baseCommission);
-         return(baseCommission * lots);
+            return(baseCommission);                               // normalized
+         return(baseCommission * lots);                           // intentionally not normalized
 
       case MODE_MARKUP:
          double pipValue = PipValue(); if (!pipValue) return(EMPTY);
          return(baseCommission/pipValue * Pip);
    }
-   return(_EMPTY(catch("GetCommission(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY(catch("GetCommission(4)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
