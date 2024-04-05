@@ -866,7 +866,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
          // check for an explicitly configured symbol override
          if      (IsConfigKey(section, symbol))    key = symbol;
          else if (IsConfigKey(section, stdSymbol)) key = stdSymbol;
-         else if (isCFD)                           dValue = 0;
+         else if (isCFD)                           dValue = 0;       // PCM_FOREX may or may not have commission
          else {
             // check general account configuration
             string company  = GetAccountCompanyId(); if (company == "") return(EMPTY);
@@ -878,7 +878,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
             if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
             else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
             else if (IsGlobalConfigKeyA(section, company))                              key = company;
-            else if (IsLogInfo()) logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default commission (0.00)");
+            else if (IsLogInfo()) logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default (no commission)");
          }
 
          // read a found configuration
@@ -893,8 +893,8 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
    switch (mode) {
       case MODE_MONEY:
          if (lots == 1)
-            return(baseCommission);                               // normalized
-         return(baseCommission * lots);                           // intentionally not normalized
+            return(baseCommission);                                  // normalized
+         return(baseCommission * lots);                              // intentionally not normalized
 
       case MODE_MARKUP:
          double pipValue = PipValue(); if (!pipValue) return(EMPTY);
@@ -2720,14 +2720,12 @@ int SumInts(int values[]) {
 
 /**
  * Replacement for the built-in function MarketInfo() with custom data overrides and better error handling.
- * Errors are optionally logged and always returned.
  *
  * @param  _In_  string symbol            - symbol
  * @param  _In_  int    mode              - MarketInfo() data identifier
  * @param  _Out_ int    &error            - variable receiving the error status
- * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
- *                                           if specified errors are logged
- *                                           if not specified errors are not logged (default)
+ * @param  _In_  string caller [optional] - location identifier of the caller, controls error handling: if not empty errors
+ *                                           are logged (default: no logging)
  *
  * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter 'error')
  */
@@ -2736,7 +2734,7 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
    string sMode   = MarketInfoModeToStr(mode);
    string key     = symbol +","+ sMode;
 
-   if (key == "VIX_U3,MODE_TICKVALUE") {                 // TODO: hard-code cases to minimize expensive logic
+   if (key == "VIX_J4,MODE_TICKVALUE") {                 // TODO: hard-code cases to minimize expensive logic
       // check for and return a custom override
       if (IsAccountConfigKey(section, key)) {
          string sValue = GetAccountConfigString(section, key);
@@ -2745,7 +2743,7 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
             return(!catch(ifString(StringLen(caller), caller +"->", "") +"MarketInfoEx(1)  invalid config value ["+ section +"] "+ key +" = (empty)", error));
          }
          if (mode == MODE_TICKVALUE) {
-            if (StrCompareI(symbol, "VIX_Q3") || StrCompareI(symbol, "VIX_U3")) {
+            if (StrCompareI(symbol, "VIX_J4") || StrCompareI(symbol, "VIX_Q3") || StrCompareI(symbol, "VIX_U3")) {
                return(MarketInfoEx("US2000", mode, error, ifString(StringLen(caller), caller +"->MarketInfoEx(2)", "")));
             }
          }

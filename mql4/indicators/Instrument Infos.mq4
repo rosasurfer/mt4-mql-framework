@@ -180,6 +180,8 @@ bool CreateChartObjects() {
  * @return int - error status
  */
 int UpdateInstrumentInfos() {
+   string _spUnit = ifString(pUnit==1, "", " "+ spUnit);
+
    string symbol          = Symbol();
    bool   tradingEnabled  = (MarketInfo(symbol, MODE_TRADEALLOWED) != 0);
    color  fontColor       = ifInt(tradingEnabled, fontColorEnabled, fontColorDisabled);
@@ -213,7 +215,7 @@ int UpdateInstrumentInfos() {
    double maintncLeverage = MathDiv(lotValue, marginMaintnc);
    double marginHedged    = MathDiv(MarketInfo(symbol, MODE_MARGINHEDGED), lotSize) * 100;
 
-   double spreadP         = MarketInfo(symbol, MODE_SPREAD) * Point;
+   double spreadP         = NormalizeDouble(MarketInfo(symbol, MODE_SPREAD) * Point, Digits);
    double commissionM     = GetCommission();
 
    double commissionP     = NormalizeDouble(MathDiv(commissionM, fullPointValue), Digits+1);    // + 1 digit for sub-precision
@@ -226,8 +228,10 @@ int UpdateInstrumentInfos() {
    string sSwapLong=" ", sSwapShort=" ";
 
    if (swapMode == SCM_POINTS) {                                  // in MQL point of quote currency
-      swapLongD  = swapLong *Point/Pip; swapLongY  = MathDiv(swapLongD *Pip*360, Close[0]) * 100;
-      swapShortD = swapShort*Point/Pip; swapShortY = MathDiv(swapShortD*Pip*360, Close[0]) * 100;
+      swapLongD  = NormalizeDouble(swapLong *Point/Pip, 8); swapLongY  = MathDiv(swapLongD *Pip*360, Close[0]) * 100;
+      swapShortD = NormalizeDouble(swapShort*Point/Pip, 8); swapShortY = MathDiv(swapShortD*Pip*360, Close[0]) * 100;
+      sSwapLong  = ifString(!swapLong,  "none", NumberToStr(swapLongD,  "+.1+") +" pip = "+ NumberToStr(swapLongY,  "+.1R") +"% p.a.");
+      sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShortD, "+.1+") +" pip = "+ NumberToStr(swapShortY, "+.1R") +"% p.a.");
    }
    else {
       /*
@@ -240,11 +244,6 @@ int UpdateInstrumentInfos() {
       */
       sSwapLong  = ifString(!swapLong,  "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapLong,  ".+"));
       sSwapShort = ifString(!swapShort, "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapShort, ".+"));
-      swapMode = -1;
-   }
-   if (swapMode != -1) {
-      sSwapLong  = ifString(!swapLong,  "none", NumberToStr(swapLongD,  "+.1R") +" pip = "+ NumberToStr(swapLongY,  "+.1R") +"% p.a.");
-      sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShortD, "+.1R") +" pip = "+ NumberToStr(swapShortY, "+.1R") +"% p.a.");
    }
 
    int    requiredUnits   = AccountSize.NumberOfUnits;            // units of MODE_MINLOT size
@@ -272,7 +271,6 @@ int UpdateInstrumentInfos() {
       serverTimezone = serverTimezone + ifString(StrStartsWithI(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");
    }
    string serverSession = ifString(serverTimezone=="", "", ifString(!tzOffset, "00:00-24:00", GmtTimeFormat(D'1970.01.02' + tzOffset, "%H:%M-%H:%M")));
-   string _spUnit = ifString(pUnit==1, "", " "+ spUnit);
 
    // populate display
    ObjectSetText(labels[I_TRADING_ENABLED        ], "Trading enabled:",                                                                                                                                                          fontSize, fontName, fontColor);
