@@ -104,7 +104,6 @@
  *  - ZigZag Twister
  *  - add ZigZag projections
  *  - input TradingTimeframe
- *  - fix virtual trading
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - rewrite Test_GetCommission()
  *  - document control scripts
@@ -239,7 +238,6 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID                    = "";                   // instance to load from a status file, format "[T]123"
-extern string TradingMode                    = "regular* | virtual"; // can be shortened
 
 extern string ___a__________________________ = "=== Instance settings ===";
 extern string Instance.StartAt               = "";                   // @time(datetime|time)
@@ -277,13 +275,6 @@ extern bool   ShowProfitInPercent            = false;                // whether 
 #define METRIC_DAILY_NET_UNITS      5
 #define METRIC_DAILY_SIG_UNITS      6
 
-// virtual trading
-#define TRADINGMODE_REGULAR         1
-#define TRADINGMODE_VIRTUAL         2
-
-int    tradingMode;
-string tradingModeDescriptions[] = {"", "regular", "virtual"};
-
 // instance start conditions
 bool     start.time.condition;               // whether a time condition is active
 datetime start.time.value;
@@ -306,9 +297,8 @@ double   stop.profitPun.value;
 string   stop.profitPun.description = "";
 
 // cache vars to speed-up ShowStatus()
-string   status.tradingModeStatus[] = {"", "", "Virtual "};
-string   status.startConditions     = "";
-string   status.stopConditions      = "";
+string   status.startConditions = "";
+string   status.stopConditions  = "";
 
 
 // framework
@@ -835,16 +825,14 @@ bool StartInstance(double signal[]) {
    if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
    // open a new position
-   int      type        = ifInt(sigOp==SIG_OP_LONG, OP_BUY, OP_SELL);
+   int      type        = ifInt(sigOp==SIG_OP_LONG, OP_BUY, OP_SELL), oeFlags, oe[];
    double   price       = NULL;
    datetime expires     = NULL;
    string   comment     = instance.name;
    int      magicNumber = CalculateMagicNumber(instance.id);
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   int ticket, oeFlags, oe[];
-   if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, NULL, NULL, marker, oe);
-   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
+   int ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
@@ -923,14 +911,11 @@ bool ReversePosition(double signal[]) {
    if (open.ticket != NULL) {
       // continue with an already reversed position
       if ((open.type==OP_BUY && sigOp==SIG_OP_LONG) || (open.type==OP_SELL && sigOp==SIG_OP_SHORT)) {
-         return(_true(logWarn("ReversePosition(4)  "+ instance.name +" to "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +": continuing with already open "+ ifString(tradingMode==TRADINGMODE_VIRTUAL, "virtual ", "") + ifString(sigOp==SIG_OP_LONG, "long", "short") +" position #"+ open.ticket)));
+         return(_true(logWarn("ReversePosition(4)  "+ instance.name +" to "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +": continuing with already open "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +" position #"+ open.ticket)));
       }
 
       // close the existing position
-      bool success;
-      if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_CLOSED, oe);
-      else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe);
-      if (!success) return(!SetLastError(oe.Error(oe)));
+      if (!OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
       double closePrice = oe.ClosePrice(oe);
       open.slippageP   += oe.Slippage(oe);
@@ -956,8 +941,7 @@ bool ReversePosition(double signal[]) {
    int      magicNumber = CalculateMagicNumber(instance.id);
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   if (tradingMode == TRADINGMODE_VIRTUAL) ticket = VirtualOrderSend(type, Lots, NULL, NULL, marker, oe);
-   else                                    ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
+   ticket = OrderSendEx(Symbol(), type, Lots, price, order.slippage, NULL, NULL, comment, magicNumber, expires, marker, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the new position data
@@ -1042,11 +1026,8 @@ bool StopInstance(double signal[]) {
    // close an open position
    if (instance.status == STATUS_TRADING) {
       if (open.ticket > 0) {
-         bool success;
-         int oeFlags, oe[];
-         if (tradingMode == TRADINGMODE_VIRTUAL) success = VirtualOrderClose(open.ticket, open.lots, CLR_CLOSED, oe);
-         else                                    success = OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe);
-         if (!success) return(!SetLastError(oe.Error(oe)));
+         int oe[];
+         if (!OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
 
          double closePrice = oe.ClosePrice(oe), closePriceSig = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid);
          open.slippageP   += oe.Slippage(oe);
@@ -1128,44 +1109,30 @@ bool UpdateStatus() {
    if (!open.ticket)                                  return(true);
 
    // update open position
-   if (tradingMode == TRADINGMODE_VIRTUAL) {
-      open.swapM        = 0;
-      open.commissionM  = 0;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask);
-      open.runupP       = MathMax(open.runupP, open.netProfitP);
-      open.rundownP     = MathMin(open.rundownP, open.netProfitP);
-      open.netProfitM   = open.netProfitP * PointValue(open.lots);
-      open.grossProfitM = open.netProfitM;
-      open.sigProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
-      open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
-      open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
+   if (!SelectTicket(open.ticket, "UpdateStatus(1)")) return(false);
+   bool isClosed = (OrderCloseTime() != NULL);
+   if (isClosed) {
+      double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
    }
    else {
-      if (!SelectTicket(open.ticket, "UpdateStatus(1)")) return(false);
-      bool isClosed = (OrderCloseTime() != NULL);
-      if (isClosed) {
-         double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
-      }
-      else {
-         exitPrice = ifDouble(open.type==OP_BUY, _Bid, _Ask);
-         exitPriceSig = _Bid;
-      }
-      open.swapM        = NormalizeDouble(OrderSwap(), 2);
-      open.commissionM  = OrderCommission();
-      open.grossProfitM = OrderProfit();
-      open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
-      open.runupP       = MathMax(open.runupP, open.netProfitP);
-      open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-      open.sigProfitP   = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
-      open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
-      open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
+      exitPrice = ifDouble(open.type==OP_BUY, _Bid, _Ask);
+      exitPriceSig = _Bid;
+   }
+   open.swapM        = NormalizeDouble(OrderSwap(), 2);
+   open.commissionM  = OrderCommission();
+   open.grossProfitM = OrderProfit();
+   open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
+   open.netProfitP   = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
+   open.runupP       = MathMax(open.runupP, open.netProfitP);
+   open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
+   open.sigProfitP   = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
+   open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
+   open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
 
-      if (isClosed) {
-         int error;
-         if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ ComposePositionCloseMsg(error), error))) return(false);
-         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                        return(false);
-      }
+   if (isClosed) {
+      int error;
+      if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ ComposePositionCloseMsg(error), error))) return(false);
+      if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                        return(false);
    }
 
    // update PnL stats
@@ -1306,7 +1273,6 @@ bool SaveStatus() {
    // [Inputs]
    section = "Inputs";
    WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
-   WriteIniString(file, section, "TradingMode",                /*string  */ TradingMode);
    WriteIniString(file, section, "Instance.StartAt",           /*string  */ Instance.StartAt);
    WriteIniString(file, section, "Instance.StopAt",            /*string  */ Instance.StopAt);
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
@@ -1327,7 +1293,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "instance.startEquity",       /*double  */ DoubleToStr(instance.startEquity, 2) + separator);
 
-   WriteIniString(file, section, "tradingMode",                /*int     */ tradingMode);
    WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
 
    WriteIniString(file, section, "start.time.condition",       /*bool    */ start.time.condition);
@@ -1376,7 +1341,6 @@ bool ReadStatus() {
    // [Inputs]
    section = "Inputs";
    Instance.ID                = GetIniStringA(file, section, "Instance.ID",      "");              // string   Instance.ID                = T123
-   TradingMode                = GetIniStringA(file, section, "TradingMode",      "");              // string   TradingMode                = regular
    Instance.StartAt           = GetIniStringA(file, section, "Instance.StartAt", "");              // string   Instance.StartAt           = @time(datetime|time)
    Instance.StopAt            = GetIniStringA(file, section, "Instance.StopAt",  "");              // string   Instance.StopAt            = @time(datetime|time) | @profit(numeric[%])
    ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"      );              // int      ZigZag.Periods             = 40
@@ -1395,7 +1359,6 @@ bool ReadStatus() {
    instance.startEquity       = GetIniDouble (file, section, "instance.startEquity");              // double   instance.startEquity       = 1000.00
    SS.InstanceName();
 
-   tradingMode                = GetIniInt    (file, section, "tradingMode");                       // int      tradingMode                = 1
    recorder.stdEquitySymbol   = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");      // string   recorder.stdEquitySymbol   = GBPJPY.001
 
    start.time.condition       = GetIniBool   (file, section, "start.time.condition"      );        // bool     start.time.condition       = 1
@@ -1540,7 +1503,6 @@ bool IsLocalClosedPosition(int ticket) {
 
 // backed-up input parameters
 string   prev.Instance.ID = "";
-string   prev.TradingMode = "";
 string   prev.Instance.StartAt = "";
 string   prev.Instance.StopAt = "";
 int      prev.ZigZag.Periods;
@@ -1548,8 +1510,6 @@ double   prev.Lots;
 bool     prev.ShowProfitInPercent;
 
 // backed-up runtime variables affected by changing input parameters
-int      prev.tradingMode;
-
 int      prev.instance.id;
 string   prev.instance.name = "";
 datetime prev.instance.created;
@@ -1585,16 +1545,13 @@ string   prev.stop.profitPun.description = "";
 void BackupInputs() {
    // input parameters, used for comparison in ValidateInputs()
    prev.Instance.ID         = StringConcatenate(Instance.ID, "");       // string inputs are references to internal C literals
-   prev.TradingMode         = StringConcatenate(TradingMode, "");       // and must be copied to break the reference
-   prev.Instance.StartAt    = StringConcatenate(Instance.StartAt, "");
+   prev.Instance.StartAt    = StringConcatenate(Instance.StartAt, "");  // and must be copied to break the reference
    prev.Instance.StopAt     = StringConcatenate(Instance.StopAt, "");
    prev.ZigZag.Periods      = ZigZag.Periods;
    prev.Lots                = Lots;
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
-   prev.tradingMode                = tradingMode;
-
    prev.instance.id                = instance.id;
    prev.instance.name              = instance.name;
    prev.instance.created           = instance.created;
@@ -1629,7 +1586,6 @@ void BackupInputs() {
 void RestoreInputs() {
    // input parameters
    Instance.ID         = prev.Instance.ID;
-   TradingMode         = prev.TradingMode;
    Instance.StartAt    = prev.Instance.StartAt;
    Instance.StopAt     = prev.Instance.StopAt;
    ZigZag.Periods      = prev.ZigZag.Periods;
@@ -1637,8 +1593,6 @@ void RestoreInputs() {
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
-   tradingMode                = prev.tradingMode;
-
    instance.id                = prev.instance.id;
    instance.name              = prev.instance.name;
    instance.created           = prev.instance.created;
@@ -1687,24 +1641,9 @@ bool ValidateInputs() {
       else if (Instance.ID != prev.Instance.ID)         return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
    }
 
-   // TradingMode: "regular* | virtual"
-   string sValues[], sValue=TradingMode;
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   sValue = StrToLower(StrTrim(sValue));
-   if      (StrStartsWith("regular", sValue)) tradingMode = TRADINGMODE_REGULAR;
-   else if (StrStartsWith("virtual", sValue)) tradingMode = TRADINGMODE_VIRTUAL;
-   else                                                 return(!onInputError("ValidateInputs(2)  "+ instance.name +" invalid input parameter TradingMode: "+ DoubleQuoteStr(TradingMode)));
-   if (isInitParameters && tradingMode!=prev.tradingMode) {
-      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(3)  "+ instance.name +" cannot change input parameter TradingMode of "+ StatusDescription(instance.status) +" instance"));
-   }
-   TradingMode = tradingModeDescriptions[tradingMode];
-
    // Instance.StartAt: "@time(datetime|time)"
    if (!isInitParameters || Instance.StartAt!=prev.Instance.StartAt) {
-      string exprs[], expr="", key="", descr="";        // split conditions
+      string sValue="", sValues[], exprs[], expr="", key="", descr="";
       int sizeOfExprs = Explode(Instance.StartAt, "|", exprs, NULL), iValue, time, pt[];
       datetime dtValue;
       bool isDaily, isTimeCondition = false;
@@ -1712,18 +1651,18 @@ bool ValidateInputs() {
       for (int i=0; i < sizeOfExprs; i++) {             // validate each expression
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr)) continue;
-         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
-         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
-         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(2)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
 
          if (key == "@time") {
-            if (isTimeCondition)                        return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt) +" (multiple time conditions)"));
+            if (isTimeCondition)                        return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt) +" (multiple time conditions)"));
             isTimeCondition = true;
 
-            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(9)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
             dtValue = DateTime2(pt, DATE_OF_ERA);
             isDaily = !pt[PT_HAS_DATE];
             descr   = "time("+ TimeToStr(dtValue, ifInt(isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
@@ -1735,7 +1674,7 @@ bool ValidateInputs() {
                start.time.description = descr;
             }
          }
-         else                                           return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+         else                                           return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
       }
       if (!isTimeCondition && start.time.condition) {
          start.time.condition = false;
@@ -1751,18 +1690,18 @@ bool ValidateInputs() {
       for (i=0; i < sizeOfExprs; i++) {                 // validate each expression
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr)) continue;                // support both OR operators "||" and "|"
-         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
-         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
-         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(9)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(14)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
 
          if (key == "@time") {
-            if (isTimeCondition)                        return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple time conditions)"));
+            if (isTimeCondition)                        return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple time conditions)"));
             isTimeCondition = true;
 
-            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+            if (!ParseDateTime(sValue, NULL, pt))       return(!onInputError("ValidateInputs(14)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
             dtValue = DateTime2(pt, DATE_OF_ERA);
             isDaily = !pt[PT_HAS_DATE];
             descr   = "time("+ TimeToStr(dtValue, ifInt(isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
@@ -1773,17 +1712,17 @@ bool ValidateInputs() {
                stop.time.description = descr;
             }
             if (start.time.condition && !start.time.isDaily && !stop.time.isDaily) {
-               if (start.time.value >= stop.time.value) return(!onInputError("ValidateInputs(17)  "+ instance.name +" invalid times in Instance.Start/StopAt: "+ start.time.description +" / "+ stop.time.description +" (start time must preceed stop time)"));
+               if (start.time.value >= stop.time.value) return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid times in Instance.Start/StopAt: "+ start.time.description +" / "+ stop.time.description +" (start time must preceed stop time)"));
             }
          }
 
          else if (key == "@profit") {
-            if (isProfitCondition)                      return(!onInputError("ValidateInputs(18)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple profit conditions)"));
+            if (isProfitCondition)                      return(!onInputError("ValidateInputs(16)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple profit conditions)"));
             isProfitCondition = true;
 
             if (StrEndsWith(sValue, "%")) {
                sValue = StrTrim(StrLeft(sValue, -1));
-               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(19)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(17)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
                double dValue = StrToDouble(sValue);
                descr  = "profit("+ NumberToStr(NormalizeDouble(dValue, 2), ".+") +"%)";
                if (descr != stop.profitPct.description) {   // enable condition only if it changed
@@ -1794,7 +1733,7 @@ bool ValidateInputs() {
                }
             }
             else {
-               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(20)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+               if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(18)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
                dValue = StrToDouble(sValue);
                descr  = "profit("+ NumberToStr(dValue, "R+."+ pDigits) +" "+ spUnit +")";
                if (descr != stop.profitPun.description) {   // enable condition only if changed
@@ -1804,7 +1743,7 @@ bool ValidateInputs() {
                }
             }
          }
-         else                                           return(!onInputError("ValidateInputs(21)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         else                                           return(!onInputError("ValidateInputs(19)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
       }
       if (!isTimeCondition && stop.time.condition) {
          stop.time.condition = false;
@@ -1813,16 +1752,16 @@ bool ValidateInputs() {
 
    // ZigZag.Periods
    if (isInitParameters && ZigZag.Periods!=prev.ZigZag.Periods) {
-      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(22)  "+ instance.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(instance.status) +" instance"));
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(20)  "+ instance.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(instance.status) +" instance"));
    }
-   if (ZigZag.Periods < 2)                              return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
+   if (ZigZag.Periods < 2)                              return(!onInputError("ValidateInputs(21)  "+ instance.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
 
    // Lots
    if (isInitParameters && NE(Lots, prev.Lots)) {
-      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(24)  "+ instance.name +" cannot change input parameter Lots of "+ StatusDescription(instance.status) +" instance"));
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(22)  "+ instance.name +" cannot change input parameter Lots of "+ StatusDescription(instance.status) +" instance"));
    }
-   if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(25)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
-   if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(26)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
+   if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    // Targets
    if (!ValidateInputs.Targets()) return(false);
@@ -1831,109 +1770,7 @@ bool ValidateInputs() {
    if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(27)"));
-}
-
-
-/**
- * Virtual replacement for OrderSendEx().
- *
- * @param  _In_  int    type       - trade operation type
- * @param  _In_  double lots       - trade volume in lots
- * @param  _In_  double stopLoss   - stoploss price
- * @param  _In_  double takeProfit - takeprofit price
- * @param  _In_  color  marker     - color of the chart marker to set
- * @param  _Out_ int    &oe[]      - order execution details (struct ORDER_EXECUTION)
- *
- * @return int - resulting ticket or NULL in case of errors
- */
-int VirtualOrderSend(int type, double lots, double stopLoss, double takeProfit, color marker, int &oe[]) {
-   if (ArraySize(oe) != ORDER_EXECUTION_intSize) ArrayResize(oe, ORDER_EXECUTION_intSize);
-   ArrayInitialize(oe, 0);
-
-   if (type!=OP_BUY && type!=OP_SELL) return(!catch("VirtualOrderSend(1)  "+ instance.name +" invalid parameter type: "+ type, oe.setError(oe, ERR_INVALID_PARAMETER)));
-   double openPrice = ifDouble(type, _Bid, _Ask);
-   string comment = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
-
-   // generate a new ticket
-   int ticket = open.ticket;
-   int size = ArrayRange(history, 0);
-   if (size > 0) ticket = Max(ticket, history[size-1][H_TICKET]);
-   ticket++;
-
-   // populate oe[]
-   oe.setTicket    (oe, ticket);
-   oe.setSymbol    (oe, Symbol());
-   oe.setDigits    (oe, Digits);
-   oe.setBid       (oe, _Bid);
-   oe.setAsk       (oe, _Ask);
-   oe.setType      (oe, type);
-   oe.setLots      (oe, lots);
-   oe.setOpenTime  (oe, Tick.time);
-   oe.setOpenPrice (oe, openPrice);
-   oe.setStopLoss  (oe, stopLoss);
-   oe.setTakeProfit(oe, takeProfit);
-
-   if (IsLogDebug()) {
-      string sType  = OperationTypeDescription(type);
-      string sLots  = NumberToStr(lots, ".+");
-      string sPrice = NumberToStr(openPrice, PriceFormat);
-      string sBid   = NumberToStr(_Bid, PriceFormat);
-      string sAsk   = NumberToStr(_Ask, PriceFormat);
-      logDebug("VirtualOrderSend(2)  "+ instance.name +" opened virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"."+ comment +"\" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")");
-   }
-   if (__isChart && marker!=CLR_NONE) ChartMarker.OrderSent_B(ticket, Digits, marker, type, lots, Symbol(), Tick.time, openPrice, stopLoss, takeProfit, comment);
-   if (!__isTesting)                  PlaySoundEx("OrderOk.wav");
-
-   return(ticket);
-}
-
-
-/**
- * Virtual replacement for OrderCloseEx().
- *
- * @param  _In_  int    ticket - order ticket of the position to close
- * @param  _In_  double lots   - order size to close
- * @param  _In_  color  marker - color of the chart marker to set
- * @param  _Out_ int    &oe[]  - execution details (struct ORDER_EXECUTION)
- *
- * @return bool - success status
- */
-bool VirtualOrderClose(int ticket, double lots, color marker, int &oe[]) {
-   if (ArraySize(oe) != ORDER_EXECUTION_intSize) ArrayResize(oe, ORDER_EXECUTION_intSize);
-   ArrayInitialize(oe, 0);
-
-   if (ticket != open.ticket) return(!catch("VirtualOrderClose(1)  "+ instance.name +" parameter ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, oe.setError(oe, ERR_INVALID_PARAMETER)));
-   double closePrice = ifDouble(open.type==OP_BUY, _Bid, _Ask);
-   double profit = NormalizeDouble(ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice) * PointValue(lots), 2);
-
-   // populate oe[]
-   oe.setTicket    (oe, ticket);
-   oe.setSymbol    (oe, Symbol());
-   oe.setDigits    (oe, Digits);
-   oe.setBid       (oe, _Bid);
-   oe.setAsk       (oe, _Ask);
-   oe.setType      (oe, open.type);
-   oe.setLots      (oe, lots);
-   oe.setOpenTime  (oe, open.time);
-   oe.setOpenPrice (oe, open.price);
-   oe.setCloseTime (oe, Tick.time);
-   oe.setClosePrice(oe, closePrice);
-   oe.setProfit    (oe, profit);
-
-   if (IsLogDebug()) {
-      string sType       = OperationTypeDescription(open.type);
-      string sLots       = NumberToStr(lots, ".+");
-      string sOpenPrice  = NumberToStr(open.price, PriceFormat);
-      string sClosePrice = NumberToStr(closePrice, PriceFormat);
-      string sBid        = NumberToStr(_Bid, PriceFormat);
-      string sAsk        = NumberToStr(_Ask, PriceFormat);
-      logDebug("VirtualOrderClose(2)  "+ instance.name +" closed virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ StrPadLeft(instance.id, 3, "0") +"\" from "+ sOpenPrice +" at "+ sClosePrice +" (market: "+ sBid +"/"+ sAsk +")");
-   }
-   if (__isChart && marker!=CLR_NONE) ChartMarker.PositionClosed_B(ticket, Digits, marker, open.type, lots, Symbol(), open.time, open.price, Tick.time, closePrice);
-   if (!__isTesting)                  PlaySoundEx("OrderOk.wav");
-
-   return(true);
+   return(!catch("ValidateInputs(25)"));
 }
 
 
@@ -2016,15 +1853,15 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(status.tradingModeStatus[tradingMode], WindowExpertName(), "    ID.", instance.id, sStatus, sError, NL,
-                                                                                                                                       NL,
-                                  "Start:    ",  status.startConditions,                                                               NL,
-                                  "Stop:     ",  status.stopConditions,                                                                NL,
-                                                                                                                                       NL,
-                                  status.metricDescription,                                                                            NL,
-                                  "Open:    ",   status.openLots,                                                                      NL,
-                                  "Closed:  ",   status.closedTrades,                                                                  NL,
-                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,                                         NL
+   string text = StringConcatenate(WindowExpertName(), "    ID.", instance.id, sStatus, sError, NL,
+                                                                                                NL,
+                                  "Start:    ",  status.startConditions,                        NL,
+                                  "Stop:     ",  status.stopConditions,                         NL,
+                                                                                                NL,
+                                  status.metricDescription,                                     NL,
+                                  "Open:    ",   status.openLots,                               NL,
+                                  "Closed:  ",   status.closedTrades,                           NL,
+                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,  NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
@@ -2076,7 +1913,6 @@ bool CreateStatusBox() {
  */
 string InputsToStr() {
    return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),      ";"+ NL +
-                            "TradingMode=",          DoubleQuoteStr(TradingMode),      ";"+ NL +
                             "Instance.StartAt=",     DoubleQuoteStr(Instance.StartAt), ";"+ NL +
                             "Instance.StopAt=",      DoubleQuoteStr(Instance.StopAt),  ";"+ NL +
 
