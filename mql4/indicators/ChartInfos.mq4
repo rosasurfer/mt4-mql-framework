@@ -1476,7 +1476,7 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet(label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet(label, OBJPROP_COLOR,      DarkTurquoise);
-            ObjectSet(label, OBJPROP_BACK,       true);
+            ObjectSet(label, OBJPROP_BACK,       false);
             ObjectSet(label, OBJPROP_PRICE1,     positions.data[i][I_BREAKEVEN_PRICE]);
             ObjectSetText(label, pmText);
          }
