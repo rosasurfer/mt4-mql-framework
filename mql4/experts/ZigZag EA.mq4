@@ -66,8 +66,8 @@
  *     implement open.nextTarget
  *
  *  - exit management
- *     trailing stop
  *     dynamic SL/TP distances (multiples of ranges)
+ *     trailing stop
  *
  *  - optimization
  *     better statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
@@ -99,7 +99,6 @@
  *  - reproduce/validate tests with original EAs
  *     terminal with Dukascopy data
  *     fast generation of old test data (e.g. from 2007)
- *     visualize account statements
  *
  *  -------------------------------------------------------------------------------------------------------------------------
  *  - ZigZag Twister
@@ -226,7 +225,6 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701979#  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981#  [Query execution mode in MQL]
  *
- *  - rewrite parameter stepping: remove commands from channel after processing
  *  - rewrite range bar generator
  *  - VPS: monitor and notify of incoming emails
  *  - CLI tools to rename/update/delete symbols
