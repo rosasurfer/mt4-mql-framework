@@ -1341,9 +1341,9 @@ bool UpdatePositions() {
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
          xDist = xPrev + xOffset[col];
          if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, xDist);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yDist);
+         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
+         ObjectSet(label, OBJPROP_XDISTANCE, xDist);
+         ObjectSet(label, OBJPROP_YDISTANCE, yDist);
          ObjectSetText(label, " ", 1);
          xPrev = xDist;
       }
@@ -1473,11 +1473,11 @@ bool UpdatePositions() {
          }
          else {
             pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   BE";
-            ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
-            ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-            ObjectSet    (label, OBJPROP_COLOR,      DarkTurquoise);
-            ObjectSet    (label, OBJPROP_BACK,       false);
-            ObjectSet    (label, OBJPROP_PRICE1,     positions.data[i][I_BREAKEVEN_PRICE]);
+            ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
+            ObjectSet(label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
+            ObjectSet(label, OBJPROP_COLOR,      DarkTurquoise);
+            ObjectSet(label, OBJPROP_BACK,       true);
+            ObjectSet(label, OBJPROP_PRICE1,     positions.data[i][I_BREAKEVEN_PRICE]);
             ObjectSetText(label, pmText);
          }
 
@@ -1488,11 +1488,11 @@ bool UpdatePositions() {
          }
          else {
             pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_PROFIT_MARKER_PCT], 2), "+.+") +"%";
-            ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
-            ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-            ObjectSet    (label, OBJPROP_COLOR,      ifInt(positions.data[i][I_PROFIT_MARKER_PCT] < 0, OrangeRed, DodgerBlue));
-            ObjectSet    (label, OBJPROP_BACK,       false);
-            ObjectSet    (label, OBJPROP_PRICE1,     positions.data[i][I_PROFIT_MARKER_PRICE]);
+            ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
+            ObjectSet(label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
+            ObjectSet(label, OBJPROP_COLOR,      ifInt(positions.data[i][I_PROFIT_MARKER_PCT] < 0, OrangeRed, DodgerBlue));
+            ObjectSet(label, OBJPROP_BACK,       false);
+            ObjectSet(label, OBJPROP_PRICE1,     positions.data[i][I_PROFIT_MARKER_PRICE]);
             ObjectSetText(label, pmText);
          }
 
@@ -1554,9 +1554,9 @@ bool UpdateOrderCounter() {
       if (!maxOpenOrders) maxOpenOrders = -1;
 
       if (maxOpenOrders > 0) {
-         alertLimit = Min(Round(0.9  * maxOpenOrders), maxOpenOrders-5);
-         warnLimit  = Min(Round(0.75 * maxOpenOrders), alertLimit   -5);
-         showLimit  = Min(Round(0.5  * maxOpenOrders), warnLimit    -5);
+         alertLimit = Min(Round(0.9 * maxOpenOrders), maxOpenOrders-5);
+         warnLimit  = Min(Round(0.8 * maxOpenOrders), alertLimit   -5);
+         showLimit  = Min(Round(0.7 * maxOpenOrders), warnLimit    -5);
       }
    }
 

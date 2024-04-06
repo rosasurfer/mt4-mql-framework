@@ -15,9 +15,9 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int AccountSize.NumberOfUnits  = 20;     // number of available bullets of MODE_MINLOT size
-       int AccountSize.MaxRiskPerUnit = 10;     // max. risk per unit in % on an ADR move against it
-extern int AccountSize.FreeMargin     = 25;     // max. margin utilization: required free margin in %
+extern int AccountSize.NumberOfUnits    = 20;      // number of available bullets of MODE_MINLOT size
+extern int AccountSize.MaxUnitRiskPct   = 10;      // max. risk in % per unit on an ADR move against it
+extern int AccountSize.MaxUsedMarginPct = 75;      // max. margin utilization in %
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -217,9 +217,13 @@ int UpdateInstrumentInfos() {
 
    double spreadP         = NormalizeDouble(MarketInfo(symbol, MODE_SPREAD) * Point, Digits);
    double commissionM     = GetCommission();
-
-   double commissionP     = NormalizeDouble(MathDiv(commissionM, fullPointValue), Digits+1); // + 1 digit for sub-precision
+   double commissionP     = NormalizeDouble(MathDiv(commissionM, fullPointValue), Digits+1); // +1 digit for sub-precision
+   double commissionPunit = NormalizeDouble(commissionP/pUnit, Digits+1);                    // ...
    double totalCostP      = NormalizeDouble(spreadP + commissionP, Digits+1);                // ...
+   double totalCostPunit  = NormalizeDouble(totalCostP/pUnit, Digits+1);                     // ...
+
+   string pUnitFormat = "."+ pDigits +"+";
+   if (pUnit==1) if (CountDecimals(commissionPunit) > 2) pUnitFormat = ".2'+";
 
    int    swapMode        = MarketInfo(symbol, MODE_SWAPTYPE);
    double swapLong        = MarketInfo(symbol, MODE_SWAPLONG);
@@ -246,7 +250,7 @@ int UpdateInstrumentInfos() {
       sSwapShort = ifString(!swapShort, "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapShort, ".+"));
    }
 
-   double usedLeverage   = symbolLeverage * (100-AccountSize.FreeMargin)/100;
+   double usedLeverage   = symbolLeverage * AccountSize.MaxUsedMarginPct/100;
    double maxUnits       = MathDiv(symbolLeverage, usedLeverage) * AccountSize.NumberOfUnits;
    double minAccountSize = maxUnits * marginMinLot;
 
@@ -263,69 +267,69 @@ int UpdateInstrumentInfos() {
    string serverSession = ifString(serverTimezone=="", "", ifString(!tzOffset, "00:00-24:00", GmtTimeFormat(D'1970.01.02' + tzOffset, "%H:%M-%H:%M")));
 
    // populate display
-   ObjectSetText(labels[I_TRADING_ENABLED        ], "Trading enabled:",                                                                                                                                                          fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_TRADING_ENABLED_DATA   ],                      ifString(tradingEnabled, "yes", "no"),                                                                                                                  fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_TRADING_ENABLED        ], "Trading enabled:",                                                                                                                                                  fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_TRADING_ENABLED_DATA   ],                      ifString(tradingEnabled, "yes", "no"),                                                                                                          fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_DIGITS                 ], "Digits:",                                                                                                                                                                   fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_TICKSIZE               ], "Tick size:",                                                                                                                                                                fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_PUNITVALUE             ], "Punit value:",                                                                                                                                                              fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_DIGITS_DATA            ],                      ""+ Digits,                                                                                                                                             fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_TICKSIZE_DATA          ],                      ifString(!tickSize,       " ", NumberToStr(tickSize, PriceFormat)),                                                                                     fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_PUNITVALUE_DATA        ],                      ifString(!fullPointValue, " ", NumberToStr(fullPointValue*pUnit, "R.2+") +" "+ accountCurrency +"/lot/"+ spUnit),                                       fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_DIGITS                 ], "Digits:",                                                                                                                                                           fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_TICKSIZE               ], "Tick size:",                                                                                                                                                        fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_PUNITVALUE             ], "Punit value:",                                                                                                                                                      fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_DIGITS_DATA            ],                      ""+ Digits,                                                                                                                                     fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_TICKSIZE_DATA          ],                      ifString(!tickSize,       " ", NumberToStr(tickSize, PriceFormat)),                                                                             fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_PUNITVALUE_DATA        ],                      ifString(!fullPointValue, " ", NumberToStr(fullPointValue*pUnit, "R.2+") +" "+ accountCurrency +"/lot/"+ spUnit),                               fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_ADR                    ], "ADR(20):",                                                                                                                                                                  fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ADR_DATA               ],                      ifString(!adr, "n/a", DoubleToStr(adr/pUnit, pDigits) + _spUnit +" = "+ NumberToStr(NormalizeDouble(volaPerADR, 2), ".0+") +"%"),                       fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ADR                    ], "ADR(20):",                                                                                                                                                          fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ADR_DATA               ],                      ifString(!adr, "n/a", DoubleToStr(adr/pUnit, pDigits) + _spUnit +" = "+ NumberToStr(NormalizeDouble(volaPerADR, 2), ".0+") +"%"),               fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_STOPLEVEL              ], "Stop level:",                                                                                                                                                               fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_FREEZELEVEL            ], "Freeze level:",                                                                                                                                                             fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_STOPLEVEL_DATA         ],                      ifString(!stopLevel,   "0", DoubleToStr(stopLevel/pUnit,   pDigits) + _spUnit),                                                                         fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_FREEZELEVEL_DATA       ],                      ifString(!freezeLevel, "0", DoubleToStr(freezeLevel/pUnit, pDigits) + _spUnit),                                                                         fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_STOPLEVEL              ], "Stop level:",                                                                                                                                                       fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_FREEZELEVEL            ], "Freeze level:",                                                                                                                                                     fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_STOPLEVEL_DATA         ],                      ifString(!stopLevel,   "0", DoubleToStr(stopLevel/pUnit,   pDigits) + _spUnit),                                                                 fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_FREEZELEVEL_DATA       ],                      ifString(!freezeLevel, "0", DoubleToStr(freezeLevel/pUnit, pDigits) + _spUnit),                                                                 fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_LOTSIZE                ], "Lot size:",                                                                                                                                                                 fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_LOTSTEP                ], "Lot step:",                                                                                                                                                                 fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MINLOT                 ], "Min lot:",                                                                                                                                                                  fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MAXLOT                 ], "Max lot:",                                                                                                                                                                  fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_LOTSIZE_DATA           ],                      ifString(!lotSize, " ", NumberToStr(lotSize, ",'.+") +" unit"+ Pluralize(lotSize)),                                                                     fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_LOTSTEP_DATA           ],                      ifString(!lotStep, " ", NumberToStr(lotStep, ".+")),                                                                                                    fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MINLOT_DATA            ],                      ifString(!minLot,  " ", NumberToStr(minLot,  ".+")),                                                                                                    fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MAXLOT_DATA            ],                      ifString(!maxLot,  " ", NumberToStr(maxLot,  ",'.+")),                                                                                                  fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_LOTSIZE                ], "Lot size:",                                                                                                                                                         fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_LOTSTEP                ], "Lot step:",                                                                                                                                                         fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MINLOT                 ], "Min lot:",                                                                                                                                                          fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MAXLOT                 ], "Max lot:",                                                                                                                                                          fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_LOTSIZE_DATA           ],                      ifString(!lotSize, " ", NumberToStr(lotSize, ",'.+") +" unit"+ Pluralize(lotSize)),                                                             fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_LOTSTEP_DATA           ],                      ifString(!lotStep, " ", NumberToStr(lotStep, ".+")),                                                                                            fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MINLOT_DATA            ],                      ifString(!minLot,  " ", NumberToStr(minLot,  ".+")),                                                                                            fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MAXLOT_DATA            ],                      ifString(!maxLot,  " ", NumberToStr(maxLot,  ",'.+")),                                                                                          fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_MARGIN_INITIAL         ], "Margin initial:",                                                                                                                                                           fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_MAINTENANCE     ], "Margin maint.:",                                                                                                                                                            fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_HEDGED          ], "Margin hedged:",                                                                                                                                                            fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_MINLOT          ], "Margin minLot:",                                                                                                                                                            fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_INITIAL_DATA    ],                      ifString(!marginInitial, " ", NumberToStr(marginInitial, ",'.2R") +" "+ accountCurrency +"  (1:"+ Round(symbolLeverage) +")"),                          fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_MAINTENANCE_DATA],                      ifString(!marginMaint,   " ", NumberToStr(marginMaint,   ",'.2R") +" "+ accountCurrency +"  (1:"+ Round(maintLeverage) +")"),                           fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_HEDGED_DATA     ],                      ifString(!marginInitial, " ", Round(marginHedged) +"%"),                                                                                                fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_MINLOT_DATA     ],                      ifString(!marginMinLot,  " ", NumberToStr(marginMinLot, ",'.2R") +" "+ accountCurrency),                                                                fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_INITIAL         ], "Margin initial:",                                                                                                                                                   fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_MAINTENANCE     ], "Margin maint.:",                                                                                                                                                    fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_HEDGED          ], "Margin hedged:",                                                                                                                                                    fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_MINLOT          ], "Margin minLot:",                                                                                                                                                    fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_INITIAL_DATA    ],                      ifString(!marginInitial, " ", NumberToStr(marginInitial, ",'.2R") +" "+ accountCurrency +"  (1:"+ Round(symbolLeverage) +")"),                  fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_MAINTENANCE_DATA],                      ifString(!marginMaint,   " ", NumberToStr(marginMaint,   ",'.2R") +" "+ accountCurrency +"  (1:"+ Round(maintLeverage) +")"),                   fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_HEDGED_DATA     ],                      ifString(!marginInitial, " ", Round(marginHedged) +"%"),                                                                                        fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_MINLOT_DATA     ],                      ifString(!marginMinLot,  " ", NumberToStr(marginMinLot, ",'.2R") +" "+ accountCurrency),                                                        fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_SPREAD                 ], "Spread:",                                                                                                                                                                   fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_COMMISSION             ], "Commission:",                                                                                                                                                               fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_TOTAL_COST             ], "Total cost:",                                                                                                                                                               fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SPREAD_DATA            ],                      DoubleToStr(spreadP/pUnit, pDigits) + _spUnit + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spreadP, adr) * 100, 1) +"% of ADR"),                     fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_COMMISSION_DATA        ],                      ifString(!commissionM, "-", DoubleToStr(commissionM, 2) +" "+ accountCurrency +"/lot = "+ NumberToStr(commissionP/pUnit, "."+ pDigits +"+") + _spUnit), fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_TOTAL_COST_DATA        ],                      ifString(!totalCostP,  "-", NumberToStr(totalCostP/pUnit, "."+ pDigits +"+") + _spUnit),                                                                fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SPREAD                 ], "Spread:",                                                                                                                                                           fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_COMMISSION             ], "Commission:",                                                                                                                                                       fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_TOTAL_COST             ], "Total cost:",                                                                                                                                                       fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SPREAD_DATA            ],                      DoubleToStr(spreadP/pUnit, pDigits) + _spUnit + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spreadP, adr) * 100, 1) +"% of ADR"),             fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_COMMISSION_DATA        ],                      ifString(!commissionM, "-", DoubleToStr(commissionM, 2) +" "+ accountCurrency +"/lot = "+ NumberToStr(commissionPunit, pUnitFormat) + _spUnit), fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_TOTAL_COST_DATA        ],                      ifString(!totalCostP,  "-", NumberToStr(totalCostPunit, pUnitFormat) + _spUnit),                                                                fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_SWAPLONG               ], "Swap long:",                                                                                                                                                                fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SWAPSHORT              ], "Swap short:",                                                                                                                                                               fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SWAPLONG_DATA          ],                      sSwapLong,                                                                                                                                              fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SWAPSHORT_DATA         ],                      sSwapShort,                                                                                                                                             fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SWAPLONG               ], "Swap long:",                                                                                                                                                        fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SWAPSHORT              ], "Swap short:",                                                                                                                                                       fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SWAPLONG_DATA          ],                      sSwapLong,                                                                                                                                      fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SWAPSHORT_DATA         ],                      sSwapShort,                                                                                                                                     fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_ACCOUNT_LEVERAGE       ], "Account leverage:",                                                                                                                                                         fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ACCOUNT_STOPOUT        ], "Account stopout:",                                                                                                                                                          fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ACCOUNT_MM             ], "Account MM:",                                                                                                                                                               fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ACCOUNT_REQUIRED       ], "Account required:",                                                                                                                                                         fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ACCOUNT_LEVERAGE_DATA  ],                      ifString(!accountLeverage, " ", "1:"+ accountLeverage),                                                                                                 fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ACCOUNT_STOPOUT_DATA   ],                      ifString(!accountLeverage, " ", ifString(stopoutMode==MSM_PERCENT, accountStopout +"%", accountStopout +".00 "+ accountCurrency)),                      fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ACCOUNT_MM_DATA        ],                      ifString(!minLot,          " ", AccountSize.NumberOfUnits +" x "+ NumberToStr(minLot, ".+") +", free margin: "+ AccountSize.FreeMargin +"%"),           fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ACCOUNT_REQUIRED_DATA  ],                      ifString(!minAccountSize,  " ", NumberToStr(MathRound(minAccountSize), ",'.2") +" "+ accountCurrency +"  (1:"+ Round(usedLeverage) +")"),               fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ACCOUNT_LEVERAGE       ], "Account leverage:",                                                                                                                                                 fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ACCOUNT_STOPOUT        ], "Account stopout:",                                                                                                                                                  fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ACCOUNT_MM             ], "Account MM:",                                                                                                                                                       fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ACCOUNT_REQUIRED       ], "Account required:",                                                                                                                                                 fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ACCOUNT_LEVERAGE_DATA  ],                      ifString(!accountLeverage, " ", "1:"+ accountLeverage),                                                                                         fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ACCOUNT_STOPOUT_DATA   ],                      ifString(!accountLeverage, " ", ifString(stopoutMode==MSM_PERCENT, accountStopout +"%", accountStopout +".00 "+ accountCurrency)),              fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ACCOUNT_MM_DATA        ],                      ifString(!minLot,          " ", AccountSize.NumberOfUnits +" x "+ NumberToStr(minLot, ".+")),                                                   fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ACCOUNT_REQUIRED_DATA  ],                      ifString(!minAccountSize,  " ", NumberToStr(MathRound(minAccountSize), ",'.2") +" "+ accountCurrency +"  (1:"+ Round(usedLeverage) +")"),       fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_SERVER_NAME            ], "Server:",                                                                                                                                                                   fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SERVER_TIMEZONE        ], "Server timezone:",                                                                                                                                                          fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SERVER_SESSION         ], "Server session:",                                                                                                                                                           fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SERVER_NAME_DATA       ],                      serverName,                                                                                                                                             fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SERVER_TIMEZONE_DATA   ],                      serverTimezone,                                                                                                                                         fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SERVER_SESSION_DATA    ],                      serverSession,                                                                                                                                          fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SERVER_NAME            ], "Server:",                                                                                                                                                           fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SERVER_TIMEZONE        ], "Server timezone:",                                                                                                                                                  fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SERVER_SESSION         ], "Server session:",                                                                                                                                                   fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SERVER_NAME_DATA       ],                      serverName,                                                                                                                                     fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SERVER_TIMEZONE_DATA   ],                      serverTimezone,                                                                                                                                 fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SERVER_SESSION_DATA    ],                      serverSession,                                                                                                                                  fontSize, fontName, fontColor);
 
    error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)
@@ -359,8 +363,8 @@ double GetADR() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("AccountSize.NumberOfUnits=",  AccountSize.NumberOfUnits,  ";", NL,
-                            "AccountSize.MaxRiskPerUnit=", AccountSize.MaxRiskPerUnit, ";", NL,
-                            "AccountSize.FreeMargin=",     AccountSize.FreeMargin,     ";")
+   return(StringConcatenate("AccountSize.NumberOfUnits=",    AccountSize.NumberOfUnits,    ";", NL,
+                            "AccountSize.MaxUnitRiskPct=",   AccountSize.MaxUnitRiskPct,   ";", NL,
+                            "AccountSize.MaxUsedMarginPct=", AccountSize.MaxUsedMarginPct, ";")
    );
 }

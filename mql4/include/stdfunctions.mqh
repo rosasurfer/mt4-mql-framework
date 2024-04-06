@@ -5626,26 +5626,25 @@ string TradeCommandToStr(int cmd) {
 
 
 /**
- * Formatiert einen numerischen Wert im angegebenen Format und gibt den resultierenden String zurück.
- * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of
- * the decimal point.
+ * Format a numeric value using the specified format.
+ *
+ * The basic format mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the
+ * right of the decimal point.
  *
  * Mask parameters:
  *
- *   n        = specified number of digits left of the decimal point, e.g. NumberToStr(123.456, "5") => "123"
- *   n.d      = specified number of left and right digits, e.g. NumberToStr(123.456, "5.2") => "123.45"
- *   n.       = specified number of left and all right digits, e.g. NumberToStr(123.456, "2.") => "23.456"
- *    .d      = all left and specified number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
- *    .d'     = all left and specified number of right digits plus 1 separate subpip digit,
- *              e.g. NumberToStr(123.45678, ".4'") => "123.4567'8"
- *    .d+     = "+" char anywhere right of .d: all left and minimum number of right digits,
- *              e.g. NumberToStr(123.45, ".3+") => "123.450"
- *  +n.d      = "+" char anywhere left of n.: plus sign for positive values
- *    R       = "R" char anywhere: round result at the last displayed digit,
- *              e.g. NumberToStr(123.456, "R3.2") => "123.46" or NumberToStr(123.7, "R3") => "124"
- *    ;       = switch thousands and decimal separators (European format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
- *    ,       = insert thousands separators, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
- *    ,<char> = insert thousands separators using <char>, e.g. NumberToStr(123456.789, ",'6.2") => "123'456.78"
+ *   n        = number of left digits, no right digits,                         e.g. NumberToStr(123.456, "5")        => "123"
+ *   n.d      = number of left and right digits,                                e.g. NumberToStr(123.456, "5.2")      => "123.45"
+ *   n.       = number of left digits, all right digits,                        e.g. NumberToStr(123.456, "2.")       => "23.456"
+ *    .d      = all left digits, number of right digits,                        e.g. NumberToStr(123.456, ".2")       => "123.45"
+ *    .d'     = all left digits, number of right digits plus 1 separated digit, e.g. NumberToStr(123.45678, ".4'")    => "123.4567'8"
+ *    .d+     = "+" char right of .d: minimum number of right digits,           e.g. NumberToStr(123.45, ".3+")       => "123.450"
+ *  +n.d      = "+" char left of n.: plus sign for positive values,             e.g. NumberToStr(123.456, "+5.2")     => "+123.45"
+ *    R       = "R" char anywhere: round result at the last displayed digit,    e.g. NumberToStr(123.456, "3.2R")     => "123.46"
+ *                                                                              e.g. NumberToStr(123.7, "R3")         => "124"
+ *    ;       = switch thousands and decimal separators (European format),      e.g. NumberToStr(123456.789, "6.2;")  => "123456,78"
+ *    ,       = insert thousands separators,                                    e.g. NumberToStr(123456.789, "6.2,")  => "123,456.78"
+ *    ,<char> = insert thousands separators using <char>,                       e.g. NumberToStr(123456.789, ",'6.2") => "123'456.78"
  *
  * @param  double value
  * @param  string mask
@@ -5667,61 +5666,68 @@ string NumberToStr(double value, string mask) {
    string sepThousand=",", sepDecimal=".";
    bool swapSeparators = (StringFind(mask, ";") > -1);
    if (swapSeparators) {
-      sepThousand = "."; sepDecimal  = ",";
+      sepThousand = ".";
+      sepDecimal  = ",";
    }
    int sepPos = StringFind(mask, ",");
    bool separators = (sepPos > -1);
    if (separators) /*&&*/ if (sepPos+1 < maskLen) {
-      sepThousand = StringSubstr(mask, sepPos+1, 1);        // user-spezifischen 1000-Separator auslesen und aus Maske löschen
-      mask        = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
+      sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske löschen
+      mask = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
    }
 
-   // white space entfernen
-   mask    = StrReplace(mask, " ", "");
+   // remove blanks
+   mask = StrReplace(mask, " ", "");
    maskLen = StringLen(mask);
 
    // Position des Dezimalpunktes
-   int  dotPos   = StringFind(mask, ".");
-   bool dotGiven = (dotPos > -1);
-   if (!dotGiven)
-      dotPos = maskLen;
+   int  dotPos = StringFind(mask, ".");
+   bool hasDot = (dotPos > -1);
+   if (!hasDot) dotPos = maskLen;
 
    // Anzahl der linken Stellen
    int chr, nLeft;
-   bool nDigit;
+   bool digitsFound = false;
    for (int i=0; i < dotPos; i++) {
       chr = StringGetChar(mask, i);
       if ('0' <= chr) /*&&*/ if (chr <= '9') {
          nLeft = 10*nLeft + chr-'0';
-         nDigit = true;
+         digitsFound = true;
       }
    }
-   if (!nDigit) nLeft = -1;
+   if (!digitsFound) nLeft = -1;
 
-   // Anzahl der rechten Stellen und Position des Subpip-Separators
-   int nRight, nSubpip=-1;
-   if (dotGiven) {
-      nDigit = false;
+   // Anzahl der rechten Stellen und Position des Sub-Separators
+   int nRight, subsepPos=-1;
+   bool hasPlus = false;
+   if (hasDot) {
+      digitsFound = false;
       for (i=dotPos+1; i < maskLen; i++) {
          chr = StringGetChar(mask, i);
          if ('0' <= chr && chr <= '9') {
             nRight = 10*nRight + chr-'0';
-            nDigit = true;
+            digitsFound = true;
          }
-         else if (nDigit && chr==39) {                      // 39 => '
-            nSubpip = nRight;
+         else if (digitsFound && chr==39) {           // sub-separator (39 = "'")
+            subsepPos = nRight;
             continue;
          }
          else {
-            if  (chr == '+')  nRight = Max(nRight + (nSubpip > -1), CountDecimals(value));
-            else if (!nDigit) nRight = CountDecimals(value);
+            if (chr == '+') {
+               hasPlus = true;
+               nRight = Max(nRight, CountDecimals(value));
+            }
+            else if (!digitsFound) {
+               nRight = CountDecimals(value);
+            }
             break;
          }
       }
-      if (nDigit) {
-         if (nSubpip > -1) nRight++;
-         if (nSubpip == 0) nSubpip = -1;     // no subpip separator directly after the decimal point
-         nRight = Min(nRight, 8);
+      if (digitsFound) {
+         if (subsepPos == 0) subsepPos = -1;          // discard a sub-separator to be inserted after the decimal point, e.g. mask = ".0'"
+         if (subsepPos > -1 && !hasPlus) nRight++;
+         nRight = Min(nRight, 8);                     // display max. 8 decimal digits
+         if (subsepPos >= nRight) subsepPos = -1;
       }
    }
 
@@ -5732,8 +5738,7 @@ string NumberToStr(double value, string mask) {
    }
    else if (value > 0) {
       int pos = StringFind(mask, "+");
-      if (-1 < pos) /*&&*/ if (pos < dotPos)
-         leadSign = "+";
+      if (-1 < pos && pos < dotPos) leadSign = "+";
    }
 
    // übrige Modifier
@@ -5760,7 +5765,7 @@ string NumberToStr(double value, string mask) {
    if (swapSeparators)
       outStr = StringSetChar(outStr, nLeft, StringGetChar(sepDecimal, 0));
 
-   // 1000er-Separatoren einfügen
+   // insert thousands separators
    if (separators) {
       string out1 = "";
       i = nLeft;
@@ -5773,12 +5778,12 @@ string NumberToStr(double value, string mask) {
       }
    }
 
-   // Subpip-Separator einfügen
-   if (nSubpip > -1) {
-      outStr = StringConcatenate(StrLeft(outStr, nSubpip-nRight), "'", StrSubstr(outStr, nSubpip-nRight));
+   // insert subpip separator
+   if (subsepPos > 0) {
+      outStr = StringConcatenate(StrLeft(outStr, subsepPos-nRight), "'", StrSubstr(outStr, subsepPos-nRight));
    }
 
-   // Vorzeichen etc. anfügen
+   // prepend sign
    outStr = StringConcatenate(leadSign, outStr);
 
    error = GetLastError();
