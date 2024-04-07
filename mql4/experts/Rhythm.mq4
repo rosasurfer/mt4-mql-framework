@@ -553,7 +553,7 @@ void BackupInputs() {
    prev.instance.isTest  = instance.isTest;
    prev.instance.status  = instance.status;
 
-   BackupInputs.Recorder();
+   Recorder_BackupInputs();
 }
 
 
@@ -580,7 +580,7 @@ void RestoreInputs() {
    instance.isTest  = prev.instance.isTest;
    instance.status  = prev.instance.status;
 
-   RestoreInputs.Recorder();
+   Recorder_RestoreInputs();
 }
 
 
@@ -621,7 +621,7 @@ bool ValidateInputs() {
    // ShowProfitInPercent (nothing to do)
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
-   if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
+   if (!Recorder_ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
    return(!catch("ValidateInputs(4)"));

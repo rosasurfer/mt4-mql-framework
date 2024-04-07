@@ -12,7 +12,7 @@
 //         an appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display
 //         negative values). Without a value the recorder queries the framework configuration.
 //
-// To enable recording call function 'Recorder.ValidateInputs()'.
+// To enable recording call function 'Recorder_ValidateInputs()'.
 //
 
 ///////////////////////////////////////////////////// Input parameters //////////////////////////////////////////////////////
@@ -86,8 +86,8 @@ string Recorder_GetInput() {
  *
  * Called in onDeinitParameters() and onDeinitChartChange().
  */
-void BackupInputs.Recorder() {
-   if (!catch("BackupInputs.Recorder(1)")) {
+void Recorder_BackupInputs() {
+   if (!catch("Recorder_BackupInputs(1)")) {
       // input parameters
       prev.EA.Recorder          = StringConcatenate(EA.Recorder, "");   // string inputs are references to internal C literals
       prev.recorder.mode        = recorder.mode;                        // and must be copied to break the reference
@@ -107,7 +107,7 @@ void BackupInputs.Recorder() {
 
       // we didn't check ArraySize(source), instead we handle a generated error
       int error = GetLastError();
-      if (error && error!=ERR_INVALID_PARAMETER) catch("BackupInputs.Recorder(2)", error);
+      if (error && error!=ERR_INVALID_PARAMETER) catch("Recorder_BackupInputs(2)", error);
    }
 }
 
@@ -115,8 +115,8 @@ void BackupInputs.Recorder() {
 /**
  * Restore backed-up input parameters and runtime variables. Called from onInitParameters() and onInitTimeframeChange().
  */
-void RestoreInputs.Recorder() {
-   if (!catch("RestoreInputs.Recorder(1)")) {
+void Recorder_RestoreInputs() {
+   if (!catch("Recorder_RestoreInputs(1)")) {
       // input parameters
       EA.Recorder          = prev.EA.Recorder;
       recorder.mode        = prev.recorder.mode;
@@ -136,7 +136,7 @@ void RestoreInputs.Recorder() {
 
       // we didn't check ArraySize(source), instead we handle a generated error
       int error = GetLastError();
-      if (error && error!=ERR_INVALID_PARAMETER) catch("RestoreInputs.Recorder(2)", error);
+      if (error && error!=ERR_INVALID_PARAMETER) catch("Recorder_RestoreInputs(2)", error);
    }
 }
 
@@ -151,12 +151,12 @@ void RestoreInputs.Recorder() {
  *
  * @return bool - whether the input parameter is valid
  */
-bool Recorder.ValidateInputs(bool isTest) {
+bool Recorder_ValidateInputs(bool isTest) {
    isTest = isTest!=0;
    bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);  // whether we validate manual or programatic input
 
    if (!isInitParameters || EA.Recorder!=prev.EA.Recorder) {
-      Recorder.ResetMetrics();
+      Recorder_ResetMetrics();
       recorder.initialized = false;
 
       string sValues[], sValue=StrToLower(EA.Recorder);           // syntax: <integer>[=<number>]
@@ -189,29 +189,29 @@ bool Recorder.ValidateInputs(bool isTest) {
             if (sValue == "...") continue;
             string sId = StrTrim(StrLeftTo(sValue, "="));
             int iValue = StrToInteger(sId);
-            if (!StrIsDigits(sId) || !iValue)            return(!Recorder.onInputError("Recorder.ValidateInputs(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric ids must be positive integers)"));
+            if (!StrIsDigits(sId) || !iValue)            return(!Recorder_onInputError("Recorder_ValidateInputs(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric ids must be positive integers)"));
             int metricId = iValue;
             if (ArraySize(metric.enabled) > metricId) {
-               if (metric.enabled[metricId])             return(!Recorder.onInputError("Recorder.ValidateInputs(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate metric id "+ metricId +")"));
+               if (metric.enabled[metricId])             return(!Recorder_onInputError("Recorder_ValidateInputs(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate metric id "+ metricId +")"));
             }
             double dValue = 0;
             if (StrContains(sValue, "=")) {
                string sBase = StrTrim(StrRightFrom(sValue, "="));
                dValue = StrToDouble(sBase);
-               if (!StrIsNumeric(sBase) || dValue <= 0)  return(!Recorder.onInputError("Recorder.ValidateInputs(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (base values must be positive numbers)"));
+               if (!StrIsNumeric(sBase) || dValue <= 0)  return(!Recorder_onInputError("Recorder_ValidateInputs(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (base values must be positive numbers)"));
             }
 
             // logical metric validation
             bool ready;
             int error = GetMT4SymbolDefinition(metricId, ready, symbol, description, group, digits, baseValue, multiplier);
             if (IsError(error)) {
-               if (error == ERR_INVALID_INPUT_PARAMETER) return(!Recorder.onInputError("Recorder.ValidateInputs(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id "+ metricId +")"));
+               if (error == ERR_INVALID_INPUT_PARAMETER) return(!Recorder_onInputError("Recorder_ValidateInputs(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id "+ metricId +")"));
                return(false);                            // a runtime error (already raised)
             }
             if (dValue > 0) baseValue = dValue;
 
             // store metric details
-            if (!Recorder.AddMetric(metricId, ready, symbol, description, group, digits, baseValue, multiplier)) return(false);
+            if (!Recorder_AddMetric(metricId, ready, symbol, description, group, digits, baseValue, multiplier)) return(false);
             metrics++;
             sInput = StringConcatenate(sInput, ",", metricId, ifString(IsEmpty(baseValue), "", "="+ NumberToStr(baseValue, ".+")));
          }
@@ -237,7 +237,7 @@ bool Recorder.ValidateInputs(bool isTest) {
  *
  * @return int - error status
  */
-int Recorder.onInputError(string message) {
+int Recorder_onInputError(string message) {
    int error = ERR_INVALID_PARAMETER;
 
    if (ProgramInitReason() == IR_PARAMETERS)
@@ -263,8 +263,8 @@ bool Recorder_init() {
    suffix                      = ", "+ PeriodDescription() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
    recorder.defaultDescription = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                           // sizeof(SYMBOL.description) = 64 chars (szchar)
    recorder.defaultGroup       = StrTrimRight(StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH));
-   recorder.hstDirectory       = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
-   recorder.hstFormat          = Recorder.GetHstFormat();    if (!recorder.hstFormat)               return(false);
+   recorder.hstDirectory       = Recorder_GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
+   recorder.hstFormat          = Recorder_GetHstFormat();    if (!recorder.hstFormat)               return(false);
 
    if (recorder.mode == RECORDER_ON) {
       // create an internal metric for AccountEquity()
@@ -285,7 +285,7 @@ bool Recorder_init() {
          if (group == "") {
             group = recorder.defaultGroup;
          }
-         if (!Recorder.AddMetric(1, true, symbol, descr, group, 2, 0, 1)) return(false);
+         if (!Recorder_AddMetric(1, true, symbol, descr, group, 2, 0, 1)) return(false);
          recorder.stdEquitySymbol = symbol;
       }
    }
@@ -338,9 +338,9 @@ bool Recorder_init() {
  */
 bool Recorder_start() {
    if (!recorder.initialized) {
-      if (recorder.mode == RECORDER_OFF) return(_true(Recorder.off()));
-      if (IsOptimization())              return(_true(Recorder.off()));
-      if (!Recorder_init())              return(_false(Recorder.off()));
+      if (recorder.mode == RECORDER_OFF) return(_true(Recorder_off()));
+      if (IsOptimization())              return(_true(Recorder_off()));
+      if (!Recorder_init())              return(_false(Recorder_off()));
    }
    /*
     Speed test SnowRoller EURUSD,M15  04.10.2012, Long, GridSize=18
@@ -368,7 +368,7 @@ bool Recorder_start() {
             else if (i < 14) metric.hSet[i] = HistorySet2.Get(metric.symbol[i], recorder.hstDirectory);
             else             metric.hSet[i] = HistorySet3.Get(metric.symbol[i], recorder.hstDirectory);
             if      (metric.hSet[i] == -1) metric.hSet[i] = NULL;
-            else if (metric.hSet[i] <=  0) return(_false(Recorder.off()));
+            else if (metric.hSet[i] <=  0) return(_false(Recorder_off()));
          }
 
          // tester or no existing history
@@ -376,7 +376,7 @@ bool Recorder_start() {
             if      (i <  7) metric.hSet[i] = HistorySet1.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
             else if (i < 14) metric.hSet[i] = HistorySet2.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
             else             metric.hSet[i] = HistorySet3.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
-            if (!metric.hSet[i]) return(_false(Recorder.off()));
+            if (!metric.hSet[i]) return(_false(Recorder_off()));
          }
       }
 
@@ -390,7 +390,7 @@ bool Recorder_start() {
    }
 
    if (!success)
-      return(_false(Recorder.off()));
+      return(_false(Recorder_off()));
    return(true);
 }
 
@@ -407,9 +407,9 @@ bool Recorder_deinit() {
       if (metric.hSet[i] > 0) {
          int tmp = metric.hSet[i];
          metric.hSet[i] = NULL;
-         if      (i <  7) { if (!HistorySet1.Close(tmp)) return(_false(Recorder.off())); }
-         else if (i < 14) { if (!HistorySet2.Close(tmp)) return(_false(Recorder.off())); }
-         else             { if (!HistorySet3.Close(tmp)) return(_false(Recorder.off())); }
+         if      (i <  7) { if (!HistorySet1.Close(tmp)) return(_false(Recorder_off())); }
+         else if (i < 14) { if (!HistorySet2.Close(tmp)) return(_false(Recorder_off())); }
+         else             { if (!HistorySet3.Close(tmp)) return(_false(Recorder_off())); }
       }
    }
    return(true);
@@ -421,7 +421,7 @@ bool Recorder_deinit() {
  *
  * @return int - NULL
  */
-int Recorder.off() {
+int Recorder_off() {
    recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
    return(NULL);
 }
@@ -441,9 +441,9 @@ int Recorder.off() {
  *
  * @return bool - success status
  */
-bool Recorder.AddMetric(int id, bool ready, string symbol, string description, string group, int digits, double baseValue, int multiplier) {
+bool Recorder_AddMetric(int id, bool ready, string symbol, string description, string group, int digits, double baseValue, int multiplier) {
    ready = ready!=0;
-   if (id < 1 || id > 21) return(!catch("Recorder.AddMetric(1)  invalid parameter id: "+ id +" (allowed range: 1 to 21)", ERR_INVALID_PARAMETER));
+   if (id < 1 || id > 21) return(!catch("Recorder_AddMetric(1)  invalid parameter id: "+ id +" (allowed range: 1 to 21)", ERR_INVALID_PARAMETER));
 
    int size = ArraySize(metric.enabled);
    if (id >= size) {
@@ -459,7 +459,7 @@ bool Recorder.AddMetric(int id, bool ready, string symbol, string description, s
       ArrayResize(metric.multiplier,  size);
       ArrayResize(metric.hSet,        size);
    }
-   if (metric.enabled[id]) return(!catch("Recorder.AddMetric(2)  invalid parameter id: "+ id +" (metric exists) ", ERR_INVALID_PARAMETER));
+   if (metric.enabled[id]) return(!catch("Recorder_AddMetric(2)  invalid parameter id: "+ id +" (metric exists) ", ERR_INVALID_PARAMETER));
 
    metric.enabled    [id] = true;
    metric.ready      [id] = ready;
@@ -472,14 +472,14 @@ bool Recorder.AddMetric(int id, bool ready, string symbol, string description, s
    metric.multiplier [id] = multiplier;
    metric.hSet       [id] = NULL;
 
-   return(!catch("Recorder.AddMetric(3)"));
+   return(!catch("Recorder_AddMetric(3)"));
 }
 
 
 /**
  * Remove all metrics currently registered in the recorder.
  */
-void Recorder.ResetMetrics() {
+void Recorder_ResetMetrics() {
    ArrayResize(metric.enabled,     0);
    ArrayResize(metric.ready,       0);
    ArrayResize(metric.symbol,      0);
@@ -500,7 +500,7 @@ void Recorder.ResetMetrics() {
  */
 string Recorder_GetNextMetricSymbol() {
    if (recorder.hstDirectory == "") {
-      recorder.hstDirectory = Recorder.GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return("");
+      recorder.hstDirectory = Recorder_GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return("");
    }
    string filename = recorder.hstDirectory +"/symbols.raw";
    string prefix = StrLeft(Symbol(), 6) +".";
@@ -544,7 +544,7 @@ string Recorder_GetNextMetricSymbol() {
  *
  * @return string - directory or an empty string in case of errors
  */
-string Recorder.GetHstDirectory() {
+string Recorder_GetHstDirectory() {
    string section = ifString(__isTesting, "Tester.", "") + WindowExpertName();
    string key = "Recorder.HistoryDirectory", sValue="";
 
@@ -557,7 +557,7 @@ string Recorder.GetHstDirectory() {
          sValue = GetConfigString(section, key, "");
       }
    }
-   if (!StringLen(sValue)) return(_EMPTY_STR(catch("Recorder.GetHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
+   if (!StringLen(sValue)) return(_EMPTY_STR(catch("Recorder_GetHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
    return(sValue);
 }
 
@@ -567,7 +567,7 @@ string Recorder.GetHstDirectory() {
  *
  * @return int - history format or NULL (0) in case of errors
  */
-int Recorder.GetHstFormat() {
+int Recorder_GetHstFormat() {
    string section = ifString(__isTesting, "Tester.", "") + WindowExpertName();
    string key = "Recorder.HistoryFormat";
 
@@ -580,9 +580,9 @@ int Recorder.GetHstFormat() {
          iValue = GetConfigInt(section, key, 0);
       }
    }
-   if (iValue!=400 && iValue!=401) return(!catch("Recorder.GetHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+   if (iValue!=400 && iValue!=401) return(!catch("Recorder_GetHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
    return(iValue);
 
    // suppress compiler warnings
-   Recorder.ResetMetrics();
+   Recorder_ResetMetrics();
 }

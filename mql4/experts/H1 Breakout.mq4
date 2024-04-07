@@ -433,7 +433,7 @@ void BackupInputs() {
    prev.instance.status  = instance.status;
 
    BackupInputs.Targets();
-   BackupInputs.Recorder();
+   Recorder_BackupInputs();
 }
 
 
@@ -454,7 +454,7 @@ void RestoreInputs() {
    instance.status  = prev.instance.status;
 
    RestoreInputs.Targets();
-   RestoreInputs.Recorder();
+   Recorder_RestoreInputs();
 }
 
 
@@ -486,7 +486,7 @@ bool ValidateInputs() {
    if (!ValidateInputs.Targets()) return(false);
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
-   if (!Recorder.ValidateInputs(IsTestInstance())) return(false);
+   if (!Recorder_ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
    return(!catch("ValidateInputs(4)"));
