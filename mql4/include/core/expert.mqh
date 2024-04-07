@@ -1,11 +1,4 @@
 
-//////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
-
-extern string   ______________________________ = "";
-extern string   EA.Recorder     = "on | off* | 1,2,3,...";        // @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;                                    // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double  __rates[][6];                                             // current price series
@@ -137,8 +130,12 @@ int init() {
 
    if (UninitializeReason() != UR_CHARTCHANGE) {                  // log input parameters
       if (IsLogInfo()) {
-         string sInputs = InputsToStr();
-         if (sInputs != "") logInfo(initHandlers[initReason] +"(0)  inputs: "+ sInputs + NL +"EA.Recorder=\""+ EA.Recorder +"\";");
+         string inputs = InputsToStr();
+         if (inputs != "") {
+            string inputRecorder = Recorder_GetInput();
+            if (inputRecorder != "") inputRecorder = NL +"EA.Recorder=\""+ inputRecorder +"\";";
+            logInfo(initHandlers[initReason] +"(0)  inputs: "+ inputs + inputRecorder);
+         }
       }
    }
 
@@ -616,9 +613,10 @@ datetime Test.GetEndDate() {
    int    ec_SetProgramCoreFunction(int ec[], int function);
    int    ec_SetRecordMode         (int ec[], int mode    );
 
+   string Recorder_GetInput();                                    // Recorder functions in the Expander are no-ops to make
+   string Recorder_GetNextMetricSymbol();                         // inclusion of "core/expert.recorder.mqh" optional.
    bool   Recorder_start();
    bool   Recorder_deinit();
-   string Recorder_GetNextMetricSymbol();
    int    RecordMetrics();
 
    string symbols_Name(int symbols[], int i);

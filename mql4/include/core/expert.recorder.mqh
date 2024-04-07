@@ -15,6 +15,13 @@
 // To enable recording call function 'Recorder.ValidateInputs()'.
 //
 
+///////////////////////////////////////////////////// Input parameters //////////////////////////////////////////////////////
+
+extern string ______________________________ = "";
+extern string EA.Recorder                    = "on | off* | 1,2,3,...";
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // recorder modes
 #define RECORDER_OFF          0              // recording off
 #define RECORDER_ON           1              // recording of a standard AccountEquity() graph
@@ -59,6 +66,16 @@ double prev.metric.currValue  [];
 double prev.metric.baseValue  [];
 int    prev.metric.multiplier [];
 int    prev.metric.hSet       [];
+
+
+/**
+ * Return input parameter "EA.Recorder".
+ *
+ * @return string
+ */
+string Recorder_GetInput() {
+   return(""+ EA.Recorder);                                             // break the internal C reference
+}
 
 
 /**
