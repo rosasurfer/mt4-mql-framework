@@ -33,7 +33,7 @@ double   open.sigRundownP;             // full points: max signal rundown distan
 //  ea/functions/status/file/ReadStatus.OpenPosition.mqh
 //  ea/functions/status/file/SaveStatus.OpenPosition.mqh
 //  ea/functions/trade/MovePositionToHistory.mqh
-//  ea/functions/trade/OpenPositionDescr.mqh
+//  ea/functions/trade/OpenPositionToStr.mqh
 
 
 // partially closed trades: when all parts of a position are closed a single aggregated trade is added to history[]

@@ -156,7 +156,7 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
 #include <ea/functions/trade/onPositionClose.mqh>
-#include <ea/functions/trade/OpenPositionDescr.mqh>
+#include <ea/functions/trade/OpenPositionToStr.mqh>
 
 #include <ea/functions/trade/signal/SignalOperationToStr.mqh>
 #include <ea/functions/trade/signal/SignalTypeToStr.mqh>
@@ -205,7 +205,7 @@ int onTick() {
    }
    return(last_error);
 
-   OpenPositionDescr();
+   OpenPositionToStr();
 }
 
 

@@ -1,11 +1,11 @@
 /**
  * Return a string representation of a history record.
  *
- * @param  int  index              - index of the record
+ * @param  int  index              - index of the record in history[] or partialClose[]
  * @param  bool partial [optional] - whether the record is a partially closed position (default: no)
  * @param  bool compact [optional] - whether to return the record in compact format suitable for SaveStatus() (default: yes)
  *
- * @return string
+ * @return string - string representation or an empty string in case of errors
  */
 string HistoryRecordToStr(int index, bool partial=false, bool compact=true) {
    partial = partial!=0;
@@ -13,6 +13,7 @@ string HistoryRecordToStr(int index, bool partial=false, bool compact=true) {
    // result: ticket,fromTicket,toTicket,type,lots,part,openTime,openPrice,openPriceSig,stopLoss,takeProfit,closeTime,closePrice,closePriceSig,slippageP,swapM,commissionM,grossProfitM,netProfitM,netProfitP,runupP,rundownP,sigProfitP,sigRunupP,sigRundownP
 
    if (partial) {
+      if (index < 0 || index >= ArrayRange(partialClose, 0)) return(_EMPTY_STR(catch("HistoryRecordToStr(1)  "+ instance.name +" invalid parameter index: "+ index +" (out of range)", ERR_INVALID_PARAMETER)));
       int      ticket        = partialClose[index][H_TICKET        ];
       int      fromTicket    = partialClose[index][H_FROM_TICKET   ];
       int      toTicket      = partialClose[index][H_TO_TICKET     ];
@@ -40,6 +41,7 @@ string HistoryRecordToStr(int index, bool partial=false, bool compact=true) {
       double   sigRundownP   = partialClose[index][H_SIG_RUNDOWN_P ];
    }
    else {
+      if (index < 0 || index >= ArrayRange(history, 0)) return(_EMPTY_STR(catch("HistoryRecordToStr(2)  "+ instance.name +" invalid parameter index: "+ index +" (out of range)", ERR_INVALID_PARAMETER)));
       ticket        = history[index][H_TICKET        ];
       fromTicket    = history[index][H_FROM_TICKET   ];
       toTicket      = history[index][H_TO_TICKET     ];
@@ -101,12 +103,12 @@ string HistoryRecordToStr(int index, bool partial=false, bool compact=true) {
       sType          = "type="         + OperationTypeDescription(type);
       sLots          = "lots="         + sLots;
       sPart          = "part="         + sPart;
-      sOpenTime      = "openTime="     +   TimeToStr(openTime, TIME_FULL);
+      sOpenTime      = "openTime="     + TimeToStr(openTime, TIME_FULL);
       sOpenPrice     = "openPrice="    + NumberToStr(openPrice,    PriceFormat);
       sOpenPriceSig  = "openPriceSig=" + NumberToStr(openPriceSig, PriceFormat);
       sStopLoss      = "stopLoss="     + NumberToStr(stopLoss,     PriceFormat);
       sTakeProfit    = "takeProfit="   + NumberToStr(takeProfit,   PriceFormat);
-      sCloseTime     = "closeTime="    +   TimeToStr(closeTime, TIME_FULL);
+      sCloseTime     = "closeTime="    + TimeToStr(closeTime, TIME_FULL);
       sClosePrice    = "closePrice="   + NumberToStr(closePrice,    PriceFormat);
       sClosePriceSig = "closePriceSig="+ NumberToStr(closePriceSig, PriceFormat);
       sSlippageP     = "slippageP="    + ifString(!slippageP,   "0", NumberToStr(slippageP/pUnit, pUnitFormat));
