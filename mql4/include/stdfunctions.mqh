@@ -6278,8 +6278,8 @@ string SwapCalculationModeToStr(int mode) {
    switch (mode) {
       case SCM_POINTS         : return("SCM_POINTS"         );
       case SCM_BASE_CURRENCY  : return("SCM_BASE_CURRENCY"  );
+      case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");
       case SCM_INTEREST       : return("SCM_INTEREST"       );
-      case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");       // Stringo: non-standard calculation (vom Broker abhängig)
    }
    return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }

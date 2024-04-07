@@ -90,6 +90,8 @@ string labels[] = {"TRADING_ENABLED","TRADING_ENABLED_DATA","DIGITS","DIGITS_DAT
 #define I_SERVER_SESSION          52
 #define I_SERVER_SESSION_DATA     53
 
+string swapCalcModeDescr[] = {"point", "base currency", "interest", "margin currency"};
+
 
 /**
  * Initialization
@@ -123,7 +125,7 @@ bool CreateChartObjects() {
    string indicatorName = ProgramName();
    color  bgColor    = C'212,208,200';
    string bgFontName = "Webdings";
-   int    bgFontSize = 222;
+   int    bgFontSize = 200;
 
    int xPos =  3;                         // X start coordinate
    int yPos = 83;                         // Y start coordinate
@@ -142,7 +144,7 @@ bool CreateChartObjects() {
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
-   ObjectSet    (label, OBJPROP_YDISTANCE, yPos+150);          // line height: 14 pt
+   ObjectSet    (label, OBJPROP_YDISTANCE, yPos+186);          // line height: 14 pt
    ObjectSetText(label, "g", bgFontSize, bgFontName, bgColor);
 
    // text labels
@@ -239,15 +241,15 @@ int UpdateInstrumentInfos() {
    }
    else {
       /*
-      if (swapMode == SCM_INTEREST) {                             // TODO: check "in percentage terms", e.g. LiteForex stock CFDs
-         //swapLongD  = swapLong *Close[0]/100/360/Pip; swapLong  = swapLong;
-         //swapShortD = swapShort*Close[0]/100/360/Pip; swapShort = swapShort;
+      if      (swapMode == SCM_BASE_CURRENCY  ) {}                // TODO: as amount of base currency   (see "symbols.raw")
+      else if (swapMode == SCM_MARGIN_CURRENCY) {}                // TODO: as amount of margin currency (see "symbols.raw")
+      else if (swapMode == SCM_INTEREST) {                        // TODO: check "in percentage terms", e.g. ICMarkets:BTCUSD
+         //swapLongD  = swapLong *Close[0]/100/360/Pip;
+         //swapShortD = swapShort*Close[0]/100/360/Pip;
       }
-      else if (swapMode == SCM_BASE_CURRENCY  ) {}                // as amount of base currency   (see "symbols.raw")
-      else if (swapMode == SCM_MARGIN_CURRENCY) {}                // as amount of margin currency (see "symbols.raw")
       */
-      sSwapLong  = ifString(!swapLong,  "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapLong,  ".+"));
-      sSwapShort = ifString(!swapShort, "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapShort, ".+"));
+      sSwapLong  = ifString(!swapLong,  "none", NumberToStr(swapLong,  "+.+") +" "+ swapCalcModeDescr[swapMode]);
+      sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShort, "+.+") +" "+ swapCalcModeDescr[swapMode]);
    }
 
    double usedLeverage   = symbolLeverage * AccountSize.MaxUsedMarginPct/100;
