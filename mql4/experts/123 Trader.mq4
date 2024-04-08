@@ -188,14 +188,14 @@ int onTick() {
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
          if (IsEntrySignal(signal)) {
-            StartInstance(signal);
+            StartTrading(signal);
          }
       }
       else if (instance.status == STATUS_TRADING) {
          UpdateStatus();                              // update client-side status
 
          if (IsStopSignal(signal)) {
-            StopInstance(signal);
+            StopTrading(signal);
          }
          else {
             UpdatePositions();                        // update server-side status
@@ -385,15 +385,15 @@ bool FindNextSemaphore(int startbar, int &offset, int &type, double &price) {
 
 
 /**
- * Start a waiting or restart a stopped instance.
+ * Start/restart trading on a waiting or stopped instance.
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StartInstance(double signal[]) {
+bool StartTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartTrading(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
    instance.status = STATUS_TRADING;
    if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
@@ -402,22 +402,22 @@ bool StartInstance(double signal[]) {
 
    if (!last_error && IsLogInfo()) {
       int sigOp = signal[SIG_OP];
-      logInfo("StartInstance(2)  "+ instance.name +" instance started ("+ SignalOperationToStr(sigOp & (SIG_OP_LONG|SIG_OP_SHORT)) +")");
+      logInfo("StartTrading(2)  "+ instance.name +" started ("+ SignalOperationToStr(sigOp & (SIG_OP_LONG|SIG_OP_SHORT)) +")");
    }
    return(!last_error);
 }
 
 
 /**
- * Stop a running instance and close open positions (if any).
+ * Stop trading on a running instance. Closes open positions (if any).
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StopInstance(double signal[]) {
+bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    int sigType = signal[SIG_TYPE];
 
    // close an open position
@@ -430,16 +430,16 @@ bool StopInstance(double signal[]) {
    if (IsLogInfo()) {
       SS.TotalProfit();
       SS.ProfitStats();
-      logInfo("StopInstance(2)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"instance stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
+      logInfo("StopTrading(2)  "+ instance.name +" stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
    }
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
    if (__isTesting) {
-      if (!IsVisualMode())       Tester.Stop("StopInstance(3)");
-      else if (test.onStopPause) Tester.Pause("StopInstance(4)");
+      if (!IsVisualMode())       Tester.Stop("StopTrading(3)");
+      else if (test.onStopPause) Tester.Pause("StopTrading(4)");
    }
-   return(!catch("StopInstance(5)"));
+   return(!catch("StopTrading(5)"));
 }
 
 

@@ -140,14 +140,14 @@ int onTick() {
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) {
-            StartInstance(signal);
+            StartTrading(signal);
          }
       }
       else if (instance.status == STATUS_TRADING) {
          UpdateStatus();
 
          if (IsStopSignal(signal)) {
-            StopInstance(signal);
+            StopTrading(signal);
          }
          else {
             UpdateOpenOrders();
@@ -214,33 +214,33 @@ bool IsStopSignal(double &signal[]) {
 
 
 /**
- * Start a waiting or restart a stopped instance.
+ * Start/restart trading on a waiting or stopped instance.
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StartInstance(double signal[]) {
+bool StartTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!signal[SIG_OP])                                                    return(!catch("StartInstance(2)  "+ instance.name +" invalid signal parameter SIG_OP: 0", ERR_INVALID_PARAMETER));
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartTrading(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!signal[SIG_OP])                                                    return(!catch("StartTrading(2)  "+ instance.name +" invalid signal parameter SIG_OP: 0", ERR_INVALID_PARAMETER));
 
    return(SaveStatus());
 }
 
 
 /**
- * Stop a running instance and close open positions (if any).
+ * Stop trading and close open positions (if any).
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StopInstance(double signal[]) {
+bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   return(!logNotice("StopInstance(2)  not implemented", ERR_NOT_IMPLEMENTED));
+   return(!logNotice("StopTrading(2)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 
 

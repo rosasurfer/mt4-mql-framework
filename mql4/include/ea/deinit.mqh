@@ -16,7 +16,7 @@ int onDeinit() {
             success = UpdateStatus();
          }
          double signal[] = {0,0,0};
-         if (success) StopInstance(signal);
+         if (success) StopTrading(signal);
          int error = RecordMetrics();
          if (recorder.mode && error) {
             catch("onDeinit(1)->RecordMetrics()", error);

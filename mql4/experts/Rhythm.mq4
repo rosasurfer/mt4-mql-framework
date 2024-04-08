@@ -142,14 +142,14 @@ int onTick() {
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
          //if (IsStartSignal(signal)) {                                                                                    // trading-time
-         //   StartInstance(signal);                                                                                       // keep existing or open new position => STATUS_TRADING
+         //   StartTrading(signal);                                                                                        // keep existing or open new position => STATUS_TRADING
          //}
       }
       else if (instance.status == STATUS_TRADING) {
          UpdateStatus();                              // update client-side status
 
          //if (IsStopSignal(signal)) {                                                                                     // no-trading-time || daily-stop-limit || total-profit-target
-         //   StopInstance(signal);                                                                                        // close all positions => STATUS_WAITING|STATUS_STOPPED
+         //   StopTrading(signal);                                                                                         // close all positions => STATUS_WAITING|STATUS_STOPPED
          //}
          //else {                                     // update server-side status
          //   UpdateOpenPositions();                  // add/reduce/reverse position, take (partial) profits
@@ -263,14 +263,14 @@ int start_old() {
 
 
 /**
- * Stop a running instance and close open positions (if any).
+ * Stop trading and close open positions (if any).
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StopInstance(double signal[]) {
-   return(!catch("StopInstance(1)", ERR_NOT_IMPLEMENTED));
+bool StopTrading(double signal[]) {
+   return(!catch("StopTrading(1)", ERR_NOT_IMPLEMENTED));
 }
 
 

@@ -14,14 +14,14 @@ int onTick() {
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) {
-            StartInstance(signal);
+            StartTrading(signal);
          }
       }
       else if (instance.status == STATUS_TRADING) {
          UpdateStatus();                              // update client-side status
 
          if (IsStopSignal(signal)) {
-            StopInstance(signal);
+            StopTrading(signal);
          }
          else {                                       // update server-side status
             UpdateOpenPositions();                    // add/reduce/reverse position, take (partial) profits

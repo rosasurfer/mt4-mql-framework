@@ -364,14 +364,14 @@ int onTick() {
 
       if (instance.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) {
-            StartInstance(signal);
+            StartTrading(signal);
          }
       }
       else if (instance.status == STATUS_TRADING) {
          UpdateStatus();
 
          if (IsStopSignal(signal)) {
-            StopInstance(signal);
+            StopTrading(signal);
          }
          else if (IsZigZagSignal(signal)) {
             ReversePosition(signal);
@@ -415,7 +415,7 @@ bool onCommand(string cmd, string params, int keys) {
                }
             }
             log("onCommand(1)  "+ instance.name + sDetail + DoubleQuoteStr(fullCmd), NO_ERROR, logLevel);
-            return(StartInstance(signal));
+            return(StartTrading(signal));
       }
    }
    else if (cmd == "stop") {
@@ -424,7 +424,7 @@ bool onCommand(string cmd, string params, int keys) {
          case STATUS_TRADING:
             logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
             double dNull[] = {0,0,0};
-            return(StopInstance(dNull));
+            return(StopTrading(dNull));
       }
    }
    else if (cmd == "wait") {
@@ -767,16 +767,16 @@ bool IsStopSignal(double &signal[]) {
 
 
 /**
- * Start a waiting or restart a stopped instance.
+ * Start/restart trading on a waiting or stopped instance.
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StartInstance(double signal[]) {
+bool StartTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartInstance(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!signal[SIG_OP])                                                    return(!catch("StartInstance(2)  "+ instance.name +" invalid signal parameter SIG_OP: 0", ERR_INVALID_PARAMETER));
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartTrading(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!signal[SIG_OP])                                                    return(!catch("StartTrading(2)  "+ instance.name +" invalid signal parameter SIG_OP: 0", ERR_INVALID_PARAMETER));
 
    int    sigType  = signal[SIG_TYPE ];
    double sigPrice = signal[SIG_PRICE];
@@ -844,9 +844,9 @@ bool StartInstance(double signal[]) {
       SS.ProfitStats();
       SS.StartStopConditions();
    }
-   if (IsLogInfo()) logInfo("StartInstance(3)  "+ instance.name +" instance started ("+ SignalOperationToStr(sigOp) +")");
+   if (IsLogInfo()) logInfo("StartTrading(3)  "+ instance.name +" started ("+ SignalOperationToStr(sigOp) +")");
 
-   if (test.onPositionOpenPause) Tester.Pause("StartInstance(4)");
+   if (test.onPositionOpenPause) Tester.Pause("StartTrading(4)");
    return(SaveStatus());
 }
 
@@ -970,15 +970,15 @@ double stop.profitPct.AbsValue() {
 
 
 /**
- * Stop an instance and close open positions (if any).
+ * Stop trading and close open positions (if any).
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StopInstance(double signal[]) {
+bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
    int    sigType  = signal[SIG_TYPE ];
    double sigPrice = signal[SIG_PRICE];
@@ -1041,22 +1041,22 @@ bool StopInstance(double signal[]) {
          instance.status = STATUS_STOPPED;
          break;
 
-      default: return(!catch("StopInstance(2)  "+ instance.name +" invalid parameter SIG_TYPE: "+ sigType, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopTrading(2)  "+ instance.name +" invalid parameter SIG_TYPE: "+ sigType, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
    SS.TotalProfit();
    SS.ProfitStats();
 
-   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"instance stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
+   if (IsLogInfo()) logInfo("StopTrading(3)  "+ instance.name +" stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
    if (__isTesting) {
-      if      (!IsVisualMode())          { if (instance.status == STATUS_STOPPED) Tester.Stop ("StopInstance(4)"); }
-      else if (sigType == SIG_TYPE_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopInstance(5)"); }
-      else                               { if (test.onStopPause)                  Tester.Pause("StopInstance(6)"); }
+      if      (!IsVisualMode())          { if (instance.status == STATUS_STOPPED) Tester.Stop ("StopTrading(4)"); }
+      else if (sigType == SIG_TYPE_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopTrading(5)"); }
+      else                               { if (test.onStopPause)                  Tester.Pause("StopTrading(6)"); }
    }
-   return(!catch("StopInstance(7)"));
+   return(!catch("StopTrading(7)"));
 }
 
 

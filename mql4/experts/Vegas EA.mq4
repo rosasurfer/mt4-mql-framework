@@ -198,7 +198,7 @@ bool onCommand(string cmd, string params, int keys) {
          case STATUS_TRADING:
             logInfo("onCommand(1)  "+ instance.name +" \""+ fullCmd +"\"");
             double dNull[] = {0,0,0};
-            return(StopInstance(dNull));
+            return(StopTrading(dNull));
       }
    }
    else if (cmd == "restart") {
@@ -468,20 +468,20 @@ bool UpdateStatus(int signal = NULL) {
 
 
 /**
- * Stop an instance and close open positions (if any).
+ * Stop trading and close open positions (if any).
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StopInstance(double signal[]) {
+bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
    // close an open position
    if (instance.status == STATUS_TRADING) {
       if (open.ticket > 0) {
-         if (IsLogInfo()) logInfo("StopInstance(2)  "+ instance.name +" stopping");
+         if (IsLogInfo()) logInfo("StopTrading(2)  "+ instance.name +" stopping");
          int oeFlags, oe[];
          if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
@@ -523,15 +523,15 @@ bool StopInstance(double signal[]) {
    SS.TotalProfit();
    SS.ProfitStats();
 
-   if (IsLogInfo()) logInfo("StopInstance(3)  "+ instance.name +" "+ ifString(__isTesting, "test ", "") +"instance stopped, profit: "+ status.totalProfit +" "+ status.profitStats);
+   if (IsLogInfo()) logInfo("StopTrading(3)  "+ instance.name +" stopped, profit: "+ status.totalProfit +" "+ status.profitStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
    if (__isTesting) {
-      if      (!IsVisualMode())  Tester.Stop ("StopInstance(4)");
-      else if (test.onStopPause) Tester.Pause("StopInstance(5)");
+      if      (!IsVisualMode())  Tester.Stop ("StopTrading(4)");
+      else if (test.onStopPause) Tester.Pause("StopTrading(5)");
    }
-   return(!catch("StopInstance(6)"));
+   return(!catch("StopTrading(6)"));
 }
 
 

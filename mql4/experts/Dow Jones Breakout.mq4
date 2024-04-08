@@ -248,19 +248,19 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Stop an instance and close open positions (if any).
+ * Stop trading and close open positions (if any).
  *
  * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool StopInstance(double signal[]) {
+bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
-   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopInstance(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   logNotice("StopInstance(0.1)  not implemented", ERR_NOT_IMPLEMENTED);
+   logNotice("StopTrading(0.1)  not implemented", ERR_NOT_IMPLEMENTED);
 
-   return(!catch("StopInstance(2)"));
+   return(!catch("StopTrading(2)"));
 }
 
 
