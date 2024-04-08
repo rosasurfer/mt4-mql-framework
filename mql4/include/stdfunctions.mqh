@@ -2738,17 +2738,17 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
       // check for and return a custom override
       if (IsAccountConfigKey(section, key)) {
          string sValue = GetAccountConfigString(section, key);
-         if (!StringLen(sValue)) {
+         if (sValue == "") {
             error = ERR_INVALID_CONFIG_VALUE;
-            return(!catch(ifString(StringLen(caller), caller +"->", "") +"MarketInfoEx(1)  invalid config value ["+ section +"] "+ key +" = (empty)", error));
+            return(!catch(ifString(caller=="", "", caller +"->") +"MarketInfoEx(1)  invalid config value ["+ section +"] "+ key +" = (empty)", error));
          }
          if (mode == MODE_TICKVALUE) {
-            if (StrCompareI(symbol, "VIX_J4") || StrCompareI(symbol, "VIX_Q3") || StrCompareI(symbol, "VIX_U3")) {
-               return(MarketInfoEx("US2000", mode, error, ifString(StringLen(caller), caller +"->MarketInfoEx(2)", "")));
+            if (StrCompareI(symbol, "VIX_J4")) {
+               return(MarketInfoEx("US2000", mode, error, ifString(caller=="", "", caller +"->MarketInfoEx(2)")));
             }
          }
          error = ERR_NOT_IMPLEMENTED;
-         return(!catch(ifString(StringLen(caller), caller +"->", "") +"MarketInfoEx(3)  custom override for \""+ key +"\" not implemented", error));
+         return(!catch(ifString(caller=="", "", caller +"->") +"MarketInfoEx(3)  custom override for \""+ key +"\" not implemented", error));
       }
    }
 
