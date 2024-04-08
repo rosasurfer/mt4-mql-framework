@@ -1,5 +1,5 @@
 /**
- * Generic template/example for the onTick() function.
+ * Generic template/example for an EA's onTick() function.
  *
  * @return int - error status
  */
@@ -8,7 +8,7 @@ int onTick() {
    double signal[3];
 
    if (__isChart) {
-      if (!HandleCommands()) return(last_error);      // process incoming commands, may switch on/off the instance
+      if (!HandleCommands()) return(last_error);      // process incoming commands (may switch on/off the instance)
    }
 
    if (instance.status != STATUS_STOPPED) {
@@ -24,7 +24,7 @@ int onTick() {
             StopTrading(signal);
          }
          else {                                       // update server-side status
-            UpdateOpenPositions();                    // add/reduce/reverse position, take (partial) profits
+            UpdateOpenPositions();                    // add/reduce/reverse positions, take (partial) profits
             UpdatePendingOrders();                    // update entry and/or exit limits
          }
       }

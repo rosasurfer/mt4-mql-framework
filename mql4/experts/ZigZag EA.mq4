@@ -33,7 +33,7 @@
  *     trailing stop
  *
  *  - optimization
- *     better statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
+ *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
  *
  *  - money management
  *
@@ -227,10 +227,6 @@ extern bool   ShowProfitInPercent            = false;                // whether 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// custom PnL metrics
-#define METRIC_DAILY_NET_MONEY      4
-#define METRIC_DAILY_NET_UNITS      5
-#define METRIC_DAILY_SIG_UNITS      6
 
 // instance start conditions
 bool     start.time.condition;               // whether a time condition is active
@@ -286,6 +282,7 @@ string   status.stopConditions  = "";
 
 #include <ea/functions/log/GetLogFilename.mqh>
 
+#include <ea/functions/metric/GetMT4SymbolDefinition.mqh>
 #include <ea/functions/metric/RecordMetrics.mqh>
 
 #include <ea/functions/status/ShowOpenOrders.mqh>
@@ -1113,93 +1110,6 @@ bool UpdateStatus() {
       SS.ProfitStats();
    }
    return(!catch("UpdateStatus(3)"));
-}
-
-
-/**
- * Return a symbol definition for the specified metric to be recorded.
- *
- * @param  _In_  int    id          - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
- * @param  _Out_ bool   &ready      - whether metric details are complete and the metric is ready to be recorded
- * @param  _Out_ string &symbol     - unique MT4 timeseries symbol
- * @param  _Out_ string &descr      - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
- * @param  _Out_ string &group      - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
- * @param  _Out_ int    &digits     - symbol digits value
- * @param  _Out_ double &baseValue  - quotes base value (if EMPTY recorder default settings are used)
- * @param  _Out_ int    &multiplier - quotes multiplier
- *
- * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
- */
-int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descr, string &group, int &digits, double &baseValue, int &multiplier) {
-   string sId = ifString(!instance.id, "???", StrPadLeft(instance.id, 3, "0"));
-   string descrSuffix="", sBarModel="";
-
-   switch (__Test.barModel) {
-      case MODE_EVERYTICK:     sBarModel = "EveryTick"; break;
-      case MODE_CONTROLPOINTS: sBarModel = "ControlP";  break;
-      case MODE_BAROPEN:       sBarModel = "BarOpen";   break;
-      default:                 sBarModel = "Live";      break;
-   }
-
-   ready      = false;
-   group      = "";
-   baseValue  = EMPTY;
-   digits     = pDigits;
-   multiplier = MathRound(1/pUnit);
-
-   switch (id) {
-      // --- standard AccountEquity() symbol for recorder.mode = RECORDER_ON ------------------------------------------------
-      case NULL:
-         symbol     = recorder.stdEquitySymbol;
-         descr      = "";
-         digits     = 2;
-         multiplier = 1;
-         ready      = true;
-         return(NO_ERROR);
-
-      // --- custom cumulated metrcis ---------------------------------------------------------------------------------------
-      case METRIC_NET_MONEY:              // OK
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"A";                      // "US500.123A"
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-         digits      = 2;
-         multiplier  = 1;
-         break;
-
-      case METRIC_NET_UNITS:              // OK
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"B";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-         break;
-
-      case METRIC_SIG_UNITS:              // OK
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"C";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-         break;
-
-      // --- custom daily metrics -------------------------------------------------------------------------------------------
-      case METRIC_DAILY_NET_MONEY:
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"D";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL/day, "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-         digits      = 2;
-         multiplier  = 1;
-         break;
-
-      case METRIC_DAILY_NET_UNITS:
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"E";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", net PnL/day, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-         break;
-
-      case METRIC_DAILY_SIG_UNITS:
-         symbol      = StrLeft(Symbol(), 6) +"."+ sId +"F";
-         descrSuffix = ", "+ PeriodDescription() +", "+ sBarModel +", signal PnL/day, "+ spUnit + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-         break;
-
-      default:
-         return(ERR_INVALID_INPUT_PARAMETER);
-   }
-
-   descr = StrLeft(ProgramName(), 63-StringLen(descrSuffix )) + descrSuffix;
-   ready = (instance.id > 0);
-   return(NO_ERROR);
 }
 
 
