@@ -38,8 +38,8 @@
  *  - money management
  *
  *  - tests
- *     read enabled trade directions at test start
  *     storage in folder per strategy
+ *     read enabled trade directions at test start
  *     on no connection/old terminal: indicator of the same name to load test into chart
  *
  *  - optimization/self-optimization
@@ -304,6 +304,7 @@ string   status.stopConditions  = "";
 
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>
+#include <ea/functions/status/file/SetStatusFilename.mqh>
 #include <ea/functions/status/file/ReadStatus.General.mqh>
 #include <ea/functions/status/file/ReadStatus.Targets.mqh>
 #include <ea/functions/status/file/ReadStatus.OpenPosition.mqh>
@@ -1292,9 +1293,9 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string section="", file=FindStatusFile(instance.id, instance.isTest);
+   string section="", file=GetStatusFilename();
    if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
-   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file \""+ file +"\" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    if (!ReadStatus.General(file)) return(false);
@@ -1802,6 +1803,9 @@ int ShowStatus(int error = NO_ERROR) {
       if (isRecursion) return(error);
       isRecursion = true;
    }
+
+   static string sInstanceId = "";
+   if (sInstanceId == "") sInstanceId = StrPadLeft(instance.id, 3, "0");
    string sStatus="", sError="";
 
    switch (instance.status) {
@@ -1814,15 +1818,15 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(WindowExpertName(), "    ID.", instance.id, sStatus, sError, NL,
-                                                                                                NL,
-                                  "Start:    ",  status.startConditions,                        NL,
-                                  "Stop:     ",  status.stopConditions,                         NL,
-                                                                                                NL,
-                                  status.metricDescription,                                     NL,
-                                  "Open:    ",   status.openLots,                               NL,
-                                  "Closed:  ",   status.closedTrades,                           NL,
-                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,  NL
+   string text = StringConcatenate(WindowExpertName(), "    ID: ", sInstanceId, sStatus, sError, NL,
+                                                                                                 NL,
+                                  "Start:    ",  status.startConditions,                         NL,
+                                  "Stop:     ",  status.stopConditions,                          NL,
+                                                                                                 NL,
+                                  status.metricDescription,                                      NL,
+                                  "Open:    ",   status.openLots,                                NL,
+                                  "Closed:  ",   status.closedTrades,                            NL,
+                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,   NL
    );
 
    // 3 lines margin-top for instrument and indicator legends

@@ -13,19 +13,22 @@ int ShowStatus(int error = NO_ERROR) {
       if (isRecursion) return(error);
       isRecursion = true;
    }
+
+   static string sInstanceId = "";
+   if (sInstanceId == "") sInstanceId = StrPadLeft(instance.id, 3, "0");
    string sStatus="", sError="";
 
    switch (instance.status) {
-      case NULL:           sStatus = "  (not initialized)"; break;
-      case STATUS_WAITING: sStatus = "  (waiting)";         break;
-      case STATUS_TRADING: sStatus = "  (trading)";         break;
-      case STATUS_STOPPED: sStatus = "  (stopped)";         break;
+      case NULL:           sStatus = "  not initialized"; break;
+      case STATUS_WAITING: sStatus = "  waiting";         break;
+      case STATUS_TRADING: sStatus = "  trading";         break;
+      case STATUS_STOPPED: sStatus = "  stopped";         break;
       default:
          return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(WindowExpertName(), "    ID: ", instance.id, sStatus, sError, NL,
+   string text = StringConcatenate(WindowExpertName(), "    ID: ", sInstanceId, sStatus, sError, NL,
                                                                                                  NL,
                                    status.metricDescription,                                     NL,
                                    "Open:    ",   status.openLots,                               NL,

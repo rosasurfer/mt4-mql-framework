@@ -33,6 +33,7 @@ int onInitUser() {
          Instance.ID      = ifString(instance.isTest, "T", "") + StrPadLeft(instance.id, 3, "0"); SS.InstanceName();
          instance.created = GetLocalTime();
          instance.status  = STATUS_WAITING;
+         SetStatusFilename();
          logInfo("onInitUser(2)  instance "+ instance.name +" created");
          SaveStatus();
       }
@@ -130,3 +131,8 @@ int afterInit() {
    StoreVolatileStatus();                          // store the instance id for template reload/restart/recompilation etc.
    return(catch("afterInit(2)"));
 }
+
+
+#import "rsfMT4Expander.dll"
+   string GetStatusFilenameData();                 // A no-op in the Expander allows the user to optionally provide his own data.
+#import

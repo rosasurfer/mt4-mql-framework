@@ -95,6 +95,7 @@ int  bracket2End   = 990;                    // 16:30
 
 #include <ea/functions/status/file/FindStatusFile.mqh>
 #include <ea/functions/status/file/GetStatusFilename.mqh>
+#include <ea/functions/status/file/SetStatusFilename.mqh>
 #include <ea/functions/status/file/ReadStatus.General.mqh>
 #include <ea/functions/status/file/ReadStatus.Targets.mqh>
 #include <ea/functions/status/file/ReadStatus.OpenPosition.mqh>
@@ -285,9 +286,9 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string section="", file=FindStatusFile(instance.id, instance.isTest);
+   string section="", file=GetStatusFilename();
    if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
-   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file \""+ file +"\" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    if (!ReadStatus.General(file)) return(false);

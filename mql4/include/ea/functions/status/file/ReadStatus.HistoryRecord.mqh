@@ -17,7 +17,7 @@ int ReadStatus.HistoryRecord(string key, string value) {
    // [full|part].i=ticket,fromTicket,toTicket,type,lots,part,openTime,openPrice,openPriceSig,stopLoss,takeProfit,closeTime,closePrice,closePriceSig,slippageP,swapM,commissionM,grossProfitM,netProfitM,netProfitP,runupP,rundownP,sigProfitP,sigRunupP,sigRundownP
    string values[];
    string sId = StrRightFrom(key, "."); if (!StrIsDigits(sId))      return(_EMPTY(catch("ReadStatus.HistoryRecord(2)  "+ instance.name +" illegal key format of history record: \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
-   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.HistoryRecord(3)  "+ instance.name +" illegal number of fields in history record \""+ key +"\": "+ ArraySize(values), ERR_INVALID_FILE_FORMAT)));
+   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.HistoryRecord(3)  "+ instance.name +" illegal number of fields in history record \""+ key +"\": "+ ArraySize(values) +" (expected "+ ArrayRange(history, 1) +")", ERR_INVALID_FILE_FORMAT)));
 
    int      ticket        = StrToInteger(values[H_TICKET        ]);
    int      fromTicket    = StrToInteger(values[H_FROM_TICKET   ]);
