@@ -2744,7 +2744,7 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
          }
          if (mode == MODE_TICKVALUE) {
             if (StrCompareI(symbol, "VIX_J4")) {
-               return(MarketInfoEx("US2000", mode, error, ifString(caller=="", "", caller +"->MarketInfoEx(2)")));
+               return(MarketInfoEx("US2000", mode, error, ifString(caller=="", "", caller +"->") +"MarketInfoEx(2)"));
             }
          }
          error = ERR_NOT_IMPLEMENTED;
