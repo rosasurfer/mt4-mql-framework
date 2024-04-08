@@ -1,26 +1,5 @@
 /**
- * A combination of ideas from the "Vegas H1 Tunnel" system, the "Turtle Trading" system and a grid for scaling in/out.
- *
- *  @see [Vegas H1 Tunnel Method] https://www.forexfactory.com/thread/4365-all-vegas-documents-located-here
- *  @see [Turtle Trading]         https://analyzingalpha.com/turtle-trading
- *  @see [Turtle Trading]         http://web.archive.org/web/20220417032905/https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/
- *
- *
- * Features
- * --------
- *  • A finished test can be loaded into an online chart for trade inspection and further analysis.
- *
- *  • The EA constantly writes a status file with complete runtime data and detailed trade statistics (more detailed than
- *    the built-in functionality). This status file can be used to move a running EA instance with all historic runtime data
- *    between different machines (e.g. from laptop to VPS).
- *
- *  • The EA supports a "virtual trading mode" in which all trades are only emulated. This makes it possible to hide all
- *    trading related deviations that impact test or real results (tester bugs, spread, slippage, swap, commission).
- *    It allows the EA to be tested and adjusted under idealised conditions.
- *
- *  • The EA contains a recorder that can record several performance graphs simultaneously at runtime (also in tester).
- *    These recordings are saved as regular chart symbols in the history directory of a second MT4 terminal. They can be
- *    displayed and analysed like regular MT4 symbols.
+ * A strategy trading tunnel breakouts.
  *
  *
  * Requirements
@@ -29,24 +8,8 @@
  *  • ZigZag indicator:    @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
  *
  *
- * Input parameters
- * ----------------
- *  • Instance.ID:        ...
- *  • Tunnel.Definition:  ...
- *  • Donchian.Periods:   ...
- *  • Lots:               ...
- *  • EA.Recorder:        Metrics to record, for syntax @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/include/core/expert.recorder.mqh
- *
- *     1: Records real PnL after all costs in account currency (net).
- *     2: Records real PnL after all costs in price units (net).
- *     3: Records signal level PnL before spread/any costs in price units.
- *
- *     Metrics in price units are recorded in the best matching unit. That's pip for Forex or full points otherwise.
- *
- *
  * External control
  * ----------------
- * The EA can be controlled via execution of the following scripts (online and in tester):
  *  • EA.Stop
  *  • EA.Restart
  *  • EA.ToggleMetrics
