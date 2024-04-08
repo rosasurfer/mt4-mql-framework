@@ -238,15 +238,13 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID                    = "";                   // instance to load from a status file, format "[T]123"
-
-extern string ___a__________________________ = "=== Instance settings ===";
 extern string Instance.StartAt               = "";                   // @time(datetime|time)
 extern string Instance.StopAt                = "";                   // @time(datetime|time) | @profit(numeric[%])
 
-extern string ___b__________________________ = "=== Signal settings ===";
+extern string ___a__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 30;
 
-extern string ___c__________________________ = "=== Trade settings ===";
+extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
 
 extern int    Initial.TakeProfit             = 0;                    // in punits (0: partial targets only or no TP)
@@ -265,7 +263,7 @@ extern int    Target4                        = 0;                    //
 extern int    Target4.ClosePercent           = 30;                   //
 extern int    Target4.MoveStopTo             = 0;                    //
 
-extern string ___d__________________________ = "=== Other ===";
+extern string ___c__________________________ = "=== Other ===";
 extern bool   ShowProfitInPercent            = false;                // whether PnL is displayed in money amounts or percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -4,8 +4,8 @@ period=30
 digits=5
 
 leftpos=9229
-scale=2
-graph=1
+scale=4
+graph=0
 fore=0
 grid=0
 volume=0

@@ -20,7 +20,7 @@
  *  • ZigZag.Periods:               Lookback periods of the Donchian channel.
  *  • ZigZag.Periods.Step:          Controls parameter 'ZigZag.Periods' via the keyboard. If non-zero it enables the parameter
  *                                   stepper and defines its step size. If zero the parameter stepper is disabled.
- *  • ZigZag.Type:                  Whether to display the ZigZag line or ZigZag semaphores. Can be shortened as long as distinct.
+ *  • ZigZag.Type:                  Whether to display the ZigZag line or ZigZag semaphores.
  *  • ZigZag.Width:                 The ZigZag's line width/semaphore size.
  *  • ZigZag.Semaphores.Wingdings:  WingDing symbol used for ZigZag semaphores.
  *  • ZigZag.Color:                 Color of ZigZag line/semaphores.
@@ -58,6 +58,7 @@
  *
  *
  * TODO:
+ *  - fix missing break condition in Draw123Projections()
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
  *  - keep bar status in IsUpperCrossLast()
  *  - document usage of iCustom()
@@ -69,38 +70,38 @@ int __DeinitFlags[];
 ///////////////////////////////////////////////////// Input parameters //////////////////////////////////////////////////////
 
 extern string ___a__________________________ = "=== ZigZag settings ===";
-extern int    ZigZag.Periods                 = 40;                      // lookback periods of the Donchian channel
-extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (hotkey)
-extern string ZigZag.Type                    = "Lines* | Semaphores";   // ZigZag lines or reversal points (may be shortened)
+extern int    ZigZag.Periods                 = 40;                            // lookback periods of the Donchian channel
+extern int    ZigZag.Periods.Step            = 0;                             // step size for a stepped input parameter (hotkey)
+extern string ZigZag.Type                    = "Lines* | Semaphores";         // ZigZag lines or reversal points (can be shortened)
 extern int    ZigZag.Width                   = 2;
-extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a large point
+extern int    ZigZag.Semaphores.Wingdings    = 108;                           // a large point
 extern color  ZigZag.Color                   = Blue;
 
 extern string ___b__________________________ = "=== Donchian settings ===";
-extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
-extern string Donchian.ShowCrossings         = "off | first* | all";    // which channel crossings to display
+extern bool   Donchian.ShowChannel           = true;                          // whether to display the Donchian channel
+extern string Donchian.ShowCrossings         = "off | first* | all";          // which channel crossings to display
 extern int    Donchian.Crossings.Width       = 1;
-extern int    Donchian.Crossings.Wingdings   = 163;                     // a small circle
+extern int    Donchian.Crossings.Wingdings   = 163;                           // a small ring
 extern color  Donchian.Upper.Color           = Blue;
 extern color  Donchian.Lower.Color           = Magenta;
 
 extern string ___c__________________________ = "=== Display settings ===";
 extern bool   ShowChartLegend                = true;
-extern int    Show123Projections             = 0;                       // number of 1-2-3 projections to display
-extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
+extern int    Show123Projections             = 0;                             // number of 1-2-3 projections to display
+extern int    MaxBarsBack                    = 10000;                         // max. values to calculate (-1: all available)
 
 extern string ___d__________________________ = "=== Signaling ===";
-extern bool   Signal.onReversal              = false;                   // signal ZigZag reversals (first Donchian channel crossing)
+extern bool   Signal.onReversal              = false;                         // signal ZigZag reversals (first Donchian channel crossing)
 extern string Signal.onReversal.Types        = "sound* | alert | mail | sms";
 
-extern bool   Signal.onBreakout              = false;                   // signal ZigZag breakouts
-extern bool   Signal.onBreakout.123Only      = false;                   // signal valid 1-2-3 breakouts only
+extern bool   Signal.onBreakout              = false;                         // signal ZigZag breakouts
+extern bool   Signal.onBreakout.123Only      = false;                         // signal valid 1-2-3 breakouts only
 extern string Signal.onBreakout.Types        = "sound* | alert | mail | sms";
 
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
-extern bool   Sound.onChannelWidening        = false;                   // signal Donchian channel widenings
+extern bool   Sound.onChannelWidening        = false;                         // signal Donchian channel widenings
 extern string Sound.onNewChannelHigh         = "Price Advance.wav";
 extern string Sound.onNewChannelLow          = "Price Decline.wav";
 
