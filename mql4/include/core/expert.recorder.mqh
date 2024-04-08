@@ -33,21 +33,21 @@ string recorder.stdEquitySymbol = "";        // symbol used with mode = RECORDER
 string recorder.hstDirectory    = "";
 int    recorder.hstFormat;
 
-string recorder.defaultDescription = "";
+string recorder.defaultDescr = "";
 string recorder.defaultGroup = "";
 double recorder.defaultBaseValue = 10000.0;
 
 // metric details
-bool   metric.enabled    [];                 // whether a metric was specified in input "EA.Recorder"
-bool   metric.ready      [];                 // whether metric details are complete
-string metric.symbol     [];
-string metric.description[];
-string metric.group      [];
-int    metric.digits     [];
-double metric.currValue  [];
-double metric.baseValue  [];
-int    metric.multiplier [];
-int    metric.hSet       [];
+bool   metric.enabled   [];                  // whether a metric was specified in input "EA.Recorder"
+bool   metric.ready     [];                  // whether metric details are complete
+string metric.symbol    [];
+string metric.descr     [];
+string metric.group     [];
+int    metric.digits    [];
+double metric.currValue [];
+double metric.baseValue [];
+int    metric.multiplier[];
+int    metric.hSet      [];
 
 // backed-up input parameters
 string prev.EA.Recorder = "";
@@ -56,16 +56,16 @@ string prev.EA.Recorder = "";
 int    prev.recorder.mode;
 bool   prev.recorder.initialized;
 
-bool   prev.metric.enabled    [];
-bool   prev.metric.ready      [];
-string prev.metric.symbol     [];
-string prev.metric.description[];
-string prev.metric.group      [];
-int    prev.metric.digits     [];
-double prev.metric.currValue  [];
-double prev.metric.baseValue  [];
-int    prev.metric.multiplier [];
-int    prev.metric.hSet       [];
+bool   prev.metric.enabled   [];
+bool   prev.metric.ready     [];
+string prev.metric.symbol    [];
+string prev.metric.descr     [];
+string prev.metric.group     [];
+int    prev.metric.digits    [];
+double prev.metric.currValue [];
+double prev.metric.baseValue [];
+int    prev.metric.multiplier[];
+int    prev.metric.hSet      [];
 
 
 /**
@@ -94,16 +94,16 @@ void Recorder_BackupInputs() {
       prev.recorder.initialized = recorder.initialized;
 
       // affected runtime variables
-      ArrayResize(prev.metric.enabled,     ArrayCopy(prev.metric.enabled,     metric.enabled    ));
-      ArrayResize(prev.metric.ready,       ArrayCopy(prev.metric.ready,       metric.ready      ));
-      ArrayResize(prev.metric.symbol,      ArrayCopy(prev.metric.symbol,      metric.symbol     ));
-      ArrayResize(prev.metric.description, ArrayCopy(prev.metric.description, metric.description));
-      ArrayResize(prev.metric.group,       ArrayCopy(prev.metric.group,       metric.group      ));
-      ArrayResize(prev.metric.digits,      ArrayCopy(prev.metric.digits,      metric.digits     ));
-      ArrayResize(prev.metric.currValue,   ArrayCopy(prev.metric.currValue,   metric.currValue  ));
-      ArrayResize(prev.metric.baseValue,   ArrayCopy(prev.metric.baseValue,   metric.baseValue  ));
-      ArrayResize(prev.metric.multiplier,  ArrayCopy(prev.metric.multiplier,  metric.multiplier ));
-      ArrayResize(prev.metric.hSet,        ArrayCopy(prev.metric.hSet,        metric.hSet       ));
+      ArrayResize(prev.metric.enabled,    ArrayCopy(prev.metric.enabled,    metric.enabled   ));
+      ArrayResize(prev.metric.ready,      ArrayCopy(prev.metric.ready,      metric.ready     ));
+      ArrayResize(prev.metric.symbol,     ArrayCopy(prev.metric.symbol,     metric.symbol    ));
+      ArrayResize(prev.metric.descr,      ArrayCopy(prev.metric.descr,      metric.descr     ));
+      ArrayResize(prev.metric.group,      ArrayCopy(prev.metric.group,      metric.group     ));
+      ArrayResize(prev.metric.digits,     ArrayCopy(prev.metric.digits,     metric.digits    ));
+      ArrayResize(prev.metric.currValue,  ArrayCopy(prev.metric.currValue,  metric.currValue ));
+      ArrayResize(prev.metric.baseValue,  ArrayCopy(prev.metric.baseValue,  metric.baseValue ));
+      ArrayResize(prev.metric.multiplier, ArrayCopy(prev.metric.multiplier, metric.multiplier));
+      ArrayResize(prev.metric.hSet,       ArrayCopy(prev.metric.hSet,       metric.hSet      ));
 
       // we didn't check ArraySize(source), instead we handle a generated error
       int error = GetLastError();
@@ -123,16 +123,16 @@ void Recorder_RestoreInputs() {
       recorder.initialized = prev.recorder.initialized;
 
       // affected runtime variables
-      ArrayResize(metric.enabled,     ArrayCopy(metric.enabled,     prev.metric.enabled    ));
-      ArrayResize(metric.ready,       ArrayCopy(metric.ready,       prev.metric.ready      ));
-      ArrayResize(metric.symbol,      ArrayCopy(metric.symbol,      prev.metric.symbol     ));
-      ArrayResize(metric.description, ArrayCopy(metric.description, prev.metric.description));
-      ArrayResize(metric.group,       ArrayCopy(metric.group,       prev.metric.group      ));
-      ArrayResize(metric.digits,      ArrayCopy(metric.digits,      prev.metric.digits     ));
-      ArrayResize(metric.currValue,   ArrayCopy(metric.currValue,   prev.metric.currValue  ));
-      ArrayResize(metric.baseValue,   ArrayCopy(metric.baseValue,   prev.metric.baseValue  ));
-      ArrayResize(metric.multiplier,  ArrayCopy(metric.multiplier,  prev.metric.multiplier ));
-      ArrayResize(metric.hSet,        ArrayCopy(metric.hSet,        prev.metric.hSet       ));
+      ArrayResize(metric.enabled,    ArrayCopy(metric.enabled,    prev.metric.enabled   ));
+      ArrayResize(metric.ready,      ArrayCopy(metric.ready,      prev.metric.ready     ));
+      ArrayResize(metric.symbol,     ArrayCopy(metric.symbol,     prev.metric.symbol    ));
+      ArrayResize(metric.descr,      ArrayCopy(metric.descr,      prev.metric.descr     ));
+      ArrayResize(metric.group,      ArrayCopy(metric.group,      prev.metric.group     ));
+      ArrayResize(metric.digits,     ArrayCopy(metric.digits,     prev.metric.digits    ));
+      ArrayResize(metric.currValue,  ArrayCopy(metric.currValue,  prev.metric.currValue ));
+      ArrayResize(metric.baseValue,  ArrayCopy(metric.baseValue,  prev.metric.baseValue ));
+      ArrayResize(metric.multiplier, ArrayCopy(metric.multiplier, prev.metric.multiplier));
+      ArrayResize(metric.hSet,       ArrayCopy(metric.hSet,       prev.metric.hSet      ));
 
       // we didn't check ArraySize(source), instead we handle a generated error
       int error = GetLastError();
@@ -260,11 +260,11 @@ bool Recorder_init() {
    double baseValue;
    string symbol="", descr="", group="", suffix="";
 
-   suffix                      = ", "+ PeriodDescription() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-   recorder.defaultDescription = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                           // sizeof(SYMBOL.description) = 64 chars (szchar)
-   recorder.defaultGroup       = StrTrimRight(StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH));
-   recorder.hstDirectory       = Recorder_GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
-   recorder.hstFormat          = Recorder_GetHstFormat();    if (!recorder.hstFormat)               return(false);
+   suffix                = ", "+ PeriodDescription() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
+   recorder.defaultDescr = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                           // sizeof(SYMBOL.description) = 64 chars (szchar)
+   recorder.defaultGroup = StrTrimRight(StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH));
+   recorder.hstDirectory = Recorder_GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
+   recorder.hstFormat    = Recorder_GetHstFormat();    if (!recorder.hstFormat)               return(false);
 
    if (recorder.mode == RECORDER_ON) {
       // create an internal metric for AccountEquity()
@@ -303,25 +303,25 @@ bool Recorder_init() {
             return(false);
          }
          if (!ready) continue;
-         metric.ready      [id] = true;
-         metric.symbol     [id] = symbol;
-         metric.description[id] = descr;
-         metric.group      [id] = group;
-         metric.digits     [id] = digits;
-         metric.currValue  [id] = NULL;
-         metric.baseValue  [id] = baseValue;
-         metric.multiplier [id] = multiplier;
+         metric.ready     [id] = true;
+         metric.symbol    [id] = symbol;
+         metric.descr     [id] = descr;
+         metric.group     [id] = group;
+         metric.digits    [id] = digits;
+         metric.currValue [id] = NULL;
+         metric.baseValue [id] = baseValue;
+         metric.multiplier[id] = multiplier;
       }
-      if (!StringLen(metric.description[id])) metric.description[id] = recorder.defaultDescription;
-      if (!StringLen(metric.group      [id])) metric.group      [id] = recorder.defaultGroup;
-      if (   IsEmpty(metric.baseValue  [id])) metric.baseValue  [id] = recorder.defaultBaseValue;
-      if (          !metric.multiplier [id])  metric.multiplier [id] = 1;
+      if (!StringLen(metric.descr     [id])) metric.descr     [id] = recorder.defaultDescr;
+      if (!StringLen(metric.group     [id])) metric.group     [id] = recorder.defaultGroup;
+      if (   IsEmpty(metric.baseValue [id])) metric.baseValue [id] = recorder.defaultBaseValue;
+      if (          !metric.multiplier[id])  metric.multiplier[id] = 1;
 
       if (IsRawSymbol(metric.symbol[id], recorder.hstDirectory)) {
          if (__isTesting) return(!catch("Recorder_init(3)  symbol \""+ metric.symbol[id] +"\" already exists", ERR_ILLEGAL_STATE));       // TODO: update existing properties instead
       }
       else {
-         int symbolId = CreateRawSymbol(metric.symbol[id], metric.description[id], metric.group[id], metric.digits[id], AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
+         int symbolId = CreateRawSymbol(metric.symbol[id], metric.descr[id], metric.group[id], metric.digits[id], AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
          if (symbolId < 0) return(false);
       }
    }
@@ -373,9 +373,9 @@ bool Recorder_start() {
 
          // tester or no existing history
          if (!metric.hSet[i]) {
-            if      (i <  7) metric.hSet[i] = HistorySet1.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
-            else if (i < 14) metric.hSet[i] = HistorySet2.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
-            else             metric.hSet[i] = HistorySet3.Create(metric.symbol[i], metric.description[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
+            if      (i <  7) metric.hSet[i] = HistorySet1.Create(metric.symbol[i], metric.descr[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
+            else if (i < 14) metric.hSet[i] = HistorySet2.Create(metric.symbol[i], metric.descr[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
+            else             metric.hSet[i] = HistorySet3.Create(metric.symbol[i], metric.descr[i], metric.digits[i], recorder.hstFormat, recorder.hstDirectory);
             if (!metric.hSet[i]) return(_false(Recorder_off()));
          }
       }
@@ -430,47 +430,47 @@ int Recorder_off() {
 /**
  * Add a metric to the recorder arrays. Prevents overwriting of existing metrics.
  *
- * @param  int    id          - metric id
- * @param  bool   ready       - whether metric details are complete and the metric is ready to be recorded
- * @param  string symbol      - symbol
- * @param  string description - symbol description
- * @param  string group       - symbol group (if empty the program name is used)
- * @param  int    digits      - symbol digits
- * @param  double baseValue   - quotes base value (EMPTY: use recorder settings)
- * @param  int    multiplier  - quotes multiplier
+ * @param  int    id         - metric id
+ * @param  bool   ready      - whether metric details are complete and the metric is ready to be recorded
+ * @param  string symbol     - symbol
+ * @param  string descr      - symbol description
+ * @param  string group      - symbol group (if empty the program name is used)
+ * @param  int    digits     - symbol digits
+ * @param  double baseValue  - quotes base value (EMPTY: use recorder settings)
+ * @param  int    multiplier - quotes multiplier
  *
  * @return bool - success status
  */
-bool Recorder_AddMetric(int id, bool ready, string symbol, string description, string group, int digits, double baseValue, int multiplier) {
+bool Recorder_AddMetric(int id, bool ready, string symbol, string descr, string group, int digits, double baseValue, int multiplier) {
    ready = ready!=0;
    if (id < 1 || id > 21) return(!catch("Recorder_AddMetric(1)  invalid parameter id: "+ id +" (allowed range: 1 to 21)", ERR_INVALID_PARAMETER));
 
    int size = ArraySize(metric.enabled);
    if (id >= size) {
       size = id + 1;
-      ArrayResize(metric.enabled,     size);
-      ArrayResize(metric.ready,       size);
-      ArrayResize(metric.symbol,      size);
-      ArrayResize(metric.description, size);
-      ArrayResize(metric.group,       size);
-      ArrayResize(metric.digits,      size);
-      ArrayResize(metric.currValue,   size);
-      ArrayResize(metric.baseValue,   size);
-      ArrayResize(metric.multiplier,  size);
-      ArrayResize(metric.hSet,        size);
+      ArrayResize(metric.enabled,    size);
+      ArrayResize(metric.ready,      size);
+      ArrayResize(metric.symbol,     size);
+      ArrayResize(metric.descr,      size);
+      ArrayResize(metric.group,      size);
+      ArrayResize(metric.digits,     size);
+      ArrayResize(metric.currValue,  size);
+      ArrayResize(metric.baseValue,  size);
+      ArrayResize(metric.multiplier, size);
+      ArrayResize(metric.hSet,       size);
    }
    if (metric.enabled[id]) return(!catch("Recorder_AddMetric(2)  invalid parameter id: "+ id +" (metric exists) ", ERR_INVALID_PARAMETER));
 
-   metric.enabled    [id] = true;
-   metric.ready      [id] = ready;
-   metric.symbol     [id] = symbol;
-   metric.description[id] = description;
-   metric.group      [id] = group;
-   metric.digits     [id] = digits;
-   metric.currValue  [id] = NULL;
-   metric.baseValue  [id] = baseValue;
-   metric.multiplier [id] = multiplier;
-   metric.hSet       [id] = NULL;
+   metric.enabled   [id] = true;
+   metric.ready     [id] = ready;
+   metric.symbol    [id] = symbol;
+   metric.descr     [id] = descr;
+   metric.group     [id] = group;
+   metric.digits    [id] = digits;
+   metric.currValue [id] = NULL;
+   metric.baseValue [id] = baseValue;
+   metric.multiplier[id] = multiplier;
+   metric.hSet      [id] = NULL;
 
    return(!catch("Recorder_AddMetric(3)"));
 }
@@ -480,16 +480,16 @@ bool Recorder_AddMetric(int id, bool ready, string symbol, string description, s
  * Remove all metrics currently registered in the recorder.
  */
 void Recorder_ResetMetrics() {
-   ArrayResize(metric.enabled,     0);
-   ArrayResize(metric.ready,       0);
-   ArrayResize(metric.symbol,      0);
-   ArrayResize(metric.description, 0);
-   ArrayResize(metric.group,       0);
-   ArrayResize(metric.digits,      0);
-   ArrayResize(metric.currValue,   0);
-   ArrayResize(metric.baseValue,   0);
-   ArrayResize(metric.multiplier,  0);
-   ArrayResize(metric.hSet,        0);
+   ArrayResize(metric.enabled,    0);
+   ArrayResize(metric.ready,      0);
+   ArrayResize(metric.symbol,     0);
+   ArrayResize(metric.descr,      0);
+   ArrayResize(metric.group,      0);
+   ArrayResize(metric.digits,     0);
+   ArrayResize(metric.currValue,  0);
+   ArrayResize(metric.baseValue,  0);
+   ArrayResize(metric.multiplier, 0);
+   ArrayResize(metric.hSet,       0);
 }
 
 

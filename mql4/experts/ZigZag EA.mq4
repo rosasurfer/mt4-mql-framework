@@ -136,9 +136,6 @@
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
  *
- *  - virtual trading
- *     adjust virtual commissions
- *
  *  - trading functionality
  *     support command "wait" in status "progressing"
  *     reverse trading and command EA.Reverse
@@ -150,7 +147,6 @@
  *
  *  - performance tracking
  *     notifications for price feed outages
- *     daily metrics
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -240,22 +236,22 @@ extern bool   ShowProfitInPercent            = false;                // whether 
 bool     start.time.condition;               // whether a time condition is active
 datetime start.time.value;
 bool     start.time.isDaily;
-string   start.time.description = "";
+string   start.time.descr = "";
 
 // instance stop conditions ("OR" combined)
 bool     stop.time.condition;                // whether a time condition is active
 datetime stop.time.value;
 bool     stop.time.isDaily;
-string   stop.time.description = "";
+string   stop.time.descr = "";
 
 bool     stop.profitPct.condition;           // whether a takeprofit condition in percent is active
 double   stop.profitPct.value;
-double   stop.profitPct.absValue    = INT_MAX;
-string   stop.profitPct.description = "";
+double   stop.profitPct.absValue = INT_MAX;
+string   stop.profitPct.descr = "";
 
-bool     stop.profitPun.condition;           // whether a takeprofit condition in price units is active (pip or full point)
-double   stop.profitPun.value;
-string   stop.profitPun.description = "";
+bool     stop.profitPunit.condition;         // whether a takeprofit condition in price units is active (pip or full point)
+double   stop.profitPunit.value;
+string   stop.profitPunit.descr = "";
 
 // cache vars to speed-up ShowStatus()
 string   status.startConditions = "";
@@ -738,17 +734,17 @@ bool IsStopSignal(double &signal[]) {
          if (instance.totalNetProfit >= stop.profitPct.absValue) {
             signal[SIG_TYPE] = SIG_TYPE_TAKEPROFIT;
             signal[SIG_OP  ] = SIG_OP_CLOSE_ALL;
-            if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitPct.description +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitPct.descr +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
             return(true);
          }
       }
 
-      // stop.profitPun -----------------------------------------------------------------------------------------------------
-      if (stop.profitPun.condition) {
-         if (instance.totalNetProfitP >= stop.profitPun.value) {
+      // stop.profitPunit ---------------------------------------------------------------------------------------------------
+      if (stop.profitPunit.condition) {
+         if (instance.totalNetProfitP >= stop.profitPunit.value) {
             signal[SIG_TYPE] = SIG_TYPE_TAKEPROFIT;
             signal[SIG_OP  ] = SIG_OP_CLOSE_ALL;
-            if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPun.description +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPunit.descr +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
             return(true);
          }
       }
@@ -759,7 +755,7 @@ bool IsStopSignal(double &signal[]) {
       if (!IsTradingTime()) {
          signal[SIG_TYPE] = SIG_TYPE_TIME;
          signal[SIG_OP  ] = SIG_OP_CLOSE_ALL;
-         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.time.description +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ instance.name +" stop condition \"@"+ stop.time.descr +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
          return(true);
       }
    }
@@ -1033,9 +1029,9 @@ bool StopTrading(double signal[]) {
          break;
 
       case SIG_TYPE_TAKEPROFIT:
-         stop.profitPct.condition = false;
-         stop.profitPun.condition = false;
-         instance.status          = STATUS_STOPPED;
+         stop.profitPct.condition   = false;
+         stop.profitPunit.condition = false;
+         instance.status            = STATUS_STOPPED;
          break;
 
       case NULL:                                            // explicit stop (manual) or end of test
@@ -1253,28 +1249,27 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
    WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
-   WriteIniString(file, section, "instance.startEquity",       /*double  */ DoubleToStr(instance.startEquity, 2) + separator);
-
+   WriteIniString(file, section, "instance.startEquity",       /*double  */ DoubleToStr(instance.startEquity, 2));
    WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
 
    WriteIniString(file, section, "start.time.condition",       /*bool    */ start.time.condition);
    WriteIniString(file, section, "start.time.value",           /*datetime*/ start.time.value);
    WriteIniString(file, section, "start.time.isDaily",         /*bool    */ start.time.isDaily);
-   WriteIniString(file, section, "start.time.description",     /*string  */ start.time.description + separator);
+   WriteIniString(file, section, "start.time.descr",           /*string  */ start.time.descr + separator);
 
    WriteIniString(file, section, "stop.time.condition",        /*bool    */ stop.time.condition);
    WriteIniString(file, section, "stop.time.value",            /*datetime*/ stop.time.value);
    WriteIniString(file, section, "stop.time.isDaily",          /*bool    */ stop.time.isDaily);
-   WriteIniString(file, section, "stop.time.description",      /*string  */ stop.time.description + separator);
+   WriteIniString(file, section, "stop.time.descr",            /*string  */ stop.time.descr + separator);
 
    WriteIniString(file, section, "stop.profitPct.condition",   /*bool    */ stop.profitPct.condition);
    WriteIniString(file, section, "stop.profitPct.value",       /*double  */ NumberToStr(stop.profitPct.value, ".1+"));
    WriteIniString(file, section, "stop.profitPct.absValue",    /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
-   WriteIniString(file, section, "stop.profitPct.description", /*string  */ stop.profitPct.description + separator);
+   WriteIniString(file, section, "stop.profitPct.descr",       /*string  */ stop.profitPct.descr + separator);
 
-   WriteIniString(file, section, "stop.profitPun.condition",   /*bool    */ stop.profitPun.condition);
-   WriteIniString(file, section, "stop.profitPun.value",       /*double  */ NumberToStr(stop.profitPun.value, ".1+"));
-   WriteIniString(file, section, "stop.profitPun.description", /*string  */ stop.profitPun.description + separator);
+   WriteIniString(file, section, "stop.profitPunit.condition", /*bool    */ stop.profitPunit.condition);
+   WriteIniString(file, section, "stop.profitPunit.value",     /*double  */ NumberToStr(stop.profitPunit.value, ".1+"));
+   WriteIniString(file, section, "stop.profitPunit.descr",     /*string  */ stop.profitPunit.descr + separator);
 
    // open/closed trades
    if (!SaveStatus.OpenPosition(file, fileExists)) return(false);
@@ -1323,24 +1318,24 @@ bool ReadStatus() {
 
    recorder.stdEquitySymbol   = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");      // string   recorder.stdEquitySymbol   = GBPJPY.001
 
-   start.time.condition       = GetIniBool   (file, section, "start.time.condition"      );        // bool     start.time.condition       = 1
-   start.time.value           = GetIniInt    (file, section, "start.time.value"          );        // datetime start.time.value           = 1624924800
-   start.time.isDaily         = GetIniBool   (file, section, "start.time.isDaily"        );        // bool     start.time.isDaily         = 0
-   start.time.description     = GetIniStringA(file, section, "start.time.description", "");        // string   start.time.description     = text
+   start.time.condition       = GetIniBool   (file, section, "start.time.condition");              // bool     start.time.condition       = 1
+   start.time.value           = GetIniInt    (file, section, "start.time.value"    );              // datetime start.time.value           = 1624924800
+   start.time.isDaily         = GetIniBool   (file, section, "start.time.isDaily"  );              // bool     start.time.isDaily         = 0
+   start.time.descr           = GetIniStringA(file, section, "start.time.descr", "");              // string   start.time.descr           = text
 
-   stop.time.condition        = GetIniBool   (file, section, "stop.time.condition"      );         // bool     stop.time.condition        = 1
-   stop.time.value            = GetIniInt    (file, section, "stop.time.value"          );         // datetime stop.time.value            = 1624924800
-   stop.time.isDaily          = GetIniBool   (file, section, "stop.time.isDaily"        );         // bool     stop.time.isDaily          = 0
-   stop.time.description      = GetIniStringA(file, section, "stop.time.description", "");         // string   stop.time.description      = text
+   stop.time.condition        = GetIniBool   (file, section, "stop.time.condition");               // bool     stop.time.condition        = 1
+   stop.time.value            = GetIniInt    (file, section, "stop.time.value"    );               // datetime stop.time.value            = 1624924800
+   stop.time.isDaily          = GetIniBool   (file, section, "stop.time.isDaily"  );               // bool     stop.time.isDaily          = 0
+   stop.time.descr            = GetIniStringA(file, section, "stop.time.descr", "");               // string   stop.time.descr            = text
 
    stop.profitPct.condition   = GetIniBool   (file, section, "stop.profitPct.condition"        );  // bool     stop.profitPct.condition   = 0
    stop.profitPct.value       = GetIniDouble (file, section, "stop.profitPct.value"            );  // double   stop.profitPct.value       = 0
    stop.profitPct.absValue    = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX);  // double   stop.profitPct.absValue    = 0.00
-   stop.profitPct.description = GetIniStringA(file, section, "stop.profitPct.description",   "");  // string   stop.profitPct.description = text
+   stop.profitPct.descr       = GetIniStringA(file, section, "stop.profitPct.descr",         "");  // string   stop.profitPct.descr       = text
 
-   stop.profitPun.condition   = GetIniBool   (file, section, "stop.profitPun.condition"      );    // bool     stop.profitPun.condition   = 1
-   stop.profitPun.value       = GetIniDouble (file, section, "stop.profitPun.value"          );    // double   stop.profitPun.value       = 1.23456
-   stop.profitPun.description = GetIniStringA(file, section, "stop.profitPun.description", "");    // string   stop.profitPun.description = text
+   stop.profitPunit.condition = GetIniBool   (file, section, "stop.profitPunit.condition");        // bool     stop.profitPunit.condition = 1
+   stop.profitPunit.value     = GetIniDouble (file, section, "stop.profitPunit.value"    );        // double   stop.profitPunit.value     = 1.23456
+   stop.profitPunit.descr     = GetIniStringA(file, section, "stop.profitPunit.descr", "");        // string   stop.profitPunit.descr     = text
 
    // open/closed trades and stats
    if (!ReadStatus.TradeStats(file))   return(false);
@@ -1448,6 +1443,16 @@ bool SynchronizeStatus() {
 
 
 /**
+ * Return a distinctive instance detail to be inserted in the status/log filename.
+ *
+ * @return string
+ */
+string GetStatusFilenameData() {
+   return("P="+ ZigZag.Periods);
+}
+
+
+/**
  * Whether the specified ticket exists in the local history of closed positions.
  *
  * @param  int ticket
@@ -1481,19 +1486,19 @@ int      prev.instance.status;
 bool     prev.start.time.condition;
 datetime prev.start.time.value;
 bool     prev.start.time.isDaily;
-string   prev.start.time.description = "";
+string   prev.start.time.descr = "";
 
 bool     prev.stop.time.condition;
 datetime prev.stop.time.value;
 bool     prev.stop.time.isDaily;
-string   prev.stop.time.description = "";
+string   prev.stop.time.descr = "";
 bool     prev.stop.profitPct.condition;
 double   prev.stop.profitPct.value;
 double   prev.stop.profitPct.absValue;
-string   prev.stop.profitPct.description = "";
-bool     prev.stop.profitPun.condition;
-double   prev.stop.profitPun.value;
-string   prev.stop.profitPun.description = "";
+string   prev.stop.profitPct.descr = "";
+bool     prev.stop.profitPunit.condition;
+double   prev.stop.profitPunit.value;
+string   prev.stop.profitPunit.descr = "";
 
 
 /**
@@ -1523,19 +1528,19 @@ void BackupInputs() {
    prev.start.time.condition       = start.time.condition;
    prev.start.time.value           = start.time.value;
    prev.start.time.isDaily         = start.time.isDaily;
-   prev.start.time.description     = start.time.description;
+   prev.start.time.descr           = start.time.descr;
 
    prev.stop.time.condition        = stop.time.condition;
    prev.stop.time.value            = stop.time.value;
    prev.stop.time.isDaily          = stop.time.isDaily;
-   prev.stop.time.description      = stop.time.description;
+   prev.stop.time.descr            = stop.time.descr;
    prev.stop.profitPct.condition   = stop.profitPct.condition;
    prev.stop.profitPct.value       = stop.profitPct.value;
    prev.stop.profitPct.absValue    = stop.profitPct.absValue;
-   prev.stop.profitPct.description = stop.profitPct.description;
-   prev.stop.profitPun.condition   = stop.profitPun.condition;
-   prev.stop.profitPun.value       = stop.profitPun.value;
-   prev.stop.profitPun.description = stop.profitPun.description;
+   prev.stop.profitPct.descr       = stop.profitPct.descr;
+   prev.stop.profitPunit.condition = stop.profitPunit.condition;
+   prev.stop.profitPunit.value     = stop.profitPunit.value;
+   prev.stop.profitPunit.descr     = stop.profitPunit.descr;
 
    BackupInputs.Targets();
    Recorder_BackupInputs();
@@ -1564,19 +1569,19 @@ void RestoreInputs() {
    start.time.condition       = prev.start.time.condition;
    start.time.value           = prev.start.time.value;
    start.time.isDaily         = prev.start.time.isDaily;
-   start.time.description     = prev.start.time.description;
+   start.time.descr           = prev.start.time.descr;
 
    stop.time.condition        = prev.stop.time.condition;
    stop.time.value            = prev.stop.time.value;
    stop.time.isDaily          = prev.stop.time.isDaily;
-   stop.time.description      = prev.stop.time.description;
+   stop.time.descr            = prev.stop.time.descr;
    stop.profitPct.condition   = prev.stop.profitPct.condition;
    stop.profitPct.value       = prev.stop.profitPct.value;
    stop.profitPct.absValue    = prev.stop.profitPct.absValue;
-   stop.profitPct.description = prev.stop.profitPct.description;
-   stop.profitPun.condition   = prev.stop.profitPun.condition;
-   stop.profitPun.value       = prev.stop.profitPun.value;
-   stop.profitPun.description = prev.stop.profitPun.description;
+   stop.profitPct.descr       = prev.stop.profitPct.descr;
+   stop.profitPunit.condition = prev.stop.profitPunit.condition;
+   stop.profitPunit.value     = prev.stop.profitPunit.value;
+   stop.profitPunit.descr     = prev.stop.profitPunit.descr;
 
    RestoreInputs.Targets();
    Recorder_RestoreInputs();
@@ -1629,11 +1634,11 @@ bool ValidateInputs() {
             isDaily = !pt[PT_HAS_DATE];
             descr   = "time("+ TimeToStr(dtValue, ifInt(isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
 
-            if (descr != start.time.description) {      // enable condition only if changed
-               start.time.condition   = true;
-               start.time.value       = dtValue;
-               start.time.isDaily     = isDaily;
-               start.time.description = descr;
+            if (descr != start.time.descr) {            // enable condition only if changed
+               start.time.condition = true;
+               start.time.value     = dtValue;
+               start.time.isDaily   = isDaily;
+               start.time.descr     = descr;
             }
          }
          else                                           return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
@@ -1667,14 +1672,14 @@ bool ValidateInputs() {
             dtValue = DateTime2(pt, DATE_OF_ERA);
             isDaily = !pt[PT_HAS_DATE];
             descr   = "time("+ TimeToStr(dtValue, ifInt(isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
-            if (descr != stop.time.description) {           // enable condition only if it changed
-               stop.time.condition   = true;
-               stop.time.value       = dtValue;
-               stop.time.isDaily     = isDaily;
-               stop.time.description = descr;
+            if (descr != stop.time.descr) {             // enable condition only if it changed
+               stop.time.condition = true;
+               stop.time.value     = dtValue;
+               stop.time.isDaily   = isDaily;
+               stop.time.descr     = descr;
             }
             if (start.time.condition && !start.time.isDaily && !stop.time.isDaily) {
-               if (start.time.value >= stop.time.value) return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid times in Instance.Start/StopAt: "+ start.time.description +" / "+ stop.time.description +" (start time must preceed stop time)"));
+               if (start.time.value >= stop.time.value) return(!onInputError("ValidateInputs(15)  "+ instance.name +" invalid times in Instance.Start/StopAt: "+ start.time.descr +" / "+ stop.time.descr +" (start time must preceed stop time)"));
             }
          }
 
@@ -1687,21 +1692,21 @@ bool ValidateInputs() {
                if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(17)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
                double dValue = StrToDouble(sValue);
                descr  = "profit("+ NumberToStr(NormalizeDouble(dValue, 2), ".+") +"%)";
-               if (descr != stop.profitPct.description) {   // enable condition only if it changed
-                  stop.profitPct.condition   = true;
-                  stop.profitPct.value       = dValue;
-                  stop.profitPct.absValue    = INT_MAX;
-                  stop.profitPct.description = descr;
+               if (descr != stop.profitPct.descr) {         // enable condition only if it changed
+                  stop.profitPct.condition = true;
+                  stop.profitPct.value     = dValue;
+                  stop.profitPct.absValue  = INT_MAX;
+                  stop.profitPct.descr     = descr;
                }
             }
             else {
                if (!StrIsNumeric(sValue))               return(!onInputError("ValidateInputs(18)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
                dValue = StrToDouble(sValue);
                descr  = "profit("+ NumberToStr(dValue, "R+."+ pDigits) +" "+ spUnit +")";
-               if (descr != stop.profitPun.description) {   // enable condition only if changed
-                  stop.profitPun.condition   = true;
-                  stop.profitPun.value       = NormalizeDouble(dValue * pUnit, Digits);
-                  stop.profitPun.description = descr;
+               if (descr != stop.profitPunit.descr) {       // enable condition only if changed
+                  stop.profitPunit.condition = true;
+                  stop.profitPunit.value     = NormalizeDouble(dValue * pUnit, Digits);
+                  stop.profitPunit.descr     = descr;
                }
             }
          }
@@ -1765,22 +1770,22 @@ void SS.StartStopConditions() {
    if (__isChart) {
       // start conditions
       string sValue = "";
-      if (start.time.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition, "@", "!") + start.time.description;
+      if (start.time.descr != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition, "@", "!") + start.time.descr;
       }
       if (sValue == "") status.startConditions = "-";
       else              status.startConditions = sValue;
 
       // stop conditions
       sValue = "";
-      if (stop.time.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
+      if (stop.time.descr != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition, "@", "!") + stop.time.descr;
       }
-      if (stop.profitPct.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
+      if (stop.profitPct.descr != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.descr;
       }
-      if (stop.profitPun.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPun.condition, "@", "!") + stop.profitPun.description;
+      if (stop.profitPunit.descr != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPunit.condition, "@", "!") + stop.profitPunit.descr;
       }
       if (sValue == "") status.stopConditions = "-";
       else              status.stopConditions = sValue;

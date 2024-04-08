@@ -12,7 +12,7 @@ bool SetStatusFilename() {
    if (!instance.created)     return(!catch("SetStatusFilename(3)  "+ instance.name +" cannot create status filename (instance.created not set)", ERR_ILLEGAL_STATE));
 
    string userData = StrTrim(GetStatusFilenameData());
-   if (userData != "") userData = userData +" ";
+   if (userData != "") userData = userData +", ";
 
    string directory = "presets\\"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"\\";
    string baseName  = ProgramName() +", "+ Symbol() +","+ PeriodDescription() +" "+ userData + GmtTimeFormat(instance.created, "%Y-%m-%d %H.%M") +", id="+ StrPadLeft(instance.id, 3, "0") +".set";
