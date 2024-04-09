@@ -35,6 +35,11 @@
  *     trailing stop
  *
  *  - optimization
+ *     MT4Expander::executioncontext.cpp::SyncLibContext_init(878)  unseen library init cycle in tester (the former program doesn't seem to be the former test):  ec={pid=68, previousPid=0, started="2024.04.09 06:30:31", programType=PT_EXPERT, programName="ZigZag EA", programCoreFunction=NULL, programInitReason=IR_USER, programUninitReason=UR_UNDEFINED, programInitFlags=INIT_PIPVALUE, programDeinitFlags=0, moduleType=MT_LIBRARY, moduleName="rsfLib", moduleCoreFunction=NULL, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="GBPJPY", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x0B440020, bars=50958, validBars=-1, changedBars=-1, ticks=571123, cycleTicks=571123, currTickTime="2024.03.01 23:56:59", prevTickTime="2024.03.01 23:56:55", bid=189.922, ask=189.923, digits=3, pipDigits=2, pip=0.01, point=0.001, pipPoints=10, priceFormat=".2'", pipPriceFormat=".2", superContext=NULL, threadId=5268 (non-UI), hChart=NULL, hChartWindow=NULL, recorderMode=0, test=0x097EFE20, testing=TRUE, visualMode=FALSE, optimization=TRUE, mqlError=0, dllError=0, dllWarning=0, loglevel=WARN, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebugger=NULL, loglevelFile=DEBUG, loglevelMail=NULL, loglevelSMS=NULL, logger=0x097EFEB8, logBuffer=(0), logFilename="E:\Trading\MetaTrader\S1\tester\files\presets\Tester\ZigZag EA, GBPJPY,M1 P=30, 2024-04-09 06.30, id=775.log"} (0x06374E58)
+ *     update status file content
+ *     update status filename
+ *     generate consecutive instance ids
+ *     storage in separate directory
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
  *
  *  - money management
@@ -206,23 +211,8 @@ extern string ___a__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 30;
 
 extern string ___b__________________________ = "=== Trade settings ===";
+extern int    EntryOrder.Distance            = 0;                    // in punits: entry order distance from the signal level
 extern double Lots                           = 0.1;
-
-extern int    Initial.TakeProfit             = 0;                    // in punits (0: partial targets only or no TP)
-extern int    Initial.StopLoss               = 0;                    // in punits (0: moving stops only or no SL
-
-extern int    Target1                        = 0;                    // in punits (0: no target)
-extern int    Target1.ClosePercent           = 0;                    // size to close (0: nothing)
-extern int    Target1.MoveStopTo             = 1;                    // in punits (0: don't move stop)
-extern int    Target2                        = 0;                    // ...
-extern int    Target2.ClosePercent           = 30;                   //
-extern int    Target2.MoveStopTo             = 0;                    //
-extern int    Target3                        = 0;                    //
-extern int    Target3.ClosePercent           = 30;                   //
-extern int    Target3.MoveStopTo             = 0;                    //
-extern int    Target4                        = 0;                    //
-extern int    Target4.ClosePercent           = 30;                   //
-extern int    Target4.MoveStopTo             = 0;                    //
 
 extern string ___c__________________________ = "=== Other ===";
 extern bool   ShowProfitInPercent            = false;                // whether PnL is displayed in money amounts or percent
@@ -301,13 +291,11 @@ string   status.stopConditions  = "";
 #include <ea/functions/status/file/GetStatusFilename.mqh>
 #include <ea/functions/status/file/SetStatusFilename.mqh>
 #include <ea/functions/status/file/ReadStatus.General.mqh>
-#include <ea/functions/status/file/ReadStatus.Targets.mqh>
-#include <ea/functions/status/file/ReadStatus.OpenPosition.mqh>
 #include <ea/functions/status/file/ReadStatus.HistoryRecord.mqh>
+#include <ea/functions/status/file/ReadStatus.OpenPosition.mqh>
 #include <ea/functions/status/file/ReadStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/ReadStatus.TradeStats.mqh>
 #include <ea/functions/status/file/SaveStatus.General.mqh>
-#include <ea/functions/status/file/SaveStatus.Targets.mqh>
 #include <ea/functions/status/file/SaveStatus.OpenPosition.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeHistory.mqh>
 #include <ea/functions/status/file/SaveStatus.TradeStats.mqh>
@@ -335,7 +323,6 @@ string   status.stopConditions  = "";
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
 #include <ea/functions/validation/ValidateInputs.ID.mqh>
-#include <ea/functions/validation/ValidateInputs.Targets.mqh>
 #include <ea/functions/validation/onInputError.mqh>
 
 // init/deinit
@@ -1147,7 +1134,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.StopAt",            /*string  */ Instance.StopAt);
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   if (!SaveStatus.Targets(file, fileExists)) return(false);   // StopLoss and TakeProfit targets
+   WriteIniString(file, section, "EntryOrder.Distance",        /*int     */ EntryOrder.Distance);
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
@@ -1214,7 +1201,7 @@ bool ReadStatus() {
    Instance.StopAt            = GetIniStringA(file, section, "Instance.StopAt",  "");              // string   Instance.StopAt            = @time(datetime|time) | @profit(numeric[%])
    ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"      );              // int      ZigZag.Periods             = 40
    Lots                       = GetIniDouble (file, section, "Lots"                );              // double   Lots                       = 0.1
-   if (!ReadStatus.Targets(file)) return(false);
+   EntryOrder.Distance        = GetIniInt    (file, section, "EntryOrder.Distance" );              // int      EntryOrder.Distance        = 12
    ShowProfitInPercent        = GetIniBool   (file, section, "ShowProfitInPercent");               // bool     ShowProfitInPercent        = 1
    EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",     "");               // string   EA.Recorder                = 1,2,4
 
@@ -1226,9 +1213,8 @@ bool ReadStatus() {
    instance.isTest            = GetIniBool   (file, section, "instance.isTest"     );              // bool     instance.isTest            = 1
    instance.status            = GetIniInt    (file, section, "instance.status"     );              // int      instance.status            = 1 (waiting)
    instance.startEquity       = GetIniDouble (file, section, "instance.startEquity");              // double   instance.startEquity       = 1000.00
-   SS.InstanceName();
-
    recorder.stdEquitySymbol   = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");      // string   recorder.stdEquitySymbol   = GBPJPY.001
+   SS.InstanceName();
 
    start.time.condition       = GetIniBool   (file, section, "start.time.condition");              // bool     start.time.condition       = 1
    start.time.value           = GetIniInt    (file, section, "start.time.value"    );              // datetime start.time.value           = 1624924800
@@ -1386,6 +1372,7 @@ string   prev.Instance.StartAt = "";
 string   prev.Instance.StopAt = "";
 int      prev.ZigZag.Periods;
 double   prev.Lots;
+int      prev.EntryOrder.Distance;
 bool     prev.ShowProfitInPercent;
 
 // backed-up runtime variables affected by changing input parameters
@@ -1428,6 +1415,7 @@ void BackupInputs() {
    prev.Instance.StopAt     = StringConcatenate(Instance.StopAt, "");
    prev.ZigZag.Periods      = ZigZag.Periods;
    prev.Lots                = Lots;
+   prev.EntryOrder.Distance = EntryOrder.Distance;
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
@@ -1454,7 +1442,6 @@ void BackupInputs() {
    prev.stop.profitPunit.value     = stop.profitPunit.value;
    prev.stop.profitPunit.descr     = stop.profitPunit.descr;
 
-   BackupInputs.Targets();
    Recorder_BackupInputs();
 }
 
@@ -1469,6 +1456,7 @@ void RestoreInputs() {
    Instance.StopAt     = prev.Instance.StopAt;
    ZigZag.Periods      = prev.ZigZag.Periods;
    Lots                = prev.Lots;
+   EntryOrder.Distance = prev.EntryOrder.Distance;
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
@@ -1495,7 +1483,6 @@ void RestoreInputs() {
    stop.profitPunit.value     = prev.stop.profitPunit.value;
    stop.profitPunit.descr     = prev.stop.profitPunit.descr;
 
-   RestoreInputs.Targets();
    Recorder_RestoreInputs();
 }
 
@@ -1642,14 +1629,16 @@ bool ValidateInputs() {
    if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
    if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
-   // Targets
-   if (!ValidateInputs.Targets()) return(false);
+   // EntryOrder.Distance
+   if (isInitParameters && EntryOrder.Distance!=prev.EntryOrder.Distance) {
+      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(25)  "+ instance.name +" cannot change input parameter EntryOrder.Distance of "+ StatusDescription(instance.status) +" instance"));
+   }
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
    if (!Recorder_ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(25)"));
+   return(!catch("ValidateInputs(26)"));
 }
 
 
@@ -1794,28 +1783,14 @@ bool CreateStatusBox() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),      ";"+ NL +
-                            "Instance.StartAt=",     DoubleQuoteStr(Instance.StartAt), ";"+ NL +
-                            "Instance.StopAt=",      DoubleQuoteStr(Instance.StopAt),  ";"+ NL +
+   return(StringConcatenate("Instance.ID=",         DoubleQuoteStr(Instance.ID),      ";"+ NL +
+                            "Instance.StartAt=",    DoubleQuoteStr(Instance.StartAt), ";"+ NL +
+                            "Instance.StopAt=",     DoubleQuoteStr(Instance.StopAt),  ";"+ NL +
 
-                            "ZigZag.Periods=",       ZigZag.Periods,                   ";"+ NL +
+                            "ZigZag.Periods=",      ZigZag.Periods,                   ";"+ NL +
+                            "Lots=",                NumberToStr(Lots, ".1+"),         ";"+ NL +
+                            "EntryOrder.Distance=", EntryOrder.Distance,              ";"+ NL +
 
-                            "Lots=",                 NumberToStr(Lots, ".1+"),         ";"+ NL +
-                            "Initial.TakeProfit=",   Initial.TakeProfit,               ";"+ NL +
-                            "Initial.StopLoss=",     Initial.StopLoss,                 ";"+ NL +
-                            "Target1=",              Target1,                          ";"+ NL +
-                            "Target1.ClosePercent=", Target1.ClosePercent,             ";"+ NL +
-                            "Target1.MoveStopTo=",   Target1.MoveStopTo,               ";"+ NL +
-                            "Target2=",              Target2,                          ";"+ NL +
-                            "Target2.ClosePercent=", Target2.ClosePercent,             ";"+ NL +
-                            "Target2.MoveStopTo=",   Target2.MoveStopTo,               ";"+ NL +
-                            "Target3=",              Target3,                          ";"+ NL +
-                            "Target3.ClosePercent=", Target3.ClosePercent,             ";"+ NL +
-                            "Target3.MoveStopTo=",   Target3.MoveStopTo,               ";"+ NL +
-                            "Target4=",              Target4,                          ";"+ NL +
-                            "Target4.ClosePercent=", Target4.ClosePercent,             ";"+ NL +
-                            "Target4.MoveStopTo=",   Target4.MoveStopTo,               ";"+ NL +
-
-                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),   ";")
+                            "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent),   ";")
    );
 }

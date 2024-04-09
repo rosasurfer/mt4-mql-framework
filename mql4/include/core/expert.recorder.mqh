@@ -220,7 +220,7 @@ bool Recorder_ValidateInputs(bool isTest) {
             EA.Recorder = StrSubstr(sInput, 1);
          }
       }
-      ec_SetRecordMode(__ExecutionContext, recorder.mode);
+      ec_SetRecorderMode(__ExecutionContext, recorder.mode);
    }
    return(true);
 }
@@ -418,7 +418,7 @@ bool Recorder_deinit() {
  * @return int - NULL
  */
 int Recorder_off() {
-   recorder.mode = ec_SetRecordMode(__ExecutionContext, RECORDER_OFF);
+   recorder.mode = ec_SetRecorderMode(__ExecutionContext, RECORDER_OFF);
    return(NULL);
 }
 

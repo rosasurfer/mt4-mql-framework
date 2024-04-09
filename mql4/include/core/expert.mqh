@@ -611,7 +611,7 @@ datetime Test.GetEndDate() {
    int    ec_TestBarModel          (int ec[]);
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
-   int    ec_SetRecordMode         (int ec[], int mode    );
+   int    ec_SetRecorderMode       (int ec[], int mode    );
 
    string Recorder_GetInput();                                    // Recorder functions in the Expander are no-ops to make
    string Recorder_GetNextMetricSymbol();                         // inclusion of "core/expert.recorder.mqh" optional.
@@ -621,7 +621,7 @@ datetime Test.GetEndDate() {
 
    string symbols_Name(int symbols[], int i);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recorderMode, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
