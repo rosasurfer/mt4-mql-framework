@@ -11,7 +11,7 @@ double targets[4][4];               // partial profit targets and stops
 
 
 /**
- * Validate StopLoss and TakeProfit targets and convert inputs to an array. Called from ValidateInputs() only.
+ * Validate StopLoss and TakeProfit targets and convert inputs to an array. Must be called from ValidateInputs().
  *
  * @return bool - whether input parameters are valid
  */
@@ -84,8 +84,6 @@ bool ValidateInputs.Targets() {
    targets[3][T_CLOSE_PCT] = Target4.ClosePercent;
    targets[3][T_REMAINDER] = t4Remainder;
    targets[3][T_MOVE_STOP] = Target4.MoveStopTo;
-
-   debug("ValidateInputs.Targets(0.1)  size(targets)="+ ArrayRange(targets, 0));
 
    return(!catch("ValidateInputs.Targets(21)"));
 }

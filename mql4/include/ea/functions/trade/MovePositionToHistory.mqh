@@ -77,7 +77,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
       history[i][H_SIG_RUNUP_P   ] = open.sigRunupP;
       history[i][H_SIG_RUNDOWN_P ] = open.sigRundownP;
 
-      logNotice("MovePositionToHistory(0.2)  oc="+ DoubleToStr(ifDouble(!open.type, closePrice-open.price, open.price-closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!open.type, closePriceSig-open.priceSig, open.priceSig-closePriceSig)/pUnit, pDigits) +"  hist="+ HistoryRecordToStr(i, false, false));
+      //logNotice("MovePositionToHistory(0.2)  oc="+ DoubleToStr(ifDouble(!open.type, closePrice-open.price, open.price-closePrice)/pUnit, pDigits) +"  sig-oc="+ DoubleToStr(ifDouble(!open.type, closePriceSig-open.priceSig, open.priceSig-closePriceSig)/pUnit, pDigits) +"  hist="+ HistoryRecordToStr(i, false, false));
    }
 
    // update PnL stats

@@ -24,6 +24,8 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
+ *  - entry management
+ *
  *  - partial close
  *     online: fix closedProfit after 1 partial-close (error loading status file)
  *     implement open.nextTarget
