@@ -85,6 +85,8 @@ bool ValidateInputs.Targets() {
    targets[3][T_REMAINDER] = t4Remainder;
    targets[3][T_MOVE_STOP] = Target4.MoveStopTo;
 
+   debug("ValidateInputs.Targets(0.1)  size(targets)="+ ArrayRange(targets, 0));
+
    return(!catch("ValidateInputs.Targets(21)"));
 }
 
@@ -118,30 +120,28 @@ double prev.targets[][4];
  * Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs.Targets() {
-   if (!catch("BackupInputs.Targets(1)")) {
-      // input parameters
-      prev.Initial.TakeProfit   = Initial.TakeProfit;
-      prev.Initial.StopLoss     = Initial.StopLoss;
-      prev.Target1              = Target1;
-      prev.Target1.ClosePercent = Target1.ClosePercent;
-      prev.Target1.MoveStopTo   = Target1.MoveStopTo;
-      prev.Target2              = Target2;
-      prev.Target2.ClosePercent = Target2.ClosePercent;
-      prev.Target2.MoveStopTo   = Target2.MoveStopTo;
-      prev.Target3              = Target3;
-      prev.Target3.ClosePercent = Target3.ClosePercent;
-      prev.Target3.MoveStopTo   = Target3.MoveStopTo;
-      prev.Target4              = Target4;
-      prev.Target4.ClosePercent = Target4.ClosePercent;
-      prev.Target4.MoveStopTo   = Target4.MoveStopTo;
+   // input parameters
+   prev.Initial.TakeProfit   = Initial.TakeProfit;
+   prev.Initial.StopLoss     = Initial.StopLoss;
+   prev.Target1              = Target1;
+   prev.Target1.ClosePercent = Target1.ClosePercent;
+   prev.Target1.MoveStopTo   = Target1.MoveStopTo;
+   prev.Target2              = Target2;
+   prev.Target2.ClosePercent = Target2.ClosePercent;
+   prev.Target2.MoveStopTo   = Target2.MoveStopTo;
+   prev.Target3              = Target3;
+   prev.Target3.ClosePercent = Target3.ClosePercent;
+   prev.Target3.MoveStopTo   = Target3.MoveStopTo;
+   prev.Target4              = Target4;
+   prev.Target4.ClosePercent = Target4.ClosePercent;
+   prev.Target4.MoveStopTo   = Target4.MoveStopTo;
 
-      // affected runtime variables
-      ArrayResize(prev.targets, ArrayCopy(prev.targets, targets));
+   // affected runtime variables
+   int size = ArrayRange(targets, 0);
+   if (size > 0) ArrayCopy(prev.targets, targets);
+   ArrayResize(prev.targets, size);
 
-      // we didn't check ArraySize(source), instead we handle a generated error
-      int error = GetLastError();
-      if (error && error!=ERR_INVALID_PARAMETER) catch("BackupInputs.Targets(2)", error);
-   }
+   catch("BackupInputs.Targets(1)");
 }
 
 
@@ -149,28 +149,26 @@ void BackupInputs.Targets() {
  * Restore backed-up input parameters and runtime variables. Called from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs.Targets() {
-   if (!catch("RestoreInputs.Targets(1)")) {
-      // input parameters
-      Initial.TakeProfit   = prev.Initial.TakeProfit;
-      Initial.StopLoss     = prev.Initial.StopLoss;
-      Target1              = prev.Target1;
-      Target1.ClosePercent = prev.Target1.ClosePercent;
-      Target1.MoveStopTo   = prev.Target1.MoveStopTo;
-      Target2              = prev.Target2;
-      Target2.ClosePercent = prev.Target2.ClosePercent;
-      Target2.MoveStopTo   = prev.Target2.MoveStopTo;
-      Target3              = prev.Target3;
-      Target3.ClosePercent = prev.Target3.ClosePercent;
-      Target3.MoveStopTo   = prev.Target3.MoveStopTo;
-      Target4              = prev.Target4;
-      Target4.ClosePercent = prev.Target4.ClosePercent;
-      Target4.MoveStopTo   = prev.Target4.MoveStopTo;
+   // input parameters
+   Initial.TakeProfit   = prev.Initial.TakeProfit;
+   Initial.StopLoss     = prev.Initial.StopLoss;
+   Target1              = prev.Target1;
+   Target1.ClosePercent = prev.Target1.ClosePercent;
+   Target1.MoveStopTo   = prev.Target1.MoveStopTo;
+   Target2              = prev.Target2;
+   Target2.ClosePercent = prev.Target2.ClosePercent;
+   Target2.MoveStopTo   = prev.Target2.MoveStopTo;
+   Target3              = prev.Target3;
+   Target3.ClosePercent = prev.Target3.ClosePercent;
+   Target3.MoveStopTo   = prev.Target3.MoveStopTo;
+   Target4              = prev.Target4;
+   Target4.ClosePercent = prev.Target4.ClosePercent;
+   Target4.MoveStopTo   = prev.Target4.MoveStopTo;
 
-      // affected runtime variables
-      ArrayResize(targets, ArrayCopy(targets, prev.targets));
+   // affected runtime variables
+   int size = ArrayRange(prev.targets, 0);
+   if (size > 0) ArrayCopy(targets, prev.targets);
+   ArrayResize(targets, size);
 
-      // we didn't check ArraySize(source), instead we handle a generated error
-      int error = GetLastError();
-      if (error && error!=ERR_INVALID_PARAMETER) catch("RestoreInputs.Targets(2)", error);
-   }
+   catch("RestoreInputs.Targets(1)");
 }

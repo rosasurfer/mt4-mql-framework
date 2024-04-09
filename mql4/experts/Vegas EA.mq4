@@ -479,6 +479,10 @@ bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
+   int    sigType  = signal[SIG_TYPE];
+   double sigPrice = signal[SIG_PRICE];
+   int    sigOp    = signal[SIG_OP];
+
    // close an open position
    if (instance.status == STATUS_TRADING) {
       if (open.ticket > 0) {
@@ -524,7 +528,7 @@ bool StopTrading(double signal[]) {
    SS.TotalProfit();
    SS.ProfitStats();
 
-   if (IsLogInfo()) logInfo("StopTrading(3)  "+ instance.name +" stopped, profit: "+ status.totalProfit +" "+ status.profitStats);
+   if (IsLogInfo()) logInfo("StopTrading(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped, profit: "+ status.totalProfit +" "+ status.profitStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration

@@ -259,9 +259,7 @@ bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   logNotice("StopTrading(0.1)  not implemented", ERR_NOT_IMPLEMENTED);
-
-   return(!catch("StopTrading(2)"));
+   return(!logNotice("StopTrading(2)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 
 

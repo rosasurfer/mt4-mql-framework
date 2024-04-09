@@ -419,7 +419,10 @@ bool StartTrading(double signal[]) {
 bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   int sigType = signal[SIG_TYPE];
+
+   int    sigType  = signal[SIG_TYPE];
+   double sigPrice = signal[SIG_PRICE];
+   int    sigOp    = signal[SIG_OP];
 
    // close an open position
    if (instance.status==STATUS_TRADING && open.ticket) {
@@ -431,7 +434,7 @@ bool StopTrading(double signal[]) {
    if (IsLogInfo()) {
       SS.TotalProfit();
       SS.ProfitStats();
-      logInfo("StopTrading(2)  "+ instance.name +" stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
+      logInfo("StopTrading(2)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
    }
    SaveStatus();
 
