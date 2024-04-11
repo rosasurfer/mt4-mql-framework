@@ -235,7 +235,7 @@ int log(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       if (__ExecutionContext[EC.loglevelTerminal] != LOG_OFF) log2Terminal(message, error, level);    // fast appenders first
-      if (__ExecutionContext[EC.loglevelDebugger] != LOG_OFF) log2Debugger(message, error, level);    // ...
+      if (__ExecutionContext[EC.loglevelDebug   ] != LOG_OFF) log2Debugger(message, error, level);    // ...
       if (__ExecutionContext[EC.loglevelFile    ] != LOG_OFF) log2File    (message, error, level);    // ...
       if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert   (message, error, level);    // after fast appenders as it may lock the UI thread in tester
       if (__ExecutionContext[EC.loglevelMail    ] != LOG_OFF) log2Mail    (message, error, level);    // slow appenders last (launches a new process)
@@ -393,16 +393,16 @@ int log2Alert(string message, int error, int level) {
  */
 int log2Debugger(string message, int error, int level) {
    // read the configuration on first usage
-   int configLevel = __ExecutionContext[EC.loglevelDebugger]; if (!configLevel) {
+   int configLevel = __ExecutionContext[EC.loglevelDebug]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (__isSuperContext) configLevel = ep_SuperLoglevelDebugger(pid);            // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ep_SuperLoglevelDebug(pid);               // an indicator loaded by iCustom()
       if (!configLevel) {
          string section = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2Debugger";
          string sValue = GetConfigString(section, key, "all");                      // built-in default: all
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
          if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debugger(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
       }
-      ec_SetLoglevelDebugger(__ExecutionContext, configLevel);
+      ec_SetLoglevelDebug(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
@@ -413,11 +413,11 @@ int log2Debugger(string message, int error, int level) {
          return(error);
       }
       isRecursion = true;
-      ec_SetLoglevelDebugger(__ExecutionContext, LOG_OFF);                          // prevent recursive calls
+      ec_SetLoglevelDebug(__ExecutionContext, LOG_OFF);                             // prevent recursive calls
 
       debug(message, error, level);
 
-      ec_SetLoglevelDebugger(__ExecutionContext, configLevel);                      // restore the configuration
+      ec_SetLoglevelDebug(__ExecutionContext, configLevel);                         // restore the configuration
       isRecursion = false;
    }
    return(error);
@@ -660,7 +660,7 @@ bool SetLogfile(string filename) {
 
    int    ep_SuperLoglevel        (int pid);
    int    ep_SuperLoglevelAlert   (int pid);
-   int    ep_SuperLoglevelDebugger(int pid);
+   int    ep_SuperLoglevelDebug   (int pid);
    int    ep_SuperLoglevelFile    (int pid);
    int    ep_SuperLoglevelMail    (int pid);
    int    ep_SuperLoglevelSMS     (int pid);
@@ -669,7 +669,7 @@ bool SetLogfile(string filename) {
 
    int    ec_SetLoglevel          (int ec[], int level);
    int    ec_SetLoglevelAlert     (int ec[], int level);
-   int    ec_SetLoglevelDebugger  (int ec[], int level);
+   int    ec_SetLoglevelDebug     (int ec[], int level);
    int    ec_SetLoglevelFile      (int ec[], int level);
    int    ec_SetLoglevelMail      (int ec[], int level);
    int    ec_SetLoglevelSMS       (int ec[], int level);

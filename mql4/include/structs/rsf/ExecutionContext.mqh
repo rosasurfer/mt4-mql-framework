@@ -59,7 +59,7 @@
    int      ep_SuperLoglevel        (int pid);
    int      ep_SuperLoglevelTerminal(int pid);
    int      ep_SuperLoglevelAlert   (int pid);
-   int      ep_SuperLoglevelDebugger(int pid);
+   int      ep_SuperLoglevelDebug   (int pid);
    int      ep_SuperLoglevelFile    (int pid);
    int      ep_SuperLoglevelMail    (int pid);
    int      ep_SuperLoglevelSMS     (int pid);
@@ -93,7 +93,7 @@
    int      ec_Loglevel             (int ec[]);
    int      ec_LoglevelTerminal     (int ec[]);
    int      ec_LoglevelAlert        (int ec[]);
-   int      ec_LoglevelDebugger     (int ec[]);
+   int      ec_LoglevelDebug        (int ec[]);
    int      ec_LoglevelFile         (int ec[]);
    int      ec_LoglevelMail         (int ec[]);
    int      ec_LoglevelSMS          (int ec[]);
@@ -110,7 +110,7 @@
    int      ec_SetLoglevel           (int ec[], int level);
    int      ec_SetLoglevelTerminal   (int ec[], int level);
    int      ec_SetLoglevelAlert      (int ec[], int level);
-   int      ec_SetLoglevelDebugger   (int ec[], int level);
+   int      ec_SetLoglevelDebug      (int ec[], int level);
    int      ec_SetLoglevelFile       (int ec[], int level);
    int      ec_SetLoglevelMail       (int ec[], int level);
    int      ec_SetLoglevelSMS        (int ec[], int level);

@@ -80,7 +80,7 @@
 #define EC.loglevel                        185
 #define EC.loglevelTerminal                186
 #define EC.loglevelAlert                   187
-#define EC.loglevelDebugger                188
+#define EC.loglevelDebug                   188
 #define EC.loglevelFile                    189
 #define EC.loglevelMail                    190
 #define EC.loglevelSMS                     191
