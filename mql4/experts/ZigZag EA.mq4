@@ -25,8 +25,8 @@
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - Expander
- *     drop EXECUTION_CONTEXT.test
  *     is EXECUTION_CONTEXT.started needed?
+ *     update position of EXECUTION_CONTEXT.recorderMode
  *     add cmd line option /rsf:debug-cf
  *
  *
@@ -84,7 +84,6 @@
  *  - add ZigZag projections
  *  - input TradingTimeframe
  *  - on recorder restart the first recorded bar opens at instance.startEquity
- *  - rewrite Test_GetCommission()
  *  - document control scripts
  *  - block tests with bar model MODE_BAROPEN
  *  - fatal error if a test starts with Instance.ID="T001" and EA.Recorder="off"

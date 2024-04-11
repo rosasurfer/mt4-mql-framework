@@ -857,7 +857,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
       double dValue = 0;
 
       if (__isTesting) {
-         dValue = Test_GetCommission(__ExecutionContext, 1);
+         dValue = Test_GetCommission(__ExecutionContext);
       }
       else {
          string section="Commissions", key="", symbol=Symbol(), stdSymbol=StdSymbol();

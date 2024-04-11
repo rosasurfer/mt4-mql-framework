@@ -37,7 +37,7 @@
    int      Tester_GetBarModel();
    datetime Tester_GetStartDate();
    datetime Tester_GetEndDate();
-   double   Test_GetCommission(int ec[], double lots);
+   double   Test_GetCommission(int ec[]);
 
    // charts and timeframes
    bool     IsCustomTimeframe(int timeframe);

@@ -482,9 +482,9 @@ bool CheckErrors(string caller, int error = NULL) {
  * @return bool - success status
  */
 bool initGlobals() {
-   __isChart       = (__ExecutionContext[EC.hChart] != 0);
-   __isTesting     = IsTesting();
-   __Test.barModel = ec_TestBarModel(__ExecutionContext);
+   __isChart   = (__ExecutionContext[EC.hChart] != 0);
+   __isTesting = IsTesting();
+   if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
    int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
    HalfPoint      = Point/2;
@@ -606,7 +606,6 @@ datetime Test.GetEndDate() {
    bool   HistorySet3.Close  (int hSet);
 
 #import "rsfMT4Expander.dll"
-   int    ec_TestBarModel          (int ec[]);
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
    int    ec_SetRecorderMode       (int ec[], int mode    );

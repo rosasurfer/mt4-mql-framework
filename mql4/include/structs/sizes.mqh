@@ -36,8 +36,8 @@
 #define BAR_size                            48
 #define BAR_doubleSize                       6
 
-#define EXECUTION_CONTEXT_size            1036
-#define EXECUTION_CONTEXT_intSize          259
+#define EXECUTION_CONTEXT_size            1032
+#define EXECUTION_CONTEXT_intSize          258
 
 #define EC.pid                               0     // All offsets must be in sync with the MT4Expander DLL.
 #define EC.previousPid                       1
@@ -70,20 +70,19 @@
 #define EC.hChart                          173
 #define EC.hChartWindow                    174
 #define EC.recorderMode                    175
-#define EC.test                            176
-#define EC.testing                         177
-#define EC.visualMode                      178
-#define EC.optimization                    179
-#define EC.mqlError                        180
-#define EC.dllError                        181
-#define EC.dllWarning                      183
-#define EC.loglevel                        185
-#define EC.loglevelTerminal                186
-#define EC.loglevelAlert                   187
-#define EC.loglevelDebug                   188
-#define EC.loglevelFile                    189
-#define EC.loglevelMail                    190
-#define EC.loglevelSMS                     191
+#define EC.testing                         176
+#define EC.visualMode                      177
+#define EC.optimization                    178
+#define EC.mqlError                        179
+#define EC.dllError                        180
+#define EC.dllWarning                      182
+#define EC.loglevel                        184
+#define EC.loglevelTerminal                185
+#define EC.loglevelAlert                   186
+#define EC.loglevelDebug                   187
+#define EC.loglevelFile                    188
+#define EC.loglevelMail                    189
+#define EC.loglevelSMS                     190
 
 #define LFX_ORDER_size                     120
 #define LFX_ORDER_intSize                   30

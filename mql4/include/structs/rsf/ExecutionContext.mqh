@@ -70,16 +70,6 @@
 
    int      ec_RecorderMode         (int ec[]);
 
-   //       ec.test
-   int      ec_TestId               (int ec[]);
-   datetime ec_TestCreated          (int ec[]);
-   datetime ec_TestStartTime        (int ec[]);
-   datetime ec_TestEndTime          (int ec[]);
-   int      ec_TestBarModel         (int ec[]);
-   int      ec_TestBars             (int ec[]);
-   int      ec_TestTicks            (int ec[]);
-   double   ec_TestSpread           (int ec[]);
-   int      ec_TestTradeDirections  (int ec[]);
    bool     ec_Testing              (int ec[]);
    bool     ec_VisualMode           (int ec[]);
    bool     ec_Optimization         (int ec[]);
