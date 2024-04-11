@@ -222,7 +222,7 @@ int log(string message, int error, int level) {
             value = GetConfigString(section, key);
          }
          else {
-            key = "General";
+            key = "LogLevel";
             value = GetConfigString(section, key, defaultValue);
          }
          configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
