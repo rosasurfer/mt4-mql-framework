@@ -25,7 +25,6 @@
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - Expander
- *     rename ep_* functions
  *     drop EXECUTION_CONTEXT.test
  *     is EXECUTION_CONTEXT.started needed?
  *     add cmd line option /rsf:debug-cf

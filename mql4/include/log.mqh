@@ -209,11 +209,11 @@ int log(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevel]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (__isSuperContext) configLevel = ep_SuperLoglevel(pid);           // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ec_SuperLoglevel(pid);           // an indicator loaded by iCustom()
 
       if (!configLevel) {
          string section      = ifString(__isTesting, "Tester.", "") +"Log", key="", value="";
-         string programName  = ifString(__isSuperContext, ep_SuperProgramName(pid), ProgramName());
+         string programName  = ifString(__isSuperContext, ec_SuperProgramName(pid), ProgramName());
          string defaultValue = ifString(__isTesting, "off", "all");        // built-in defaults: tester/online
 
          // read and apply the loglevel of the current environment
@@ -341,7 +341,7 @@ int log2Alert(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelAlert]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (__isSuperContext) configLevel = ep_SuperLoglevelAlert(pid);               // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ec_SuperLoglevelAlert(pid);               // an indicator loaded by iCustom()
       if (!configLevel) {
          string section  = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2Alert";
          string sDefault = ifString(__isTesting, "warn", "notice");                 // built-in defaults tester/online
@@ -395,7 +395,7 @@ int log2Debug(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelDebug]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (__isSuperContext) configLevel = ep_SuperLoglevelDebug(pid);               // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ec_SuperLoglevelDebug(pid);               // an indicator loaded by iCustom()
       if (!configLevel) {
          string section = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2Debug";
          string sValue = GetConfigString(section, key, "all");                      // built-in default: all
@@ -437,7 +437,7 @@ int log2File(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelFile]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (__isSuperContext) configLevel = ep_SuperLoglevelFile(pid);                // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ec_SuperLoglevelFile(pid);                // an indicator loaded by iCustom()
       if (!configLevel) {
          string section  = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2File";
          string sDefault = ifString(__isTesting, "all", "off");                     // built-in defaults tester/online
@@ -483,7 +483,7 @@ int log2Mail(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelMail]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (__isSuperContext) configLevel = ep_SuperLoglevelMail(pid);                // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ec_SuperLoglevelMail(pid);                // an indicator loaded by iCustom()
       if (!configLevel) {
          string section = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2Mail";
          string sValue = GetConfigString(section, key, "off");                      // built-in default: off
@@ -529,7 +529,7 @@ int log2SMS(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelSMS]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (__isSuperContext) configLevel = ep_SuperLoglevelSMS(pid);                 // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ec_SuperLoglevelSMS(pid);                 // an indicator loaded by iCustom()
       if (!configLevel) {
          string section = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2SMS";
          string sValue = GetConfigString(section, key, "off");                      // built-in default: off
@@ -574,7 +574,7 @@ int log2Terminal(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelTerminal]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (__isSuperContext) configLevel = ep_SuperLoglevelTerminal(pid);            // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ec_SuperLoglevelTerminal(pid);            // an indicator loaded by iCustom()
       if (!configLevel) {
          string section = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2Terminal";
          string sValue = GetConfigString(section, key, "all");                      // built-in default: all
@@ -658,14 +658,14 @@ bool SetLogfile(string filename) {
 #import "rsfMT4Expander.dll"
    string ec_LogFilename          (int ec[]);
 
-   int    ep_SuperLoglevel        (int pid);
-   int    ep_SuperLoglevelAlert   (int pid);
-   int    ep_SuperLoglevelDebug   (int pid);
-   int    ep_SuperLoglevelFile    (int pid);
-   int    ep_SuperLoglevelMail    (int pid);
-   int    ep_SuperLoglevelSMS     (int pid);
-   int    ep_SuperLoglevelTerminal(int pid);
-   string ep_SuperProgramName     (int pid);
+   int    ec_SuperLoglevel        (int pid);
+   int    ec_SuperLoglevelAlert   (int pid);
+   int    ec_SuperLoglevelDebug   (int pid);
+   int    ec_SuperLoglevelFile    (int pid);
+   int    ec_SuperLoglevelMail    (int pid);
+   int    ec_SuperLoglevelSMS     (int pid);
+   int    ec_SuperLoglevelTerminal(int pid);
+   string ec_SuperProgramName     (int pid);
 
    int    ec_SetLoglevel          (int ec[], int level);
    int    ec_SetLoglevelAlert     (int ec[], int level);

@@ -55,14 +55,14 @@
    string   ec_PipPriceFormat       (int ec[]);
 
    bool     ec_SuperContext         (int ec[], int target[]);
-   string   ep_SuperProgramName     (int pid);
-   int      ep_SuperLoglevel        (int pid);
-   int      ep_SuperLoglevelTerminal(int pid);
-   int      ep_SuperLoglevelAlert   (int pid);
-   int      ep_SuperLoglevelDebug   (int pid);
-   int      ep_SuperLoglevelFile    (int pid);
-   int      ep_SuperLoglevelMail    (int pid);
-   int      ep_SuperLoglevelSMS     (int pid);
+   string   ec_SuperProgramName     (int pid);
+   int      ec_SuperLoglevel        (int pid);
+   int      ec_SuperLoglevelTerminal(int pid);
+   int      ec_SuperLoglevelAlert   (int pid);
+   int      ec_SuperLoglevelDebug   (int pid);
+   int      ec_SuperLoglevelFile    (int pid);
+   int      ec_SuperLoglevelMail    (int pid);
+   int      ec_SuperLoglevelSMS     (int pid);
 
    int      ec_ThreadId             (int ec[]);
    int      ec_hChart               (int ec[]);
