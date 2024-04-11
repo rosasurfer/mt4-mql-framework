@@ -102,6 +102,7 @@ bool initGlobals() {
       spUnit  = "point";
    }
 
+   // don't use MathLog() as in terminals (build > 509 && build < 603) it fails to produce NaN/-INF
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 
