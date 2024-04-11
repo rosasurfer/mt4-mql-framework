@@ -4283,16 +4283,16 @@ color ModifyColor(color rgb, double hue, double saturation, double lightness) {
  * @return string
  */
 string DoubleToStrEx(double value, int digits) {
-   string sValue = value;
-   if (StringGetChar(sValue, 3) == '#')                              // "-1.#IND0000" => NaN
-      return(sValue);                                                // "-1.#INF0000" => Infinite
+   if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
 
-   if (digits < 0 || digits > 16)
-      return(_EMPTY_STR(catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
+   string sValue = value;
+   if (sValue=="-1.#IND0000" || sValue=="-nan(ind)") return(sValue);    //  NaN: not-a-number (in terminal builds < 416 the comparison NaN==NaN returns TRUE/is broken)
+   if (sValue== "1.#INF0000" || sValue== "inf"     ) return(sValue);    //  INF: positive infinity
+   if (sValue=="-1.#INF0000" || sValue=="-inf"     ) return(sValue);    // -INF: negative infinity
 
    /*
-   double decimals[17] = { 1.0,                                      // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
-                          10.0,                                      // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
+   double decimals[17] = { 1.0,                                         // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
+                          10.0,                                         // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
                          100.0,
                         1000.0,
                        10000.0,

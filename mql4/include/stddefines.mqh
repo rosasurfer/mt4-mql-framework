@@ -61,11 +61,10 @@ int      __orderStack[];                                          // FIFO stack 
 #define HTML_COMMA                  "&comma;"                     // comma                               ,
 
 
-// Special math variables, defined in init()
-double  NaN;                                                      // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPUs immer negativ)
-double  P_INF;                                                    //  1.#INF: positive infinity
-double  N_INF;                                                    // -1.#INF: negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
-
+// Special double values, defined in init(), string representation depends on the used compiler
+double  NaN;                                                      // -1.#IND | -nan(ind): indefinite quiet Not-a-Number (on x86 CPUs always negative)
+double  INF;                                                      //  1.#INF |  inf:      positive infinity
+//     -INF                                                       // -1.#INF | -inf:      negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
 
 // Magic characters zur visuellen Darstellung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
 #define PLACEHOLDER_NUL_CHAR        '…'                           // 0x85 (133) - Ersatzzeichen für NUL-Bytes in Strings

@@ -81,6 +81,10 @@
 
    // math
    int      DoubleExp(double value);
+   bool     IsInfinite(double value);
+   bool     IsNaN(double value);
+   double   Math_INF();
+   double   Math_NaN();
    double   MathLog10(double value);
 
    // pointer and memory helpers

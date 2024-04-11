@@ -49,9 +49,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode()) {       // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
    }
-   int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
-
-   int recorderMode = NULL;
+   int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags), recorderMode=NULL;
 
    int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recorderMode, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                            // detect a DLL exception
@@ -506,9 +504,8 @@ bool initGlobals() {
       spUnit  = "point";
    }
 
-   N_INF = MathLog(0);                                      // negative infinity
-   P_INF = -N_INF;                                          // positive infinity
-   NaN   =  N_INF - N_INF;                                  // not-a-number
+   INF = Math_INF();                                        // positive infinity
+   NaN = INF-INF;                                           // not-a-number
 
    return(!catch("initGlobals(1)"));
 }

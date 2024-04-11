@@ -1407,34 +1407,6 @@ bool LE(double double1, double double2, int digits = 8) {
 
 
 /**
- * Ob der Wert eines Doubles NaN (Not-a-Number) ist.
- *
- * @param  double value
- *
- * @return bool
- */
-bool IsNaN(double value) {
-   // Bug Builds < 509: der Ausdruck (NaN==NaN) ist dort fälschlicherweise TRUE
-   string s = value;
-   return(s == "-1.#IND0000");
-}
-
-
-/**
- * Ob der Wert eines Doubles positiv oder negativ unendlich (Infinity) ist.
- *
- * @param  double value
- *
- * @return bool
- */
-bool IsInfinity(double value) {
-   if (!value)                               // 0
-      return(false);
-   return(value+value == value);             // 1.#INF oder -1.#INF
-}
-
-
-/**
  * Pseudo-Funktion, die nichts weiter tut, als boolean TRUE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
@@ -5653,8 +5625,9 @@ string TradeCommandToStr(int cmd) {
  */
 string NumberToStr(double value, string mask) {
    string sNumber = value;
-   if (StringGetChar(sNumber, 3) == '#')                    // "-1.#IND0000" => NaN
-      return(sNumber);                                      // "-1.#INF0000" => Infinite
+   if (sNumber=="-1.#IND0000" || sNumber=="-nan(ind)") return(sNumber);    //  NaN: not-a-number (in terminal builds < 416 the comparison NaN==NaN returns TRUE/is broken)
+   if (sNumber== "1.#INF0000" || sNumber== "inf"     ) return(sNumber);    //  INF: positive infinity
+   if (sNumber=="-1.#INF0000" || sNumber=="-inf"     ) return(sNumber);    // -INF: negative infinity
 
    int error = GetLastError();
    if (error != NO_ERROR) catch("NumberToStr(1)  unhandled error (value="+ value +", mask=\""+ mask +"\")", error);
@@ -7172,7 +7145,6 @@ void __DummyCalls() {
    IsExpert();
    IsFile(NULL, NULL);
    IsIndicator();
-   IsInfinity(NULL);
    IsLastError();
    IsLeapYear(NULL);
    IsLibrary();
@@ -7180,7 +7152,6 @@ void __DummyCalls() {
    IsLog();
    IsLongOrderType(NULL);
    IsMQLError();
-   IsNaN(NULL);
    IsNaT(NULL);
    IsOrderType(NULL);
    IsPendingOrderType(NULL);

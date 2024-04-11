@@ -56,9 +56,8 @@ int init() {
    prev_error = NO_ERROR;
    last_error = NO_ERROR;
 
-   N_INF = MathLog(0);                                      // negative infinity
-   P_INF = -N_INF;                                          // positive infinity
-   NaN   =  N_INF - N_INF;                                  // not-a-number
+   INF = Math_INF();                                        // positive infinity
+   NaN = INF-INF;                                           // not-a-number
 
    // EA-Tasks
    if (IsExpert()) {
