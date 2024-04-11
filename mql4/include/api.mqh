@@ -69,7 +69,7 @@ int      logError (string message, int error);;
 int      logFatal (string message, int error);;
 
 int      log2Alert   (string message, int error, int level);;
-int      log2Debugger(string message, int error, int level);;
+int      log2Debug   (string message, int error, int level);;
 int      log2File    (string message, int error, int level);;
 int      log2Mail    (string message, int error, int level);;
 int      log2SMS     (string message, int error, int level);;

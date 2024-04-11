@@ -25,7 +25,7 @@
  * +----------------+--------------------------------------------------------------+------------------+
  * | log2Terminal() | TerminalLogAppender                                          | configurable     |
  * | log2Alert()    | TerminalAlertAppender                                        | configurable     |
- * | log2Debugger() | DebugOutputAppender                                          | configurable     |
+ * | log2Debug()    | DebugOutputAppender                                          | configurable     |
  * | log2File()     | LogfileAppender                                              | configurable     |
  * | log2Mail()     | MailAppender                                                 | configurable     |
  * | log2SMS()      | SMSAppender                                                  | configurable     |
@@ -235,7 +235,7 @@ int log(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       if (__ExecutionContext[EC.loglevelTerminal] != LOG_OFF) log2Terminal(message, error, level);    // fast appenders first
-      if (__ExecutionContext[EC.loglevelDebug   ] != LOG_OFF) log2Debugger(message, error, level);    // ...
+      if (__ExecutionContext[EC.loglevelDebug   ] != LOG_OFF) log2Debug   (message, error, level);    // ...
       if (__ExecutionContext[EC.loglevelFile    ] != LOG_OFF) log2File    (message, error, level);    // ...
       if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert   (message, error, level);    // after fast appenders as it may lock the UI thread in tester
       if (__ExecutionContext[EC.loglevelMail    ] != LOG_OFF) log2Mail    (message, error, level);    // slow appenders last (launches a new process)
@@ -391,16 +391,16 @@ int log2Alert(string message, int error, int level) {
  *
  * @return int - the same error or the configured debugger loglevel if parameter level is LOG_OFF
  */
-int log2Debugger(string message, int error, int level) {
+int log2Debug(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelDebug]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
       if (__isSuperContext) configLevel = ep_SuperLoglevelDebug(pid);               // an indicator loaded by iCustom()
       if (!configLevel) {
-         string section = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2Debugger";
+         string section = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2Debug";
          string sValue = GetConfigString(section, key, "all");                      // built-in default: all
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debugger(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debug(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
       }
       ec_SetLoglevelDebug(__ExecutionContext, configLevel);
    }
@@ -409,7 +409,7 @@ int log2Debugger(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Debugger(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2Debug(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
@@ -626,7 +626,7 @@ int log2Terminal(string message, int error, int level) {
    logFatal (NULL, NULL);
 
    log2Alert   (NULL, NULL, NULL);
-   log2Debugger(NULL, NULL, NULL);
+   log2Debug   (NULL, NULL, NULL);
    log2File    (NULL, NULL, NULL);
    log2Mail    (NULL, NULL, NULL);
    log2SMS     (NULL, NULL, NULL);
