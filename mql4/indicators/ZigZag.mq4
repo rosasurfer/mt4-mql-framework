@@ -115,6 +115,7 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <functions/iCustom/ZigZag.mqh>
 #include <win32api.mqh>
 

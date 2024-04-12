@@ -23,6 +23,7 @@ extern color  BracketsColor    = Blue;                   //
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iCopyRates.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <functions/ParseDateTime.mqh>
 #include <functions/ParseTimeRange.mqh>
 

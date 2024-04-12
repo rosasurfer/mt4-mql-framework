@@ -22,9 +22,9 @@ extern string LFX.Labels = "";                           // Label_1 [, Label_n [
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <functions/InitializeByteBuffer.mqh>
 #include <rsfLib.mqh>
-
+#include <functions/InitializeByteBuffer.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <structs/rsf/LFXOrder.mqh>

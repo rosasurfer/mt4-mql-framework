@@ -50,6 +50,7 @@ extern string Weekend.Symbols     = "";               // comma-separated list of
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
 #include <functions/iPreviousPeriod.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <win32api.mqh>
 
 #property indicator_chart_window

@@ -59,6 +59,7 @@ int  bracket2End   = 990;                    // 16:30
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 
 // EA definitions
 #include <ea/functions/instance/defines.mqh>

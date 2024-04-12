@@ -175,7 +175,7 @@
    bool     IsVirtualKeyDown(int vKey);
    bool     PlaySoundA(string soundfile);
 
-   // Virtual no-ops. Automatically over-written by MQL implementations of the same name.
+   // Virtual no-ops. Over-written by MQL implementations of the same name.
    int      onInit();
    int      onInitUser();
    int      onInitParameters();
@@ -206,7 +206,8 @@
    int      onAccountChange(int oldAccount, int newAccount);   // event handlers
    bool     onBarOpen();
 
-   void     DummyCalls();                                      // other virtual no-ops
+   int      DeleteRegisteredObjects();                         // other virtual no-ops
+   void     DummyCalls();
    string   InputsToStr();
    bool     RemoveChartLegend();
    int      ShowStatus(int error);

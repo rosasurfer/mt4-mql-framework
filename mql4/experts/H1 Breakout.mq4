@@ -51,6 +51,7 @@ extern bool   ShowProfitInPercent  = false;  // whether PnL is displayed in mone
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 
 // EA definitions
 #include <ea/functions/instance/defines.mqh>

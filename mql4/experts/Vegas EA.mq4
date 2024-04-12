@@ -81,6 +81,7 @@ extern bool   ShowProfitInPercent  = false;                          // whether 
 #include <functions/IsBarOpen.mqh>
 #include <functions/iCustom/MaTunnel.mqh>
 #include <functions/iCustom/ZigZag.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 // EA definitions

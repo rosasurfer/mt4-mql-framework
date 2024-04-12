@@ -89,6 +89,7 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/iCustom/ZigZag.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 // EA definitions

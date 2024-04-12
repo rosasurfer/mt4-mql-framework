@@ -7289,7 +7289,6 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   CharToHexStr(int chr);
    string   CreateTempFile(string path, string prefix);
-   int      DeleteRegisteredObjects();
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetFxtToGmtTimeOffset(datetime time);
@@ -7303,7 +7302,6 @@ void __DummyCalls() {
    int      GetServerToFxtTimeOffset(datetime serverTime);
    int      GetServerToGmtTimeOffset(datetime serverTime);
    int      InitializeStringBuffer(string buffer[], int length);
-   bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
    bool     ReleaseLock(string mutex);
    bool     ReverseStringArray(string array[]);
 

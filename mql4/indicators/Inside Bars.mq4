@@ -34,6 +34,7 @@ extern bool   Signal.onInsideBar.SMS         = false;
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iCopyRates.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
 

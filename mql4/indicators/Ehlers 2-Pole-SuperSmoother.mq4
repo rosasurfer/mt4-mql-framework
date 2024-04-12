@@ -45,6 +45,7 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <functions/chartlegend.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <functions/trend.mqh>
 
 #define MODE_MAIN             MovingAverage.MODE_MA      // indicator buffer ids

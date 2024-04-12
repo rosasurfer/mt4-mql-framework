@@ -53,6 +53,7 @@ extern bool   ShowProfitInPercent            = false;    // whether PnL is displ
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 // EA definitions

@@ -24,6 +24,7 @@ extern int    HistoryFormat    = 401;                      // written history fo
 #include <rsfHistory.mqh>
 #include <functions/ComputeFloatingPnL.mqh>
 #include <functions/chartlegend.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   1                          // there's a minimum of 1 buffer

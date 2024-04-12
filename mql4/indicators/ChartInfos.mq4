@@ -33,6 +33,7 @@ extern bool   Track.Orders    = true;                             // whether to 
 #include <stdfunctions.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <functions/SortClosedTickets.mqh>
 #include <functions/ta/ADR.mqh>
 #include <MT4iQuickChannel.mqh>

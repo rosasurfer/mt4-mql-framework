@@ -333,7 +333,7 @@ bool     ConfigureSignalsByAlert(string signalId, bool autoConfig, bool &enabled
 bool     ConfigureSignalsBySMS(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled, bool &smsEnabled);;
-
+int      DeleteRegisteredObjects();;
 int      ExplodeStrings(int &buffer[], string &results[]);;
 bool     GetChartCommand(string channel, string &commands[]);;
 bool     HandleCommands(string channel = "");;
@@ -349,6 +349,7 @@ string   JoinDoubles(double &values[], string separator=", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator=", ");;
 string   JoinInts(int &values[], string separator=", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
+bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);;
 bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 
@@ -633,7 +634,6 @@ int      CreateRawSymbol(string name, string description, string group, int digi
 string   CreateTempFile(string path, string prefix="");;
 int      DecreasePeriod(int period=0);;
 bool     DeletePendingOrders(color markerColor=CLR_NONE);;
-int      DeleteRegisteredObjects();;
 bool     DoubleInArray(double &haystack[], double needle);;
 bool     DoubleQuoteStrings(string &array[]);;
 string   DoublesToStr(double &array[], string separator);;
@@ -685,7 +685,6 @@ int      MergeDoubleArrays(double &array1[], double &array2[], double &merged[])
 int      MergeIntArrays(int &array1[], int &array2[], int &merged[]);;
 int      MergeStringArrays(string &array1[], string &array2[], string &merged[]);;
 color    ModifyColor(color rgb, double hue, double saturation, double lightness);;
-bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);;
 string   OperationTypesToStr(int &array[], string separator);;
 int      OrderSendEx(string symbol=NULL, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int &oe[]);;
 bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int &oe[]);;

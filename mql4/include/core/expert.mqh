@@ -302,8 +302,6 @@ int start() {
  */
 int deinit() {
    __CoreFunction = CF_DEINIT;
-   _Bid = NormalizeDouble(Bid, Digits);            // normalized versions of Bid/Ask
-   _Ask = NormalizeDouble(Ask, Digits);            //
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
       return(last_error);

@@ -69,6 +69,11 @@
  *
  *
  *  -------------------------------------------------------------------------------------------------------------------------
+ *  - rsfLib::ObjectCreateRegister()
+ *     106.000 initial calls on terminal start with 7 open charts
+ *     SuperBars in regular charts: permant non-stopping calls (after a few minutes more than 1.000.000)
+ *     SuperBars in offline charts: 271 calls on every tick
+ *
  *  - reproduce/validate tests with original EAs
  *     terminal with Dukascopy data
  *     fast generation of old test data (e.g. from 2007)
@@ -255,6 +260,7 @@ string   status.stopConditions  = "";
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <functions/ParseDateTime.mqh>
 #include <functions/iCustom/ZigZag.mqh>
 #include <structs/rsf/OrderExecution.mqh>

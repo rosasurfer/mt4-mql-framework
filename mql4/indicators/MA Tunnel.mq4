@@ -40,6 +40,7 @@ extern string Signal.onTickCross.SoundDown   = "Alert Down.wav";
 #include <functions/chartlegend.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <functions/iCustom/MaTunnel.mqh>
 
 #define MODE_UPPER_BAND       MaTunnel.MODE_UPPER_BAND   // indicator buffer ids

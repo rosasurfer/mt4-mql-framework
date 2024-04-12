@@ -27,9 +27,9 @@ int   __InitFlags[];
 int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <functions/InitializeByteBuffer.mqh>
 #include <rsfLib.mqh>
-
+#include <functions/InitializeByteBuffer.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <scriptrunner.mqh>

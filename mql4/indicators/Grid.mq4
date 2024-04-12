@@ -19,6 +19,7 @@ extern color Color.SuperGrid   = LightGray;                          // C'211,21
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/iBarShiftNext.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers      1
