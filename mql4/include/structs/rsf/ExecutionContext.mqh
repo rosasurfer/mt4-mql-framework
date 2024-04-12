@@ -68,11 +68,10 @@
    int      ec_hChart               (int ec[]);
    int      ec_hChartWindow         (int ec[]);
 
-   int      ec_RecorderMode         (int ec[]);
-
    bool     ec_Testing              (int ec[]);
    bool     ec_VisualMode           (int ec[]);
    bool     ec_Optimization         (int ec[]);
+   int      ec_RecorderMode         (int ec[]);
 
    int      ec_MqlError             (int ec[]);
    int      ec_DllError             (int ec[]);

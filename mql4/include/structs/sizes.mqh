@@ -69,10 +69,10 @@
 #define EC.threadId                        172
 #define EC.hChart                          173
 #define EC.hChartWindow                    174
-#define EC.recorderMode                    175
-#define EC.testing                         176
-#define EC.visualMode                      177
-#define EC.optimization                    178
+#define EC.testing                         175
+#define EC.visualMode                      176
+#define EC.optimization                    177
+#define EC.recorderMode                    178
 #define EC.mqlError                        179
 #define EC.dllError                        180
 #define EC.dllWarning                      182
