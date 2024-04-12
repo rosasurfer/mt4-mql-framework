@@ -792,7 +792,6 @@ int      ec_SetLoglevelTerminal   (int &ec[], int level);;
 int      ec_SetMqlError           (int &ec[], int error);;
 int      ec_SetProgramCoreFunction(int &ec[], int id);;
 int      ec_SetRecorder           (int &ec[], int mode);;
-datetime ec_Started               (int &ec[]);;
 bool     ec_SuperContext          (int &ec[], int &target[]);;
 string   ec_Symbol                (int &ec[]);;
 bool     ec_Testing               (int &ec[]);;
