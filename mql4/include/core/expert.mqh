@@ -49,9 +49,9 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode()) {       // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
    }
-   int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags), recorderMode=NULL;
+   int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags), recorder=NULL;
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), recorderMode, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), recorder, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                            // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -608,7 +608,7 @@ datetime Test.GetEndDate() {
 #import "rsfMT4Expander.dll"
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
-   int    ec_SetRecorderMode       (int ec[], int mode    );
+   int    ec_SetRecorder           (int ec[], int mode    );
 
    string Recorder_GetInput();                                    // Recorder functions in the Expander are no-ops to make
    string Recorder_GetNextMetricSymbol();                         // inclusion of "core/expert.recorder.mqh" optional.
@@ -618,7 +618,7 @@ datetime Test.GetEndDate() {
 
    string symbols_Name(int symbols[], int i);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorderMode, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 

@@ -71,7 +71,7 @@
    bool     ec_Testing              (int ec[]);
    bool     ec_VisualMode           (int ec[]);
    bool     ec_Optimization         (int ec[]);
-   int      ec_RecorderMode         (int ec[]);
+   int      ec_Recorder             (int ec[]);
 
    int      ec_MqlError             (int ec[]);
    int      ec_DllError             (int ec[]);
@@ -93,7 +93,7 @@
 
    // used setters
    int      ec_SetProgramCoreFunction(int ec[], int id   );
-   int      ec_SetRecorderMode       (int ec[], int mode );
+   int      ec_SetRecorder           (int ec[], int mode );
    int      ec_SetMqlError           (int ec[], int error);
    int      ec_SetDllError           (int ec[], int error);
    int      ec_SetLoglevel           (int ec[], int level);

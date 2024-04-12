@@ -72,7 +72,7 @@
 #define EC.testing                         175
 #define EC.visualMode                      176
 #define EC.optimization                    177
-#define EC.recorderMode                    178
+#define EC.recorder                        178
 #define EC.mqlError                        179
 #define EC.dllError                        180
 #define EC.dllWarning                      182
