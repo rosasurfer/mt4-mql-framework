@@ -28,12 +28,28 @@ int init() {
    int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), WindowExpertName(), Symbol(), Period(), Digits, Point, IsTesting(), IsOptimization());
    if (IsError(error)) return(error);
 
-   // globale Variablen initialisieren
+   // initialize global vars
    __lpSuperContext =  __ExecutionContext[EC.superContext];
    __isSuperContext = (__lpSuperContext != 0);
    __isChart        = (__ExecutionContext[EC.hChart] != 0);
    __isTesting      = (__ExecutionContext[EC.testing] || IsTesting());
-   if (__isTesting) __Test.barModel = Tester.GetBarModel();
+
+   if (__isTesting) {
+      if (IsIndicator()) {
+         int initReason = ProgramInitReason();
+         if (initReason == IR_TEMPLATE && !__isChart) {     // an indicator in template "Tester.tpl" with VisualMode=off
+            __STATUS_OFF        = true;
+            __STATUS_OFF.reason = last_error;
+            return(last_error);
+         }
+         if (initReason == IR_PROGRAM_AFTERTEST) {          // an indicator loaded by iCustom() after the test finished
+            __STATUS_OFF        = true;
+            __STATUS_OFF.reason = last_error;
+            return(last_error);
+         }
+      }
+      __Test.barModel = Tester.GetBarModel();
+   }
 
    int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
    HalfPoint      = Point/2;

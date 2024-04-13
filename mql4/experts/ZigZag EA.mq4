@@ -24,9 +24,22 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - optimization
- *     MT4Expander::executioncontext.cpp::SyncLibContext_init(878)  unseen library init cycle in tester (the former program doesn't seem to be the former test):  ec={pid=68, previousPid=0, programType=PT_EXPERT, programName="ZigZag EA", programCoreFunction=NULL, programInitReason=IR_USER, programUninitReason=UR_UNDEFINED, programInitFlags=INIT_PIPVALUE, programDeinitFlags=0, moduleType=MT_LIBRARY, moduleName="rsfLib", moduleCoreFunction=NULL, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="GBPJPY", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x0B440020, bars=50958, validBars=-1, changedBars=-1, ticks=571123, cycleTicks=571123, currTickTime="2024.03.01 23:56:59", prevTickTime="2024.03.01 23:56:55", bid=189.922, ask=189.923, digits=3, pipDigits=2, pip=0.01, point=0.001, pipPoints=10, priceFormat=".2'", pipPriceFormat=".2", superContext=NULL, threadId=5268 (non-UI), hChart=NULL, hChartWindow=NULL, testing=TRUE, visualMode=FALSE, optimization=TRUE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=WARN, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebug=NULL, loglevelFile=DEBUG, loglevelMail=NULL, loglevelSMS=NULL, logger=0x097EFEB8, logBuffer=(0), logFilename="E:\Trading\MetaTrader\S1\tester\files\presets\Tester\ZigZag EA, GBPJPY,M1 P=30, 2024-04-09 06.30, id=775.log"} (0x06374E58)
- *      happens only if the tester template loads a custom indicator
+ *  - optimization with empty tester template
+ *     build 500-1408: no errors
+ *
+ *  - optimization with custom indicator in tester template
+ *     build 500-825:
+ *      MT4Expander::executioncontext.cpp::SyncLibContext_init(842)  unseen library init cycle in tester (the previously executed program doesn't seem to be the previous test):  ec={pid=13, previousPid=0, programType=PT_EXPERT, programName="TestExpert", programCoreFunction=NULL, programInitReason=IR_USER, programUninitReason=UR_UNDEFINED, programInitFlags=0, programDeinitFlags=0, moduleType=MT_LIBRARY, moduleName="rsfLib", moduleCoreFunction=NULL, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="EURUSD", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x08710048, bars=3880, validBars=-1, changedBars=-1, ticks=22872, cycleTicks=22872, currTickTime="2019.04.30 23:59:59", prevTickTime="2019.04.30 23:59:50", bid=1.12151, ask=1.12155, digits=5, pipDigits=4, pip=0.0001, point=0.00001, pipPoints=10, priceFormat=".4'", pipPriceFormat=".4", superContext=NULL, threadId=3632 (non-UI), hChart=NULL, hChartWindow=NULL, testing=TRUE, visualMode=FALSE, optimization=TRUE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=INFO, loglevelTerminal=FATAL, loglevelAlert=WARN, loglevelDebug=DEBUG, loglevelFile=DEBUG, loglevelMail=OFF, loglevelSMS=OFF, logger=NULL, logBuffer=(0), logFilename=""} (0x07233970)
+ *      build 650, 710: suddenly no errors
+ *
+ *     build 830-1408:
+ *      MT4Expander::executioncontext.cpp::SyncLibContext_init(842)  unseen library init cycle in tester (the previously executed program doesn't seem to be the previous test):  ec={pid=13, previousPid=0, programType=PT_EXPERT, programName="TestExpert", programCoreFunction=NULL, programInitReason=IR_USER, programUninitReason=UR_UNDEFINED, programInitFlags=0, programDeinitFlags=0, moduleType=MT_LIBRARY, moduleName="rsfLib", moduleCoreFunction=NULL, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="EURUSD", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x08710048, bars=3880, validBars=-1, changedBars=-1, ticks=22872, cycleTicks=22872, currTickTime="2019.04.30 23:59:59", prevTickTime="2019.04.30 23:59:50", bid=1.12151, ask=1.12155, digits=5, pipDigits=4, pip=0.0001, point=0.00001, pipPoints=10, priceFormat=".4'", pipPriceFormat=".4", superContext=NULL, threadId=3632 (non-UI), hChart=NULL, hChartWindow=NULL, testing=TRUE, visualMode=FALSE, optimization=TRUE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=INFO, loglevelTerminal=FATAL, loglevelAlert=WARN, loglevelDebug=DEBUG, loglevelFile=DEBUG, loglevelMail=OFF, loglevelSMS=OFF, logger=NULL, logBuffer=(0), logFilename=""} (0x07233970)
+ *      during optimization Expander hangs
+ *
+ *  - libraries must not call Tester.GetBarModel()
+ *
+ *
+ *
  *
  *  - entry management
  *
@@ -40,6 +53,7 @@
  *     generate consecutive instance ids
  *     storage in separate directory
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
+ *     should run with an empty tester template (for max speed)
  *
  *  - partial close
  *     online: fix closedProfit after 1 partial-close (error loading status file)

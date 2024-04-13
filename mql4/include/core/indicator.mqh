@@ -57,7 +57,16 @@ int init() {
       __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
-   if (ProgramInitReason() == IR_PROGRAM_AFTERTEST) {
+
+   int initReason = ProgramInitReason();
+   if (initReason == IR_TEMPLATE) {
+      if (__ExecutionContext[EC.testing] && !__ExecutionContext[EC.visualMode]) {
+         __STATUS_OFF        = true;                                 // an indicator in template "Tester.tpl" with VisualMode=off
+         __STATUS_OFF.reason = last_error;
+         return(last_error);
+      }
+   }
+   if (initReason == IR_PROGRAM_AFTERTEST) {                         // an indicator loaded by iCustom() after the test finished
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
       return(last_error);
@@ -128,9 +137,6 @@ int init() {
    error = onInit();                                                                   // preprocessing hook
                                                                                        //
    if (!error && !__STATUS_OFF) {                                                      //
-      int initReason = ProgramInitReason();                                            //
-      if (!initReason) if (CheckErrors("init(14)")) return(last_error);                //
-                                                                                       //
       switch (initReason) {                                                            //
          case INITREASON_USER             : error = onInitUser();             break;   // init reasons
          case INITREASON_TEMPLATE         : error = onInitTemplate();         break;   //
@@ -141,7 +147,7 @@ int init() {
          case INITREASON_SYMBOLCHANGE     : error = onInitSymbolChange();     break;   //
          case INITREASON_RECOMPILE        : error = onInitRecompile();        break;   //
          default:                                                                      //
-            return(_last_error(CheckErrors("init(15)  unknown initReason: "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(14)  unknown initReason: "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                                //
    }                                                                                   //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
@@ -156,7 +162,7 @@ int init() {
       }                                            // TODO: Nicht im Tester-Chart. Oder etwa doch?
    }
 
-   CheckErrors("init(16)");
+   CheckErrors("init(15)");
    return(last_error);
 }
 
