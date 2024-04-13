@@ -69,8 +69,8 @@
  *
  *
  *  -------------------------------------------------------------------------------------------------------------------------
- *  - rsfLib::ObjectCreateRegister()
- *     106.000 initial calls on terminal start with 7 open charts
+ *  - ObjectCreateRegister()
+ *     106.000 initial calls on terminal start with 7 charts
  *     SuperBars in regular charts: permant non-stopping calls (after a few minutes more than 1.000.000)
  *     SuperBars in offline charts: 271 calls on every tick
  *
