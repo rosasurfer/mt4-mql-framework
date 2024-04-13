@@ -184,9 +184,8 @@ bool initGlobals() {
    //
    // TODO: implement workaround in the Expander
    //
-   __isChart      = (__ExecutionContext[EC.hChart] != 0);
-   __isTesting    = (__ExecutionContext[EC.testing] || IsTesting());
-   if (__isTesting) __Test.barModel = Tester.GetBarModel();
+   __isChart   = (__ExecutionContext[EC.hChart] != 0);
+   __isTesting = (__ExecutionContext[EC.testing] || IsTesting());
 
    int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
    HalfPoint      = Point/2;
@@ -209,7 +208,7 @@ bool initGlobals() {
    Ticks     = __ExecutionContext[EC.ticks];
    Tick.time = __ExecutionContext[EC.currTickTime];
 
-   // don't use MathLog() as in terminals (build > 509 && build < 603) it fails to produce NaN/-INF
+   // don't use MathLog() as in terminals (509 < build && build < 603) it fails to produce NaN/-INF
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 

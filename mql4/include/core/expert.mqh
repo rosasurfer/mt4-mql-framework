@@ -3,6 +3,7 @@
 int     __CoreFunction = NULL;                                    // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double  __rates[][6];                                             // current price series
 int     __tickTimerId;                                            // timer id for virtual ticks
+int     __Test.barModel = -1;                                     // the bar model of a test
 int     recorder.mode;                                            // EA recorder settings
 double  _Bid;                                                     // normalized versions of predefined vars Bid/Ask
 double  _Ask;                                                     // ...
@@ -502,7 +503,7 @@ bool initGlobals() {
       spUnit  = "point";
    }
 
-   // don't use MathLog() as in terminals (build > 509 && build < 603) it fails to produce NaN/-INF
+   // don't use MathLog() as in terminals (509 < build && build < 603) it fails to produce NaN/-INF
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 

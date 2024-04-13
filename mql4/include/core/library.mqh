@@ -34,21 +34,18 @@ int init() {
    __isChart        = (__ExecutionContext[EC.hChart] != 0);
    __isTesting      = (__ExecutionContext[EC.testing] || IsTesting());
 
-   if (__isTesting) {
-      if (IsIndicator()) {
-         int initReason = ProgramInitReason();
-         if (initReason == IR_TEMPLATE && !__isChart) {     // an indicator in template "Tester.tpl" with VisualMode=off
-            __STATUS_OFF        = true;
-            __STATUS_OFF.reason = last_error;
-            return(last_error);
-         }
-         if (initReason == IR_PROGRAM_AFTERTEST) {          // an indicator loaded by iCustom() after the test finished
-            __STATUS_OFF        = true;
-            __STATUS_OFF.reason = last_error;
-            return(last_error);
-         }
+   if (__isTesting && IsIndicator()) {
+      int initReason = ProgramInitReason();
+      if (initReason == IR_TEMPLATE && !__isChart) {        // an indicator in template "Tester.tpl" with VisualMode=off
+         __STATUS_OFF        = true;
+         __STATUS_OFF.reason = last_error;
+         return(last_error);
       }
-      __Test.barModel = Tester.GetBarModel();
+      if (initReason == IR_PROGRAM_AFTERTEST) {             // an indicator loaded by iCustom() after the test finished
+         __STATUS_OFF        = true;
+         __STATUS_OFF.reason = last_error;
+         return(last_error);
+      }
    }
 
    int digits = MathMax(Digits, 2);                         // treat Digits=1 as 2 (for some indices)
@@ -72,7 +69,7 @@ int init() {
    prev_error = NO_ERROR;
    last_error = NO_ERROR;
 
-   // don't use MathLog() as in terminals (build > 509 && build < 603) it fails to produce NaN/-INF
+   // don't use MathLog() as in terminals (509 < build && build < 603) it fails to produce NaN/-INF
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 
