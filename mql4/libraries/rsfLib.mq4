@@ -2847,7 +2847,7 @@ int WinExecWait(string cmdLine, int cmdShow) {
 
    if (result != WAIT_OBJECT_0) {
       if (result == WAIT_FAILED) catch("WinExecWait(2)->kernel32::WaitForSingleObject()", ERR_WIN32_ERROR);
-      else                         logNotice("WinExecWait(3)->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
+      else                       logNotice("WinExecWait(3)->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
    CloseHandle(pi_hProcess(pi));
@@ -3566,7 +3566,7 @@ string IntegerToHexStr(int integer) {
    int    value = integer;
 
    while (value != 0) {
-      chr    = chrs[value & 0x0F];                  // value % 16
+      chr    = chrs[value & 0x0F];                 // value % 16
       hexStr = StringConcatenate(chr, hexStr);
       value >>= 4;                                 // value / 16
    }

@@ -24,14 +24,6 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - optimization with empty tester template
- *     build 500-1408: no errors
- *
- *  - optimization with custom indicator in tester template
- *     build 500-1408:
- *      MT4Expander::executioncontext.cpp::SyncLibContext_init(842)  unseen library init cycle in tester (the previously executed program doesn't seem to be the previous test):  ec={pid=13, previousPid=0, programType=PT_EXPERT, programName="TestExpert", programCoreFunction=NULL, programInitReason=IR_USER, programUninitReason=UR_UNDEFINED, programInitFlags=0, programDeinitFlags=0, moduleType=MT_LIBRARY, moduleName="rsfLib", moduleCoreFunction=NULL, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="EURUSD", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x08710048, bars=3880, validBars=-1, changedBars=-1, ticks=22872, cycleTicks=22872, currTickTime="2019.04.30 23:59:59", prevTickTime="2019.04.30 23:59:50", bid=1.12151, ask=1.12155, digits=5, pipDigits=4, pip=0.0001, point=0.00001, pipPoints=10, priceFormat=".4'", pipPriceFormat=".4", superContext=NULL, threadId=3632 (non-UI), hChart=NULL, hChartWindow=NULL, testing=TRUE, visualMode=FALSE, optimization=TRUE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=INFO, loglevelTerminal=FATAL, loglevelAlert=WARN, loglevelDebug=DEBUG, loglevelFile=DEBUG, loglevelMail=OFF, loglevelSMS=OFF, logger=NULL, logBuffer=(0), logFilename=""} (0x07233970)
- *     build 650, 710: sporadic no errors
- *
  *
  *  - entry management
  *
@@ -45,7 +37,19 @@
  *     generate consecutive instance ids
  *     storage in separate directory
  *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
- *     should run with an empty tester template (for max speed)
+ *
+ *     performance: for max speed the tester template must not load indicators
+ *      empty tester template, 100 permutations:
+ *       build 500:   4.8 sec
+ *       build 1408:  4.3 sec (1.1 times faster than build 500)
+ *      tester template with custom indicator, no lib-calls, 100 permutations:
+ *       build 500:   5.7 sec
+ *       build 1408: 13.8 sec (2.4 times slower than build 500)
+ *      tester template with custom indicator and lib-calls, 100 permutations:
+ *       build 500:   7.2 sec
+ *       build 1408: 23.4 sec (3.2 times slower than build 500)
+ *
+ *
  *
  *  - partial close
  *     online: fix closedProfit after 1 partial-close (error loading status file)
