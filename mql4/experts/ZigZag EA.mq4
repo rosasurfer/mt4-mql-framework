@@ -31,25 +31,22 @@
  *     dynamic SL/TP distances (multiples of ranges)
  *     trailing stop
  *
+ *  - more statistics: consecutive winners/profit/losers/loss, sharp ratio, sortino ratio, calmar ratio, z-score, recovery time
+ *
  *  - optimization
  *     update status file content
  *     update status filename
- *     generate consecutive instance ids
  *     storage in separate directory
- *     more statistics: profit factor, sharp ratio, sortino ratio, calmar ratio
+ *     generate consecutive instance ids
+ *     optimization report
  *
- *     performance: for max speed the tester template must not load indicators
+ *     performance:
  *      empty tester template, 100 permutations:
  *       build 500:   4.8 sec
  *       build 1408:  4.3 sec (1.1 times faster than build 500)
- *      tester template with custom indicator, no lib-calls, 100 permutations:
- *       build 500:   5.7 sec
- *       build 1408: 13.8 sec (2.4 times slower than build 500)
  *      tester template with custom indicator and lib-calls, 100 permutations:
  *       build 500:   7.2 sec
  *       build 1408: 23.4 sec (3.2 times slower than build 500)
- *
- *
  *
  *  - partial close
  *     online: fix closedProfit after 1 partial-close (error loading status file)
@@ -80,7 +77,7 @@
  *
  *  -------------------------------------------------------------------------------------------------------------------------
  *  - ObjectCreateRegister()
- *     106.000 initial calls on terminal start with 7 charts
+ *     on terminal start with 7 charts 106.000 initial calls
  *     SuperBars in regular charts: permant non-stopping calls (after a few minutes more than 1.000.000)
  *     SuperBars in offline charts: 271 calls on every tick
  *

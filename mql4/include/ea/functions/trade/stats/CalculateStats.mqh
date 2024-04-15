@@ -23,36 +23,36 @@ void CalculateStats() {
             stats[METRIC_NET_UNITS][S_TRADES_SHORT]++;
             stats[METRIC_SIG_UNITS][S_TRADES_SHORT]++;
          }
+         stats[METRIC_NET_MONEY][S_TRADES_TOTAL_PROFIT] += history[i][H_NETPROFIT_M];
          stats[METRIC_NET_MONEY][S_TRADES_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
          stats[METRIC_NET_MONEY][S_TRADES_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
-         stats[METRIC_NET_MONEY][S_TRADES_SUM_PROFIT  ] += history[i][H_NETPROFIT_M];
 
+         stats[METRIC_NET_UNITS][S_TRADES_TOTAL_PROFIT] += history[i][H_NETPROFIT_P];
          stats[METRIC_NET_UNITS][S_TRADES_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
          stats[METRIC_NET_UNITS][S_TRADES_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
-         stats[METRIC_NET_UNITS][S_TRADES_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
 
+         stats[METRIC_SIG_UNITS][S_TRADES_TOTAL_PROFIT] += history[i][H_SIG_PROFIT_P ];
          stats[METRIC_SIG_UNITS][S_TRADES_SUM_RUNUP   ] += history[i][H_SIG_RUNUP_P  ];
          stats[METRIC_SIG_UNITS][S_TRADES_SUM_DRAWDOWN] += history[i][H_SIG_RUNDOWN_P];
-         stats[METRIC_SIG_UNITS][S_TRADES_SUM_PROFIT  ] += history[i][H_SIG_PROFIT_P ];
 
          // METRIC_NET_MONEY
-         if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {          // compare against H_NETPROFIT_P to simplify scratch limits
+         if (history[i][H_NETPROFIT_P] > HalfPoint) {             // compare against H_NETPROFIT_P to simplify scratch limits
             // winners
             stats[METRIC_NET_MONEY][S_WINNERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_NET_MONEY][S_WINNERS_LONG ]++;
             else                               stats[METRIC_NET_MONEY][S_WINNERS_SHORT]++;
+            stats[METRIC_NET_MONEY][S_WINNERS_TOTAL_PROFIT] += history[i][H_NETPROFIT_M];
             stats[METRIC_NET_MONEY][S_WINNERS_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
             stats[METRIC_NET_MONEY][S_WINNERS_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
-            stats[METRIC_NET_MONEY][S_WINNERS_SUM_PROFIT  ] += history[i][H_NETPROFIT_M];
          }
-         else if (LT(history[i][H_NETPROFIT_P], -0.5*Point)) {
+         else if (history[i][H_NETPROFIT_P] < -HalfPoint) {
             // losers
             stats[METRIC_NET_MONEY][S_LOSERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_NET_MONEY][S_LOSERS_LONG ]++;
             else                               stats[METRIC_NET_MONEY][S_LOSERS_SHORT]++;
+            stats[METRIC_NET_MONEY][S_LOSERS_TOTAL_LOSS  ] += history[i][H_NETPROFIT_M];
             stats[METRIC_NET_MONEY][S_LOSERS_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
             stats[METRIC_NET_MONEY][S_LOSERS_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
-            stats[METRIC_NET_MONEY][S_LOSERS_SUM_PROFIT  ] += history[i][H_NETPROFIT_M];
          }
          else {
             // scratch
@@ -62,23 +62,23 @@ void CalculateStats() {
          }
 
          // METRIC_NET_UNITS
-         if (GT(history[i][H_NETPROFIT_P], 0.5*Point)) {
+         if (history[i][H_NETPROFIT_P] > HalfPoint) {
             // winners
             stats[METRIC_NET_UNITS][S_WINNERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_NET_UNITS][S_WINNERS_LONG ]++;
             else                               stats[METRIC_NET_UNITS][S_WINNERS_SHORT]++;
+            stats[METRIC_NET_UNITS][S_WINNERS_TOTAL_PROFIT] += history[i][H_NETPROFIT_P];
             stats[METRIC_NET_UNITS][S_WINNERS_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
             stats[METRIC_NET_UNITS][S_WINNERS_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
-            stats[METRIC_NET_UNITS][S_WINNERS_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
          }
-         else if (LT(history[i][H_NETPROFIT_P], -0.5*Point)) {
+         else if (history[i][H_NETPROFIT_P] < -HalfPoint) {
             // losers
             stats[METRIC_NET_UNITS][S_LOSERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_NET_UNITS][S_LOSERS_LONG ]++;
             else                               stats[METRIC_NET_UNITS][S_LOSERS_SHORT]++;
+            stats[METRIC_NET_UNITS][S_LOSERS_TOTAL_LOSS  ] += history[i][H_NETPROFIT_P];
             stats[METRIC_NET_UNITS][S_LOSERS_SUM_RUNUP   ] += history[i][H_RUNUP_P    ];
             stats[METRIC_NET_UNITS][S_LOSERS_SUM_DRAWDOWN] += history[i][H_RUNDOWN_P  ];
-            stats[METRIC_NET_UNITS][S_LOSERS_SUM_PROFIT  ] += history[i][H_NETPROFIT_P];
          }
          else {
             // scratch
@@ -88,23 +88,23 @@ void CalculateStats() {
          }
 
          // METRIC_SIG_UNITS
-         if (GT(history[i][H_SIG_PROFIT_P], 0.5*Point)) {
+         if (history[i][H_SIG_PROFIT_P] > HalfPoint) {
             // winners
             stats[METRIC_SIG_UNITS][S_WINNERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_SIG_UNITS][S_WINNERS_LONG ]++;
             else                               stats[METRIC_SIG_UNITS][S_WINNERS_SHORT]++;
+            stats[METRIC_SIG_UNITS][S_WINNERS_TOTAL_PROFIT] += history[i][H_SIG_PROFIT_P ];
             stats[METRIC_SIG_UNITS][S_WINNERS_SUM_RUNUP   ] += history[i][H_SIG_RUNUP_P  ];
             stats[METRIC_SIG_UNITS][S_WINNERS_SUM_DRAWDOWN] += history[i][H_SIG_RUNDOWN_P];
-            stats[METRIC_SIG_UNITS][S_WINNERS_SUM_PROFIT  ] += history[i][H_SIG_PROFIT_P ];
          }
-         else if (LT(history[i][H_SIG_PROFIT_P], -0.5*Point)) {
+         else if (history[i][H_SIG_PROFIT_P] < -HalfPoint) {
             // losers
             stats[METRIC_SIG_UNITS][S_LOSERS]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_SIG_UNITS][S_LOSERS_LONG ]++;
             else                               stats[METRIC_SIG_UNITS][S_LOSERS_SHORT]++;
+            stats[METRIC_SIG_UNITS][S_LOSERS_TOTAL_LOSS  ] += history[i][H_SIG_PROFIT_P ];
             stats[METRIC_SIG_UNITS][S_LOSERS_SUM_RUNUP   ] += history[i][H_SIG_RUNUP_P  ];
             stats[METRIC_SIG_UNITS][S_LOSERS_SUM_DRAWDOWN] += history[i][H_SIG_RUNDOWN_P];
-            stats[METRIC_SIG_UNITS][S_LOSERS_SUM_PROFIT  ] += history[i][H_SIG_PROFIT_P ];
          }
          else {
             // scratch
@@ -130,17 +130,18 @@ void CalculateStats() {
          stats[i][S_SCRATCH_LONG_PCT    ] = MathDiv(stats[i][S_SCRATCH_LONG        ], stats[i][S_SCRATCH]);
          stats[i][S_SCRATCH_SHORT_PCT   ] = MathDiv(stats[i][S_SCRATCH_SHORT       ], stats[i][S_SCRATCH]);
 
+         stats[i][S_TRADES_AVG_PROFIT   ] = MathDiv(stats[i][S_TRADES_TOTAL_PROFIT ], stats[i][S_TRADES ]);
          stats[i][S_TRADES_AVG_RUNUP    ] = MathDiv(stats[i][S_TRADES_SUM_RUNUP    ], stats[i][S_TRADES ]);
          stats[i][S_TRADES_AVG_DRAWDOWN ] = MathDiv(stats[i][S_TRADES_SUM_DRAWDOWN ], stats[i][S_TRADES ]);
-         stats[i][S_TRADES_AVG_PROFIT   ] = MathDiv(stats[i][S_TRADES_SUM_PROFIT   ], stats[i][S_TRADES ]);
+         stats[i][S_TRADES_PROFIT_FACTOR] = MathAbs(MathDiv(stats[i][S_WINNERS_TOTAL_PROFIT], stats[i][S_LOSERS_TOTAL_LOSS], INT_MAX));   // w/o losers: INT_MAX
 
+         stats[i][S_WINNERS_AVG_PROFIT  ] = MathDiv(stats[i][S_WINNERS_TOTAL_PROFIT], stats[i][S_WINNERS]);
          stats[i][S_WINNERS_AVG_RUNUP   ] = MathDiv(stats[i][S_WINNERS_SUM_RUNUP   ], stats[i][S_WINNERS]);
          stats[i][S_WINNERS_AVG_DRAWDOWN] = MathDiv(stats[i][S_WINNERS_SUM_DRAWDOWN], stats[i][S_WINNERS]);
-         stats[i][S_WINNERS_AVG_PROFIT  ] = MathDiv(stats[i][S_WINNERS_SUM_PROFIT  ], stats[i][S_WINNERS]);
 
+         stats[i][S_LOSERS_AVG_LOSS     ] = MathDiv(stats[i][S_LOSERS_TOTAL_LOSS   ], stats[i][S_LOSERS ]);
          stats[i][S_LOSERS_AVG_RUNUP    ] = MathDiv(stats[i][S_LOSERS_SUM_RUNUP    ], stats[i][S_LOSERS ]);
          stats[i][S_LOSERS_AVG_DRAWDOWN ] = MathDiv(stats[i][S_LOSERS_SUM_DRAWDOWN ], stats[i][S_LOSERS ]);
-         stats[i][S_LOSERS_AVG_PROFIT   ] = MathDiv(stats[i][S_LOSERS_SUM_PROFIT   ], stats[i][S_LOSERS ]);
       }
    }
 }
