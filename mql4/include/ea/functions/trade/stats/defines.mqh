@@ -1,17 +1,6 @@
 /**
  * Trade statistic related constants and global vars.
- *
- *
- * TODO:
- *  - Sharp ratio
- *  - Sortino ratio
- *  - Calmar ratio
- *  - Z-score
- *  - recovery time
- *  - Zephyr Pain Index: https://investexcel.net/zephyr-pain-index/
- *  - Zephyr K-Ratio:    http://web.archive.org/web/20210116024652/https://www.styleadvisor.com/resources/statfacts/zephyr-k-ratio
  */
-
 double stats[4][67];                            // trade statistic per metric with metric id as index (0 is unused)
 
 #define S_TRADES                           0    // indexes of trade statistics
