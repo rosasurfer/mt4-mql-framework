@@ -31,7 +31,7 @@
  *     dynamic SL/TP distances (multiples of ranges)
  *     trailing stop
  *
- *  - more statistics: consecutive winners/profit/losers/loss, sharp ratio, sortino ratio, calmar ratio, z-score, recovery time
+ *  - more statistics: sharp ratio, sortino ratio, calmar ratio, z-score, recovery time
  *
  *  - optimization
  *     update status file content
@@ -251,7 +251,7 @@ double   stop.profitPct.value;
 double   stop.profitPct.absValue = INT_MAX;
 string   stop.profitPct.descr = "";
 
-bool     stop.profitPunit.condition;         // whether a takeprofit condition in price units is active (pip or full point)
+bool     stop.profitPunit.condition;         // whether a takeprofit condition in punits is active
 double   stop.profitPunit.value;
 string   stop.profitPunit.descr = "";
 
