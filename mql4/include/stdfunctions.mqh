@@ -2611,7 +2611,7 @@ datetime DateTime2(int parsed[], int flags = DATE_OF_TODAY) {
 /**
  * Return the day of the month of the specified time: 1...31
  *
- * Fixes the broken built-in function TimeDay() which returns 0 instead of 1 for D'1970.01.01 00:00:00'.
+ * Fixes the broken built-in function TimeDay() which returns 0 instead for "Thursday, 01.01.1970 00:00:00".
  *
  * @param  datetime time
  *
@@ -2626,14 +2626,14 @@ int TimeDayEx(datetime time) {
 /**
  * Return the zero-based weekday of the specified time: 0=Sunday...6=Saturday
  *
- * Fixes the broken built-in function TimeDayOfWeek() which returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
+ * Fixes the broken built-in function TimeDayOfWeek() which returns 0 (Sunday) for "Thursday, 01.01.1970 00:00:00".
  *
  * @param  datetime time
  *
  * @return int
  */
 int TimeDayOfWeekEx(datetime time) {
-   if (!time) return(3);
+   if (!time) return(THURSDAY);
    return(TimeDayOfWeek(time));
 }
 
@@ -2641,7 +2641,7 @@ int TimeDayOfWeekEx(datetime time) {
 /**
  * Return the year of the specified time: 1970..2037
  *
- * Fixes the broken built-in function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
+ * Fixes the broken built-in function TimeYear() which returns 1900 for "Thursday, 01.01.1970 00:00:00".
  *
  * @param  datetime time
  *
@@ -2650,6 +2650,39 @@ int TimeDayOfWeekEx(datetime time) {
 int TimeYearEx(datetime time) {
    if (!time) return(1970);
    return(TimeYear(time));
+}
+
+
+/**
+ * Count the number of non-weekend days between two times. This function doesn't account for Holidays.
+ *
+ * @param  datetime from - start time (the whole day is included in the calculation)
+ * @param  datetime to   - end time (the whole day is included in the calculation)
+ *
+ * @return int
+ */
+int CountWorkdays(datetime from, datetime to) {
+   datetime startDate = from - from % DAYS;
+   int startDow = TimeDayOfWeekEx(startDate);
+   if      (startDow == SAT) { startDate += 2*DAYS; startDow = MON; }
+   else if (startDow == SUN) { startDate += 1*DAY;  startDow = MON; }
+
+   datetime endDate = to - to % DAYS;
+   int endDow = TimeDayOfWeekEx(endDate);
+   if      (endDow == SAT) { endDate -= 1*DAY;  endDow = FRI; }
+   else if (endDow == SUN) { endDate -= 2*DAYS; endDow = FRI; }
+
+   int workdays = 0;
+   if (startDate <= endDate) {
+      int days = (endDate-startDate)/DAYS + 1;
+      workdays = days/7 * 5;
+      days %= 7;
+      if (days > 0) {
+         if (endDow < startDow) days -= 2;
+         workdays += days;
+      }
+   }
+   return(workdays);
 }
 
 
@@ -7057,6 +7090,7 @@ void __DummyCalls() {
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);
+   CountWorkdays(NULL, NULL);
    CreateDirectory(NULL, NULL);
    CreateString(NULL);
    DateTime1(NULL);
