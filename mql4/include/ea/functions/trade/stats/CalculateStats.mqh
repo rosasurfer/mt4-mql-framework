@@ -27,6 +27,10 @@ void CalculateStats() {
    }
 
    if (trades > processedTrades) {
+      datetime startTime = instance.started;
+      datetime endTime   = ifInt(instance.stopped, instance.stopped, Tick.time);
+      int workdays = CountWorkdays(startTime, endTime);
+
       bool prevNetMisWinner, prevNetMisLoser;
       bool prevNetUisWinner, prevNetUisLoser;
       bool prevSigUisWinner, prevSigUisLoser;
@@ -329,10 +333,11 @@ void CalculateStats() {
          }
       }
 
-      // percentages and averages
+      // percentages, averages and performance ratios
       int metrics = ArrayRange(stats, 0);
-      for (i=1; i < metrics; i++) {                // skip unused metric/index 0
-         stats[i][S_TRADES] = trades;
+      for (i=1; i < metrics; i++) {                 // skip unused metric/index 0
+         stats[i][S_TRADES  ] = trades;
+         stats[i][S_WORKDAYS] = workdays;           // used to annualize returns
 
          stats[i][S_TRADES_LONG_PCT     ] =         MathDiv(stats[i][S_TRADES_LONG         ], stats[i][S_TRADES ]);
          stats[i][S_TRADES_SHORT_PCT    ] =         MathDiv(stats[i][S_TRADES_SHORT        ], stats[i][S_TRADES ]);
@@ -367,79 +372,87 @@ void CalculateStats() {
 
 
 /**
- * Calculate the Sharpe ratio for the specified metric.
+ * Calculate the annualized Sharpe ratio for the specified metric.
  *
- * @param  int id - metric id
+ *  Sharpe ratio = ReturnPerAnno / TotalVolatility
+ *  TotalVolatility = StdDeviation(AllReturns)
  *
- * @return double - positive ratio or -1 if the strategy is not profitable
+ * @param  int metric - metric id
+ *
+ * @return double - positive ratio or -1 if the strategy is not profitable; NULL in case of errors
  */
-double CalculateSharpeRatio(int id) {
-   int trades = stats[id][S_TRADES];                                 // process trades with updated stats only
+double CalculateSharpeRatio(int metric) {
+   double totalProfit = stats[metric][S_TRADES_TOTAL_PROFIT];
+   if (totalProfit < 0) return(-1);
+
+   // process trades with updated stats only
+   int trades = stats[metric][S_TRADES];
    if (!trades) return(0);
-   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSharpeRatio(1)  invalid value stats["+ id +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
+   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSharpeRatio(1)  illegal value stats["+ metric +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
 
-   // Sharpe ratio = ReturnPerAnno / TotalVolatility
-   // TotalVolatility = StdDeviation(AllReturns)
+   // annualize total profit
+   int workdays = stats[metric][S_WORKDAYS];
+   if (workdays <= 0)                   return(!catch("CalculateSharpeRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (out-of-range)", ERR_ILLEGAL_STATE));
+   double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 Holidays
 
-   double returns[], totalReturn=stats[id][S_TRADES_TOTAL_PROFIT];   // TODO: annualize returns
-   ArrayResize(returns, trades);
-
-   int idxProfit[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P};
-   int iProfit = idxProfit[id];
-
-   for (int i=0; i < trades; i++) {                                  // prepare dataset for iStdDevOnArray()
-      returns[i] = history[i][iProfit];
+   // prepare dataset for iStdDevOnArray()
+   double profits[];
+   ArrayResize(profits, trades);
+   int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
+   for (int i=0; i < trades; i++) {
+      profits[i] = history[i][iProfit];
    }
 
-   double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
-   double ratio = NormalizeDouble(totalReturn/stdDev, 2);
+   // calculate stdDeviation and final ratio
+   double stdDev = iStdDevOnArray(profits, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
+   double ratio = NormalizeDouble(annualizedProfit/stdDev, 2);
 
-   ArrayResize(returns, 0);
-
-   if (ratio < 0)
-      return(-1);
+   ArrayResize(profits, 0);
    return(ratio);
 }
 
 
 /**
- * Calculate the Sortino ratio for the specified metric.
+ * Calculate the annualized Sortino ratio for the specified metric.
  *
- * @param  int id - metric id
+ *  Sortino ratio = ReturnPerAnno / DownsideVolatility
+ *  DownsideVolatility = StdDeviation(NegativeReturns)
  *
- * @return double - positive ratio or -1 if the strategy is not profitable
+ * @param  int metric - metric id
+ *
+ * @return double - positive ratio or -1 if the strategy is not profitable; NULL in case of errors
  */
-double CalculateSortinoRatio(int id) {
-   int trades = stats[id][S_TRADES];                                 // process trades with updated stats only
+double CalculateSortinoRatio(int metric) {
+   double totalProfit = stats[metric][S_TRADES_TOTAL_PROFIT];
+   if (totalProfit < 0) return(-1);
+
+   // process trades with updated stats only
+   int trades = stats[metric][S_TRADES];
    if (!trades) return(0);
-   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSortinoRatio(1)  invalid value stats["+ id +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
+   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSortinoRatio(1)  illegal value stats["+ metric +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
 
-   // Sortino ratio = ReturnPerAnno / DownsideVolatility
-   // DownsideVolatility = StdDeviation(NegativeReturns)
+   // annualize total profit
+   int workdays = stats[metric][S_WORKDAYS];
+   if (workdays <= 0)                   return(!catch("CalculateSortinoRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (out-of-range)", ERR_ILLEGAL_STATE));
+   double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 Holidays
 
-   double returns[], totalReturn=stats[id][S_TRADES_TOTAL_PROFIT];   // TODO: annualize returns
-   ArrayResize(returns, trades);
-
-   int cmpFields[] = {0, H_NETPROFIT_P, H_NETPROFIT_P, H_SIG_PROFIT_P};
-   int iCmpField = cmpFields[id];
-
-   int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P};
-   int iProfit = profitFields[id], n=0;
-
-   for (int i=0; i < trades; i++) {                                  // prepare dataset for iStdDevOnArray()
+   // prepare dataset for iStdDevOnArray()
+   double profits[];
+   ArrayResize(profits, trades);
+   int cmpFields   [] = {0, H_NETPROFIT_P, H_NETPROFIT_P, H_SIG_PROFIT_P}, iCmpField=cmpFields[metric];
+   int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric], n=0;
+   for (int i=0; i < trades; i++) {
       if (history[i][iCmpField] < -HalfPoint) {
-         returns[n] = history[i][iProfit];
+         profits[n] = history[i][iProfit];
          n++;
       }
    }
-   ArrayResize(returns, n);
+   ArrayResize(profits, n);
 
-   double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, n, 0, MODE_SMA, 0);
-   double ratio = NormalizeDouble(totalReturn/stdDev, 2);
+   // calculate stdDeviation and final ratio
+   double stdDev = iStdDevOnArray(profits, WHOLE_ARRAY, n, 0, MODE_SMA, 0);
+   double ratio = NormalizeDouble(annualizedProfit/stdDev, 2);
 
-   ArrayResize(returns, 0);
-
-   if (ratio < 0)
-      return(-1);
+   ArrayResize(profits, 0);
    return(ratio);
 }

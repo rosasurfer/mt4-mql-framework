@@ -1,7 +1,7 @@
 /**
  * Trade statistic related constants and global vars.
  */
-double stats[4][70];                            // trade statistic with metric id as main index (0 is not used)
+double stats[4][71];                            // trade statistic with metric id as main index (0 is not used)
 
 #define S_TRADES                           0    // stats[] field indexes
 #define S_TRADES_LONG                      1
@@ -77,3 +77,4 @@ double stats[4][70];                            // trade statistic with metric i
 #define S_SCRATCH_SHORT_PCT               68
 
 #define S_LAST_TRADE_TYPE                 69    // type of last processed trade: winner|loser|scratch
+#define S_WORKDAYS                        70    // number of workdays covered by the trades (used to annualize returns)
