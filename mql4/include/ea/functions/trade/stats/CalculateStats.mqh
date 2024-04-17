@@ -1,12 +1,14 @@
 /**
  * Update trade statistics.
  *
- *  Profit factor = GrossProfit/GrossLoss
+ *  Profit factor = GrossProfit / GrossLoss
+ *  Sharpe ratio  = ReturnPerAnno / TotalVolatility;    TotalVolatility    = StdDeviation(AllReturns)
+ *  Sortino ratio = ReturnPerAnno / DownsideVolatility; DownsideVolatility = StdDeviation(NegativeReturns)
  *
  *
  * TODO:
- *  - Sortino ratio = Return / DownsideVolatility           // gain / std-deviation-of-losers (same as std-deviation using only negative data points)
- *  - Calmar ratio  = Return / MaxDrawdown                  // gain / +max-drawdown
+ *  - annualize returns for ratios (255 trading days/year: 365 - 104 Sat/Sun - ~6-non-trading/holidays)
+ *  - Calmar ratio = ReturnPerAnno / MaxRelativeDrawdown                  // gain / +max-drawdown
  *  - Z-score
  *  - MaxRecoveryTime
  *  - Zephyr Pain Index: https://investexcel.net/zephyr-pain-index/
@@ -358,6 +360,7 @@ void CalculateStats() {
          stats[i][S_LOSERS_AVG_DRAWDOWN ] =         MathDiv(stats[i][S_LOSERS_SUM_DRAWDOWN ], stats[i][S_LOSERS ]);
 
          stats[i][S_TRADES_SHARPE_RATIO ] = CalculateSharpeRatio(i);
+         stats[i][S_TRADES_SORTINO_RATIO] = CalculateSortinoRatio(i);
       }
    }
 }
@@ -368,28 +371,75 @@ void CalculateStats() {
  *
  * @param  int id - metric id
  *
- * @return double
+ * @return double - positive ratio or -1 if the strategy is not profitable
  */
 double CalculateSharpeRatio(int id) {
-   int trades = stats[id][S_TRADES];                           // process trades with updated stats only
+   int trades = stats[id][S_TRADES];                                 // process trades with updated stats only
    if (!trades) return(0);
    if (trades > ArrayRange(history, 0)) return(!catch("CalculateSharpeRatio(1)  invalid value stats["+ id +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
 
-   // Sharpe ratio = TotalReturn / Std-Deviation
+   // Sharpe ratio = ReturnPerAnno / TotalVolatility
+   // TotalVolatility = StdDeviation(AllReturns)
 
-   double returns[], totalReturn=stats[id][S_TRADES_TOTAL_PROFIT];
+   double returns[], totalReturn=stats[id][S_TRADES_TOTAL_PROFIT];   // TODO: annualize returns
    ArrayResize(returns, trades);
 
    int idxProfit[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P};
    int iProfit = idxProfit[id];
 
-   for (int i=0; i < trades; i++) {                            // prepare data for iStdDevOnArray()
+   for (int i=0; i < trades; i++) {                                  // prepare dataset for iStdDevOnArray()
       returns[i] = history[i][iProfit];
    }
 
    double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
-   double ratio  = totalReturn/stdDev;
+   double ratio = NormalizeDouble(totalReturn/stdDev, 2);
 
    ArrayResize(returns, 0);
+
+   if (ratio < 0)
+      return(-1);
+   return(ratio);
+}
+
+
+/**
+ * Calculate the Sortino ratio for the specified metric.
+ *
+ * @param  int id - metric id
+ *
+ * @return double - positive ratio or -1 if the strategy is not profitable
+ */
+double CalculateSortinoRatio(int id) {
+   int trades = stats[id][S_TRADES];                                 // process trades with updated stats only
+   if (!trades) return(0);
+   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSortinoRatio(1)  invalid value stats["+ id +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
+
+   // Sortino ratio = ReturnPerAnno / DownsideVolatility
+   // DownsideVolatility = StdDeviation(NegativeReturns)
+
+   double returns[], totalReturn=stats[id][S_TRADES_TOTAL_PROFIT];   // TODO: annualize returns
+   ArrayResize(returns, trades);
+
+   int cmpFields[] = {0, H_NETPROFIT_P, H_NETPROFIT_P, H_SIG_PROFIT_P};
+   int iCmpField = cmpFields[id];
+
+   int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P};
+   int iProfit = profitFields[id], n=0;
+
+   for (int i=0; i < trades; i++) {                                  // prepare dataset for iStdDevOnArray()
+      if (history[i][iCmpField] < -HalfPoint) {
+         returns[n] = history[i][iProfit];
+         n++;
+      }
+   }
+   ArrayResize(returns, n);
+
+   double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, n, 0, MODE_SMA, 0);
+   double ratio = NormalizeDouble(totalReturn/stdDev, 2);
+
+   ArrayResize(returns, 0);
+
+   if (ratio < 0)
+      return(-1);
    return(ratio);
 }
