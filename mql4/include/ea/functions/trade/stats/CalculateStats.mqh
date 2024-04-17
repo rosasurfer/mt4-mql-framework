@@ -7,7 +7,6 @@
  *
  *
  * TODO:
- *  - annualize returns for ratios (255 trading days/year: 365 - 104 Sat/Sun - ~6-non-trading/holidays)
  *  - Calmar ratio = ReturnPerAnno / MaxRelativeDrawdown                  // gain / +max-drawdown
  *  - Z-score
  *  - MaxRecoveryTime
@@ -383,7 +382,7 @@ void CalculateStats() {
  */
 double CalculateSharpeRatio(int metric) {
    double totalProfit = stats[metric][S_TRADES_TOTAL_PROFIT];
-   if (totalProfit < 0) return(-1);
+   if (totalProfit <= 0) return(ifInt(!totalProfit, 0, -1));
 
    // process trades with updated stats only
    int trades = stats[metric][S_TRADES];
@@ -392,7 +391,7 @@ double CalculateSharpeRatio(int metric) {
 
    // annualize total profit
    int workdays = stats[metric][S_WORKDAYS];
-   if (workdays <= 0)                   return(!catch("CalculateSharpeRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (out-of-range)", ERR_ILLEGAL_STATE));
+   if (workdays <= 0)                   return(!catch("CalculateSharpeRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
    double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 Holidays
 
    // prepare dataset for iStdDevOnArray()
@@ -424,7 +423,7 @@ double CalculateSharpeRatio(int metric) {
  */
 double CalculateSortinoRatio(int metric) {
    double totalProfit = stats[metric][S_TRADES_TOTAL_PROFIT];
-   if (totalProfit < 0) return(-1);
+   if (totalProfit <= 0) return(ifInt(!totalProfit, 0, -1));
 
    // process trades with updated stats only
    int trades = stats[metric][S_TRADES];
@@ -433,7 +432,7 @@ double CalculateSortinoRatio(int metric) {
 
    // annualize total profit
    int workdays = stats[metric][S_WORKDAYS];
-   if (workdays <= 0)                   return(!catch("CalculateSortinoRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (out-of-range)", ERR_ILLEGAL_STATE));
+   if (workdays <= 0)                   return(!catch("CalculateSortinoRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
    double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 Holidays
 
    // prepare dataset for iStdDevOnArray()
