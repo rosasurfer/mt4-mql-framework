@@ -780,8 +780,10 @@ bool StartTrading(double signal[]) {
    double sigPrice = signal[SIG_PRICE];
    int    sigOp    = signal[SIG_OP   ]; sigOp &= (SIG_OP_LONG|SIG_OP_SHORT);
 
-   instance.status = STATUS_TRADING;
    if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
+   if (!instance.started) instance.started = Tick.time;
+   instance.stopped = NULL;
+   instance.status = STATUS_TRADING;
 
    // open a new position
    int      type        = ifInt(sigOp==SIG_OP_LONG, OP_BUY, OP_SELL), oeFlags, oe[];
@@ -1041,6 +1043,8 @@ bool StopTrading(double signal[]) {
 
       default: return(!catch("StopTrading(2)  "+ instance.name +" invalid parameter SIG_TYPE: "+ sigType, ERR_INVALID_PARAMETER));
    }
+   if (instance.status == STATUS_STOPPED) instance.stopped = Tick.time;
+
    SS.StartStopConditions();
    SS.TotalProfit();
    SS.ProfitStats();
@@ -1161,7 +1165,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
    WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
    WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "instance.started",           /*datetime*/ instance.started + GmtTimeFormat(instance.started, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.started",           /*datetime*/ instance.started + ifString(!instance.started, "", GmtTimeFormat(instance.started, " (%a, %Y.%m.%d %H:%M:%S)")));
+   WriteIniString(file, section, "instance.stopped",           /*datetime*/ instance.stopped + ifString(!instance.stopped, "", GmtTimeFormat(instance.stopped, " (%a, %Y.%m.%d %H:%M:%S)")));
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
    WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "instance.startEquity",       /*double  */ DoubleToStr(instance.startEquity, 2));
@@ -1226,9 +1231,10 @@ bool ReadStatus() {
    instance.id                = GetIniInt    (file, section, "instance.id"         );              // int      instance.id                = 123
    instance.name              = GetIniStringA(file, section, "instance.name",    "");              // string   instance.name              = Z.123
    instance.created           = GetIniInt    (file, section, "instance.created"    );              // datetime instance.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.started           = GetIniInt    (file, section, "instance.started"    );              // datetime instance.started           = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.stopped           = GetIniInt    (file, section, "instance.stopped"    );              // datetime instance.stopped           = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest            = GetIniBool   (file, section, "instance.isTest"     );              // bool     instance.isTest            = 1
    instance.status            = GetIniInt    (file, section, "instance.status"     );              // int      instance.status            = 1 (waiting)
-   instance.started           = GetIniInt    (file, section, "instance.started"    );              // datetime instance.started           = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.startEquity       = GetIniDouble (file, section, "instance.startEquity");              // double   instance.startEquity       = 1000.00
    recorder.stdEquitySymbol   = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");      // string   recorder.stdEquitySymbol   = GBPJPY.001
    SS.InstanceName();

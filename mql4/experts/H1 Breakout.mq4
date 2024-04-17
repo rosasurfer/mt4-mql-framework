@@ -227,6 +227,11 @@ bool StartTrading(double signal[]) {
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartTrading(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (!signal[SIG_OP])                                                    return(!catch("StartTrading(2)  "+ instance.name +" invalid signal parameter SIG_OP: 0", ERR_INVALID_PARAMETER));
 
+   if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
+   if (!instance.started) instance.started = Tick.time;
+   instance.stopped = NULL;
+   instance.status = STATUS_TRADING;
+
    return(SaveStatus());
 }
 
@@ -301,6 +306,7 @@ bool ReadStatus() {
    instance.name            = GetIniStringA(file, section, "instance.name", "");             // string   instance.name            = ID.123
    instance.created         = GetIniInt    (file, section, "instance.created" );             // datetime instance.created         = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.started         = GetIniInt    (file, section, "instance.started" );             // datetime instance.started         = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.stopped         = GetIniInt    (file, section, "instance.stopped" );             // datetime instance.stopped         = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest          = GetIniBool   (file, section, "instance.isTest"  );             // bool     instance.isTest          = 1
    instance.status          = GetIniInt    (file, section, "instance.status"  );             // int      instance.status          = 1 (waiting)
    recorder.stdEquitySymbol = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");  // string   recorder.stdEquitySymbol = GBPJPY.001
@@ -389,7 +395,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
    WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
    WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "instance.started",           /*datetime*/ instance.started + GmtTimeFormat(instance.started, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.started",           /*datetime*/ instance.started + ifString(!instance.started, "", GmtTimeFormat(instance.started, " (%a, %Y.%m.%d %H:%M:%S)")));
+   WriteIniString(file, section, "instance.stopped",           /*datetime*/ instance.stopped + ifString(!instance.stopped, "", GmtTimeFormat(instance.stopped, " (%a, %Y.%m.%d %H:%M:%S)")));
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
    WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
