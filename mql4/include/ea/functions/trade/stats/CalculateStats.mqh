@@ -5,13 +5,15 @@
  *
  *
  * TODO:
- *  - Sharp ratio
- *  - Sortino ratio
- *  - Calmar ratio
+ *  - Sortino ratio = Return / DownsideVolatility           // gain / std-deviation-of-losers (same as std-deviation using only negative data points)
+ *  - Calmar ratio  = Return / MaxDrawdown                  // gain / +max-drawdown
  *  - Z-score
- *  - recovery time
+ *  - MaxRecoveryTime
  *  - Zephyr Pain Index: https://investexcel.net/zephyr-pain-index/
  *  - Zephyr K-Ratio:    http://web.archive.org/web/20210116024652/https://www.styleadvisor.com/resources/statfacts/zephyr-k-ratio
+ *
+ *  @link  https://www.calculator.net/standard-deviation-calculator.html#                                                                           [StdDev calculator with inputs for sample vs. population]
+ *  @link  https://www.khanacademy.org/math/statistics-probability/summarizing-quantitative-data/variance-standard-deviation-population/a/calculating-standard-deviation-step-by-step# [Sample vs population]
  */
 void CalculateStats() {
    int trades = ArrayRange(history, 0);
@@ -58,11 +60,11 @@ void CalculateStats() {
             stats[METRIC_NET_MONEY][S_WINNERS_CUR_CONS_FROM] = INT_MAX;
             stats[METRIC_NET_MONEY][S_LOSERS_CUR_CONS_FROM ] = INT_MAX;
          }
-         else if (stats[METRIC_NET_MONEY][S_TRADES_LAST_TRADE_RESULT] > 0) {
+         else if (stats[METRIC_NET_MONEY][S_LAST_TRADE_TYPE] > 0) {
             prevNetMisWinner = true;
             prevNetMisLoser = false;
          }
-         else if (stats[METRIC_NET_MONEY][S_TRADES_LAST_TRADE_RESULT] < 0) {
+         else if (stats[METRIC_NET_MONEY][S_LAST_TRADE_TYPE] < 0) {
             prevNetMisWinner = false;
             prevNetMisLoser = true;
          }
@@ -98,7 +100,7 @@ void CalculateStats() {
                stats[METRIC_NET_MONEY][S_WINNERS_MAX_CONS_PROFIT_TO   ] = stats[METRIC_NET_MONEY][S_WINNERS_CUR_CONS_TO    ];
                stats[METRIC_NET_MONEY][S_WINNERS_MAX_CONS_PROFIT_COUNT] = stats[METRIC_NET_MONEY][S_WINNERS_CUR_CONS_COUNT ];
             }
-            stats[METRIC_NET_MONEY][S_TRADES_LAST_TRADE_RESULT] = 1;
+            stats[METRIC_NET_MONEY][S_LAST_TRADE_TYPE] = 1;
          }
          else if (history[i][H_NETPROFIT_P] < -HalfPoint) {
             // loser
@@ -132,14 +134,14 @@ void CalculateStats() {
                stats[METRIC_NET_MONEY][S_LOSERS_MAX_CONS_LOSS_TO   ] = stats[METRIC_NET_MONEY][S_LOSERS_CUR_CONS_TO   ];
                stats[METRIC_NET_MONEY][S_LOSERS_MAX_CONS_LOSS_COUNT] = stats[METRIC_NET_MONEY][S_LOSERS_CUR_CONS_COUNT];
             }
-            stats[METRIC_NET_MONEY][S_TRADES_LAST_TRADE_RESULT] = -1;
+            stats[METRIC_NET_MONEY][S_LAST_TRADE_TYPE] = -1;
          }
          else {
             // scratch
             stats[METRIC_NET_MONEY][S_SCRATCH]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_NET_MONEY][S_SCRATCH_LONG ]++;
             else                               stats[METRIC_NET_MONEY][S_SCRATCH_SHORT]++;
-            stats[METRIC_NET_MONEY][S_TRADES_LAST_TRADE_RESULT] = 0;
+            stats[METRIC_NET_MONEY][S_LAST_TRADE_TYPE] = 0;
          }
 
          // METRIC_NET_UNITS
@@ -149,11 +151,11 @@ void CalculateStats() {
             stats[METRIC_NET_UNITS][S_WINNERS_CUR_CONS_FROM] = INT_MAX;
             stats[METRIC_NET_UNITS][S_LOSERS_CUR_CONS_FROM ] = INT_MAX;
          }
-         else if (stats[METRIC_NET_UNITS][S_TRADES_LAST_TRADE_RESULT] > 0) {
+         else if (stats[METRIC_NET_UNITS][S_LAST_TRADE_TYPE] > 0) {
             prevNetUisWinner = true;
             prevNetUisLoser = false;
          }
-         else if (stats[METRIC_NET_UNITS][S_TRADES_LAST_TRADE_RESULT] < 0) {
+         else if (stats[METRIC_NET_UNITS][S_LAST_TRADE_TYPE] < 0) {
             prevNetUisWinner = false;
             prevNetUisLoser = true;
          }
@@ -189,7 +191,7 @@ void CalculateStats() {
                stats[METRIC_NET_UNITS][S_WINNERS_MAX_CONS_PROFIT_TO   ] = stats[METRIC_NET_UNITS][S_WINNERS_CUR_CONS_TO    ];
                stats[METRIC_NET_UNITS][S_WINNERS_MAX_CONS_PROFIT_COUNT] = stats[METRIC_NET_UNITS][S_WINNERS_CUR_CONS_COUNT ];
             }
-            stats[METRIC_NET_UNITS][S_TRADES_LAST_TRADE_RESULT] = 1;
+            stats[METRIC_NET_UNITS][S_LAST_TRADE_TYPE] = 1;
          }
          else if (history[i][H_NETPROFIT_P] < -HalfPoint) {
             // loser
@@ -223,14 +225,14 @@ void CalculateStats() {
                stats[METRIC_NET_UNITS][S_LOSERS_MAX_CONS_LOSS_TO   ] = stats[METRIC_NET_UNITS][S_LOSERS_CUR_CONS_TO   ];
                stats[METRIC_NET_UNITS][S_LOSERS_MAX_CONS_LOSS_COUNT] = stats[METRIC_NET_UNITS][S_LOSERS_CUR_CONS_COUNT];
             }
-            stats[METRIC_NET_UNITS][S_TRADES_LAST_TRADE_RESULT] = -1;
+            stats[METRIC_NET_UNITS][S_LAST_TRADE_TYPE] = -1;
          }
          else {
             // scratch
             stats[METRIC_NET_UNITS][S_SCRATCH]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_NET_UNITS][S_SCRATCH_LONG ]++;
             else                               stats[METRIC_NET_UNITS][S_SCRATCH_SHORT]++;
-            stats[METRIC_NET_UNITS][S_TRADES_LAST_TRADE_RESULT] = 0;
+            stats[METRIC_NET_UNITS][S_LAST_TRADE_TYPE] = 0;
          }
 
          // METRIC_SIG_UNITS
@@ -240,11 +242,11 @@ void CalculateStats() {
             stats[METRIC_SIG_UNITS][S_WINNERS_CUR_CONS_FROM] = INT_MAX;
             stats[METRIC_SIG_UNITS][S_LOSERS_CUR_CONS_FROM ] = INT_MAX;
          }
-         else if (stats[METRIC_SIG_UNITS][S_TRADES_LAST_TRADE_RESULT] > 0) {
+         else if (stats[METRIC_SIG_UNITS][S_LAST_TRADE_TYPE] > 0) {
             prevSigUisWinner = true;
             prevSigUisLoser = false;
          }
-         else if (stats[METRIC_SIG_UNITS][S_TRADES_LAST_TRADE_RESULT] < 0) {
+         else if (stats[METRIC_SIG_UNITS][S_LAST_TRADE_TYPE] < 0) {
             prevSigUisWinner = false;
             prevSigUisLoser = true;
          }
@@ -280,7 +282,7 @@ void CalculateStats() {
                stats[METRIC_SIG_UNITS][S_WINNERS_MAX_CONS_PROFIT_TO   ] = stats[METRIC_SIG_UNITS][S_WINNERS_CUR_CONS_TO    ];
                stats[METRIC_SIG_UNITS][S_WINNERS_MAX_CONS_PROFIT_COUNT] = stats[METRIC_SIG_UNITS][S_WINNERS_CUR_CONS_COUNT ];
             }
-            stats[METRIC_SIG_UNITS][S_TRADES_LAST_TRADE_RESULT] = 1;
+            stats[METRIC_SIG_UNITS][S_LAST_TRADE_TYPE] = 1;
          }
          else if (history[i][H_SIG_PROFIT_P] < -HalfPoint) {
             // loser
@@ -314,19 +316,20 @@ void CalculateStats() {
                stats[METRIC_SIG_UNITS][S_LOSERS_MAX_CONS_LOSS_TO   ] = stats[METRIC_SIG_UNITS][S_LOSERS_CUR_CONS_TO   ];
                stats[METRIC_SIG_UNITS][S_LOSERS_MAX_CONS_LOSS_COUNT] = stats[METRIC_SIG_UNITS][S_LOSERS_CUR_CONS_COUNT];
             }
-            stats[METRIC_SIG_UNITS][S_TRADES_LAST_TRADE_RESULT] = -1;
+            stats[METRIC_SIG_UNITS][S_LAST_TRADE_TYPE] = -1;
          }
          else {
             // scratch
             stats[METRIC_SIG_UNITS][S_SCRATCH]++;
             if (history[i][H_TYPE] == OP_LONG) stats[METRIC_SIG_UNITS][S_SCRATCH_LONG ]++;
             else                               stats[METRIC_SIG_UNITS][S_SCRATCH_SHORT]++;
-            stats[METRIC_SIG_UNITS][S_TRADES_LAST_TRADE_RESULT] = 0;
+            stats[METRIC_SIG_UNITS][S_LAST_TRADE_TYPE] = 0;
          }
       }
 
       // percentages and averages
-      for (i=ArrayRange(stats, 0)-1; i > 0; i--) {                // skip unused index 0
+      int metrics = ArrayRange(stats, 0);
+      for (i=1; i < metrics; i++) {                // skip unused metric/index 0
          stats[i][S_TRADES] = trades;
 
          stats[i][S_TRADES_LONG_PCT     ] =         MathDiv(stats[i][S_TRADES_LONG         ], stats[i][S_TRADES ]);
@@ -353,6 +356,40 @@ void CalculateStats() {
          stats[i][S_LOSERS_AVG_LOSS     ] =         MathDiv(stats[i][S_LOSERS_GROSS_LOSS   ], stats[i][S_LOSERS ]);
          stats[i][S_LOSERS_AVG_RUNUP    ] =         MathDiv(stats[i][S_LOSERS_SUM_RUNUP    ], stats[i][S_LOSERS ]);
          stats[i][S_LOSERS_AVG_DRAWDOWN ] =         MathDiv(stats[i][S_LOSERS_SUM_DRAWDOWN ], stats[i][S_LOSERS ]);
+
+         stats[i][S_TRADES_SHARPE_RATIO ] = CalculateSharpeRatio(i);
       }
    }
+}
+
+
+/**
+ * Calculate the Sharpe ratio for the specified metric.
+ *
+ * @param  int id - metric id
+ *
+ * @return double
+ */
+double CalculateSharpeRatio(int id) {
+   int trades = stats[id][S_TRADES];                           // process trades with updated stats only
+   if (!trades) return(0);
+   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSharpeRatio(1)  invalid value stats["+ id +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
+
+   // Sharpe ratio = TotalReturn / Std-Deviation
+
+   double returns[], totalReturn=stats[id][S_TRADES_TOTAL_PROFIT];
+   ArrayResize(returns, trades);
+
+   int idxProfit[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P};
+   int iProfit = idxProfit[id];
+
+   for (int i=0; i < trades; i++) {                            // prepare data for iStdDevOnArray()
+      returns[i] = history[i][iProfit];
+   }
+
+   double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
+   double ratio  = totalReturn/stdDev;
+
+   ArrayResize(returns, 0);
+   return(ratio);
 }

@@ -1,9 +1,9 @@
 /**
  * Trade statistic related constants and global vars.
  */
-double stats[4][67];                            // trade statistic per metric with metric id as index (0 is unused)
+double stats[4][68];                            // trade statistic with metric id as main index (0 is not used)
 
-#define S_TRADES                           0    // indexes of trade statistics
+#define S_TRADES                           0    // stats[] field indexes
 #define S_TRADES_LONG                      1
 #define S_TRADES_LONG_PCT                  2
 #define S_TRADES_SHORT                     3
@@ -15,7 +15,7 @@ double stats[4][67];                            // trade statistic per metric wi
 #define S_TRADES_AVG_RUNUP                 9
 #define S_TRADES_AVG_DRAWDOWN             10
 #define S_TRADES_PROFIT_FACTOR            11
-#define S_TRADES_LAST_TRADE_RESULT        12    // result type of last processed trade: winner|loser|scratch
+#define S_TRADES_SHARPE_RATIO             12
 
 #define S_WINNERS                         13
 #define S_WINNERS_PCT                     14
@@ -73,3 +73,5 @@ double stats[4][67];                            // trade statistic per metric wi
 #define S_SCRATCH_LONG_PCT                64
 #define S_SCRATCH_SHORT                   65
 #define S_SCRATCH_SHORT_PCT               66
+
+#define S_LAST_TRADE_TYPE                 67    // type of last processed trade: winner|loser|scratch
