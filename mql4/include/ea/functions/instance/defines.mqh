@@ -8,7 +8,8 @@
 
 int      instance.id;                  // actual instance id (also used to generate magic order numbers)
 string   instance.name = "";
-datetime instance.created;
+datetime instance.created;             // local system time (also in tester)
 bool     instance.isTest;              // whether the instance is a test
 int      instance.status;
+datetime instance.started;             // trade server time (modeled in tester)
 double   instance.startEquity;

@@ -396,6 +396,7 @@ bool ReadStatus() {
    instance.id              = GetIniInt    (file, section, "instance.id"      );             // int      instance.id              = 123
    instance.name            = GetIniStringA(file, section, "instance.name", "");             // string   instance.name            = ID.123
    instance.created         = GetIniInt    (file, section, "instance.created" );             // datetime instance.created         = 1624924800 (Mon, 2021.05.12 13:22:34)
+   instance.started         = GetIniInt    (file, section, "instance.started" );             // datetime instance.started         = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest          = GetIniBool   (file, section, "instance.isTest"  );             // bool     instance.isTest          = 1
    instance.status          = GetIniInt    (file, section, "instance.status"  );             // int      instance.status          = 1 (waiting)
    recorder.stdEquitySymbol = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");  // string   recorder.stdEquitySymbol = GBPJPY.001
@@ -495,6 +496,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
    WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
    WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.started",           /*datetime*/ instance.started + GmtTimeFormat(instance.started, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
    WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "recorder.stdEquitySymbol",   /*string  */ recorder.stdEquitySymbol + separator);
@@ -519,13 +521,6 @@ bool     prev.BreakevenStop;
 bool     prev.TrailingStop;
 bool     prev.ShowProfitInPercent;
 
-// backed-up runtime variables affected by changing input parameters
-int      prev.instance.id;
-string   prev.instance.name = "";
-datetime prev.instance.created;
-bool     prev.instance.isTest;
-int      prev.instance.status;
-
 
 /**
  * When input parameters are changed at runtime, input errors must be handled gracefully. To enable the EA to continue in
@@ -549,12 +544,6 @@ void BackupInputs() {
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
-   prev.instance.id      = instance.id;
-   prev.instance.name    = instance.name;
-   prev.instance.created = instance.created;
-   prev.instance.isTest  = instance.isTest;
-   prev.instance.status  = instance.status;
-
    Recorder_BackupInputs();
 }
 
@@ -576,12 +565,6 @@ void RestoreInputs() {
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
-   instance.id      = prev.instance.id;
-   instance.name    = prev.instance.name;
-   instance.created = prev.instance.created;
-   instance.isTest  = prev.instance.isTest;
-   instance.status  = prev.instance.status;
-
    Recorder_RestoreInputs();
 }
 

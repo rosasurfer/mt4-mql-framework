@@ -3903,7 +3903,7 @@ int MarketWatch.Symbols() {
  * Extended version of TimeCurrent().
  *
  * Return the server time of the last tick of all subscribed symbols as a Unix timestamp (seconds since 01.01.1970 00:00
- * server time). In tester this time is modelled. Use TimeServer() to get the server time irrespective of received ticks.
+ * server time). In tester this time is modeled. Use TimeServer() to get the server time irrespective of received ticks.
  *
  * The underlying call to TimeCurrent() may return 0 without signaling an error under various conditions (e.g. if no locally
  * stored ticks are available or in older builds in tester when loading standalone indicators). This function will log such
@@ -3932,7 +3932,7 @@ datetime TimeCurrentEx(string caller, bool useLastBar=false, bool strict=true) {
 /**
  * Return the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
  *
- * In tester this time is modelled. Use GetFxtTime() to get the non-modelled FXT time in tester.
+ * In tester this time is modeled. Use GetFxtTime() to get the non-modeled FXT time in tester.
  *
  * @return datetime - time or NULL (0) in case of errors
  */
@@ -3946,7 +3946,7 @@ datetime TimeFXT() {
 /**
  * Return the current GMT time as a Unix timestamp (seconds since 01.01.1970 00:00 GMT).
  *
- * In tester this time is modelled. Use GetGmtTime() to get the non-modelled GMT time in tester.
+ * In tester this time is modeled. Use GetGmtTime() to get the non-modeled GMT time in tester.
  *
  * @return datetime - time or NULL (0) in case of errors
  */
@@ -3964,11 +3964,11 @@ datetime TimeGMT() {
  *
  * Return the current local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time).
  *
- * In tester this time is modelled and mapped to TimeCurrent(), meaning the modelled local time matches the modelled server
+ * In tester this time is modeled and mapped to TimeCurrent(), meaning the modeled local time matches the modeled server
  * time. This mapping may return 0 without signaling an error under various conditions (e.g. if no locally stored ticks are
  * available or in older builds in tester when loading standalone indicators). This function will log such errors.
  *
- * Use GetLocalTime() to get the non-modelled local time in tester.
+ * Use GetLocalTime() to get the non-modeled local time in tester.
  *
  * @param  string caller            - location identifier of the caller
  * @param  bool   strict [optional] - whether TimeLocal() returning 0 causes a fatal terminating error (default: yes)
@@ -3991,7 +3991,7 @@ datetime TimeLocalEx(string caller, bool strict = true) {
  * Return the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
  * known tick time which is updated on new ticks only.
  *
- * In tester this time is modelled. Use GetServerTime() to get the non-modelled server time in tester.
+ * In tester this time is modeled. Use GetServerTime() to get the non-modeled server time in tester.
  *
  * @param  string caller     [optional] - location identifier of the caller (default: none)
  * @param  bool   useLastBar [optional] - whether to return the time of the last bar if server time is not available (default: no)
@@ -4025,7 +4025,7 @@ datetime TimeServer(string caller="", bool useLastBar=false) {
 /**
  * Return the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
  *
- * Not modelled in tester. Use TimeFXT() to get the modelled FXT time in tester.
+ * Not modeled in tester. Use TimeFXT() to get the modeled FXT time in tester.
  *
  * @return datetime - time or NULL (0) in case of errors
  */
@@ -4039,7 +4039,7 @@ datetime GetFxtTime() {
 /**
  * Return the current GMT time as a Unix timestamp (seconds since 01.01.1970 00:00 GMT).
  *
- * Not modelled in tester. Use TimeGmt() to get the modelled GMT time in tester.
+ * Not modeled in tester. Use TimeGmt() to get the modeled GMT time in tester.
  *
  * @return datetime
  */
@@ -4051,7 +4051,7 @@ datetime GetGmtTime() {
 /**
  * Return the current local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time).
  *
- * Not modelled in tester. Use TimeLocal() to get the modelled local time in tester.
+ * Not modeled in tester. Use TimeLocal() to get the modeled local time in tester.
  *
  * @return datetime
  */
@@ -4064,7 +4064,7 @@ datetime GetLocalTime() {
  * Return the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
  * known tick time which is updated on new ticks only.
  *
- * Not modelled in tester. Use TimeServer() to get the modelled server time in tester.
+ * Not modeled in tester. Use TimeServer() to get the modeled server time in tester.
  *
  * @return datetime - time or NULL (0) in case of errors
  */

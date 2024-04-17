@@ -1161,6 +1161,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
    WriteIniString(file, section, "instance.name",              /*string  */ instance.name);
    WriteIniString(file, section, "instance.created",           /*datetime*/ instance.created + GmtTimeFormat(instance.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "instance.started",           /*datetime*/ instance.started + GmtTimeFormat(instance.started, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "instance.isTest",            /*bool    */ instance.isTest);
    WriteIniString(file, section, "instance.status",            /*int     */ instance.status +" ("+ StatusDescription(instance.status) +")");
    WriteIniString(file, section, "instance.startEquity",       /*double  */ DoubleToStr(instance.startEquity, 2));
@@ -1227,6 +1228,7 @@ bool ReadStatus() {
    instance.created           = GetIniInt    (file, section, "instance.created"    );              // datetime instance.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.isTest            = GetIniBool   (file, section, "instance.isTest"     );              // bool     instance.isTest            = 1
    instance.status            = GetIniInt    (file, section, "instance.status"     );              // int      instance.status            = 1 (waiting)
+   instance.started           = GetIniInt    (file, section, "instance.started"    );              // datetime instance.started           = 1624924800 (Mon, 2021.05.12 13:22:34)
    instance.startEquity       = GetIniDouble (file, section, "instance.startEquity");              // double   instance.startEquity       = 1000.00
    recorder.stdEquitySymbol   = GetIniStringA(file, section, "recorder.stdEquitySymbol", "");      // string   recorder.stdEquitySymbol   = GBPJPY.001
    SS.InstanceName();
@@ -1391,12 +1393,6 @@ int      prev.EntryOrder.Distance;
 bool     prev.ShowProfitInPercent;
 
 // backed-up runtime variables affected by changing input parameters
-int      prev.instance.id;
-string   prev.instance.name = "";
-datetime prev.instance.created;
-bool     prev.instance.isTest;
-int      prev.instance.status;
-
 bool     prev.start.time.condition;
 datetime prev.start.time.value;
 bool     prev.start.time.isDaily;
@@ -1434,12 +1430,6 @@ void BackupInputs() {
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
-   prev.instance.id                = instance.id;
-   prev.instance.name              = instance.name;
-   prev.instance.created           = instance.created;
-   prev.instance.isTest            = instance.isTest;
-   prev.instance.status            = instance.status;
-
    prev.start.time.condition       = start.time.condition;
    prev.start.time.value           = start.time.value;
    prev.start.time.isDaily         = start.time.isDaily;
@@ -1475,12 +1465,6 @@ void RestoreInputs() {
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
-   instance.id                = prev.instance.id;
-   instance.name              = prev.instance.name;
-   instance.created           = prev.instance.created;
-   instance.isTest            = prev.instance.isTest;
-   instance.status            = prev.instance.status;
-
    start.time.condition       = prev.start.time.condition;
    start.time.value           = prev.start.time.value;
    start.time.isDaily         = prev.start.time.isDaily;
