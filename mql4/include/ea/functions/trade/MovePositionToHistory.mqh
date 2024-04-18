@@ -81,9 +81,9 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    }
 
    // update PnL stats
-   instance.closedNetProfit  += open.netProfitM;
-   instance.closedNetProfitP += open.netProfitP;
-   instance.closedSigProfitP += open.sigProfitP;
+   stats.closedNetProfit  += open.netProfitM;
+   stats.closedNetProfitP += open.netProfitP;
+   stats.closedSigProfitP += open.sigProfitP;
 
    if (!open.toTicket) {
       if (open.fromTicket > 0) {

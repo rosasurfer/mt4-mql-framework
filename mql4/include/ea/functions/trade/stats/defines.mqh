@@ -80,23 +80,23 @@ double stats[4][71];                            // trade statistics with metric 
 #define S_WORKDAYS                        70    // number of workdays covered by the trades (used to annualize returns)
 
 
-double instance.openNetProfit;                  // real PnL after all costs in money (net)
-double instance.closedNetProfit;                //
-double instance.totalNetProfit;                 //
-double instance.maxNetProfit;                   // 0...+n
-double instance.maxNetAbsDrawdown;              // -n...0
-double instance.maxNetRelDrawdown;              // -n...0
+double  stats.openNetProfit;                    // real PnL after all costs in money (net)
+double  stats.closedNetProfit;                  //
+double  stats.totalNetProfit;                   //
+double  stats.maxNetProfit;                     // 0...+n
+double  stats.maxNetAbsDrawdown;                // -n...0
+double  stats.maxNetRelDrawdown;                // -n...0
 
-double instance.openNetProfitP;                 // real PnL after all costs in full points (net)
-double instance.closedNetProfitP;               //
-double instance.totalNetProfitP;                //
-double instance.maxNetProfitP;                  //
-double instance.maxNetAbsDrawdownP;             //
-double instance.maxNetRelDrawdownP;             //
+double  stats.openNetProfitP;                   // real PnL after all costs in full points (net)
+double  stats.closedNetProfitP;                 //
+double  stats.totalNetProfitP;                  //
+double  stats.maxNetProfitP;                    //
+double  stats.maxNetAbsDrawdownP;               //
+double  stats.maxNetRelDrawdownP;               //
 
-double instance.openSigProfitP;                 // signal PnL before spread/any costs in full points
-double instance.closedSigProfitP;               //
-double instance.totalSigProfitP;                //
-double instance.maxSigProfitP;                  //
-double instance.maxSigAbsDrawdownP;             //
-double instance.maxSigRelDrawdownP;             //
+double  stats.openSigProfitP;                   // signal PnL before spread/any costs in full points
+double  stats.closedSigProfitP;                 //
+double  stats.totalSigProfitP;                  //
+double  stats.maxSigProfitP;                    //
+double  stats.maxSigAbsDrawdownP;               //
+double  stats.maxSigRelDrawdownP;               //

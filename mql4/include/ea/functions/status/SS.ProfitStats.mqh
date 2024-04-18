@@ -12,21 +12,21 @@ void SS.ProfitStats() {
       switch (status.activeMetric) {
          case METRIC_NET_MONEY:
             if (ShowProfitInPercent) {
-               sMaxProfit   = NumberToStr(MathDiv(instance.maxNetProfit,      instance.startEquity) * 100, "R+.2");
-               sMaxDrawdown = NumberToStr(MathDiv(instance.maxNetAbsDrawdown, instance.startEquity) * 100, "R+.2");
+               sMaxProfit   = NumberToStr(MathDiv(stats.maxNetProfit,      instance.startEquity) * 100, "R+.2");
+               sMaxDrawdown = NumberToStr(MathDiv(stats.maxNetAbsDrawdown, instance.startEquity) * 100, "R+.2");
             }
             else {
-               sMaxProfit   = NumberToStr(instance.maxNetProfit,      "R+.2");
-               sMaxDrawdown = NumberToStr(instance.maxNetAbsDrawdown, "R+.2");
+               sMaxProfit   = NumberToStr(stats.maxNetProfit,      "R+.2");
+               sMaxDrawdown = NumberToStr(stats.maxNetAbsDrawdown, "R+.2");
             }
             break;
          case METRIC_NET_UNITS:
-            sMaxProfit   = NumberToStr(instance.maxNetProfitP     /pUnit, "R+."+ pDigits);
-            sMaxDrawdown = NumberToStr(instance.maxNetAbsDrawdownP/pUnit, "R+."+ pDigits);
+            sMaxProfit   = NumberToStr(stats.maxNetProfitP     /pUnit, "R+."+ pDigits);
+            sMaxDrawdown = NumberToStr(stats.maxNetAbsDrawdownP/pUnit, "R+."+ pDigits);
             break;
          case METRIC_SIG_UNITS:
-            sMaxProfit   = NumberToStr(instance.maxSigProfitP     /pUnit, "R+."+ pDigits);
-            sMaxDrawdown = NumberToStr(instance.maxSigAbsDrawdownP/pUnit, "R+."+ pDigits);
+            sMaxProfit   = NumberToStr(stats.maxSigProfitP     /pUnit, "R+."+ pDigits);
+            sMaxDrawdown = NumberToStr(stats.maxSigAbsDrawdownP/pUnit, "R+."+ pDigits);
             break;
 
          default:

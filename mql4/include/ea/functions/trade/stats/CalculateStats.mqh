@@ -1,15 +1,15 @@
 /**
  * Update/re-calculate trade statistics. Most important numbers:
  *
- *  - Profit factor
- *  - MaxRelativeDrawdown (equity peak to valley)
- *  - Sharpe ratio
- *  - Sortino ratio
- *  - Calmar ratio
+ *  - Profit factor       = GrossProfit / GrossLoss
+ *  - MaxRelativeDrawdown = Max(EquityPeak - EquityValley)
+ *  - Sharpe ratio        = AnnualizedReturn / TotalVolatility
+ *  - Sortino ratio       = AnnualizedReturn / DownsideVolatility
+ *  - Calmar ratio        = AnnualizedReturn / MaxRelativeDrawdown
  *
  *
  * TODO:
- *  - MaxRecoveryTime
+ *  - MaxRecoveryTime = MaxTime(equity high to new high)
  *  - Z-score:           http://web.archive.org/web/20120429061838/http://championship.mql4.com/2007/news/203
  *  - Zephyr Pain Index: https://investexcel.net/zephyr-pain-index/
  *  - Zephyr K-Ratio:    http://web.archive.org/web/20210116024652/https://www.styleadvisor.com/resources/statfacts/zephyr-k-ratio
@@ -462,6 +462,7 @@ double CalculateSortinoRatio(int metric) {
  * Calculate the annualized Calmar ratio for the specified metric.
  *
  *  Calmar ratio = AnnualizedReturn / MaxRelativeDrawdown
+ *  MaxRelativeDrawdown = Max(EquityPeak - EquityValley)
  *
  * @param  int metric - metric id
  *
@@ -486,9 +487,9 @@ double CalculateCalmarRatio(int metric) {
    // get max relative drawdown
    double drawdown;
    switch (metric) {
-      case METRIC_NET_MONEY: drawdown = instance.maxNetRelDrawdown;  break;
-      case METRIC_NET_UNITS: drawdown = instance.maxNetRelDrawdownP; break;
-      case METRIC_SIG_UNITS: drawdown = instance.maxSigRelDrawdownP; break;
+      case METRIC_NET_MONEY: drawdown = stats.maxNetRelDrawdown;  break;
+      case METRIC_NET_UNITS: drawdown = stats.maxNetRelDrawdownP; break;
+      case METRIC_SIG_UNITS: drawdown = stats.maxSigRelDrawdownP; break;
       default:
          return(!catch("CalculateCalmarRatio(2)  invalid parameter metric: "+ metric, ERR_INVALID_PARAMETER));
    }

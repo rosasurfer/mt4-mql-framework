@@ -29,9 +29,9 @@ bool SaveStatus.TradeHistory(string file, bool fileExists) {
    }
 
    // cross-check stored 'close' stats
-   if (NE(netProfit,  instance.closedNetProfit, 2))       return(!catch("SaveStatus.TradeHistory(1)  "+ instance.name +" sum(history[H_NETPROFIT_M]) != instance.closedNetProfit ("  + NumberToStr(netProfit, ".2+")             +" != "+ NumberToStr(instance.closedNetProfit, ".2+")             +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP, instance.closedNetProfitP, Digits)) return(!catch("SaveStatus.TradeHistory(2)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != instance.closedNetProfitP (" + NumberToStr(netProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(sigProfitP, instance.closedSigProfitP, Digits)) return(!catch("SaveStatus.TradeHistory(3)  "+ instance.name +" sum(history[H_SIG_PROFIT_P]) != instance.closedSigProfitP ("+ NumberToStr(sigProfitP, "."+ Digits +"+") +" != "+ NumberToStr(instance.closedSigProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,  stats.closedNetProfit, 2))       return(!catch("SaveStatus.TradeHistory(1)  "+ instance.name +" sum(history[H_NETPROFIT_M]) != stats.closedNetProfit ("  + NumberToStr(netProfit, ".2+")             +" != "+ NumberToStr(stats.closedNetProfit, ".2+")             +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP, stats.closedNetProfitP, Digits)) return(!catch("SaveStatus.TradeHistory(2)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != stats.closedNetProfitP (" + NumberToStr(netProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(sigProfitP, stats.closedSigProfitP, Digits)) return(!catch("SaveStatus.TradeHistory(3)  "+ instance.name +" sum(history[H_SIG_PROFIT_P]) != stats.closedSigProfitP ("+ NumberToStr(sigProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats.closedSigProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("SaveStatus.TradeHistory(4)"));
 }
