@@ -21,9 +21,9 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
    WriteIniString(file, section, "MaxDrawdown",                  /*double  */ DoubleToStr(instance.maxNetDrawdown, 2));
    WriteIniString(file, section, "GrossProfit",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_WINNERS_GROSS_PROFIT], 2));
    WriteIniString(file, section, "GrossLoss",                    /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_LOSERS_GROSS_LOSS   ], 2));
-   WriteIniString(file, section, "ProfitFactor",                 /*double  */ ifString(stats[METRIC_NET_MONEY][S_TRADES_PROFIT_FACTOR]==INT_MAX, "-", DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_PROFIT_FACTOR], 2)));
-   WriteIniString(file, section, "SharpeRatio",                  /*double  */ ifString(stats[METRIC_NET_MONEY][S_TRADES_SHARPE_RATIO ]==INT_MAX, "-", DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_SHARPE_RATIO ], 2)));
-   WriteIniString(file, section, "SortinoRatio",                 /*double  */ ifString(stats[METRIC_NET_MONEY][S_TRADES_SORTINO_RATIO]==INT_MAX, "-", DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_SORTINO_RATIO], 2)) + separator);
+   WriteIniString(file, section, "ProfitFactor",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_PROFIT_FACTOR], 2));
+   WriteIniString(file, section, "SharpeRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_SHARPE_RATIO ], 2));
+   WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_SORTINO_RATIO], 2) + separator);
 
    // [Stats: net in punits]
    section = "Stats: net in "+ spUnit;
@@ -34,9 +34,9 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
    WriteIniString(file, section, "MaxDrawdown",                  /*double  */ DoubleToStr(instance.maxNetDrawdownP /pUnit, pDigits));
    WriteIniString(file, section, "GrossProfit",                  /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_WINNERS_GROSS_PROFIT]/pUnit, pDigits));
    WriteIniString(file, section, "GrossLoss",                    /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_LOSERS_GROSS_LOSS   ]/pUnit, pDigits));
-   WriteIniString(file, section, "ProfitFactor",                 /*double  */ ifString(stats[METRIC_NET_UNITS][S_TRADES_PROFIT_FACTOR]==INT_MAX, "-", DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_PROFIT_FACTOR], 2)));
-   WriteIniString(file, section, "SharpeRatio",                  /*double  */ ifString(stats[METRIC_NET_UNITS][S_TRADES_SHARPE_RATIO ]==INT_MAX, "-", DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_SHARPE_RATIO ], 2)));
-   WriteIniString(file, section, "SortinoRatio",                 /*double  */ ifString(stats[METRIC_NET_UNITS][S_TRADES_SORTINO_RATIO]==INT_MAX, "-", DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_SORTINO_RATIO], 2)) + separator);
+   WriteIniString(file, section, "ProfitFactor",                 /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_PROFIT_FACTOR], 2));
+   WriteIniString(file, section, "SharpeRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_SHARPE_RATIO ], 2));
+   WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_SORTINO_RATIO], 2) + separator);
 
    WriteIniString(file, section, "trades",                       /*int     */ Round(stats[METRIC_NET_UNITS][S_TRADES]));
    WriteIniString(file, section, "trades.long",                  /*int     */ StrPadRight(Round(stats[METRIC_NET_UNITS][S_TRADES_LONG ]), 23) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_NET_UNITS][S_TRADES_LONG_PCT  ], 1) +"%)", 8));
@@ -82,9 +82,9 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
    WriteIniString(file, section, "MaxDrawdown",                  /*double  */ DoubleToStr(instance.maxSigDrawdownP /pUnit, pDigits));
    WriteIniString(file, section, "GrossProfit",                  /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_WINNERS_GROSS_PROFIT]/pUnit, pDigits));
    WriteIniString(file, section, "GrossLoss",                    /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_LOSERS_GROSS_LOSS   ]/pUnit, pDigits));
-   WriteIniString(file, section, "ProfitFactor",                 /*double  */ ifString(stats[METRIC_SIG_UNITS][S_TRADES_PROFIT_FACTOR]==INT_MAX, "-", DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_PROFIT_FACTOR], 2)));
-   WriteIniString(file, section, "SharpeRatio",                  /*double  */ ifString(stats[METRIC_SIG_UNITS][S_TRADES_SHARPE_RATIO ]==INT_MAX, "-", DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_SHARPE_RATIO ], 2)));
-   WriteIniString(file, section, "SortinoRatio",                 /*double  */ ifString(stats[METRIC_SIG_UNITS][S_TRADES_SORTINO_RATIO]==INT_MAX, "-", DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_SORTINO_RATIO], 2)) + separator);
+   WriteIniString(file, section, "ProfitFactor",                 /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_PROFIT_FACTOR], 2));
+   WriteIniString(file, section, "SharpeRatio",                  /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_SHARPE_RATIO ], 2));
+   WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_SORTINO_RATIO], 2) + separator);
 
    WriteIniString(file, section, "trades",                       /*int     */ Round(stats[METRIC_SIG_UNITS][S_TRADES]));
    WriteIniString(file, section, "trades.long",                  /*int     */ StrPadRight(Round(stats[METRIC_SIG_UNITS][S_TRADES_LONG ]), 23) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_SIG_UNITS][S_TRADES_LONG_PCT  ], 1) +"%)", 8));

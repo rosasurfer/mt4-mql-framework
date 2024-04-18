@@ -351,7 +351,7 @@ void CalculateStats() {
          stats[i][S_TRADES_AVG_PROFIT   ] =         MathDiv(stats[i][S_TRADES_TOTAL_PROFIT ], stats[i][S_TRADES ]);
          stats[i][S_TRADES_AVG_RUNUP    ] =         MathDiv(stats[i][S_TRADES_SUM_RUNUP    ], stats[i][S_TRADES ]);
          stats[i][S_TRADES_AVG_DRAWDOWN ] =         MathDiv(stats[i][S_TRADES_SUM_DRAWDOWN ], stats[i][S_TRADES ]);
-         stats[i][S_TRADES_PROFIT_FACTOR] = MathAbs(MathDiv(stats[i][S_WINNERS_GROSS_PROFIT], stats[i][S_LOSERS_GROSS_LOSS], INT_MAX));   // w/o losers: INT_MAX
+         stats[i][S_TRADES_PROFIT_FACTOR] = MathAbs(MathDiv(stats[i][S_WINNERS_GROSS_PROFIT], stats[i][S_LOSERS_GROSS_LOSS], 99999));
 
          stats[i][S_WINNERS_AVG_PROFIT  ] =         MathDiv(stats[i][S_WINNERS_GROSS_PROFIT], stats[i][S_WINNERS]);
          stats[i][S_WINNERS_AVG_RUNUP   ] =         MathDiv(stats[i][S_WINNERS_SUM_RUNUP   ], stats[i][S_WINNERS]);
@@ -406,7 +406,7 @@ double CalculateSharpeRatio(int metric) {
 
    // calculate stdDeviation and final ratio
    double stdDev = iStdDevOnArray(profits, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
-   double ratio = MathDiv(annualizedProfit, stdDev, INT_MAX);
+   double ratio = MathDiv(annualizedProfit, stdDev, 99999);
 
    ArrayResize(profits, 0);
    return(ratio);
@@ -444,15 +444,15 @@ double CalculateSortinoRatio(int metric) {
    // calculate downside deviation (standard deviation but using 0 as mean)
    int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
 
-   double squaredSum = 0;
+   double sumSquared = 0;
    for (int n, i=0; i < trades; i++) {
       if (history[i][iProfit] >= 0) continue;
-      squaredSum += MathPow(history[i][iProfit], 2);
+      sumSquared += MathPow(history[i][iProfit], 2);
       n++;
    }
-   double variance = MathDiv(squaredSum, n);
+   double variance = MathDiv(sumSquared, n);
    double lpSD = MathSqrt(variance);
 
    // calculate final ratio
-   return(MathDiv(annualizedProfit, lpSD, INT_MAX));
+   return(MathDiv(annualizedProfit, lpSD, 99999));
 }
