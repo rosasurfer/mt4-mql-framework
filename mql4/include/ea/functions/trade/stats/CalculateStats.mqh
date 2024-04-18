@@ -1,20 +1,18 @@
 /**
- * Update trade statistics.
+ * Update trade statistics. Most important:
  *
- *  Profit factor = GrossProfit / GrossLoss
- *  Sharpe ratio  = ReturnPerAnno / TotalVolatility;    TotalVolatility    = StdDeviation(AllReturns)
- *  Sortino ratio = ReturnPerAnno / DownsideVolatility; DownsideVolatility = StdDeviation(NegativeReturns)
+ *  - Profit factor
+ *  - Sharpe ratio
+ *  - Sortino ratio
  *
  *
  * TODO:
- *  - Calmar ratio = ReturnPerAnno / MaxRelativeDrawdown                  // gain / +max-drawdown
- *  - Z-score
+ *  - MaxRelativeDrawdown
  *  - MaxRecoveryTime
+ *  - Calmar ratio = AnnualReturn / MaxRelativeDrawdown                  // gain / +max-drawdown
+ *  - Z-score
  *  - Zephyr Pain Index: https://investexcel.net/zephyr-pain-index/
  *  - Zephyr K-Ratio:    http://web.archive.org/web/20210116024652/https://www.styleadvisor.com/resources/statfacts/zephyr-k-ratio
- *
- *  @link  https://www.calculator.net/standard-deviation-calculator.html#                                                                           [StdDev calculator with inputs for sample vs. population]
- *  @link  https://www.khanacademy.org/math/statistics-probability/summarizing-quantitative-data/variance-standard-deviation-population/a/calculating-standard-deviation-step-by-step# [Sample vs population]
  */
 void CalculateStats() {
    int trades = ArrayRange(history, 0);
@@ -373,16 +371,20 @@ void CalculateStats() {
 /**
  * Calculate the annualized Sharpe ratio for the specified metric.
  *
- *  Sharpe ratio = ReturnPerAnno / TotalVolatility
+ *  Sharpe ratio = AnnualReturn / TotalVolatility
  *  TotalVolatility = StdDeviation(AllReturns)
  *
  * @param  int metric - metric id
  *
  * @return double - positive ratio or -1 if the strategy is not profitable; NULL in case of errors
+ *
+ * @link  https://investexcel.net/calculating-the-sharpe-ratio-with-excel/
+ * @link  https://www.calculator.net/standard-deviation-calculator.html
  */
 double CalculateSharpeRatio(int metric) {
    double totalProfit = stats[metric][S_TRADES_TOTAL_PROFIT];
-   if (totalProfit <= 0) return(ifInt(!totalProfit, 0, -1));
+   if (!totalProfit)    return(0);
+   if (totalProfit < 0) return(-1);
 
    // process trades with updated stats only
    int trades = stats[metric][S_TRADES];
@@ -392,7 +394,7 @@ double CalculateSharpeRatio(int metric) {
    // annualize total profit
    int workdays = stats[metric][S_WORKDAYS];
    if (workdays <= 0)                   return(!catch("CalculateSharpeRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 Holidays
+   double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
 
    // prepare dataset for iStdDevOnArray()
    double profits[];
@@ -404,7 +406,7 @@ double CalculateSharpeRatio(int metric) {
 
    // calculate stdDeviation and final ratio
    double stdDev = iStdDevOnArray(profits, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
-   double ratio = NormalizeDouble(annualizedProfit/stdDev, 2);
+   double ratio = MathDiv(annualizedProfit, stdDev, INT_MAX);
 
    ArrayResize(profits, 0);
    return(ratio);
@@ -414,16 +416,20 @@ double CalculateSharpeRatio(int metric) {
 /**
  * Calculate the annualized Sortino ratio for the specified metric.
  *
- *  Sortino ratio = ReturnPerAnno / DownsideVolatility
- *  DownsideVolatility = StdDeviation(NegativeReturns)
+ *  Sortino ratio = AnnualReturn / DownsideVolatility
+ *  DownsideVolatility = LowerPartialStdDeviation(NegativeReturns)
  *
  * @param  int metric - metric id
  *
  * @return double - positive ratio or -1 if the strategy is not profitable; NULL in case of errors
+ *
+ * @link  https://investexcel.net/calculate-the-sortino-ratio-with-excel/
+ * @link  https://www.calculator.net/standard-deviation-calculator.html
  */
 double CalculateSortinoRatio(int metric) {
    double totalProfit = stats[metric][S_TRADES_TOTAL_PROFIT];
-   if (totalProfit <= 0) return(ifInt(!totalProfit, 0, -1));
+   if (!totalProfit)    return(0);
+   if (totalProfit < 0) return(-1);
 
    // process trades with updated stats only
    int trades = stats[metric][S_TRADES];
@@ -433,25 +439,20 @@ double CalculateSortinoRatio(int metric) {
    // annualize total profit
    int workdays = stats[metric][S_WORKDAYS];
    if (workdays <= 0)                   return(!catch("CalculateSortinoRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 Holidays
+   double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
 
-   // prepare dataset for iStdDevOnArray()
-   double profits[];
-   ArrayResize(profits, trades);
-   int cmpFields   [] = {0, H_NETPROFIT_P, H_NETPROFIT_P, H_SIG_PROFIT_P}, iCmpField=cmpFields[metric];
-   int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric], n=0;
-   for (int i=0; i < trades; i++) {
-      if (history[i][iCmpField] < -HalfPoint) {
-         profits[n] = history[i][iProfit];
-         n++;
-      }
+   // calculate downside deviation (standard deviation but using 0 as mean)
+   int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
+
+   double squaredSum = 0;
+   for (int n, i=0; i < trades; i++) {
+      if (history[i][iProfit] >= 0) continue;
+      squaredSum += MathPow(history[i][iProfit], 2);
+      n++;
    }
-   ArrayResize(profits, n);
+   double variance = MathDiv(squaredSum, n);
+   double lpSD = MathSqrt(variance);
 
-   // calculate stdDeviation and final ratio
-   double stdDev = iStdDevOnArray(profits, WHOLE_ARRAY, n, 0, MODE_SMA, 0);
-   double ratio = NormalizeDouble(annualizedProfit/stdDev, 2);
-
-   ArrayResize(profits, 0);
-   return(ratio);
+   // calculate final ratio
+   return(MathDiv(annualizedProfit, lpSD, INT_MAX));
 }
