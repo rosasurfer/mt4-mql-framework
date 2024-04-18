@@ -31,7 +31,7 @@
  *     dynamic SL/TP distances (multiples of ranges)
  *     trailing stop
  *
- *  - more statistics: calmar ratio, z-score, recovery time
+ *  - more statistics: z-score, recovery time
  *
  *  - optimization
  *     update status file content

@@ -1,13 +1,14 @@
 /**
- * Update trade statistics. Most important stats:
+ * Update/re-calculate trade statistics. Most important numbers:
  *
  *  - Profit factor
+ *  - MaxRelativeDrawdown (equity peak to valley)
  *  - Sharpe ratio
  *  - Sortino ratio
+ *  - Calmar ratio
  *
  *
  * TODO:
- *  - Calmar ratio = AnnualReturn / MaxRelativeDrawdown                 // gain / +max-drawdown
  *  - MaxRecoveryTime
  *  - Z-score:           http://web.archive.org/web/20120429061838/http://championship.mql4.com/2007/news/203
  *  - Zephyr Pain Index: https://investexcel.net/zephyr-pain-index/
@@ -362,6 +363,7 @@ void CalculateStats() {
 
          stats[i][S_TRADES_SHARPE_RATIO ] = CalculateSharpeRatio(i);
          stats[i][S_TRADES_SORTINO_RATIO] = CalculateSortinoRatio(i);
+         stats[i][S_TRADES_CALMAR_RATIO ] = CalculateCalmarRatio(i);
       }
    }
 }
@@ -370,7 +372,7 @@ void CalculateStats() {
 /**
  * Calculate the annualized Sharpe ratio for the specified metric.
  *
- *  Sharpe ratio = AnnualReturn / TotalVolatility
+ *  Sharpe ratio = AnnualizedReturn / TotalVolatility
  *  TotalVolatility = StdDeviation(AllReturns)
  *
  * @param  int metric - metric id
@@ -381,33 +383,33 @@ void CalculateStats() {
  * @link  https://www.calculator.net/standard-deviation-calculator.html
  */
 double CalculateSharpeRatio(int metric) {
-   double totalProfit = stats[metric][S_TRADES_TOTAL_PROFIT];
-   if (!totalProfit)    return(0);
-   if (totalProfit < 0) return(-1);
+   double totalReturn = stats[metric][S_TRADES_TOTAL_PROFIT];
+   if (!totalReturn)    return(0);
+   if (totalReturn < 0) return(-1);
 
    // process trades with updated stats only
    int trades = stats[metric][S_TRADES];
    if (!trades) return(0);
-   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSharpeRatio(1)  illegal value stats["+ metric +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
+   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSharpeRatio(1)  illegal value of stats["+ metric +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
 
-   // annualize total profit
+   // annualize total return
    int workdays = stats[metric][S_WORKDAYS];
-   if (workdays <= 0)                   return(!catch("CalculateSharpeRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
+   if (workdays <= 0)                   return(!catch("CalculateSharpeRatio(2)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
+   double annualizedReturn = totalReturn/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
 
    // prepare dataset for iStdDevOnArray()
-   double profits[];
-   ArrayResize(profits, trades);
+   double returns[];
+   ArrayResize(returns, trades);
    int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
    for (int i=0; i < trades; i++) {
-      profits[i] = history[i][iProfit];
+      returns[i] = history[i][iProfit];
    }
 
    // calculate stdDeviation and final ratio
-   double stdDev = iStdDevOnArray(profits, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
-   double ratio = MathDiv(annualizedProfit, stdDev, 99999);
+   double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
+   double ratio = MathDiv(annualizedReturn, stdDev, 99999);
 
-   ArrayResize(profits, 0);
+   ArrayResize(returns, 0);
    return(ratio);
 }
 
@@ -415,30 +417,29 @@ double CalculateSharpeRatio(int metric) {
 /**
  * Calculate the annualized Sortino ratio for the specified metric.
  *
- *  Sortino ratio = AnnualReturn / DownsideVolatility
- *  DownsideVolatility = LowerPartialStdDeviation(NegativeReturns)
+ *  Sortino ratio = AnnualizedReturn / DownsideVolatility
+ *  DownsideVolatility = LowerPartDeviation(NegativeReturns)
  *
  * @param  int metric - metric id
  *
  * @return double - positive ratio or -1 if the strategy is not profitable; NULL in case of errors
  *
  * @link  https://investexcel.net/calculate-the-sortino-ratio-with-excel/
- * @link  https://www.calculator.net/standard-deviation-calculator.html
  */
 double CalculateSortinoRatio(int metric) {
-   double totalProfit = stats[metric][S_TRADES_TOTAL_PROFIT];
-   if (!totalProfit)    return(0);
-   if (totalProfit < 0) return(-1);
+   double totalReturn = stats[metric][S_TRADES_TOTAL_PROFIT];
+   if (!totalReturn)    return(0);
+   if (totalReturn < 0) return(-1);
 
    // process trades with updated stats only
    int trades = stats[metric][S_TRADES];
    if (!trades) return(0);
-   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSortinoRatio(1)  illegal value stats["+ metric +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
+   if (trades > ArrayRange(history, 0)) return(!catch("CalculateSortinoRatio(1)  illegal value of stats["+ metric +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
 
-   // annualize total profit
+   // annualize total return
    int workdays = stats[metric][S_WORKDAYS];
-   if (workdays <= 0)                   return(!catch("CalculateSortinoRatio(2)  illegal value stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedProfit = totalProfit/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
+   if (workdays <= 0)                   return(!catch("CalculateSortinoRatio(2)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
+   double annualizedReturn = totalReturn/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
 
    // calculate downside deviation (standard deviation but using 0 as mean)
    int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
@@ -450,8 +451,48 @@ double CalculateSortinoRatio(int metric) {
       n++;
    }
    double variance = MathDiv(sumSquared, n);
-   double lpSD = MathSqrt(variance);
+   double lowPartDev = MathSqrt(variance);
 
    // calculate final ratio
-   return(MathDiv(annualizedProfit, lpSD, 99999));
+   return(MathDiv(annualizedReturn, lowPartDev, 99999));
+}
+
+
+/**
+ * Calculate the annualized Calmar ratio for the specified metric.
+ *
+ *  Calmar ratio = AnnualizedReturn / MaxRelativeDrawdown
+ *
+ * @param  int metric - metric id
+ *
+ * @return double - positive ratio or -1 if the strategy is not profitable; NULL in case of errors
+ *
+ * @link  https://investexcel.net/calmar-ratio/
+ */
+double CalculateCalmarRatio(int metric) {
+   double totalReturn = stats[metric][S_TRADES_TOTAL_PROFIT];
+   if (!totalReturn)    return(0);
+   if (totalReturn < 0) return(-1);
+
+   // process trades with updated stats only
+   int trades = stats[metric][S_TRADES];
+   if (!trades) return(0);
+
+   // annualize total return
+   int workdays = stats[metric][S_WORKDAYS];
+   if (workdays <= 0) return(!catch("CalculateCalmarRatio(1)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
+   double annualizedReturn = totalReturn/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
+
+   // get max relative drawdown
+   double drawdown;
+   switch (metric) {
+      case METRIC_NET_MONEY: drawdown = instance.maxNetRelDrawdown;  break;
+      case METRIC_NET_UNITS: drawdown = instance.maxNetRelDrawdownP; break;
+      case METRIC_SIG_UNITS: drawdown = instance.maxSigRelDrawdownP; break;
+      default:
+         return(!catch("CalculateCalmarRatio(2)  invalid parameter metric: "+ metric, ERR_INVALID_PARAMETER));
+   }
+
+   // calculate final ratio
+   return(MathDiv(annualizedReturn, -drawdown, 99999));
 }
