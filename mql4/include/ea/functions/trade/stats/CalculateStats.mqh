@@ -1,5 +1,5 @@
 /**
- * Update trade statistics. Most important:
+ * Update trade statistics. Most important stats:
  *
  *  - Profit factor
  *  - Sharpe ratio
@@ -7,10 +7,9 @@
  *
  *
  * TODO:
- *  - MaxRelativeDrawdown
+ *  - Calmar ratio = AnnualReturn / MaxRelativeDrawdown                 // gain / +max-drawdown
  *  - MaxRecoveryTime
- *  - Calmar ratio = AnnualReturn / MaxRelativeDrawdown                  // gain / +max-drawdown
- *  - Z-score
+ *  - Z-score:           http://web.archive.org/web/20120429061838/http://championship.mql4.com/2007/news/203
  *  - Zephyr Pain Index: https://investexcel.net/zephyr-pain-index/
  *  - Zephyr K-Ratio:    http://web.archive.org/web/20210116024652/https://www.styleadvisor.com/resources/statfacts/zephyr-k-ratio
  */

@@ -1,9 +1,9 @@
 /**
  * Trade statistic related constants and global vars.
  */
-double stats[4][71];                            // trade statistic with metric id as main index (0 is not used)
+double stats[4][71];                            // trade statistics with metric id as main index (index 0 is not used)
 
-#define S_TRADES                           0    // stats[] field indexes
+#define S_TRADES                           0    // stats[] fields
 #define S_TRADES_LONG                      1
 #define S_TRADES_LONG_PCT                  2
 #define S_TRADES_SHORT                     3
@@ -78,3 +78,25 @@ double stats[4][71];                            // trade statistic with metric i
 
 #define S_LAST_TRADE_TYPE                 69    // type of last processed trade: winner|loser|scratch
 #define S_WORKDAYS                        70    // number of workdays covered by the trades (used to annualize returns)
+
+
+double instance.openNetProfit;                  // real PnL after all costs in money (net)
+double instance.closedNetProfit;                //
+double instance.totalNetProfit;                 //
+double instance.maxNetProfit;                   // 0...+n
+double instance.maxNetAbsDrawdown;              // -n...0
+double instance.maxNetRelDrawdown;              // -n...0
+
+double instance.openNetProfitP;                 // real PnL after all costs in full points (net)
+double instance.closedNetProfitP;               //
+double instance.totalNetProfitP;                //
+double instance.maxNetProfitP;                  //
+double instance.maxNetAbsDrawdownP;             //
+double instance.maxNetRelDrawdownP;             //
+
+double instance.openSigProfitP;                 // signal PnL before spread/any costs in full points
+double instance.closedSigProfitP;               //
+double instance.totalSigProfitP;                //
+double instance.maxSigProfitP;                  //
+double instance.maxSigAbsDrawdownP;             //
+double instance.maxSigRelDrawdownP;             //

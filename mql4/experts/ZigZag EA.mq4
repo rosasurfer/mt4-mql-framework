@@ -816,20 +816,23 @@ bool StartTrading(double signal[]) {
    open.sigRundownP  = open.sigRunupP;
 
    // update PnL stats
-   instance.openNetProfit  = open.netProfitM;
-   instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
-   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
-   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+   instance.openNetProfit     = open.netProfitM;
+   instance.totalNetProfit    = instance.openNetProfit + instance.closedNetProfit;
+   instance.maxNetProfit      = MathMax(instance.maxNetProfit,      instance.totalNetProfit);
+   instance.maxNetAbsDrawdown = MathMin(instance.maxNetAbsDrawdown, instance.totalNetProfit);
+   instance.maxNetRelDrawdown = MathMin(instance.maxNetRelDrawdown, instance.totalNetProfit - instance.maxNetProfit);
 
-   instance.openNetProfitP  = open.netProfitP;
-   instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
-   instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
-   instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
+   instance.openNetProfitP     = open.netProfitP;
+   instance.totalNetProfitP    = instance.openNetProfitP + instance.closedNetProfitP;
+   instance.maxNetProfitP      = MathMax(instance.maxNetProfitP,      instance.totalNetProfitP);
+   instance.maxNetAbsDrawdownP = MathMin(instance.maxNetAbsDrawdownP, instance.totalNetProfitP);
+   instance.maxNetRelDrawdownP = MathMin(instance.maxNetRelDrawdownP, instance.totalNetProfitP - instance.maxNetProfitP);
 
-   instance.openSigProfitP  = open.sigProfitP;
-   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
-   instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
-   instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
+   instance.openSigProfitP     = open.sigProfitP;
+   instance.totalSigProfitP    = instance.openSigProfitP + instance.closedSigProfitP;
+   instance.maxSigProfitP      = MathMax(instance.maxSigProfitP,      instance.totalSigProfitP);
+   instance.maxSigAbsDrawdownP = MathMin(instance.maxSigAbsDrawdownP, instance.totalSigProfitP);
+   instance.maxSigRelDrawdownP = MathMin(instance.maxSigRelDrawdownP, instance.totalSigProfitP - instance.maxSigProfitP);
 
    // update start conditions
    if (start.time.condition) {
@@ -925,20 +928,23 @@ bool ReversePosition(double signal[]) {
    open.sigRundownP  = open.sigProfitP;
 
    // update PL numbers
-   instance.openNetProfit  = open.netProfitM;
-   instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
-   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
-   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+   instance.openNetProfit     = open.netProfitM;
+   instance.totalNetProfit    = instance.openNetProfit + instance.closedNetProfit;
+   instance.maxNetProfit      = MathMax(instance.maxNetProfit,      instance.totalNetProfit);
+   instance.maxNetAbsDrawdown = MathMin(instance.maxNetAbsDrawdown, instance.totalNetProfit);
+   instance.maxNetRelDrawdown = MathMin(instance.maxNetRelDrawdown, instance.totalNetProfit - instance.maxNetProfit);
 
-   instance.openNetProfitP  = open.netProfitP;
-   instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
-   instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
-   instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
+   instance.openNetProfitP     = open.netProfitP;
+   instance.totalNetProfitP    = instance.openNetProfitP + instance.closedNetProfitP;
+   instance.maxNetProfitP      = MathMax(instance.maxNetProfitP,      instance.totalNetProfitP);
+   instance.maxNetAbsDrawdownP = MathMin(instance.maxNetAbsDrawdownP, instance.totalNetProfitP);
+   instance.maxNetRelDrawdownP = MathMin(instance.maxNetRelDrawdownP, instance.totalNetProfitP - instance.maxNetProfitP);
 
-   instance.openSigProfitP  = open.sigProfitP;
-   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
-   instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
-   instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
+   instance.openSigProfitP     = open.sigProfitP;
+   instance.totalSigProfitP    = instance.openSigProfitP + instance.closedSigProfitP;
+   instance.maxSigProfitP      = MathMax(instance.maxSigProfitP,      instance.totalSigProfitP);
+   instance.maxSigAbsDrawdownP = MathMin(instance.maxSigAbsDrawdownP, instance.totalSigProfitP);
+   instance.maxSigRelDrawdownP = MathMin(instance.maxSigRelDrawdownP, instance.totalSigProfitP - instance.maxSigProfitP);
 
    if (__isChart) {
       SS.OpenLots();
@@ -1005,20 +1011,23 @@ bool StopTrading(double signal[]) {
 
          if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, closePriceSig)) return(false);
 
-         instance.openNetProfit  = open.netProfitM;
-         instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
-         instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
-         instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+         instance.openNetProfit     = open.netProfitM;
+         instance.totalNetProfit    = instance.openNetProfit + instance.closedNetProfit;
+         instance.maxNetProfit      = MathMax(instance.maxNetProfit,      instance.totalNetProfit);
+         instance.maxNetAbsDrawdown = MathMin(instance.maxNetAbsDrawdown, instance.totalNetProfit);
+         instance.maxNetRelDrawdown = MathMin(instance.maxNetRelDrawdown, instance.totalNetProfit - instance.maxNetProfit);
 
-         instance.openNetProfitP  = open.netProfitP;
-         instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
-         instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
-         instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
+         instance.openNetProfitP     = open.netProfitP;
+         instance.totalNetProfitP    = instance.openNetProfitP + instance.closedNetProfitP;
+         instance.maxNetProfitP      = MathMax(instance.maxNetProfitP,      instance.totalNetProfitP);
+         instance.maxNetAbsDrawdownP = MathMin(instance.maxNetAbsDrawdownP, instance.totalNetProfitP);
+         instance.maxNetRelDrawdownP = MathMin(instance.maxNetRelDrawdownP, instance.totalNetProfitP - instance.maxNetProfitP);
 
-         instance.openSigProfitP  = open.sigProfitP;
-         instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
-         instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
-         instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
+         instance.openSigProfitP     = open.sigProfitP;
+         instance.totalSigProfitP    = instance.openSigProfitP + instance.closedSigProfitP;
+         instance.maxSigProfitP      = MathMax(instance.maxSigProfitP,      instance.totalSigProfitP);
+         instance.maxSigAbsDrawdownP = MathMin(instance.maxSigAbsDrawdownP, instance.totalSigProfitP);
+         instance.maxSigRelDrawdownP = MathMin(instance.maxSigRelDrawdownP, instance.totalSigProfitP - instance.maxSigProfitP);
       }
    }
 
@@ -1099,20 +1108,24 @@ bool UpdateStatus() {
    }
 
    // update PnL stats
-   instance.openNetProfit  = open.netProfitM;
-   instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
-   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
-   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+   instance.openNetProfit     = open.netProfitM;
+   instance.totalNetProfit    = instance.openNetProfit + instance.closedNetProfit;
+   instance.maxNetProfit      = MathMax(instance.maxNetProfit,      instance.totalNetProfit);
+   instance.maxNetAbsDrawdown = MathMin(instance.maxNetAbsDrawdown, instance.totalNetProfit);
+   instance.maxNetRelDrawdown = MathMin(instance.maxNetRelDrawdown, instance.totalNetProfit - instance.maxNetProfit);
 
-   instance.openNetProfitP  = open.netProfitP;
-   instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
-   instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
-   instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
+   instance.openNetProfitP     = open.netProfitP;
+   instance.totalNetProfitP    = instance.openNetProfitP + instance.closedNetProfitP;
+   instance.maxNetProfitP      = MathMax(instance.maxNetProfitP,      instance.totalNetProfitP);
+   instance.maxNetAbsDrawdownP = MathMin(instance.maxNetAbsDrawdownP, instance.totalNetProfitP);
+   instance.maxNetRelDrawdownP = MathMin(instance.maxNetRelDrawdownP, instance.totalNetProfitP - instance.maxNetProfitP);
 
-   instance.openSigProfitP  = open.sigProfitP;
-   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
-   instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
-   instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
+   instance.openSigProfitP     = open.sigProfitP;
+   instance.totalSigProfitP    = instance.openSigProfitP + instance.closedSigProfitP;
+   instance.maxSigProfitP      = MathMax(instance.maxSigProfitP,      instance.totalSigProfitP);
+   instance.maxSigAbsDrawdownP = MathMin(instance.maxSigAbsDrawdownP, instance.totalSigProfitP);
+   instance.maxSigRelDrawdownP = MathMin(instance.maxSigRelDrawdownP, instance.totalSigProfitP - instance.maxSigProfitP);
+
    if (__isChart) {
       SS.TotalProfit();
       SS.ProfitStats();
@@ -1344,17 +1357,20 @@ bool SynchronizeStatus() {
    }
 
    // recalculate total PL numbers
-   instance.totalNetProfit = instance.openNetProfit + instance.closedNetProfit;
-   instance.maxNetProfit   = MathMax(instance.maxNetProfit,   instance.totalNetProfit);
-   instance.maxNetDrawdown = MathMin(instance.maxNetDrawdown, instance.totalNetProfit);
+   instance.totalNetProfit    = instance.openNetProfit + instance.closedNetProfit;
+   instance.maxNetProfit      = MathMax(instance.maxNetProfit,      instance.totalNetProfit);
+   instance.maxNetAbsDrawdown = MathMin(instance.maxNetAbsDrawdown, instance.totalNetProfit);
+   instance.maxNetRelDrawdown = MathMin(instance.maxNetRelDrawdown, instance.totalNetProfit - instance.maxNetProfit);
 
-   instance.totalNetProfitP = instance.openNetProfitP + instance.closedNetProfitP;
-   instance.maxNetProfitP   = MathMax(instance.maxNetProfitP,   instance.totalNetProfitP);
-   instance.maxNetDrawdownP = MathMin(instance.maxNetDrawdownP, instance.totalNetProfitP);
+   instance.totalNetProfitP    = instance.openNetProfitP + instance.closedNetProfitP;
+   instance.maxNetProfitP      = MathMax(instance.maxNetProfitP,      instance.totalNetProfitP);
+   instance.maxNetAbsDrawdownP = MathMin(instance.maxNetAbsDrawdownP, instance.totalNetProfitP);
+   instance.maxNetRelDrawdownP = MathMin(instance.maxNetRelDrawdownP, instance.totalNetProfitP - instance.maxNetProfitP);
 
-   instance.totalSigProfitP = instance.openSigProfitP + instance.closedSigProfitP;
-   instance.maxSigProfitP   = MathMax(instance.maxSigProfitP,   instance.totalSigProfitP);
-   instance.maxSigDrawdownP = MathMin(instance.maxSigDrawdownP, instance.totalSigProfitP);
+   instance.totalSigProfitP    = instance.openSigProfitP + instance.closedSigProfitP;
+   instance.maxSigProfitP      = MathMax(instance.maxSigProfitP,      instance.totalSigProfitP);
+   instance.maxSigAbsDrawdownP = MathMin(instance.maxSigAbsDrawdownP, instance.totalSigProfitP);
+   instance.maxSigRelDrawdownP = MathMin(instance.maxSigRelDrawdownP, instance.totalSigProfitP - instance.maxSigProfitP);
    SS.All();
 
    if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize)
