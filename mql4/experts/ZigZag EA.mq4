@@ -34,7 +34,7 @@
  *  - more statistics: z-score, recovery time
  *
  *  - optimization
- *     update status file content
+ *     update status file content: execution time, optimizer settings
  *     update status filename
  *     storage in separate directory
  *     generate consecutive instance ids
@@ -359,7 +359,6 @@ int onTick() {
    }
 
    if (instance.status != STATUS_STOPPED) {
-
       if (instance.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) {
             StartTrading(signal);
@@ -1054,11 +1053,14 @@ bool StopTrading(double signal[]) {
    }
    if (instance.status == STATUS_STOPPED) instance.stopped = Tick.time;
 
-   SS.StartStopConditions();
-   SS.TotalProfit();
-   SS.ProfitStats();
-
-   if (IsLogInfo()) logInfo("StopTrading(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
+   if (__isChart) {
+      SS.StartStopConditions();
+   }
+   if (__isChart || IsLogInfo()) {
+      SS.TotalProfit();
+      SS.ProfitStats();
+      logInfo("StopTrading(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
+   }
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
