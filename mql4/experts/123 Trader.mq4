@@ -435,11 +435,12 @@ bool StopTrading(double signal[]) {
    // update status
    instance.status = STATUS_STOPPED;
    instance.stopped = Tick.time;
-   if (IsLogInfo()) {
+
+   if (__isChart || IsLogInfo()) {
       SS.TotalProfit();
       SS.ProfitStats();
-      logInfo("StopTrading(2)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
    }
+   if (IsLogInfo()) logInfo("StopTrading(2)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration

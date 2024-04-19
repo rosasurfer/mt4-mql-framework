@@ -537,9 +537,11 @@ bool StopTrading(double signal[]) {
    // update status
    instance.status = STATUS_STOPPED;
    instance.stopped = Tick.time;
-   SS.TotalProfit();
-   SS.ProfitStats();
 
+   if (__isChart || IsLogInfo()) {
+      SS.TotalProfit();
+      SS.ProfitStats();
+   }
    if (IsLogInfo()) logInfo("StopTrading(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped, profit: "+ status.totalProfit +" "+ status.profitStats);
    SaveStatus();
 
