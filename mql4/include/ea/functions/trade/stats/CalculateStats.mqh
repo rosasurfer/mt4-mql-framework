@@ -395,17 +395,17 @@ double CalculateSharpeRatio(int metric) {
    // annualize total return
    int workdays = stats[metric][S_WORKDAYS];
    if (workdays <= 0)                   return(!catch("CalculateSharpeRatio(2)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedReturn = totalReturn/workdays * 252;          // commonly used number
+   double annualizedReturn = totalReturn/workdays * 252;          // commonly used number of working days
 
    // prepare dataset for iStdDevOnArray()
+   int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
    double returns[];
    ArrayResize(returns, trades);
-   int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
    for (int i=0; i < trades; i++) {
       returns[i] = history[i][iProfit];
    }
 
-   // calculate stdDeviation and final ratio
+   // calculate stdDeviation and final ratio                      // Don't annualize volatility as in std-finance. An automated system deteriorating over time would be broken.
    double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
    double ratio = MathDiv(annualizedReturn, stdDev, 99999);
 
@@ -418,7 +418,7 @@ double CalculateSharpeRatio(int metric) {
  * Calculate the annualized Sortino ratio for the specified metric.
  *
  *  Sortino ratio = AnnualizedReturn / DownsideVolatility
- *  DownsideVolatility = LowerPartDeviation(NegativeReturns)
+ *  DownsideVolatility = StdDeviation(NegativeReturns)
  *
  * @param  int metric - metric id
  *
@@ -439,26 +439,25 @@ double CalculateSortinoRatio(int metric) {
    // annualize total return
    int workdays = stats[metric][S_WORKDAYS];
    if (workdays <= 0)                   return(!catch("CalculateSortinoRatio(2)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedReturn = totalReturn/workdays * 252;          // commonly used number
+   double annualizedReturn = totalReturn/workdays * 252;          // commonly used number of working days
 
-   // TODO: use StdDeviation of the losses (average loss as mean) excluding 0 (zero) returns
-   // {-2, -2, -2} and {-3, -3, -3} correctly have the same downside volatility (denominator)
-   // size of losses is already accounted for by the nominator
-
-   // calculate downside deviation (standard deviation but using 0 as mean)
+   // prepare dataset for iStdDevOnArray()
    int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
-
-   double sumSquared = 0;
+   double returns[];
+   ArrayResize(returns, trades);
    for (int n, i=0; i < trades; i++) {
-      if (history[i][iProfit] >= 0) continue;
-      sumSquared += MathPow(history[i][iProfit], 2);
+      if (history[i][iProfit] >= 0) continue;                     // Don't include 0 (zero) for non-negative returns as we are
+      returns[n] = history[i][iProfit];                           // interested in volatility of negative returns only.
       n++;
    }
-   double variance = MathDiv(sumSquared, n);
-   double lowPartDev = MathSqrt(variance);
+   ArrayResize(returns, n);
 
-   // calculate final ratio
-   return(MathDiv(annualizedReturn, lowPartDev, 99999));
+   // calculate stdDeviation and final ratio                      // Don't annualize volatility as in std-finance. An automated system deteriorating over time would be broken.
+   double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, n, 0, MODE_SMA, 0);
+   double ratio = MathDiv(annualizedReturn, stdDev, 99999);       // Returns {-2, -2, -2} and {-3, -3, -3} correctly have the same volatility.
+                                                                  // Size of losses is already accounted for by the nominator.
+   ArrayResize(returns, 0);
+   return(ratio);
 }
 
 
@@ -486,7 +485,7 @@ double CalculateCalmarRatio(int metric) {
    // annualize total return
    int workdays = stats[metric][S_WORKDAYS];
    if (workdays <= 0) return(!catch("CalculateCalmarRatio(1)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedReturn = totalReturn/workdays * 252;          // commonly used number
+   double annualizedReturn = totalReturn/workdays * 252;          // commonly used number of working days
 
    // calculate final ratio
    double drawdown = stats[metric][S_MAX_REL_DRAWDOWN];
