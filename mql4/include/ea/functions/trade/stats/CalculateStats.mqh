@@ -395,7 +395,7 @@ double CalculateSharpeRatio(int metric) {
    // annualize total return
    int workdays = stats[metric][S_WORKDAYS];
    if (workdays <= 0)                   return(!catch("CalculateSharpeRatio(2)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedReturn = totalReturn/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
+   double annualizedReturn = totalReturn/workdays * 252;          // commonly used number
 
    // prepare dataset for iStdDevOnArray()
    double returns[];
@@ -439,7 +439,11 @@ double CalculateSortinoRatio(int metric) {
    // annualize total return
    int workdays = stats[metric][S_WORKDAYS];
    if (workdays <= 0)                   return(!catch("CalculateSortinoRatio(2)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedReturn = totalReturn/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
+   double annualizedReturn = totalReturn/workdays * 252;          // commonly used number
+
+   // TODO: use StdDeviation of the losses (average loss as mean) excluding 0 (zero) returns
+   // {-2, -2, -2} and {-3, -3, -3} correctly have the same downside volatility (denominator)
+   // size of losses is already accounted for by the nominator
 
    // calculate downside deviation (standard deviation but using 0 as mean)
    int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
@@ -482,18 +486,9 @@ double CalculateCalmarRatio(int metric) {
    // annualize total return
    int workdays = stats[metric][S_WORKDAYS];
    if (workdays <= 0) return(!catch("CalculateCalmarRatio(1)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedReturn = totalReturn/workdays * 255;          // avg. number of trading days: 365 - 52*2 - 6 holidays
-
-   // get max relative drawdown
-   double drawdown;
-   switch (metric) {
-      case METRIC_NET_MONEY: drawdown = stats.maxNetRelDrawdown;  break;
-      case METRIC_NET_UNITS: drawdown = stats.maxNetRelDrawdownP; break;
-      case METRIC_SIG_UNITS: drawdown = stats.maxSigRelDrawdownP; break;
-      default:
-         return(!catch("CalculateCalmarRatio(2)  invalid parameter metric: "+ metric, ERR_INVALID_PARAMETER));
-   }
+   double annualizedReturn = totalReturn/workdays * 252;          // commonly used number
 
    // calculate final ratio
+   double drawdown = stats[metric][S_MAX_REL_DRAWDOWN];
    return(MathDiv(annualizedReturn, -drawdown, 99999));
 }

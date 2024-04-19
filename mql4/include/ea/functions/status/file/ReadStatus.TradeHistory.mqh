@@ -27,11 +27,13 @@ bool ReadStatus.TradeHistory(string file) {
    }
 
    // restore exact 'closed' stats (for readability the stats section shows rounded pUnit values)
-   if (NE(netProfit,  stats.closedNetProfit, 2))       return(!catch("ReadStatus.TradeHistory(2)  "+ instance.name +" sum(history[H_NETPROFIT_M]) != stats.closedNetProfit ("  + NumberToStr(netProfit, ".2+")             +" != "+ NumberToStr(stats.closedNetProfit, ".2+")             +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP, stats.closedNetProfitP, Digits)) return(!catch("ReadStatus.TradeHistory(3)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != stats.closedNetProfitP (" + NumberToStr(netProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(sigProfitP, stats.closedSigProfitP, Digits)) return(!catch("ReadStatus.TradeHistory(4)  "+ instance.name +" sum(history[H_SIG_PROFIT_P]) != stats.closedSigProfitP ("+ NumberToStr(sigProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats.closedSigProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   stats.closedNetProfitP = netProfitP;
-   stats.closedSigProfitP = sigProfitP;
+   if (NE(netProfit,  stats[METRIC_NET_MONEY][S_CLOSED_PROFIT], 2))      return(!catch("ReadStatus.TradeHistory(2)  "+ instance.name +" sum(history[NETPROFIT_M]) != stats[NET_MONEY][CLOSED_PROFIT] (" + NumberToStr(netProfit, ".2+")             +" != "+ NumberToStr(stats[METRIC_NET_MONEY][S_CLOSED_PROFIT], ".2+")            +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP, stats[METRIC_NET_UNITS][S_CLOSED_PROFIT], Digits)) return(!catch("ReadStatus.TradeHistory(3)  "+ instance.name +" sum(history[NETPROFIT_P]) != stats[NET_UNITS][CLOSED_PROFIT] (" + NumberToStr(netProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats[METRIC_NET_UNITS][S_CLOSED_PROFIT], "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(sigProfitP, stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT], Digits)) return(!catch("ReadStatus.TradeHistory(4)  "+ instance.name +" sum(history[SIG_PROFIT_P]) != stats[SIG_UNITS][CLOSED_PROFIT] ("+ NumberToStr(sigProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT], "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+
+   stats[METRIC_NET_MONEY][S_CLOSED_PROFIT] = netProfit;
+   stats[METRIC_NET_UNITS][S_CLOSED_PROFIT] = netProfitP;
+   stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT] = sigProfitP;
 
    return(!catch("ReadStatus.TradeHistory(5)"));
 }

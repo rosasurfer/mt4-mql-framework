@@ -29,9 +29,9 @@ bool SaveStatus.TradeHistory(string file, bool fileExists) {
    }
 
    // cross-check stored 'close' stats
-   if (NE(netProfit,  stats.closedNetProfit, 2))       return(!catch("SaveStatus.TradeHistory(1)  "+ instance.name +" sum(history[H_NETPROFIT_M]) != stats.closedNetProfit ("  + NumberToStr(netProfit, ".2+")             +" != "+ NumberToStr(stats.closedNetProfit, ".2+")             +")", ERR_ILLEGAL_STATE));
-   if (NE(netProfitP, stats.closedNetProfitP, Digits)) return(!catch("SaveStatus.TradeHistory(2)  "+ instance.name +" sum(history[H_NETPROFIT_P]) != stats.closedNetProfitP (" + NumberToStr(netProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats.closedNetProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
-   if (NE(sigProfitP, stats.closedSigProfitP, Digits)) return(!catch("SaveStatus.TradeHistory(3)  "+ instance.name +" sum(history[H_SIG_PROFIT_P]) != stats.closedSigProfitP ("+ NumberToStr(sigProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats.closedSigProfitP, "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfit,  stats[METRIC_NET_MONEY][S_CLOSED_PROFIT], 2))      return(!catch("SaveStatus.TradeHistory(1)  "+ instance.name +" sum(history[NETPROFIT_M]) != stats.closedNetProfit ("  + NumberToStr(netProfit, ".2+")             +" != "+ NumberToStr(stats[METRIC_NET_MONEY][S_CLOSED_PROFIT], ".2+")            +")", ERR_ILLEGAL_STATE));
+   if (NE(netProfitP, stats[METRIC_NET_UNITS][S_CLOSED_PROFIT], Digits)) return(!catch("SaveStatus.TradeHistory(2)  "+ instance.name +" sum(history[NETPROFIT_P]) != stats.closedNetProfitP (" + NumberToStr(netProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats[METRIC_NET_UNITS][S_CLOSED_PROFIT], "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
+   if (NE(sigProfitP, stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT], Digits)) return(!catch("SaveStatus.TradeHistory(3)  "+ instance.name +" sum(history[SIG_PROFIT_P]) != stats.closedSigProfitP ("+ NumberToStr(sigProfitP, "."+ Digits +"+") +" != "+ NumberToStr(stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT], "."+ Digits +"+") +")", ERR_ILLEGAL_STATE));
 
    return(!catch("SaveStatus.TradeHistory(4)"));
 }

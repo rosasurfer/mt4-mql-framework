@@ -43,13 +43,6 @@ extern bool   ShowProfitInPercent  = false;  // whether PnL is displayed in mone
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// bracket times
-int  bracket1Start = 900;                    // 15:00 (minutes after Midnight)
-int  bracket1End   = 930;                    // 15:30
-int  bracket2Start = 960;                    // 16:00
-int  bracket2End   = 990;                    // 16:30
-
-
 // framework
 #include <core/expert.mqh>
 #include <core/expert.recorder.mqh>
@@ -132,6 +125,13 @@ int  bracket2End   = 990;                    // 16:30
 // init/deinit
 #include <ea/init.mqh>
 #include <ea/deinit.mqh>
+
+
+// bracket times
+int bracket1Start = 900;                           // 15:00 (minutes after Midnight)
+int bracket1End   = 930;                           // 15:30
+int bracket2Start = 960;                           // 16:00
+int bracket2End   = 990;                           // 16:30
 
 
 /**

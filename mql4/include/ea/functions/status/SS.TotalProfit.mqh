@@ -7,16 +7,16 @@ void SS.TotalProfit() {
       status.totalProfit = "-";
    }
    else {
-      switch (status.activeMetric) {
+      int metric = status.activeMetric;
+      switch (metric) {
          case METRIC_NET_MONEY:
-            if (ShowProfitInPercent) status.totalProfit = NumberToStr(MathDiv(stats.totalNetProfit, instance.startEquity) * 100, "R+.2") +"%";
-            else                     status.totalProfit = NumberToStr(stats.totalNetProfit, "R+.2") +" "+ AccountCurrency();
+            if (ShowProfitInPercent) status.totalProfit = NumberToStr(MathDiv(stats[metric][S_TOTAL_PROFIT], instance.startEquity) * 100, "R+.2") +"%";
+            else                     status.totalProfit = NumberToStr(stats[metric][S_TOTAL_PROFIT], "R+.2") +" "+ AccountCurrency();
             break;
+
          case METRIC_NET_UNITS:
-            status.totalProfit = NumberToStr(stats.totalNetProfitP/pUnit, "R+."+ pDigits) +" "+ spUnit;
-            break;
          case METRIC_SIG_UNITS:
-            status.totalProfit = NumberToStr(stats.totalSigProfitP/pUnit, "R+."+ pDigits) +" "+ spUnit;
+            status.totalProfit = NumberToStr(stats[metric][S_TOTAL_PROFIT]/pUnit, "R+."+ pDigits) +" "+ spUnit;
             break;
 
          default:

@@ -174,6 +174,12 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/deinit.mqh>
 
 
+// shorter metric aliases
+#define NET_MONEY    METRIC_NET_MONEY
+#define NET_UNITS    METRIC_NET_UNITS
+#define SIG_UNITS    METRIC_SIG_UNITS
+
+
 /**
  * Main function
  *
@@ -494,23 +500,15 @@ bool UpdateStatus() {
    }
 
    // update PnL stats
-   stats.openNetProfit     = open.netProfitM;
-   stats.totalNetProfit    = stats.openNetProfit + stats.closedNetProfit;
-   stats.maxNetProfit      = MathMax(stats.maxNetProfit,      stats.totalNetProfit);
-   stats.maxNetAbsDrawdown = MathMin(stats.maxNetAbsDrawdown, stats.totalNetProfit);
-   stats.maxNetRelDrawdown = MathMin(stats.maxNetRelDrawdown, stats.totalNetProfit - stats.maxNetProfit);
-
-   stats.openNetProfitP     = open.netProfitP;
-   stats.totalNetProfitP    = stats.openNetProfitP + stats.closedNetProfitP;
-   stats.maxNetProfitP      = MathMax(stats.maxNetProfitP,      stats.totalNetProfitP);
-   stats.maxNetAbsDrawdownP = MathMin(stats.maxNetAbsDrawdownP, stats.totalNetProfitP);
-   stats.maxNetRelDrawdownP = MathMin(stats.maxNetRelDrawdownP, stats.totalNetProfitP - stats.maxNetProfitP);
-
-   stats.openSigProfitP     = open.sigProfitP;
-   stats.totalSigProfitP    = stats.openSigProfitP + stats.closedSigProfitP;
-   stats.maxSigProfitP      = MathMax(stats.maxSigProfitP,      stats.totalSigProfitP);
-   stats.maxSigAbsDrawdownP = MathMin(stats.maxSigAbsDrawdownP, stats.totalSigProfitP);
-   stats.maxSigRelDrawdownP = MathMin(stats.maxSigRelDrawdownP, stats.totalSigProfitP - stats.maxSigProfitP);
+   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   for (int i=1; i <= 3; i++) {
+      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
+      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+   }
 
    if (__isChart) {
       SS.TotalProfit();
@@ -589,23 +587,15 @@ bool OpenPosition(double signal[]) {
    open.sigRundownP  = open.sigRunupP;
 
    // update PnL stats
-   stats.openNetProfit     = open.netProfitM;
-   stats.totalNetProfit    = stats.openNetProfit + stats.closedNetProfit;
-   stats.maxNetProfit      = MathMax(stats.maxNetProfit,      stats.totalNetProfit);
-   stats.maxNetAbsDrawdown = MathMin(stats.maxNetAbsDrawdown, stats.totalNetProfit);
-   stats.maxNetRelDrawdown = MathMin(stats.maxNetRelDrawdown, stats.totalNetProfit - stats.maxNetProfit);
-
-   stats.openNetProfitP     = open.netProfitP;
-   stats.totalNetProfitP    = stats.openNetProfitP + stats.closedNetProfitP;
-   stats.maxNetProfitP      = MathMax(stats.maxNetProfitP,      stats.totalNetProfitP);
-   stats.maxNetAbsDrawdownP = MathMin(stats.maxNetAbsDrawdownP, stats.totalNetProfitP);
-   stats.maxNetRelDrawdownP = MathMin(stats.maxNetRelDrawdownP, stats.totalNetProfitP - stats.maxNetProfitP);
-
-   stats.openSigProfitP     = open.sigProfitP;
-   stats.totalSigProfitP    = stats.openSigProfitP + stats.closedSigProfitP;
-   stats.maxSigProfitP      = MathMax(stats.maxSigProfitP,      stats.totalSigProfitP);
-   stats.maxSigAbsDrawdownP = MathMin(stats.maxSigAbsDrawdownP, stats.totalSigProfitP);
-   stats.maxSigRelDrawdownP = MathMin(stats.maxSigRelDrawdownP, stats.totalSigProfitP - stats.maxSigProfitP);
+   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   for (int i=1; i <= 3; i++) {
+      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
+      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+   }
 
    if (__isChart) {
       SS.OpenLots();
@@ -659,23 +649,15 @@ bool ClosePosition(double signal[]) {
    if (!MovePositionToHistory(closeTime, closePrice, closePriceSig)) return(false);
 
    // update PnL stats
-   stats.openNetProfit     = open.netProfitM;
-   stats.totalNetProfit    = stats.openNetProfit + stats.closedNetProfit;
-   stats.maxNetProfit      = MathMax(stats.maxNetProfit,      stats.totalNetProfit);
-   stats.maxNetAbsDrawdown = MathMin(stats.maxNetAbsDrawdown, stats.totalNetProfit);
-   stats.maxNetRelDrawdown = MathMin(stats.maxNetRelDrawdown, stats.totalNetProfit - stats.maxNetProfit);
-
-   stats.openNetProfitP     = open.netProfitP;
-   stats.totalNetProfitP    = stats.openNetProfitP + stats.closedNetProfitP;
-   stats.maxNetProfitP      = MathMax(stats.maxNetProfitP,      stats.totalNetProfitP);
-   stats.maxNetAbsDrawdownP = MathMin(stats.maxNetAbsDrawdownP, stats.totalNetProfitP);
-   stats.maxNetRelDrawdownP = MathMin(stats.maxNetRelDrawdownP, stats.totalNetProfitP - stats.maxNetProfitP);
-
-   stats.openSigProfitP     = open.sigProfitP;
-   stats.totalSigProfitP    = stats.openSigProfitP + stats.closedSigProfitP;
-   stats.maxSigProfitP      = MathMax(stats.maxSigProfitP,      stats.totalSigProfitP);
-   stats.maxSigAbsDrawdownP = MathMin(stats.maxSigAbsDrawdownP, stats.totalSigProfitP);
-   stats.maxSigRelDrawdownP = MathMin(stats.maxSigRelDrawdownP, stats.totalSigProfitP - stats.maxSigProfitP);
+   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   for (int i=1; i <= 3; i++) {
+      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
+      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+   }
 
    if (__isChart) {
       SS.TotalProfit();
@@ -812,23 +794,15 @@ bool TakePartialProfit(double lots) {
    }
 
    // update PnL stats
-   stats.openNetProfit     = open.netProfitM;
-   stats.totalNetProfit    = stats.openNetProfit + stats.closedNetProfit;
-   stats.maxNetProfit      = MathMax(stats.maxNetProfit,      stats.totalNetProfit);
-   stats.maxNetAbsDrawdown = MathMin(stats.maxNetAbsDrawdown, stats.totalNetProfit);
-   stats.maxNetRelDrawdown = MathMin(stats.maxNetRelDrawdown, stats.totalNetProfit - stats.maxNetProfit);
-
-   stats.openNetProfitP     = open.netProfitP;
-   stats.totalNetProfitP    = stats.openNetProfitP + stats.closedNetProfitP;
-   stats.maxNetProfitP      = MathMax(stats.maxNetProfitP,      stats.totalNetProfitP);
-   stats.maxNetAbsDrawdownP = MathMin(stats.maxNetAbsDrawdownP, stats.totalNetProfitP);
-   stats.maxNetRelDrawdownP = MathMin(stats.maxNetRelDrawdownP, stats.totalNetProfitP - stats.maxNetProfitP);
-
-   stats.openSigProfitP     = open.sigProfitP;
-   stats.totalSigProfitP    = stats.openSigProfitP + stats.closedSigProfitP;
-   stats.maxSigProfitP      = MathMax(stats.maxSigProfitP,      stats.totalSigProfitP);
-   stats.maxSigAbsDrawdownP = MathMin(stats.maxSigAbsDrawdownP, stats.totalSigProfitP);
-   stats.maxSigRelDrawdownP = MathMin(stats.maxSigRelDrawdownP, stats.totalSigProfitP - stats.maxSigProfitP);
+   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   for (int i=1; i <= 3; i++) {
+      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
+      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+   }
 
    if (__isChart) {
       SS.OpenLots();
