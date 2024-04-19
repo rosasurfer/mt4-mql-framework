@@ -978,7 +978,7 @@ bool SaveStatus() {
    SS.All();                                                   // update trade stats and global string representations
 
    // [General]
-   if (!SaveStatus.General(file, fileExists)) return(false);   // account and instrument infos
+   if (!SaveStatus.General(file, fileExists)) return(false);   // account, symbol and test infos
 
    // [Inputs]
    section = "Inputs";

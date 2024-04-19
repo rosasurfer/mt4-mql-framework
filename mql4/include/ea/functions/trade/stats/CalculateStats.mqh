@@ -10,9 +10,11 @@
  *
  * TODO:
  *  - MaxRecoveryTime = MaxTime(equity high to new high)
- *  - Z-score:           http://web.archive.org/web/20120429061838/http://championship.mql4.com/2007/news/203
- *  - Zephyr Pain Index: https://investexcel.net/zephyr-pain-index/
- *  - Zephyr K-Ratio:    http://web.archive.org/web/20210116024652/https://www.styleadvisor.com/resources/statfacts/zephyr-k-ratio
+ *  - Z-score:             http://web.archive.org/web/20120429061838/http://championship.mql4.com/2007/news/203
+ *  - Zephyr Pain Index:   https://investexcel.net/zephyr-pain-index/
+ *  - Zephyr K-Ratio:      http://web.archive.org/web/20210116024652/https://www.styleadvisor.com/resources/statfacts/zephyr-k-ratio
+ *
+ *  @link  https://invidious.nerdvpn.de/watch?v=GhrxgbQnEEU#                               [Simple Linear Regression by Hand]
  */
 void CalculateStats() {
    int trades = ArrayRange(history, 0);
@@ -404,8 +406,8 @@ double CalculateSharpeRatio(int metric) {
    for (int i=0; i < trades; i++) {
       returns[i] = history[i][iProfit];
    }
-
-   // calculate stdDeviation and final ratio                      // Don't annualize volatility as in std-finance. An automated system deteriorating over time would be broken.
+                                                                  // Don't annualize volatility as in std-finance. With a statistically sufficient
+   // calculate stdDeviation and final ratio                      // number of trades an automated system deteriorating over time would be a failure.
    double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, trades, 0, MODE_SMA, 0);
    double ratio = MathDiv(annualizedReturn, stdDev, 99999);
 
@@ -451,8 +453,8 @@ double CalculateSortinoRatio(int metric) {
       n++;
    }
    ArrayResize(returns, n);
-
-   // calculate stdDeviation and final ratio                      // Don't annualize volatility as in std-finance. An automated system deteriorating over time would be broken.
+                                                                  // Don't annualize volatility as in std-finance. With a statistically sufficient
+   // calculate stdDeviation and final ratio                      // number of trades an automated system deteriorating over time would be a failure.
    double stdDev = iStdDevOnArray(returns, WHOLE_ARRAY, n, 0, MODE_SMA, 0);
    double ratio = MathDiv(annualizedReturn, stdDev, 99999);       // Returns {-2, -2, -2} and {-3, -3, -3} correctly have the same volatility.
                                                                   // Size of losses is already accounted for by the nominator.

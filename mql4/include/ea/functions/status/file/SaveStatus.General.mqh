@@ -1,5 +1,5 @@
 /**
- * Write account and instrument infos to the status file.
+ * Write account, symbol and test infos (if any) to the status file.
  *
  * @param  string file       - status filename
  * @param  bool   fileExists - whether the status file exists
@@ -20,12 +20,13 @@ bool SaveStatus.General(string file, bool fileExists) {
       WriteIniString(file, section, "Symbol",          Symbol() + separator);
    }
    else {
-      WriteIniString(file, section, "Test.Currency",   AccountCurrency());
-      WriteIniString(file, section, "Test.Symbol",     Symbol());
-      WriteIniString(file, section, "Test.TimeRange",  TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
-      WriteIniString(file, section, "Test.Period",     PeriodDescription());
-      WriteIniString(file, section, "Test.BarModel",   BarModelDescription(__Test.barModel));
-      WriteIniString(file, section, "Test.Spread",     DoubleToStr((_Ask-_Bid)/pUnit, pDigits) +" "+ spUnit);
+      section = "Test";
+      WriteIniString(file, section, "Currency",  AccountCurrency());
+      WriteIniString(file, section, "Symbol",    Symbol());
+      WriteIniString(file, section, "TimeRange", TimeToStr(Test.GetStartDate(), TIME_DATE) +"-"+ TimeToStr(Test.GetEndDate()-1*DAY, TIME_DATE));
+      WriteIniString(file, section, "Period",    PeriodDescription());
+      WriteIniString(file, section, "BarModel",  BarModelDescription(__Test.barModel));
+      WriteIniString(file, section, "Spread",    DoubleToStr((_Ask-_Bid)/pUnit, pDigits) +" "+ spUnit);
          double commission  = GetCommission();
          string sCommission = DoubleToStr(commission, 2);
          if (NE(commission, 0)) {
@@ -34,7 +35,7 @@ bool SaveStatus.General(string file, bool fileExists) {
             double price     = MathDiv(commission, MathDiv(tickValue, tickSize));
             sCommission = sCommission +" ("+ DoubleToStr(price/pUnit, pDigits) +" "+ spUnit +")";
          }
-      WriteIniString(file, section, "Test.Commission", sCommission + separator);
+      WriteIniString(file, section, "Commission", sCommission + separator);
    }
    return(!catch("SaveStatus.General(1)"));
 }

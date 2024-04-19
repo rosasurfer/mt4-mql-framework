@@ -24,14 +24,21 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
+ *  - profitable setups
+ *
+ *
+ *  - reliable test environment
+ *     reproduce tests with original EAs
+ *     terminal with Dukascopy data
+ *     fast generation of new test data (e.g. from 2007)
+ *
  *
  *  - entry management
- *
  *  - exit management
  *     dynamic SL/TP distances (multiples of ranges)
  *     trailing stop
  *
- *  - more statistics: z-score, recovery time
+ *  - more statistics: recovery time, z-score
  *
  *  - optimization
  *     update status file content: execution time, optimizer settings
@@ -80,10 +87,6 @@
  *     on terminal start with 7 charts 106.000 initial calls
  *     SuperBars in regular charts: permant non-stopping calls (after a few minutes more than 1.000.000)
  *     SuperBars in offline charts: 271 calls on every tick
- *
- *  - reproduce/validate tests with original EAs
- *     terminal with Dukascopy data
- *     fast generation of old test data (e.g. from 2007)
  *
  *  -------------------------------------------------------------------------------------------------------------------------
  *  - ZigZag Twister
@@ -1129,7 +1132,7 @@ bool SaveStatus() {
    SS.All();                                                   // update trade stats and global string representations
 
    // [General]
-   if (!SaveStatus.General(file, fileExists)) return(false);   // account and instrument infos
+   if (!SaveStatus.General(file, fileExists)) return(false);   // account, symbol and test infos
 
    // [Inputs]
    section = "Inputs";
