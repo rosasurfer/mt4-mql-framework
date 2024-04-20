@@ -15,28 +15,28 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
    // [Stats: net in money]
    string section = "Stats: net in money";
    WriteIniString(file, section, "OpenProfit",                   /*double  */ StrPadRight(DoubleToStr(stats[METRIC_NET_MONEY][S_OPEN_PROFIT], 2), 25) +"; after all costs in "+ AccountCurrency());
-   WriteIniString(file, section, "ClosedProfit",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_CLOSED_PROFIT       ], 2));
-   WriteIniString(file, section, "TotalProfit",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TOTAL_PROFIT        ], 2));
-   WriteIniString(file, section, "MaxProfit",                    /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_MAX_PROFIT          ], 2));
-   WriteIniString(file, section, "MaxAbsDrawdown",               /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_MAX_ABS_DRAWDOWN    ], 2));
-   WriteIniString(file, section, "MaxRelDrawdown",               /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_MAX_REL_DRAWDOWN    ], 2));
-   WriteIniString(file, section, "ProfitFactor",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_PROFIT_FACTOR], 2));
-   WriteIniString(file, section, "SharpeRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_SHARPE_RATIO ], 2));
-   WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_SORTINO_RATIO], 2));
-   WriteIniString(file, section, "CalmarRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TRADES_CALMAR_RATIO ], 2) + separator);
+   WriteIniString(file, section, "ClosedProfit",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_CLOSED_PROFIT   ], 2));
+   WriteIniString(file, section, "TotalProfit",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TOTAL_PROFIT    ], 2));
+   WriteIniString(file, section, "MaxProfit",                    /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_MAX_PROFIT      ], 2));
+   WriteIniString(file, section, "MaxAbsDrawdown",               /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_MAX_ABS_DRAWDOWN], 2));
+   WriteIniString(file, section, "MaxRelDrawdown",               /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_MAX_REL_DRAWDOWN], 2));
+   WriteIniString(file, section, "ProfitFactor",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_PROFIT_FACTOR   ], 2));
+   WriteIniString(file, section, "SharpeRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_SHARPE_RATIO    ], 2));
+   WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_SORTINO_RATIO   ], 2));
+   WriteIniString(file, section, "CalmarRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_CALMAR_RATIO    ], 2) + separator);
 
    // [Stats: net in punits]
    section = "Stats: net in "+ spUnit;
    WriteIniString(file, section, "OpenProfit",                   /*double  */ StrPadRight(DoubleToStr(stats[METRIC_NET_UNITS][S_OPEN_PROFIT]/pUnit, pDigits), 25) +"; after all costs in "+ spUnit);
-   WriteIniString(file, section, "ClosedProfit",                 /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_CLOSED_PROFIT       ]/pUnit, pDigits));
-   WriteIniString(file, section, "TotalProfit",                  /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TOTAL_PROFIT        ]/pUnit, pDigits));
-   WriteIniString(file, section, "MaxProfit",                    /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_MAX_PROFIT          ]/pUnit, pDigits));
-   WriteIniString(file, section, "MaxAbsDrawdown",               /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_MAX_ABS_DRAWDOWN    ]/pUnit, pDigits));
-   WriteIniString(file, section, "MaxRelDrawdown",               /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_MAX_REL_DRAWDOWN    ]/pUnit, pDigits));
-   WriteIniString(file, section, "ProfitFactor",                 /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_PROFIT_FACTOR], 2));
-   WriteIniString(file, section, "SharpeRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_SHARPE_RATIO ], 2));
-   WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_SORTINO_RATIO], 2));
-   WriteIniString(file, section, "CalmarRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TRADES_CALMAR_RATIO ], 2) + separator);
+   WriteIniString(file, section, "ClosedProfit",                 /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_CLOSED_PROFIT   ]/pUnit, pDigits));
+   WriteIniString(file, section, "TotalProfit",                  /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TOTAL_PROFIT    ]/pUnit, pDigits));
+   WriteIniString(file, section, "MaxProfit",                    /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_MAX_PROFIT      ]/pUnit, pDigits));
+   WriteIniString(file, section, "MaxAbsDrawdown",               /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_MAX_ABS_DRAWDOWN]/pUnit, pDigits));
+   WriteIniString(file, section, "MaxRelDrawdown",               /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_MAX_REL_DRAWDOWN]/pUnit, pDigits));
+   WriteIniString(file, section, "ProfitFactor",                 /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_PROFIT_FACTOR   ], 2));
+   WriteIniString(file, section, "SharpeRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_SHARPE_RATIO    ], 2));
+   WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_SORTINO_RATIO   ], 2));
+   WriteIniString(file, section, "CalmarRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_CALMAR_RATIO    ], 2) + separator);
 
    WriteIniString(file, section, "trades",                       /*int     */ Round(stats[METRIC_NET_UNITS][S_TRADES]));
    WriteIniString(file, section, "trades.long",                  /*int     */ StrPadRight(Round(stats[METRIC_NET_UNITS][S_TRADES_LONG ]), 23) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_NET_UNITS][S_TRADES_LONG_PCT  ], 1) +"%)", 8));
@@ -78,15 +78,15 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
    // [Stats: signal in punits]
    section = "Stats: signal in "+ spUnit;
    WriteIniString(file, section, "OpenProfit",                   /*double  */ StrPadRight(DoubleToStr(stats[METRIC_SIG_UNITS][S_OPEN_PROFIT]/pUnit, pDigits), 25) +"; before spread/any costs in "+ spUnit);
-   WriteIniString(file, section, "ClosedProfit",                 /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT       ]/pUnit, pDigits));
-   WriteIniString(file, section, "TotalProfit",                  /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TOTAL_PROFIT        ]/pUnit, pDigits));
-   WriteIniString(file, section, "MaxProfit",                    /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_MAX_PROFIT          ]/pUnit, pDigits));
-   WriteIniString(file, section, "MaxAbsDrawdown",               /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_MAX_ABS_DRAWDOWN    ]/pUnit, pDigits));
-   WriteIniString(file, section, "MaxRelDrawdown",               /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_MAX_REL_DRAWDOWN    ]/pUnit, pDigits));
-   WriteIniString(file, section, "ProfitFactor",                 /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_PROFIT_FACTOR], 2));
-   WriteIniString(file, section, "SharpeRatio",                  /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_SHARPE_RATIO ], 2));
-   WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_SORTINO_RATIO], 2));
-   WriteIniString(file, section, "CalmarRatio",                  /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TRADES_CALMAR_RATIO ], 2) + separator);
+   WriteIniString(file, section, "ClosedProfit",                 /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT   ]/pUnit, pDigits));
+   WriteIniString(file, section, "TotalProfit",                  /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TOTAL_PROFIT    ]/pUnit, pDigits));
+   WriteIniString(file, section, "MaxProfit",                    /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_MAX_PROFIT      ]/pUnit, pDigits));
+   WriteIniString(file, section, "MaxAbsDrawdown",               /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_MAX_ABS_DRAWDOWN]/pUnit, pDigits));
+   WriteIniString(file, section, "MaxRelDrawdown",               /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_MAX_REL_DRAWDOWN]/pUnit, pDigits));
+   WriteIniString(file, section, "ProfitFactor",                 /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_PROFIT_FACTOR   ], 2));
+   WriteIniString(file, section, "SharpeRatio",                  /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_SHARPE_RATIO    ], 2));
+   WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_SORTINO_RATIO   ], 2));
+   WriteIniString(file, section, "CalmarRatio",                  /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_CALMAR_RATIO    ], 2) + separator);
 
    WriteIniString(file, section, "trades",                       /*int     */ Round(stats[METRIC_SIG_UNITS][S_TRADES]));
    WriteIniString(file, section, "trades.long",                  /*int     */ StrPadRight(Round(stats[METRIC_SIG_UNITS][S_TRADES_LONG ]), 23) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_SIG_UNITS][S_TRADES_LONG_PCT  ], 1) +"%)", 8));

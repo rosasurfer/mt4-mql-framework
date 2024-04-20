@@ -593,9 +593,9 @@ bool ReadStatus() {
    SS.InstanceName();
 
    // open/closed trades and stats
-   if (!ReadStatus.TradeStats(file))   return(false);
    if (!ReadStatus.OpenPosition(file)) return(false);
    if (!ReadStatus.TradeHistory(file)) return(false);
+   if (!ReadStatus.TradeStats(file))   return(false);
 
    return(!catch("ReadStatus(4)"));
 }

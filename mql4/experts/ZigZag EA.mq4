@@ -1211,8 +1211,8 @@ bool ReadStatus() {
    ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"      );              // int      ZigZag.Periods             = 40
    Lots                       = GetIniDouble (file, section, "Lots"                );              // double   Lots                       = 0.1
    EntryOrder.Distance        = GetIniInt    (file, section, "EntryOrder.Distance" );              // int      EntryOrder.Distance        = 12
-   ShowProfitInPercent        = GetIniBool   (file, section, "ShowProfitInPercent");               // bool     ShowProfitInPercent        = 1
-   EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",     "");               // string   EA.Recorder                = 1,2,4
+   ShowProfitInPercent        = GetIniBool   (file, section, "ShowProfitInPercent" );              // bool     ShowProfitInPercent        = 1
+   EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",      "");              // string   EA.Recorder                = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";
@@ -1247,9 +1247,9 @@ bool ReadStatus() {
    stop.profitPunit.descr     = GetIniStringA(file, section, "stop.profitPunit.descr", "");        // string   stop.profitPunit.descr     = text
 
    // open/closed trades and stats
-   if (!ReadStatus.TradeStats(file))   return(false);
    if (!ReadStatus.OpenPosition(file)) return(false);
    if (!ReadStatus.TradeHistory(file)) return(false);
+   if (!ReadStatus.TradeStats(file))   return(false);
 
    return(!catch("ReadStatus(4)"));
 }
@@ -1276,7 +1276,7 @@ bool SynchronizeStatus() {
             continue;
          }
          if (!open.ticket) {
-            logWarn("SynchronizeStatus(2)  "+ instance.name +" dangling open position found: #"+ OrderTicket() +", adding to instance...");
+            logWarn("SynchronizeStatus(2)  "+ instance.name +" orphaned open position found: #"+ OrderTicket() +", adding to instance...");
             open.ticket    = OrderTicket();
             open.type      = OrderType();
             open.time      = OrderOpenTime();
@@ -1285,7 +1285,7 @@ bool SynchronizeStatus() {
             open.slippageP = NULL;                                    // open PnL numbers will auto-update in the following UpdateStatus() call
          }
          else if (OrderTicket() != open.ticket) {
-            return(!catch("SynchronizeStatus(3)  "+ instance.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+            return(!catch("SynchronizeStatus(3)  "+ instance.name +" orphaned open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
          }
       }
    }
@@ -1332,16 +1332,18 @@ bool SynchronizeStatus() {
    }
 
    // recalculate total PL numbers
-   for (i=1; i <= 3; i++) {
-      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
-      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
-      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
-      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+   for (int m=1; m <= 3; m++) {
+      stats[m][S_TOTAL_PROFIT    ] = stats[m][S_OPEN_PROFIT] + stats[m][S_CLOSED_PROFIT];
+      stats[m][S_MAX_PROFIT      ] = MathMax(stats[m][S_MAX_PROFIT      ], stats[m][S_TOTAL_PROFIT]);
+      stats[m][S_MAX_ABS_DRAWDOWN] = MathMin(stats[m][S_MAX_ABS_DRAWDOWN], stats[m][S_TOTAL_PROFIT]);
+      stats[m][S_MAX_REL_DRAWDOWN] = MathMin(stats[m][S_MAX_REL_DRAWDOWN], stats[m][S_TOTAL_PROFIT] - stats[m][S_MAX_PROFIT]);
    }
    SS.All();
 
-   if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize)
+   if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize) {
+      CalculateStats(true);
       return(SaveStatus());                                          // immediately save status if orders changed
+   }
    return(!catch("SynchronizeStatus(5)"));
 }
 

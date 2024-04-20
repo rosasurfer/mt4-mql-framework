@@ -9,15 +9,12 @@
 int ReadStatus.HistoryRecord(string key, string value) {
    if (last_error != NULL) return(EMPTY);
 
-   bool isPartial;
-   if      (StrStartsWith(key, "full.")) isPartial = false;
-   else if (StrStartsWith(key, "part.")) isPartial = true;
-   else return(_EMPTY(catch("ReadStatus.HistoryRecord(1)  "+ instance.name +" illegal history key \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
+   if (!StrStartsWith(key, "full.") && !StrStartsWith(key, "part.")) return(_EMPTY(catch("ReadStatus.HistoryRecord(1)  "+ instance.name +" illegal history key \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
 
    // [full|part].i=ticket,fromTicket,toTicket,type,lots,part,openTime,openPrice,openPriceSig,stopLoss,takeProfit,closeTime,closePrice,closePriceSig,slippageP,swapM,commissionM,grossProfitM,netProfitM,netProfitP,runupP,rundownP,sigProfitP,sigRunupP,sigRundownP
    string values[];
-   string sId = StrRightFrom(key, "."); if (!StrIsDigits(sId))      return(_EMPTY(catch("ReadStatus.HistoryRecord(2)  "+ instance.name +" illegal key format of history record: \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
-   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(_EMPTY(catch("ReadStatus.HistoryRecord(3)  "+ instance.name +" illegal number of fields in history record \""+ key +"\": "+ ArraySize(values) +" (expected "+ ArrayRange(history, 1) +")", ERR_INVALID_FILE_FORMAT)));
+   string sId = StrRightFrom(key, "."); if (!StrIsDigits(sId))       return(_EMPTY(catch("ReadStatus.HistoryRecord(2)  "+ instance.name +" illegal key format of history record: \""+ key +"\"", ERR_INVALID_FILE_FORMAT)));
+   if (Explode(value, ",", values, NULL) != ArrayRange(history, 1))  return(_EMPTY(catch("ReadStatus.HistoryRecord(3)  "+ instance.name +" illegal number of fields in history record \""+ key +"\": "+ ArraySize(values) +" (expected "+ ArrayRange(history, 1) +")", ERR_INVALID_FILE_FORMAT)));
 
    int      ticket        = StrToInteger(values[H_TICKET        ]);
    int      fromTicket    = StrToInteger(values[H_FROM_TICKET   ]);

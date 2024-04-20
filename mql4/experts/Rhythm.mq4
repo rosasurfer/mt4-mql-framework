@@ -404,9 +404,9 @@ bool ReadStatus() {
    SS.InstanceName();
 
    // open/closed trades and stats
-   if (!ReadStatus.TradeStats(file))   return(false);
    if (!ReadStatus.OpenPosition(file)) return(false);
    if (!ReadStatus.TradeHistory(file)) return(false);
+   if (!ReadStatus.TradeStats(file))   return(false);
 
    return(!catch("ReadStatus(4)"));
 }
@@ -435,7 +435,7 @@ bool SynchronizeStatus() {
       }
    }
 
-   // detect and handle orphaned open positions
+   // detect and handle orphaned closed trades
    orders = OrdersHistoryTotal();
    for (i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;       // FALSE: the visible history range was modified in another thread
