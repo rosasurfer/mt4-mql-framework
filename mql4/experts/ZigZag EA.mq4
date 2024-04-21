@@ -24,18 +24,21 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - profitable setups
+ *  - profitable backtests
+ *     profitable setups
+ *     order managment framework to implement setups
+ *     reliable and easily updatable testing environment
  *
  *
  *  - reliable test environment
  *     reproduce tests with original EAs
  *     terminal with Dukascopy data
- *     fast generation of new test data (e.g. from 2007)
+ *     comfortable update/generation/synchronization of new test data (e.g. from 2007)
  *
  *
  *  - entry management
  *  - exit management
- *     dynamic SL/TP distances (multiples of ranges)
+ *     dynamic SL/TP distances (multiples of various range types)
  *     trailing stop
  *
  *  - more statistics: recovery time, z-score

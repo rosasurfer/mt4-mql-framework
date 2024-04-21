@@ -165,10 +165,11 @@ int onInit() {
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
-   // styles
-   if (Histogram.Style.Width < 0)       return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)       return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width < 0)              return(catch("onInit(13)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   // Histogram.Style.Width
+   if (Histogram.Style.Width < 0)       return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)       return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   // MainLine.Width
+   if (MainLine.Width < 0)              return(catch("onInit(13)  invalid input parameter MainLine.Width: "+ MainLine.Width +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
    if (MaxBarsBack < -1)                return(catch("onInit(14)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;

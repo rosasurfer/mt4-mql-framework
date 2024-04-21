@@ -109,7 +109,7 @@ void UpdateBandLegend(string legendName, string indicatorName, string status, co
    string sUpperValue = NumberToStr(upperValue, PriceFormat);
    string sLowerValue = NumberToStr(lowerValue, PriceFormat);
 
-   string text = StringConcatenate(indicatorName, "   ", sLowerValue, " / ", sUpperValue, "   ", status);
+   string text = StringConcatenate(indicatorName, "   ", sUpperValue, " / ", sLowerValue, "   ", status);
    color  textColor = bandsColor;
    if      (textColor == Aqua        ) textColor = DeepSkyBlue;
    else if (textColor == Gold        ) textColor = Orange;
