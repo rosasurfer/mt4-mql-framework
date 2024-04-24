@@ -146,7 +146,7 @@ string   GetClassName(int hWnd);;
 double   GetCommission(double lots=1.0, int mode=MODE_MONEY);;
 string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
-double   GetExternalAssets(string company="", int account=NULL, bool refresh=false);;
+double   GetExternalAssets(string company="", int account=NULL, double equity=NULL);;
 datetime GetFxtTime();;
 string   GetMqlSandboxPath();;
 datetime GetNextSessionEndTime  (datetime time, int tz);;

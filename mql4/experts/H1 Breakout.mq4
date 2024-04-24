@@ -227,7 +227,7 @@ bool StartTrading(double signal[]) {
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartTrading(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
    if (!signal[SIG_OP])                                                    return(!catch("StartTrading(2)  "+ instance.name +" invalid signal parameter SIG_OP: 0", ERR_INVALID_PARAMETER));
 
-   if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
+   if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit(), 2);
    if (!instance.started) instance.started = Tick.time;
    instance.stopped = NULL;
    instance.status = STATUS_TRADING;

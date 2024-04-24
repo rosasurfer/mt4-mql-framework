@@ -4682,18 +4682,16 @@ string GetAccountServerPath() {
 
 
 /**
- * Get the configured value of an account's externally hold assets. The returned value can be negative to scale-down the
+ * Get the configuration value of an account's externally hold assets. The returned value can be negative to scale-down the
  * account size (e.g. for testing in a real account).
  *
  * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
- * @param  bool   refresh [optional] - whether to refresh a cached value (default: no)
+ * @param  double equity  [optional] - current equity value, used for configured multiples (default: zero)
  *
  * @return double - asset value in account currency or EMPTY_VALUE in case of errors
  */
-double GetExternalAssets(string company="", int account=NULL, bool refresh=false) {
-   refresh = refresh!=0;
-
+double GetExternalAssets(string company="", int account=NULL, double equity=NULL) {
    if (!StringLen(company) || company=="0") {
       company = GetAccountCompanyId();
       if (!StringLen(company)) return(EMPTY_VALUE);
@@ -4704,22 +4702,20 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
       if (!account) return(EMPTY_VALUE);
    }
 
-   static string lastCompany = "";
-   static int    lastAccount = 0;
-   static double lastResult;
+   string file = GetAccountConfigPath(company, account);
+   if (!StringLen(file)) return(EMPTY_VALUE);
 
-   if (refresh || company!=lastCompany || account!=lastAccount) {
-      string file = GetAccountConfigPath(company, account);
-      if (!StringLen(file)) return(EMPTY_VALUE);
+   string sValue = GetIniStringA(file, "General", "ExternalAssets", "");
+   double assetValue;
 
-      double value = GetIniDouble(file, "General", "ExternalAssets");
-      if (IsEmptyValue(value)) return(EMPTY_VALUE);
-
-      lastCompany = company;
-      lastAccount = account;
-      lastResult  = value;
+   if (StrStartsWith(sValue, "x")) {
+      if (!equity) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter equity=NULL for configured equity multiple: "+ sValue, ERR_INVALID_PARAMETER)));
+      assetValue = NormalizeDouble(StrToDouble(StrRight(sValue, -1)) * equity, 2);
    }
-   return(lastResult);
+   else {
+      assetValue = StrToDouble(sValue);
+   }
+   return(assetValue);
 }
 
 

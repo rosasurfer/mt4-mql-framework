@@ -390,7 +390,7 @@ bool UpdateStatus(int signal = NULL) {
 
    // process signal
    if (signal != NULL) {
-      if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
+      if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit(), 2);
       if (!instance.started) instance.started = Tick.time;
       instance.stopped = NULL;
       instance.status = STATUS_TRADING;

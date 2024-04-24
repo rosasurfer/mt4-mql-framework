@@ -789,7 +789,7 @@ bool StartTrading(double signal[]) {
    double sigPrice = signal[SIG_PRICE];
    int    sigOp    = signal[SIG_OP   ]; sigOp &= (SIG_OP_LONG|SIG_OP_SHORT);
 
-   if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
+   if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit(), 2);
    if (!instance.started) instance.started = Tick.time;
    instance.stopped = NULL;
    instance.status = STATUS_TRADING;
@@ -960,7 +960,7 @@ double stop.profitPct.AbsValue() {
    if (stop.profitPct.condition) {
       if (stop.profitPct.absValue == INT_MAX) {
          double startEquity = instance.startEquity;
-         if (!startEquity) startEquity = AccountEquity() - AccountCredit() + GetExternalAssets();
+         if (!startEquity) startEquity = AccountEquity() - AccountCredit();
          return(stop.profitPct.value/100 * startEquity);
       }
    }

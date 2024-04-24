@@ -286,10 +286,9 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (4) Lotsizes je Pair berechnen
-   double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
-   double visibleEquity  = AccountEquity()-AccountCredit();                            // bei negativer AccountBalance wird nur visibleEquity benutzt
-      if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
-   double equity = visibleEquity + externalAssets;
+   double equity = AccountEquity() - AccountCredit();
+   if (AccountBalance() > 0) equity = MathMin(AccountBalance(), equity);               // bei negativer AccountBalance wird nur 'equity' benutzt
+   equity += GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
    string errorMsg="", overLeverageMsg="";
 

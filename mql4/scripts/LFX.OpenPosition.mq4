@@ -114,12 +114,11 @@ int onStart() {
 
 
    // (2) Lotsizes berechnen
-   double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
-   double visibleEquity  = AccountEquity()-AccountCredit();                            // bei negativer AccountBalance wird nur visibleEquity benutzt
-      if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
-   double equity = visibleEquity + externalAssets;
+   double equity = AccountEquity() - AccountCredit();
+   if (AccountBalance() > 0) equity = MathMin(AccountBalance(), equity);               // bei negativer AccountBalance wird nur 'equity' benutzt
+   equity += GetExternalAssets(tradeAccount.company, tradeAccount.number, equity);
 
-   int    button;
+   int button;
    string errorMsg="", overLeverageMsg="";
 
    for (int retry, i=0; i < symbolsSize; i++) {

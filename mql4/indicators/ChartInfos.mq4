@@ -50,6 +50,7 @@ int     displayedPrice = PRICE_MEDIAN;                            // Bid | Ask |
 // unitsize calculation
 bool    mm.done;                                                  // processing flag
 double  mm.externalAssets;                                        // external assets
+bool    mm.externalAssetsCached;                                  //
 double  mm.equity;                                                // equity value used for calculations, incl. external assets and floating losses (but w/o floating/unrealized profits)
 
 double  mm.cfgLeverage;
@@ -283,10 +284,13 @@ int onAccountChange(int previous, int current) {
  * @return bool - success status of the executed command
  */
 bool onCommand(string cmd, string params, int keys) {
+   double equity = AccountEquity() - AccountCredit();
+   if (AccountBalance() > 0.005) equity = MathMin(AccountBalance(), equity);
+
    if (cmd == "log-custom-positions") {
-      int flags = F_LOG_TICKETS;                                              // log tickets
-      if (!keys & F_VK_SHIFT) flags |= F_LOG_SKIP_EMPTY;                      // without VK_SHIFT: skip empty tickets (default)
-      if (!AnalyzePositions(flags)) return(false);                            // with VK_SHIFT:    log empty tickets
+      int flags = F_LOG_TICKETS;                                        // log tickets
+      if (!keys & F_VK_SHIFT) flags |= F_LOG_SKIP_EMPTY;                // without VK_SHIFT: skip empty tickets (default)
+      if (!AnalyzePositions(flags)) return(false);                      // with VK_SHIFT:    log empty tickets
    }
 
    else if (cmd == "toggle-account-balance") {
@@ -296,9 +300,9 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-open-orders") {
       flags = NULL;
       if (keys & F_VK_SHIFT != 0) {
-         flags = F_SHOW_CUSTOM_POSITIONS;                                     // with VK_SHIFT: show custom positions only
-         ArrayResize(configTerms, 0);                                         // reparse configuration
-         GetExternalAssets(tradeAccount.company, tradeAccount.number, true);  // invalidate cached external assets
+         flags = F_SHOW_CUSTOM_POSITIONS;                               // with VK_SHIFT: show custom positions only
+         ArrayResize(configTerms, 0);                                   // reparse configuration
+         mm.externalAssetsCached = false;                               // invalidate cached external assets
       }
       if (!ToggleOpenOrders(flags)) return(false);
    }
@@ -306,9 +310,9 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-trade-history") {
       flags = NULL;
       if (keys & F_VK_SHIFT != 0) {
-         flags = F_SHOW_CUSTOM_HISTORY;                                       // with VK_SHIFT: show custom history only
-         ArrayResize(configTerms, 0);                                         // reparse configuration
-         GetExternalAssets(tradeAccount.company, tradeAccount.number, true);  // invalidate cached external assets
+         flags = F_SHOW_CUSTOM_HISTORY;                                 // with VK_SHIFT: show custom history only
+         ArrayResize(configTerms, 0);                                   // reparse configuration
+         mm.externalAssetsCached = false;                               // invalidate cached external assets
       }
       if (!ToggleTradeHistory(flags)) return(false);
    }
@@ -324,9 +328,9 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "trade-account") {
       string key = StrReplace(params, ",", ":");
       if (!InitTradeAccount(key))  return(false);
-      GetExternalAssets(tradeAccount.company, tradeAccount.number, true);     // invalidate cached external assets
       if (!UpdateAccountDisplay()) return(false);
-      ArrayResize(configTerms, 0);                                            // reparse configuration
+      ArrayResize(configTerms, 0);                                      // reparse configuration
+      mm.externalAssetsCached = false;                                  // invalidate cached external assets
    }
    else return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
 
@@ -1925,7 +1929,7 @@ bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL)
 
 
 /**
- * Calculate the unitsize according to the configured profile. Calculation is risk-based and/or leverage-based.
+ * Calculate the unitsize according to the configuration. Calculation is risk-based and/or leverage-based.
  *
  *  - Default configuration settings for risk-based calculation:
  *    [Unitsize]
@@ -1941,21 +1945,25 @@ bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL)
  *    GBPUSD.RiskPercent = <numeric>                     ; per symbol: risked percent of account equity
  *    EURUSD.Leverage    = <numeric>                     ; per symbol: leverage per unit
  *
- * The default settings apply if no symbol-specific settings are provided. For symbol-specific settings the term "Default"
- * is replaced by the broker's symbol name or the symbol's standard name. The broker's symbol name has preference over the
- * standard name. E.g. if a broker offers the symbol "EURUSDm" and the configuration provides the settings "Default.Leverage",
- * "EURUSD.Leverage" and "EURUSDm.Leverage" the calculation uses the settings for "EURUSDm".
+ * This default settings apply if no symbol-specific settings are provided. For symbol-specific settings the term "Default"
+ * gets replaced by the actual symbol.
  *
- * If both risk and leverage settings are provided the resulting unitsize is the smaller of both calculations.
- * The configuration is read in onInit().
+ * If multiple settings are found for the same standard symbol (e.g. "EURUSDm.Leverage" and "EURUSD.Leverage"), then a broker
+ * specific settings is preferred.
+ *
+ * If both risk and leverage settings are configured the resulting unitsize is the smaller of both calculations.
  *
  * @return bool - success status
  */
 bool CalculateUnitSize() {
    if (mm.done) return(true);
-   mm.externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
-   if (mode.extern) return(true);                                       // skip remaining part for external accounts
+   double accountEquity = AccountEquity() - AccountCredit();
+   if (AccountBalance() > 0.005) accountEquity = MathMin(AccountBalance(), accountEquity);
+   if (accountEquity < 0.005) return(true);                             // empty account or terminal not yet ready
+   mm.externalAssets = GetExternalBalance(accountEquity);
+
+   if (mode.extern) return(true);                                       // skip everything else for external accounts
 
    // see declaration of global vars mm.* for their descriptions
    mm.lotValue                = 0;
@@ -1967,8 +1975,6 @@ bool CalculateUnitSize() {
    mm.riskRange               = 0;
 
    // recalculate equity used for calculations
-   double accountEquity = AccountEquity()-AccountCredit();
-   if (AccountBalance() > 0) accountEquity = MathMin(AccountBalance(), accountEquity);
    mm.equity = accountEquity + mm.externalAssets;
 
    // recalculate lot value and unleveraged unitsize
@@ -2035,6 +2041,31 @@ bool CalculateUnitSize() {
 
    mm.done = true;
    return(!catch("CalculateUnitSize(2)"));
+}
+
+
+/**
+ * Resolve the amount of externally hold assets.
+ *
+ * @param  double equity - current equity value, used for configured multiples only
+ *
+ * @return double - asset value in account currency or EMPTY_VALUE in case of errors
+ */
+double GetExternalBalance(double equity) {
+   static string lastCompany = "";
+   static int    lastAccount = 0;
+   static double lastResult  = 0;
+
+   if (!mm.externalAssetsCached || tradeAccount.company!=lastCompany || tradeAccount.number!=lastAccount) {
+      double assets = GetExternalAssets(tradeAccount.company, tradeAccount.number, equity);
+      if (IsEmptyValue(assets)) return(EMPTY_VALUE);
+
+      lastCompany = tradeAccount.company;
+      lastAccount = tradeAccount.number;
+      lastResult  = assets;
+      mm.externalAssetsCached = true;
+   }
+   return(lastResult);
 }
 
 
