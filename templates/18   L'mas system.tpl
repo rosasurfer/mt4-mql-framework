@@ -4,7 +4,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=6
+scale=4
 graph=0
 fore=0
 grid=0

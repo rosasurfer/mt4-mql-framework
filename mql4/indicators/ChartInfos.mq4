@@ -1631,24 +1631,23 @@ bool UpdateStopoutLevel() {
    double soEquity   = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity = usedMargin * soEquity/100;
    double tickSize   = MarketInfoEx(Symbol(), MODE_TICKSIZE, error);
    double tickValue  = MarketInfoEx(Symbol(), MODE_TICKVALUE, error) * MathAbs(totalPosition);
-   if (!Bid || !tickSize || !tickValue) {
-      if (!Bid || error==ERR_SYMBOL_NOT_AVAILABLE)
+   if (!_Bid || !tickSize || !tickValue) {
+      if (!_Bid || error==ERR_SYMBOL_NOT_AVAILABLE)
          return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // Symbol noch nicht subscribed (possible on start, change of account/template, offline chart, MarketWatch -> Hide all)
       return(!catch("UpdateStopoutLevel(2)", error));
    }
    double soDistance = (equity - soEquity)/tickValue * tickSize;
-   double soPrice;
-   if (totalPosition > 0) soPrice = NormalizeDouble(Bid - soDistance, Digits);
-   else                   soPrice = NormalizeDouble(Ask + soDistance, Digits);
+   if (totalPosition > 0) double soPrice = _Bid - soDistance;
+   else                          soPrice = _Ask + soDistance;
 
    // Stopout-Preis anzeigen
    if (ObjectFind(label.stopoutLevel) == -1) if (!ObjectCreateRegister(label.stopoutLevel, OBJ_HLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet(label.stopoutLevel, OBJPROP_STYLE,  STYLE_SOLID);
    ObjectSet(label.stopoutLevel, OBJPROP_COLOR,  OrangeRed);
-   ObjectSet(label.stopoutLevel, OBJPROP_BACK,   true);
+   ObjectSet(label.stopoutLevel, OBJPROP_BACK,   false);                               // FALSE causes the price level to be displayed on the scala
    ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);
-      if (soMode == MSM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%  =  ", NumberToStr(soPrice, PriceFormat));
-      else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency(), "  =  ", NumberToStr(soPrice, PriceFormat));
+      if (soMode == MSM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%");
+      else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency());
    ObjectSetText(label.stopoutLevel, text);
 
    error = GetLastError();
