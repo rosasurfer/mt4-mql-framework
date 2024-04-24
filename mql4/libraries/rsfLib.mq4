@@ -740,8 +740,7 @@ bool SortStrings(string &values[]) {
  */
 int SortTicketsChronological(int &tickets[]) {
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets < 2)
-      return(NO_ERROR);
+   if (sizeOfTickets < 2) return(NO_ERROR);
 
    int data[][2]; ArrayResize(data, sizeOfTickets);
 
@@ -749,8 +748,7 @@ int SortTicketsChronological(int &tickets[]) {
 
    // Tickets aufsteigend nach OrderOpenTime() sortieren
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "SortTicketsChronological(2)", NULL, O_RESTORE))
-         return(last_error);
+      if (!SelectTicket(tickets[i], "SortTicketsChronological(2)", NULL, O_RESTORE)) return(last_error);
       data[i][0] = OrderOpenTime();
       data[i][1] = tickets[i];
    }
@@ -1250,7 +1248,7 @@ bool ArrayShiftBool(bool array[]) {
    if (ArrayDimension(array) > 1) return(!catch("ArrayShiftBool(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY));
 
    int size = ArraySize(array);
-   if (size == 0)                 return(!catch("ArrayShiftBool(2)  cannot shift element from empty array = {}", ERR_ARRAY_ERROR));
+   if (size == 0)                 return(!catch("ArrayShiftBool(2)  cannot shift element from empty array: {}", ERR_INVALID_PARAMETER));
 
    bool shifted = array[0];
 
@@ -1273,8 +1271,7 @@ int ArrayShiftInt(int array[]) {
    if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayShiftInt(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    int size = ArraySize(array);
-   if (size == 0)
-      return(_NULL(catch("ArrayShiftInt(2)  cannot shift element from empty array = {}", ERR_ARRAY_ERROR)));
+   if (size == 0)                 return(_NULL(catch("ArrayShiftInt(2)  cannot shift element from empty array: {}", ERR_INVALID_PARAMETER)));
 
    int shifted = array[0];
 
@@ -1297,8 +1294,7 @@ double ArrayShiftDouble(double array[]) {
    if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayShiftDouble(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    int size = ArraySize(array);
-   if (size == 0)
-      return(_NULL(catch("ArrayShiftDouble(2)  cannot shift element from an empty array = {}", ERR_ARRAY_ERROR)));
+   if (size == 0)                 return(_NULL(catch("ArrayShiftDouble(2)  cannot shift element from empty array: {}", ERR_INVALID_PARAMETER)));
 
    double shifted = array[0];
 
@@ -1321,8 +1317,7 @@ string ArrayShiftString(string array[]) {
    if (ArrayDimension(array) > 1) return(_EMPTY_STR(catch("ArrayShiftString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    int size = ArraySize(array);
-   if (size == 0)
-      return(_EMPTY_STR(catch("ArrayShiftString(2)  cannot shift element from an empty array = {}", ERR_ARRAY_ERROR)));
+   if (size == 0)                 return(_EMPTY_STR(catch("ArrayShiftString(2)  cannot shift element from empty array: {}", ERR_INVALID_PARAMETER)));
 
    string shifted = array[0];
 
@@ -1348,8 +1343,7 @@ int ArrayDropBool(bool array[], bool value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayDropBool()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    int size = ArraySize(array);
-   if (size == 0)
-      return(0);
+   if (size == 0) return(0);
 
    for (int count, i=size-1; i>=0; i--) {
       if (array[i] == value) {
@@ -1375,8 +1369,7 @@ int ArrayDropInt(int array[], int value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayDropInt()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    int size = ArraySize(array);
-   if (size == 0)
-      return(0);
+   if (size == 0) return(0);
 
    for (int count, i=size-1; i>=0; i--) {
       if (array[i] == value) {
@@ -1402,8 +1395,7 @@ int ArrayDropDouble(double array[], double value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayDropDouble()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    int size = ArraySize(array);
-   if (size == 0)
-      return(0);
+   if (size == 0) return(0);
 
    for (int count, i=size-1; i>=0; i--) {
       if (EQ(array[i], value)) {
@@ -1429,8 +1421,7 @@ int ArrayDropString(string array[], string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayDropString()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    int count, size=ArraySize(array);
-   if (!size)
-      return(0);
+   if (!size) return(0);
 
    if (StrIsNull(value)) {                            // NULL-Pointer
       for (int i=size-1; i>=0; i--) {
@@ -6365,8 +6356,9 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
    // hedge the total position
    int oes2[][ORDER_EXECUTION_intSize];                                 // newTicket = -1: no new ticket (one of the tickets was fully closed)
    int newTicket = OrdersHedge(ticketsCopy, slippage, oeFlags, oes2);   // newTicket =  0: error or total position was already flat
-   if (IsError(oes.Error(oes2, 0)))                                     // newTicket >  0: new ticket of offsetting transaction (new position) or remaining position after a partial close
+   if (IsError(oes.Error(oes2, 0))) {                                   // newTicket >  0: new ticket of offsetting transaction (new position) or remaining position after a partial close
       return(!oes.setError(oes, -1, oes.Error(oes2, 0)));
+   }
 
    for (i=0; i < sizeOfTickets; i++) {
       oes.setBid       (oes, i, oes.Bid       (oes2, i));
@@ -6392,8 +6384,9 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
    }
 
    // close the hedged position
-   if (!OrdersCloseHedged(ticketsCopy, markerColor, oeFlags, oes2))
+   if (!OrdersCloseHedged(ticketsCopy, markerColor, oeFlags, oes2)) {
       return(!oes.setError(oes, -1, oes.Error(oes2, 0)));
+   }
 
    for (i=0; i < sizeOfCopy; i++) {
       int pos = SearchIntArray(tickets, ticketsCopy[i]);
@@ -6641,7 +6634,7 @@ bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][
       oes.setTakeProfit(oes, i, OrderTakeProfit());
       oes.setComment   (oes, i, OrderComment()   );
    }
-   if (NE(lots, 0, 2)) return(_false(Order.HandleError("OrdersCloseHedged(13)  tickets don't form a flat position (total position: "+ DoubleToStr(lots, 2) +")", ERR_TOTAL_POSITION_NOT_FLAT, oeFlags, oes), OrderPop("OrdersCloseHedged(14)")));
+   if (NE(lots, 0, 2)) return(_false(Order.HandleError("OrdersCloseHedged(13)  tickets don't represent a flat position (total position: "+ DoubleToStr(lots, 2) +")", ERR_TOTAL_POSITION_NOT_FLAT, oeFlags, oes), OrderPop("OrdersCloseHedged(14)")));
 
    if (IsLogDebug()) logDebug("OrdersCloseHedged(15)  closing "+ sizeOfTickets +" hedged "+ OrderSymbol() +" positions "+ TicketsToStr.Lots(tickets));
 

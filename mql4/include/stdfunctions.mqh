@@ -570,7 +570,7 @@ string OrderLogMessage(int ticket) {
  *
  * @param  int    ticket                    - order ticket
  * @param  string caller         [optional] - location identifier of the caller (default: none)
- * @param  bool   saveCurrent    [optional] - whether to save the current selection (default: no)
+ * @param  bool   saveCurrent    [optional] - whether to save the currently selected ticket (default: no)
  * @param  bool   onErrorRestore [optional] - whether to restore the last stored selection in case of errors
  *                                            (default: yes if saveCurrent=TRUE, otherwise no)
  * @return bool - success status

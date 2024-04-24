@@ -18105,7 +18105,7 @@ MA.ReversalFilter=0.1
 Draw.Type=Line | Dot*
 Draw.Width=5
 Color.UpTrend=16711680
-Color.DownTrend=65535
+Color.DownTrend=16776960
 AutoConfiguration=0
 </inputs>
 </expert>
