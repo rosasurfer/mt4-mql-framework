@@ -37,7 +37,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=360
+height=400
 fixed_height=0
 
 <indicator>
@@ -18135,7 +18135,7 @@ show_data=1
 </window>
 
 <window>
-height=16
+height=10
 fixed_height=0
 
 <indicator>

@@ -1,5 +1,5 @@
 /**
- * A MACD with support for non-standard Moving Average types.
+ * A standard MACD indicator with support for different "Moving Average" types.
  *
  *
  * Moving Average types:
