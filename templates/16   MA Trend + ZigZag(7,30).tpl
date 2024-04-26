@@ -18163,7 +18163,7 @@ ZigZag.Color=16711680
 Donchian.Upper.Color=16711680
 Donchian.Lower.Color=16711935
 Show123Projections=0
-Signal.onReversal=1
+Signal.onReversal=0
 Signal.onReversal.Types=sound
 </inputs>
 </expert>

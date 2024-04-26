@@ -18340,7 +18340,7 @@ ZigZag.Type=Line* | Semaphores
 ZigZag.Width=0
 Donchian.Upper.Color=16711680
 Donchian.Lower.Color=16711935
-Signal.onReversal=1
+Signal.onReversal=0
 Signal.onReversal.Types=sound
 </inputs>
 </expert>
