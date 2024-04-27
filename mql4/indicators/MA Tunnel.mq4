@@ -16,8 +16,8 @@ int __DeinitFlags[];
 extern string Tunnel.Definition              = "EMA(144)";        // one or more MAs separated by ","
 extern string Supported.MA.Methods           = "SMA, LWMA, EMA, SMMA";
 extern color  Tunnel.Color                   = Magenta;
-extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 extern bool   ShowChartLegend                = true;
+extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onBarCross              = false;             // on channel leave at opposite side of the last crossing
@@ -85,9 +85,9 @@ string legendLabel   = "";
  * @return int - error status
  */
 int onInit() {
+   // input validation
    string indicator = WindowExpertName();
 
-   // input validation
    // Tunnel.Definition
    ArrayResize(ma, 0);
    ArrayResize(maDefinitions, 0);
@@ -127,12 +127,12 @@ int onInit() {
    // Tunnel.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Tunnel.Color = GetConfigColor(indicator, "Tunnel.Color", Tunnel.Color);
    if (Tunnel.Color == 0xFF000000) Tunnel.Color = CLR_NONE;
+   // ShowChartLegend
+   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)               return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
-   // ShowChartLegend
-   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
 
    // signal configuration
    string signalId = "Signal.onBarCross";
@@ -343,8 +343,8 @@ void SetIndicatorOptions() {
 string InputsToStr() {
    return(StringConcatenate("Tunnel.Definition=",            DoubleQuoteStr(Tunnel.Definition),            ";", NL,
                             "Tunnel.Color=",                 ColorToStr(Tunnel.Color),                     ";", NL,
-                            "MaxBarsBack=",                  MaxBarsBack,                                  ";", NL,
                             "ShowChartLegend=",              BoolToStr(ShowChartLegend),                   ";", NL,
+                            "MaxBarsBack=",                  MaxBarsBack,                                  ";", NL,
 
                             "Signal.onBarCross",             BoolToStr(Signal.onBarCross),                 ";", NL,
                             "Signal.onBarCross.Sound",       BoolToStr(Signal.onBarCross.Sound),           ";", NL,

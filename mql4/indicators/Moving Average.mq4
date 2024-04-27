@@ -104,9 +104,9 @@ int    drawType;
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
    string indicator = WindowExpertName();
 
-   // validate inputs
    // MA.Periods
    if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
    if (MA.Periods < 1)                                        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));

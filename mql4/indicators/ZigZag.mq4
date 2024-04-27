@@ -86,8 +86,8 @@ extern color  Donchian.Upper.Color           = Blue;
 extern color  Donchian.Lower.Color           = Magenta;
 
 extern string ___c__________________________ = "=== Display settings ===";
-extern bool   ShowChartLegend                = true;
 extern int    Show123Projections             = 0;                             // number of 1-2-3 projections to display
+extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                         // max. values to calculate (-1: all available)
 
 extern string ___d__________________________ = "=== Signaling ===";
@@ -215,9 +215,9 @@ int      lastSoundSignal;                                      // GetTickCount()
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
    string indicator = WindowExpertName();
 
-   // validate inputs
    // ZigZag.Periods
    if (AutoConfiguration) ZigZag.Periods = GetConfigInt(indicator, "ZigZag.Periods", ZigZag.Periods);
    if (ZigZag.Periods < 2)                 return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -270,12 +270,12 @@ int onInit() {
    if (ZigZag.Color         == 0xFF000000) ZigZag.Color         = CLR_NONE;
    if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
    if (Donchian.Lower.Color == 0xFF000000) Donchian.Lower.Color = CLR_NONE;
-   // ShowChartLegend
-   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // Show123Projections
    if (AutoConfiguration) Show123Projections = GetConfigInt(indicator, "Show123Projections", Show123Projections);
    if (Show123Projections < -1)            return(catch("onInit(11)  invalid input parameter Show123Projections: "+ Show123Projections, ERR_INVALID_INPUT_PARAMETER));
    if (Show123Projections == -1) Show123Projections = INT_MAX;
+   // ShowChartLegend
+   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)                   return(catch("onInit(12)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
@@ -1291,8 +1291,8 @@ string InputsToStr() {
                             "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)        +";"+ NL,
                             "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)        +";"+ NL,
 
-                            "ShowChartLegend=",              BoolToStr(ShowChartLegend)              +";"+ NL,
                             "Show123Projections=",           Show123Projections                      +";"+ NL,
+                            "ShowChartLegend=",              BoolToStr(ShowChartLegend)              +";"+ NL,
                             "MaxBarsBack=",                  MaxBarsBack                             +";"+ NL,
 
                             "Signal.onReversal=",            BoolToStr(Signal.onReversal)            +";"+ NL,

@@ -23,8 +23,9 @@ double icMaTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar)
                           tunnelDefinition,           // string Tunnel.Definition
                           "",                         // string Supported.MA.Methods
                           Blue,                       // color  Tunnel.Color
-                          -1,                         // int    MaxBarsBack
                           false,                      // bool   ShowChartLegend
+                          -1,                         // int    MaxBarsBack
+
                           "",                         // string ____________________________
                           false,                      // bool   Signal.onBarCross
                           false,                      // bool   Signal.onBarCross.Sound
@@ -33,10 +34,12 @@ double icMaTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar)
                           false,                      // bool   Signal.onBarCross.Alert
                           false,                      // bool   Signal.onBarCross.Mail
                           false,                      // bool   Signal.onBarCross.SMS
+
                           "",                         // string ____________________________
                           false,                      // bool   Signal.onTickCross.Sound
                           "",                         // string Signal.onTickCross.SoundUp
                           "",                         // string Signal.onTickCross.SoundDown
+
                           "",                         // string ____________________________
                           false,                      // bool   AutoConfiguration
                           lpSuperContext,             // int    __lpSuperContext

@@ -100,11 +100,15 @@ bool   isCentUnit    = false;                               // display unit: cen
  */
 int onInit() {
    // validate inputs
+   string indicator = WindowExpertName();
+
    // FastMA.Periods
+   if (AutoConfiguration) FastMA.Periods = GetConfigInt(indicator, "FastMA.Periods", FastMA.Periods);
    if (FastMA.Periods < 1)              return(catch("onInit(1)  invalid input parameter FastMA.Periods: "+ FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    fastMA.periods = FastMA.Periods;
    // FastMA.Method
    string values[], sValue = FastMA.Method;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "FastMA.Method", sValue);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -114,7 +118,8 @@ int onInit() {
    if (fastMA.method == MODE_SMMA)      return(catch("onInit(3)  unsupported FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    FastMA.Method = MaMethodDescription(fastMA.method);
    // FastMA.AppliedPrice
-   sValue = StrToLower(FastMA.AppliedPrice);
+   sValue = FastMA.AppliedPrice;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "FastMA.AppliedPrice", sValue);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -126,6 +131,7 @@ int onInit() {
                                         return(catch("onInit(4)  invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    FastMA.AppliedPrice = PriceTypeDescription(fastMA.appliedPrice);
    // SlowMA.Periods
+   if (AutoConfiguration) SlowMA.Periods = GetConfigInt(indicator, "SlowMA.Periods", SlowMA.Periods);
    if (SlowMA.Periods < 1)              return(catch("onInit(5)  invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slowMA.periods = SlowMA.Periods;
    if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(6)  parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
@@ -138,6 +144,7 @@ int onInit() {
    }
    // SlowMA.Method
    sValue = SlowMA.Method;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "SlowMA.Method", sValue);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -147,7 +154,8 @@ int onInit() {
    if (slowMA.method == MODE_SMMA)      return(catch("onInit(9)  unsuported SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.Method = MaMethodDescription(slowMA.method);
    // SlowMA.AppliedPrice
-   sValue = StrToLower(SlowMA.AppliedPrice);
+   sValue = SlowMA.AppliedPrice;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "SlowMA.AppliedPrice", sValue);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -159,15 +167,21 @@ int onInit() {
                                         return(catch("onInit(10)  invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
+   if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
+   if (AutoConfiguration) MainLine.Color        = GetConfigColor(indicator, "MainLine.Color",        MainLine.Color);
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
    // Histogram.Style.Width
+   if (AutoConfiguration) Histogram.Style.Width = GetConfigInt(indicator, "Histogram.Style.Width", Histogram.Style.Width);
    if (Histogram.Style.Width < 0)       return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5)       return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
    // MainLine.Width
+   if (AutoConfiguration) MainLine.Width = GetConfigInt(indicator, "MainLine.Width", MainLine.Width);
    if (MainLine.Width < 0)              return(catch("onInit(13)  invalid input parameter MainLine.Width: "+ MainLine.Width +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
+   if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)                return(catch("onInit(14)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
