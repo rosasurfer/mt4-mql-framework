@@ -43,8 +43,8 @@ extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 4;
 extern color  Background.Color               = DimGray;           // background for Draw.Type = "Line"
 extern int    Background.Width               = 2;
-extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 extern bool   ShowChartLegend                = true;
+extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -155,12 +155,12 @@ int onInit() {
    if (Background.Color == 0xFF000000) Background.Color = CLR_NONE;
    if (UpTrend.Color    == 0xFF000000) UpTrend.Color    = CLR_NONE;
    if (DownTrend.Color  == 0xFF000000) DownTrend.Color  = CLR_NONE;
+   // ShowChartLegend
+   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)                                      return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
-   // ShowChartLegend
-   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
 
    // signaling
    string signalId = "Signal.onTrendChange";
@@ -333,14 +333,15 @@ string InputsToStr() {
    return(StringConcatenate("MA.Periods=",                     MA.Periods,                                     ";"+ NL,
                             "MA.Method=",                      DoubleQuoteStr(MA.Method),                      ";"+ NL,
                             "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
+
                             "UpTrend.Color=",                  ColorToStr(UpTrend.Color),                      ";"+ NL,
                             "DownTrend.Color=",                ColorToStr(DownTrend.Color),                    ";"+ NL,
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,
                             "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
                             "Background.Color=",               ColorToStr(Background.Color),                   ";"+ NL,
                             "Background.Width=",               Background.Width,                               ";"+ NL,
-                            "MaxBarsBack=",                    MaxBarsBack,                                    ";"+ NL,
                             "ShowChartLegend=",                BoolToStr(ShowChartLegend),                     ";"+ NL,
+                            "MaxBarsBack=",                    MaxBarsBack,                                    ";"+ NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,

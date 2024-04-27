@@ -18085,6 +18085,7 @@ window_num=0
 <inputs>
 Tunnel.Definition=LWMA(55)
 ShowChartLegend=1
+AutoConfiguration=0
 </inputs>
 </expert>
 weight_0=2
@@ -18106,6 +18107,7 @@ Draw.Type=Line | Dot*
 Draw.Width=5
 Color.UpTrend=16711680
 Color.DownTrend=16776960
+ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
 </expert>

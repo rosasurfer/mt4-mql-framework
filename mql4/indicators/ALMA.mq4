@@ -32,6 +32,7 @@ extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
+extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
@@ -157,6 +158,8 @@ int onInit() {
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
+   // ShowChartLegend
+   if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)                                     return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
@@ -201,7 +204,7 @@ int onInit() {
    ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights);
 
    // chart legend and coloring
-   legendLabel = CreateChartLegend();
+   if (ShowChartLegend) legendLabel = CreateChartLegend();
    enableMultiColoring = !__isSuperContext;
 
    return(catch("onInit(11)"));
@@ -297,7 +300,7 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], trend[0]);
+      if (__isChart && ShowChartLegend) UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], trend[0]);
 
       if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {            // monitor trend reversals
          int iTrend = Round(trend[1]);
@@ -561,6 +564,7 @@ string InputsToStr() {
                             "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
                             "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
+                            "ShowChartLegend=",                BoolToStr(ShowChartLegend),                     ";"+ NL,
                             "MaxBarsBack=",                    MaxBarsBack,                                    ";"+ NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,

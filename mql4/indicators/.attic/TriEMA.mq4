@@ -1,15 +1,15 @@
 /**
  * Triple Smoothed Exponential Moving Average
  *
- *
  * A three times applied exponential moving average (not to be confused with the TEMA moving average). This indicator is the
  * base of the Trix indicator.
+ *
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -24,7 +24,7 @@ extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern int    MaxBarsBack                    = 10000;    // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;                // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -43,6 +43,7 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <functions/chartlegend.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <functions/trend.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
@@ -88,7 +89,7 @@ string legendInfo    = "";                               // additional chart leg
 int onInit() {
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1)   return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)       return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    // MA.AppliedPrice
    string sValues[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -97,14 +98,8 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                   // default price type
-   if      (StrStartsWith("open",     sValue)) maAppliedPrice = PRICE_OPEN;
-   else if (StrStartsWith("high",     sValue)) maAppliedPrice = PRICE_HIGH;
-   else if (StrStartsWith("low",      sValue)) maAppliedPrice = PRICE_LOW;
-   else if (StrStartsWith("close",    sValue)) maAppliedPrice = PRICE_CLOSE;
-   else if (StrStartsWith("median",   sValue)) maAppliedPrice = PRICE_MEDIAN;
-   else if (StrStartsWith("typical",  sValue)) maAppliedPrice = PRICE_TYPICAL;
-   else if (StrStartsWith("weighted", sValue)) maAppliedPrice = PRICE_WEIGHTED;
-   else                  return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (maAppliedPrice == -1) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
@@ -118,11 +113,11 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                  return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                      return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
-   if (Draw.Width < 0)   return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)       return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
-   if (MaxBarsBack < -1) return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)     return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling

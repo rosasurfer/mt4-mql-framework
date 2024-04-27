@@ -6605,11 +6605,14 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           distributionSigma,                // double Distribution.Sigma
                           maReversalFilter,                 // double MA.ReversalFilter
                           0,                                // double MA.ReversalFilter.Step
+
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
+                          false,                            // bool   ShowChartLegend
                           -1,                               // int    MaxBarsBack
+
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6618,6 +6621,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
+
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
@@ -6820,11 +6824,16 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           maPeriods,                        // int    MA.Periods
                           maMethod,                         // string MA.Method
                           maAppliedPrice,                   // string MA.AppliedPrice
-                          Blue,                             // color  Color.UpTrend
-                          Blue,                             // color  Color.DownTrend
+
+                          Blue,                             // color  UpTrend.Color
+                          Blue,                             // color  DownTrend.Color
                           "Line",                           // string Draw.Type
                           0,                                // int    Draw.Width
+                          CLR_NONE,                         // color  Background.Color
+                          0,                                // int    Background.Width
+                          false,                            // bool   ShowChartLegend
                           -1,                               // int    MaxBarsBack
+
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6833,6 +6842,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
+
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
