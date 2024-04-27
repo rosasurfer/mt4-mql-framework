@@ -162,7 +162,6 @@ datetime GmtToFxtTime(datetime time);;
 datetime GmtToServerTime(datetime time);;
 bool     GT(double double1, double double2, int digits=8);;
 string   HistoryFlagsToStr(int flags);;
-double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
 double   icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double maReversalFilter, int iBuffer, int iBar);;
 double   icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
@@ -353,6 +352,7 @@ bool     UpdateTrendDirection(double &values[], int offset, double &trend[], dou
 
 // include/functions/iCustom/
 double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, double maReversalFilter, int iBuffer, int iBar);;
+double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
 double   icMaTunnel(int timeframe, int maPeriods, string maMethod, int iBuffer, int iBar);;
 double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;

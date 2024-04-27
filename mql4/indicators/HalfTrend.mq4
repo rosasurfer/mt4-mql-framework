@@ -41,6 +41,7 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <functions/ConfigureSignals.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/ObjectCreateRegister.mqh>
+#include <functions/iCustom/HalfTrend.mqh>
 
 #define MODE_MAIN             HalfTrend.MODE_MAIN        // indicator buffer ids
 #define MODE_TREND            HalfTrend.MODE_TREND
@@ -332,4 +333,6 @@ string InputsToStr() {
                             "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";", NL,
                             "Signal.onTrendChange.SMS=",       BoolToStr(Signal.onTrendChange.SMS),            ";")
    );
+   // suppress compiler warnings
+   icHalfTrend(NULL, NULL, NULL, NULL);
 }

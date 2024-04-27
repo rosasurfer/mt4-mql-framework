@@ -348,9 +348,6 @@ double  INF;                                                      //  1.#INF |  
 #define HeikinAshi.MODE_CLOSE             1     // Heikin-Ashi bar close price
 #define HeikinAshi.MODE_TREND             4     // Heikin-Ashi trend direction and length
 
-#define HalfTrend.MODE_MAIN       MODE_MAIN     // HalfTrend SR line (0)
-#define HalfTrend.MODE_TREND              1     // HalfTrend trend direction and length
-
 #define MMI.MODE_MAIN             MODE_MAIN     // MMI main line (0)
 
 #define MovingAverage.MODE_MA             0     // MA value
