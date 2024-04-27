@@ -19,33 +19,33 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
    }
 
    double value = iCustom(NULL, timeframe, "ALMA",
-                          maPeriods,                        // int    MA.Periods
-                          0,                                // int    MA.Periods.Step
-                          maAppliedPrice,                   // string MA.AppliedPrice
-                          distributionOffset,               // double Distribution.Offset
-                          distributionSigma,                // double Distribution.Sigma
-                          maReversalFilter,                 // double MA.ReversalFilter
-                          0,                                // double MA.ReversalFilter.Step
+                          maPeriods,                  // int    MA.Periods
+                          0,                          // int    MA.Periods.Step
+                          maAppliedPrice,             // string MA.AppliedPrice
+                          distributionOffset,         // double Distribution.Offset
+                          distributionSigma,          // double Distribution.Sigma
+                          maReversalFilter,           // double MA.ReversalFilter
+                          0,                          // double MA.ReversalFilter.Step
 
-                          "Line",                           // string Draw.Type
-                          1,                                // int    Draw.Width
-                          CLR_NONE,                         // color  Color.UpTrend
-                          CLR_NONE,                         // color  Color.DownTrend
-                          false,                            // bool   ShowChartLegend
-                          -1,                               // int    MaxBarsBack
+                          "Line",                     // string Draw.Type
+                          1,                          // int    Draw.Width
+                          CLR_NONE,                   // color  Color.UpTrend
+                          CLR_NONE,                   // color  Color.DownTrend
+                          false,                      // bool   ShowChartLegend
+                          -1,                         // int    MaxBarsBack
 
-                          "",                               // string ______________________________
-                          false,                            // bool   Signal.onTrendChange
-                          false,                            // bool   Signal.onTrendChange.Sound
-                          "",                               // string Signal.onTrendChange.SoundUp
-                          "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Alert
-                          false,                            // bool   Signal.onTrendChange.Mail
-                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                         // string ______________________________
+                          false,                      // bool   Signal.onTrendChange
+                          false,                      // bool   Signal.onTrendChange.Sound
+                          "",                         // string Signal.onTrendChange.SoundUp
+                          "",                         // string Signal.onTrendChange.SoundDown
+                          false,                      // bool   Signal.onTrendChange.Alert
+                          false,                      // bool   Signal.onTrendChange.Mail
+                          false,                      // bool   Signal.onTrendChange.SMS
 
-                          "",                               // string ______________________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
+                          "",                         // string ______________________________
+                          false,                      // bool   AutoConfiguration
+                          lpSuperContext,             // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -55,7 +55,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
       logWarn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];           // TODO: synchronize execution contexts
    if (!error) return(value);
    return(!SetLastError(error));
 }

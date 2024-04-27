@@ -1,6 +1,6 @@
 
-#define HalfTrend.MODE_MAIN       MODE_MAIN                 // SR line (0)
-#define HalfTrend.MODE_TREND              1                 // trend direction and length
+#define HalfTrend.MODE_MAIN       MODE_MAIN              // SR line (0)
+#define HalfTrend.MODE_TREND              1              // trend direction and length
 
 
 /**
@@ -19,26 +19,26 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    }
 
    double value = iCustom(NULL, timeframe, "HalfTrend",
-                          periods,                          // int    Periods
-                          Blue,                             // color  Color.UpTrend
-                          Red,                              // color  Color.DownTrend
-                          CLR_NONE,                         // color  Color.Channel
-                          "Line",                           // string Draw.Type
-                          1,                                // int    Draw.Width
-                          -1,                               // int    MaxBarsBack
+                          periods,                       // int    Periods
+                          Blue,                          // color  Color.UpTrend
+                          Red,                           // color  Color.DownTrend
+                          CLR_NONE,                      // color  Color.Channel
+                          "Line",                        // string Draw.Type
+                          1,                             // int    Draw.Width
+                          -1,                            // int    MaxBarsBack
 
-                          "",                               // string ______________________________
-                          false,                            // bool   Signal.onTrendChange
-                          false,                            // bool   Signal.onTrendChange.Sound
-                          "",                               // string Signal.onTrendChange.SoundUp
-                          "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Alert
-                          false,                            // bool   Signal.onTrendChange.Mail
-                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                            // string ______________________________
+                          false,                         // bool   Signal.onTrendChange
+                          false,                         // bool   Signal.onTrendChange.Sound
+                          "",                            // string Signal.onTrendChange.SoundUp
+                          "",                            // string Signal.onTrendChange.SoundDown
+                          false,                         // bool   Signal.onTrendChange.Alert
+                          false,                         // bool   Signal.onTrendChange.Mail
+                          false,                         // bool   Signal.onTrendChange.SMS
 
-                          "",                               // string ______________________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
+                          "",                            // string ______________________________
+                          false,                         // bool   AutoConfiguration
+                          lpSuperContext,                // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -48,7 +48,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
       logWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];              // TODO: synchronize execution contexts
    if (!error) return(value);
    return(!SetLastError(error));
 }

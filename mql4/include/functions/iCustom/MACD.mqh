@@ -1,6 +1,6 @@
 
-#define MACD.MODE_MAIN     MODE_MAIN         // MACD main line
-#define MACD.MODE_SECTION          1         // MACD trend and trend length
+#define MACD.MODE_MAIN     MODE_MAIN                  // main line
+#define MACD.MODE_SECTION          1                  // trend and trend length
 
 
 /**
@@ -24,31 +24,31 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    }
 
    double value = iCustom(NULL, timeframe, "MACD",
-                          fastMaPeriods,                    // int    Fast.MA.Periods
-                          fastMaMethod,                     // string Fast.MA.Method
-                          fastMaAppliedPrice,               // string Fast.MA.AppliedPrice
-                          slowMaPeriods,                    // int    Slow.MA.Periods
-                          slowMaMethod,                     // string Slow.MA.Method
-                          slowMaAppliedPrice,               // string Slow.MA.AppliedPrice
-                          Blue,                             // color  MainLine.Color
-                          1,                                // int    MainLine.Width
-                          Green,                            // color  Histogram.Color.Upper
-                          Red,                              // color  Histogram.Color.Lower
-                          2,                                // int    Histogram.Style.Width
-                          -1,                               // int    MaxBarsBack
+                          fastMaPeriods,              // int    Fast.MA.Periods
+                          fastMaMethod,               // string Fast.MA.Method
+                          fastMaAppliedPrice,         // string Fast.MA.AppliedPrice
+                          slowMaPeriods,              // int    Slow.MA.Periods
+                          slowMaMethod,               // string Slow.MA.Method
+                          slowMaAppliedPrice,         // string Slow.MA.AppliedPrice
+                          Blue,                       // color  MainLine.Color
+                          1,                          // int    MainLine.Width
+                          Green,                      // color  Histogram.Color.Upper
+                          Red,                        // color  Histogram.Color.Lower
+                          2,                          // int    Histogram.Style.Width
+                          -1,                         // int    MaxBarsBack
 
-                          "",                               // string ________________________
-                          false,                            // bool   Signal.onCross
-                          false,                            // bool   Signal.onCross.Sound
-                          "",                               // string Signal.onCross.SoundUp
-                          "",                               // string Signal.onCross.SoundDown
-                          false,                            // bool   Signal.onCross.Alert
-                          false,                            // bool   Signal.onCross.Mail
-                          false,                            // bool   Signal.onCross.SMS
+                          "",                         // string ________________________
+                          false,                      // bool   Signal.onCross
+                          false,                      // bool   Signal.onCross.Sound
+                          "",                         // string Signal.onCross.SoundUp
+                          "",                         // string Signal.onCross.SoundDown
+                          false,                      // bool   Signal.onCross.Alert
+                          false,                      // bool   Signal.onCross.Mail
+                          false,                      // bool   Signal.onCross.SMS
 
-                          "",                               // string ________________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
+                          "",                         // string ________________________
+                          false,                      // bool   AutoConfiguration
+                          lpSuperContext,             // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -58,7 +58,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
       logWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];           // TODO: synchronize execution contexts
    if (!error) return(value);
    return(!SetLastError(error));
 }
