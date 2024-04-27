@@ -6580,69 +6580,6 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
 
 
 /**
- * Load the "ALMA" indicator and return a value.
- *
- * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    maPeriods          - indicator parameter
- * @param  string maAppliedPrice     - indicator parameter
- * @param  double distributionOffset - indicator parameter
- * @param  double distributionSigma  - indicator parameter
- * @param  double maReversalFilter   - indicator parameter
- * @param  int    iBuffer            - indicator buffer index of the value to return
- * @param  int    iBar               - bar index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, double maReversalFilter, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
-      lpSuperContext = GetIntsAddress(__ExecutionContext);
-
-   double value = iCustom(NULL, timeframe, "ALMA",
-                          maPeriods,                        // int    MA.Periods
-                          0,                                // int    MA.Periods.Step
-                          maAppliedPrice,                   // string MA.AppliedPrice
-                          distributionOffset,               // double Distribution.Offset
-                          distributionSigma,                // double Distribution.Sigma
-                          maReversalFilter,                 // double MA.ReversalFilter
-                          0,                                // double MA.ReversalFilter.Step
-
-                          "Line",                           // string Draw.Type
-                          1,                                // int    Draw.Width
-                          CLR_NONE,                         // color  Color.UpTrend
-                          CLR_NONE,                         // color  Color.DownTrend
-                          false,                            // bool   ShowChartLegend
-                          -1,                               // int    MaxBarsBack
-
-                          "",                               // string ______________________________
-                          false,                            // bool   Signal.onTrendChange
-                          false,                            // bool   Signal.onTrendChange.Sound
-                          "",                               // string Signal.onTrendChange.SoundUp
-                          "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Alert
-                          false,                            // bool   Signal.onTrendChange.Mail
-                          false,                            // bool   Signal.onTrendChange.SMS
-
-                          "",                               // string ______________________________
-                          false,                            // bool   AutoConfiguration
-                          lpSuperContext,                   // int    __lpSuperContext
-
-                          iBuffer, iBar);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icALMA(1)", error));
-      logWarn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
-   }
-
-   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(!SetLastError(error));
-}
-
-
-/**
  * Load the "HalfTrend" indicator and return a value.
  *
  * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
@@ -6653,8 +6590,9 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
  * @return double - indicator value or NULL in case of errors
  */
 double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
+   static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
+   }
 
    double value = iCustom(NULL, timeframe, "HalfTrend",
                           periods,                          // int    Periods
@@ -6664,6 +6602,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    MaxBarsBack
+
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6672,6 +6611,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
+
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
@@ -6680,14 +6620,12 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icHalfTrend(1)", error));
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icHalfTrend(1)", error));
       logWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
+   if (!error) return(value);
    return(!SetLastError(error));
 }
 
@@ -6705,8 +6643,9 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
  * @return double - indicator value or NULL in case of errors
  */
 double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
+   static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
+   }
 
    double value = iCustom(NULL, timeframe, "Jurik Moving Average",
                           periods,                          // int    Periods
@@ -6716,6 +6655,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
+
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6724,6 +6664,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
+
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
@@ -6732,14 +6673,12 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icJMA(1)", error));
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icJMA(1)", error));
       logWarn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
+   if (!error) return(value);
    return(!SetLastError(error));
 }
 
@@ -6760,8 +6699,9 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
  * @return double - indicator value or NULL in case of errors
  */
 double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
+   static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
+   }
 
    double value = iCustom(NULL, timeframe, "MACD",
                           fastMaPeriods,                    // int    Fast.MA.Periods
@@ -6776,6 +6716,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           Red,                              // color  Histogram.Color.Lower
                           2,                                // int    Histogram.Style.Width
                           -1,                               // int    MaxBarsBack
+
                           "",                               // string ________________________
                           false,                            // bool   Signal.onCross
                           false,                            // bool   Signal.onCross.Sound
@@ -6784,6 +6725,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           false,                            // bool   Signal.onCross.Alert
                           false,                            // bool   Signal.onCross.Mail
                           false,                            // bool   Signal.onCross.SMS
+
                           "",                               // string ________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
@@ -6792,14 +6734,12 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icMACD(1)", error));
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icMACD(1)", error));
       logWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
+   if (!error) return(value);
    return(!SetLastError(error));
 }
 
@@ -6817,8 +6757,9 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
  * @return double - indicator value or NULL in case of errors
  */
 double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
+   static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
+   }
 
    double value = iCustom(NULL, timeframe, "Moving Average",
                           maPeriods,                        // int    MA.Periods
@@ -6851,14 +6792,12 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icMovingAverage(1)", error));
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icMovingAverage(1)", error));
       logWarn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
+   if (!error) return(value);
    return(!SetLastError(error));
 }
 
@@ -6876,8 +6815,9 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
  * @return double - indicator value or NULL in case of errors
  */
 double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double maReversalFilter, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
+   static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
+   }
 
    double value = iCustom(NULL, timeframe, "NonLagMA",
                           waveCyclePeriods,                 // int    WaveCycle.Periods
@@ -6890,6 +6830,7 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    MaxBarsBack
+
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6898,6 +6839,7 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
+
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
@@ -6906,14 +6848,12 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icNLMA(1)", error));
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icNLMA(1)", error));
       logWarn("icNLMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
+   if (!error) return(value);
    return(!SetLastError(error));
 }
 
@@ -6930,8 +6870,9 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
  * @return double - indicator value or NULL in case of errors
  */
 double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
+   static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
+   }
 
    double value = iCustom(NULL, timeframe, "Ehlers 2-Pole-SuperSmoother",
                           periods,                          // int    Periods
@@ -6941,6 +6882,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    MaxBarsBack
+
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -6949,6 +6891,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
                           false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
+
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
@@ -6957,14 +6900,12 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icSuperSmoother(1)", error));
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icSuperSmoother(1)", error));
       logWarn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
+   if (!error) return(value);
    return(!SetLastError(error));
 }
 
@@ -6981,8 +6922,9 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
  * @return double - indicator value or NULL in case of errors
  */
 double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
+   static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
+   }
 
    double value = iCustom(NULL, timeframe, "SuperTrend",
                           atrPeriods,                       // int    ATR.Periods
@@ -6994,6 +6936,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           -1,                               // int    MaxBarsBack
+
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
                           false,                            // bool   Signal.onTrendChange.Sound
@@ -7002,6 +6945,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
                           false,                            // bool   Signal.onTrendChange.SMS
+
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
@@ -7010,14 +6954,12 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icSuperTrend(1)", error));
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icSuperTrend(1)", error));
       logWarn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
+   if (!error) return(value);
    return(!SetLastError(error));
 }
 
@@ -7176,7 +7118,6 @@ void __DummyCalls() {
    GmtToServerTime(NULL);
    GT(NULL, NULL);
    HistoryFlagsToStr(NULL);
-   icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);
    icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);

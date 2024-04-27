@@ -20,8 +20,9 @@
  * @return double - indicator value or NULL in case of errors
  */
 double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
-   static int lpSuperContext = 0; if (!lpSuperContext)
+   static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
+   }
 
    double value = iCustom(NULL, timeframe, "ZigZag",
                           "",                         // string ____________________________
@@ -65,13 +66,11 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icZigZag(1)", error));
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icZigZag(1)", error));
       logWarn("icZigZag(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];           // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
+   if (!error) return(value);
    return(!SetLastError(error));
 }
