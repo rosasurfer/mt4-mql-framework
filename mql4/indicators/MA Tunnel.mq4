@@ -13,14 +13,14 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Tunnel.Definition              = "EMA(144)";        // one or more MAs separated by ","
+extern string Tunnel.Definition              = "EMA(144)";           // one or more MAs separated by ","
 extern string Supported.MA.Methods           = "SMA, LWMA, EMA, SMMA";
 extern color  Tunnel.Color                   = Magenta;
 extern bool   ShowChartLegend                = true;
-extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;                // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
-extern bool   Signal.onBarCross              = false;             // on channel leave at opposite side of the last crossing
+extern bool   Signal.onBarCross              = false;                // on channel leave at opposite side of the last crossing
 extern bool   Signal.onBarCross.Sound        = true;
 extern string Signal.onBarCross.SoundUp      = "Signal Up.wav";
 extern string Signal.onBarCross.SoundDown    = "Signal Down.wav";
@@ -102,17 +102,17 @@ int onInit() {
       if (sValue == "") continue;
 
       string sMethod = StrLeftTo(sValue, "(");
-      if (sMethod == sValue)           return(catch("onInit(1)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
+      if (sMethod == sValue)           return(catch("onInit(1)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
       int iMethod = StrToMaMethod(sMethod, F_ERR_INVALID_PARAMETER);
-      if (iMethod == -1)               return(catch("onInit(2)  invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition), ERR_INVALID_INPUT_PARAMETER));
-      if (iMethod > MODE_LWMA)         return(catch("onInit(3)  unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition), ERR_INVALID_INPUT_PARAMETER));
+      if (iMethod == -1)               return(catch("onInit(2)  invalid "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (unsupported MA method)", ERR_INVALID_INPUT_PARAMETER));
+      if (iMethod > MODE_LWMA)         return(catch("onInit(3)  invalid "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (unsupported MA method)", ERR_INVALID_INPUT_PARAMETER));
 
       string sPeriods = StrRightFrom(sValue, "(");
-      if (!StrEndsWith(sPeriods, ")")) return(catch("onInit(4)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
+      if (!StrEndsWith(sPeriods, ")")) return(catch("onInit(4)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
       sPeriods = StrTrim(StrLeft(sPeriods, -1));
-      if (!StrIsDigits(sPeriods))      return(catch("onInit(5)  invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
+      if (!StrIsDigits(sPeriods))      return(catch("onInit(5)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
       int iPeriods = StrToInteger(sPeriods);
-      if (iPeriods < 1)                return(catch("onInit(6)  invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
+      if (iPeriods < 1)                return(catch("onInit(6)  invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
 
       ArrayResize(ma, mas+1);
       ArrayResize(maDefinitions, mas+1);
@@ -122,7 +122,7 @@ int onInit() {
       maxMaPeriods = MathMax(maxMaPeriods, iPeriods);
       mas++;
    }
-   if (!mas)                           return(catch("onInit(7)  missing input parameter Tunnel.Definition (empty)", ERR_INVALID_INPUT_PARAMETER));
+   if (!mas)                           return(catch("onInit(7)  missing input parameter Tunnel.Definition", ERR_INVALID_INPUT_PARAMETER));
 
    // Tunnel.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Tunnel.Color = GetConfigColor(indicator, "Tunnel.Color", Tunnel.Color);
