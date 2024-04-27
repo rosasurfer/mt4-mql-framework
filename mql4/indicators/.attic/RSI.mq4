@@ -27,7 +27,7 @@ extern color  Histogram.Color.Upper = Blue;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    MaxBarsBack           = 10000;                // max. values to calculate (-1: all available)
+extern int    MaxBarsBack           = 10000;          // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,8 +35,8 @@ extern int    MaxBarsBack           = 10000;                // max. values to ca
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 
-#define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
-#define MODE_SECTION          MACD.MODE_SECTION
+#define MODE_MAIN             0                       // indicator buffer ids
+#define MODE_SECTION          1
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
 
@@ -44,10 +44,10 @@ extern int    MaxBarsBack           = 10000;                // max. values to ca
 #property indicator_buffers   4
 #property indicator_level1    0
 
-double bufferRSI    [];                                     // RSI main value:            visible, displayed in "Data" window
-double bufferSection[];                                     // RSI section and length:    invisible
-double bufferUpper  [];                                     // positive histogram values: visible
-double bufferLower  [];                                     // negative histogram values: visible
+double bufferRSI    [];                               // RSI main value:            visible, displayed in "Data" window
+double bufferSection[];                               // RSI section and length:    invisible
+double bufferUpper  [];                               // positive histogram values: visible
+double bufferLower  [];                               // negative histogram values: visible
 
 int rsi.periods;
 int rsi.appliedPrice;

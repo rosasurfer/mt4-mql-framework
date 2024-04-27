@@ -57,6 +57,7 @@ extern bool   Signal.onCross.SMS             = false;
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/iCustom/MACD.mqh>
 #include <functions/ta/ALMA.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
@@ -406,4 +407,7 @@ string InputsToStr() {
                             "Signal.onCross.Mail=",      BoolToStr(Signal.onCross.Mail),           ";", NL,
                             "Signal.onCross.SMS=",       BoolToStr(Signal.onCross.SMS),            ";")
    );
+
+   // suppress compiler warnings
+   icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }

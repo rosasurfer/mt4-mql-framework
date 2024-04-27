@@ -351,9 +351,6 @@ double  INF;                                                      //  1.#INF |  
 #define HalfTrend.MODE_MAIN       MODE_MAIN     // HalfTrend SR line (0)
 #define HalfTrend.MODE_TREND              1     // HalfTrend trend direction and length
 
-#define MACD.MODE_MAIN            MODE_MAIN     // MACD main line (0)
-#define MACD.MODE_SECTION                 1     // MACD section and section length
-
 #define MMI.MODE_MAIN             MODE_MAIN     // MMI main line (0)
 
 #define MovingAverage.MODE_MA             0     // MA value
