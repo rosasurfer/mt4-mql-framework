@@ -29,17 +29,14 @@ double icMaTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar)
 
                           "",                         // string ____________________________
                           false,                      // bool   Signal.onBarCross
-                          false,                      // bool   Signal.onBarCross.Sound
-                          "",                         // string Signal.onBarCross.SoundUp
-                          "",                         // string Signal.onBarCross.SoundDown
-                          false,                      // bool   Signal.onBarCross.Alert
-                          false,                      // bool   Signal.onBarCross.Mail
-                          false,                      // bool   Signal.onBarCross.SMS
+                          "",                         // string Signal.onBarCross.Types
+                          "",                         // string Signal.Sound.Up
+                          "",                         // string Signal.Sound.Down
 
                           "",                         // string ____________________________
-                          false,                      // bool   Signal.onTickCross.Sound
-                          "",                         // string Signal.onTickCross.SoundUp
-                          "",                         // string Signal.onTickCross.SoundDown
+                          false,                      // bool   Sound.onTickCross
+                          "",                         // string Sound.onTickCross.Up
+                          "",                         // string Sound.onTickCross.Down
 
                           "",                         // string ____________________________
                           false,                      // bool   AutoConfiguration

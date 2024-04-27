@@ -20,13 +20,13 @@ extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
-extern bool   Signal.onBarCross              = false;                   // on channel leave at opposite side of the last crossing
+extern bool   Signal.onBarCross              = false;                   // onBarClose: on channel cross at opposite side of the last crossing
 extern string Signal.onBarCross.Types        = "sound* | alert | mail | sms";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
 extern string ___b__________________________;
-extern bool   Sound.onTickCross             = false;
+extern bool   Sound.onTickCross             = false;                    // onTick: on channel cross at opposite side of the last crossing
 extern string Sound.onTickCross.Up          = "Alert Up.wav";
 extern string Sound.onTickCross.Down        = "Alert Down.wav";
 
