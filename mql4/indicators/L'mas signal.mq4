@@ -33,9 +33,6 @@
  *     support SMMA
  *     support price type PRICE_AVERAGE
  *     add parameter stepping
- *
- *  - TriEMA
- *     use StrToPriceType(F_PARTIAL_ID)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
