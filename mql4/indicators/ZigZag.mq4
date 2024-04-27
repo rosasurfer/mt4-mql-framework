@@ -195,7 +195,7 @@ bool     signal.onBreakout.alert;
 bool     signal.onBreakout.mail;
 bool     signal.onBreakout.sms;
 
-datetime skipSignals;                                          // skip signals until this time to wait for possible data pumping
+datetime skipSignals;                                          // skip signals until the specified time to wait for possible data pumping
 datetime lastTick;
 int      lastSoundSignal;                                      // GetTickCount() value of the last audible signal
 
@@ -289,11 +289,8 @@ int onInit() {
       if (!ConfigureSignalTypes(signalId, Signal.onReversal.Types, AutoConfiguration, signal.onReversal.sound, signal.onReversal.alert, signal.onReversal.mail, signal.onReversal.sms)) {
          return(catch("onInit(13)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      if (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail || signal.onReversal.sms) {
-         legendInfo = StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", "") + ifString(signal.onReversal.sms, "sms,", ""), -1);
-         legendInfo = "("+ legendInfo +")";
-      }
-      else Signal.onReversal = false;
+      Signal.onReversal = (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail || signal.onReversal.sms);
+      if (Signal.onReversal) legendInfo = "("+ StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", "") + ifString(signal.onReversal.sms, "sms,", ""), -1) +")";
    }
    // Signal.onBreakout
    signalId = "Signal.onBreakout";
@@ -302,11 +299,17 @@ int onInit() {
       if (!ConfigureSignalTypes(signalId, Signal.onBreakout.Types, AutoConfiguration, signal.onBreakout.sound, signal.onBreakout.alert, signal.onBreakout.mail, signal.onBreakout.sms)) {
          return(catch("onInit(14)  invalid input parameter Signal.onBreakout.Types: "+ DoubleQuoteStr(Signal.onBreakout.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      // Signal.onBreakout.123Only
-      if (AutoConfiguration) Signal.onBreakout.123Only = GetConfigBool(indicator, "Signal.onBreakout.123Only", Signal.onBreakout.123Only);
+      Signal.onBreakout = (signal.onBreakout.sound || signal.onBreakout.alert || signal.onBreakout.mail || signal.onBreakout.sms);
    }
+   // Signal.onBreakout.123Only
+   if (AutoConfiguration) Signal.onBreakout.123Only = GetConfigBool(indicator, "Signal.onBreakout.123Only", Signal.onBreakout.123Only);
+   // Signal.Sound.*
+   if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
+   if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
    // Sound.onChannelWidening
    if (AutoConfiguration) Sound.onChannelWidening = GetConfigBool(indicator, "Sound.onChannelWidening", Sound.onChannelWidening);
+   if (AutoConfiguration) Sound.onNewChannelHigh  = GetConfigString(indicator, "Sound.onNewChannelHigh", Sound.onNewChannelHigh);
+   if (AutoConfiguration) Sound.onNewChannelLow   = GetConfigString(indicator, "Sound.onNewChannelLow", Sound.onNewChannelLow);
 
    // reset an active command handler
    if (__isChart && (ZigZag.Periods.Step || Show123Projections)) {

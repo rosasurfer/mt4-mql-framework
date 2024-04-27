@@ -13,24 +13,22 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Tunnel.Definition              = "EMA(144)";           // one or more MAs separated by ","
+extern string Tunnel.Definition              = "EMA(144)";              // one or more MAs separated by ","
 extern string Supported.MA.Methods           = "SMA, LWMA, EMA, SMMA";
 extern color  Tunnel.Color                   = Magenta;
 extern bool   ShowChartLegend                = true;
-extern int    MaxBarsBack                    = 10000;                // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
-extern bool   Signal.onBarCross              = false;                // on channel leave at opposite side of the last crossing
-extern bool   Signal.onBarCross.Sound        = true;
-extern string Signal.onBarCross.SoundUp      = "Signal Up.wav";
-extern string Signal.onBarCross.SoundDown    = "Signal Down.wav";
-extern bool   Signal.onBarCross.Alert        = false;
-extern bool   Signal.onBarCross.Mail         = false;
-extern bool   Signal.onBarCross.SMS          = false;
+extern bool   Signal.onBarCross              = false;                   // on channel leave at opposite side of the last crossing
+extern string Signal.onBarCross.Types        = "sound* | alert | mail | sms";
+extern string Signal.Sound.Up                = "Signal Up.wav";
+extern string Signal.Sound.Down              = "Signal Down.wav";
+
 extern string ___b__________________________;
-extern bool   Signal.onTickCross.Sound       = false;
-extern string Signal.onTickCross.SoundUp     = "Alert Up.wav";
-extern string Signal.onTickCross.SoundDown   = "Alert Down.wav";
+extern bool   Sound.onTickCross             = false;
+extern string Sound.onTickCross.Up          = "Alert Up.wav";
+extern string Sound.onTickCross.Down        = "Alert Down.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -68,12 +66,14 @@ string maDefinitions[];                                  // MA definitions
 int    ma[][2];                                          // integer representation
 int    maxMaPeriods;
 
-bool   signal.barCross;
-bool   signal.tickCross;
-string signalInfo = "";
-
 string indicatorName = "";
 string legendLabel   = "";
+string legendInfo    = "";
+
+bool   signal.onBarCross.sound;
+bool   signal.onBarCross.alert;
+bool   signal.onBarCross.mail;
+bool   signal.onBarCross.sms;
 
 #define D_LONG    TRADE_DIRECTION_LONG                   // signal direction types
 #define D_SHORT   TRADE_DIRECTION_SHORT                  //
@@ -136,28 +136,22 @@ int onInit() {
 
    // signal configuration
    string signalId = "Signal.onBarCross";
+   legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onBarCross)) return(last_error);
    if (Signal.onBarCross) {
-      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onBarCross.Sound)) return(last_error);
-      if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onBarCross.Alert)) return(last_error);
-      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onBarCross.Mail))  return(last_error);
-      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onBarCross.SMS))   return(last_error);
-      Signal.onBarCross = (Signal.onBarCross.Sound || Signal.onBarCross.Alert || Signal.onBarCross.Mail || Signal.onBarCross.SMS);
+      if (!ConfigureSignalTypes(signalId, Signal.onBarCross.Types, AutoConfiguration, signal.onBarCross.sound, signal.onBarCross.alert, signal.onBarCross.mail, signal.onBarCross.sms)) {
+         return(catch("onInit(13)  invalid input parameter Signal.onBarCross.Types: "+ DoubleQuoteStr(Signal.onBarCross.Types), ERR_INVALID_INPUT_PARAMETER));
+      }
+      Signal.onBarCross = (signal.onBarCross.sound || signal.onBarCross.alert || signal.onBarCross.mail || signal.onBarCross.sms);
+      if (Signal.onBarCross) legendInfo = "("+ StrLeft(ifString(signal.onBarCross.sound, "sound,", "") + ifString(signal.onBarCross.alert, "alert,", "") + ifString(signal.onBarCross.mail, "mail,", "") + ifString(signal.onBarCross.sms, "sms,", ""), -1) +")";
    }
-   signal.barCross = Signal.onBarCross;
-   if (AutoConfiguration) Signal.onBarCross.SoundUp   = GetConfigString(indicator, "Signal.onBarCross.SoundUp",   Signal.onBarCross.SoundUp);
-   if (AutoConfiguration) Signal.onBarCross.SoundDown = GetConfigString(indicator, "Signal.onBarCross.SoundDown", Signal.onBarCross.SoundDown);
-
-   if (!ConfigureSignalsBySound("Signal.onTickCross", AutoConfiguration, Signal.onTickCross.Sound)) return(last_error);
-   signal.tickCross = Signal.onTickCross.Sound;
-   if (AutoConfiguration) Signal.onTickCross.SoundUp   = GetConfigString(indicator, "Signal.onTickCross.SoundUp",   Signal.onTickCross.SoundUp);
-   if (AutoConfiguration) Signal.onTickCross.SoundDown = GetConfigString(indicator, "Signal.onTickCross.SoundDown", Signal.onTickCross.SoundDown);
-
-   signalInfo = "";
-   if (signal.barCross) {
-      signalInfo = ifString(Signal.onBarCross.Sound, "sound,", "") + ifString(Signal.onBarCross.Alert, "alert,", "") + ifString(Signal.onBarCross.Mail, "mail,", "") + ifString(Signal.onBarCross.SMS, "sms,", "");
-      signalInfo = "("+ StrLeft(signalInfo, -1) +")";
-   }
+   // Signal.Sound.*
+   if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
+   if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
+   // Sound.onTickCross
+   if (AutoConfiguration) Sound.onTickCross      = GetConfigBool(indicator, "Sound.onTickCross", Sound.onTickCross);
+   if (AutoConfiguration) Sound.onTickCross.Up   = GetConfigString(indicator, "Sound.onTickCross.Up",   Sound.onTickCross.Up);
+   if (AutoConfiguration) Sound.onTickCross.Down = GetConfigString(indicator, "Sound.onTickCross.Down", Sound.onTickCross.Down);
 
    // buffer management
    SetIndexBuffer(MODE_UPPER_BAND, upperBand);
@@ -246,14 +240,14 @@ int onTick() {
 
    if (!__isSuperContext) {
       // update chart legend
-      if (ShowChartLegend) UpdateBandLegend(legendLabel, indicatorName, signalInfo, Tunnel.Color, upperBand[0], lowerBand[0]);
+      if (ShowChartLegend) UpdateBandLegend(legendLabel, indicatorName, legendInfo, Tunnel.Color, upperBand[0], lowerBand[0]);
 
       // monitor signals
-      if (signal.tickCross) {
+      if (Sound.onTickCross) {
          if      (tickTrend[0] == +1) onCross(D_LONG, 0);
          else if (tickTrend[0] == -1) onCross(D_SHORT, 0);
       }
-      if (signal.barCross) /*&&*/ if (IsBarOpen()) {
+      if (Signal.onBarCross) /*&&*/ if (IsBarOpen()) {
          if      (barTrend[1] == +1) onCross(D_LONG, 1);
          else if (barTrend[1] == -1) onCross(D_SHORT, 1);
       }
@@ -277,20 +271,20 @@ bool onCross(int direction, int bar) {
    int error = NO_ERROR;
 
    if (bar == 0) {
-      if (!signal.tickCross) return(false);
+      if (!Sound.onTickCross) return(false);
 
       if (direction == D_LONG) {
          if (IsLogInfo()) logInfo("onCross(2)  tick above "+ indicatorName);
-         error |= PlaySoundEx(Signal.onTickCross.SoundUp);
+         error |= PlaySoundEx(Sound.onTickCross.Up);
       }
       else /*direction == D_SHORT*/ {
          if (IsLogInfo()) logInfo("onCross(3)  tick below "+ indicatorName);
-         error |= PlaySoundEx(Signal.onTickCross.SoundDown);
+         error |= PlaySoundEx(Sound.onTickCross.Down);
       }
       return(!error);
    }
    if (bar == 1) {
-      if (!signal.barCross) return(false);
+      if (!Signal.onBarCross) return(false);
 
       string message="", accountTime="("+ TimeToStr(TimeLocalEx("onCross(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
@@ -299,20 +293,20 @@ bool onCross(int direction, int bar) {
          if (IsLogInfo()) logInfo("onCross(5)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-         if (Signal.onBarCross.Alert)          Alert(message);
-         if (Signal.onBarCross.Sound) error |= PlaySoundEx(Signal.onBarCross.SoundUp);
-         if (Signal.onBarCross.Mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
-         if (Signal.onBarCross.SMS)   error |= !SendSMS("", message +NL+ accountTime);
+         if (signal.onBarCross.alert)          Alert(message);
+         if (signal.onBarCross.sound) error |= PlaySoundEx(Signal.Sound.Up);
+         if (signal.onBarCross.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
+         if (signal.onBarCross.sms)   error |= !SendSMS("", message +NL+ accountTime);
       }
       else /*direction == D_SHORT*/ {
          message = "bar close below "+ indicatorName;
          if (IsLogInfo()) logInfo("onCross(6)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-         if (Signal.onBarCross.Alert)          Alert(message);
-         if (Signal.onBarCross.Sound) error |= PlaySoundEx(Signal.onBarCross.SoundDown);
-         if (Signal.onBarCross.Mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
-         if (Signal.onBarCross.SMS)   error |= !SendSMS("", message +NL+ accountTime);
+         if (signal.onBarCross.alert)          Alert(message);
+         if (signal.onBarCross.sound) error |= PlaySoundEx(Signal.Sound.Down);
+         if (signal.onBarCross.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
+         if (signal.onBarCross.sms)   error |= !SendSMS("", message +NL+ accountTime);
       }
       return(!error);
    }
@@ -341,22 +335,19 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Tunnel.Definition=",            DoubleQuoteStr(Tunnel.Definition),            ";", NL,
-                            "Tunnel.Color=",                 ColorToStr(Tunnel.Color),                     ";", NL,
-                            "ShowChartLegend=",              BoolToStr(ShowChartLegend),                   ";", NL,
-                            "MaxBarsBack=",                  MaxBarsBack,                                  ";", NL,
+   return(StringConcatenate("Tunnel.Definition=",       DoubleQuoteStr(Tunnel.Definition),       ";", NL,
+                            "Tunnel.Color=",            ColorToStr(Tunnel.Color),                ";", NL,
+                            "ShowChartLegend=",         BoolToStr(ShowChartLegend),              ";", NL,
+                            "MaxBarsBack=",             MaxBarsBack,                             ";", NL,
 
-                            "Signal.onBarCross",             BoolToStr(Signal.onBarCross),                 ";", NL,
-                            "Signal.onBarCross.Sound",       BoolToStr(Signal.onBarCross.Sound),           ";", NL,
-                            "Signal.onBarCross.SoundUp=",    DoubleQuoteStr(Signal.onBarCross.SoundUp),    ";", NL,
-                            "Signal.onBarCross.SoundDown=",  DoubleQuoteStr(Signal.onBarCross.SoundDown),  ";", NL,
-                            "Signal.onBarCross.Alert",       BoolToStr(Signal.onBarCross.Alert),           ";", NL,
-                            "Signal.onBarCross.Mail",        BoolToStr(Signal.onBarCross.Mail),            ";", NL,
-                            "Signal.onBarCross.SMS",         BoolToStr(Signal.onBarCross.SMS),             ";", NL,
+                            "Signal.onBarCross=",       BoolToStr(Signal.onBarCross),            ";", NL,
+                            "Signal.onBarCross.Types=", DoubleQuoteStr(Signal.onBarCross.Types), ";", NL,
+                            "Signal.Sound.Up=",         DoubleQuoteStr(Signal.Sound.Up),         ";", NL,
+                            "Signal.Sound.Down=",       DoubleQuoteStr(Signal.Sound.Down),       ";", NL,
 
-                            "Signal.onTickCross.Sound",      BoolToStr(Signal.onTickCross.Sound),          ";", NL,
-                            "Signal.onTickCross.SoundUp=",   DoubleQuoteStr(Signal.onTickCross.SoundUp),   ";", NL,
-                            "Signal.onTickCross.SoundDown=", DoubleQuoteStr(Signal.onTickCross.SoundDown), ";")
+                            "Sound.onTickCross=",       BoolToStr(Sound.onTickCross),            ";", NL,
+                            "Sound.onTickCross.Up=",    DoubleQuoteStr(Sound.onTickCross.Up),    ";", NL,
+                            "Sound.onTickCross.Down=",  DoubleQuoteStr(Sound.onTickCross.Down),  ";")
    );
 
    // suppress compiler warnings

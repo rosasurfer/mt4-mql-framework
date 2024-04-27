@@ -17,7 +17,7 @@ bool ConfigureSignals(string signalId, bool autoConfig, bool &enabled) {
    }
    return(true);
 
-   // suppress compiler warnings about unused functions
+   // suppress compiler warnings
    bool bNull;
    ConfigureSignalsBySound(NULL, NULL, bNull);
    ConfigureSignalsByAlert(NULL, NULL, bNull);
