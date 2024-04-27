@@ -3,14 +3,16 @@
  *
  * A moving average using a Gaussian distribution function for weight calculation.
  *
+ *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  *
- *  @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/#             [Arnaud Legoux Moving Average]
- *  @link  https://www.forexfactory.com/thread/251668#                                         [Arnaud Legoux Moving Average]
+ *
+ *  @see  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/#              [Arnaud Legoux Moving Average]
+ *  @see  https://www.forexfactory.com/thread/251668#                                          [Arnaud Legoux Moving Average]
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -470,7 +472,7 @@ double GetPrice(int type, int i) {
       case PRICE_WEIGHTED: return(iMA(NULL, NULL, 1, 0, MODE_SMA, type, i));     // 6: (H+L+C+C)/4
       case PRICE_AVERAGE:  return((Open[i] + High[i] + Low[i] + Close[i])/4);    // 7: (O+H+L+C)/4
    }
-   return(!catch("GetPrice(2)  invalid or unsupported price type: "+ type, ERR_INVALID_PARAMETER));
+   return(!catch("GetPrice(2)  unsupported price type: "+ type, ERR_INVALID_PARAMETER));
 }
 
 

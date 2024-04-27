@@ -2450,33 +2450,54 @@ int StrToLogLevel(string value, int flags = NULL) {
 
 
 /**
- * Return the integer constant of a Moving-Average type representation.
+ * Return the integer constant of a "Moving Average" method representation.
  *
- * @param  string value            - string representation of a Moving-Average type
- * @param  int    flags [optional] - execution control: errors to set silently (default: none)
+ * @param  string value            - string representation of a "Moving Average" method
+ * @param  int    flags [optional] - execution control flags (default: none)
+ *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "AL" = "ALMA"
+ *                                   F_ERR_INVALID_PARAMETER: don't trigger a fatal error on unrecognized values
  *
- * @return int - Moving-Average type constant oder EMPTY (-1) in case of errors
+ * @return int - "Moving Average" method constant oder EMPTY (-1) if the value is not recognized
  */
 int StrToMaMethod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
-   if (StrStartsWith(str, "MODE_"))
-      str = StrSubstr(str, 5);
+   if (StrStartsWith(str, "MODE_")) {
+      flags &= (~F_PARTIAL_ID);                          // MODE_* doesn't support flag F_PARTIAL_ID
+      if (str == "MODE_SMA" ) return(MODE_SMA);
+      if (str == "MODE_LWMA") return(MODE_LWMA);
+      if (str == "MODE_EMA" ) return(MODE_EMA);
+      if (str == "MODE_SMMA") return(MODE_SMMA);
+      if (str == "MODE_ALMA") return(MODE_ALMA);
+   }
+   else if (StringLen(str) > 0) {
+      if (str == ""+ MODE_SMA ) return(MODE_SMA);        // test for numeric identifiers
+      if (str == ""+ MODE_LWMA) return(MODE_LWMA);
+      if (str == ""+ MODE_EMA ) return(MODE_EMA);
+      if (str == ""+ MODE_SMMA) return(MODE_SMMA);
+      if (str == ""+ MODE_ALMA) return(MODE_ALMA);
 
-   if (str ==         "SMA" ) return(MODE_SMA );
-   if (str == ""+ MODE_SMA  ) return(MODE_SMA );
-   if (str ==         "EMA" ) return(MODE_EMA );
-   if (str == ""+ MODE_EMA  ) return(MODE_EMA );
-   if (str ==         "SMMA") return(MODE_SMMA);
-   if (str == ""+ MODE_SMMA ) return(MODE_SMMA);
-   if (str ==         "LWMA") return(MODE_LWMA);
-   if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
-   if (str ==         "ALMA") return(MODE_ALMA);
-   if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
+      if (flags & F_PARTIAL_ID && 1) {
+         if (StrStartsWith("LWMA", str))    return(MODE_LWMA);
+         if (StrStartsWith("EMA",  str))    return(MODE_EMA);
+         if (StrStartsWith("ALMA", str))    return(MODE_ALMA);
+         if (StringLen(str) > 2) {
+            if (StrStartsWith("SMA",  str)) return(MODE_SMA);
+            if (StrStartsWith("SMMA", str)) return(MODE_SMMA);
+         }
+      }
+      else {
+         if (str == "SMA" ) return(MODE_SMA);
+         if (str == "LWMA") return(MODE_LWMA);
+         if (str == "EMA" ) return(MODE_EMA);
+         if (str == "SMMA") return(MODE_SMMA);
+         if (str == "ALMA") return(MODE_ALMA);
+      }
+   }
 
    if (!flags & F_ERR_INVALID_PARAMETER)
       return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER)));
-   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   return(-1);
 }
 
 
@@ -6004,7 +6025,7 @@ string HistoryFlagsToStr(int flags) {
  * @param  string value
  * @param  int    flags [optional] - execution control flags (default: none)
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
- *                                   F_ERR_INVALID_PARAMETER: don't trigger a fatal error on unsupported parameters
+ *                                   F_ERR_INVALID_PARAMETER: don't set trigger a fatal error on unrecognized values
  *
  * @return int - price type constant or EMPTY (-1) if the value is not recognized
  */
@@ -6012,7 +6033,7 @@ int StrToPriceType(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "PRICE_")) {
-      flags &= (~F_PARTIAL_ID);                                // PRICE_* doesn't support the F_PARTIAL_ID flag
+      flags &= (~F_PARTIAL_ID);                                // PRICE_* doesn't support flag F_PARTIAL_ID
       if (str == "PRICE_OPEN"    ) return(PRICE_OPEN    );
       if (str == "PRICE_HIGH"    ) return(PRICE_HIGH    );
       if (str == "PRICE_LOW"     ) return(PRICE_LOW     );
@@ -6025,7 +6046,7 @@ int StrToPriceType(string value, int flags = NULL) {
       if (str == "PRICE_ASK"     ) return(PRICE_ASK     );
    }
    else if (StringLen(str) > 0) {
-      if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );   // check for numeric identifiers
+      if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );   // test for numeric identifiers
       if (str == ""+ PRICE_HIGH    ) return(PRICE_HIGH    );
       if (str == ""+ PRICE_LOW     ) return(PRICE_LOW     );
       if (str == ""+ PRICE_CLOSE   ) return(PRICE_CLOSE   );

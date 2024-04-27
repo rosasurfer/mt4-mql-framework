@@ -1,5 +1,5 @@
 /**
- * A "Moving Average" with more features than the built-in version.
+ * A "Moving Average" indicator with support for more MA methods and additional features.
  *
  *
  * Available Moving Average types:
@@ -9,11 +9,13 @@
  *  • SMMA - Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes)
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
+ *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
+ *
  *
  * Notes:
  *  (1) EMA calculation:
@@ -21,6 +23,9 @@
  *
  *  (2) The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
  *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
+ *
+ *  (3) ALMA calculation:
+ *      @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -112,15 +117,7 @@ int onInit() {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   sValue = StrToUpper(StrTrim(sValue));
-   if      (StrStartsWith("ALMA", sValue)) sValue = "ALMA";
-   else if (StrStartsWith("EMA",  sValue)) sValue = "EMA";
-   else if (StrStartsWith("LWMA", sValue)) sValue = "LWMA";
-   else if (StringLen(sValue) > 2) {
-      if      (StrStartsWith("SMA",  sValue)) sValue = "SMA";
-      else if (StrStartsWith("SMMA", sValue)) sValue = "SMMA";
-   }
-   maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maMethod == -1)                                        return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.AppliedPrice

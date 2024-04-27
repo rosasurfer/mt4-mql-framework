@@ -771,7 +771,7 @@ bool ValidateInputs() {
 
       string sMethod = StrLeftTo(sValue, "(");
       if (sMethod == sValue)                       return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
-      int iMethod = StrToMaMethod(sMethod, F_ERR_INVALID_PARAMETER);
+      int iMethod = StrToMaMethod(sMethod, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
       if (iMethod == -1)                           return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
       if (iMethod > MODE_LWMA)                     return(!onInputError("ValidateInputs(5)  "+ instance.name +" unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
 

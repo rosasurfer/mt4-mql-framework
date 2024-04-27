@@ -65,7 +65,7 @@ int onInit() {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maMethod == -1)       return(catch("onInit(3)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    if (maMethod > MODE_LWMA) return(catch("onInit(4)  unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);

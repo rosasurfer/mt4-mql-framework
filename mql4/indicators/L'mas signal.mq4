@@ -2,12 +2,40 @@
  * Signal indicator for the "L'mas system"
  *
  * - long:
- *    entry signal: onBarClose: Close > UpperTunnel && EMA > UpperTunnel && MACD > 0      // is (Close > UpperTunnel) redundant?
+ *    entry signal: onBarClose: Close > UpperTunnel && EMA > UpperTunnel && MACD > 0      // test whether (Close > UpperTunnel) is redundant
  *    exit signal:  onTick:     Close < LowerTunnel && EMA < LowerTunnel                  // ...
  *
  * - short:
- *    entry signal: onBarClose: Close < LowerTunnel && EMA < LowerTunnel && MACD < 0      // is (Close < UpperTunnel) redundant?
+ *    entry signal: onBarClose: Close < LowerTunnel && EMA < LowerTunnel && MACD < 0      // test whether (Close < UpperTunnel) is redundant
  *    exit signal:  onTick:     Close > UpperTunnel && EMA > UpperTunnel                  // ...
+ *
+ *
+ * TODO:
+ *  - MA Tunnel
+ *     rewrite signaling
+ *     rewrite validation messages
+ *     support MA method MODE_ALMA
+ *
+ *  - ALMA
+ *     rewrite signaling
+ *     add ShowChartLegend
+ *     add Background.Color+Background.Width
+ *     move GetPrice() to stdfunctions.mqh
+ *
+ *  - Moving Average
+ *     rewrite signaling
+ *     support price type PRICE_AVERAGE
+ *     add parameter stepping
+ *
+ *  - MACD
+ *     rewrite signaling
+ *     support AutoConfiguration
+ *     support SMMA
+ *     support price type PRICE_AVERAGE
+ *     add parameter stepping
+ *
+ *  - TriEMA
+ *     use StrToPriceType(F_PARTIAL_ID)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -18,8 +46,8 @@ int __DeinitFlags[];
 extern string Tunnel.MA.Method               = "SMA | LWMA* | EMA | SMMA | ALMA";
 extern int    Tunnel.MA.Periods              = 55;
 
-extern string MA.Method                      = "SMA | LWMA | EMA | SMMA | ALMA*";   // original: EMA
-extern int    MA.Periods                     = 10;                                  // original: 5
+extern string MA.Method                      = "SMA | LWMA | EMA | SMMA | ALMA*";
+extern int    MA.Periods                     = 10;                                  // original: EMA(5)
 
 extern string MACD.FastMA.Method             = "SMA | LWMA | EMA* | SMMA | ALMA";
 extern int    MACD.FastMA.Periods            = 12;
@@ -30,10 +58,12 @@ extern string ___a__________________________ = "=== Display settings ===";
 extern int    MaxBarsBack                    = 10000;                               // max. values to calculate (-1: all available)
 
 extern string ___b__________________________ = "=== Signaling ===";
-extern bool   Signal.onTrendChange           = false;
-extern string Signal.onTrendChange.Types     = "sound* | alert | mail | sms";
-extern string Signal.Sound.Up                = "Signal Up.wav";
-extern string Signal.Sound.Down              = "Signal Down.wav";
+extern bool   Signal.onEntry                 = false;
+extern string Signal.onEntry.Types           = "sound* | alert | mail | sms";
+extern bool   Signal.onExit                  = false;
+extern string Signal.onExit.Types            = "sound* | alert | mail | sms";
+extern string Signal.Sound.EntryLong         = "Signal Up.wav";
+extern string Signal.Sound.EntryShort        = "Signal Down.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -49,6 +79,17 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
  */
 int onInit() {
    // validate inputs
+   // Tunnel.MA.Method
+   // Tunnel.MA.Periods
+   // MA.Method
+   // MA.Periods
+   // MACD.FastMA.Method
+   // MACD.FastMA.Periods
+   // MACD.SlowMA.Method
+   // MACD.SlowMA.Periods
+
+
+
 
    return(catch("onInit(1)"));
 }
@@ -70,20 +111,22 @@ int onTick() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Tunnel.MA.Method=",           DoubleQuoteStr(Tunnel.MA.Method),           ";", NL,
-                            "Tunnel.MA.Periods=",          Tunnel.MA.Periods,                          ";", NL,
-                            "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";", NL,
-                            "MA.Periods=",                 MA.Periods,                                 ";", NL,
-                            "MACD.FastMA.Method=",         DoubleQuoteStr(MACD.FastMA.Method),         ";", NL,
-                            "MACD.FastMA.Periods=",        MACD.FastMA.Periods,                        ";", NL,
-                            "MACD.SlowMA.Method=",         DoubleQuoteStr(MACD.SlowMA.Method),         ";", NL,
-                            "MACD.SlowMA.Periods=",        MACD.SlowMA.Periods,                        ";", NL,
+   return(StringConcatenate("Tunnel.MA.Method=",        DoubleQuoteStr(Tunnel.MA.Method),        ";", NL,
+                            "Tunnel.MA.Periods=",       Tunnel.MA.Periods,                       ";", NL,
+                            "MA.Method=",               DoubleQuoteStr(MA.Method),               ";", NL,
+                            "MA.Periods=",              MA.Periods,                              ";", NL,
+                            "MACD.FastMA.Method=",      DoubleQuoteStr(MACD.FastMA.Method),      ";", NL,
+                            "MACD.FastMA.Periods=",     MACD.FastMA.Periods,                     ";", NL,
+                            "MACD.SlowMA.Method=",      DoubleQuoteStr(MACD.SlowMA.Method),      ";", NL,
+                            "MACD.SlowMA.Periods=",     MACD.SlowMA.Periods,                     ";", NL,
 
-                            "MaxBarsBack=",                MaxBarsBack,                                ";", NL,
+                            "MaxBarsBack=",             MaxBarsBack,                             ";", NL,
 
-                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";", NL,
-                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";", NL,
-                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";", NL,
-                            "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
+                            "Signal.onEntry=",          BoolToStr(Signal.onEntry),               ";", NL,
+                            "Signal.onEntry.Types=",    DoubleQuoteStr(Signal.onEntry.Types),    ";", NL,
+                            "Signal.onExit=",           BoolToStr(Signal.onExit),                ";", NL,
+                            "Signal.onExit.Types=",     DoubleQuoteStr(Signal.onExit.Types),     ";", NL,
+                            "Signal.Sound.EntryLong=",  DoubleQuoteStr(Signal.Sound.EntryLong),  ";", NL,
+                            "Signal.Sound.EntryShort=", DoubleQuoteStr(Signal.Sound.EntryShort), ";")
    );
 }

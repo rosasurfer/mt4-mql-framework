@@ -9,7 +9,7 @@
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA - Smoothed Moving Average:        same as EMA, it holds: SMMA(n) = EMA(2*n-1)
+ *  • SMMA - Smoothed Moving Average:        an EMA, it holds: SMMA(n) = EMA(2*n-1)
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  */
 #include <stddefines.mqh>
@@ -18,7 +18,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string MA.Method       = "SMA* | LWMA | EMA | ALMA";
+extern string MA.Method       = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern int    MA.Periods      = 10;
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern color  MA.Color        = CLR_NONE;
@@ -78,14 +78,13 @@ string legendLabel   = "";
  */
 int onInit() {
    // validate inputs
-   // MA
+   // MA.Method
    string sValues[], sValue = MA.Method;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   sValue = StrTrim(sValue);
-   maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maMethod == -1)        return(catch("onInit(1)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.Periods

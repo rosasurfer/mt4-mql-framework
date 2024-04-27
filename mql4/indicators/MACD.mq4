@@ -1,5 +1,5 @@
 /**
- * A standard MACD indicator with support for different "Moving Average" types.
+ * A MACD indicator with support for different "Moving Average" methods and additional features.
  *
  *
  * Moving Average types:
@@ -8,11 +8,13 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
+ *
  * Indicator buffers for iCustom():
- *  • MACD.MODE_MAIN:    MACD main values
+ *  • MACD.MODE_MAIN:    MACD main value
  *  • MACD.MODE_SECTION: MACD section and section length since last crossing of the zero level
  *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
+ *
  *
  * Notes:
  *  - The SMMA is not supported as SMMA(n) = EMA(2*n-1).
@@ -102,15 +104,12 @@ int onInit() {
    if (FastMA.Periods < 1)              return(catch("onInit(1)  invalid input parameter FastMA.Periods: "+ FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    fastMA.periods = FastMA.Periods;
    // FastMA.Method
-   string sValue="", values[];
-   if (Explode(FastMA.Method, "*", values, 2) > 1) {
+   string values[], sValue = FastMA.Method;
+   if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   else {
-      sValue = StrTrim(FastMA.Method);
-   }
-   fastMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   fastMA.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (fastMA.method == -1)             return(catch("onInit(2)  invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    if (fastMA.method == MODE_SMMA)      return(catch("onInit(3)  unsupported FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    FastMA.Method = MaMethodDescription(fastMA.method);
@@ -138,14 +137,12 @@ int onInit() {
       }
    }
    // SlowMA.Method
-   if (Explode(SlowMA.Method, "*", values, 2) > 1) {
+   sValue = SlowMA.Method;
+   if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   else {
-      sValue = StrTrim(SlowMA.Method);
-   }
-   slowMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   slowMA.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (slowMA.method == -1)             return(catch("onInit(8)  invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    if (slowMA.method == MODE_SMMA)      return(catch("onInit(9)  unsuported SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.Method = MaMethodDescription(slowMA.method);

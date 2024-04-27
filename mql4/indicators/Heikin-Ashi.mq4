@@ -102,12 +102,13 @@ int onInit() {
       inputMaMethod = EMPTY;
    }
    else {
-      inputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-      if (inputMaMethod == -1)   return(catch("onInit(1)  invalid input parameter Input.MA.Method: "+ DoubleQuoteStr(Input.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      inputMaMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+      if (inputMaMethod == -1)         return(catch("onInit(1)  invalid input parameter Input.MA.Method: "+ DoubleQuoteStr(Input.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (inputMaMethod == MODE_ALMA)  return(catch("onInit(2)  unsupported input parameter Input.MA.Method: \"ALMA\"", ERR_INVALID_INPUT_PARAMETER));
    }
    Input.MA.Method = MaMethodDescription(inputMaMethod, false);
    if (!IsEmpty(inputMaMethod)) {
-      if (Input.MA.Periods < 0)  return(catch("onInit(2)  invalid input parameter Input.MA.Periods: "+ Input.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+      if (Input.MA.Periods < 0)        return(catch("onInit(3)  invalid input parameter Input.MA.Periods: "+ Input.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
       inputMaPeriods = ifInt(!Input.MA.Periods, 1, Input.MA.Periods);
       if (inputMaPeriods == 1) inputMaMethod = EMPTY;
    }
@@ -122,12 +123,13 @@ int onInit() {
       outputMaMethod = EMPTY;
    }
    else {
-      outputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-      if (outputMaMethod == -1)  return(catch("onInit(3)  invalid input parameter Output.MA.Method: "+ DoubleQuoteStr(Output.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      outputMaMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+      if (outputMaMethod == -1)        return(catch("onInit(4)  invalid input parameter Output.MA.Method: "+ DoubleQuoteStr(Output.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (outputMaMethod == MODE_ALMA) return(catch("onInit(5)  unsupported input parameter Output.MA.Method: \"ALMA\"", ERR_INVALID_INPUT_PARAMETER));
    }
    Output.MA.Method = MaMethodDescription(outputMaMethod, false);
    if (!IsEmpty(outputMaMethod)) {
-      if (Output.MA.Periods < 0) return(catch("onInit(4)  invalid input parameter Output.MA.Periods: "+ Output.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+      if (Output.MA.Periods < 0)       return(catch("onInit(6)  invalid input parameter Output.MA.Periods: "+ Output.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
       outputMaPeriods = ifInt(!Output.MA.Periods, 1, Output.MA.Periods);
       if (outputMaPeriods == 1) outputMaMethod = EMPTY;
    }
@@ -137,11 +139,11 @@ int onInit() {
    if (Color.BarDown == 0xFF000000) Color.BarDown = CLR_NONE;
 
    // CandleWidth
-   if (CandleWidth < 0)          return(catch("onInit(5)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (CandleWidth > 5)          return(catch("onInit(6)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (CandleWidth < 0)                return(catch("onInit(7)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (CandleWidth > 5)                return(catch("onInit(8)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // MaxBarsBack
-   if (MaxBarsBack < -1)         return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)               return(catch("onInit(9)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // buffer management
@@ -182,7 +184,7 @@ int onInit() {
    inputInitPeriods  = ifInt( inputMaMethod==MODE_EMA ||  inputMaMethod==MODE_SMMA, Max(10,  inputMaPeriods*3),  inputMaPeriods);
    outputInitPeriods = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), outputMaPeriods);
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(10)"));
 }
 
 
