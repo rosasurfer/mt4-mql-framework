@@ -7,8 +7,8 @@
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    all filter values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  *
  *
  * TODO: analyze and fix the required run-up period

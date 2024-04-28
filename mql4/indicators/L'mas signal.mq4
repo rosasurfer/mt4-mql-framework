@@ -23,7 +23,6 @@
  *
  *  - MACD
  *     rename const MODE_SECTION => MODE_TREND
- *     support SMMA
  *     add parameter stepping
  */
 #include <stddefines.mqh>

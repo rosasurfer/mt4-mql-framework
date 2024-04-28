@@ -10,12 +10,12 @@
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  *
  *
- *  @link  http://unicorn.us.com/trading/el.html#_T3Average                                     [T3 Moving Average, Matulich]
- *  @see   additional notes at the end of this file
+ *  @see  http://unicorn.us.com/trading/el.html#_T3Average                                      [T3 Moving Average, Matulich]
+ *  @see  additional notes at the end of this file
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

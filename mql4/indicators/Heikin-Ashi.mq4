@@ -12,8 +12,8 @@
  *  • HeikinAshi.MODE_OPEN:  Heikin-Ashi bar open price
  *  • HeikinAshi.MODE_CLOSE: Heikin-Ashi bar close price
  *  • HeikinAshi.MODE_TREND: Heikin-Ashi trend direction and length
- *    - trend direction:     positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:        the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
