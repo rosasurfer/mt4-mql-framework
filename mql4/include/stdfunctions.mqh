@@ -4708,11 +4708,10 @@ string GetAccountServerPath() {
  *
  * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
- * @param  double equity  [optional] - current equity value, used for configured multiples (default: zero)
  *
  * @return double - asset value in account currency or EMPTY_VALUE in case of errors
  */
-double GetExternalAssets(string company="", int account=NULL, double equity=NULL) {
+double GetExternalAssets(string company="", int account=NULL) {
    if (!StringLen(company) || company=="0") {
       company = GetAccountCompanyId();
       if (!StringLen(company)) return(EMPTY_VALUE);
@@ -4726,17 +4725,7 @@ double GetExternalAssets(string company="", int account=NULL, double equity=NULL
    string file = GetAccountConfigPath(company, account);
    if (!StringLen(file)) return(EMPTY_VALUE);
 
-   string sValue = GetIniStringA(file, "General", "ExternalAssets", "");
-   double assetValue;
-
-   if (StrStartsWith(sValue, "x")) {
-      if (!equity) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter equity=NULL for configured equity multiple: "+ sValue, ERR_INVALID_PARAMETER)));
-      assetValue = NormalizeDouble(StrToDouble(StrRight(sValue, -1)) * equity, 2);
-   }
-   else {
-      assetValue = StrToDouble(sValue);
-   }
-   return(assetValue);
+   return(GetIniDouble(file, "General", "ExternalAssets"));
 }
 
 

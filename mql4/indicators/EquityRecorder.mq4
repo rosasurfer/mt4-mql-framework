@@ -161,7 +161,7 @@ bool CalculateEquity() {
 
    // store resulting equity values
    currEquity[I_EQUITY_ACCOUNT    ] = NormalizeDouble(equity, 2);
-   currEquity[I_EQUITY_ACCOUNT_EXT] = NormalizeDouble(equity + GetExternalAssets("", NULL, equity), 2);
+   currEquity[I_EQUITY_ACCOUNT_EXT] = NormalizeDouble(equity + GetExternalAssets(), 2);
    isOpenPosition = (size > 0);
 
    if (!last_error)

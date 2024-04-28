@@ -2,18 +2,15 @@
  * Signal indicator for the "L'mas system"
  *
  * - long:
- *    entry onBarClose: Close > UpperTunnel && MA > UpperTunnel && MACD > 0      // test whether (Close > UpperTunnel) is redundant
- *    stop  onTick:     Close < LowerTunnel && MA < LowerTunnel                  // ...
+ *    entry onBarClose: Close > UpperTunnel && MA > UpperTunnel && MACD > 0
+ *    stop  onTick:     Close < LowerTunnel && MA < LowerTunnel
  *
  * - short:
- *    entry onBarClose: Close < LowerTunnel && MA < LowerTunnel && MACD < 0      // test whether (Close < UpperTunnel) is redundant
- *    stop  onTick:     Close > UpperTunnel && MA > UpperTunnel                  // ...
+ *    entry onBarClose: Close < LowerTunnel && MA < LowerTunnel && MACD < 0
+ *    stop  onTick:     Close > UpperTunnel && MA > UpperTunnel
  *
  *
  * TODO:
- *  - GetExternalAssets()
- *     drop support for multiples
- *
  *  - MA Tunnel
  *     support MA method MODE_ALMA
  *

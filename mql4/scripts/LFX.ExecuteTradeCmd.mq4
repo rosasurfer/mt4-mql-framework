@@ -251,7 +251,6 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    int    direction   = IsShortOrderType(lo.Type(lo));
    double units       = lo.Units(lo);
 
-
    // (2) zu handelnde Pairs bestimmen
    string symbols    [7]; ArrayResize(symbols    , 0); ArrayResize(symbols    , 7);    // setzt die Größe und den Inhalt der Arrays zurück
    double exactLots  [7]; ArrayResize(exactLots  , 0); ArrayResize(exactLots  , 7);
@@ -270,7 +269,6 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    else if (lfxCurrency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "GBPNZD"; symbols[3] = "NZDCAD"; symbols[4] = "NZDCHF"; symbols[5] = "NZDJPY"; symbols[6] = "NZDUSD"; symbolsSize = 7; }
    else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
 
-
    // (3) Leverage-Konfiguration einlesen und validieren
    double static.leverage;
    if (!static.leverage) {
@@ -283,7 +281,6 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       if (static.leverage < 1)               return(!catch("OpenLfxOrder.Execute(4)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(static.leverage, ".+"), ERR_INVALID_CONFIG_VALUE));
    }
    double leverage = static.leverage;
-
 
    // (4) Lotsizes je Pair berechnen
    double equity = AccountEquity() - AccountCredit();

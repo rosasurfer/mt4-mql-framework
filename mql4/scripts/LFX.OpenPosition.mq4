@@ -100,7 +100,6 @@ int onStart() {
    int    directions[7];
    int    tickets   [7];
 
-
    // (1) zu handelnde Pairs bestimmen
    //     TODO: Brokerspezifische Symbole ermitteln
    if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD";                        symbolsSize = 6; }
@@ -112,11 +111,10 @@ int onStart() {
    else if (lfxCurrency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "GBPNZD"; symbols[3] = "NZDCAD"; symbols[4] = "NZDCHF"; symbols[5] = "NZDJPY"; symbols[6] = "NZDUSD"; symbolsSize = 7; }
    else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
 
-
    // (2) Lotsizes berechnen
    double equity = AccountEquity() - AccountCredit();
    if (AccountBalance() > 0) equity = MathMin(AccountBalance(), equity);               // bei negativer AccountBalance wird nur 'equity' benutzt
-   equity += GetExternalAssets(tradeAccount.company, tradeAccount.number, equity);
+   equity += GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
    int button;
    string errorMsg="", overLeverageMsg="";

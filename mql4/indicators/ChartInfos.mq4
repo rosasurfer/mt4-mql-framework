@@ -1945,14 +1945,8 @@ bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL)
 bool CalculateUnitSize() {
    if (mm.done) return(true);
 
-   double accountEquity = AccountEquity() - AccountCredit();
-   if (AccountBalance() > 0.005) accountEquity = MathMin(AccountBalance(), accountEquity);
-   if (accountEquity < 0.005) return(true);                             // empty account or terminal not yet ready
-   mm.externalAssets = GetExternalBalance(accountEquity);
-
-   if (mode.extern) return(true);                                       // skip everything else for external accounts
-
-   // see declaration of global vars mm.* for their descriptions
+   // see declaration of global vars for descriptions
+   mm.externalAssets          = GetExternalBalance();
    mm.lotValue                = 0;
    mm.unleveragedLots         = 0;
    mm.leveragedLots           = 0;
@@ -1961,7 +1955,12 @@ bool CalculateUnitSize() {
    mm.riskPercent             = 0;
    mm.riskRange               = 0;
 
+   if (mode.extern) return(true);                                       // skip everything else for external accounts
+
    // recalculate equity used for calculations
+   double accountEquity = AccountEquity() - AccountCredit();
+   if (AccountBalance() > 0.005) accountEquity = MathMin(AccountBalance(), accountEquity);
+   if (accountEquity < 0.005) return(true);                             // empty account or terminal not yet ready
    mm.equity = accountEquity + mm.externalAssets;
 
    // recalculate lot value and unleveraged unitsize
@@ -2032,27 +2031,25 @@ bool CalculateUnitSize() {
 
 
 /**
- * Resolve the amount of externally hold assets.
- *
- * @param  double equity - current equity value, used for configured multiples only
+ * Resolve and cache the amount of externally hold assets.
  *
  * @return double - asset value in account currency or EMPTY_VALUE in case of errors
  */
-double GetExternalBalance(double equity) {
+double GetExternalBalance() {
    static string lastCompany = "";
    static int    lastAccount = 0;
-   static double lastResult  = 0;
+   static double lastAssets  = 0;
 
    if (!mm.externalAssetsCached || tradeAccount.company!=lastCompany || tradeAccount.number!=lastAccount) {
-      double assets = GetExternalAssets(tradeAccount.company, tradeAccount.number, equity);
+      double assets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
       if (IsEmptyValue(assets)) return(EMPTY_VALUE);
 
       lastCompany = tradeAccount.company;
       lastAccount = tradeAccount.number;
-      lastResult  = assets;
+      lastAssets  = assets;
       mm.externalAssetsCached = true;
    }
-   return(lastResult);
+   return(lastAssets);
 }
 
 
