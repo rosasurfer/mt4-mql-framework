@@ -22,7 +22,7 @@ int __DeinitFlags[];
 
 extern int    MA.Periods                     = 38;
 extern int    MA.Periods.Step                = 0;                 // step size for a stepped input parameter (hotkey)
-extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
+extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern double Distribution.Offset            = 0.85;              // Gaussian distribution offset (offset of parabola vertex: 0..1)
 extern double Distribution.Sigma             = 6.0;               // Gaussian distribution sigma (parabola steepness)
 extern double MA.ReversalFilter              = 0.4;               // min. MA change in std-deviations for a trend reversal
@@ -114,10 +114,10 @@ int onInit() {
 
    // MA.Periods
    if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
-   if (MA.Periods < 1)                                       return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)                                     return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    // MA.Periods.Step
    if (AutoConfiguration) MA.Periods.Step = GetConfigInt(indicator, "MA.Periods.Step", MA.Periods.Step);
-   if (MA.Periods.Step < 0)                                  return(catch("onInit(2)  invalid input parameter MA.Periods.Step: "+ MA.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods.Step < 0)                                return(catch("onInit(2)  invalid input parameter MA.Periods.Step: "+ MA.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.AppliedPrice
    string sValues[], sValue = MA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.AppliedPrice", sValue);
@@ -127,20 +127,20 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice == -1)                               return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // Distribution.Offset
    if (AutoConfiguration) Distribution.Offset = GetConfigDouble(indicator, "Distribution.Offset", Distribution.Offset);
-   if (Distribution.Offset < 0 || Distribution.Offset > 1)   return(catch("onInit(4)  invalid input parameter Distribution.Offset: "+ NumberToStr(Distribution.Offset, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
+   if (Distribution.Offset < 0 || Distribution.Offset > 1) return(catch("onInit(4)  invalid input parameter Distribution.Offset: "+ NumberToStr(Distribution.Offset, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
    // Distribution.Sigma
    if (AutoConfiguration) Distribution.Sigma = GetConfigDouble(indicator, "Distribution.Sigma", Distribution.Sigma);
-   if (Distribution.Sigma <= 0)                              return(catch("onInit(5)  invalid input parameter Distribution.Sigma: "+ NumberToStr(Distribution.Sigma, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (Distribution.Sigma <= 0)                            return(catch("onInit(5)  invalid input parameter Distribution.Sigma: "+ NumberToStr(Distribution.Sigma, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
    // MA.ReversalFilter
    if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
-   if (MA.ReversalFilter < 0)                                return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter < 0)                              return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.ReversalFilter.StepS
    if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
-   if (MA.ReversalFilter.Step < 0)                           return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter.Step < 0)                         return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -151,10 +151,10 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                                                      return(catch("onInit(8)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else                                                    return(catch("onInit(8)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)                                       return(catch("onInit(9)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)                                     return(catch("onInit(9)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
@@ -164,7 +164,7 @@ int onInit() {
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)                                     return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)                                   return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signal configuration
@@ -272,7 +272,7 @@ int onTick() {
    for (int bar=startbar; bar >= 0; bar--) {
       maRaw[bar] = 0;
       for (int i=0; i < MA.Periods; i++) {
-         maRaw[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
+         maRaw[bar] += maWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
       }
       maFiltered[bar] = maRaw[bar];
 
@@ -329,7 +329,7 @@ int onTick() {
    //
    // Speed test on Dell Precision
    // -----------------------------------------------------------------------------------------------------
-   // as above            ALMA(168)      as above                   bars(2000)=0.062 sec   as above            no measurable difference between iMA() and GetPrice()
+   // as above            ALMA(168)      as above                   bars(2000)=0.062 sec   as above
    // ...                 ALMA(336)      ...                        bars(2000)=0.109 sec   ...
    // ...                 ALMA(672)      ...                        bars(2000)=0.218 sec   ...
    // ...                 ALMA(2016)     ...                        bars(2000)=0.671 sec   ...

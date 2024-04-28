@@ -73,9 +73,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                               // default price type
    rsi.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(rsi.appliedPrice) || rsi.appliedPrice > PRICE_WEIGHTED) {
-                                  return(catch("onInit(2)  invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   if (rsi.appliedPrice == -1)    return(catch("onInit(2)  invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    RSI.AppliedPrice = PriceTypeDescription(rsi.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)

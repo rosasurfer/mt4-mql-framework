@@ -153,7 +153,6 @@ datetime GetNextSessionEndTime  (datetime time, int tz);;
 datetime GetNextSessionStartTime(datetime time, int tz);;
 datetime GetPrevSessionEndTime  (datetime time, int tz);;
 datetime GetPrevSessionStartTime(datetime time, int tz);;
-double   GetPrice(int type, int offset);;
 int      GetRandomValue(int min, int max);;
 datetime GetServerTime();;
 datetime GetSessionEndTime  (datetime time, int tz);;

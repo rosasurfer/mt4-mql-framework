@@ -68,7 +68,7 @@ string legendInfo    = "";                            // additional chart legend
 int onInit() {
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1)      return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)       return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    // MA.Method
    string values[], sValue = MA.Method;
    if (Explode(MA.Method, "*", values, 2) > 1) {
@@ -76,7 +76,7 @@ int onInit() {
       sValue = values[size-1];
    }
    maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)      return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)       return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.AppliedPrice
    sValue = MA.AppliedPrice;
@@ -87,17 +87,16 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if (sValue == "") sValue = "close";                         // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
-                            return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice == -1) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // MA.LineWidth
-   if (MA.LineWidth < 0)    return(catch("onInit(4)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.LineWidth < 0)     return(catch("onInit(4)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // Bands.StdDevs
-   if (Bands.StdDevs < 0)   return(catch("onInit(5)  invalid input parameter Bands.StdDevs: "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.StdDevs < 0)    return(catch("onInit(5)  invalid input parameter Bands.StdDevs: "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
    // Bands.LineWidth
-   if (Bands.LineWidth < 0) return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth < 0)  return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
-   if (MaxBarsBack < -1)    return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)     return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MA.Color    == 0xFF000000) MA.Color    = CLR_NONE;

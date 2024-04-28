@@ -44,9 +44,6 @@ extern bool   Track.Orders    = true;                             // whether to 
 
 #property indicator_chart_window
 
-// chart infos
-int     displayedPrice = PRICE_MEDIAN;                            // Bid | Ask | Median (default)
-
 // unitsize calculation
 bool    mm.done;                                                  // processing flag
 double  mm.externalAssets;                                        // external assets
@@ -1151,22 +1148,13 @@ bool CreateLabels() {
  * @return bool - success status
  */
 bool UpdatePrice() {
-   double price = Bid;
+   double price = _Bid;                                     // fall-back to Close[0]: Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel, Offline-Chart)
+   if (!price) price = NormalizeDouble(Close[0], Digits);   // History-Daten können unnormalisiert sein, wenn sie nicht von MetaTrader erstellt wurden
 
-   if (!Bid) {                                           // fall-back to Close[0]: Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel, Offline-Chart)
-      price = NormalizeDouble(Close[0], Digits);         // History-Daten können unnormalisiert sein, wenn sie nicht von MetaTrader erstellt wurden
-   }
-   else {
-      switch (displayedPrice) {
-         case PRICE_BID   : price =  Bid;                                   break;
-         case PRICE_ASK   : price =  Ask;                                   break;
-         case PRICE_MEDIAN: price = NormalizeDouble((Bid + Ask)/2, Digits); break;
-      }
-   }
    ObjectSetText(label.price, NumberToStr(price, PriceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on ObjectDrag or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)          // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdatePrice(1)", error));
 }

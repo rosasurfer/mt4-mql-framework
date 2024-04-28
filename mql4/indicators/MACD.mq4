@@ -129,8 +129,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
    fastMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (fastMA.appliedPrice==-1 || fastMA.appliedPrice > PRICE_WEIGHTED)
-                                        return(catch("onInit(4)  invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (fastMA.appliedPrice == -1)       return(catch("onInit(4)  invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    FastMA.AppliedPrice = PriceTypeDescription(fastMA.appliedPrice);
    // SlowMA.Periods
    if (AutoConfiguration) SlowMA.Periods = GetConfigInt(indicator, "SlowMA.Periods", SlowMA.Periods);
@@ -165,8 +164,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
    slowMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (slowMA.appliedPrice==-1 || slowMA.appliedPrice > PRICE_WEIGHTED)
-                                        return(catch("onInit(10)  invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (slowMA.appliedPrice == -1)       return(catch("onInit(10)  invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);

@@ -231,9 +231,6 @@
 #define PRICE_MEDIAN                            4        // (H+L)/2
 #define PRICE_TYPICAL                           5        // (H+L+C)/3
 #define PRICE_WEIGHTED                          6        // (H+L+C+C)/4
-#define PRICE_AVERAGE                           7        // (O+H+L+C)/4
-#define PRICE_BID                               8        // Bid
-#define PRICE_ASK                               9        // Ask
 
 
 // commission types, see struct FXT_HEADER

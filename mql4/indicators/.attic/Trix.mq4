@@ -90,8 +90,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                           // default price type
    ema.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (ema.appliedPrice==-1 || ema.appliedPrice > PRICE_WEIGHTED)
-                                  return(catch("onInit(2)  invalid input parameter EMA.AppliedPrice: "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (ema.appliedPrice == -1)    return(catch("onInit(2)  invalid input parameter EMA.AppliedPrice: "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)

@@ -27,6 +27,7 @@ extern int    MaxBarsBack     = 10000;                               // max. val
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <functions/ParseDateTime.mqh>
 
 #define MODE_BUFFER1         0                                       // indicator buffer ids

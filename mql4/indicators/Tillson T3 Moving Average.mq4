@@ -29,7 +29,7 @@ extern int    T3.Periods.Step                = 0;                 // step size f
 extern bool   T3.Periods.MatulichScale       = true;
 extern double T3.VolumeFactor                = 0.7;
 extern double T3.VolumeFactor.Step           = 0;                 // step size for a stepped input parameter (hotkeys + VK_LWIN)
-extern string T3.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
+extern string T3.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern string ___b__________________________ = "=== Trend reversal filter ===";
 extern double MA.ReversalFilter              = 0.1;               // min. MA change in std-deviations for a trend reversal
@@ -134,23 +134,23 @@ bool   enableMultiColoring;
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
    string indicator = WindowExpertName();
 
-   // validate inputs
    // T3.Periods
    if (AutoConfiguration) T3.Periods = GetConfigInt(indicator, "T3.Periods", T3.Periods);
-   if (T3.Periods < 1)                                   return(catch("onInit(1)  invalid input parameter T3.Periods: "+ T3.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (T3.Periods < 1)                             return(catch("onInit(1)  invalid input parameter T3.Periods: "+ T3.Periods, ERR_INVALID_INPUT_PARAMETER));
    // T3.Periods.Step
    if (AutoConfiguration) T3.Periods.Step = GetConfigInt(indicator, "T3.Periods.Step", T3.Periods.Step);
-   if (T3.Periods.Step < 0)                              return(catch("onInit(2)  invalid input parameter T3.Periods.Step: "+ T3.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (T3.Periods.Step < 0)                        return(catch("onInit(2)  invalid input parameter T3.Periods.Step: "+ T3.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // T3.Periods.MatulichScale
    if (AutoConfiguration) T3.Periods.MatulichScale = GetConfigBool(indicator, "T3.Periods.MatulichScale", T3.Periods.MatulichScale);
    // T3.VolumeFactor
    if (AutoConfiguration) T3.VolumeFactor = GetConfigDouble(indicator, "T3.VolumeFactor", T3.VolumeFactor);
-   if (T3.VolumeFactor < 0 || T3.VolumeFactor > 1)       return(catch("onInit(3)  invalid input parameter T3.VolumeFactor: "+ NumberToStr(T3.VolumeFactor, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
+   if (T3.VolumeFactor < 0 || T3.VolumeFactor > 1) return(catch("onInit(3)  invalid input parameter T3.VolumeFactor: "+ NumberToStr(T3.VolumeFactor, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
    // T3.VolumeFactor.Step
    if (AutoConfiguration) T3.VolumeFactor.Step = GetConfigDouble(indicator, "T3.VolumeFactor.Step", T3.VolumeFactor.Step);
-   if (T3.VolumeFactor.Step < 0)                         return(catch("onInit(4)  invalid input parameter T3.VolumeFactor.Step: "+ NumberToStr(T3.VolumeFactor.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (T3.VolumeFactor.Step < 0)                   return(catch("onInit(4)  invalid input parameter T3.VolumeFactor.Step: "+ NumberToStr(T3.VolumeFactor.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // T3.AppliedPrice
    string sValues[], sValue = T3.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "T3.AppliedPrice", sValue);
@@ -160,14 +160,14 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (appliedPrice==-1 || appliedPrice > PRICE_AVERAGE) return(catch("onInit(5)  invalid input parameter T3.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   if (appliedPrice == -1)                         return(catch("onInit(5)  invalid input parameter T3.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    T3.AppliedPrice = PriceTypeDescription(appliedPrice);
    // MA.ReversalFilter
    if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
-   if (MA.ReversalFilter < 0)                            return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter < 0)                      return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.ReversalFilter.StepS
    if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
-   if (MA.ReversalFilter.Step < 0)                       return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter.Step < 0)                 return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -178,10 +178,10 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                                                  return(catch("onInit(8)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else                                            return(catch("onInit(8)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)                                   return(catch("onInit(9)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)                             return(catch("onInit(9)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
@@ -189,7 +189,7 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)                                 return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)                           return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
@@ -343,7 +343,7 @@ int onTick() {
 
    // initialize an empty previous bar
    if (!ema1[limit]) {
-      price = GetPrice(appliedPrice, limit);
+      price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, limit);
       ema1      [limit] = price;
       ema2      [limit] = price;
       ema3      [limit] = price;
@@ -356,7 +356,7 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      price = GetPrice(appliedPrice, bar);
+      price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
       ema1[bar] = ema1[bar+1] + alpha * (price     - ema1[bar+1]);
       ema2[bar] = ema2[bar+1] + alpha * (ema1[bar] - ema2[bar+1]);
       ema3[bar] = ema3[bar+1] + alpha * (ema2[bar] - ema3[bar+1]);
@@ -517,32 +517,6 @@ bool ParameterStepper(int direction, int keys) {
 
    PlaySoundEx("Parameter Step.wav");
    return(true);
-}
-
-
-/**
- * Get the price of the specified type at the given bar offset.
- *
- * @param  int type - price type
- * @param  int i    - bar offset
- *
- * @return double - price or NULL in case of errors
- */
-double GetPrice(int type, int i) {
-   if (i < 0 || i >= Bars) return(!catch("GetPrice(1)  invalid parameter i: "+ i +" (out of range)", ERR_INVALID_PARAMETER));
-
-   switch (type) {
-      case PRICE_CLOSE:                                                          // 0
-      case PRICE_BID:      return(Close[i]);                                     // 8
-      case PRICE_OPEN:     return( Open[i]);                                     // 1
-      case PRICE_HIGH:     return( High[i]);                                     // 2
-      case PRICE_LOW:      return(  Low[i]);                                     // 3
-      case PRICE_MEDIAN:                                                         // 4: (H+L)/2
-      case PRICE_TYPICAL:                                                        // 5: (H+L+C)/3
-      case PRICE_WEIGHTED: return(iMA(NULL, NULL, 1, 0, MODE_SMA, type, i));     // 6: (H+L+C+C)/4
-      case PRICE_AVERAGE:  return((Open[i] + High[i] + Low[i] + Close[i])/4);    // 7: (O+H+L+C)/4
-   }
-   return(!catch("GetPrice(2)  invalid or unsupported price type: "+ type, ERR_INVALID_PARAMETER));
 }
 
 

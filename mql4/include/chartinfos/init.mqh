@@ -22,15 +22,6 @@ int onInit() {
    // Track.Orders
    if (AutoConfiguration) Track.Orders = GetConfigBool(indicator, "Track.Orders", Track.Orders);
 
-   // resolve the price type to display
-   string section = "ChartInfos";
-   string key     = "DisplayedPrice."+ StdSymbol();
-   sValue  = StrToLower(GetConfigString(section, key, "Bid"));    // default: Bid
-   if      (sValue == "bid"   ) displayedPrice = PRICE_BID;
-   else if (sValue == "ask"   ) displayedPrice = PRICE_ASK;
-   else if (sValue == "median") displayedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (unknown)", ERR_INVALID_CONFIG_VALUE));
-
    // init labels, status and used trade account
    if (!CreateLabels())         return(last_error);
    if (!RestoreStatus())        return(last_error);
@@ -44,7 +35,7 @@ int onInit() {
       if (!ReadUnitSizeConfigValue("RiskRange",   sValue)) return(last_error); mm.cfgRiskRange   = StrToDouble(sValue);
       mm.cfgRiskRangeIsADR = StrCompareI(sValue, "ADR");
    }
-   return(catch("onInit(3)"));
+   return(catch("onInit(2)"));
 }
 
 

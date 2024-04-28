@@ -6041,9 +6041,6 @@ int StrToPriceType(string value, int flags = NULL) {
       if (str == "PRICE_MEDIAN"  ) return(PRICE_MEDIAN  );
       if (str == "PRICE_TYPICAL" ) return(PRICE_TYPICAL );
       if (str == "PRICE_WEIGHTED") return(PRICE_WEIGHTED);
-      if (str == "PRICE_AVERAGE" ) return(PRICE_AVERAGE );
-      if (str == "PRICE_BID"     ) return(PRICE_BID     );
-      if (str == "PRICE_ASK"     ) return(PRICE_ASK     );
    }
    else if (StringLen(str) > 0) {
       if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );   // test for numeric identifiers
@@ -6053,23 +6050,15 @@ int StrToPriceType(string value, int flags = NULL) {
       if (str == ""+ PRICE_MEDIAN  ) return(PRICE_MEDIAN  );
       if (str == ""+ PRICE_TYPICAL ) return(PRICE_TYPICAL );
       if (str == ""+ PRICE_WEIGHTED) return(PRICE_WEIGHTED);
-      if (str == ""+ PRICE_AVERAGE ) return(PRICE_AVERAGE );
-      if (str == ""+ PRICE_BID     ) return(PRICE_BID     );
-      if (str == ""+ PRICE_ASK     ) return(PRICE_ASK     );
 
       if (flags & F_PARTIAL_ID && 1) {
-         if (StrStartsWith("OPEN",     str))   return(PRICE_OPEN    );
-         if (StrStartsWith("HIGH",     str))   return(PRICE_HIGH    );
-         if (StrStartsWith("LOW",      str))   return(PRICE_LOW     );
-         if (StrStartsWith("CLOSE",    str))   return(PRICE_CLOSE   );
-         if (StrStartsWith("MEDIAN",   str))   return(PRICE_MEDIAN  );
-         if (StrStartsWith("TYPICAL",  str))   return(PRICE_TYPICAL );
-         if (StrStartsWith("WEIGHTED", str))   return(PRICE_WEIGHTED);
-         if (StrStartsWith("BID",      str))   return(PRICE_BID     );
-         if (StringLen(str) > 1) {
-            if (StrStartsWith("ASK",     str)) return(PRICE_ASK     );
-            if (StrStartsWith("AVERAGE", str)) return(PRICE_AVERAGE );
-         }
+         if (StrStartsWith("OPEN",     str)) return(PRICE_OPEN    );
+         if (StrStartsWith("HIGH",     str)) return(PRICE_HIGH    );
+         if (StrStartsWith("LOW",      str)) return(PRICE_LOW     );
+         if (StrStartsWith("CLOSE",    str)) return(PRICE_CLOSE   );
+         if (StrStartsWith("MEDIAN",   str)) return(PRICE_MEDIAN  );
+         if (StrStartsWith("TYPICAL",  str)) return(PRICE_TYPICAL );
+         if (StrStartsWith("WEIGHTED", str)) return(PRICE_WEIGHTED);
       }
       else {
          if (str == "O"       ) return(PRICE_OPEN    );
@@ -6079,7 +6068,6 @@ int StrToPriceType(string value, int flags = NULL) {
          if (str == "M"       ) return(PRICE_MEDIAN  );
          if (str == "T"       ) return(PRICE_TYPICAL );
          if (str == "W"       ) return(PRICE_WEIGHTED);
-         if (str == "A"       ) return(PRICE_AVERAGE );
          if (str == "OPEN"    ) return(PRICE_OPEN    );
          if (str == "HIGH"    ) return(PRICE_HIGH    );
          if (str == "LOW"     ) return(PRICE_LOW     );
@@ -6087,9 +6075,6 @@ int StrToPriceType(string value, int flags = NULL) {
          if (str == "MEDIAN"  ) return(PRICE_MEDIAN  );
          if (str == "TYPICAL" ) return(PRICE_TYPICAL );
          if (str == "WEIGHTED") return(PRICE_WEIGHTED);
-         if (str == "AVERAGE" ) return(PRICE_AVERAGE );
-         if (str == "BID"     ) return(PRICE_BID     );        // no single letter id
-         if (str == "ASK"     ) return(PRICE_ASK     );        // no single letter id
       }
    }
 
@@ -6151,16 +6136,13 @@ string MaMethodDescription(int type, bool strict = true) {
  */
 string PriceTypeToStr(int type) {
    switch (type) {
-      case PRICE_CLOSE   : return("PRICE_CLOSE"   );
       case PRICE_OPEN    : return("PRICE_OPEN"    );
       case PRICE_HIGH    : return("PRICE_HIGH"    );
       case PRICE_LOW     : return("PRICE_LOW"     );
+      case PRICE_CLOSE   : return("PRICE_CLOSE"   );
       case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // (High+Low+Close+Close)/4
-      case PRICE_AVERAGE : return("PRICE_AVERAGE" );     // (O+H+L+C)/4
-      case PRICE_BID     : return("PRICE_BID"     );
-      case PRICE_ASK     : return("PRICE_ASK"     );
    }
    return(_EMPTY_STR(catch("PriceTypeToStr(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
@@ -6175,16 +6157,13 @@ string PriceTypeToStr(int type) {
  */
 string PriceTypeDescription(int type) {
    switch (type) {
-      case PRICE_CLOSE   : return("Close"   );
       case PRICE_OPEN    : return("Open"    );
       case PRICE_HIGH    : return("High"    );
       case PRICE_LOW     : return("Low"     );
+      case PRICE_CLOSE   : return("Close"   );
       case PRICE_MEDIAN  : return("Median"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("Typical" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("Weighted");     // (High+Low+Close+Close)/4
-      case PRICE_AVERAGE : return("Average" );     // (O+H+L+C)/4
-      case PRICE_BID     : return("Bid"     );
-      case PRICE_ASK     : return("Ask"     );
    }
    return(_EMPTY_STR(catch("PriceTypeDescription(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
@@ -6742,33 +6721,6 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
 
 
 /**
- * Get the requested price type at the specified bar offset.
- *
- * @param  int type   - price type
- * @param  int offset - bar offset
- *
- * @return double - price or NULL in case of errors
- */
-double GetPrice(int type, int offset) {
-   if (offset < 0 || offset >= Bars) return(!catch("GetPrice(1)  invalid parameter offset: "+ offset +" (out of range)", ERR_INVALID_PARAMETER));
-   int i = offset;
-
-   switch (type) {
-      case PRICE_OPEN:     return( Open[i]);                                     // 1
-      case PRICE_HIGH:     return( High[i]);                                     // 2
-      case PRICE_LOW:      return(  Low[i]);                                     // 3
-      case PRICE_CLOSE:                                                          // 0
-      case PRICE_BID:      return(Close[i]);                                     // 8
-      case PRICE_MEDIAN:                                                         // 4: (H+L)/2
-      case PRICE_TYPICAL:                                                        // 5: (H+L+C)/3
-      case PRICE_WEIGHTED: return(iMA(NULL, NULL, 1, 0, MODE_SMA, type, i));     // 6: (H+L+C+C)/4
-      case PRICE_AVERAGE:  return((Open[i] + High[i] + Low[i] + Close[i])/4);    // 7: (O+H+L+C)/4
-   }
-   return(!catch("GetPrice(2)  unsupported price type: "+ type, ERR_INVALID_PARAMETER));
-}
-
-
-/**
  * Check/initialize a trade server path (a history directory). Makes sure directory, "symbols.raw" and "symgroups.raw" exist.
  *
  * @param  string path - absolute path or path relative to the MQL sandbox directory
@@ -6913,7 +6865,6 @@ void __DummyCalls() {
    GetNextSessionEndTime(NULL, NULL);
    GetPrevSessionEndTime(NULL, NULL);
    GetPrevSessionStartTime(NULL, NULL);
-   GetPrice(NULL, NULL);
    GetRandomValue(NULL, NULL);
    GetServerTime();
    GetSessionEndTime(NULL, NULL);

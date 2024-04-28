@@ -11,22 +11,22 @@
  *
  *
  * TODO:
+ *  - GetExternalAssets()
+ *     drop support for multiples
+ *
  *  - MA Tunnel
  *     support MA method MODE_ALMA
  *
  *  - ALMA
  *     add Background.Color+Background.Width
- *     move GetPrice() to stdfunctions.mqh
  *     merge includes icALMA() and functions/ta/ALMA.mqh
  *
  *  - Moving Average
- *     support price type PRICE_AVERAGE
  *     add parameter stepping
  *
  *  - MACD
  *     rename const MODE_SECTION => MODE_TREND
  *     support SMMA
- *     support price type PRICE_AVERAGE
  *     add parameter stepping
  *     prevent signal duplication on multiple charts
  */

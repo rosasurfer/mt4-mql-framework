@@ -30,6 +30,7 @@ extern int    MaxBarsBack     = 10000;                   // max. values to calcu
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/chartlegend.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 
 #define MODE_DEMA             MovingAverage.MODE_MA
 #define MODE_EMA_1            1
@@ -57,7 +58,7 @@ string legendLabel = "";
 int onInit() {
    // (1) validate inputs
    // MA.Periods
-   if (MA.Periods < 1) return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
    string values[], sValue = StrToLower(MA.AppliedPrice);
@@ -68,9 +69,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                      // default price type
    ma.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(ma.appliedPrice) || ma.appliedPrice > PRICE_WEIGHTED) {
-                       return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   if (ma.appliedPrice == -1) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -85,19 +84,18 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                  return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                       return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.Width
-   if (Draw.Width < 0)   return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)        return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // MaxBarsBack
-   if (MaxBarsBack < -1) return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)      return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // (2) setup buffer management
    SetIndexBuffer(MODE_DEMA,  dema);
    SetIndexBuffer(MODE_EMA_1, firstEma);
-
 
    // (3) data display configuration, names and labels
    legendLabel = CreateChartLegend();
