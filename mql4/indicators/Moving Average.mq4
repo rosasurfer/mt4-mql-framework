@@ -303,7 +303,6 @@ bool onTrendChange(int trend) {
       if (signal.sms)   error |= !SendSMS("", message + NL + accountTime);
       return(!error);
    }
-
    return(!catch("onTrendChange(4)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 

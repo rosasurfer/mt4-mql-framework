@@ -357,7 +357,6 @@ bool onCross(int section) {
       if (signal.sms)   error |= !SendSMS("", message);
       return(!error);
    }
-
    return(!catch("onCross(3)  invalid parameter section: "+ section, ERR_INVALID_PARAMETER));
 }
 

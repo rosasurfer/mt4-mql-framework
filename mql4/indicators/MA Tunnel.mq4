@@ -40,6 +40,7 @@ extern string Sound.onTickCross.Down         = "Alert Down.wav";
 #include <functions/IsBarOpen.mqh>
 #include <functions/ObjectCreateRegister.mqh>
 #include <functions/iCustom/MaTunnel.mqh>
+#include <win32api.mqh>
 
 #define MODE_UPPER_BAND       MaTunnel.MODE_UPPER_BAND   // indicator buffer ids
 #define MODE_LOWER_BAND       MaTunnel.MODE_LOWER_BAND   //
@@ -123,6 +124,7 @@ int onInit() {
       mas++;
    }
    if (!mas)                           return(catch("onInit(7)  missing input parameter Tunnel.Definition", ERR_INVALID_INPUT_PARAMETER));
+   Tunnel.Definition = JoinStrings(maDefinitions, ",");
 
    // Tunnel.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Tunnel.Color = GetConfigColor(indicator, "Tunnel.Color", Tunnel.Color);
@@ -161,7 +163,7 @@ int onInit() {
 
    // names, labels and display options
    if (ShowChartLegend) legendLabel = CreateChartLegend();
-   indicatorName = WindowExpertName() +" "+ JoinStrings(maDefinitions, ",");
+   indicatorName = WindowExpertName() +" "+ Tunnel.Definition;
    IndicatorShortName(indicatorName);                             // chart tooltips and context menu
    SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper band");  // "Data" window and context menu
    SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower band");  // ...
@@ -268,50 +270,38 @@ bool onCross(int direction, int bar) {
    if (ChangedBars > 2)                         return(false);
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   int error = NO_ERROR;
-
    if (bar == 0) {
       if (!Sound.onTickCross) return(false);
-
-      if (direction == D_LONG) {
-         if (IsLogInfo()) logInfo("onCross(2)  tick above "+ indicatorName);
-         error |= PlaySoundEx(Sound.onTickCross.Up);
-      }
-      else /*direction == D_SHORT*/ {
-         if (IsLogInfo()) logInfo("onCross(3)  tick below "+ indicatorName);
-         error |= PlaySoundEx(Sound.onTickCross.Down);
-      }
+      if (IsLogInfo()) logInfo("onCross(2)  tick "+ ifString(direction==D_LONG, "above", "below") +" "+ indicatorName);
+      int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onTickCross.Up, Sound.onTickCross.Down));
+      if (error == ERR_FILE_NOT_FOUND) Sound.onTickCross = false;
       return(!error);
    }
+
    if (bar == 1) {
       if (!Signal.onBarCross) return(false);
 
-      string message="", accountTime="("+ TimeToStr(TimeLocalEx("onCross(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+      // skip the signal if it was already signaled elsewhere
+      int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
+      string sPeriod = PeriodDescription();
+      string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[bar]);
+      if (GetPropA(hWnd, sEvent) != 0) return(true);
+      SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals on slow CPU)
 
-      if (direction == D_LONG) {
-         message = "bar close above "+ indicatorName;
-         if (IsLogInfo()) logInfo("onCross(5)  "+ message);
-         message = Symbol() +","+ PeriodDescription() +": "+ message;
+      string message = "bar close "+ ifString(direction==D_LONG, "above ", "below ") + indicatorName;
+      if (IsLogInfo()) logInfo("onCross(3)  "+ message);
 
-         if (signal.alert)          Alert(message);
-         if (signal.sound) error |= PlaySoundEx(Signal.Sound.Up);
-         if (signal.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
-         if (signal.sms)   error |= !SendSMS("", message +NL+ accountTime);
-      }
-      else /*direction == D_SHORT*/ {
-         message = "bar close below "+ indicatorName;
-         if (IsLogInfo()) logInfo("onCross(6)  "+ message);
-         message = Symbol() +","+ PeriodDescription() +": "+ message;
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
+      string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-         if (signal.alert)          Alert(message);
-         if (signal.sound) error |= PlaySoundEx(Signal.Sound.Down);
-         if (signal.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
-         if (signal.sms)   error |= !SendSMS("", message +NL+ accountTime);
-      }
+      if (signal.alert)          Alert(message);
+      if (signal.sound) error  = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down)); if (error == ERR_FILE_NOT_FOUND) signal.sound = false;
+      if (signal.mail)  error |= !SendEmail("", "", message, message + NL + sAccount);
+      if (signal.sms)   error |= !SendSMS("", message + NL + sAccount);
       return(!error);
    }
 
-   return(!catch("onCross(7)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
+   return(!catch("onCross(5)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
 }
 
 

@@ -1042,12 +1042,12 @@ bool onBreakout(int direction, bool is123Pattern) {
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
-   // skip the signal if it already was signaled before
+   // skip the signal if it was already signaled elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow()), error;
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals with slow CPU)
+   SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals on slow CPU)
 
    string sDirection = ifString(direction==D_LONG, "long", "short");
    string sBid       = NumberToStr(_Bid, PriceFormat);
