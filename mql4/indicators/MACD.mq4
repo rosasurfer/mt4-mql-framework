@@ -363,13 +363,13 @@ void SetIndicatorOptions() {
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    IndicatorBuffers(indicator_buffers);
 
-   int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
-   int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
+   int mainType = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
+   int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
-   SetIndexStyle(MODE_MAIN,          mainType,    EMPTY, MainLine.Width,        MainLine.Color       );
-   SetIndexStyle(MODE_TREND,         DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
-   SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
+   SetIndexStyle(MODE_MAIN,          mainType,  EMPTY, MainLine.Width,        MainLine.Color       );
+   SetIndexStyle(MODE_TREND,         DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_UPPER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_LOWER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
 
 

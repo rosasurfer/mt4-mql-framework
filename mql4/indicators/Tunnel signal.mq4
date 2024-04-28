@@ -43,6 +43,9 @@ extern string MACD.SlowMA.Method             = "SMA | LWMA | EMA* | SMMA | ALMA"
 extern int    MACD.SlowMA.Periods            = 26;
 
 extern string ___a__________________________ = "=== Display settings ===";
+extern color  Histogram.Color.Upper          = Blue;        // LimeGreen;
+extern color  Histogram.Color.Lower          = LightSalmon; // Red;
+extern int    Histogram.Style.Width          = 2;
 extern int    MaxBarsBack                    = 10000;                               // max. values to calculate (-1: all available)
 
 extern string ___b__________________________ = "=== Signaling ===";
@@ -181,16 +184,25 @@ int onInit() {
       if (macd.fastMethod == macd.slowMethod) return(catch("onInit(10)  MACD parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
    }
    longestPeriods = Max(tunnel.periods, ma.periods, macd.slowPeriods);
+   // Histogram.Color.*: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
+   if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
+   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
+   if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
+   // Histogram.Style.Width
+   if (AutoConfiguration) Histogram.Style.Width = GetConfigInt(indicator, "Histogram.Style.Width", Histogram.Style.Width);
+   if (Histogram.Style.Width < 0)             return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)             return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)                      return(catch("onInit(11)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)                      return(catch("onInit(13)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
    // Signal.onEntry
    string signalId = "Signal.onEntry";
    ConfigureSignals(signalId, AutoConfiguration, Signal.onEntry);
    if (Signal.onEntry) {
       if (!ConfigureSignalTypes(signalId, Signal.onEntry.Types, AutoConfiguration, signal.onEntry.sound, signal.onEntry.alert, signal.onEntry.mail, signal.onEntry.sms)) {
-         return(catch("onInit(12)  invalid input parameter Signal.onEntry.Types: "+ DoubleQuoteStr(Signal.onEntry.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(14)  invalid input parameter Signal.onEntry.Types: "+ DoubleQuoteStr(Signal.onEntry.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onEntry = (signal.onEntry.sound || signal.onEntry.alert || signal.onEntry.mail || signal.onEntry.sms);
    }
@@ -199,7 +211,7 @@ int onInit() {
    ConfigureSignals(signalId, AutoConfiguration, Signal.onExit);
    if (Signal.onExit) {
       if (!ConfigureSignalTypes(signalId, Signal.onExit.Types, AutoConfiguration, signal.onExit.sound, signal.onExit.alert, signal.onExit.mail, signal.onExit.sms)) {
-         return(catch("onInit(13)  invalid input parameter Signal.onExit.Types: "+ DoubleQuoteStr(Signal.onExit.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(15)  invalid input parameter Signal.onExit.Types: "+ DoubleQuoteStr(Signal.onExit.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onExit = (signal.onExit.sound || signal.onExit.alert || signal.onExit.mail || signal.onExit.sms);
    }
@@ -214,15 +226,15 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower); SetIndexEmptyValue(MODE_LOWER_SECTION, 0);
 
    // display options
-   IndicatorShortName("Tunnel signal");                     // chart subwindow and context menu
-   SetIndexLabel(MODE_MAIN,  "Tunnel entry signal");
+   IndicatorShortName(WindowExpertName());               // chart subwindow
+   SetIndexLabel(MODE_MAIN,  "Tunnel entry signal");     // "Data" window and context menu
    SetIndexLabel(MODE_TREND, "Tunnel trend");
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
    IndicatorDigits(0);
    SetIndicatorOptions();
 
-   return(catch("onInit(14)"));
+   return(catch("onInit(16)"));
 }
 
 
@@ -341,10 +353,12 @@ void SetIndicatorOptions() {
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    IndicatorBuffers(indicator_buffers);
 
+   int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
+
    SetIndexStyle(MODE_MAIN,          DRAW_NONE);
    SetIndexStyle(MODE_TREND,         DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, EMPTY, LimeGreen);
-   SetIndexStyle(MODE_LOWER_SECTION, DRAW_HISTOGRAM, EMPTY, EMPTY, Red);
+   SetIndexStyle(MODE_UPPER_SECTION, drawType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_LOWER_SECTION, drawType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
 
 
@@ -354,21 +368,25 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Tunnel.MA.Method=",        DoubleQuoteStr(Tunnel.MA.Method),        ";", NL,
-                            "Tunnel.MA.Periods=",       Tunnel.MA.Periods,                       ";", NL,
-                            "MA.Method=",               DoubleQuoteStr(MA.Method),               ";", NL,
-                            "MA.Periods=",              MA.Periods,                              ";", NL,
-                            "MACD.FastMA.Method=",      DoubleQuoteStr(MACD.FastMA.Method),      ";", NL,
-                            "MACD.FastMA.Periods=",     MACD.FastMA.Periods,                     ";", NL,
-                            "MACD.SlowMA.Method=",      DoubleQuoteStr(MACD.SlowMA.Method),      ";", NL,
-                            "MACD.SlowMA.Periods=",     MACD.SlowMA.Periods,                     ";", NL,
-                            "MaxBarsBack=",             MaxBarsBack,                             ";", NL,
+   return(StringConcatenate("Tunnel.MA.Method=",        DoubleQuoteStr(Tunnel.MA.Method),        ";"+ NL,
+                            "Tunnel.MA.Periods=",       Tunnel.MA.Periods,                       ";"+ NL,
+                            "MA.Method=",               DoubleQuoteStr(MA.Method),               ";"+ NL,
+                            "MA.Periods=",              MA.Periods,                              ";"+ NL,
+                            "MACD.FastMA.Method=",      DoubleQuoteStr(MACD.FastMA.Method),      ";"+ NL,
+                            "MACD.FastMA.Periods=",     MACD.FastMA.Periods,                     ";"+ NL,
+                            "MACD.SlowMA.Method=",      DoubleQuoteStr(MACD.SlowMA.Method),      ";"+ NL,
+                            "MACD.SlowMA.Periods=",     MACD.SlowMA.Periods,                     ";"+ NL,
 
-                            "Signal.onEntry=",          BoolToStr(Signal.onEntry),               ";", NL,
-                            "Signal.onEntry.Types=",    DoubleQuoteStr(Signal.onEntry.Types),    ";", NL,
-                            "Signal.onExit=",           BoolToStr(Signal.onExit),                ";", NL,
-                            "Signal.onExit.Types=",     DoubleQuoteStr(Signal.onExit.Types),     ";", NL,
-                            "Signal.Sound.EntryLong=",  DoubleQuoteStr(Signal.Sound.EntryLong),  ";", NL,
+                            "Histogram.Color.Upper=",   ColorToStr(Histogram.Color.Upper),       ";"+ NL,
+                            "Histogram.Color.Lower=",   ColorToStr(Histogram.Color.Lower),       ";"+ NL,
+                            "Histogram.Style.Width=",   Histogram.Style.Width,                   ";"+ NL,
+                            "MaxBarsBack=",             MaxBarsBack,                             ";"+ NL,
+
+                            "Signal.onEntry=",          BoolToStr(Signal.onEntry),               ";"+ NL,
+                            "Signal.onEntry.Types=",    DoubleQuoteStr(Signal.onEntry.Types),    ";"+ NL,
+                            "Signal.onExit=",           BoolToStr(Signal.onExit),                ";"+ NL,
+                            "Signal.onExit.Types=",     DoubleQuoteStr(Signal.onExit.Types),     ";"+ NL,
+                            "Signal.Sound.EntryLong=",  DoubleQuoteStr(Signal.Sound.EntryLong),  ";"+ NL,
                             "Signal.Sound.EntryShort=", DoubleQuoteStr(Signal.Sound.EntryShort), ";")
    );
 }

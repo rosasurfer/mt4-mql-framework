@@ -18143,25 +18143,25 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD
+name=Tunnel signal
 flags=339
 window_num=2
 <inputs>
-FastMA.Periods=12
-FastMA.Method=SMA | LWMA | EMA* | ALMA
-SlowMA.Periods=26
-SlowMA.Method=SMA | LWMA | EMA* | ALMA
-Histogram.Color.Upper=3329434
-Histogram.Color.Lower=5275647
-Histogram.Style.Width=2
-MainLine.Width=0
-Signal.onCross=1
-Signal.onCross.Sound=1
+Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Tunnel.MA.Periods=55
+MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
+MA.Periods=10
+MACD.FastMA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MACD.FastMA.Periods=12
+MACD.SlowMA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MACD.SlowMA.Periods=26
+Histogram.Color.Upper=3329330
+Histogram.Color.Lower=255
+Histogram.Style.Width= 2
+Signal.onEntry=1
 AutoConfiguration=0
 </inputs>
 </expert>
-min=-0.001
-max=0.001
 period_flags=0
 show_data=1
 </indicator>
