@@ -331,22 +331,22 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",                 MA.Periods,                                 ";"+ NL,
-                            "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";"+ NL,
-                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";"+ NL,
+   return(StringConcatenate("MA.Periods=",                 MA.Periods,                                 ";", NL,
+                            "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";", NL,
+                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";", NL,
 
-                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";"+ NL,
-                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";"+ NL,
-                            "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";"+ NL,
-                            "Draw.Width=",                 Draw.Width,                                 ";"+ NL,
-                            "Background.Color=",           ColorToStr(Background.Color),               ";"+ NL,
-                            "Background.Width=",           Background.Width,                           ";"+ NL,
-                            "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";"+ NL,
-                            "MaxBarsBack=",                MaxBarsBack,                                ";"+ NL,
+                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";", NL,
+                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";", NL,
+                            "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";", NL,
+                            "Draw.Width=",                 Draw.Width,                                 ";", NL,
+                            "Background.Color=",           ColorToStr(Background.Color),               ";", NL,
+                            "Background.Width=",           Background.Width,                           ";", NL,
+                            "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";", NL,
+                            "MaxBarsBack=",                MaxBarsBack,                                ";", NL,
 
-                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
-                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
-                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
+                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";", NL,
+                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";", NL,
+                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";", NL,
                             "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
    );
 }
