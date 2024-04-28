@@ -1,5 +1,5 @@
 #define MACD.MODE_MAIN     MODE_MAIN                  // main line
-#define MACD.MODE_SECTION          1                  // trend and trend length
+#define MACD.MODE_TREND            1                  // trend and trend length
 
 
 /**

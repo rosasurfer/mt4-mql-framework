@@ -11,10 +11,10 @@
  *
  *
  * Indicator buffers for iCustom():
- *  • MACD.MODE_MAIN:    MACD main value
- *  • MACD.MODE_SECTION: MACD section and section length since last crossing of the zero level
- *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
- *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
+ *  • MACD.MODE_MAIN:  MACD main value
+ *  • MACD.MODE_TREND: MACD trend and trend length since last crossing of the zero level
+ *    - trend:  positive values denote a MACD above zero (+1...+n), negative values denote a MACD below zero (-1...-n)
+ *    - length: the absolute value is the histogram section length (bars since the last crossing of zero)
  *
  *
  * Notes: The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
@@ -60,7 +60,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <win32api.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
-#define MODE_SECTION          MACD.MODE_SECTION
+#define MODE_TREND            MACD.MODE_TREND
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
 
@@ -74,10 +74,10 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 
 #property indicator_level1    0
 
-double bufferMACD   [];                                     // MACD main value:           visible, displayed in "Data" window
-double bufferSection[];                                     // MACD section and length:   invisible
-double bufferUpper  [];                                     // positive histogram values: visible
-double bufferLower  [];                                     // negative histogram values: visible
+double bufferMACD [];                                       // all histogram values:      visible, displayed in "Data" window
+double bufferTrend[];                                       // trend and trend length:    invisible
+double bufferUpper[];                                       // positive histogram values: visible
+double bufferLower[];                                       // negative histogram values: visible
 
 int    fastMA.periods;
 int    fastMA.method;
@@ -200,10 +200,10 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
 
    // buffer management
-   SetIndexBuffer(MODE_MAIN,          bufferMACD   );                   // MACD main value:         visible, displayed in "Data" window
-   SetIndexBuffer(MODE_SECTION,       bufferSection);                   // MACD section and length: invisible
-   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper  );                   // positive values:         visible
-   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower  );                   // negative values:         visible
+   SetIndexBuffer(MODE_MAIN,          bufferMACD );                     // all histogram values:      visible, displayed in "Data" window
+   SetIndexBuffer(MODE_TREND,         bufferTrend);                     // trend and trend length:    invisible
+   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper);                     // positive histogram values: visible
+   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower);                     // negative histogram values: visible
 
    // display options, names and labels
    string dataName="", sAppliedPrice="";
@@ -220,7 +220,7 @@ int onInit() {
 
    IndicatorShortName(indicatorName + signalInfo +"  ");                // chart subwindow and context menu
    SetIndexLabel(MODE_MAIN,          dataName);                         // chart tooltips and "Data" window
-   SetIndexLabel(MODE_SECTION,       NULL);
+   SetIndexLabel(MODE_TREND,         NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
    IndicatorDigits(pDigits + 1);
@@ -247,7 +247,7 @@ int onTick() {
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMACD,  EMPTY_VALUE);
-      ArrayInitialize(bufferSection,         0);
+      ArrayInitialize(bufferTrend,           0);
       ArrayInitialize(bufferUpper, EMPTY_VALUE);
       ArrayInitialize(bufferLower, EMPTY_VALUE);
       SetIndicatorOptions();
@@ -255,10 +255,10 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(bufferMACD,    Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(bufferSection, Bars, ShiftedBars,           0);
-      ShiftDoubleIndicatorBuffer(bufferUpper,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(bufferLower,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(bufferMACD,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(bufferTrend, Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(bufferUpper, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(bufferLower, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
@@ -303,17 +303,17 @@ int onTick() {
          bufferLower[bar] = bufferMACD[bar];
       }
 
-      // update section length (duration)
-      if      (bufferSection[bar+1] > 0 && bufferMACD[bar] >= 0) bufferSection[bar] = bufferSection[bar+1] + 1;
-      else if (bufferSection[bar+1] < 0 && bufferMACD[bar] <= 0) bufferSection[bar] = bufferSection[bar+1] - 1;
-      else                                                       bufferSection[bar] = Sign(bufferMACD[bar]);
+      // update trend length (duration)
+      if      (bufferTrend[bar+1] > 0 && bufferMACD[bar] >= 0) bufferTrend[bar] = bufferTrend[bar+1] + 1;
+      else if (bufferTrend[bar+1] < 0 && bufferMACD[bar] <= 0) bufferTrend[bar] = bufferTrend[bar+1] - 1;
+      else                                                     bufferTrend[bar] = Sign(bufferMACD[bar]);
    }
 
    // detect zero line crossings
    if (!__isSuperContext) {
       if (Signal.onCross) /*&&*/ if (IsBarOpen()) {
-         static int lastSide; if (!lastSide) lastSide = bufferSection[2];
-         int side = bufferSection[1];
+         static int lastSide; if (!lastSide) lastSide = bufferTrend[2];
+         int side = bufferTrend[1];
          if      (lastSide<=0 && side > 0) onCross(MODE_UPPER_SECTION);    // this also detects crosses on bars without ticks (e.g. on slow M1)
          else if (lastSide>=0 && side < 0) onCross(MODE_LOWER_SECTION);
          lastSide = side;
@@ -360,13 +360,14 @@ bool onCross(int direction) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
+   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    IndicatorBuffers(indicator_buffers);
 
    int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
    int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
    SetIndexStyle(MODE_MAIN,          mainType,    EMPTY, MainLine.Width,        MainLine.Color       );
-   SetIndexStyle(MODE_SECTION,       DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_TREND,         DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }

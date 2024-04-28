@@ -338,7 +338,7 @@ int onTick() {
    //                     ALMA(38/0.7)   ...                       bars(10000)=?     sec   loops=  380,000
    //                     ALMA(38/0.7)   ...                       bars(60000)=?     sec   loops=2,280,000
    //                     ALMA(38/0.7)   ...                      bars(240000)=?     sec   loops=9,120,000
-
+   //
    // Speed test on Dell Precision
    // -----------------------------------------------------------------------------------------------------
    //                     NLMA(34/0.7)   weights(169)               bars(2000)=0.062 sec   as above            ...
@@ -349,7 +349,7 @@ int onTick() {
    //                     NLMA(20/0.7)   weights(99)               bars(10000)=0.187 sec   loops=   990,000
    //                     NLMA(20/0.7)   weights(99)               bars(60000)=0.904 sec   loops= 5,940,000
    //                     NLMA(20/0.7)   weights(99)              bars(240000)=3.448 sec   loops=23,760,000
-
+   //
    // Conclusion: Weight calculation can be ignored, bottleneck is the nested loop in MA calculation.
 }
 
