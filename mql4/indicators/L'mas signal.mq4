@@ -25,7 +25,6 @@
  *     rename const MODE_SECTION => MODE_TREND
  *     support SMMA
  *     add parameter stepping
- *     prevent signal duplication on multiple charts
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

@@ -56,6 +56,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <functions/IsBarOpen.mqh>
 #include <functions/iCustom/MACD.mqh>
 #include <functions/ta/ALMA.mqh>
+#include <win32api.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
 #define MODE_SECTION          MACD.MODE_SECTION
@@ -326,38 +327,32 @@ int onTick() {
 /**
  * Event handler called on BarOpen if the MACD crossed the zero line.
  *
- * @param  int section
+ * @param  int direction
  *
  * @return bool - success status
  */
-bool onCross(int section) {
-   string message = "";
-   int error = 0;
+bool onCross(int direction) {
+   if (direction!=MODE_UPPER_SECTION && direction!=MODE_LOWER_SECTION) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   if (section == MODE_UPPER_SECTION) {
-      message = indicatorName +" crossed up at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
-      if (IsLogInfo()) logInfo("onCross(1)  "+ StrRightFrom(message, "MACD ", -1));    // -1 makes sure on error the whole string is returned
-      message = Symbol() +","+ PeriodDescription() +": "+ message;
+   // skip the signal if it was already signaled elsewhere
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
+   string sPeriod = PeriodDescription();
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
+   if (GetPropA(hWnd, sEvent) != 0) return(true);
+   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
 
-      if (signal.alert)          Alert(message);
-      if (signal.sound) error |= PlaySoundEx(Signal.Sound.Up);
-      if (signal.mail)  error |= !SendEmail("", "", message, message);
-      if (signal.sms)   error |= !SendSMS("", message);
-      return(!error);
-   }
+   string message = indicatorName +" crossed "+ ifString(direction==MODE_UPPER_SECTION, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   if (IsLogInfo()) logInfo("onCross(2)  "+ message);
 
-   if (section == MODE_LOWER_SECTION) {
-      message = indicatorName +" crossed down at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
-      if (IsLogInfo()) logInfo("onCross(2)  "+ StrRightFrom(message, "MACD ", -1));
-      message = Symbol() +","+ PeriodDescription() +": "+ message;
+   message = Symbol() +","+ PeriodDescription() +": "+ message;
+   string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   int error = NO_ERROR;
 
-      if (signal.alert)          Alert(message);
-      if (signal.sound) error |= PlaySoundEx(Signal.Sound.Down);
-      if (signal.mail)  error |= !SendEmail("", "", message, message);
-      if (signal.sms)   error |= !SendSMS("", message);
-      return(!error);
-   }
-   return(!catch("onCross(3)  invalid parameter section: "+ section, ERR_INVALID_PARAMETER));
+   if (signal.alert)          Alert(message);
+   if (signal.sound) error  = PlaySoundEx(ifString(direction==MODE_UPPER_SECTION, Signal.Sound.Up, Signal.Sound.Down)); if (error == ERR_FILE_NOT_FOUND) signal.sound = false;
+   if (signal.mail)  error |= !SendEmail("", "", message, message + NL + sAccount);
+   if (signal.sms)   error |= !SendSMS("", message + NL + sAccount);
+   return(!error);
 }
 
 
