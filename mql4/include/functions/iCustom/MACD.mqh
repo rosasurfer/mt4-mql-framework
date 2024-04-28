@@ -51,7 +51,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE) return(!catch("icMACD(1)", error));
-      logWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
+      logWarn("icMACD(2)  "+ PeriodDescription(timeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];           // TODO: synchronize execution contexts

@@ -35,7 +35,7 @@ double ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreErr
          debug("ATR(2)  silently converting ERR_SERIES_NOT_AVAILABLE to ERS_HISTORY_UPDATE");
       }
       else {
-         return(!catch("ATR(3)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)), error));
+         return(!catch("ATR(3)  "+ PeriodDescription(timeframe), error));
       }
    }
 
@@ -45,5 +45,5 @@ double ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreErr
          return(result);                                       // ignore the error (result may be NULL)
       }
    }
-   return(!catch("ATR(4)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)), error));
+   return(!catch("ATR(4)  "+ PeriodDescription(timeframe), error));
 }

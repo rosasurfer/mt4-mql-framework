@@ -42,7 +42,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE) return(!catch("icJMA(1)", error));
-      logWarn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
+      logWarn("icJMA(2)  "+ PeriodDescription(timeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts

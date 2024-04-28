@@ -44,7 +44,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE) return(!catch("icHalfTrend(1)", error));
-      logWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
+      logWarn("icHalfTrend(2)  "+ PeriodDescription(timeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];              // TODO: synchronize execution contexts

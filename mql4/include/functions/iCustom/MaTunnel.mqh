@@ -46,7 +46,7 @@ double icMaTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar)
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE) return(!catch("icMaTunnel(1)", error));
-      logWarn("icMaTunnel(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
+      logWarn("icMaTunnel(2)  "+ PeriodDescription(timeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];           // TODO: synchronize execution contexts
