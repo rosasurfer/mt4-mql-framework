@@ -367,7 +367,7 @@ bool onTrendChange(int direction) {
    // skip the signal if it was already signaled elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
-   string sName   = WindowExpertName() +"("+ MA.Periods +", "+ PriceTypeDescription(maAppliedPrice) +")";
+   string sName   = "ALMA("+ MA.Periods +", "+ PriceTypeDescription(maAppliedPrice) +")";
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ sName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
    SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)

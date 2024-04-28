@@ -63,6 +63,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <functions/ObjectCreateRegister.mqh>
 #include <functions/trend.mqh>
 #include <functions/ta/ALMA.mqh>
+#include <win32api.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
@@ -272,38 +273,33 @@ int onTick() {
 /**
  * Event handler for trend changes.
  *
- * @param  int trend - direction
+ * @param  int direction - direction
  *
  * @return bool - success status
  */
-bool onTrendChange(int trend) {
-   string message="", accountTime="("+ TimeToStr(TimeLocalEx("onTrendChange(1)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+bool onTrendChange(int direction) {
+   if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   // skip the signal if it was already signaled elsewhere
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
+   string sPeriod = PeriodDescription();
+   string sName   = MA.Method +"("+ MA.Periods +", "+ PriceTypeDescription(maAppliedPrice) +")";
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ sName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]);
+   if (GetPropA(hWnd, sEvent) != 0) return(true);
+   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
+
+   string message = indicatorName +" turned "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
+
+   message = Symbol() +","+ PeriodDescription() +": "+ message;
+   string sAccount = "("+ TimeToStr(TimeLocalEx("onTrendChange(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
    int error = NO_ERROR;
 
-   if (trend == MODE_UPTREND) {
-      message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
-      message = Symbol() +","+ PeriodDescription() +": "+ message;
-
-      if (signal.alert)          Alert(message);
-      if (signal.sound) error |= PlaySoundEx(Signal.Sound.Up);
-      if (signal.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (signal.sms)   error |= !SendSMS("", message + NL + accountTime);
-      return(!error);
-   }
-
-   if (trend == MODE_DOWNTREND) {
-      message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
-      message = Symbol() +","+ PeriodDescription() +": "+ message;
-
-      if (signal.alert)          Alert(message);
-      if (signal.sound) error |= PlaySoundEx(Signal.Sound.Down);
-      if (signal.mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (signal.sms)   error |= !SendSMS("", message + NL + accountTime);
-      return(!error);
-   }
-   return(!catch("onTrendChange(4)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
+   if (signal.alert)          Alert(message);
+   if (signal.sound) error  = PlaySoundEx(ifString(direction==MODE_UPTREND, Signal.Sound.Up, Signal.Sound.Down)); if (error == ERR_FILE_NOT_FOUND) signal.sound = false;
+   if (signal.mail)  error |= !SendEmail("", "", message, message + NL + sAccount);
+   if (signal.sms)   error |= !SendSMS("", message + NL + sAccount);
+   return(!error);
 }
 
 
