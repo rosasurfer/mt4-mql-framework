@@ -19,19 +19,19 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MainLine.Periods      = 15;                // %K line                                                        // EURJPY: 15        14
-extern int    SlowedMain.MA.Periods = 1;                 // slowed %K line (MA 1)                                          //         1          3
-extern int    SignalLine.MA.Periods = 1;                 // %D line (MA 2 of resulting %K)                                 //         1          3
-extern color  MainLine.Color        = DodgerBlue;
-extern color  SignalLine.Color      = Red;
-extern int    MaxBarsBack           = 10000;             // max. number of values to calculate (-1: all available)
-extern string ___a__________________________;
+extern int    MainLine.Periods               = 15;          // %K line                                                        // EURJPY: 15        14
+extern int    SlowedMain.MA.Periods          = 1;           // slowed %K line (MA 1)                                          //         1          3
+extern int    SignalLine.MA.Periods          = 1;           // %D line (MA 2 of resulting %K)                                 //         1          3
+extern color  MainLine.Color                 = DodgerBlue;
+extern color  SignalLine.Color               = Red;
+extern int    MaxBarsBack                    = 10000;       // max. number of values to calculate (-1: all available)
+extern string ___a__________________________ = "";
 
-extern int    SignalLevel.Long      = 73;                // signal level to cross upwards to trigger a long signal         //         73        70
-extern int    SignalLevel.Short     = 27;                // signal level to cross downwards to trigger a short signal      //         27        30
-extern color  SignalColor.Long      = Blue;
-extern color  SignalColor.Short     = Magenta;
-extern int    SignalBars            = 1000;              // max. number of bars to mark signals for
+extern int    SignalLevel.Long               = 73;          // signal level to cross upwards to trigger a long signal         //         73        70
+extern int    SignalLevel.Short              = 27;          // signal level to cross downwards to trigger a short signal      //         27        30
+extern color  SignalColor.Long               = Blue;
+extern color  SignalColor.Short              = Magenta;
+extern int    SignalBars                     = 1000;        // max. number of bars to mark signals for
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

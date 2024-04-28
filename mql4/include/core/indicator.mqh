@@ -1,7 +1,7 @@
 
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
-extern string ______________________________;
+extern string ______________________________ = "";
 extern bool   AutoConfiguration = true;
 extern int    __lpSuperContext;
 

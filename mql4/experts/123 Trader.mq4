@@ -59,19 +59,19 @@ extern double Lots                           = 0.1;                             
 extern int    Initial.TakeProfit             = 100;         // in punits (0: partial targets only or no TP)                //  |  off (60)   |  on (100)   |  on (400)   |
 extern int    Initial.StopLoss               = 50;          // in punits (0: moving stops only or no SL                    //  |  on (100)   |  on (100)   |  on (100)   |
 extern bool   CloseOnOppositeBreakout        = false;                                                                      //  |   off (0)   |   off (0)   |   off (0)   |
-extern string ___c__________________________;                                                                              //  +-------------+-------------+-------------+
+extern string ___c__________________________ = "";                                                                         //  +-------------+-------------+-------------+
 extern int    Target1                        = 0;           // in punits (0: no target)                                    //  |      50     |      10     |      20     |
 extern int    Target1.ClosePercent           = 0;           // size to close (0: nothing)                                  //  |      0%     |     10%     |     25%     |
 extern int    Target1.MoveStopTo             = 1;           // in punits (0: don't move stop)                              //  |       1     |       1     |     -50     | 1: Breakeven-Stop (OpenPrice + 1 pip)
-extern string ___d__________________________;                                                                              //  +-------------+-------------+-------------+
+extern string ___d__________________________ = "";                                                                         //  +-------------+-------------+-------------+
 extern int    Target2                        = 0;           // ...                                                         //  |             |      20     |      40     |
 extern int    Target2.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     25%     |
 extern int    Target2.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |     -30     |
-extern string ___e__________________________;                                                                              //  +-------------+-------------+-------------+
+extern string ___e__________________________ = "";                                                                         //  +-------------+-------------+-------------+
 extern int    Target3                        = 0;           // ...                                                         //  |             |      40     |     100     |
 extern int    Target3.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target3.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      20     |
-extern string ___f__________________________;                                                                              //  +-------------+-------------+-------------+
+extern string ___f__________________________ = "";                                                                         //  +-------------+-------------+-------------+
 extern int    Target4                        = 0;           // ...                                                         //  |             |      60     |     200     |
 extern int    Target4.ClosePercent           = 25;          // ...                                                         //  |             |     10%     |     20%     |
 extern int    Target4.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      -      |

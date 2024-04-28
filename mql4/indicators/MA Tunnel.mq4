@@ -25,10 +25,10 @@ extern string Signal.onBarCross.Types        = "sound* | alert | mail | sms";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
-extern string ___b__________________________;
-extern bool   Sound.onTickCross             = false;                    // onTick: on channel cross at opposite side of the last crossing
-extern string Sound.onTickCross.Up          = "Alert Up.wav";
-extern string Sound.onTickCross.Down        = "Alert Down.wav";
+extern string ___b__________________________ = "";
+extern bool   Sound.onTickCross              = false;                   // onTick: on channel cross at opposite side of the last crossing
+extern string Sound.onTickCross.Up           = "Alert Up.wav";
+extern string Sound.onTickCross.Down         = "Alert Down.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

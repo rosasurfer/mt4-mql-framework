@@ -2,12 +2,12 @@
  * Signal indicator for the "L'mas system"
  *
  * - long:
- *    entry signal: onBarClose: Close > UpperTunnel && MA > UpperTunnel && MACD > 0       // test whether (Close > UpperTunnel) is redundant
- *    exit signal:  onTick:     Close < LowerTunnel && MA < LowerTunnel                   // ...
+ *    entry onBarClose: Close > UpperTunnel && MA > UpperTunnel && MACD > 0      // test whether (Close > UpperTunnel) is redundant
+ *    stop  onTick:     Close < LowerTunnel && MA < LowerTunnel                  // ...
  *
  * - short:
- *    entry signal: onBarClose: Close < LowerTunnel && MA < LowerTunnel && MACD < 0       // test whether (Close < UpperTunnel) is redundant
- *    exit signal:  onTick:     Close > UpperTunnel && MA > UpperTunnel                   // ...
+ *    entry onBarClose: Close < LowerTunnel && MA < LowerTunnel && MACD < 0      // test whether (Close < UpperTunnel) is redundant
+ *    stop  onTick:     Close > UpperTunnel && MA > UpperTunnel                  // ...
  *
  *
  * TODO:
@@ -55,6 +55,7 @@ extern bool   Signal.onEntry                 = false;
 extern string Signal.onEntry.Types           = "sound* | alert | mail | sms";
 extern bool   Signal.onExit                  = false;
 extern string Signal.onExit.Types            = "sound* | alert | mail | sms";
+
 extern string Signal.Sound.EntryLong         = "Signal Up.wav";
 extern string Signal.Sound.EntryShort        = "Signal Down.wav";
 

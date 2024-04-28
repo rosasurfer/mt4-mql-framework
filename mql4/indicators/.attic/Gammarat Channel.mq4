@@ -16,20 +16,20 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods       = 111;
-extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
+extern int    MA.Periods                     = 111;
+extern string MA.AppliedPrice                = "Open | High | Low | Close | Median | Typical | Weighted*";
 
-extern double Bands.Deviations = 2.5;
-extern color  Bands.Color      = LightSkyBlue;
-extern int    Bands.LineWidth  = 3;
+extern double Bands.Deviations               = 2.5;
+extern color  Bands.Color                    = LightSkyBlue;
+extern int    Bands.LineWidth                = 3;
 
-extern string ___a__________________________;
-extern bool   RepaintingMode   = true;             // toggle repainting mode (a full recalculation is way too slow when disabled)
-extern bool   MarkReversals    = true;
-extern int    MaxBarsBack      = 10000;            // max. values to calculate (-1: all available)
+extern string ___a__________________________ = "";
+extern bool   RepaintingMode                 = true;    // toggle repainting mode (a full recalculation is way too slow when disabled)
+extern bool   MarkReversals                  = true;
+extern int    MaxBarsBack                    = 10000;   // max. values to calculate (-1: all available)
 
-extern string ___b__________________________;
-extern bool   AlertsOn         = false;
+extern string ___b__________________________ = "";
+extern bool   AlertsOn                       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
