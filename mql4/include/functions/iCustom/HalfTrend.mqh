@@ -1,4 +1,3 @@
-
 #define HalfTrend.MODE_MAIN       MODE_MAIN              // SR line (0)
 #define HalfTrend.MODE_TREND              1              // trend direction and length
 

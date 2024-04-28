@@ -70,10 +70,10 @@ string indicatorName = "";
 string legendLabel   = "";
 string legendInfo    = "";
 
-bool   signal.onBarCross.sound;
-bool   signal.onBarCross.alert;
-bool   signal.onBarCross.mail;
-bool   signal.onBarCross.sms;
+bool   signal.sound;
+bool   signal.alert;
+bool   signal.mail;
+bool   signal.sms;
 
 #define D_LONG    TRADE_DIRECTION_LONG                   // signal direction types
 #define D_SHORT   TRADE_DIRECTION_SHORT                  //
@@ -139,11 +139,11 @@ int onInit() {
    legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onBarCross)) return(last_error);
    if (Signal.onBarCross) {
-      if (!ConfigureSignalTypes(signalId, Signal.onBarCross.Types, AutoConfiguration, signal.onBarCross.sound, signal.onBarCross.alert, signal.onBarCross.mail, signal.onBarCross.sms)) {
-         return(catch("onInit(13)  invalid input parameter Signal.onBarCross.Types: "+ DoubleQuoteStr(Signal.onBarCross.Types), ERR_INVALID_INPUT_PARAMETER));
+      if (!ConfigureSignalTypes(signalId, Signal.onBarCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+         return(catch("onInit(9)  invalid input parameter Signal.onBarCross.Types: "+ DoubleQuoteStr(Signal.onBarCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onBarCross = (signal.onBarCross.sound || signal.onBarCross.alert || signal.onBarCross.mail || signal.onBarCross.sms);
-      if (Signal.onBarCross) legendInfo = "("+ StrLeft(ifString(signal.onBarCross.sound, "sound,", "") + ifString(signal.onBarCross.alert, "alert,", "") + ifString(signal.onBarCross.mail, "mail,", "") + ifString(signal.onBarCross.sms, "sms,", ""), -1) +")";
+      Signal.onBarCross = (signal.sound || signal.alert || signal.mail || signal.sms);
+      if (Signal.onBarCross) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.sms, "sms,", ""), -1) +")";
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -170,7 +170,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(10)"));
 }
 
 
@@ -293,20 +293,20 @@ bool onCross(int direction, int bar) {
          if (IsLogInfo()) logInfo("onCross(5)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-         if (signal.onBarCross.alert)          Alert(message);
-         if (signal.onBarCross.sound) error |= PlaySoundEx(Signal.Sound.Up);
-         if (signal.onBarCross.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
-         if (signal.onBarCross.sms)   error |= !SendSMS("", message +NL+ accountTime);
+         if (signal.alert)          Alert(message);
+         if (signal.sound) error |= PlaySoundEx(Signal.Sound.Up);
+         if (signal.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
+         if (signal.sms)   error |= !SendSMS("", message +NL+ accountTime);
       }
       else /*direction == D_SHORT*/ {
          message = "bar close below "+ indicatorName;
          if (IsLogInfo()) logInfo("onCross(6)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-         if (signal.onBarCross.alert)          Alert(message);
-         if (signal.onBarCross.sound) error |= PlaySoundEx(Signal.Sound.Down);
-         if (signal.onBarCross.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
-         if (signal.onBarCross.sms)   error |= !SendSMS("", message +NL+ accountTime);
+         if (signal.alert)          Alert(message);
+         if (signal.sound) error |= PlaySoundEx(Signal.Sound.Down);
+         if (signal.mail)  error |= !SendEmail("", "", message, message +NL+ accountTime);
+         if (signal.sms)   error |= !SendSMS("", message +NL+ accountTime);
       }
       return(!error);
    }

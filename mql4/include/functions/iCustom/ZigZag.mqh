@@ -1,4 +1,3 @@
-
 #define ZigZag.MODE_SEMAPHORE_OPEN     0              // semaphore open price
 #define ZigZag.MODE_SEMAPHORE_CLOSE    1              // semaphore close price
 #define ZigZag.MODE_UPPER_BAND         2              // upper channel band

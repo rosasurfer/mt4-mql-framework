@@ -1,4 +1,3 @@
-
 /**
  * Load the custom "Moving Average" and return an indicator value.
  *

@@ -1,4 +1,3 @@
-
 /**
  * Load the "ALMA" indicator and return a value.
  *
@@ -34,16 +33,13 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           false,                      // bool   ShowChartLegend
                           -1,                         // int    MaxBarsBack
 
-                          "",                         // string ______________________________
+                          "",                         // string __________________________
                           false,                      // bool   Signal.onTrendChange
-                          false,                      // bool   Signal.onTrendChange.Sound
-                          "",                         // string Signal.onTrendChange.SoundUp
-                          "",                         // string Signal.onTrendChange.SoundDown
-                          false,                      // bool   Signal.onTrendChange.Alert
-                          false,                      // bool   Signal.onTrendChange.Mail
-                          false,                      // bool   Signal.onTrendChange.SMS
+                          "",                         // string Signal.onTrendChange.Types
+                          "",                         // string Signal.Sound.Up
+                          "",                         // string Signal.Sound.Down
 
-                          "",                         // string ______________________________
+                          "",                         // string __________________________
                           false,                      // bool   AutoConfiguration
                           lpSuperContext,             // int    __lpSuperContext
 

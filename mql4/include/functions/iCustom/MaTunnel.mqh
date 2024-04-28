@@ -1,4 +1,3 @@
-
 #define MaTunnel.MODE_UPPER_BAND    0                 // indicator buffer ids
 #define MaTunnel.MODE_LOWER_BAND    1                 //
 #define MaTunnel.MODE_BAR_TREND     2                 //
@@ -27,18 +26,18 @@ double icMaTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar)
                           false,                      // bool   ShowChartLegend
                           -1,                         // int    MaxBarsBack
 
-                          "",                         // string ____________________________
+                          "",                         // string _______________________
                           false,                      // bool   Signal.onBarCross
                           "",                         // string Signal.onBarCross.Types
                           "",                         // string Signal.Sound.Up
                           "",                         // string Signal.Sound.Down
 
-                          "",                         // string ____________________________
+                          "",                         // string _______________________
                           false,                      // bool   Sound.onTickCross
                           "",                         // string Sound.onTickCross.Up
                           "",                         // string Sound.onTickCross.Down
 
-                          "",                         // string ____________________________
+                          "",                         // string _______________________
                           false,                      // bool   AutoConfiguration
                           lpSuperContext,             // int    __lpSuperContext
 
