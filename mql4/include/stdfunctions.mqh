@@ -6742,6 +6742,33 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
 
 
 /**
+ * Get the requested price type at the specified bar offset.
+ *
+ * @param  int type   - price type
+ * @param  int offset - bar offset
+ *
+ * @return double - price or NULL in case of errors
+ */
+double GetPrice(int type, int offset) {
+   if (offset < 0 || offset >= Bars) return(!catch("GetPrice(1)  invalid parameter offset: "+ offset +" (out of range)", ERR_INVALID_PARAMETER));
+   int i = offset;
+
+   switch (type) {
+      case PRICE_OPEN:     return( Open[i]);                                     // 1
+      case PRICE_HIGH:     return( High[i]);                                     // 2
+      case PRICE_LOW:      return(  Low[i]);                                     // 3
+      case PRICE_CLOSE:                                                          // 0
+      case PRICE_BID:      return(Close[i]);                                     // 8
+      case PRICE_MEDIAN:                                                         // 4: (H+L)/2
+      case PRICE_TYPICAL:                                                        // 5: (H+L+C)/3
+      case PRICE_WEIGHTED: return(iMA(NULL, NULL, 1, 0, MODE_SMA, type, i));     // 6: (H+L+C+C)/4
+      case PRICE_AVERAGE:  return((Open[i] + High[i] + Low[i] + Close[i])/4);    // 7: (O+H+L+C)/4
+   }
+   return(!catch("GetPrice(2)  unsupported price type: "+ type, ERR_INVALID_PARAMETER));
+}
+
+
+/**
  * Check/initialize a trade server path (a history directory). Makes sure directory, "symbols.raw" and "symgroups.raw" exist.
  *
  * @param  string path - absolute path or path relative to the MQL sandbox directory
@@ -6886,6 +6913,7 @@ void __DummyCalls() {
    GetNextSessionEndTime(NULL, NULL);
    GetPrevSessionEndTime(NULL, NULL);
    GetPrevSessionStartTime(NULL, NULL);
+   GetPrice(NULL, NULL);
    GetRandomValue(NULL, NULL);
    GetServerTime();
    GetSessionEndTime(NULL, NULL);

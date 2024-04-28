@@ -455,32 +455,6 @@ bool ParameterStepper(int direction, int keys) {
 
 
 /**
- * Get the price of the specified type at the given bar offset.
- *
- * @param  int type - price type
- * @param  int i    - bar offset
- *
- * @return double - price or NULL in case of errors
- */
-double GetPrice(int type, int i) {
-   if (i < 0 || i >= Bars) return(!catch("GetPrice(1)  invalid parameter i: "+ i +" (out of range)", ERR_INVALID_PARAMETER));
-
-   switch (type) {
-      case PRICE_CLOSE:                                                          // 0
-      case PRICE_BID:      return(Close[i]);                                     // 8
-      case PRICE_OPEN:     return( Open[i]);                                     // 1
-      case PRICE_HIGH:     return( High[i]);                                     // 2
-      case PRICE_LOW:      return(  Low[i]);                                     // 3
-      case PRICE_MEDIAN:                                                         // 4: (H+L)/2
-      case PRICE_TYPICAL:                                                        // 5: (H+L+C)/3
-      case PRICE_WEIGHTED: return(iMA(NULL, NULL, 1, 0, MODE_SMA, type, i));     // 6: (H+L+C+C)/4
-      case PRICE_AVERAGE:  return((Open[i] + High[i] + Low[i] + Close[i])/4);    // 7: (O+H+L+C)/4
-   }
-   return(!catch("GetPrice(2)  unsupported price type: "+ type, ERR_INVALID_PARAMETER));
-}
-
-
-/**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
  * recompilation options must be set in start() to not be ignored.
  */
