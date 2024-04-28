@@ -36,16 +36,13 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           2,                          // int    Histogram.Style.Width
                           -1,                         // int    MaxBarsBack
 
-                          "",                         // string ________________________
+                          "",                         // string _____________________
                           false,                      // bool   Signal.onCross
-                          false,                      // bool   Signal.onCross.Sound
-                          "",                         // string Signal.onCross.SoundUp
-                          "",                         // string Signal.onCross.SoundDown
-                          false,                      // bool   Signal.onCross.Alert
-                          false,                      // bool   Signal.onCross.Mail
-                          false,                      // bool   Signal.onCross.SMS
+                          "",                         // string Signal.onCross.Types
+                          "",                         // string Signal.Sound.Up
+                          "",                         // string Signal.Sound.Down
 
-                          "",                         // string ________________________
+                          "",                         // string _____________________
                           false,                      // bool   AutoConfiguration
                           lpSuperContext,             // int    __lpSuperContext
 

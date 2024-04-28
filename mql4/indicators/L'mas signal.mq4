@@ -2,37 +2,34 @@
  * Signal indicator for the "L'mas system"
  *
  * - long:
- *    entry signal: onBarClose: Close > UpperTunnel && EMA > UpperTunnel && MACD > 0      // test whether (Close > UpperTunnel) is redundant
- *    exit signal:  onTick:     Close < LowerTunnel && EMA < LowerTunnel                  // ...
+ *    entry signal: onBarClose: Close > UpperTunnel && MA > UpperTunnel && MACD > 0       // test whether (Close > UpperTunnel) is redundant
+ *    exit signal:  onTick:     Close < LowerTunnel && MA < LowerTunnel                   // ...
  *
  * - short:
- *    entry signal: onBarClose: Close < LowerTunnel && EMA < LowerTunnel && MACD < 0      // test whether (Close < UpperTunnel) is redundant
- *    exit signal:  onTick:     Close > UpperTunnel && EMA > UpperTunnel                  // ...
+ *    entry signal: onBarClose: Close < LowerTunnel && MA < LowerTunnel && MACD < 0       // test whether (Close < UpperTunnel) is redundant
+ *    exit signal:  onTick:     Close > UpperTunnel && MA > UpperTunnel                   // ...
  *
  *
  * TODO:
  *  - MA Tunnel
- *     rewrite signaling
- *     rewrite validation messages
  *     support MA method MODE_ALMA
  *
  *  - ALMA
- *     rewrite signaling
- *     add ShowChartLegend
  *     add Background.Color+Background.Width
  *     move GetPrice() to stdfunctions.mqh
+ *     merge includes icALMA() and functions/ta/ALMA.mqh
  *
  *  - Moving Average
- *     rewrite signaling
  *     support price type PRICE_AVERAGE
  *     add parameter stepping
  *
  *  - MACD
- *     rewrite signaling
- *     support AutoConfiguration
+ *     rename const MODE_SECTION => MODE_TREND
  *     support SMMA
  *     support price type PRICE_AVERAGE
  *     add parameter stepping
+ *     prevent signal duplication on multiple charts
+ *     replace var bool isCentUnit by punits
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
