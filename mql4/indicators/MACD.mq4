@@ -88,7 +88,6 @@ int    slowMA.appliedPrice;
 double slowALMA.weights[];                                  // slow ALMA weights
 
 string indicatorName = "";                                  // "Data" window and signal notification name
-bool   isCentUnit    = false;                               // display unit: cent or pip
 
 bool   signal.sound;
 bool   signal.alert;
@@ -226,8 +225,7 @@ int onInit() {
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
-   isCentUnit = (Digits==2 && Close[0]>=500);                           // unit is either 'cent' with fractions for big values (indexes): 123.4 pip => 1.23'4
-   IndicatorDigits(ifInt(isCentUnit, 3, 2));                            // or pip with 2 decimal digit otherwise:                         123.4 pip => 123.04
+   IndicatorDigits(pDigits + 1);
    SetIndicatorOptions();
 
    // calculate ALMA bar weights
@@ -296,8 +294,7 @@ int onTick() {
       }
 
       // final MACD
-      bufferMACD[bar] = (fastMA - slowMA)/Pip;
-      if (isCentUnit) bufferMACD[bar] /= 100;
+      bufferMACD[bar] = (fastMA - slowMA)/pUnit;
 
       if (bufferMACD[bar] > 0) {
          bufferUpper[bar] = bufferMACD[bar];

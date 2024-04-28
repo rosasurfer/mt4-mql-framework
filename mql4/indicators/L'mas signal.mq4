@@ -29,7 +29,6 @@
  *     support price type PRICE_AVERAGE
  *     add parameter stepping
  *     prevent signal duplication on multiple charts
- *     replace var bool isCentUnit by punits
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
