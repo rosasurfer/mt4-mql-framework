@@ -163,7 +163,8 @@ int onInit() {
 
    // names, labels and display options
    if (ShowChartLegend) legendLabel = CreateChartLegend();
-   indicatorName = WindowExpertName() +" "+ Tunnel.Definition;
+   if (ArraySize(maDefinitions) == 1) indicatorName = StrLeftTo(maDefinitions[0], "(") +" Tunnel("+ StrRightFrom(maDefinitions[0], "(");
+   else                               indicatorName = WindowExpertName() +" "+ Tunnel.Definition;
    IndicatorShortName(indicatorName);                             // chart tooltips and context menu
    SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper band");  // "Data" window and context menu
    SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower band");  // ...
