@@ -1876,6 +1876,7 @@ bool UpdateStopoutLevel() {
    }
    positions.analyzed = true;
    return(!catch("AnalyzePositions(3)"));
+   // TODO: after 2 times account change:    FATAL: XAUUSD,M5  ChartInfos::AnalyzePositions(3)  [ERR_ARRAY_INDEX_OUT_OF_RANGE]
 }
 
 
