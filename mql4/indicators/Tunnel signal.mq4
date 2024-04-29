@@ -11,8 +11,11 @@
  *
  *
  * TODO:
+ *  - merge bufferMain[] and bufferTrend[]
+ *
  *  - MA Tunnel
  *     support MA method MODE_ALMA
+ *     remove tick signaling?
  *
  *  - ALMA
  *     add Background.Color+Background.Width
@@ -24,6 +27,9 @@
  *
  *  - MACD
  *     add parameter stepping
+ *
+ *  - iCustom(): limit calculated bars in online charts
+ *  - simplify ObjectCreateRegister()
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -63,6 +69,7 @@ extern string Signal.Sound.EntryShort        = "Signal Down.wav";
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
+#include <functions/ObjectCreateRegister.mqh>
 #include <functions/iCustom/MACD.mqh>
 #include <functions/iCustom/MaTunnel.mqh>
 #include <functions/iCustom/MovingAverage.mqh>
@@ -71,6 +78,10 @@ extern string Signal.Sound.EntryShort        = "Signal Down.wav";
 #define MODE_TREND            MACD.MODE_TREND   // 1
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
+
+#define HINT_CLOSE            1                 // trend hint ids
+#define HINT_MA               2
+#define HINT_MACD             3
 
 #property indicator_separate_window
 #property indicator_buffers   4
@@ -111,6 +122,13 @@ bool   signal.onExit.sound;
 bool   signal.onExit.alert;
 bool   signal.onExit.mail;
 bool   signal.onExit.sms;
+
+string trendHintCloseLabel = "";
+string trendHintMaLabel    = "";
+string trendHintMacdLabel  = "";
+
+string trendHintFontName = "Arial Black";
+int    trendHintFontSize = 8;
 
 
 /**
@@ -219,9 +237,10 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.EntryLong  = GetConfigString(indicator, "Signal.Sound.EntryLong",  Signal.Sound.EntryLong);
    if (AutoConfiguration) Signal.Sound.EntryShort = GetConfigString(indicator, "Signal.Sound.EntryShort", Signal.Sound.EntryShort);
 
-   // indicator buffer management
    SetIndicatorOptions();
+   CreateTrendHints();
 
+   debug("onInit(0.1)  MODE_CLOSE=?  MODE_MA=?  MODE_MACD=?");
    return(catch("onInit(16)"));
 }
 
@@ -256,15 +275,15 @@ int onTick() {
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-longestPeriods);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
+   double upperBand, lowerBand, ma, macd;
+
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      // collect data
-      double upperBand = GetMaTunnel(MODE_UPPER, bar);
-      double lowerBand = GetMaTunnel(MODE_LOWER, bar);
-      double ma        = GetMovingAverage(bar);
-      double macd      = GetMACD(bar);
+      upperBand = GetMaTunnel(MODE_UPPER, bar);
+      lowerBand = GetMaTunnel(MODE_LOWER, bar);
+      ma        = GetMovingAverage(bar);
+      macd      = GetMACD(bar);
 
-      // calculate indicator
       if (Close[bar] > upperBand && ma > upperBand && macd > 0) {
          bufferMain [bar] = 1;
          bufferUpper[bar] = bufferMain[bar];
@@ -281,7 +300,28 @@ int onTick() {
          bufferLower[bar] = bufferLower[bar+1];
       }
    }
-   return(catch("onTick(3)"));
+
+   if (!__isSuperContext) {
+      if (__isChart) {
+         int status = 0;
+         if      (Close[0] > upperBand) status = +1;
+         else if (Close[0] < lowerBand) status = -1;
+         UpdateTrendHint(HINT_CLOSE, status);
+
+         status = 0;
+         if      (ma > upperBand) status = +1;
+         else if (ma < lowerBand) status = -1;
+         UpdateTrendHint(HINT_MA, status);
+
+         status = 0;
+         if      (macd > 0) status = +1;
+         else if (macd < 0) status = -1;
+         UpdateTrendHint(HINT_MACD, status);
+      }
+
+      // monitor signals
+   }
+   return(catch("onTick(4)"));
 }
 
 
@@ -312,7 +352,17 @@ double GetMaTunnel(int mode, int bar) {
  */
 double GetMovingAverage(int bar) {
    if (ma.method == MODE_ALMA) {
-      return(icMovingAverage(NULL, ma.periods, "ALMA", "close", MovingAverage.MODE_MA, bar));
+      static bool initialized = false;
+
+      int starttime = GetTickCount();
+      double value = icMovingAverage(NULL, ma.periods, "ALMA", "close", MovingAverage.MODE_MA, bar);
+
+      if (!initialized) {
+         int endtime = GetTickCount();
+         //debug("GetMovingAverage(0.1)  1st execution: "+ DoubleToStr((endtime-starttime)/1000., 3) +" sec");
+         initialized = true;
+      }
+      return(value);
    }
    return(iMA(NULL, NULL, ma.periods, 0, ma.method, PRICE_CLOSE, bar));
 }
@@ -330,6 +380,75 @@ double GetMACD(int bar) {
       return(iMACD(NULL, NULL, macd.fastPeriods, macd.slowPeriods, 1, PRICE_CLOSE, MACD.MODE_MAIN, bar));
    }
    return(icMACD(NULL, macd.fastPeriods, MACD.FastMA.Method, "close", macd.slowPeriods, MACD.SlowMA.Method, "close", MACD.MODE_MAIN, bar));
+}
+
+
+/**
+ * Create chart objects for the trend hints.
+ *
+ * @return bool - success status
+ */
+bool CreateTrendHints() {
+   if (__isSuperContext || !__isChart) return(true);
+
+   string prefix = "rsf."+ WindowExpertName() +".";
+   string suffix = "."+ __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
+   int window = WindowFind(WindowExpertName());
+
+   string label = prefix +"Close"+ suffix;
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, 68);
+   ObjectSet    (label, OBJPROP_YDISTANCE,  1);
+   ObjectSetText(label, " ");
+   trendHintCloseLabel = label;
+
+   label = prefix +"MA"+ suffix;
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, 35);
+   ObjectSet    (label, OBJPROP_YDISTANCE,  1);
+   ObjectSetText(label, " ");
+   trendHintMaLabel = label;
+
+   label = prefix +"MACD"+ suffix;
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, 7);
+   ObjectSet    (label, OBJPROP_YDISTANCE, 1);
+   ObjectSetText(label, " ");
+   trendHintMacdLabel = label;
+
+   return(!catch("CreateTrendHints(1)"));
+}
+
+
+/**
+ * Update a trend hint.
+ *
+ * @param  int id     - trend hint id: HINT_CLOSE | HINT_MA | HINT_MACD
+ * @param  int status - hint status, one of +1, 0 or -1
+ *
+ * @return void
+ */
+void UpdateTrendHint(int id, int status) {
+   if (__isSuperContext || !__isChart) return;
+
+   if      (status > 0) color clr = Histogram.Color.Upper;
+   else if (status < 0)       clr = Histogram.Color.Lower;
+   else                       clr = Orange;
+
+   switch (id) {
+      case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "C",  trendHintFontSize, trendHintFontName, clr); break;
+      case HINT_MA:    ObjectSetText(trendHintMaLabel,    "MA", trendHintFontSize, trendHintFontName, clr); break;
+      case HINT_MACD:  ObjectSetText(trendHintMacdLabel,  "CD", trendHintFontSize, trendHintFontName, clr); break;
+
+      default:
+         return(!catch("UpdateTrendHint(1)  invalid parameter id: "+ id, ERR_INVALID_PARAMETER));
+   }
+
+   int error = GetLastError();               // on ObjectDrag or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateTrendHint(2)", error);
 }
 
 

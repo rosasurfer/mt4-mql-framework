@@ -155,11 +155,10 @@ int onInit() {
    if (AutoConfiguration) Sound.onTickCross.Up   = GetConfigString(indicator, "Sound.onTickCross.Up",   Sound.onTickCross.Up);
    if (AutoConfiguration) Sound.onTickCross.Down = GetConfigString(indicator, "Sound.onTickCross.Down", Sound.onTickCross.Down);
 
-   // indicator buffer management
-   SetIndicatorOptions();
-
    // chart legend
    if (ShowChartLegend) legendLabel = CreateChartLegend();
+
+   SetIndicatorOptions();
    return(catch("onInit(10)"));
 }
 
