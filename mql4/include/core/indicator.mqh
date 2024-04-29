@@ -99,13 +99,13 @@ int init() {
    }
 
    // before onInit(): log input parameters if loaded by iCustom()
-   if (__isSuperContext && IsLogInfo()) {
+   if (__isSuperContext && IsLogDebug()) {
       string sInputs = InputsToStr();
       if (StringLen(sInputs) > 0) {
-         sInputs = StringConcatenate(sInputs,
-            ifString(!AutoConfiguration, "", NL +"AutoConfiguration=TRUE;"),
-                                             NL +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";");
-         logInfo("init(13)  inputs: "+ sInputs);
+         sInputs = StringConcatenate(sInputs,                                                        NL,
+                                     "AutoConfiguration=", AutoConfiguration,                   ";", NL,
+                                     "__lpSuperContext=",  "0x", IntToHexStr(__lpSuperContext), ";");
+         logDebug("init(13)  inputs: "+ sInputs);
       }
    }
 
