@@ -219,19 +219,7 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.EntryLong  = GetConfigString(indicator, "Signal.Sound.EntryLong",  Signal.Sound.EntryLong);
    if (AutoConfiguration) Signal.Sound.EntryShort = GetConfigString(indicator, "Signal.Sound.EntryShort", Signal.Sound.EntryShort);
 
-   // buffer management
-   SetIndexBuffer(MODE_MAIN,          bufferMain ); SetIndexEmptyValue(MODE_MAIN,          0);
-   SetIndexBuffer(MODE_TREND,         bufferTrend); SetIndexEmptyValue(MODE_TREND,         0);
-   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper); SetIndexEmptyValue(MODE_UPPER_SECTION, 0);
-   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower); SetIndexEmptyValue(MODE_LOWER_SECTION, 0);
-
-   // display options
-   IndicatorShortName(WindowExpertName());               // chart subwindow
-   SetIndexLabel(MODE_MAIN,  "Tunnel entry signal");     // "Data" window and context menu
-   SetIndexLabel(MODE_TREND, "Tunnel trend");
-   SetIndexLabel(MODE_UPPER_SECTION, NULL);
-   SetIndexLabel(MODE_LOWER_SECTION, NULL);
-   IndicatorDigits(0);
+   // indicator buffer management
    SetIndicatorOptions();
 
    return(catch("onInit(16)"));
@@ -350,8 +338,15 @@ double GetMACD(int bar) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   string indicatorName = WindowExpertName();
+   IndicatorShortName(indicatorName);
+
    IndicatorBuffers(indicator_buffers);
+   SetIndexBuffer(MODE_MAIN,          bufferMain ); SetIndexEmptyValue(MODE_MAIN,          0); SetIndexLabel(MODE_MAIN,  indicatorName);
+   SetIndexBuffer(MODE_TREND,         bufferTrend); SetIndexEmptyValue(MODE_TREND,         0); SetIndexLabel(MODE_TREND, "Tunnel trend");
+   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper); SetIndexEmptyValue(MODE_UPPER_SECTION, 0); SetIndexLabel(MODE_UPPER_SECTION, NULL);
+   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower); SetIndexEmptyValue(MODE_LOWER_SECTION, 0); SetIndexLabel(MODE_LOWER_SECTION, NULL);
+   IndicatorDigits(0);
 
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 

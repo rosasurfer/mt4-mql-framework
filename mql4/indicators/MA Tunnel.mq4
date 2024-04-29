@@ -48,12 +48,12 @@ extern string Sound.onTickCross.Down         = "Alert Down.wav";
 #define MODE_TICK_TREND       MaTunnel.MODE_TICK_TREND   // ...
 
 #property indicator_chart_window
-#property indicator_buffers   4
+#property indicator_buffers   3                          // visible buffers
+int       terminal_buffers  = 4;                         // all buffers
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
 #property indicator_color3    CLR_NONE
-#property indicator_color4    CLR_NONE
 
 double upperBand[];                                      // upper band:      visible
 double lowerBand[];                                      // lower band:      visible
@@ -136,7 +136,7 @@ int onInit() {
    if (MaxBarsBack < -1)               return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
-   // signal configuration
+   // Signal.onBarCross
    string signalId = "Signal.onBarCross";
    legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onBarCross)) return(last_error);
@@ -151,28 +151,15 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
    // Sound.onTickCross
-   if (AutoConfiguration) Sound.onTickCross      = GetConfigBool(indicator, "Sound.onTickCross", Sound.onTickCross);
+   if (AutoConfiguration) Sound.onTickCross      = GetConfigBool  (indicator, "Sound.onTickCross",      Sound.onTickCross);
    if (AutoConfiguration) Sound.onTickCross.Up   = GetConfigString(indicator, "Sound.onTickCross.Up",   Sound.onTickCross.Up);
    if (AutoConfiguration) Sound.onTickCross.Down = GetConfigString(indicator, "Sound.onTickCross.Down", Sound.onTickCross.Down);
 
-   // buffer management
-   SetIndexBuffer(MODE_UPPER_BAND, upperBand);
-   SetIndexBuffer(MODE_LOWER_BAND, lowerBand);
-   SetIndexBuffer(MODE_BAR_TREND,  barTrend);  SetIndexEmptyValue(MODE_BAR_TREND, 0);
-   SetIndexBuffer(MODE_TICK_TREND, tickTrend); SetIndexEmptyValue(MODE_TICK_TREND, 0);
-
-   // names, labels and display options
-   if (ShowChartLegend) legendLabel = CreateChartLegend();
-   if (ArraySize(maDefinitions) == 1) indicatorName = StrLeftTo(maDefinitions[0], "(") +" Tunnel("+ StrRightFrom(maDefinitions[0], "(");
-   else                               indicatorName = WindowExpertName() +" "+ Tunnel.Definition;
-   IndicatorShortName(indicatorName);                             // chart tooltips and context menu
-   SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper band");  // "Data" window and context menu
-   SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower band");  // ...
-   SetIndexLabel(MODE_BAR_TREND,  indicatorName +" bar trend" );  //
-   SetIndexLabel(MODE_TICK_TREND, indicatorName +" tick trend");  //
-   IndicatorDigits(Digits);
+   // indicator buffer management
    SetIndicatorOptions();
 
+   // chart legend
+   if (ShowChartLegend) legendLabel = CreateChartLegend();
    return(catch("onInit(10)"));
 }
 
@@ -311,12 +298,20 @@ bool onCross(int direction, int bar) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   if (ArraySize(maDefinitions) == 1) indicatorName = StrLeftTo(maDefinitions[0], "(") +" Tunnel("+ StrRightFrom(maDefinitions[0], "(");
+   else                               indicatorName = WindowExpertName() +" "+ Tunnel.Definition;
+   IndicatorShortName(indicatorName);
 
-   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
-   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
-   SetIndexStyle(MODE_BAR_TREND,  DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
-   SetIndexStyle(MODE_TICK_TREND, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+   IndicatorBuffers(terminal_buffers);
+   SetIndexBuffer(MODE_UPPER_BAND, upperBand);
+   SetIndexBuffer(MODE_LOWER_BAND, lowerBand);
+   SetIndexBuffer(MODE_BAR_TREND,  barTrend ); SetIndexEmptyValue(MODE_BAR_TREND, 0);
+   SetIndexBuffer(MODE_TICK_TREND, tickTrend);
+   IndicatorDigits(Digits);
+
+   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color); SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper");
+   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color); SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower");
+   SetIndexStyle(MODE_BAR_TREND,  DRAW_NONE, EMPTY, EMPTY, CLR_NONE);     SetIndexLabel(MODE_BAR_TREND,  indicatorName +" trend");
 }
 
 
