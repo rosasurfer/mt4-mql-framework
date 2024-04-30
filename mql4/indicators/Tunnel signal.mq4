@@ -1,16 +1,10 @@
 /**
  * Signal indicator for the "L'mas system"
  *
- * - long:
- *    entry onBarClose: Close > UpperTunnel && MA > UpperTunnel && MACD > 0
- *    stop  onTick:     Close < LowerTunnel && MA < LowerTunnel
- *
- * - short:
- *    entry onBarClose: Close < LowerTunnel && MA < LowerTunnel && MACD < 0
- *    stop  onTick:     Close > UpperTunnel && MA > UpperTunnel
- *
  *
  * TODO:
+ *  - update Grid for Bitcoin, GBPJPY
+ *  - signaling
  *  - merge bufferMain[] and bufferTrend[]
  *
  *  - MA Tunnel
@@ -22,11 +16,14 @@
  *     merge includes icALMA() and functions/ta/ALMA.mqh
  *     replace manual StdDev calculation
  *
- *  - Moving Average
+ *  - Moving Average, MACD
  *     add parameter stepping
  *
- *  - MACD
- *     add parameter stepping
+ *  - Inside Bars
+ *     prevent signaling of duplicated events
+ *
+ *  - ChartInfos
+ *     fix positioning of UnitSize/PositionSize when in CORNER_TOP_LEFT
  *
  *  - iCustom(): limit calculated bars in online charts
  *  - simplify ObjectCreateRegister()
@@ -49,8 +46,8 @@ extern string MACD.SlowMA.Method             = "SMA | LWMA | EMA* | SMMA | ALMA"
 extern int    MACD.SlowMA.Periods            = 26;
 
 extern string ___a__________________________ = "=== Display settings ===";
-extern color  Histogram.Color.Upper          = Blue;        // LimeGreen;
-extern color  Histogram.Color.Lower          = LightSalmon; // Red;
+extern color  Histogram.Color.Upper          = LimeGreen;
+extern color  Histogram.Color.Lower          = Red;
 extern int    Histogram.Style.Width          = 2;
 extern int    MaxBarsBack                    = 10000;                               // max. values to calculate (-1: all available)
 
@@ -237,10 +234,8 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.EntryLong  = GetConfigString(indicator, "Signal.Sound.EntryLong",  Signal.Sound.EntryLong);
    if (AutoConfiguration) Signal.Sound.EntryShort = GetConfigString(indicator, "Signal.Sound.EntryShort", Signal.Sound.EntryShort);
 
-   SetIndicatorOptions();
    CreateTrendHints();
-
-   debug("onInit(0.1)  MODE_CLOSE=?  MODE_MA=?  MODE_MACD=?");
+   SetIndicatorOptions();
    return(catch("onInit(16)"));
 }
 
@@ -302,6 +297,7 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
+      // update trend hints
       if (__isChart) {
          int status = 0;
          if      (Close[0] > upperBand) status = +1;
@@ -398,7 +394,7 @@ bool CreateTrendHints() {
    string label = prefix +"Close"+ suffix;
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-   ObjectSet    (label, OBJPROP_XDISTANCE, 68);
+   ObjectSet    (label, OBJPROP_XDISTANCE, 67);
    ObjectSet    (label, OBJPROP_YDISTANCE,  1);
    ObjectSetText(label, " ");
    trendHintCloseLabel = label;
@@ -428,8 +424,6 @@ bool CreateTrendHints() {
  *
  * @param  int id     - trend hint id: HINT_CLOSE | HINT_MA | HINT_MACD
  * @param  int status - hint status, one of +1, 0 or -1
- *
- * @return void
  */
 void UpdateTrendHint(int id, int status) {
    if (__isSuperContext || !__isChart) return;
@@ -439,7 +433,7 @@ void UpdateTrendHint(int id, int status) {
    else                       clr = Orange;
 
    switch (id) {
-      case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "C",  trendHintFontSize, trendHintFontName, clr); break;
+      case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "B",  trendHintFontSize, trendHintFontName, clr); break;
       case HINT_MA:    ObjectSetText(trendHintMaLabel,    "MA", trendHintFontSize, trendHintFontName, clr); break;
       case HINT_MACD:  ObjectSetText(trendHintMacdLabel,  "CD", trendHintFontSize, trendHintFontName, clr); break;
 
