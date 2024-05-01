@@ -390,6 +390,7 @@ bool CreateTrendHints() {
    string prefix = "rsf."+ WindowExpertName() +".";
    string suffix = "."+ __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
    int window = WindowFind(WindowExpertName());
+   if (__CoreFunction==CF_INIT && window==-1) window = WindowsTotal();      // spurious issue: window=-1, it will get the "next" index
 
    string label = prefix +"Close"+ suffix;
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);

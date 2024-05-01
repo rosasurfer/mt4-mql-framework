@@ -18337,7 +18337,7 @@ name=Custom Indicator
 <expert>
 name=Tunnel signal
 flags=339
-window_num=2
+window_num=1
 <inputs>
 Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
 Tunnel.MA.Periods=55
@@ -18354,6 +18354,8 @@ Signal.onEntry=1
 AutoConfiguration=0
 </inputs>
 </expert>
+min=-1.0
+max=1.0
 period_flags=0
 show_data=1
 </indicator>
