@@ -2,14 +2,12 @@
  * Chart grid
  *
  *
- *
- * TODO:
- *  @see  https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowrect#                                                      [GetWindowRect()]
+ * Notes:
  *  @see  https://stackoverflow.com/questions/68375674/how-to-get-scaling-aware-window-size-using-winapi#                              [Get scaling-aware window size]
  *  @see  https://gist.github.com/marler8997/9f39458d26e2d8521d48e36530fbb459#                                                          [Win32DPI and monitor scaling]
  *  @see  https://cplusplus.com/forum/windows/285609/#                                                           [Get desktop dimensions while DPI scaling is enabled]
  *  @see  https://stackoverflow.com/questions/5977445/how-to-get-windows-display-settings#                                              [How to get Win7 scale factor]
- *  @see  https://www.reddit.com/r/Windows10/comments/3lolnr/why_is_dpi_scaling_on_windows_7_better_than_on/?rdt=56415# [Whiy is DPI scaling on W7 better than on W10]
+ *  @see  https://www.reddit.com/r/Windows10/comments/3lolnr/why_is_dpi_scaling_on_windows_7_better_than_on/?rdt=56415#  [Why is DPI scaling on W7 better than on W10]
  *  @see  https://forums.mydigitallife.net/threads/solved-windows-10-higher-dpi-win8dpiscaling-problem.62528/
  *  @see  https://www.reddit.com/r/buildapc/comments/5v8pcd/rwindows10_wasnt_very_friendly_but_does_anyone/#              [Disable W10 DPI scaling for an application]
  */
@@ -19,10 +17,12 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color Color.RegularGrid = Gainsboro;        // C'220,220,220'
-extern color Color.SuperGrid   = LightGray;        // C'211,211,211' (slightly darker)
+extern bool  DrawPriceGrid               = false;
+extern int   PriceGrid.MinDistance.Pixel = 30;
+extern bool  DoDebug                     = false;
 
-extern bool  DoDebug = false;
+extern color Color.RegularGrid           = Gainsboro;      // C'220,220,220'
+extern color Color.SuperGrid             = LightGray;      // C'211,211,211' (slightly darker)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,6 +36,10 @@ extern bool  DoDebug = false;
 #property indicator_chart_window
 #property indicator_buffers      1
 #property indicator_color1       CLR_NONE
+
+double lastChartHeight;
+double lastMinPrice;
+double lastMaxPrice;
 
 
 /**
@@ -67,16 +71,11 @@ int onTick() {
    if (!ValidBars) SetIndicatorOptions();
 
    if (__isChart) {
-      if (ChangedBars > 2) UpdateVerticalGrid();
       UpdateHorizontalGrid();
+      if (ChangedBars > 2) UpdateVerticalGrid();
    }
    return(last_error);
 }
-
-
-double lastMinPrice;
-double lastMaxPrice;
-double lastChartHeight;
 
 
 /**
@@ -85,7 +84,7 @@ double lastChartHeight;
  * @return bool - success status
  */
 bool UpdateHorizontalGrid() {
-   if (!__isChart) return(true);
+   if (!DrawPriceGrid) return(true);
 
    int hChartWnd = __ExecutionContext[EC.hChartWindow];
    if (!IsWindowVisible(hChartWnd)) {
@@ -108,7 +107,6 @@ bool UpdateHorizontalGrid() {
 
    double minPrice = WindowPriceMin();
    double maxPrice = WindowPriceMax();
-
    if (!minPrice || !maxPrice) {                               // chart not yet ready
       if (DoDebug) debug("UpdateHorizontalGrid(0.4)  Tick="+ Ticks +"  skip => minPrice=0  maxPrice=0");
       return(true);
@@ -121,28 +119,46 @@ bool UpdateHorizontalGrid() {
    }
 
    if (chartHeight!=lastChartHeight || minPrice!=lastMinPrice || maxPrice!=lastMaxPrice) {
-      int minSeparatorDistance = 30;                           // min separator distance in pixel
-      double separators = 1.*chartHeight/minSeparatorDistance;
-      double separatorRange = NormalizeDouble(chartRange/separators, Digits);
-      double grid, baseGrid = MathPow(10, MathFloor(MathLog10(separatorRange)));
+      double separators = 1.*chartHeight/PriceGrid.MinDistance.Pixel;
+      double separatorRange = chartRange/separators;
+      double gridBase = MathPow(10, MathFloor(MathLog10(separatorRange))), gridSize;
 
       static int multiples[] = {2, 5, 10};
       for (int i, size=ArraySize(multiples); i < size; i++) {
-         grid = NormalizeDouble(multiples[i] * baseGrid, Digits);
-         if (grid > separatorRange) break;
+         gridSize = multiples[i] * gridBase;
+         if (gridSize > separatorRange) break;
       }
-      if (DoDebug) debug("UpdateHorizontalGrid(0.6)  Tick="+ Ticks +"  height="+ chartHeight +"  range="+ DoubleToStr(chartRange/pUnit, pDigits) +" "+ spUnit
-                                                    +" => "+ Round(separators) +" seps"
-                                                    +" => "+ DoubleToStr(separatorRange/pUnit, pDigits) +" "+ spUnit +"/sep"
-                                                    +" => grid: "+ DoubleToStr(grid/pUnit, pDigits) +" "+ spUnit);
+      gridSize = NormalizeDouble(gridSize, Digits);
+
+      debug("UpdateHorizontalGrid(0.6)  Tick="+ Ticks +"  height="+ chartHeight +"  range="+ DoubleToStr(chartRange/pUnit, pDigits) +" "+ spUnit
+                                                      +" => "+ Round(separators) +" seps"
+                                                      +" => gridSize: "+ DoubleToStr(gridSize/pUnit, pDigits) +" "+ spUnit);
+      // calculate and draw grid levels
+      double fromPrice = minPrice - gridSize;
+      double toPrice   = maxPrice + gridSize;
+      double gridLevel = fromPrice - MathMod(fromPrice, gridSize);
+
+      while (gridLevel < toPrice) {
+         if (DoDebug) debug("UpdateHorizontalGrid(0.7)  gridLevel="+ NumberToStr(gridLevel, PriceFormat));
+
+         string label = NumberToStr(gridLevel, ",'R.+");
+         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_HLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         ObjectSet(label, OBJPROP_STYLE,  STYLE_DOT);
+         ObjectSet(label, OBJPROP_COLOR,  Color.RegularGrid);
+         ObjectSet(label, OBJPROP_PRICE1, gridLevel);
+         ObjectSet(label, OBJPROP_BACK,   true);
+
+         gridLevel += gridSize;
+      }
+
+      lastChartHeight = chartHeight;
       lastMinPrice    = minPrice;
       lastMaxPrice    = maxPrice;
-      lastChartHeight = chartHeight;
    }
    return(!catch("UpdateHorizontalGrid(2)"));
 
-   // a separator every multiple of 1
-   // -------------------------------
+   // a separator every multiple of 1, 2, 5...
+   // ----------------------------------------
    // a separator every 0.0001 units   1 * 10 ^ -4     1 pip
    // a separator every 0.001 units    1 * 10 ^ -3
    // a separator every 0.01 units     1 * 10 ^ -2
@@ -152,42 +168,15 @@ bool UpdateHorizontalGrid() {
    // a separator every 100 units      1 * 10 ^ +2
    // a separator every 1000 units     1 * 10 ^ +3
    // a separator every 10000 units    1 * 10 ^ +4
-
-
-   // a separator every multiple of 2
-   // -------------------------------
-   // a separator every 0.0002 units   2 * 10 ^ -4     2 pip
-   // a separator every 0.002 units    2 * 10 ^ -3
-   // a separator every 0.02 units     2 * 10 ^ -2
-   // a separator every 0.2 units      2 * 10 ^ -1
-   // a separator every 2 units        2 * 10 ^  0
-   // a separator every 20 units       2 * 10 ^ +1
-   // a separator every 200 units      2 * 10 ^ +2
-   // a separator every 2000 units     2 * 10 ^ +3
-   // a separator every 20000 units    2 * 10 ^ +4
-
-
-   // a separator every multiple of 5
-   // -------------------------------
-   // a separator every 0.0005 units   5 * 10 ^ -4     5 pip
-   // a separator every 0.005 units    5 * 10 ^ -3
-   // a separator every 0.05 units     5 * 10 ^ -2
-   // a separator every 0.5 units      5 * 10 ^ -1
-   // a separator every 5 units        5 * 10 ^  0
-   // a separator every 50 units       5 * 10 ^ +1
-   // a separator every 500 units      5 * 10 ^ +2
-   // a separator every 5000 units     5 * 10 ^ +3
-   // a separator every 50000 units    5 * 10 ^ +4
 }
 
 
 /**
- * Zeichnet das Grid.
+ * Update the vertical grid (date/time separators).
  *
  * @return bool - success status
  */
 bool UpdateVerticalGrid() {
-   // due to init flag INIT_TIMEZONE we don't have to check for timezone related errors
    datetime firstWeekDay, separatorTime, chartTime, lastChartTime;
    int      dow, dd, mm, yyyy, bar, sepColor, sepStyle;
    string   label="", lastLabel="";
@@ -357,7 +346,9 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Color.RegularGrid=", ColorToStr(Color.RegularGrid), ";", NL,
-                            "Color.SuperGrid=",   ColorToStr(Color.SuperGrid),   ";")
+   return(StringConcatenate("DrawPriceGrid=",               BoolToStr(DrawPriceGrid),      ";", NL,
+                            "PriceGrid.MinDistance.Pixel=", PriceGrid.MinDistance.Pixel,   ";", NL,
+                            "Color.RegularGrid=",           ColorToStr(Color.RegularGrid), ";", NL,
+                            "Color.SuperGrid=",             ColorToStr(Color.SuperGrid),   ";")
    );
 }
