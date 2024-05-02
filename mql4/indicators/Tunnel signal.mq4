@@ -3,9 +3,10 @@
  *
  *
  * TODO:
- *  - update Grid for Bitcoin, GBPJPY
- *  - signaling
+ *  - dynamic Grid
+ *
  *  - merge bufferMain[] and bufferTrend[]
+ *  - signaling
  *
  *  - MA Tunnel
  *     support MA method MODE_ALMA
@@ -24,6 +25,8 @@
  *
  *  - ChartInfos
  *     fix positioning of UnitSize/PositionSize when in CORNER_TOP_LEFT
+ *     on hotkey CustomPositions() the unitsize is not recalculated
+ *     rewrite unitsize configuration
  *
  *  - iCustom(): limit calculated bars in online charts
  *  - simplify ObjectCreateRegister()
@@ -395,7 +398,7 @@ bool CreateTrendHints() {
    string label = prefix +"Close"+ suffix;
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-   ObjectSet    (label, OBJPROP_XDISTANCE, 67);
+   ObjectSet    (label, OBJPROP_XDISTANCE, 66);
    ObjectSet    (label, OBJPROP_YDISTANCE,  1);
    ObjectSetText(label, " ");
    trendHintCloseLabel = label;
@@ -403,7 +406,7 @@ bool CreateTrendHints() {
    label = prefix +"MA"+ suffix;
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-   ObjectSet    (label, OBJPROP_XDISTANCE, 35);
+   ObjectSet    (label, OBJPROP_XDISTANCE, 34);
    ObjectSet    (label, OBJPROP_YDISTANCE,  1);
    ObjectSetText(label, " ");
    trendHintMaLabel = label;

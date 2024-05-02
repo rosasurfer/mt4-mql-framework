@@ -4184,6 +4184,11 @@ string DoubleToStrEx(double value, int digits) {
    if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
 
    string sValue = value;
+   // Since VS 2015 string representations of infinite, indefinite, and NaN values conform to the C99 standard. Before Microsoft used its own non-standard format.
+   //
+   // @see  https://learn.microsoft.com/en-us/cpp/c-runtime-library/format-specification-syntax-printf-and-wprintf-functions?view=msvc-170
+   //
+   //            non-standard               C99
    if (sValue=="-1.#IND0000" || sValue=="-nan(ind)") return(sValue);    //  NaN: not-a-number (in terminal builds < 416 the comparison NaN==NaN returns TRUE/is broken)
    if (sValue== "1.#INF0000" || sValue== "inf"     ) return(sValue);    //  INF: positive infinity
    if (sValue=="-1.#INF0000" || sValue=="-inf"     ) return(sValue);    // -INF: negative infinity

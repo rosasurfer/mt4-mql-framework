@@ -94,6 +94,14 @@
 #define PROCESS_INFORMATION_size            16
 #define PROCESS_INFORMATION_intSize          4
 
+#define RECT_size                           16
+#define RECT_intSize                         4
+
+#define RECT.left                            0
+#define RECT.top                             1
+#define RECT.right                           2
+#define RECT.bottom                          3
+
 #define SECURITY_ATTRIBUTES_size            12
 #define SECURITY_ATTRIBUTES_intSize          3
 

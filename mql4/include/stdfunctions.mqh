@@ -5664,6 +5664,12 @@ string TradeCommandToStr(int cmd) {
  */
 string NumberToStr(double value, string mask) {
    string sNumber = value;
+
+   // Since VS 2015 string representations of infinite, indefinite, and NaN values conform to the C99 standard. Before Microsoft used its own non-standard format.
+   //
+   // @see  https://learn.microsoft.com/en-us/cpp/c-runtime-library/format-specification-syntax-printf-and-wprintf-functions?view=msvc-170
+   //
+   //            non-standard               C99
    if (sNumber=="-1.#IND0000" || sNumber=="-nan(ind)") return(sNumber);    //  NaN: not-a-number (in terminal builds < 416 the comparison NaN==NaN returns TRUE/is broken)
    if (sNumber== "1.#INF0000" || sNumber== "inf"     ) return(sNumber);    //  INF: positive infinity
    if (sNumber=="-1.#INF0000" || sNumber=="-inf"     ) return(sNumber);    // -INF: negative infinity
