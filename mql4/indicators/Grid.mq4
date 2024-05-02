@@ -22,6 +22,8 @@ int __DeinitFlags[];
 extern color Color.RegularGrid = Gainsboro;        // C'220,220,220'
 extern color Color.SuperGrid   = LightGray;        // C'211,211,211' (slightly darker)
 
+extern bool  DoDebug = false;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
@@ -74,7 +76,7 @@ int onTick() {
 
 double lastMinPrice;
 double lastMaxPrice;
-double lastHeight;
+double lastChartHeight;
 
 
 /**
@@ -83,23 +85,99 @@ double lastHeight;
  * @return bool - success status
  */
 bool UpdateHorizontalGrid() {
+   if (!__isChart) return(true);
+
+   int hChartWnd = __ExecutionContext[EC.hChartWindow];
+   if (!IsWindowVisible(hChartWnd)) {
+      if (DoDebug) debug("UpdateHorizontalGrid(0.1)  Tick="+ Ticks +"  skip => IsVisible=0");
+      return(true);
+   }
+
+   if (IsIconic(hChartWnd)) {
+      if (DoDebug) debug("UpdateHorizontalGrid(0.2)  Tick="+ Ticks +"  skip => IsIconic=1");
+      return(true);
+   }
+
+   int hChart = __ExecutionContext[EC.hChart], rect[RECT_size];
+   if (!GetWindowRect(hChart, rect)) return(!catch("UpdateHorizontalGrid(1)->GetWindowRect()", ERR_WIN32_ERROR+GetLastWin32Error()));
+   int chartHeight = rect[RECT.bottom]-rect[RECT.top];
+   if (!chartHeight) {                                         // view port resized to zero height
+      if (DoDebug) debug("UpdateHorizontalGrid(0.3)  Tick="+ Ticks +"  skip => chartHeight=0");
+      return(true);
+   }
+
    double minPrice = WindowPriceMin();
    double maxPrice = WindowPriceMax();
-   if (!minPrice || !maxPrice) return(true);          // ERS_TERMINAL_NOT_YET_READY
 
-   int hWnd = __ExecutionContext[EC.hChart], rect[RECT_size];
-   if (!GetWindowRect(hWnd, rect)) return(!catch("UpdateHorizontalGrid(1)->GetWindowRect()", ERR_WIN32_ERROR+GetLastWin32Error()));
-   int height = rect[RECT.bottom]-rect[RECT.top];
-   if (!height) return(true);                         // view port resized to zero height
+   if (!minPrice || !maxPrice) {                               // chart not yet ready
+      if (DoDebug) debug("UpdateHorizontalGrid(0.4)  Tick="+ Ticks +"  skip => minPrice=0  maxPrice=0");
+      return(true);
+   }
 
-   if (height!=lastHeight || minPrice!=lastMinPrice || maxPrice!=lastMaxPrice) {
-      if (false) debug("onTick(0.1)  height="+ height +"  minPrice="+ NumberToStr(minPrice, PriceFormat) +"  maxPrice="+ NumberToStr(maxPrice, PriceFormat));
+   double chartRange = NormalizeDouble(maxPrice-minPrice, Digits);
+   if (chartRange <= 0) {                                      // chart with ScaleFix=1 after resizing to zero height
+      if (DoDebug) debug("UpdateHorizontalGrid(0.5)  Tick="+ Ticks +"  skip => chartRange="+ NumberToStr(chartRange, ".+") +"  (min="+ NumberToStr(minPrice, PriceFormat) +"  max="+ NumberToStr(maxPrice, PriceFormat) +")");
+      return(true);
+   }
 
-      lastMinPrice = minPrice;
-      lastMaxPrice = maxPrice;
-      lastHeight = height;
+   if (chartHeight!=lastChartHeight || minPrice!=lastMinPrice || maxPrice!=lastMaxPrice) {
+      int minSeparatorDistance = 30;                           // min separator distance in pixel
+      double separators = 1.*chartHeight/minSeparatorDistance;
+      double separatorRange = NormalizeDouble(chartRange/separators, Digits);
+      double grid, baseGrid = MathPow(10, MathFloor(MathLog10(separatorRange)));
+
+      static int multiples[] = {2, 5, 10};
+      for (int i, size=ArraySize(multiples); i < size; i++) {
+         grid = NormalizeDouble(multiples[i] * baseGrid, Digits);
+         if (grid > separatorRange) break;
+      }
+      if (DoDebug) debug("UpdateHorizontalGrid(0.6)  Tick="+ Ticks +"  height="+ chartHeight +"  range="+ DoubleToStr(chartRange/pUnit, pDigits) +" "+ spUnit
+                                                    +" => "+ Round(separators) +" seps"
+                                                    +" => "+ DoubleToStr(separatorRange/pUnit, pDigits) +" "+ spUnit +"/sep"
+                                                    +" => grid: "+ DoubleToStr(grid/pUnit, pDigits) +" "+ spUnit);
+      lastMinPrice    = minPrice;
+      lastMaxPrice    = maxPrice;
+      lastChartHeight = chartHeight;
    }
    return(!catch("UpdateHorizontalGrid(2)"));
+
+   // a separator every multiple of 1
+   // -------------------------------
+   // a separator every 0.0001 units   1 * 10 ^ -4     1 pip
+   // a separator every 0.001 units    1 * 10 ^ -3
+   // a separator every 0.01 units     1 * 10 ^ -2
+   // a separator every 0.1 units      1 * 10 ^ -1
+   // a separator every 1 unit         1 * 10 ^  0
+   // a separator every 10 units       1 * 10 ^ +1
+   // a separator every 100 units      1 * 10 ^ +2
+   // a separator every 1000 units     1 * 10 ^ +3
+   // a separator every 10000 units    1 * 10 ^ +4
+
+
+   // a separator every multiple of 2
+   // -------------------------------
+   // a separator every 0.0002 units   2 * 10 ^ -4     2 pip
+   // a separator every 0.002 units    2 * 10 ^ -3
+   // a separator every 0.02 units     2 * 10 ^ -2
+   // a separator every 0.2 units      2 * 10 ^ -1
+   // a separator every 2 units        2 * 10 ^  0
+   // a separator every 20 units       2 * 10 ^ +1
+   // a separator every 200 units      2 * 10 ^ +2
+   // a separator every 2000 units     2 * 10 ^ +3
+   // a separator every 20000 units    2 * 10 ^ +4
+
+
+   // a separator every multiple of 5
+   // -------------------------------
+   // a separator every 0.0005 units   5 * 10 ^ -4     5 pip
+   // a separator every 0.005 units    5 * 10 ^ -3
+   // a separator every 0.05 units     5 * 10 ^ -2
+   // a separator every 0.5 units      5 * 10 ^ -1
+   // a separator every 5 units        5 * 10 ^  0
+   // a separator every 50 units       5 * 10 ^ +1
+   // a separator every 500 units      5 * 10 ^ +2
+   // a separator every 5000 units     5 * 10 ^ +3
+   // a separator every 50000 units    5 * 10 ^ +4
 }
 
 
