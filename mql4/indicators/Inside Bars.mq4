@@ -596,7 +596,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    // vertical line at IB open
    string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +") ["+ counter +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget, 0, 0)) {
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet      (label, OBJPROP_COLOR, Blue);
       ObjectSet      (label, OBJPROP_RAY,   false);
@@ -607,7 +607,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    // horizontal line at long projection
    label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, closeTime, longTarget, 0, 0)) {
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, closeTime, longTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet      (label, OBJPROP_COLOR, Blue);
       ObjectSet      (label, OBJPROP_RAY,   false);
@@ -619,7 +619,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    // horizontal line at short projection
    label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, shortTarget, closeTime, shortTarget, 0, 0)) {
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, shortTarget, closeTime, shortTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet      (label, OBJPROP_COLOR, Blue);
       ObjectSet      (label, OBJPROP_RAY,   false);
@@ -702,7 +702,7 @@ bool DeleteInsideBars(int timeframe) {
 string CreateStatusLabel() {
    string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return("");
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 500);            // the SuperBars label starts at xDist=300
    ObjectSet    (label, OBJPROP_YDISTANCE,   3);

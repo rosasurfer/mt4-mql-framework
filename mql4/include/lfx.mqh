@@ -129,7 +129,7 @@ bool InitTradeAccount(string accountId = "") {
 
    // store account identifier in the chart to enable remote access by other programs
    string label = "TradeAccount";
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);           // format "{account-company}:{account-number}"
    ObjectSetText(label, StringConcatenate(tradeAccount.company, ":", tradeAccount.number));
 

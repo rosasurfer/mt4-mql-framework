@@ -1067,7 +1067,7 @@ bool CreateLabels() {
 
    // instrument name (the text is set immediately here)
    if (build <= 509) {                                                              // only builds <= 509, newer builds already display the symbol here
-      if (ObjectFind(label.instrument) == -1) if (!ObjectCreateRegister(label.instrument, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (ObjectFind(label.instrument) == -1) if (!ObjectCreateRegister(label.instrument, OBJ_LABEL, 0, 0, 0)) return(false);
       ObjectSet(label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));    // On builds > 478 the label is inset to account for the arrow of the
       ObjectSet(label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));    // "One-Click-Trading" feature.
@@ -1078,7 +1078,7 @@ bool CreateLabels() {
    }
 
    // price
-   if (ObjectFind(label.price) == -1) if (!ObjectCreateRegister(label.price, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label.price) == -1) if (!ObjectCreateRegister(label.price, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet    (label.price, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label.price, OBJPROP_XDISTANCE, 14);
    ObjectSet    (label.price, OBJPROP_YDISTANCE, 15);
@@ -1088,7 +1088,7 @@ bool CreateLabels() {
    corner = CORNER_TOP_RIGHT;
    xDist  = 33;
    yDist  = 38;
-   if (ObjectFind(label.spread) == -1) if (!ObjectCreateRegister(label.spread, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label.spread) == -1) if (!ObjectCreateRegister(label.spread, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet    (label.spread, OBJPROP_CORNER,   corner);
    ObjectSet    (label.spread, OBJPROP_XDISTANCE, xDist);
    ObjectSet    (label.spread, OBJPROP_YDISTANCE, yDist);
@@ -1101,7 +1101,7 @@ bool CreateLabels() {
       case CORNER_TOP_RIGHT:    yDist = 58; break;                // y(spread) + 20
       case CORNER_BOTTOM_RIGHT: yDist = 9;  break;
    }
-   if (ObjectFind(label.unitSize) == -1) if (!ObjectCreateRegister(label.unitSize, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label.unitSize) == -1) if (!ObjectCreateRegister(label.unitSize, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet    (label.unitSize, OBJPROP_CORNER,   corner);
    ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, xDist);
    ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, yDist);
@@ -1111,28 +1111,28 @@ bool CreateLabels() {
    corner = totalPosition.corner;
    xDist  = 9;
    yDist += 20;                                                   // 1 line above/below unitsize
-   if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet    (label.totalPosition, OBJPROP_CORNER,   corner);
    ObjectSet    (label.totalPosition, OBJPROP_XDISTANCE, xDist);
    ObjectSet    (label.totalPosition, OBJPROP_YDISTANCE, yDist);
    ObjectSetText(label.totalPosition, " ", 1);
 
    // account balance
-   if (ObjectFind(label.accountBalance) == -1) if (!ObjectCreateRegister(label.accountBalance, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label.accountBalance) == -1) if (!ObjectCreateRegister(label.accountBalance, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet    (label.accountBalance, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet    (label.accountBalance, OBJPROP_XDISTANCE, 330);
    ObjectSet    (label.accountBalance, OBJPROP_YDISTANCE,   9);
    ObjectSetText(label.accountBalance, " ", 1);
 
    // order counter
-   if (ObjectFind(label.orderCounter) == -1) if (!ObjectCreateRegister(label.orderCounter, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label.orderCounter) == -1) if (!ObjectCreateRegister(label.orderCounter, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 500);
    ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
    ObjectSetText(label.orderCounter, " ", 1);
 
    // trade account
-   if (ObjectFind(label.tradeAccount) == -1) if (!ObjectCreateRegister(label.tradeAccount, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label.tradeAccount) == -1) if (!ObjectCreateRegister(label.tradeAccount, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet    (label.tradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet    (label.tradeAccount, OBJPROP_XDISTANCE, 6);
    ObjectSet    (label.tradeAccount, OBJPROP_YDISTANCE, 4);
@@ -1267,7 +1267,7 @@ bool UpdatePositions() {
 
    // pending order marker bottom-right
    string label = ProgramName() +".PendingTickets";
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet(label, OBJPROP_CORNER,     CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE,  12);
    ObjectSet(label, OBJPROP_YDISTANCE,  ifInt(isPosition, 48, 30));
@@ -1333,7 +1333,7 @@ bool UpdatePositions() {
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
          xDist = xPrev + xOffset[col];
-         if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return(false);
          ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
          ObjectSet(label, OBJPROP_XDISTANCE, xDist);
          ObjectSet(label, OBJPROP_YDISTANCE, yDist);
@@ -1341,13 +1341,13 @@ bool UpdatePositions() {
          xPrev = xDist;
       }
       label = StringConcatenate(label.customPosition, ".line", lines, "_bem");
-      if (!ObjectCreateRegister(label, OBJ_HLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (!ObjectCreateRegister(label, OBJ_HLINE, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       label = StringConcatenate(label.customPosition, ".line", lines, "_pm");
-      if (!ObjectCreateRegister(label, OBJ_HLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (!ObjectCreateRegister(label, OBJ_HLINE, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       label = StringConcatenate(label.customPosition, ".line", lines, "_lm");
-      if (!ObjectCreateRegister(label, OBJ_HLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (!ObjectCreateRegister(label, OBJ_HLINE, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
 
@@ -1629,7 +1629,7 @@ bool UpdateStopoutLevel() {
    else                          soPrice = _Ask + soDistance;
 
    // Stopout-Preis anzeigen
-   if (ObjectFind(label.stopoutLevel) == -1) if (!ObjectCreateRegister(label.stopoutLevel, OBJ_HLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label.stopoutLevel) == -1) if (!ObjectCreateRegister(label.stopoutLevel, OBJ_HLINE, 0, 0, 0)) return(false);
    ObjectSet(label.stopoutLevel, OBJPROP_STYLE,  STYLE_SOLID);
    ObjectSet(label.stopoutLevel, OBJPROP_COLOR,  OrangeRed);
    ObjectSet(label.stopoutLevel, OBJPROP_BACK,   false);                               // FALSE causes the price level to be displayed on the scala

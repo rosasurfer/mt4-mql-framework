@@ -29,7 +29,6 @@
  *     rewrite unitsize configuration
  *
  *  - iCustom(): limit calculated bars in online charts
- *  - simplify ObjectCreateRegister()
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -396,7 +395,7 @@ bool CreateTrendHints() {
    if (__CoreFunction==CF_INIT && window==-1) window = WindowsTotal();      // spurious issue: window=-1, it will get the "next" index
 
    string label = prefix +"Close"+ suffix;
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 66);
    ObjectSet    (label, OBJPROP_YDISTANCE,  1);
@@ -404,7 +403,7 @@ bool CreateTrendHints() {
    trendHintCloseLabel = label;
 
    label = prefix +"MA"+ suffix;
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 34);
    ObjectSet    (label, OBJPROP_YDISTANCE,  1);
@@ -412,7 +411,7 @@ bool CreateTrendHints() {
    trendHintMaLabel = label;
 
    label = prefix +"MACD"+ suffix;
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 7);
    ObjectSet    (label, OBJPROP_YDISTANCE, 1);

@@ -134,7 +134,7 @@ bool CreateChartObjects() {
 
    // background rectangles
    string label = indicatorName +"."+ n +".background";
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
    ObjectSet    (label, OBJPROP_YDISTANCE, yPos);
@@ -142,7 +142,7 @@ bool CreateChartObjects() {
 
    n++;
    label = indicatorName +"."+ n +".background";
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
    ObjectSet    (label, OBJPROP_YDISTANCE, yPos+186);          // line height: 14 pt
@@ -157,7 +157,7 @@ bool CreateChartObjects() {
    for (int i=0; i < size; i++) {
       n++;
       label = indicatorName +"."+ n +"."+ labels[i];
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
 
       if (IntInArray(col2Data, i)) {                  // column 2 data

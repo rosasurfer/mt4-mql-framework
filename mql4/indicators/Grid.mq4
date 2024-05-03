@@ -107,7 +107,7 @@ bool UpdateHorizontalGrid() {
       if (DoDebug) debug("UpdateHorizontalGrid(0.1)  gridLevel="+ NumberToStr(gridLevel, PriceFormat));
 
       string label = NumberToStr(gridLevel, ",'R.+");
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_HLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_HLINE, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_STYLE,  STYLE_DOT);
       ObjectSet(label, OBJPROP_COLOR,  Color.RegularGrid);
       ObjectSet(label, OBJPROP_PRICE1, gridLevel);
@@ -310,7 +310,7 @@ bool UpdateVerticalGrid() {
       if (lastChartTime == chartTime) ObjectDelete(lastLabel);                // Bars der vorherigen Periode fehlen (noch laufendes ERS_HISTORY_UPDATE oder Kurslücke)
                                                                               // Separator für die fehlende Periode wieder löschen
       // Separator zeichnen
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_VLINE, 0, chartTime, 0, 0, 0, 0, 0)) return(false);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_VLINE, 0, chartTime, 0)) return(false);
       sepStyle = STYLE_DOT;
       sepColor = Color.RegularGrid;
       if (Period() < PERIOD_H4) {

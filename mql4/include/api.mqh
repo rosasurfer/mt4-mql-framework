@@ -217,7 +217,7 @@ color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits=8);;
 double   NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT);;
 string   NumberToStr(double value, string mask);;
-string   ObjectTypeToStr(int type);;
+string   ObjectTypeToStr(int type, int flags=NULL);;
 string   OperationTypeDescription(int type);;
 string   OperationTypeToStr(int type);;
 bool     OrderLogMessage(int ticket);;
@@ -344,7 +344,7 @@ string   JoinDoubles(double &values[], string separator=", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator=", ");;
 string   JoinInts(int &values[], string separator=", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
-bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);;
+bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2=NULL, double price2=NULL, datetime time3=NULL, double price3=NULL);;
 bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 

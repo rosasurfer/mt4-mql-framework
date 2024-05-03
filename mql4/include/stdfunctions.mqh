@@ -5489,11 +5489,12 @@ string MessageBoxButtonToStr(int id) {
 /**
  * Return a human-readable form of an object type identifier.
  *
- * @param  int type - object type id
- *
+ * @param  int type             - object type id
+ * @param  int flags [optional] - execution control flags (default: none)
+ *                                F_ERR_INVALID_PARAMETER: don't trigger a fatal error on unrecognized values
  * @return string
  */
-string ObjectTypeToStr(int type) {
+string ObjectTypeToStr(int type, int flags = NULL) {
    switch (type) {
       case OBJ_VLINE        : return("OBJ_VLINE"        );
       case OBJ_HLINE        : return("OBJ_HLINE"        );
@@ -5520,7 +5521,10 @@ string ObjectTypeToStr(int type) {
       case OBJ_ARROW        : return("OBJ_ARROW"        );
       case OBJ_LABEL        : return("OBJ_LABEL"        );
    }
-   return(_EMPTY_STR(catch("ObjectTypeToStr(1)  unknown object type: "+ type, ERR_RUNTIME_ERROR)));
+
+   if (!flags & F_ERR_INVALID_PARAMETER)
+      return(_EMPTY_STR(catch("ObjectTypeToStr(1)  unknown object type: "+ type, ERR_INVALID_PARAMETER)));
+   return(""+ type);
 }
 
 

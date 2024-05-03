@@ -936,7 +936,7 @@ bool Create123Projection(int stopBar, double stopLevel, int breakoutBar, double 
    counter++;
    string label = "123 projection: "+ NumberToStr(targetLevel, PriceFormat) +"-"+ NumberToStr(breakoutLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], targetLevel, Time[stopBar], breakoutLevel, 0, 0)) {
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], targetLevel, Time[stopBar], breakoutLevel)) {
       ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
       ObjectSet(label, OBJPROP_WIDTH, 2);
       ObjectSet(label, OBJPROP_COLOR, Red);
@@ -952,7 +952,7 @@ bool Create123Projection(int stopBar, double stopLevel, int breakoutBar, double 
    // horizontal marker at breakout level
    label = "123 projection: BO = "+ NumberToStr(breakoutLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], breakoutLevel, toTime, breakoutLevel, 0, 0)) {
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], breakoutLevel, toTime, breakoutLevel)) {
       ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
       ObjectSet(label, OBJPROP_COLOR, Red);
       ObjectSet(label, OBJPROP_RAY,   false);
@@ -963,7 +963,7 @@ bool Create123Projection(int stopBar, double stopLevel, int breakoutBar, double 
    // horizontal marker at target level
    label = "123 projection: TP = "+ NumberToStr(targetLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], targetLevel, toTime, targetLevel, 0, 0)) {
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], targetLevel, toTime, targetLevel)) {
       ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
       ObjectSet(label, OBJPROP_COLOR, Red);
       ObjectSet(label, OBJPROP_RAY,   false);

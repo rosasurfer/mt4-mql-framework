@@ -12,7 +12,7 @@ string CreateChartLegend() {
 
    if (__isChart && !__isSuperContext) {
       if (ObjectFind(name) == -1) {                      // create a new label or reuse an existing one
-         if (!ObjectCreateRegister(name, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
+         if (!ObjectCreateRegister(name, OBJ_LABEL, 0, 0, 0)) return("");
          ObjectSetText(name, " ");
       }
       RearrangeChartLegends();
