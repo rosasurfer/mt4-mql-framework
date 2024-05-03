@@ -883,6 +883,7 @@ bool     IsSymlinkA(string path);;
 bool     IsTerminalConfigKeyA(string section, string key);;
 bool     IsUIThread(int threadId=NULL);;
 bool     IsVirtualKeyDown(int vKey);;
+bool     IsWindowAreaVisible(int hWnd);;
 int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
