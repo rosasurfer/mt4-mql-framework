@@ -122,12 +122,14 @@ bool   signal.onExit.alert;
 bool   signal.onExit.mail;
 bool   signal.onExit.sms;
 
+string indicatorName = "";
+
 string trendHintCloseLabel = "";
 string trendHintMaLabel    = "";
 string trendHintMacdLabel  = "";
-
-string trendHintFontName = "Arial Black";
-int    trendHintFontSize = 8;
+string trendHintFontName   = "Arial Black";
+int    trendHintFontSize   = 8;
+bool   trendHintsCreated   = false;
 
 
 /**
@@ -236,7 +238,6 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.EntryLong  = GetConfigString(indicator, "Signal.Sound.EntryLong",  Signal.Sound.EntryLong);
    if (AutoConfiguration) Signal.Sound.EntryShort = GetConfigString(indicator, "Signal.Sound.EntryShort", Signal.Sound.EntryShort);
 
-   CreateTrendHints();
    SetIndicatorOptions();
    return(catch("onInit(16)"));
 }
@@ -258,6 +259,9 @@ int onTick() {
       ArrayInitialize(bufferUpper, 0);
       ArrayInitialize(bufferLower, 0);
       SetIndicatorOptions();
+      if (!trendHintsCreated) {
+         if (!CreateTrendHints()) return(last_error);       // uses WindowFind() which cannot be called in CF_INIT
+      }
    }
 
    // synchronize buffers with a shifted offline chart
@@ -391,8 +395,8 @@ bool CreateTrendHints() {
 
    string prefix = "rsf."+ WindowExpertName() +".";
    string suffix = "."+ __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
-   int window = WindowFind(WindowExpertName());
-   if (__CoreFunction==CF_INIT && window==-1) window = WindowsTotal();      // spurious issue: window=-1, it will get the "next" index
+   int window = WindowFind(indicatorName);
+   if (window == -1) return(!catch("CreateTrendHints(1)->WindowFind(\""+ indicatorName +"\") => -1", ERR_RUNTIME_ERROR));
 
    string label = prefix +"Close"+ suffix;
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0)) return(false);
@@ -418,7 +422,8 @@ bool CreateTrendHints() {
    ObjectSetText(label, " ");
    trendHintMacdLabel = label;
 
-   return(!catch("CreateTrendHints(1)"));
+   trendHintsCreated = true;
+   return(!catch("CreateTrendHints(2)"));
 }
 
 
@@ -454,7 +459,7 @@ void UpdateTrendHint(int id, int status) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   string indicatorName = WindowExpertName();
+   indicatorName = WindowExpertName();
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);

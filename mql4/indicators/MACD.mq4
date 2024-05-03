@@ -31,7 +31,7 @@ extern string FastMA.Method                  = "SMA | LWMA | EMA* | SMMA| ALMA";
 extern string FastMA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern int    SlowMA.Periods                 = 26;
-extern string SlowMA.Method                  = "SMA | LWMA | EMA | ALMA*";
+extern string SlowMA.Method                  = "SMA | LWMA | EMA* | ALMA";
 extern string SlowMA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Histogram.Color.Upper          = LimeGreen;
