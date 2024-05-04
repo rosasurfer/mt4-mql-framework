@@ -213,6 +213,15 @@
  *  - rewrite range bar generator
  *  - VPS: monitor and notify of incoming emails
  *  - CLI tools to rename/update/delete symbols
+ *
+ *
+ *  @see  https://stackoverflow.com/questions/68375674/how-to-get-scaling-aware-window-size-using-winapi#                              [Get scaling-aware window size]
+ *  @see  https://gist.github.com/marler8997/9f39458d26e2d8521d48e36530fbb459#                                                          [Win32DPI and monitor scaling]
+ *  @see  https://cplusplus.com/forum/windows/285609/#                                                           [Get desktop dimensions while DPI scaling is enabled]
+ *  @see  https://stackoverflow.com/questions/5977445/how-to-get-windows-display-settings#                                              [How to get Win7 scale factor]
+ *  @see  https://www.reddit.com/r/Windows10/comments/3lolnr/why_is_dpi_scaling_on_windows_7_better_than_on/?rdt=56415#  [Why is DPI scaling on W7 better than on W10]
+ *  @see  https://forums.mydigitallife.net/threads/solved-windows-10-higher-dpi-win8dpiscaling-problem.62528/
+ *  @see  https://www.reddit.com/r/buildapc/comments/5v8pcd/rwindows10_wasnt_very_friendly_but_does_anyone/#              [Disable W10 DPI scaling for an application]
  */
 #define STRATEGY_ID  107                     // unique strategy id (used for generation of magic order numbers)
 

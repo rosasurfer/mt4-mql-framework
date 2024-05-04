@@ -3,8 +3,6 @@
  *
  *
  * TODO:
- *  - dynamic Grid
- *
  *  - merge bufferMain[] and bufferTrend[]
  *  - signaling
  *

@@ -4247,8 +4247,8 @@ string DoubleToStrEx(double value, int digits) {
 
 
 /**
- * Wrap values of a string array in double quote characters. Modifies the passed array. Not initialized array elements
- * (string NULL pointers) are not modified.
+ * Wrap values of a string array in double quote characters. Modifies the passed array. Not initialized strings (NULL pointers)
+ * are not modified.
  *
  * @param  string values[]
  *
@@ -4260,8 +4260,9 @@ bool DoubleQuoteStrings(string &values[]) {
    int size = ArraySize(values);
 
    for (int i=0; i < size; i++) {
-      if (!StrIsNull(values[i]))                                     // skip NULL pointers
+      if (!StrIsNull(values[i])) {                                // leave NULL pointers as is
          values[i] = StringConcatenate("\"", values[i], "\"");
+      }
    }
    return(true);
 }

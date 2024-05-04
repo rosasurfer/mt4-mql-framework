@@ -1,6 +1,6 @@
 
-string __registeredObjects[];
-int    __registeredOjectsCounter = 0;
+string __objects[];              // registered objects
+int    __ojectsCounter = 0;      // sizeof(__objects)
 
 
 /**
@@ -59,17 +59,17 @@ bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NU
    if (!success) return(!catch("ObjectCreateRegister(2)  name=\""+ name +"\", type="+ ObjectTypeToStr(type, F_ERR_INVALID_PARAMETER) +", window="+ window, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
    // register the object for auto-removal
-   int size = ArraySize(__registeredObjects);
-   if (size <= __registeredOjectsCounter) {
+   int size = ArraySize(__objects);
+   if (size <= __ojectsCounter) {
       if (!size) size = 512;
       size <<= 1;                                           // prevent re-allocation on every call (initial size 1024)
-      ArrayResize(__registeredObjects, size);
-      if (size >= 131072) debug("ObjectCreateRegister(3)  objects="+ (__registeredOjectsCounter+1));
+      ArrayResize(__objects, size);
+      if (size >= 131072) debug("ObjectCreateRegister(3)  objects="+ (__ojectsCounter+1));
    }
-   __registeredObjects[__registeredOjectsCounter] = name;
-   __registeredOjectsCounter++;
+   __objects[__ojectsCounter] = name;
+   __ojectsCounter++;
 
-   //debug("ObjectCreateRegister(4)  Tick="+ __ExecutionContext[EC.ticks] +"  objects="+ __registeredOjectsCounter +"  \""+ name +"\"");
+   //debug("ObjectCreateRegister(4)  Tick="+ __ExecutionContext[EC.ticks] +"  objects="+ __objectsCounter +"  \""+ name +"\"");
    return(true);
 }
 
@@ -80,12 +80,11 @@ bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NU
  * @return int - error status
  */
 int DeleteRegisteredObjects() {
-   for (int i=0; i < __registeredOjectsCounter; i++) {
-      if (ObjectFind(__registeredObjects[i]) != -1) {
-         if (!ObjectDelete(__registeredObjects[i])) logWarn("DeleteRegisteredObjects(1)->ObjectDelete(name=\""+ __registeredObjects[i] +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR));
+   for (int i=0; i < __ojectsCounter; i++) {
+      if (ObjectFind(__objects[i]) != -1) {
+         if (!ObjectDelete(__objects[i])) logWarn("DeleteRegisteredObjects(1)->ObjectDelete(name=\""+ __objects[i] +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR));
       }
    }
-   ArrayResize(__registeredObjects, 0);
-   __registeredOjectsCounter = 0;
+   __ojectsCounter = ArrayResize(__objects, 0);
    return(catch("DeleteRegisteredObjects(2)"));
 }
