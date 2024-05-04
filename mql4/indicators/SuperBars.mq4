@@ -469,7 +469,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          adjustedCloseBar--;
       }
    }
-   if (ObjectFind(nameRectangle) == -1) if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, 0, 0)) return(false);
+   if (ObjectFind(nameRectangle) == -1) if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE)) return(false);
    ObjectSet(nameRectangle, OBJPROP_COLOR,  barColor);
    ObjectSet(nameRectangle, OBJPROP_BACK,   true);
    ObjectSet(nameRectangle, OBJPROP_TIME1,  Time[openBar]);
@@ -492,11 +492,11 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
             }
          }
 
-         if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL, 0, 0, 0)) return(false);
+         if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL)) return(false);
          ObjectSet    (nameLabel, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          ObjectSetText(nameLabel, nameTrendline);
 
-         if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, 0, 0)) return(false);
+         if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND)) return(false);
          ObjectSet(nameTrendline, OBJPROP_RAY,    false);
          ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
          ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
@@ -541,7 +541,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       nameRectangleBg = nameRectangle +" background";
 
       // draw ETH background (creates an optical hole in the SuperBar)
-      if (ObjectFind(nameRectangleBg) == -1) if (!ObjectCreateRegister(nameRectangleBg, OBJ_RECTANGLE, 0, 0, 0)) return(false);
+      if (ObjectFind(nameRectangleBg) == -1) if (!ObjectCreateRegister(nameRectangleBg, OBJ_RECTANGLE)) return(false);
       ObjectSet(nameRectangleBg, OBJPROP_COLOR,  barColor);                      // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
       ObjectSet(nameRectangleBg, OBJPROP_BACK,   true);                          // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
       ObjectSet(nameRectangleBg, OBJPROP_TIME1,  Time[ethOpenBar]);              // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
@@ -551,7 +551,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
       // draw ETH bar (fills the hole with the ETH color)
       if (ObjectFind(nameRectangle) == -1)
-         if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, 0, 0)) return(false);
+         if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE)) return(false);
       ObjectSet(nameRectangle, OBJPROP_COLOR,  ETH.Color);
       ObjectSet(nameRectangle, OBJPROP_BACK,   true);
       ObjectSet(nameRectangle, OBJPROP_TIME1,  Time[ethOpenBar]);
@@ -574,11 +574,11 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
                }
             }
 
-            if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL, 0, 0, 0)) return(false);
+            if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL)) return(false);
             ObjectSet    (nameLabel, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
             ObjectSetText(nameLabel, nameTrendline);
 
-            if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, 0, 0)) return(false);
+            if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND)) return(false);
             ObjectSet(nameTrendline, OBJPROP_RAY,    false);
             ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
             ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
@@ -667,7 +667,7 @@ string CreateStatusLabel() {
 
    string name = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
-   if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_LABEL, 0, 0, 0)) return("");
+   if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_LABEL)) return("");
    ObjectSet    (name, OBJPROP_CORNER,    legendCorner);
    ObjectSet    (name, OBJPROP_XDISTANCE, legend_xDistance);
    ObjectSet    (name, OBJPROP_YDISTANCE, legend_yDistance);

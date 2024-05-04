@@ -12,7 +12,7 @@ bool CreateStatusBox() {
 
    for (int i=0; i < sizeofX; i++) {
       string label = ProgramName() +".statusbox."+ (i+1);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return(false);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
       ObjectSet(label, OBJPROP_YDISTANCE, y);

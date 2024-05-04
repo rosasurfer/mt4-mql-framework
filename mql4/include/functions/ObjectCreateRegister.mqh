@@ -9,9 +9,9 @@ int    __registeredOjectsCounter = 0;
  *
  * @param  string   name              - unique object name (max. 63 chars, may contain line breaks)
  * @param  int      type              - object type identifier
- * @param  int      window            - index of the chart window to create the object in
- * @param  datetime time1             - time value of the first coordinate pair
- * @param  double   price1            - price value of the first coordinate pair
+ * @param  int      window [optional] - index of the chart window to create the object in (default: the main window)
+ * @param  datetime time1  [optional] - time value of the first coordinate pair
+ * @param  double   price1 [optional] - price value of the first coordinate pair
  * @param  datetime time2  [optional] - time value of the second coordinate pair
  * @param  double   price2 [optional] - price value of the second coordinate pair
  * @param  datetime time3  [optional] - time value of the third coordinate pair
@@ -26,7 +26,7 @@ int    __registeredOjectsCounter = 0;
  *  - SuperBars in offline charts: 271 calls on every tick
  *  - move elsewhere as the library is not a singleton (there can be multiple instances)
  */
-bool ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2=NULL, double price2=NULL, datetime time3=NULL, double price3=NULL) {
+bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NULL, double price1=NULL, datetime time2=NULL, double price2=NULL, datetime time3=NULL, double price3=NULL) {
    if (StringLen(name) > 63) return(!catch("ObjectCreateRegister(1)  invalid parameter name: \""+ name +"\" (max 63 chars)", ERR_INVALID_PARAMETER));
 
    // OBJ_VLINE         - Vertical line. Uses time of first coordinate pair.

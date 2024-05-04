@@ -154,7 +154,7 @@ bool UpdateBrackets() {
 
          // high
          label = "Bracket "+ TimeWindow +" High "+ NumberToStr(high, PriceFormat) +" ["+ i +"]["+ pid +"]";
-         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0)) return(false);
+         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND)) return(false);
          ObjectSet(label, OBJPROP_TIME1,  rangeStart);
          ObjectSet(label, OBJPROP_PRICE1, high);
          ObjectSet(label, OBJPROP_TIME2,  rangeEnd);
@@ -167,7 +167,7 @@ bool UpdateBrackets() {
 
          // low
          label = "Bracket "+ TimeWindow +" Low "+ NumberToStr(low, PriceFormat) +" ["+ i +"]["+ pid +"]";
-         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0)) return(false);
+         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND)) return(false);
          ObjectSet(label, OBJPROP_TIME1,  rangeStart);
          ObjectSet(label, OBJPROP_PRICE1, low);
          ObjectSet(label, OBJPROP_TIME2,  rangeEnd);

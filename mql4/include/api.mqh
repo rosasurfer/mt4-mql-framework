@@ -344,7 +344,7 @@ string   JoinDoubles(double &values[], string separator=", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator=", ");;
 string   JoinInts(int &values[], string separator=", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
-bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2=NULL, double price2=NULL, datetime time3=NULL, double price3=NULL);;
+bool     ObjectCreateRegister(string name, int type, int window=0, datetime time1=NULL, double price1=NULL, datetime time2=NULL, double price2=NULL, datetime time3=NULL, double price3=NULL);;
 bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 

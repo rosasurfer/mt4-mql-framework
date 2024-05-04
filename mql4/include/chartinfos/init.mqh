@@ -147,7 +147,7 @@ int afterInit() {
 
          // display ticker status
          string label = ProgramName() +".TickerStatus";
-         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(__ExecutionContext[EC.mqlError]);
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
          ObjectSet    (label, OBJPROP_XDISTANCE, 38);
          ObjectSet    (label, OBJPROP_YDISTANCE, 38);

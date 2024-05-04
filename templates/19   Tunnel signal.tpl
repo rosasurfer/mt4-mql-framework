@@ -18299,7 +18299,7 @@ Draw.Type=Line | Dot*
 Draw.Width=5
 Color.UpTrend=16711680
 Color.DownTrend=16776960
-ShowChartLegend=0
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -18320,6 +18320,7 @@ Draw.Type=Line* | Dot
 Draw.Width=3
 Color.UpTrend=4678655
 Color.DownTrend=4678655
+ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
 </expert>

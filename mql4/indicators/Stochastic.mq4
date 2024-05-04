@@ -199,7 +199,7 @@ bool UpdateSignalMarker(int bar) {
    double price;
 
    if (trend[bar]==1 || trend[bar]==-1) {                                     // set marker long|short
-      if (!objExists) if (!ObjectCreateRegister(label, OBJ_ARROW, 0, 0, 0)) return(false);
+      if (!objExists) if (!ObjectCreateRegister(label, OBJ_ARROW)) return(false);
       if (trend[bar]==1) price =  Low[bar] - iATR(NULL, NULL, 10, bar) * 1.1;
       else               price = High[bar] + iATR(NULL, NULL, 10, bar) * 1.1;
 

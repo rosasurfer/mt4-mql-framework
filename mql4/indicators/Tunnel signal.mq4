@@ -25,8 +25,8 @@
  *
  *  - ChartInfos
  *     fix positioning of UnitSize/PositionSize when in CORNER_TOP_LEFT
- *     on hotkey CustomPositions() the unitsize is not recalculated
- *     rewrite unitsize configuration
+ *     on reload of custom positions per hotkey the unitsize configuration is not re-read
+ *     rewrite and better document unitsize configuration (remove "Default.")
  *
  *  - iCustom(): limit calculated bars in online charts
  */
@@ -260,7 +260,7 @@ int onTick() {
       ArrayInitialize(bufferLower, 0);
       SetIndicatorOptions();
       if (!trendHintsCreated) {
-         if (!CreateTrendHints()) return(last_error);       // uses WindowFind() which cannot be called in CF_INIT
+         if (!CreateTrendHints()) return(last_error);       // calls WindowFind(self) which can't be used in CF_INIT
       }
    }
 
@@ -399,7 +399,7 @@ bool CreateTrendHints() {
    if (window == -1) return(!catch("CreateTrendHints(1)->WindowFind(\""+ indicatorName +"\") => -1", ERR_RUNTIME_ERROR));
 
    string label = prefix +"Close"+ suffix;
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 66);
    ObjectSet    (label, OBJPROP_YDISTANCE,  1);
@@ -407,7 +407,7 @@ bool CreateTrendHints() {
    trendHintCloseLabel = label;
 
    label = prefix +"MA"+ suffix;
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 34);
    ObjectSet    (label, OBJPROP_YDISTANCE,  1);
@@ -415,7 +415,7 @@ bool CreateTrendHints() {
    trendHintMaLabel = label;
 
    label = prefix +"MACD"+ suffix;
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 7);
    ObjectSet    (label, OBJPROP_YDISTANCE, 1);

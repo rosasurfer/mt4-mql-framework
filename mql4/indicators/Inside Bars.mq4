@@ -702,7 +702,7 @@ bool DeleteInsideBars(int timeframe) {
 string CreateStatusLabel() {
    string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0)) return("");
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return("");
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 500);            // the SuperBars label starts at xDist=300
    ObjectSet    (label, OBJPROP_YDISTANCE,   3);
