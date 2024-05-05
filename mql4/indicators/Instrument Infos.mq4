@@ -281,7 +281,7 @@ int UpdateInstrumentInfos() {
    ObjectSetText(labels[I_PUNITVALUE_DATA        ],                      ifString(!fullPointValue, " ", NumberToStr(fullPointValue*pUnit, "R.2+") +" "+ accountCurrency +"/lot"),                                        fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_ADR                    ], "ADR(20):",                                                                                                                                                          fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ADR_DATA               ],                      ifString(!adr, "n/a", DoubleToStr(adr/pUnit, pDigits) + _spUnit +" = "+ NumberToStr(NormalizeDouble(volaPerADR, 2), ".0+") +"%"),               fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ADR_DATA               ],                      ifString(!adr, "n/a", DoubleToStr(adr/pUnit, pDigits) + _spUnit +" = "+ NumberToStr(NormalizeDouble(volaPerADR, 2), ".0+") +"%/price"),         fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_STOPLEVEL              ], "Stop level:",                                                                                                                                                       fontSize, fontName, fontColor);
    ObjectSetText(labels[I_STOPLEVEL_DATA         ],                      ifString(!stopLevel,   "0", DoubleToStr(stopLevel/pUnit,   pDigits) + _spUnit),                                                                 fontSize, fontName, fontColor);
@@ -307,11 +307,11 @@ int UpdateInstrumentInfos() {
    ObjectSetText(labels[I_MARGIN_MINLOT_DATA     ],                      ifString(!marginMinLot,  " ", NumberToStr(marginMinLot, ",'.2R") +" "+ accountCurrency),                                                        fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_SPREAD                 ], "Spread:",                                                                                                                                                           fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_SPREAD_DATA            ],                      DoubleToStr(spreadP/pUnit, pDigits) + _spUnit + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spreadP, adr) * 100, 1) +"% of ADR"),             fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_SPREAD_DATA            ],                      DoubleToStr(spreadP/pUnit, pDigits) + _spUnit + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spreadP, adr) * 100, 1) +"%/ADR"),                fontSize, fontName, fontColor);
    ObjectSetText(labels[I_COMMISSION             ], "Commission:",                                                                                                                                                       fontSize, fontName, fontColor);
    ObjectSetText(labels[I_COMMISSION_DATA        ],                      ifString(!commissionM, "-", DoubleToStr(commissionM, 2) +" "+ accountCurrency +"/lot = "+ NumberToStr(commissionPunit, pUnitFormat) + _spUnit), fontSize, fontName, fontColor);
    ObjectSetText(labels[I_TOTAL_COST             ], "Total cost:",                                                                                                                                                       fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_TOTAL_COST_DATA        ],                      ifString(!totalCostP,  "-", NumberToStr(totalCostPunit, pUnitFormat) + _spUnit),                                                                fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_TOTAL_COST_DATA        ],                      ifString(!totalCostP,  "-", NumberToStr(totalCostPunit, pUnitFormat) + _spUnit) /*+" = ?%/TxV"*/,                                               fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_SWAPLONG               ], "Swap long:",                                                                                                                                                        fontSize, fontName, fontColor);
    ObjectSetText(labels[I_SWAPLONG_DATA          ],                      sSwapLong,                                                                                                                                      fontSize, fontName, fontColor);

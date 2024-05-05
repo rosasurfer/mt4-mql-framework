@@ -154,7 +154,7 @@ show_data=1
 </window>
 
 <window>
-height=16
+height=12
 fixed_height=0
 
 <indicator>
@@ -185,7 +185,7 @@ show_data=1
 </window>
 
 <window>
-height=16
+height=12
 fixed_height=0
 
 <indicator>
