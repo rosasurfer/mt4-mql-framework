@@ -33,10 +33,8 @@ int    lastChartHeight;
 double lastChartMinPrice;
 double lastChartMaxPrice;
 double lastGridSize;
-int    lastGridBase;
 
-string hSeparatorLabels[];       // horizontal separator labels
-double hSeparatorLevels[];       // horizontal separator levels
+string hSeparatorLabels[];       // horizontal price separator labels
 
 
 /**
@@ -62,6 +60,17 @@ int onInit() {
 
    SetIndicatorOptions();
    return(catch("onInit(2)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   RemovePriceSeparators();
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -115,7 +124,6 @@ bool UpdateHorizontalGrid() {
    lastChartMinPrice = minPrice;
    lastChartMaxPrice = maxPrice;
    lastGridSize      = gridSize;
-   lastGridBase      = MathRound(gridSize / MathPow(10, MathFloor(MathLog10(gridSize))));    // 1 | 2 | 5
    return(!catch("UpdateHorizontalGrid(1)"));
 }
 
@@ -271,15 +279,12 @@ bool RemovePriceSeparators() {
 
    for (int i=0; i < size; i++) {
       if (ObjectFind(hSeparatorLabels[i]) != -1) {
-         if (!ObjectDelete(hSeparatorLabels[i])) {
-            return(!catch("RemovePriceSeparators(1)->ObjectDelete(name=\""+ hSeparatorLabels[i] +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-         }
+         ObjectDelete(hSeparatorLabels[i]);
       }
    }
    ArrayResize(hSeparatorLabels, 0);
-   ArrayResize(hSeparatorLevels, 0);
 
-   return(!catch("RemovePriceSeparators(2)"));
+   return(!catch("RemovePriceSeparators(1)"));
 }
 
 
@@ -294,27 +299,21 @@ bool RemovePriceSeparators() {
  */
 bool CreatePriceSeparators(double fromPrice, double toPrice, double gridSize) {
    double gridLevel = NormalizeDouble(fromPrice - MathMod(fromPrice, gridSize), Digits);
-   int numberOfSeparators = (toPrice-gridLevel)/gridSize + 1;
 
-   ArrayResize(hSeparatorLabels, numberOfSeparators);
-   ArrayResize(hSeparatorLevels, numberOfSeparators);
+   int separators = (toPrice-gridLevel)/gridSize + 1;
+   ArrayResize(hSeparatorLabels, separators);
 
-   for (int i=0; gridLevel < toPrice; i++) {
-      string label = NumberToStr(gridLevel, ",'R.+");
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_HLINE)) return(false);
+   for (int i=0; i < separators; i++) {                     // no ObjectCreateRegister(), price separators change constantly
+      string label = NumberToStr(gridLevel, ",'R.+");       // and are handled more efficiently by the indicator itself
+      if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_HLINE, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_STYLE,  STYLE_DOT);
       ObjectSet(label, OBJPROP_COLOR,  Color.RegularGrid);
       ObjectSet(label, OBJPROP_PRICE1, gridLevel);
       ObjectSet(label, OBJPROP_BACK,   true);
 
       hSeparatorLabels[i] = label;
-      hSeparatorLevels[i] = gridLevel;
 
       gridLevel = NormalizeDouble(gridLevel + gridSize, Digits);
-   }
-   if (i < numberOfSeparators) {
-      ArrayResize(hSeparatorLabels, i);
-      ArrayResize(hSeparatorLevels, i);
    }
    //debug("CreatePriceSeparators(0.1)  created "+ i +" separators (gridSize="+ NumberToStr(gridSize, PriceFormat) +")");
 

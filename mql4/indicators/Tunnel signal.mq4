@@ -23,7 +23,7 @@
  *
  *  - ChartInfos
  *     fix positioning of UnitSize/PositionSize when in CORNER_TOP_LEFT
- *     on reload of custom positions per hotkey the unitsize configuration is not re-read
+ *     the unitsize configuration is not read if custom positions are reloaded per hotkey
  *     rewrite and better document unitsize configuration (remove "Default.")
  *
  *  - iCustom(): limit calculated bars in online charts
@@ -439,7 +439,7 @@ void UpdateTrendHint(int id, int status) {
    else                       clr = Orange;
 
    switch (id) {
-      case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "B",  trendHintFontSize, trendHintFontName, clr); break;
+      case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "C",  trendHintFontSize, trendHintFontName, clr); break;
       case HINT_MA:    ObjectSetText(trendHintMaLabel,    "MA", trendHintFontSize, trendHintFontName, clr); break;
       case HINT_MACD:  ObjectSetText(trendHintMacdLabel,  "CD", trendHintFontSize, trendHintFontName, clr); break;
 

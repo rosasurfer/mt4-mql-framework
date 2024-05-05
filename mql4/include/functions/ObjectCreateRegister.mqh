@@ -82,9 +82,9 @@ bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NU
 int DeleteRegisteredObjects() {
    for (int i=0; i < __ojectsCounter; i++) {
       if (ObjectFind(__objects[i]) != -1) {
-         if (!ObjectDelete(__objects[i])) logWarn("DeleteRegisteredObjects(1)->ObjectDelete(name=\""+ __objects[i] +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR));
+         ObjectDelete(__objects[i]);
       }
    }
    __ojectsCounter = ArrayResize(__objects, 0);
-   return(catch("DeleteRegisteredObjects(2)"));
+   return(catch("DeleteRegisteredObjects(1)"));
 }
