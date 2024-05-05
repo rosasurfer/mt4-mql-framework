@@ -210,6 +210,8 @@ Signal.onEntry=1
 AutoConfiguration=0
 </inputs>
 </expert>
+min=-1.0
+max=1.0
 period_flags=0
 show_data=1
 </indicator>

@@ -142,6 +142,8 @@ bool GetHorizontalChartDimensions(int &chartHeight, double &chartMinPrice, doubl
    chartMinPrice = 0;
    chartMaxPrice = 0;
 
+   // TODO: move all Win32 api tests to a single MT4Expander call
+
    static bool lastIsWindowVisible=true, lastIsIconic=false, lastIsWindowAreaVisible=true, lastIsHeight=true, lastIsPrice=true, lastIsPriceRange=true;
    bool isLogDebug = IsLogDebug();
 
@@ -153,15 +155,15 @@ bool GetHorizontalChartDimensions(int &chartHeight, double &chartMinPrice, doubl
    }
    lastIsWindowVisible = true;
 
-   if (lastChartHeight && 1) {                                 // don't test (IsIconic || IsWindowAreaVisible) if the price grid was not yet initialized
-      if (IsIconic(hChartWnd)) {
+   if (lastChartHeight && 1) {                                 // IsIconic() and IsWindowAreaVisible() serve performance purposes only,
+      if (IsIconic(hChartWnd)) {                               // don't test for it if the price grid was not yet initialized
          if (!lastIsIconic && isLogDebug) logDebug("GetHorizontalChartDimensions(2)  Tick="+ Ticks +"  skip (IsIconic=1)");
          lastIsIconic = true;
          return(false);
       }
       lastIsIconic = false;
 
-      if (!IsWindowAreaVisible(hChartWnd)) {
+      if (!IsWindowAreaVisible(hChartWnd)) {                   // in fact this covers IsIconic() but IsIconic() is faster
          if (lastIsWindowAreaVisible && isLogDebug) logDebug("GetHorizontalChartDimensions(3)  Tick="+ Ticks +"  skip (IsWindowAreaVisible=0)");
          lastIsWindowAreaVisible = false;
          return(false);
