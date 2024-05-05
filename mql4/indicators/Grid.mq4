@@ -98,9 +98,9 @@ int onTick() {
 bool UpdateHorizontalGrid() {
    int chartHeight;
    double minPrice, maxPrice;
-   if (!GetHorizontalDimensions(chartHeight, minPrice, maxPrice)) return(!last_error);
+   if (!GetHorizontalChartDimensions(chartHeight, minPrice, maxPrice)) return(!last_error);
 
-   // nothing to do if chart dimensions unchanged
+   // nothing to do if chart dimensions are unchanged
    if (chartHeight==lastChartHeight && minPrice==lastChartMinPrice && maxPrice==lastChartMaxPrice) return(true);
 
    // recalculate grid size
@@ -108,16 +108,16 @@ bool UpdateHorizontalGrid() {
    if (!gridSize) return(false);
 
    // update the grid
-   if (gridSize != lastGridSize) {                       // this includes first use (!lastGridSize)
+   if (gridSize != lastGridSize) {                       // this includes first use: !lastGridSize
       if (!RemovePriceSeparators()) return(false);
 
       double priceRange = maxPrice - minPrice;
-      double fromPrice  = minPrice - 4*priceRange;       // cover 3 times of the view port to both sides (for fast chart moves)
+      double fromPrice  = minPrice - 4*priceRange;       // cover 4 times of the view port on both sides (for fast chart moves)
       double toPrice    = maxPrice + 4*priceRange;
       if (!CreatePriceSeparators(fromPrice, toPrice, gridSize)) return(false);
    }
    else /*gridSize == lastGridSize*/ {
-      // TODO: check whether existing price separators cover the view port
+      // TODO: check whether existing separators cover the view port
    }
 
    lastChartHeight   = chartHeight;
@@ -129,15 +129,15 @@ bool UpdateHorizontalGrid() {
 
 
 /**
- * Compute horizontal chart dimensions.
+ * Get current horizontal chart dimensions.
  *
  * @param  _Out_ int    chartHeight   - variable receiving the chart height in pixel
  * @param  _Out_ double chartMinPrice - variable receiving the min chart price
  * @param  _Out_ double chartMaxPrice - variable receiving the max chart price
  *
- * @return bool - success status; FALSE if there's no visible chart
+ * @return bool - success status; FALSE if there's currently no visible chart
  */
-bool GetHorizontalDimensions(int &chartHeight, double &chartMinPrice, double &chartMaxPrice) {
+bool GetHorizontalChartDimensions(int &chartHeight, double &chartMinPrice, double &chartMaxPrice) {
    chartHeight   = 0;
    chartMinPrice = 0;
    chartMaxPrice = 0;
@@ -147,31 +147,33 @@ bool GetHorizontalDimensions(int &chartHeight, double &chartMinPrice, double &ch
 
    int hChartWnd = __ExecutionContext[EC.hChartWindow];
    if (!IsWindowVisible(hChartWnd)) {
-      if (lastIsWindowVisible && isLogDebug) logDebug("GetHorizontalDimensions(1)  Tick="+ Ticks +"  skip (IsWindowVisible=0)");
+      if (lastIsWindowVisible && isLogDebug) logDebug("GetHorizontalChartDimensions(1)  Tick="+ Ticks +"  skip (IsWindowVisible=0)");
       lastIsWindowVisible = false;
       return(false);
    }
    lastIsWindowVisible = true;
 
-   if (IsIconic(hChartWnd)) {
-      if (!lastIsIconic && isLogDebug) logDebug("GetHorizontalDimensions(2)  Tick="+ Ticks +"  skip (IsIconic=1)");
-      lastIsIconic = true;
-      return(false);
-   }
-   lastIsIconic = false;
+   if (lastChartHeight && 1) {                                 // don't test (IsIconic || IsWindowAreaVisible) if the price grid was not yet initialized
+      if (IsIconic(hChartWnd)) {
+         if (!lastIsIconic && isLogDebug) logDebug("GetHorizontalChartDimensions(2)  Tick="+ Ticks +"  skip (IsIconic=1)");
+         lastIsIconic = true;
+         return(false);
+      }
+      lastIsIconic = false;
 
-   if (!IsWindowAreaVisible(hChartWnd)) {
-      if (lastIsWindowAreaVisible && isLogDebug) logDebug("GetHorizontalDimensions(3)  Tick="+ Ticks +"  skip (IsWindowAreaVisible=0)");
-      lastIsWindowAreaVisible = false;
-      return(false);
+      if (!IsWindowAreaVisible(hChartWnd)) {
+         if (lastIsWindowAreaVisible && isLogDebug) logDebug("GetHorizontalChartDimensions(3)  Tick="+ Ticks +"  skip (IsWindowAreaVisible=0)");
+         lastIsWindowAreaVisible = false;
+         return(false);
+      }
+      lastIsWindowAreaVisible = true;
    }
-   lastIsWindowAreaVisible = true;
 
    int hChart = __ExecutionContext[EC.hChart], rect[RECT_size];
-   if (!GetWindowRect(hChart, rect)) return(!catch("GetHorizontalDimensions(4)->GetWindowRect()", ERR_WIN32_ERROR+GetLastWin32Error()));
+   if (!GetWindowRect(hChart, rect)) return(!catch("GetHorizontalChartDimensions(4)->GetWindowRect()", ERR_WIN32_ERROR+GetLastWin32Error()));
    int height = rect[RECT.bottom]-rect[RECT.top];
    if (!height) {                                              // view port resized to zero height
-      if (lastIsHeight && isLogDebug) logDebug("GetHorizontalDimensions(5)  Tick="+ Ticks +"  skip (chartHeight=0)");
+      if (lastIsHeight && isLogDebug) logDebug("GetHorizontalChartDimensions(5)  Tick="+ Ticks +"  skip (chartHeight=0)");
       lastIsHeight = false;
       return(false);
    }
@@ -180,7 +182,7 @@ bool GetHorizontalDimensions(int &chartHeight, double &chartMinPrice, double &ch
    double minPrice = NormalizeDouble(WindowPriceMin(), Digits);
    double maxPrice = NormalizeDouble(WindowPriceMax(), Digits);
    if (!minPrice || !maxPrice) {                               // chart not yet ready
-      if (lastIsPrice && isLogDebug) logDebug("GetHorizontalDimensions(6)  Tick="+ Ticks +"  skip (minPrice=0, maxPrice=0)");
+      if (lastIsPrice && isLogDebug) logDebug("GetHorizontalChartDimensions(6)  Tick="+ Ticks +"  skip (minPrice=0, maxPrice=0)");
       lastIsPrice = false;
       return(false);
    }
@@ -188,7 +190,7 @@ bool GetHorizontalDimensions(int &chartHeight, double &chartMinPrice, double &ch
 
    double priceRange = NormalizeDouble(maxPrice - minPrice, Digits);
    if (priceRange <= 0) {                                      // chart with ScaleFix=1 after resizing to zero height
-      if (lastIsPriceRange && isLogDebug) logDebug("GetHorizontalDimensions(7)  Tick="+ Ticks +"  skip (priceRange="+ NumberToStr(priceRange, ".+") +", min="+ NumberToStr(minPrice, PriceFormat) +", max="+ NumberToStr(maxPrice, PriceFormat) +")");
+      if (lastIsPriceRange && isLogDebug) logDebug("GetHorizontalChartDimensions(7)  Tick="+ Ticks +"  skip (priceRange="+ NumberToStr(priceRange, ".+") +", min="+ NumberToStr(minPrice, PriceFormat) +", max="+ NumberToStr(maxPrice, PriceFormat) +")");
       lastIsPriceRange = false;
       return(false);
    }
@@ -216,11 +218,10 @@ double ComputeGridSize(int chartHeight, double chartMinPrice, double chartMaxPri
    double separatorRange = priceRange / separators;
    double baseSize       = MathPow(10, MathFloor(MathLog10(separatorRange))), gridSize;
 
-   static int multiples[] = {2, 5, 10};
-   int size = ArraySize(multiples);
-   int startAt = ifInt(EnableGridBase_20, 0, 1);
+   static int multiples[] = {2, 5, 10}, size = 3;
+   int iStart = ifInt(EnableGridBase_20, 0, 1);
 
-   for (int i=startAt; i < size; i++) {
+   for (int i=iStart; i < size; i++) {
       gridSize = multiples[i] * baseSize;
       if (gridSize > separatorRange) break;
    }
