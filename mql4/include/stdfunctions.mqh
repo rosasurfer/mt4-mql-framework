@@ -860,13 +860,15 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
          dValue = Test_GetCommission(__ExecutionContext);
       }
       else {
-         string section="Commissions", key="", symbol=Symbol(), stdSymbol=StdSymbol();
-         bool isCFD = (MarketInfo(Symbol(), MODE_PROFITCALCMODE) == PCM_CFD);
+         // TODO:
+         //  - move commissions to account configuration
+         //  - MODE_PROFITCALCMODE can't be used for deciding on commissions
 
-         // check for an explicitly configured symbol override
+         string section="Commissions", key="", symbol=Symbol(), stdSymbol=StdSymbol();
+
+         // check for an explicitly configured symbol
          if      (IsConfigKey(section, symbol))    key = symbol;
          else if (IsConfigKey(section, stdSymbol)) key = stdSymbol;
-         else if (isCFD)                           dValue = 0;       // PCM_FOREX may or may not have commission
          else {
             // check general account configuration
             string company  = GetAccountCompanyId(); if (company == "") return(EMPTY);

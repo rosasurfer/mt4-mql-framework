@@ -21,12 +21,17 @@
  *  - Inside Bars
  *     prevent signaling of duplicated events
  *
+ *  - SuperBars
+ *     automatically detect weekend sessions and remove config SuperBars->Weekend.Symbols
+ *
  *  - ChartInfos
  *     fix positioning of UnitSize/PositionSize when in CORNER_TOP_LEFT
  *     the unitsize configuration is not read if custom positions are reloaded per hotkey
  *     rewrite and better document unitsize configuration (remove "Default.")
  *
  *  - iCustom(): limit calculated bars in online charts
+ *  - move account infos from global to account config
+ *  - Bybit executes with DealingDesk mode (trades potentially cause ERR_OFF_QUOTES)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

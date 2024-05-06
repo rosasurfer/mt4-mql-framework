@@ -988,7 +988,7 @@ bool ToggleAccountBalance() {
    if (enabled) {
       string sBalance = " ";
       if (mode.intern) {
-         sBalance = "Balance: " + DoubleToStr(AccountBalance(), 2) +" "+ AccountCurrency();
+         sBalance = "Balance: " + NumberToStr(AccountBalance(), ",'.2") +" "+ AccountCurrency();
       }
       else {
          enabled = false;                                      // mode.extern not yet implemented
