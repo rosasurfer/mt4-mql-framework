@@ -1,16 +1,15 @@
 /**
  * DDL Monitor
  *
- * This EA's purpose is to protect the trading account and enforce adherence to a daily loss/drawdown limit (DDL). It monitors
+ * The purpose of this EA is to protect the trading account and enforce adherence to a specified drawdown limit. It monitors
  * open positions and PnL of all symbols (not only the symbol where the EA is attached).
  *
  * Positions of symbols without trade permission and positions opened outside the permitted time range are immediately closed.
  *
- * Permitted positions are monitored until a predefined drawdown limit is reached. Once the DDL is triggered the EA closes all
- * open positions and deletes all pending orders, and further trading is prohibited until the end of the day.
+ * Permitted positions are monitored until the specified drawdown limit is reached. If reached the EA closes all open positions
+ * and deletes all pending orders. Further trading is prohibited until the end of the day (immediate close of new orders).
  *
- * The EA should run in a separate terminal connected 24/7 to the trade server. For best operation it's recommended to setup
- * a hosted environment (VM or dedicated server).
+ * For best operation it's recommended to run the EA in a hosted environment (VM or dedicated server).
  *
  *
  * Input parameters:

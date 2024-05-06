@@ -3,8 +3,10 @@
  *
  *
  * TODO:
- *  - merge bufferMain[] and bufferTrend[]
+ *  - Account Guard @-2.5%
+ *
  *  - signaling
+ *  - merge bufferMain[] and bufferTrend[]
  *
  *  - MA Tunnel
  *     support MA method MODE_ALMA
