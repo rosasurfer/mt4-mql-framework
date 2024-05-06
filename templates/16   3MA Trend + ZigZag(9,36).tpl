@@ -174,7 +174,7 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=30
+ZigZag.Periods=36
 ZigZag.Type=Line* | Semaphores
 ZigZag.Width=0
 ZigZag.Color=16711680
@@ -200,9 +200,9 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=7
+ZigZag.Periods=9
 ZigZag.Type=Line* | Semaphores
-ZigZag.Width=2
+ZigZag.Width=1
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off* | first | all
 Show123Projections=1

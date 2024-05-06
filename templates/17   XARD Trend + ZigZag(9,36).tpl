@@ -353,13 +353,16 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=30
-ZigZag.Type=Line* | Semaphores
-ZigZag.Width=0
+ZigZag.Periods=36
+ZigZag.Type=Line | Semaphores*
+ZigZag.Width=3
+ZigZag.Color=9639167
+Donchian.ShowChannel=1
+Donchian.ShowCrossings=off | first* | all
 Donchian.Upper.Color=16711680
 Donchian.Lower.Color=16711935
+Show123Projections=0
 Signal.onReversal=0
-Signal.onReversal.Types=sound
 </inputs>
 </expert>
 style_2=2
@@ -377,11 +380,13 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=7
+ZigZag.Periods=9
 ZigZag.Type=Line* | Semaphores
 ZigZag.Width=1
+ZigZag.Color=16711680
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off* | first | all
+Show123Projections=1
 Signal.onReversal=0
 Signal.onBreakout=1
 Signal.onBreakout.123Only=1
