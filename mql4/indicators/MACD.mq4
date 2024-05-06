@@ -137,13 +137,6 @@ int onInit() {
    if (SlowMA.Periods < 1)              return(catch("onInit(4)  invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slowMA.periods = SlowMA.Periods;
    if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(5)  parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
-   if (fastMA.periods == slowMA.periods) {
-      if (fastMA.method == slowMA.method) {
-         if (fastMA.appliedPrice == slowMA.appliedPrice) {
-            return(catch("onInit(6)  parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
-         }
-      }
-   }
    // SlowMA.Method
    sValue = SlowMA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "SlowMA.Method", sValue);
@@ -152,7 +145,7 @@ int onInit() {
       sValue = values[size-1];
    }
    slowMA.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (slowMA.method == -1)             return(catch("onInit(7)  invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (slowMA.method == -1)             return(catch("onInit(6)  invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.Method = MaMethodDescription(slowMA.method);
    // SlowMA.AppliedPrice
    sValue = SlowMA.AppliedPrice;
@@ -164,7 +157,14 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
    slowMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (slowMA.appliedPrice == -1)       return(catch("onInit(8)  invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (slowMA.appliedPrice == -1)       return(catch("onInit(7)  invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (fastMA.periods == slowMA.periods) {
+      if (fastMA.method == slowMA.method) {
+         if (fastMA.appliedPrice == slowMA.appliedPrice) {
+            return(catch("onInit(8)  parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
+         }
+      }
+   }
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
