@@ -47,7 +47,6 @@ name=Grid
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -58,7 +57,6 @@ name=ChartInfos
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -71,7 +69,6 @@ window_num=0
 <inputs>
 </inputs>
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -106,7 +103,6 @@ levels_color=12632256
 levels_style=2
 levels_weight=1
 level_0=0.002
-period_flags=0
 show_data=1
 </indicator>
 </window>

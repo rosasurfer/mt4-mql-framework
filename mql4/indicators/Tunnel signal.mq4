@@ -33,6 +33,7 @@
  *     fix positioning of UnitSize/PositionSize when in CORNER_TOP_LEFT
  *     the unitsize configuration is not read if custom positions are reloaded per hotkey
  *     rewrite and better document unitsize configuration (remove "Default.")
+ *     option to display 100% margin level
  *
  *  - CloseOrders
  *     Bybit: add config for IsDemoFix() and use it everywhere

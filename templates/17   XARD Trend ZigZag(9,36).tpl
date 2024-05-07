@@ -1,7 +1,3 @@
-<!--
-@see https://forex-station.com/viewtopic.php?p=1295434513#p1295434513
--->
-
 <chart>
 symbol=GBPUSD
 period=60
@@ -55,7 +51,6 @@ name=Grid
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -66,7 +61,6 @@ name=ChartInfos
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -77,7 +71,6 @@ name=SuperBars
 flags=339
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -150,11 +143,6 @@ STR05=<<<==== [05] BOXtxt Settings ====>>>
 showBOXtxt=false
 STR06=<<<==== [06] Alert Settings ====>>>
 inpAlertsOn=false
-inpAlertsOnCurrent=true
-inpAlertsSound=true
-inpAlertsMessage=false
-inpAlertsEmail=false
-inpAlertsPushNotif=false
 </inputs>
 </expert>
 shift_0=0
@@ -342,7 +330,6 @@ draw_36=12
 color_36=0
 style_36=0
 weight_36=0
-period_flags=0
 show_data=1
 </indicator>
 
@@ -369,7 +356,6 @@ style_2=2
 style_3=2
 color_6=4294967295
 color_7=4294967295
-period_flags=0
 show_data=1
 </indicator>
 
@@ -395,7 +381,8 @@ Signal.onBreakout.Types=sound, alert
 </expert>
 style_2=2
 style_3=2
-period_flags=0
+color_6=4294967295
+color_7=4294967295
 show_data=1
 </indicator>
 

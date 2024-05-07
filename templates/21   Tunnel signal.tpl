@@ -51,7 +51,6 @@ name=Grid
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -62,7 +61,6 @@ name=ChartInfos
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -73,7 +71,6 @@ name=SuperBars
 flags=339
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -106,7 +103,6 @@ AutoConfiguration=0
 </expert>
 weight_0=2
 weight_1=2
-period_flags=0
 show_data=1
 </indicator>
 
@@ -127,7 +123,6 @@ ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=0
 show_data=1
 </indicator>
 
@@ -148,7 +143,6 @@ ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=0
 show_data=1
 </indicator>
 </window>
@@ -181,7 +175,6 @@ AutoConfiguration=0
 </expert>
 min=-1.0
 max=1.0
-period_flags=0
 show_data=1
 </indicator>
 

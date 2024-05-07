@@ -1,13 +1,11 @@
-<!-- Default (US Brackets).tpl -->
-
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
-leftpos=9229
-scale=1
-graph=1
+leftpos=59606
+scale=4
+graph=0
 fore=0
 grid=0
 volume=0
@@ -39,7 +37,8 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=300
+height=800
+fixed_height=0
 
 <indicator>
 name=main
@@ -71,8 +70,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -88,23 +85,11 @@ Timeframe=H1
 NumberOfInsideBars=2
 </inputs>
 </expert>
-period_flags=3
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Brackets
-flags=339
-window_num=0
-<inputs>
-TimeWindow=15:00-15:30
-NumberOfBrackets=20
-BracketsColor=9639167   ; DeepPink
-AutoConfiguration=0
-</inputs>
-</expert>
+shift_0=0
+draw_0=0
+color_0=0
+style_0=0
+weight_0=0
 period_flags=7
 show_data=0
 </indicator>
@@ -112,18 +97,79 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=Moving Average
 flags=339
 window_num=0
 <inputs>
-BracketsColor=16711680  ; Blue
-NumberOfBrackets=20
-TimeWindow=16:00-16:30
+MA.Periods=144
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
+UpTrend.Color=16760576
+DownTrend.Color=55295
+Draw.Type=Line* | Dot
+Draw.Width=4
+Background.Color=6908265
+Background.Width=2
+ShowChartLegend=0
+Signal.onTrendChange=0
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ZigZag
+flags=339
+window_num=0
+<inputs>
+ZigZag.Periods=36
+ZigZag.Type=Line | Semaphores*
+ZigZag.Width=3
+ZigZag.Color=9639167
+Donchian.ShowChannel=1
+Donchian.ShowCrossings=off | first* | all
+Show123Projections=0
+Signal.onReversal=0
+Signal.onBreakout=1
+Signal.onBreakout.123Only=1
+Signal.onBreakout.Types=sound, alert
+</inputs>
+</expert>
+style_2=2
+style_3=2
+color_6=4294967295
+color_7=4294967295
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ZigZag
+flags=339
+window_num=0
+<inputs>
+ZigZag.Periods=9
+ZigZag.Type=Line* | Semaphores
+ZigZag.Width=2
+ZigZag.Color=16711680
+Donchian.ShowChannel=0
+Donchian.ShowCrossings=off* | first | all
+Show123Projections=1
+Signal.onReversal=0
+Signal.onBreakout=1
+Signal.onBreakout.123Only=1
+Signal.onBreakout.Types=sound, alert
+</inputs>
+</expert>
+style_2=2
+style_3=2
+color_6=4294967295
+color_7=4294967295
+show_data=1
 </indicator>
 
 </window>

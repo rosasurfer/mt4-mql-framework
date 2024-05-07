@@ -51,7 +51,6 @@ name=Grid
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -62,7 +61,6 @@ name=ChartInfos
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -73,7 +71,6 @@ name=SuperBars
 flags=339
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -113,7 +110,6 @@ Signal.onTrendChange=0
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=0
 show_data=1
 </indicator>
 
@@ -138,7 +134,6 @@ Signal.onTrendChange=0
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=0
 show_data=1
 </indicator>
 
@@ -163,7 +158,6 @@ Signal.onTrendChange=0
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=0
 show_data=1
 </indicator>
 
@@ -175,21 +169,22 @@ flags=339
 window_num=0
 <inputs>
 ZigZag.Periods=36
-ZigZag.Type=Line* | Semaphores
-ZigZag.Width=0
-ZigZag.Color=16711680
-Donchian.Upper.Color=16711680
-Donchian.Lower.Color=16711935
+ZigZag.Type=Line | Semaphores*
+ZigZag.Width=3
+ZigZag.Color=9639167
+Donchian.ShowChannel=1
+Donchian.ShowCrossings=off | first* | all
 Show123Projections=0
 Signal.onReversal=0
-Signal.onReversal.Types=sound
+Signal.onBreakout=1
+Signal.onBreakout.123Only=1
+Signal.onBreakout.Types=sound, alert
 </inputs>
 </expert>
 style_2=2
 style_3=2
 color_6=4294967295
 color_7=4294967295
-period_flags=0
 show_data=1
 </indicator>
 
@@ -202,7 +197,8 @@ window_num=0
 <inputs>
 ZigZag.Periods=9
 ZigZag.Type=Line* | Semaphores
-ZigZag.Width=1
+ZigZag.Width=2
+ZigZag.Color=16711680
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off* | first | all
 Show123Projections=1
@@ -214,7 +210,8 @@ Signal.onBreakout.Types=sound, alert
 </expert>
 style_2=2
 style_3=2
-period_flags=0
+color_6=4294967295
+color_7=4294967295
 show_data=1
 </indicator>
 

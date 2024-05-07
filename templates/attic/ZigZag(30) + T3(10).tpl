@@ -50,7 +50,6 @@ name=Grid
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -61,7 +60,6 @@ name=ChartInfos
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -72,7 +70,6 @@ name=SuperBars
 flags=339
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -99,7 +96,6 @@ weight_4=0
 weight_5=0
 color_6=4294967295
 color_7=4294967295
-period_flags=0
 show_data=1
 </indicator>
 
@@ -121,7 +117,6 @@ Color.DownTrend=65535
 </expert>
 weight_0=0
 weight_1=0
-period_flags=0
 show_data=1
 </indicator>
 

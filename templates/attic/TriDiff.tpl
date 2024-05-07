@@ -47,7 +47,6 @@ name=Grid
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -58,7 +57,6 @@ name=ChartInfos
 flags=347
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -69,7 +67,6 @@ name=SuperBars
 flags=339
 window_num=0
 </expert>
-period_flags=0
 show_data=0
 </indicator>
 
@@ -86,7 +83,6 @@ Color.UpTrend=16776960
 Color.DownTrend=16711935
 </inputs>
 </expert>
-period_flags=0
 show_data=1
 </indicator>
 
@@ -104,7 +100,6 @@ Color.DownTrend=255
 Draw.Width=1
 </inputs>
 </expert>
-period_flags=0
 show_data=1
 </indicator>
 </window>
@@ -128,7 +123,6 @@ Color.Histogram.Upper=3329330
 Color.Histogram.Lower=255
 </inputs>
 </expert>
-period_flags=0
 show_data=1
 </indicator>
 </window>
@@ -150,7 +144,6 @@ levels_style=2
 levels_weight=1
 level_0=30
 level_1=70
-period_flags=0
 show_data=1
 </indicator>
 </window>
