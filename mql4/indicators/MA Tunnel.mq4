@@ -25,11 +25,6 @@ extern string Signal.onBarCross.Types        = "sound* | alert | mail | sms";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
-extern string ___b__________________________ = "";
-extern bool   Sound.onTickCross              = false;                   // onTick: on channel cross at opposite side of the last crossing
-extern string Sound.onTickCross.Up           = "Alert Up.wav";
-extern string Sound.onTickCross.Down         = "Alert Down.wav";
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
@@ -45,11 +40,9 @@ extern string Sound.onTickCross.Down         = "Alert Down.wav";
 #define MODE_UPPER_BAND       MaTunnel.MODE_UPPER_BAND   // indicator buffer ids
 #define MODE_LOWER_BAND       MaTunnel.MODE_LOWER_BAND   //
 #define MODE_BAR_TREND        MaTunnel.MODE_BAR_TREND    // direction/shift of the last tunnel crossing: +1...+n=up, -1...-n=down
-#define MODE_TICK_TREND       MaTunnel.MODE_TICK_TREND   // ...
 
 #property indicator_chart_window
 #property indicator_buffers   3                          // visible buffers
-int       terminal_buffers  = 4;                         // all buffers
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -58,7 +51,6 @@ int       terminal_buffers  = 4;                         // all buffers
 double upperBand[];                                      // upper band:      visible
 double lowerBand[];                                      // lower band:      visible
 double barTrend [];                                      // trend direction: invisible, displayed in "Data" window
-double tickTrend[];                                      // ...
 
 #define MA_METHOD    0                                   // indexes of ma[]
 #define MA_PERIODS   1
@@ -150,10 +142,6 @@ int onInit() {
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
-   // Sound.onTickCross
-   if (AutoConfiguration) Sound.onTickCross      = GetConfigBool  (indicator, "Sound.onTickCross",      Sound.onTickCross);
-   if (AutoConfiguration) Sound.onTickCross.Up   = GetConfigString(indicator, "Sound.onTickCross.Up",   Sound.onTickCross.Up);
-   if (AutoConfiguration) Sound.onTickCross.Down = GetConfigString(indicator, "Sound.onTickCross.Down", Sound.onTickCross.Down);
 
    // chart legend
    if (ShowChartLegend) legendLabel = CreateChartLegend();
@@ -177,7 +165,6 @@ int onTick() {
       ArrayInitialize(upperBand, EMPTY_VALUE);
       ArrayInitialize(lowerBand, EMPTY_VALUE);
       ArrayInitialize(barTrend,            0);
-      ArrayInitialize(tickTrend,           0);
       SetIndicatorOptions();
    }
 
@@ -186,7 +173,6 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(upperBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(barTrend,  Bars, ShiftedBars,           0);
-      ShiftDoubleIndicatorBuffer(tickTrend, Bars, ShiftedBars,           0);
    }
 
    // calculate start bar
@@ -211,34 +197,15 @@ int onTick() {
       if      (Close[bar] > upperBand[bar]) barTrend[bar] = _int(MathMax(prevBarTrend, 0)) + 1;
       else if (Close[bar] < lowerBand[bar]) barTrend[bar] = _int(MathMin(prevBarTrend, 0)) - 1;
       else                                  barTrend[bar] = prevBarTrend + Sign(prevBarTrend);
-      tickTrend[bar] = barTrend[bar];
    }
 
-   // recalculate tick trend
-   static int currTickTrend, prevTickTrend;
-   if (!prevTickTrend) prevTickTrend = tickTrend[0];
-   static double prevHigh=INT_MAX, prevLow=INT_MIN;
-
-   if      (Close[0] > upperBand[0] || (High[0] > prevHigh && High[0] > upperBand[0])) currTickTrend = MathMax(prevTickTrend, 0) + 1;
-   else if (Close[0] < lowerBand[0] || (Low [0] < prevLow  && Low [0] < lowerBand[0])) currTickTrend = MathMin(prevTickTrend, 0) - 1;
-   else                                                                                currTickTrend = prevTickTrend + Sign(prevTickTrend);
-   tickTrend[0]  = currTickTrend;
-   prevTickTrend = currTickTrend;
-   prevHigh      = High[0];
-   prevLow       = Low [0];
-
    if (!__isSuperContext) {
-      // update chart legend
       if (ShowChartLegend) UpdateBandLegend(legendLabel, indicatorName, legendInfo, Tunnel.Color, upperBand[0], lowerBand[0]);
 
       // monitor signals
-      if (Sound.onTickCross) {
-         if      (tickTrend[0] == +1) onCross(D_LONG, 0);
-         else if (tickTrend[0] == -1) onCross(D_SHORT, 0);
-      }
       if (Signal.onBarCross) /*&&*/ if (IsBarOpen()) {
-         if      (barTrend[1] == +1) onCross(D_LONG, 1);
-         else if (barTrend[1] == -1) onCross(D_SHORT, 1);
+         if      (barTrend[1] == +1) onCross(D_LONG);
+         else if (barTrend[1] == -1) onCross(D_SHORT);
       }
    }
    return(catch("onTick(3)"));
@@ -249,46 +216,32 @@ int onTick() {
  * Event handler signaling tunnel crossings.
  *
  * @param  int direction - crossing direction: D_LONG | D_SHORT
- * @param  int bar       - bar of the crossing (the current or the closed bar)
  *
  * @return bool - success status
  */
-bool onCross(int direction, int bar) {
-   if (ChangedBars > 2)                         return(false);
+bool onCross(int direction) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (!Signal.onBarCross) return(false);
+   if (ChangedBars > 2)    return(false);
 
-   if (bar == 0) {
-      if (!Sound.onTickCross) return(false);
-      if (IsLogInfo()) logInfo("onCross(2)  tick "+ ifString(direction==D_LONG, "above", "below") +" "+ indicatorName);
-      int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onTickCross.Up, Sound.onTickCross.Down));
-      if (error == ERR_FILE_NOT_FOUND) Sound.onTickCross = false;
-      return(!error);
-   }
+   // skip the signal if it was already signaled elsewhere
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow()), error;
+   string sPeriod = PeriodDescription();
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
+   if (GetPropA(hWnd, sEvent) != 0) return(true);
+   SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals on slow CPU)
 
-   if (bar == 1) {
-      if (!Signal.onBarCross) return(false);
+   string message = "bar close "+ ifString(direction==D_LONG, "above ", "below ") + indicatorName;
+   if (IsLogInfo()) logInfo("onCross(3)  "+ message);
 
-      // skip the signal if it was already signaled elsewhere
-      int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
-      string sPeriod = PeriodDescription();
-      string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[bar]);
-      if (GetPropA(hWnd, sEvent) != 0) return(true);
-      SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals on slow CPU)
+   message = Symbol() +","+ PeriodDescription() +": "+ message;
+   string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-      string message = "bar close "+ ifString(direction==D_LONG, "above ", "below ") + indicatorName;
-      if (IsLogInfo()) logInfo("onCross(3)  "+ message);
-
-      message = Symbol() +","+ PeriodDescription() +": "+ message;
-      string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-
-      if (signal.alert)          Alert(message);
-      if (signal.sound) error  = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down)); if (error == ERR_FILE_NOT_FOUND) signal.sound = false;
-      if (signal.mail)  error |= !SendEmail("", "", message, message + NL + sAccount);
-      if (signal.sms)   error |= !SendSMS("", message + NL + sAccount);
-      return(!error);
-   }
-
-   return(!catch("onCross(5)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
+   if (signal.alert)          Alert(message);
+   if (signal.sound) error  = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down)); if (error == ERR_FILE_NOT_FOUND) signal.sound = false;
+   if (signal.mail)  error |= !SendEmail("", "", message, message + NL + sAccount);
+   if (signal.sms)   error |= !SendSMS("", message + NL + sAccount);
+   return(!error);
 }
 
 
@@ -301,11 +254,10 @@ void SetIndicatorOptions() {
    else                               indicatorName = WindowExpertName() +" "+ Tunnel.Definition;
    IndicatorShortName(indicatorName);
 
-   IndicatorBuffers(terminal_buffers);
+   IndicatorBuffers(indicator_buffers);
    SetIndexBuffer(MODE_UPPER_BAND, upperBand);
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);
    SetIndexBuffer(MODE_BAR_TREND,  barTrend ); SetIndexEmptyValue(MODE_BAR_TREND, 0);
-   SetIndexBuffer(MODE_TICK_TREND, tickTrend);
    IndicatorDigits(Digits);
 
    SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color); SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper");
@@ -328,11 +280,7 @@ string InputsToStr() {
                             "Signal.onBarCross=",       BoolToStr(Signal.onBarCross),            ";", NL,
                             "Signal.onBarCross.Types=", DoubleQuoteStr(Signal.onBarCross.Types), ";", NL,
                             "Signal.Sound.Up=",         DoubleQuoteStr(Signal.Sound.Up),         ";", NL,
-                            "Signal.Sound.Down=",       DoubleQuoteStr(Signal.Sound.Down),       ";", NL,
-
-                            "Sound.onTickCross=",       BoolToStr(Sound.onTickCross),            ";", NL,
-                            "Sound.onTickCross.Up=",    DoubleQuoteStr(Sound.onTickCross.Up),    ";", NL,
-                            "Sound.onTickCross.Down=",  DoubleQuoteStr(Sound.onTickCross.Down),  ";")
+                            "Signal.Sound.Down=",       DoubleQuoteStr(Signal.Sound.Down),       ";")
    );
 
    // suppress compiler warnings

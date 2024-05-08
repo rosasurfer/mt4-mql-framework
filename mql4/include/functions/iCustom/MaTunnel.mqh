@@ -1,7 +1,6 @@
 #define MaTunnel.MODE_UPPER_BAND    0                 // indicator buffer ids
 #define MaTunnel.MODE_LOWER_BAND    1                 //
 #define MaTunnel.MODE_BAR_TREND     2                 //
-#define MaTunnel.MODE_TICK_TREND    3                 //
 
 
 /**
