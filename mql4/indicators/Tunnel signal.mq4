@@ -21,9 +21,6 @@
  *  - Inside Bars
  *     prevent signaling of duplicated events
  *
- *  - Grid
- *     optimize code
- *
  *  - SuperBars
  *     detect weekend sessions and remove config SuperBars->Weekend.Symbols
  *

@@ -948,3 +948,6 @@ string   TradeDirectionToStr(int direction);;
 string   UninitializeReasonToStr(int reason);;
 string   UninitReasonToStr(int reason);;
 int      WM_MT4();;
+
+// MT4Expander: MQL program-specific api
+int      Grid_GetChartHeight(int hChart, int lastHeight);;

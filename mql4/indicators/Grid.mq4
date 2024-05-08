@@ -134,61 +134,14 @@ bool GetHorizontalChartDimensions(int &chartHeight, double &chartMinPrice, doubl
    chartMinPrice = 0;
    chartMaxPrice = 0;
 
-   // TODO: move all Win32 api tests to a single MT4Expander call
-
-   static bool lastIsWindowVisible=true, lastIsIconic=false, lastIsWindowAreaVisible=true, lastIsHeight=true, lastIsPrice=true, lastIsPriceRange=true;
-   bool isLogDebug = IsLogDebug();
-
-   int hChartWnd = __ExecutionContext[EC.hChartWindow];
-   if (!IsWindowVisible(hChartWnd)) {
-      if (lastIsWindowVisible && isLogDebug) logDebug("GetHorizontalChartDimensions(1)  Tick="+ Ticks +"  skip (IsWindowVisible=0)");
-      lastIsWindowVisible = false;
-      return(false);
-   }
-   lastIsWindowVisible = true;
-
-   if (lastChartHeight && 1) {                                 // IsIconic() and IsWindowAreaVisible() serve performance purposes only,
-      if (IsIconic(hChartWnd)) {                               // don't test for it if the price grid was not yet initialized
-         if (!lastIsIconic && isLogDebug) logDebug("GetHorizontalChartDimensions(2)  Tick="+ Ticks +"  skip (IsIconic=1)");
-         lastIsIconic = true;
-         return(false);
-      }
-      lastIsIconic = false;
-
-      if (!IsWindowAreaVisible(hChartWnd)) {                   // in fact this covers IsIconic() but IsIconic() is faster
-         if (lastIsWindowAreaVisible && isLogDebug) logDebug("GetHorizontalChartDimensions(3)  Tick="+ Ticks +"  skip (IsWindowAreaVisible=0)");
-         lastIsWindowAreaVisible = false;
-         return(false);
-      }
-      lastIsWindowAreaVisible = true;
-   }
-
-   int hChart = __ExecutionContext[EC.hChart], rect[RECT_size];
-   if (!GetWindowRect(hChart, rect)) return(!catch("GetHorizontalChartDimensions(4)->GetWindowRect()", ERR_WIN32_ERROR+GetLastWin32Error()));
-   int height = rect[RECT.bottom]-rect[RECT.top];
-   if (!height) {                                              // view port resized to zero height
-      if (lastIsHeight && isLogDebug) logDebug("GetHorizontalChartDimensions(5)  Tick="+ Ticks +"  skip (chartHeight=0)");
-      lastIsHeight = false;
-      return(false);
-   }
-   lastIsHeight = true;
+   int height = Grid_GetChartHeight(__ExecutionContext[EC.hChart], lastChartHeight);
+   if (!height) return(false);                                 // no visible chart
 
    double minPrice = NormalizeDouble(WindowPriceMin(), Digits);
    double maxPrice = NormalizeDouble(WindowPriceMax(), Digits);
-   if (!minPrice || !maxPrice) {                               // chart not yet ready
-      if (lastIsPrice && isLogDebug) logDebug("GetHorizontalChartDimensions(6)  Tick="+ Ticks +"  skip (minPrice=0, maxPrice=0)");
-      lastIsPrice = false;
-      return(false);
-   }
-   lastIsPrice = true;
+   if (!minPrice || !maxPrice) return(false);                  // chart not yet ready
 
-   double priceRange = NormalizeDouble(maxPrice - minPrice, Digits);
-   if (priceRange <= 0) {                                      // chart with ScaleFix=1 after resizing to zero height
-      if (lastIsPriceRange && isLogDebug) logDebug("GetHorizontalChartDimensions(7)  Tick="+ Ticks +"  skip (priceRange="+ NumberToStr(priceRange, ".+") +", min="+ NumberToStr(minPrice, PriceFormat) +", max="+ NumberToStr(maxPrice, PriceFormat) +")");
-      lastIsPriceRange = false;
-      return(false);
-   }
-   lastIsPriceRange = true;
+   if (maxPrice-minPrice < HalfPoint) return(false);           // chart with ScaleFix=1 after resizing to zero height
 
    chartHeight   = height;
    chartMinPrice = minPrice;
@@ -481,3 +434,8 @@ string InputsToStr() {
                             "Color.SuperGrid=",             ColorToStr(Color.SuperGrid),   ";")
    );
 }
+
+
+#import "rsfMT4Expander.dll"
+   int Grid_GetChartHeight(int hChart, int lastHeight);
+#import
