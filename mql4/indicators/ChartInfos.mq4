@@ -1534,22 +1534,22 @@ bool UpdatePositions() {
 
 
 /**
- * Update the number of open orders and the account's open order limit.
+ * Update the current amount of open tickets and the account's open ticket limit.
  *
  * @return bool - success status
  */
 bool UpdateOrderCounter() {
-   static int showLimit=INT_MAX, warnLimit=INT_MAX, alertLimit=INT_MAX, maxOpenOrders;
+   static int showLimit=INT_MAX, warnLimit=INT_MAX, alertLimit=INT_MAX, maxOpenTickets;
    static color defaultColor=SlateGray, warnColor=DarkOrange, alertColor=Red;
 
-   if (!maxOpenOrders) {
-      maxOpenOrders = GetGlobalConfigInt("Accounts", GetAccountNumber() +".maxOpenTickets.total", -1);
-      if (!maxOpenOrders) maxOpenOrders = -1;
+   if (!maxOpenTickets) {
+      maxOpenTickets = GetAccountConfigInt("Accounts", "MaxOpenTickets", -1);
+      if (!maxOpenTickets) maxOpenTickets = -1;
 
-      if (maxOpenOrders > 0) {
-         alertLimit = Min(Round(0.9 * maxOpenOrders), maxOpenOrders-5);
-         warnLimit  = Min(Round(0.8 * maxOpenOrders), alertLimit   -5);
-         showLimit  = Min(Round(0.7 * maxOpenOrders), warnLimit    -5);
+      if (maxOpenTickets > 0) {
+         alertLimit = Min(Round(0.9 * maxOpenTickets), maxOpenTickets-5);
+         warnLimit  = Min(Round(0.8 * maxOpenTickets), alertLimit    -5);
+         showLimit  = Min(Round(0.7 * maxOpenTickets), warnLimit     -5);
       }
    }
 
@@ -1560,7 +1560,7 @@ bool UpdateOrderCounter() {
    if (orders >= showLimit) {
       if      (orders >= alertLimit) objectColor = alertColor;
       else if (orders >= warnLimit ) objectColor = warnColor;
-      sText = StringConcatenate(orders, " open orders (max. ", maxOpenOrders, ")");
+      sText = StringConcatenate(orders, " open orders (max. ", maxOpenTickets, ")");
    }
    ObjectSetText(label.orderCounter, sText, 8, "Tahoma Fett", objectColor);
 

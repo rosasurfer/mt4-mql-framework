@@ -3,8 +3,6 @@
  *
  *
  * TODO:
- *  - Account Guard @-2.5%
- *
  *  - signaling
  *  - merge bufferMain[] and bufferTrend[]
  *
@@ -43,8 +41,8 @@
  *     MetaTrader FATAL  EURJPY,M1  ChartInfos::start(5)->SyncMainContext_start()  DLL error  [ERR_ILLEGAL_STATE]
  *
  *  - iCustom(): limit calculated bars in online charts
- *  - move account infos from global to account config
- *  - Bybit executes with DealingDesk mode (possibly ERR_OFF_QUOTES)
+ *  - Bybit: adjust slippage to prevent ERR_OFF_QUOTES (dealing desk)
+ *  - rewrite stdfunctions::GetCommission()
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

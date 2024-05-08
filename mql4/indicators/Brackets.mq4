@@ -75,8 +75,6 @@ int onInit() {
    if (AutoConfiguration) {
       BracketsColor = GetConfigColor(indicator, "BracketsColor", BracketsColor);
    }
-
-   SetIndexLabel(0, NULL);                                                // disable "Data" window display
    return(catch("onInit(4)"));
 }
 

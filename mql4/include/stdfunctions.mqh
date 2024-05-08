@@ -870,12 +870,14 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
          if      (IsConfigKey(section, symbol))    key = symbol;
          else if (IsConfigKey(section, stdSymbol)) key = stdSymbol;
          else {
-            // check general account configuration
-            string company  = GetAccountCompanyId(); if (company == "") return(EMPTY);
-            int    account  = GetAccountNumber();    if (!account)      return(EMPTY);
+            // check the account configuration
+            string config   = GetAccountConfigPath(); if (config == "")  return(EMPTY);
+            string company  = GetAccountCompanyId();  if (company == "") return(EMPTY);
+            int    account  = GetAccountNumber();     if (!account)      return(EMPTY);
+
             string currency = AccountCurrency();
-            if (currency == "") currency = GetGlobalConfigString("Accounts", account +".currency");
-            if (currency == "") return(_EMPTY(catch("GetCommission(1)  cannot resolve account currency (account configuration \""+ account +"\" not found)", ERR_ILLEGAL_STATE)));
+            if (currency == "") currency = GetIniStringA(config, "Account", "Currency", "");
+            if (currency == "") return(_EMPTY(catch("GetCommission(1)  cannot resolve account currency (config [Account]->Currency not found)", ERR_INVALID_CONFIG_VALUE)));
 
             if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
             else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
@@ -4580,43 +4582,10 @@ int GetAccountNumber() {
 
 
 /**
- * Return the account number of an account alias.
+ * Return the alias of an account. The alias is used in outbound messages (email, SMS, chat) to obfuscate the actual account
+ * number. It's configurable in [Account]->Alias of the account configuration file.
  *
- * @param  string company - account company
- * @param  string alias   - account alias
- *
- * @return int - account number or NULL in case of errors or if the account alias is unknown
- */
-int GetAccountNumberFromAlias(string company, string alias) {
-   if (!StringLen(company)) return(!catch("GetAccountNumberFromAlias(1)  invalid parameter company: \"\"", ERR_INVALID_PARAMETER));
-   if (!StringLen(alias))   return(!catch("GetAccountNumberFromAlias(2)  invalid parameter alias: \"\"", ERR_INVALID_PARAMETER));
-
-   string file = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
-   string section = "Accounts";
-   string keys[], value="", sAccount="";
-   int keysSize = GetIniKeys(file, section, keys);
-
-   for (int i=0; i < keysSize; i++) {
-      if (StrEndsWithI(keys[i], ".alias")) {
-         value = GetGlobalConfigString(section, keys[i]);
-         if (StrCompareI(value, alias)) {
-            sAccount = StringTrimRight(StrLeft(keys[i], -6));
-            value    = GetGlobalConfigString(section, sAccount +".company");
-            if (StrCompareI(value, company)) {
-               if (StrIsDigits(sAccount))
-                  return(StrToInteger(sAccount));
-            }
-         }
-      }
-   }
-   return(NULL);
-}
-
-
-/**
- * Return the alias of an account. The alias is used in outbound messages (SMS, email, chat) to obfuscate the actual account
- * number and is configurable via the framework configuration. If no alias is configured the function returns the account
- * number with all characters except the last 4 replaced by wildcards.
+ * If no alias is configured the function returns the account number with digits replaced by wildcards, except the last 2.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
@@ -4634,11 +4603,14 @@ string GetAccountAlias(string company="", int account=NULL) {
       if (!account) return(EMPTY_STR);
    }
 
-   string result = GetGlobalConfigString("Accounts", account +".alias");
+   string file = GetAccountConfigPath(company, account);
+   if (!StringLen(file)) return(EMPTY_STR);
+
+   string result = GetIniStringA(file, "Account", "Alias", "");
    if (!StringLen(result)) {
       logInfo("GetAccountAlias(2)  no account alias found for account \""+ company +":"+ account +"\"");
       result = account;
-      result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
+      result = StrRepeat("*", StringLen(result)-2) + StrRight(result, 2);
    }
    return(result);
 }
@@ -4727,7 +4699,7 @@ double GetExternalAssets(string company="", int account=NULL) {
    string file = GetAccountConfigPath(company, account);
    if (!StringLen(file)) return(EMPTY_VALUE);
 
-   return(GetIniDouble(file, "General", "ExternalAssets"));
+   return(GetIniDouble(file, "Account", "ExternalAssets"));
 }
 
 
@@ -6842,7 +6814,6 @@ void __DummyCalls() {
    GetAccountCompanyId();
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumber();
-   GetAccountNumberFromAlias(NULL, NULL);
    GetAccountServerPath();
    GetCommission();
    GetConfigBool(NULL, NULL);

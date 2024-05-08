@@ -5,7 +5,6 @@
  *
  *
  * TODO:
- *  - finish projection sound alerts
  *  - check bar alignment of all timeframes and use the largest correctly aligned instead of M5
  */
 #include <stddefines.mqh>
@@ -86,7 +85,6 @@ int onInit() {
    }
 
    // display options
-   SetIndexLabel(0, NULL);                                     // disable "Data" window display
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => system menu font family
    int    fontSize = 8;                                        // 8  => system menu font size

@@ -40,12 +40,12 @@ int    hQC.TradeCmdReceiver;
 
 
 /**
- * Initialize global vars describing the current trade account.
+ * Initialize global vars identifying the current trade account.
  *
- * @param  string accountId [optional] - account identifier in format "{account-company}:{account-number}"
+ * @param  string accountId [optional] - account identifier in format "{company-id}:{account-number}"
  *                                       (default: the current account)
  *
- * @return bool - whether the specified account was successfully applied
+ * @return bool - whether the trade account was successfully initialized
  */
 bool InitTradeAccount(string accountId = "") {
    if (IsLastError()) return(false);
@@ -60,27 +60,24 @@ bool InitTradeAccount(string accountId = "") {
    string _accountName = "";
 
    if (StringLen(accountId) > 0) {
-      // resolve the specified trade account
-      _accountCompany = StrLeftTo(accountId, ":");  if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: \""+ accountId +"\""));
-      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigits(sValue))        return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: \""+ accountId +"\""));
-      _accountNumber = StrToInteger(sValue);        if (!_accountNumber)             return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: \""+ accountId +"\""));
+      // parse the specified trade account
+      _accountCompany = StrLeftTo(accountId, ":");    if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: \""+ accountId +"\""));
+      string sValue   = StrRightFrom(accountId, ":"); if (!StrIsDigits(sValue))        return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: \""+ accountId +"\""));
+      _accountNumber  = StrToInteger(sValue);         if (!_accountNumber)             return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: \""+ accountId +"\""));
    }
    else {
-      // use the current account and resolve a configured trade account
+      // resolve a configured trade account using the current account
       _accountCompany = currAccountCompany;
       _accountNumber  = currAccountNumber;
 
       string file    = GetAccountConfigPath(); if (!StringLen(file)) return(false);
-      string section = "General";
-      string key     = "TradeAccount"+ ifString(__isTesting, ".Tester", "");
+      string section = "Account";
+      string key     = "TradeAccount";
       sValue = GetIniStringA(file, section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StrIsDigits(sValue))                                                  return(!logWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
-         _accountNumber = StrToInteger(sValue); if (!_accountNumber)                return(!logWarn("InitTradeAccount(5)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
-         section = "Accounts";
-         key     = _accountNumber +".company";
-         sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))     return(!logWarn("InitTradeAccount(6)  missing global account setting ["+ section +"]->"+ key));
-         _accountCompany = sValue;
+         _accountCompany = StrLeftTo(sValue, ":");    if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(4)  invalid account config setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
+         sValue          = StrRightFrom(sValue, ":"); if (!StrIsDigits(sValue))        return(!logWarn("InitTradeAccount(5)  invalid account config setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
+         _accountNumber  = StrToInteger(sValue);      if (!_accountNumber)             return(!logWarn("InitTradeAccount(6)  invalid account config setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
       }
    }
 
@@ -95,25 +92,22 @@ bool InitTradeAccount(string accountId = "") {
    _accountName     = AccountName();
 
    if (_accountCompany!=currAccountCompany || _accountNumber!=currAccountNumber) {
-      // account currency
-      section = "Accounts";
-      key     = _accountNumber +".currency";
-      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(7)  missing global account setting ["+ section +"]->"+ key));
-      if (!IsCurrency(sValue))                                                      return(!logWarn("InitTradeAccount(8)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
+      file = GetAccountConfigPath(_accountCompany, _accountNumber); if (!StringLen(file)) return(false);
+
+      section = "Account";
+      key     = "Currency";
+      sValue  = GetIniStringA(file, section, key, ""); if (!StringLen(sValue)) return(!logWarn("InitTradeAccount(7)  missing account config setting ["+ section +"]->"+ key));
+      if (!IsCurrency(sValue))                                                 return(!logWarn("InitTradeAccount(8)  invalid account config setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
       _accountCurrency = StrToUpper(sValue);
 
-      // account type
-      section = "Accounts";
-      key     = _accountNumber +".type";
-      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(9)  missing global account setting ["+ section +"]->"+ key));
+      key    = "Type";
+      sValue = GetIniStringA(file, section, key, ""); if (!StringLen(sValue))  return(!logWarn("InitTradeAccount(9)  missing account config setting ["+ section +"]->"+ key));
       if      (StrCompareI(sValue, "demo")) _accountType = ACCOUNT_TYPE_DEMO;
       else if (StrCompareI(sValue, "real")) _accountType = ACCOUNT_TYPE_REAL;
-      else                                                                          return(!logWarn("InitTradeAccount(10)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
+      else                                                                     return(!logWarn("InitTradeAccount(10)  invalid account config setting ["+ section +"]->"+ key +" = \""+ sValue +"\""));
 
-      // account name
-      section = "Accounts";
-      key     = _accountNumber +".name";
-      sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(11)  missing global account setting ["+ section +"]->"+ key));
+      key    = "Name";
+      sValue = GetIniStringA(file, section, key, ""); if (!StringLen(sValue))  return(!logWarn("InitTradeAccount(11)  missing account config setting ["+ section +"]->"+ key));
       _accountName = sValue;
    }
 

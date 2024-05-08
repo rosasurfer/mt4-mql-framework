@@ -26,17 +26,13 @@
  *
  *  - profitable backtests
  *     find profitable setups
- *     order managment framework to implement setups
- *     reliable and easily updatable testing environment
- *
- *
- *  - reliable test environment
- *     reproduce tests with original EAs
- *     terminal with Dukascopy data
- *     comfortable update/generation/synchronization of new test data (e.g. from 2007)
- *
+ *     easily updatable testing environment
+ *      reproduce tests with original EAs
+ *      terminal with Dukascopy data
+ *      comfortable update/generation/synchronization of new test data (e.g. from 2007)
  *
  *  - entry management
+ *
  *  - exit management
  *     dynamic SL/TP distances (multiples of various range types)
  *     trailing stop
@@ -50,7 +46,7 @@
  *     generate consecutive instance ids
  *     optimization report
  *
- *     performance:
+ *     optimizer performance:
  *      empty tester template, 100 permutations:
  *       build 500:   4.8 sec
  *       build 1408:  4.3 sec (1.1 times faster than build 500)
@@ -207,8 +203,8 @@
  *  - handle orders.acceptableSlippage dynamically (via framework config)
  *     https://www.mql5.com/en/forum/120795
  *     https://www.mql5.com/en/forum/289014#comment_9296322
- *     https://www.mql5.com/en/forum/146808#comment_3701979#  [ECN restriction removed since build 500]
- *     https://www.mql5.com/en/forum/146808#comment_3701981#  [Query execution mode in MQL]
+ *     https://www.mql5.com/en/forum/146808#comment_3701979#  [ECN tp/sl restriction removed since build 500]
+ *     https://www.mql5.com/en/forum/146808#comment_3701981#
  *
  *  - rewrite range bar generator
  *  - VPS: monitor and notify of incoming emails

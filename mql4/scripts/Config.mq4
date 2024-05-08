@@ -40,7 +40,7 @@ int onStart() {
    // get the external trade account configuration filename (if configured)
    string label = "TradeAccount";
    if (!isVkShift && ObjectFind(label)==0) {
-      string account = StrTrim(ObjectDescription(label));            // format "{account-company}:{account-number}"
+      string account = StrTrim(ObjectDescription(label));            // format "{company-id}:{account-number}"
 
       if (StringLen(account) > 0) {
          string company = StrLeftTo(account, ":");

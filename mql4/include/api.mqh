@@ -141,7 +141,6 @@ bool     GE(double double1, double double2, int digits=8);;
 string   GetAccountAlias(string company="", int account=NULL);;
 string   GetAccountCompanyId();;
 int      GetAccountNumber();;
-int      GetAccountNumberFromAlias(string company, string alias);;
 string   GetClassName(int hWnd);;
 double   GetCommission(double lots=1.0, int mode=MODE_MONEY);;
 string   GetCurrency(int id);;

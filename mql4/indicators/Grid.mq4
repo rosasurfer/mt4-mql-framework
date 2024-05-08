@@ -9,11 +9,11 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int   PriceGrid.MinDistance.Pixel     = 40;             // adjust to your screen and DPI scaling
+extern int    PriceGrid.MinDistance.Pixel    = 40;             // adjust to your screen and DPI scaling
 
 extern string ___a__________________________ = "";
-extern color Color.RegularGrid               = Gainsboro;      // C'220,220,220'
-extern color Color.SuperGrid                 = LightGray;      // C'211,211,211' (slightly darker)
+extern color  Color.RegularGrid              = Gainsboro;      // C'220,220,220'
+extern color  Color.SuperGrid                = LightGray;      // C'211,211,211' (slightly darker)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25,8 +25,6 @@ extern color Color.SuperGrid                 = LightGray;      // C'211,211,211'
 #include <win32api.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers      1
-#property indicator_color1       CLR_NONE
 
 int    lastChartHeight;
 double lastChartMinPrice;
@@ -55,7 +53,6 @@ int onInit() {
    if (Color.RegularGrid == 0xFF000000) Color.RegularGrid = CLR_NONE;
    if (Color.SuperGrid   == 0xFF000000) Color.SuperGrid   = CLR_NONE;
 
-   SetIndicatorOptions();
    return(catch("onInit(2)"));
 }
 
@@ -77,8 +74,6 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   if (!ValidBars) SetIndicatorOptions();
-
    if (__isChart) {
       UpdateHorizontalGrid();
       if (ChangedBars > 2) UpdateVerticalGrid();
@@ -472,18 +467,6 @@ datetime GetFirstWeekdayOfMonth(int year, int month) {
    if (dow == SUNDAY  ) return(firstDayOfMonth + 1*DAY );
 
    return(firstDayOfMonth);
-}
-
-
-/**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
- */
-void SetIndicatorOptions() {
-   IndicatorBuffers(indicator_buffers);
-   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
-   SetIndexLabel(0, NULL);
-   IndicatorShortName("");
 }
 
 
