@@ -9,8 +9,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int   PriceGrid.MinDistance.Pixel     = 40;
-extern bool  EnableGridBase_20               = true;           // FALSE=multiples(10, 50); TRUE=multiples(10, 20, 50)
+extern int   PriceGrid.MinDistance.Pixel     = 40;             // adjust to your screen and DPI scaling
 
 extern string ___a__________________________ = "";
 extern color Color.RegularGrid               = Gainsboro;      // C'220,220,220'
@@ -49,8 +48,6 @@ int onInit() {
    // PriceGrid.MinDistance.Pixel
    if (AutoConfiguration) PriceGrid.MinDistance.Pixel = GetConfigInt(indicator, "PriceGrid.MinDistance.Pixel", PriceGrid.MinDistance.Pixel);
    if (PriceGrid.MinDistance.Pixel < 1) return(catch("onInit(1)  invalid input parameter PriceGrid.MinDistance.Pixel: "+ PriceGrid.MinDistance.Pixel, ERR_INVALID_INPUT_PARAMETER));
-   // EnableGridBase_20
-   if (AutoConfiguration) EnableGridBase_20 = GetConfigBool(indicator, "EnableGridBase_20", EnableGridBase_20);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.RegularGrid = GetConfigColor(indicator, "Color.RegularGrid", Color.RegularGrid);
@@ -218,23 +215,20 @@ double ComputeGridSize(int chartHeight, double chartMinPrice, double chartMaxPri
    double separators     = 1.*chartHeight / PriceGrid.MinDistance.Pixel;
    double priceRange     = chartMaxPrice - chartMinPrice;
    double separatorRange = priceRange / separators;
-   double baseSize       = MathPow(10, MathFloor(MathLog10(separatorRange))), gridSize;
+   double baseSize       = MathPow(10, MathFloor(MathLog10(separatorRange)));
 
-   static int multiples[] = {2, 5, 10}, size = 3;
-   int iStart = ifInt(EnableGridBase_20, 0, 1);
-
-   for (int i=iStart; i < size; i++) {
-      gridSize = multiples[i] * baseSize;
-      if (gridSize > separatorRange) break;
+   double gridSize = 5 * baseSize;
+   if (gridSize < separatorRange) {
+      gridSize *= 2;
    }
    gridSize = NormalizeDouble(gridSize, Digits);
-   if (IsLogDebug()) logDebug("ComputeGridSize(0.1)  Tick="+ Ticks +"  height="+ chartHeight +"  range="+ DoubleToStr(priceRange/pUnit, pDigits) +" => grid("+ (multiples[i] % 9) +") = "+ DoubleToStr(gridSize/pUnit, pDigits));
+   if (IsLogDebug()) logDebug("ComputeGridSize(0.1)  Tick="+ Ticks +"  height="+ chartHeight +"  range="+ DoubleToStr(priceRange/pUnit, pDigits) +" => grid = "+ DoubleToStr(gridSize/pUnit, pDigits));
 
    return(gridSize);
 
    // a separator every multiple of 1 * 10^n
    // --------------------------------------
-   // a separator every 0.0001 units   1 * 10 ^ -4     1 pip
+   // a separator every 0.0001 units   1 * 10 ^ -4    1 pip
    // a separator every 0.001 units    1 * 10 ^ -3
    // a separator every 0.01 units     1 * 10 ^ -2
    // a separator every 0.1 units      1 * 10 ^ -1
@@ -245,9 +239,9 @@ double ComputeGridSize(int chartHeight, double chartMinPrice, double chartMaxPri
    // a separator every 10000 units    1 * 10 ^ +4
 
 
-   // a separator every multiple of 2 * 10^n
+   // a separator every multiple of 2 * 10^n          // not used anymore
    // --------------------------------------
-   // a separator every 0.0002 units   2 * 10 ^ -4     2 pip
+   // a separator every 0.0002 units   2 * 10 ^ -4    2 pip
    // a separator every 0.002 units    2 * 10 ^ -3
    // a separator every 0.02 units     2 * 10 ^ -2
    // a separator every 0.2 units      2 * 10 ^ -1
@@ -260,7 +254,7 @@ double ComputeGridSize(int chartHeight, double chartMinPrice, double chartMaxPri
 
    // a separator every multiple of 5 * 10^n
    // --------------------------------------
-   // a separator every 0.0005 units   5 * 10 ^ -4     5 pip
+   // a separator every 0.0005 units   5 * 10 ^ -4    5 pip
    // a separator every 0.005 units    5 * 10 ^ -3
    // a separator every 0.05 units     5 * 10 ^ -2
    // a separator every 0.5 units      5 * 10 ^ -1
@@ -500,8 +494,6 @@ void SetIndicatorOptions() {
  */
 string InputsToStr() {
    return(StringConcatenate("PriceGrid.MinDistance.Pixel=", PriceGrid.MinDistance.Pixel,   ";", NL,
-                            "EnableGridBase_20=",           BoolToStr(EnableGridBase_20),  ";", NL,
-
                             "Color.RegularGrid=",           ColorToStr(Color.RegularGrid), ";", NL,
                             "Color.SuperGrid=",             ColorToStr(Color.SuperGrid),   ";")
    );
