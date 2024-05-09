@@ -1386,8 +1386,8 @@ bool UpdatePositions() {
          sPositionType = typeDescriptions[index];
 
          if (positions.showAbsProfits) {
-            sProfitAbs = DoubleToStr(positions.data[i][I_PROFIT], 2);
-            if (positions.data[i][I_ADJUSTED_PROFIT] != NULL) sProfitAbs = StringConcatenate(sProfitAbs, " (", NumberToStr(positions.data[i][I_ADJUSTED_PROFIT], "+.2"), ")");
+            sProfitAbs = NumberToStr(positions.data[i][I_PROFIT], ",'.2");
+            if (positions.data[i][I_ADJUSTED_PROFIT] != NULL) sProfitAbs = StringConcatenate(sProfitAbs, " (", NumberToStr(positions.data[i][I_ADJUSTED_PROFIT], "+,'.2"), ")");
          }
          sProfitPct    = StringConcatenate(DoubleToStr(positions.data[i][I_PROFIT_PCT], 2), "%");
          sProfitMinMax = " ";
