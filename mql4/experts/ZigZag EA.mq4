@@ -32,10 +32,16 @@
  *      comfortable update/generation/synchronization of new test data (e.g. from 2007)
  *
  *  - entry management
+ *     handling of multiple positions (scale in on retracement)
  *
  *  - exit management
+ *     partial close
+ *      online: fix closedProfit after 1 partial-close (error loading status file)
+ *      implement open.nextTarget
  *     dynamic SL/TP distances (multiples of various range types)
  *     trailing stop
+ *
+ *  - independant handling of possibly simultaneous long/short positions
  *
  *  - more statistics: recovery time, z-score
  *
@@ -53,10 +59,6 @@
  *      tester template with custom indicator and lib-calls, 100 permutations:
  *       build 500:   7.2 sec
  *       build 1408: 23.4 sec (3.2 times slower than build 500)
- *
- *  - partial close
- *     online: fix closedProfit after 1 partial-close (error loading status file)
- *     implement open.nextTarget
  *
  *  - money management
  *

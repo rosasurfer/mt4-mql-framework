@@ -7,61 +7,59 @@
  *  • MA Tunnel indicator: @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/MA%20Tunnel.mq4
  *
  *
- * External control
- * ----------------
- *  • EA.Stop
- *  • EA.Restart
- *  • EA.ToggleMetrics
- *  • Chart.ToggleOpenOrders
- *  • Chart.ToggleTradeHistory
- *
- *
- *
  * TODO:
- *  - implement partial profit taking
- *     manage/track partial open/closed positions
- *     add break-even stop
- *     add exit strategies
+ *  - implement XARD tunnel
+ *
+ *  - entry management
+ *
+ *  - exit management
+ *     break-even stop
+ *     partial profit taking
  *
  *  - convert signal constants to array
- *  - add entry strategies
  *  - add virtual trading
  *  - add input "TradingTimeframe"
  *  - document input params, control scripts and general usage
  */
-#define STRATEGY_ID  108                     // unique strategy id (used for generation of magic order numbers)
+#define STRATEGY_ID  108            // unique strategy id (used for generation of magic order numbers)
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks = 10000;                  // every 10 seconds to continue operation on a stalled data feed
+int __virtualTicks = 10000;         // every 10 seconds to continue operation on a stalled data feed
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Instance.ID          = "";                             // instance to load from a status file, format: "[T]123"
+extern string Instance.ID                    = "";                            // instance to load from a status file, format: "[T]123"
 
-extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MA definitions separated by comma
-extern string Supported.MA.Methods = "SMA, LWMA, EMA, SMMA";
+extern string ___a__________________________ = "=== Signal settings ===========";
+extern string Tunnel                         = "EMA(9), EMA(36), EMA(144)";   // one or more MA definitions (SMA, LWMA, EMA, SMMA)
+extern string Filter.1                       = "";
+extern string Filter.2                       = "";
+extern string Filter.3                       = "";
 
-extern double Lots                 = 0.1;
+extern string ___b__________________________ = "=== Trade settings ============";
+extern double Lots                           = 0.1;
 
-extern int    Initial.TakeProfit   = 100;                            // in punits (0: partial targets only or no TP)
-extern int    Initial.StopLoss     = 50;                             // in punits (0: moving stops only or no SL
+extern string ___c__________________________ = "=== Exit management ===========";
+extern int    Initial.TakeProfit             = 100;                           // in punits (0: partial targets only)
+extern int    Initial.StopLoss               = 50;                            // in punits (0: moving stops only)
 
-extern int    Target1              = 0;                              // in punits (0: no target)
-extern int    Target1.ClosePercent = 0;                              // size to close (0: nothing)
-extern int    Target1.MoveStopTo   = 1;                              // in punits (0: don't move stop)
-extern int    Target2              = 0;                              // ...
-extern int    Target2.ClosePercent = 30;                             //
-extern int    Target2.MoveStopTo   = 0;                              //
-extern int    Target3              = 0;                              //
-extern int    Target3.ClosePercent = 30;                             //
-extern int    Target3.MoveStopTo   = 0;                              //
-extern int    Target4              = 0;                              //
-extern int    Target4.ClosePercent = 30;                             //
-extern int    Target4.MoveStopTo   = 0;                              //
+extern int    Target1                        = 0;                             // in punits (0: no target)
+extern int    Target1.ClosePercent           = 0;                             // size to close (0: nothing)
+extern int    Target1.MoveStopTo             = 1;                             // in punits (0: don't move stop)
+extern int    Target2                        = 0;                             // ...
+extern int    Target2.ClosePercent           = 30;                            //
+extern int    Target2.MoveStopTo             = 0;                             //
+extern int    Target3                        = 0;                             //
+extern int    Target3.ClosePercent           = 30;                            //
+extern int    Target3.MoveStopTo             = 0;                             //
+extern int    Target4                        = 0;                             //
+extern int    Target4.ClosePercent           = 30;                            //
+extern int    Target4.MoveStopTo             = 0;                             //
 
-extern bool   ShowProfitInPercent  = false;                          // whether PnL is displayed in money amounts or percent
+extern string ___d__________________________ = "=== Other settings ============";
+extern bool   ShowProfitInPercent            = true;                          // whether PnL is displayed in percent or money amounts
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -152,7 +150,6 @@ extern bool   ShowProfitInPercent  = false;                          // whether 
 #include <ea/init.mqh>
 #include <ea/deinit.mqh>
 
-
 #define NET_MONEY       METRIC_NET_MONEY           // shorter metric aliases
 #define NET_UNITS       METRIC_NET_UNITS
 #define SIG_UNITS       METRIC_SIG_UNITS
@@ -170,7 +167,7 @@ int onTick() {
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
 
    if (__isChart) {
-      if (!HandleCommands()) return(last_error);   // process incoming commands, may switch on/off the instance
+      if (!HandleCommands()) return(last_error);   // process incoming commands (may switch on/off the instance)
    }
 
    if (instance.status != STATUS_STOPPED) {
@@ -264,7 +261,7 @@ bool IsMaTunnelSignal(int &signal) {
    }
    else {
       if (IsBarOpen()) {
-         int trend = icMaTunnel(NULL, Tunnel.Definition, MaTunnel.MODE_BAR_TREND, 1);
+         int trend = icMaTunnel(NULL, Tunnel, MaTunnel.MODE_BAR_TREND, 1);
          if      (trend == +1) signal = SIGNAL_LONG;
          else if (trend == -1) signal = SIGNAL_SHORT;
 
@@ -504,12 +501,12 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   Instance.ID              = GetIniStringA(file, section, "Instance.ID",       "");         // string   Instance.ID         = T123
-   Tunnel.Definition        = GetIniStringA(file, section, "Tunnel.Definition", "");         // string   Tunnel.Definition   = EMA(1), EMA(2), EMA(3)
-   Lots                     = GetIniDouble (file, section, "Lots"                 );         // double   Lots                = 0.1
+   Instance.ID              = GetIniStringA(file, section, "Instance.ID", "");               // string   Instance.ID         = T123
+   Tunnel                   = GetIniStringA(file, section, "Tunnel",      "");               // string   Tunnel              = EMA(1), EMA(2), EMA(3)
+   Lots                     = GetIniDouble (file, section, "Lots"           );               // double   Lots                = 0.1
    if (!ReadStatus.Targets(file)) return(false);
-   ShowProfitInPercent      = GetIniBool   (file, section, "ShowProfitInPercent"  );         // bool     ShowProfitInPercent = 1
-   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",       "");         // string   EA.Recorder         = 1,2,4
+   ShowProfitInPercent      = GetIniBool   (file, section, "ShowProfitInPercent");           // bool     ShowProfitInPercent = 1
+   EA.Recorder              = GetIniStringA(file, section, "EA.Recorder",     "");           // string   EA.Recorder         = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";
@@ -593,7 +590,7 @@ bool SaveStatus() {
    // [Inputs]
    section = "Inputs";
    WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
-   WriteIniString(file, section, "Tunnel.Definition",          /*string  */ Tunnel.Definition);
+   WriteIniString(file, section, "Tunnel",                     /*string  */ Tunnel);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
    if (!SaveStatus.Targets(file, fileExists)) return(false);   // StopLoss and TakeProfit targets
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
@@ -623,8 +620,7 @@ bool SaveStatus() {
 
 // backed-up input parameters
 string   prev.Instance.ID = "";
-string   prev.Tunnel.Definition = "";
-int      prev.Donchian.Periods;
+string   prev.Tunnel = "";
 double   prev.Lots;
 bool     prev.ShowProfitInPercent;
 
@@ -639,8 +635,8 @@ bool     prev.ShowProfitInPercent;
  */
 void BackupInputs() {
    // input parameters, used for comparison in ValidateInputs()
-   prev.Instance.ID         = StringConcatenate(Instance.ID, "");       // string inputs are references to internal C literals
-   prev.Tunnel.Definition   = StringConcatenate(Tunnel.Definition, ""); // and must be copied to break the reference
+   prev.Instance.ID         = StringConcatenate(Instance.ID, "");    // string inputs are references to internal C literals
+   prev.Tunnel              = StringConcatenate(Tunnel, "");         // and must be copied to break the reference
    prev.Lots                = Lots;
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
@@ -656,7 +652,7 @@ void BackupInputs() {
 void RestoreInputs() {
    // input parameters
    Instance.ID         = prev.Instance.ID;
-   Tunnel.Definition   = prev.Tunnel.Definition;
+   Tunnel              = prev.Tunnel;
    Lots                = prev.Lots;
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
@@ -686,36 +682,36 @@ bool ValidateInputs() {
       else if (Instance.ID != prev.Instance.ID)    return(!onInputError("ValidateInputs(1)  "+ instance.name +" switching to another instance is not supported (unload the EA first)"));
    }
 
-   // Tunnel.Definition
-   if (isInitParameters && Tunnel.Definition!=prev.Tunnel.Definition) {
-      if (hasOpenOrders)                           return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input parameter Tunnel.Definition with open orders"));
+   // Tunnel
+   if (isInitParameters && Tunnel!=prev.Tunnel) {
+      if (hasOpenOrders)                           return(!onInputError("ValidateInputs(2)  "+ instance.name +" cannot change input parameter Tunnel with open orders"));
    }
    string sValue, sValues[], sMAs[];
    ArrayResize(sMAs, 0);
-   int n=0, size=Explode(Tunnel.Definition, ",", sValues, NULL);
+   int n=0, size=Explode(Tunnel, ",", sValues, NULL);
    for (int i=0; i < size; i++) {
       sValue = StrTrim(sValues[i]);
       if (sValue == "") continue;
 
       string sMethod = StrLeftTo(sValue, "(");
-      if (sMethod == sValue)                       return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      if (sMethod == sValue)                       return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel: "+ DoubleQuoteStr(Tunnel) +" (format not \"MaMethod(int)\")"));
       int iMethod = StrToMaMethod(sMethod, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-      if (iMethod == -1)                           return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
-      if (iMethod > MODE_LWMA)                     return(!onInputError("ValidateInputs(5)  "+ instance.name +" unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition)));
+      if (iMethod == -1)                           return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel: "+ DoubleQuoteStr(Tunnel)));
+      if (iMethod > MODE_LWMA)                     return(!onInputError("ValidateInputs(5)  "+ instance.name +" unsupported MA method "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel: "+ DoubleQuoteStr(Tunnel)));
 
       string sPeriods = StrRightFrom(sValue, "(");
-      if (!StrEndsWith(sPeriods, ")"))             return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      if (!StrEndsWith(sPeriods, ")"))             return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel: "+ DoubleQuoteStr(Tunnel) +" (format not \"MaMethod(int)\")"));
       sPeriods = StrTrim(StrLeft(sPeriods, -1));
-      if (!StrIsDigits(sPeriods))                  return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (format not \"MaMethod(int)\")"));
+      if (!StrIsDigits(sPeriods))                  return(!onInputError("ValidateInputs(7)  "+ instance.name +" invalid value "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel: "+ DoubleQuoteStr(Tunnel) +" (format not \"MaMethod(int)\")"));
       int iPeriods = StrToInteger(sPeriods);
-      if (iPeriods < 1)                            return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be > 0)"));
+      if (iPeriods < 1)                            return(!onInputError("ValidateInputs(8)  "+ instance.name +" invalid MA periods "+ iPeriods +" in input parameter Tunnel: "+ DoubleQuoteStr(Tunnel) +" (must be > 0)"));
 
       ArrayResize(sMAs, n+1);
       sMAs[n]  = MaMethodDescription(iMethod) +"("+ iPeriods +")";
       n++;
    }
-   if (!n)                                         return(!onInputError("ValidateInputs(9)  "+ instance.name +" missing input parameter Tunnel.Definition (empty)"));
-   Tunnel.Definition = JoinStrings(sMAs);
+   if (!n)                                         return(!onInputError("ValidateInputs(9)  "+ instance.name +" missing input parameter Tunnel (empty)"));
+   Tunnel = JoinStrings(sMAs);
 
    // Lots
    if (LT(Lots, 0))                                return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
@@ -763,25 +759,25 @@ void SS.InstanceName() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),       ";"+ NL +
-                            "Tunnel.Definition=",    DoubleQuoteStr(Tunnel.Definition), ";"+ NL +
+   return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),    ";"+ NL +
+                            "Tunnel=",               DoubleQuoteStr(Tunnel),         ";"+ NL +
 
-                            "Lots=",                 NumberToStr(Lots, ".1+"),          ";"+ NL +
-                            "Initial.TakeProfit=",   Initial.TakeProfit,                ";"+ NL +
-                            "Initial.StopLoss=",     Initial.StopLoss,                  ";"+ NL +
-                            "Target1=",              Target1,                           ";"+ NL +
-                            "Target1.ClosePercent=", Target1.ClosePercent,              ";"+ NL +
-                            "Target1.MoveStopTo=",   Target1.MoveStopTo,                ";"+ NL +
-                            "Target2=",              Target2,                           ";"+ NL +
-                            "Target2.ClosePercent=", Target2.ClosePercent,              ";"+ NL +
-                            "Target2.MoveStopTo=",   Target2.MoveStopTo,                ";"+ NL +
-                            "Target3=",              Target3,                           ";"+ NL +
-                            "Target3.ClosePercent=", Target3.ClosePercent,              ";"+ NL +
-                            "Target3.MoveStopTo=",   Target3.MoveStopTo,                ";"+ NL +
-                            "Target4=",              Target4,                           ";"+ NL +
-                            "Target4.ClosePercent=", Target4.ClosePercent,              ";"+ NL +
-                            "Target4.MoveStopTo=",   Target4.MoveStopTo,                ";"+ NL +
+                            "Lots=",                 NumberToStr(Lots, ".1+"),       ";"+ NL +
+                            "Initial.TakeProfit=",   Initial.TakeProfit,             ";"+ NL +
+                            "Initial.StopLoss=",     Initial.StopLoss,               ";"+ NL +
+                            "Target1=",              Target1,                        ";"+ NL +
+                            "Target1.ClosePercent=", Target1.ClosePercent,           ";"+ NL +
+                            "Target1.MoveStopTo=",   Target1.MoveStopTo,             ";"+ NL +
+                            "Target2=",              Target2,                        ";"+ NL +
+                            "Target2.ClosePercent=", Target2.ClosePercent,           ";"+ NL +
+                            "Target2.MoveStopTo=",   Target2.MoveStopTo,             ";"+ NL +
+                            "Target3=",              Target3,                        ";"+ NL +
+                            "Target3.ClosePercent=", Target3.ClosePercent,           ";"+ NL +
+                            "Target3.MoveStopTo=",   Target3.MoveStopTo,             ";"+ NL +
+                            "Target4=",              Target4,                        ";"+ NL +
+                            "Target4.ClosePercent=", Target4.ClosePercent,           ";"+ NL +
+                            "Target4.MoveStopTo=",   Target4.MoveStopTo,             ";"+ NL +
 
-                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),    ";")
+                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent), ";")
    );
 }
