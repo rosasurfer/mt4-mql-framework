@@ -5,7 +5,6 @@
  * Requirements
  * ------------
  *  • MA Tunnel indicator: @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/MA%20Tunnel.mq4
- *  • ZigZag indicator:    @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/ZigZag.mq4
  *
  *
  * External control
@@ -43,7 +42,6 @@ extern string Instance.ID          = "";                             // instance
 
 extern string Tunnel.Definition    = "EMA(9), EMA(36), EMA(144)";    // one or more MA definitions separated by comma
 extern string Supported.MA.Methods = "SMA, LWMA, EMA, SMMA";
-extern int    Donchian.Periods     = 30;
 
 extern double Lots                 = 0.1;
 
@@ -76,7 +74,6 @@ extern bool   ShowProfitInPercent  = false;                          // whether 
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/iCustom/MaTunnel.mqh>
-#include <functions/iCustom/ZigZag.mqh>
 #include <functions/ObjectCreateRegister.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -241,13 +238,8 @@ bool IsTradeSignal(int &signal) {
    signal = NULL;
    if (last_error != NULL) return(false);
 
-   // MA Tunnel signal ------------------------------------------------------------------------------------------------------
+   // MA Tunnel signal
    if (IsMaTunnelSignal(signal)) {
-      return(true);
-   }
-
-   // ZigZag signal ---------------------------------------------------------------------------------------------------------
-   if (false) /*&&*/ if (IsZigZagSignal(signal)) {
       return(true);
    }
    return(false);
@@ -284,66 +276,6 @@ bool IsMaTunnelSignal(int &signal) {
       lastResult = signal;
    }
    return(signal != NULL);
-}
-
-
-/**
- * Whether a new ZigZag reversal occurred.
- *
- * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
- *
- * @return bool
- */
-bool IsZigZagSignal(int &signal) {
-   if (last_error != NULL) return(false);
-   signal = NULL;
-
-   static int lastTick, lastResult, lastSignal, lastSignalBar;
-   int trend, reversal;
-
-   if (Ticks == lastTick) {
-      signal = lastResult;
-   }
-   else {
-      // TODO: error on triple-crossing at bar 0 or 1
-      //  - extension down, then reversal up, then reversal down           e.g. ZigZag(20), GBPJPY,M5 2023.12.18 00:00
-      if (!GetZigZagData(0, trend, reversal)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData(0) => FALSE", ERR_RUNTIME_ERROR));
-      int absTrend = Abs(trend);
-
-      // The same value denotes a regular reversal, reversal==0 && absTrend==1 denotes a double crossing.
-      if (absTrend==reversal || (!reversal && absTrend==1)) {
-         if (trend > 0) signal = SIGNAL_LONG;
-         else           signal = SIGNAL_SHORT;
-
-         if (Time[0]==lastSignalBar && signal==lastSignal) {
-            signal = NULL;
-         }
-         else {
-            if (IsLogNotice()) logNotice("IsZigZagSignal(2)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
-            lastSignal = signal;
-            lastSignalBar = Time[0];
-         }
-      }
-      lastTick = Ticks;
-      lastResult = signal;
-   }
-   return(signal != NULL);
-}
-
-
-/**
- * Get ZigZag data at the specified bar offset.
- *
- * @param  _In_  int bar       - bar offset
- * @param  _Out_ int &trend    - combined trend value (buffers MODE_KNOWN_TREND + MODE_UNKNOWN_TREND)
- * @param  _Out_ int &reversal - bar offset of current ZigZag reversal to previous ZigZag extreme
- *
- * @return bool - success status
- */
-bool GetZigZagData(int bar, int &trend, int &reversal) {
-   trend    = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_TREND,    bar));
-   reversal = MathRound(icZigZag(NULL, Donchian.Periods, ZigZag.MODE_REVERSAL, bar));
-   return(!last_error && trend);
 }
 
 
@@ -574,7 +506,6 @@ bool ReadStatus() {
    section = "Inputs";
    Instance.ID              = GetIniStringA(file, section, "Instance.ID",       "");         // string   Instance.ID         = T123
    Tunnel.Definition        = GetIniStringA(file, section, "Tunnel.Definition", "");         // string   Tunnel.Definition   = EMA(1), EMA(2), EMA(3)
-   Donchian.Periods         = GetIniInt    (file, section, "Donchian.Periods"     );         // int      Donchian.Periods    = 40
    Lots                     = GetIniDouble (file, section, "Lots"                 );         // double   Lots                = 0.1
    if (!ReadStatus.Targets(file)) return(false);
    ShowProfitInPercent      = GetIniBool   (file, section, "ShowProfitInPercent"  );         // bool     ShowProfitInPercent = 1
@@ -663,7 +594,6 @@ bool SaveStatus() {
    section = "Inputs";
    WriteIniString(file, section, "Instance.ID",                /*string  */ Instance.ID);
    WriteIniString(file, section, "Tunnel.Definition",          /*string  */ Tunnel.Definition);
-   WriteIniString(file, section, "Donchian.Periods",           /*int     */ Donchian.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
    if (!SaveStatus.Targets(file, fileExists)) return(false);   // StopLoss and TakeProfit targets
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
@@ -711,7 +641,6 @@ void BackupInputs() {
    // input parameters, used for comparison in ValidateInputs()
    prev.Instance.ID         = StringConcatenate(Instance.ID, "");       // string inputs are references to internal C literals
    prev.Tunnel.Definition   = StringConcatenate(Tunnel.Definition, ""); // and must be copied to break the reference
-   prev.Donchian.Periods    = Donchian.Periods;
    prev.Lots                = Lots;
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
@@ -728,7 +657,6 @@ void RestoreInputs() {
    // input parameters
    Instance.ID         = prev.Instance.ID;
    Tunnel.Definition   = prev.Tunnel.Definition;
-   Donchian.Periods    = prev.Donchian.Periods;
    Lots                = prev.Lots;
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
@@ -789,24 +717,18 @@ bool ValidateInputs() {
    if (!n)                                         return(!onInputError("ValidateInputs(9)  "+ instance.name +" missing input parameter Tunnel.Definition (empty)"));
    Tunnel.Definition = JoinStrings(sMAs);
 
-   // Donchian.Periods
-   if (isInitParameters && Donchian.Periods!=prev.Donchian.Periods) {
-      if (hasOpenOrders)                           return(!onInputError("ValidateInputs(10)  "+ instance.name +" cannot change input parameter Donchian.Periods with open orders"));
-   }
-   if (Donchian.Periods < 2)                       return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Donchian.Periods: "+ Donchian.Periods +" (must be > 1)"));
-
    // Lots
-   if (LT(Lots, 0))                                return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
-   if (NE(Lots, NormalizeLots(Lots)))              return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be > 0)"));
+   if (NE(Lots, NormalizeLots(Lots)))              return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (must be a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    // Targets
    if (!ValidateInputs.Targets()) return(false);
 
-   // EA.Recorder: on | off* | 1,2,3=1000,...
+   // EA.Recorder
    if (!Recorder_ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(14)"));
+   return(!catch("ValidateInputs(12)"));
 }
 
 
@@ -843,7 +765,6 @@ void SS.InstanceName() {
 string InputsToStr() {
    return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),       ";"+ NL +
                             "Tunnel.Definition=",    DoubleQuoteStr(Tunnel.Definition), ";"+ NL +
-                            "Donchian.Periods=",     Donchian.Periods,                  ";"+ NL +
 
                             "Lots=",                 NumberToStr(Lots, ".1+"),          ";"+ NL +
                             "Initial.TakeProfit=",   Initial.TakeProfit,                ";"+ NL +

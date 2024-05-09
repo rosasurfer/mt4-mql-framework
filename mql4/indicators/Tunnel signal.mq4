@@ -31,7 +31,7 @@
  *
  *  - CloseOrders
  *     Bybit: add config for IsDemoFix() and use it everywhere
- *     support ticket numbers from arrow chart objects
+ *     support ticket numbers from chart objects (order arrows)
  *     support deleting of TP/SL limits
  *
  *  - account change to a new server
