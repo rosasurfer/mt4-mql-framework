@@ -361,7 +361,7 @@ int onTick() {
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  sizeof(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && (ZigZag.Periods.Step || Show123Projections)) {
+   if (__isChart) /*&&*/ if (ZigZag.Periods.Step || Show123Projections) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
    }
 
@@ -412,7 +412,7 @@ int onTick() {
    }
 
    // check data pumping on every tick so the reversal handler can skip errornous signals
-   IsPossibleDataPumping();
+   if (!__isTesting) IsPossibleDataPumping();
 
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-ZigZag.Periods);
@@ -567,7 +567,7 @@ int onTick() {
          }
       }
    }
-   return(catch("onTick(4)"));
+   return(last_error);
 }
 
 

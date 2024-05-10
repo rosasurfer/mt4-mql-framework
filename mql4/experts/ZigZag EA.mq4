@@ -90,7 +90,7 @@
  *     SuperBars in offline charts: 271 calls on every tick
  *
  *  -------------------------------------------------------------------------------------------------------------------------
- *  - ZigZag Twister
+ *  - ZigZag Twister (123 Trader)
  *  - add ZigZag projections
  *  - input TradingTimeframe
  *  - on recorder restart the first recorded bar opens at instance.startEquity
@@ -489,7 +489,7 @@ bool IsZigZagSignal(double &signal[]) {
       signal[SIG_PRICE] = 0;
       signal[SIG_OP   ] = 0;
 
-      if (!GetZigZagData(0, trend, reversalOffset, reversalPrice)) return(!logError("IsZigZagSignal(1)  "+ instance.name +" GetZigZagData(0) => FALSE", ERR_RUNTIME_ERROR));
+      if (!GetZigZagData(0, trend, reversalOffset, reversalPrice)) return(!logError("IsZigZagSignal(1)->GetZigZagData(0) => FALSE", ERR_RUNTIME_ERROR));
       int absTrend = MathAbs(trend);
       bool isReversal = false;
       if      (absTrend == reversalOffset)     isReversal = true;             // regular reversal
@@ -529,10 +529,12 @@ bool IsZigZagSignal(double &signal[]) {
  * @return bool - success status
  */
 bool GetZigZagData(int bar, int &trend, int &reversalOffset, double &reversalPrice) {
-   trend          = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
-   reversalOffset = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
+   // TODO: the EA spends 56% of the runtime in this function
 
-   if (trend > 0) reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
+   trend          = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));          // 88% of the runtime
+   reversalOffset = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));          // 6% of the runtime
+
+   if (trend > 0) reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);    // 6% of the runtime
    else           reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, bar);
    return(!last_error && trend);
 }
