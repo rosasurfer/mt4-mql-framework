@@ -11,7 +11,7 @@
  * TODO:
  *  - self-optimize the best bracket hour over the last few weeks
  */
-#define STRATEGY_ID  111                     // unique strategy id (used for generation of magic order numbers)
+#define STRATEGY_ID  111                     // unique strategy id
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -136,7 +136,7 @@ int onTick() {
    double signal[3];
 
    if (__isChart) {
-      if (!HandleCommands()) return(last_error);      // process incoming commands, may switch on/off the instance
+      if (!HandleCommands()) return(last_error);      // process incoming commands (may switch on/off the instance)
    }
 
    if (instance.status != STATUS_STOPPED) {
@@ -190,9 +190,9 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Whether an instance start condition evalutes to TRUE.
+ * Whether conditions are fullfilled to start trading.
  *
- * @param  _Out_ double &signal[] - array receiving signal details
+ * @param  _Out_ double &signal[] - array receiving entry signal details
  *
  * @return bool
  */
@@ -203,9 +203,9 @@ bool IsStartSignal(double &signal[]) {
 
 
 /**
- * Whether an instance stop condition evaluates to TRUE.
+ * Whether conditions are fullfilled to stop trading.
  *
- * @param  _Out_ double &signal[] - array receiving signal details
+ * @param  _Out_ double &signal[] - array receiving exit signal details (if any)
  *
  * @return bool
  */
@@ -246,7 +246,6 @@ bool StartTrading(double signal[]) {
 bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-
    return(!logNotice("StopTrading(2)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 
@@ -258,7 +257,6 @@ bool StopTrading(double signal[]) {
  */
 bool UpdateStatus() {
    if (last_error || instance.status!=STATUS_TRADING) return(false);
-
    return(!catch("UpdateStatus(1)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 
@@ -271,7 +269,6 @@ bool UpdateStatus() {
 bool UpdateOpenOrders() {
    if (last_error != NULL) return(false);
    if (instance.status != STATUS_TRADING) return(!catch("UpdateOpenOrders(1)  "+ instance.name +" cannot update orders of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-
    return(!catch("UpdateOpenOrders(1)  not implemented", ERR_NOT_IMPLEMENTED));
 }
 

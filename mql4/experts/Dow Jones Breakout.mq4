@@ -10,7 +10,7 @@
  *
  *  - track spread at range end time
  */
-#define STRATEGY_ID  110                     // unique strategy id (used for generation of magic order numbers)
+#define STRATEGY_ID  110                     // unique strategy id
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};

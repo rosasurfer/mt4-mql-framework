@@ -11,7 +11,7 @@
  *
  * Notes
  * -----
- *  - Signals represent a basic bar pattern. The pattern is not related to the current market scheme/trend and there no
+ *  - Signals represent a basic bar pattern. The pattern is not related to the current market scheme/trend and there is no
  *    distinction between micro and macro patterns. In effect signal outcome is random and results merely reflect the used
  *    exit management. Worse, signals are not able to catch big trends where exit management could play out its strengths.
  *
@@ -38,7 +38,7 @@
  *     Initial.TakeProfit=70; Initial.StopLoss=50; Target1=30; Target1.MoveStopTo=1:      choppy, always below breakeven (BE stop kicks in too early)
  *     Initial.TakeProfit=80; Initial.StopLoss=50; Target1=40; Target1.MoveStopTo=1:      significantly better (more room for TP and BE stop)
  */
-#define STRATEGY_ID  109                     // unique strategy id (used for generation of magic order numbers)
+#define STRATEGY_ID  109                     // unique strategy id
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -158,7 +158,6 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <ea/functions/trade/IsMyOrder.mqh>
 #include <ea/functions/trade/MovePositionToHistory.mqh>
 #include <ea/functions/trade/onPositionClose.mqh>
-#include <ea/functions/trade/OpenPositionToStr.mqh>
 
 #include <ea/functions/trade/signal/SignalOperationToStr.mqh>
 #include <ea/functions/trade/signal/SignalTypeToStr.mqh>
@@ -190,7 +189,7 @@ int onTick() {
    double signal[3];
 
    if (__isChart) {
-      if (!HandleCommands()) return(last_error);      // process incoming commands, may switch on/off the instance
+      if (!HandleCommands()) return(last_error);      // process incoming commands (may switch on/off the instance)
    }
 
    if (instance.status != STATUS_STOPPED) {
@@ -206,14 +205,12 @@ int onTick() {
             StopTrading(signal);
          }
          else {
-            UpdatePositions();                        // update server-side status
+            ManageOpenPositions();                    // update server-side status
          }
       }
       RecordMetrics();
    }
    return(last_error);
-
-   OpenPositionToStr();
 }
 
 
@@ -359,6 +356,7 @@ bool IsExitSignal(double &signal[]) {
  */
 bool IsStopSignal(double &signal[]) {
    if (last_error || (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING)) return(false);
+   // TODO: check PnL conditions
    return(false);
 }
 
@@ -429,10 +427,6 @@ bool StopTrading(double signal[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   int    sigType  = signal[SIG_TYPE];
-   double sigPrice = signal[SIG_PRICE];
-   int    sigOp    = signal[SIG_OP];
-
    // close an open position
    if (instance.status==STATUS_TRADING && open.ticket) {
       ClosePosition(signal);
@@ -446,7 +440,10 @@ bool StopTrading(double signal[]) {
       SS.TotalProfit();
       SS.ProfitStats();
    }
-   if (IsLogInfo()) logInfo("StopTrading(2)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
+   if (IsLogInfo()) {
+      int sigType = signal[SIG_TYPE];
+      logInfo("StopTrading(2)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
+   }
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
@@ -523,7 +520,7 @@ bool UpdateStatus() {
  *
  * @return bool - success status
  */
-bool UpdatePositions() {
+bool ManageOpenPositions() {
    if (last_error || instance.status!=STATUS_TRADING) return(false);
    double signal[3];
 
@@ -534,7 +531,7 @@ bool UpdatePositions() {
    if (!open.ticket) {
       if (IsEntrySignal(signal)) OpenPosition(signal);   // open a new position
    }
-   return(!catch("UpdatePositions(1)"));
+   return(!catch("ManageOpenPositions(1)"));
 }
 
 
@@ -559,16 +556,15 @@ bool OpenPosition(double signal[]) {
    double takeProfit  = CalculateInitialTakeProfit(type);
    string comment     = instance.name;
    int    magicNumber = CalculateMagicNumber(instance.id);
-   color  marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+   color  markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   int ticket = OrderSendEx(Symbol(), type, Lots, NULL, order.slippage, stopLoss, takeProfit, comment, magicNumber, NULL, marker, NULL, oe);
+   int ticket = OrderSendEx(NULL, type, Lots, NULL, order.slippage, stopLoss, takeProfit, comment, magicNumber, NULL, markerColor, NULL, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store the position data
    open.ticket       = ticket;
    open.type         = type;
    open.lots         = oe.Lots(oe);
-   open.part         = 1;
    open.time         = oe.OpenTime(oe);
    open.price        = oe.OpenPrice(oe);
    open.priceSig     = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid);
@@ -596,7 +592,6 @@ bool OpenPosition(double signal[]) {
       stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
       stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
    }
-
    if (__isChart) {
       SS.OpenLots();
       SS.TotalProfit();

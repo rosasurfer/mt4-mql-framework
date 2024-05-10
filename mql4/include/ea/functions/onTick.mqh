@@ -24,7 +24,7 @@ int onTick() {
             StopTrading(signal);
          }
          else {                                       // update server-side status
-            UpdateOpenPositions();                    // add/reduce/reverse positions, take (partial) profits
+            ManageOpenPositions();                    // add/reduce/reverse positions, take (partial) profits
             UpdatePendingOrders();                    // update entry and/or exit limits
          }
       }

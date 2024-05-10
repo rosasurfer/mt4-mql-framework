@@ -397,21 +397,21 @@ void ForceAlert(string message) {
  */
 int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    string prefix = Symbol() +","+ PeriodDescription();
-
-   if (!StrContains(caption, prefix))
-      caption = prefix +" - "+ caption;
+   if (!StrContains(caption, prefix)) caption = prefix +" - "+ caption;
 
    bool win32 = false;
-   if      (IsTesting())                                                       win32 = true;
-   else if (IsIndicator())                                                     win32 = true;
-   else if (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
-
-   if (!win32) int button = MessageBox(message, caption, flags);
-   else            button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
-
-   if (!(flags & MB_DONT_LOG)) {
-      logDebug("MessageBoxEx(1)  "+ message +" (response: "+ MessageBoxButtonToStr(button) +")");
+   if (IsTesting() || IsIndicator()) {
+      win32 = true;
    }
+   else {
+      win32 = (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE);
+   }
+
+   // the default flag MB_APPLMODAL may block the UI thread from processing messages (happens *sometimes* in test::deinit())
+   if (win32) int button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TASKMODAL|MB_TOPMOST|MB_SETFOREGROUND);
+   else           button = MessageBox(message, caption, flags);
+
+   if (!(flags & MB_DONT_LOG)) logDebug("MessageBoxEx(1)  "+ message +" (response: "+ MessageBoxButtonToStr(button) +")");
    return(button);
 }
 

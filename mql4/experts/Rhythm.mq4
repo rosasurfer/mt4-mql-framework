@@ -20,7 +20,7 @@
  *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick:  8.2 sec, 56 trades            Rhythm w/o framework
  *     GBPJPY,M1 2024.02.01-2024.03.02, EveryTick: 13.6 sec, 56 trades            Rhythm-v2 2007.11.28 @rraygun
  */
-#define STRATEGY_ID  112                                 // unique strategy id (used for generation of magic order numbers)
+#define STRATEGY_ID  112                                 // unique strategy id
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -154,7 +154,7 @@ int onTick() {
          //   StopTrading(signal);                                                                                         // close all positions => STATUS_WAITING|STATUS_STOPPED
          //}
          //else {                                     // update server-side status
-         //   UpdateOpenPositions();                  // add/reduce/reverse position, take (partial) profits
+         //   ManageOpenPositions();                  // add/reduce/reverse position, take (partial) profits
          //   UpdatePendingOrders();                  // update entry and/or exit limits
          //}
       }

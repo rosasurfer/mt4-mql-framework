@@ -1,10 +1,12 @@
 /**
- * A strategy trading tunnel breakouts.
+ * An EA for trading tunnel breakouts.
  *
  *
- * Requirements
- * ------------
- *  • MA Tunnel indicator: @see https://github.com/rosasurfer/mt4-mql/blob/master/mql4/indicators/MA%20Tunnel.mq4
+ * Rules
+ * -----
+ *  - Entry:      on breakout of the defined tunnel (by close of the current bar and/or meeting the defined filter condition)
+ *  - StopLoss:   on opposite signal or on meeting the defined stop condition
+ *  - TakeProfit: by following the defined target configuration
  *
  *
  * TODO:
@@ -21,19 +23,19 @@
  *  - add input "TradingTimeframe"
  *  - document input params, control scripts and general usage
  */
-#define STRATEGY_ID  108            // unique strategy id (used for generation of magic order numbers)
+#define STRATEGY_ID  108                     // unique strategy id
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks = 10000;         // every 10 seconds to continue operation on a stalled data feed
+int __virtualTicks = 10000;                  // every 10 seconds to continue operation on a stalled data feed
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID                    = "";                            // instance to load from a status file, format: "[T]123"
 
 extern string ___a__________________________ = "=== Signal settings ===========";
-extern string Tunnel                         = "EMA(9), EMA(36), EMA(144)";   // one or more MA definitions (SMA, LWMA, EMA, SMMA)
+extern string Tunnel                         = "EMA(9), EMA(36), EMA(144)";   // tunnel definition as supported by the "MA Tunnel" indicator
 extern string Filter.1                       = "";
 extern string Filter.2                       = "";
 extern string Filter.3                       = "";
@@ -140,6 +142,8 @@ extern bool   ShowProfitInPercent            = true;                          //
 #include <ea/functions/trade/MovePositionToHistory.mqh>
 #include <ea/functions/trade/onPositionClose.mqh>
 
+#include <ea/functions/trade/signal/SignalOperationToStr.mqh>
+
 #include <ea/functions/trade/stats/CalculateStats.mqh>
 
 #include <ea/functions/validation/ValidateInputs.ID.mqh>
@@ -150,12 +154,9 @@ extern bool   ShowProfitInPercent            = true;                          //
 #include <ea/init.mqh>
 #include <ea/deinit.mqh>
 
-#define NET_MONEY       METRIC_NET_MONEY           // shorter metric aliases
+#define NET_MONEY       METRIC_NET_MONEY              // shorter metric aliases
 #define NET_UNITS       METRIC_NET_UNITS
 #define SIG_UNITS       METRIC_SIG_UNITS
-
-#define SIGNAL_LONG     1                          // signal types
-#define SIGNAL_SHORT    2
 
 
 /**
@@ -165,15 +166,28 @@ extern bool   ShowProfitInPercent            = true;                          //
  */
 int onTick() {
    if (!instance.status) return(catch("onTick(1)  illegal instance.status: "+ instance.status, ERR_ILLEGAL_STATE));
+   double signal[3];
 
    if (__isChart) {
-      if (!HandleCommands()) return(last_error);   // process incoming commands (may switch on/off the instance)
+      if (!HandleCommands()) return(last_error);      // process incoming commands (may switch on/off the instance)
    }
 
    if (instance.status != STATUS_STOPPED) {
-      int signal;
-      IsTradeSignal(signal);
-      UpdateStatus(signal);
+      if (instance.status == STATUS_WAITING) {
+         if (IsStartSignal(signal)) {
+            StartTrading(signal);
+         }
+      }
+      else if (instance.status == STATUS_TRADING) {
+         UpdateStatus();                              // update client-side status
+
+         if (IsStopSignal(signal)) {
+            StopTrading(signal);
+         }
+         else {
+            ManageOpenPositions();                    // update server-side status
+         }
+      }
       RecordMetrics();
    }
    return(last_error);
@@ -201,13 +215,6 @@ bool onCommand(string cmd, string params, int keys) {
             return(StopTrading(dNull));
       }
    }
-   else if (cmd == "restart") {
-      switch (instance.status) {
-         case STATUS_STOPPED:
-            logInfo("onCommand(2)  "+ instance.name +" \""+ fullCmd +"\"");
-            return(RestartInstance());
-      }
-   }
    else if (cmd == "toggle-metrics") {
       int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
       return(ToggleMetrics(direction, METRIC_NET_MONEY, METRIC_SIG_UNITS));
@@ -225,18 +232,19 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Whether a trade signal occurred.
+ * Whether conditions are fullfilled to start trading.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of a triggered condition
+ * @param  _Out_ double &signal[] - array receiving entry signal details
  *
  * @return bool
  */
-bool IsTradeSignal(int &signal) {
-   signal = NULL;
-   if (last_error != NULL) return(false);
+bool IsStartSignal(double &signal[]) {
+   if (last_error || instance.status!=STATUS_WAITING) return(false);
+   signal[SIG_TYPE ] = 0;
+   signal[SIG_PRICE] = 0;
+   signal[SIG_OP   ] = 0;
 
-   // MA Tunnel signal
-   if (IsMaTunnelSignal(signal)) {
+   if (IsEntrySignal(signal)) {
       return(true);
    }
    return(false);
@@ -244,160 +252,140 @@ bool IsTradeSignal(int &signal) {
 
 
 /**
- * Whether a new MA tunnel crossing occurred.
+ * Whether conditions are fullfilled to stop trading.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier: SIGNAL_LONG | SIGNAL_SHORT
+ * @param  _Out_ double &signal[] - array receiving exit signal details (if any)
  *
  * @return bool
  */
-bool IsMaTunnelSignal(int &signal) {
-   if (last_error != NULL) return(false);
-   signal = NULL;
-
-   static int lastTick, lastResult;
-
-   if (Ticks == lastTick) {
-      signal = lastResult;
-   }
-   else {
-      if (IsBarOpen()) {
-         int trend = icMaTunnel(NULL, Tunnel, MaTunnel.MODE_BAR_TREND, 1);
-         if      (trend == +1) signal = SIGNAL_LONG;
-         else if (trend == -1) signal = SIGNAL_SHORT;
-
-         if (signal != NULL) {
-            if (IsLogNotice()) logNotice("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" crossing (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
-         }
-      }
-      lastTick = Ticks;
-      lastResult = signal;
-   }
-   return(signal != NULL);
+bool IsStopSignal(double &signal[]) {
+   if (last_error || (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING)) return(false);
+   // TODO: check PnL conditions
+   return(false);
 }
 
 
 /**
- * Update order status and PnL.
+ * Whether a signal occurred to open a new position.
  *
- * @param  int signal [optional] - trade signal causing the call (default: none, update status only)
+ * @param  _Out_ double &signal[] - array receiving signal details
+ *
+ * @return bool
+ */
+bool IsEntrySignal(double &signal[]) {
+   return(IsMaTunnelSignal(signal));
+}
+
+
+/**
+ * Whether a signal occurred to close an open position.
+ *
+ * @param  _Out_ double &signal[] - array receiving signal details (if any)
+ *
+ * @return bool
+ */
+bool IsExitSignal(double &signal[]) {
+   if (last_error || instance.status!=STATUS_TRADING) return(false);
+
+   static int lastTick, lastSigType, lastSigOp;
+   static double lastSigPrice;
+
+   if (Ticks == lastTick) {                  // return the same result for the same tick
+      signal[SIG_TYPE ] = lastSigType;
+      signal[SIG_PRICE] = lastSigPrice;
+      signal[SIG_OP   ] = lastSigOp;
+   }
+   else {
+      signal[SIG_TYPE ] = 0;
+      signal[SIG_PRICE] = 0;
+      signal[SIG_OP   ] = 0;
+
+      if (open.ticket > 0) {
+         if (IsMaTunnelSignal(signal)) {
+            int sigOp = signal[SIG_OP];
+            if      (open.type==OP_LONG  && sigOp & SIG_OP_SHORT) sigOp |= SIG_OP_CLOSE_LONG;
+            else if (open.type==OP_SHORT && sigOp & SIG_OP_LONG ) sigOp |= SIG_OP_CLOSE_SHORT;
+            else                                                  sigOp = NULL;
+            if (sigOp != NULL) {
+               signal[SIG_OP] = sigOp;
+               if (IsLogNotice()) logNotice("IsExitSignal(1)  "+ instance.name +" close "+ ifString(sigOp & SIG_OP_CLOSE_LONG, "long", "short") +" signal at "+ NumberToStr(signal[SIG_PRICE], PriceFormat) +" (opposite breakout, market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
+            }
+         }
+      }
+      lastTick     = Ticks;
+      lastSigType  = signal[SIG_TYPE ];
+      lastSigPrice = signal[SIG_PRICE];
+      lastSigOp    = signal[SIG_OP   ];
+   }
+   return(lastSigType != NULL);
+}
+
+
+/**
+ * Whether an MA tunnel crossing occurred.
+ *
+ * @param  _Out_ double &signal[] - array receiving signal details (if any)
+ *
+ * @return bool
+ */
+bool IsMaTunnelSignal(double &signal[]) {
+   if (last_error != NULL) return(false);
+
+   static int lastTick, lastSigType, lastSigOp;
+   static double lastSigPrice;
+
+   if (Ticks == lastTick) {                  // return the same result for the same tick
+      signal[SIG_TYPE ] = lastSigType;
+      signal[SIG_PRICE] = lastSigPrice;
+      signal[SIG_OP   ] = lastSigOp;
+   }
+   else {
+      signal[SIG_TYPE ] = 0;
+      signal[SIG_PRICE] = 0;
+      signal[SIG_OP   ] = 0;
+
+      if (IsBarOpen()) {
+         int trend = icMaTunnel(NULL, Tunnel, MaTunnel.MODE_BAR_TREND, 1);
+         if (Abs(trend) == 1) {
+            signal[SIG_TYPE ] = SIG_TYPE_TUNNEL;
+            signal[SIG_PRICE] = Close[1];
+            signal[SIG_OP   ] = ifInt(trend==1, SIG_OP_LONG, SIG_OP_SHORT);
+
+            if (IsLogNotice()) logNotice("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal[SIG_OP]==SIG_OP_LONG, "long", "short") +" crossing (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
+         }
+      }
+      lastTick     = Ticks;
+      lastSigType  = signal[SIG_TYPE ];
+      lastSigPrice = signal[SIG_PRICE];
+      lastSigOp    = signal[SIG_OP   ];
+   }
+   return(lastSigType != NULL);
+}
+
+
+/**
+ * Start/restart trading on a waiting or stopped instance.
+ *
+ * @param  double signal[] - signal infos causing the call
  *
  * @return bool - success status
  */
-bool UpdateStatus(int signal = NULL) {
-   if (last_error || instance.status!=STATUS_TRADING) return(false);
-   bool positionClosed = false;
+bool StartTrading(double signal[]) {
+   if (last_error != NULL)                                                 return(false);
+   if (instance.status!=STATUS_WAITING && instance.status!=STATUS_STOPPED) return(!catch("StartTrading(1)  "+ instance.name +" cannot start "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   // update open position
-   if (open.ticket != NULL) {
-      if (!SelectTicket(open.ticket, "UpdateStatus(1)")) return(false);
-      bool isClosed = (OrderCloseTime() != NULL);
-      if (isClosed) {
-         double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
-      }
-      else {
-         exitPrice = ifDouble(open.type==OP_BUY, _Bid, _Ask);
-         exitPriceSig = _Bid;
-      }
-      open.swapM        = NormalizeDouble(OrderSwap(), 2);
-      open.commissionM  = OrderCommission();
-      open.grossProfitM = OrderProfit();
-      open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
-      open.runupP       = MathMax(open.runupP, open.netProfitP);
-      open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-      open.sigProfitP   = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
-      open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
-      open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
+   if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit(), 2);
+   if (!instance.started) instance.started = Tick.time;
+   instance.stopped = NULL;
+   instance.status = STATUS_TRADING;
 
-      if (isClosed) {
-         int error;
-         if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ ComposePositionCloseMsg(error), error))) return(false);
-         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                        return(false);
-         positionClosed = true;
-      }
+   OpenPosition(signal);
+
+   if (!last_error && IsLogInfo()) {
+      int sigOp = signal[SIG_OP];
+      logInfo("StartTrading(2)  "+ instance.name +" started ("+ SignalOperationToStr(sigOp & (SIG_OP_LONG|SIG_OP_SHORT)) +")");
    }
-
-   // process signal
-   if (signal != NULL) {
-      if (!instance.startEquity) instance.startEquity = NormalizeDouble(AccountEquity() - AccountCredit(), 2);
-      if (!instance.started) instance.started = Tick.time;
-      instance.stopped = NULL;
-      instance.status = STATUS_TRADING;
-
-      // close an existing open position
-      if (open.ticket != NULL) {
-         if (open.type != ifInt(signal==SIGNAL_SHORT, OP_LONG, OP_SHORT)) return(!catch("UpdateStatus(3)  "+ instance.name +" cannot process "+ SignalToStr(signal) +" with open "+ OperationTypeToStr(open.type) +" position", ERR_ILLEGAL_STATE));
-
-         int oeFlags, oe[];
-         if (!OrderCloseEx(open.ticket, NULL, NULL, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-
-         double closePrice = oe.ClosePrice(oe);
-         open.slippageP   += oe.Slippage(oe);
-         open.swapM        = oe.Swap(oe);
-         open.commissionM  = oe.Commission(oe);
-         open.grossProfitM = oe.Profit(oe);
-         open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-         open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
-         open.runupP       = MathMax(open.runupP, open.netProfitP);
-         open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-         open.sigProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
-         open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
-         open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
-
-         if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, _Bid)) return(false);
-      }
-
-      // open new position
-      int    type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
-      string comment     = instance.name;
-      int    magicNumber = CalculateMagicNumber(instance.id);
-      color  markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
-
-      int ticket = OrderSendEx(NULL, type, Lots, NULL, order.slippage, NULL, NULL, comment, magicNumber, NULL, markerColor, NULL, oe);
-      if (!ticket) return(!SetLastError(oe.Error(oe)));
-
-      // store the new position
-      open.ticket       = ticket;
-      open.type         = type;
-      open.lots         = oe.Lots(oe);
-      open.time         = oe.OpenTime(oe);
-      open.price        = oe.OpenPrice(oe);
-      open.priceSig     = _Bid;
-      open.slippageP    = oe.Slippage(oe);
-      open.swapM        = oe.Swap(oe);
-      open.commissionM  = oe.Commission(oe);
-      open.grossProfitM = oe.Profit(oe);
-      open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-      open.runupP       = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask);
-      open.rundownP     = open.runupP;
-      open.sigProfitP   = 0;
-      open.sigRunupP    = open.sigProfitP;
-      open.sigRundownP  = open.sigRunupP;
-      if (__isChart) SS.OpenLots();
-
-      if (test.onPositionOpenPause) Tester.Pause("UpdateStatus(4)");
-   }
-
-   // update PnL numbers
-   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
-   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
-   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
-   for (int i=1; i <= 3; i++) {
-      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
-      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
-      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
-      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
-   }
-
-   if (__isChart) {
-      SS.TotalProfit();
-      SS.ProfitStats();
-   }
-
-   if (positionClosed || signal)
-      return(SaveStatus());
-   return(!catch("UpdateStatus(5)"));
+   return(!last_error);
 }
 
 
@@ -472,14 +460,204 @@ bool StopTrading(double signal[]) {
 
 
 /**
- * Restart a stopped instance.
+ * Update client-side order status.
  *
  * @return bool - success status
  */
-bool RestartInstance() {
+bool UpdateStatus() {
+   if (last_error || instance.status!=STATUS_TRADING) return(false);
+   bool positionClosed = false;
+
+   // update open position
+   if (open.ticket != NULL) {
+      if (!SelectTicket(open.ticket, "UpdateStatus(1)")) return(false);
+      bool isClosed = (OrderCloseTime() != NULL);
+      if (isClosed) {
+         double exitPrice=OrderClosePrice(), exitPriceSig=exitPrice;
+      }
+      else {
+         exitPrice = ifDouble(open.type==OP_BUY, _Bid, _Ask);
+         exitPriceSig = _Bid;
+      }
+      open.swapM        = NormalizeDouble(OrderSwap(), 2);
+      open.commissionM  = OrderCommission();
+      open.grossProfitM = OrderProfit();
+      open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
+      open.netProfitP   = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
+      open.runupP       = MathMax(open.runupP, open.netProfitP);
+      open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
+      open.sigProfitP   = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
+      open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
+      open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
+
+      if (isClosed) {
+         int error;
+         if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ ComposePositionCloseMsg(error), error))) return(false);
+         if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                        return(false);
+         positionClosed = true;
+      }
+   }
+
+   // update PnL numbers
+   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   for (int i=1; i <= 3; i++) {
+      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
+      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+   }
+   if (__isChart) {
+      SS.TotalProfit();
+      SS.ProfitStats();
+   }
+
+   if (positionClosed) return(SaveStatus());
+   return(!catch("UpdateStatus(3)"));
+}
+
+
+/**
+ * Update server-side order status.
+ *
+ * @return bool - success status
+ */
+bool ManageOpenPositions() {
+   if (last_error || instance.status!=STATUS_TRADING) return(false);
+   double signal[3];
+
+   if (open.ticket > 0) {
+      if (IsExitSignal(signal)) ClosePosition(signal);   // close an existing position
+   }
+   if (!open.ticket) {
+      if (IsEntrySignal(signal)) OpenPosition(signal);   // open a new position
+   }
+   return(!catch("ManageOpenPositions(1)"));
+}
+
+
+/**
+ * Open a new position.
+ *
+ * @param  double signal[] - signal infos causing the call
+ *
+ * @return bool - success status
+ */
+bool OpenPosition(double signal[]) {
+   if (last_error != NULL)                    return(false);
+   if (instance.status != STATUS_TRADING)     return(!catch("OpenPosition(1)  "+ instance.name +" cannot open new position for "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   int    sigType  = signal[SIG_TYPE ];
+   double sigPrice = signal[SIG_PRICE];
+   int    sigOp    = signal[SIG_OP   ];
+   if (!(sigOp & (SIG_OP_LONG|SIG_OP_SHORT))) return(!catch("OpenPosition(2)  "+ instance.name +" invalid signal parameter SIG_OP: "+ sigOp, ERR_INVALID_PARAMETER));
+
+   // open a new position
+   int    type        = ifInt(sigOp & SIG_OP_LONG, OP_BUY, OP_SELL), oe[];
+   string comment     = instance.name;
+   int    magicNumber = CalculateMagicNumber(instance.id);
+   color  markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+
+   int ticket = OrderSendEx(NULL, type, Lots, NULL, order.slippage, NULL, NULL, comment, magicNumber, NULL, markerColor, NULL, oe);
+   if (!ticket) return(!SetLastError(oe.Error(oe)));
+
+   // store the position data
+   open.ticket       = ticket;
+   open.type         = type;
+   open.lots         = oe.Lots(oe);
+   open.time         = oe.OpenTime(oe);
+   open.price        = oe.OpenPrice(oe);
+   open.priceSig     = ifDouble(sigType==SIG_TYPE_TUNNEL, sigPrice, _Bid);
+   open.slippageP    = oe.Slippage(oe);
+   open.swapM        = oe.Swap(oe);
+   open.commissionM  = oe.Commission(oe);
+   open.grossProfitM = oe.Profit(oe);
+   open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
+   open.netProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
+   open.runupP       = ifDouble(open.type==OP_BUY, _Bid-open.price, open.price-_Ask);
+   open.rundownP     = open.runupP;
+   open.sigProfitP   = ifDouble(open.type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
+   open.sigRunupP    = open.sigProfitP;
+   open.sigRundownP  = open.sigRunupP;
+
+   // update PnL stats
+   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   for (int i=1; i <= 3; i++) {
+      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
+      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+   }
+   if (__isChart) {
+      SS.OpenLots();
+      SS.TotalProfit();
+      SS.ProfitStats();
+   }
+
+   if (test.onPositionOpenPause) Tester.Pause("OpenPosition(3)");
+   return(SaveStatus());
+}
+
+
+/**
+ * Close an existing open position.
+ *
+ * @param  double signal[] - signal infos causing the call
+ *
+ * @return bool - success status
+ */
+bool ClosePosition(double signal[]) {
    if (last_error != NULL)                return(false);
-   if (instance.status != STATUS_STOPPED) return(!catch("RestartInstance(1)  "+ instance.name +" cannot restart "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   return(!catch("RestartInstance(2)", ERR_NOT_IMPLEMENTED));
+   if (instance.status != STATUS_TRADING) return(!catch("ClosePosition(1)  "+ instance.name +" cannot close position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
+   if (!open.ticket)                      return(true);
+
+   int    sigType  = signal[SIG_TYPE ];
+   double sigPrice = signal[SIG_PRICE];
+   int    sigOp    = signal[SIG_OP   ];
+
+   int oeFlags, oe[];
+   if (!OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+
+   datetime closeTime     = oe.CloseTime(oe);
+   double   closePrice    = oe.ClosePrice(oe);
+   double   closePriceSig = ifDouble(sigType==SIG_TYPE_TUNNEL, sigPrice, _Bid), openCloseRange;
+
+   open.slippageP   += oe.Slippage(oe);
+   open.swapM        = oe.Swap(oe);
+   open.commissionM  = oe.Commission(oe);
+   open.grossProfitM = oe.Profit(oe);
+   open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
+   openCloseRange    = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+   open.netProfitP   = openCloseRange + (open.swapM + open.commissionM)/PointValue(open.lots);
+   open.runupP       = MathMax(open.runupP, openCloseRange);
+   open.rundownP     = MathMin(open.rundownP, openCloseRange);
+   openCloseRange    = ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
+   open.sigProfitP   = openCloseRange;
+   open.sigRunupP    = MathMax(open.sigRunupP, openCloseRange);
+   open.sigRundownP  = MathMin(open.sigRundownP, openCloseRange);
+
+   if (!MovePositionToHistory(closeTime, closePrice, closePriceSig)) return(false);
+
+   // update PnL stats
+   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   for (int i=1; i <= 3; i++) {
+      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
+      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+   }
+   if (__isChart) {
+      SS.TotalProfit();
+      SS.ProfitStats();
+   }
+   if (test.onPositionClosePause) Tester.Pause("ClosePosition(2)");
+   return(SaveStatus());
+
+
 }
 
 
@@ -729,27 +907,10 @@ bool ValidateInputs() {
 
 
 /**
- * Return a readable representation of a signal constant.
- *
- * @param  int signal
- *
- * @return string - readable constant or an empty string in case of errors
- */
-string SignalToStr(int signal) {
-   switch (signal) {
-      case NULL        : return("no signal"   );
-      case SIGNAL_LONG : return("SIGNAL_LONG" );
-      case SIGNAL_SHORT: return("SIGNAL_SHORT");
-   }
-   return(_EMPTY_STR(catch("SignalToStr(1)  "+ instance.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "V."+ StrPadLeft(instance.id, 3, "0");
+   instance.name = "T."+ StrPadLeft(instance.id, 3, "0");
 }
 
 
@@ -760,9 +921,14 @@ void SS.InstanceName() {
  */
 string InputsToStr() {
    return(StringConcatenate("Instance.ID=",          DoubleQuoteStr(Instance.ID),    ";"+ NL +
+
                             "Tunnel=",               DoubleQuoteStr(Tunnel),         ";"+ NL +
+                            "Filter.1=",             DoubleQuoteStr(Filter.1),       ";"+ NL +
+                            "Filter.2=",             DoubleQuoteStr(Filter.2),       ";"+ NL +
+                            "Filter.3=",             DoubleQuoteStr(Filter.3),       ";"+ NL +
 
                             "Lots=",                 NumberToStr(Lots, ".1+"),       ";"+ NL +
+
                             "Initial.TakeProfit=",   Initial.TakeProfit,             ";"+ NL +
                             "Initial.StopLoss=",     Initial.StopLoss,               ";"+ NL +
                             "Target1=",              Target1,                        ";"+ NL +

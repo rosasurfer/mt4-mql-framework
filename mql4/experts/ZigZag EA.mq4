@@ -1,5 +1,5 @@
 /**
- * A strategy trading Donchian channel breakouts.
+ * A system trading ZigZag reversals (i.e. Donchian channel breakouts).
  *
  *
  * Requirements
@@ -221,7 +221,7 @@
  *  @see  https://forums.mydigitallife.net/threads/solved-windows-10-higher-dpi-win8dpiscaling-problem.62528/
  *  @see  https://www.reddit.com/r/buildapc/comments/5v8pcd/rwindows10_wasnt_very_friendly_but_does_anyone/#              [Disable W10 DPI scaling for an application]
  */
-#define STRATEGY_ID  107                     // unique strategy id (used for generation of magic order numbers)
+#define STRATEGY_ID  107                     // unique strategy id
 
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -704,9 +704,9 @@ bool IsTradingTime() {
 
 
 /**
- * Whether a start condition is triggered.
+ * Whether conditions are fullfilled to start trading.
  *
- * @param  _Out_ double &signal[] - array receiving signal details
+ * @param  _Out_ double &signal[] - array receiving entry signal details
  *
  * @return bool
  */
@@ -730,9 +730,9 @@ bool IsStartSignal(double &signal[]) {
 
 
 /**
- * Whether a stop condition is triggered.
+ * Whether conditions are fullfilled to stop trading.
  *
- * @param  _Out_ double &signal[] - array receiving signal details
+ * @param  _Out_ double &signal[] - array receiving exit signal details (if any)
  *
  * @return bool
  */

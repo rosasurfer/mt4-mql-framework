@@ -32,11 +32,6 @@ double icMaTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar)
                           "",                         // string Signal.Sound.Down
 
                           "",                         // string _______________________
-                          false,                      // bool   Sound.onTickCross
-                          "",                         // string Sound.onTickCross.Up
-                          "",                         // string Sound.onTickCross.Down
-
-                          "",                         // string _______________________
                           false,                      // bool   AutoConfiguration
                           lpSuperContext,             // int    __lpSuperContext
 
