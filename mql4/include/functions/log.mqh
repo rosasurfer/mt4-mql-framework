@@ -51,7 +51,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
       return(error);
    }
    static bool isRecursion = false; if (isRecursion) {
-      Alert("debug(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(loglevel));
+      Alert("debug(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStrA(loglevel));
       return(error);
    }
    isRecursion = true;
@@ -357,7 +357,7 @@ int log2Alert(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Alert(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2Alert(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStrA(level));
          return(error);
       }
       isRecursion = true;
@@ -409,7 +409,7 @@ int log2Debug(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Debug(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2Debug(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStrA(level));
          return(error);
       }
       isRecursion = true;
@@ -452,7 +452,7 @@ int log2File(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {
-         Alert("log2File(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2File(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStrA(level));
          return(error);
       }
       isRecursion = true;
@@ -497,7 +497,7 @@ int log2Mail(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Mail(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2Mail(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStrA(level));
          return(error);
       }
       isRecursion = true;
@@ -543,7 +543,7 @@ int log2SMS(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {
-         Alert("log2SMS(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2SMS(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStrA(level));
          return(error);
       }
       isRecursion = true;
@@ -589,7 +589,7 @@ int log2Terminal(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Terminal(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2Terminal(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStrA(level));
          return(error);
       }
       isRecursion = true;

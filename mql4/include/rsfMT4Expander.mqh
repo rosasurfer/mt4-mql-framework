@@ -137,7 +137,8 @@
    string   InitializeReasonToStr(int reason);                 // alias of InitReasonToStr()
    string   InitReasonToStr(int reason);
    string   IntToHexStr(int value);
-   string   LoglevelToStr(int level);
+   string   LoglevelToStrA(int level);
+   string   MessageBoxButtonToStrA(int id);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr(int type);
    string   NumberFormat(double value, string format);
@@ -174,7 +175,7 @@
    bool     IsProgramType(int type);
    bool     IsVirtualKeyDown(int vKey);
    bool     IsWindowAreaVisible(int hWnd);
-   bool     PlaySoundA(string soundfile);
+   int      PlaySoundA(string soundfile);
 
    // Virtual no-ops. Over-written by MQL implementations of the same name.
    int      onInit();

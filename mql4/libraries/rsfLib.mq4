@@ -4021,8 +4021,8 @@ int RGBToHSL(color rgb, double &hsl[], bool human = false) {
 
    double dR=iR/255., dG=iG/255., dB=iB/255.;                     // scale values to the range 0...1
 
-   double dMin   = MathMin(dR, MathMin(dG, dB)); int iMin   = Min(iR, Min(iG, iB));
-   double dMax   = MathMax(dR, MathMax(dG, dB)); int iMax   = Max(iR, Max(iG, iB));
+   double dMin   = MathMin(dR, MathMin(dG, dB)); int iMin   = Min(iR, iG, iB);
+   double dMax   = MathMax(dR, MathMax(dG, dB)); int iMax   = Max(iR, iG, iB);
    double dDelta = dMax - dMin;                  int iDelta = iMax - iMin;
 
    double hue=0, sat=0, lum=(dMax + dMin)/2;
@@ -4181,7 +4181,7 @@ color ModifyColor(color rgb, double hue, double saturation, double lightness) {
  * @return string
  */
 string DoubleToStrEx(double value, int digits) {
-   if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
+   if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("DoubleToStrEx(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
 
    string sValue = value;
    // Since VS 2015 string representations of infinite, indefinite, and NaN values conform to the C99 standard. Before Microsoft used its own non-standard format.

@@ -37,8 +37,8 @@ extern bool   Track.Orders    = true;                             // whether to 
 #include <functions/SortClosedTickets.mqh>
 #include <functions/ta/ADR.mqh>
 #include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
-#include <scriptrunner.mqh>
+#include <functions/lfx.mqh>
+#include <functions/scriptrunner.mqh>
 #include <structs/rsf/LFXOrder.mqh>
 #include <win32api.mqh>
 

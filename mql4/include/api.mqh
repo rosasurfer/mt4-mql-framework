@@ -1,87 +1,6 @@
 /**
- * Overview of framework functions grouped by inlude location (this documentation can't be used as a header file).
+ * Documentation of framework functions grouped by inlude location (this file itself can't be included).
  */
-
-
-// include/configuration.mqh
-string   GetAccountConfigPath(string company="", int account=NULL);;
-
-
-bool     IsConfigKey               (string section, string key);;
-bool     IsAccountConfigKey        (string section, string key);;
-
-bool     GetConfigBool             (string section, string key, bool defaultValue=false);;
-bool     GetGlobalConfigBool       (string section, string key, bool defaultValue=false);;
-bool     GetTerminalConfigBool     (string section, string key, bool defaultValue=false);;
-bool     GetAccountConfigBool      (string section, string key, bool defaultValue=false);;
-
-color    GetConfigColor            (string section, string key, color defaultValue=CLR_NONE);;
-color    GetGlobalConfigColor      (string section, string key, color defaultValue=CLR_NONE);;
-color    GetTerminalConfigColor    (string section, string key, color defaultValue=CLR_NONE);;
-color    GetAccountConfigColor     (string section, string key, color defaultValue=CLR_NONE);;
-
-int      GetConfigInt              (string section, string key, int defaultValue=0);;
-int      GetGlobalConfigInt        (string section, string key, int defaultValue=0);;
-int      GetTerminalConfigInt      (string section, string key, int defaultValue=0);;
-int      GetAccountConfigInt       (string section, string key, int defaultValue=0);;
-
-double   GetConfigDouble           (string section, string key, double defaultValue=0);;
-double   GetGlobalConfigDouble     (string section, string key, double defaultValue=0);;
-double   GetTerminalConfigDouble   (string section, string key, double defaultValue=0);;
-double   GetAccountConfigDouble    (string section, string key, double defaultValue=0);;
-
-string   GetConfigString           (string section, string key, string defaultValue="");;
-string   GetGlobalConfigString     (string section, string key, string defaultValue="");;
-string   GetTerminalConfigString   (string section, string key, string defaultValue="");;
-string   GetAccountConfigString    (string section, string key, string defaultValue="");;
-
-string   GetConfigStringRaw        (string section, string key, string defaultValue="");;
-string   GetGlobalConfigStringRaw  (string section, string key, string defaultValue="");;
-string   GetTerminalConfigStringRaw(string section, string key, string defaultValue="");;
-string   GetAccountConfigStringRaw (string section, string key, string defaultValue="");;
-
-bool     GetIniBool  (string fileName, string section, string key, bool   defaultValue=false);;
-color    GetIniColor (string fileName, string section, string key, color  defaultValue=CLR_NONE);;
-int      GetIniInt   (string fileName, string section, string key, int    defaultValue=0);;
-double   GetIniDouble(string fileName, string section, string key, double defaultValue=0);;
-
-bool     WriteIniString(string fileName, string section, string key, string value);;
-
-
-// include/log.mqh
-int      catch(string caller, int error=NO_ERROR, bool popOrder=false);;
-int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
-
-bool     IsLog();;
-bool     IsLogDebug();;
-bool     IsLogInfo();;
-bool     IsLogNotice();;
-bool     IsLogWarn();;
-bool     IsLogError();;
-bool     IsLogFatal();;
-
-int      log      (string message, int error, int level);;
-int      logDebug (string message, int error=NO_ERROR);;
-int      logInfo  (string message, int error=NO_ERROR);;
-int      logNotice(string message, int error=NO_ERROR);;
-int      logWarn  (string message, int error=NO_ERROR);;
-int      logError (string message, int error);;
-int      logFatal (string message, int error);;
-
-int      log2Alert   (string message, int error, int level);;
-int      log2Debug   (string message, int error, int level);;
-int      log2File    (string message, int error, int level);;
-int      log2Mail    (string message, int error, int level);;
-int      log2SMS     (string message, int error, int level);;
-int      log2Terminal(string message, int error, int level);;
-
-bool     SetLogfile(string filename);;
-
-
-// include/scriptrunner.mqh
-bool     RunScript(string name, string parameters = "");;
-bool     ScriptRunner.GetParameters(string &parameters[]);;
-bool     ScriptRunner.SetParameters(string parameters);;
 
 
 // include/stdfunctions.mqh
@@ -98,7 +17,6 @@ int      _NO_ERROR   (int    param1=NULL, int param2=NULL, int param3=NULL, int 
 int      _NULL       (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 string   _string     (string param1,      int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 bool     _true       (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
-int      Abs(int value);;
 int      ArrayUnshiftString(string &array[], string value);;
 int      Ceil(double value);;
 int      Chart.Expert.Properties();;
@@ -196,7 +114,6 @@ bool     IsVisualModeFix();;
 string   JoinStrings(string values[], string separator=", ");;
 bool     LE(double double1, double double2, int digits=8);;
 string   LocalTimeFormat(datetime timestamp, string format);;
-string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
 bool     LT(double double1, double double2, int digits=8);;
 string   MaMethodDescription(int method, bool strict=true);;
 string   MaMethodToStr(int method);;
@@ -205,10 +122,7 @@ string   MarketInfoModeToStr(int mode);;
 int      MarketWatch.Symbols();;
 double   MathDiv(double a, double b, double onZero=0);;
 double   MathModFix(double a, double b);;
-int      Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int value5=INT_MIN, int value6=INT_MIN, int value7=INT_MIN, int value8=INT_MIN);;
-string   MessageBoxButtonToStr(int id);;
 int      MessageBoxEx(string caption, string message, int flags=MB_OK);;
-int      Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int value5=INT_MAX, int value6=INT_MAX, int value7=INT_MAX, int value8=INT_MAX);;
 string   ModuleTypesToStr(int fType);;
 string   ModuleName(bool fullName = false);;
 int      Mul(int a, int b, bool boundaryOnOverflow=false);;
@@ -223,12 +137,11 @@ bool     OrderLogMessage(int ticket);;
 bool     OrderPop(string caller="");;
 bool     OrderPush(string caller="");;
 string   OrderTypeToStr(int type);;
-string   PeriodDescription(int period=NULL);;
 int      PeriodFlag(int period=NULL);;
 string   PeriodFlagToStr(int flag);;
 double   PipValue(double lots=1.0, bool muteErrors=false);;
 double   PipValueEx(string symbol, double lots, int &error, string caller="");;
-bool     PlaySoundEx(string soundfile);;
+int      PlaySoundEx(string soundfile);;
 string   Pluralize(int count, string singular="", string plural="s");;
 double   PointValue(double lots=1.0, bool muteErrors=false);;
 string   PriceTypeDescription(int type);;
@@ -253,8 +166,7 @@ int      Sign(double value);;
 string   StdSymbol();;
 string   StrCapitalize(string value);;
 bool     StrCompareI(string string1, string string2);;
-bool     StrContains(string value, string substring);;
-bool     StrContainsI(string value, string substring);;
+bool     StrContainsI(string str, string substr);;
 bool     StrEndsWithI(string value, string suffix);;
 int      StrFindR(string value, string search);;
 string   stringOr(string value, string altValue);;
@@ -263,16 +175,13 @@ bool     StrIsEmailAddress(string value);;
 bool     StrIsInteger(string value);;
 bool     StrIsNumeric(string value);;
 bool     StrIsPhoneNumber(string value);;
-string   StrLeft(string value, int n);;
 string   StrLeftTo(string value, string substring, int count=1);;
-string   StrPadLeft(string input, int pad_length, string pad_string=" ");;
-string   StrPadRight(string input, int pad_length, string pad_string=" ");;
-string   StrRepeat(string input, int times);;
-string   StrReplace(string value, string search, string replace, bool recursive=false);;
+string   StrPadLeft(string str, int pad_length, string pad_string=" ");;
+string   StrRepeat(string str, int times);;
+string   StrReplace(string str, string search, string replace, bool recursive=false);;
 string   StrRight(string value, int n);;
 string   StrRightFrom(string value, string substring, int count=1);;
 bool     StrStartsWithI(string value, string prefix);;
-string   StrSubstr(string str, int start, int length=INT_MAX);;
 bool     StrToBool(string value, bool strict=false);;
 string   StrToHexStr(string value);;
 int      StrToLogLevel(string value, int flags=NULL);;
@@ -284,7 +193,6 @@ int      StrToPriceType(string value, int execFlags=NULL);;
 int      StrToTimeframe(string timeframe, int flags=NULL);;
 int      StrToTradeDirection(string value, int flags=NULL);;
 string   StrToUpper(string value);;
-string   StrTrim(string value);;
 int      SumInts(int &values[]);;
 string   SwapCalculationModeToStr(int mode);;
 int      Tester.GetBarModel();;
@@ -316,6 +224,86 @@ bool     RearrangeChartLegends();;
 bool     RemoveChartLegend();;
 void     UpdateBandLegend(string legendName, string indicatorName, string status, color bandsColor, double upperValue, double lowerValue);;
 void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int trend=0);;
+
+
+// include/functions/configuration.mqh
+string   GetAccountConfigPath(string company="", int account=NULL);;
+
+bool     IsConfigKey               (string section, string key);;
+bool     IsAccountConfigKey        (string section, string key);;
+
+bool     GetConfigBool             (string section, string key, bool defaultValue=false);;
+bool     GetGlobalConfigBool       (string section, string key, bool defaultValue=false);;
+bool     GetTerminalConfigBool     (string section, string key, bool defaultValue=false);;
+bool     GetAccountConfigBool      (string section, string key, bool defaultValue=false);;
+
+color    GetConfigColor            (string section, string key, color defaultValue=CLR_NONE);;
+color    GetGlobalConfigColor      (string section, string key, color defaultValue=CLR_NONE);;
+color    GetTerminalConfigColor    (string section, string key, color defaultValue=CLR_NONE);;
+color    GetAccountConfigColor     (string section, string key, color defaultValue=CLR_NONE);;
+
+int      GetConfigInt              (string section, string key, int defaultValue=0);;
+int      GetGlobalConfigInt        (string section, string key, int defaultValue=0);;
+int      GetTerminalConfigInt      (string section, string key, int defaultValue=0);;
+int      GetAccountConfigInt       (string section, string key, int defaultValue=0);;
+
+double   GetConfigDouble           (string section, string key, double defaultValue=0);;
+double   GetGlobalConfigDouble     (string section, string key, double defaultValue=0);;
+double   GetTerminalConfigDouble   (string section, string key, double defaultValue=0);;
+double   GetAccountConfigDouble    (string section, string key, double defaultValue=0);;
+
+string   GetConfigString           (string section, string key, string defaultValue="");;
+string   GetGlobalConfigString     (string section, string key, string defaultValue="");;
+string   GetTerminalConfigString   (string section, string key, string defaultValue="");;
+string   GetAccountConfigString    (string section, string key, string defaultValue="");;
+
+string   GetConfigStringRaw        (string section, string key, string defaultValue="");;
+string   GetGlobalConfigStringRaw  (string section, string key, string defaultValue="");;
+string   GetTerminalConfigStringRaw(string section, string key, string defaultValue="");;
+string   GetAccountConfigStringRaw (string section, string key, string defaultValue="");;
+
+bool     GetIniBool  (string fileName, string section, string key, bool   defaultValue=false);;
+color    GetIniColor (string fileName, string section, string key, color  defaultValue=CLR_NONE);;
+int      GetIniInt   (string fileName, string section, string key, int    defaultValue=0);;
+double   GetIniDouble(string fileName, string section, string key, double defaultValue=0);;
+
+bool     WriteIniString(string fileName, string section, string key, string value);;
+
+
+// include/functions/log.mqh
+int      catch(string caller, int error=NO_ERROR, bool popOrder=false);;
+int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
+
+bool     IsLog();;
+bool     IsLogDebug();;
+bool     IsLogInfo();;
+bool     IsLogNotice();;
+bool     IsLogWarn();;
+bool     IsLogError();;
+bool     IsLogFatal();;
+
+int      log      (string message, int error, int level);;
+int      logDebug (string message, int error=NO_ERROR);;
+int      logInfo  (string message, int error=NO_ERROR);;
+int      logNotice(string message, int error=NO_ERROR);;
+int      logWarn  (string message, int error=NO_ERROR);;
+int      logError (string message, int error);;
+int      logFatal (string message, int error);;
+
+int      log2Alert   (string message, int error, int level);;
+int      log2Debug   (string message, int error, int level);;
+int      log2File    (string message, int error, int level);;
+int      log2Mail    (string message, int error, int level);;
+int      log2SMS     (string message, int error, int level);;
+int      log2Terminal(string message, int error, int level);;
+
+bool     SetLogfile(string filename);;
+
+
+// include/functions/scriptrunner.mqh
+bool     RunScript(string name, string parameters = "");;
+bool     ScriptRunner.GetParameters(string &parameters[]);;
+bool     ScriptRunner.SetParameters(string parameters);;
 
 
 // include/functions/
@@ -364,6 +352,19 @@ double   ATR(string symbol, int timeframe, int periods, int offset);;
 double   iADR(int flags=NULL);;
 double   JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, double series, int bar);;
 bool     NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]);;
+
+
+// include/rsf/functions/
+int      Abs(int value);;
+string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
+int      Max(int a, int b, int c=INT_MIN);;
+int      Min(int a, int b, int c=INT_MAX);;
+string   PeriodDescription(int period=NULL);;
+bool     StrContains(string str, string substr);;
+string   StrLeft(string value, int n);;
+string   StrPadRight(string str, int padLength, string padString=" ");;
+string   StrSubstr(string str, int start, int length=INT_MAX);;
+string   StrTrim(string str);;
 
 
 // include/structs/mt4/
@@ -806,6 +807,7 @@ int      ec_SuperLoglevelTerminal (int pid);;
 string   ec_SuperProgramName      (int pid);;
 bool     EmptyIniSectionA(string fileName, string section);;
 string   ErrorToStrA(int error);;
+string   ErrorToStrW(int error);;
 string   EXECUTION_CONTEXT_toStr(int &ec[]);;
 int      FindTesterWindow();;
 int      GetBoolsAddress(bool &values[]);;
@@ -853,6 +855,7 @@ double   GetWindowDoubleA(int hWnd, string name);;
 int      GetWindowIntegerA(int hWnd, string name);;
 string   GetWindowStringA(int hWnd, string name);;
 string   GmtTimeFormatA(datetime time, string format);;
+string   GmtTimeFormatW(datetime time, string format);;
 datetime GmtToLocalTime(datetime time);;
 string   InitFlagsToStr(int flags);;
 bool     InitializeBOOLArray  (bool   &values[], int size, int    initValue, int from, int count);;
@@ -888,7 +891,8 @@ bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
 string   LocalTimeFormatA(datetime time, string format);;
 datetime LocalToGmtTime(datetime time);;
-string   LoglevelToStr(int level);;
+string   LoglevelToStrA(int level);;
+string   LoglevelToStrW(int level);;
 string   lpEXECUTION_CONTEXT_toStr(int lpEc);;
 double   Math_INF();;
 double   Math_NaN();;
@@ -896,6 +900,8 @@ double   MathLog10(double value);;
 string   MD5Hash(int &input[], int length);;
 string   MD5HashA(string str);;
 bool     MemCompare(int lpBufferA, int lpBufferB, int size);;
+string   MessageBoxButtonToStrA(int id);;
+string   MessageBoxButtonToStrW(int id);;
 string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
 int      MT4InternalMsg();;

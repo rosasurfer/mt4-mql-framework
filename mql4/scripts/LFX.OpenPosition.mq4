@@ -23,7 +23,7 @@ extern double Units        = 0.2;                                    // Position
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/ObjectCreateRegister.mqh>
 #include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
+#include <functions/lfx.mqh>
 #include <structs/rsf/LFXOrder.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 

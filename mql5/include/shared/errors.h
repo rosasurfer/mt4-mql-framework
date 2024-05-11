@@ -4,7 +4,7 @@
  * @link  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//efine NO_ERROR                                           ERR_NO_ERROR    // in C++ already defined (Win32)
+#define NO_ERROR                                           ERR_NO_ERROR    // in C++ already defined (Win32)
 
 // Trading errors
 #define ERR_NO_RESULT                                                 1

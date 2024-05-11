@@ -1,5 +1,8 @@
 /**
  * Windows constants
+ *
+ * In MQL5 the redefinition of constants (even with the same value) is not allowed. Commented names are in fact defined,
+ * the entries exist for documentation purposes only.
  */
 
 
@@ -50,13 +53,13 @@
 #define MB_DEFBUTTON4                     0x00000300
 
 #define MB_ICONEXCLAMATION                0x00000030  // icons
-#define MB_ICONWARNING            MB_ICONEXCLAMATION
+#define MB_ICONWARNING                    0x00000030  // MB_ICONEXCLAMATION
 #define MB_ICONINFORMATION                0x00000040
-#define MB_ICONASTERISK           MB_ICONINFORMATION
+#define MB_ICONASTERISK                   0x00000040  // MB_ICONINFORMATION
 #define MB_ICONQUESTION                   0x00000020
 #define MB_ICONSTOP                       0x00000010
-#define MB_ICONERROR                     MB_ICONSTOP
-#define MB_ICONHAND                      MB_ICONSTOP
+#define MB_ICONERROR                      0x00000010  // MB_ICONSTOP
+#define MB_ICONHAND                       0x00000010  // MB_ICONSTOP
 #define MB_USERICON                       0x00000080
 
 #define MB_APPLMODAL                      0x00000000  // modality

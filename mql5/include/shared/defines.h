@@ -1,10 +1,19 @@
 /**
  * MQL constants shared with the MT4Expander (C++).
+ *
+ * When the MT4Expander is compiled definitions are read from directory "mql4/include/shared" and not from here.
+ * Nevertheless, these constants exists in both MQL versions and in MT4Expander, and have everywhere the same values.
+ *
+ * Unlike MQL4, the redefinition of constants (even with the same value) in MQL5 is not allowed.
  */
 
 // special constants
+#ifndef EMPTY
 #define EMPTY                          0xFFFFFFFF        // -1
+#endif
+#ifndef EMPTY_VALUE
 #define EMPTY_VALUE                       INT_MAX        // MetaQuotes: empty custom indicator value (integer)    min(datetime-literal) = D'1970.01.01 00:00:00'; (datetime)INT_MIN = '1901-12-13 20:45:52'
+#endif
 #define NaC                            0xFFFFFFFE        // Not-a-Color: invalid color value (-2)                 max(datetime-literal) = D'2037.12.31 23:59:59'; (datetime)INT_MAX = '2038-01-19 03:14:07'
 #define NaT                               INT_MIN        // Not-a-Time: invalid datetime value (32-bit)
 #define MIN_VALID_POINTER              0x00010000        // minimum value of a valid 32-bit pointer
@@ -63,7 +72,7 @@
                                                          // | terminal builds <= 509               | terminal builds > 509            |
 // built-in UninitializeReason() return values           // +--------------------------------------+----------------------------------+
 #define REASON_UNDEFINED                        0        // | no reason                            | -                                |
-#define REASON_PROGRAM           REASON_UNDEFINED        // | -                                    | expert removed by ExpertRemove() |
+//efine REASON_PROGRAM           REASON_UNDEFINED        // | -                                    | expert removed by ExpertRemove() |
                                                          // +--------------------------------------+----------------------------------+
 #define REASON_REMOVE                           1        // | program removed from chart                                              |
 #define REASON_RECOMPILE                        2        // | program recompiled                                                      |
@@ -505,7 +514,9 @@
 #define CornflowerBlue                   0xED9564
 #define Cornsilk                         0xDCF8FF
 #define Crimson                          0x3C14DC
+#ifndef Cyan
 #define Cyan                                 Aqua        // alias
+#endif
 #define DarkBlue                         0x8B0000
 #define DarkGoldenrod                    0x0B86B8
 #define DarkGray                         0xA9A9A9
@@ -515,7 +526,9 @@
 #define DarkOrange                       0x008CFF
 #define DarkOrchid                       0xCC3299
 #define DarkSalmon                       0x7A96E9
+#ifndef DarkSeaGreen
 #define DarkSeaGreen                     0x8BBC8F
+#endif
 #define DarkSlateBlue                    0x8B3D48
 #define DarkSlateGray                    0x4F4F2F
 #define DarkTurquoise                    0xD1CE00
@@ -620,6 +633,7 @@
 #define Yellow                           0x00FFFF
 #define YellowGreen                      0x32CD9A
 
+#ifndef clrAliceBlue
 #define clrAliceBlue                     AliceBlue
 #define clrAntiqueWhite                  AntiqueWhite
 #define clrAqua                          Aqua
@@ -753,6 +767,7 @@
 #define clrYellow                        Yellow
 #define clrYellowGreen                   YellowGreen
 #define clrNONE                          CLR_NONE
+#endif
 
 
 // LFX trade commands
@@ -763,3 +778,9 @@
 #define TC_LFX_ORDER_HEDGE               5
 #define TC_LFX_ORDER_MODIFY              6
 #define TC_LFX_ORDER_DELETE              7
+
+
+
+
+
+

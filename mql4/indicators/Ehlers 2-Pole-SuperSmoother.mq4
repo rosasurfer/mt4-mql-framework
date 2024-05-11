@@ -158,7 +158,7 @@ int onInit() {
    double rad2Deg = 45 / MathArctan(1);
    double deg2Rad =  1 / rad2Deg;
 
-   double a1 = MathExp(-MathSqrt(2) * Math.PI / Periods);
+   double a1 = MathExp(-MathSqrt(2) * M_PI / Periods);
    double b1 = 2 * a1 * MathCos(deg2Rad * MathSqrt(2) * 180 / Periods);
 
    coef2 = b1;

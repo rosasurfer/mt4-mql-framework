@@ -83,7 +83,7 @@ int onStart() {
          // create the file
          int hFile = CreateFileA(files[i],                                 // file name
                                  GENERIC_READ,                             // desired access: read
-                                 FILE_SHARE_READ,                          // share mode
+                                 WIN32_FILE_SHARE_READ,                    // share mode
                                  NULL,                                     // default security
                                  CREATE_NEW,                               // create file only if it doesn't exist
                                  FILE_ATTRIBUTE_NORMAL,                    // flags and attributes: normal file

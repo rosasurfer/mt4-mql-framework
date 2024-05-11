@@ -22,7 +22,7 @@ bool NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]) {
    // version 4
    // -----------------------------------------------------------------------------------------------------------------------
    if (false) {
-      coeff       = 3 * Math.PI;
+      coeff       = 3 * M_PI;
       phase       = cyclePeriods - 1;
       weightsSize = cycles * cyclePeriods + phase;
       weightsSum  = 0;
@@ -32,7 +32,7 @@ bool NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]) {
          if (t <= 0.5) g = 1;
          else          g = 1/(t*coeff + 1);
 
-         weights[i]  = g * MathCos(t * Math.PI);
+         weights[i]  = g * MathCos(t * M_PI);
          weightsSum += weights[i];
 
          if      (t < 1)             t += 1/(phase-1.);
@@ -47,7 +47,7 @@ bool NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]) {
    // version 7.1 (updated weights calculation, nearly identical results)
    // -----------------------------------------------------------------------------------------------------------------------
    if (true) {
-      coeff       = 3 * Math.PI;
+      coeff       = 3 * M_PI;
       phase       = cyclePeriods - 1;
       weightsSize = cycles * cyclePeriods + phase;
       weightsSum  = 0;
@@ -60,7 +60,7 @@ bool NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]) {
          if (t <= 0.5 ) g = 1;
          else           g = 1/(t*coeff+1);
 
-         weights[i]  = g * MathCos(t * Math.PI);
+         weights[i]  = g * MathCos(t * M_PI);
          weightsSum += weights[i];
       }
       //debug("NLMA.CalculateWeights(0.2)  NonLagMA("+ cyclePeriods +") v7.1: sum("+ weightsSum +") = "+ DoublesToStr(weights, NULL));

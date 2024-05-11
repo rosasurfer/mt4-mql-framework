@@ -1,9 +1,12 @@
 /**
- * Global constants and variables
+ * Custom constants and global variables.
+ *
+ * In MQL4 the redefinition of constants (with the same value) is allowed. Redefined entries exist for documentation
+ * purposes only.
  */
 #property stacksize 32768                                         // According to different MetaQuotes infos the default stacksize per MQL module in 2019 is 256KB
                                                                   // (some even claim 1-8MB). In build 225 the default stacksize was 16KB which had to be increased.
-#include <mqldefines.mqh>                                         // Using 32KB has always been sufficient.
+#include <shared.mqh>                                             // Using 32KB has always been sufficient.
 #include <win32defines.mqh>                                       //
 #include <structs/sizes.mqh>                                      // @see  https://docs.mql4.com/basis/variables/local#stack
                                                                   // @see  https://docs.mql4.com/basis/preprosessor/compilation
@@ -60,19 +63,19 @@ int      __orderStack[];                                          // FIFO stack 
 #define HTML_COMMA                  "&comma;"                     // comma                               ,
 
 
-// Special double values, defined in init(), string representation depends on the used compiler
+// special double values, defined in init(), string representation depends on the VisualStudio version used for building "terminal.exe"
 double  NaN;                                                      // -1.#IND | -nan(ind): indefinite quiet Not-a-Number (on x86 CPUs always negative)
 double  INF;                                                      //  1.#INF |  inf:      positive infinity
 //     -INF                                                       // -1.#INF | -inf:      negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
 
-// Magic characters zur visuellen Darstellung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
-#define PLACEHOLDER_NUL_CHAR        '…'                           // 0x85 (133) - Ersatzzeichen für NUL-Bytes in Strings
-#define PLACEHOLDER_CTRL_CHAR       '•'                           // 0x95 (149) - Ersatzzeichen für Control-Characters in Strings
+// magic characters to represent non-printable chars in binry strings, @see BufferToStr()
+#define PLACEHOLDER_NUL_CHAR        '…'                           // 0x85 (133) - replacement for NUL chars in strings
+#define PLACEHOLDER_CTRL_CHAR       '•'                           // 0x95 (149) - replacement for Control chars in strings
 
 
-// Mathematische Konstanten (internally 15 correct decimal digits)
-#define Math.E                      2.7182818284590452354         // base of natural logarythm
-#define Math.PI                     3.1415926535897932384
+// mathematical constants (internally 15 correct digits)
+#define M_E                         2.71828182845904523536        // base of natural logarythm
+#define M_PI                        3.14159265358979323846
 
 
 // MQL program types
@@ -97,7 +100,7 @@ double  INF;                                                      //  1.#INF |  
 // MQL program launch types
 #define LT_TEMPLATE                 LAUNCHTYPE_TEMPLATE           // via template
 #define LT_PROGRAM                  LAUNCHTYPE_PROGRAM            // via iCustom()
-#define LT_MANUAL                   LAUNCHTYPE_MANUAL             // by hand
+#define LT_USER                     LAUNCHTYPE_USER               // by user
 
 
 // framework InitializeReason codes                               // +-- init reason --------------------------------+-- ui -----------+-- applies --+
@@ -168,26 +171,13 @@ double  INF;                                                      //  1.#INF |  
 #define PT_ERROR                    8           // string*
 
 
-// timeframe identifier
-#define PERIOD_M1                   1           // 1 Minute
-#define PERIOD_M5                   5           // 5 Minuten
-#define PERIOD_M15                 15           // 15 Minuten
-#define PERIOD_M30                 30           // 30 Minuten
-#define PERIOD_H1                  60           // 1 Stunde
-#define PERIOD_H4                 240           // 4 Stunden
-#define PERIOD_D1                1440           // 1 Tag
-#define PERIOD_W1               10080           // 1 Woche (7 Tage)
-#define PERIOD_MN1              43200           // 1 Monat (30 Tage)
-#define PERIOD_Q1              129600           // 1 Quartal (3 Monate)
-
-
-// Arrayindizes für Timezone-Transitionsdaten
+// array indexes of timezone transitions
 #define TRANSITION_TIME             0
 #define TRANSITION_OFFSET           1
 #define TRANSITION_DST              2
 
 
-// Object property ids, siehe ObjectSet()
+// object property ids, @see ObjectSet()
 #define OBJPROP_TIME1               0
 #define OBJPROP_PRICE1              1
 #define OBJPROP_TIME2               2
@@ -306,7 +296,7 @@ double  INF;                                                      //  1.#INF |  
 #define DRAW_HISTOGRAM                    2     // drawing histogram
 #define DRAW_ARROW                        3     // drawing arrows (symbols)
 #define DRAW_ZIGZAG                       4     // drawing sections between even and odd indicator buffers
-#define DRAW_NONE                         2     // no drawing
+#define DRAW_NONE                        12     // no drawing
 
 
 // indicator line styles
@@ -321,10 +311,12 @@ double  INF;                                                      //  1.#INF |  
 #define MODE_MAIN                         0     // main indicator line
 #define MODE_SIGNAL                       1     // signal line
 
+
 // indicator line identifiers, see iADX()
 #define MODE_MAIN                         0     // base indicator line
 #define MODE_PLUSDI                       1     // +DI indicator line
 #define MODE_MINUSDI                      2     // -DI indicator line
+
 
 // indicator line identifiers, see iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals(), iGator()
 #define MODE_UPPER                        1     // upper line
@@ -581,60 +573,6 @@ double  INF;                                                      //  1.#INF |  
 #define HST_SKIP_DUPLICATE_TICKS       2        // aufeinanderfolgende identische Ticks innerhalb einer Bar werden nicht geschrieben
 #define HST_FILL_GAPS                  4
 #define HST_TIME_IS_OPENTIME           8
-
-
-// MessageBox() flags
-#define MB_OK                       0x00000000  // buttons
-#define MB_OKCANCEL                 0x00000001
-#define MB_YESNO                    0x00000004
-#define MB_YESNOCANCEL              0x00000003
-#define MB_ABORTRETRYIGNORE         0x00000002
-#define MB_CANCELTRYCONTINUE        0x00000006
-#define MB_RETRYCANCEL              0x00000005
-#define MB_HELP                     0x00004000  // additional help button
-
-#define MB_DEFBUTTON1               0x00000000  // default button
-#define MB_DEFBUTTON2               0x00000100
-#define MB_DEFBUTTON3               0x00000200
-#define MB_DEFBUTTON4               0x00000300
-
-#define MB_ICONEXCLAMATION          0x00000030  // icons
-#define MB_ICONWARNING      MB_ICONEXCLAMATION
-#define MB_ICONINFORMATION          0x00000040
-#define MB_ICONASTERISK     MB_ICONINFORMATION
-#define MB_ICONQUESTION             0x00000020
-#define MB_ICONSTOP                 0x00000010
-#define MB_ICONERROR               MB_ICONSTOP
-#define MB_ICONHAND                MB_ICONSTOP
-#define MB_USERICON                 0x00000080
-
-#define MB_APPLMODAL                0x00000000  // modality
-#define MB_SYSTEMMODAL              0x00001000
-#define MB_TASKMODAL                0x00002000
-
-#define MB_DEFAULT_DESKTOP_ONLY     0x00020000  // other
-#define MB_RIGHT                    0x00080000
-#define MB_RTLREADING               0x00100000
-#define MB_SETFOREGROUND            0x00010000
-#define MB_TOPMOST                  0x00040000
-#define MB_NOFOCUS                  0x00008000
-#define MB_SERVICE_NOTIFICATION     0x00200000
-
-#define MB_DONT_LOG                 0x10000000  // custom: don't log prompt and response
-
-
-// MessageBox() return codes
-#define IDOK                                 1
-#define IDCANCEL                             2
-#define IDABORT                              3
-#define IDRETRY                              4
-#define IDIGNORE                             5
-#define IDYES                                6
-#define IDNO                                 7
-#define IDCLOSE                              8
-#define IDHELP                               9
-#define IDTRYAGAIN                          10
-#define IDCONTINUE                          11
 
 
 // arrow codes, see ObjectSet(label, OBJPROP_ARROWCODE, value)

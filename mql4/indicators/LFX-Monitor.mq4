@@ -109,7 +109,7 @@ extern string Broker.SymbolSuffix            = "";                     // symbol
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/ObjectCreateRegister.mqh>
 #include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
+#include <functions/lfx.mqh>
 #include <structs/rsf/LFXOrder.mqh>
 
 #property indicator_chart_window

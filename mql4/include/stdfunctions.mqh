@@ -1,10 +1,20 @@
 /**
- * Global functions
+ * Commonly used framework functions
  */
-#include <configuration.mqh>
-#include <log.mqh>
-#include <metaquotes.mqh>
+#include <functions/configuration.mqh>
+#include <functions/log.mqh>
 #include <rsfMT4Expander.mqh>
+
+#include <rsf/functions/Abs.mqh>
+#include <rsf/functions/LoglevelDescription.mqh>
+#include <rsf/functions/Max.mqh>
+#include <rsf/functions/Min.mqh>
+#include <rsf/functions/PeriodDescription.mqh>
+#include <rsf/functions/StrContains.mqh>
+#include <rsf/functions/StrLeft.mqh>
+#include <rsf/functions/StrPadRight.mqh>
+#include <rsf/functions/StrSubstr.mqh>
+#include <rsf/functions/StrTrim.mqh>
 
 
 /**
@@ -250,34 +260,34 @@ string ErrorDescription(int error) {
 /**
  * Replace all occurences of a substring in a string by another string.
  *
- * @param  string value                - string to process
+ * @param  string str                  - string to process
  * @param  string search               - search string
  * @param  string replace              - replacement string
  * @param  bool   recursive [optional] - whether to replace recursively (default: no)
  *
  * @return string - resulting string or an empty string in case of errors
  */
-string StrReplace(string value, string search, string replace, bool recursive = false) {
+string StrReplace(string str, string search, string replace, bool recursive = false) {
    recursive = recursive!=0;
-   if (!StringLen(value))  return(value);
-   if (!StringLen(search)) return(value);
-   if (search == replace)  return(value);
+   if (!StringLen(str))    return(str);
+   if (!StringLen(search)) return(str);
+   if (search == replace)  return(str);
 
    string result="", lastResult="";
 
    if (!recursive) {
-      int from=0, found=StringFind(value, search);
+      int from=0, found=StringFind(str, search);
 
       while (found > -1) {
-         result = StringConcatenate(result, StrSubstr(value, from, found-from), replace);
+         result = StringConcatenate(result, StrSubstr(str, from, found-from), replace);
          from   = found + StringLen(search);
-         found  = StringFind(value, search, from);
+         found  = StringFind(str, search, from);
       }
-      result = StringConcatenate(result, StrSubstr(value, from));
+      result = StringConcatenate(result, StrSubstr(str, from));
    }
    else {
       int counter = 0;
-      result = value;
+      result = str;
 
       while (result != lastResult) {
          lastResult = result;
@@ -296,51 +306,19 @@ string StrReplace(string value, string search, string replace, bool recursive = 
 
 
 /**
- * Drop-in replacement for the flawed built-in MQL function StringSubstr().
- *
- * Fixes the case StringSubstr(string, start, length=0) where the built-in function returns the whole string.
- * Additionally supports negative values for the parameters "start" and "length".
- *
- * @param  string str    - string to process
- * @param  int    start  - start index; if negative counted from the end of the string
- * @param  int    length - number of chars to return; if positive chars on the right side, if negative chars on the left side
- *                         of the start index
- * @return string
- */
-string StrSubstr(string str, int start, int length = INT_MAX) {
-   if (length == 0)
-      return("");
-
-   if (start < 0)
-      start = Max(0, start + StringLen(str));
-
-   if (length < 0) {
-      start += 1 + length;
-      length = Abs(length);
-   }
-
-   if (length == INT_MAX) {
-      length = INT_MAX - start;        // start + length must not be larger than INT_MAX
-   }
-
-   return(StringSubstr(str, start, length));
-}
-
-
-/**
  * Replacement for the built-in MQL function PlaySound().
  *
  * Queues a soundfile for playing and immediately returns (non-blocking). Plays all sound types currently supported on the
- * system. Allows mixing of sounds (except midi files). Also plays sounds if the terminal doesn't support it in the current
+ * system. Allows mixing of sounds (except MIDI files). Also plays sounds if the terminal doesn't support it in the current
  * context (e.g. in tester).
  *
- * @param  string soundfile - either an absolute filename or
- *                            a filename relative to "sounds" of either the terminal or the data directory
+ * @param  string soundfile - an absolute filename or a filename relative to directory "sounds" of the terminal directory or
+ *                            the data directory (both are searched)
+ *
  * @return int - error status
  */
 int PlaySoundEx(string soundfile) {
-   bool success = PlaySoundA(soundfile);
-   return(ifInt(success, NO_ERROR, __ExecutionContext[EC.dllError]));
+   return(PlaySoundA(soundfile));
 }
 
 
@@ -385,33 +363,33 @@ void ForceAlert(string message) {
 
 
 /**
- * Dropin replacement for the MQL function MessageBox().
+ * Replacement for the MQL function MessageBox().
  *
- * Display a modal messagebox even if not supported by the terminal in the current context (e.g. in tester or in indicators).
+ * Displays a modal messagebox even if not supported by the terminal in the current context (e.g. in tester or in indicators).
  *
  * @param  string caption
  * @param  string message
  * @param  int    flags
  *
- * @return int - the pressed button's key code
+ * @return int - key code of the pressed button
  */
 int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    string prefix = Symbol() +","+ PeriodDescription();
    if (!StrContains(caption, prefix)) caption = prefix +" - "+ caption;
 
-   bool win32 = false;
+   bool useWin32 = false;
    if (IsTesting() || IsIndicator()) {
-      win32 = true;
+      useWin32 = true;
    }
    else {
-      win32 = (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE);
+      useWin32 = (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE);
    }
 
    // the default flag MB_APPLMODAL may block the UI thread from processing messages (happens *sometimes* in test::deinit())
-   if (win32) int button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TASKMODAL|MB_TOPMOST|MB_SETFOREGROUND);
-   else           button = MessageBox(message, caption, flags);
+   if (useWin32) int button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TASKMODAL|MB_TOPMOST|MB_SETFOREGROUND);
+   else              button = MessageBox(message, caption, flags);
 
-   if (!(flags & MB_DONT_LOG)) logDebug("MessageBoxEx(1)  "+ message +" (response: "+ MessageBoxButtonToStr(button) +")");
+   if (!(flags & MB_DONT_LOG)) logDebug("MessageBoxEx(1)  "+ message +" (response: "+ MessageBoxButtonToStrA(button) +")");
    return(button);
 }
 
@@ -1291,7 +1269,7 @@ string stringOr(string value, string altValue) {
 
 
 /**
- * Correct comparison of two doubles for "Equal".
+ * Correct comparison of two doubles for "Equality".
  *
  * @param  double double1           - first value
  * @param  double double2           - second value
@@ -1329,6 +1307,19 @@ bool EQ(double double1, double double2, int digits = 8) {
    }
    return(!catch("EQ()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER));
    */
+}
+
+
+/**
+ * Framework alias for the MQL4 function distributed by MetaQuotes.
+ *
+ * @param  double a - first value
+ * @param  double b - second value
+ *
+ * @return bool
+ */
+bool CompareDoubles(double a, double b) {
+   return(EQ(a, b));
 }
 
 
@@ -1685,78 +1676,6 @@ string ModuleName(bool fullName = false) {
 
 
 /**
- * Integer version of MathMin()
- *
- * Return the smallest of all specified values.
- *
- * @param  int value1
- * @param  int value2
- * @param      ...    - Insgesamt bis zu 8 Werte mit INT_MAX als Argumentbegrenzer. Kann einer der Werte selbst INT_MAX sein,
- *                      muß er innerhalb der ersten drei Argumente aufgeführt sein.
- * @return int
- */
-int Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int value5=INT_MAX, int value6=INT_MAX, int value7=INT_MAX, int value8=INT_MAX) {
-   int result = value1;
-   while (true) {
-      if (value2 < result) result = value2;
-      if (value3 < result) result = value3; if (value3 == INT_MAX) break;
-      if (value4 < result) result = value4; if (value4 == INT_MAX) break;
-      if (value5 < result) result = value5; if (value5 == INT_MAX) break;
-      if (value6 < result) result = value6; if (value6 == INT_MAX) break;
-      if (value7 < result) result = value7; if (value7 == INT_MAX) break;
-      if (value8 < result) result = value8;
-      break;
-   }
-   return(result);
-}
-
-
-/**
- * Integer version of MathMax()
- *
- * Return the largest of all specified values.
- *
- * @param  int value1
- * @param  int value2
- * @param      ...    - Insgesamt bis zu 8 Werte mit INT_MIN als Argumentbegrenzer. Kann einer der Werte selbst INT_MIN sein,
- *                      muß er innerhalb der ersten drei Argumente aufgeführt sein.
- * @return int
- */
-int Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int value5=INT_MIN, int value6=INT_MIN, int value7=INT_MIN, int value8=INT_MIN) {
-   int result = value1;
-   while (true) {
-      if (value2 > result) result = value2;
-      if (value3 > result) result = value3; if (value3 == INT_MIN) break;
-      if (value4 > result) result = value4; if (value4 == INT_MIN) break;
-      if (value5 > result) result = value5; if (value5 == INT_MIN) break;
-      if (value6 > result) result = value6; if (value6 == INT_MIN) break;
-      if (value7 > result) result = value7; if (value7 == INT_MIN) break;
-      if (value8 > result) result = value8;
-      break;
-   }
-   return(result);
-}
-
-
-/**
- * Integer-Version von MathAbs()
- *
- * Ermittelt den Absolutwert einer Ganzzahl.
- *
- * @param  int  value
- *
- * @return int
- */
-int Abs(int value) {
-   if (value == INT_MIN)
-      return(INT_MAX);
-   if (value < 0)
-      return(-value);
-   return(value);
-}
-
-
-/**
  * Return the sign of a numerical value.
  *
  * @param  double value
@@ -2009,27 +1928,6 @@ int CountDecimals(double number) {
          break;
    }
    return(i - dot);
-}
-
-
-/**
- * Gibt einen linken Teilstring eines Strings zurück.
- *
- * Ist N positiv, gibt StrLeft() die N am meisten links stehenden Zeichen des Strings zurück.
- *    z.B.  StrLeft("ABCDEFG",  2)  =>  "AB"
- *
- * Ist N negativ, gibt StrLeft() alle außer den N am meisten rechts stehenden Zeichen des Strings zurück.
- *    z.B.  StrLeft("ABCDEFG", -2)  =>  "ABCDE"
- *
- * @param  string value
- * @param  int    n
- *
- * @return string
- */
-string StrLeft(string value, int n) {
-   if (n > 0) return(StrSubstr(value, 0, n                 ));
-   if (n < 0) return(StrSubstr(value, 0, StringLen(value)+n));
-   return("");
 }
 
 
@@ -2536,6 +2434,36 @@ string DoubleQuoteStr(string value) {
       return("(null)");
    }
    return(StringConcatenate("\"", value, "\""));
+}
+
+
+/**
+ * Framework alias for the MQL4 function distributed by MetaQuotes.
+ *
+ * Convert a double to a string with up to 16 decimal digits.
+ *
+ * @param  double value     - value
+ * @param  int    precision - number of decimals
+ *
+ * @return string
+ */
+string DoubleToStrMorePrecision(double value, int precision) {
+   return(DoubleToStrEx(value, precision));
+}
+
+
+/**
+ * Framework alias for the MQL4 function distributed by MetaQuotes.
+ *
+ * Return the hexadecimale representation of an integer.
+ *  e.g. IntegerToHexString(13465610) => "00CD780A"
+ *
+ * @param  int value - 4 byte integer value
+ *
+ * @return string - 8 character string value
+ */
+string IntegerToHexString(int integer) {
+   return(IntToHexStr(integer));
 }
 
 
@@ -3057,34 +2985,17 @@ TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
 /**
  * Pad a string left-side to a minimum length using a pad string.
  *
- * @param  string input                - source string
+ * @param  string str                  - source string
  * @param  int    padLength            - minimum length of the resulting string
  * @param  string padString [optional] - substring used for padding (default: space chars)
  *
  * @return string
  */
-string StrPadLeft(string input, int padLength, string padString = " ") {
-   while (StringLen(input) < padLength) {
-      input = StringConcatenate(padString, input);
+string StrPadLeft(string str, int padLength, string padString = " ") {
+   while (StringLen(str) < padLength) {
+      str = StringConcatenate(padString, str);
    }
-   return(input);
-}
-
-
-/**
- * Pad a string right-side to a minimum length using a pad string.
- *
- * @param  string input                - source string
- * @param  int    padLength            - minimum length of the resulting string
- * @param  string padString [optional] - substring used for padding (default: space chars)
- *
- * @return string
- */
-string StrPadRight(string input, int padLength, string padString = " ") {
-   while (StringLen(input) < padLength) {
-      input = StringConcatenate(input, padString);
-   }
-   return(input);
+   return(str);
 }
 
 
@@ -3275,18 +3186,6 @@ string StrToUpper(string value) {
       else if (chr  >  96) if (chr < 123) result = StringSetChar(result, i, chr-32);
    }
    return(result);
-}
-
-
-/**
- * Trim white space characters from both sides of a string.
- *
- * @param  string value
- *
- * @return string - trimmed string
- */
-string StrTrim(string value) {
-   return(StringTrimLeft(StringTrimRight(value)));
 }
 
 
@@ -4020,7 +3919,7 @@ datetime TimeGMT() {
 /**
  * Extended version of TimeLocal().
  *
- * Return the current local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time).
+ * Returns the current local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time).
  *
  * In tester this time is modeled and mapped to TimeCurrent(), meaning the modeled local time matches the modeled server
  * time. This mapping may return 0 without signaling an error under various conditions (e.g. if no locally stored ticks are
@@ -4725,32 +4624,17 @@ bool StrCompareI(string string1, string string2) {
 
 
 /**
- * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird beachtet.
+ * Whether a string contains a substring (case-insensitive).
  *
- * @param  string value     - zu durchsuchender String
- * @param  string substring - zu suchender Substring
- *
- * @return bool
- */
-bool StrContains(string value, string substring) {
-   if (!StringLen(substring))
-      return(!catch("StrContains(1)  illegal parameter substring: \""+ substring +"\"", ERR_INVALID_PARAMETER));
-   return(StringFind(value, substring) != -1);
-}
-
-
-/**
- * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird nicht beachtet.
- *
- * @param  string value     - zu durchsuchender String
- * @param  string substring - zu suchender Substring
+ * @param  string str    - string to inspect
+ * @param  string substr - substring
  *
  * @return bool
  */
-bool StrContainsI(string value, string substring) {
-   if (!StringLen(substring))
-      return(!catch("StrContainsI(1)  illegal parameter substring: \""+ substring +"\"", ERR_INVALID_PARAMETER));
-   return(StringFind(StrToUpper(value), StrToUpper(substring)) != -1);
+bool StrContainsI(string str, string substr) {
+   if (!StringLen(substr))
+      return(!catch("StrContainsI(1)  illegal parameter substr: \""+ substr +"\"", ERR_INVALID_PARAMETER));
+   return(StringFind(StrToUpper(str), StrToUpper(substr)) != -1);
 }
 
 
@@ -5170,19 +5054,19 @@ color NameToColor(string name) {
 /**
  * Repeats a string.
  *
- * @param  string input - string to be repeated
+ * @param  string str   - string to be repeated
  * @param  int    times - number of times to repeat the string
  *
  * @return string - the repeated string or an empty string in case of errors
  */
-string StrRepeat(string input, int times) {
-   if (times < 0)         return(_EMPTY_STR(catch("StrRepeat(1)  invalid parameter times: "+ times, ERR_INVALID_PARAMETER)));
-   if (!times)            return("");
-   if (!StringLen(input)) return("");
+string StrRepeat(string str, int times) {
+   if (times < 0)       return(_EMPTY_STR(catch("StrRepeat(1)  invalid parameter times: "+ times, ERR_INVALID_PARAMETER)));
+   if (!times)          return("");
+   if (!StringLen(str)) return("");
 
-   string output = input;
+   string output = str;
    for (int i=1; i < times; i++) {
-      output = StringConcatenate(output, input);
+      output = StringConcatenate(output, str);
    }
    return(output);
 }
@@ -5432,31 +5316,6 @@ bool IsAbsolutePath(string path) {
          return(StringGetChar(path, 1) == ':');
    }
    return(false);
-}
-
-
-/**
- * Return a human-readable form of a MessageBox push button id.
- *
- * @param  int id - button id
- *
- * @return string
- */
-string MessageBoxButtonToStr(int id) {
-   switch (id) {
-      case IDABORT   : return("IDABORT"   );
-      case IDCANCEL  : return("IDCANCEL"  );
-      case IDCONTINUE: return("IDCONTINUE");
-      case IDIGNORE  : return("IDIGNORE"  );
-      case IDNO      : return("IDNO"      );
-      case IDOK      : return("IDOK"      );
-      case IDRETRY   : return("IDRETRY"   );
-      case IDTRYAGAIN: return("IDTRYAGAIN");
-      case IDYES     : return("IDYES"     );
-      case IDCLOSE   : return("IDCLOSE"   );
-      case IDHELP    : return("IDHELP"    );
-   }
-   return(_EMPTY_STR(catch("MessageBoxButtonToStr(1)  unknown message box button = "+ id, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -5785,67 +5644,6 @@ string NumberToStr(double value, string mask) {
    error = GetLastError();
    if (error != NO_ERROR) catch("NumberToStr(2)  value="+ value +", mask=\""+ mask +"\"", error);
    return(outStr);
-}
-
-
-/**
- * Return the description of a loglevel constant.
- *
- * @param  int level - loglevel
- *
- * @return string
- */
-string LoglevelDescription(int level) {
-   switch (level) {
-      case LOG_DEBUG : return("DEBUG" );
-      case LOG_INFO  : return("INFO"  );
-      case LOG_NOTICE: return("NOTICE");
-      case LOG_WARN  : return("WARN"  );
-      case LOG_ERROR : return("ERROR" );
-      case LOG_FATAL : return("FATAL" );
-      case LOG_OFF   : return("OFF"   );        // not a regular loglevel
-   }
-   return(""+ level);
-}
-
-
-/**
- * Return the description of a timeframe identifier. Supports custom timeframes.
- *
- * @param  int period [optional] - timeframe identifier or number of minutes per period (default: the current chart period)
- *
- * @return string
- *
- * Note: As DLL calls may be disabled we need an MQL implementation. This one should match the one in the MT4Expander.
- */
-string PeriodDescription(int period = NULL) {
-   if (!period) period = Period();
-
-   switch (period) {
-      case PERIOD_M1:  return("M1");      // 1 minute
-      case PERIOD_M2:  return("M2");      // 2 minutes  (custom timeframe)
-      case PERIOD_M3:  return("M3");      // 3 minutes  (custom timeframe)
-      case PERIOD_M4:  return("M4");      // 4 minutes  (custom timeframe)
-      case PERIOD_M5:  return("M5");      // 5 minutes
-      case PERIOD_M6:  return("M6");      // 6 minutes  (custom timeframe)
-      case PERIOD_M10: return("M10");     // 10 minutes (custom timeframe)
-      case PERIOD_M12: return("M12");     // 12 minutes (custom timeframe)
-      case PERIOD_M15: return("M15");     // 15 minutes
-      case PERIOD_M20: return("M20");     // 20 minutes (custom timeframe)
-      case PERIOD_M30: return("M30");     // 30 minutes
-      case PERIOD_H1:  return("H1");      // 1 hour
-      case PERIOD_H2:  return("H2");      // 2 hours    (custom timeframe)
-      case PERIOD_H3:  return("H3");      // 3 hours    (custom timeframe)
-      case PERIOD_H4:  return("H4");      // 4 hours
-      case PERIOD_H6:  return("H6");      // 6 hours    (custom timeframe)
-      case PERIOD_H8:  return("H8");      // 8 hours    (custom timeframe)
-      case PERIOD_H12: return("H12");     // 12 hours   (custom timeframe)
-      case PERIOD_D1:  return("D1");      // 1 day
-      case PERIOD_W1:  return("W1");      // 1 week
-      case PERIOD_MN1: return("MN1");     // 1 month
-      case PERIOD_Q1:  return("Q1");      // 1 quarter  (custom timeframe)
-   }
-   return(""+ period);
 }
 
 
@@ -6716,7 +6514,7 @@ bool InitTradeServerPath(string path) {
       if (fsMode == MODE_MQL) symbolsFile = GetMqlSandboxPath() +"/"+ symbolsFile;
       int hFile = CreateFileA(symbolsFile,            // file name
                               GENERIC_READ,           // desired access
-                              FILE_SHARE_READ,        // share mode
+                              WIN32_FILE_SHARE_READ,  // share mode
                               NULL,                   // default security
                               CREATE_NEW,             // create file only if it doesn't exist
                               FILE_ATTRIBUTE_NORMAL,  // flags and attributes: normal file
@@ -6732,7 +6530,7 @@ bool InitTradeServerPath(string path) {
       if (fsMode == MODE_MQL) groupsFile = GetMqlSandboxPath() +"/"+ groupsFile;
       hFile = CreateFileA(groupsFile,                 // file name
                           GENERIC_READ,               // desired access
-                          FILE_SHARE_READ,            // share mode
+                          WIN32_FILE_SHARE_READ,      // share mode
                           NULL,                       // default security
                           CREATE_NEW,                 // create file only if it doesn't exist
                           FILE_ATTRIBUTE_NORMAL,      // flags and attributes: normal file
@@ -6899,7 +6697,6 @@ void __DummyCalls() {
    MathDiv(NULL, NULL);
    MathModFix(NULL, NULL);
    Max(NULL, NULL);
-   MessageBoxButtonToStr(NULL);
    Min(NULL, NULL);
    ModuleName();
    ModuleTypesToStr(NULL);
@@ -7005,7 +6802,7 @@ void __DummyCalls() {
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------------
 
 
 #import "rsfLib.ex4"
@@ -7039,18 +6836,18 @@ void __DummyCalls() {
 
 #import "kernel32.dll"
    bool     CloseHandle(int hObject);
-   int      CreateFileA(string lpFileName, int dwDesiredAccess, int dwShareMode, int lpSecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, int hTemplateFile);
+   int      CreateFileA(string fileName, int dwDesiredAccess, int dwShareMode, int lpSecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, int hTemplateFile);
    int      GetCurrentProcessId();
    int      GetCurrentThreadId();
-   int      GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   void     OutputDebugStringA(string lpMessage);
+   int      GetPrivateProfileIntA(string section, string key, int nDefault, string fileName);
+   void     OutputDebugStringA(string message);
    void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
-   int      WinExec(string lpCmdLine, int cmdShow);
-   bool     WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);
+   int      WinExec(string cmdLine, int cmdShow);
+   bool     WritePrivateProfileStringA(string section, string key, string value, string fileName);
 
 #import "user32.dll"
    int      GetAncestor(int hWnd, int cmd);
-   int      GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
+   int      GetClassNameA(int hWnd, string buffer, int bufferSize);
    int      GetDesktopWindow();
    int      GetDlgCtrlID(int hWndCtl);
    int      GetDlgItem(int hDlg, int itemId);
@@ -7058,8 +6855,8 @@ void __DummyCalls() {
    int      GetTopWindow(int hWnd);
    int      GetWindow(int hWnd, int cmd);
    bool     IsWindow(int hWnd);
-   int      MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
+   int      MessageBoxA(int hWnd, string text, string caption, int style);
    bool     PostMessageA(int hWnd, int msg, int wParam, int lParam);
-   int      RegisterWindowMessageA(string lpString);
+   int      RegisterWindowMessageA(string str);
    int      SendMessageA(int hWnd, int msg, int wParam, int lParam);
 #import

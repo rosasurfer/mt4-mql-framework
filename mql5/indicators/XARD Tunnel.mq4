@@ -13,6 +13,7 @@
  *  @link  https://forex-station.com/viewtopic.php?p=1295434513#p1295434513                           [XARD FX Final Edition]
  */
 #property strict
+#include <stddefines.mqh>
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -48,6 +49,9 @@ input int            MA3_Width                      = 5;
 #property indicator_buffers   1           // buffers visible to the user
 
 
+double buffer[];
+
+
 /**
  * Initialization
  *
@@ -56,6 +60,9 @@ input int            MA3_Width                      = 5;
 int init() {
    // input validation
    // chart legend
+
+   debug("init(0.1)  hello world");
+
    SetIndicatorOptions();
    return(catch("init(1)"));
 }
@@ -67,6 +74,7 @@ int init() {
  * @return int - error status
  */
 int start() {
+   debug("start(0.1)  Bars="+ (string)Bars +"  scale="+ (string)ChartGetInteger(0, CHART_SCALE));
    return(catch("start(1)"));
 }
 
@@ -74,8 +82,11 @@ int start() {
 /**
  * Callback handler for chart events
  */
-void OnChartEvent(const int id, const long &lParam, const double &dParam, const string &sParam) {
-   SetIndicatorOptions(true);
+void OnChartEvent(const int event, const long &lParam, const double &dParam, const string &sParam) {
+   if (event == CHARTEVENT_CHART_CHANGE) {
+      debug("OnChartEvent(0.1)  CHARTEVENT_CHART_CHANGE  scale="+ (string)ChartGetInteger(0, CHART_SCALE));
+      SetIndicatorOptions(true);
+   }
    catch("OnChartEvent(1)");
 }
 
@@ -86,4 +97,6 @@ void OnChartEvent(const int id, const long &lParam, const double &dParam, const 
  * @param  bool redraw [optional] - whether to redraw the chart (default: no)
  */
 void SetIndicatorOptions(bool redraw = false) {
+   SetIndexBuffer(0, buffer);
+   SetIndexStyle(0, DRAW_NONE);
 }

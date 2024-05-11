@@ -31,8 +31,8 @@ int __DeinitFlags[];
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/ObjectCreateRegister.mqh>
 #include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
-#include <scriptrunner.mqh>
+#include <functions/lfx.mqh>
+#include <functions/scriptrunner.mqh>
 #include <structs/rsf/LFXOrder.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
