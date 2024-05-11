@@ -75,7 +75,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=.Xard/2021.05.05/indicators/XU v4-XARDFX
+name=.Xard/2021.05.04/indicators/XU v4-XARDFX
 flags=339
 window_num=0
 <inputs>
