@@ -1,8 +1,9 @@
 <chart>
 symbol=USDCHF
 period=60
-leftpos=13564
 digits=5
+
+leftpos=13564
 scale=1
 graph=1
 fore=1
@@ -16,11 +17,13 @@ days=0
 descriptions=1
 shift_size=50
 fixed_pos=620
+
 window_left=0
 window_top=0
 window_right=1304
 window_bottom=1032
 window_type=3
+
 background_color=16316664
 foreground_color=0
 barup_color=30720

@@ -23,6 +23,7 @@ window_top=47
 window_right=996
 window_bottom=632
 window_type=3
+
 background_color=16316664
 foreground_color=0
 barup_color=30720
