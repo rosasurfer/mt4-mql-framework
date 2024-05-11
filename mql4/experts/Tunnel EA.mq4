@@ -331,6 +331,8 @@ bool IsExitSignal(double &signal[]) {
 bool IsMaTunnelSignal(double &signal[]) {
    if (last_error != NULL) return(false);
 
+   // TODO: 35% of the total runtime are spent in this function
+
    static int lastTick, lastSigType, lastSigOp;
    static double lastSigPrice;
 

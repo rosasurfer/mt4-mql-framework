@@ -524,17 +524,18 @@ bool IsZigZagSignal(double &signal[]) {
  * @param  _In_  int    bar             - bar offset
  * @param  _Out_ int    &trend          - MODE_TREND: combined buffers MODE_KNOWN_TREND + MODE_UNKNOWN_TREND
  * @param  _Out_ int    &reversalOffset - MODE_REVERSAL: bar offset of most recent ZigZag reversal to previous ZigZag semaphore
- * @param  _Out_ double &reversalPrice  - MODE_(UPPER|LOWER)_CROSS: reversal price if the bar denotes a ZigZag reversal; otherwise 0
+ * @param  _Out_ double &reversalPrice  - MODE_UPPER_CROSS|MODE_LOWER_CROSS: reversal price if the bar denotes a ZigZag reversal; 0 otherwise
  *
  * @return bool - success status
  */
 bool GetZigZagData(int bar, int &trend, int &reversalOffset, double &reversalPrice) {
-   // TODO: the EA spends 56% of the runtime in this function
 
-   trend          = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));          // 88% of the runtime
-   reversalOffset = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));          // 6% of the runtime
+   // TODO: 56% of the total runtime are spent in this function
 
-   if (trend > 0) reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);    // 6% of the runtime
+   trend          = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));          // 88% of the local time
+   reversalOffset = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));          // 6% of the local time
+
+   if (trend > 0) reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);    // 6% of the local time
    else           reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, bar);
    return(!last_error && trend);
 }
