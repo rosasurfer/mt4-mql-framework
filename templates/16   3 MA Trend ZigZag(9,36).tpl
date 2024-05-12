@@ -98,7 +98,7 @@ window_num=0
 <inputs>
 MA.Periods=144
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close | Median* | Typical | Weighted
+MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
 UpTrend.Color=16760576
 DownTrend.Color=55295
 Draw.Type=Line* | Dot
@@ -122,7 +122,7 @@ window_num=0
 <inputs>
 MA.Periods=36
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close | Median* | Typical | Weighted
+MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
 UpTrend.Color=16760576
 DownTrend.Color=55295
 Draw.Type=Line* | Dot
@@ -146,7 +146,7 @@ window_num=0
 <inputs>
 MA.Periods=9
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close | Median* | Typical | Weighted
+MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
 UpTrend.Color=16760576
 DownTrend.Color=55295
 Draw.Type=Line* | Dot
