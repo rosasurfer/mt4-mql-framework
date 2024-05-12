@@ -90,6 +90,7 @@ int onTick() {
 bool UpdateHorizontalGrid() {
    int chartHeight;
    double minPrice, maxPrice;
+
    if (!GetHorizontalChartDimensions(chartHeight, minPrice, maxPrice)) return(!last_error);
 
    // nothing to do if chart dimensions are unchanged
