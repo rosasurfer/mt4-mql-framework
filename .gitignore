@@ -25,16 +25,14 @@ mqlcache.dat
 /mql4/experts/scripts
 /mql4/experts/templates
 
-# ignore log related/generated/linked files in MQL4.5 and MQL5 structures
-/mql*/Files
+# ignore log related/generated/linked files in MQL4.5 structure
 /mql*/files
-/mql*/Images
-/mql*/Logs
+/mql*/images
 /mql*/logs
-/mql*/Presets
+/mql*/logs
 /mql*/presets
-/mql*/Projects
-/mql*/Shared Projects
+/mql*/projects
+/mql*/shared projects
 
 # ignore files created by the tester
 /tester/
