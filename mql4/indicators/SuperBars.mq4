@@ -35,6 +35,7 @@ int __DeinitFlags[];
 extern color  UpBars.Color        = PaleGreen;        // bullish bars
 extern color  DownBars.Color      = Pink;             // bearish bars
 extern color  UnchangedBars.Color = Lavender;         // unchanged bars
+extern bool   FillBars            = true;             //
 extern color  CloseMarker.Color   = Gray;             // bar close marker
 extern color  ETH.Color           = LemonChiffon;     // ETH sessions
 extern string ETH.Symbols         = "";               // comma-separated list of symbols with RTH/ETH sessions
@@ -454,12 +455,12 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
    // define object names
    switch (superTimeframe) {
-      case PERIOD_H1    : nameRectangle =          GmtTimeFormat(openTimeFxt, "%d.%m.%Y %H:%M");                   break;
+      case PERIOD_H1:  nameRectangle =          GmtTimeFormat(openTimeFxt, "%d.%m.%Y %H:%M");                   break;
       case PERIOD_D1_ETH:
-      case PERIOD_D1    : nameRectangle =          GmtTimeFormat(openTimeFxt, "%a %d.%m.%Y ");                     break;  // plus an extra space as "%a %d.%m.%Y" is already used by the Grid indicator
-      case PERIOD_W1    : nameRectangle = "Week "+ GmtTimeFormat(openTimeFxt,    "%d.%m.%Y");                      break;
-      case PERIOD_MN1   : nameRectangle =          GmtTimeFormat(openTimeFxt,       "%B %Y");                      break;
-      case PERIOD_Q1    : nameRectangle = ((TimeMonth(openTimeFxt)-1)/3+1) +". Quarter "+ TimeYearEx(openTimeFxt); break;
+      case PERIOD_D1:  nameRectangle =          GmtTimeFormat(openTimeFxt, "%a %d.%m.%Y ");                     break;  // plus an extra space as "%a %d.%m.%Y" is already used by the Grid indicator
+      case PERIOD_W1:  nameRectangle = "Week "+ GmtTimeFormat(openTimeFxt,    "%d.%m.%Y");                      break;
+      case PERIOD_MN1: nameRectangle =          GmtTimeFormat(openTimeFxt,       "%B %Y");                      break;
+      case PERIOD_Q1:  nameRectangle = ((TimeMonth(openTimeFxt)-1)/3+1) +". Quarter "+ TimeYearEx(openTimeFxt); break;
    }
 
    // draw SuperBar body
@@ -470,12 +471,12 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       }
    }
    if (ObjectFind(nameRectangle) == -1) if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE)) return(false);
-   ObjectSet(nameRectangle, OBJPROP_COLOR,  barColor);
-   ObjectSet(nameRectangle, OBJPROP_BACK,   true);
    ObjectSet(nameRectangle, OBJPROP_TIME1,  Time[openBar]);
    ObjectSet(nameRectangle, OBJPROP_PRICE1, High[highBar]);
    ObjectSet(nameRectangle, OBJPROP_TIME2,  Time[adjustedCloseBar]);
    ObjectSet(nameRectangle, OBJPROP_PRICE2, Low[lowBar]);
+   ObjectSet(nameRectangle, OBJPROP_COLOR,  barColor);
+   ObjectSet(nameRectangle, OBJPROP_BACK,   FillBars);
 
    // draw SuperBar close marker and referencing label
    if (closeBar > 0) {                                                           // except for the youngest (still unfinished) SuperBar
@@ -497,14 +498,14 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          ObjectSetText(nameLabel, nameTrendline);
 
          if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND)) return(false);
-         ObjectSet(nameTrendline, OBJPROP_RAY,    false);
-         ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
-         ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
-         ObjectSet(nameTrendline, OBJPROP_BACK,   true);
          ObjectSet(nameTrendline, OBJPROP_TIME1,  Time[centerBar]);
          ObjectSet(nameTrendline, OBJPROP_PRICE1, Close[closeBar]);
          ObjectSet(nameTrendline, OBJPROP_TIME2,  Time[closeBar]);
          ObjectSet(nameTrendline, OBJPROP_PRICE2, Close[closeBar]);
+         ObjectSet(nameTrendline, OBJPROP_RAY,    false);
+         ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
+         ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
+         ObjectSet(nameTrendline, OBJPROP_BACK,   true);
       }
    }
 
@@ -542,22 +543,22 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
       // draw ETH background (creates an optical hole in the SuperBar)
       if (ObjectFind(nameRectangleBg) == -1) if (!ObjectCreateRegister(nameRectangleBg, OBJ_RECTANGLE)) return(false);
-      ObjectSet(nameRectangleBg, OBJPROP_COLOR,  barColor);                      // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
-      ObjectSet(nameRectangleBg, OBJPROP_BACK,   true);                          // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
-      ObjectSet(nameRectangleBg, OBJPROP_TIME1,  Time[ethOpenBar]);              // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
-      ObjectSet(nameRectangleBg, OBJPROP_PRICE1, ethHigh);                       // of the chart background in the SuperBar. Then we draw the ETH bar into this "hole". It's color doesn't get mixed with the
-      ObjectSet(nameRectangleBg, OBJPROP_TIME2,  Time[ethCloseBar]);             // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.
-      ObjectSet(nameRectangleBg, OBJPROP_PRICE2, ethLow);
+      ObjectSet(nameRectangleBg, OBJPROP_TIME1,  Time[ethOpenBar]);              // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
+      ObjectSet(nameRectangleBg, OBJPROP_PRICE1, ethHigh);                       // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
+      ObjectSet(nameRectangleBg, OBJPROP_TIME2,  Time[ethCloseBar]);             // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
+      ObjectSet(nameRectangleBg, OBJPROP_PRICE2, ethLow);                        // of the chart background in the SuperBar. Then we draw the ETH bar into this "hole". It's color doesn't get mixed with the
+      ObjectSet(nameRectangleBg, OBJPROP_COLOR,  barColor);                      // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.
+      ObjectSet(nameRectangleBg, OBJPROP_BACK,   true);
 
       // draw ETH bar (fills the hole with the ETH color)
       if (ObjectFind(nameRectangle) == -1)
          if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE)) return(false);
-      ObjectSet(nameRectangle, OBJPROP_COLOR,  ETH.Color);
-      ObjectSet(nameRectangle, OBJPROP_BACK,   true);
       ObjectSet(nameRectangle, OBJPROP_TIME1,  Time[ethOpenBar]);
       ObjectSet(nameRectangle, OBJPROP_PRICE1, ethHigh);
       ObjectSet(nameRectangle, OBJPROP_TIME2,  Time[ethCloseBar]);
       ObjectSet(nameRectangle, OBJPROP_PRICE2, ethLow);
+      ObjectSet(nameRectangle, OBJPROP_COLOR,  ETH.Color);
+      ObjectSet(nameRectangle, OBJPROP_BACK,   true);
 
       // draw ETH close marker if the RTH session has started
       if (serverTime >= ethCloseTimeSrv) {
@@ -579,14 +580,14 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
             ObjectSetText(nameLabel, nameTrendline);
 
             if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND)) return(false);
-            ObjectSet(nameTrendline, OBJPROP_RAY,    false);
-            ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
-            ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
-            ObjectSet(nameTrendline, OBJPROP_BACK,   true);
             ObjectSet(nameTrendline, OBJPROP_TIME1,  Time[ethCenterBar]);
             ObjectSet(nameTrendline, OBJPROP_PRICE1, ethClose);
             ObjectSet(nameTrendline, OBJPROP_TIME2,  Time[ethCloseBar]);
             ObjectSet(nameTrendline, OBJPROP_PRICE2, ethClose);
+            ObjectSet(nameTrendline, OBJPROP_RAY,    false);
+            ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
+            ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
+            ObjectSet(nameTrendline, OBJPROP_BACK,   true);
          }
       }
       break;
