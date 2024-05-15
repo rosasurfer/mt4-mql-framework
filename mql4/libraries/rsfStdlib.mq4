@@ -658,14 +658,14 @@ string GetAccountServer() {
             }
             next = FindNextFileA(hFindDir, wfd);
          }
-         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetAccountServer(4) directory "+ DoubleQuoteStr(pattern) +" not found", ERR_FILE_NOT_FOUND)));
+         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetAccountServer(4) directory \""+ pattern +"\" not found", ERR_FILE_NOT_FOUND)));
 
          FindClose(hFindDir);
          ArrayResize(wfd, 0);
       }
 
       if (IsError(catch("GetAccountServer(5)"))) return( EMPTY_STR);
-      if (!StringLen(serverName))                return(_EMPTY_STR(catch("GetAccountServer(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
+      if (!StringLen(serverName))                return(_EMPTY_STR(catch("GetAccountServer(6)  cannot find server directory containing \""+ tmpFilename +"\"", ERR_RUNTIME_ERROR)));
 
       static.serverName[0] = serverName;
    }

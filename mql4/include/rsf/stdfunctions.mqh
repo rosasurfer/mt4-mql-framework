@@ -4518,9 +4518,9 @@ string GetAccountAlias(string company="", int account=NULL) {
 /**
  * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
  * characters only. By default the identifier matches the first word of the current tradeserver name. It can be mapped to a
- * different company identifier via section [AccountCompanies] of the framework configuration.
+ * different company identifier via section [AccountCompanies] of the global framework configuration.
  *
- * @return string - original or mapped company identifier or an empty string in case of errors
+ * @return string - company identifier or an empty string in case of errors
  *
  * Example:
  * +--------------------+--------------------+
@@ -4549,7 +4549,7 @@ string GetAccountCompanyId() {
    if (server == lastServer)
       return(lastId);
 
-   string mapping = GetGlobalConfigString("AccountCompanies", server);     // global only to prevent recursion
+   string mapping = GetGlobalConfigString("AccountCompanies", server);
    if (StringLen(mapping) > 0) {
       lastServer = server;
       lastId = mapping;
