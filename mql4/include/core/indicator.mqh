@@ -222,8 +222,6 @@ bool initGlobals() {
  * @return int - error status
  */
 int start() {
-   int startEnter = GetTickCount();
-
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed()) {
          if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
@@ -262,13 +260,20 @@ int start() {
 
    // detect and handle account changes
    // ---------------------------------
-   // The tick on which AccountNumber() reports a new account the first time is executed either on new history (if it exists)
-   // or on old history (if no history exists for the new account). Depending on it ValidBars will be either 0 (new history)
-   // or not 0 (old history). Only the first tick with a new account number may be executed on old history. After a successfull
-   // account change all bars will be indicated as changed, no matter whether history changed or not (ValidBars is reliable).
+   // At terminal start AccountNumber() returns 0 until the trade server connection is fully established.
    //
-   // At terminal start AccountNumber() reports 0 (zero) until the connection is fully established. An account change at runtime
-   // causes a new tick where AccountNumber() immediately reports the new account and IsConnected() returns FALSE.
+   // An account change at runtime causes a new tick with AccountNumber() immediately returning the new account number but
+   // IsConnected() returning FALSE.
+   //
+   // This first tick after an account change is executed either on new history (if it exists) or on old history (if no history
+   // exists for the new account). Depending on that condition ValidBars will either be 0 (new history) or not 0 (old history).
+   // Only one tick may be executed on old history.
+   //
+   // If history exists for the new account it's usually outdated (not current). A first tick on such an outdated history will
+   // cause the Expander message: SyncMainContext_start()  ERROR: ticktime is running backwards: tickTime=... prevTickTime=...
+   //
+   // After account change all bars will be indicated as changed, no matter whether history changed or not (ValidBars is reliable).
+   //
    static int prevAccount;
    int currAccount = AccountNumber();
    __isAccountChange = (prevAccount && currAccount!=prevAccount);
@@ -384,8 +389,6 @@ int start() {
       if (CheckErrors("start(5)->SyncMainContext_start()")) return(last_error);
    }
 
-   int starttime = GetTickCount();
-
    // call the userland main function
    error = onTick();
    if (error && error!=last_error) CheckErrors("start(6)", error);
@@ -394,6 +397,7 @@ int start() {
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       CheckErrors("start(7)", error);
+   }
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }

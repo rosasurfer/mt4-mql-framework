@@ -47,7 +47,7 @@ extern bool   Track.Orders    = true;                             // whether to 
 // unitsize calculation
 bool    mm.done;                                                  // processing flag
 double  mm.externalAssets;                                        // external assets
-bool    mm.externalAssetsCached;                                  //
+bool    mm.externalAssetsCached;                                  // whether mm.externalAssets holds a valid cached value
 double  mm.equity;                                                // equity value used for calculations, incl. external assets and floating losses (but w/o floating/unrealized profits)
 
 double  mm.cfgLeverage;
@@ -266,7 +266,6 @@ int onTick() {
  * @return int - error status
  */
 int onAccountChange(int previous, int current) {
-   ArrayResize(trackedOrders, 0);
    return(onInit());
 }
 
@@ -1822,6 +1821,7 @@ bool UpdateStopoutLevel() {
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct, line, lineSkipped)) {
             return(false);
          }
+
          if (line > -1) {
             if (lineSkipped) {
                config.dData[line][I_PROFIT_MFE] = 0;                             // reset existing stats
@@ -1874,9 +1874,9 @@ bool UpdateStopoutLevel() {
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, NULL, NULL, NULL, EMPTY_VALUE, NULL, EMPTY_VALUE, line, lineSkipped)) {
       return(false);
    }
+
    positions.analyzed = true;
    return(!catch("AnalyzePositions(3)"));
-   // TODO: after 2 times account change:    FATAL: XAUUSD,M5  ChartInfos::AnalyzePositions(3)  [ERR_ARRAY_INDEX_OUT_OF_RANGE]
 }
 
 

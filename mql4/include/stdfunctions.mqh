@@ -4442,14 +4442,14 @@ string InitReasonDescription(int reason) {
 
 
 /**
- * Return the current account number (with and without a trade server connection).
+ * Return the current account number, with or without a trade server connection.
  *
  * @return int - account number or NULL (0) in case of errors
  */
 int GetAccountNumber() {
-   // In tester the account number is cached to prevent UI deadlocks in expert::deinit() caused by GetWindowText()
-   // (only if VisualMode=On; should be obsolete since use of GetInternalWindowText()).
-   // No cache if online, otherwise account changes wouldn't be recognised.
+   // In tester the account number is cached to prevent UI deadlocks in expert::deinit() caused by GetWindowText().
+   // - only if VisualMode=On; should be obsolete since we use GetInternalWindowText()
+   // No cache if online, otherwise account changes wouldn't be recognized.
 
    static int testAccount;
    if (testAccount != 0) return(testAccount);
@@ -4457,7 +4457,7 @@ int GetAccountNumber() {
    int account = AccountNumber();
 
    if (account == 0x4000) {                                             // in tester without server connection
-      if (!__isTesting)           return(!catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x4000)", ERR_RUNTIME_ERROR));
+      if (!__isTesting)           return(!catch("GetAccountNumber(1)->AccountNumber()  unexpected account number: "+ account +" (0x4000)", ERR_RUNTIME_ERROR));
       account = 0;
    }
 
@@ -4474,8 +4474,8 @@ int GetAccountNumber() {
       account = StrToInteger(strValue);
    }
 
-   if (__isTesting)
-      testAccount = account;
+   if (__isTesting) testAccount = account;
+
    return(account);
 }
 

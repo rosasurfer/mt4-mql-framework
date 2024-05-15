@@ -3,21 +3,28 @@
  *
  *
  * TODO:
+ *  - account change to a new server
+ *     MT4Expander::executioncontext.cpp::SyncMainContext_start(517)  ERROR: ticktime is running backwards:  tick=400  tickTime=1970.01.01 00:00:00  prevTickTime=2024.05.06 17:54:14  ec={pid=2, previousPid=0, programType=PT_INDICATOR, programName="ChartInfos", programCoreFunction=CF_START, programInitReason=IR_TEMPLATE, programUninitReason=UR_UNDEFINED, programInitFlags=0, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="ChartInfos", moduleCoreFunction=CF_START, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="EURJPY", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x07CA0020, bars=60002, validBars=60001, changedBars=1, ticks=399, cycleTicks=399, currTickTime="2024.05.06 17:54:14", prevTickTime="2024.05.06 17:54:14", bid=165.918, ask=165.925, digits=3, pipDigits=2, pip=0.01, point=0.001, pipPoints=10, priceFormat=".2'", pipPriceFormat=".2", superContext=NULL, threadId=4640 (UI), hChart=0x000D0818, hChartWindow=0x000508B4, testing=FALSE, visualMode=FALSE, optimization=FALSE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=DEBUG, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebug=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x05E08B80)  [ERR_ILLEGAL_STATE]
+ *     MetaTrader FATAL  EURJPY,M1  ChartInfos::start(5)->SyncMainContext_start()  DLL error  [ERR_ILLEGAL_STATE]
+ *     add account infos to execution context
+ *     rewrite core functions and Expander, remove onAccountChange()
+ *
  *  - signaling
  *  - merge bufferMain[] and bufferTrend[]
- *
- *  - MA Tunnel
- *     support MA method MODE_ALMA
  *
  *  - ALMA
  *     add Background.Color+Background.Width
  *     merge includes icALMA() and functions/ta/ALMA.mqh
  *     replace manual StdDev calculation
  *
+ *  - MA Tunnel
+ *     support MA method MODE_ALMA
+ *
  *  - Moving Average, MACD
  *     add parameter stepping
  *
  *  - Inside Bars
+ *     fix update error on terminal start/after data pumping
  *     prevent signaling of duplicated events
  *
  *  - SuperBars
@@ -32,11 +39,8 @@
  *  - CloseOrders
  *     Bybit: add config for IsDemoFix() and use it everywhere
  *     support ticket numbers from chart objects (order arrows)
- *     support deleting of TP/SL limits
- *
- *  - account change to a new server
- *     MT4Expander::executioncontext.cpp::SyncMainContext_start(517)  ERROR: ticktime is running backwards:  tick=400  tickTime=1970.01.01 00:00:00  prevTickTime=2024.05.06 17:54:14  ec={pid=2, previousPid=0, programType=PT_INDICATOR, programName="ChartInfos", programCoreFunction=CF_START, programInitReason=IR_TEMPLATE, programUninitReason=UR_UNDEFINED, programInitFlags=0, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="ChartInfos", moduleCoreFunction=CF_START, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="EURJPY", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x07CA0020, bars=60002, validBars=60001, changedBars=1, ticks=399, cycleTicks=399, currTickTime="2024.05.06 17:54:14", prevTickTime="2024.05.06 17:54:14", bid=165.918, ask=165.925, digits=3, pipDigits=2, pip=0.01, point=0.001, pipPoints=10, priceFormat=".2'", pipPriceFormat=".2", superContext=NULL, threadId=4640 (UI), hChart=0x000D0818, hChartWindow=0x000508B4, testing=FALSE, visualMode=FALSE, optimization=FALSE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=DEBUG, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebug=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x05E08B80)  [ERR_ILLEGAL_STATE]
- *     MetaTrader FATAL  EURJPY,M1  ChartInfos::start(5)->SyncMainContext_start()  DLL error  [ERR_ILLEGAL_STATE]
+ *     support deletion of TP/SL limits
+ *     error when position is hedged and pending orders exist
  *
  *  - iCustom(): limit calculated bars in online charts
  *  - Bybit: adjust slippage to prevent ERR_OFF_QUOTES (dealing desk)

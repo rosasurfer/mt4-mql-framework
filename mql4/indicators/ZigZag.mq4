@@ -1178,8 +1178,9 @@ void UpdateChartLegend() {
       string sKnown    = "   "+ NumberToStr(knownTrend[0], "+.");
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
-      string sSignal   = ifString(Signal.onReversal, "  "+ legendInfo, "");
-      string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal);
+      string sSignal   = ifString(Signal.onReversal, "  "+ legendInfo, ""), sInfo="";
+      if (Sound.onChannelWidening) sInfo = " (s)";
+      string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal, sInfo);
 
       color clr = ZigZag.Color;
       if      (clr == Aqua        ) clr = DeepSkyBlue;

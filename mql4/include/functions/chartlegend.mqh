@@ -128,13 +128,13 @@ void UpdateBandLegend(string legendName, string indicatorName, string status, co
  *
  * @param  string legendName       - the legend's chart object name
  * @param  string indicatorName    - displayed indicator name
- * @param  string status           - additional status info (if any)
+ * @param  string info             - additional status info (if any)
  * @param  color  uptrendColor     - the uptrend color
  * @param  color  downtrendColor   - the downtrend color
  * @param  double value            - indicator value to display
  * @param  int    trend [optional] - trend direction of the value to display (default: none)
  */
-void UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int trend=0) {
+void UpdateTrendLegend(string legendName, string indicatorName, string info, color uptrendColor, color downtrendColor, double value, int trend=0) {
    static string lastName = "";
    static double lastValue;
    static int    lastTrend;
@@ -144,15 +144,15 @@ void UpdateTrendLegend(string legendName, string indicatorName, string status, c
    if (indicatorName!=lastName || value!=lastValue || trend!=lastTrend) {
       sValue = NumberToStr(value, PriceFormat);
 
-      if (trend  != 0)  sTrend = StringConcatenate("  (", trend, ")");
-      if (status != "") status = StringConcatenate("  ", status);
+      if (trend != 0) sTrend = StringConcatenate("  (", trend, ")");
+      if (info != "") info   = StringConcatenate("  ", info);
 
       if (uptrendColor != downtrendColor) {
          if      (trend ==  1) sOnTrendChange = "  turns up";           // intra-bar trend change
          else if (trend == -1) sOnTrendChange = "  turns down";         // ...
       }
 
-      string text = StringConcatenate(indicatorName, "   ", sValue, sTrend, sOnTrendChange, status);
+      string text = StringConcatenate(indicatorName, "   ", sValue, sTrend, sOnTrendChange, info);
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
       if      (textColor == Aqua        ) textColor = DeepSkyBlue;
       else if (textColor == Gold        ) textColor = Orange;
