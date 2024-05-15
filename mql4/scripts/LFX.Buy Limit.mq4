@@ -3,7 +3,7 @@
  *
  *  TODO: Fehler in Counter, wenn zwei Orders gleichzeitig erzeugt werden (2 x CHF.3)
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -18,14 +18,14 @@ extern double StopLossPrice;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/script.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <MT4iQuickChannel.mqh>
-#include <functions/lfx.mqh>
-#include <structs/rsf/LFXOrder.mqh>
+#include <rsf/core/script.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/InitializeByteBuffer.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/MT4iQuickChannel.mqh>
+#include <rsf/v40/lfx.mqh>
+#include <rsf/v40/structs/LFXOrder.mqh>
 
 
 int limitType;                                                       // OP_BUYLIMIT | OP_BUYSTOP

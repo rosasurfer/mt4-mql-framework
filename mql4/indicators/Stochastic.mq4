@@ -13,7 +13,7 @@
  *    - signal direction:     positive values denote a long signal (+1...+n), negative values a short signal (-1...-n)
  *    - signal age:           the absolute value is the age of the signal in bars since its occurrence
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -35,10 +35,10 @@ extern int    SignalBars                     = 1000;        // max. number of ba
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/ObjectCreateRegister.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
 
 #define MODE_MAIN             Stochastic.MODE_MAIN       // 0 indicator buffer ids
 #define MODE_SIGNAL           Stochastic.MODE_SIGNAL     // 1

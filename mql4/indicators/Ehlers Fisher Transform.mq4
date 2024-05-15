@@ -17,7 +17,7 @@
  *    - implement PRICE_* types
  *    - check required run-up period
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -30,9 +30,9 @@ extern int   Histogram.Style.Width = 2;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #define MODE_MAIN             Fisher.MODE_MAIN              // indicator buffer ids
 #define MODE_SECTION          Fisher.MODE_SECTION

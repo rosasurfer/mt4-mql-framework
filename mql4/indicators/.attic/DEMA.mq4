@@ -10,7 +10,7 @@
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA: MA values
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -26,11 +26,11 @@ extern int    MaxBarsBack     = 10000;                   // max. values to calcu
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ObjectCreateRegister.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
 
 #define MODE_DEMA             MovingAverage.MODE_MA
 #define MODE_EMA_1            1

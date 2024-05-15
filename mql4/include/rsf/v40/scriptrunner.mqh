@@ -30,11 +30,11 @@ bool RunScript(string name, string parameters="") {
 
    // (2) Prüfen, ob bereits ein Script läuft. Eines läuft, wenn auf dem Parameter-Channel ein Receiver aktiv ist oder dort unabgeholte Messages liegen.
    string channel = ScriptRunner.GetChannelName();
-   int    result  = QC_ChannelHasReceiver(channel);
+   int    result  = QC_ChannelHasReceiverA(channel);
    if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("RunScript(4)->MT4iQuickChannel::QC_ChannelHasReceiver(name="+ DoubleQuoteStr(channel) +") = QC_CHECK_CHANNEL_ERROR", ERR_WIN32_ERROR));
    bool isChannel=(result!=QC_CHECK_CHANNEL_NONE), isChannelReceiver=(result==QC_CHECK_RECEIVER_OK), isChannelEmpty=true;
    if (isChannel) {
-      result = QC_CheckChannel(channel);
+      result = QC_CheckChannelA(channel);
       if (result < QC_CHECK_CHANNEL_EMPTY) return(!catch("RunScript(5)->MT4iQuickChannel::QC_CheckChannel(name="+ DoubleQuoteStr(channel) +") = "+ result, ERR_WIN32_ERROR));
       isChannelEmpty = (result==QC_CHECK_CHANNEL_EMPTY);
    }
@@ -88,7 +88,7 @@ bool ScriptRunner.SetParameters(string parameters) {
 
    parameters = StrReplace(parameters, TAB, HTML_TAB);
 
-   if (!QC_SendMessage(scriptrunner.hQC.sender, parameters, NULL))
+   if (!QC_SendMessageA(scriptrunner.hQC.sender, parameters, NULL))
       return(!catch("ScriptRunner.SetParameters(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
 
    return(true);
@@ -118,7 +118,7 @@ bool ScriptRunner.GetParameters(string &parameters[], bool stopReceiver=true) {
 
    // Channel auf neue Messages prüfen
    string channel     = ScriptRunner.GetChannelName();
-   int    checkResult = QC_CheckChannel(channel);
+   int    checkResult = QC_CheckChannelA(channel);
    if (checkResult < QC_CHECK_CHANNEL_EMPTY) {
       if      (checkResult == QC_CHECK_CHANNEL_ERROR) error = catch("ScriptRunner.GetParameters(2)->MT4iQuickChannel::QC_CheckChannel(name="+ DoubleQuoteStr(channel) +") => QC_CHECK_CHANNEL_ERROR",                ERR_WIN32_ERROR);
       else if (checkResult == QC_CHECK_CHANNEL_NONE ) error = catch("ScriptRunner.GetParameters(3)->MT4iQuickChannel::QC_CheckChannel(name="+ DoubleQuoteStr(channel) +")  channel doesn't exist",                   ERR_WIN32_ERROR);
@@ -127,7 +127,7 @@ bool ScriptRunner.GetParameters(string &parameters[], bool stopReceiver=true) {
    else if (checkResult > QC_CHECK_CHANNEL_EMPTY) {
       // neue Messages abholen
       string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
-      int getResult = QC_GetMessages3(scriptrunner.hQC.receiver, messageBuffer, QC_MAX_BUFFER_SIZE);
+      int getResult = QC_GetMessages3A(scriptrunner.hQC.receiver, messageBuffer, QC_MAX_BUFFER_SIZE);
       if (getResult != QC_GET_MSG3_SUCCESS) {
          if      (getResult == QC_GET_MSG3_CHANNEL_EMPTY) error = catch("ScriptRunner.GetParameters(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR);
          else if (getResult == QC_GET_MSG3_INSUF_BUFFER ) error = catch("ScriptRunner.GetParameters(6)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR);
@@ -162,7 +162,7 @@ bool ScriptRunner.StartParamSender() {
    if (scriptrunner.hQC.sender != NULL)
       return(true);
 
-   scriptrunner.hQC.sender = QC_StartSender(ScriptRunner.GetChannelName());
+   scriptrunner.hQC.sender = QC_StartSenderA(ScriptRunner.GetChannelName());
 
    if (!scriptrunner.hQC.sender)
       return(!catch("ScriptRunner.StartParamSender(2)->MT4iQuickChannel::QC_StartSender(channel="+ DoubleQuoteStr(ScriptRunner.GetChannelName()) +")", ERR_WIN32_ERROR));
@@ -197,7 +197,7 @@ bool ScriptRunner.StartParamReceiver() {
       return(true);
 
    int hWnd = __ExecutionContext[EC.hChart];
-   scriptrunner.hQC.receiver = QC_StartReceiver(ScriptRunner.GetChannelName(), hWnd);
+   scriptrunner.hQC.receiver = QC_StartReceiverA(ScriptRunner.GetChannelName(), hWnd);
 
    if (!scriptrunner.hQC.receiver)
       return(!catch("ScriptRunner.StartParamReceiver(2)->MT4iQuickChannel::QC_StartReceiver(channel="+ DoubleQuoteStr(ScriptRunner.GetChannelName()) +", hWnd="+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));

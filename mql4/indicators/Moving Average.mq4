@@ -27,7 +27,7 @@
  *  (3) ALMA calculation:
  *      @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -54,16 +54,16 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/IsBarOpen.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/trend.mqh>
-#include <functions/ta/ALMA.mqh>
-#include <win32api.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ConfigureSignals.mqh>
+#include <rsf/v40/IsBarOpen.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/trend.mqh>
+#include <rsf/v40/ta/ALMA.mqh>
+#include <rsf/win32api.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND

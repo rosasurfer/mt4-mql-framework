@@ -1,8 +1,7 @@
 /**
  * Windows constants
  *
- * In MQL5 the redefinition of constants (even with the same value) is not allowed. Commented names are in fact defined,
- * the entries exist for documentation purposes only.
+ * In MQL4 the redefinition of constants (with the same value) is allowed, in MQL5 it's not.
  */
 
 
@@ -53,7 +52,7 @@
 #define MB_DEFBUTTON4                     0x00000300
 
 #define MB_ICONEXCLAMATION                0x00000030  // icons
-#define MB_ICONWARNING                    0x00000030  // MB_ICONEXCLAMATION
+#define MB_ICONWARNING                    0x00000030  // MB_ICONEXCLAMATION      // MQL5 bug: built-in constants cannot reference each other
 #define MB_ICONINFORMATION                0x00000040
 #define MB_ICONASTERISK                   0x00000040  // MB_ICONINFORMATION
 #define MB_ICONQUESTION                   0x00000020
@@ -113,7 +112,7 @@
 
 
 // File sharing modes
-#define WIN32_FILE_SHARE_READ                      1     // these constants w/o prefix exist in MQL5 with a different value
+#define WIN32_FILE_SHARE_READ                      1     // MQL5: these constants w/o prefix exist with a different value
 #define WIN32_FILE_SHARE_WRITE                     2
 #define WIN32_FILE_SHARE_DELETE                    4
 
@@ -703,22 +702,22 @@
 
 
 // Process creation flags, see CreateProcess()
-#define DEBUG_PROCESS                    0x00000001
-#define DEBUG_ONLY_THIS_PROCESS          0x00000002
-#define CREATE_SUSPENDED                 0x00000004
-#define DETACHED_PROCESS                 0x00000008
-#define CREATE_NEW_CONSOLE               0x00000010
-#define CREATE_NEW_PROCESS_GROUP         0x00000200
-#define CREATE_UNICODE_ENVIRONMENT       0x00000400
-#define CREATE_SEPARATE_WOW_VDM          0x00000800
-#define CREATE_SHARED_WOW_VDM            0x00001000
-#define INHERIT_PARENT_AFFINITY          0x00010000
-#define CREATE_PROTECTED_PROCESS         0x00040000
-#define EXTENDED_STARTUPINFO_PRESENT     0x00080000
-#define CREATE_BREAKAWAY_FROM_JOB        0x01000000
-#define CREATE_PRESERVE_CODE_AUTHZ_LEVEL 0x02000000
-#define CREATE_DEFAULT_ERROR_MODE        0x04000000
-#define CREATE_NO_WINDOW                 0x08000000
+#define DEBUG_PROCESS                     0x00000001
+#define DEBUG_ONLY_THIS_PROCESS           0x00000002
+#define CREATE_SUSPENDED                  0x00000004
+#define DETACHED_PROCESS                  0x00000008
+#define CREATE_NEW_CONSOLE                0x00000010
+#define CREATE_NEW_PROCESS_GROUP          0x00000200
+#define CREATE_UNICODE_ENVIRONMENT        0x00000400
+#define CREATE_SEPARATE_WOW_VDM           0x00000800
+#define CREATE_SHARED_WOW_VDM             0x00001000
+#define INHERIT_PARENT_AFFINITY           0x00010000
+#define CREATE_PROTECTED_PROCESS          0x00040000
+#define EXTENDED_STARTUPINFO_PRESENT      0x00080000
+#define CREATE_BREAKAWAY_FROM_JOB         0x01000000
+#define CREATE_PRESERVE_CODE_AUTHZ_LEVEL  0x02000000
+#define CREATE_DEFAULT_ERROR_MODE         0x04000000
+#define CREATE_NO_WINDOW                  0x08000000
 
 
 // Process priority flags, see CreateProcess()

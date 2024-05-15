@@ -7,7 +7,7 @@
  * TODO:
  *  - check bar alignment of all timeframes and use the largest correctly aligned instead of M5
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -26,14 +26,14 @@ extern bool   Signal.onInsideBar.SMS         = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iCopyRates.mqh>
-#include <functions/IsBarOpen.mqh>
-#include <functions/ObjectCreateRegister.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/ConfigureSignals.mqh>
+#include <rsf/v40/iBarShiftNext.mqh>
+#include <rsf/v40/iCopyRates.mqh>
+#include <rsf/v40/IsBarOpen.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
 

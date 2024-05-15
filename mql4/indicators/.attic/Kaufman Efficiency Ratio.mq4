@@ -3,7 +3,7 @@
  *
  * Ratio between the amount price moved in one way (direction) to the amount price moved in any way (volatility).
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -13,9 +13,9 @@ extern int Periods = 32;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #property indicator_separate_window
 #property indicator_buffers   1

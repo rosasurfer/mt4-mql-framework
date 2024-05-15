@@ -7,7 +7,7 @@
  * TODO:
  *  - add input "Tunnel.Width" = 100% (percent of High/Low range)
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -27,15 +27,15 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/IsBarOpen.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/iCustom/MaTunnel.mqh>
-#include <win32api.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ConfigureSignals.mqh>
+#include <rsf/v40/IsBarOpen.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/iCustom/MaTunnel.mqh>
+#include <rsf/win32api.mqh>
 
 #define MODE_UPPER_BAND       MaTunnel.MODE_UPPER_BAND   // indicator buffer ids
 #define MODE_LOWER_BAND       MaTunnel.MODE_LOWER_BAND   //

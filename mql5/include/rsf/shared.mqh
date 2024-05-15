@@ -1,26 +1,30 @@
 /**
- * Built-in and custom MQL constants shared with the MT4Expander (C++).
+ * MQL constants shared with the MT4Expander (C++).
  *
- * In MQL4 the redefinition of constants (with the same value) is allowed. Redefined entries exist for documentation
- * purposes only.
+ * When the MT4Expander is compiled definitions are read from directory "mql4/include/shared" and not from here.
+ * Nevertheless, these constants exists in both MQL versions and in MT4Expander, and have everywhere the same values.
+ *
+ * Unlike MQL4, the redefinition of constants (even with the same value) in MQL5 is not allowed.
  */
 
-// in C++ already defined
+// in C++ defined
+#ifndef INT_MIN
 #define INT_MIN   0x80000000                 // minimum signed int value (-2147483648)
 #define INT_MAX   0x7FFFFFFF                 // maximum signed int value (+2147483647)
+#endif
 
 
-// fully shared
-#include <shared/defines.h>
-#include <shared/errors.h>
+// mirroring the file structure used in "mql4/include/shared.mqh"
+#include <rsf/cpp/defines.h>
+#include <rsf/cpp/errors.h>
 
 
-// already defined in C++ with a different type, but the same value
-#define NO_ERROR  ERR_NO_ERROR               // 0x0L
+// in C++ defined with a different type (same value)
 #define CLR_NONE  0xFFFFFFFF                 // 0xFFFFFFFFL
 
 
-// MetaQuotes constants replaced by framework aliases and intentionally not shared (the wording is odd)
+// MetaQuotes constants replaced by framework aliases (too long names or odd wording)
+#ifndef ERR_DLLFUNC_CRITICALERROR
 #define ERR_DLLFUNC_CRITICALERROR            ERR_DLL_EXCEPTION
 #define ERR_EXTERNAL_CALLS_NOT_ALLOWED       ERR_EX4_CALLS_NOT_ALLOWED
 #define ERR_FILE_BUFFER_ALLOCATION_ERROR     ERR_FILE_BUFFER_ALLOC_ERROR
@@ -39,3 +43,4 @@
 #define ERR_SOME_FILE_ERROR                  ERR_FILE_ERROR
 #define ERR_SOME_OBJECT_ERROR                ERR_OBJECT_ERROR
 #define ERR_UNKNOWN_SYMBOL                   ERR_SYMBOL_NOT_AVAILABLE
+#endif

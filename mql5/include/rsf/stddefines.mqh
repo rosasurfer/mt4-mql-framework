@@ -3,8 +3,8 @@
  *
  * Unlike MQL4, the redefinition of constants (even with the same value) in MQL5 is not allowed.
  */
-#include <shared.mqh>
-#include <win32defines.mqh>
+#include <rsf/shared.mqh>
+#include <rsf/win32defines.mqh>
 
 
 // global variables

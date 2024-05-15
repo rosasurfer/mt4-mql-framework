@@ -18,7 +18,7 @@
  *  - set order tracker sound on stopout to "margin-call"
  *  - PositionOpen/PositionClose events during change of chart timeframe/symbol are not detected
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -29,18 +29,19 @@ extern bool   Track.Orders    = true;                             // whether to 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <functions/HandleCommands.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/SortClosedTickets.mqh>
-#include <functions/ta/ADR.mqh>
-#include <MT4iQuickChannel.mqh>
-#include <functions/lfx.mqh>
-#include <functions/scriptrunner.mqh>
-#include <structs/rsf/LFXOrder.mqh>
-#include <win32api.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/MT4iQuickChannel.mqh>
+#include <rsf/win32api.mqh>
+
+#include <rsf/v40/lfx.mqh>
+#include <rsf/v40/HandleCommands.mqh>
+#include <rsf/v40/InitializeByteBuffer.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/SortClosedTickets.mqh>
+#include <rsf/v40/scriptrunner.mqh>
+#include <rsf/v40/structs/LFXOrder.mqh>
+#include <rsf/v40/ta/ADR.mqh>
 
 #property indicator_chart_window
 
@@ -212,8 +213,8 @@ string  orderTracker.positionStepSize = "MarginLow.wav";          // position in
 #define CLOSE_STOPOUT      3
 
 // initialization/deinitialization
-#include <chartinfos/init.mqh>
-#include <chartinfos/deinit.mqh>
+#include <rsf/v40/chartinfos/init.mqh>
+#include <rsf/v40/chartinfos/deinit.mqh>
 
 
 /**
@@ -3892,7 +3893,7 @@ bool QC.HandleLfxTerminalMessages() {
       return(false);
 
    // (2) Channel auf neue Messages prüfen
-   int checkResult = QC_CheckChannel(qc.TradeToLfxChannel);
+   int checkResult = QC_CheckChannelA(qc.TradeToLfxChannel);
    if (checkResult == QC_CHECK_CHANNEL_EMPTY)
       return(true);
    if (checkResult < QC_CHECK_CHANNEL_EMPTY) {
@@ -3903,7 +3904,7 @@ bool QC.HandleLfxTerminalMessages() {
 
    // (3) neue Messages abholen
    string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
-   int getResult = QC_GetMessages3(hQC.TradeToLfxReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
+   int getResult = QC_GetMessages3A(hQC.TradeToLfxReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
    if (getResult != QC_GET_MSG3_SUCCESS) {
       if (getResult == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleLfxTerminalMessages(4)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR));
       if (getResult == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleLfxTerminalMessages(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR));
@@ -4131,7 +4132,7 @@ bool QC.HandleTradeCommands() {
       return(false);
 
    // (2) Channel auf neue Messages prüfen
-   int checkResult = QC_CheckChannel(qc.TradeCmdChannel);
+   int checkResult = QC_CheckChannelA(qc.TradeCmdChannel);
    if (checkResult == QC_CHECK_CHANNEL_EMPTY)
       return(true);
    if (checkResult < QC_CHECK_CHANNEL_EMPTY) {
@@ -4142,7 +4143,7 @@ bool QC.HandleTradeCommands() {
 
    // (3) neue Messages abholen
    string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
-   int getResult = QC_GetMessages3(hQC.TradeCmdReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
+   int getResult = QC_GetMessages3A(hQC.TradeCmdReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
    if (getResult != QC_GET_MSG3_SUCCESS) {
       if (getResult == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR));
       if (getResult == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeCommands(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR));
@@ -4222,7 +4223,7 @@ bool AnalyzePos.ProcessLfxProfits() {
       if (StringLen(messages[i]) > 0) {
          if (!hQC.TradeToLfxSenders[i]) /*&&*/ if (!QC.StartLfxSender(i))
             return(false);
-         if (!QC_SendMessage(hQC.TradeToLfxSenders[i], messages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
+         if (!QC_SendMessageA(hQC.TradeToLfxSenders[i], messages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
             return(!catch("AnalyzePos.ProcessLfxProfits(1)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
       }
    }
@@ -4760,7 +4761,7 @@ string InputsToStr() {
 }
 
 
-#import "rsfLib.ex4"
+#import "rsfStdlib.ex4"
    int      ArrayDropInt          (int    &array[], int value);
    int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);
    int      ArrayInsertDoubles    (double &array[], int offset, double values[]);

@@ -6,7 +6,7 @@
  *
  * TODO: add a moving average as signal line
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -19,9 +19,9 @@ extern int   MaxBarsBack = 10000;                           // max. values to ca
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #define MODE_MAIN           MMI.MODE_MAIN                   // indicator buffer id
 

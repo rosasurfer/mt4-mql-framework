@@ -16,7 +16,7 @@
  *  @link  https://www.mql5.com/en/forum/175037/page74#comment_4584032                           [NonLag Moving Average v7.9]
  *  @link  https://www.forexfactory.com/thread/561195-scalping-strategy#                          [Scalping Strategy M5 & M1]
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -45,16 +45,16 @@ extern bool   Signal.onTrendChange.SMS       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/HandleCommands.mqh>
-#include <functions/IsBarOpen.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/trend.mqh>
-#include <functions/ta/NLMA.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ConfigureSignals.mqh>
+#include <rsf/v40/HandleCommands.mqh>
+#include <rsf/v40/IsBarOpen.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/trend.mqh>
+#include <rsf/v40/ta/NLMA.mqh>
 
 #define MODE_MA_FILTERED      MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND

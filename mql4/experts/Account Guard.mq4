@@ -20,7 +20,7 @@
  * • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
  *                       prevents DDL triggering by spread widening/spikes.
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
 int __virtualTicks = 800;                             // milliseconds (must be short as the EA watches all symbols)
@@ -34,13 +34,13 @@ extern bool   IgnoreSpread       = true;              // whether to ignore the s
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/expert.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/ComputeFloatingPnL.mqh>
-#include <functions/ParseDateTime.mqh>
-#include <functions/ParseTimeRange.mqh>
-#include <functions/SortClosedTickets.mqh>
+#include <rsf/core/expert.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/ComputeFloatingPnL.mqh>
+#include <rsf/v40/ParseDateTime.mqh>
+#include <rsf/v40/ParseTimeRange.mqh>
+#include <rsf/v40/SortClosedTickets.mqh>
 
 double   prevEquity;                                  // equity value at the previous tick
 bool     isPctLimit;                                  // whether a percent limit is configured

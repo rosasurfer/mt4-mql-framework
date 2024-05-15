@@ -7,7 +7,7 @@
  * TODO:
  *  - document both equity curves
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -18,13 +18,13 @@ extern int    HistoryFormat    = 401;                      // written history fo
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <rsfHistory.mqh>
-#include <functions/ComputeFloatingPnL.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ObjectCreateRegister.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/history.mqh>
+#include <rsf/v40/ComputeFloatingPnL.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   1                          // there's a minimum of 1 buffer

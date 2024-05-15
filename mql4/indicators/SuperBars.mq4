@@ -26,7 +26,7 @@
  *  - workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
  *  - ETH/RTH separation for Frankfurt session
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -43,16 +43,16 @@ extern string Weekend.Symbols     = "";               // comma-separated list of
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/HandleCommands.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
-#include <functions/iChangedBars.mqh>
-#include <functions/iPreviousPeriod.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <win32api.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/HandleCommands.mqh>
+#include <rsf/v40/iBarShiftNext.mqh>
+#include <rsf/v40/iBarShiftPrevious.mqh>
+#include <rsf/v40/iChangedBars.mqh>
+#include <rsf/v40/iPreviousPeriod.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/win32api.mqh>
 
 #property indicator_chart_window
 

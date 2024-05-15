@@ -7,13 +7,13 @@
  *
  * If the "Shift" key (VK_SHIFT) is pressed during execution only the account configuration is loaded.
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
 int __DeinitFlags[];
-#include <core/script.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <win32api.mqh>
+#include <rsf/core/script.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/win32api.mqh>
 
 
 /**

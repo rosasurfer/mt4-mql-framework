@@ -12,7 +12,7 @@
  * @link  http://www.finware.com/generator.html
  * @link  http://fx.qrz.ru/
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -35,14 +35,14 @@ extern bool   Signal.onTrendChange.SMS       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/IsBarOpen.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/trend.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ConfigureSignals.mqh>
+#include <rsf/v40/IsBarOpen.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/trend.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND

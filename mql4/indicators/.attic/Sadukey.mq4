@@ -6,7 +6,7 @@
  * @link  http://www.finware.com/generator.html
  * @link  http://fx.qrz.ru/
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -20,15 +20,15 @@ extern int    MaxBarsBack     = 10000;                               // max. val
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
-#include <functions/iChangedBars.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/ParseDateTime.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/iBarShiftNext.mqh>
+#include <rsf/v40/iBarShiftPrevious.mqh>
+#include <rsf/v40/iChangedBars.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/ParseDateTime.mqh>
 
 #define MODE_BUFFER1         0                                       // indicator buffer ids
 #define MODE_BUFFER2         1

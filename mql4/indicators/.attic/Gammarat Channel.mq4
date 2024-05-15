@@ -10,7 +10,7 @@
  * @link  https://forex-station.com/viewtopic.php?f=579496&t=8423458#                    [Centered Triangular Moving Average]
  * @link  http://www.gammarat.com/Forex/#                                                                    [GammaRat Forex]
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -33,13 +33,13 @@ extern bool   AlertsOn                       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/IsBarOpen.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/ObjectCreateRegister.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/IsBarOpen.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ManageDoubleIndicatorBuffer.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
 #define MODE_UPPER_BAND_RP       1                 //

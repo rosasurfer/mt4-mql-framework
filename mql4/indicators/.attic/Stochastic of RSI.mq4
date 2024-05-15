@@ -16,7 +16,7 @@
  * the raw Stochastic. If both Moving Averages are configured the indicator calculates the "Slow Stochastic" and MODE_MAIN
  * contains MA1(StochRaw). MODE_SIGNAL always contains the last configured Moving Average.
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -35,9 +35,9 @@ extern int    MaxBarsBack              = 10000;          // max. values to calcu
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #define MODE_STOCH_MA1        Stochastic.MODE_MAIN       // indicator buffer ids
 #define MODE_STOCH_MA2        Stochastic.MODE_SIGNAL

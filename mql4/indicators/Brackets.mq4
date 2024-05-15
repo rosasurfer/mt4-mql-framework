@@ -5,7 +5,7 @@
  *
  * TODDO: input TimeWindow must support timezone ids (09:00-09:30 NY, 09:15-09:30 FF)
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -17,15 +17,15 @@ extern color  BracketsColor    = Blue;                   //
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
-#include <functions/iCopyRates.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/ParseDateTime.mqh>
-#include <functions/ParseTimeRange.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/iBarShiftNext.mqh>
+#include <rsf/v40/iBarShiftPrevious.mqh>
+#include <rsf/v40/iCopyRates.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/ParseDateTime.mqh>
+#include <rsf/v40/ParseTimeRange.mqh>
 
 #property indicator_chart_window
 

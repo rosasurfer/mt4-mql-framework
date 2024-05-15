@@ -584,7 +584,7 @@ datetime Test.GetEndDate() {
 }
 
 
-#import "rsfLib.ex4"
+#import "rsfStdlib.ex4"
    int    CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory);
    bool   IntInArray(int haystack[], int needle);
 

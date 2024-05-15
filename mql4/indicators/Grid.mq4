@@ -3,7 +3,7 @@
  *
  * Dynamically maintains horizontal (price) and vertical (date/time) chart separators.
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -17,12 +17,12 @@ extern color  Color.SuperGrid                = LightGray;      // C'211,211,211'
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <win32api.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/iBarShiftNext.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/win32api.mqh>
 
 #property indicator_chart_window
 

@@ -3,7 +3,7 @@
  */
 
 
-// include/stdfunctions.mqh
+// include/rsf/stdfunctions.mqh
 bool     _bool       (bool   param1,      int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 double   _double     (double param1,      int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
 int      _EMPTY      (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL);;
@@ -218,7 +218,50 @@ string   UrlEncode(string value);;
 bool     WaitForTicket(int ticket, bool select=false);;
 
 
-// include/functions/chartlegend.mqh
+// include/rsf/common/
+int      Abs(int value);;
+string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
+int      Max(int a, int b, int c=INT_MIN);;
+int      Min(int a, int b, int c=INT_MAX);;
+string   PeriodDescription(int period=NULL);;
+bool     StrContains(string str, string substr);;
+string   StrLeft(string value, int n);;
+string   StrPadRight(string str, int padLength, string padString=" ");;
+string   StrSubstr(string str, int start, int length=INT_MAX);;
+string   StrTrim(string str);;
+
+
+// include/rsf/v40/
+double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
+bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false);;
+bool     ConfigureSignals(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalsByAlert(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalsBySMS(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled);;
+bool     ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled, bool &smsEnabled);;
+int      DeleteRegisteredObjects();;
+int      ExplodeStrings(int &buffer[], string &results[]);;
+bool     GetChartCommand(string channel, string &commands[]);;
+bool     HandleCommands(string channel = "");;
+int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int mute=NULL);;
+int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int mute=NULL);;
+int      iChangedBars(string symbol=NULL, int timeframe=NULL);;
+int      iCopyRates(double target[][6], string symbol=NULL, int timeframe=NULL);;
+int      InitializeByteBuffer(int &buffer[], int bytes);;
+bool     iPreviousPeriod(int timeframe=NULL, datetime &openTimeFxt, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv, bool skipWeekends=true);;
+bool     IsBarOpen(int timeframe=NULL);;
+string   JoinBools(bool &values[], string separator=", ");;
+string   JoinDoubles(double &values[], string separator=", ");;
+string   JoinDoublesEx(double &values[], int digits, string separator=", ");;
+string   JoinInts(int &values[], string separator=", ");;
+bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
+bool     ObjectCreateRegister(string name, int type, int window=0, datetime time1=NULL, double price1=NULL, datetime time2=NULL, double price2=NULL, datetime time3=NULL, double price3=NULL);;
+bool     ParseDateTime(string value, int flags, int &result[]);;
+bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
+
+
+// include/rsf/v40/chartlegend.mqh
 string   CreateChartLegend();;
 bool     RearrangeChartLegends();;
 bool     RemoveChartLegend();;
@@ -226,7 +269,7 @@ void     UpdateBandLegend(string legendName, string indicatorName, string status
 void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int trend=0);;
 
 
-// include/functions/configuration.mqh
+// include/rsf/v40/configuration.mqh
 string   GetAccountConfigPath(string company="", int account=NULL);;
 
 bool     IsConfigKey               (string section, string key);;
@@ -270,7 +313,7 @@ double   GetIniDouble(string fileName, string section, string key, double defaul
 bool     WriteIniString(string fileName, string section, string key, string value);;
 
 
-// include/functions/log.mqh
+// include/rsf/v40/log.mqh
 int      catch(string caller, int error=NO_ERROR, bool popOrder=false);;
 int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
 
@@ -300,43 +343,13 @@ int      log2Terminal(string message, int error, int level);;
 bool     SetLogfile(string filename);;
 
 
-// include/functions/scriptrunner.mqh
+// include/rsf/v40/scriptrunner.mqh
 bool     RunScript(string name, string parameters = "");;
 bool     ScriptRunner.GetParameters(string &parameters[]);;
 bool     ScriptRunner.SetParameters(string parameters);;
 
 
-// include/functions/
-double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
-bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false);;
-bool     ConfigureSignals(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalsByAlert(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalsBySMS(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled, bool &smsEnabled);;
-int      DeleteRegisteredObjects();;
-int      ExplodeStrings(int &buffer[], string &results[]);;
-bool     GetChartCommand(string channel, string &commands[]);;
-bool     HandleCommands(string channel = "");;
-int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int mute=NULL);;
-int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int mute=NULL);;
-int      iChangedBars(string symbol=NULL, int timeframe=NULL);;
-int      iCopyRates(double target[][6], string symbol=NULL, int timeframe=NULL);;
-int      InitializeByteBuffer(int &buffer[], int bytes);;
-bool     iPreviousPeriod(int timeframe=NULL, datetime &openTimeFxt, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv, bool skipWeekends=true);;
-bool     IsBarOpen(int timeframe=NULL);;
-string   JoinBools(bool &values[], string separator=", ");;
-string   JoinDoubles(double &values[], string separator=", ");;
-string   JoinDoublesEx(double &values[], int digits, string separator=", ");;
-string   JoinInts(int &values[], string separator=", ");;
-bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
-bool     ObjectCreateRegister(string name, int type, int window=0, datetime time1=NULL, double price1=NULL, datetime time2=NULL, double price2=NULL, datetime time3=NULL, double price3=NULL);;
-bool     ParseDateTime(string value, int flags, int &result[]);;
-bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
-
-
-// include/functions/iCustom/
+// include/rsf/v40/iCustom/
 double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, double maReversalFilter, int iBuffer, int iBar);;
 double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
@@ -346,7 +359,7 @@ double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string m
 double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 
 
-// include/functions/ta/
+// include/rsf/v40/ta/
 bool     ALMA.CalculateWeights(int periods, double offset, double sigma, double &weights[]);;
 double   ATR(string symbol, int timeframe, int periods, int offset);;
 double   iADR(int flags=NULL);;
@@ -354,23 +367,7 @@ double   JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, dou
 bool     NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]);;
 
 
-// include/rsf/functions/
-int      Abs(int value);;
-string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
-int      Max(int a, int b, int c=INT_MIN);;
-int      Min(int a, int b, int c=INT_MAX);;
-string   PeriodDescription(int period=NULL);;
-bool     StrContains(string str, string substr);;
-string   StrLeft(string value, int n);;
-string   StrPadRight(string str, int padLength, string padString=" ");;
-string   StrSubstr(string str, int start, int length=INT_MAX);;
-string   StrTrim(string str);;
-
-
-// include/structs/mt4/
-
-
-// include/structs/rsf/Bar.mqh
+// include/rsf/v40/structs/Bar.mqh
 datetime bar.Time      (double bar[]);;
 double   bar.Open      (double bar[]);;
 double   bar.Low       (double bar[]);;
@@ -402,7 +399,7 @@ int      bars.setVolume(double &bar[][], int i, int    volume);;
 string   BAR.toStr     (double bar[]);;
 
 
-// include/structs/rsf/OrderExecution.mqh
+// include/rsf/v40/structs/OrderExecution.mqh
 int      oe.Error              (/*ORDER_EXECUTION*/int oe[]);;
 bool     oe.IsError            (/*ORDER_EXECUTION*/int oe[]);;
 string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]);;
@@ -518,7 +515,8 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[]);;
 
 
-// include/structs/win32/
+// include/rsf/v40/structs/mt4/
+// include/rsf/v40/structs/win32/
 
 
 // libraries/rsfHistory1.ex4
@@ -572,7 +570,7 @@ bool     HistorySet3.Close  (int hSet);;
 bool     HistorySet3.AddTick(int hSet, datetime time, double value, int flags=NULL);;
 
 
-// libraries/rsfLib.ex4
+// libraries/rsfStdlib.ex4
 int      AddSymbolGroup(int sgs[], string name, string description, color bgColor);;
 bool     AquireLock(string mutex);;
 bool     ArrayAddInt(int &array[], int value);;
@@ -955,5 +953,6 @@ string   UninitializeReasonToStr(int reason);;
 string   UninitReasonToStr(int reason);;
 int      WM_MT4();;
 
-// MT4Expander: MQL program-specific api
+
+// libraries/rsfMT4Expander.dll: program-specific api
 int      Grid_GetChartHeight(int hChart, int lastHeight);;

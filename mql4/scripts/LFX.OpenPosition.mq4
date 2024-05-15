@@ -4,7 +4,7 @@
  * TODO: Fehler im Position-Marker, wenn gleichzeitig zwei Orders erzeugt und die finalen Bestätigungsdialoge gehalten
  *       werden (2 x CHF.3).
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -17,15 +17,15 @@ extern double Units        = 0.2;                                    // Position
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/script.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <MT4iQuickChannel.mqh>
-#include <functions/lfx.mqh>
-#include <structs/rsf/LFXOrder.mqh>
-#include <structs/rsf/OrderExecution.mqh>
+#include <rsf/core/script.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/InitializeByteBuffer.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/MT4iQuickChannel.mqh>
+#include <rsf/v40/lfx.mqh>
+#include <rsf/v40/structs/LFXOrder.mqh>
+#include <rsf/v40/structs/OrderExecution.mqh>
 
 
 int    direction;

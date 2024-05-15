@@ -15,7 +15,7 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
  *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -35,12 +35,12 @@ extern int    MaxBarsBack       = 10000;                                // max. 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/ObjectCreateRegister.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ManageDoubleIndicatorBuffer.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
 
 #define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids
 #define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   //

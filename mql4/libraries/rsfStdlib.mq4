@@ -22,20 +22,20 @@
  */
 #property library
 
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
-#include <core/library.mqh>
-#include <stdfunctions.mqh>
-#include <timezones.mqh>
-#include <win32api.mqh>
-#include <functions/ExplodeStrings.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinBools.mqh>
-#include <functions/JoinDoubles.mqh>
-#include <functions/JoinDoublesEx.mqh>
-#include <functions/JoinInts.mqh>
-#include <structs/rsf/OrderExecution.mqh>
+#include <rsf/core/library.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/timezones.mqh>
+#include <rsf/win32api.mqh>
+#include <rsf/v40/ExplodeStrings.mqh>
+#include <rsf/v40/InitializeByteBuffer.mqh>
+#include <rsf/v40/JoinBools.mqh>
+#include <rsf/v40/JoinDoubles.mqh>
+#include <rsf/v40/JoinDoublesEx.mqh>
+#include <rsf/v40/JoinInts.mqh>
+#include <rsf/v40/structs/OrderExecution.mqh>
 
 
 /**

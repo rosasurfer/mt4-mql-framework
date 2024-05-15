@@ -35,14 +35,14 @@
  */
 #property library
 
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
-#include <core/library.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <structs/mt4/HistoryHeader.mqh>
+#include <rsf/core/library.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/InitializeByteBuffer.mqh>
+#include <rsf/v40/structs/mt4/HistoryHeader.mqh>
 
 
 // Standard-Timeframes ------------------------------------------------------------------------------------------------------------------------------------

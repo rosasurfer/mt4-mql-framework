@@ -46,7 +46,7 @@
  *  - Bybit: adjust slippage to prevent ERR_OFF_QUOTES (dealing desk)
  *  - rewrite stdfunctions::GetCommission()
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -80,14 +80,14 @@ extern string Signal.Sound.EntryShort        = "Signal Down.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/iCustom/MACD.mqh>
-#include <functions/iCustom/MaTunnel.mqh>
-#include <functions/iCustom/MovingAverage.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/ConfigureSignals.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/iCustom/MACD.mqh>
+#include <rsf/v40/iCustom/MaTunnel.mqh>
+#include <rsf/v40/iCustom/MovingAverage.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN    // 0 indicator buffer ids
 #define MODE_TREND            MACD.MODE_TREND   // 1

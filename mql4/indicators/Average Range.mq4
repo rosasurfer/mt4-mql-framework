@@ -1,7 +1,7 @@
 /**
  * Average Range/Average True Range
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -17,10 +17,10 @@ extern color  Line.Color      = Blue;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/HandleCommands.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/HandleCommands.mqh>
 
 // parameter stepper directions
 #define STEP_UP               1

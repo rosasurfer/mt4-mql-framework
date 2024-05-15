@@ -1,7 +1,7 @@
 /**
  * Pivot levels
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -17,11 +17,11 @@ extern color  Color.Support    = Red;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/iBarShiftNext.mqh>
+#include <rsf/v40/iBarShiftPrevious.mqh>
 
 #define MODE_R3               0                          // indicator buffer ids
 #define MODE_R2               1

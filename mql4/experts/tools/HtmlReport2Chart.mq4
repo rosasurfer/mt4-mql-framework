@@ -5,7 +5,7 @@
  * TODO:
  *  - process account statements
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 int __virtualTicks = 0;
@@ -18,10 +18,10 @@ extern string HtmlFilename = "statement.html";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/expert.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/HandleCommands.mqh>
+#include <rsf/core/expert.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/HandleCommands.mqh>
 
 #define TYPE_TEST_REPORT         1
 #define TYPE_ACCOUNT_STATEMENT   2
@@ -30,21 +30,21 @@ string Instance.ID = "999";                  // dummy, needed by StoreVolatileSt
 
 
 // EA definitions
-#include <ea/functions/instance/defines.mqh>
-#include <ea/functions/metric/defines.mqh>
-#include <ea/functions/status/defines.mqh>
-#include <ea/functions/trade/defines.mqh>
+#include <rsf/v40/ea/instance/defines.mqh>
+#include <rsf/v40/ea/metric/defines.mqh>
+#include <rsf/v40/ea/status/defines.mqh>
+#include <rsf/v40/ea/trade/defines.mqh>
 
 // EA functions
-#include <ea/functions/status/ShowOpenOrders.mqh>
-#include <ea/functions/status/ShowTradeHistory.mqh>
+#include <rsf/v40/ea/status/ShowOpenOrders.mqh>
+#include <rsf/v40/ea/status/ShowTradeHistory.mqh>
 
-#include <ea/functions/status/volatile/StoreVolatileStatus.mqh>
-#include <ea/functions/status/volatile/RemoveVolatileStatus.mqh>
-#include <ea/functions/status/volatile/ToggleOpenOrders.mqh>
-#include <ea/functions/status/volatile/ToggleTradeHistory.mqh>
+#include <rsf/v40/ea/status/volatile/StoreVolatileStatus.mqh>
+#include <rsf/v40/ea/status/volatile/RemoveVolatileStatus.mqh>
+#include <rsf/v40/ea/status/volatile/ToggleOpenOrders.mqh>
+#include <rsf/v40/ea/status/volatile/ToggleTradeHistory.mqh>
 
-#include <ea/functions/trade/AddHistoryRecord.mqh>
+#include <rsf/v40/ea/trade/AddHistoryRecord.mqh>
 
 
 /**

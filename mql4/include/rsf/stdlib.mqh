@@ -1,10 +1,7 @@
 /**
  * Functions already imported by the framework core files are removed from this file.
- * Last version with a complete function listing:
- *
- *
  */
-#import "rsfLib.ex4"
+#import "rsfStdlib.ex4"
 
    // arrays
    bool     ArrayAddInt         (int    &array[],   int value);

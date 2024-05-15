@@ -29,7 +29,7 @@
  * @link  http://beathespread.com/pages/view/2228/fractal-dimension-indicators-and-their-use#             [FDI Usage, JohnLast, 2010]
  * @link  https://www.mql5.com/en/code/8997#                                                              [FGDI with fixed FDI issues, LastViking]
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -44,9 +44,9 @@ extern int    MaxBarsBack    = 10000;                    // max. values to calcu
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #define MODE_MAIN             FDI.MODE_MAIN
 #define MODE_UPPER            1                          // indicator buffer ids

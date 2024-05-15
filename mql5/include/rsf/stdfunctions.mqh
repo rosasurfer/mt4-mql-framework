@@ -1,19 +1,20 @@
 /**
  * Commonly used framework functions
  */
-//#include <functions/configuration.mqh>
-#include <functions/log.mqh>
-#include <rsfMT4Expander.mqh>
+#include <rsf/common/Abs.mqh>
+#include <rsf/common/LoglevelDescription.mqh>
+#include <rsf/common/Max.mqh>
+#include <rsf/common/PeriodDescription.mqh>
+#include <rsf/common/StrContains.mqh>
+#include <rsf/common/StrLeft.mqh>
+#include <rsf/common/StrPadRight.mqh>
+#include <rsf/common/StrSubstr.mqh>
+#include <rsf/common/StrTrim.mqh>
 
-#include <rsf/functions/Abs.mqh>
-#include <rsf/functions/LoglevelDescription.mqh>
-#include <rsf/functions/Max.mqh>
-#include <rsf/functions/PeriodDescription.mqh>
-#include <rsf/functions/StrContains.mqh>
-#include <rsf/functions/StrLeft.mqh>
-#include <rsf/functions/StrPadRight.mqh>
-#include <rsf/functions/StrSubstr.mqh>
-#include <rsf/functions/StrTrim.mqh>
+//#include <functions/configuration.mqh>
+#include <rsf/v45/log.mqh>
+
+#include <rsf/MT4Expander.mqh>
 
 
 /**

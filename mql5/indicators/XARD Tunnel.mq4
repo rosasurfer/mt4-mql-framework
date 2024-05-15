@@ -13,7 +13,7 @@
  *  @link  https://forex-station.com/viewtopic.php?p=1295434513#p1295434513                           [XARD FX Final Edition]
  */
 #property strict
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -43,7 +43,7 @@ input int            MA3_Width                      = 5;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <stdfunctions.mqh>
+#include <rsf/stdfunctions.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   1           // buffers visible to the user

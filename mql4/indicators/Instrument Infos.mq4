@@ -9,7 +9,7 @@
  *  - get an instrument's base currency: https://www.mql5.com/en/book/automation/symbols/symbols_currencies
  *  - config override: if (Symbol() == "#Germany40") marginInitial = 751.93;
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -21,11 +21,11 @@ extern int AccountSize.MaxUsedMarginPct = 75;      // max. margin utilization in
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/ta/ADR.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/ta/ADR.mqh>
 
 #property indicator_chart_window
 

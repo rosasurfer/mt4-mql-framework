@@ -10,7 +10,7 @@
  * TODO:
  *  - replace manual calculation of StdDev(ALMA) with correct syntax for iStdDevOnArray()
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -29,12 +29,12 @@ extern int    MaxBarsBack     = 10000;                // max. values to calculat
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/ta/ALMA.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER

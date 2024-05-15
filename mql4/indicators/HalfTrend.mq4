@@ -9,7 +9,7 @@
  *    - trend direction:    positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
  *    - trend length:       the absolute value of the direction is the trend length in bars since the last reversal
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -34,14 +34,14 @@ extern bool   Signal.onTrendChange.SMS       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/IsBarOpen.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/iCustom/HalfTrend.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ConfigureSignals.mqh>
+#include <rsf/v40/IsBarOpen.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/iCustom/HalfTrend.mqh>
 
 #define MODE_MAIN             HalfTrend.MODE_MAIN        // indicator buffer ids
 #define MODE_TREND            HalfTrend.MODE_TREND

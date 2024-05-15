@@ -1,7 +1,7 @@
 /**
  * Close all orders matching the specified input.
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
 int __DeinitFlags[];
 
@@ -18,10 +18,10 @@ extern bool   Close.Hedged       = false;          // close hedged part only
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/script.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <structs/rsf/OrderExecution.mqh>
+#include <rsf/core/script.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/structs/OrderExecution.mqh>
 
 bool   closeAllSymbols = false;
 

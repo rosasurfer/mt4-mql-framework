@@ -67,7 +67,7 @@
  *  - improve cache flushing for the different timeframes
  *  - move history libraries to MT4Expander
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -101,16 +101,16 @@ extern string Broker.SymbolSuffix            = "";                     // symbol
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <rsfHistory.mqh>
-#include <functions/HandleCommands.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <MT4iQuickChannel.mqh>
-#include <functions/lfx.mqh>
-#include <structs/rsf/LFXOrder.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/history.mqh>
+#include <rsf/v40/HandleCommands.mqh>
+#include <rsf/v40/InitializeByteBuffer.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/MT4iQuickChannel.mqh>
+#include <rsf/v40/lfx.mqh>
+#include <rsf/v40/structs/LFXOrder.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers      1                       // there's a minimum of 1 buffer

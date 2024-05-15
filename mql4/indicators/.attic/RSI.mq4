@@ -11,7 +11,7 @@
  *    - section: positive values denote a RSI above 50 (+1...+n), negative values a RSI below 50 (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of level 50)
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -31,9 +31,9 @@ extern int    MaxBarsBack           = 10000;          // max. values to calculat
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #define MODE_MAIN             0                       // indicator buffer ids
 #define MODE_SECTION          1

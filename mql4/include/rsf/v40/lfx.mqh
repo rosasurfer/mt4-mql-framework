@@ -2,7 +2,7 @@
  *  Format der LFX-MagicNumber:
  *  ---------------------------
  *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 101-1023
- *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15         entspricht rsfLib::GetCurrencyId()
+ *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15         entspricht rsfStdlib::GetCurrencyId()
  *  Units:         4 bit (Bit 15-18) => Bereich   1-15         Vielfaches von 0.1 von 1 bis 10           // wird in MagicNumber nicht mehr verwendet
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
  *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                   // wird in MagicNumber nicht mehr verwendet
@@ -994,7 +994,7 @@ bool QC.SendTradeCommand(string cmd) {
       if (!hQC.TradeCmdSender) /*&&*/ if (!QC.StartTradeCmdSender())
          return(false);
 
-      int result = QC_SendMessage(hQC.TradeCmdSender, cmd, QC_FLAG_SEND_MSG_IF_RECEIVER);
+      int result = QC_SendMessageA(hQC.TradeCmdSender, cmd, QC_FLAG_SEND_MSG_IF_RECEIVER);
       if (!result)
          return(!catch("QC.SendTradeCommand(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
 
@@ -1031,7 +1031,7 @@ bool QC.StartTradeCmdSender() {
          value = GetIniStringA(file, section, keys[i], "");
          if (value!="") /*&&*/ if (value!="0") {
             // Channel sollte aktiv sein, testen...
-            int result = QC_ChannelHasReceiver(keys[i]);
+            int result = QC_ChannelHasReceiverA(keys[i]);
             if (result == QC_CHECK_RECEIVER_OK)                   // Receiver ist da, Channel ist ok
                break;
             if (result == QC_CHECK_CHANNEL_NONE) {                // orphaned Channeleintrag aus .ini-Datei löschen
@@ -1052,7 +1052,7 @@ bool QC.StartTradeCmdSender() {
 
    // Sender auf gefundenem Channel starten
    qc.TradeCmdChannel = keys[i];
-   hQC.TradeCmdSender = QC_StartSender(qc.TradeCmdChannel);
+   hQC.TradeCmdSender = QC_StartSenderA(qc.TradeCmdChannel);
    if (!hQC.TradeCmdSender)
       return(!catch("QC.StartTradeCmdSender(5)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.TradeCmdChannel +"\")", ERR_WIN32_ERROR));
    //debug("QC.StartTradeCmdSender(6)  sender on \""+ qc.TradeCmdChannel +"\" started");
@@ -1094,7 +1094,7 @@ bool QC.StartTradeCmdReceiver() {
    qc.TradeCmdChannel = "TradeCommands."+ IntToHexStr(hWnd);
 
    // Receiver starten
-   hQC.TradeCmdReceiver = QC_StartReceiver(qc.TradeCmdChannel, hWnd);
+   hQC.TradeCmdReceiver = QC_StartReceiverA(qc.TradeCmdChannel, hWnd);
    if (!hQC.TradeCmdReceiver)
       return(!catch("QC.StartTradeCmdReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel=\""+ qc.TradeCmdChannel +"\", hWnd="+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
    //debug("QC.StartTradeCmdReceiver(2)  receiver on \""+ qc.TradeCmdChannel +"\" started");
@@ -1151,7 +1151,7 @@ bool QC.SendOrderNotification(int cid, string msg) {
    if (!hQC.TradeToLfxSenders[cid]) /*&&*/ if (!QC.StartLfxSender(cid))
       return(false);
 
-   if (!QC_SendMessage(hQC.TradeToLfxSenders[cid], msg, QC_FLAG_SEND_MSG_IF_RECEIVER))
+   if (!QC_SendMessageA(hQC.TradeToLfxSenders[cid], msg, QC_FLAG_SEND_MSG_IF_RECEIVER))
       return(!catch("QC.SendOrderNotification(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
    return(true);
 }
@@ -1172,7 +1172,7 @@ bool QC.StartLfxSender(int cid) {
       return(true);
                                                                      // Channel-Name: "{AccountCompanyAlias}:{AccountNumber}:LFX.Profit.{Currency}"
    qc.TradeToLfxChannels[cid] = tradeAccount.company +":"+ tradeAccount.number +":LFX.Profit."+ GetCurrency(cid);
-   hQC.TradeToLfxSenders[cid] = QC_StartSender(qc.TradeToLfxChannels[cid]);
+   hQC.TradeToLfxSenders[cid] = QC_StartSenderA(qc.TradeToLfxChannels[cid]);
    if (!hQC.TradeToLfxSenders[cid])
       return(!catch("QC.StartLfxSender(2)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.TradeToLfxChannels[cid] +"\")", ERR_WIN32_ERROR));
 
@@ -1212,7 +1212,7 @@ bool QC.StartLfxReceiver() {
    int hWnd = __ExecutionContext[EC.hChart];                         // Channel-Name: "{AccountCompanyAlias}:{AccountNumber}:LFX.Profit.{Currency}"
    qc.TradeToLfxChannel = tradeAccount.company +":"+ tradeAccount.number +":LFX.Profit."+ StrLeft(Symbol(), -3);
 
-   hQC.TradeToLfxReceiver = QC_StartReceiver(qc.TradeToLfxChannel, hWnd);
+   hQC.TradeToLfxReceiver = QC_StartReceiverA(qc.TradeToLfxChannel, hWnd);
    if (!hQC.TradeToLfxReceiver)
       return(!catch("QC.StartLfxReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel=\""+ qc.TradeToLfxChannel +"\", hWnd="+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
    //debug("QC.StartLfxReceiver(2)  receiver on \""+ qc.TradeToLfxChannel +"\" started");
@@ -1307,7 +1307,7 @@ void DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "rsfLib.ex4"
+#import "rsfStdlib.ex4"
    string ArrayPopString(string array[]);
    int    ArrayPushInts(int array[][], int values[]);
    int    ArraySetInts(int array[][], int i, int values[]);

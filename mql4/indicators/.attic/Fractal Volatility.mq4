@@ -7,7 +7,7 @@
  *    significantly differ. Imagine range bars. The value calculated by this indicator resembles something similar to the
  *    number of completed range bars per time. The displayed unit is "pip", that's range bars of 1 pip size.
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -18,9 +18,9 @@ extern string Vola.Type    = "Kaufman* | Intra-Bar";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #define VOLA_KAUFMAN          1
 #define VOLA_INTRABAR         2

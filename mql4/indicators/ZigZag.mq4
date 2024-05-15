@@ -63,7 +63,7 @@
  *  - keep bar status in IsUpperCrossLast()
  *  - document usage of iCustom()
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -107,17 +107,17 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/HandleCommands.mqh>
-#include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/ManageIntIndicatorBuffer.mqh>
-#include <functions/ObjectCreateRegister.mqh>
-#include <functions/iCustom/ZigZag.mqh>
-#include <win32api.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/v40/chartlegend.mqh>
+#include <rsf/v40/ConfigureSignals.mqh>
+#include <rsf/v40/HandleCommands.mqh>
+#include <rsf/v40/ManageDoubleIndicatorBuffer.mqh>
+#include <rsf/v40/ManageIntIndicatorBuffer.mqh>
+#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/v40/iCustom/ZigZag.mqh>
+#include <rsf/win32api.mqh>
 
 // indicator buffer ids
 #define MODE_SEMAPHORE_OPEN      ZigZag.MODE_SEMAPHORE_OPEN    //  0: semaphore open price
