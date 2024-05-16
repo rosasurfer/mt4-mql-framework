@@ -49,7 +49,6 @@
    int      ec_PipDigits            (int ec[]);
    double   ec_Pip                  (int ec[]);
    double   ec_Point                (int ec[]);
-   int      ec_PipPoints            (int ec[]);
 
    bool     ec_SuperContext         (int ec[], int target[]);
    string   ec_SuperProgramName     (int pid);
