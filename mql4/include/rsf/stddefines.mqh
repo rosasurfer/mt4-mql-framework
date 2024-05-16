@@ -28,7 +28,7 @@ int      __STATUS_OFF.reason;                                     // reason of p
 double   HalfPoint;                                               // 0.5 MQL Points of the current symbol (e.g. 0.00005 for EURUSD, 0.005 for DAX)
 double   Pip;                                                     // 1 pip of the current symbol (e.g. 0.0001 for EURUSD, 0.01 for DAX)
 int      PipDigits;                                               // number of decimal places of 1 pip, always even (e.g. 4 for EURUSD, 2 for DAX)
-string   PriceFormat="", PipPriceFormat="";                       // price format strings of the current symbol for NumberToStr()
+string   PriceFormat = "";                                        // price format of the current symbol for NumberToStr()
 
 double   pUnit;                                                   // 1 price unit of the current symbol (1 pip for Forex or 1 full point otherwise, e.g. 0.0001 for EURUSD, 1.00 for DAX)
 int      pDigits;                                                 // number of decimal places to represent a unit amount (1 or 2, e.g. 1 for EURUSD, 2 for DAX)

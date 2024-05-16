@@ -769,7 +769,6 @@ int      ec_Pid                   (int &ec[]);;
 double   ec_Pip                   (int &ec[]);;
 int      ec_PipDigits             (int &ec[]);;
 int      ec_PipPoints             (int &ec[]);;
-string   ec_PipPriceFormat        (int &ec[]);;
 double   ec_Point                 (int &ec[]);;
 int      ec_PreviousPid           (int &ec[]);;
 datetime ec_PrevTickTime          (int &ec[]);;

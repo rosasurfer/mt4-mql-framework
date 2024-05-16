@@ -51,7 +51,6 @@
    double   ec_Point                (int ec[]);
    int      ec_PipPoints            (int ec[]);
    string   ec_PriceFormat          (int ec[]);
-   string   ec_PipPriceFormat       (int ec[]);
 
    bool     ec_SuperContext         (int ec[], int target[]);
    string   ec_SuperProgramName     (int pid);
