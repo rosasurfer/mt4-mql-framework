@@ -739,8 +739,6 @@ string   DeinitFlagsToStr(int flags);;
 bool     DeleteIniKeyA(string fileName, string section, string key);;
 bool     DeleteIniSectionA(string fileName, string section);;
 int      DoubleExp(double value);;
-string   ec_AccountServer         (int &ec[]);;
-int      ec_AccountNumber         (int &ec[]);;
 double   ec_Ask                   (int &ec[]);;
 int      ec_Bars                  (int &ec[]);;
 double   ec_Bid                   (int &ec[]);;
@@ -935,16 +933,19 @@ bool     StrEndsWith(string str, string suffix);;
 string   StringToStr(string str);;
 bool     StrIsNull(string str);;
 bool     StrStartsWith(string str, string prefix);;
-int      SyncLibContext_deinit(int &ec[], int uninitReason);;
-int      SyncLibContext_init(int &ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);;
-int      SyncMainContext_deinit(int &ec[], int uninitReason);;
-int      SyncMainContext_init(int &ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);;
+
+int      SyncMainContext_init(int &ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);;
 int      SyncMainContext_start(int &ec[], double &rates[][], int bars, int changedBars, int ticks, datetime tickTime, double bid, double ask);;
+int      SyncMainContext_deinit(int &ec[], int uninitReason);;
+
+int      SyncLibContext_init(int &ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);;
+int      SyncLibContext_deinit(int &ec[], int uninitReason);;
+
 bool     TerminalIsPortableMode();;
-double   Test_GetCommission(int &ec[]);;
 int      Tester_GetBarModel();;
 datetime Tester_GetEndDate();;
 datetime Tester_GetStartDate();;
+double   Test_GetCommission(int &ec[]);;
 string   TimeframeToStr(int timeframe);;
 string   TradeDirectionDescription(int direction);;
 string   TradeDirectionToStr(int direction);;

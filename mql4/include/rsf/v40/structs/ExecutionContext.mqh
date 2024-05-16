@@ -69,9 +69,6 @@
    bool     ec_Optimization         (int ec[]);
    int      ec_Recorder             (int ec[]);
 
-   string   ec_AccountServer        (int ec[]);
-   int      ec_AccountNumber        (int ec[]);
-
    int      ec_MqlError             (int ec[]);
    int      ec_DllError             (int ec[]);
    //       ec.dllErrorMsg
