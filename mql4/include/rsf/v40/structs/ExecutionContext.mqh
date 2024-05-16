@@ -1,14 +1,14 @@
 /**
  * Framework struct EXECUTION_CONTEXT
  *
- * A shared storage context for runtime variables, data exchange and communication between MQL modules and MT4Expander DLL.
+ * A storage context for runtime variables, data exchange and communication between MQL modules and MT4Expander DLL.
  *
  * @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/rsf/ExecutionContext.h
  *
  *
  * TODO:
  *  - indicators loaded in a library must use a temporary copy of the main module context for their init() cycles
- *  - integrate __STATUS_OFF and __STATUS_OFF.reason
+ *  - integrate __STATUS_OFF, __STATUS_OFF.reason
  */
 #import "rsfMT4Expander.dll"
    // getters
@@ -50,7 +50,6 @@
    double   ec_Pip                  (int ec[]);
    double   ec_Point                (int ec[]);
    int      ec_PipPoints            (int ec[]);
-   string   ec_PriceFormat          (int ec[]);
 
    bool     ec_SuperContext         (int ec[], int target[]);
    string   ec_SuperProgramName     (int pid);
@@ -63,8 +62,8 @@
    int      ec_SuperLoglevelSMS     (int pid);
 
    int      ec_ThreadId             (int ec[]);
-   int      ec_hChart               (int ec[]);
    int      ec_hChartWindow         (int ec[]);
+   int      ec_hChart               (int ec[]);
 
    bool     ec_Testing              (int ec[]);
    bool     ec_VisualMode           (int ec[]);

@@ -772,7 +772,6 @@ int      ec_PipPoints             (int &ec[]);;
 double   ec_Point                 (int &ec[]);;
 int      ec_PreviousPid           (int &ec[]);;
 datetime ec_PrevTickTime          (int &ec[]);;
-string   ec_PriceFormat           (int &ec[]);;
 int      ec_ProgramCoreFunction   (int &ec[]);;
 int      ec_ProgramInitReason     (int &ec[]);;
 string   ec_ProgramName           (int &ec[]);;

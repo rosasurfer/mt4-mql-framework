@@ -36,10 +36,10 @@
 #define BAR_size                            48
 #define BAR_doubleSize                       6
 
-#define EXECUTION_CONTEXT_size            1036
-#define EXECUTION_CONTEXT_intSize          259
+#define EXECUTION_CONTEXT_size            1032
+#define EXECUTION_CONTEXT_intSize          258
 
-#define EC.pid                               0     // All offsets must be in sync with the MT4Expander DLL.
+#define EC.pid                               0     // offsets must be in sync with the MT4Expander DLL
 #define EC.previousPid                       1
 #define EC.programType                       2
 #define EC.programCoreFunction              67
@@ -64,26 +64,26 @@
 #define EC.digits                          162
 #define EC.pipDigits                       163
 #define EC.pipPoints                       168
-#define EC.superContext                    170
-#define EC.threadId                        171
+#define EC.superContext                    169
+#define EC.threadId                        170
+#define EC.hChartWindow                    171
 #define EC.hChart                          172
-#define EC.hChartWindow                    173
-#define EC.testing                         174
-#define EC.visualMode                      175
-#define EC.optimization                    176
-#define EC.recorder                        177
-#define EC.accountServer                   178
-#define EC.accountNumber                   179
-#define EC.mqlError                        180
-#define EC.dllError                        181
-#define EC.dllWarning                      183
-#define EC.loglevel                        185
-#define EC.loglevelTerminal                186
-#define EC.loglevelAlert                   187
-#define EC.loglevelDebug                   188
-#define EC.loglevelFile                    189
-#define EC.loglevelMail                    190
-#define EC.loglevelSMS                     191
+#define EC.testing                         173
+#define EC.visualMode                      174
+#define EC.optimization                    175
+#define EC.recorder                        176
+#define EC.accountServer                   177
+#define EC.accountNumber                   178
+#define EC.mqlError                        179
+#define EC.dllError                        180
+#define EC.dllWarning                      182
+#define EC.loglevel                        184
+#define EC.loglevelTerminal                185
+#define EC.loglevelAlert                   186
+#define EC.loglevelDebug                   187
+#define EC.loglevelFile                    188
+#define EC.loglevelMail                    189
+#define EC.loglevelSMS                     190
 
 #define LFX_ORDER_size                     120
 #define LFX_ORDER_intSize                   30

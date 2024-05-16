@@ -4546,8 +4546,7 @@ string GetAccountCompanyId() {
    static string lastServer="", lastId="";
 
    string server = GetAccountServer(); if (!StringLen(server)) return("");
-   if (server == lastServer)
-      return(lastId);
+   if (server == lastServer) return(lastId);
 
    string mapping = GetGlobalConfigString("AccountCompanies", server);
    if (StringLen(mapping) > 0) {
