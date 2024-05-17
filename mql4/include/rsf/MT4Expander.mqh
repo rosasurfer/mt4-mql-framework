@@ -1,12 +1,12 @@
 /**
  * MT4Expander import declarations
  *
- * Note: MQL4 supports up to 512 arrays per MQL module (in MQL5 this limit was removed). In this file all functions with array
- *       parameters are commented out to prevent hitting that limit. Import commented functions manually to use them.
+ * Note: MQL4.0 supports up to 512 arrays per MQL module (in MQL4.5/MQL5 this limit was removed). To prevent hitting that
+ *       limit all imports with array parameters are disabled in this file. Import needed functions per program to use them.
  */
 #import "rsfMT4Expander.dll"
 
-   // terminal status, terminal interaction
+   // terminal status and interaction
    string   FindHistoryDirectoryA(string filename, int removeFile);
    string   GetExpanderFileNameA();
    string   GetHistoryRootPathA();
@@ -20,6 +20,7 @@
    string   GetTerminalFileNameA();
    string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
+   bool     IsTerminalPortableMode();
    bool     IsUIThread(int threadId);
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
    int      MT4InternalMsg();
@@ -30,7 +31,6 @@
    //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
    //int    SyncLibContext_deinit (int ec[], int uninitReason);
    //int    LeaveContext(int ec[]);
-   bool     TerminalIsPortableMode();
    int      WM_MT4();
 
    // strategy tester
@@ -93,8 +93,8 @@
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);
    int      GetStringAddress (string value   );                // Warning: GetStringAddress() must be used with string array elements only.
-   int      GetStringsAddress(string values[]);                //  Simple strings are passed to DLLs as copies. The resulting address
-   string   GetStringA(int address);                           //  is a dangling pointer and accessing it may cause a terminal crash.
+   int      GetStringsAddress(string values[]);                //  Simple strings are passed to DLLs as copies and immediately destroyed
+   string   GetStringA(int address);                           //  after the call. Accessing such an address may cause a terminal crash.
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
    // array functions
@@ -170,9 +170,11 @@
    string   GetWindowStringA   (int hWnd, string name);
    string   RemoveWindowStringA(int hWnd, string name);
 
-   // other helpers
+   // other
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
+   bool     IsDebugAccount();
+   bool     IsDebugEC();
    bool     IsProgramType(int type);
    bool     IsVirtualKeyDown(int vKey);
    bool     IsWindowAreaVisible(int hWnd);

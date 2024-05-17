@@ -4575,7 +4575,6 @@ string GetAccountServer() {
 
    if (tick == lastTick) {
       if (StringLen(lastResult) > 0) {
-         //debug("GetAccountServer(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  returning cache: \""+ lastResult +"\"");
          return(lastResult);                          // return the same result for the same tick
       }
    }
@@ -4588,12 +4587,11 @@ string GetAccountServer() {
       string serverName = AccountServer();
 
       if (!StringLen(serverName)) {
-         debug("GetAccountServer(0.2)  tick="+ __ExecutionContext[EC.ticks] +"  server unknown, creating temporary history file...");
+         if (IsDebugAccount()) debug("GetAccountServer(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  scanning for temporary history file...");
 
          // create temporary file (programs in the UI thread are executed one after another and may use the same file name)
          string tmpFile = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
          int hFile = FileOpenHistory(tmpFile, FILE_WRITE|FILE_BIN);
-
          if (hFile < 0) {                             // error if the server directory does not exist or write access was denied
             int error = GetLastError();
             if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
@@ -4602,11 +4600,9 @@ string GetAccountServer() {
          }
          FileClose(hFile);
 
-         // search and remove the file
+         // search and remove the temporary file
          serverName = FindHistoryDirectoryA(tmpFile, true);
          if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find server directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
-
-         //debug("GetAccountServer(0.3)  tick="+ __ExecutionContext[EC.ticks] +"  found server=\""+ serverName +"\"");
       }
 
       lastResult = serverName;

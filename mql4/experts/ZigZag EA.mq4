@@ -27,7 +27,9 @@
  *  - on account change
  *    MT4Expander::executioncontext.cpp::SyncMainContext_start(517)  ERROR: ticktime is running backwards:  tick=201  tickTime=2024.05.14 23:34:57  prevTickTime=2024.05.14 23:41:07  ec={pid=110, previousPid=0, programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TEMPLATE, programUninitReason=UR_UNDEFINED, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="XAUUSD", timeframe=M15, newSymbol="", newTimeframe=(null), rates=0x09C60020, bars=60000, validBars=59999, changedBars=1, ticks=200, cycleTicks=200, currTickTime="2024.05.14 23:41:07", prevTickTime=0, bid=2357.31, ask=2357.38, digits=2, pipDigits=2, pip=0.01, point=0.01, superContext=(null), threadId=5576 (UI), hChart=0x00510B6A, hChartWindow=0x00310820, testing=FALSE, visualMode=FALSE, optimization=FALSE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=INFO, loglevelTerminal=(null), loglevelAlert=(null), loglevelDebug=(null), loglevelFile=(null), loglevelMail=(null), loglevelSMS=(null), logger=(null), logBuffer=(0), logFilename=""} (0x0DF3BEE8)
  *
- *  - pass AccountNumber() to SyncMainContext_start()    | flag account change?     | account company?
+ *  - start()
+ *     detect account change and call init() again: | flag account change?     | account company?
+ *
  *
  *  - realtime equity charts
  *     don't find out afterwards what has happened in the account
