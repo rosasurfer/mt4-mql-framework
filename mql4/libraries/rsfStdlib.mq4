@@ -604,66 +604,6 @@ int GetIniSections(string fileName, string &names[]) {
 
 
 /**
- * Return the name of the current account server. Same as the built-in function AccountServer() but can also be used without
- * a server connection.
- *
- * @return string - directory name or an empty string in case of errors
- */
-string GetAccountServer() {
-   // The resolved server name is cached until a tick signals ValidBars = 0. On account change the MQL account functions
-   // may report the new account already during the last tick on the previous server directory/history data. Only after
-   // ValidBars = 0 is it ensured that the new server directory/history is active.
-
-   int tick=__ExecutionContext[EC.ticks], validBars=__ExecutionContext[EC.validBars];
-   static int lastTick;
-   static string lastResult[1];
-
-   if (tick == lastTick) {
-      if (StringLen(lastResult[0]) > 0) {
-         //debug("GetAccountServer(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  returning cache: \""+ lastResult[0] +"\"");
-         return(lastResult[0]);                       // return the same result for the same tick
-      }
-   }
-   if (!validBars) lastResult[0] = "";                // invalidate the cache
-
-   if (!StringLen(lastResult[0])) {
-      static bool isRecursion = false; if (isRecursion) return("");
-      isRecursion = true;                             // logger invocations will try to read the account config => recursion
-
-      string serverName = AccountServer();
-
-      if (!StringLen(serverName)) {
-         debug("GetAccountServer(0.2)  tick="+ __ExecutionContext[EC.ticks] +"  server unknown, creating temporary history file...");
-
-         // create temporary file (programs in the UI thread are executed one after another and may use the same file name)
-         string tmpFile = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
-         int hFile = FileOpenHistory(tmpFile, FILE_WRITE|FILE_BIN);
-
-         if (hFile < 0) {                             // error if the server directory does not exist or write access was denied
-            int error = GetLastError();
-            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-            else                                   catch("GetAccountServer(2)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", error);
-            return("");
-         }
-         FileClose(hFile);
-
-         // search and remove the file
-         serverName = FindHistoryDirectoryA(tmpFile, true);
-         if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find server directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
-
-         debug("GetAccountServer(0.3)  tick="+ __ExecutionContext[EC.ticks] +"  found server=\""+ serverName +"\"");
-      }
-
-      lastResult[0] = serverName;
-      isRecursion = false;
-   }
-   lastTick = tick;
-
-   return(lastResult[0]);
-}
-
-
-/**
  * Initialisiert einen Buffer zur Aufnahme der gewünschten Anzahl von Doubles.
  *
  * @param  double buffer[] - das für den Buffer zu verwendende Double-Array
@@ -7467,7 +7407,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
  * Create a raw symbol and add it to "symbols.raw" of the specified directory.
  *
  * @param  string symbol               - symbol
- * @param  string description          - symbol description
+ * @param  string descr                - symbol description
  * @param  string group                - group the symbol is listed in
  * @param  int    digits               - digits
  * @param  string baseCurrency         - base currency
@@ -7479,7 +7419,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
  *
  * @return int - MT4 id of the new symbol (field SYMBOL.id) or EMPTY (-1) in case of errors
  */
-int CreateRawSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory = "") {
+int CreateRawSymbol(string symbol, string descr, string group, int digits, string baseCurrency, string marginCurrency, string directory = "") {
    if (!StringLen(symbol))                         return(_EMPTY(catch("CreateRawSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH)      return(_EMPTY(catch("CreateRawSymbol(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    if (StrContains(symbol, " "))                   return(_EMPTY(catch("CreateRawSymbol(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
@@ -7510,14 +7450,14 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
 
    // create symbol
    /*SYMBOL*/int iSymbol[]; InitializeByteBuffer(iSymbol, SYMBOL_size);
-   if (!SetRawSymbolTemplate               (iSymbol, SYMBOL_TYPE_INDEX))              return(-1);
-   if (!StringLen(symbol_SetName           (iSymbol, symbol          )))              return(_EMPTY(catch("CreateRawSymbol(6)->symbol_SetName() => NULL", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetDescription    (iSymbol, description     )))              return(_EMPTY(catch("CreateRawSymbol(7)->symbol_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
-   if (          !symbol_SetDigits         (iSymbol, digits           ))              return(_EMPTY(catch("CreateRawSymbol(8)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetBaseCurrency   (iSymbol, baseCurrency    )))              return(_EMPTY(catch("CreateRawSymbol(9)->symbol_SetBaseCurrency() => NULL", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetMarginCurrency (iSymbol, marginCurrency  )))              return(_EMPTY(catch("CreateRawSymbol(10)->symbol_SetMarginCurrency() => NULL", ERR_RUNTIME_ERROR)));
-   if (           symbol_SetGroup          (iSymbol, groupIndex        ) < 0)         return(_EMPTY(catch("CreateRawSymbol(11)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
-   if (           symbol_SetBackgroundColor(iSymbol, groupColor        ) == CLR_NONE) return(_EMPTY(catch("CreateRawSymbol(12)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
+   if (!SetRawSymbolTemplate               (iSymbol, SYMBOL_TYPE_INDEX))            return(-1);
+   if (!StringLen(symbol_SetName           (iSymbol, symbol        )))              return(_EMPTY(catch("CreateRawSymbol(6)->symbol_SetName() => NULL",                 ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetDescription    (iSymbol, descr         )))              return(_EMPTY(catch("CreateRawSymbol(7)->symbol_SetDescription() => NULL",          ERR_RUNTIME_ERROR)));
+   if (          !symbol_SetDigits         (iSymbol, digits         ))              return(_EMPTY(catch("CreateRawSymbol(8)->symbol_SetDigits() => FALSE",              ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetBaseCurrency   (iSymbol, baseCurrency  )))              return(_EMPTY(catch("CreateRawSymbol(9)->symbol_SetBaseCurrency() => NULL",         ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetMarginCurrency (iSymbol, marginCurrency)))              return(_EMPTY(catch("CreateRawSymbol(10)->symbol_SetMarginCurrency() => NULL",      ERR_RUNTIME_ERROR)));
+   if (           symbol_SetGroup          (iSymbol, groupIndex      ) < 0)         return(_EMPTY(catch("CreateRawSymbol(11)->symbol_SetGroup() => -1",                 ERR_RUNTIME_ERROR)));
+   if (           symbol_SetBackgroundColor(iSymbol, groupColor      ) == CLR_NONE) return(_EMPTY(catch("CreateRawSymbol(12)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
    // insert it into "symbols.raw"
    if (!InsertRawSymbol(iSymbol, directory)) return(-1);
@@ -7530,12 +7470,12 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
  *
  * @param  SYMBOL_GROUP sgs[] - Liste von Symbolgruppen, der die neue Gruppe hinzugefügt werden soll
  * @param  string name        - Gruppenname
- * @param  string description - Gruppenbeschreibung
+ * @param  string descr       - Gruppenbeschreibung
  * @param  color  bgColor     - Hintergrundfarbe der Symbolgruppe im "Market Watch"-Window
  *
  * @return int - Index der Gruppe innerhalb der Liste oder EMPTY (-1), falls ein Fehler auftrat (z.B. wenn die angegebene Gruppe bereits existiert)
  */
-int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, color bgColor) {
+int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string descr, color bgColor) {
    int byteSize = ArraySize(sgs) * 4;
    if (byteSize % SYMBOL_GROUP_size != 0)         return(_EMPTY(catch("AddSymbolGroup(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP_size) +" trailing bytes)", ERR_RUNTIME_ERROR)));
    if (!StringLen(name))                          return(_EMPTY(catch("AddSymbolGroup(2)  invalid parameter name: "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
@@ -7561,9 +7501,9 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
 
    // neue Gruppe erstellen und an freien Index kopieren
    /*SYMBOL_GROUP*/int sg[]; InitializeByteBuffer(sg, SYMBOL_GROUP_size);
-   if (!StringLen(sg_SetName           (sg, name       )))            return(_EMPTY(catch("AddSymbolGroup(6)->sg_SetName() => NULL", ERR_RUNTIME_ERROR)));
-   if (!StringLen(sg_SetDescription    (sg, description)))            return(_EMPTY(catch("AddSymbolGroup(7)->sg_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
-   if (           sg_SetBackgroundColor(sg, bgColor    ) == CLR_NONE) return(_EMPTY(catch("AddSymbolGroup(8)->sg_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
+   if (!StringLen(sg_SetName           (sg, name   )))            return(_EMPTY(catch("AddSymbolGroup(6)->sg_SetName() => NULL",                ERR_RUNTIME_ERROR)));
+   if (!StringLen(sg_SetDescription    (sg, descr  )))            return(_EMPTY(catch("AddSymbolGroup(7)->sg_SetDescription() => NULL",         ERR_RUNTIME_ERROR)));
+   if (           sg_SetBackgroundColor(sg, bgColor) == CLR_NONE) return(_EMPTY(catch("AddSymbolGroup(8)->sg_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
    int src  = GetIntsAddress(sg);
    int dest = GetIntsAddress(sgs) + iFree*SYMBOL_GROUP_size;
@@ -7577,7 +7517,7 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
 /**
  * Return the SYMBOL_GROUPs found in "symgroups.raw" of a directory.
  *
- * @param  _Out_ SYMBOL_GROUP &sgs[]               - array receiving the found symbol groups
+ * @param  _Out_ SYMBOL_GROUP sgs[]                - array receiving the found symbol groups
  * @param  _In_  string       directory [optional] - directory name
  *                                                    if empty:            the current trade server directory (default)
  *                                                    if a relative path:  relative to the MQL sandbox/files directory
@@ -7585,7 +7525,7 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
  *
  * @return int - number of found SYMBOL_GROUPs or EMPTY (-1) in case of errors
  */
-int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
+int GetSymbolGroups(/*SYMBOL_GROUP*/int &sgs[], string directory = "") {
    ArrayResize(sgs, 0);
    if (directory == "0") directory = "";                    // (string) NULL
 
@@ -7836,18 +7776,18 @@ void onLibraryInit() {
    int    symbols_Id  (int symbols[], int i);
    string symbols_Name(int symbols[], int i);
 
-   int    symbol_SetId             (int symbol[], int    id         );
-   string symbol_SetName           (int symbol[], string name       );
-   string symbol_SetDescription    (int symbol[], string description);
-   int    symbol_SetDigits         (int symbol[], int    digits     );
-   string symbol_SetBaseCurrency   (int symbol[], string currency   );
-   string symbol_SetMarginCurrency (int symbol[], string currency   );
-   int    symbol_SetGroup          (int symbol[], int    index      );
-   color  symbol_SetBackgroundColor(int symbol[], color  bgColor    );
+   int    symbol_SetId             (int symbol[], int    id      );
+   string symbol_SetName           (int symbol[], string name    );
+   string symbol_SetDescription    (int symbol[], string descr   );
+   int    symbol_SetDigits         (int symbol[], int    digits  );
+   string symbol_SetBaseCurrency   (int symbol[], string currency);
+   string symbol_SetMarginCurrency (int symbol[], string currency);
+   int    symbol_SetGroup          (int symbol[], int    index   );
+   color  symbol_SetBackgroundColor(int symbol[], color  bgColor );
 
-   string sg_SetName           (int sg[], string name       );
-   string sg_SetDescription    (int sg[], string description);
-   color  sg_SetBackgroundColor(int sg[], color  bgColor    );
+   string sg_SetName           (int sg[], string name   );
+   string sg_SetDescription    (int sg[], string descr  );
+   color  sg_SetBackgroundColor(int sg[], color  bgColor);
 
    string sgs_Name           (int sg[], int i);
    color  sgs_BackgroundColor(int sg[], int i);

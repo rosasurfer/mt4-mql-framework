@@ -4559,6 +4559,66 @@ string GetAccountCompanyId() {
 
 
 /**
+ * Rseolve the name of the current account server. Same as the built-in function AccountServer() but can be used without
+ * a server connection.
+ *
+ * @return string - directory name or an empty string in case of errors
+ */
+string GetAccountServer() {
+   // The resolved server name is cached until a tick signals ValidBars = 0. On account change the built-in account functions
+   // may report the new account already during the last tick of the previous server directory/history data. Only on
+   // ValidBars = 0 is it ensured that the code operates in the new server directory on different history data.
+
+   int tick=__ExecutionContext[EC.ticks], validBars=__ExecutionContext[EC.validBars];
+   static int lastTick;
+   static string lastResult;
+
+   if (tick == lastTick) {
+      if (StringLen(lastResult) > 0) {
+         //debug("GetAccountServer(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  returning cache: \""+ lastResult +"\"");
+         return(lastResult);                          // return the same result for the same tick
+      }
+   }
+   if (!validBars) lastResult = "";                   // invalidate the cache
+
+   if (!StringLen(lastResult)) {
+      static bool isRecursion = false; if (isRecursion) return("");
+      isRecursion = true;                             // logger invocations will try to read the account config => recursion
+
+      string serverName = AccountServer();
+
+      if (!StringLen(serverName)) {
+         debug("GetAccountServer(0.2)  tick="+ __ExecutionContext[EC.ticks] +"  server unknown, creating temporary history file...");
+
+         // create temporary file (programs in the UI thread are executed one after another and may use the same file name)
+         string tmpFile = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
+         int hFile = FileOpenHistory(tmpFile, FILE_WRITE|FILE_BIN);
+
+         if (hFile < 0) {                             // error if the server directory does not exist or write access was denied
+            int error = GetLastError();
+            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                                   catch("GetAccountServer(2)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", error);
+            return("");
+         }
+         FileClose(hFile);
+
+         // search and remove the file
+         serverName = FindHistoryDirectoryA(tmpFile, true);
+         if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find server directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
+
+         //debug("GetAccountServer(0.3)  tick="+ __ExecutionContext[EC.ticks] +"  found server=\""+ serverName +"\"");
+      }
+
+      lastResult = serverName;
+      isRecursion = false;
+   }
+   lastTick = tick;
+
+   return(lastResult);
+}
+
+
+/**
  * Return the full path of the current account/trade server directory. The function doesn't check whether the directory exists.
  *
  * @return string - directory name or an empty string in case of errors
@@ -6607,6 +6667,7 @@ void __DummyCalls() {
    GetAccountCompanyId();
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumber();
+   GetAccountServer();
    GetAccountServerPath();
    GetCommission();
    GetConfigBool(NULL, NULL);
@@ -6815,7 +6876,6 @@ void __DummyCalls() {
    int      GetGmtToServerTimeOffset(datetime time);
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
-   string   GetAccountServer();
    string   GetServerTimezone();
    int      GetServerToFxtTimeOffset(datetime serverTime);
    int      GetServerToGmtTimeOffset(datetime serverTime);

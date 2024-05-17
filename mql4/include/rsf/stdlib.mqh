@@ -190,8 +190,6 @@
 
 
    // other
-   string   GetAccountServer();
-
    int      CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory = "");
    bool     IsRawSymbol(string symbol, string directory = "");
    string   GetSymbolName(string symbol);                               // alias of GetSymbolNameOrAlt(symbol, symbol)
