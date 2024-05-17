@@ -7,6 +7,10 @@
  *     MT4Expander::executioncontext.cpp::SyncMainContext_start(517)  ERROR: ticktime is running backwards:  tick=400  tickTime=1970.01.01 00:00:00  prevTickTime=2024.05.06 17:54:14  ec={pid=2, previousPid=0, programType=PT_INDICATOR, programName="ChartInfos", programCoreFunction=CF_START, programInitReason=IR_TEMPLATE, programUninitReason=UR_UNDEFINED, programInitFlags=0, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="ChartInfos", moduleCoreFunction=CF_START, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="EURJPY", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x07CA0020, bars=60002, validBars=60001, changedBars=1, ticks=399, cycleTicks=399, currTickTime="2024.05.06 17:54:14", prevTickTime="2024.05.06 17:54:14", bid=165.918, ask=165.925, digits=3, pipDigits=2, pip=0.01, point=0.001, superContext=NULL, threadId=4640 (UI), hChart=0x000D0818, hChartWindow=0x000508B4, testing=FALSE, visualMode=FALSE, optimization=FALSE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=DEBUG, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebug=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x05E08B80)  [ERR_ILLEGAL_STATE]
  *     rewrite core functions and Expander, remove onAccountChange()
  *
+ *     profile Bitcoin (6 charts): on terminal start 319 calls of GetAccountNumber(0.1)  evaluating terminal title bar...
+ *
+ *
+ *  - high spread marker (BTCUSD has suddenly an evrage spread of 70-100 points)
  *  - signaling
  *  - merge bufferMain[] and bufferTrend[]
  *
@@ -408,7 +412,7 @@ bool CreateTrendHints() {
    if (__isSuperContext || !__isChart) return(true);
 
    string prefix = "rsf."+ WindowExpertName() +".";
-   string suffix = "."+ __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
+   string suffix = "."+ __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.chart];
    int window = WindowFind(indicatorName);
    if (window == -1) return(!catch("CreateTrendHints(1)->WindowFind(\""+ indicatorName +"\") => -1", ERR_RUNTIME_ERROR));
 
@@ -455,7 +459,7 @@ void UpdateTrendHint(int id, int status) {
    else                       clr = Orange;
 
    switch (id) {
-      case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "C",  trendHintFontSize, trendHintFontName, clr); break;
+      case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "B",  trendHintFontSize, trendHintFontName, clr); break;
       case HINT_MA:    ObjectSetText(trendHintMaLabel,    "MA", trendHintFontSize, trendHintFontName, clr); break;
       case HINT_MACD:  ObjectSetText(trendHintMacdLabel,  "CD", trendHintFontSize, trendHintFontName, clr); break;
 

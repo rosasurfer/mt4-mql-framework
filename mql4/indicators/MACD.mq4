@@ -334,7 +334,7 @@ bool onCross(int direction) {
    if (direction!=MODE_UPPER_SECTION && direction!=MODE_LOWER_SECTION) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    // skip the signal if it was already signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);

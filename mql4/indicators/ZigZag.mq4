@@ -325,7 +325,7 @@ int onInit() {
    // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
    // invalid signals caused by ticks during data pumping.
    if (!__isTesting) {
-      int hWnd = __ExecutionContext[EC.hChart];
+      int hWnd = __ExecutionContext[EC.chart];
       int millis = 2000;                                         // a virtual tick every 2 seconds
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
       if (!__tickTimerId) return(catch("onInit(15)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
@@ -1003,7 +1003,7 @@ bool onReversal(int direction) {
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
    // skip the signal if it already was signaled before
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow()), error;
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow()), error;
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
@@ -1043,7 +1043,7 @@ bool onBreakout(int direction, bool is123Pattern) {
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
    // skip the signal if it was already signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow()), error;
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow()), error;
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);

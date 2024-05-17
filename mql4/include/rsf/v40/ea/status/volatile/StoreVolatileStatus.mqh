@@ -11,28 +11,28 @@ bool StoreVolatileStatus() {
    Instance.ID = value;
    if (__isChart) {
       string key = name +".Instance.ID";
-      SetWindowStringA(__ExecutionContext[EC.hChart], key, value);
+      SetWindowStringA(__ExecutionContext[EC.chart], key, value);
       Chart.StoreString(key, value);
    }
 
    // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";
-      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, status.activeMetric);
+      SetWindowIntegerA(__ExecutionContext[EC.chart], key, status.activeMetric);
       Chart.StoreInt(key, status.activeMetric);
    }
 
    // bool status.showOpenOrders
    if (__isChart) {
       key = name +".status.showOpenOrders";
-      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, ifInt(status.showOpenOrders, 1, -1));
+      SetWindowIntegerA(__ExecutionContext[EC.chart], key, ifInt(status.showOpenOrders, 1, -1));
       Chart.StoreBool(key, status.showOpenOrders);
    }
 
    // bool status.showTradeHistory
    if (__isChart) {
       key = name +".status.showTradeHistory";
-      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, ifInt(status.showTradeHistory, 1, -1));
+      SetWindowIntegerA(__ExecutionContext[EC.chart], key, ifInt(status.showTradeHistory, 1, -1));
       Chart.StoreBool(key, status.showTradeHistory);
    }
    return(!catch("StoreVolatileStatus(1)"));

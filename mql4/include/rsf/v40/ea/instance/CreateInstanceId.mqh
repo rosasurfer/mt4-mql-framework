@@ -10,7 +10,7 @@
  */
 int CreateInstanceId() {
    int instanceId, magicNumber;
-   MathSrand(GetTickCount() - __ExecutionContext[EC.hChartWindow]);
+   MathSrand(GetTickCount() - __ExecutionContext[EC.chartWindow]);
 
    if (__isTesting) {
       // generate next consecutive id from already recorded metrics

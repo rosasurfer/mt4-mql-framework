@@ -31,7 +31,7 @@ int init() {
    // initialize global vars
    __lpSuperContext =  __ExecutionContext[EC.superContext];
    __isSuperContext = (__lpSuperContext != 0);
-   __isChart        = (__ExecutionContext[EC.hChart] != 0);
+   __isChart        = (__ExecutionContext[EC.chart] != 0);
    __isTesting      = (__ExecutionContext[EC.testing] || IsTesting());
 
    if (__isTesting && IsIndicator()) {

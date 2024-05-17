@@ -40,8 +40,6 @@ int init() {
       __STATUS_OFF.reason = last_error;
       return(last_error);
    }
-   _Bid = NormalizeDouble(Bid, Digits);                              // normalized versions of Bid/Ask
-   _Ask = NormalizeDouble(Ask, Digits);                              //
 
    // initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode()) {          // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
@@ -180,7 +178,7 @@ bool initGlobals() {
    //
    // TODO: implement workaround in the Expander
    //
-   __isChart   = (__ExecutionContext[EC.hChart] != 0);
+   __isChart   = (__ExecutionContext[EC.chart] != 0);
    __isTesting = (__ExecutionContext[EC.testing] || IsTesting());
 
    int digits  = MathMax(Digits, 2);                        // treat Digits=1 as 2 (for some indices)
@@ -202,8 +200,10 @@ bool initGlobals() {
 
    Ticks     = __ExecutionContext[EC.ticks];
    Tick.time = __ExecutionContext[EC.currTickTime];
+   _Bid      = NormalizeDouble(Bid, Digits);                // normalized versions of Bid/Ask
+   _Ask      = NormalizeDouble(Ask, Digits);                //
 
-   // don't use MathLog() as in terminals (509 < build && build < 603) it fails to produce NaN/-INF
+   // don't use MathLog() to produce special double values as in terminals (509 < build && build < 603) it fails
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 
@@ -230,8 +230,6 @@ int start() {
       }
       return(__STATUS_OFF.reason);
    }
-   _Bid = NormalizeDouble(Bid, Digits);                                          // normalized versions of Bid/Ask
-   _Ask = NormalizeDouble(Ask, Digits);                                          //
 
    // check chart initialization: Without history (i.e. no bars) Indicator::start() is never called.
    // However on older builds Bars=0 used to be a spurious issue which was sometimes observed on terminal start.
@@ -321,7 +319,7 @@ int start() {
       if      (__isTesting)                 __isOfflineChart = false;
       else if (IsCustomTimeframe(Period())) __isOfflineChart = true;
       else {
-         string wndTitle = GetInternalWindowTextA(__ExecutionContext[EC.hChartWindow]);
+         string wndTitle = GetInternalWindowTextA(__ExecutionContext[EC.chartWindow]);
          if (StringLen(wndTitle) > 0) {
             __isOfflineChart = StrEndsWith(wndTitle, "(offline)");
          }
@@ -384,7 +382,9 @@ int start() {
 
    // synchronize EXECUTION_CONTEXT
    ArrayCopyRates(__rates);
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
+   _Bid = NormalizeDouble(Bid, Digits);                                             // normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                                             //
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, _Bid, _Ask) != NO_ERROR) {
       if (CheckErrors("start(5)->SyncMainContext_start()")) return(last_error);
    }
 

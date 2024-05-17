@@ -78,7 +78,7 @@ int onInit() {
 
    // setup a chart ticker (online only)
    if (!__isTesting) {
-      int hWnd = __ExecutionContext[EC.hChart];
+      int hWnd = __ExecutionContext[EC.chart];
       int millis = 1000;                                 // a virtual tick every second (1000 milliseconds)
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
       if (!__tickTimerId) return(catch("onInit(5)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));

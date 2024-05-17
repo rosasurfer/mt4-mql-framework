@@ -365,7 +365,7 @@ bool onTrendChange(int direction) {
    if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    // skip the signal if it was already signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sName   = "ALMA("+ MA.Periods +", "+ PriceTypeDescription(maAppliedPrice) +")";
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ sName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]);

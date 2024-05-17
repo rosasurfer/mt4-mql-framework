@@ -692,7 +692,7 @@ bool StoreStatus() {
    string label = "rsf."+ ProgramName() +".superTimeframe";
 
    // store timeframe in the window
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    SetWindowIntegerA(hWnd, label, superTimeframe);
 
    // store timeframe in the chart
@@ -715,7 +715,7 @@ bool RestoreStatus() {
    string label = "rsf."+ ProgramName() +".superTimeframe";
 
    // look-up a stored timeframe in the window
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    int result = RemoveWindowIntegerA(hWnd, label);
 
    // on error look-up a stored timeframe in the chart

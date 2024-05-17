@@ -30,9 +30,6 @@ int init() {
       __STATUS_OFF.reason = last_error;
       return(last_error);
    }
-   _Bid = NormalizeDouble(Bid, Digits);                              // normalized versions of Bid/Ask
-   _Ask = NormalizeDouble(Ask, Digits);                              //
-
    int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
@@ -80,7 +77,7 @@ int init() {
  * @return bool - success status
  */
 bool initGlobals() {
-   __isChart   = (__ExecutionContext[EC.hChart ] != 0);
+   __isChart   = (__ExecutionContext[EC.chart  ] != 0);
    __isTesting = (__ExecutionContext[EC.testing] != 0);
 
    int digits  = MathMax(Digits, 2);                        // treat Digits=1 as 2 (for some indices)
@@ -99,8 +96,10 @@ bool initGlobals() {
       pDigits = 2;
       spUnit  = "point";
    }
+   _Bid = NormalizeDouble(Bid, Digits);                     // normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                     //
 
-   // don't use MathLog() as in terminals (509 < build && build < 603) it fails to produce NaN/-INF
+   // don't use MathLog() to produce special double values as in terminals (509 < build && build < 603) it fails
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 
@@ -123,8 +122,6 @@ int start() {
       return(__STATUS_OFF.reason);
    }
    __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
-   _Bid = NormalizeDouble(Bid, Digits);                                       // normalized versions of Bid/Ask
-   _Ask = NormalizeDouble(Ask, Digits);                                       //
 
    Ticks++;                                                                   // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im Tester- und Offline-Chart falsch !!!
@@ -133,9 +130,11 @@ int start() {
    ValidBars      = -1;                                                       // ...
    ShiftedBars    = -1;                                                       // ...
 
+   // synchronize EXECUTION_CONTEXT
    ArrayCopyRates(__rates);
-
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
+   _Bid = NormalizeDouble(Bid, Digits);                                       // normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                                       //
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, _Bid, _Ask) != NO_ERROR) {
       if (CheckErrors("start(2)->SyncMainContext_start()")) return(last_error);
    }
 

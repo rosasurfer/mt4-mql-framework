@@ -8,7 +8,7 @@
  * @return string - object name or an empty string in case of errors
  */
 string CreateChartLegend() {
-   string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
+   string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.chart];
 
    if (__isChart && !__isSuperContext) {
       if (ObjectFind(name) == -1) {                      // create a new label or reuse an existing one
@@ -32,7 +32,7 @@ string CreateChartLegend() {
  */
 bool RemoveChartLegend() {
    if (__isChart && !__isSuperContext) {
-      string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
+      string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.chart];
       if (ObjectFind(name) != -1) {
          ObjectDelete(name);
          return(RearrangeChartLegends());
@@ -65,7 +65,7 @@ bool RearrangeChartLegends() {
             int pid     = StrToInteger(data);
             int hChart  = StrToInteger(StrRightFrom(data, "."));
 
-            if (pid && hChart==__ExecutionContext[EC.hChart]) {
+            if (pid && hChart==__ExecutionContext[EC.chart]) {
                ArrayPushInt(pids, pid);
             }
             else {
@@ -85,7 +85,7 @@ bool RearrangeChartLegends() {
    if (size > 0) {
       ArraySort(pids);
       for (i=0; i < size; i++) {
-         name = CHARTLEGEND_PREFIX + pids[i] +"."+ __ExecutionContext[EC.hChart];
+         name = CHARTLEGEND_PREFIX + pids[i] +"."+ __ExecutionContext[EC.chart];
          ObjectSet(name, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet(name, OBJPROP_XDISTANCE, xDist);
          ObjectSet(name, OBJPROP_YDISTANCE, yDist + i*lineHeight);

@@ -186,7 +186,7 @@ int LFX.CreateInstanceId(/*LFX_ORDER*/int orders[][]) {
       ArrayPushInt(ids, LFX.InstanceId(los.Ticket(orders, i)));
    }
 
-   MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
+   MathSrand(GetTickCount()-__ExecutionContext[EC.chartWindow]);
    while (!id) {
       id = MathRand();
       while (id > 1023) {
@@ -1090,7 +1090,7 @@ bool QC.StartTradeCmdReceiver() {
    if (!__isChart)                   return(false);
 
    // Channelnamen definieren
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    qc.TradeCmdChannel = "TradeCommands."+ IntToHexStr(hWnd);
 
    // Receiver starten
@@ -1209,7 +1209,7 @@ bool QC.StartLfxReceiver() {
    if (!__isChart)                     return(false);
    if (!StrEndsWith(Symbol(), "LFX"))  return(false);                // kein LFX-Chart
 
-   int hWnd = __ExecutionContext[EC.hChart];                         // Channel-Name: "{AccountCompanyAlias}:{AccountNumber}:LFX.Profit.{Currency}"
+   int hWnd = __ExecutionContext[EC.chart];                          // Channel-Name: "{AccountCompanyAlias}:{AccountNumber}:LFX.Profit.{Currency}"
    qc.TradeToLfxChannel = tradeAccount.company +":"+ tradeAccount.number +":LFX.Profit."+ StrLeft(Symbol(), -3);
 
    hQC.TradeToLfxReceiver = QC_StartReceiverA(qc.TradeToLfxChannel, hWnd);

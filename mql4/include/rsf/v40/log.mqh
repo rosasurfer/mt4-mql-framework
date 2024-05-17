@@ -656,8 +656,6 @@ bool SetLogfile(string filename) {
 
 
 #import "rsfMT4Expander.dll"
-   string ec_LogFilename          (int ec[]);
-
    int    ec_SuperLoglevel        (int pid);
    int    ec_SuperLoglevelAlert   (int pid);
    int    ec_SuperLoglevelDebug   (int pid);

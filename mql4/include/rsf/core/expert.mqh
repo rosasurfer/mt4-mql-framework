@@ -22,7 +22,6 @@ int init() {
          ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
    }
-
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this expert.");
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
@@ -43,8 +42,6 @@ int init() {
       prev_error   = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
-   _Bid = NormalizeDouble(Bid, Digits);                           // normalized versions of Bid/Ask
-   _Ask = NormalizeDouble(Ask, Digits);                           //
 
    // initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode()) {       // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
@@ -177,7 +174,7 @@ int init() {
 
    // setup virtual ticks
    if (__virtualTicks && !__isTesting) {
-      int hWnd = __ExecutionContext[EC.hChart];
+      int hWnd = __ExecutionContext[EC.chart];
       __tickTimerId = SetupTickTimer(hWnd, __virtualTicks, NULL);
       if (!__tickTimerId) return(catch("init(15)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
@@ -207,8 +204,6 @@ int start() {
       }
       return(last_error);
    }
-   _Bid = NormalizeDouble(Bid, Digits);                                    // normalized versions of Bid/Ask
-   _Ask = NormalizeDouble(Ask, Digits);                                    //
 
    // resolve tick status
    Ticks++;                                                                // simple counter, the value is meaningless
@@ -261,9 +256,11 @@ int start() {
       }
    }
 
+   // synchronize EXECUTION_CONTEXT
    ArrayCopyRates(__rates);
-
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
+   _Bid = NormalizeDouble(Bid, Digits);                                    // normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                                    //
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, _Bid, _Ask) != NO_ERROR) {
       if (CheckErrors("start(6)->SyncMainContext_start()")) return(last_error);
    }
 
@@ -481,7 +478,7 @@ bool CheckErrors(string caller, int error = NULL) {
  * @return bool - success status
  */
 bool initGlobals() {
-   __isChart   = (__ExecutionContext[EC.hChart] != 0);
+   __isChart   = (__ExecutionContext[EC.chart] != 0);
    __isTesting = IsTesting();
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
@@ -501,8 +498,10 @@ bool initGlobals() {
       pDigits = 2;
       spUnit  = "point";
    }
+   _Bid = NormalizeDouble(Bid, Digits);                     // normalized versions of Bid/Ask
+   _Ask = NormalizeDouble(Ask, Digits);                     //
 
-   // don't use MathLog() as in terminals (509 < build && build < 603) it fails to produce NaN/-INF
+   // don't use MathLog() to produce special double values as in terminals (509 < build && build < 603) it fails
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 

@@ -49,7 +49,7 @@ bool RunScript(string name, string parameters="") {
    // (3) Script starten, falls es noch nicht läuft                  // Der Zeiger auf den Scriptnamen muß auch nach Verlassen der Funktion gültig sein, was ein String-Array
    if (!isScriptRunning) {                                           // für die Variable bedingt. Dieses Array darf bei Verlassen der Funktion nicht zurückgesetzt werden.
       scriptName[0] = StringConcatenate("", name);                   // Der Zeiger wird beim Aufruf eines anderen Scripts oder beim nächsten deinit() ungültig.
-      int hWnd = __ExecutionContext[EC.hChart];
+      int hWnd = __ExecutionContext[EC.chart];
       if (!PostMessageA(hWnd, WM_MT4(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0]))) return(!catch("RunScript(8)->user32::PostMessageA()", ERR_WIN32_ERROR));
    }
 
@@ -65,7 +65,7 @@ bool RunScript(string name, string parameters="") {
  */
 string ScriptRunner.GetChannelName() {
    static string name=""; if (!StringLen(name)) {
-      int hWnd = __ExecutionContext[EC.hChart];
+      int hWnd = __ExecutionContext[EC.chart];
       name = "ScriptParameters."+ IntToHexStr(hWnd);
    }
    return(name);
@@ -196,7 +196,7 @@ bool ScriptRunner.StartParamReceiver() {
    if (scriptrunner.hQC.receiver != NULL)
       return(true);
 
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    scriptrunner.hQC.receiver = QC_StartReceiverA(ScriptRunner.GetChannelName(), hWnd);
 
    if (!scriptrunner.hQC.receiver)

@@ -4244,13 +4244,13 @@ bool StoreStatus() {
    // bool positions.showAbsProfits
    string key = ProgramName() +".positions.showAbsProfits";
    int iValue = ifInt(positions.showAbsProfits, 1, -1);                    // GetWindowInteger() cannot restore integer 0
-   SetWindowIntegerA(__ExecutionContext[EC.hChart], key, iValue);          // chart window
+   SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
    // bool positions.showMaxRisk
    key = ProgramName() +".positions.showMaxRisk";
    iValue = ifInt(positions.showMaxRisk, 1, -1);                           // GetWindowInteger() cannot restore integer 0
-   SetWindowIntegerA(__ExecutionContext[EC.hChart], key, iValue);          // chart window
+   SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
    // Risk/MFE/MAE stats of custom positions
@@ -4260,13 +4260,13 @@ bool StoreStatus() {
       configKey = config.sData[i][I_CONFIG_KEY];
       key = ProgramName() +"."+ Symbol() +".config."+ configKey +".risk";
       sValue = NumberToStr(config.dData[i][I_MAX_LOTS], ".1+") +"|"+ NumberToStr(config.dData[i][I_MAX_RISK], ".1+");
-      SetWindowStringA(__ExecutionContext[EC.hChart], key, sValue);        // chart window
+      SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);         // chart window
       Chart.StoreString(key, sValue);                                      // chart
 
       if (config.dData[i][I_MFE_ENABLED] > 0) {
          key = ProgramName() +"."+ Symbol() +".config."+ configKey +".mfe|mae";
          sValue = NumberToStr(config.dData[i][I_PROFIT_MFE], ".1+") +"|"+ NumberToStr(config.dData[i][I_PROFIT_MAE], ".1+");
-         SetWindowStringA(__ExecutionContext[EC.hChart], key, sValue);     // chart window
+         SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);      // chart window
          Chart.StoreString(key, sValue);                                   // chart
       }
       keys = keys +"="+ configKey;                                         // config keys can't contain equal signs "="
@@ -4276,7 +4276,7 @@ bool StoreStatus() {
    if (size > 0) {
       key = ProgramName() +"."+ Symbol() +".config.keys";
       sValue = StrRight(keys, -1);
-      SetWindowStringA(__ExecutionContext[EC.hChart], key, sValue);        // chart window
+      SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);         // chart window
       Chart.StoreString(key, sValue);                                      // chart
    }
    return(!catch("StoreStatus(1)"));
@@ -4293,14 +4293,14 @@ bool RestoreStatus() {
 
    // bool positions.showAbsProfits
    string key = ProgramName() +".positions.showAbsProfits";
-   int iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key); // +1 || -1
+   int iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);  // +1 || -1
    int iValue2 = 0;
    Chart.RestoreInt(key, iValue2);
    positions.showAbsProfits = (iValue1==1 || iValue2==1);
 
    // bool positions.showMaxRisk
    key = ProgramName() +".positions.showMaxRisk";
-   iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);     // +1 || -1
+   iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);      // +1 || -1
    iValue2 = 0;
    Chart.RestoreInt(key, iValue2);
    positions.showMaxRisk = (iValue1==1 || iValue2==1);
@@ -4308,7 +4308,7 @@ bool RestoreStatus() {
    // config keys of custom positions
    string configKeys[], sValue="", sValue2="";
    key = ProgramName() +"."+ Symbol() +".config.keys";
-   sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
+   sValue = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
    Chart.RestoreString(key, sValue2);
    if (!StringLen(sValue)) sValue = sValue2;
 
@@ -4324,7 +4324,7 @@ bool RestoreStatus() {
       config.sData[i][I_CONFIG_COMMENT] = "";
 
       key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".risk";
-      sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
+      sValue = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
       sValue2 = "";
       Chart.RestoreString(key, sValue2);
       if (!StringLen(sValue)) sValue = sValue2;
@@ -4332,7 +4332,7 @@ bool RestoreStatus() {
       config.dData[i][I_MAX_RISK] = StrToDouble(StrRightFrom(sValue, "|"));
 
       key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".mfe|mae";
-      sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
+      sValue = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
       sValue2 = "";
       Chart.RestoreString(key, sValue2);
       if (!StringLen(sValue)) sValue = sValue2;

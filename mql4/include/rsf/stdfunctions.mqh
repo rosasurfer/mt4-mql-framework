@@ -627,19 +627,17 @@ bool OrderPop(string caller = "") {
  */
 bool WaitForTicket(int ticket, bool select = false) {
    select = select!=0;
-
-   if (ticket <= 0)
-      return(!catch("WaitForTicket(1)  illegal parameter ticket: "+ ticket, ERR_INVALID_PARAMETER));
+   if (ticket <= 0) return(!catch("WaitForTicket(1)  illegal parameter ticket: "+ ticket, ERR_INVALID_PARAMETER));
 
    if (!select) {
       if (!OrderPush("WaitForTicket(2)")) return(false);
    }
 
-   int i, delay=100;                                                 // je 0.1 Sekunden warten
+   int i, delay = 100;                                      // wait 100 msec
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
       if (__isTesting)       logWarn("WaitForTicket(3)  #"+ ticket +" not yet accessible");
-      else if (i && !(i%10)) logWarn("WaitForTicket(4)  #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000., 1) +" s");
+      else if (i && !(i%10)) logWarn("WaitForTicket(4)  #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000., 3) +" s");
       Sleep(delay);
       i++;
    }
@@ -647,7 +645,6 @@ bool WaitForTicket(int ticket, bool select = false) {
    if (!select) {
       if (!OrderPop("WaitForTicket(5)")) return(false);
    }
-
    return(true);
 }
 
@@ -3371,7 +3368,7 @@ string StrCapitalize(string value) {
 int Chart.Expert.Properties() {
    if (__isTesting) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0);
 
    return(NO_ERROR);
@@ -3387,7 +3384,7 @@ int Chart.Expert.Properties() {
  */
 int Chart.SendTick(bool sound = false) {
    sound = sound!=0;
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
 
    if (!__isTesting) {
       PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // int lParam: 0 - doesn't trigger experts in offline charts
@@ -3407,7 +3404,7 @@ int Chart.SendTick(bool sound = false) {
  * @return int - error status
  */
 int Chart.Objects.UnselectAll() {
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    PostMessageA(hWnd, WM_COMMAND, ID_CHART_OBJECTS_UNSELECTALL, 0);
    return(NO_ERROR);
 }
@@ -3419,7 +3416,7 @@ int Chart.Objects.UnselectAll() {
  * @return int - error status
  */
 int Chart.Refresh() {
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    PostMessageA(hWnd, WM_COMMAND, ID_CHART_REFRESH, 0);
    return(NO_ERROR);
 }
@@ -4347,7 +4344,7 @@ datetime GetNextSessionEndTime(datetime time, int tz) {
  */
 int GetRandomValue(int min, int max) {
    static bool seeded = false; if (!seeded) {
-      MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
+      MathSrand(GetTickCount()-__ExecutionContext[EC.chartWindow]);
       seeded = true;
    }
    int    value = MathRand();                   // pseudo-random value from 0 to 32767
@@ -4453,19 +4450,21 @@ int GetAccountNumber() {
    int account = AccountNumber();
 
    if (account == 0x4000) {                                             // in tester without server connection
-      if (!__isTesting)           return(!catch("GetAccountNumber(1)->AccountNumber()  unexpected account number: "+ account +" (0x4000)", ERR_RUNTIME_ERROR));
+      if (!__isTesting) return(!catch("GetAccountNumber(1)->AccountNumber()  unexpected account number: "+ account +" (0x4000)", ERR_RUNTIME_ERROR));
       account = 0;
    }
 
    if (!account) {                                                      // evaluate title bar of the main window
+      if (IsDebugAccount()) debug("GetAccountNumber(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  AccountNumber()="+ AccountNumber() +"  ec.accountNumber="+ __ExecutionContext[EC.accountNumber] +", evaluating terminal title bar...");
+
       string title = GetInternalWindowTextA(GetTerminalMainWindow());
-      if (!StringLen(title))      return(!logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) = \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!StringLen(title))      return(!logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) => \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       int pos = StringFind(title, ":");
-      if (pos < 1)                return(!catch("GetAccountNumber(3)  account number separator not found in main title bar \""+ title +"\"", ERR_RUNTIME_ERROR));
+      if (pos < 1)                return(!catch("GetAccountNumber(3)  account number separator not found in main title bar: \""+ title +"\"", ERR_RUNTIME_ERROR));
 
       string strValue = StrLeft(title, pos);
-      if (!StrIsDigits(strValue)) return(!catch("GetAccountNumber(4)  account number in main title bar contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR));
+      if (!StrIsDigits(strValue)) return(!catch("GetAccountNumber(4)  account number in main title bar contains non-digits: \""+ title +"\"", ERR_RUNTIME_ERROR));
 
       account = StrToInteger(strValue);
    }
@@ -4565,10 +4564,71 @@ string GetAccountCompanyId() {
  * @return string - directory name or an empty string in case of errors
  */
 string GetAccountServer() {
+   static int lpAccountServer = 0;
+   static string sAccountServer = "";
+
+   if (__ExecutionContext[EC.accountServer] != lpAccountServer) {
+      lpAccountServer = __ExecutionContext[EC.accountServer];
+      sAccountServer = GetStringA(lpAccountServer);
+   }
+
+
+
+   // begin old invalidation code
+   static int lastTick;
+   if (__ExecutionContext[EC.ticks] == lastTick) {
+      if (StringLen(sAccountServer) > 0) {
+         return(sAccountServer);                // return the same result for the same tick
+      }
+   }
+   if (!__ExecutionContext[EC.validBars]) {
+      lpAccountServer = 0;
+      sAccountServer = "";                      // invalidate the cache
+   }
+   lastTick = __ExecutionContext[EC.ticks];
+   // end old invalidation code
+
+
+
+   if (!lpAccountServer) {
+      static bool isRecursion = false; if (isRecursion) return("");
+      isRecursion = true;                             // logger invocations will try to read the account config and cause recursion
+
+      string serverName = AccountServer();
+
+      if (!StringLen(serverName)) {
+         if (IsDebugAccount()) debug("GetAccountServer(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  ec.accountServer=(null), scanning server directories...");
+
+         // create temporary file (programs in the UI thread are executed one after another and can use the same file name)
+         string tmpFile = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
+         int hFile = FileOpenHistory(tmpFile, FILE_WRITE|FILE_BIN);
+         if (hFile < 0) {                             // error if the server directory does not exist or write access was denied
+            int error = GetLastError();
+            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                                   catch("GetAccountServer(2)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", error);
+            return("");
+         }
+         FileClose(hFile);
+
+         // search and remove the temporary file
+         serverName = FindHistoryDirectoryA(tmpFile, true);
+         if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find server directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
+      }
+      ec_SetAccountServer(__ExecutionContext, serverName);
+      lpAccountServer = __ExecutionContext[EC.accountServer];
+      sAccountServer = serverName;
+
+      isRecursion = false;
+   }
+   return(sAccountServer);
+
+
+   // --- old ---------------------------------------------------------------------------------------------------------------
    // The resolved server name is cached until a tick signals ValidBars = 0. On account change the built-in account functions
    // may report the new account already during the last tick of the previous server directory/history data. Only on
    // ValidBars = 0 is it ensured that the code operates in the new server directory on different history data.
 
+   /*
    int tick=__ExecutionContext[EC.ticks], validBars=__ExecutionContext[EC.validBars];
    static int lastTick;
    static string lastResult;
@@ -4609,8 +4669,8 @@ string GetAccountServer() {
       isRecursion = false;
    }
    lastTick = tick;
-
    return(lastResult);
+   */
 }
 
 
@@ -6881,6 +6941,7 @@ void __DummyCalls() {
 
 #import "rsfMT4Expander.dll"
    string   ec_ProgramName(int ec[]);
+   string   ec_SetAccountServer(int ec[], string server);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[]);
    int      LeaveContext(int ec[]);

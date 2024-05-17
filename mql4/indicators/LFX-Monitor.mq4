@@ -324,7 +324,7 @@ int onInit() {
 
       // setup a chart ticker
       int millis = 500;                                 // a virtual tick every 500 milliseconds
-      int hWnd = __ExecutionContext[EC.hChart];
+      int hWnd = __ExecutionContext[EC.chart];
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
       if (!__tickTimerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
@@ -1009,7 +1009,7 @@ bool StoreTradeAccount() {
    if (!__isChart) return(true);
 
    // account company id
-   int    hWnd = __ExecutionContext[EC.hChart];
+   int    hWnd = __ExecutionContext[EC.chart];
    string key  = ProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
@@ -1036,7 +1036,7 @@ bool StoreTradeAccount() {
  */
 string GetStoredTradeAccount() {
    // account company id
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    string key = ProgramName() +".runtime.tradeAccount.company";
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {

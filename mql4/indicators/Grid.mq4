@@ -135,7 +135,7 @@ bool GetHorizontalChartDimensions(int &chartHeight, double &chartMinPrice, doubl
    chartMinPrice = 0;
    chartMaxPrice = 0;
 
-   int height = Grid_GetChartHeight(__ExecutionContext[EC.hChart], lastChartHeight);
+   int height = Grid_GetChartHeight(__ExecutionContext[EC.chart], lastChartHeight);
    if (!height) return(false);                                 // no visible chart
 
    double minPrice = NormalizeDouble(WindowPriceMin(), Digits);

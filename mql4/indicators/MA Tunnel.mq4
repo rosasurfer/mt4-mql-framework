@@ -225,7 +225,7 @@ bool onCross(int direction) {
    if (ChangedBars > 2)    return(false);
 
    // skip the signal if it was already signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow()), error;
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow()), error;
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);

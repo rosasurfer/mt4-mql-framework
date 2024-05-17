@@ -156,7 +156,7 @@ int afterInit() {
       }
 
       // setup a chart ticker
-      int hWnd = __ExecutionContext[EC.hChart];
+      int hWnd = __ExecutionContext[EC.chart];
       int millis = 2000;                                          // once every 2 seconds
 
       if (StrStartsWithI(GetAccountServer(), "XTrade-")) {
