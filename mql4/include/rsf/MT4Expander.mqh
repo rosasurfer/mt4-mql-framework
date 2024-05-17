@@ -7,6 +7,7 @@
 #import "rsfMT4Expander.dll"
 
    // terminal status, terminal interaction
+   string   FindHistoryDirectoryA(string filename, int removeFile);
    string   GetExpanderFileNameA();
    string   GetHistoryRootPathA();
    string   GetMqlDirectoryA();

@@ -51,8 +51,8 @@ bool IsConfigKey(string section, string key) {
  */
 bool IsAccountConfigKey(string section, string key) {
    string accountConfig = GetAccountConfigPath();
-   if (!StringLen(accountConfig))
-      return(false);
+   if (!StringLen(accountConfig)) return(false);
+
    return(IsIniKeyA(accountConfig, section, key));
 }
 

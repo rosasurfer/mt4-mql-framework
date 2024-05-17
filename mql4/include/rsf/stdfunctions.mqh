@@ -3372,9 +3372,7 @@ int Chart.Expert.Properties() {
    if (__isTesting) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
    int hWnd = __ExecutionContext[EC.hChart];
-
-   if (!PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0))
-      return(catch("Chart.Expert.Properties(3)->user32::PostMessageA() failed", ERR_WIN32_ERROR));
+   PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0);
 
    return(NO_ERROR);
 }
@@ -3830,12 +3828,10 @@ int Toolbar.Experts(bool enable) {
       return(last_error);
 
    if (enable) {
-      if (!IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
+      if (!IsExpertEnabled()) SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
    }
    else /*disable*/ {
-      if (IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
+      if (IsExpertEnabled())  SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
    }
    return(NO_ERROR);
 }

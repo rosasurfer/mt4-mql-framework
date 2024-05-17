@@ -14,7 +14,7 @@
    bool CloseHandle(int hObject);
    int  CreateFileA(string lpFileName, int dwDesiredAccess, int dwShareMode, int lpSecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, int hTemplateFile);
    bool CreateProcessA(string lpApplicationName, string lpCmdLine, int lpProcessAttributes[], int lpThreadAttributes[], int bInheritHandles, int creationFlags, int lpEnvironment[], string lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
-   bool DeleteFileA(string lpFileName);
+   bool DeleteFileA(string fileName);
    bool FindClose(int hFindFile);
    int  FindFirstFileA(string lpFileName, int lpFindFileData[]);
    bool FindNextFileA(int hFindFile, int lpFindFileData[]);

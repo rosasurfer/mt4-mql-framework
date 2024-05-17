@@ -604,72 +604,62 @@ int GetIniSections(string fileName, string &names[]) {
 
 
 /**
- * Return the name of the current account server. Similar to the built-in function AccountServer() but can also be used without
+ * Return the name of the current account server. Same as the built-in function AccountServer() but can also be used without
  * a server connection.
  *
  * @return string - directory name or an empty string in case of errors
  */
 string GetAccountServer() {
-   // Der Servername wird zwischengespeichert und der Cache bei ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
-   // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
-   // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
+   // The resolved server name is cached until a tick signals ValidBars = 0. On account change the MQL account functions
+   // may report the new account already during the last tick on the previous server directory/history data. Only after
+   // ValidBars = 0 is it ensured that the new server directory/history is active.
 
-   static string static.serverName[1];
-   static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
+   int tick=__ExecutionContext[EC.ticks], validBars=__ExecutionContext[EC.validBars];
+   static int lastTick;
+   static string lastResult[1];
 
-   // invalidate cache if a new tick and ValidBars==0
-   int tick = __ExecutionContext[EC.ticks];
-   if (!__ExecutionContext[EC.validBars]) /*&&*/ if (tick != static.lastTick)
-      static.serverName[0] = "";
-   static.lastTick = tick;
+   if (tick == lastTick) {
+      if (StringLen(lastResult[0]) > 0) {
+         //debug("GetAccountServer(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  returning cache: \""+ lastResult[0] +"\"");
+         return(lastResult[0]);                       // return the same result for the same tick
+      }
+   }
+   if (!validBars) lastResult[0] = "";                // invalidate the cache
 
-   if (!StringLen(static.serverName[0])) {
-      string serverName=AccountServer(), tmpFilename="", fullTmpFilename="";
+   if (!StringLen(lastResult[0])) {
+      static bool isRecursion = false; if (isRecursion) return("");
+      isRecursion = true;                             // logger invocations will try to read the account config => recursion
+
+      string serverName = AccountServer();
 
       if (!StringLen(serverName)) {
-         // create temporary file
-         tmpFilename = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
-         int hFile = FileOpenHistory(tmpFilename, FILE_WRITE|FILE_BIN);
+         debug("GetAccountServer(0.2)  tick="+ __ExecutionContext[EC.ticks] +"  server unknown, creating temporary history file...");
 
-         if (hFile < 0) {                             // if the server directory doesn't yet exist or write access was denied
+         // create temporary file (programs in the UI thread are executed one after another and may use the same file name)
+         string tmpFile = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
+         int hFile = FileOpenHistory(tmpFile, FILE_WRITE|FILE_BIN);
+
+         if (hFile < 0) {                             // error if the server directory does not exist or write access was denied
             int error = GetLastError();
-            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFilename +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-            else                               catch("GetAccountServer(2)->FileOpenHistory(\""+ tmpFilename +"\", FILE_WRITE)", error);
-            return(EMPTY_STR);
+            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                                   catch("GetAccountServer(2)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", error);
+            return("");
          }
          FileClose(hFile);
 
-         // search the created file
-         string pattern = GetHistoryRootPathA() +"/*";
+         // search and remove the file
+         serverName = FindHistoryDirectoryA(tmpFile, true);
+         if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find server directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
 
-         /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA_size);
-         int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
-         while (next != 0) {
-            if (wfd_FileAttribute_Directory(wfd)) {
-               string name = wfd_FileName(wfd);
-               if (name!=".") /*&&*/ if (name!="..") {
-                  fullTmpFilename = GetHistoryRootPathA() +"/"+ name +"/"+ tmpFilename;
-                  if (IsFile(fullTmpFilename, MODE_SYSTEM)) {
-                     DeleteFileA(fullTmpFilename);
-                     serverName = name;
-                     break;
-                  }
-               }
-            }
-            next = FindNextFileA(hFindDir, wfd);
-         }
-         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetAccountServer(4) directory \""+ pattern +"\" not found", ERR_FILE_NOT_FOUND)));
-
-         FindClose(hFindDir);
-         ArrayResize(wfd, 0);
+         debug("GetAccountServer(0.3)  tick="+ __ExecutionContext[EC.ticks] +"  found server=\""+ serverName +"\"");
       }
 
-      if (IsError(catch("GetAccountServer(5)"))) return( EMPTY_STR);
-      if (!StringLen(serverName))                return(_EMPTY_STR(catch("GetAccountServer(6)  cannot find server directory containing \""+ tmpFilename +"\"", ERR_RUNTIME_ERROR)));
-
-      static.serverName[0] = serverName;
+      lastResult[0] = serverName;
+      isRecursion = false;
    }
-   return(static.serverName[0]);
+   lastTick = tick;
+
+   return(lastResult[0]);
 }
 
 

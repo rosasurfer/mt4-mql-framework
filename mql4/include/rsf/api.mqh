@@ -804,6 +804,7 @@ bool     EmptyIniSectionA(string fileName, string section);;
 string   ErrorToStrA(int error);;
 string   ErrorToStrW(int error);;
 string   EXECUTION_CONTEXT_toStr(int &ec[]);;
+string   FindHistoryDirectoryA(string filename, int removeFile);;
 int      FindTesterWindow();;
 int      GetBoolsAddress(bool &values[]);;
 int      GetDoublesAddress(double &values[]);;
