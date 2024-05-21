@@ -16,7 +16,7 @@
  * TODO:
  *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - set order tracker sound on stopout to "margin-call"
- *  - PositionOpen/PositionClose events during change of chart timeframe/symbol are not detected
+ *  - order events during chart change (symbol/timeframe) are not detected
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -233,13 +233,13 @@ int onTick() {
 
    if (mode.extern) {
       if (!QC.HandleLfxTerminalMessages()) if (IsLastError()) return(last_error);   // process incoming LFX commands
-      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // update detailed P/L statistics (bottom-left) and the total open position (bottom-right)
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom PnL statistics (bottom-left) and total open position (bottom-right)
    }
    else {
       if (!QC.HandleTradeCommands())       if (IsLastError()) return(last_error);   // process incoming trade commands
       if (!UpdateSpread())                 if (IsLastError()) return(last_error);   // current spread (top-right)
-      if (!UpdateUnitSize())               if (IsLastError()) return(last_error);   // calculated unit size of a standard position (bottom-right)
-      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // detailed P/L stats (bottom-left) and total open position (bottom-right)
+      if (!UpdateUnitSize())               if (IsLastError()) return(last_error);   // unit size of a standard position (bottom-right)
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom PnL statistics (bottom-left) and total open position (bottom-right)
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // stopout level marker
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // counter for the account's open order limit
 
@@ -2040,7 +2040,7 @@ bool CalculateUnitSize() {
 double GetExternalBalance() {
    static string lastCompany = "";
    static int    lastAccount = 0;
-   static double lastAssets  = 0;
+   static double lastAssets = 0;
 
    if (!mm.externalAssetsCached || tradeAccount.company!=lastCompany || tradeAccount.number!=lastAccount) {
       double assets = GetExternalAssets(tradeAccount.company, tradeAccount.number);

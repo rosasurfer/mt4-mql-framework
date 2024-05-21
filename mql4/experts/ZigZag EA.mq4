@@ -24,8 +24,10 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - on account change
- *    MT4Expander::executioncontext.cpp::SyncMainContext_start(517)  ERROR: ticktime is running backwards:  tick=201  tickTime=2024.05.14 23:34:57  prevTickTime=2024.05.14 23:41:07  ec={pid=110, previousPid=0, programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TEMPLATE, programUninitReason=UR_UNDEFINED, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="XAUUSD", timeframe=M15, newSymbol="", newTimeframe=(null), rates=0x09C60020, bars=60000, validBars=59999, changedBars=1, ticks=200, cycleTicks=200, currTickTime="2024.05.14 23:41:07", prevTickTime=0, bid=2357.31, ask=2357.38, digits=2, pipDigits=2, pip=0.01, point=0.01, superContext=(null), threadId=5576 (UI), hChart=0x00510B6A, hChartWindow=0x00310820, testing=FALSE, visualMode=FALSE, optimization=FALSE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=INFO, loglevelTerminal=(null), loglevelAlert=(null), loglevelDebug=(null), loglevelFile=(null), loglevelMail=(null), loglevelSMS=(null), logger=(null), logBuffer=(0), logFilename=""} (0x0DF3BEE8)
+ *  - on account change to a new server
+ *     profile Bitcoin (6 charts): on terminal start 319 calls of GetAccountNumber(0.1)  evaluating terminal title bar...
+ *     rewrite core functions and Expander, remove onAccountChange()
+ *     MT4Expander::executioncontext.cpp::SyncMainContext_start(517)  ERROR: ticktime is running backwards:  tick=400  tickTime=1970.01.01 00:00:00  prevTickTime=2024.05.06 17:54:14  ec={pid=2, previousPid=0, programType=PT_INDICATOR, programName="ChartInfos", programCoreFunction=CF_START, programInitReason=IR_TEMPLATE, programUninitReason=UR_UNDEFINED, programInitFlags=0, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="ChartInfos", moduleCoreFunction=CF_START, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="EURJPY", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x07CA0020, bars=60002, validBars=60001, changedBars=1, ticks=399, cycleTicks=399, currTickTime="2024.05.06 17:54:14", prevTickTime="2024.05.06 17:54:14", bid=165.918, ask=165.925, digits=3, pipDigits=2, pip=0.01, point=0.001, superContext=NULL, threadId=4640 (UI), hChart=0x000D0818, hChartWindow=0x000508B4, testing=FALSE, visualMode=FALSE, optimization=FALSE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=DEBUG, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebug=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x05E08B80)  [ERR_ILLEGAL_STATE]
  *
  *  - start()
  *     detect account change and call init() again: | flag account change?     | account company?
@@ -102,7 +104,6 @@
  *
  *  -------------------------------------------------------------------------------------------------------------------------
  *  - ZigZag Twister (123 Trader)
- *  - add ZigZag projections
  *  - input TradingTimeframe
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - document control scripts
