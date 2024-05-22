@@ -54,11 +54,6 @@ extern int    Tunnel.MA.Periods              = 55;
 extern string MA.Method                      = "SMA | LWMA | EMA | SMMA | ALMA*";
 extern int    MA.Periods                     = 10;                                  // original: EMA(5)
 
-extern string MACD.FastMA.Method             = "SMA | LWMA | EMA* | SMMA | ALMA";
-extern int    MACD.FastMA.Periods            = 12;
-extern string MACD.SlowMA.Method             = "SMA | LWMA | EMA* | SMMA | ALMA";
-extern int    MACD.SlowMA.Periods            = 26;
-
 extern string ___a__________________________ = "=== Display settings ===";
 extern color  Histogram.Color.Upper          = LimeGreen;
 extern color  Histogram.Color.Lower          = Red;
@@ -81,18 +76,16 @@ extern string Signal.Sound.EntryShort        = "Signal Down.wav";
 #include <rsf/stdlib.mqh>
 #include <rsf/v40/ConfigureSignals.mqh>
 #include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/iCustom/MACD.mqh>
 #include <rsf/v40/iCustom/MaTunnel.mqh>
 #include <rsf/v40/iCustom/MovingAverage.mqh>
 
-#define MODE_MAIN             MACD.MODE_MAIN    // 0 indicator buffer ids
-#define MODE_TREND            MACD.MODE_TREND   // 1
+#define MODE_MAIN             0                 // indicator buffer ids
+#define MODE_TREND            1
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
 
 #define HINT_CLOSE            1                 // trend hint ids
 #define HINT_MA               2
-#define HINT_MACD             3
 
 #property indicator_separate_window
 #property indicator_buffers   4
@@ -117,11 +110,6 @@ string tunnel.definition;
 int    ma.method;
 int    ma.periods;
 
-int    macd.fastMethod;
-int    macd.fastPeriods;
-int    macd.slowMethod;
-int    macd.slowPeriods;
-
 int    longestPeriods;
 
 bool   signal.onEntry.sound;
@@ -138,7 +126,6 @@ string indicatorName = "";
 
 string trendHintCloseLabel = "";
 string trendHintMaLabel    = "";
-string trendHintMacdLabel  = "";
 string trendHintFontName   = "Arial Black";
 int    trendHintFontSize   = 8;
 bool   trendHintsCreated   = false;
@@ -182,39 +169,7 @@ int onInit() {
    if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
    if (MA.Periods < 1)                        return(catch("onInit(4)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
-   // MACD.FastMA.Method
-   sValue = MACD.FastMA.Method;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "MACD.FastMA.Method", sValue);
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   macd.fastMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (macd.fastMethod == -1)                 return(catch("onInit(5)  invalid input parameter MACD.FastMA.Method: "+ DoubleQuoteStr(MACD.FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
-   MACD.FastMA.Method = MaMethodDescription(macd.fastMethod);
-   // MACD.FastMA.Periods
-   if (AutoConfiguration) MACD.FastMA.Periods = GetConfigInt(indicator, "MACD.FastMA.Periods", MACD.FastMA.Periods);
-   if (MACD.FastMA.Periods < 1)               return(catch("onInit(6)  invalid input parameter MACD.FastMA.Periods: "+ MACD.FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   macd.fastPeriods = MACD.FastMA.Periods;
-   // MACD.SlowMA.Method
-   sValue = MACD.SlowMA.Method;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "MACD.SlowMA.Method", sValue);
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   macd.slowMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (macd.slowMethod == -1)                 return(catch("onInit(7)  invalid input parameter MACD.SlowMA.Method: "+ DoubleQuoteStr(MACD.SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
-   MACD.SlowMA.Method = MaMethodDescription(macd.slowMethod);
-   // MACD.SlowMA.Periods
-   if (AutoConfiguration) MACD.SlowMA.Periods = GetConfigInt(indicator, "MACD.SlowMA.Periods", MACD.SlowMA.Periods);
-   if (MACD.SlowMA.Periods < 1)               return(catch("onInit(8)  invalid input parameter MACD.SlowMA.Periods: "+ MACD.SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   macd.slowPeriods = MACD.SlowMA.Periods;
-   if (macd.fastPeriods > macd.slowPeriods)   return(catch("onInit(9)  MACD parameter mis-match (fast MA periods must be smaller than slow MA periods)", ERR_INVALID_INPUT_PARAMETER));
-   if (macd.fastPeriods == macd.slowPeriods) {
-      if (macd.fastMethod == macd.slowMethod) return(catch("onInit(10)  MACD parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
-   }
-   longestPeriods = Max(tunnel.periods, ma.periods, macd.slowPeriods);
+   longestPeriods = Max(tunnel.periods, ma.periods);
    // Histogram.Color.*: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
    if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
@@ -288,21 +243,20 @@ int onTick() {
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-longestPeriods);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
-   double upperBand, lowerBand, ma, macd;
+   double upperBand, lowerBand, ma;
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
       upperBand = GetMaTunnel(MODE_UPPER, bar);
       lowerBand = GetMaTunnel(MODE_LOWER, bar);
-      ma        = GetMovingAverage(bar);
-      macd      = GetMACD(bar);
+      ma = GetMovingAverage(bar);
 
-      if (Close[bar] > upperBand && ma > upperBand && macd > 0) {
+      if (Close[bar] > upperBand && ma > upperBand) {
          bufferMain [bar] = 1;
          bufferUpper[bar] = bufferMain[bar];
          bufferLower[bar] = 0;
       }
-      else if (Close[bar] < lowerBand && ma < lowerBand && macd < 0) {
+      else if (Close[bar] < lowerBand && ma < lowerBand) {
          bufferMain [bar] = -1;
          bufferUpper[bar] = 0;
          bufferLower[bar] = bufferMain[bar];
@@ -326,11 +280,6 @@ int onTick() {
          if      (ma > upperBand) status = +1;
          else if (ma < lowerBand) status = -1;
          UpdateTrendHint(HINT_MA, status);
-
-         status = 0;
-         if      (macd > 0) status = +1;
-         else if (macd < 0) status = -1;
-         UpdateTrendHint(HINT_MACD, status);
       }
 
       // monitor signals
@@ -383,21 +332,6 @@ double GetMovingAverage(int bar) {
 
 
 /**
- * Get a value of the "MACD" indicator.
- *
- * @param  int bar  - bar offset
- *
- * @return double - MACD value or NULL in case of errors
- */
-double GetMACD(int bar) {
-   if (macd.fastMethod==MODE_EMA && macd.slowMethod==MODE_EMA) {
-      return(iMACD(NULL, NULL, macd.fastPeriods, macd.slowPeriods, 1, PRICE_CLOSE, MACD.MODE_MAIN, bar));
-   }
-   return(icMACD(NULL, macd.fastPeriods, MACD.FastMA.Method, "close", macd.slowPeriods, MACD.SlowMA.Method, "close", MACD.MODE_MAIN, bar));
-}
-
-
-/**
  * Create chart objects for the trend hints.
  *
  * @return bool - success status
@@ -406,33 +340,25 @@ bool CreateTrendHints() {
    if (__isSuperContext || !__isChart) return(true);
 
    string prefix = "rsf."+ WindowExpertName() +".";
-   string suffix = "."+ __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.chart];
+   string sPid = "["+ __ExecutionContext[EC.pid] +"]";
    int window = WindowFind(indicatorName);
    if (window == -1) return(!catch("CreateTrendHints(1)->WindowFind(\""+ indicatorName +"\") => -1", ERR_RUNTIME_ERROR));
 
-   string label = prefix +"Close"+ suffix;
+   string label = prefix +"Close"+ sPid;
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-   ObjectSet    (label, OBJPROP_XDISTANCE, 66);
+   ObjectSet    (label, OBJPROP_XDISTANCE, 37);
    ObjectSet    (label, OBJPROP_YDISTANCE,  1);
    ObjectSetText(label, " ");
    trendHintCloseLabel = label;
 
-   label = prefix +"MA"+ suffix;
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
-   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-   ObjectSet    (label, OBJPROP_XDISTANCE, 34);
-   ObjectSet    (label, OBJPROP_YDISTANCE,  1);
-   ObjectSetText(label, " ");
-   trendHintMaLabel = label;
-
-   label = prefix +"MACD"+ suffix;
+   label = prefix +"MA"+ sPid;
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 7);
    ObjectSet    (label, OBJPROP_YDISTANCE, 1);
    ObjectSetText(label, " ");
-   trendHintMacdLabel = label;
+   trendHintMaLabel = label;
 
    trendHintsCreated = true;
    return(!catch("CreateTrendHints(2)"));
@@ -455,8 +381,6 @@ void UpdateTrendHint(int id, int status) {
    switch (id) {
       case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "B",  trendHintFontSize, trendHintFontName, clr); break;
       case HINT_MA:    ObjectSetText(trendHintMaLabel,    "MA", trendHintFontSize, trendHintFontName, clr); break;
-      case HINT_MACD:  ObjectSetText(trendHintMacdLabel,  "CD", trendHintFontSize, trendHintFontName, clr); break;
-
       default:
          return(!catch("UpdateTrendHint(1)  invalid parameter id: "+ id, ERR_INVALID_PARAMETER));
    }
@@ -498,12 +422,9 @@ void SetIndicatorOptions() {
 string InputsToStr() {
    return(StringConcatenate("Tunnel.MA.Method=",        DoubleQuoteStr(Tunnel.MA.Method),        ";"+ NL,
                             "Tunnel.MA.Periods=",       Tunnel.MA.Periods,                       ";"+ NL,
+
                             "MA.Method=",               DoubleQuoteStr(MA.Method),               ";"+ NL,
                             "MA.Periods=",              MA.Periods,                              ";"+ NL,
-                            "MACD.FastMA.Method=",      DoubleQuoteStr(MACD.FastMA.Method),      ";"+ NL,
-                            "MACD.FastMA.Periods=",     MACD.FastMA.Periods,                     ";"+ NL,
-                            "MACD.SlowMA.Method=",      DoubleQuoteStr(MACD.SlowMA.Method),      ";"+ NL,
-                            "MACD.SlowMA.Periods=",     MACD.SlowMA.Periods,                     ";"+ NL,
 
                             "Histogram.Color.Upper=",   ColorToStr(Histogram.Color.Upper),       ";"+ NL,
                             "Histogram.Color.Lower=",   ColorToStr(Histogram.Color.Lower),       ";"+ NL,
