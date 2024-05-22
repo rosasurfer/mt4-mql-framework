@@ -3,6 +3,8 @@
  *
  *
  * TODO:
+ *  - merge bufferMain[] and bufferTrend[]
+ *
  *  - ChartInfos
  *     unitsize configuration: manual leverage doesn't work (limits to 10% risk)
  *     the unitsize configuration is not read if custom positions are reloaded per hotkey
@@ -10,9 +12,6 @@
  *     fix positioning of UnitSize/PositionSize when in CORNER_TOP_LEFT
  *     option to display 100% margin level
  *     high spread marker (BTCUSD suddenly has an average spread of 70-100 points)
- *
- *  - signaling
- *  - merge bufferMain[] and bufferTrend[]
  *
  *  - ALMA
  *     add Background.Color+Background.Width
@@ -61,13 +60,10 @@ extern int    Histogram.Style.Width          = 2;
 extern int    MaxBarsBack                    = 10000;                               // max. values to calculate (-1: all available)
 
 extern string ___b__________________________ = "=== Signaling ===";
-extern bool   Signal.onEntry                 = false;
-extern string Signal.onEntry.Types           = "sound* | alert | mail | sms";
-extern bool   Signal.onExit                  = false;
-extern string Signal.onExit.Types            = "sound* | alert | mail | sms";
-
-extern string Signal.Sound.EntryLong         = "Signal Up.wav";
-extern string Signal.Sound.EntryShort        = "Signal Down.wav";
+extern bool   Signal.onCross                 = false;
+extern string Signal.onCross.Types           = "sound* | alert | mail | sms";
+extern string Signal.Sound.Up                = "Signal Up.wav";
+extern string Signal.Sound.Down              = "Signal Down.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -75,9 +71,11 @@ extern string Signal.Sound.EntryShort        = "Signal Down.wav";
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
 #include <rsf/v40/ConfigureSignals.mqh>
+#include <rsf/v40/IsBarOpen.mqh>
 #include <rsf/v40/ObjectCreateRegister.mqh>
 #include <rsf/v40/iCustom/MaTunnel.mqh>
 #include <rsf/v40/iCustom/MovingAverage.mqh>
+#include <rsf/win32api.mqh>
 
 #define MODE_MAIN             0                 // indicator buffer ids
 #define MODE_TREND            1
@@ -112,15 +110,10 @@ int    ma.periods;
 
 int    longestPeriods;
 
-bool   signal.onEntry.sound;
-bool   signal.onEntry.alert;
-bool   signal.onEntry.mail;
-bool   signal.onEntry.sms;
-
-bool   signal.onExit.sound;
-bool   signal.onExit.alert;
-bool   signal.onExit.mail;
-bool   signal.onExit.sms;
+bool   signal.sound;
+bool   signal.alert;
+bool   signal.mail;
+bool   signal.sms;
 
 string indicatorName = "";
 
@@ -183,27 +176,18 @@ int onInit() {
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)                      return(catch("onInit(13)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
-   // Signal.onEntry
-   string signalId = "Signal.onEntry";
-   ConfigureSignals(signalId, AutoConfiguration, Signal.onEntry);
-   if (Signal.onEntry) {
-      if (!ConfigureSignalTypes(signalId, Signal.onEntry.Types, AutoConfiguration, signal.onEntry.sound, signal.onEntry.alert, signal.onEntry.mail, signal.onEntry.sms)) {
-         return(catch("onInit(14)  invalid input parameter Signal.onEntry.Types: "+ DoubleQuoteStr(Signal.onEntry.Types), ERR_INVALID_INPUT_PARAMETER));
+   // Signal.onCross
+   string signalId = "Signal.onCross";
+   ConfigureSignals(signalId, AutoConfiguration, Signal.onCross);
+   if (Signal.onCross) {
+      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+         return(catch("onInit(14)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onEntry = (signal.onEntry.sound || signal.onEntry.alert || signal.onEntry.mail || signal.onEntry.sms);
-   }
-   // Signal.onExit
-   signalId = "Signal.onExit";
-   ConfigureSignals(signalId, AutoConfiguration, Signal.onExit);
-   if (Signal.onExit) {
-      if (!ConfigureSignalTypes(signalId, Signal.onExit.Types, AutoConfiguration, signal.onExit.sound, signal.onExit.alert, signal.onExit.mail, signal.onExit.sms)) {
-         return(catch("onInit(15)  invalid input parameter Signal.onExit.Types: "+ DoubleQuoteStr(Signal.onExit.Types), ERR_INVALID_INPUT_PARAMETER));
-      }
-      Signal.onExit = (signal.onExit.sound || signal.onExit.alert || signal.onExit.mail || signal.onExit.sms);
+      Signal.onCross = (signal.sound || signal.alert || signal.mail || signal.sms);
    }
    // Signal.Sound.*
-   if (AutoConfiguration) Signal.Sound.EntryLong  = GetConfigString(indicator, "Signal.Sound.EntryLong",  Signal.Sound.EntryLong);
-   if (AutoConfiguration) Signal.Sound.EntryShort = GetConfigString(indicator, "Signal.Sound.EntryShort", Signal.Sound.EntryShort);
+   if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
+   if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
 
    SetIndicatorOptions();
    return(catch("onInit(16)"));
@@ -283,8 +267,49 @@ int onTick() {
       }
 
       // monitor signals
+      if (Signal.onCross) /*&&*/ if (IsBarOpen()) {
+         int trend     = Round(bufferMain[1]);
+         int prevTrend = Round(bufferMain[2]);
+
+         if (Sign(trend) != Sign(prevTrend)) {
+            if      (trend == +1) onCross(MODE_UPPER_SECTION);
+            else if (trend == -1) onCross(MODE_LOWER_SECTION);
+         }
+      }
    }
    return(catch("onTick(4)"));
+}
+
+
+/**
+ * Event handler called on BarOpen if one of the tunnel bands was crossed.
+ *
+ * @param  int direction
+ *
+ * @return bool - success status
+ */
+bool onCross(int direction) {
+   if (direction!=MODE_UPPER_SECTION && direction!=MODE_LOWER_SECTION) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   // skip the signal if it was already signaled elsewhere
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
+   string sPeriod = PeriodDescription();
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
+   if (GetPropA(hWnd, sEvent) != 0) return(true);
+   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
+
+   string message = "Tunnel crossing "+ ifString(direction==MODE_UPPER_SECTION, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   if (IsLogInfo()) logInfo("onCross(2)  "+ message);
+
+   message = Symbol() +","+ PeriodDescription() +": "+ message;
+   string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   int error = NO_ERROR;
+
+   if (signal.alert)          Alert(message);
+   if (signal.sound) error  = PlaySoundEx(ifString(direction==MODE_UPPER_SECTION, Signal.Sound.Up, Signal.Sound.Down)); if (error == ERR_FILE_NOT_FOUND) signal.sound = false;
+   if (signal.mail)  error |= !SendEmail("", "", message, message + NL + sAccount);
+   if (signal.sms)   error |= !SendSMS("", message + NL + sAccount);
+   return(!error);
 }
 
 
@@ -420,22 +445,20 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Tunnel.MA.Method=",        DoubleQuoteStr(Tunnel.MA.Method),        ";"+ NL,
-                            "Tunnel.MA.Periods=",       Tunnel.MA.Periods,                       ";"+ NL,
+   return(StringConcatenate("Tunnel.MA.Method=",      DoubleQuoteStr(Tunnel.MA.Method),     ";"+ NL,
+                            "Tunnel.MA.Periods=",     Tunnel.MA.Periods,                    ";"+ NL,
 
-                            "MA.Method=",               DoubleQuoteStr(MA.Method),               ";"+ NL,
-                            "MA.Periods=",              MA.Periods,                              ";"+ NL,
+                            "MA.Method=",             DoubleQuoteStr(MA.Method),            ";"+ NL,
+                            "MA.Periods=",            MA.Periods,                           ";"+ NL,
 
-                            "Histogram.Color.Upper=",   ColorToStr(Histogram.Color.Upper),       ";"+ NL,
-                            "Histogram.Color.Lower=",   ColorToStr(Histogram.Color.Lower),       ";"+ NL,
-                            "Histogram.Style.Width=",   Histogram.Style.Width,                   ";"+ NL,
-                            "MaxBarsBack=",             MaxBarsBack,                             ";"+ NL,
+                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";"+ NL,
+                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";"+ NL,
+                            "Histogram.Style.Width=", Histogram.Style.Width,                ";"+ NL,
+                            "MaxBarsBack=",           MaxBarsBack,                          ";"+ NL,
 
-                            "Signal.onEntry=",          BoolToStr(Signal.onEntry),               ";"+ NL,
-                            "Signal.onEntry.Types=",    DoubleQuoteStr(Signal.onEntry.Types),    ";"+ NL,
-                            "Signal.onExit=",           BoolToStr(Signal.onExit),                ";"+ NL,
-                            "Signal.onExit.Types=",     DoubleQuoteStr(Signal.onExit.Types),     ";"+ NL,
-                            "Signal.Sound.EntryLong=",  DoubleQuoteStr(Signal.Sound.EntryLong),  ";"+ NL,
-                            "Signal.Sound.EntryShort=", DoubleQuoteStr(Signal.Sound.EntryShort), ";")
+                            "Signal.onCross=",        BoolToStr(Signal.onCross),            ";"+ NL,
+                            "Signal.onCross.Types=",  DoubleQuoteStr(Signal.onCross.Types), ";"+ NL,
+                            "Signal.Sound.Up=",       DoubleQuoteStr(Signal.Sound.Up),      ";"+ NL,
+                            "Signal.Sound.Down=",     DoubleQuoteStr(Signal.Sound.Down),    ";")
    );
 }

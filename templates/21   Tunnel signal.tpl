@@ -162,14 +162,11 @@ Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
 Tunnel.MA.Periods=55
 MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
 MA.Periods=10
-MACD.FastMA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MACD.FastMA.Periods=12
-MACD.SlowMA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MACD.SlowMA.Periods=26
 Histogram.Color.Upper=3329330
 Histogram.Color.Lower=255
 Histogram.Style.Width= 2
-Signal.onEntry=1
+Signal.onCross=1
+Signal.onCross.Types=sound, alert
 AutoConfiguration=0
 </inputs>
 </expert>
