@@ -349,6 +349,7 @@ Donchian.ShowCrossings=off | first* | all
 Donchian.Upper.Color=16711680
 Donchian.Lower.Color=16711935
 Show123Projections=0
+ShowChartLegend=0
 Signal.onReversal=0
 </inputs>
 </expert>

@@ -175,6 +175,7 @@ ZigZag.Color=9639167
 Donchian.ShowChannel=1
 Donchian.ShowCrossings=off | first* | all
 Show123Projections=0
+ShowChartLegend=0
 Signal.onReversal=0
 Signal.onBreakout=1
 Signal.onBreakout.123Only=1
@@ -197,7 +198,7 @@ window_num=0
 <inputs>
 ZigZag.Periods=9
 ZigZag.Type=Line* | Semaphores
-ZigZag.Width=1
+ZigZag.Width=2
 ZigZag.Color=16711680
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off* | first | all
