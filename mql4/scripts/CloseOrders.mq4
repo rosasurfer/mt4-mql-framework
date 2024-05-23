@@ -178,7 +178,6 @@ int onStart() {
    SortTicketsChronological(hedgedShort);
 
    // close orders
-   PlaySoundEx("Windows Notify.wav");
    int oe[], oes[][ORDER_EXECUTION_intSize], oeFlags=NULL;
 
    if (sizeOfPendingOrders || sizeOfOpenPositions) {
@@ -187,7 +186,9 @@ int onStart() {
       string sOpenPositions = ifString(sizeOfOpenPositions, "close "+ sizeOfOpenPositions +" open position"+ Pluralize(sizeOfOpenPositions), "");
       string msg            = "Do you really want to "+ sPendingOrders + sAnd + sOpenPositions +"?";
 
+      PlaySoundEx("Windows Notify.wav");
       int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
+
       if (button == IDOK) {
          if (sizeOfOpenPositions > 0) {
             if (!OrdersClose(openPositions, 1, CLR_NONE, oeFlags, oes))  return(ERR_RUNTIME_ERROR);
@@ -200,7 +201,9 @@ int onStart() {
    else if (sizeOfHedgedLong && sizeOfHedgedShort) {
       msg = "Do you really want to close the hedged part of "+ (sizeOfHedgedLong+sizeOfHedgedShort) +" positions?";
 
+      PlaySoundEx("Windows Notify.wav");
       button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
+
       if (button == IDOK) {
          while (sizeOfHedgedLong && sizeOfHedgedShort) {
             int longTicket  = ArrayShiftInt(hedgedLong);
@@ -226,6 +229,7 @@ int onStart() {
       }
    }
    else {
+      PlaySoundEx("Plonk.wav");
       MessageBox("No matching orders found.", ProgramName(), MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));

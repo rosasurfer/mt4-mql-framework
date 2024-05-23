@@ -34,13 +34,14 @@ int onStart() {
    int positions = ArraySize(tickets);
 
    // notify
-   PlaySoundEx("Windows Notify.wav");
    if (!positions) {
+      PlaySoundEx("Plonk.wav");
       MessageBox("No open positions found.", ProgramName(), MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(1)"));
    }
 
    // get confirmation
+   PlaySoundEx("Windows Notify.wav");
    string msg = "Do you really want to hedge "+ positions +" open position"+ Pluralize(positions) +"?";
    int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK) return(catch("onStart(2)"));
