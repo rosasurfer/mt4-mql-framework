@@ -154,9 +154,39 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=MACD
+flags=339
+window_num=2
+<inputs>
+FastMA.Periods=12
+FastMA.Method=SMA | LWMA | EMA* | ALMA
+SlowMA.Periods=26
+SlowMA.Method=SMA | LWMA | EMA* | ALMA
+Histogram.Color.Upper=3329434
+Histogram.Color.Lower=5275647
+Histogram.Style.Width=2
+MainLine.Width=0
+Signal.onCross=1
+Signal.onCross.Types=sound, alert
+AutoConfiguration=0
+</inputs>
+</expert>
+min=-0.001
+max=0.001
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=12
+fixed_height=0
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=Tunnel signal
 flags=339
-window_num=1
+window_num=2
 <inputs>
 Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
 Tunnel.MA.Periods=55
