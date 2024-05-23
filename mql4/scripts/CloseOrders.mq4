@@ -42,6 +42,7 @@ int    hedgedShort[];         // close hedged: short tickets of the position
  */
 int onInit() {
    // validate inputs
+
    // Close.Symbols
    closeAllSymbols = false;
    string sValues[], sValue=Close.Symbols;

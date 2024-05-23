@@ -6341,12 +6341,13 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
 
 /**
  * Offset multiple positions and create a flat (hedged) total position by submitting a single trade operation request.
- * Preferably one of the positions is closed. If a (partial) close doesn't yield the intended result an additional hedging
- * position is opened. All passed order tickets must belong to the same symbol.
+ * Preferably one of the positions is closed. If a single (partial) close doesn't yield the intended result an additional
+ * hedging position is opened. All passed order tickets must belong to the same symbol.
  *
  * @param  _In_  int tickets[] - order tickets to offset
  * @param  _In_  int slippage  - acceptable slippage in points for the offsetting transaction
  * @param  _In_  int oeFlags   - flags controlling trade request execution:
+ *                               F_OE_HEDGE_NO_CLOSE    - don't close one of the tickets (always open an offsetting position)
  *                               F_OE_DONT_CHECK_STATUS - don't check the ticket's order status to prevent
  *                                                        ERR_INVALID_TRADE_PARAMETERS if a ticket is already closed
  * @param  _Out_ int oes[][]   - array of execution details (struct ORDER_EXECUTION)
@@ -6366,7 +6367,7 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
  *
  *        (3) Time and price of the last (the offsetting) transaction are stored as oe.CloseTime/oe.ClosePrice of all tickets.
  *
- *        (4) In case of errors the error is stored in oe.Error of all tickets. Typical trade operation errors are:
+ *        (4) An occurring error is stored in oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
  *            - ERR_MIXED_SYMBOLS:            passed tickets belong to mixed symbols
@@ -6434,8 +6435,11 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
       if (IsLogDebug()) logDebug("OrdersHedge(17)  hedging "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, " ", "s ") + TicketsToStr.Lots(tickets));
       int closeTicket, totalDir=ifInt(GT(totalLots, 0), OP_LONG, OP_SHORT), oe[];
 
-      // if possible use OrderCloseEx() for hedging (reduces MarginRequired and cannot cause violation of TradeserverLimit)
-      if (!(oeFlags & F_OE_DONT_CHECK_STATUS)) {
+      if (oeFlags & F_OE_HEDGE_NO_CLOSE || oeFlags & F_OE_DONT_CHECK_STATUS) {
+         // always open new ticket
+      }
+      else {
+         // try to find a ticket to close (reduces required margin and cannot cause violation of TradeserverLimit)
          for (i=0; i < sizeOfTickets; i++) {
             if (EQ(lots[i], totalLots)) {                // first find a ticket to close completely
                closeTicket = tickets[i];

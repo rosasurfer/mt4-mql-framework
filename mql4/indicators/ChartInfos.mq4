@@ -1646,7 +1646,7 @@ bool UpdateStopoutLevel() {
 
 
 /**
- * Resolve the total open position, group/store it according to the custom configuration and calculate PL stats.
+ * Resolve the total open position, group/store it according to the custom configuration and calculate PnL stats.
  *
  * @param  int flags [optional] - control flags, supported values:
  *                                F_LOG_TICKETS:           log all tickets of resulting custom positions
@@ -1686,7 +1686,7 @@ bool UpdateStopoutLevel() {
       int sortKeys[][2];                                                         // Sortierschlüssel der offenen Positionen: {OpenTime, Ticket}
       ArrayResize(sortKeys, orders);
 
-      // Sortierschlüssel auslesen und dabei PL von LFX-Positionen erfassen (alle Symbole).
+      // Sortierschlüssel auslesen und dabei PnL von LFX-Positionen erfassen (alle Symbole).
       for (int n, i=0; i < orders; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                 // FALSE: an open order was closed/deleted in another thread
          if (OrderType() > OP_SELL) {

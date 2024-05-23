@@ -179,8 +179,9 @@
 
 
 // flags controlling order execution
-#define F_OE_DONT_HEDGE                0x00040000        //  262144  don't hedge multiple positions on close
-#define F_OE_DONT_CHECK_STATUS         0x00080000        //  524288  don't check order status before proceeding
+#define F_OE_DONT_HEDGE                0x00080000        //  262144  don't hedge multiple positions on close
+#define F_OE_HEDGE_NO_CLOSE            0x00100000        //  524288  don't close a position when hedging (open an offsetting position instead)
+#define F_OE_DONT_CHECK_STATUS         0x00200000        //  524288  don't check order status before proceeding
 
 
 // other control flags
