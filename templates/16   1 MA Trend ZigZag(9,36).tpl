@@ -154,7 +154,7 @@ window_num=0
 <inputs>
 ZigZag.Periods=9
 ZigZag.Type=Line* | Semaphores
-ZigZag.Width=2
+ZigZag.Width=1
 ZigZag.Color=16711680
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off* | first | all
