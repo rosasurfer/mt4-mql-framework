@@ -37,10 +37,10 @@ int init() {
       return(last_error);
    }
 
-   if (__CoreFunction != CF_START) {                              // init() is called by the terminal
+   if (__CoreFunction != CF_START) {                              // init() called by the terminal
       __CoreFunction = CF_INIT;
-      prev_error   = last_error;
-      ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
+      prev_error = last_error;
+      last_error = NO_ERROR;                                      // don't use SetLastError() as it may call MT4Expander::ec_SetMqlError() before SyncMainContext_init()
    }
 
    // initialize the execution context
@@ -58,6 +58,8 @@ int init() {
       __STATUS_OFF.reason = last_error;                           // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
+   ec_SetMqlError(__ExecutionContext, NO_ERROR);
+   ec_SetDllError(__ExecutionContext, NO_ERROR);
 
    // finish initialization of global vars
    if (!initGlobals()) if (CheckErrors("init(3)")) return(last_error);

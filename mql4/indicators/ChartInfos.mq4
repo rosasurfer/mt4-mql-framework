@@ -18,6 +18,15 @@
  *  - set order tracker sound on stopout to "margin-call"
  *  - order events during chart change (symbol/timeframe) are not detected
  */
+
+/*
+Nach Ausschalten des Laptops per On/Off-Button wurde in 3 von 6 Charts deinit() nicht ausgeführt
+------------------------------------------------------------------------------------------------
+MetaTrader FATAL  BTCUSD,M1  ChartInfos::ObjectCreateRegister(2)  name="ChartInfos.CustomPosition.line1_col0", type=OBJ_LABEL, window=0  [ERR_OBJECT_ALREADY_EXISTS]
+MetaTrader FATAL  BTCUSD,M1  ChartInfos::ObjectCreateRegister(2)  name="ChartInfos.CustomPosition.line1_col0", type=OBJ_LABEL, window=0  [ERR_OBJECT_ALREADY_EXISTS]
+MetaTrader FATAL  BTCUSD,M1  ChartInfos::ObjectCreateRegister(2)  name="ChartInfos.CustomPosition.line1_col0", type=OBJ_LABEL, window=0  [ERR_OBJECT_ALREADY_EXISTS]
+*/
+
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];

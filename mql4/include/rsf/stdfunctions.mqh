@@ -28,7 +28,10 @@
  * @return int - the same error
  */
 int SetLastError(int error, int param = NULL) {
-   last_error = ec_SetMqlError(__ExecutionContext, error);
+   if (__ExecutionContext[EC.pid] != NULL) {
+      ec_SetMqlError(__ExecutionContext, error);
+   }
+   last_error = error;
    if (error && IsExpert()) CheckErrors("SetLastError(1)");       // immediately update __STATUS_OFF in experts
    return(error);
 }
