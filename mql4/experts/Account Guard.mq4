@@ -1,21 +1,18 @@
 /**
- * DDL Monitor
+ * Account Guard
  *
- * The purpose of this EA is to protect the trading account and enforce adherence to a specified drawdown limit. It monitors
- * open positions and PnL of all symbols (not only the symbol where the EA is attached).
+ * The EA monitors open positions of all symbols and enforces a specified drawdown limit.
  *
- * Positions of symbols without trade permission and positions opened outside the permitted time range are immediately closed.
+ * Positions of symbols without trade permission and positions outside of the permitted time range are immediately closed.
  *
  * Permitted positions are monitored until the specified drawdown limit is reached. If reached the EA closes all open positions
- * and deletes all pending orders. Further trading is prohibited until the end of the day (immediate close of new orders).
- *
- * For best operation it's recommended to run the EA in a hosted environment (VM or dedicated server).
+ * and deletes all pending orders. Further trading is prohibited until the end of the day. New orders are immediately closed.
  *
  *
  * Input parameters:
  * -----------------
  * • PermittedSymbols:   Comma-separated list of symbols allowed to trade ("*" allows all available symbols).
- * • PermittedTimeRange: Time range when trading is allowed. Format: "00:00-23:59" in server time (empty: no limitation).
+ * • PermittedTimeRange: Time range when trading is allowed. Format: "00:00-23:59" in server time (empty: no restriction).
  * • DrawdownLimit:      Either an absolute money amount or a percentage value describing the drawdown limit of an open position.
  * • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
  *                       prevents DDL triggering by spread widening/spikes.
@@ -28,7 +25,7 @@ int __virtualTicks = 800;                             // milliseconds (must be s
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string PermittedSymbols   = "";                // symbols allowed to trade ("*": all symbols)
-extern string PermittedTimeRange = "";                // time range trading is allowed (empty: no limitation)
+extern string PermittedTimeRange = "";                // time range trading is allowed (empty: no time restriction)
 extern string DrawdownLimit      = "200.00 | 5%*";    // absolute money amount or percentage drawdown limit
 extern bool   IgnoreSpread       = true;              // whether to ignore the spread of floating positions
 
