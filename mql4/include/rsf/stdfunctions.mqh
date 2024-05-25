@@ -311,9 +311,9 @@ string StrReplace(string str, string search, string replace, bool recursive = fa
 /**
  * Replacement for the built-in MQL function PlaySound().
  *
- * Queues a soundfile for playing and immediately returns (non-blocking). Plays all sound types currently supported on the
- * system. Allows mixing of sounds (except MIDI files). Also plays sounds if the terminal doesn't support it in the current
- * context (e.g. in tester).
+ * Plays a soundfile asynchronously and immediately returns (non-blocking). Plays all sound types supported on the system and
+ * supports simultaneous playback of multiple sounds (except MIDI files). Also plays sounds if the terminal doesn't support it
+ * in the current context (e.g. in tester).
  *
  * @param  string soundfile - an absolute filename or a filename relative to directory "sounds" of the terminal directory or
  *                            the data directory (both are searched)

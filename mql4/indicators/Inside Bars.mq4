@@ -657,14 +657,13 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    if (IsLogInfo()) logInfo("onInsideBar(2)  "+ message +" at "+ sBarTime +"  H="+ sBarHigh +"  L="+ sBarLow);
    message = Symbol() +": "+ message;
 
-   int error = NO_ERROR;
-   if (Signal.onInsideBar.Alert)          Alert(message);
-   if (Signal.onInsideBar.Sound) error |= PlaySoundEx(Signal.onInsideBar.SoundFile);
-   if (Signal.onInsideBar.Mail)  error |= !SendEmail("", "", message, message + NL + sLocalTime);
-   if (Signal.onInsideBar.SMS)   error |= !SendSMS("", message + NL + sLocalTime);
+   if (Signal.onInsideBar.Alert) Alert(message);
+   if (Signal.onInsideBar.Sound) PlaySoundEx(Signal.onInsideBar.SoundFile);
+   if (Signal.onInsideBar.Mail)  SendEmail("", "", message, message + NL + sLocalTime);
+   if (Signal.onInsideBar.SMS)   SendSMS("", message + NL + sLocalTime);
 
    if (__isTesting) Tester.Pause();
-   return(!error);
+   return(!catch("onInsideBar(3)"));
 }
 
 

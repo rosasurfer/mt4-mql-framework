@@ -1003,7 +1003,7 @@ bool onReversal(int direction) {
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
    // skip the signal if it already was signaled before
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow()), error;
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
@@ -1013,18 +1013,17 @@ bool onReversal(int direction) {
    if (IsLogInfo()) logInfo("onReversal(P="+ ZigZag.Periods +")  "+ message);
 
    if (signal.onReversal.sound) {
-      error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
-      if (!error)                           lastSoundSignal = GetTickCount();
-      else if (error == ERR_FILE_NOT_FOUND) signal.onReversal.sound = false;
+      int error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
+      if (!error) lastSoundSignal = GetTickCount();
    }
 
    message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message;
    if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-   if (signal.onReversal.alert)          Alert(message);
-   if (signal.onReversal.mail) error |= !SendEmail("", "", message, message + NL + accountTime);
-   if (signal.onReversal.sms)  error |= !SendSMS("", message + NL + accountTime);
-   return(!error);
+   if (signal.onReversal.alert) Alert(message);
+   if (signal.onReversal.mail)  SendEmail("", "", message, message + NL + accountTime);
+   if (signal.onReversal.sms)   SendSMS("", message + NL + accountTime);
+   return(!catch("onReversal(3)"));
 }
 
 
@@ -1043,7 +1042,7 @@ bool onBreakout(int direction, bool is123Pattern) {
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
    // skip the signal if it was already signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow()), error;
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
@@ -1054,19 +1053,18 @@ bool onBreakout(int direction, bool is123Pattern) {
    if (IsLogInfo()) logInfo("onBreakout(P="+ ZigZag.Periods +")  "+ ifString(is123Pattern, "1-2-3 breakout ", "") + sDirection +" (bid: "+ sBid +")");
 
    if (signal.onBreakout.sound) {
-      error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
-      if (!error)                           lastSoundSignal = GetTickCount();
-      else if (error == ERR_FILE_NOT_FOUND) signal.onBreakout.sound = false;
+      int error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
+      if (!error) lastSoundSignal = GetTickCount();
    }
 
    string message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +")"+ ifString(is123Pattern, " 1-2-3", "") +" breakout "+ sDirection +" (bid: "+ sBid +")";
    string sAccount = "";
    if (signal.onReversal.mail || signal.onReversal.sms) sAccount = "("+ TimeToStr(TimeLocalEx("onBreakout(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-   if (signal.onBreakout.alert)          Alert(message);
-   if (signal.onBreakout.mail) error |= !SendEmail("", "", message, message + NL + sAccount);
-   if (signal.onBreakout.sms)  error |= !SendSMS("", message + NL + sAccount);
-   return(!error);
+   if (signal.onBreakout.alert) Alert(message);
+   if (signal.onBreakout.mail)  SendEmail("", "", message, message + NL + sAccount);
+   if (signal.onBreakout.sms)   SendSMS("", message + NL + sAccount);
+   return(!catch("onBreakout(3)"));
 }
 
 
@@ -1082,8 +1080,7 @@ bool onChannelWidening(int direction) {
 
    if (lastSoundSignal+2000 < GetTickCount()) {                      // at least 2 sec pause between consecutive sound signals
       int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onNewChannelHigh, Sound.onNewChannelLow));
-      if (!error)                           lastSoundSignal = GetTickCount();
-      else if (error == ERR_FILE_NOT_FOUND) Sound.onChannelWidening = false;
+      if (!error) lastSoundSignal = GetTickCount();
    }
    return(!catch("onChannelWidening(2)"));
 }

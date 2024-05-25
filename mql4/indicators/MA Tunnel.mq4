@@ -225,23 +225,23 @@ bool onCross(int direction) {
    if (ChangedBars > 2)    return(false);
 
    // skip the signal if it was already signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow()), error;
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
    SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals on slow CPU)
 
    string message = "bar close "+ ifString(direction==D_LONG, "above ", "below ") + indicatorName;
-   if (IsLogInfo()) logInfo("onCross(3)  "+ message);
+   if (IsLogInfo()) logInfo("onCross(2)  "+ message);
 
    message = Symbol() +","+ PeriodDescription() +": "+ message;
-   string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-   if (signal.alert)          Alert(message);
-   if (signal.sound) error  = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down)); if (error == ERR_FILE_NOT_FOUND) signal.sound = false;
-   if (signal.mail)  error |= !SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   error |= !SendSMS("", message + NL + sAccount);
-   return(!error);
+   if (signal.alert) Alert(message);
+   if (signal.sound) PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
+   if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
+   if (signal.sms)   SendSMS("", message + NL + sAccount);
+   return(!catch("onCross(4)"));
 }
 
 

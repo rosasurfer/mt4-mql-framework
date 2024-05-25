@@ -222,33 +222,32 @@ int onTick() {
  */
 bool onLevelCross(int mode) {
    string message = "";
-   int error = 0;
 
    if (mode == MODE_UPPER) {
       message = indicatorName +" crossed level "+ Signal.Level;
       if (IsLogInfo()) logInfo("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onCross.Alert)          Alert(message);
-      if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundUp);
-      if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
-      if (Signal.onCross.SMS)   error |= !SendSMS("", message);
-      return(!error);
+      if (Signal.onCross.Alert) Alert(message);
+      if (Signal.onCross.Sound) PlaySoundEx(Signal.onCross.SoundUp);
+      if (Signal.onCross.Mail)  SendEmail("", "", message, message);
+      if (Signal.onCross.SMS)   SendSMS("", message);
+      return(!catch("onLevelCross(2)"));
    }
 
    if (mode == MODE_LOWER) {
       message = indicatorName +" crossed level "+ (-Signal.Level);
-      if (IsLogInfo()) logInfo("onLevelCross(2)  "+ message);
+      if (IsLogInfo()) logInfo("onLevelCross(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onCross.Alert)          Alert(message);
-      if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundDown);
-      if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
-      if (Signal.onCross.SMS)   error |= !SendSMS("", message);
-      return(!error);
+      if (Signal.onCross.Alert) Alert(message);
+      if (Signal.onCross.Sound) PlaySoundEx(Signal.onCross.SoundDown);
+      if (Signal.onCross.Mail)  SendEmail("", "", message, message);
+      if (Signal.onCross.SMS)   SendSMS("", message);
+      return(!catch("onLevelCross(4)"));
    }
 
-   return(!catch("onLevelCross(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
+   return(!catch("onLevelCross(5)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
 }
 
 

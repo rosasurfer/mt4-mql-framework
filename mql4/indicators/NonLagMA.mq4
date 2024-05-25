@@ -315,33 +315,32 @@ int onTick() {
  */
 bool onTrendChange(int trend) {
    string message="", accountTime="("+ TimeToStr(TimeLocalEx("onTrendChange(1)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-   int error = NO_ERROR;
 
    if (trend == MODE_UPTREND) {
       message = shortName +" turned up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onTrendChange.Alert)          Alert(message);
-      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
-      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
-      return(!error);
+      if (Signal.onTrendChange.Alert) Alert(message);
+      if (Signal.onTrendChange.Sound) PlaySoundEx(Signal.onTrendChange.SoundUp);
+      if (Signal.onTrendChange.Mail)  SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onTrendChange.SMS)   SendSMS("", message + NL + accountTime);
+      return(!catch("onTrendChange(3)"));
    }
 
    if (trend == MODE_DOWNTREND) {
       message = shortName +" turned down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(4)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onTrendChange.Alert)          Alert(message);
-      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
-      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
-      return(!error);
+      if (Signal.onTrendChange.Alert) Alert(message);
+      if (Signal.onTrendChange.Sound) PlaySoundEx(Signal.onTrendChange.SoundDown);
+      if (Signal.onTrendChange.Mail)  SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onTrendChange.SMS)   SendSMS("", message + NL + accountTime);
+      return(!catch("onTrendChange(5)"));
    }
 
-   return(!catch("onTrendChange(4)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(6)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

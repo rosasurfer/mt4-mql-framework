@@ -298,18 +298,17 @@ bool onCross(int direction) {
    if (GetPropA(hWnd, sEvent) != 0) return(true);
    SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
 
-   string message = "Tunnel crossing "+ ifString(direction==MODE_UPPER_SECTION, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message = "Tunnel signal "+ ifString(direction==MODE_UPPER_SECTION, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    if (IsLogInfo()) logInfo("onCross(2)  "+ message);
 
    message = Symbol() +","+ PeriodDescription() +": "+ message;
    string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-   int error = NO_ERROR;
 
-   if (signal.alert)          Alert(message);
-   if (signal.sound) error  = PlaySoundEx(ifString(direction==MODE_UPPER_SECTION, Signal.Sound.Up, Signal.Sound.Down)); if (error == ERR_FILE_NOT_FOUND) signal.sound = false;
-   if (signal.mail)  error |= !SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   error |= !SendSMS("", message + NL + sAccount);
-   return(!error);
+   if (signal.alert) Alert(message);
+   if (signal.sound) PlaySoundEx(ifString(direction==MODE_UPPER_SECTION, Signal.Sound.Up, Signal.Sound.Down));
+   if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
+   if (signal.sms)   SendSMS("", message + NL + sAccount);
+   return(!catch("onCross(4)"));
 }
 
 

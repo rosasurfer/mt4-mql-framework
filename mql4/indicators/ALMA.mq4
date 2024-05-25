@@ -377,13 +377,12 @@ bool onTrendChange(int direction) {
 
    message = Symbol() +","+ PeriodDescription() +": "+ message;
    string sAccount = "("+ TimeToStr(TimeLocalEx("onTrendChange(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-   int error = NO_ERROR;
 
-   if (signal.alert)          Alert(message);
-   if (signal.sound) error  = PlaySoundEx(ifString(direction==MODE_UPTREND, Signal.Sound.Up, Signal.Sound.Down)); if (error == ERR_FILE_NOT_FOUND) signal.sound = false;
-   if (signal.mail)  error |= !SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   error |= !SendSMS("", message + NL + sAccount);
-   return(!error);
+   if (signal.alert) Alert(message);
+   if (signal.sound) PlaySoundEx(ifString(direction==MODE_UPTREND, Signal.Sound.Up, Signal.Sound.Down));
+   if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
+   if (signal.sms)   SendSMS("", message + NL + sAccount);
+   return(!catch("onTrendChange(4)"));
 }
 
 
