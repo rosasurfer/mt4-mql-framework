@@ -173,7 +173,8 @@
    // other
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
-   bool     IsDebugAccount();
+   bool     IsDebugAccountServer();
+   bool     IsDebugAccountNumber();
    bool     IsDebugEC();
    bool     IsProgramType(int type);
    bool     IsVirtualKeyDown(int vKey);

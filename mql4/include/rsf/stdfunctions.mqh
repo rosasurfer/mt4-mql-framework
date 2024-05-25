@@ -4438,7 +4438,78 @@ string InitReasonDescription(int reason) {
 
 
 /**
- * Return the current account number, with or without a trade server connection.
+ * Rseolve the name of the current account server. Same as the built-in function AccountServer() but can also be used without
+ * a server connection.
+ *
+ * @return string - server/directory name or an empty string in case of errors
+ */
+string GetAccountServer() {
+   // AccountServer() can't be used directly for two reasons:
+   //  - Without server connection it returns an empty value.
+   //  - On account change it reports the new account already during the last tick on old data in the old history directory.
+
+   // synchronize local state with state in the MT4Expander
+   static int lpAccountServer = 0;
+   static string sAccountServer = "";
+   if (__ExecutionContext[EC.accountServer] != lpAccountServer) {
+      lpAccountServer = __ExecutionContext[EC.accountServer];
+      sAccountServer = GetStringA(lpAccountServer);      // the cache allows to call GetStringA() only once
+      //debug("GetAccountServer(0.1)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  fetching changed DLL value "+ DoubleQuoteStr(sAccountServer));
+   }
+
+   if (!lpAccountServer) {
+      static bool isRecursion = false; if (isRecursion) return("");
+      isRecursion = true;                                // prevent recursion in following log messages (the logger tries to read the account config)
+
+      string serverName = AccountServer();
+      if (serverName == "") {
+         if (IsDebugAccountServer()) debug("GetAccountServer(0.2)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  AccountServer()=\"\", scanning history directories...");
+
+         // create temporary file (programs in the UI thread are executed one after another and can use the same file name)
+         string tmpFile = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
+         int hFile = FileOpenHistory(tmpFile, FILE_WRITE|FILE_BIN);
+         if (hFile < 0) {                                // error if the server directory does not exist or write access was denied
+            int error = GetLastError();
+            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                                   catch("GetAccountServer(2)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", error);
+            return("");
+         }
+         FileClose(hFile);
+
+         // search and remove the temporary file
+         serverName = FindHistoryDirectoryA(tmpFile, true);
+         if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find history directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
+
+         //debug("GetAccountServer(0.3)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  result from directory scan is \""+ serverName +"\" => DLL");
+      }
+      else {
+         //debug("GetAccountServer(0.4)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  result from AccountServer() is \""+ serverName +"\" => DLL");
+      }
+      ec_SetAccountServer(__ExecutionContext, serverName);
+      lpAccountServer = __ExecutionContext[EC.accountServer];
+      sAccountServer = serverName;
+
+      isRecursion = false;
+   }
+   return(sAccountServer);
+}
+
+
+/**
+ * Return the full path of the current trade server directory. The function doesn't check whether the directory exists.
+ *
+ * @return string - directory name or an empty string in case of errors
+ */
+string GetAccountServerPath() {
+   string directory  = GetHistoryRootPathA(); if (directory == "")  return("");
+   string serverName = GetAccountServer();    if (serverName == "") return("");
+   return(StringConcatenate(directory, "\\", serverName));
+}
+
+
+/**
+ * Resolve the current account number. Same as the built-in function AccountNumber() but can also be used without a
+ * server connection.
  *
  * @return int - account number or NULL (0) in case of errors
  */
@@ -4458,7 +4529,7 @@ int GetAccountNumber() {
    }
 
    if (!account) {                                                      // evaluate title bar of the main window
-      if (IsDebugAccount()) debug("GetAccountNumber(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  AccountNumber()="+ AccountNumber() +"  ec.accountNumber="+ __ExecutionContext[EC.accountNumber] +", evaluating terminal title bar...");
+      if (IsDebugAccountNumber()) debug("GetAccountNumber(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  AccountNumber()="+ AccountNumber() +"  ec.accountNumber="+ __ExecutionContext[EC.accountNumber] +", evaluating terminal title bar...");
 
       string title = GetInternalWindowTextA(GetTerminalMainWindow());
       if (!StringLen(title))      return(!logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) => \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
@@ -4516,17 +4587,16 @@ string GetAccountAlias(string company="", int account=NULL) {
 /**
  * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
  * characters only. By default the identifier matches the first word of the current tradeserver name. It can be mapped to a
- * different company identifier via section [AccountCompanies] of the global framework configuration.
+ * different identifier via section [AccountCompanies] of the global framework configuration.
  *
  * @return string - company identifier or an empty string in case of errors
  *
  * Example:
  * +--------------------+--------------------+
- * | Tradeserver        | Default identifier |
+ * | Tradeserver        | Default id         |
  * +--------------------+--------------------+
- * | Alpari-Standard1   | Alpari             | Without name mapping all servers have different company identifiers.
+ * | Alpari-Standard1   | Alpari             | Without name mapping all these servers have different company ids.
  * | AlpariBroker-Demo  | AlpariBroker       |
- * | AlpariUK-Classic-1 | AlpariUK           |
  * | AlpariUK-Live2     | AlpariUK           |
  * +--------------------+--------------------+
  *
@@ -4534,7 +4604,7 @@ string GetAccountAlias(string company="", int account=NULL) {
  * [AccountCompanies]
  *  alparibroker   = Alpari                  ; With name mapping different servers can be grouped together.
  *  alpariuk       = Alpari
- *  alpariuk-live2 = AlpariLive              ; A mapped full server name precedes a mapping for a default identifier.
+ *  alpariuk-live2 = AlpariLive              ; A mapped full server name precedes a mapping for a default id.
  */
 string GetAccountCompanyId() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
@@ -4557,135 +4627,6 @@ string GetAccountCompanyId() {
    lastId = GetGlobalConfigString("AccountCompanies", word1, word1);
    lastServer = server;
    return(lastId);
-}
-
-
-/**
- * Rseolve the name of the current account server. Same as the built-in function AccountServer() but can be used without
- * a server connection.
- *
- * @return string - directory name or an empty string in case of errors
- */
-string GetAccountServer() {
-   static int lpAccountServer = 0;
-   static string sAccountServer = "";
-
-   if (__ExecutionContext[EC.accountServer] != lpAccountServer) {
-      lpAccountServer = __ExecutionContext[EC.accountServer];
-      sAccountServer = GetStringA(lpAccountServer);
-   }
-
-
-
-   // begin old invalidation code
-   static int lastTick;
-   if (__ExecutionContext[EC.ticks] == lastTick) {
-      if (StringLen(sAccountServer) > 0) {
-         return(sAccountServer);                // return the same result for the same tick
-      }
-   }
-   if (!__ExecutionContext[EC.validBars]) {
-      lpAccountServer = 0;
-      sAccountServer = "";                      // invalidate the cache
-   }
-   lastTick = __ExecutionContext[EC.ticks];
-   // end old invalidation code
-
-
-
-   if (!lpAccountServer) {
-      static bool isRecursion = false; if (isRecursion) return("");
-      isRecursion = true;                             // logger invocations will try to read the account config and cause recursion
-
-      string serverName = AccountServer();
-
-      if (!StringLen(serverName)) {
-         if (IsDebugAccount()) debug("GetAccountServer(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  ec.accountServer=(null), scanning server directories...");
-
-         // create temporary file (programs in the UI thread are executed one after another and can use the same file name)
-         string tmpFile = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
-         int hFile = FileOpenHistory(tmpFile, FILE_WRITE|FILE_BIN);
-         if (hFile < 0) {                             // error if the server directory does not exist or write access was denied
-            int error = GetLastError();
-            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-            else                                   catch("GetAccountServer(2)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", error);
-            return("");
-         }
-         FileClose(hFile);
-
-         // search and remove the temporary file
-         serverName = FindHistoryDirectoryA(tmpFile, true);
-         if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find server directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
-      }
-      ec_SetAccountServer(__ExecutionContext, serverName);
-      lpAccountServer = __ExecutionContext[EC.accountServer];
-      sAccountServer = serverName;
-
-      isRecursion = false;
-   }
-   return(sAccountServer);
-
-
-   // --- old ---------------------------------------------------------------------------------------------------------------
-   // The resolved server name is cached until a tick signals ValidBars = 0. On account change the built-in account functions
-   // may report the new account already during the last tick of the previous server directory/history data. Only on
-   // ValidBars = 0 is it ensured that the code operates in the new server directory on different history data.
-
-   /*
-   int tick=__ExecutionContext[EC.ticks], validBars=__ExecutionContext[EC.validBars];
-   static int lastTick;
-   static string lastResult;
-
-   if (tick == lastTick) {
-      if (StringLen(lastResult) > 0) {
-         return(lastResult);                          // return the same result for the same tick
-      }
-   }
-   if (!validBars) lastResult = "";                   // invalidate the cache
-
-   if (!StringLen(lastResult)) {
-      static bool isRecursion = false; if (isRecursion) return("");
-      isRecursion = true;                             // logger invocations will try to read the account config => recursion
-
-      string serverName = AccountServer();
-
-      if (!StringLen(serverName)) {
-         if (IsDebugAccount()) debug("GetAccountServer(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  scanning for temporary history file...");
-
-         // create temporary file (programs in the UI thread are executed one after another and may use the same file name)
-         string tmpFile = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
-         int hFile = FileOpenHistory(tmpFile, FILE_WRITE|FILE_BIN);
-         if (hFile < 0) {                             // error if the server directory does not exist or write access was denied
-            int error = GetLastError();
-            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-            else                                   catch("GetAccountServer(2)->FileOpenHistory(\""+ tmpFile +"\", FILE_WRITE)", error);
-            return("");
-         }
-         FileClose(hFile);
-
-         // search and remove the temporary file
-         serverName = FindHistoryDirectoryA(tmpFile, true);
-         if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find server directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
-      }
-
-      lastResult = serverName;
-      isRecursion = false;
-   }
-   lastTick = tick;
-   return(lastResult);
-   */
-}
-
-
-/**
- * Return the full path of the current account/trade server directory. The function doesn't check whether the directory exists.
- *
- * @return string - directory name or an empty string in case of errors
- */
-string GetAccountServerPath() {
-   string directory  = GetHistoryRootPathA(); if (directory == "")  return("");
-   string serverName = GetAccountServer();    if (serverName == "") return("");
-   return(StringConcatenate(directory, "\\", serverName));
 }
 
 
