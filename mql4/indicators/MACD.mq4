@@ -340,7 +340,7 @@ bool onCross(int direction) {
    if (GetPropA(hWnd, sEvent) != 0) return(true);
    SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
 
-   string message = indicatorName +" "+ ifString(direction==MODE_UPPER_SECTION, "above", "below") +" 0 (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message = indicatorName +" "+ ifString(direction==MODE_UPPER_SECTION, "above", "below") +" zero (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    if (IsLogInfo()) logInfo("onCross(2)  "+ message);
 
    message = Symbol() +","+ PeriodDescription() +": "+ message;

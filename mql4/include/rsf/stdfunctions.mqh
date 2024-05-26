@@ -5424,7 +5424,7 @@ string ObjectTypeToStr(int type, int flags = NULL) {
  * @return int - OperationType-Code oder OP_UNDEFINED (-1), wenn der Bezeichner ungültig ist
  */
 int StrToOperationType(string value) {
-   string str = StrToUpper(StrTrim(value));
+   string str = StrToLower(StrTrim(value));
 
    if (StringLen(str) == 1) {
       switch (StrToInteger(str)) {
@@ -5440,24 +5440,24 @@ int StrToOperationType(string value) {
       }
    }
    else {
-      if (StrStartsWith(str, "OP_"))
+      if (StrStartsWith(str, "op_"))
          str = StrSubstr(str, 3);
-      if (str == "BUY"       ) return(OP_BUY      );
-      if (str == "SELL"      ) return(OP_SELL     );
-      if (str == "BUYLIMIT"  ) return(OP_BUYLIMIT );
-      if (str == "BUY LIMIT" ) return(OP_BUYLIMIT );
-      if (str == "BUY-LIMIT" ) return(OP_BUYLIMIT );
-      if (str == "SELLLIMIT" ) return(OP_SELLLIMIT);
-      if (str == "SELL LIMIT") return(OP_SELLLIMIT);
-      if (str == "SELL-LIMIT") return(OP_SELLLIMIT);
-      if (str == "BUYSTOP"   ) return(OP_BUYSTOP  );
-      if (str == "STOP BUY"  ) return(OP_BUYSTOP  );
-      if (str == "STOP-BUY"  ) return(OP_BUYSTOP  );
-      if (str == "SELLSTOP"  ) return(OP_SELLSTOP );
-      if (str == "STOP SELL" ) return(OP_SELLSTOP );
-      if (str == "STOP-SELL" ) return(OP_SELLSTOP );
-      if (str == "BALANCE"   ) return(OP_BALANCE  );
-      if (str == "CREDIT"    ) return(OP_CREDIT   );
+      if (str == "buy"       ) return(OP_BUY      );
+      if (str == "sell"      ) return(OP_SELL     );
+      if (str == "buylimit"  ) return(OP_BUYLIMIT );
+      if (str == "buy limit" ) return(OP_BUYLIMIT );
+      if (str == "buy-limit" ) return(OP_BUYLIMIT );
+      if (str == "selllimit" ) return(OP_SELLLIMIT);
+      if (str == "sell limit") return(OP_SELLLIMIT);
+      if (str == "sell-limit") return(OP_SELLLIMIT);
+      if (str == "buystop"   ) return(OP_BUYSTOP  );
+      if (str == "stop buy"  ) return(OP_BUYSTOP  );
+      if (str == "stop-buy"  ) return(OP_BUYSTOP  );
+      if (str == "sellstop"  ) return(OP_SELLSTOP );
+      if (str == "stop sell" ) return(OP_SELLSTOP );
+      if (str == "stop-sell" ) return(OP_SELLSTOP );
+      if (str == "balance"   ) return(OP_BALANCE  );
+      if (str == "credit"    ) return(OP_CREDIT   );
    }
 
    if (IsLogDebug()) logDebug("StrToOperationType(1)  invalid parameter value: \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
