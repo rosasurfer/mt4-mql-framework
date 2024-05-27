@@ -5975,17 +5975,21 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
             continue;
 
          // map terminal generated errors
-         case ERR_INVALID_TICKET:                 // unknown tickets or not open positions anymore (client-side)                          ! not yet encountered
+         case ERR_INVALID_TICKET:                 // client-side: unknown tickets or not open positions anymore                        ! not yet encountered
             if (IsLogDebug()) logDebug("OrderCloseByEx(30)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
             break;
 
-         case ERR_OFF_QUOTES:                     // positions are locked and in processing queue (server-side) => SL/TP are executed     ! not yet encountered
+         case ERR_OFF_QUOTES:                     // server-side: positions are locked and in processing queue => SL/TP was executed   ! not yet encountered
             if (IsLogDebug()) logDebug("OrderCloseByEx(31)  translating returned ERR_OFF_QUOTES => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
             break;
 
-         case ERR_INVALID_TRADE_PARAMETERS:       // positions are processed and not open anymore (server-side)
+         case ERR_INVALID_TRADE_PARAMETERS:       // server-side: position/s are not open anymore
+            // TODO: handle more gracefully as it's typical when 2 programs try to close the same tickets
+            // 2 cases:
+            //  - one ticket is closed
+            //  - both tickets are closed
             break;
 
          case NO_ERROR:
