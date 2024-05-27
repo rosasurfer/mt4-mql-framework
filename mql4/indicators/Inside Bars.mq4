@@ -111,6 +111,10 @@ int onTick() {
       if (!CopyRates(rates, changedBars, PERIOD_M5)) return(last_error);
    }
 
+   if (!ValidBars) {                         // if the chart changed rates must be marked as changed accordingly
+      changedBars = ArrayRange(rates, 0);    // TODO: find rates offset of the actual change and modify 'changedBars'
+   }
+
    switch (timeframeIB) {
       case PERIOD_M1 :
       case PERIOD_M5 : CheckInsideBars   (rates, changedBars, timeframeIB); break;
@@ -142,14 +146,14 @@ int onAccountChange(int previous, int current) {
 /**
  * Copy the rates of the specified timeframe to the target array and resolve the number of changed bars since the last tick.
  *
- * @param  _Out_ double rates[][]   - array receiving the rates
+ * @param  _Out_ double target[][]  - array receiving the rates
  * @param  _Out_ int    changedBars - variable receiving the number of changed bars
  * @param  _In_  int    timeframe   - rates timeframe
  *
  * @return bool - success status
  */
-bool CopyRates(double &rates[][], int &changedBars, int timeframe) {
-   int changed = iCopyRates(rates, NULL, timeframe);
+bool CopyRates(double &target[][], int &changedBars, int timeframe) {
+   int changed = iCopyRates(target, NULL, timeframe);
    if (changed < 0) return(false);
    changedBars = changed;
    return(true);
@@ -582,6 +586,11 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    datetime chartOpenTime = openTime;
    int chartOffset = iBarShiftNext(NULL, NULL, openTime);         // offset of the first matching chart bar
    if (chartOffset >= 0) chartOpenTime = Time[chartOffset];
+
+   if (chartOpenTime-openTime > Period()*MINUTES) {
+      // No chart data matching the rates[] data yet available: skip the bar, it will be drawn after the next chart update.
+      return(true);
+   }
 
    datetime closeTime   = openTime + timeframe*MINUTES;
    double   barSize     = (high-low);
