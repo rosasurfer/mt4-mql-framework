@@ -2095,43 +2095,6 @@ bool StrStartsWithI(string value, string prefix) {
 
 
 /**
- * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird nicht beachtet.
- *
- * @param  string value  - zu prüfender String
- * @param  string suffix - Substring
- *
- * @return bool
- */
-bool StrEndsWithI(string value, string suffix) {
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StrIsNull(value))  return(false);
-         if (StrIsNull(suffix)) return(!catch("StrEndsWithI(1)  invalid parameter suffix: (NULL)", error));
-      }
-      catch("StrEndsWithI(2)", error);
-   }
-
-   int lenValue = StringLen(value);
-   int lenSuffix = StringLen(suffix);
-
-   if (lenSuffix == 0)          return(!catch("StrEndsWithI(3)  illegal parameter suffix: \"\"", ERR_INVALID_PARAMETER));
-
-   if (lenValue < lenSuffix)
-      return(false);
-
-   value = StrToUpper(value);
-   suffix = StrToUpper(suffix);
-
-   if (lenValue == lenSuffix)
-      return(value == suffix);
-
-   int start = lenValue-lenSuffix;
-   return(StringFind(value, suffix, start) == start);
-}
-
-
-/**
  * Whether a string consists of digits only.
  *
  * @param  string value
@@ -6799,7 +6762,6 @@ void __DummyCalls() {
    StrContains(NULL, NULL);
    StrContainsChars(NULL, iNulls);
    StrContainsI(NULL, NULL);
-   StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
    stringOr(NULL, NULL);
    StrIsDigits(NULL);

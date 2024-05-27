@@ -25,6 +25,34 @@
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - journal
+ *     logging trades is too time consuming: let Account Guard log all details
+ *     focus on written journal
+ *
+ *  - Account Guard:
+ *     log complete trade/position details for the journal to logfile
+ *     display runtime errors on screen
+ *     delete pending orders on prohibited symbols
+ *     enable trading if disabled
+ *     bug when a hedged position is closed elsewhere (sees a different position and may trigger DDL => error)
+ *      local
+ *       18:39:38.120  order buy market 0.02 BTCUSD sl: 0.00 tp: 0.00                                 (manual)
+ *       18:39:38.415  order was opened : #561128139 buy 0.02 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
+ *       ...
+ *       18:39:49.825  Script CloseOrders BTCUSD,M5: loaded successfully                              (script)
+ *       18:39:56.555  close order #561117926 sell 0.01 BTCUSD at 68882.72 sl: 0.00 tp: 0.00 by order #561126725 buy 0.01 BTCUSD at 69972.15 sl: 0.00 tp: 0.00
+ *       18:39:56.829  rsfStdlib: order #561117926 was closed by order #561126725
+ *       18:39:56.848  close order #561127602 sell 0.01 BTCUSD at 69808.17 sl: 0.00 tp: 0.00 by order #561128139 buy 0.02 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
+ *       18:39:57.130  rsfStdlib: order #561127602 was closed by order #561128139
+ *    -> 18:39:57.130  remainder of order #561127602 was opened : #561128149 buy 0.01 BTCUSD at 70323.78 sl: 0.00 tp: 0.00                                  => triggers remote error
+ *       18:39:57.144  close order #561127605 sell 0.01 BTCUSD at 69795.76 sl: 0.00 tp: 0.00 by order #561128149 buy 0.01 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
+ *       18:39:57.374  rsfStdlib: order #561127605 was closed by order #561128149
+ *      remote
+ *    -> 18:39:57.252  WARN   Account Guard::onTick(8)  BTCUSD: drawdown limit of -23.8% reached, liquidating positions...
+ *       18:39:57.268         Account Guard::rsfStdlib::OrdersCloseSameSymbol(16)  closing 2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
+ *       18:39:57.268         Account Guard::rsfStdlib::OrdersHedge(13)  2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01} are already flat
+ *       18:39:57.268         Account Guard::rsfStdlib::OrdersCloseHedged(15)  closing 2 hedged BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
+ *       18:39:57.487  FATAL  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #561127605 by #561128149 after 0.219 s  [ERR_INVALID_TRADE_PARAMETERS]
+ *
  *
  *  - on account change to a new server
  *     rewrite core functions and Expander, remove onAccountChange()
@@ -37,10 +65,6 @@
  *      - 39 calls of GetAccountServer(0.1)  scanning server directories...
  *         indicator only:    ChartInfos::GetAccountServer(0.1)
  *         indicator+library: Grid::rsfStdlib::GetAccountServer(0.1)
- *
- *
- *  - Account Guard:
- *     enable trading if disabled
  *
  *  - monitor and signal 3 lower H1 closes in a row => always significant swing to the upside
  *
@@ -175,8 +199,8 @@
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "Today 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *
- *  - sound.cpp::PlaySoundW(171)  ERROR: mciSendString(play "E:\Trading\MetaTrader\S5\sounds\MarginLow.wav" from 0) => MCIERR_WAVE_OUTPUTSINUSE  [ERR_RUNTIME_ERROR]
- *                                FATAL  US30,M5  ChartInfos::start(8)  DLL error  [ERR_RUNTIME_ERROR]
+ *  - sound.cpp::PlaySoundW(171)  ERROR: mciSendString(play "E:\Trading\MetaTrader\S5\sounds\MarginLow.wav" from 0)  [mci:MCIERR_WAVE_OUTPUTSINUSE]
+ *                                FATAL  US30,M5  ChartInfos::start(8)  DLL error  [mci:MCIERR_WAVE_OUTPUTSINUSE]
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT

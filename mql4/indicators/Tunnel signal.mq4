@@ -25,7 +25,6 @@
  *     add parameter stepping
  *
  *  - Inside Bars
- *     fix update error on terminal start/after data pumping
  *     prevent signaling of duplicated events
  *
  *  - SuperBars

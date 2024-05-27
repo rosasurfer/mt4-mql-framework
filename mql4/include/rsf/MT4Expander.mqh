@@ -122,6 +122,7 @@
    //bool   SortMqlStringsA(string values[], int size);
    bool     StrCompare(string s1, string s2);
    bool     StrEndsWith(string str, string suffix);
+   bool     StrEndsWithI(string str, string suffix);
    bool     StrIsNull(string str);
    bool     StrStartsWith(string str, string prefix);
    string   StringToStr(string str);
