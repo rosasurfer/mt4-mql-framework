@@ -20,17 +20,9 @@
  *
  * TODO:
  *  - enable trading if disabled
+ *     MetaTrader WARN   BTCUSD,M15  Account Guard::onTick(8)  BTCUSD: drawdown limit of -21.7% reached, liquidating positions...
+ *     MetaTrader FATAL  BTCUSD,M15  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #560866538 by #560870050 after 0.000 s  [ERR_TRADE_DISABLED]
  */
-
-/*
-MetaTrader INFO   BTCUSD,M15  Account Guard::onTick(7)  watching BTCUSD position, ddl=-29.63
-MetaTrader WARN   BTCUSD,M15  Account Guard::onTick(8)  BTCUSD: drawdown limit of -21.7% reached, liquidating positions...
-MetaTrader        BTCUSD,M15  Account Guard::rsfStdlib::OrdersCloseSameSymbol(16)  closing 9 BTCUSD positions {#560866538:+0.02, #560866540:+0.02, #560866610:+0.02, #560866630:+0.02, #560866692:+0.01, #560866764:+0.01, #560867538:+0.01, #560868424:+0.01, #560870050:-0.12}
-MetaTrader        BTCUSD,M15  Account Guard::rsfStdlib::OrdersHedge(13)  9 BTCUSD positions {#560866538:+0.02, #560866540:+0.02, #560866610:+0.02, #560866630:+0.02, #560866692:+0.01, #560866764:+0.01, #560867538:+0.01, #560868424:+0.01, #560870050:-0.12} are already flat
-MetaTrader        BTCUSD,M15  Account Guard::rsfStdlib::OrdersCloseHedged(15)  closing 9 hedged BTCUSD positions {#560866538:+0.02, #560866540:+0.02, #560866610:+0.02, #560866630:+0.02, #560866692:+0.01, #560866764:+0.01, #560867538:+0.01, #560868424:+0.01, #560870050:-0.12}
-MetaTrader FATAL  BTCUSD,M15  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #560866538 by #560870050 after 0.000 s  [ERR_TRADE_DISABLED]
-*/
-
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];

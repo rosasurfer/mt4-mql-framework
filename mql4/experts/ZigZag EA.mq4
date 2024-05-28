@@ -24,12 +24,8 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - journal
- *     logging trades is too time consuming: let Account Guard log all details
- *     focus on written journal
- *
  *  - Account Guard:
- *     log complete trade/position details for the journal to logfile
+ *     log all trade details to logfile (manual logging is too time consuming)
  *     display runtime errors on screen
  *     delete pending orders on prohibited symbols
  *     enable trading if disabled
@@ -38,7 +34,7 @@
  *       18:39:38.120  order buy market 0.02 BTCUSD sl: 0.00 tp: 0.00                                 (manual)
  *       18:39:38.415  order was opened : #561128139 buy 0.02 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
  *       ...
- *       18:39:49.825  Script CloseOrders BTCUSD,M5: loaded successfully                              (script)
+ *       18:39:49.825  Script CloseOrders BTCUSD,M5: loaded successfully
  *       18:39:56.555  close order #561117926 sell 0.01 BTCUSD at 68882.72 sl: 0.00 tp: 0.00 by order #561126725 buy 0.01 BTCUSD at 69972.15 sl: 0.00 tp: 0.00
  *       18:39:56.829  rsfStdlib: order #561117926 was closed by order #561126725
  *       18:39:56.848  close order #561127602 sell 0.01 BTCUSD at 69808.17 sl: 0.00 tp: 0.00 by order #561128139 buy 0.02 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
@@ -66,7 +62,7 @@
  *         indicator only:    ChartInfos::GetAccountServer(0.1)
  *         indicator+library: Grid::rsfStdlib::GetAccountServer(0.1)
  *
- *  - monitor and signal 3 lower H1 closes in a row => always significant swing to the upside
+ *  - monitor and signal 3 lower H1 closes in a row => potential swing up
  *
  *  - realtime equity charts
  *     don't find out afterwards what has happened in the account

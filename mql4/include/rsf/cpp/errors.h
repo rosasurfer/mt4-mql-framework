@@ -212,8 +212,8 @@
 #define ERR_STOP_DISTANCE_VIOLATED                                65559    // stop or limit price violates the broker's stop distance
 #define ERR_MARGIN_STOPOUT                                        65560    // margin stopout
 
-// mapped win32 errors: error = win32-base-error + actual win32-error
+// mapped win32 errors: error = ERR_WIN32_ERROR + actual win32-error
 #define ERR_WIN32_ERROR                                          100000    // win32:0 => ERROR_SUCCESS
 
-// mapped MCI errors:   error = mci-base-error + actual mci-error
+// mapped MCI errors: error = ERR_MCI_ERROR + actual mci-error
 #define ERR_MCI_ERROR                                            200000    // mci:0 => no error

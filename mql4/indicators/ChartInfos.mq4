@@ -1,7 +1,7 @@
 /**
  * ChartInfos
  *
- * This indicator displays various market data, trade statistics and account infos on the chart.
+ * This indicator displays various market data, trade statistics and account infos in the chart.
  *
  *  - The current price and spread.
  *  - The current instrument name (only in terminals <= build 509).
@@ -20,7 +20,7 @@
  */
 
 /*
-Nach Ausschalten des Laptops per On/Off-Button wurde in 3 von 6 Charts deinit() nicht ausgeführt
+Nach Ausschalten des Laptops via Power-Button wurde in 3 von 6 Charts deinit() nicht ausgeführt
 ------------------------------------------------------------------------------------------------
 MetaTrader FATAL  BTCUSD,M1  ChartInfos::ObjectCreateRegister(2)  name="ChartInfos.CustomPosition.line1_col0", type=OBJ_LABEL, window=0  [ERR_OBJECT_ALREADY_EXISTS]
 MetaTrader FATAL  BTCUSD,M1  ChartInfos::ObjectCreateRegister(2)  name="ChartInfos.CustomPosition.line1_col0", type=OBJ_LABEL, window=0  [ERR_OBJECT_ALREADY_EXISTS]
