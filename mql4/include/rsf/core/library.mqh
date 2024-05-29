@@ -54,7 +54,7 @@ int init() {
    Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PriceFormat = ",'R."+ PipDigits + ifString(digits==PipDigits, "", "'");    // TODO: in library::deinit() global strings are already destroyed
 
-   if (digits > 2 || Close[0] < 1000) {
+   if (digits > 2 || Close[0] < 20) {
       pUnit   = Pip;
       pDigits = 1;                                          // always represent pips with subpips
       spUnit  = "pip";

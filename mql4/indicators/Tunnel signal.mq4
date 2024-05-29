@@ -3,7 +3,19 @@
  *
  *
  * TODO:
+ *  - MACD
+ *     signals at terminal startup
+ *
+ *  - Inside Bars
+ *     prevent double-signaling of parallel events
+ *
  *  - merge bufferMain[] and bufferTrend[]
+ *
+ *  - CloseOrders
+ *     Bybit: add config for IsDemoFix() and use it everywhere
+ *     support ticket numbers from chart objects (order arrows)
+ *     support deletion of TP/SL limits
+ *     error when position is hedged and pending orders exist
  *
  *  - ChartInfos
  *     unitsize configuration: manual leverage doesn't work (limits to 10% risk)
@@ -24,17 +36,8 @@
  *  - Moving Average, MACD
  *     add parameter stepping
  *
- *  - Inside Bars
- *     prevent signaling of duplicated events
- *
  *  - SuperBars
  *     detect weekend sessions and remove config [SuperBars]->Weekend.Symbols
- *
- *  - CloseOrders
- *     Bybit: add config for IsDemoFix() and use it everywhere
- *     support ticket numbers from chart objects (order arrows)
- *     support deletion of TP/SL limits
- *     error when position is hedged and pending orders exist
  *
  *  - iCustom(): limit calculated bars in online charts
  *  - Bybit: adjust slippage to prevent ERR_OFF_QUOTES (dealing desk)

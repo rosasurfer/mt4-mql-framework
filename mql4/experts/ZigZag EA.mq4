@@ -25,10 +25,10 @@
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - Account Guard:
- *     log all trade details to logfile (manual logging is too time consuming)
- *     display runtime errors on screen
  *     delete pending orders on prohibited symbols
  *     enable trading if disabled
+ *     display runtime errors on screen
+ *     log trade details to logfile (manual logging is too time consuming)
  *     bug when a hedged position is closed elsewhere (sees a different position and may trigger DDL => error)
  *      local
  *       18:39:38.120  order buy market 0.02 BTCUSD sl: 0.00 tp: 0.00                                 (manual)

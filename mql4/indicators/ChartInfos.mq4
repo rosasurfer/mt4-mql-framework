@@ -4500,8 +4500,8 @@ bool onPositionOpen(double data[][]) {
    OrderPush();
    for (int i=0; i < size; i++) {
       if (!SelectTicket(data[i][TICKET], "onPositionOpen(1)")) return(false);
-      if (OrderType() > OP_SELL)                               continue;      // skip pending orders (should not happen)
-      if (OrderMagicNumber() != 0)                             continue;      // skip orders managed by an EA (should not happen)
+      if (OrderType() > OP_SELL)   continue;                // skip pending orders (should not happen)
+      if (OrderMagicNumber() != 0) continue;                // skip orders managed by an EA (should not happen)
 
       bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
@@ -4510,29 +4510,40 @@ bool onPositionOpen(double data[][]) {
          string event = "PositionOpen::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
+            eventLogged = SetOrderEventLogged(event, true); // immediately update status to prevent parallel execution on slow CPUs
+
             // #1 Sell 0.1 GBPUSD "L.8692.+3" at 1.5524'8[ instead of 1.5522'0 (better|worse: -2.8 pip)]
-            string sType       = OperationTypeDescription(OrderType());
-            string sLots       = NumberToStr(OrderLots(), ".+");
-            string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
             int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
             int    pipDigits   = digits & (~1);
             string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
-            string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-            double slippage    = NormalizeDouble(ifDouble(OrderType()==OP_BUY, data[i][ENTRYLIMIT]-OrderOpenPrice(), OrderOpenPrice()-data[i][ENTRYLIMIT]), digits);
+
+            if (digits > 2 || OrderOpenPrice() < 20) {      // local vars overlay global vars
+               double pUnit   = Pip;
+               int    pDigits = 1;
+               string spUnit  = " pip";
+            }
+            else {
+               pUnit   = 1.00;
+               pDigits = 2;
+               spUnit  = "";
+            }
+
+            string sType    = OperationTypeDescription(OrderType());
+            string sLots    = NumberToStr(OrderLots(), ".+");
+            string sComment = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
+            string sPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
+            double slippage = NormalizeDouble(ifDouble(OrderType()==OP_BUY, data[i][ENTRYLIMIT]-OrderOpenPrice(), OrderOpenPrice()-data[i][ENTRYLIMIT]), digits);
             if (NE(slippage, 0)) {
-               sPrice = sPrice +" instead of "+ NumberToStr(data[i][ENTRYLIMIT], priceFormat) +" ("+ ifString(GT(slippage, 0), "better", "worse") +": "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
+               sPrice = sPrice +" instead of "+ NumberToStr(data[i][ENTRYLIMIT], priceFormat) +" ("+ ifString(GT(slippage, 0), "better", "worse") +": "+ NumberToStr(slippage/pUnit, "+."+ pDigits) + spUnit +")";
             }
             string message = "#"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" at "+ sPrice;
             logInfo("onPositionOpen(2)  "+ message);
-            eventLogged = SetOrderEventLogged(event, true);
+            PlaySoundEx(orderTracker.positionOpened);
          }
       }
    }
    OrderPop();
 
-   if (eventLogged && Track.Orders) {
-      return(!PlaySoundEx(orderTracker.positionOpened));
-   }
    return(!catch("onPositionOpen(3)"));
 }
 
@@ -4554,9 +4565,9 @@ bool onPositionClose(int data[][]) {
 
    for (int i=0; i < size; i++) {
       if (!SelectTicket(data[i][TICKET], "onPositionClose(1)")) return(false);
-      if (OrderType() > OP_SELL)                                continue;     // skip pending orders (should not happen)
-      if (!OrderCloseTime())                                    continue;     // skip open positions (should not happen)
-      if (OrderMagicNumber() != 0)                              continue;     // skip orders managed by an EA (should not happen)
+      if (OrderType() > OP_SELL)   continue;                // skip pending orders (should not happen)
+      if (!OrderCloseTime())       continue;                // skip open positions (should not happen)
+      if (OrderMagicNumber() != 0) continue;                // skip orders managed by an EA (should not happen)
 
       bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
@@ -4565,20 +4576,34 @@ bool onPositionClose(int data[][]) {
          string event = "PositionClose::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
+            eventLogged = SetOrderEventLogged(event, true); // immediately update status to prevent parallel execution on slow CPUs
+
             // #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 at 1.5534'4[ instead of 1.5532'2 (better|worse: -2.8 pip)] [tp]
-            string sType       = OperationTypeDescription(OrderType());
-            string sLots       = NumberToStr(OrderLots(), ".+");
-            string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
             int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
             int    pipDigits   = digits & (~1);
             string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
+
+            if (digits > 2 || OrderOpenPrice() < 20) {      // local vars overlay global vars
+               double pUnit   = Pip;
+               int    pDigits = 1;
+               string spUnit  = " pip";
+            }
+            else {
+               pUnit   = 1.00;
+               pDigits = 2;
+               spUnit  = "";
+            }
+
+            string sType       = OperationTypeDescription(OrderType());
+            string sLots       = NumberToStr(OrderLots(), ".+");
+            string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
             string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
             string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
             double slippage    = 0;
             if      (data[i][CLOSETYPE] == CLOSE_TAKEPROFIT) slippage = NormalizeDouble(ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderTakeProfit(), OrderTakeProfit()-OrderClosePrice()), digits);
             else if (data[i][CLOSETYPE] == CLOSE_STOPLOSS)   slippage = NormalizeDouble(ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderStopLoss(),   OrderStopLoss()-OrderClosePrice()),   digits);
             if (NE(slippage, 0)) {
-               sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(data[i][CLOSETYPE]==CLOSE_TAKEPROFIT, OrderTakeProfit(), OrderStopLoss()), priceFormat) +" ("+ ifString(GT(slippage, 0), "better", "worse") +": "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
+               sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(data[i][CLOSETYPE]==CLOSE_TAKEPROFIT, OrderTakeProfit(), OrderStopLoss()), priceFormat) +" ("+ ifString(GT(slippage, 0), "better", "worse") +": "+ NumberToStr(slippage/pUnit, "+."+ pDigits) + spUnit +")";
             }
             string sCloseType = sCloseTypeDescr[data[i][CLOSETYPE]];
             if (data[i][CLOSETYPE] == CLOSE_STOPOUT) {
@@ -4587,14 +4612,12 @@ bool onPositionClose(int data[][]) {
             }
             string message = "#"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" from "+ sOpenPrice +" at "+ sClosePrice + sCloseType;
             logInfo("onPositionClose(2)  "+ message);
-            eventLogged = SetOrderEventLogged(event, true);
+            PlaySoundEx(orderTracker.positionClosed);
          }
       }
    }
    OrderPop();
 
-   if (eventLogged && Track.Orders)
-      return(!PlaySoundEx(orderTracker.positionClosed));
    return(!catch("onPositionClose(3)"));
 }
 
@@ -4623,23 +4646,24 @@ bool onOrderFail(int tickets[]) {
          string event = "OrderFail::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
-            string sType       = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
-            string sLots       = NumberToStr(OrderLots(), ".+");
+            eventLogged = SetOrderEventLogged(event, true);                // immediately update status to prevent parallel execution on slow CPUs
+
             int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
             int    pipDigits   = digits & (~1);
             string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-            string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-            string sError      = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", " (unknown error)");
-            string message     = "order failed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + sError;
+
+            string sType   = OperationTypeDescription(OrderType() & 1);    // BuyLimit => Buy, SellStop => Sell...
+            string sLots   = NumberToStr(OrderLots(), ".+");
+            string sPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
+            string sError  = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", " (unknown error)");
+            string message = "order failed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + sError;
             logWarn("onOrderFail(2)  "+ message);
-            eventLogged = SetOrderEventLogged(event, true);
+            PlaySoundEx(orderTracker.orderFailed);
          }
       }
    }
    OrderPop();
 
-   if (eventLogged && Track.Orders)
-      return(!PlaySoundEx(orderTracker.orderFailed));
    return(!catch("onOrderFail(3)"));
 }
 

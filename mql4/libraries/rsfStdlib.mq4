@@ -5072,13 +5072,24 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
  *
  * @return string
  */
-string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+string OrderSendEx.SuccessMsg(int oe[]) {
    // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8[ instead of 1.5522'0], sl=1.5500'0, tp=1.5600'0 (slippage: -2.8 pip, market: Bid/Ask) after 0.345 s and 1 requote
 
    int    digits      = MathMax(oe.Digits(oe), 2);
    int    pipDigits   = digits & (~1);
    double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
+
+   if (digits > 2 || oe.OpenPrice(oe) < 20) {   // local vars overlay global vars
+      double pUnit   = Pip;
+      int    pDigits = 1;
+      string spUnit  = " pip";
+   }
+   else {
+      pUnit   = 1.00;
+      pDigits = 2;
+      spUnit  = "";
+   }
 
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
@@ -5091,8 +5102,7 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) {
          sPrice    = sPrice +" instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat);
-         if (digits > 2) sSlippage = NumberToStr(slippage/pip, "+."+ (digits & 1)) +" pip";
-         else            sSlippage = NumberToStr(slippage, "+"+ priceFormat);
+         sSlippage = NumberToStr(slippage/pUnit, "+."+ pDigits) + spUnit;
          sSlippage = "slippage: "+ sSlippage +", ";
       }
    string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice;
@@ -5661,6 +5671,17 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
 
+   if (digits > 2 || oe.OpenPrice(oe) < 20) {      // local vars overlay global vars
+      double pUnit   = Pip;
+      int    pDigits = 1;
+      string spUnit  = " pip";
+   }
+   else {
+      pUnit   = 1.00;
+      pDigits = 2;
+      spUnit  = "";
+   }
+
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string symbol      = oe.Symbol(oe);
@@ -5674,8 +5695,7 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) {
          sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(!oe.Type(oe), oe.Bid(oe), oe.Ask(oe)), priceFormat);
-         if (digits > 2) sSlippage = NumberToStr(slippage/pip, "+."+ (digits & 1)) +" pip";
-         else            sSlippage = NumberToStr(slippage, "+."+ priceFormat);
+         sSlippage   = NumberToStr(slippage/pUnit, "+."+ pDigits) + spUnit;
          sSlippage   = "slippage: "+ sSlippage +", ";
       }
    int  remainder = oe.RemainingTicket(oe);
