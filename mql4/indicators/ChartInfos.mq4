@@ -18,15 +18,6 @@
  *  - set order tracker sound on stopout to "margin-call"
  *  - order events during chart change (symbol/timeframe) are not detected
  */
-
-/*
-Nach Ausschalten des Laptops via Power-Button wurde in 3 von 6 Charts deinit() nicht ausgeführt
-------------------------------------------------------------------------------------------------
-MetaTrader FATAL  BTCUSD,M1  ChartInfos::ObjectCreateRegister(2)  name="ChartInfos.CustomPosition.line1_col0", type=OBJ_LABEL, window=0  [ERR_OBJECT_ALREADY_EXISTS]
-MetaTrader FATAL  BTCUSD,M1  ChartInfos::ObjectCreateRegister(2)  name="ChartInfos.CustomPosition.line1_col0", type=OBJ_LABEL, window=0  [ERR_OBJECT_ALREADY_EXISTS]
-MetaTrader FATAL  BTCUSD,M1  ChartInfos::ObjectCreateRegister(2)  name="ChartInfos.CustomPosition.line1_col0", type=OBJ_LABEL, window=0  [ERR_OBJECT_ALREADY_EXISTS]
-*/
-
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
@@ -1234,7 +1225,7 @@ bool UpdateUnitSize() {
 
 
 /**
- * Update detailed PnL stats (bottom-left) and total open position (bottom-right).
+ * Update total open position (bottom-right) and detailed PnL stats (bottom-left).
  *
  * @return bool - success status
  */
@@ -1339,10 +1330,11 @@ bool UpdatePositions() {
       xPrev = 0;
       yDist = yStart + (lines-1)*(positions.fontSize+8);
 
+      // test existence of labels again (on terminal shutdown via power button deinit() is not always executed)
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
          xDist = xPrev + xOffset[col];
-         if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
+         if (ObjectFind(label) == -1) /*&&*/ if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
          ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
          ObjectSet(label, OBJPROP_XDISTANCE, xDist);
          ObjectSet(label, OBJPROP_YDISTANCE, yDist);
@@ -1350,13 +1342,13 @@ bool UpdatePositions() {
          xPrev = xDist;
       }
       label = StringConcatenate(label.customPosition, ".line", lines, "_bem");
-      if (!ObjectCreateRegister(label, OBJ_HLINE)) return(false);
+      if (ObjectFind(label) == -1) /*&&*/ if (!ObjectCreateRegister(label, OBJ_HLINE)) return(false);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       label = StringConcatenate(label.customPosition, ".line", lines, "_pm");
-      if (!ObjectCreateRegister(label, OBJ_HLINE)) return(false);
+      if (ObjectFind(label) == -1) /*&&*/ if (!ObjectCreateRegister(label, OBJ_HLINE)) return(false);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       label = StringConcatenate(label.customPosition, ".line", lines, "_lm");
-      if (!ObjectCreateRegister(label, OBJ_HLINE)) return(false);
+      if (ObjectFind(label) == -1) /*&&*/ if (!ObjectCreateRegister(label, OBJ_HLINE)) return(false);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
 
