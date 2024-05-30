@@ -190,7 +190,7 @@ bool RecordEquity() {
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
       if (!hSet[i]) {
-         string symbol      = StrLeft(GetAccountNumber(), 8) + symbolSuffixes[i];
+         string symbol = StrLeft(GetAccountNumber(), 8) + symbolSuffixes[i];
          string description = StrReplace(symbolDescriptions[i], "{account-number}", GetAccountNumber());
 
          hSet[i] = HistorySet1.Get(symbol, historyDirectory);

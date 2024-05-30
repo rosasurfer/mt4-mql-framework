@@ -25,6 +25,7 @@
    int    ec_SetProgramCoreFunction(int ec[], int id);
    int    ec_SetRecorder           (int ec[], int mode);
    string ec_SetAccountServer      (int ec[], string server);
+   int    ec_SetAccountNumber      (int ec[], int number);
    int    ec_SetDllError           (int ec[], int error);
    int    ec_SetMqlError           (int ec[], int error);
    int    ec_SetLoglevel           (int ec[], int level);

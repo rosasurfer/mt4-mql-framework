@@ -4404,7 +4404,7 @@ string InitReasonDescription(int reason) {
 
 
 /**
- * Rseolve the name of the current account server. Same as the built-in function AccountServer() but can also be used without
+ * Resolve the name of the current account server. Same as the built-in function AccountServer() but can also be used without
  * a server connection.
  *
  * @return string - server/directory name or an empty string in case of errors
@@ -4419,13 +4419,13 @@ string GetAccountServer() {
    static string sAccountServer = "";
    if (__ExecutionContext[EC.accountServer] != lpAccountServer) {
       lpAccountServer = __ExecutionContext[EC.accountServer];
-      sAccountServer = GetStringA(lpAccountServer);      // the cache allows to call GetStringA() only once
+      sAccountServer = GetStringA(lpAccountServer);      // the cache allows to call GetString() only once
       //debug("GetAccountServer(0.1)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  fetching changed DLL value "+ DoubleQuoteStr(sAccountServer));
    }
 
    if (!lpAccountServer) {
       static bool isRecursion = false; if (isRecursion) return("");
-      isRecursion = true;                                // prevent recursion in following log messages (the logger tries to read the account config)
+      isRecursion = true;                                // prevent recursion in the log messages (the logger tries to read the account config)
 
       string serverName = AccountServer();
       if (serverName == "") {
@@ -4480,37 +4480,43 @@ string GetAccountServerPath() {
  * @return int - account number or NULL (0) in case of errors
  */
 int GetAccountNumber() {
-   // In tester the account number is cached.
-   // No cache if online, otherwise account changes can't get detected.
+   // AccountNumber() can't be used directly for two reasons:
+   //  - Without server connection it returns online 0 (zero) and in tester 0x4000 (16384).
+   //  - On account change it reports the new account already during the last tick on old data in the old history directory.
 
-   static int testAccount;
-   if (testAccount != 0) return(testAccount);
+   int accountNumber = __ExecutionContext[EC.accountNumber];
 
-   int account = AccountNumber();
+   if (!accountNumber) {
+      static bool isRecursion = false; if (isRecursion) return(NULL);
+      isRecursion = true;                                // prevent recursion in the log messages (the logger tries to read the account config)
 
-   if (account == 0x4000) {                                             // in tester without server connection
-      if (!__isTesting) return(!catch("GetAccountNumber(1)->AccountNumber()  unexpected account number: "+ account +" (0x4000)", ERR_RUNTIME_ERROR));
-      account = 0;
+      // resolve account number
+      accountNumber = AccountNumber();
+      if (accountNumber == 0x4000) {                     // in tester without server connection
+         if (!__isTesting) return(!catch("GetAccountNumber(1)->AccountNumber()  unexpected account number: 0x4000 (16384)", ERR_ILLEGAL_STATE));
+         accountNumber = 0;
+      }
+
+      // evaluate title bar of the main window
+      if (!accountNumber) {
+         if (IsDebugAccountNumber()) debug("GetAccountNumber(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  AccountNumber()="+ AccountNumber() +"  ec.accountNumber="+ __ExecutionContext[EC.accountNumber] +", evaluating terminal title bar...");
+
+         string title = GetInternalWindowTextA(GetTerminalMainWindow());
+         if (!StringLen(title)) return(!logInfo("GetAccountNumber(2)->GetInternalWindowText(hWndMain) => \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
+         int pos = StringFind(title, ":");
+         if (pos < 1) return(!catch("GetAccountNumber(3)  account number separator not found in main title bar: \""+ title +"\"", ERR_RUNTIME_ERROR));
+
+         string sValue = StrLeft(title, pos);
+         if (!StrIsDigits(sValue)) return(!catch("GetAccountNumber(4)  account number in main title bar contains non-digits: \""+ title +"\"", ERR_RUNTIME_ERROR));
+
+         accountNumber = StrToInteger(sValue);
+      }
+      ec_SetAccountNumber(__ExecutionContext, accountNumber);
+
+      isRecursion = false;
    }
-
-   if (!account) {                                                      // evaluate title bar of the main window
-      if (IsDebugAccountNumber()) debug("GetAccountNumber(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  AccountNumber()="+ AccountNumber() +"  ec.accountNumber="+ __ExecutionContext[EC.accountNumber] +", evaluating terminal title bar...");
-
-      string title = GetInternalWindowTextA(GetTerminalMainWindow());
-      if (!StringLen(title))      return(!logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) => \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
-      int pos = StringFind(title, ":");
-      if (pos < 1)                return(!catch("GetAccountNumber(3)  account number separator not found in main title bar: \""+ title +"\"", ERR_RUNTIME_ERROR));
-
-      string strValue = StrLeft(title, pos);
-      if (!StrIsDigits(strValue)) return(!catch("GetAccountNumber(4)  account number in main title bar contains non-digits: \""+ title +"\"", ERR_RUNTIME_ERROR));
-
-      account = StrToInteger(strValue);
-   }
-
-   if (__isTesting) testAccount = account;
-
-   return(account);
+   return(accountNumber);
 }
 
 
@@ -6849,6 +6855,7 @@ void __DummyCalls() {
 
 #import "rsfMT4Expander.dll"
    string   ec_ProgramName(int ec[]);
+   int      ec_SetAccountNumber(int ec[], int number);
    string   ec_SetAccountServer(int ec[], string server);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[]);

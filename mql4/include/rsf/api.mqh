@@ -740,6 +740,7 @@ bool     DeleteIniKeyA(string fileName, string section, string key);;
 bool     DeleteIniSectionA(string fileName, string section);;
 int      DoubleExp(double value);;
 string   ec_ProgramName           (int &ec[]);;
+int      ec_SetAccountNumber      (int &ec[], int number);
 string   ec_SetAccountServer      (int &ec[], string server);;
 int      ec_SetDllError           (int &ec[], int error);;
 int      ec_SetLoglevel           (int &ec[], int level);;

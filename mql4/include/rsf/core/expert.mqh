@@ -101,9 +101,8 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
    }
 
-   // resolve init reason and account number
+   // resolve init reason
    int initReason = ProgramInitReason();
-   int account = GetAccountNumber(); if (!account) return(_last_error(CheckErrors("init(12)")));
    string initHandlers[] = {"", "initUser", "initTemplate", "", "", "initParameters", "initTimeframeChange", "initSymbolChange", "initRecompile"};
 
    if (__isTesting) {
@@ -120,7 +119,7 @@ int init() {
    }
    else if (UninitializeReason() != UR_CHARTCHANGE) {             // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
-         msg = initHandlers[initReason] +"(0)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
+         msg = initHandlers[initReason] +"(0)  "+ GetAccountServer() +", account "+ GetAccountNumber() +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
          logInfo(StrRepeat(":", StringLen(msg)));
          logInfo(msg);
       }
@@ -163,7 +162,7 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break; //
          case IR_TERMINAL_FAILURE:                                         //
          default:                                                          //
-            return(_last_error(CheckErrors("init(13)  unsupported initReaso"+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(12)  unsupported initReaso"+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
@@ -171,14 +170,14 @@ int init() {
    if (!error && !__STATUS_OFF)                                            //
       afterInit();                                                         // postprocessing hook
 
-   if (CheckErrors("init(14)")) return(last_error);
+   if (CheckErrors("init(13)")) return(last_error);
    ShowStatus(last_error);
 
    // setup virtual ticks
    if (__virtualTicks && !__isTesting) {
       int hWnd = __ExecutionContext[EC.chart];
       __tickTimerId = SetupTickTimer(hWnd, __virtualTicks, NULL);
-      if (!__tickTimerId) return(catch("init(15)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!__tickTimerId) return(catch("init(14)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
