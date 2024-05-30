@@ -115,8 +115,8 @@ window_num=0
 <inputs>
 MA.Periods=38
 MA.ReversalFilter=0.1
-Draw.Type=Line | Dot*
-Draw.Width=5
+Draw.Type=Line* | Dot
+Draw.Width=6
 Color.UpTrend=16711680
 Color.DownTrend=16776960
 ShowChartLegend=1
@@ -148,7 +148,7 @@ show_data=1
 </window>
 
 <window>
-height=12
+height=11
 fixed_height=0
 
 <indicator>
@@ -162,8 +162,8 @@ FastMA.Periods=12
 FastMA.Method=SMA | LWMA | EMA* | ALMA
 SlowMA.Periods=26
 SlowMA.Method=SMA | LWMA | EMA* | ALMA
-Histogram.Color.Upper=3329434
-Histogram.Color.Lower=5275647
+Histogram.Color.Upper=3329330
+Histogram.Color.Lower=255
 Histogram.Style.Width=2
 MainLine.Width=0
 Signal.onCross=1
@@ -178,7 +178,7 @@ show_data=1
 </window>
 
 <window>
-height=12
+height=11
 fixed_height=0
 
 <indicator>
