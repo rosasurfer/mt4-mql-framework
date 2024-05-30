@@ -49,6 +49,8 @@
  *       18:39:57.268         Account Guard::rsfStdlib::OrdersCloseHedged(15)  closing 2 hedged BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
  *       18:39:57.487  FATAL  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #561127605 by #561128149 after 0.219 s  [ERR_INVALID_TRADE_PARAMETERS]
  *
+ *     bug ERR_NOT_ENOUGH_MONEY when closing a basket
+ *
  *
  *  - on account change to a new server
  *     rewrite core functions and Expander, remove onAccountChange()
@@ -62,7 +64,12 @@
  *         indicator only:    ChartInfos::GetAccountServer(0.1)
  *         indicator+library: Grid::rsfStdlib::GetAccountServer(0.1)
  *
- *  - monitor and signal 3 lower H1 closes in a row => potential swing up
+ *
+ *  - TradeManager to practise trade management strategies
+ *     working in tester (most important)
+ *     manual order execution
+ *     automated position management
+ *
  *
  *  - realtime equity charts
  *     don't find out afterwards what has happened in the account

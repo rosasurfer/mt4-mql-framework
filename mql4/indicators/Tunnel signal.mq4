@@ -19,7 +19,7 @@
  *
  *  - ChartInfos
  *     unitsize configuration: manual leverage doesn't work (limits to 10% risk)
- *     the unitsize configuration is not read if custom positions are reloaded per hotkey
+ *     unitsize configuration is not read if custom positions are reloaded per hotkey
  *     rewrite and better document unitsize configuration (remove "Default.")
  *     fix positioning of UnitSize/PositionSize when in CORNER_TOP_LEFT
  *     option to display 100% margin level

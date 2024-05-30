@@ -3679,7 +3679,7 @@ int Tester.Pause(string caller = "") {
 
    if (IsLogDebug()) logDebug(caller + ifString(StringLen(caller), "->", "") +"Tester.Pause()");
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() would cause a UI thread dead-lock if called in deinit()
+   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() causes a UI thread dead-lock if called in deinit()
    return(NO_ERROR);
 }
 
@@ -4480,9 +4480,8 @@ string GetAccountServerPath() {
  * @return int - account number or NULL (0) in case of errors
  */
 int GetAccountNumber() {
-   // In tester the account number is cached to prevent UI deadlocks in expert::deinit() caused by GetWindowText().
-   // - only if VisualMode=On; should be obsolete since we use GetInternalWindowText()
-   // No cache if online, otherwise account changes wouldn't be recognized.
+   // In tester the account number is cached.
+   // No cache if online, otherwise account changes can't get detected.
 
    static int testAccount;
    if (testAccount != 0) return(testAccount);
