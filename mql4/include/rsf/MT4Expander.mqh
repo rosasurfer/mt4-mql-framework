@@ -174,9 +174,10 @@
    // other
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
-   bool     IsDebugAccountServer();
    bool     IsDebugAccountNumber();
+   bool     IsDebugAccountServer();
    bool     IsDebugEC();
+   bool     IsDebugObjectCreate();
    bool     IsProgramType(int type);
    bool     IsVirtualKeyDown(int vKey);
    bool     IsWindowAreaVisible(int hWnd);

@@ -1,6 +1,6 @@
 
 string __objects[];              // registered objects
-int    __ojectsCounter = 0;      // sizeof(__objects)
+int    __objectsCounter = 0;     // sizeof(__objects)
 
 
 /**
@@ -21,10 +21,8 @@ int    __ojectsCounter = 0;      // sizeof(__objects)
  *
  *
  * TODO:
- *  - 106.000 initial calls on terminal start with 7 open charts
- *  - SuperBars in regular charts: permant non-stopping calls (after a few minutes more than 1.000.000)
+ *  - 13.739 calls on terminal start with 6 open charts
  *  - SuperBars in offline charts: 271 calls on every tick
- *  - move elsewhere as the library is not a singleton (there can be multiple instances)
  */
 bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NULL, double price1=NULL, datetime time2=NULL, double price2=NULL, datetime time3=NULL, double price3=NULL) {
    if (StringLen(name) > 63) return(!catch("ObjectCreateRegister(1)  invalid parameter name: \""+ name +"\" (max 63 chars)", ERR_INVALID_PARAMETER));
@@ -60,16 +58,16 @@ bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NU
 
    // register the object for auto-removal
    int size = ArraySize(__objects);
-   if (size <= __ojectsCounter) {
+   if (size <= __objectsCounter) {
       if (!size) size = 512;
       size <<= 1;                                           // prevent re-allocation on every call (initial size 1024)
       ArrayResize(__objects, size);
-      if (size >= 131072) debug("ObjectCreateRegister(3)  objects="+ (__ojectsCounter+1));
+      if (size > 131071) debug("ObjectCreateRegister(3)  objects="+ (__objectsCounter+1));
    }
-   __objects[__ojectsCounter] = name;
-   __ojectsCounter++;
+   __objects[__objectsCounter] = name;
+   __objectsCounter++;
 
-   //debug("ObjectCreateRegister(4)  Tick="+ __ExecutionContext[EC.ticks] +"  objects="+ __objectsCounter +"  \""+ name +"\"");
+   //if (IsDebugObjectCreate()) debug("ObjectCreateRegister(0.1)  Tick="+ __ExecutionContext[EC.ticks] +"  objects="+ __objectsCounter +"  \""+ name +"\"");
    return(true);
 }
 
@@ -80,11 +78,11 @@ bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NU
  * @return int - error status
  */
 int DeleteRegisteredObjects() {
-   for (int i=0; i < __ojectsCounter; i++) {
+   for (int i=0; i < __objectsCounter; i++) {
       if (ObjectFind(__objects[i]) != -1) {
          ObjectDelete(__objects[i]);
       }
    }
-   __ojectsCounter = ArrayResize(__objects, 0);
+   __objectsCounter = ArrayResize(__objects, 0);
    return(catch("DeleteRegisteredObjects(1)"));
 }
