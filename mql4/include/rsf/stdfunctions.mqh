@@ -4427,10 +4427,12 @@ string GetAccountServer() {
       static bool isRecursion = false; if (isRecursion) return("");
       isRecursion = true;                                // prevent recursion in the log messages (the logger tries to read the account config)
 
+      int hMainWnd = GetTerminalMainWindow();
+
       string serverName = AccountServer();
       if (serverName == "") {
-         // check window properties
-         int lpString = GetPropA(__ExecutionContext[EC.chart], PROP_STRING_ACCOUNT_SERVER);
+         // check main window properties
+         int lpString = GetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER);
          if (lpString != NULL) serverName = GetStringA(lpString);
       }
 
@@ -4453,11 +4455,11 @@ string GetAccountServer() {
          if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find history directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
       }
 
-      // update EXECUTION_CONTEXT and window properties
+      // update EXECUTION_CONTEXT and main window properties
       sAccountServer = ec_SetAccountServer(__ExecutionContext, serverName);
       lpAccountServer = __ExecutionContext[EC.accountServer];
-      if (!GetPropA(__ExecutionContext[EC.chart], PROP_STRING_ACCOUNT_SERVER)) {
-         SetPropA(__ExecutionContext[EC.chart], PROP_STRING_ACCOUNT_SERVER, lpAccountServer);
+      if (!GetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER)) {
+         SetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER, lpAccountServer);
       }
 
       isRecursion = false;
@@ -4502,9 +4504,10 @@ int GetAccountNumber() {
          accountNumber = 0;
       }
 
-      // check window properties
+      // check main window properties
+      int hMainWnd = GetTerminalMainWindow();
       if (!accountNumber) {
-         accountNumber = GetPropA(__ExecutionContext[EC.chart], PROP_INT_ACCOUNT_NUMBER);
+         accountNumber = GetPropA(hMainWnd, PROP_INT_ACCOUNT_NUMBER);
       }
 
       // evaluate title bar of the main window
@@ -4525,7 +4528,7 @@ int GetAccountNumber() {
 
       // update EXECUTION_CONTEXT and window properties
       ec_SetAccountNumber(__ExecutionContext, accountNumber);
-      SetPropA(__ExecutionContext[EC.chart], PROP_INT_ACCOUNT_NUMBER, accountNumber);
+      SetPropA(hMainWnd, PROP_INT_ACCOUNT_NUMBER, accountNumber);
 
       isRecursion = false;
    }
