@@ -77,7 +77,7 @@ int onInit() {
    historyFormat = HistoryFormat;
 
    // setup a chart ticker (online only)
-   if (!__isTesting) {
+   if (!__tickTimerId && !__isTesting) {
       int hWnd = __ExecutionContext[EC.chart];
       int millis = 1000;                                 // a virtual tick every second (1000 milliseconds)
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
@@ -90,6 +90,31 @@ int onInit() {
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);
    return(catch("onInit(6)"));
+}
+
+
+/**
+ * Called after a finished account change. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitAccountChange() {
+   // close open history sets
+   int size = ArraySize(hSet);
+   for (int i=0; i < size; i++) {
+      if (hSet[i] != 0) {
+         int tmp = hSet[i]; hSet[i] = NULL;
+         if (!HistorySet1.Close(tmp)) return(ERR_RUNTIME_ERROR);
+      }
+   }
+
+   // reset global vars
+   ArrayResize(hSet,       0);
+   ArrayResize(currEquity, 0);
+   ArrayResize(prevEquity, 0);
+   isOpenPosition = false;
+   lastTickTime = NULL;
+   return(catch("onInitAccountChange(1)"));
 }
 
 

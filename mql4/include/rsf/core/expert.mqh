@@ -107,8 +107,7 @@ int init() {
 
    // resolve init reason
    int initReason = ProgramInitReason();
-   string initHandlers[] = {"", "initUser", "initTemplate", "", "", "initParameters", "initTimeframeChange", "initSymbolChange", "initRecompile"};
-
+   string initHandlers[] = {"", "initUser", "initTemplate", "initProgram", "initProgramAfterTest", "initParameters", "initTimeframeChange", "initSymbolChange", "initAccountChange", "initRecompile", "initTerminalFailure"};
    if (__isTesting) {
       Test.GetStartDate();                                        // populate date caches to prevent UI deadlocks if called in deinit()
       Test.GetEndDate();
@@ -166,7 +165,7 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break; //
          case IR_TERMINAL_FAILURE:                                         //
          default:                                                          //
-            return(_last_error(CheckErrors("init(12)  unsupported initReaso"+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(12)  unsupported initReason: "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
@@ -178,7 +177,7 @@ int init() {
    ShowStatus(last_error);
 
    // setup virtual ticks
-   if (__virtualTicks && !__isTesting) {
+   if (__virtualTicks && !__tickTimerId && !__isTesting) {
       int hWnd = __ExecutionContext[EC.chart];
       __tickTimerId = SetupTickTimer(hWnd, __virtualTicks, NULL);
       if (!__tickTimerId) return(catch("init(14)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));

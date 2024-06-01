@@ -10,8 +10,7 @@ extern int    __lpSuperContext;
 int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double __rates[][6];                                                 // current price series
 int    __tickTimerId;                                                // timer id for virtual ticks
-bool   __isAccountChange = false;
-bool   __isOfflineChart  = -1;                                       // initialized in start(), not before
+bool   __isOfflineChart = -1;                                        // initialized in start(), not before
 double  _Bid;                                                        // normalized versions of predefined vars Bid/Ask
 double  _Ask;                                                        // ...
 
@@ -127,29 +126,31 @@ int init() {
    | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
    | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
    | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
+   | IR_ACCOUNTCHANGE     | account changed                               | no input dialog |   I         |
    | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
    | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql/issues/1
    +----------------------+-----------------------------------------------+-----------------+-------------+
    */
-   error = onInit();                                                                   // preprocessing hook
-                                                                                       //
-   if (!error && !__STATUS_OFF) {                                                      //
-      switch (initReason) {                                                            //
-         case INITREASON_USER             : error = onInitUser();             break;   // init reasons
-         case INITREASON_TEMPLATE         : error = onInitTemplate();         break;   //
-         case INITREASON_PROGRAM          : error = onInitProgram();          break;   //
-         case INITREASON_PROGRAM_AFTERTEST: error = onInitProgramAfterTest(); break;   //
-         case INITREASON_PARAMETERS       : error = onInitParameters();       break;   //
-         case INITREASON_TIMEFRAMECHANGE  : error = onInitTimeframeChange();  break;   //
-         case INITREASON_SYMBOLCHANGE     : error = onInitSymbolChange();     break;   //
-         case INITREASON_RECOMPILE        : error = onInitRecompile();        break;   //
-         default:                                                                      //
+   error = onInit();                                                             // preprocessing hook
+                                                                                 //
+   if (!error && !__STATUS_OFF) {                                                //
+      switch (initReason) {                                                      //
+         case IR_USER             : error = onInitUser();             break;     // init reasons
+         case IR_TEMPLATE         : error = onInitTemplate();         break;     //
+         case IR_PROGRAM          : error = onInitProgram();          break;     //
+         case IR_PROGRAM_AFTERTEST: error = onInitProgramAfterTest(); break;     //
+         case IR_PARAMETERS       : error = onInitParameters();       break;     //
+         case IR_TIMEFRAMECHANGE  : error = onInitTimeframeChange();  break;     //
+         case IR_SYMBOLCHANGE     : error = onInitSymbolChange();     break;     //
+         case IR_ACCOUNTCHANGE    : error = onInitAccountChange();    break;     //
+         case IR_RECOMPILE        : error = onInitRecompile();        break;     //
+         default:                                                                //
             return(_last_error(CheckErrors("init(14)  unknown initReason: "+ initReason, ERR_RUNTIME_ERROR)));
-      }                                                                                //
-   }                                                                                   //
-   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
-   if (!error && !__STATUS_OFF) {                                                      //
-      error = afterInit();                                                             // postprocessing hook
+      }                                                                          //
+   }                                                                             //
+   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                       //
+   if (!error && !__STATUS_OFF) {                                                //
+      error = afterInit();                                                       // postprocessing hook
    }
 
    // nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
@@ -210,6 +211,8 @@ bool initGlobals() {
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 
+   ArrayResize(__orderStack, 0);
+
    return(!catch("initGlobals(1)"));
 }
 
@@ -234,11 +237,11 @@ int start() {
       return(__STATUS_OFF.reason);
    }
 
-   // check chart initialization: Without history (i.e. no bars) Indicator::start() is never called.
-   // However on older builds Bars=0 used to be a spurious issue which was sometimes observed on terminal start.
+   // check chart initialization: start() is never called without history. However on older builds Bars=0
+   // was a spurious issue sometimes observed on terminal start.
    if (!Bars) return(_last_error(logInfo("start(1)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(2)")));
 
-   // initialize ValidBars, ChangedBars and ShiftedBars (updated later)
+   // initialize ValidBars, ChangedBars and ShiftedBars (updated again later)
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    ShiftedBars = 0;
@@ -252,37 +255,42 @@ int start() {
          if (CheckErrors("start(3)  Tick.time = 0", error)) return(last_error);
       }
    }
-   static int prevVolume;
+   static double prevVolume;                                                     // not a static integer to prevent precision errors during comparison
    if      (!Volume[0] || !prevVolume) Tick.isVirtual = true;
-   else if ( Volume[0] ==  prevVolume) Tick.isVirtual = true;
+   else if ( Volume[0] == prevVolume)  Tick.isVirtual = true;
    else                                Tick.isVirtual = (ChangedBars > 2);
    prevVolume = Volume[0];
 
-   // detect and handle account changes
-   // ---------------------------------
+   // handle account changes
+   // ----------------------
    // At terminal start AccountNumber() returns 0 until the trade server connection is fully established.
    //
-   // An account change at runtime causes a new tick with AccountNumber() immediately returning the new account number but
-   // IsConnected() returning FALSE.
+   // On account change the account functions immediately report the new account but IsConnected() returns FALSE.
    //
-   // This first tick after an account change is executed either on new history (if it exists) or on old history (if no history
-   // exists for the new account). Depending on that condition ValidBars will either be 0 (new history) or not 0 (old history).
-   // Only one tick may be executed on old history.
+   // If no history exists for the new account up to two ticks may be executed on old history (with valid bars). Not before
+   // the first tick on new history all bars will be indicated as changed.
    //
-   // If history exists for the new account it's usually outdated (not current). A first tick on such an outdated history will
-   // cause the Expander message: SyncMainContext_start()  ERROR: ticktime is running backwards: tickTime=... prevTickTime=...
-   //
-   // After account change all bars will be indicated as changed, no matter whether history changed or not (ValidBars is reliable).
-   //
-   static int prevAccount;
-   int currAccount = AccountNumber();
-   __isAccountChange = (prevAccount && currAccount!=prevAccount);
-   if (__isAccountChange) {
-      __ExecutionContext[EC.currTickTime] = 0;
-      __ExecutionContext[EC.prevTickTime] = 0;
-      onAccountChange(prevAccount, currAccount);                                 // TODO: handle errors
+   static string prevAccountServer = "";
+   static int    prevAccountNumber;
+   static int    prevBars;
+   static datetime prevFirstBarTime, prevLastBarTime;
+
+   int currAccountNumber = AccountNumber();
+   if (prevAccountNumber && currAccountNumber!=prevAccountNumber) {              // account change
+      if (ValidBars != 0) return(ERS_TERMINAL_NOT_YET_READY);                    // wait for ValidBars = 0
+
+      Ticks = 1;
+      __ExecutionContext[EC.programInitReason] = IR_ACCOUNTCHANGE;               // mark init reason and call init() again
+      error = init();
+      if (__STATUS_OFF) return(last_error);
+      if (error == ERS_TERMINAL_NOT_YET_READY) return(error);
+
+      prevBars = 0;                                                              // reset vars for ShiftedBars/offline charts
+      prevFirstBarTime = 0;
+      prevLastBarTime = 0;
    }
-   prevAccount = currAccount;
+   prevAccountServer = AccountServer();
+   prevAccountNumber = currAccountNumber;
 
    // handle a first call after init()
    if (__CoreFunction == CF_INIT) {
@@ -316,8 +324,6 @@ int start() {
    // - if the full history is replaced then either number of Bars, Time[0] or Time[Bars-1] must change (e.g. by modifying the timestamp of Time[Bars-1] by a random second)
    // - if neither number of Bars, Time[0] nor Time[Bars-1] changed it's assumed that only the newest bar changed (i.e. a new tick was added)
    //
-   static int prevBars;
-   static datetime prevFirstBarTime, prevLastBarTime;
    if (__isOfflineChart == -1) {                                                    // cannot be initialized in init()
       if      (__isTesting)                 __isOfflineChart = false;
       else if (IsCustomTimeframe(Period())) __isOfflineChart = true;
@@ -329,7 +335,7 @@ int start() {
       }
    }
 
-   if (!__isAccountChange && prevBars && !ValidBars) {
+   if (prevBars && !ValidBars) {
       if (__isOfflineChart==true || !IsConnected()) {
          bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
          bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.

@@ -214,7 +214,7 @@ datetime TimeServer(string caller="", bool useLastBar=false);;
 int      TimeYearEx(datetime time);;
 int      Toolbar.Experts(bool enable);;
 string   TradeCommandToStr(int cmd);;
-string   UninitializeReasonDescription(int reason);;
+string   UninitReasonDescription(int reason);;
 string   UrlEncode(string value);;
 bool     WaitForTicket(int ticket, bool select=false);;
 
@@ -823,7 +823,6 @@ bool     InitializeFloatArray (float  &values[], int size, float  initValue, int
 bool     InitializeIntArray   (int    &values[], int size, int    initValue, int from, int count);;
 bool     InitializeLongArray  (long   &values[], int size, long   initValue, int from, int count);;
 bool     InitializeShortArray (short  &values[], int size, short  initValue, int from, int count);;
-string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
 string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
@@ -916,7 +915,6 @@ double   Test_GetCommission(int &ec[]);;
 string   TimeframeToStr(int timeframe);;
 string   TradeDirectionDescription(int direction);;
 string   TradeDirectionToStr(int direction);;
-string   UninitializeReasonToStr(int reason);;
 string   UninitReasonToStr(int reason);;
 int      WM_MT4();;
 

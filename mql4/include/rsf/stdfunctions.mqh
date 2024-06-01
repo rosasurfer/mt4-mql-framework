@@ -691,7 +691,7 @@ double PointValue(double lots=1.0, bool muteErrors=false) {
 }
 
 
-// whether to disable an "Inaccurate MODE_TICKVALUE" warning in tester, @see function PipValue()
+// whether to disable an "inaccurate MODE_TICKVALUE" warning in tester, @see function PipValue()
 bool test.disableTickValueWarning = false;
 
 
@@ -4352,7 +4352,7 @@ string ModuleTypesToStr(int fType) {
  *
  * @return string
  */
-string UninitializeReasonDescription(int reason) {
+string UninitReasonDescription(int reason) {
    switch (reason) {
       case UR_UNDEFINED  : return("undefined"                          );
       case UR_REMOVE     : return("program removed from chart"         );
@@ -4366,7 +4366,7 @@ string UninitializeReasonDescription(int reason) {
       case UR_INITFAILED : return("OnInit() failed"                    );
       case UR_CLOSE      : return("terminal closed"                    );
    }
-   return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("UninitReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -4389,15 +4389,16 @@ int ProgramInitReason() {
  */
 string InitReasonDescription(int reason) {
    switch (reason) {
-      case INITREASON_USER             : return("program loaded by user"    );
-      case INITREASON_TEMPLATE         : return("program loaded by template");
-      case INITREASON_PROGRAM          : return("program loaded by program" );
-      case INITREASON_PROGRAM_AFTERTEST: return("program loaded after test" );
-      case INITREASON_PARAMETERS       : return("input parameters changed"  );
-      case INITREASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
-      case INITREASON_SYMBOLCHANGE     : return("chart symbol changed"      );
-      case INITREASON_RECOMPILE        : return("program recompiled"        );
-      case INITREASON_TERMINAL_FAILURE : return("terminal failure"          );
+      case IR_USER             : return("program loaded by user"    );
+      case IR_TEMPLATE         : return("program loaded by template");
+      case IR_PROGRAM          : return("program loaded by program" );
+      case IR_PROGRAM_AFTERTEST: return("program loaded after test" );
+      case IR_PARAMETERS       : return("input parameters changed"  );
+      case IR_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
+      case IR_SYMBOLCHANGE     : return("chart symbol changed"      );
+      case IR_ACCOUNTCHANGE    : return("account changed"           );
+      case IR_RECOMPILE        : return("program recompiled"        );
+      case IR_TERMINAL_FAILURE : return("terminal failure"          );
    }
    return(_EMPTY_STR(catch("InitReasonDescription(1)  invalid parameter reason: "+ reason, ERR_INVALID_PARAMETER)));
 }
@@ -6837,7 +6838,7 @@ void __DummyCalls() {
    TimeYearEx(NULL);
    Toolbar.Experts(NULL);
    TradeCommandToStr(NULL);
-   UninitializeReasonDescription(NULL);
+   UninitReasonDescription(NULL);
    UrlEncode(NULL);
    WaitForTicket(NULL);
    WriteIniString(NULL, NULL, NULL, NULL);

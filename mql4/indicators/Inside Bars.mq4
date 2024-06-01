@@ -131,19 +131,6 @@ int onTick() {
 
 
 /**
- * Handle AccountChange events.
- *
- * @param  int previous - previous account number
- * @param  int current  - new account number
- *
- * @return int - error status
- */
-int onAccountChange(int previous, int current) {
-   return(onInit());
-}
-
-
-/**
  * Copy the rates of the specified timeframe to the target array and resolve the number of changed bars since the last tick.
  *
  * @param  _Out_ double target[][]  - array receiving the rates

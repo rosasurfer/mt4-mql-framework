@@ -136,7 +136,6 @@
    string   DeinitFlagsToStr(int flags);
    string   ErrorToStrA(int error);
    string   InitFlagsToStr(int flags);
-   string   InitializeReasonToStr(int reason);                 // alias of InitReasonToStr()
    string   InitReasonToStr(int reason);
    string   IntToHexStr(int value);
    string   LoglevelToStrA(int level);
@@ -155,7 +154,6 @@
    string   TimeframeToStr(int timeframe);                     // alias of PeriodToStr()
    string   TradeDirectionDescription(int direction);
    string   TradeDirectionToStr(int direction);
-   string   UninitializeReasonToStr(int reason);               // alias of UninitReasonToStr()
    string   UninitReasonToStr(int reason);
 
    // window property management
@@ -189,6 +187,7 @@
    int      onInitParameters();
    int      onInitSymbolChange();
    int      onInitTimeframeChange();
+   int      onInitAccountChange();
    int      onInitProgram();
    int      onInitProgramAfterTest();
    int      onInitTemplate();
@@ -210,9 +209,6 @@
    int      onDeinitFailed();                                  // ...
    int      onDeinitTemplate();                                // ...
    int      afterDeinit();
-
-   int      onAccountChange(int oldAccount, int newAccount);   // event handlers
-   bool     onBarOpen();
 
    int      DeleteRegisteredObjects();                         // other virtual no-ops
    void     DummyCalls();

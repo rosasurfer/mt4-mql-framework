@@ -315,7 +315,7 @@ int onInit() {
    }
 
    // only online
-   if (!__isTesting) {
+   if (!__tickTimerId && !__isTesting) {
       // restore a configured trade account and initialize order/limit monitoring
       string accountId = GetStoredTradeAccount();
       if (!InitTradeAccount(accountId)) return(last_error);

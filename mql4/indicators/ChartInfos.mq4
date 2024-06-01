@@ -259,19 +259,6 @@ int onTick() {
 
 
 /**
- * Handle AccountChange events.
- *
- * @param  int previous - previous account number
- * @param  int current  - current account number
- *
- * @return int - error status
- */
-int onAccountChange(int previous, int current) {
-   return(onInit());
-}
-
-
-/**
  * Process an incoming command.
  *
  * @param  string cmd    - command name
@@ -4362,8 +4349,6 @@ bool RestoreStatus() {
  * @return bool - success status
  */
 bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], int &failedOrders[]) {
-   if (__isAccountChange) return(true);                                          // skip to prevent synchronization errors
-
    /*
    monitoring of entry limits (pendings must be known before)
    ----------------------------------------------------------

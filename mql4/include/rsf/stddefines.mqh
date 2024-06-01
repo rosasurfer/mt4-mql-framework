@@ -78,54 +78,55 @@ double  INF;                                                      //  1.#INF |  
 #define M_PI                        3.14159265358979323846
 
 
-// MQL program types
+// program type aliases (flags)
 #define PT_INDICATOR                PROGRAMTYPE_INDICATOR         // 1
 #define PT_EXPERT                   PROGRAMTYPE_EXPERT            // 2
 #define PT_SCRIPT                   PROGRAMTYPE_SCRIPT            // 4
 
 
-// MQL module types (flags)
+// module type aliases (flags)
 #define MT_INDICATOR                MODULETYPE_INDICATOR          // 1
 #define MT_EXPERT                   MODULETYPE_EXPERT             // 2
 #define MT_SCRIPT                   MODULETYPE_SCRIPT             // 4
 #define MT_LIBRARY                  MODULETYPE_LIBRARY            // 8
 
 
-// MQL program core function ids
-#define CF_INIT                     COREFUNCTION_INIT
-#define CF_START                    COREFUNCTION_START
-#define CF_DEINIT                   COREFUNCTION_DEINIT
+// core function aliases
+#define CF_INIT                     COREFUNCTION_INIT             // 1
+#define CF_START                    COREFUNCTION_START            // 2
+#define CF_DEINIT                   COREFUNCTION_DEINIT           // 3
 
 
-// MQL program launch types
-#define LT_TEMPLATE                 LAUNCHTYPE_TEMPLATE           // via template
-#define LT_PROGRAM                  LAUNCHTYPE_PROGRAM            // via iCustom()
-#define LT_USER                     LAUNCHTYPE_USER               // by user
+// program launch type aliases
+#define LT_TEMPLATE                 LAUNCHTYPE_TEMPLATE           // 1 via template
+#define LT_PROGRAM                  LAUNCHTYPE_PROGRAM            // 2 via iCustom()
+#define LT_USER                     LAUNCHTYPE_USER               // 3 by user
 
 
-// framework InitializeReason codes                               // +-- init reason --------------------------------+-- ui -----------+-- applies --+
-#define IR_USER                     INITREASON_USER               // | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
-#define IR_TEMPLATE                 INITREASON_TEMPLATE           // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
-#define IR_PROGRAM                  INITREASON_PROGRAM            // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
-#define IR_PROGRAM_AFTERTEST        INITREASON_PROGRAM_AFTERTEST  // | loaded by iCustom() after end of test         | no input dialog |   I         |
-#define IR_PARAMETERS               INITREASON_PARAMETERS         // | input parameters changed                      |    input dialog |   I, E      |
-#define IR_TIMEFRAMECHANGE          INITREASON_TIMEFRAMECHANGE    // | chart period changed                          | no input dialog |   I, E      |
-#define IR_SYMBOLCHANGE             INITREASON_SYMBOLCHANGE       // | chart symbol changed                          | no input dialog |   I, E      |
-#define IR_RECOMPILE                INITREASON_RECOMPILE          // | reloaded after recompilation                  | no input dialog |   I, E      |
-#define IR_TERMINAL_FAILURE         INITREASON_TERMINAL_FAILURE   // | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
-                                                                  // +-----------------------------------------------+-----------------+-------------+
+// InitializeReason aliases                                       //    +-- init reason --------------------------------+-- ui -----------+-- applies --+
+#define IR_USER                     INITREASON_USER               //  1 | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
+#define IR_TEMPLATE                 INITREASON_TEMPLATE           //  2 | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+#define IR_PROGRAM                  INITREASON_PROGRAM            //  3 | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+#define IR_PROGRAM_AFTERTEST        INITREASON_PROGRAM_AFTERTEST  //  4 | loaded by iCustom() after end of test         | no input dialog |   I         |
+#define IR_PARAMETERS               INITREASON_PARAMETERS         //  5 | input parameters changed                      |    input dialog |   I, E      |
+#define IR_TIMEFRAMECHANGE          INITREASON_TIMEFRAMECHANGE    //  6 | chart period changed                          | no input dialog |   I, E      |
+#define IR_SYMBOLCHANGE             INITREASON_SYMBOLCHANGE       //  7 | chart symbol changed                          | no input dialog |   I, E      |
+#define IR_ACCOUNTCHANGE            INITREASON_ACCOUNTCHANGE      //  8 | account changed                               | no input dialog |   I         |
+#define IR_RECOMPILE                INITREASON_RECOMPILE          //  9 | reloaded after recompilation                  | no input dialog |   I, E      |
+#define IR_TERMINAL_FAILURE         INITREASON_TERMINAL_FAILURE   // 10 | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
+                                                                  //    +-----------------------------------------------+-----------------+-------------+
 
-// UninitializeReason codes
-#define UR_UNDEFINED                UNINITREASON_UNDEFINED
-#define UR_REMOVE                   UNINITREASON_REMOVE
-#define UR_RECOMPILE                UNINITREASON_RECOMPILE
-#define UR_CHARTCHANGE              UNINITREASON_CHARTCHANGE
-#define UR_CHARTCLOSE               UNINITREASON_CHARTCLOSE
-#define UR_PARAMETERS               UNINITREASON_PARAMETERS
-#define UR_ACCOUNT                  UNINITREASON_ACCOUNT
-#define UR_TEMPLATE                 UNINITREASON_TEMPLATE
-#define UR_INITFAILED               UNINITREASON_INITFAILED
-#define UR_CLOSE                    UNINITREASON_CLOSE
+// UninitializeReason aliases
+#define UR_UNDEFINED                UNINITREASON_UNDEFINED        // 0
+#define UR_REMOVE                   UNINITREASON_REMOVE           // 1
+#define UR_RECOMPILE                UNINITREASON_RECOMPILE        // 2
+#define UR_CHARTCHANGE              UNINITREASON_CHARTCHANGE      // 3
+#define UR_CHARTCLOSE               UNINITREASON_CHARTCLOSE       // 4
+#define UR_PARAMETERS               UNINITREASON_PARAMETERS       // 5
+#define UR_ACCOUNT                  UNINITREASON_ACCOUNT          // 6
+#define UR_TEMPLATE                 UNINITREASON_TEMPLATE         // 7
+#define UR_INITFAILED               UNINITREASON_INITFAILED       // 8
+#define UR_CLOSE                    UNINITREASON_CLOSE            // 9
 
 
 // account types

@@ -310,6 +310,11 @@ int onInit() {
    if (AutoConfiguration) Sound.onNewChannelHigh  = GetConfigString(indicator, "Sound.onNewChannelHigh", Sound.onNewChannelHigh);
    if (AutoConfiguration) Sound.onNewChannelLow   = GetConfigString(indicator, "Sound.onNewChannelLow", Sound.onNewChannelLow);
 
+   // reset global vars used by the various event handlers
+   skipSignals     = 0;
+   lastTick        = 0;
+   lastSoundSignal = 0;
+
    // reset an active command handler
    if (__isChart && (ZigZag.Periods.Step || Show123Projections)) {
       GetChartCommand("ParameterStepper", sValues);
@@ -324,7 +329,7 @@ int onInit() {
 
    // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
    // invalid signals caused by ticks during data pumping.
-   if (!__isTesting) {
+   if (!__tickTimerId && !__isTesting) {
       int hWnd = __ExecutionContext[EC.chart];
       int millis = 2000;                                         // a virtual tick every 2 seconds
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
@@ -971,22 +976,6 @@ bool Create123Projection(int stopBar, double stopLevel, int breakoutBar, double 
       ArrayPushString(labels, label);
    }
    return(!catch("Create123Projection(1)"));
-}
-
-
-/**
- * Handle AccountChange events.
- *
- * @param  int previous - account number
- * @param  int current  - account number
- *
- * @return int - error status
- */
-int onAccountChange(int previous, int current) {
-   lastTick        = 0;             // reset global vars used by the various event handlers
-   lastSoundSignal = 0;
-   skipSignals     = 0;
-   return(onInit());
 }
 
 
