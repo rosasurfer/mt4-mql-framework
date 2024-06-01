@@ -24,9 +24,28 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
+ *  - on account change to a new server
+ *     rewrite core functions and Expander, remove onAccountChange()
+ *     start(): detect account change and call init() again: | flag account change? | account company?
+ *     MT4Expander::executioncontext.cpp::SyncMainContext_start(517)  ERROR: ticktime is running backwards:  tick=400  tickTime=1970.01.01 00:00:00  prevTickTime=2024.05.06 17:54:14  ec={pid=2, previousPid=0, programType=PT_INDICATOR, programName="ChartInfos", programCoreFunction=CF_START, programInitReason=IR_TEMPLATE, programUninitReason=UR_UNDEFINED, programInitFlags=0, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="ChartInfos", moduleCoreFunction=CF_START, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="EURJPY", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x07CA0020, bars=60002, validBars=60001, changedBars=1, ticks=399, cycleTicks=399, currTickTime="2024.05.06 17:54:14", prevTickTime="2024.05.06 17:54:14", bid=165.918, ask=165.925, digits=3, pipDigits=2, pip=0.01, point=0.001, superContext=NULL, threadId=4640 (UI), hChart=0x000D0818, hChartWindow=0x000508B4, testing=FALSE, visualMode=FALSE, optimization=FALSE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=DEBUG, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebug=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x05E08B80)  [ERR_ILLEGAL_STATE]
+ *
+ *     on terminal start with 6 charts:
+ *      - 7 calls of GetAccountServer(0.1)  scanning server directories...
+ *      - 7 calls of GetAccountNumber(0.1)  evaluating terminal title bar...
+ *
+ *  - EXECUTION_CONTEXT
+ *     field/flags for debug options
+ *     replace string arrays by pointers
+ *
+ *  - TradeManager to practise trade management strategies
+ *     working in tester (most important)
+ *     manual order execution
+ *     automated position management
+ *
  *  - Account Guard:
  *     delete pending orders on prohibited symbols
  *     enable trading if disabled
+ *     ERR_NOT_ENOUGH_MONEY when closing a basket
  *     display runtime errors on screen
  *     log trade details to logfile (manual logging is too time consuming)
  *     bug when a hedged position is closed elsewhere (sees a different position and may trigger DDL => error)
@@ -49,30 +68,6 @@
  *       18:39:57.268         Account Guard::rsfStdlib::OrdersCloseHedged(15)  closing 2 hedged BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
  *       18:39:57.487  FATAL  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #561127605 by #561128149 after 0.219 s  [ERR_INVALID_TRADE_PARAMETERS]
  *
- *     bug ERR_NOT_ENOUGH_MONEY when closing a basket
- *
- *
- *  - on account change to a new server
- *     rewrite core functions and Expander, remove onAccountChange()
- *     start(): detect account change and call init() again: | flag account change? | account company?
- *     MT4Expander::executioncontext.cpp::SyncMainContext_start(517)  ERROR: ticktime is running backwards:  tick=400  tickTime=1970.01.01 00:00:00  prevTickTime=2024.05.06 17:54:14  ec={pid=2, previousPid=0, programType=PT_INDICATOR, programName="ChartInfos", programCoreFunction=CF_START, programInitReason=IR_TEMPLATE, programUninitReason=UR_UNDEFINED, programInitFlags=0, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="ChartInfos", moduleCoreFunction=CF_START, moduleUninitReason=UR_UNDEFINED, moduleInitFlags=0, moduleDeinitFlags=0, symbol="EURJPY", timeframe=M1, newSymbol="", newTimeframe=NULL, rates=0x07CA0020, bars=60002, validBars=60001, changedBars=1, ticks=399, cycleTicks=399, currTickTime="2024.05.06 17:54:14", prevTickTime="2024.05.06 17:54:14", bid=165.918, ask=165.925, digits=3, pipDigits=2, pip=0.01, point=0.001, superContext=NULL, threadId=4640 (UI), hChart=0x000D0818, hChartWindow=0x000508B4, testing=FALSE, visualMode=FALSE, optimization=FALSE, recorder=0, mqlError=0, dllError=0, dllWarning=0, loglevel=DEBUG, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebug=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x05E08B80)  [ERR_ILLEGAL_STATE]
- *
- *     on terminal start with 6 charts:
- *      - 39 calls of GetAccountNumber(0.1)  evaluating terminal title bar...
- *      - 39 calls of GetAccountServer(0.1)  scanning server directories...
- *         indicator only:    ChartInfos::GetAccountServer(0.1)
- *         indicator+library: Grid::rsfStdlib::GetAccountServer(0.1)
- *
- *
- *  - TradeManager to practise trade management strategies
- *     working in tester (most important)
- *     manual order execution
- *     automated position management
- *
- *
- *  - realtime equity charts
- *     don't find out afterwards what has happened in the account
- *     option to set visual SL in equity chart?
  *
  *  - profitable backtests
  *     find profitable setups
@@ -132,12 +127,12 @@
  *     separate optimization of long|short trades
  *     consider max holding period
  *
- *
- *  -------------------------------------------------------------------------------------------------------------------------
  *  - ObjectCreateRegister()
- *     on terminal start with 7 charts 106.000 initial calls
- *     SuperBars in regular charts: permant non-stopping calls (after a few minutes more than 1.000.000)
+ *     13.739 initial calls on terminal start with 6 open charts
  *     SuperBars in offline charts: 271 calls on every tick
+ *
+ *  - realtime equity charts
+ *     don't find out afterwards what has happened in the account
  *
  *  -------------------------------------------------------------------------------------------------------------------------
  *  - ZigZag Twister (123 Trader)

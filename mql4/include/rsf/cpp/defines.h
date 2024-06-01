@@ -14,7 +14,8 @@
 #define MAX_SYMBOL_GROUP_LENGTH                15
 #define MAX_SYMBOL_LENGTH                      11
 
-// string constants in the MT4Expander are defined as ANSI only
+
+// string constants in the MT4Expander are defined as ANSI
 #define EOL_MAC                              "\r"        // old MacOS line separator: 0x0D
 #define EOL_NETSCAPE                     "\r\r\n"        // Netscape line separator:  0x0D0D0A
 #define EOL_UNIX                             "\n"        // Unix line separator:      0x0A (MQL/Win32 file functions in text mode auto-convert EOL_UNIX to EOL_WINDOWS)
@@ -102,6 +103,11 @@
 #define UNINITREASON_TEMPLATE                   7
 #define UNINITREASON_INITFAILED                 8
 #define UNINITREASON_CLOSE                      9
+
+
+// window property names
+#define PROP_STRING_ACCOUNT_SERVER              "rsf:string:accountServer"
+#define PROP_INT_ACCOUNT_NUMBER                 "rsf:int:accountNumber"
 
 
 // timeframe identifiers (cannot be combined)

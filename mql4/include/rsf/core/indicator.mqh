@@ -54,7 +54,6 @@ int init() {
       __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
-
    int initReason = ProgramInitReason();
    if (initReason == IR_TEMPLATE) {
       if (__ExecutionContext[EC.testing] && !__ExecutionContext[EC.visualMode]) {
@@ -68,6 +67,10 @@ int init() {
       __STATUS_OFF.reason = last_error;
       return(last_error);
    }
+
+   // immediately resolve a missing account server/number so the Expander can find the account configuration
+   if (!__ExecutionContext[EC.accountServer]) GetAccountServer();
+   if (!__ExecutionContext[EC.accountNumber]) GetAccountNumber();
 
    // finish initialization
    if (!initGlobals()) if (CheckErrors("init(2)")) return(last_error);

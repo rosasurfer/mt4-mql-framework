@@ -58,10 +58,14 @@ int init() {
       __STATUS_OFF.reason = last_error;                           // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
-   ec_SetMqlError(__ExecutionContext, NO_ERROR);
-   ec_SetDllError(__ExecutionContext, NO_ERROR);
+
+   // immediately resolve a missing account server/number so the Expander can find the account configuration
+   if (!__ExecutionContext[EC.accountServer]) GetAccountServer();
+   if (!__ExecutionContext[EC.accountNumber]) GetAccountNumber();
 
    // finish initialization of global vars
+   ec_SetMqlError(__ExecutionContext, NO_ERROR);
+   ec_SetDllError(__ExecutionContext, NO_ERROR);
    if (!initGlobals()) if (CheckErrors("init(3)")) return(last_error);
 
    // execute custom init tasks

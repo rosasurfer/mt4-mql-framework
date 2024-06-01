@@ -4429,6 +4429,12 @@ string GetAccountServer() {
 
       string serverName = AccountServer();
       if (serverName == "") {
+         // check window properties
+         int lpString = GetPropA(__ExecutionContext[EC.chart], PROP_STRING_ACCOUNT_SERVER);
+         if (lpString != NULL) serverName = GetStringA(lpString);
+      }
+
+      if (serverName == "") {
          if (IsDebugAccountServer()) debug("GetAccountServer(0.2)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  AccountServer()=\"\", scanning history directories...");
 
          // create temporary file (programs in the UI thread are executed one after another and can use the same file name)
@@ -4445,15 +4451,14 @@ string GetAccountServer() {
          // search and remove the temporary file
          serverName = FindHistoryDirectoryA(tmpFile, true);
          if (!StringLen(serverName)) return(_EMPTY_STR(catch("GetAccountServer(3)  cannot find history directory containing \""+ tmpFile +"\"", ERR_RUNTIME_ERROR)));
+      }
 
-         //debug("GetAccountServer(0.3)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  result from directory scan is \""+ serverName +"\" => DLL");
-      }
-      else {
-         //debug("GetAccountServer(0.4)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  result from AccountServer() is \""+ serverName +"\" => DLL");
-      }
-      ec_SetAccountServer(__ExecutionContext, serverName);
+      // update EXECUTION_CONTEXT and window properties
+      sAccountServer = ec_SetAccountServer(__ExecutionContext, serverName);
       lpAccountServer = __ExecutionContext[EC.accountServer];
-      sAccountServer = serverName;
+      if (!GetPropA(__ExecutionContext[EC.chart], PROP_STRING_ACCOUNT_SERVER)) {
+         SetPropA(__ExecutionContext[EC.chart], PROP_STRING_ACCOUNT_SERVER, lpAccountServer);
+      }
 
       isRecursion = false;
    }
@@ -4497,6 +4502,11 @@ int GetAccountNumber() {
          accountNumber = 0;
       }
 
+      // check window properties
+      if (!accountNumber) {
+         accountNumber = GetPropA(__ExecutionContext[EC.chart], PROP_INT_ACCOUNT_NUMBER);
+      }
+
       // evaluate title bar of the main window
       if (!accountNumber) {
          if (IsDebugAccountNumber()) debug("GetAccountNumber(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  AccountNumber()="+ AccountNumber() +"  ec.accountNumber="+ __ExecutionContext[EC.accountNumber] +", evaluating terminal title bar...");
@@ -4512,7 +4522,10 @@ int GetAccountNumber() {
 
          accountNumber = StrToInteger(sValue);
       }
+
+      // update EXECUTION_CONTEXT and window properties
       ec_SetAccountNumber(__ExecutionContext, accountNumber);
+      SetPropA(__ExecutionContext[EC.chart], PROP_INT_ACCOUNT_NUMBER, accountNumber);
 
       isRecursion = false;
    }
@@ -6879,6 +6892,7 @@ void __DummyCalls() {
    int      GetDlgCtrlID(int hWndCtl);
    int      GetDlgItem(int hDlg, int itemId);
    int      GetParent(int hWnd);
+   int      GetPropA(int hWnd, string name);
    int      GetTopWindow(int hWnd);
    int      GetWindow(int hWnd, int cmd);
    bool     IsWindow(int hWnd);
@@ -6886,4 +6900,5 @@ void __DummyCalls() {
    bool     PostMessageA(int hWnd, int msg, int wParam, int lParam);
    int      RegisterWindowMessageA(string str);
    int      SendMessageA(int hWnd, int msg, int wParam, int lParam);
+   bool     SetPropA(int hWnd, string name, int hData);
 #import

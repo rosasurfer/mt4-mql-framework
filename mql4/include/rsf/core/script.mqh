@@ -30,6 +30,8 @@ int init() {
       __STATUS_OFF.reason = last_error;
       return(last_error);
    }
+
+   // initialize the execution context
    int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
@@ -39,6 +41,10 @@ int init() {
       __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
+
+   // immediately resolve a missing account server/number so the Expander can find the account configuration
+   if (!__ExecutionContext[EC.accountServer]) GetAccountServer();
+   if (!__ExecutionContext[EC.accountNumber]) GetAccountNumber();
 
    // finish initialization
    if (!initGlobals()) if (CheckErrors("init(2)")) return(last_error);
@@ -315,3 +321,4 @@ bool CheckErrors(string caller, int error = NULL) {
 #import "user32.dll"
    int GetParent(int hWnd);
 #import
+
