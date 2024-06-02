@@ -36,8 +36,8 @@
 #define BAR_size                            48
 #define BAR_doubleSize                       6
 
-#define EXECUTION_CONTEXT_size            1032
-#define EXECUTION_CONTEXT_intSize          258
+#define EXECUTION_CONTEXT_size             776
+#define EXECUTION_CONTEXT_intSize          194
 
 #define EC.pid                               0     // offsets must be in sync with MT4Expander::header/struct/rsf/ExecutionContext.h
 #define EC.previousPid                       1
