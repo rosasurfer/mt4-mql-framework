@@ -25,7 +25,6 @@
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
  *  - EXECUTION_CONTEXT
- *     replace IsDebug*() by bit fields in contexts
  *     replace string arrays by pointers
  *
  *  - TradeManager to practise trade management strategies

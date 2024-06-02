@@ -67,7 +67,7 @@ bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NU
    __objects[__objectsCounter] = name;
    __objectsCounter++;
 
-   //if (IsDebugObjectCreate()) debug("ObjectCreateRegister(0.1)  Tick="+ __ExecutionContext[EC.ticks] +"  objects="+ __objectsCounter +"  \""+ name +"\"");
+   //if (__ExecutionContext[EC.debugOptions] & DEBUG_OBJECT_CREATE && 1) debug("ObjectCreateRegister(0.1)  Tick="+ __ExecutionContext[EC.ticks] +"  objects="+ __objectsCounter +"  \""+ name +"\"");
    return(true);
 }
 

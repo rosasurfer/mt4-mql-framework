@@ -20,7 +20,7 @@
    string   GetTerminalFileNameA();
    string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
-   bool     IsTerminalPortableMode();
+   bool     IsPortableMode();
    bool     IsUIThread(int threadId);
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
    int      MT4InternalMsg();
@@ -172,10 +172,6 @@
    // other
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
-   bool     IsDebugAccountNumber();
-   bool     IsDebugAccountServer();
-   bool     IsDebugEC();
-   bool     IsDebugObjectCreate();
    bool     IsProgramType(int type);
    bool     IsVirtualKeyDown(int vKey);
    bool     IsWindowAreaVisible(int hWnd);

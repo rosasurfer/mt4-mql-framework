@@ -4415,22 +4415,20 @@ string GetAccountServer() {
    //  - Without server connection it returns an empty value.
    //  - On account change it reports the new account already during the last tick on old data in the old history directory.
 
-   // synchronize local state with state in the MT4Expander
    static int lpAccountServer = 0;
    static string sAccountServer = "";
    if (__ExecutionContext[EC.accountServer] != lpAccountServer) {
       lpAccountServer = __ExecutionContext[EC.accountServer];
       sAccountServer = GetStringA(lpAccountServer);      // the cache allows to call GetString() only once
-      //debug("GetAccountServer(0.1)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  fetching changed DLL value "+ DoubleQuoteStr(sAccountServer));
    }
 
    if (!lpAccountServer) {
       static bool isRecursion = false; if (isRecursion) return("");
       isRecursion = true;                                // prevent recursion in the log messages (the logger tries to read the account config)
 
+      string serverName = AccountServer();
       int hMainWnd = GetTerminalMainWindow();
 
-      string serverName = AccountServer();
       if (serverName == "") {
          // check main window properties
          int lpString = GetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER);
@@ -4438,8 +4436,6 @@ string GetAccountServer() {
       }
 
       if (serverName == "") {
-         if (IsDebugAccountServer()) debug("GetAccountServer(0.2)  "+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]) +"  tick="+ __ExecutionContext[EC.ticks] +"  validBars="+ __ExecutionContext[EC.validBars] +"  AccountServer()=\"\", scanning history directories...");
-
          // create temporary file (programs in the UI thread are executed one after another and can use the same file name)
          string tmpFile = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
          int hFile = FileOpenHistory(tmpFile, FILE_WRITE|FILE_BIN);
@@ -4513,8 +4509,6 @@ int GetAccountNumber() {
 
       // evaluate title bar of the main window
       if (!accountNumber) {
-         if (IsDebugAccountNumber()) debug("GetAccountNumber(0.1)  tick="+ __ExecutionContext[EC.ticks] +"  AccountNumber()="+ AccountNumber() +"  ec.accountNumber="+ __ExecutionContext[EC.accountNumber] +", evaluating terminal title bar...");
-
          string title = GetInternalWindowTextA(GetTerminalMainWindow());
          if (!StringLen(title)) return(!logInfo("GetAccountNumber(2)->GetInternalWindowText(hWndMain) => \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 

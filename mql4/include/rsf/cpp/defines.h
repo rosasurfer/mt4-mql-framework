@@ -106,6 +106,13 @@
 #define UNINITREASON_CLOSE                      9
 
 
+// CLI debug options (flags)
+#define DEBUG_EXECUTION_CONTEXT                 1           // whether cmd line option /rsf:debug-ec is set
+#define DEBUG_ACCOUNT_SERVER                    2           // whether cmd line option /rsf:debug-accountserver is set
+#define DEBUG_ACCOUNT_NUMBER                    4           // whether cmd line option /rsf:debug-accountnumber is set
+#define DEBUG_OBJECT_CREATE                     8           // whether cmd line option /rsf:debug-objectcreate is set
+
+
 // window property names
 #define PROP_STRING_ACCOUNT_SERVER              "rsf:string:accountServer"
 #define PROP_INT_ACCOUNT_NUMBER                 "rsf:int:accountNumber"
