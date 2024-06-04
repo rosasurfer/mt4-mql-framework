@@ -4,7 +4,7 @@
  *
  * TODO:
  *  - MACD
- *     signals at terminal startup
+ *     invalid signals at terminal startup
  *
  *  - Inside Bars
  *     prevent double-signaling of parallel events

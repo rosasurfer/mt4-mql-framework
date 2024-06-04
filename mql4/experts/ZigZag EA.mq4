@@ -27,6 +27,23 @@
  *  - EXECUTION_CONTEXT
  *     replace string arrays by pointers
  *
+ *  - profitable backtests
+ *     profitable setups: Rhythm variants, Tunnel EA
+ *     easily updatable testing environment
+ *      reproduce tests with original EAs
+ *      terminal with Dukascopy data
+ *      comfortable update/generation/synchronization of new test data (e.g. from 2007)
+ *
+ *  - entry management
+ *     handling of multiple positions (scale in on retracement)
+ *
+ *  - exit management
+ *     partial close
+ *      online: fix closedProfit after 1 partial-close (error loading status file)
+ *      implement open.nextTarget
+ *     dynamic SL/TP distances (multiples of various range types)
+ *     trailing stop
+ *
  *  - TradeManager to practise trade management strategies
  *     working in tester (most important)
  *     manual order execution
@@ -44,37 +61,14 @@
  *       18:39:38.415  order was opened : #561128139 buy 0.02 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
  *       ...
  *       18:39:49.825  Script CloseOrders BTCUSD,M5: loaded successfully
- *       18:39:56.555  close order #561117926 sell 0.01 BTCUSD at 68882.72 sl: 0.00 tp: 0.00 by order #561126725 buy 0.01 BTCUSD at 69972.15 sl: 0.00 tp: 0.00
- *       18:39:56.829  rsfStdlib: order #561117926 was closed by order #561126725
- *       18:39:56.848  close order #561127602 sell 0.01 BTCUSD at 69808.17 sl: 0.00 tp: 0.00 by order #561128139 buy 0.02 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
  *       18:39:57.130  rsfStdlib: order #561127602 was closed by order #561128139
  *    -> 18:39:57.130  remainder of order #561127602 was opened : #561128149 buy 0.01 BTCUSD at 70323.78 sl: 0.00 tp: 0.00                                  => triggers remote error
- *       18:39:57.144  close order #561127605 sell 0.01 BTCUSD at 69795.76 sl: 0.00 tp: 0.00 by order #561128149 buy 0.01 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
- *       18:39:57.374  rsfStdlib: order #561127605 was closed by order #561128149
  *      remote
  *    -> 18:39:57.252  WARN   Account Guard::onTick(8)  BTCUSD: drawdown limit of -23.8% reached, liquidating positions...
- *       18:39:57.268         Account Guard::rsfStdlib::OrdersCloseSameSymbol(16)  closing 2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
+  *       18:39:57.268         Account Guard::rsfStdlib::OrdersCloseSameSymbol(16)  closing 2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
  *       18:39:57.268         Account Guard::rsfStdlib::OrdersHedge(13)  2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01} are already flat
  *       18:39:57.268         Account Guard::rsfStdlib::OrdersCloseHedged(15)  closing 2 hedged BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
  *       18:39:57.487  FATAL  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #561127605 by #561128149 after 0.219 s  [ERR_INVALID_TRADE_PARAMETERS]
- *
- *
- *  - profitable backtests
- *     find profitable setups
- *     easily updatable testing environment
- *      reproduce tests with original EAs
- *      terminal with Dukascopy data
- *      comfortable update/generation/synchronization of new test data (e.g. from 2007)
- *
- *  - entry management
- *     handling of multiple positions (scale in on retracement)
- *
- *  - exit management
- *     partial close
- *      online: fix closedProfit after 1 partial-close (error loading status file)
- *      implement open.nextTarget
- *     dynamic SL/TP distances (multiples of various range types)
- *     trailing stop
  *
  *  - independant handling of possibly simultaneous long/short positions
  *
