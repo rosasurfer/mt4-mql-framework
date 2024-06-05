@@ -29,11 +29,11 @@ extern bool   Signal.onInsideBar.SMS         = false;
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/ConfigureSignals.mqh>
-#include <rsf/v40/iBarShiftNext.mqh>
-#include <rsf/v40/iCopyRates.mqh>
-#include <rsf/v40/IsBarOpen.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/iCopyRates.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
 

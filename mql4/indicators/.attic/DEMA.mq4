@@ -29,8 +29,8 @@ extern int    MaxBarsBack     = 10000;                   // max. values to calcu
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/chartlegend.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 #define MODE_DEMA             MovingAverage.MODE_MA
 #define MODE_EMA_1            1

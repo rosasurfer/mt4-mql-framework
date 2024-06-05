@@ -24,8 +24,8 @@ extern int AccountSize.MaxUsedMarginPct = 75;      // max. margin utilization in
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/ta/ADR.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/ta/ADR.mqh>
 
 #property indicator_chart_window
 

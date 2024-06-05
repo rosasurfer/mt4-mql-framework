@@ -36,10 +36,10 @@ extern bool   AlertsOn                       = false;
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/IsBarOpen.mqh>
-#include <rsf/v40/chartlegend.mqh>
-#include <rsf/v40/ManageDoubleIndicatorBuffer.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ManageDoubleIndicatorBuffer.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
 #define MODE_UPPER_BAND_RP       1                 //

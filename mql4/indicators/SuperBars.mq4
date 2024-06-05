@@ -46,12 +46,12 @@ extern string Weekend.Symbols     = "";               // comma-separated list of
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/HandleCommands.mqh>
-#include <rsf/v40/iBarShiftNext.mqh>
-#include <rsf/v40/iBarShiftPrevious.mqh>
-#include <rsf/v40/iChangedBars.mqh>
-#include <rsf/v40/iPreviousPeriod.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/iBarShiftPrevious.mqh>
+#include <rsf/functions/iChangedBars.mqh>
+#include <rsf/functions/iPreviousPeriod.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/win32api.mqh>
 
 #property indicator_chart_window

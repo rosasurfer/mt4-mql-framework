@@ -34,14 +34,14 @@ extern bool   Track.Orders    = true;                             // whether to 
 #include <rsf/MT4iQuickChannel.mqh>
 #include <rsf/win32api.mqh>
 
-#include <rsf/v40/lfx.mqh>
-#include <rsf/v40/HandleCommands.mqh>
-#include <rsf/v40/InitializeByteBuffer.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/SortClosedTickets.mqh>
-#include <rsf/v40/scriptrunner.mqh>
-#include <rsf/v40/structs/LFXOrder.mqh>
-#include <rsf/v40/ta/ADR.mqh>
+#include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/InitializeByteBuffer.mqh>
+#include <rsf/functions/lfx.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/SortClosedTickets.mqh>
+#include <rsf/functions/scriptrunner.mqh>
+#include <rsf/functions/ta/ADR.mqh>
+#include <rsf/struct/LFXOrder.mqh>
 
 #property indicator_chart_window
 
@@ -213,8 +213,8 @@ string  orderTracker.positionStepSize = "MarginLow.wav";          // position in
 #define CLOSE_STOPOUT      3
 
 // initialization/deinitialization
-#include <rsf/v40/chartinfos/init.mqh>
-#include <rsf/v40/chartinfos/deinit.mqh>
+#include <rsf/functions/chartinfos/init.mqh>
+#include <rsf/functions/chartinfos/deinit.mqh>
 
 
 /**

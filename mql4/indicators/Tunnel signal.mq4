@@ -72,11 +72,11 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/ConfigureSignals.mqh>
-#include <rsf/v40/IsBarOpen.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/iCustom/MaTunnel.mqh>
-#include <rsf/v40/iCustom/MovingAverage.mqh>
+#include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/iCustom/MaTunnel.mqh>
+#include <rsf/functions/iCustom/MovingAverage.mqh>
 #include <rsf/win32api.mqh>
 
 #define MODE_MAIN             0                 // indicator buffer ids

@@ -23,12 +23,12 @@ extern string LFX.Labels = "";                           // Label_1 [, Label_n [
 #include <rsf/core/script.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/InitializeByteBuffer.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
 #include <rsf/MT4iQuickChannel.mqh>
-#include <rsf/v40/lfx.mqh>
-#include <rsf/v40/structs/LFXOrder.mqh>
-#include <rsf/v40/structs/OrderExecution.mqh>
+#include <rsf/functions/InitializeByteBuffer.mqh>
+#include <rsf/functions/lfx.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/struct/LFXOrder.mqh>
+#include <rsf/struct/OrderExecution.mqh>
 
 
 string inputLabels[];

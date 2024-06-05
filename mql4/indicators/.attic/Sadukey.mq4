@@ -23,12 +23,12 @@ extern int    MaxBarsBack     = 10000;                               // max. val
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/chartlegend.mqh>
-#include <rsf/v40/iBarShiftNext.mqh>
-#include <rsf/v40/iBarShiftPrevious.mqh>
-#include <rsf/v40/iChangedBars.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/ParseDateTime.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/iBarShiftPrevious.mqh>
+#include <rsf/functions/iChangedBars.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/ParseDateTime.mqh>
 
 #define MODE_BUFFER1         0                                       // indicator buffer ids
 #define MODE_BUFFER2         1

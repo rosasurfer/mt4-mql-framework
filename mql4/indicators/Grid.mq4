@@ -20,8 +20,8 @@ extern color  Color.SuperGrid                = LightGray;      // C'211,211,211'
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/iBarShiftNext.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/win32api.mqh>
 
 #property indicator_chart_window

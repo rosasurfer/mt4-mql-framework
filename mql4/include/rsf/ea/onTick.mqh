@@ -1,5 +1,5 @@
 /**
- * Generic template/example for an EA's onTick() function.
+ * Generic template for an EA's onTick() function.
  *
  * @return int - error status
  */

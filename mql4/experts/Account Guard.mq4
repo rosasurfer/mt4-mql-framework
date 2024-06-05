@@ -40,10 +40,10 @@ extern bool   IgnoreSpread       = true;              // whether to ignore the s
 #include <rsf/core/expert.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/ComputeFloatingPnL.mqh>
-#include <rsf/v40/ParseDateTime.mqh>
-#include <rsf/v40/ParseTimeRange.mqh>
-#include <rsf/v40/SortClosedTickets.mqh>
+#include <rsf/functions/ComputeFloatingPnL.mqh>
+#include <rsf/functions/ParseDateTime.mqh>
+#include <rsf/functions/ParseTimeRange.mqh>
+#include <rsf/functions/SortClosedTickets.mqh>
 
 double   prevEquity;                                  // equity value at the previous tick
 bool     isPctLimit;                                  // whether a percent limit is configured

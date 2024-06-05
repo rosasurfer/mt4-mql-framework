@@ -21,7 +21,7 @@ extern string HtmlFilename = "statement.html";
 #include <rsf/core/expert.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/HandleCommands.mqh>
+#include <rsf/functions/HandleCommands.mqh>
 
 #define TYPE_TEST_REPORT         1
 #define TYPE_ACCOUNT_STATEMENT   2
@@ -30,21 +30,21 @@ string Instance.ID = "999";                  // dummy, needed by StoreVolatileSt
 
 
 // EA definitions
-#include <rsf/v40/ea/instance/defines.mqh>
-#include <rsf/v40/ea/metric/defines.mqh>
-#include <rsf/v40/ea/status/defines.mqh>
-#include <rsf/v40/ea/trade/defines.mqh>
+#include <rsf/ea/instance/defines.mqh>
+#include <rsf/ea/metric/defines.mqh>
+#include <rsf/ea/status/defines.mqh>
+#include <rsf/ea/trade/defines.mqh>
 
 // EA functions
-#include <rsf/v40/ea/status/ShowOpenOrders.mqh>
-#include <rsf/v40/ea/status/ShowTradeHistory.mqh>
+#include <rsf/ea/status/ShowOpenOrders.mqh>
+#include <rsf/ea/status/ShowTradeHistory.mqh>
 
-#include <rsf/v40/ea/status/volatile/StoreVolatileStatus.mqh>
-#include <rsf/v40/ea/status/volatile/RemoveVolatileStatus.mqh>
-#include <rsf/v40/ea/status/volatile/ToggleOpenOrders.mqh>
-#include <rsf/v40/ea/status/volatile/ToggleTradeHistory.mqh>
+#include <rsf/ea/status/volatile/StoreVolatileStatus.mqh>
+#include <rsf/ea/status/volatile/RemoveVolatileStatus.mqh>
+#include <rsf/ea/status/volatile/ToggleOpenOrders.mqh>
+#include <rsf/ea/status/volatile/ToggleTradeHistory.mqh>
 
-#include <rsf/v40/ea/trade/AddHistoryRecord.mqh>
+#include <rsf/ea/trade/AddHistoryRecord.mqh>
 
 
 /**

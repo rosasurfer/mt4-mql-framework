@@ -34,9 +34,9 @@ extern int    MaxBarsBack     = 10000;                            // max. values
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/chartlegend.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/ta/ALMA.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA                       // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER

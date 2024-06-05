@@ -20,7 +20,7 @@ extern color  Line.Color      = Blue;
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/HandleCommands.mqh>
+#include <rsf/functions/HandleCommands.mqh>
 
 // parameter stepper directions
 #define STEP_UP               1

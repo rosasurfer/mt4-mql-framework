@@ -11,8 +11,8 @@
 
 
 // fully shared
-#include <rsf/cpp/defines.h>
-#include <rsf/cpp/errors.h>
+#include <rsf/expander/defines.h>
+#include <rsf/expander/errors.h>
 
 
 // already defined in C++ with a different type, but the same value

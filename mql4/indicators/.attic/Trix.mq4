@@ -39,7 +39,7 @@ extern int    MaxBarsBack           = 10000;                // max. values to ca
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/trend.mqh>
+#include <rsf/functions/trend.mqh>
 
 #property indicator_separate_window
 #property indicator_buffers   4                             // buffers visible to the user

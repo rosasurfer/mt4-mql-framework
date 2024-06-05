@@ -20,8 +20,8 @@ extern color  Color.Support    = Red;
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/iBarShiftNext.mqh>
-#include <rsf/v40/iBarShiftPrevious.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/iBarShiftPrevious.mqh>
 
 #define MODE_R3               0                          // indicator buffer ids
 #define MODE_R2               1

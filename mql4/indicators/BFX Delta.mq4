@@ -39,8 +39,8 @@ extern bool   Signal.onCross.SMS             = false;
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/ConfigureSignals.mqh>
-#include <rsf/v40/IsBarOpen.mqh>
+#include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
 
 #define MODE_DELTA_MAIN       0                                // this indicator's buffer ids
 #define MODE_DELTA_SIGNAL     1

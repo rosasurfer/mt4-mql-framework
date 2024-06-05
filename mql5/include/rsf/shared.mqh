@@ -14,9 +14,9 @@
 #endif
 
 
-// mirroring the file structure used in "mql4/include/shared.mqh"
-#include <rsf/cpp/defines.h>
-#include <rsf/cpp/errors.h>
+// mirroring the file structure used in "mql4/include/rsf/shared.mqh"
+#include <rsf/expander/defines.h>
+#include <rsf/expander/errors.h>
 
 
 // in C++ defined with a different type (same value)

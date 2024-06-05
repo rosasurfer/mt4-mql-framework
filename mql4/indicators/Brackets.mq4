@@ -20,12 +20,12 @@ extern color  BracketsColor    = Blue;                   //
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/iBarShiftNext.mqh>
-#include <rsf/v40/iBarShiftPrevious.mqh>
-#include <rsf/v40/iCopyRates.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/ParseDateTime.mqh>
-#include <rsf/v40/ParseTimeRange.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/iBarShiftPrevious.mqh>
+#include <rsf/functions/iCopyRates.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/ParseDateTime.mqh>
+#include <rsf/functions/ParseTimeRange.mqh>
 
 #property indicator_chart_window
 

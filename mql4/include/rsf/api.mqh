@@ -232,7 +232,7 @@ string   StrSubstr(string str, int start, int length=INT_MAX);;
 string   StrTrim(string str);;
 
 
-// include/rsf/v40/
+// include/rsf/functions/
 double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
 bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false);;
 bool     ConfigureSignals(string signalId, bool autoConfig, bool &enabled);;
@@ -262,7 +262,7 @@ bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 
 
-// include/rsf/v40/chartlegend.mqh
+// include/rsf/functions/chartlegend.mqh
 string   CreateChartLegend();;
 bool     RearrangeChartLegends();;
 bool     RemoveChartLegend();;
@@ -270,7 +270,7 @@ void     UpdateBandLegend(string legendName, string indicatorName, string status
 void     UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int trend=0);;
 
 
-// include/rsf/v40/configuration.mqh
+// include/rsf/functions/configuration.mqh
 string   GetAccountConfigPath(string company="", int account=NULL);;
 
 bool     IsConfigKey               (string section, string key);;
@@ -314,7 +314,7 @@ double   GetIniDouble(string fileName, string section, string key, double defaul
 bool     WriteIniString(string fileName, string section, string key, string value);;
 
 
-// include/rsf/v40/log.mqh
+// include/rsf/functions/log.mqh
 int      catch(string caller, int error=NO_ERROR, bool popOrder=false);;
 int      debug(string message, int error=NO_ERROR, int loglevel=NULL);;
 
@@ -344,13 +344,13 @@ int      log2Terminal(string message, int error, int level);;
 bool     SetLogfile(string filename);;
 
 
-// include/rsf/v40/scriptrunner.mqh
+// include/rsf/functions/scriptrunner.mqh
 bool     RunScript(string name, string parameters = "");;
 bool     ScriptRunner.GetParameters(string &parameters[]);;
 bool     ScriptRunner.SetParameters(string parameters);;
 
 
-// include/rsf/v40/iCustom/
+// include/rsf/functions/iCustom/
 double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, double maReversalFilter, int iBuffer, int iBar);;
 double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
@@ -360,7 +360,7 @@ double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string m
 double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 
 
-// include/rsf/v40/ta/
+// include/rsf/functions/ta/
 bool     ALMA.CalculateWeights(int periods, double offset, double sigma, double &weights[]);;
 double   ATR(string symbol, int timeframe, int periods, int offset);;
 double   iADR(int flags=NULL);;
@@ -368,7 +368,7 @@ double   JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, dou
 bool     NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]);;
 
 
-// include/rsf/v40/structs/Bar.mqh
+// include/rsf/struct/Bar.mqh
 datetime bar.Time      (double bar[]);;
 double   bar.Open      (double bar[]);;
 double   bar.Low       (double bar[]);;
@@ -400,7 +400,7 @@ int      bars.setVolume(double &bar[][], int i, int    volume);;
 string   BAR.toStr     (double bar[]);;
 
 
-// include/rsf/v40/structs/OrderExecution.mqh
+// include/rsf/struct/OrderExecution.mqh
 int      oe.Error              (/*ORDER_EXECUTION*/int oe[]);;
 bool     oe.IsError            (/*ORDER_EXECUTION*/int oe[]);;
 string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]);;
@@ -516,8 +516,8 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[]);;
 
 
-// include/rsf/v40/structs/mt4/
-// include/rsf/v40/structs/win32/
+// include/rsf/struct/mt4/
+// include/rsf/struct/win32/
 
 
 // libraries/rsfHistory1.ex4

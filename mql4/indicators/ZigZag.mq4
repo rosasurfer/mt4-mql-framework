@@ -110,13 +110,13 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/chartlegend.mqh>
-#include <rsf/v40/ConfigureSignals.mqh>
-#include <rsf/v40/HandleCommands.mqh>
-#include <rsf/v40/ManageDoubleIndicatorBuffer.mqh>
-#include <rsf/v40/ManageIntIndicatorBuffer.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/iCustom/ZigZag.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/ManageDoubleIndicatorBuffer.mqh>
+#include <rsf/functions/ManageIntIndicatorBuffer.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/iCustom/ZigZag.mqh>
 #include <rsf/win32api.mqh>
 
 // indicator buffer ids

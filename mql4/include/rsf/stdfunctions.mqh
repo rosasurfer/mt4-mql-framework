@@ -1,10 +1,6 @@
 /**
  * Standard framework functions
  */
-#include <rsf/v40/configuration.mqh>
-#include <rsf/v40/log.mqh>
-#include <rsf/MT4Expander.mqh>
-
 #include <rsf/common/Abs.mqh>
 #include <rsf/common/LoglevelDescription.mqh>
 #include <rsf/common/Max.mqh>
@@ -15,6 +11,9 @@
 #include <rsf/common/StrPadRight.mqh>
 #include <rsf/common/StrSubstr.mqh>
 #include <rsf/common/StrTrim.mqh>
+#include <rsf/functions/configuration.mqh>
+#include <rsf/functions/log.mqh>
+#include <rsf/MT4Expander.mqh>
 
 
 /**

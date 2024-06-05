@@ -38,7 +38,7 @@ extern int    SignalBars                     = 1000;        // max. number of ba
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 #define MODE_MAIN             Stochastic.MODE_MAIN       // 0 indicator buffer ids
 #define MODE_SIGNAL           Stochastic.MODE_SIGNAL     // 1

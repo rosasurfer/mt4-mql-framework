@@ -11,8 +11,8 @@
 #include <rsf/common/StrSubstr.mqh>
 #include <rsf/common/StrTrim.mqh>
 
-//#include <functions/configuration.mqh>
-#include <rsf/v45/log.mqh>
+//#include <rsf/functions/configuration.mqh>
+#include <rsf/functions/log.mqh>
 
 #include <rsf/MT4Expander.mqh>
 

@@ -86,91 +86,91 @@ extern bool   ShowProfitInPercent            = false;  // whether PnL is display
 #include <rsf/core/expert.recorder.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/HandleCommands.mqh>
-#include <rsf/v40/InitializeByteBuffer.mqh>
-#include <rsf/v40/iCustom/ZigZag.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/structs/OrderExecution.mqh>
+#include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/InitializeByteBuffer.mqh>
+#include <rsf/functions/iCustom/ZigZag.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/struct/OrderExecution.mqh>
 
 // EA definitions
-#include <rsf/v40/ea/instance/defines.mqh>
-#include <rsf/v40/ea/metric/defines.mqh>
-#include <rsf/v40/ea/status/defines.mqh>
-#include <rsf/v40/ea/test/defines.mqh>
-#include <rsf/v40/ea/trade/defines.mqh>
-#include <rsf/v40/ea/trade/signal/defines.mqh>
-#include <rsf/v40/ea/trade/stats/defines.mqh>
+#include <rsf/ea/instance/defines.mqh>
+#include <rsf/ea/metric/defines.mqh>
+#include <rsf/ea/status/defines.mqh>
+#include <rsf/ea/test/defines.mqh>
+#include <rsf/ea/trade/defines.mqh>
+#include <rsf/ea/trade/signal/defines.mqh>
+#include <rsf/ea/trade/stats/defines.mqh>
 
 // EA functions
-#include <rsf/v40/ea/event/onCommand.mqh>
+#include <rsf/ea/event/onCommand.mqh>
 
-#include <rsf/v40/ea/instance/CreateInstanceId.mqh>
-#include <rsf/v40/ea/instance/IsTestInstance.mqh>
-#include <rsf/v40/ea/instance/RestoreInstance.mqh>
-#include <rsf/v40/ea/instance/SetInstanceId.mqh>
+#include <rsf/ea/instance/CreateInstanceId.mqh>
+#include <rsf/ea/instance/IsTestInstance.mqh>
+#include <rsf/ea/instance/RestoreInstance.mqh>
+#include <rsf/ea/instance/SetInstanceId.mqh>
 
-#include <rsf/v40/ea/log/GetLogFilename.mqh>
+#include <rsf/ea/log/GetLogFilename.mqh>
 
-#include <rsf/v40/ea/metric/GetMT4SymbolDefinition.mqh>
-#include <rsf/v40/ea/metric/RecordMetrics.mqh>
+#include <rsf/ea/metric/GetMT4SymbolDefinition.mqh>
+#include <rsf/ea/metric/RecordMetrics.mqh>
 
-#include <rsf/v40/ea/status/CreateStatusBox_6.mqh>
-#include <rsf/v40/ea/status/ShowOpenOrders.mqh>
-#include <rsf/v40/ea/status/ShowTradeHistory.mqh>
-#include <rsf/v40/ea/status/ShowStatus.mqh>
-#include <rsf/v40/ea/status/SS.All.mqh>
-#include <rsf/v40/ea/status/SS.MetricDescription.mqh>
-#include <rsf/v40/ea/status/SS.OpenLots.mqh>
-#include <rsf/v40/ea/status/SS.ClosedTrades.mqh>
-#include <rsf/v40/ea/status/SS.TotalProfit.mqh>
-#include <rsf/v40/ea/status/SS.ProfitStats.mqh>
-#include <rsf/v40/ea/status/StatusToStr.mqh>
-#include <rsf/v40/ea/status/StatusDescription.mqh>
+#include <rsf/ea/status/CreateStatusBox_6.mqh>
+#include <rsf/ea/status/ShowOpenOrders.mqh>
+#include <rsf/ea/status/ShowTradeHistory.mqh>
+#include <rsf/ea/status/ShowStatus.mqh>
+#include <rsf/ea/status/SS.All.mqh>
+#include <rsf/ea/status/SS.MetricDescription.mqh>
+#include <rsf/ea/status/SS.OpenLots.mqh>
+#include <rsf/ea/status/SS.ClosedTrades.mqh>
+#include <rsf/ea/status/SS.TotalProfit.mqh>
+#include <rsf/ea/status/SS.ProfitStats.mqh>
+#include <rsf/ea/status/StatusToStr.mqh>
+#include <rsf/ea/status/StatusDescription.mqh>
 
-#include <rsf/v40/ea/status/file/FindStatusFile.mqh>
-#include <rsf/v40/ea/status/file/GetStatusFilename.mqh>
-#include <rsf/v40/ea/status/file/SetStatusFilename.mqh>
-#include <rsf/v40/ea/status/file/ReadStatus.General.mqh>
-#include <rsf/v40/ea/status/file/ReadStatus.Targets.mqh>
-#include <rsf/v40/ea/status/file/ReadStatus.OpenPosition.mqh>
-#include <rsf/v40/ea/status/file/ReadStatus.HistoryRecord.mqh>
-#include <rsf/v40/ea/status/file/ReadStatus.TradeHistory.mqh>
-#include <rsf/v40/ea/status/file/ReadStatus.TradeStats.mqh>
-#include <rsf/v40/ea/status/file/SaveStatus.General.mqh>
-#include <rsf/v40/ea/status/file/SaveStatus.Targets.mqh>
-#include <rsf/v40/ea/status/file/SaveStatus.OpenPosition.mqh>
-#include <rsf/v40/ea/status/file/SaveStatus.TradeHistory.mqh>
-#include <rsf/v40/ea/status/file/SaveStatus.TradeStats.mqh>
+#include <rsf/ea/status/file/FindStatusFile.mqh>
+#include <rsf/ea/status/file/GetStatusFilename.mqh>
+#include <rsf/ea/status/file/SetStatusFilename.mqh>
+#include <rsf/ea/status/file/ReadStatus.General.mqh>
+#include <rsf/ea/status/file/ReadStatus.Targets.mqh>
+#include <rsf/ea/status/file/ReadStatus.OpenPosition.mqh>
+#include <rsf/ea/status/file/ReadStatus.HistoryRecord.mqh>
+#include <rsf/ea/status/file/ReadStatus.TradeHistory.mqh>
+#include <rsf/ea/status/file/ReadStatus.TradeStats.mqh>
+#include <rsf/ea/status/file/SaveStatus.General.mqh>
+#include <rsf/ea/status/file/SaveStatus.Targets.mqh>
+#include <rsf/ea/status/file/SaveStatus.OpenPosition.mqh>
+#include <rsf/ea/status/file/SaveStatus.TradeHistory.mqh>
+#include <rsf/ea/status/file/SaveStatus.TradeStats.mqh>
 
-#include <rsf/v40/ea/status/volatile/StoreVolatileStatus.mqh>
-#include <rsf/v40/ea/status/volatile/RestoreVolatileStatus.mqh>
-#include <rsf/v40/ea/status/volatile/RemoveVolatileStatus.mqh>
-#include <rsf/v40/ea/status/volatile/ToggleOpenOrders.mqh>
-#include <rsf/v40/ea/status/volatile/ToggleTradeHistory.mqh>
-#include <rsf/v40/ea/status/volatile/ToggleMetrics.mqh>
+#include <rsf/ea/status/volatile/StoreVolatileStatus.mqh>
+#include <rsf/ea/status/volatile/RestoreVolatileStatus.mqh>
+#include <rsf/ea/status/volatile/RemoveVolatileStatus.mqh>
+#include <rsf/ea/status/volatile/ToggleOpenOrders.mqh>
+#include <rsf/ea/status/volatile/ToggleTradeHistory.mqh>
+#include <rsf/ea/status/volatile/ToggleMetrics.mqh>
 
-#include <rsf/v40/ea/test/ReadTestConfiguration.mqh>
+#include <rsf/ea/test/ReadTestConfiguration.mqh>
 
-#include <rsf/v40/ea/trade/AddHistoryRecord.mqh>
-#include <rsf/v40/ea/trade/CalculateMagicNumber.mqh>
-#include <rsf/v40/ea/trade/ComposePositionCloseMsg.mqh>
-#include <rsf/v40/ea/trade/HistoryRecordToStr.mqh>
-#include <rsf/v40/ea/trade/IsMyOrder.mqh>
-#include <rsf/v40/ea/trade/MovePositionToHistory.mqh>
-#include <rsf/v40/ea/trade/onPositionClose.mqh>
+#include <rsf/ea/trade/AddHistoryRecord.mqh>
+#include <rsf/ea/trade/CalculateMagicNumber.mqh>
+#include <rsf/ea/trade/ComposePositionCloseMsg.mqh>
+#include <rsf/ea/trade/HistoryRecordToStr.mqh>
+#include <rsf/ea/trade/IsMyOrder.mqh>
+#include <rsf/ea/trade/MovePositionToHistory.mqh>
+#include <rsf/ea/trade/onPositionClose.mqh>
 
-#include <rsf/v40/ea/trade/signal/SignalOperationToStr.mqh>
-#include <rsf/v40/ea/trade/signal/SignalTypeToStr.mqh>
+#include <rsf/ea/trade/signal/SignalOperationToStr.mqh>
+#include <rsf/ea/trade/signal/SignalTypeToStr.mqh>
 
-#include <rsf/v40/ea/trade/stats/CalculateStats.mqh>
+#include <rsf/ea/trade/stats/CalculateStats.mqh>
 
-#include <rsf/v40/ea/validation/ValidateInputs.ID.mqh>
-#include <rsf/v40/ea/validation/ValidateInputs.Targets.mqh>
-#include <rsf/v40/ea/validation/onInputError.mqh>
+#include <rsf/ea/validation/ValidateInputs.ID.mqh>
+#include <rsf/ea/validation/ValidateInputs.Targets.mqh>
+#include <rsf/ea/validation/onInputError.mqh>
 
 // init/deinit
-#include <rsf/v40/ea/init.mqh>
-#include <rsf/v40/ea/deinit.mqh>
+#include <rsf/ea/init.mqh>
+#include <rsf/ea/deinit.mqh>
 
 
 // shorter metric aliases

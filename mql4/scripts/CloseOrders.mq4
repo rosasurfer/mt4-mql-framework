@@ -21,7 +21,7 @@ extern bool   Close.Hedged       = false;          // close hedged part only
 #include <rsf/core/script.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/structs/OrderExecution.mqh>
+#include <rsf/struct/OrderExecution.mqh>
 
 bool   closeAllSymbols = false;
 

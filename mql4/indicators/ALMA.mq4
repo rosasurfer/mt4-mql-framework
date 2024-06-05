@@ -46,13 +46,13 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/v40/chartlegend.mqh>
-#include <rsf/v40/ConfigureSignals.mqh>
-#include <rsf/v40/HandleCommands.mqh>
-#include <rsf/v40/IsBarOpen.mqh>
-#include <rsf/v40/ObjectCreateRegister.mqh>
-#include <rsf/v40/trend.mqh>
-#include <rsf/v40/ta/ALMA.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/trend.mqh>
+#include <rsf/functions/ta/ALMA.mqh>
 #include <rsf/win32api.mqh>
 
 #define MODE_MA_FILTERED      MovingAverage.MODE_MA      // indicator buffer ids

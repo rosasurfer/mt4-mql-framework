@@ -29,13 +29,13 @@ int __DeinitFlags[];
 #include <rsf/stdfunctions.mqh>
 #include <rsf/timezones.mqh>
 #include <rsf/win32api.mqh>
-#include <rsf/v40/ExplodeStrings.mqh>
-#include <rsf/v40/InitializeByteBuffer.mqh>
-#include <rsf/v40/JoinBools.mqh>
-#include <rsf/v40/JoinDoubles.mqh>
-#include <rsf/v40/JoinDoublesEx.mqh>
-#include <rsf/v40/JoinInts.mqh>
-#include <rsf/v40/structs/OrderExecution.mqh>
+#include <rsf/functions/ExplodeStrings.mqh>
+#include <rsf/functions/InitializeByteBuffer.mqh>
+#include <rsf/functions/JoinBools.mqh>
+#include <rsf/functions/JoinDoubles.mqh>
+#include <rsf/functions/JoinDoublesEx.mqh>
+#include <rsf/functions/JoinInts.mqh>
+#include <rsf/struct/OrderExecution.mqh>
 
 
 /**
