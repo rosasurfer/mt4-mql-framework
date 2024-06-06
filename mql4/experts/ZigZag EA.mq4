@@ -10,12 +10,12 @@
  * External control
  * ----------------
  *  • EA.Start: When a "start" command is received the EA opens a position in direction of the current ZigZag leg. There are
- *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction. The command has no
- *              effect if the EA already manages an open position.
- *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for trade signals. The
- *              command has no effect if the EA is already in status "stopped".
- *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new trade signals and start trading. The command
- *              has no effect if the EA is already in status "waiting".
+ *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction.
+ *              The command has no effect if the EA already manages an open position.
+ *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for trade signals.
+ *              The command has no effect if the EA is already in status "stopped".
+ *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new trade signals and start trading.
+ *              The command has no effect if the EA is already in status "waiting".
  *  • EA.ToggleMetrics
  *  • Chart.ToggleOpenOrders
  *  • Chart.ToggleTradeHistory
@@ -24,11 +24,9 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - EXECUTION_CONTEXT
- *     replace string arrays by pointers
  *
  *  - profitable backtests
- *     profitable setups: Rhythm variants, Tunnel EA
+ *     setups: Rhythm variants, Tunnel EA
  *     easily updatable testing environment
  *      reproduce tests with original EAs
  *      terminal with Dukascopy data
@@ -51,6 +49,7 @@
  *
  *  - Account Guard:
  *     delete pending orders on prohibited symbols
+ *     visual chart feedback when active
  *     enable trading if disabled
  *     ERR_NOT_ENOUGH_MONEY when closing a basket
  *     display runtime errors on screen
@@ -118,8 +117,9 @@
  *  - realtime equity charts
  *     don't find out afterwards what has happened in the account
  *
- *  -------------------------------------------------------------------------------------------------------------------------
  *  - ZigZag Twister (123 Trader)
+ *
+ *  -------------------------------------------------------------------------------------------------------------------------
  *  - input TradingTimeframe
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - document control scripts

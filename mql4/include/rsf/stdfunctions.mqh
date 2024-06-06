@@ -5409,15 +5409,16 @@ int StrToOperationType(string value) {
 
    if (StringLen(str) == 1) {
       switch (StrToInteger(str)) {
-         case OP_BUY      :
-            if (str == "0")    return(OP_BUY      ); break;          // OP_BUY = 0: Sonderfall
-         case OP_SELL     :    return(OP_SELL     );
-         case OP_BUYLIMIT :    return(OP_BUYLIMIT );
-         case OP_SELLLIMIT:    return(OP_SELLLIMIT);
-         case OP_BUYSTOP  :    return(OP_BUYSTOP  );
-         case OP_SELLSTOP :    return(OP_SELLSTOP );
-         case OP_BALANCE  :    return(OP_BALANCE  );
-         case OP_CREDIT   :    return(OP_CREDIT   );
+         case OP_BUY:
+            if (str == "0") return(OP_BUY);
+            break;                                    // OP_BUY = 0: Sonderfall
+         case OP_SELL:      return(OP_SELL);
+         case OP_BUYLIMIT:  return(OP_BUYLIMIT);
+         case OP_SELLLIMIT: return(OP_SELLLIMIT);
+         case OP_BUYSTOP:   return(OP_BUYSTOP);
+         case OP_SELLSTOP:  return(OP_SELLSTOP);
+         case OP_BALANCE:   return(OP_BALANCE);
+         case OP_CREDIT:    return(OP_CREDIT);
       }
    }
    else {
