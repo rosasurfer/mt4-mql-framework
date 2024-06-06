@@ -571,13 +571,9 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
  */
 bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) {
    datetime chartOpenTime = openTime;
-   int chartOffset = iBarShiftNext(NULL, NULL, openTime);         // offset of the first matching chart bar
-   if (chartOffset >= 0) chartOpenTime = Time[chartOffset];
-
-   if (chartOpenTime-openTime > Period()*MINUTES) {
-      // No chart data matching the rates[] data yet available: skip the bar, it will be drawn after the next chart update.
-      return(true);
-   }
+   int chartOffset = iBarShiftNext(NULL, NULL, openTime);      // offset of the first matching chart bar
+   if (chartOffset < 0) return(true);                          // no chart data yet available: skip the inside bar, it will be drawn after chart bars arrived
+   chartOpenTime = Time[chartOffset];
 
    datetime closeTime   = openTime + timeframe*MINUTES;
    double   barSize     = (high-low);
