@@ -5421,22 +5421,36 @@ int StrToOperationType(string value) {
       }
    }
    else {
-      if (StrStartsWith(str, "op_"))
+      if (StrStartsWith(str, "op_")) {
          str = StrSubstr(str, 3);
+      }
       if (str == "buy"       ) return(OP_BUY      );
       if (str == "sell"      ) return(OP_SELL     );
+
       if (str == "buylimit"  ) return(OP_BUYLIMIT );
-      if (str == "buy limit" ) return(OP_BUYLIMIT );
       if (str == "buy-limit" ) return(OP_BUYLIMIT );
+      if (str == "buy limit" ) return(OP_BUYLIMIT );
+
       if (str == "selllimit" ) return(OP_SELLLIMIT);
-      if (str == "sell limit") return(OP_SELLLIMIT);
       if (str == "sell-limit") return(OP_SELLLIMIT);
+      if (str == "sell limit") return(OP_SELLLIMIT);
+
       if (str == "buystop"   ) return(OP_BUYSTOP  );
-      if (str == "stop buy"  ) return(OP_BUYSTOP  );
-      if (str == "stop-buy"  ) return(OP_BUYSTOP  );
+      if (str == "buy-stop"  ) return(OP_BUYSTOP  );
+      if (str == "buy stop"  ) return(OP_BUYSTOP  );
+
       if (str == "sellstop"  ) return(OP_SELLSTOP );
-      if (str == "stop sell" ) return(OP_SELLSTOP );
+      if (str == "sell-stop" ) return(OP_SELLSTOP );
+      if (str == "sell stop" ) return(OP_SELLSTOP );
+
+      if (str == "stopbuy"   ) return(OP_BUYSTOP  );
+      if (str == "stop-buy"  ) return(OP_BUYSTOP  );
+      if (str == "stop buy"  ) return(OP_BUYSTOP  );
+
+      if (str == "stopsell"  ) return(OP_SELLSTOP );
       if (str == "stop-sell" ) return(OP_SELLSTOP );
+      if (str == "stop sell" ) return(OP_SELLSTOP );
+
       if (str == "balance"   ) return(OP_BALANCE  );
       if (str == "credit"    ) return(OP_CREDIT   );
    }
