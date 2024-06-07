@@ -22,7 +22,7 @@ extern int    HistoryFormat    = 401;                      // written history fo
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
 #include <rsf/history.mqh>
-#include <rsf/functions/ComputeFloatingPnL.mqh>
+#include <rsf/functions/ComputeFloatingProfit.mqh>
 #include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
@@ -171,15 +171,15 @@ int onTick() {
  * @return bool - success status
  */
 bool CalculateEquity() {
-   // calculate PL per symbol
+   // calculate PnL per symbol
    string symbols[];
    double profits[];
-   if (!ComputeFloatingPnLs(symbols, profits)) return(false);
+   if (!ComputeFloatingProfits(symbols, profits)) return(false);
 
    // calculate current equity
-   int size = ArraySize(symbols);
+   int size = ArraySize(symbols), error;
    double equity = AccountBalance();
-   for (int error, i=0; i < size; i++) {
+   for (int i=0; i < size; i++) {
       equity      += profits[i];
       lastTickTime = Max(lastTickTime, MarketInfoEx(symbols[i], MODE_TIME, error, "CalculateEquity(1)")); if (error != NULL) return(false);
    }
@@ -189,9 +189,7 @@ bool CalculateEquity() {
    currEquity[I_EQUITY_ACCOUNT_EXT] = NormalizeDouble(equity + GetExternalAssets(), 2);
    isOpenPosition = (size > 0);
 
-   if (!last_error)
-      return(!catch("CalculateEquity(2)"));
-   return(false);
+   return(!last_error);
 }
 
 

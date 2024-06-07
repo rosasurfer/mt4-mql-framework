@@ -1,5 +1,5 @@
 /**
- * Compute floating PnL values of all open positions.
+ * Compute floating profit values of all open positions.
  *
  * @param  _Out_ string symbols[]               - symbols of open positions
  * @param  _Out_ double profits[]               - PnL value per symbol
@@ -7,7 +7,7 @@
  *                                                Use if spread widening shall not impact the result (default: no).
  * @return bool - success status
  */
-bool ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false) {
+bool ComputeFloatingProfits(string &symbols[], double &profits[], bool ignoreSpread=false) {
    string _symbols[]; ArrayResize(_symbols, 0);
    double _profits[]; ArrayResize(_profits, 0);
 
@@ -61,12 +61,12 @@ bool ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread
    ArrayResize(_profits, size);
 
    for (i=0; i < size; i++) {
-      _profits[i] = ComputeFloatingPnL(_symbols[i], i, iSymbols, tickets, types, lots, openPrices, commissions, swaps, orderProfits, ignoreSpread); if (_profits[i] == EMPTY_VALUE) return(false);
+      _profits[i] = ComputeFloatingProfit(_symbols[i], i, iSymbols, tickets, types, lots, openPrices, commissions, swaps, orderProfits, ignoreSpread); if (_profits[i] == EMPTY_VALUE) return(false);
       _profits[i] = NormalizeDouble(_profits[i], 2);
    }
 
    // finally modify passed parameters (on errors they are untouched)
-   if (!catch("ComputeFloatingPnLs(1)")) {
+   if (!catch("ComputeFloatingProfits(1)")) {
       ArrayResize(symbols, 0); if (ArraySize(_symbols) > 0) ArrayCopy(symbols, _symbols);
       ArrayResize(profits, 0); if (ArraySize(_profits) > 0) ArrayCopy(profits, _profits);
       return(true);
@@ -76,10 +76,10 @@ bool ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread
 
 
 /**
- * Compute the floating PnL of a single symbol. PnL of hedged positions is calculated in the most effective way, ie. when
+ * Compute the floating profit of a single symbol. Profit of hedged positions is calculated in the most effective way, ie. when
  * hedged positions are closed "one by another".
  *
- * Should be called from ComputeFloatingPnLs() only.
+ * Should be called from ComputeFloatingProfits() only.
  *
  * @param  _In_    string symbol                  - symbol
  * @param  _In_    int    symbolIndex             - symbol index in symbols[]
@@ -96,11 +96,11 @@ bool ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread
  *
  * @return double  - PnL value of the symbol or EMPTY_VALUE in case of errors
  */
-double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false) {
+double ComputeFloatingProfit(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false) {
    double longPosition, shortPosition, totalPosition, hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, fullProfit, hedgedProfit, spread, spreadPips, spreadProfit, pipValue, pipDistance;
    int error, ticketsSize = ArraySize(tickets);
 
-   // resolve the symbol's total position: hedged volume (constant PL) + directional volume (variable PL)
+   // resolve the symbol's total position: hedged volume (constant PnL) + directional volume (variable PnL)
    for (int i=0; i < ticketsSize; i++) {
       if (iSymbols[i] != symbolIndex) continue;
 
@@ -112,16 +112,16 @@ double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &t
    totalPosition = NormalizeDouble(longPosition-shortPosition, 2);
 
    // TODO: in indicators loaded in a new chart window MarketInfo(MODE_DIGITS) may be erroneous
-   int    digits    = MarketInfoEx(symbol, MODE_DIGITS, error, "ComputeFloatingPnL(1)"); if (error != NULL) return(EMPTY_VALUE);
+   int    digits    = MarketInfoEx(symbol, MODE_DIGITS, error, "ComputeFloatingProfit(1)"); if (error != NULL) return(EMPTY_VALUE);
    int    pipDigits = digits & (~1);
    double pipSize   = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
 
    if (ignoreSpread) {
-      spread     = MarketInfoEx(symbol, MODE_SPREAD, error, "ComputeFloatingPnL(2)"); if (error != NULL) return(EMPTY_VALUE);
+      spread     = MarketInfoEx(symbol, MODE_SPREAD, error, "ComputeFloatingProfit(2)"); if (error != NULL) return(EMPTY_VALUE);
       spreadPips = spread/MathPow(10, digits & 1);                            // spread in pip
    }
 
-   // resolve the constant PL of a hedged position
+   // resolve the constant PnL of a hedged position
    if (longPosition && shortPosition) {
       hedgedLots     = MathMin(longPosition, shortPosition);
       remainingLong  = hedgedLots;
@@ -142,7 +142,7 @@ double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &t
                tickets[i]    = NULL;
             }
             else {
-               // apply full swap and reduce the ticket's commission, PL and lotsize
+               // apply full swap and reduce the ticket's commission, PnL and lotsize
                factor        = remainingLong/lots[i];
                openPrice     = NormalizeDouble(openPrice + remainingLong * openPrices[i], 8);
                swap         += swaps[i];                swaps      [i]  = 0;
@@ -163,7 +163,7 @@ double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &t
                tickets[i]     = NULL;
             }
             else {
-               // apply full swap and reduce the ticket's commission, PL and lotsize
+               // apply full swap and reduce the ticket's commission, PnL and lotsize
                factor         = remainingShort/lots[i];
                closePrice     = NormalizeDouble(closePrice + remainingShort * openPrices[i], 8);
                swap          += swaps[i]; swaps      [i]  = 0;
@@ -174,22 +174,22 @@ double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &t
             }
          }
       }
-      if (remainingLong  != 0) return(_EMPTY_VALUE(catch("ComputeFloatingPnL(3)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
-      if (remainingShort != 0) return(_EMPTY_VALUE(catch("ComputeFloatingPnL(4)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
+      if (remainingLong  != 0) return(_EMPTY_VALUE(catch("ComputeFloatingProfit(3)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
+      if (remainingShort != 0) return(_EMPTY_VALUE(catch("ComputeFloatingProfit(4)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
 
-      // calculate BE distance and the resulting PL
-      pipValue     = PipValueEx(symbol, hedgedLots, error, "ComputeFloatingPnL(5)"); if (error != NULL) return(EMPTY_VALUE);
+      // calculate BE distance and the resulting PnL
+      pipValue     = PipValueEx(symbol, hedgedLots, error, "ComputeFloatingProfit(5)"); if (error != NULL) return(EMPTY_VALUE);
       pipDistance  = (closePrice-openPrice)/hedgedLots/pipSize + (commission+swap)/pipValue;
       hedgedProfit = pipDistance * pipValue;
 
-      // without directional position return PL of the hedged position only
+      // without directional position return PnL of the hedged position only
       if (!totalPosition) {
          fullProfit = NormalizeDouble(hedgedProfit, 2);
-         return(ifDouble(!catch("ComputeFloatingPnL(6)"), fullProfit, EMPTY_VALUE));
+         return(ifDouble(!catch("ComputeFloatingProfit(6)"), fullProfit, EMPTY_VALUE));
       }
    }
 
-   // calculate PL of a long position (if any)
+   // calculate PnL of a long position (if any)
    if (totalPosition > 0) {
       swap           = 0;
       commission     = 0;
@@ -209,13 +209,13 @@ double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &t
       }
       // if enabled add the PnL value of the spread to ignore spread spikes/widening
       if (ignoreSpread) {
-         spreadProfit = spreadPips * PipValueEx(symbol, totalPosition, error, "ComputeFloatingPnL(7)"); if (error != NULL) return(EMPTY_VALUE);
+         spreadProfit = spreadPips * PipValueEx(symbol, totalPosition, error, "ComputeFloatingProfit(7)"); if (error != NULL) return(EMPTY_VALUE);
       }
       fullProfit = NormalizeDouble(hedgedProfit + floatingProfit + spreadProfit + swap + commission, 2);
-      return(ifDouble(!catch("ComputeFloatingPnL(8)"), fullProfit, EMPTY_VALUE));
+      return(ifDouble(!catch("ComputeFloatingProfit(8)"), fullProfit, EMPTY_VALUE));
    }
 
-   // calculate PL of a short position (if any)
+   // calculate PnL of a short position (if any)
    if (totalPosition < 0) {
       swap           = 0;
       commission     = 0;
@@ -235,11 +235,11 @@ double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &t
       }
       // if enabled add the PnL value of the spread to ignore spread spikes/widening
       if (ignoreSpread) {
-         spreadProfit = spreadPips * PipValueEx(symbol, -totalPosition, error, "ComputeFloatingPnL(9)"); if (error != NULL) return(EMPTY_VALUE);
+         spreadProfit = spreadPips * PipValueEx(symbol, -totalPosition, error, "ComputeFloatingProfit(9)"); if (error != NULL) return(EMPTY_VALUE);
       }
       fullProfit = NormalizeDouble(hedgedProfit + floatingProfit + spreadProfit + swap + commission, 2);
-      return(ifDouble(!catch("ComputeFloatingPnL(10)"), fullProfit, EMPTY_VALUE));
+      return(ifDouble(!catch("ComputeFloatingProfit(10)"), fullProfit, EMPTY_VALUE));
    }
 
-   return(_EMPTY_VALUE(catch("ComputeFloatingPnL(11)  unreachable code", ERR_RUNTIME_ERROR)));
+   return(_EMPTY_VALUE(catch("ComputeFloatingProfit(11)  unreachable code", ERR_RUNTIME_ERROR)));
 }

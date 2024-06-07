@@ -1,7 +1,7 @@
 /**
  * Account Guard
  *
- * The EA monitors open positions of all symbols and enforces a specified drawdown limit.
+ * The EA monitors open orders and positions of all symbols and enforces defined trading rules.
  *
  * Positions of symbols without trade permission and positions outside of the permitted time range are immediately closed.
  *
@@ -26,8 +26,10 @@
  *  - XAU: prohibit trading between 15:00-17:30
  *  - XAU: prohibit trading from 30 minutes before until 60 minutes after major news
  *
- *  - define major news per week and a time window around it where trading is prohibited
  *  - delete pending orders on prohibited symbols
+ *
+ *  - ComputeClosedProfit() freezes the terminal if the full history is visible => move to Expander
+ *  - define major news per week and a time window around it where trading is prohibited
  *  - visual chart feedback when active (red dot when inactive, green dot when active)
  *  - enable trading if disabled
  *  - ERR_NOT_ENOUGH_MONEY when closing a basket
@@ -65,29 +67,30 @@ extern bool   IgnoreSpread       = true;              // whether to ignore the s
 #include <rsf/core/expert.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/functions/ComputeFloatingPnL.mqh>
+#include <rsf/functions/ComputeFloatingProfit.mqh>
 #include <rsf/functions/ParseDateTime.mqh>
 #include <rsf/functions/ParseTimeRange.mqh>
 #include <rsf/functions/SortClosedTickets.mqh>
 
 double   prevEquity;                                  // equity value at the previous tick
-bool     isPctLimit;                                  // whether a percent limit is configured
 double   absLimit;                                    // configured absolute drawdown limit
 double   pctLimit;                                    // configured percentage drawdown limit
+bool     isPctLimit;                                  // whether a percent limit is configured
 datetime lastLiquidationTime;
 
+bool     allSymbolsPermitted;
+string   permittedSymbols[];
 datetime permittedFrom = -1;
 datetime permittedTo   = -1;
-bool     permitAllSymbols;
-string   permittedSymbols[];
-string   watchedSymbols  [];
-double   watchedPositions[][5];
 
-#define I_START_TIME       0                          // indexes of watchedPositions[]
-#define I_START_EQUITY     1                          //
-#define I_DRAWDOWN_LIMIT   2                          //
-#define I_OPEN_PROFIT      3                          //
-#define I_HISTORY          4                          //
+string   trackedSymbols[];                            // currently tracked open positions
+double   trackedData[][5];
+
+#define I_OPEN_TIME        0                          // indexes of trackedData[]
+#define I_OPEN_EQUITY      1                          //
+#define I_OPEN_PROFIT      2                          //
+#define I_CLOSED_PROFIT    3                          //
+#define I_DRAWDOWN_LIMIT   4                          //
 
 
 /**
@@ -99,12 +102,12 @@ int onInit() {
    // validate inputs
    // PermittedSymbols
    string sValue = StrTrim(PermittedSymbols), sValues[];
-   permitAllSymbols = (sValue == "*");
-   if (!permitAllSymbols) {
+   allSymbolsPermitted = (sValue == "*");
+   if (!allSymbolsPermitted) {
       int size = Explode(PermittedSymbols, ",", sValues, NULL);
       for (int i=0; i < size; i++) {
          sValue = StrTrim(sValues[i]);
-         if (StringLen(sValue) > MAX_SYMBOL_LENGTH)                   return(catch("onInit(1)  invalid parameter PermittedSymbols: "+ DoubleQuoteStr(PermittedSymbols) +" (max symbol length = "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER));
+         if (StringLen(sValue) > MAX_SYMBOL_LENGTH)                   return(catch("onInit(1)  invalid symbol in parameter PermittedSymbols: "+ DoubleQuoteStr(sValue) +" (max symbol length: "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER));
          if (SearchStringArrayI(permittedSymbols, sValue) == -1) {
             ArrayPushString(permittedSymbols, sValue);
          }
@@ -156,39 +159,40 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // get open positions
+   // get open positions and floating profits
    string openSymbols[];
    double openProfits[];
-   if (!ComputeFloatingPnLs(openSymbols, openProfits, IgnoreSpread)) return(last_error);
+   if (!ComputeFloatingProfits(openSymbols, openProfits, IgnoreSpread)) return(last_error);
 
-   // calculate current equity
+   // calculate current equity value
    double equity = AccountBalance();
    int openSize = ArraySize(openSymbols);
    for (int i=0; i < openSize; i++) {
       equity += openProfits[i];
    }
 
-   // synchronize watched positions
-   int watchedSize = ArraySize(watchedSymbols);
-   for (i=0; i < watchedSize; i++) {
-      int n = SearchStringArray(openSymbols, watchedSymbols[i]);
+   // synchronize tracked open positions
+   int trackedSize = ArraySize(trackedSymbols);
+   for (i=0; i < trackedSize; i++) {
+      int n = SearchStringArray(openSymbols, trackedSymbols[i]);
       if (n == -1) {
-         // position closed, remove it from watchlist
-         logInfo("onTick(1)  "+ watchedSymbols[i] +" position closed");
-         if (watchedSize > i+1) {
-            int dim2 = ArrayRange(watchedPositions, 1);
-            ArrayCopy(watchedSymbols,   watchedSymbols,   i,       i+1);
-            ArrayCopy(watchedPositions, watchedPositions, i*dim2, (i+1)*dim2);
+         // tracked symbol is not an open position anymore, remove it
+         logInfo("onTick(1)  "+ trackedSymbols[i] +" position closed");
+         if (trackedSize > i+1) {
+            int dim2 = ArrayRange(trackedData, 1);
+            ArrayCopy(trackedSymbols, trackedSymbols, i,       i+1);
+            ArrayCopy(trackedData,    trackedData,    i*dim2, (i+1)*dim2);
          }
-         watchedSize--;
-         ArrayResize(watchedSymbols,   watchedSize);
-         ArrayResize(watchedPositions, watchedSize);
+         trackedSize--;
+         ArrayResize(trackedSymbols, trackedSize);
+         ArrayResize(trackedData,    trackedSize);
          i--;
       }
       else {
-         // update watched position and remove processed open position
-         watchedPositions[i][I_OPEN_PROFIT] = openProfits[n];
-         watchedPositions[i][I_HISTORY    ] = CalculateHistory(watchedSymbols[i], watchedPositions[i][I_START_TIME]); if (!watchedPositions[i][I_HISTORY] && last_error) return(last_error);
+         // update tracked position and remove symbol from open[Symbols|Profits]
+         trackedData[i][I_OPEN_PROFIT  ] = openProfits[n];
+         trackedData[i][I_CLOSED_PROFIT] = ComputeClosedProfit(trackedSymbols[i], trackedData[i][I_OPEN_TIME]);
+         if (last_error != NULL) return(last_error);
 
          if (openSize > n+1) {
             ArrayCopy(openSymbols, openSymbols, n, n+1);
@@ -199,17 +203,18 @@ int onTick() {
          ArrayResize(openProfits, openSize);
       }
    }
+   // on openSize > 0: all remaining open[Symbols|Profits] are new (unknown to the tracker)
 
-   // liquidate new positions after a previous liquidation at the same day
+   // close new positions after a previous liquidation at the same day
    if (openSize > 0) {
       datetime today = TimeFXT();
       today -= (today % DAY);
       datetime lastLiquidation = lastLiquidationTime - lastLiquidationTime % DAY;
       if (lastLiquidation == today) {
-         logWarn("onTick(2)  liquidating all new positions (auto-liquidation until end of day)");
-         ArrayResize(watchedSymbols, 0);
-         ArrayResize(watchedPositions, 0);
-         CloseOpenOrders();
+         logWarn("onTick(2)  closing all new positions until end of day");
+         ArrayResize(trackedSymbols, 0);
+         ArrayResize(trackedData,    0);
+         CloseOpenOrders();                                       // FIXME: closes all open tickets, not only new ones
          return(catch("onTick(3)"));
       }
    }
@@ -217,7 +222,7 @@ int onTick() {
    // process new positions
    for (i=0; prevEquity && i < openSize; i++) {
       // close non-permitted positions
-      if (!permitAllSymbols) {
+      if (!allSymbolsPermitted) {
          if (SearchStringArrayI(permittedSymbols, openSymbols[i]) == -1) {
             logWarn("onTick(4)  closing non-permitted "+ openSymbols[i] +" position");
             CloseOpenOrders(openSymbols[i]);
@@ -240,35 +245,38 @@ int onTick() {
          }
       }
 
-      // add new position to watchlist
-      ArrayResize(watchedSymbols,   watchedSize+1);
-      ArrayResize(watchedPositions, watchedSize+1);
-      watchedSymbols  [watchedSize]                   = openSymbols[i];
-      watchedPositions[watchedSize][I_START_TIME    ] = GetPositionStartTime(openSymbols[i]);
-      watchedPositions[watchedSize][I_START_EQUITY  ] = prevEquity;
-      watchedPositions[watchedSize][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);
-      watchedPositions[watchedSize][I_OPEN_PROFIT   ] = openProfits[i];
-      watchedPositions[watchedSize][I_HISTORY       ] = CalculateHistory(watchedSymbols[watchedSize], watchedPositions[watchedSize][I_START_TIME]); if (!watchedPositions[watchedSize][I_HISTORY] && last_error) return(last_error);
-      logInfo("onTick(7)  watching "+ watchedSymbols[watchedSize] +" position, ddl="+ DoubleToStr(watchedPositions[watchedSize][I_DRAWDOWN_LIMIT], 2));
-      watchedSize++;
+      // add new position to tracker
+      ArrayResize(trackedSymbols, trackedSize+1);
+      ArrayResize(trackedData,    trackedSize+1);
+      trackedSymbols[trackedSize]                = openSymbols[i];
+      trackedData[trackedSize][I_OPEN_TIME     ] = GetPositionStartTime(openSymbols[i]);
+      trackedData[trackedSize][I_OPEN_EQUITY   ] = prevEquity;    // equity value of the previous tick
+      trackedData[trackedSize][I_OPEN_PROFIT   ] = openProfits[i];
+      trackedData[trackedSize][I_CLOSED_PROFIT ] = ComputeClosedProfit(trackedSymbols[trackedSize], trackedData[trackedSize][I_OPEN_TIME]);
+      trackedData[trackedSize][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);
+      if (last_error != NULL) return(last_error);
+
+      logInfo("onTick(7)  watching "+ trackedSymbols[trackedSize] +" position, ddl="+ DoubleToStr(trackedData[trackedSize][I_DRAWDOWN_LIMIT], 2));
+      trackedSize++;
    }
-   prevEquity = equity;
 
    // monitor drawdown limit
-   for (i=0; i < watchedSize; i++) {
-      double openProfit = watchedPositions[i][I_OPEN_PROFIT   ];
-      double history    = watchedPositions[i][I_HISTORY       ];
-      double ddl        = watchedPositions[i][I_DRAWDOWN_LIMIT];
+   for (i=0; i < trackedSize; i++) {
+      double openProfit   = trackedData[i][I_OPEN_PROFIT   ];
+      double closedProfit = trackedData[i][I_CLOSED_PROFIT ];
+      double ddl          = trackedData[i][I_DRAWDOWN_LIMIT];
 
-      if (openProfit+history < ddl) {
+      if (openProfit+closedProfit < ddl) {
          lastLiquidationTime = TimeFXT();
-         logWarn("onTick(8)  "+ watchedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, liquidating positions...");
-         ArrayResize(watchedSymbols, 0);
-         ArrayResize(watchedPositions, 0);
-         CloseOpenOrders();
+         logWarn("onTick(8)  "+ trackedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, closing positions...");
+         ArrayResize(trackedSymbols, 0);
+         ArrayResize(trackedData,    0);
+         CloseOpenOrders();                                       // FIXME: closes all open tickets, not only the one hitting the DDL
          break;
       }
    }
+
+   prevEquity = equity;
    return(catch("onTick(9)"));
 }
 
@@ -298,18 +306,18 @@ datetime GetPositionStartTime(string symbol) {
 
 
 /**
- * Calculate historic PnL for the specified symbol and start time.
+ * Compute the closed profit value for the specified symbol and start time.
  *
- * @param string   symbol - trade symbol
+ * @param string   symbol - symbol
  * @param datetime from   - history start time
  *
- * @return double - historic PnL or NULL in case of errors (check last_error)
+ * @return double - closed profit value or NULL in case of errors (check last_error)
  */
-double CalculateHistory(string symbol, datetime from) {
-   if (from <= NULL) return(!catch("CalculateHistory(1)  invalid parameter from: "+ from, ERR_INVALID_PARAMETER));
+double ComputeClosedProfit(string symbol, datetime from) {
+   if (from <= NULL) return(!catch("ComputeClosedProfit(1)  invalid parameter from: "+ from, ERR_INVALID_PARAMETER));
 
    static int    lastOrders = -1;
-   static double lastProfit = 0;
+   static double lastProfit = 0;                                     // FIXME: static profit is not separated by symbol
 
    int orders = OrdersHistoryTotal(), _orders=orders;
    if (orders == lastOrders) return(lastProfit);                     // PnL is only recalculated if history size changes
@@ -330,7 +338,7 @@ double CalculateHistory(string symbol, datetime from) {
    }
    orders = n;
    ArrayResize(sortKeys, orders);
-   SortClosedTickets(sortKeys);
+   SortClosedTickets(sortKeys);                                      // TODO: move to Expander (bad performance)
 
    // read tickets sorted
    int      hst.tickets    []; ArrayResize(hst.tickets,     orders);
@@ -346,7 +354,7 @@ double CalculateHistory(string symbol, datetime from) {
    string   hst.comments   []; ArrayResize(hst.comments,    orders);
 
    for (i=0; i < orders; i++) {
-      if (!SelectTicket(sortKeys[i][2], "CalculateHistory(2)")) return(NULL);
+      if (!SelectTicket(sortKeys[i][2], "ComputeClosedProfit(2)")) return(NULL);
       hst.tickets    [i] = OrderTicket();
       hst.types      [i] = OrderType();
       hst.lotSizes   [i] = OrderLots();
@@ -361,13 +369,14 @@ double CalculateHistory(string symbol, datetime from) {
    }
 
    // adjust hedges: apply all data to the first ticket and discard the hedging ticket
+   // TODO: the nested loop freezes the terminal if the full history is visible => move to Expander
    for (i=0; i < orders; i++) {
       if (!hst.tickets[i]) continue;                                 // skip discarded tickets
 
-      if (EQ(hst.lotSizes[i], 0)) {                                  // lotSize = 0: hedging order
+      if (hst.lotSizes[i] < 0.005) {                                 // lotSize = 0: hedging order
          // TODO: check behaviour if OrderComment() is a custom value
-         if (!StrStartsWithI(hst.comments[i], "close hedge by #")) {
-            return(!catch("CalculateHistory(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+         if (!StrStartsWith(hst.comments[i], "close hedge by #")) {
+            return(!catch("ComputeClosedProfit(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
          }
 
          // search counterpart ticket
@@ -375,8 +384,8 @@ double CalculateHistory(string symbol, datetime from) {
          for (n=0; n < orders; n++) {
             if (hst.tickets[n] == ticket) break;
          }
-         if (n == orders) return(!catch("CalculateHistory(4)  cannot find counterpart ticket for hedging position #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
-         if (i == n     ) return(!catch("CalculateHistory(5)  both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+         if (n == orders) return(!catch("ComputeClosedProfit(4)  cannot find counterpart ticket for hedging position #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+         if (i == n     ) return(!catch("ComputeClosedProfit(5)  both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
 
          int first  = Min(i, n);
          int second = Max(i, n);
@@ -412,9 +421,9 @@ double CalculateHistory(string symbol, datetime from) {
 
 
 /**
- * Close open positions and pending orders.
+ * Close open positions and delete pending orders.
  *
- * @param string symbol [optional] - symbol to close (default: all symbols)
+ * @param string symbol [optional] - symbol (default: all symbols)
  *
  * @return bool - success status
  */
