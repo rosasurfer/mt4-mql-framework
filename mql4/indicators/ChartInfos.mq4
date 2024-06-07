@@ -14,6 +14,14 @@
  *
  *
  * TODO:
+ *  - CustomPosition()
+ *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice and so on...
+ *     history parsing/config term HT... freezes the terminal if the full history is active
+ *      ExtractPosition()
+ *       SortClosedTickets()    time=0.271 sec  => move to Expander
+ *       loop "correct hedges"  time=13.5 sec   => move to Expander
+ *     weekend configuration/timespans don't work (H Today on Bitcoin)
+ *     including/excluding a specific strategy is not supported
  *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - set order tracker sound on stopout to "margin-call"
  *  - order events during chart change (symbol/timeframe) are not detected
@@ -1221,6 +1229,7 @@ bool UpdatePositions() {
       if (!CalculateUnitSize()) return(false);
       if (!mm.done)             return(true);                              // terminal not yet ready
    }
+
    if (!positions.analyzed) {
       if (!AnalyzePositions())  return(false);
       if (!positions.analyzed)  return(true);                              // terminal not yet ready
@@ -1248,9 +1257,8 @@ bool UpdatePositions() {
    }
    ObjectSetText(label.totalPosition, sCurrentPosition, 9, "Tahoma", SlateGray);
 
-   int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                          // on ObjectDrag or opened "Properties" dialog
-      return(!catch("UpdatePositions(1)", error));
+   int error = GetLastError();                                             // on ObjectDrag or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) return(!catch("UpdatePositions(1)", error));
 
    // pending order marker bottom-right
    string label = ProgramName() +".PendingTickets";
@@ -1683,7 +1691,7 @@ bool UpdateStopoutLevel() {
             continue;
          }
 
-         // PL gefundener LFX-Positionen aufaddieren
+         // PnL gefundener LFX-Positionen aufaddieren
          while (true) {                                                          // Pseudo-Schleife, dient dem einfacherem Verlassen des Blocks
             if (!lfxOrders.openPositions) break;
 
@@ -1717,7 +1725,7 @@ bool UpdateStopoutLevel() {
          sortKeys[n][1] = OrderTicket();
          n++;
       }
-      if (lfxProfits) /*&&*/if (!AnalyzePos.ProcessLfxProfits()) return(false);  // PL gefundener LFX-Positionen verarbeiten
+      if (lfxProfits) /*&&*/if (!AnalyzePos.ProcessLfxProfits()) return(false);  // PnL gefundener LFX-Positionen verarbeiten
 
       if (n < orders) ArrayResize(sortKeys, n);
       openPositions = n;
@@ -1735,8 +1743,7 @@ bool UpdateStopoutLevel() {
       ArrayResize(profits,     openPositions);
 
       for (i=0; i < openPositions; i++) {
-         if (!SelectTicket(sortKeys[i][1], "AnalyzePositions(1)"))
-            return(false);
+         if (!SelectTicket(sortKeys[i][1], "AnalyzePositions(1)")) return(false);
          tickets    [i] = OrderTicket();
          types      [i] = OrderType();
          lots       [i] = NormalizeDouble(OrderLots(), 2);
@@ -1863,7 +1870,6 @@ bool UpdateStopoutLevel() {
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, NULL, NULL, NULL, EMPTY_VALUE, NULL, EMPTY_VALUE, line, lineSkipped)) {
       return(false);
    }
-
    positions.analyzed = true;
    return(!catch("AnalyzePositions(3)"));
 }
@@ -3269,8 +3275,8 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       int    lastOrders = termResult2;    // default: EMPTY_VALUE                // Anzahl der Tickets in der History: ändert sie sich, wird der PL neu berechnet
 
       int orders=OrdersHistoryTotal(), _orders=orders;
-
       if (orders != lastOrders) {
+
          // Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
          int sortKeys[][3], n, hst.ticket;                                 // {CloseTime, OpenTime, Ticket}
          ArrayResize(sortKeys, orders);
@@ -3304,7 +3310,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          }
          orders = n;
          ArrayResize(sortKeys, orders);
-         SortClosedTickets(sortKeys);
+         SortClosedTickets(sortKeys);                                         // TODO: move to Expander (bad performance)
 
          // Tickets sortiert einlesen
          int      hst.tickets    []; ArrayResize(hst.tickets,     orders);
@@ -3337,12 +3343,13 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          }
 
          // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen (auch Positionen mehrerer Symbole werden korrekt zugeordnet)
+         // TODO: the nested loop freezes the terminal if the full history is visible => move to Expander
          for (i=0; i < orders; i++) {
             if (!hst.valid[i]) continue;                                      // skip processed hedging orders
 
-            if (EQ(hst.lotSizes[i], 0)) {                                     // lotSize = 0: Hedge-Position
+            if (hst.lotSizes[i] < 0.005) {                                    // lotSize = 0: Hedge-Position
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
-               if (!StrStartsWithI(hst.comments[i], "close hedge by #")) {
+               if (!StrStartsWith(hst.comments[i], "close hedge by #")) {
                   return(!catch("ExtractPosition(2)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
                }
 
@@ -3393,6 +3400,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          termResult2        = _orders;
          //debug("ExtractPosition(0.1)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ ifString(IsEmptyValue(lastProfit), "empty", DoubleToStr(lastProfit, 2)) +"  closed trades="+ n);
       }
+
       // lastProfit zu closedProfit hinzufügen, wenn geschlossene Trades existierten (Ausgangsdaten bleiben unverändert)
       if (lastProfit != EMPTY_VALUE) {
          if (closedProfit == EMPTY_VALUE) closedProfit  = lastProfit;

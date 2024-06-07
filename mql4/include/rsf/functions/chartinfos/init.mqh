@@ -7,12 +7,12 @@ int onInit() {
    // reset global vars with account state (we may be called from an event handler, outside an init cycle)
    mm.done                 = false;
    mm.externalAssetsCached = false;                      // invalidate cached external assets
-
-   positions.analyzed = false;                           // reparse configuration
+   positions.analyzed      = false;                      // reparse configuration
    ArrayResize(config.sData,   0);                       //
    ArrayResize(config.dData,   0);                       //
    ArrayResize(configTerms,    0);                       //
    ArrayResize(positions.data, 0);                       //
+   ArrayResize(trackedOrders,  0);
 
    ArrayResize(lfxOrders.iCache, 0);
    ArrayResize(lfxOrders.bCache, 0);

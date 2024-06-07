@@ -19,9 +19,34 @@
  *
  *
  * TODO:
+ *  - XAU: prohibit counter-trend trading on sudden volatility
+ *     volatility: Donchian channel width
+ *     trend: ALMA(10) crosses LWMA(55) tunnel (L'mas signal)
+ *
+ *  - XAU: prohibit trading between 15:00-17:30
+ *  - XAU: prohibit trading from 30 minutes before until 60 minutes after major news
+ *
+ *  - define major news per week and a time window around it where trading is prohibited
+ *  - delete pending orders on prohibited symbols
+ *  - visual chart feedback when active (red dot when inactive, green dot when active)
  *  - enable trading if disabled
- *     MetaTrader WARN   BTCUSD,M15  Account Guard::onTick(8)  BTCUSD: drawdown limit of -21.7% reached, liquidating positions...
- *     MetaTrader FATAL  BTCUSD,M15  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #560866538 by #560870050 after 0.000 s  [ERR_TRADE_DISABLED]
+ *  - ERR_NOT_ENOUGH_MONEY when closing a basket
+ *  - display runtime errors on screen
+ *  - log trade details to logfile (manual logging is too time consuming)
+ *  - bug when a hedged position is closed elsewhere (sees a different position and may trigger DDL => error)
+ *     local
+ *      18:39:38.120  order buy market 0.02 BTCUSD sl: 0.00 tp: 0.00                                 (manual)
+ *      18:39:38.415  order was opened : #561128139 buy 0.02 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
+ *      ...
+ *      18:39:49.825  Script CloseOrders BTCUSD,M5: loaded successfully
+ *      18:39:57.130  rsfStdlib: order #561127602 was closed by order #561128139
+ *   -> 18:39:57.130  remainder of order #561127602 was opened : #561128149 buy 0.01 BTCUSD at 70323.78 sl: 0.00 tp: 0.00  => triggers remote error
+ *     remote
+ *   -> 18:39:57.252  WARN   Account Guard::onTick(8)  BTCUSD: drawdown limit of -23.8% reached, liquidating positions...
+ *      18:39:57.268         Account Guard::rsfStdlib::OrdersCloseSameSymbol(16)  closing 2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
+ *      18:39:57.268         Account Guard::rsfStdlib::OrdersHedge(13)  2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01} are already flat
+ *      18:39:57.268         Account Guard::rsfStdlib::OrdersCloseHedged(15)  closing 2 hedged BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
+ *      18:39:57.487  FATAL  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #561127605 by #561128149 after 0.219 s  [ERR_INVALID_TRADE_PARAMETERS]
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};

@@ -24,6 +24,7 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
+ *  - Account Guard
  *
  *  - profitable backtests
  *     setups: Rhythm variants, Tunnel EA
@@ -46,28 +47,6 @@
  *     working in tester (most important)
  *     manual order execution
  *     automated position management
- *
- *  - Account Guard:
- *     delete pending orders on prohibited symbols
- *     visual chart feedback when active
- *     enable trading if disabled
- *     ERR_NOT_ENOUGH_MONEY when closing a basket
- *     display runtime errors on screen
- *     log trade details to logfile (manual logging is too time consuming)
- *     bug when a hedged position is closed elsewhere (sees a different position and may trigger DDL => error)
- *      local
- *       18:39:38.120  order buy market 0.02 BTCUSD sl: 0.00 tp: 0.00                                 (manual)
- *       18:39:38.415  order was opened : #561128139 buy 0.02 BTCUSD at 70323.78 sl: 0.00 tp: 0.00
- *       ...
- *       18:39:49.825  Script CloseOrders BTCUSD,M5: loaded successfully
- *       18:39:57.130  rsfStdlib: order #561127602 was closed by order #561128139
- *    -> 18:39:57.130  remainder of order #561127602 was opened : #561128149 buy 0.01 BTCUSD at 70323.78 sl: 0.00 tp: 0.00                                  => triggers remote error
- *      remote
- *    -> 18:39:57.252  WARN   Account Guard::onTick(8)  BTCUSD: drawdown limit of -23.8% reached, liquidating positions...
-  *       18:39:57.268         Account Guard::rsfStdlib::OrdersCloseSameSymbol(16)  closing 2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
- *       18:39:57.268         Account Guard::rsfStdlib::OrdersHedge(13)  2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01} are already flat
- *       18:39:57.268         Account Guard::rsfStdlib::OrdersCloseHedged(15)  closing 2 hedged BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
- *       18:39:57.487  FATAL  Account Guard::rsfStdlib::OrderCloseByEx(33)  error while trying to close #561127605 by #561128149 after 0.219 s  [ERR_INVALID_TRADE_PARAMETERS]
  *
  *  - independant handling of possibly simultaneous long/short positions
  *
@@ -192,11 +171,6 @@
  *  - trading functionality
  *     support command "wait" in status "progressing"
  *     reverse trading and command EA.Reverse
- *
- *  - ChartInfos
- *     CustomPosition() weekend configuration/timespans don't work
- *     CustomPosition() including/excluding a specific strategy is not supported
- *     don't recalculate unitsize on every tick (every few seconds is sufficient)
  *
  *  - performance tracking
  *     notifications for price feed outages
