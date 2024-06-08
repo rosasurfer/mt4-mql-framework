@@ -1,21 +1,21 @@
 /**
  * Account Guard
  *
- * The EA monitors open orders and positions of all symbols and enforces defined trading rules.
+ * The EA monitors orders and positions of all symbols and enforces defined trading rules.
  *
- * Positions of symbols without trade permission and positions outside of the permitted time range are immediately closed.
+ * Orders/positions of symbols without trade permission or outside of the permitted time range are immediately closed.
  *
  * Permitted positions are monitored until the specified drawdown limit is reached. If reached the EA closes all open positions
- * and deletes all pending orders. Further trading is prohibited until the end of the day. New orders are immediately closed.
+ * and pending orders. Further trading is prohibited until the end of the day. New orders/positions are immediately closed.
  *
  *
  * Input parameters:
  * -----------------
- * • PermittedSymbols:   Comma-separated list of symbols allowed to trade ("*" allows all available symbols).
- * • PermittedTimeRange: Time range when trading is allowed. Format: "00:00-23:59" in server time (empty: no restriction).
+ * • PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*" permits all available symbols).
+ * • PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
  * • DrawdownLimit:      Either an absolute money amount or a percentage value describing the drawdown limit of an open position.
  * • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
- *                       prevents DDL triggering by spread widening/spikes.
+ *                       prevents DDL triggering by spread widening.
  *
  *
  * TODO:
@@ -26,13 +26,14 @@
  *  - XAU: prohibit trading between 15:00-17:30
  *  - XAU: prohibit trading from 30 minutes before until 60 minutes after major news
  *
+ *  - display runtime status on screen
+ *  - custom logfile per instance
+ *  - log trade details to logfile (manual logging is too time consuming)
  *  - ComputeClosedProfit() freezes the terminal if the full history is visible => move to Expander
  *  - define major news per week and a time window around it where trading is prohibited
  *  - visual chart feedback when active (red dot when inactive, green dot when active)
  *  - enable trading if disabled
  *  - ERR_NOT_ENOUGH_MONEY when closing a basket
- *  - display runtime errors on screen
- *  - log trade details to logfile (manual logging is too time consuming)
  *  - bug when a hedged position is closed elsewhere (sees a different position and may trigger DDL => error)
  *     local
  *      18:39:38.120  order buy market 0.02 BTCUSD sl: 0.00 tp: 0.00                                 (manual)
@@ -51,7 +52,7 @@
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks = 800;                             // milliseconds (must be short as the EA watches all symbols)
+int __virtualTicks = 800;                             // milliseconds (must be short as the EA monitors all symbols)
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -200,7 +201,7 @@ int onTick() {
             if (!trackedData[i][I_OPEN_TIME]) {
                // pendings executed, position opened
                trackedData[i][I_OPEN_TIME     ] = GetPositionOpenTime(trackedSymbols[i]);
-               trackedData[i][I_OPEN_EQUITY   ] = prevEquity;    // equity value of the previous tick
+               trackedData[i][I_OPEN_EQUITY   ] = prevEquity;     // equity value of the previous tick
                trackedData[i][I_OPEN_PROFIT   ] = openProfits[n];
                trackedData[i][I_CLOSED_PROFIT ] = ComputeClosedProfit(trackedSymbols[i], trackedData[i][I_OPEN_TIME]);
                trackedData[i][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);
@@ -286,7 +287,7 @@ int onTick() {
       }
       else {
          trackedData[trackedSize][I_OPEN_TIME     ] = GetPositionOpenTime(openSymbols[i]);
-         trackedData[trackedSize][I_OPEN_EQUITY   ] = prevEquity;    // equity value of the previous tick
+         trackedData[trackedSize][I_OPEN_EQUITY   ] = prevEquity;       // equity value of the previous tick
          trackedData[trackedSize][I_OPEN_PROFIT   ] = openProfits[i];
          trackedData[trackedSize][I_CLOSED_PROFIT ] = ComputeClosedProfit(trackedSymbols[trackedSize], trackedData[trackedSize][I_OPEN_TIME]);
          trackedData[trackedSize][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);

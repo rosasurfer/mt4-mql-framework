@@ -3,7 +3,7 @@
  *
  *
  * TODO:
- *  - MACD
+ *  - MACD + Tunnel signal
  *     invalid signals at terminal startup
  *
  *  - Inside Bars
