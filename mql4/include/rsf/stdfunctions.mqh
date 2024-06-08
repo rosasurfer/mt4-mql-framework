@@ -2646,7 +2646,7 @@ int SumInts(int values[]) {
  * @param  _In_  int    mode              - MarketInfo() data identifier
  * @param  _Out_ int    &error            - variable receiving the error status
  * @param  _In_  string caller [optional] - location identifier of the caller, controls error handling: if not empty errors
- *                                           are logged (default: no logging)
+ *                                          are logged (default: no logging)
  *
  * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter 'error')
  */

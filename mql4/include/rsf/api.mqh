@@ -234,7 +234,7 @@ string   StrTrim(string str);;
 
 // include/rsf/functions/
 double   ComputeFloatingProfit(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
-bool     ComputeFloatingProfits(string &symbols[], double &profits[], bool ignoreSpread=false);;
+bool     ComputeFloatingProfits(string &symbols[], double &profits[], bool includePendings=false, bool ignoreSpread=false);;
 bool     ConfigureSignals(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsByAlert(string signalId, bool autoConfig, bool &enabled);;

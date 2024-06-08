@@ -26,8 +26,6 @@
  *  - XAU: prohibit trading between 15:00-17:30
  *  - XAU: prohibit trading from 30 minutes before until 60 minutes after major news
  *
- *  - delete pending orders on prohibited symbols
- *
  *  - ComputeClosedProfit() freezes the terminal if the full history is visible => move to Expander
  *  - define major news per week and a time window around it where trading is prohibited
  *  - visual chart feedback when active (red dot when inactive, green dot when active)
@@ -159,10 +157,11 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // get open positions and floating profits
+   // get open orders and floating profits
    string openSymbols[];
    double openProfits[];
-   if (!ComputeFloatingProfits(openSymbols, openProfits, IgnoreSpread)) return(last_error);
+   bool includePendings = true;
+   if (!ComputeFloatingProfits(openSymbols, openProfits, includePendings, IgnoreSpread)) return(last_error);
 
    // calculate current equity value
    double equity = AccountBalance();
@@ -171,13 +170,13 @@ int onTick() {
       equity += openProfits[i];
    }
 
-   // synchronize tracked open positions
+   // synchronize tracked open orders
    int trackedSize = ArraySize(trackedSymbols);
    for (i=0; i < trackedSize; i++) {
       int n = SearchStringArray(openSymbols, trackedSymbols[i]);
       if (n == -1) {
-         // tracked symbol is not an open position anymore, remove it
-         logInfo("onTick(1)  "+ trackedSymbols[i] +" position closed");
+         // tracked symbol has no open orders anymore, remove it from tracker
+         logInfo("onTick(1)  "+ trackedSymbols[i] + ifString(trackedData[i][I_OPEN_TIME], " position closed", " orders deleted"));
          if (trackedSize > i+1) {
             int dim2 = ArrayRange(trackedData, 1);
             ArrayCopy(trackedSymbols, trackedSymbols, i,       i+1);
@@ -189,11 +188,37 @@ int onTick() {
          i--;
       }
       else {
-         // update tracked position and remove symbol from open[Symbols|Profits]
-         trackedData[i][I_OPEN_PROFIT  ] = openProfits[n];
-         trackedData[i][I_CLOSED_PROFIT] = ComputeClosedProfit(trackedSymbols[i], trackedData[i][I_OPEN_TIME]);
+         // update tracked order data
+         bool isPendingOrder = IsEmptyValue(openProfits[n]);
+
+         if (!isPendingOrder && trackedData[i][I_OPEN_TIME]) {
+            // normal open position
+            trackedData[i][I_OPEN_PROFIT  ] = openProfits[n];
+            trackedData[i][I_CLOSED_PROFIT] = ComputeClosedProfit(trackedSymbols[i], trackedData[i][I_OPEN_TIME]);
+         }
+         else if (!isPendingOrder || trackedData[i][I_OPEN_TIME]) {
+            if (!trackedData[i][I_OPEN_TIME]) {
+               // pendings executed, position opened
+               trackedData[i][I_OPEN_TIME     ] = GetPositionOpenTime(trackedSymbols[i]);
+               trackedData[i][I_OPEN_EQUITY   ] = prevEquity;    // equity value of the previous tick
+               trackedData[i][I_OPEN_PROFIT   ] = openProfits[n];
+               trackedData[i][I_CLOSED_PROFIT ] = ComputeClosedProfit(trackedSymbols[i], trackedData[i][I_OPEN_TIME]);
+               trackedData[i][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);
+               logInfo("onTick(2)  watching "+ trackedSymbols[i] +" position, ddl="+ DoubleToStr(trackedData[i][I_DRAWDOWN_LIMIT], 2));
+            }
+            else {
+               // position closed, pendings remaining
+               trackedData[i][I_OPEN_TIME     ] = NULL;
+               trackedData[i][I_OPEN_EQUITY   ] = NULL;
+               trackedData[i][I_OPEN_PROFIT   ] = NULL;
+               trackedData[i][I_CLOSED_PROFIT ] = NULL;
+               trackedData[i][I_DRAWDOWN_LIMIT] = NULL;
+               logInfo("onTick(3)  "+ trackedSymbols[i] + " position closed");
+            }
+         }
          if (last_error != NULL) return(last_error);
 
+         // remove symbol from open[Symbols|Profits]
          if (openSize > n+1) {
             ArrayCopy(openSymbols, openSymbols, n, n+1);
             ArrayCopy(openProfits, openProfits, n, n+1);
@@ -203,28 +228,31 @@ int onTick() {
          ArrayResize(openProfits, openSize);
       }
    }
-   // on openSize > 0: all remaining open[Symbols|Profits] are new (unknown to the tracker)
+   // on openSize > 0: all remaining open orders are new (unknown to the tracker)
 
-   // close new positions after a previous liquidation at the same day
+   // close/delete new orders after a previous liquidation at the same day
    if (openSize > 0) {
       datetime today = TimeFXT();
       today -= (today % DAY);
       datetime lastLiquidation = lastLiquidationTime - lastLiquidationTime % DAY;
       if (lastLiquidation == today) {
-         logWarn("onTick(2)  closing all new positions until end of day");
+         logWarn("onTick(4)  closing/deleting all new orders until end of day");
          ArrayResize(trackedSymbols, 0);
          ArrayResize(trackedData,    0);
          CloseOpenOrders();                                       // FIXME: closes all open tickets, not only new ones
-         return(catch("onTick(3)"));
+         return(catch("onTick(5)"));
       }
    }
 
-   // process new positions
+   // process new orders
    for (i=0; prevEquity && i < openSize; i++) {
-      // close non-permitted positions
+      isPendingOrder = IsEmptyValue(openProfits[n]);
+      string msg = ifString(isPendingOrder, "deleting", "closing") +" non-permitted "+ openSymbols[i] + ifString(isPendingOrder, " order", " position");
+
+      // close/delete non-permitted orders
       if (!allSymbolsPermitted) {
          if (SearchStringArrayI(permittedSymbols, openSymbols[i]) == -1) {
-            logWarn("onTick(4)  closing non-permitted "+ openSymbols[i] +" position");
+            logWarn("onTick(6)  "+ msg);
             CloseOpenOrders(openSymbols[i]);
             continue;
          }
@@ -232,14 +260,14 @@ int onTick() {
       int now = Tick.time % DAY;
       if (permittedFrom > -1) {
          if (now < permittedFrom*MINUTES) {
-            logWarn("onTick(5)  closing non-permitted "+ openSymbols[i] +" position");
+            logWarn("onTick(7)  "+ msg);
             CloseOpenOrders(openSymbols[i]);
             continue;
          }
       }
       if (permittedTo > -1) {
          if (now > permittedTo*MINUTES) {
-            logWarn("onTick(6)  closing non-permitted "+ openSymbols[i] +" position");
+            logWarn("onTick(8)  "+ msg);
             CloseOpenOrders(openSymbols[i]);
             continue;
          }
@@ -248,27 +276,37 @@ int onTick() {
       // add new position to tracker
       ArrayResize(trackedSymbols, trackedSize+1);
       ArrayResize(trackedData,    trackedSize+1);
-      trackedSymbols[trackedSize]                = openSymbols[i];
-      trackedData[trackedSize][I_OPEN_TIME     ] = GetPositionStartTime(openSymbols[i]);
-      trackedData[trackedSize][I_OPEN_EQUITY   ] = prevEquity;    // equity value of the previous tick
-      trackedData[trackedSize][I_OPEN_PROFIT   ] = openProfits[i];
-      trackedData[trackedSize][I_CLOSED_PROFIT ] = ComputeClosedProfit(trackedSymbols[trackedSize], trackedData[trackedSize][I_OPEN_TIME]);
-      trackedData[trackedSize][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);
+      trackedSymbols[trackedSize] = openSymbols[i];
+      if (isPendingOrder) {
+         trackedData[trackedSize][I_OPEN_TIME     ] = NULL;
+         trackedData[trackedSize][I_OPEN_EQUITY   ] = NULL;
+         trackedData[trackedSize][I_OPEN_PROFIT   ] = NULL;
+         trackedData[trackedSize][I_CLOSED_PROFIT ] = NULL;
+         trackedData[trackedSize][I_DRAWDOWN_LIMIT] = NULL;
+      }
+      else {
+         trackedData[trackedSize][I_OPEN_TIME     ] = GetPositionOpenTime(openSymbols[i]);
+         trackedData[trackedSize][I_OPEN_EQUITY   ] = prevEquity;    // equity value of the previous tick
+         trackedData[trackedSize][I_OPEN_PROFIT   ] = openProfits[i];
+         trackedData[trackedSize][I_CLOSED_PROFIT ] = ComputeClosedProfit(trackedSymbols[trackedSize], trackedData[trackedSize][I_OPEN_TIME]);
+         trackedData[trackedSize][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);
+         logInfo("onTick(9)  watching "+ trackedSymbols[trackedSize] +" position, ddl="+ DoubleToStr(trackedData[trackedSize][I_DRAWDOWN_LIMIT], 2));
+      }
       if (last_error != NULL) return(last_error);
-
-      logInfo("onTick(7)  watching "+ trackedSymbols[trackedSize] +" position, ddl="+ DoubleToStr(trackedData[trackedSize][I_DRAWDOWN_LIMIT], 2));
       trackedSize++;
    }
 
    // monitor drawdown limit
    for (i=0; i < trackedSize; i++) {
+      if (!trackedData[i][I_OPEN_TIME]) continue;
+
       double openProfit   = trackedData[i][I_OPEN_PROFIT   ];
       double closedProfit = trackedData[i][I_CLOSED_PROFIT ];
       double ddl          = trackedData[i][I_DRAWDOWN_LIMIT];
 
       if (openProfit+closedProfit < ddl) {
          lastLiquidationTime = TimeFXT();
-         logWarn("onTick(8)  "+ trackedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, closing positions...");
+         logWarn("onTick(10)  "+ trackedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, closing positions...");
          ArrayResize(trackedSymbols, 0);
          ArrayResize(trackedData,    0);
          CloseOpenOrders();                                       // FIXME: closes all open tickets, not only the one hitting the DDL
@@ -277,18 +315,18 @@ int onTick() {
    }
 
    prevEquity = equity;
-   return(catch("onTick(9)"));
+   return(catch("onTick(11)"));
 }
 
 
 /**
- * Get the time of the oldest open position of the specified symbol.
+ * Get the open time of the oldest open position for the specified symbol.
  *
  * @param string symbol - order symbol
  *
- * @return datetime - order time or NULL in case of errors
+ * @return datetime - position open time or NULL in case of errors
  */
-datetime GetPositionStartTime(string symbol) {
+datetime GetPositionOpenTime(string symbol) {
    int orders = OrdersTotal();
    datetime time = INT_MAX;
 
@@ -301,7 +339,7 @@ datetime GetPositionStartTime(string symbol) {
 
    if (time < INT_MAX)
       return(time);
-   return(!catch("GetPositionStartTime(1)  no open "+ symbol +" position found", ERR_RUNTIME_ERROR));
+   return(!catch("GetPositionOpenTime(1)  no open "+ symbol +" position found", ERR_RUNTIME_ERROR));
 }
 
 

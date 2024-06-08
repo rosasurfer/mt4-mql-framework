@@ -17,15 +17,16 @@ string JoinDoublesEx(double values[], int digits, string separator = ", ") {
    ArrayResize(strings, size);
 
    for (int i=0; i < size; i++) {
-      strings[i] = DoubleToStrEx(values[i], digits);
-      if (!StringLen(strings[i]))
-         return("");
+      if      (values[i] == EMPTY_VALUE) strings[i] = "EMPTY_VALUE";
+      else if (values[i] == INT_MIN)     strings[i] = "INT_MIN";
+      else                               strings[i] = DoubleToStrEx(values[i], digits);
+      if (!StringLen(strings[i])) return("");
    }
 
    string result = JoinStrings(strings, separator);
 
-   if (ArraySize(strings) > 0)
+   if (ArraySize(strings) > 0) {
       ArrayResize(strings, 0);
-
+   }
    return(result);
 }
