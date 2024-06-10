@@ -5245,13 +5245,12 @@ bool IsCurrency(string value) {
  */
 bool IsOrderType(int value) {
    switch (value) {
-      case OP_BUY      :
-      case OP_SELL     :
-      case OP_BUYLIMIT :
+      case OP_BUY:
+      case OP_SELL:
+      case OP_BUYLIMIT:
       case OP_SELLLIMIT:
-      case OP_BUYSTOP  :
-      case OP_SELLSTOP :
-         return(true);
+      case OP_BUYSTOP:
+      case OP_SELLSTOP: return(true);
    }
    return(false);
 }
@@ -5266,11 +5265,10 @@ bool IsOrderType(int value) {
  */
 bool IsPendingOrderType(int value) {
    switch (value) {
-      case OP_BUYLIMIT :
+      case OP_BUYLIMIT:
       case OP_SELLLIMIT:
-      case OP_BUYSTOP  :
-      case OP_SELLSTOP :
-         return(true);
+      case OP_BUYSTOP:
+      case OP_SELLSTOP: return(true);
    }
    return(false);
 }
@@ -5285,10 +5283,9 @@ bool IsPendingOrderType(int value) {
  */
 bool IsLongOrderType(int value) {
    switch (value) {
-      case OP_BUY     :
+      case OP_BUY:
       case OP_BUYLIMIT:
-      case OP_BUYSTOP :
-         return(true);
+      case OP_BUYSTOP: return(true);
    }
    return(false);
 }
@@ -5303,10 +5300,9 @@ bool IsLongOrderType(int value) {
  */
 bool IsShortOrderType(int value) {
    switch (value) {
-      case OP_SELL     :
+      case OP_SELL:
       case OP_SELLLIMIT:
-      case OP_SELLSTOP :
-         return(true);
+      case OP_SELLSTOP: return(true);
    }
    return(false);
 }
@@ -5348,8 +5344,9 @@ bool IsAbsolutePath(string path) {
 
    if (len > 1) {
       int chr = StringGetChar(path, 0);
-      if ((chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z'))
+      if ((chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z')) {
          return(StringGetChar(path, 1) == ':');
+      }
    }
    return(false);
 }
