@@ -1,5 +1,11 @@
 /**
  * Close all orders matching the specified input.
+ *
+ *
+ * TODO:
+ *  - Bybit: add config for IsDemoFix() and use it everywhere
+ *  - support ticket numbers from chart objects (order arrows)
+ *  - support deletion of TP/SL limits
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};

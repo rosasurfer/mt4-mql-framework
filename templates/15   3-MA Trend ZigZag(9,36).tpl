@@ -179,7 +179,7 @@ ShowChartLegend=1
 Signal.onReversal=0
 Signal.onBreakout=1
 Signal.onBreakout.123Only=1
-Signal.onBreakout.Types=sound, alert
+Signal.onBreakout.Types=sound
 </inputs>
 </expert>
 style_2=2
@@ -207,7 +207,7 @@ ShowChartLegend=0
 Signal.onReversal=0
 Signal.onBreakout=1
 Signal.onBreakout.123Only=1
-Signal.onBreakout.Types=sound, alert
+Signal.onBreakout.Types=sound
 </inputs>
 </expert>
 style_2=2

@@ -166,8 +166,8 @@ Histogram.Color.Upper=3329330
 Histogram.Color.Lower=255
 Histogram.Style.Width=2
 MainLine.Width=0
-Signal.onCross=1
-Signal.onCross.Types=sound, alert
+Signal.onCross=0
+Signal.onCross.Types=sound
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -196,7 +196,7 @@ Histogram.Color.Upper=3329330
 Histogram.Color.Lower=255
 Histogram.Style.Width= 2
 Signal.onCross=1
-Signal.onCross.Types=sound, alert
+Signal.onCross.Types=sound
 AutoConfiguration=0
 </inputs>
 </expert>
