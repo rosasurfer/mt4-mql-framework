@@ -24,7 +24,13 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
+ *  - update external assets via script/hotkey
+ *  - monitor and auto-reload changed config files
+ *  - rewrite CCI indicator: histogram, signaling
+ *  - realtime equity charts (don't learn afterwards about what happened in the account)
+ *
  *  - Account Guard
+ *     close/hedge open positions 2 min before major news (with notification)
  *
  *  - profitable backtests
  *     setups: Rhythm variants, Tunnel EA
@@ -34,7 +40,7 @@
  *      comfortable update/generation/synchronization of new test data (e.g. from 2007)
  *
  *  - entry management
- *     handling of multiple positions (scale in on retracement)
+ *     scale in multiple positions
  *
  *  - exit management
  *     partial close
@@ -92,9 +98,6 @@
  *  - ObjectCreateRegister()
  *     13.739 initial calls on terminal start with 6 open charts
  *     SuperBars in offline charts: 271 calls on every tick
- *
- *  - realtime equity charts
- *     don't find out afterwards what has happened in the account
  *
  *  - ZigZag Twister (123 Trader)
  *
