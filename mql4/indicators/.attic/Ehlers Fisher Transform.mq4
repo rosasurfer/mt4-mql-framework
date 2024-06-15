@@ -1,21 +1,15 @@
 /**
  * Ehlers' Fisher Transform
  *
- * As described in his book "Cybernetic Analysis for Stocks and Futures". This indicator is a different representation of a
- * smoothed Stochastic oscillator.
+ * As described in his book "Cybernetic Analysis for Stocks and Futures". A different visualization of a smoothed
+ * Stochastic oscillator.
+ *
  *
  * Indicator buffers for iCustom():
  *  • Fisher.MODE_MAIN:    oscillator main values
  *  • Fisher.MODE_SECTION: oscillator section and section length
  *    - section: positive values (+1...+n) denote an oscillator above zero, negative ones (-1...-n) an oscillator below zero
  *    - length:  the absolute value is each histogram's section length (bars since the last crossing of zero)
- *
- *
- * TODO:
- *    - implement customizable moving averages for Stochastic and Fisher Transform
- *    - implement MaxBarsBack
- *    - implement PRICE_* types
- *    - check required run-up period
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
