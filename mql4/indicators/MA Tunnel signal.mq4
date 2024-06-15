@@ -99,7 +99,7 @@ double bufferLower[];                           // negative histogram values: vi
 
 int    tunnel.method;
 int    tunnel.periods;
-string tunnel.definition;
+string tunnel.definition = "";
 
 int    ma.method;
 int    ma.periods;
