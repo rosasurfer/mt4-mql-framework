@@ -2,11 +2,11 @@
  * A "Moving Average" indicator with support for more MA methods and additional features.
  *
  *
- * Available Moving Average types:
+ * Available averaging methods:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA - Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes)
+ *  • SMMA - Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes 2)
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  *
@@ -21,7 +21,7 @@
  *  (1) EMA calculation:
  *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
  *
- *  (2) The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
+ *  (2) SMMA calculation: The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
  *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
  *
  *  (3) ALMA calculation:

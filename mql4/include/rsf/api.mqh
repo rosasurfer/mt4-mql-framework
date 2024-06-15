@@ -82,7 +82,6 @@ datetime GmtToServerTime(datetime time);;
 bool     GT(double double1, double double2, int digits=8);;
 string   HistoryFlagsToStr(int flags);;
 double   icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double maReversalFilter, int iBuffer, int iBar);;
-double   icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
 bool     ifBool(bool condition, bool thenValue, bool elseValue);;
 double   ifDouble(bool condition, double thenValue, double elseValue);;

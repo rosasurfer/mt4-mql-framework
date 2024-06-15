@@ -1,19 +1,45 @@
 /**
- * A Heikin-Ashi indicator with optional smoothing of input and output values.
+ * A Heikin-Ashi indicator with optional smoothing of input and/or output values.
  *
  *
- * Supported Moving-Averages:
+ * Heikin-Ashi calculation is fundamentally not different from defining new/different price types:
+ *  haClose = (O + H + L + C)/4
+ *  haOpen  = (prevHaOpen + prevHaClose)/2
+ *  haHigh  = Max(H, haOpen, haClose)
+ *  haLow   = Min(L, haOpen, haClose)
+ *
+ *
+ * Smoothed Heikin-Ashi bars are fundamentally not different from regular Moving Averages. Available averaging methods:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA - Smoothed Moving Average:        same as EMA, it holds: SMMA(n) = EMA(2*n-1)
+ *  • SMMA - Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes 2)
+ *
+ *
+ * When smoothing input values the Heikin-Ashi calculation operates on averaged prices instead of standard prices:
+ * O-H-L-C becomes MA(Open,n), MA(High,n), MA(Low,n), MA(Close,n) with n = Input.MA.Periods
+ *
+ * When smoothing output values the calculated Heikin-Ashi bar prices are averaged another time:
+ * haOpen, haHigh, haLow, haClose becomes MA(haOpen,n), MA(haHigh,n), MA(haLow,n), MA(haClose,n) with n = Output.MA.Periods
+ *
  *
  * Indicator buffers for iCustom():
  *  • HeikinAshi.MODE_OPEN:  Heikin-Ashi bar open price
  *  • HeikinAshi.MODE_CLOSE: Heikin-Ashi bar close price
  *  • HeikinAshi.MODE_TREND: Heikin-Ashi trend direction and length
- *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
- *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
+ *    - trend direction:     positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:        the absolute value of the direction is the trend length in bars since the last reversal
+ *
+ *
+ * Notes:
+ *  (1) EMA calculation:
+ *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+ *
+ *  (2) SMMA calculation: The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
+ *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
+ *
+ *  (3) ALMA calculation:
+ *      @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -42,15 +68,15 @@ extern int    MaxBarsBack       = 10000;                                // max. 
 #include <rsf/functions/ManageDoubleIndicatorBuffer.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
-#define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids
-#define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   //
+#define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // 0 indicator buffer ids
+#define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   // 1
 #define MODE_OUT_HIGHLOW      2                       //
 #define MODE_OUT_LOWHIGH      3                       //
 #define MODE_TREND            HeikinAshi.MODE_TREND   // 4
 #define MODE_HA_OPEN          5                       //
 #define MODE_HA_HIGH          6                       //
 #define MODE_HA_LOW           7                       //
-#define MODE_HA_CLOSE         8                       // managed by the framework
+#define MODE_HA_CLOSE         8                       //
 
 #property indicator_chart_window
 #property indicator_buffers   4                       // visible buffers
@@ -158,9 +184,9 @@ int onInit() {
 
    // names, labels and display options
    legendLabel = CreateChartLegend();
-   indicatorName = WindowExpertName();          // or  Heikin-Ashi(SMA(10))  or  EMA(Heikin-Ashi(SMA(10)), 5)
-   if (!IsEmpty(inputMaMethod))  indicatorName = indicatorName +"("+ Input.MA.Method +"("+ inputMaPeriods +"))";
-   if (!IsEmpty(outputMaMethod)) indicatorName = Output.MA.Method +"("+ indicatorName +", "+ outputMaPeriods +")";
+   indicatorName = WindowExpertName();
+   if (!IsEmpty(inputMaMethod))  indicatorName = indicatorName +"("+ Input.MA.Method +"("+ inputMaPeriods +"))";     // e.g. "Heikin-Ashi(SMA(10))"
+   if (!IsEmpty(outputMaMethod)) indicatorName = Output.MA.Method +"("+ indicatorName +", "+ outputMaPeriods +")";   // e.g. "EMA(Heikin-Ashi, 5)"
 
    IndicatorShortName(indicatorName);           // chart tooltips and context menu
    SetIndexLabel(MODE_OUT_OPEN,    NULL);       // chart tooltips and "Data" window
