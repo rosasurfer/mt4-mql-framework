@@ -420,7 +420,7 @@ void SetIndicatorOptions() {
 
    IndicatorBuffers(indicator_buffers);
    SetIndexBuffer(MODE_MAIN,          bufferMain ); SetIndexEmptyValue(MODE_MAIN,          0); SetIndexLabel(MODE_MAIN,  indicatorName);
-   SetIndexBuffer(MODE_TREND,         bufferTrend); SetIndexEmptyValue(MODE_TREND,         0); SetIndexLabel(MODE_TREND, "Tunnel trend");
+   SetIndexBuffer(MODE_TREND,         bufferTrend); SetIndexEmptyValue(MODE_TREND,         0); SetIndexLabel(MODE_TREND, "MA Tunnel trend");
    SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper); SetIndexEmptyValue(MODE_UPPER_SECTION, 0); SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower); SetIndexEmptyValue(MODE_LOWER_SECTION, 0); SetIndexLabel(MODE_LOWER_SECTION, NULL);
    IndicatorDigits(0);

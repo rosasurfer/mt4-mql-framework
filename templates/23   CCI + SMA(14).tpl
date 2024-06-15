@@ -156,7 +156,7 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Tunnel signal
+name=MA Tunnel signal
 flags=339
 window_num=2
 <inputs>
