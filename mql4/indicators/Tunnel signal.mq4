@@ -28,7 +28,7 @@
  *     support MA method MODE_ALMA
  *
  *  - Moving Average, MACD
- *     add parameter stepping
+ *     add period stepping
  *
  *  - SuperBars
  *     detect weekend sessions and remove config [SuperBars]->Weekend.Symbols

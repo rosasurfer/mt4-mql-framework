@@ -26,11 +26,17 @@
  *
  *  - update external assets via script/hotkey
  *  - monitor and auto-reload changed config files
- *  - rewrite CCI indicator: histogram, signaling
+ *  - rewrite CCI indicator: histogram, signaling, XARD coloring of bars
+ *  - Daily Range projection, @see https://www.forexfactory.com/thread/993524-roadmap-a-way-to-read-markets#
  *  - realtime equity charts (don't learn afterwards about what happened in the account)
+ *
+ *  - all indicators
+ *     add period stepping
+ *     rewrite signaling
  *
  *  - Account Guard
  *     close/hedge open positions 2 min before major news (with notification)
+ *     fix margin bugs (ERR_NOT_ENOUGH_MONEY)
  *
  *  - profitable backtests
  *     setups: Rhythm variants, Tunnel EA
