@@ -111,7 +111,7 @@ void UpdateBandLegend(string legendName, string indicatorName, string status, co
 
    string text = StringConcatenate(indicatorName, "   ", sUpperValue, " / ", sLowerValue, "   ", status);
    color  textColor = bandsColor;
-   if      (textColor == Aqua        ) textColor = DeepSkyBlue;
+   if      (textColor == Aqua        ) textColor = DodgerBlue;
    else if (textColor == Gold        ) textColor = Orange;
    else if (textColor == LightSkyBlue) textColor = C'94,174,255';
    else if (textColor == Lime        ) textColor = LimeGreen;
@@ -154,7 +154,7 @@ void UpdateTrendLegend(string legendName, string indicatorName, string info, col
 
       string text = StringConcatenate(indicatorName, "   ", sValue, sTrend, sOnTrendChange, info);
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
-      if      (textColor == Aqua        ) textColor = DeepSkyBlue;
+      if      (textColor == Aqua        ) textColor = DodgerBlue;
       else if (textColor == Gold        ) textColor = Orange;
       else if (textColor == LightSkyBlue) textColor = C'94,174,255';
       else if (textColor == Lime        ) textColor = LimeGreen;

@@ -1169,7 +1169,7 @@ void UpdateChartLegend() {
       string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal, sInfo);
 
       color clr = ZigZag.Color;
-      if      (clr == Aqua        ) clr = DeepSkyBlue;
+      if      (clr == Aqua        ) clr = DodgerBlue;
       else if (clr == Gold        ) clr = Orange;
       else if (clr == LightSkyBlue) clr = C'94,174,255';
       else if (clr == Lime        ) clr = LimeGreen;
