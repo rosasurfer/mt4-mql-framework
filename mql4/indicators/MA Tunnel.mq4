@@ -176,8 +176,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int bars     = Min(ChangedBars, MaxBarsBack);
-   int startbar = Min(bars-1, Bars-maxMaPeriods), prevBarTrend;
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods), prevBarTrend;
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    int numberOfMas = ArrayRange(ma, 0);

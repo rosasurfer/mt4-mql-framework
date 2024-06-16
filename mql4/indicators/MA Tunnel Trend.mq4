@@ -19,8 +19,8 @@ extern string Tunnel.Method                  = "SMA | LWMA* | EMA | SMMA | ALMA"
 
 extern string ___b__________________________ = "=== Bar settings ===";
 extern color  Color.UpTrend                  = Blue;
-extern color  Color.DownTrend                = Gold;
-extern color  Color.NoTrend                  = Gray;
+extern color  Color.DownTrend                = Red;
+extern color  Color.NoTrend                  = Silver;
 extern int    BarWidth                       = 2;
 extern int    MaxBarsBack                    = 10000;       // max. values to calculate (-1: all available)
 extern bool   ShowChartLegend                = false;
@@ -31,20 +31,40 @@ extern bool   ShowChartLegend                = false;
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
 #include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/HandleCommands.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/iCustom/MaTunnel.mqh>
 
-#define BUFFER_BAR_OPEN      0         // indicator buffer ids
-#define BUFFER_BAR_CLOSE     1         //
+#define BUFFER_TREND_BODY_A      0        // indicator buffer ids
+#define BUFFER_TREND_BODY_B      1
+#define BUFFER_TREND_WICK_A      2
+#define BUFFER_TREND_WICK_B      3
+#define BUFFER_NOTREND_BODY_A    4
+#define BUFFER_NOTREND_BODY_B    5
+#define BUFFER_NOTREND_WICK_A    6
+#define BUFFER_NOTREND_WICK_B    7
 
 #property indicator_chart_window
-#property indicator_buffers  2         // visible buffers
-int       terminal_buffers = 2;
+#property indicator_buffers 8             // visible buffers
 
-#property indicator_color1   CLR_NONE
-#property indicator_color2   CLR_NONE
+#property indicator_color1  CLR_NONE
+#property indicator_color2  CLR_NONE
+#property indicator_color3  CLR_NONE
+#property indicator_color4  CLR_NONE
+#property indicator_color5  CLR_NONE
+#property indicator_color6  CLR_NONE
+#property indicator_color7  CLR_NONE
+#property indicator_color8  CLR_NONE
 
-double barOpen [];                     // indicator buffers
-double barClose[];
+double trendBodyA[];                      // indicator buffers
+double trendBodyB[];
+double trendWickA[];
+double trendWickB[];
+
+double noTrendBodyA[];
+double noTrendBodyB[];
+double noTrendWickA[];
+double noTrendWickB[];
 
 int    tunnel.periods;
 int    tunnel.method;
@@ -92,6 +112,9 @@ int onInit() {
    if (MaxBarsBack < -1)    return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
+   // reset the command handler
+   if (__isChart) GetChartCommand("TrendBars", sValues);
+
    // display options
    if (ShowChartLegend) legendLabel = CreateChartLegend();
 
@@ -106,32 +129,128 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   // process incoming commands
+   if (__isChart) {
+      if (!HandleCommands("TrendBars")) return(last_error);
+   }
+
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(barOpen,  0);
-      ArrayInitialize(barClose, 0);
+      ArrayInitialize(trendBodyA,   0);
+      ArrayInitialize(trendBodyB,   0);
+      ArrayInitialize(trendWickA,   0);
+      ArrayInitialize(trendWickB,   0);
+      ArrayInitialize(noTrendBodyA, 0);
+      ArrayInitialize(noTrendBodyB, 0);
+      ArrayInitialize(noTrendWickA, 0);
+      ArrayInitialize(noTrendWickB, 0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(barOpen,  Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(barClose, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(trendBodyA,   Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(trendBodyB,   Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(trendWickA,   Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(trendWickB,   Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(noTrendBodyA, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(noTrendBodyB, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(noTrendWickA, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(noTrendWickB, Bars, ShiftedBars, 0);
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1);
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-tunnel.periods);
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      barOpen [bar] = Open [bar];
-      barClose[bar] = Close[bar];
-   }
+      trendBodyA  [bar] = 0;
+      trendBodyB  [bar] = 0;
+      trendWickA  [bar] = 0;
+      trendWickB  [bar] = 0;
+      noTrendBodyA[bar] = 0;
+      noTrendBodyB[bar] = 0;
+      noTrendWickA[bar] = 0;
+      noTrendWickB[bar] = 0;
 
-   if (!__isSuperContext) {
-      //if (__isChart && ShowChartLegend) UpdateTrendLegend(legendLabel, indicatorName, legendInfo, UpTrend.Color, DownTrend.Color, main[0], trend[0]);
+      double upperBand = GetMaTunnel(MODE_UPPER, bar);
+      double lowerBand = GetMaTunnel(MODE_LOWER, bar);
+
+      if (Close[bar] > upperBand) {
+         if (Open[bar] > Close[bar]) {
+            trendBodyA[bar] = Open [bar];
+            trendBodyB[bar] = Close[bar];
+         }
+         else {
+            trendBodyA[bar] = Close[bar];
+            trendBodyB[bar] = Open [bar];
+         }
+         trendWickA[bar] = High[bar];
+         trendWickB[bar] = Low [bar];
+      }
+      else if (Close[bar] < lowerBand) {
+         if (Open[bar] > Close[bar]) {
+            trendBodyA[bar] = Close[bar];
+            trendBodyB[bar] = Open [bar];
+         }
+         else {
+            trendBodyA[bar] = Open [bar];
+            trendBodyB[bar] = Close[bar];
+         }
+         trendWickA[bar] = Low [bar];
+         trendWickB[bar] = High[bar];
+      }
+      else {
+         noTrendBodyA[bar] = Open [bar];
+         noTrendBodyB[bar] = Close[bar];
+         noTrendWickA[bar] = High [bar];
+         noTrendWickB[bar] = Low  [bar];
+      }
    }
    return(catch("onTick(1)"));
+}
+
+
+/**
+ * Process an incoming command.
+ *
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string cmd, string params, int keys) {
+   if (cmd == "barwidth") {
+      if (params == "increase") {
+         BarWidth = Min(BarWidth+1, 13);
+         return(SetIndicatorOptions(true));
+      }
+      if (params == "decrease") {
+         BarWidth = Max(BarWidth-1, 0);
+         return(SetIndicatorOptions(true));
+      }
+   }
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(cmd +":"+ params +":"+ keys)));
+}
+
+
+/**
+ * Get a band value of the "MA Tunnel" indicator.
+ *
+ * @param  int mode - band identifier: MODE_UPPER | MODE_LOWER
+ * @param  int bar  - bar offset
+ *
+ * @return double - band value or NULL in case of errors
+ */
+double GetMaTunnel(int mode, int bar) {
+   if (tunnel.method == MODE_ALMA) {
+      static int buffers[] = {0, MaTunnel.MODE_UPPER_BAND, MaTunnel.MODE_LOWER_BAND};
+      return(icMaTunnel(NULL, tunnel.definition, buffers[mode], bar));
+   }
+   static int priceTypes[] = {0, PRICE_HIGH, PRICE_LOW};
+   return(iMA(NULL, NULL, tunnel.periods, 0, tunnel.method, priceTypes[mode], bar));
 }
 
 
@@ -139,25 +258,45 @@ int onTick() {
  * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
  *
  * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions(bool redraw = false) {
+bool SetIndicatorOptions(bool redraw = false) {
    indicatorName = ProgramName();
    IndicatorShortName(indicatorName);
 
-   IndicatorBuffers(terminal_buffers);
-   SetIndexBuffer(BUFFER_BAR_OPEN,  barOpen);  SetIndexEmptyValue(BUFFER_BAR_OPEN,  0);
-   SetIndexBuffer(BUFFER_BAR_CLOSE, barClose); SetIndexEmptyValue(BUFFER_BAR_CLOSE, 0);
+   IndicatorBuffers(indicator_buffers);
+   SetIndexBuffer(BUFFER_TREND_BODY_A,   trendBodyA);   SetIndexEmptyValue(BUFFER_TREND_BODY_A,   0);
+   SetIndexBuffer(BUFFER_TREND_BODY_B,   trendBodyB);   SetIndexEmptyValue(BUFFER_TREND_BODY_B,   0);
+   SetIndexBuffer(BUFFER_TREND_WICK_A,   trendWickA);   SetIndexEmptyValue(BUFFER_TREND_WICK_A,   0);
+   SetIndexBuffer(BUFFER_TREND_WICK_B,   trendWickB);   SetIndexEmptyValue(BUFFER_TREND_WICK_B,   0);
+   SetIndexBuffer(BUFFER_NOTREND_BODY_A, noTrendBodyA); SetIndexEmptyValue(BUFFER_NOTREND_BODY_A, 0);
+   SetIndexBuffer(BUFFER_NOTREND_BODY_B, noTrendBodyB); SetIndexEmptyValue(BUFFER_NOTREND_BODY_B, 0);
+   SetIndexBuffer(BUFFER_NOTREND_WICK_A, noTrendWickA); SetIndexEmptyValue(BUFFER_NOTREND_WICK_A, 0);
+   SetIndexBuffer(BUFFER_NOTREND_WICK_B, noTrendWickB); SetIndexEmptyValue(BUFFER_NOTREND_WICK_B, 0);
    IndicatorDigits(Digits);
 
-   int drawTypeBars = ifInt(BarWidth, DRAW_HISTOGRAM, DRAW_NONE);
-   SetIndexStyle(BUFFER_BAR_OPEN,  drawTypeBars, EMPTY, BarWidth, Color.DownTrend);    // in histograms the larger of both values
-   SetIndexStyle(BUFFER_BAR_CLOSE, drawTypeBars, EMPTY, BarWidth, Color.UpTrend);      // determines the applied color
+   int drawType = ifInt(BarWidth, DRAW_HISTOGRAM, DRAW_NONE);
+   SetIndexStyle(BUFFER_TREND_BODY_A,   drawType, EMPTY, BarWidth, Color.UpTrend);     // in histograms the larger of both values
+   SetIndexStyle(BUFFER_TREND_BODY_B,   drawType, EMPTY, BarWidth, Color.DownTrend);   // determines the applied color
+   SetIndexStyle(BUFFER_TREND_WICK_A,   drawType, EMPTY, 1,        Color.UpTrend);
+   SetIndexStyle(BUFFER_TREND_WICK_B,   drawType, EMPTY, 1,        Color.DownTrend);
+   SetIndexStyle(BUFFER_NOTREND_BODY_A, drawType, EMPTY, BarWidth, Color.NoTrend);
+   SetIndexStyle(BUFFER_NOTREND_BODY_B, drawType, EMPTY, BarWidth, Color.NoTrend);
+   SetIndexStyle(BUFFER_NOTREND_WICK_A, drawType, EMPTY, 1,        Color.NoTrend);
+   SetIndexStyle(BUFFER_NOTREND_WICK_B, drawType, EMPTY, 1,        Color.NoTrend);
 
-   SetIndexLabel(BUFFER_BAR_OPEN,  NULL);
-   SetIndexLabel(BUFFER_BAR_CLOSE, NULL);
+   SetIndexLabel(BUFFER_TREND_BODY_A,   NULL);
+   SetIndexLabel(BUFFER_TREND_BODY_B,   NULL);
+   SetIndexLabel(BUFFER_TREND_WICK_A,   NULL);
+   SetIndexLabel(BUFFER_TREND_WICK_B,   NULL);
+   SetIndexLabel(BUFFER_NOTREND_BODY_A, NULL);
+   SetIndexLabel(BUFFER_NOTREND_BODY_B, NULL);
+   SetIndexLabel(BUFFER_NOTREND_WICK_A, NULL);
+   SetIndexLabel(BUFFER_NOTREND_WICK_B, NULL);
 
    if (redraw) WindowRedraw();
-   catch("SetIndicatorOptions(1)");
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
