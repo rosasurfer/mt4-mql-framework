@@ -249,7 +249,7 @@ bool onCross(int direction) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   if (ArraySize(maDefinitions) == 1) indicatorName = StrLeftTo(maDefinitions[0], "(") +" Tunnel("+ StrRightFrom(maDefinitions[0], "(");
+   if (ArraySize(maDefinitions) == 1) indicatorName = Tunnel.Definition +" Tunnel";
    else                               indicatorName = WindowExpertName() +" "+ Tunnel.Definition;
    IndicatorShortName(indicatorName);
 

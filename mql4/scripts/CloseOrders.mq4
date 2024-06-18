@@ -3,10 +3,12 @@
  *
  *
  * TODO:
+ *  - fix margin bugs: ERR_NOT_ENOUGH_MONEY
  *  - FATAL CloseOrders::rsfStdlib::OrderCloseByEx(10)  opposite ticket #487167489 is not an open position (anymore)  [ERR_INVALID_TRADE_PARAMETERS]
- *  - Bybit: add config for IsDemoFix() and use it everywhere
+ *
  *  - support ticket numbers from chart objects (order arrows)
  *  - support deletion of TP/SL limits
+ *  - Bybit: add config for IsDemoFix() and use it everywhere
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};

@@ -92,6 +92,25 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Trend Bars
+flags=339
+window_num=0
+<inputs>
+Tunnel.Periods=55
+Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Color.UpTrend=16711680
+Color.DownTrend=255
+Color.NoTrend=11119017
+BarWidth=2
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=MA Tunnel
 flags=339
 window_num=0
