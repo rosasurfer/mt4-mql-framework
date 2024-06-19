@@ -1,5 +1,5 @@
 /**
- * MA Tunnel Trend
+ * Trend Bars
  *
  *
  * Colors chart bars according to the indicated trend:

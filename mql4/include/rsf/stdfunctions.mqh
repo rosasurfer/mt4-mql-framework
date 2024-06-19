@@ -2969,7 +2969,8 @@ string StrPadLeft(string str, int padLength, string padString = " ") {
  * @return bool
  */
 bool IsDemoFix() {
-   static bool result = -1; if (result == -1) {
+   static bool result = -1;
+   if (result == -1) {
       result = (IsDemo() || __isTesting);
    }
    return(result);
