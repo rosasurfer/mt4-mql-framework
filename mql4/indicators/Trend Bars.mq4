@@ -1,11 +1,15 @@
 /**
  * Trend Bars
  *
- *
  * Colors chart bars according to the indicated trend:
  *  - Close prices above the tunnel are interpreted as "up trend".
  *  - Close prices below the tunnel are interpreted as "down trend".
  *  - Close prices in the tunnel are interpreted as "no trend".
+ *
+ *
+ * TODO:
+ *  - CCI as data source
+ *  - MQL5 indicator as source for MQL5 chart properties
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];

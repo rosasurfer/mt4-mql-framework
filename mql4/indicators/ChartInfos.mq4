@@ -286,25 +286,42 @@ bool onCommand(string cmd, string params, int keys) {
    }
 
    else if (cmd == "toggle-account-balance") {
+      if (keys & F_VK_SHIFT && 1) {                                     // update external assets
+         double multiplier = GetAccountConfigDouble("Account", "ExternalAssets.Multiplier", 0);
+         double externalAssets = AccountBalance() * multiplier;         // get scaling multiplier and calculate new external assets
+
+         if (externalAssets != 0) {                                     // compose new config value
+            string sConfigValue = GetAccountConfigStringRaw("Account", "ExternalAssets", "");
+            string comment = StrRightFrom(sConfigValue, ";");
+            sConfigValue = " "+ DoubleToStr(externalAssets, 2);
+            if (comment != "") sConfigValue = StringConcatenate(sConfigValue, "            ; ", comment);
+
+            // write updated value back to the config file
+            if (WriteIniString(GetAccountConfigPath(), "Account", "ExternalAssets", sConfigValue)) {
+               mm.externalAssetsCached = false;                         // invalidate cached value
+               ArrayResize(configTerms, 0);                             // trigger reparsing of the configuration
+            }
+         }
+      }
       if (!ToggleAccountBalance()) return(false);
    }
 
    else if (cmd == "toggle-open-orders") {
       flags = NULL;
-      if (keys & F_VK_SHIFT != 0) {
+      if (keys & F_VK_SHIFT && 1) {
          flags = F_SHOW_CUSTOM_POSITIONS;                               // with VK_SHIFT: show custom positions only
-         ArrayResize(configTerms, 0);                                   // reparse configuration
          mm.externalAssetsCached = false;                               // invalidate cached external assets
+         ArrayResize(configTerms, 0);                                   // trigger reparsing of the configuration
       }
       if (!ToggleOpenOrders(flags)) return(false);
    }
 
    else if (cmd == "toggle-trade-history") {
       flags = NULL;
-      if (keys & F_VK_SHIFT != 0) {
+      if (keys & F_VK_SHIFT && 1) {
          flags = F_SHOW_CUSTOM_HISTORY;                                 // with VK_SHIFT: show custom history only
-         ArrayResize(configTerms, 0);                                   // reparse configuration
          mm.externalAssetsCached = false;                               // invalidate cached external assets
+         ArrayResize(configTerms, 0);                                   // trigger reparsing of the configuration
       }
       if (!ToggleTradeHistory(flags)) return(false);
    }
@@ -321,8 +338,8 @@ bool onCommand(string cmd, string params, int keys) {
       string key = StrReplace(params, ",", ":");
       if (!InitTradeAccount(key))  return(false);
       if (!UpdateAccountDisplay()) return(false);
-      ArrayResize(configTerms, 0);                                      // reparse configuration
       mm.externalAssetsCached = false;                                  // invalidate cached external assets
+      ArrayResize(configTerms, 0);                                      // trigger reparsing of the configuration
    }
    else return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
 
@@ -2321,7 +2338,7 @@ bool CustomPositions.ReadConfig() {
                   termResult2 = NULL;
                }
 
-               else if (StrStartsWith(values[n], "O")) {             // O = die verbleibenden Positionen [aller Symbole] eines Zeitraums
+               else if (StrStartsWith(values[n], "O")) {             // O = die verbleibenden Positionen eines Zeitraums
                   if (!CustomPositions.ParseOpenTerm(values[n], openComment, from, to)) return(false);
                   termType    = TERM_OPEN;                           // intentionally TERM_OPEN_TOTAL is not implemented
                   termValue1  = from;
@@ -2469,7 +2486,7 @@ bool CustomPositions.ReadConfig() {
       }
    }
 
-   // finally overwrite global vars (on errors they are untouched)
+   // finally overwrite global vars (on error global var stay untouched)
    ArrayResize(configTerms,  0); if (ArraySize(confTerms) > 0) ArrayCopy(configTerms,  confTerms);
    ArrayResize(config.sData, 0); if (ArraySize(confsData) > 0) ArrayCopy(config.sData, confsData);
    ArrayResize(config.dData, 0); if (ArraySize(confdData) > 0) ArrayCopy(config.dData, confdData);
