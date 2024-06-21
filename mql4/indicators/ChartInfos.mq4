@@ -301,6 +301,8 @@ bool onCommand(string cmd, string params, int keys) {
                mm.externalAssetsCached = false;                         // invalidate cached value
                ArrayResize(configTerms, 0);                             // trigger reparsing of the configuration
             }
+            PlaySoundEx("Bell 1.wav");
+            return(true);
          }
       }
       if (!ToggleAccountBalance()) return(false);

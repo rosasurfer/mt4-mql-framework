@@ -24,7 +24,7 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - rewrite CCI indicator: histogram, signaling, XARD coloring of bars
+ *  - rewrite CCI indicator: histogram, signaling, trend coloring of bars
  *  - update ChartInfos::CustomConfig()  (OH|HO) datetime
  *  - monitor and auto-reload changed config files
  *  - realtime equity charts (don't learn afterwards about what happened in the account)
