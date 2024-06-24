@@ -24,11 +24,12 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
- *  - monitor and auto-reload changed config files
- *  - rewrite CCI indicator: histogram, signaling, trend coloring of bars
+ *  - rewrite CCI indicator: histogram, signaling, trend-colored bars
  *  - update ChartInfos::CustomConfig()  (OH|HO) datetime
+ *  - daily range projection, @see https://www.forexfactory.com/thread/993524-roadmap-a-way-to-read-markets#
+ *
+ *  - monitor and auto-reload changed config files
  *  - realtime equity charts (don't learn afterwards about what happened in the account)
- *  - Daily Range projection, @see https://www.forexfactory.com/thread/993524-roadmap-a-way-to-read-markets#
  *
  *  - all indicators
  *     add period stepping

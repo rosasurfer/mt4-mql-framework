@@ -175,8 +175,8 @@ int onInit() {
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
    // Histogram.Style.Width
    if (AutoConfiguration) Histogram.Style.Width = GetConfigInt(indicator, "Histogram.Style.Width", Histogram.Style.Width);
-   if (Histogram.Style.Width < 0)       return(catch("onInit(9)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)       return(catch("onInit(10)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0)       return(catch("onInit(9)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)       return(catch("onInit(10)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
    // MainLine.Width
    if (AutoConfiguration) MainLine.Width = GetConfigInt(indicator, "MainLine.Width", MainLine.Width);
    if (MainLine.Width < 0)              return(catch("onInit(11)  invalid input parameter MainLine.Width: "+ MainLine.Width +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));

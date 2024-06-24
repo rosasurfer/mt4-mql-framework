@@ -52,7 +52,7 @@ extern int    MA.Periods                     = 10;                              
 extern string ___a__________________________ = "=== Display settings ===";
 extern color  Histogram.Color.Upper          = LimeGreen;
 extern color  Histogram.Color.Lower          = Red;
-extern int    Histogram.Style.Width          = 2;
+extern int    Histogram.Width                = 2;
 extern int    MaxBarsBack                    = 10000;                               // max. values to calculate (-1: all available)
 
 extern string ___b__________________________ = "=== Signaling ===";
@@ -164,10 +164,10 @@ int onInit() {
    if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
-   // Histogram.Style.Width
-   if (AutoConfiguration) Histogram.Style.Width = GetConfigInt(indicator, "Histogram.Style.Width", Histogram.Style.Width);
-   if (Histogram.Style.Width < 0)             return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)             return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   // Histogram.Width
+   if (AutoConfiguration) Histogram.Width = GetConfigInt(indicator, "Histogram.Width", Histogram.Width);
+   if (Histogram.Width < 0)                   return(catch("onInit(11)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Width > 5)                   return(catch("onInit(12)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (valid range: 0-5)", ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)                      return(catch("onInit(13)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
@@ -411,10 +411,13 @@ void UpdateTrendHint(int id, int status) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
    indicatorName = WindowExpertName();
    IndicatorShortName(indicatorName);
 
@@ -425,12 +428,14 @@ void SetIndicatorOptions() {
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower); SetIndexEmptyValue(MODE_LOWER_SECTION, 0); SetIndexLabel(MODE_LOWER_SECTION, NULL);
    IndicatorDigits(0);
 
-   int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
-
+   int drawType = ifInt(Histogram.Width, DRAW_HISTOGRAM, DRAW_NONE);
    SetIndexStyle(MODE_MAIN,          DRAW_NONE);
    SetIndexStyle(MODE_TREND,         DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_SECTION, drawType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
-   SetIndexStyle(MODE_LOWER_SECTION, drawType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
+   SetIndexStyle(MODE_UPPER_SECTION, drawType, EMPTY, Histogram.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_LOWER_SECTION, drawType, EMPTY, Histogram.Width, Histogram.Color.Lower);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
@@ -448,7 +453,7 @@ string InputsToStr() {
 
                             "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";"+ NL,
                             "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";"+ NL,
-                            "Histogram.Style.Width=", Histogram.Style.Width,                ";"+ NL,
+                            "Histogram.Width=",       Histogram.Width,                      ";"+ NL,
                             "MaxBarsBack=",           MaxBarsBack,                          ";"+ NL,
 
                             "Signal.onCross=",        BoolToStr(Signal.onCross),            ";"+ NL,
