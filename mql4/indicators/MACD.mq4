@@ -59,8 +59,8 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ta/ALMA.mqh>
 #include <rsf/win32api.mqh>
 
-#define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
-#define MODE_TREND            MACD.MODE_TREND
+#define MODE_MAIN             MACD.MODE_MAIN                // 0 indicator buffer ids
+#define MODE_TREND            MACD.MODE_TREND               // 1
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
 
@@ -74,10 +74,10 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 
 #property indicator_level1    0
 
-double bufferMACD [];                                       // all histogram values:      visible, displayed in "Data" window
-double bufferTrend[];                                       // trend and trend length:    invisible
-double bufferUpper[];                                       // positive histogram values: visible
-double bufferLower[];                                       // negative histogram values: visible
+double macd[];                                              // all histogram values:      visible, displayed in "Data" window
+double macdUpper[];                                         // positive histogram values: visible
+double macdLower[];                                         // negative histogram values: visible
+double trend[];                                             // trend and trend length:    invisible
 
 int    fastMA.periods;
 int    fastMA.method;
@@ -186,51 +186,24 @@ int onInit() {
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signal configuration
-   string signalId = "Signal.onCross", signalInfo = "";
+   string signalId = "Signal.onCross";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
    if (Signal.onCross) {
       if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
          return(catch("onInit(13)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onCross = (signal.sound || signal.alert || signal.mail || signal.sms);
-      if (Signal.onCross) signalInfo = "  "+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.sms, "sms,", ""), -1);
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
-
-   // buffer management
-   SetIndexBuffer(MODE_MAIN,          bufferMACD );                     // all histogram values:      visible, displayed in "Data" window
-   SetIndexBuffer(MODE_TREND,         bufferTrend);                     // trend and trend length:    invisible
-   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper);                     // positive histogram values: visible
-   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower);                     // negative histogram values: visible
-
-   // display options, names and labels
-   string dataName="", sAppliedPrice="";
-   if (fastMA.appliedPrice!=slowMA.appliedPrice || fastMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(fastMA.appliedPrice);
-   string fastMA.name = FastMA.Method +"("+ fastMA.periods + sAppliedPrice +")";
-   sAppliedPrice = "";
-   if (fastMA.appliedPrice!=slowMA.appliedPrice || slowMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(slowMA.appliedPrice);
-   string slowMA.name = SlowMA.Method +"("+ slowMA.periods + sAppliedPrice +")";
-
-   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = WindowExpertName() +" "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
-   else                                                                          indicatorName = WindowExpertName() +" "+ fastMA.name +", "+ slowMA.name;
-   if (FastMA.Method==SlowMA.Method)                                             dataName      = WindowExpertName() +" "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
-   else                                                                          dataName      = WindowExpertName() +" "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
-
-   IndicatorShortName(indicatorName + signalInfo +"  ");                // chart subwindow and context menu
-   SetIndexLabel(MODE_MAIN,          dataName);                         // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND,         NULL);
-   SetIndexLabel(MODE_UPPER_SECTION, NULL);
-   SetIndexLabel(MODE_LOWER_SECTION, NULL);
-   IndicatorDigits(pDigits + 1);
-   SetIndicatorOptions();
 
    // calculate ALMA bar weights
    double almaOffset=0.85, almaSigma=6.0;
    if (fastMA.method == MODE_ALMA) ALMA.CalculateWeights(fastMA.periods, almaOffset, almaSigma, fastALMA.weights);
    if (slowMA.method == MODE_ALMA) ALMA.CalculateWeights(slowMA.periods, almaOffset, almaSigma, slowALMA.weights);
 
+   SetIndicatorOptions();
    return(catch("onInit(14)"));
 }
 
@@ -241,29 +214,26 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMACD)) return(logInfo("onTick(1)  sizeof(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferMACD,  EMPTY_VALUE);
-      ArrayInitialize(bufferTrend,           0);
-      ArrayInitialize(bufferUpper, EMPTY_VALUE);
-      ArrayInitialize(bufferLower, EMPTY_VALUE);
+      ArrayInitialize(macd,      EMPTY_VALUE);
+      ArrayInitialize(macdUpper, EMPTY_VALUE);
+      ArrayInitialize(macdLower, EMPTY_VALUE);
+      ArrayInitialize(trend,               0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(bufferMACD,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(bufferTrend, Bars, ShiftedBars,           0);
-      ShiftDoubleIndicatorBuffer(bufferUpper, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(bufferLower, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(macd,      Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(macdUpper, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(macdLower, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
    }
 
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-slowMA.periods);
-   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    double fastMA, slowMA;
@@ -292,30 +262,30 @@ int onTick() {
       }
 
       // final MACD
-      bufferMACD[bar] = (fastMA - slowMA)/pUnit;
+      macd[bar] = (fastMA - slowMA)/pUnit;
 
-      if (bufferMACD[bar] > 0) {
-         bufferUpper[bar] = bufferMACD[bar];
-         bufferLower[bar] = EMPTY_VALUE;
+      if (macd[bar] > 0) {
+         macdUpper[bar] = macd[bar];
+         macdLower[bar] = EMPTY_VALUE;
       }
       else {
-         bufferUpper[bar] = EMPTY_VALUE;
-         bufferLower[bar] = bufferMACD[bar];
+         macdUpper[bar] = EMPTY_VALUE;
+         macdLower[bar] = macd[bar];
       }
 
       // update trend length (duration)
-      if      (bufferTrend[bar+1] > 0 && bufferMACD[bar] >= 0) bufferTrend[bar] = bufferTrend[bar+1] + 1;
-      else if (bufferTrend[bar+1] < 0 && bufferMACD[bar] <= 0) bufferTrend[bar] = bufferTrend[bar+1] - 1;
-      else                                                     bufferTrend[bar] = Sign(bufferMACD[bar]);
+      if      (trend[bar+1] > 0 && macd[bar] >= 0) trend[bar] = trend[bar+1] + 1;
+      else if (trend[bar+1] < 0 && macd[bar] <= 0) trend[bar] = trend[bar+1] - 1;
+      else                                         trend[bar] = Sign(macd[bar]);
    }
 
    // detect zero line crossings
    if (!__isSuperContext) {
       if (Signal.onCross) /*&&*/ if (IsBarOpen()) {
-         static int lastSide; if (!lastSide) lastSide = bufferTrend[2];
-         int side = bufferTrend[1];
-         if      (lastSide<=0 && side > 0) onCross(MODE_UPPER_SECTION);    // this also detects crosses on bars without ticks (e.g. on slow M1)
-         else if (lastSide>=0 && side < 0) onCross(MODE_LOWER_SECTION);
+         static int lastSide; if (!lastSide) lastSide = trend[2];
+         int side = trend[1];
+         if      (lastSide <= 0 && side > 0) onCross(MODE_UPPER_SECTION);  // this also detects crosses on bars without ticks (e.g. on slow M1)
+         else if (lastSide >= 0 && side < 0) onCross(MODE_LOWER_SECTION);
          lastSide = side;
       }
    }
@@ -355,20 +325,51 @@ bool onCross(int direction) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+bool SetIndicatorOptions(bool redraw = false) {
    IndicatorBuffers(indicator_buffers);
+   SetIndexBuffer(MODE_MAIN,          macd     );                       // all histogram values:      visible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPPER_SECTION, macdUpper);                       // positive histogram values: visible
+   SetIndexBuffer(MODE_LOWER_SECTION, macdLower);                       // negative histogram values: visible
+   SetIndexBuffer(MODE_TREND,         trend    );                       // trend and trend length:    invisible
+   IndicatorDigits(pDigits + 1);
 
    int mainType = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
    SetIndexStyle(MODE_MAIN,          mainType,  EMPTY, MainLine.Width,        MainLine.Color       );
-   SetIndexStyle(MODE_TREND,         DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
+   SetIndexStyle(MODE_TREND,         DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
+
+   string dataName="", sAppliedPrice="";
+   if (fastMA.appliedPrice!=slowMA.appliedPrice || fastMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(fastMA.appliedPrice);
+   string fastMA.name = FastMA.Method +"("+ fastMA.periods + sAppliedPrice +")";
+   sAppliedPrice = "";
+   if (fastMA.appliedPrice!=slowMA.appliedPrice || slowMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(slowMA.appliedPrice);
+   string slowMA.name = SlowMA.Method +"("+ slowMA.periods + sAppliedPrice +")";
+
+   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
+   else                                                                          indicatorName = "MACD "+ fastMA.name +", "+ slowMA.name;
+   if (FastMA.Method==SlowMA.Method)                                             dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
+   else                                                                          dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
+
+   string signalInfo = "";
+   if (Signal.onCross) signalInfo = "  "+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.sms, "sms,", ""), -1);
+
+   IndicatorShortName(indicatorName + signalInfo +"  ");                // chart subwindow and context menu
+   SetIndexLabel(MODE_MAIN,          dataName);                         // chart tooltips and "Data" window
+   SetIndexLabel(MODE_UPPER_SECTION, NULL);
+   SetIndexLabel(MODE_LOWER_SECTION, NULL);
+   SetIndexLabel(MODE_TREND,         NULL);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
