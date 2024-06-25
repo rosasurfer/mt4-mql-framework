@@ -202,6 +202,7 @@ ZigZag.Width=2
 ZigZag.Color=16711680
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off | first* | all
+Donchian.Crossings.Wingdings=108
 Show123Projections=1
 ShowChartLegend=0
 Signal.onReversal=0
