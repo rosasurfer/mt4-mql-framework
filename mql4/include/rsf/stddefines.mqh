@@ -331,6 +331,7 @@ double  INF;                                                      //  1.#INF |  
 #define Bands.MODE_MA                     0     // MA value
 #define Bands.MODE_UPPER                  1     // upper band value
 #define Bands.MODE_LOWER                  2     // lower band value
+#define Bands.MODE_WIDTH                  3     // band width
 
 #define Fisher.MODE_MAIN          MODE_MAIN     // Fisher Transform main line (0)
 #define Fisher.MODE_SECTION               1     // Fisher Transform section and section length

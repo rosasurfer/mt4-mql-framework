@@ -45,18 +45,20 @@ extern int    MaxBarsBack     = 10000;                // max. values to calculat
 #define MODE_MA              Bands.MODE_MA            // indicator buffer ids
 #define MODE_UPPER           Bands.MODE_UPPER
 #define MODE_LOWER           Bands.MODE_LOWER
+#define MODE_WIDTH           Bands.MODE_WIDTH
 
 #property indicator_chart_window
-#property indicator_buffers  3
-int       terminal_buffers = 3;
+#property indicator_buffers  4
+int       terminal_buffers = 4;
 
 #property indicator_style1   STYLE_DOT
 #property indicator_style2   STYLE_SOLID
 #property indicator_style3   STYLE_SOLID
 
-double bufferMa   [];                                 // MA values:         visible if configured
-double bufferUpper[];                                 // upper band values: visible, displayed in "Data" window
-double bufferLower[];                                 // lower band values: visible, displayed in "Data" window
+double ma[];                                          // MA:         visible if configured
+double upperBand[];                                   // upper band: visible
+double lowerBand[];                                   // lower band: visible
+double bandWidth[];                                   // band width: invisible, displayed in "Data" window
 
 int    maMethod;
 int    maAppliedPrice;
@@ -64,7 +66,6 @@ double almaWeights[];
 
 string indicatorName = "";                            // name for chart legend
 string legendLabel   = "";
-string legendInfo    = "";                            // additional chart legend info
 
 
 /**
@@ -129,17 +130,19 @@ int onInit() {
 int onTick() {
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferMa,    EMPTY_VALUE);
-      ArrayInitialize(bufferUpper, EMPTY_VALUE);
-      ArrayInitialize(bufferLower, EMPTY_VALUE);
+      ArrayInitialize(ma,        EMPTY_VALUE);
+      ArrayInitialize(upperBand, EMPTY_VALUE);
+      ArrayInitialize(lowerBand, EMPTY_VALUE);
+      ArrayInitialize(bandWidth, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(bufferMa,    Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(bufferUpper, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(bufferLower, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ma,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(upperBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(bandWidth, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
@@ -151,30 +154,31 @@ int onTick() {
 
    for (int bar=startbar; bar >= 0; bar--) {
       if (maMethod == MODE_ALMA) {
-         bufferMa[bar] = 0;
+         ma[bar] = 0;
          for (int i=0; i < MA.Periods; i++) {
-            bufferMa[bar] += almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
+            ma[bar] += almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
          }
          // calculate deviation manually (for some reason iStdDevOnArray() fails)
-         //deviation = iStdDevOnArray(bufferMa, WHOLE_ARRAY, MA.Periods, 0, MODE_SMA, bar) * StdDev.Multiplier;
+         //deviation = iStdDevOnArray(ma, WHOLE_ARRAY, MA.Periods, 0, MODE_SMA, bar) * StdDev.Multiplier;
          sum = 0;
          for (int j=0; j < MA.Periods; j++) {
             price = iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+j);
-            sum  += (price-bufferMa[bar]) * (price-bufferMa[bar]);
+            sum += (price-ma[bar]) * (price-ma[bar]);
          }
          deviation = MathSqrt(sum/MA.Periods) * Bands.StdDevs;
       }
       else {
-         bufferMa[bar] = iMA    (NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar);
-         deviation     = iStdDev(NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar) * Bands.StdDevs;
+         ma[bar]   = iMA    (NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar);
+         deviation = iStdDev(NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar) * Bands.StdDevs;
       }
-      bufferUpper[bar] = bufferMa[bar] + deviation;
-      bufferLower[bar] = bufferMa[bar] - deviation;
+      upperBand[bar] = ma[bar] + deviation;
+      lowerBand[bar] = ma[bar] - deviation;
+      bandWidth[bar] = upperBand[bar] - lowerBand[bar];
    }
 
    // update chart legend
    if (!__isSuperContext) {
-      UpdateBandLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0]);
+      if (__isChart) UpdateTrendLegend(legendLabel, indicatorName, "", Bands.Color, Bands.Color, bandWidth[0]);
    }
    return(last_error);
 }
@@ -190,12 +194,13 @@ int onTick() {
 bool SetIndicatorOptions(bool redraw = false) {
    string sMaAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = "BollingerBands "+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ±"+ Bands.StdDevs +"SD";
-   IndicatorShortName("BollingerBands("+ MA.Periods +")");     // chart tooltips and context menu
+   IndicatorShortName("BollingerBands("+ MA.Periods +")");
 
    IndicatorBuffers(terminal_buffers);
-   SetIndexBuffer(MODE_MA,    bufferMa   );                    // MA values:         visible if configured
-   SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
-   SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
+   SetIndexBuffer(MODE_MA,    ma);
+   SetIndexBuffer(MODE_UPPER, upperBand);
+   SetIndexBuffer(MODE_LOWER, lowerBand);
+   SetIndexBuffer(MODE_WIDTH, bandWidth);
    IndicatorDigits(Digits);
 
    int startDraw = Bars - MaxBarsBack;
@@ -208,10 +213,12 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_MA,    maDrawType,    EMPTY, MA.Width,    MA.Color   );
    SetIndexStyle(MODE_UPPER, bandsDrawType, EMPTY, Bands.Width, Bands.Color);
    SetIndexStyle(MODE_LOWER, bandsDrawType, EMPTY, Bands.Width, Bands.Color);
+   SetIndexStyle(MODE_WIDTH, DRAW_NONE);
 
    SetIndexLabel(MODE_MA,    MA.Method +"("+ MA.Periods + sMaAppliedPrice +")"); if (maDrawType    == DRAW_NONE) SetIndexLabel(MODE_MA,    NULL);
    SetIndexLabel(MODE_UPPER, "BBand("+ MA.Periods +") upper");                   if (bandsDrawType == DRAW_NONE) SetIndexLabel(MODE_UPPER, NULL);
    SetIndexLabel(MODE_LOWER, "BBand("+ MA.Periods +") lower");                   if (bandsDrawType == DRAW_NONE) SetIndexLabel(MODE_LOWER, NULL);
+   SetIndexLabel(MODE_WIDTH, "BBand("+ MA.Periods +") width");
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
