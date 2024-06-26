@@ -286,7 +286,8 @@ bool onCommand(string cmd, string params, int keys) {
    }
 
    else if (cmd == "toggle-account-balance") {
-      if (keys & F_VK_SHIFT && 1) {                                     // update external assets
+      if (keys & F_VK_SHIFT && 1) {
+         // update external assets
          double multiplier = GetAccountConfigDouble("Account", "ExternalAssets.Multiplier", 0);
          double externalAssets = AccountBalance() * multiplier;         // get scaling multiplier and calculate new external assets
 

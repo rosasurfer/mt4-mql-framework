@@ -1,11 +1,16 @@
 /**
  * Bollinger Bands
  *
+ * Normal distribution of natural data:
+ *
+ *  @see  https://upload.wikimedia.org/wikipedia/commons/3/3a/Standard_deviation_diagram_micro.svg#         [68–95–99.7 Rule => Percentages within 1-2-3 SD]
+ *
  *
  * Indicator buffers for iCustom():
  *  • Bands.MODE_MA:    MA values
  *  • Bands.MODE_UPPER: upper band values
  *  • Bands.MODE_LOWER: lower band value
+ *
  *
  * TODO:
  *  - replace manual calculation of StdDev(ALMA) with correct syntax for iStdDevOnArray()
@@ -22,8 +27,8 @@ extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical |
 extern color  MA.Color        = LimeGreen;
 extern int    MA.LineWidth    = 0;
 
-extern double Bands.StdDevs   = 2;
-extern color  Bands.Color     = RoyalBlue;
+extern int    Bands.StdDevs   = 2;
+extern color  Bands.Color     = Blue;
 extern int    Bands.LineWidth = 1;
 extern int    MaxBarsBack     = 10000;                // max. values to calculate (-1: all available)
 
@@ -92,7 +97,7 @@ int onInit() {
    // MA.LineWidth
    if (MA.LineWidth < 0)     return(catch("onInit(4)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // Bands.StdDevs
-   if (Bands.StdDevs < 0)    return(catch("onInit(5)  invalid input parameter Bands.StdDevs: "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.StdDevs < 0)    return(catch("onInit(5)  invalid input parameter Bands.StdDevs: "+ Bands.StdDevs, ERR_INVALID_INPUT_PARAMETER));
    // Bands.LineWidth
    if (Bands.LineWidth < 0)  return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
@@ -110,12 +115,12 @@ int onInit() {
    // data display configuration, names and labels
    legendLabel = CreateChartLegend();
    string sMaAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = ProgramName() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
-   IndicatorShortName(ProgramName() +"("+ MA.Periods +")");    // chart tooltips and context menu
+   indicatorName = "BollingerBands "+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ±"+ Bands.StdDevs +" SD)";
+   IndicatorShortName("BollingerBands("+ MA.Periods +")");     // chart tooltips and context menu
    if (!MA.LineWidth || MA.Color==CLR_NONE) SetIndexLabel(MODE_MA, NULL);
    else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
-   SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");   // chart tooltips and "Data" window
-   SetIndexLabel(MODE_LOWER, "LowerBand("+ MA.Periods +")");
+   SetIndexLabel(MODE_UPPER, "BBand("+ MA.Periods +") upper"); // chart tooltips and "Data" window
+   SetIndexLabel(MODE_LOWER, "BBand("+ MA.Periods +") lower");
    IndicatorDigits(Digits | 1);
 
    // drawing options and styles
@@ -224,14 +229,14 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",      MA.Periods,                        ";", NL,
-                            "MA.Method=",       DoubleQuoteStr(MA.Method),         ";", NL,
-                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),   ";", NL,
-                            "MA.Color=",        ColorToStr(MA.Color),              ";", NL,
-                            "MA.LineWidth=",    MA.LineWidth,                      ";", NL,
-                            "Bands.StdDevs=",   NumberToStr(Bands.StdDevs, ".1+"), ";", NL,
-                            "Bands.Color=",     ColorToStr(Bands.Color),           ";", NL,
-                            "Bands.LineWidth=", Bands.LineWidth,                   ";", NL,
-                            "MaxBarsBack=",     MaxBarsBack,                       ";")
+   return(StringConcatenate("MA.Periods=",      MA.Periods,                      ";", NL,
+                            "MA.Method=",       DoubleQuoteStr(MA.Method),       ";", NL,
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), ";", NL,
+                            "MA.Color=",        ColorToStr(MA.Color),            ";", NL,
+                            "MA.LineWidth=",    MA.LineWidth,                    ";", NL,
+                            "Bands.StdDevs=",   Bands.StdDevs,                   ";", NL,
+                            "Bands.Color=",     ColorToStr(Bands.Color),         ";", NL,
+                            "Bands.LineWidth=", Bands.LineWidth,                 ";", NL,
+                            "MaxBarsBack=",     MaxBarsBack,                     ";")
    );
 }
