@@ -1,9 +1,9 @@
 /**
  * Bollinger Bands
  *
- * Normal distribution of natural data:
+ * For normal distribution of natural data:
  *
- *  @see  https://upload.wikimedia.org/wikipedia/commons/3/3a/Standard_deviation_diagram_micro.svg#         [68–95–99.7 Rule => Percentages within 1-2-3 SD]
+ *  @see  https://upload.wikimedia.org/wikipedia/commons/3/3a/Standard_deviation_diagram_micro.svg#         [68–95–99.7 Rule]
  *
  *
  * Indicator buffers for iCustom():
@@ -25,11 +25,12 @@ extern int    MA.Periods      = 200;
 extern string MA.Method       = "SMA | LWMA | EMA* | SMMA | ALMA";
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern color  MA.Color        = LimeGreen;
-extern int    MA.LineWidth    = 0;
+extern int    MA.Width        = 0;
 
 extern int    Bands.StdDevs   = 2;
 extern color  Bands.Color     = Blue;
-extern int    Bands.LineWidth = 1;
+extern int    Bands.Width     = 1;
+
 extern int    MaxBarsBack     = 10000;                // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41,16 +42,17 @@ extern int    MaxBarsBack     = 10000;                // max. values to calculat
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/ta/ALMA.mqh>
 
-#define MODE_MA               Bands.MODE_MA           // indicator buffer ids
-#define MODE_UPPER            Bands.MODE_UPPER
-#define MODE_LOWER            Bands.MODE_LOWER
+#define MODE_MA              Bands.MODE_MA            // indicator buffer ids
+#define MODE_UPPER           Bands.MODE_UPPER
+#define MODE_LOWER           Bands.MODE_LOWER
 
 #property indicator_chart_window
-#property indicator_buffers   3
+#property indicator_buffers  3
+int       terminal_buffers = 3;
 
-#property indicator_style1    STYLE_DOT
-#property indicator_style2    STYLE_SOLID
-#property indicator_style3    STYLE_SOLID
+#property indicator_style1   STYLE_DOT
+#property indicator_style2   STYLE_SOLID
+#property indicator_style3   STYLE_SOLID
 
 double bufferMa   [];                                 // MA values:         visible if configured
 double bufferUpper[];                                 // upper band values: visible, displayed in "Data" window
@@ -94,12 +96,12 @@ int onInit() {
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice == -1) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
-   // MA.LineWidth
-   if (MA.LineWidth < 0)     return(catch("onInit(4)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   // MA.Width
+   if (MA.Width < 0)         return(catch("onInit(4)  invalid input parameter MA.Width: "+ MA.Width, ERR_INVALID_INPUT_PARAMETER));
    // Bands.StdDevs
    if (Bands.StdDevs < 0)    return(catch("onInit(5)  invalid input parameter Bands.StdDevs: "+ Bands.StdDevs, ERR_INVALID_INPUT_PARAMETER));
-   // Bands.LineWidth
-   if (Bands.LineWidth < 0)  return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   // Bands.Width
+   if (Bands.Width < 0)      return(catch("onInit(6)  invalid input parameter Bands.Width: "+ Bands.Width, ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
    if (MaxBarsBack < -1)     return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
@@ -107,34 +109,14 @@ int onInit() {
    if (MA.Color    == 0xFF000000) MA.Color    = CLR_NONE;
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
-   // setup buffer management
-   SetIndexBuffer(MODE_MA,    bufferMa   );                    // MA values:         visible if configured
-   SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
-   SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
-
-   // data display configuration, names and labels
-   legendLabel = CreateChartLegend();
-   string sMaAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = "BollingerBands "+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ±"+ Bands.StdDevs +" SD)";
-   IndicatorShortName("BollingerBands("+ MA.Periods +")");     // chart tooltips and context menu
-   if (!MA.LineWidth || MA.Color==CLR_NONE) SetIndexLabel(MODE_MA, NULL);
-   else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
-   SetIndexLabel(MODE_UPPER, "BBand("+ MA.Periods +") upper"); // chart tooltips and "Data" window
-   SetIndexLabel(MODE_LOWER, "BBand("+ MA.Periods +") lower");
-   IndicatorDigits(Digits | 1);
-
-   // drawing options and styles
-   int startDraw = Bars - MaxBarsBack;
-   SetIndexDrawBegin(MODE_MA,    startDraw);
-   SetIndexDrawBegin(MODE_UPPER, startDraw);
-   SetIndexDrawBegin(MODE_LOWER, startDraw);
-   SetIndicatorOptions();
-
    // initialize indicator calculation
    if (maMethod==MODE_ALMA && MA.Periods > 1) {
-      double almaOffset=0.85, almaSigma=6.0;
-      ALMA.CalculateWeights(MA.Periods, almaOffset, almaSigma, almaWeights);
+      double offset=0.85, sigma=6.0;
+      ALMA.CalculateWeights(MA.Periods, offset, sigma, almaWeights);
    }
+
+   legendLabel = CreateChartLegend();
+   SetIndicatorOptions();
    return(catch("onInit(8)"));
 }
 
@@ -145,9 +127,6 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMa)) return(logInfo("onTick(1)  sizeof(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMa,    EMPTY_VALUE);
@@ -163,11 +142,9 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(bufferLower, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-MA.Periods);
-   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
-
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    double deviation, price, sum;
@@ -195,7 +172,6 @@ int onTick() {
       bufferLower[bar] = bufferMa[bar] - deviation;
    }
 
-
    // update chart legend
    if (!__isSuperContext) {
       UpdateBandLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0]);
@@ -205,21 +181,40 @@ int onTick() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
-   IndicatorBuffers(indicator_buffers);
+bool SetIndicatorOptions(bool redraw = false) {
+   string sMaAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
+   indicatorName = "BollingerBands "+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ±"+ Bands.StdDevs +"SD";
+   IndicatorShortName("BollingerBands("+ MA.Periods +")");     // chart tooltips and context menu
 
-   if (!MA.LineWidth)    { int ma.drawType    = DRAW_NONE, ma.width    = EMPTY;           }
-   else                  {     ma.drawType    = DRAW_LINE; ma.width    = MA.LineWidth;    }
+   IndicatorBuffers(terminal_buffers);
+   SetIndexBuffer(MODE_MA,    bufferMa   );                    // MA values:         visible if configured
+   SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
+   SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
+   IndicatorDigits(Digits);
 
-   if (!Bands.LineWidth) { int bands.drawType = DRAW_NONE, bands.width = EMPTY;           }
-   else                  {     bands.drawType = DRAW_LINE; bands.width = Bands.LineWidth; }
+   int startDraw = Bars - MaxBarsBack;
+   SetIndexDrawBegin(MODE_MA,    startDraw);
+   SetIndexDrawBegin(MODE_UPPER, startDraw);
+   SetIndexDrawBegin(MODE_LOWER, startDraw);
 
-   SetIndexStyle(MODE_MA,    ma.drawType,    EMPTY, ma.width,    MA.Color   );
-   SetIndexStyle(MODE_UPPER, bands.drawType, EMPTY, bands.width, Bands.Color);
-   SetIndexStyle(MODE_LOWER, bands.drawType, EMPTY, bands.width, Bands.Color);
+   int maDrawType    = ifInt(!MA.Width    || MA.Color==CLR_NONE,    DRAW_NONE, DRAW_LINE);
+   int bandsDrawType = ifInt(!Bands.Width || Bands.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
+   SetIndexStyle(MODE_MA,    maDrawType,    EMPTY, MA.Width,    MA.Color   );
+   SetIndexStyle(MODE_UPPER, bandsDrawType, EMPTY, Bands.Width, Bands.Color);
+   SetIndexStyle(MODE_LOWER, bandsDrawType, EMPTY, Bands.Width, Bands.Color);
+
+   SetIndexLabel(MODE_MA,    MA.Method +"("+ MA.Periods + sMaAppliedPrice +")"); if (maDrawType    == DRAW_NONE) SetIndexLabel(MODE_MA,    NULL);
+   SetIndexLabel(MODE_UPPER, "BBand("+ MA.Periods +") upper");                   if (bandsDrawType == DRAW_NONE) SetIndexLabel(MODE_UPPER, NULL);
+   SetIndexLabel(MODE_LOWER, "BBand("+ MA.Periods +") lower");                   if (bandsDrawType == DRAW_NONE) SetIndexLabel(MODE_LOWER, NULL);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
@@ -233,10 +228,10 @@ string InputsToStr() {
                             "MA.Method=",       DoubleQuoteStr(MA.Method),       ";", NL,
                             "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), ";", NL,
                             "MA.Color=",        ColorToStr(MA.Color),            ";", NL,
-                            "MA.LineWidth=",    MA.LineWidth,                    ";", NL,
+                            "MA.Width=",        MA.Width,                        ";", NL,
                             "Bands.StdDevs=",   Bands.StdDevs,                   ";", NL,
                             "Bands.Color=",     ColorToStr(Bands.Color),         ";", NL,
-                            "Bands.LineWidth=", Bands.LineWidth,                 ";", NL,
+                            "Bands.Width=",     Bands.Width,                     ";", NL,
                             "MaxBarsBack=",     MaxBarsBack,                     ";")
    );
 }
