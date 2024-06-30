@@ -520,10 +520,15 @@ bool ParameterStepper(int direction, int keys) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
+
    string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
    indicatorName        = WindowExpertName() +"("+ ifString(T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step, "step:", "") + T3.Periods +","+ NumberToStr(T3.VolumeFactor, ".1+") + sMaFilter + sAppliedPrice +")";
@@ -539,6 +544,9 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_DOWNTREND,   draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND,   NULL);
    SetIndexStyle(MODE_UPTREND2,    draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,    NULL);
    IndicatorDigits(Digits);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

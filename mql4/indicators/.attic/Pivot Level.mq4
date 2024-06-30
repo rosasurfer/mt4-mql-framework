@@ -274,10 +274,14 @@ int iPivotLevel_new(datetime time, int period/*=NULL*/, double &results[]) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(indicator_buffers);
 
    SetIndexStyle(MODE_R3, ifInt(srLevels>=3, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Resistance);
@@ -287,6 +291,9 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_S1, ifInt(srLevels>=1, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Support   );
    SetIndexStyle(MODE_S2, ifInt(srLevels>=2, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Support   );
    SetIndexStyle(MODE_S3, ifInt(srLevels>=3, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Support   );
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

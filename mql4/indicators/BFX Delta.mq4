@@ -308,10 +308,14 @@ double GetBfxCoreVolume(int buffer, int bar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(indicator_buffers);
 
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
@@ -323,6 +327,9 @@ void SetIndicatorOptions() {
 
    SetLevelValue(0,  Signal.Level);
    SetLevelValue(1, -Signal.Level);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

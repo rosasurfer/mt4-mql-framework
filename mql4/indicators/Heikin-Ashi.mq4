@@ -355,10 +355,14 @@ void UpdateTrend(int bar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
    int drawTypeCandles = ifInt(CandleWidth, DRAW_HISTOGRAM, DRAW_NONE);
@@ -368,6 +372,9 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_OUT_CLOSE,   drawTypeCandles, EMPTY, CandleWidth, Color.BarUp  );   // determines the applied color
    SetIndexStyle(MODE_OUT_HIGHLOW, drawTypeWicks,   EMPTY, 1,           Color.BarDown);
    SetIndexStyle(MODE_OUT_LOWHIGH, drawTypeWicks,   EMPTY, 1,           Color.BarUp  );
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

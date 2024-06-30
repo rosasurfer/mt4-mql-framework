@@ -379,12 +379,19 @@ double icSelf(int iBuffer, int iBar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    SetIndexStyle(MODE_BUFFER1, DRAW_HISTOGRAM, EMPTY, 5, Color.UpTrend  );
    SetIndexStyle(MODE_BUFFER2, DRAW_HISTOGRAM, EMPTY, 5, Color.DownTrend);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

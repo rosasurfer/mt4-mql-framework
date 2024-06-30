@@ -263,10 +263,14 @@ int CalculateTrend(int bar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    int signalType = ifInt(SignalLine.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
 
    SetIndexStyle(MODE_MAIN,   DRAW_LINE,  EMPTY, EMPTY, MainLine.Color);
@@ -275,6 +279,9 @@ void SetIndicatorOptions() {
 
    SetLevelValue(0, signalLevelLong);
    SetLevelValue(1, signalLevelShort);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

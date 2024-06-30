@@ -347,7 +347,7 @@ bool IsMaTunnelSignal(double &signal[]) {
       signal[SIG_OP   ] = 0;
 
       if (IsBarOpen()) {
-         int trend = icMaTunnel(NULL, Tunnel, MaTunnel.MODE_BAR_TREND, 1);
+         int trend = icMaTunnel(NULL, Tunnel, MaTunnel.MODE_TREND, 1);
          if (Abs(trend) == 1) {
             signal[SIG_TYPE ] = SIG_TYPE_TUNNEL;
             signal[SIG_PRICE] = Close[1];

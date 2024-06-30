@@ -92,11 +92,16 @@ void OnChartEvent(const int event, const long &lParam, const double &dParam, con
 
 
 /**
- * Set indicator options.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
  *
  * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions(bool redraw = false) {
+bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(0, buffer);
    SetIndexStyle(0, DRAW_NONE);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }

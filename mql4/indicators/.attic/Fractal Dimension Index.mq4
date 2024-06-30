@@ -213,10 +213,14 @@ bool UpdateChangedBars(int startbar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    SetIndexStyle(MODE_MAIN, DRAW_NONE);
 
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
@@ -225,6 +229,8 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_UPPER, draw_type, EMPTY, drawWidth, Color.Ranging ); SetIndexArrow(MODE_UPPER, 158);
    SetIndexStyle(MODE_LOWER, draw_type, EMPTY, drawWidth, Color.Trending); SetIndexArrow(MODE_LOWER, 158);
 
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

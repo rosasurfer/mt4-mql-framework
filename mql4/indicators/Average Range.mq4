@@ -201,10 +201,14 @@ bool ParameterStepper(int direction, int keys) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
    string name = ifString(TrueRange, "ATR", "AvgRange") +"("+ ifString(MA.Periods.Step, "step:", "") + MA.Periods +")";
@@ -215,6 +219,9 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_RANGE, DRAW_NONE, EMPTY, EMPTY,      CLR_NONE);
    SetIndexStyle(MODE_MA,    drawType,  EMPTY, Line.Width, Line.Color); SetIndexLabel(MODE_MA, name);
    IndicatorDigits(Digits);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

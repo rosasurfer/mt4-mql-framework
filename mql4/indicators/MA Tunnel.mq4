@@ -37,9 +37,9 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/iCustom/MaTunnel.mqh>
 #include <rsf/win32api.mqh>
 
-#define MODE_UPPER_BAND       MaTunnel.MODE_UPPER_BAND   // indicator buffer ids
-#define MODE_LOWER_BAND       MaTunnel.MODE_LOWER_BAND   //
-#define MODE_BAR_TREND        MaTunnel.MODE_BAR_TREND    // direction/shift of the last tunnel crossing: +1...+n=up, -1...-n=down
+#define MODE_UPPER_BAND       MaTunnel.MODE_UPPER_BAND   // 0 indicator buffer ids
+#define MODE_LOWER_BAND       MaTunnel.MODE_LOWER_BAND   // 1
+#define MODE_TREND            MaTunnel.MODE_TREND        // 2 direction/length of the last tunnel crossing: +1...+n=up, -1...-n=down
 
 #property indicator_chart_window
 #property indicator_buffers   3                          // visible buffers
@@ -245,10 +245,14 @@ bool onCross(int direction) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    if (ArraySize(maDefinitions) == 1) indicatorName = Tunnel.Definition +" Tunnel";
    else                               indicatorName = WindowExpertName() +" "+ Tunnel.Definition;
    IndicatorShortName(indicatorName);
@@ -256,12 +260,19 @@ void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
    SetIndexBuffer(MODE_UPPER_BAND, upperBand);
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);
-   SetIndexBuffer(MODE_BAR_TREND,  barTrend ); SetIndexEmptyValue(MODE_BAR_TREND, 0);
+   SetIndexBuffer(MODE_TREND,      barTrend); SetIndexEmptyValue(MODE_TREND, 0);
    IndicatorDigits(Digits);
 
-   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color); SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper");
-   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color); SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower");
-   SetIndexStyle(MODE_BAR_TREND,  DRAW_NONE, EMPTY, EMPTY, CLR_NONE);     SetIndexLabel(MODE_BAR_TREND,  indicatorName +" trend");
+   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
+   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
+   SetIndexStyle(MODE_TREND,      DRAW_NONE);
+
+   SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper");
+   SetIndexLabel(MODE_LOWER_BAND, indicatorName +" lower");
+   SetIndexLabel(MODE_TREND,      NULL);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

@@ -303,10 +303,14 @@ int onTick() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
    int drawType = ifInt(MA.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
@@ -333,6 +337,9 @@ void SetIndicatorOptions() {
       SetIndexStyle(MODE_LINE_DOWN,      DRAW_LINE,  EMPTY, EMPTY, Resistance.Color);
       SetIndexStyle(MODE_LINE_DOWNSTART, DRAW_ARROW, EMPTY, EMPTY, Resistance.Color); SetIndexArrow(MODE_LINE_DOWNSTART, 159);
    }
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

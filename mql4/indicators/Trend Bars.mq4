@@ -266,6 +266,7 @@ double GetMaTunnel(int mode, int bar) {
  * @return bool - success status
  */
 bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    indicatorName = ProgramName();
    IndicatorShortName(indicatorName);
 

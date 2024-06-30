@@ -38,6 +38,7 @@
  *  - Account Guard
  *     close/hedge open positions 2 min before major news (with notification)
  *     fix margin bugs (ERR_NOT_ENOUGH_MONEY)
+ *     implement solution to notify on no-connection or failed-login (also for EquityRecorder, LFX-Monitor)
  *
  *  - profitable backtests
  *     setups: Rhythm variants, Tunnel EA
