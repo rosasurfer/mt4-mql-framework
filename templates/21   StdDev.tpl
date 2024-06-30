@@ -1,4 +1,4 @@
-<!-- BollingerBands.tpl -->
+<!-- Default (FF Brackets).tpl -->
 
 <chart>
 symbol=GBPUSD
@@ -40,7 +40,6 @@ stops_color=17919
 
 <window>
 height=300
-
 <indicator>
 name=main
 </indicator>
@@ -84,7 +83,7 @@ name=Inside Bars
 flags=339
 window_num=0
 <inputs>
-Timeframe=H1
+Timeframe=D1
 NumberOfInsideBars=2
 </inputs>
 </expert>
@@ -125,22 +124,26 @@ AutoConfiguration=0
 period_flags=7
 show_data=0
 </indicator>
+</window>
 
+<window>
+height=51
+fixed_height=0
 <indicator>
-name=Custom Indicator
-<expert>
-name=Bollinger Bands
-flags=339
-window_num=0
-<inputs>
-MA.Periods=100
-MA.Method=SMA* | LWMA | EMA | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-Bands.StdDevs=2
-AutoConfiguration=0
-</inputs>
-</expert>
+name=Standard Deviation
+period=20
+method=0
+apply=0
+color=16711680
+style=0
+weight=1
+min=0
+levels_color=12632256
+levels_style=2
+levels_weight=1
+level_0=0.60
+level_1=50
+show_data=1
 </indicator>
-
 </window>
 </chart>
