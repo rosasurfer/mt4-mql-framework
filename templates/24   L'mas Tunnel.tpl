@@ -92,7 +92,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MA Tunnel
+name=Tunnel
 flags=339
 window_num=0
 <inputs>
@@ -184,7 +184,7 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MA Tunnel signal
+name=Tunnel signal
 flags=339
 window_num=2
 <inputs>

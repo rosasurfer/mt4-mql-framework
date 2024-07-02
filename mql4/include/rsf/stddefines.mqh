@@ -323,9 +323,6 @@ double  INF;                                                      //  1.#INF |  
 #define MODE_UPPER                        1     // upper line
 #define MODE_LOWER                        2     // lower line
 
-#define B_LOWER                           0     // custom
-#define B_UPPER                           1     // custom
-
 
 // custom indicator buffer identifiers
 #define Bands.MODE_MA                     0     // MA value

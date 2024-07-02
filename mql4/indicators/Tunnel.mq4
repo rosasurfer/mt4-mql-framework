@@ -1,5 +1,5 @@
 /**
- * MA Tunnel
+ * Tunnel
  *
  * An indicator for price crossing a High/Low channel (aka a tunnel) built from one or more Moving Averages.
  *
@@ -34,12 +34,12 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MaTunnel.mqh>
+#include <rsf/functions/iCustom/Tunnel.mqh>
 #include <rsf/win32api.mqh>
 
-#define MODE_UPPER_BAND       MaTunnel.MODE_UPPER_BAND   // 0 indicator buffer ids
-#define MODE_LOWER_BAND       MaTunnel.MODE_LOWER_BAND   // 1
-#define MODE_TREND            MaTunnel.MODE_TREND        // 2 direction/length of the last tunnel crossing: +1...+n=up, -1...-n=down
+#define MODE_UPPER_BAND       Tunnel.MODE_UPPER_BAND     // 0 indicator buffer ids
+#define MODE_LOWER_BAND       Tunnel.MODE_LOWER_BAND     // 1
+#define MODE_TREND            Tunnel.MODE_TREND          // 2 direction/length of the last tunnel crossing: +1...+n=up, -1...-n=down
 
 #property indicator_chart_window
 #property indicator_buffers   3                          // visible buffers
@@ -294,5 +294,5 @@ string InputsToStr() {
    );
 
    // suppress compiler warnings
-   icMaTunnel(NULL, NULL, NULL, NULL);
+   icTunnel(NULL, NULL, NULL, NULL);
 }

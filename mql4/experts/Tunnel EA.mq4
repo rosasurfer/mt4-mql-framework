@@ -35,7 +35,7 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 extern string Instance.ID                    = "";                            // instance to load from a status file, format: "[T]123"
 
 extern string ___a__________________________ = "=== Signal settings ===========";
-extern string Tunnel                         = "EMA(9), EMA(36), EMA(144)";   // tunnel definition as supported by the "MA Tunnel" indicator
+extern string Tunnel                         = "EMA(9), EMA(36), EMA(144)";   // tunnel definition as supported by the "Tunnel" indicator
 extern string Filter.1                       = "";
 extern string Filter.2                       = "";
 extern string Filter.3                       = "";
@@ -73,7 +73,7 @@ extern bool   ShowProfitInPercent            = true;                          //
 #include <rsf/functions/HandleCommands.mqh>
 #include <rsf/functions/InitializeByteBuffer.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
-#include <rsf/functions/iCustom/MaTunnel.mqh>
+#include <rsf/functions/iCustom/Tunnel.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/struct/OrderExecution.mqh>
 
@@ -273,7 +273,7 @@ bool IsStopSignal(double &signal[]) {
  * @return bool
  */
 bool IsEntrySignal(double &signal[]) {
-   return(IsMaTunnelSignal(signal));
+   return(IsTunnelSignal(signal));
 }
 
 
@@ -301,7 +301,7 @@ bool IsExitSignal(double &signal[]) {
       signal[SIG_OP   ] = 0;
 
       if (open.ticket > 0) {
-         if (IsMaTunnelSignal(signal)) {
+         if (IsTunnelSignal(signal)) {
             int sigOp = signal[SIG_OP];
             if      (open.type==OP_LONG  && sigOp & SIG_OP_SHORT) sigOp |= SIG_OP_CLOSE_LONG;
             else if (open.type==OP_SHORT && sigOp & SIG_OP_LONG ) sigOp |= SIG_OP_CLOSE_SHORT;
@@ -322,13 +322,13 @@ bool IsExitSignal(double &signal[]) {
 
 
 /**
- * Whether an MA tunnel crossing occurred.
+ * Whether a tunnel crossing occurred.
  *
  * @param  _Out_ double &signal[] - array receiving signal details (if any)
  *
  * @return bool
  */
-bool IsMaTunnelSignal(double &signal[]) {
+bool IsTunnelSignal(double &signal[]) {
    if (last_error != NULL) return(false);
 
    // TODO: 35% of the total runtime are spent in this function
@@ -347,13 +347,13 @@ bool IsMaTunnelSignal(double &signal[]) {
       signal[SIG_OP   ] = 0;
 
       if (IsBarOpen()) {
-         int trend = icMaTunnel(NULL, Tunnel, MaTunnel.MODE_TREND, 1);
+         int trend = icTunnel(NULL, Tunnel, Tunnel.MODE_TREND, 1);
          if (Abs(trend) == 1) {
             signal[SIG_TYPE ] = SIG_TYPE_TUNNEL;
             signal[SIG_PRICE] = Close[1];
             signal[SIG_OP   ] = ifInt(trend==1, SIG_OP_LONG, SIG_OP_SHORT);
 
-            if (IsLogNotice()) logNotice("IsMaTunnelSignal(1)  "+ instance.name +" "+ ifString(signal[SIG_OP]==SIG_OP_LONG, "long", "short") +" crossing (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsTunnelSignal(1)  "+ instance.name +" "+ ifString(signal[SIG_OP]==SIG_OP_LONG, "long", "short") +" crossing (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
          }
       }
       lastTick     = Ticks;

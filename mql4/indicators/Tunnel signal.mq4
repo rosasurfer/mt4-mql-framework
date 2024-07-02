@@ -24,7 +24,7 @@
  *     merge includes icALMA() and functions/ta/ALMA.mqh
  *     replace manual StdDev calculation
  *
- *  - MA Tunnel
+ *  - Tunnel
  *     support MA method MODE_ALMA
  *
  *  - Moving Average, MACD
@@ -69,8 +69,8 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MaTunnel.mqh>
 #include <rsf/functions/iCustom/MovingAverage.mqh>
+#include <rsf/functions/iCustom/Tunnel.mqh>
 #include <rsf/win32api.mqh>
 
 #define MODE_MAIN             0                 // indicator buffer ids
@@ -227,8 +227,8 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      upperBand = GetMaTunnel(MODE_UPPER, bar);
-      lowerBand = GetMaTunnel(MODE_LOWER, bar);
+      upperBand = GetTunnel(MODE_UPPER, bar);
+      lowerBand = GetTunnel(MODE_LOWER, bar);
       ma = GetMovingAverage(bar);
 
       if (Close[bar] > upperBand && ma > upperBand) {
@@ -309,17 +309,17 @@ bool onCross(int direction) {
 
 
 /**
- * Get a band value of the "MA Tunnel" indicator.
+ * Get a band value of the "Tunnel" indicator.
  *
  * @param  int mode - band identifier: MODE_UPPER | MODE_LOWER
  * @param  int bar  - bar offset
  *
  * @return double - band value or NULL in case of errors
  */
-double GetMaTunnel(int mode, int bar) {
+double GetTunnel(int mode, int bar) {
    if (tunnel.method == MODE_ALMA) {
-      static int buffers[] = {0, MaTunnel.MODE_UPPER_BAND, MaTunnel.MODE_LOWER_BAND};
-      return(icMaTunnel(NULL, tunnel.definition, buffers[mode], bar));
+      static int buffers[] = {0, Tunnel.MODE_UPPER_BAND, Tunnel.MODE_LOWER_BAND};
+      return(icTunnel(NULL, tunnel.definition, buffers[mode], bar));
    }
    static int prices[] = {0, PRICE_HIGH, PRICE_LOW};
    return(iMA(NULL, NULL, tunnel.periods, 0, tunnel.method, prices[mode], bar));
@@ -423,7 +423,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    IndicatorBuffers(indicator_buffers);
    SetIndexBuffer(MODE_MAIN,          bufferMain ); SetIndexEmptyValue(MODE_MAIN,          0); SetIndexLabel(MODE_MAIN,  indicatorName);
-   SetIndexBuffer(MODE_TREND,         bufferTrend); SetIndexEmptyValue(MODE_TREND,         0); SetIndexLabel(MODE_TREND, "MA Tunnel trend");
+   SetIndexBuffer(MODE_TREND,         bufferTrend); SetIndexEmptyValue(MODE_TREND,         0); SetIndexLabel(MODE_TREND, "Tunnel trend");
    SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper); SetIndexEmptyValue(MODE_UPPER_SECTION, 0); SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower); SetIndexEmptyValue(MODE_LOWER_SECTION, 0); SetIndexLabel(MODE_LOWER_SECTION, NULL);
    IndicatorDigits(0);

@@ -1,7 +1,7 @@
 /**
  * Trend Bars
  *
- * Colors chart bars according to the indicated trend:
+ * Colors chart bars according to the last signal of the configured indicator:
  *  - Close prices above the tunnel are interpreted as "up trend".
  *  - Close prices below the tunnel are interpreted as "down trend".
  *  - Close prices in the tunnel are interpreted as "no trend".
@@ -37,7 +37,7 @@ extern bool   ShowChartLegend                = false;
 #include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/HandleCommands.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MaTunnel.mqh>
+#include <rsf/functions/iCustom/Tunnel.mqh>
 
 #define BUFFER_TREND_BODY_A      0        // indicator buffer ids
 #define BUFFER_TREND_BODY_B      1
@@ -178,8 +178,8 @@ int onTick() {
       noTrendWickA[bar] = 0;
       noTrendWickB[bar] = 0;
 
-      double upperBand = GetMaTunnel(MODE_UPPER, bar);
-      double lowerBand = GetMaTunnel(MODE_LOWER, bar);
+      double upperBand = GetTunnel(MODE_UPPER, bar);
+      double lowerBand = GetTunnel(MODE_LOWER, bar);
 
       if (Close[bar] > upperBand) {
          if (Open[bar] > Close[bar]) {
@@ -241,17 +241,17 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Get a band value of the "MA Tunnel" indicator.
+ * Get a band value of the "Tunnel" indicator.
  *
  * @param  int mode - band identifier: MODE_UPPER | MODE_LOWER
  * @param  int bar  - bar offset
  *
  * @return double - band value or NULL in case of errors
  */
-double GetMaTunnel(int mode, int bar) {
+double GetTunnel(int mode, int bar) {
    if (tunnel.method == MODE_ALMA) {
-      static int buffers[] = {0, MaTunnel.MODE_UPPER_BAND, MaTunnel.MODE_LOWER_BAND};
-      return(icMaTunnel(NULL, tunnel.definition, buffers[mode], bar));
+      static int buffers[] = {0, Tunnel.MODE_UPPER_BAND, Tunnel.MODE_LOWER_BAND};
+      return(icTunnel(NULL, tunnel.definition, buffers[mode], bar));
    }
    static int priceTypes[] = {0, PRICE_HIGH, PRICE_LOW};
    return(iMA(NULL, NULL, tunnel.periods, 0, tunnel.method, priceTypes[mode], bar));

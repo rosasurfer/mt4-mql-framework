@@ -354,8 +354,8 @@ double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double dist
 double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
 double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar);;
-double   icMaTunnel(int timeframe, int maPeriods, string maMethod, int iBuffer, int iBar);;
 double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
+double   icTunnel(int timeframe, int maPeriods, string maMethod, int iBuffer, int iBar);;
 double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 
 

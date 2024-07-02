@@ -1,10 +1,10 @@
-#define MaTunnel.MODE_UPPER_BAND    0                 // indicator buffer ids
-#define MaTunnel.MODE_LOWER_BAND    1                 //
-#define MaTunnel.MODE_TREND         2                 //
+#define Tunnel.MODE_UPPER_BAND      0                 // indicator buffer ids
+#define Tunnel.MODE_LOWER_BAND      1                 //
+#define Tunnel.MODE_TREND           2                 //
 
 
 /**
- * Load the "MA Tunnel" indicator and return a value.
+ * Load the "Tunnel" indicator and return a value.
  *
  * @param  int    timeframe        - timeframe to load the indicator (NULL: the current timeframe)
  * @param  string tunnelDefinition - indicator parameter
@@ -13,12 +13,12 @@
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icMaTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar) {
+double icTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
    }
 
-   double value = iCustom(NULL, timeframe, "MA Tunnel",
+   double value = iCustom(NULL, timeframe, "Tunnel",
                           tunnelDefinition,           // string Tunnel.Definition
                           "",                         // string Supported.MA.Methods
                           Blue,                       // color  Tunnel.Color
@@ -39,8 +39,8 @@ double icMaTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar)
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE) return(!catch("icMaTunnel(1)", error));
-      logWarn("icMaTunnel(2)  "+ PeriodDescription(timeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icTunnel(1)", error));
+      logWarn("icTunnel(2)  "+ PeriodDescription(timeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];           // TODO: synchronize execution contexts

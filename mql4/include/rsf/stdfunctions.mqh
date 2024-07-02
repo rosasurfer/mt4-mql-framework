@@ -4304,6 +4304,32 @@ datetime GetNextSessionEndTime(datetime time, int tz) {
 
 
 /**
+ * Get the price at the specified bar offset.
+ *
+ * @param  int type   - price type
+ * @param  int offset - bar offset
+ *
+ * @return double - price or NULL (0) in case of errors
+ */
+double GetPrice(int type, int offset) {
+   if (offset < 0)     return(!catch("GetPrice(1)  invalid parameter offset: "+ offset +" (must be non-negative)", ERR_INVALID_PARAMETER));
+   if (offset >= Bars) return(!catch("GetPrice(2)  invalid parameter offset: "+ offset +" (must be < Bars)", ERR_INVALID_PARAMETER));
+
+   switch (type) {
+      case PRICE_OPEN    : return( Open[offset]);
+      case PRICE_HIGH    : return( High[offset]);
+      case PRICE_LOW     : return(  Low[offset]);
+      case PRICE_CLOSE   : return(Close[offset]);
+      case PRICE_MEDIAN  : return((High[offset] + Low[offset]) / 2);
+      case PRICE_TYPICAL : return((High[offset] + Low[offset] + Close[offset]) / 3);
+      case PRICE_WEIGHTED: return((High[offset] + Low[offset] + Close[offset] + Close[offset]) / 4);
+   }
+
+   return(!catch("GetPrice(3)  invalid/unsupported parameter type: "+ type, ERR_INVALID_PARAMETER));
+}
+
+
+/**
  * Generate a random integer value between the specified minimum and maximum values.
  *
  * @param  int min - minimum value
@@ -6633,6 +6659,7 @@ void __DummyCalls() {
    GetNextSessionEndTime(NULL, NULL);
    GetPrevSessionEndTime(NULL, NULL);
    GetPrevSessionStartTime(NULL, NULL);
+   GetPrice(NULL, NULL);
    GetRandomValue(NULL, NULL);
    GetServerTime();
    GetSessionEndTime(NULL, NULL);

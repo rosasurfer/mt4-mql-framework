@@ -13,6 +13,9 @@ int __DeinitFlags[];
 extern int    CCI.Periods           = 14;
 extern string CCI.AppliedPrice      = "Open | High | Low | Close | Median | Typical* | Weighted";
 
+extern color  Line.Color            = Blue;
+extern int    Line.Width            = 0;
+
 extern color  Histogram.Color.Long  = LimeGreen;
 extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Width       = 2;
@@ -28,11 +31,10 @@ extern int    MaxBarsBack           = 10000;       // max. values to calculate (
 #define MODE_MAIN            0                     // indicator buffer ids
 #define MODE_UPPER           1
 #define MODE_LOWER           2
-#define MODE_PRICE           3
 
 #property indicator_separate_window
 #property indicator_buffers  3                     // visible buffers
-int       terminal_buffers = 4;                    // buffers managed by the terminal
+int       terminal_buffers = 3;                    // all buffers managed by the terminal
 
 #property indicator_color1   CLR_NONE
 #property indicator_color2   CLR_NONE
@@ -42,13 +44,12 @@ int       terminal_buffers = 4;                    // buffers managed by the ter
 #property indicator_level2      0
 #property indicator_level3   -100
 
-//#property indicator_maximum  +200
-//#property indicator_minimum  -200
+#property indicator_maximum  +180
+#property indicator_minimum  -180
 
-double bufferCCI[];                                // all CCI values:      invisible, displayed in "Data" window
-double bufferUpper[];                              // positive CCI values: visible
-double bufferLower[];                              // negative CCi values: visible
-double bufferPrice[];                              // input prices:        invisible
+double cci[];                                      // main CCI values: displayed in "Data" window
+double cciUpper[];                                 // positive CCI values
+double cciLower[];                                 // negative CCI values
 
 int cci.appliedPrice;
 
@@ -81,24 +82,30 @@ int onInit() {
    if (cci.appliedPrice == -1) return(catch("onInit(2)  invalid input parameter CCI.AppliedPrice: "+ DoubleQuoteStr(CCI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    CCI.AppliedPrice = PriceTypeDescription(cci.appliedPrice);
 
+   // Line.Width
+   if (AutoConfiguration) Line.Width = GetConfigInt(indicator, "Line.Width", Line.Width);
+   if (Line.Width < 0)         return(catch("onInit(3)  invalid input parameter Line.Width: "+ Line.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Line.Width > 5)         return(catch("onInit(4)  invalid input parameter Line.Width: "+ Line.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+
+   // Histogram.Width
+   if (AutoConfiguration) Histogram.Width = GetConfigInt(indicator, "Histogram.Width", Histogram.Width);
+   if (Histogram.Width < 0)    return(catch("onInit(5)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Width > 5)    return(catch("onInit(6)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (AutoConfiguration) Line.Color            = GetConfigColor(indicator, "Line.Color",            Line.Color);
    if (AutoConfiguration) Histogram.Color.Long  = GetConfigColor(indicator, "Histogram.Color.Long",  Histogram.Color.Long);
    if (AutoConfiguration) Histogram.Color.Short = GetConfigColor(indicator, "Histogram.Color.Short", Histogram.Color.Short);
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
 
-   // Histogram.Width
-   if (AutoConfiguration) Histogram.Width = GetConfigInt(indicator, "Histogram.Width", Histogram.Width);
-   if (Histogram.Width < 0)    return(catch("onInit(3)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Width > 5)    return(catch("onInit(4)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
-
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)       return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)       return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    SetIndicatorOptions();
-   return(catch("onInit(6)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -113,19 +120,17 @@ int onTick() {
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferCCI,   0);
-      ArrayInitialize(bufferUpper, 0);
-      ArrayInitialize(bufferLower, 0);
-      ArrayInitialize(bufferPrice, 0);
+      ArrayInitialize(cci,      0);
+      ArrayInitialize(cciUpper, 0);
+      ArrayInitialize(cciLower, 0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(bufferCCI,   Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(bufferUpper, Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(bufferLower, Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(bufferPrice, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(cci,      Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(cciUpper, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(cciLower, Bars, ShiftedBars, 0);
    }
 
    // calculate start bar
@@ -134,44 +139,29 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      // moving average
-      double ma = iMA(NULL, NULL, CCI.Periods, 0, MODE_SMA, cci.appliedPrice, bar);
+      // CCI: upscaled ratio of current to average distance from MA
+      // ----------------------------------------------------------
+      // double ma       = iMA(NULL, NULL, CCI.Periods, 0, MODE_SMA, cci.appliedPrice, bar);
+      // double distance = GetPrice(bar) - ma;
+      // double sum = 0;
+      // for (int n=bar+CCI.Periods-1; n >= bar; n--) {
+      //    sum += MathAbs(GetPrice(n) - ma);
+      // }
+      // double avgDistance = sum / CCI.Periods;
+      // cci[bar] = MathDiv(distance, avgDistance) / 0.015;                // 1/0.015 = 66.6667
 
-      // current distance from MA
-      double distance = GetPrice(bar) - ma;
+      cci[bar] = iCCI(NULL, NULL, CCI.Periods, cci.appliedPrice, bar);
 
-      // average distance from MA
-      double sum = 0;
-      for (int n=bar+CCI.Periods-1; n >= bar; n--) {
-         sum += MathAbs(GetPrice(n) - ma);
+      if (cci[bar] > 0) {
+         cciUpper[bar] = cci[bar];
+         cciLower[bar] = EMPTY_VALUE;
       }
-      double avgDistance = sum / CCI.Periods;
-
-      // CCI = upscaled ratio of current to average distance from MA
-      bufferCCI[bar] = MathDiv(distance, avgDistance) / 0.015;          // 1/0.015 = 66.6667
+      else {
+         cciUpper[bar] = EMPTY_VALUE;
+         cciLower[bar] = cci[bar];
+      }
    }
    return(catch("onTick(2)"));
-}
-
-
-/**
- * Get the configured input price at the specified bar offset.
- *
- * @param  int bar - bar offset
- *
- * @return double
- */
-double GetPrice(int bar) {
-   switch (cci.appliedPrice) {
-      case PRICE_OPEN    : return( Open[bar]);
-      case PRICE_HIGH    : return( High[bar]);
-      case PRICE_LOW     : return(  Low[bar]);
-      case PRICE_CLOSE   : return(Close[bar]);
-      case PRICE_MEDIAN  : return((High[bar]+Low[bar])/2);
-      case PRICE_TYPICAL : return((High[bar]+Low[bar]+Close[bar])/3);
-      case PRICE_WEIGHTED: return((High[bar]+Low[bar]+Close[bar]+Close[bar])/4);
-   }
-   return(0);
 }
 
 
@@ -183,14 +173,14 @@ double GetPrice(int bar) {
  * @return bool - success status
  */
 bool SetIndicatorOptions(bool redraw = false) {
-   indicatorName = "rsf.CCI("+ CCI.Periods +")";
+   redraw = redraw!=0;
+   indicatorName = "CCI("+ CCI.Periods +")";
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(terminal_buffers);
-   SetIndexBuffer(MODE_MAIN,  bufferCCI);   SetIndexLabel(MODE_MAIN,  indicatorName);
-   SetIndexBuffer(MODE_UPPER, bufferUpper); SetIndexLabel(MODE_UPPER, NULL);
-   SetIndexBuffer(MODE_LOWER, bufferLower); SetIndexLabel(MODE_LOWER, NULL);
-   SetIndexBuffer(MODE_PRICE, bufferPrice);
+   SetIndexBuffer(MODE_MAIN,  cci);
+   SetIndexBuffer(MODE_UPPER, cciUpper);
+   SetIndexBuffer(MODE_LOWER, cciLower);
    IndicatorDigits(4);
 
    int drawBegin = Max(CCI.Periods-1, Bars-MaxBarsBack);
@@ -198,8 +188,15 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexDrawBegin(MODE_UPPER, drawBegin);
    SetIndexDrawBegin(MODE_LOWER, drawBegin);
 
-   int drawType = ifInt(0 && Histogram.Width, DRAW_HISTOGRAM, DRAW_NONE);
-   SetIndexStyle(MODE_MAIN,  DRAW_LINE);
+   SetIndexLabel(MODE_MAIN,  indicatorName);
+   SetIndexLabel(MODE_UPPER, NULL);
+   SetIndexLabel(MODE_LOWER, NULL);
+
+   // SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   int drawType = ifInt(Line.Width, DRAW_LINE, DRAW_NONE);
+   SetIndexStyle(MODE_MAIN, drawType, EMPTY, Line.Width, Line.Color);
+
+   drawType = ifInt(Histogram.Width, DRAW_HISTOGRAM, DRAW_NONE);
    SetIndexStyle(MODE_UPPER, drawType, EMPTY, Histogram.Width, Histogram.Color.Long);
    SetIndexStyle(MODE_LOWER, drawType, EMPTY, Histogram.Width, Histogram.Color.Short);
 
@@ -216,6 +213,8 @@ bool SetIndicatorOptions(bool redraw = false) {
 string InputsToStr() {
    return(StringConcatenate("CCI.Periods=",           CCI.Periods,                       ";", NL,
                             "CCI.AppliedPrice=",      DoubleQuoteStr(CCI.AppliedPrice),  ";", NL,
+                            "Line.Width=",            Line.Width,                        ";", NL,
+                            "Line.Color=",            ColorToStr(Line.Color),            ";", NL,
                             "Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),  ";", NL,
                             "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short), ";", NL,
                             "Histogram.Width=",       Histogram.Width,                   ";", NL,
