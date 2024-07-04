@@ -307,7 +307,7 @@ int onTick() {
       double price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
       main[bar] = JMASeries(0, oldestBar, startbar, Periods, Phase, price, bar); if (last_error != 0) return(last_error);
 
-      UpdateTrendDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
+      UpdateTrend(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!__isSuperContext) {

@@ -24,11 +24,16 @@
  *
  * TODO:  *** Main objective is faster implementation and testing of new EAs. ***
  *
+ *  - EAs: Rhythm variants, Tunnel variants
+ *     easily updatable testing environment
+ *     reproduce profitable backtests
+ *      reproduce tests with original EAs
+ *      terminal with Dukascopy data
+ *      comfortable update/generation/synchronization of new test data (e.g. from 2007)
+ *
  *  - rewrite CCI indicator: histogram, signaling, colored bars
  *  - update ChartInfos::CustomConfig()  (OH|HO) datetime
  *  - daily range projection, @see https://www.forexfactory.com/thread/993524-roadmap-a-way-to-read-markets#
- *
- *  - EAs: Rhythm variants, Tunnel variants
  *
  *  - monitor and auto-reload changed config files
  *  - realtime equity charts (don't learn afterwards about what happened in the account)
@@ -40,14 +45,7 @@
  *  - Account Guard
  *     close/hedge open positions 2 min before major news (with notification)
  *     fix margin bugs (ERR_NOT_ENOUGH_MONEY)
- *     implement solution to notify on no-connection or failed-login (also for EquityRecorder, LFX-Monitor)
- *
- *  - profitable backtests
- *     setups: Rhythm variants, Tunnel EA
- *     easily updatable testing environment
- *      reproduce tests with original EAs
- *      terminal with Dukascopy data
- *      comfortable update/generation/synchronization of new test data (e.g. from 2007)
+ *     implement solution to notify on connection-loss or failed-login (also for EquityRecorder, LFX-Monitor)
  *
  *  - entry management
  *     scale in multiple positions

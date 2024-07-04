@@ -198,7 +198,7 @@ int onTick() {
       else                   { trixUpper[bar] = EMPTY_VALUE;   trixLower[bar] = trixMain[bar]; }
 
       // trend direction and length
-      UpdateTrendDirection(trixMain, bar, trixTrend, dNull, dNull, dNull);
+      UpdateTrend(trixMain, bar, trixTrend, dNull, dNull, dNull);
    }
    return(last_error);
 }

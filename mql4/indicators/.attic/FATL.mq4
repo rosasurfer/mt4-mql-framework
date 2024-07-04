@@ -180,7 +180,7 @@ int onTick() {
       for (int i=0; i < length; i++) {
          main[bar] += filterWeights[i] * Close[bar+i];
       }
-      UpdateTrendDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
+      UpdateTrend(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!__isSuperContext) {

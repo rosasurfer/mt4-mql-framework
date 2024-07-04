@@ -253,7 +253,7 @@ int onTick() {
       else {                                 // built-in moving averages
          main[bar] = iMA(NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar);
       }
-      UpdateTrendDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
+      UpdateTrend(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!__isSuperContext) {

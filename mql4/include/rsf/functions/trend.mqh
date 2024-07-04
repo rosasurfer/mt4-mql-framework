@@ -1,33 +1,34 @@
 /**
  * Update a trendline's indicator buffers for trend direction and coloring.
  *
- * @param  _In_  double values[]                  - Trendline values (a timeseries).
- * @param  _In_  int    offset                    - Bar offset to update.
- * @param  _Out_ double trend[]                   - Buffer for trend direction and length: -n...-1 ... +1...+n.
- * @param  _Out_ double uptrend[]                 - Buffer for rising trendline values.
- * @param  _Out_ double downtrend[]               - Buffer for falling trendline values.
+ * @param  _In_  double values[]                  - trendline values (a timeseries)
+ * @param  _In_  int    offset                    - bar offset to update
+ * @param  _Out_ double trend[]                   - buffer for trend direction and length: -n...-1 ... +1...+n
+ * @param  _Out_ double uptrend[]                 - buffer for rising trendline values
+ * @param  _Out_ double downtrend[]               - buffer for falling trendline values
  * @param  _Out_ double uptrend2[]                - Additional buffer for single-bar uptrends. Must overlay uptrend[] and downtrend[] to be visible.
  * @param  _In_  bool   enableColoring [optional] - Whether to update the up/downtrend buffers for trend coloring (default: no).
  * @param  _In_  bool   enableUptrend2 [optional] - Whether to update the single-bar uptrend buffer (if enableColoring=On, default: no).
- * @param  _In_  int    lineStyle      [optional] - Trendline drawing style: If set to DRAW_LINE a line is drawn immediately at the start of a trend.
+ * @param  _In_  int    lineStyle      [optional] - trendline drawing style: If set to DRAW_LINE a line is drawn immediately at the start of a trend.
  *                                                  Otherwise MetaTrader needs at least two data points to draw a line (default: draw data points only).
- * @param  _In_  int    digits         [optional] - If set, trendline values are normalized to the specified number of digits (default: no normalization).
+ * @param  _In_  int    digits         [optional] - Normalize trendline values to the specified number of digits (default: no normalization).
  *
  * @return bool - success status
  */
-bool UpdateTrendDirection(double values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
+bool UpdateTrend(double values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
    enableColoring = enableColoring!=0;
    enableUptrend2 = enableColoring && enableUptrend2!=0;
 
    if (offset >= Bars-1) {
-      if (offset >= Bars) return(!catch("UpdateTrendDirection(1)  illegal parameter offset: "+ offset +" (Bars="+ Bars +")", ERR_INVALID_PARAMETER));
+      if (offset >= Bars) return(!catch("UpdateTrend(1)  illegal parameter offset: "+ offset +" (Bars="+ Bars +")", ERR_INVALID_PARAMETER));
       trend[offset] = 0;
 
       if (enableColoring) {
          uptrend  [offset] = EMPTY_VALUE;
          downtrend[offset] = EMPTY_VALUE;
-         if (enableUptrend2)
+         if (enableUptrend2) {
             uptrend2[offset] = EMPTY_VALUE;
+         }
       }
       return(true);
    }

@@ -206,7 +206,7 @@ int onTick() {
       if (bar > Bars-3) main[bar] = price;               // prevent index out of range errors
       else              main[bar] = coef1*price + coef2*main[bar+1] + coef3*main[bar+2];
 
-      UpdateTrendDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
+      UpdateTrend(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!__isSuperContext) {

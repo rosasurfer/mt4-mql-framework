@@ -298,7 +298,7 @@ int onTick() {
             }
          }
       }
-      UpdateTrendDirection(maFiltered, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
+      UpdateTrend(maFiltered, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
    }
 
    if (!__isSuperContext) {

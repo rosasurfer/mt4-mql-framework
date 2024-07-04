@@ -135,7 +135,7 @@ window_num=0
 MA.Periods=38
 MA.ReversalFilter=0.1
 Draw.Type=Line* | Dot
-Draw.Width=6
+Draw.Width=5
 Color.UpTrend=16711680
 Color.DownTrend=16711680
 ShowChartLegend=1
@@ -177,7 +177,6 @@ name=Custom Indicator
 <expert>
 name=Tunnel signal
 flags=339
-window_num=2
 <inputs>
 Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
 Tunnel.MA.Periods=55
@@ -201,12 +200,22 @@ show_data=1
 height=65
 fixed_height=0
 <indicator>
+name=Custom Indicator
+<expert>
 name=Commodity Channel Index
-period=14
-apply=5
-color=16711680
-style=0
-weight=2
+flags=339
+<inputs>
+CCI.Periods=14
+CCI.AppliedPrice=Open | High | Low | Close | Median | Typical* | Weighted
+AutoConfiguration=0
+</inputs>
+</expert>
+draw_2=2
+color_2=3329330
+weight_2=2
+draw_3=2
+color_3=255
+weight_3=2
 min=-180
 max=180
 levels_color=12632256
@@ -215,7 +224,6 @@ levels_weight=1
 level_0=100
 level_1=0
 level_2=-100
-period_flags=0
 show_data=1
 </indicator>
 </window>
