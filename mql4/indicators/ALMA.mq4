@@ -1,7 +1,7 @@
 /**
  * Arnaud Legoux Moving Average
  *
- * A moving average using a Gaussian distribution function for weight calculation.
+ * A moving average using a Gaussian distribution function for weight calculations.
  *
  *
  * Indicator buffers for iCustom():
@@ -12,7 +12,6 @@
  *
  *
  *  @see  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/#              [Arnaud Legoux Moving Average]
- *  @see  https://www.forexfactory.com/thread/251668#                                          [Arnaud Legoux Moving Average]
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -25,13 +24,15 @@ extern int    MA.Periods.Step                = 0;                 // step size f
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern double Distribution.Offset            = 0.85;              // Gaussian distribution offset (offset of parabola vertex: 0..1)
 extern double Distribution.Sigma             = 6.0;               // Gaussian distribution sigma (parabola steepness)
-extern double MA.ReversalFilter              = 0.4;               // min. MA change in std-deviations for a trend reversal
+extern double MA.ReversalFilter              = 0.1;               // min. MA change in std-deviations for a trend reversal
 extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (hotkey + VK_SHIFT)
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern color  Color.UpTrend                  = Blue;
-extern color  Color.DownTrend                = Red;
+extern color  UpTrend.Color                  = Blue;
+extern color  DownTrend.Color                = Red;
+extern color  Background.Color               = DimGray;           // background for Draw.Type = "Line"
+extern int    Background.Width               = 2;
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 
@@ -75,7 +76,7 @@ int       terminal_buffers  = 8;                         // all buffers
 #property indicator_color5    CLR_NONE
 
 double maRaw     [];                                     // MA raw main values:      invisible
-double maFiltered[];                                     // MA filtered main values: invisible, displayed in legend and "Data" window
+double maFiltered[];                                     // MA filtered main values: visible (background), displayed in legend and "Data" window
 double trend     [];                                     // trend direction:         invisible, displayed in "Data" window
 double uptrend   [];                                     // uptrend values:          visible
 double downtrend [];                                     // downtrend values:        visible
@@ -139,7 +140,7 @@ int onInit() {
    // MA.ReversalFilter
    if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
    if (MA.ReversalFilter < 0)                              return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
-   // MA.ReversalFilter.StepS
+   // MA.ReversalFilter.Step
    if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
    if (MA.ReversalFilter.Step < 0)                         return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
@@ -156,16 +157,21 @@ int onInit() {
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
    if (Draw.Width < 0)                                     return(catch("onInit(9)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   // Background.Width
+   if (AutoConfiguration) Background.Width = GetConfigInt(indicator, "Background.Width", Background.Width);
+   if (Background.Width < 0)                               return(catch("onInit(10)  invalid input parameter Background.Width: "+ Background.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
-   if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
+   if (AutoConfiguration) UpTrend.Color    = GetConfigColor(indicator, "UpTrend.Color",    UpTrend.Color);
+   if (AutoConfiguration) DownTrend.Color  = GetConfigColor(indicator, "DownTrend.Color",  DownTrend.Color);
+   if (AutoConfiguration) Background.Color = GetConfigColor(indicator, "Background.Color", Background.Color);
+   if (UpTrend.Color    == 0xFF000000) UpTrend.Color    = CLR_NONE;
+   if (DownTrend.Color  == 0xFF000000) DownTrend.Color  = CLR_NONE;
+   if (Background.Color == 0xFF000000) Background.Color = CLR_NONE;
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)                                   return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)                                   return(catch("onInit(11)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signal configuration
@@ -174,7 +180,7 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
       if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
-         return(catch("onInit(11)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(12)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.sms);
       if (Signal.onTrendChange) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.sms, "sms,", ""), -1) +")";
@@ -191,17 +197,6 @@ int onInit() {
    // restore a stored runtime status
    RestoreStatus();
 
-   // buffer management and options
-   SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // MA raw main values:      invisible
-   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // MA filtered main values: invisible, displayed in legend and "Data" window
-   SetIndexBuffer(MODE_TREND,       trend     );   // trend direction:         invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND,     uptrend   );   // uptrend values:          visible
-   SetIndexBuffer(MODE_DOWNTREND,   downtrend );   // downtrend values:        visible
-   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );   // single-bar uptrends:     visible
-   SetIndexBuffer(MODE_MA_CHANGE,   maChange  );   //                          invisible
-   SetIndexBuffer(MODE_AVG,         maAverage );   //                          invisible
-   SetIndicatorOptions();
-
    // calculate ALMA bar weights
    ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights);
 
@@ -209,7 +204,8 @@ int onInit() {
    if (ShowChartLegend) legendLabel = CreateChartLegend();
    enableMultiColoring = !__isSuperContext;
 
-   return(catch("onInit(12)"));
+   SetIndicatorOptions();
+   return(catch("onInit(13)"));
 }
 
 
@@ -302,7 +298,7 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      if (__isChart && ShowChartLegend) UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], trend[0]);
+      if (__isChart && ShowChartLegend) UpdateTrendLegend(legendLabel, indicatorName, legendInfo, UpTrend.Color, DownTrend.Color, maFiltered[0], trend[0]);
 
       if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {            // monitor trend reversals
          int iTrend = Round(trend[1]);
@@ -458,21 +454,37 @@ bool ParameterStepper(int direction, int keys) {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
-   string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
+   string sMaFilter     = ifString((UpTrend.Color!=DownTrend.Color) && (MA.ReversalFilter || MA.ReversalFilter.Step), "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName        = WindowExpertName() +"("+ ifString(MA.Periods.Step || MA.ReversalFilter.Step, "step:", "") + MA.Periods + sMaFilter + sAppliedPrice +")";
    shortName            = "ALMA("+ MA.Periods +")";
    IndicatorShortName(shortName);
 
-   int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
-
    IndicatorBuffers(terminal_buffers);
-   SetIndexStyle(MODE_MA_FILTERED, DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_MA_FILTERED, shortName);
-   SetIndexStyle(MODE_TREND,       DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_TREND,       shortName +" trend");
-   SetIndexStyle(MODE_UPTREND,     draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158); SetIndexLabel(MODE_UPTREND,     shortName +" up");
-   SetIndexStyle(MODE_DOWNTREND,   draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND,   shortName +" down");
-   SetIndexStyle(MODE_UPTREND2,    draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,    NULL);
+   SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // MA raw main values:      invisible
+   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // MA filtered main values: invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,       trend     );   // trend direction:         invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND,     uptrend   );   // uptrend values:          visible
+   SetIndexBuffer(MODE_DOWNTREND,   downtrend );   // downtrend values:        visible
+   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );   // single-bar uptrends:     visible
+   SetIndexBuffer(MODE_MA_CHANGE,   maChange  );   //                          invisible
+   SetIndexBuffer(MODE_AVG,         maAverage );   //                          invisible
    IndicatorDigits(Digits);
+
+   int draw_type = ifInt(drawType==DRAW_LINE, drawType, DRAW_NONE);
+   SetIndexStyle(MODE_MA_FILTERED, draw_type, EMPTY, Draw.Width+Background.Width, Background.Color);
+
+   draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
+   SetIndexStyle(MODE_TREND,       DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
+   SetIndexStyle(MODE_UPTREND,     draw_type, EMPTY, Draw.Width, UpTrend.Color  ); SetIndexArrow(MODE_UPTREND,   158);
+   SetIndexStyle(MODE_DOWNTREND,   draw_type, EMPTY, Draw.Width, DownTrend.Color); SetIndexArrow(MODE_DOWNTREND, 158);
+   SetIndexStyle(MODE_UPTREND2,    draw_type, EMPTY, Draw.Width, UpTrend.Color  ); SetIndexArrow(MODE_UPTREND2,  158);
+
+   SetIndexLabel(MODE_MA_FILTERED, shortName);
+   SetIndexLabel(MODE_TREND,       shortName +" trend");
+   SetIndexLabel(MODE_UPTREND,     shortName +" up");
+   SetIndexLabel(MODE_DOWNTREND,   shortName +" down");
+   SetIndexLabel(MODE_UPTREND2,    NULL);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -539,8 +551,10 @@ string InputsToStr() {
 
                             "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";"+ NL,
                             "Draw.Width=",                 Draw.Width,                                 ";"+ NL,
-                            "Color.DownTrend=",            ColorToStr(Color.DownTrend),                ";"+ NL,
-                            "Color.UpTrend=",              ColorToStr(Color.UpTrend),                  ";"+ NL,
+                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";"+ NL,
+                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";"+ NL,
+                            "Background.Color=",           ColorToStr(Background.Color),               ";", NL,
+                            "Background.Width=",           Background.Width,                           ";", NL,
                             "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";"+ NL,
                             "MaxBarsBack=",                MaxBarsBack,                                ";"+ NL,
 

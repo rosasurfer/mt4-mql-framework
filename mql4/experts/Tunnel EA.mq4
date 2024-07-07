@@ -154,9 +154,9 @@ extern bool   ShowProfitInPercent            = true;                          //
 #include <rsf/ea/init.mqh>
 #include <rsf/ea/deinit.mqh>
 
-#define NET_MONEY       METRIC_NET_MONEY              // shorter metric aliases
-#define NET_UNITS       METRIC_NET_UNITS
-#define SIG_UNITS       METRIC_SIG_UNITS
+#define NET_MONEY    METRIC_NET_MONEY                 // shorter metric aliases
+#define NET_UNITS    METRIC_NET_UNITS
+#define SIG_UNITS    METRIC_SIG_UNITS
 
 
 /**

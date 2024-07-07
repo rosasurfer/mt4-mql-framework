@@ -20,10 +20,10 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           maMethod,                         // string MA.Method
                           maAppliedPrice,                   // string MA.AppliedPrice
 
-                          Blue,                             // color  UpTrend.Color
-                          Blue,                             // color  DownTrend.Color
                           "Line",                           // string Draw.Type
                           0,                                // int    Draw.Width
+                          Blue,                             // color  UpTrend.Color
+                          Blue,                             // color  DownTrend.Color
                           CLR_NONE,                         // color  Background.Color
                           0,                                // int    Background.Width
                           false,                            // bool   ShowChartLegend

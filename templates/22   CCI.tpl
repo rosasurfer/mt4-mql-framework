@@ -135,9 +135,9 @@ window_num=0
 MA.Periods=38
 MA.ReversalFilter=0.1
 Draw.Type=Line* | Dot
-Draw.Width=5
-Color.UpTrend=16711680
-Color.DownTrend=16776960
+Draw.Width=4
+UpTrend.Color=16711680
+DownTrend.Color=16776960
 ShowChartLegend=1
 AutoConfiguration=0
 </inputs>

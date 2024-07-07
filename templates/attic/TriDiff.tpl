@@ -82,8 +82,8 @@ window_num=0
 <inputs>
 MA.Periods=9
 MA.Method=ALMA
-Color.UpTrend=16776960
-Color.DownTrend=16711935
+UpTrend.Color=16776960
+DownTrend.Color=16711935
 </inputs>
 </expert>
 show_data=1
@@ -98,8 +98,8 @@ window_num=0
 <inputs>
 MA.Periods=22
 MA.Method=TMA
-Color.UpTrend=16711680
-Color.DownTrend=255
+UpTrend.Color=16711680
+DownTrend.Color=255
 Draw.Width=1
 </inputs>
 </expert>

@@ -28,8 +28,10 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
 
                           "Line",                     // string Draw.Type
                           1,                          // int    Draw.Width
-                          CLR_NONE,                   // color  Color.UpTrend
-                          CLR_NONE,                   // color  Color.DownTrend
+                          CLR_NONE,                   // color  UpTrend.Color
+                          CLR_NONE,                   // color  DownTrend.Color
+                          CLR_NONE,                   // color  Background.Color
+                          0,                          // int    Background.Width
                           false,                      // bool   ShowChartLegend
                           -1,                         // int    MaxBarsBack
 

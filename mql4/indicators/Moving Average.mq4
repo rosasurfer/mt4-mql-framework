@@ -37,10 +37,10 @@ extern int    MA.Periods                     = 100;
 extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  UpTrend.Color                  = DeepSkyBlue;
-extern color  DownTrend.Color                = Gold;
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 4;
+extern color  UpTrend.Color                  = DeepSkyBlue;
+extern color  DownTrend.Color                = Gold;
 extern color  Background.Color               = DimGray;           // background for Draw.Type = "Line"
 extern int    Background.Width               = 2;
 extern bool   ShowChartLegend                = true;
@@ -180,32 +180,15 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
 
-   // buffer management
-   SetIndexBuffer(MODE_MA,        main     );            // MA main values:       visible (background), displayed in legend and "Data" window
-   SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:      invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:       visible
-   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:     visible
-   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends:  visible
-
-   // names, labels and display options
-   if (ShowChartLegend) legendLabel = CreateChartLegend();
-   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = MA.Method +"("+ MA.Periods + sAppliedPrice +")";
-   string shortName = MA.Method +"("+ MA.Periods +")";
-   IndicatorShortName(shortName);                        // chart tooltips and context menu
-   SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND,     shortName +" trend");
-   SetIndexLabel(MODE_UPTREND,   NULL);
-   SetIndexLabel(MODE_DOWNTREND, NULL);
-   SetIndexLabel(MODE_UPTREND2,  NULL);
-   IndicatorDigits(Digits);
-   SetIndicatorOptions();
-
    // calculate ALMA bar weights
    if (maMethod == MODE_ALMA) {
       double almaOffset=0.85, almaSigma=6.0;
       ALMA.CalculateWeights(MA.Periods, almaOffset, almaSigma, almaWeights);
    }
+
+   if (ShowChartLegend) legendLabel = CreateChartLegend();
+   SetIndicatorOptions();
+
    return(catch("onInit(9)"));
 }
 
@@ -312,7 +295,20 @@ bool onTrendChange(int direction) {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
-   //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   // names, labels and display options
+   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
+   indicatorName = MA.Method +"("+ MA.Periods + sAppliedPrice +")";
+   string shortName = MA.Method +"("+ MA.Periods +")";
+   IndicatorShortName(shortName);                        // chart tooltips and context menu
+
+   IndicatorBuffers(indicator_buffers);
+   SetIndexBuffer(MODE_MA,        main     );            // MA main values:       visible (background), displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:      invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:       visible
+   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:     visible
+   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends:  visible
+   IndicatorDigits(Digits);
+
    int draw_type = ifInt(drawType==DRAW_LINE, drawType, DRAW_NONE);
    SetIndexStyle(MODE_MA,        draw_type, EMPTY, Draw.Width+Background.Width, Background.Color);
 
@@ -321,6 +317,12 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_UPTREND,   draw_type, EMPTY, Draw.Width, UpTrend.Color  ); SetIndexArrow(MODE_UPTREND,   158);
    SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, DownTrend.Color); SetIndexArrow(MODE_DOWNTREND, 158);
    SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, UpTrend.Color  ); SetIndexArrow(MODE_UPTREND2,  158);
+
+   SetIndexLabel(MODE_MA,        shortName);
+   SetIndexLabel(MODE_TREND,     shortName +" trend");
+   SetIndexLabel(MODE_UPTREND,   NULL);
+   SetIndexLabel(MODE_DOWNTREND, NULL);
+   SetIndexLabel(MODE_UPTREND2,  NULL);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -337,10 +339,10 @@ string InputsToStr() {
                             "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";", NL,
                             "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";", NL,
 
-                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";", NL,
-                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";", NL,
                             "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";", NL,
                             "Draw.Width=",                 Draw.Width,                                 ";", NL,
+                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";", NL,
+                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";", NL,
                             "Background.Color=",           ColorToStr(Background.Color),               ";", NL,
                             "Background.Width=",           Background.Width,                           ";", NL,
                             "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";", NL,

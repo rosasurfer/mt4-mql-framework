@@ -98,8 +98,8 @@ window_num=0
 <inputs>
 MA.Periods=34
 MA.Method=SMA
-Color.UpTrend=16711680
-Color.DownTrend=16711680
+UpTrend.Color=16711680
+DownTrend.Color=16711680
 </inputs>
 </expert>
 show_data=1

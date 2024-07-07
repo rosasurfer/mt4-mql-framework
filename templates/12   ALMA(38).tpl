@@ -81,8 +81,8 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=38
-Color.UpTrend=16711680
-Color.DownTrend=255
+UpTrend.Color=16711680
+DownTrend.Color=255
 Draw.Type=Line | Dot*
 Draw.Width=3
 </inputs>

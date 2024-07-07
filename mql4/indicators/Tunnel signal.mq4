@@ -20,7 +20,6 @@
  *     high spread marker (BTCUSD suddenly has an average spread of 70-100 points)
  *
  *  - ALMA
- *     add Background.Color+Background.Width
  *     merge includes icALMA() and functions/ta/ALMA.mqh
  *     replace manual StdDev calculation
  *

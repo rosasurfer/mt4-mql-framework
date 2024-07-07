@@ -97,8 +97,8 @@ window_num=0
 <inputs>
 MA.Periods=38
 MA.Method=ALMA
-Color.UpTrend=255
-Color.DownTrend=255
+UpTrend.Color=255
+DownTrend.Color=255
 Draw.Type=Line
 Draw.Width=2
 AutoConfiguration=0
@@ -116,8 +116,8 @@ window_num=0
 <inputs>
 MA.Periods=46
 MA.Method=ALMA
-Color.UpTrend=16711680
-Color.DownTrend=16711680
+UpTrend.Color=16711680
+DownTrend.Color=16711680
 Draw.Type=Line
 Draw.Width=2
 AutoConfiguration=0
