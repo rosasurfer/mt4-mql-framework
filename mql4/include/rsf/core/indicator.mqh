@@ -589,15 +589,16 @@ bool CheckErrors(string caller, int error = NULL) {
 
 
 #import "rsfMT4Expander.dll"
-   int  ec_SetDllError           (int ec[], int error);
-   int  ec_SetProgramCoreFunction(int ec[], int function);
+   int    ec_SetDllError           (int ec[], int error);
+   int    ec_SetProgramCoreFunction(int ec[], int function);
+   string lpEXECUTION_CONTEXT_toStr(int lpEc);
 
-   bool RemoveChartLegend();
-   bool ShiftDoubleIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
+   bool   RemoveChartLegend();
+   bool   ShiftDoubleIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
 
-   int  SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
-   int  SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
-   int  SyncMainContext_deinit(int ec[], int unintReason);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   int    SyncMainContext_deinit(int ec[], int unintReason);
 #import
 
 

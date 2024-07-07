@@ -95,6 +95,42 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Bollinger Bands
+flags=339
+window_num=0
+<inputs>
+MA.Periods=100
+MA.Method=SMA* | LWMA | EMA | SMMA | ALMA
+MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
+Bands.StdDevs=2
+AutoConfiguration=0
+</inputs>
+</expert>
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Moving Average
+flags=339
+<inputs>
+MA.Periods=200
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+ShowChartLegend=1
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=Brackets
 flags=339
 window_num=0
@@ -124,22 +160,6 @@ AutoConfiguration=0
 </expert>
 period_flags=7
 show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Bollinger Bands
-flags=339
-window_num=0
-<inputs>
-MA.Periods=100
-MA.Method=SMA* | LWMA | EMA | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-Bands.StdDevs=2
-AutoConfiguration=0
-</inputs>
-</expert>
 </indicator>
 
 </window>
