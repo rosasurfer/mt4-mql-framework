@@ -10,8 +10,6 @@
  *
  *
  * TODO:
- *  - implement XARD tunnel
- *
  *  - entry management
  *
  *  - exit management

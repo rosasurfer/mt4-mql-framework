@@ -37,7 +37,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=385
+height=405
 fixed_height=0
 
 <indicator>
@@ -120,8 +120,6 @@ ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
-weight_0=2
-weight_1=2
 show_data=1
 </indicator>
 
@@ -197,7 +195,7 @@ show_data=1
 </window>
 
 <window>
-height=65
+height=45
 fixed_height=0
 <indicator>
 name=Custom Indicator

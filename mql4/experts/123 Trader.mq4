@@ -77,7 +77,7 @@ extern int    Target4.ClosePercent           = 25;          // ...              
 extern int    Target4.MoveStopTo             = 0;           // ...                                                         //  |             |      -      |      -      |
                                                                                                                            //  +-------------+-------------+-------------+
 extern string ___g__________________________ = "=== Other settings ============";                                          //
-extern bool   ShowProfitInPercent            = false;  // whether PnL is displayed in money amounts or percent             //
+extern bool   ShowProfitInPercent            = false;       // whether PnL is displayed in money or percent                //
                                                                                                                            //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -37,7 +37,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=405
+height=417
 fixed_height=0
 
 <indicator>
@@ -126,6 +126,26 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
+name=Moving Average
+flags=339
+<inputs>
+MA.Periods=200
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+ShowChartLegend=1
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=ALMA
 flags=339
 window_num=0
@@ -145,34 +165,7 @@ show_data=1
 </window>
 
 <window>
-height=11
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=Tunnel signal
-flags=339
-<inputs>
-Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Tunnel.MA.Periods=55
-MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
-MA.Periods=10
-Histogram.Color.Upper=3329330
-Histogram.Color.Lower=255
-Histogram.Style.Width= 2
-Signal.onCross=0
-Signal.onCross.Types=sound
-AutoConfiguration=0
-</inputs>
-</expert>
-min=-1.0
-max=1.0
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=45
+height=33
 fixed_height=0
 <indicator>
 name=Custom Indicator

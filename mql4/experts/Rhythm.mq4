@@ -42,7 +42,7 @@ extern bool   BreakevenStop                  = true;
 extern bool   TrailingStop                   = false;
 
 extern string ___a__________________________ = "=== Other settings ============";
-extern bool   ShowProfitInPercent            = false;    // whether PnL is displayed in money amounts or percent
+extern bool   ShowProfitInPercent            = false;    // whether PnL is displayed in money or percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

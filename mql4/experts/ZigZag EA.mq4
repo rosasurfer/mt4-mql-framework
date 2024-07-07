@@ -255,7 +255,7 @@ extern int    EntryOrder.Distance            = 0;                    // in punit
 extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Other ===";
-extern bool   ShowProfitInPercent            = false;                // whether PnL is displayed in money amounts or percent
+extern bool   ShowProfitInPercent            = false;                // whether PnL is displayed in money or percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

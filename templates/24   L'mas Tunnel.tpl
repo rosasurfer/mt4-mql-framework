@@ -37,7 +37,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=400
+height=500
 fixed_height=0
 
 <indicator>
@@ -101,8 +101,6 @@ ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
-weight_0=2
-weight_1=2
 show_data=1
 </indicator>
 

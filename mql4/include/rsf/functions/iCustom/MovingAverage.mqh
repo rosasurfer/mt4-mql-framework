@@ -17,6 +17,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
 
    double value = iCustom(NULL, timeframe, "Moving Average",
                           maPeriods,                        // int    MA.Periods
+                          0,                                // int    MA.Periods.Step
                           maMethod,                         // string MA.Method
                           maAppliedPrice,                   // string MA.AppliedPrice
 

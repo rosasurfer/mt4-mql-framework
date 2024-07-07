@@ -34,6 +34,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods                     = 100;
+extern int    MA.Periods.Step                = 0;                 // step size for a stepped input parameter (hotkey)
 extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
@@ -59,6 +60,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/stdlib.mqh>
 #include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/HandleCommands.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/trend.mqh>
@@ -100,6 +102,10 @@ bool   signal.alert;
 bool   signal.mail;
 bool   signal.sms;
 
+// parameter stepper directions
+#define STEP_UP    1
+#define STEP_DOWN -1
+
 
 /**
  * Initialization
@@ -113,6 +119,9 @@ int onInit() {
    // MA.Periods
    if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
    if (MA.Periods < 1)       return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   // MA.Periods.Step
+   if (AutoConfiguration) MA.Periods.Step = GetConfigInt(indicator, "MA.Periods.Step", MA.Periods.Step);
+   if (MA.Periods.Step < 0)  return(catch("onInit(2)  invalid input parameter MA.Periods.Step: "+ MA.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.Method
    string sValues[], sValue = MA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.Method", sValue);
@@ -121,7 +130,7 @@ int onInit() {
       sValue = sValues[size-1];
    }
    maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)       return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)       return(catch("onInit(3)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.AppliedPrice
    sValue = MA.AppliedPrice;
@@ -132,7 +141,7 @@ int onInit() {
    }
    if (StrTrim(sValue) == "") sValue = "close";               // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice == -1) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice == -1) return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // Draw.Type
    sValue = Draw.Type;
@@ -144,13 +153,13 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                      return(catch("onInit(4)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                      return(catch("onInit(5)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)       return(catch("onInit(5)  invalid input parameter Draw.Width: "+ Draw.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)       return(catch("onInit(6)  invalid input parameter Draw.Width: "+ Draw.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Background.Width
    if (AutoConfiguration) Background.Width = GetConfigInt(indicator, "Background.Width", Background.Width);
-   if (Background.Width < 0) return(catch("onInit(6)  invalid input parameter Background.Width: "+ Background.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (Background.Width < 0) return(catch("onInit(7)  invalid input parameter Background.Width: "+ Background.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Background.Color = GetConfigColor(indicator, "Background.Color", Background.Color);
    if (AutoConfiguration) UpTrend.Color    = GetConfigColor(indicator, "UpTrend.Color",    UpTrend.Color);
@@ -162,7 +171,7 @@ int onInit() {
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)     return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)     return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signal configuration
@@ -171,7 +180,7 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
       if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
-         return(catch("onInit(8)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(9)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.sms);
       if (Signal.onTrendChange) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.sms, "sms,", ""), -1) +")";
@@ -189,7 +198,7 @@ int onInit() {
    if (ShowChartLegend) legendLabel = CreateChartLegend();
    SetIndicatorOptions();
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(10)"));
 }
 
 
@@ -199,8 +208,10 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
+   if (__isChart && MA.Periods.Step) {
+      if (!HandleCommands("ParameterStepper")) return(last_error);
+   }
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -223,7 +234,7 @@ int onTick() {
 
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-MA.Periods);
-   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
@@ -286,6 +297,58 @@ bool onTrendChange(int direction) {
 
 
 /**
+ * Process an incoming command.
+ *
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string cmd, string params, int keys) {
+   if (cmd == "parameter") {
+      if (params == "up")   return(ParameterStepper(STEP_UP, keys));
+      if (params == "down") return(ParameterStepper(STEP_DOWN, keys));
+   }
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(cmd +":"+ params +":"+ keys)));
+}
+
+
+/**
+ * Step up/down an input parameter.
+ *
+ * @param  int direction - STEP_UP | STEP_DOWN
+ * @param  int keys      - pressed modifier keys
+ *
+ * @return bool - success status
+ */
+bool ParameterStepper(int direction, int keys) {
+   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   // step up/down input parameter "MA.Periods"
+   double step = MA.Periods.Step;
+
+   if (!step || MA.Periods + direction*step < 1) {       // no stepping if parameter limit reached
+      PlaySoundEx("Plonk.wav");
+      return(false);
+   }
+   if (direction == STEP_UP) MA.Periods += step;
+   else                      MA.Periods -= step;
+
+   if (maMethod == MODE_ALMA) {                          // recalculate ALMA bar weights
+      double almaOffset=0.85, almaSigma=6.0;
+      ALMA.CalculateWeights(MA.Periods, almaOffset, almaSigma, almaWeights);
+   }
+
+   ChangedBars = Bars;
+   ValidBars   = 0;
+
+   PlaySoundEx("Parameter Step.wav");
+   return(true);
+}
+
+
+/**
  * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
  *
  * @param  bool redraw [optional] - whether to redraw the chart (default: no)
@@ -297,7 +360,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    // names, labels and display options
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = MA.Method +"("+ MA.Periods + sAppliedPrice +")";
+   indicatorName = MA.Method +"("+ ifString(MA.Periods.Step, "step:", "") + MA.Periods + sAppliedPrice +")";
    string shortName = MA.Method +"("+ MA.Periods +")";
    IndicatorShortName(shortName);                        // chart tooltips and context menu
 
@@ -336,6 +399,7 @@ bool SetIndicatorOptions(bool redraw = false) {
  */
 string InputsToStr() {
    return(StringConcatenate("MA.Periods=",                 MA.Periods,                                 ";", NL,
+                            "MA.Periods.Step=",            MA.Periods.Step,                            ";"+ NL,
                             "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";", NL,
                             "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";", NL,
 

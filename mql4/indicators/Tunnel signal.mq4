@@ -26,7 +26,7 @@
  *  - Tunnel
  *     support MA method MODE_ALMA
  *
- *  - Moving Average, MACD
+ *  - MACD
  *     add period stepping
  *
  *  - SuperBars

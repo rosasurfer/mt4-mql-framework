@@ -40,7 +40,7 @@ extern int    Target4              = 0;      //
 extern int    Target4.ClosePercent = 30;     //
 extern int    Target4.MoveStopTo   = 0;      //
 
-extern bool   ShowProfitInPercent  = false;  // whether PnL is displayed in money amounts or percent
+extern bool   ShowProfitInPercent  = false;  // whether PnL is displayed in money or percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
