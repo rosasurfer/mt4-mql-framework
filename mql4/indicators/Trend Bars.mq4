@@ -18,8 +18,8 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a__________________________ = "=== Tunnel settings ===";
-extern int    Tunnel.Periods                 = 55;
 extern string Tunnel.Method                  = "SMA | LWMA* | EMA | SMMA | ALMA";
+extern int    Tunnel.Periods                 = 55;
 
 extern string ___b__________________________ = "=== Bar settings ===";
 extern color  Color.UpTrend                  = Blue;
@@ -87,10 +87,6 @@ int onInit() {
    // input validation
    string indicator = WindowExpertName();
 
-   // Tunnel.Periods
-   if (AutoConfiguration) Tunnel.Periods = GetConfigInt(indicator, "Tunnel.Periods", Tunnel.Periods);
-   if (Tunnel.Periods < 1)  return(catch("onInit(1)  invalid input parameter Tunnel.Periods: "+ Tunnel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   tunnel.periods = Tunnel.Periods;
    // Tunnel.Method
    string sValues[], sValue = Tunnel.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Tunnel.Method", sValue);
@@ -99,8 +95,12 @@ int onInit() {
       sValue = sValues[size-1];
    }
    tunnel.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (tunnel.method == -1) return(catch("onInit(2)  invalid input parameter Tunnel.Method: "+ DoubleQuoteStr(Tunnel.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (tunnel.method == -1) return(catch("onInit(1)  invalid input parameter Tunnel.Method: "+ DoubleQuoteStr(Tunnel.Method), ERR_INVALID_INPUT_PARAMETER));
    Tunnel.Method = MaMethodDescription(tunnel.method);
+   // Tunnel.Periods
+   if (AutoConfiguration) Tunnel.Periods = GetConfigInt(indicator, "Tunnel.Periods", Tunnel.Periods);
+   if (Tunnel.Periods < 1)  return(catch("onInit(2)  invalid input parameter Tunnel.Periods: "+ Tunnel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   tunnel.periods = Tunnel.Periods;
    tunnel.definition = Tunnel.Method +"("+ tunnel.periods+")";
    // Color.*: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
@@ -311,8 +311,8 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Tunnel.Periods=",  Tunnel.Periods,                ";", NL,
-                            "Tunnel.Method=",   DoubleQuoteStr(Tunnel.Method), ";", NL,
+   return(StringConcatenate("Tunnel.Method=",   DoubleQuoteStr(Tunnel.Method), ";", NL,
+                            "Tunnel.Periods=",  Tunnel.Periods,                ";", NL,
 
                             "Color.UpTrend=",   ColorToStr(Color.UpTrend),     ";", NL,
                             "Color.DownTrend=", ColorToStr(Color.DownTrend),   ";", NL,

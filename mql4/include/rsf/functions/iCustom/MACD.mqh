@@ -6,28 +6,28 @@
  * Load the custom "MACD" indicator and return a value.
  *
  * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    fastMaPeriods      - indicator parameter
  * @param  string fastMaMethod       - indicator parameter
+ * @param  int    fastMaPeriods      - indicator parameter
  * @param  string fastMaAppliedPrice - indicator parameter
- * @param  int    slowMaPeriods      - indicator parameter
  * @param  string slowMaMethod       - indicator parameter
+ * @param  int    slowMaPeriods      - indicator parameter
  * @param  string slowMaAppliedPrice - indicator parameter
  * @param  int    iBuffer            - indicator buffer index of the value to return
  * @param  int    iBar               - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int iBuffer, int iBar) {
+double icMACD(int timeframe, string fastMaMethod, int fastMaPeriods, string fastMaAppliedPrice, string slowMaMethod, int slowMaPeriods, string slowMaAppliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
    }
 
    double value = iCustom(NULL, timeframe, "MACD",
-                          fastMaPeriods,              // int    Fast.MA.Periods
                           fastMaMethod,               // string Fast.MA.Method
+                          fastMaPeriods,              // int    Fast.MA.Periods
                           fastMaAppliedPrice,         // string Fast.MA.AppliedPrice
-                          slowMaPeriods,              // int    Slow.MA.Periods
                           slowMaMethod,               // string Slow.MA.Method
+                          slowMaPeriods,              // int    Slow.MA.Periods
                           slowMaAppliedPrice,         // string Slow.MA.AppliedPrice
                           Blue,                       // color  MainLine.Color
                           1,                          // int    MainLine.Width

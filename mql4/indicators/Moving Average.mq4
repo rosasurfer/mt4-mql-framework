@@ -33,9 +33,9 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern int    MA.Periods                     = 100;
 extern int    MA.Periods.Step                = 0;                 // step size for a stepped input parameter (hotkey)
-extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern string Draw.Type                      = "Line* | Dot";
@@ -116,12 +116,6 @@ int onInit() {
    // validate inputs
    string indicator = WindowExpertName();
 
-   // MA.Periods
-   if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
-   if (MA.Periods < 1)       return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   // MA.Periods.Step
-   if (AutoConfiguration) MA.Periods.Step = GetConfigInt(indicator, "MA.Periods.Step", MA.Periods.Step);
-   if (MA.Periods.Step < 0)  return(catch("onInit(2)  invalid input parameter MA.Periods.Step: "+ MA.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.Method
    string sValues[], sValue = MA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.Method", sValue);
@@ -130,8 +124,14 @@ int onInit() {
       sValue = sValues[size-1];
    }
    maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)       return(catch("onInit(3)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)       return(catch("onInit(1)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
+   // MA.Periods
+   if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
+   if (MA.Periods < 1)       return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   // MA.Periods.Step
+   if (AutoConfiguration) MA.Periods.Step = GetConfigInt(indicator, "MA.Periods.Step", MA.Periods.Step);
+   if (MA.Periods.Step < 0)  return(catch("onInit(3)  invalid input parameter MA.Periods.Step: "+ MA.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.AppliedPrice
    sValue = MA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.AppliedPrice", sValue);
@@ -398,9 +398,9 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",                 MA.Periods,                                 ";", NL,
+   return(StringConcatenate("MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";", NL,
+                            "MA.Periods=",                 MA.Periods,                                 ";", NL,
                             "MA.Periods.Step=",            MA.Periods.Step,                            ";"+ NL,
-                            "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";", NL,
                             "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";", NL,
 
                             "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";", NL,

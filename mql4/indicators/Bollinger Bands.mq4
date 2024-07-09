@@ -21,8 +21,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods      = 200;
 extern string MA.Method       = "SMA | LWMA | EMA* | SMMA | ALMA";
+extern int    MA.Periods      = 200;
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern color  MA.Color        = LimeGreen;
 extern int    MA.Width        = 0;
@@ -75,8 +75,6 @@ string legendLabel   = "";
  */
 int onInit() {
    // validate inputs
-   // MA.Periods
-   if (MA.Periods < 1)       return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    // MA.Method
    string values[], sValue = MA.Method;
    if (Explode(MA.Method, "*", values, 2) > 1) {
@@ -84,8 +82,10 @@ int onInit() {
       sValue = values[size-1];
    }
    maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)       return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)       return(catch("onInit(1)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
+   // MA.Periods
+   if (MA.Periods < 1)       return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    // MA.AppliedPrice
    sValue = MA.AppliedPrice;
    if (Explode(sValue, "*", values, 2) > 1) {
@@ -231,8 +231,8 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",      MA.Periods,                      ";", NL,
-                            "MA.Method=",       DoubleQuoteStr(MA.Method),       ";", NL,
+   return(StringConcatenate("MA.Method=",       DoubleQuoteStr(MA.Method),       ";", NL,
+                            "MA.Periods=",      MA.Periods,                      ";", NL,
                             "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), ";", NL,
                             "MA.Color=",        ColorToStr(MA.Color),            ";", NL,
                             "MA.Width=",        MA.Width,                        ";", NL,

@@ -337,7 +337,7 @@ double GetMovingAverage(int bar) {
       static bool initialized = false;
 
       int starttime = GetTickCount();
-      double value = icMovingAverage(NULL, ma.periods, "ALMA", "close", MovingAverage.MODE_MA, bar);
+      double value = icMovingAverage(NULL, "ALMA", ma.periods, "close", MovingAverage.MODE_MA, bar);
 
       if (!initialized) {
          int endtime = GetTickCount();

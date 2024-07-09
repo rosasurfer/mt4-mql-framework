@@ -26,12 +26,12 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    FastMA.Periods                 = 12;
 extern string FastMA.Method                  = "SMA | LWMA | EMA* | SMMA| ALMA";
+extern int    FastMA.Periods                 = 12;
 extern string FastMA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern int    SlowMA.Periods                 = 26;
 extern string SlowMA.Method                  = "SMA | LWMA | EMA* | ALMA";
+extern int    SlowMA.Periods                 = 26;
 extern string SlowMA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Histogram.Color.Upper          = LimeGreen;
@@ -106,10 +106,6 @@ int onInit() {
    // validate inputs
    string indicator = WindowExpertName();
 
-   // FastMA.Periods
-   if (AutoConfiguration) FastMA.Periods = GetConfigInt(indicator, "FastMA.Periods", FastMA.Periods);
-   if (FastMA.Periods < 1)              return(catch("onInit(1)  invalid input parameter FastMA.Periods: "+ FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   fastMA.periods = FastMA.Periods;
    // FastMA.Method
    string values[], sValue = FastMA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "FastMA.Method", sValue);
@@ -118,8 +114,12 @@ int onInit() {
       sValue = values[size-1];
    }
    fastMA.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (fastMA.method == -1)             return(catch("onInit(2)  invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (fastMA.method == -1)             return(catch("onInit(1)  invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    FastMA.Method = MaMethodDescription(fastMA.method);
+   // FastMA.Periods
+   if (AutoConfiguration) FastMA.Periods = GetConfigInt(indicator, "FastMA.Periods", FastMA.Periods);
+   if (FastMA.Periods < 1)              return(catch("onInit(2)  invalid input parameter FastMA.Periods: "+ FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   fastMA.periods = FastMA.Periods;
    // FastMA.AppliedPrice
    sValue = FastMA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "FastMA.AppliedPrice", sValue);
@@ -132,11 +132,6 @@ int onInit() {
    fastMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (fastMA.appliedPrice == -1)       return(catch("onInit(3)  invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    FastMA.AppliedPrice = PriceTypeDescription(fastMA.appliedPrice);
-   // SlowMA.Periods
-   if (AutoConfiguration) SlowMA.Periods = GetConfigInt(indicator, "SlowMA.Periods", SlowMA.Periods);
-   if (SlowMA.Periods < 1)              return(catch("onInit(4)  invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   slowMA.periods = SlowMA.Periods;
-   if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(5)  parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
    // SlowMA.Method
    sValue = SlowMA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "SlowMA.Method", sValue);
@@ -145,8 +140,13 @@ int onInit() {
       sValue = values[size-1];
    }
    slowMA.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (slowMA.method == -1)             return(catch("onInit(6)  invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (slowMA.method == -1)             return(catch("onInit(4)  invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.Method = MaMethodDescription(slowMA.method);
+   // SlowMA.Periods
+   if (AutoConfiguration) SlowMA.Periods = GetConfigInt(indicator, "SlowMA.Periods", SlowMA.Periods);
+   if (SlowMA.Periods < 1)              return(catch("onInit(5)  invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   slowMA.periods = SlowMA.Periods;
+   if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(6)  parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
    // SlowMA.AppliedPrice
    sValue = SlowMA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "SlowMA.AppliedPrice", sValue);
@@ -380,11 +380,11 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("FastMA.Periods=",        FastMA.Periods,                       ";", NL,
-                            "FastMA.Method=",         DoubleQuoteStr(FastMA.Method),        ";", NL,
+   return(StringConcatenate("FastMA.Method=",         DoubleQuoteStr(FastMA.Method),        ";", NL,
+                            "FastMA.Periods=",        FastMA.Periods,                       ";", NL,
                             "FastMA.AppliedPrice=",   DoubleQuoteStr(FastMA.AppliedPrice),  ";", NL,
-                            "SlowMA.Periods=",        SlowMA.Periods,                       ";", NL,
                             "SlowMA.Method=",         DoubleQuoteStr(SlowMA.Method),        ";", NL,
+                            "SlowMA.Periods=",        SlowMA.Periods,                       ";", NL,
                             "SlowMA.AppliedPrice=",   DoubleQuoteStr(SlowMA.AppliedPrice),  ";", NL,
                             "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";", NL,
                             "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";", NL,
