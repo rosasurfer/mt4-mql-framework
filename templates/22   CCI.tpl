@@ -96,8 +96,8 @@ name=Trend Bars
 flags=339
 window_num=0
 <inputs>
-Tunnel.Periods=55
 Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Tunnel.Periods=55
 Color.UpTrend=16711680
 Color.DownTrend=255
 Color.NoTrend=11119017
@@ -129,8 +129,8 @@ name=Custom Indicator
 name=Moving Average
 flags=339
 <inputs>
-MA.Periods=200
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=200
 MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
 Draw.Type=Line* | Dot
 Draw.Width=3

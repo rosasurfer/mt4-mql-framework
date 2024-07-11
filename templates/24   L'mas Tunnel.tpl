@@ -92,6 +92,25 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Trend Bars
+flags=339
+window_num=0
+<inputs>
+Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Tunnel.Periods=55
+Color.UpTrend=16711680
+Color.DownTrend=255
+Color.NoTrend=11119017
+BarWidth=2
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=Tunnel
 flags=339
 window_num=0
@@ -110,8 +129,8 @@ name=Custom Indicator
 name=Moving Average
 flags=339
 <inputs>
-MA.Periods=200
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=200
 MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
 Draw.Type=Line* | Dot
 Draw.Width=3
@@ -178,10 +197,10 @@ name=MACD
 flags=339
 window_num=2
 <inputs>
-FastMA.Periods=12
 FastMA.Method=SMA | LWMA | EMA* | ALMA
-SlowMA.Periods=26
+FastMA.Periods=12
 SlowMA.Method=SMA | LWMA | EMA* | ALMA
+SlowMA.Periods=26
 Histogram.Color.Upper=3329330
 Histogram.Color.Lower=255
 Histogram.Style.Width=2
