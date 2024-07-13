@@ -237,19 +237,21 @@ int UpdateInstrumentInfos() {
    string sSwapLong=" ", sSwapShort=" ";
 
    if (swapMode == SCM_POINTS) {                                  // in MQL point of quote currency
-      swapLongD  = NormalizeDouble(swapLong *Point/Pip, 8); swapLongY  = MathDiv(swapLongD *Pip*360, Close[0]) * 100;
-      swapShortD = NormalizeDouble(swapShort*Point/Pip, 8); swapShortY = MathDiv(swapShortD*Pip*360, Close[0]) * 100;
-      sSwapLong  = ifString(!swapLong,  "none", NumberToStr(swapLongD,  "+.1+") +" pip = "+ NumberToStr(swapLongY,  "+.1R") +"% p.a.");
-      sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShortD, "+.1+") +" pip = "+ NumberToStr(swapShortY, "+.1R") +"% p.a.");
+      swapLongD  = NormalizeDouble(swapLong *Point, 8); swapLongY  = MathDiv(swapLongD  * 360, Close[0]) * 100;
+      swapShortD = NormalizeDouble(swapShort*Point, 8); swapShortY = MathDiv(swapShortD * 360, Close[0]) * 100;
+      sSwapLong  = ifString(!swapLong,  "none", NumberToStr(swapLongD /pUnit, "+."+ ifString(pUnit==1, "2'", "1+")) + _spUnit + " = "+ NumberToStr(swapLongY,  "+.1R") +"% p.a.");
+      sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShortD/pUnit, "+."+ ifString(pUnit==1, "2'", "1+")) + _spUnit + " = "+ NumberToStr(swapShortY, "+.1R") +"% p.a.");
+   }
+   else if (swapMode == SCM_INTEREST) {                           // in % p.a. of quote value
+      swapLongY  = swapLong;  swapLongD  = NormalizeDouble(swapLongY /100 * Close[0] / 360, 8);
+      swapShortY = swapShort; swapShortD = NormalizeDouble(swapShortY/100 * Close[0] / 360, 8);
+      sSwapLong  = ifString(!swapLong,  "none", NumberToStr(swapLongD /pUnit, "+."+ ifString(pUnit==1, "2'", "1+")) + _spUnit + " = "+ NumberToStr(swapLongY,  "+.1R") +"% p.a.");
+      sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShortD/pUnit, "+."+ ifString(pUnit==1, "2'", "1+")) + _spUnit + " = "+ NumberToStr(swapShortY, "+.1R") +"% p.a.");
    }
    else {
       /*
       if      (swapMode == SCM_BASE_CURRENCY  ) {}                // TODO: as amount of base currency   (see "symbols.raw")
       else if (swapMode == SCM_MARGIN_CURRENCY) {}                // TODO: as amount of margin currency (see "symbols.raw")
-      else if (swapMode == SCM_INTEREST) {                        // TODO: check "in percentage terms", e.g. ICMarkets:BTCUSD
-         //swapLongD  = swapLong *Close[0]/100/360/Pip;
-         //swapShortD = swapShort*Close[0]/100/360/Pip;
-      }
       */
       sSwapLong  = ifString(!swapLong,  "none", NumberToStr(swapLong,  "+.+") +" "+ swapCalcModeDescr[swapMode]);
       sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShort, "+.+") +" "+ swapCalcModeDescr[swapMode]);
