@@ -15,9 +15,9 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int AccountSize.NumberOfUnits    = 20;      // number of available bullets of MODE_MINLOT size
-extern int AccountSize.MaxUnitRiskPct   = 10;      // max. risk in % per unit on an ADR move against it
-extern int AccountSize.MaxUsedMarginPct = 75;      // max. margin utilization in %
+extern int AccountSize.NumberOfUnits     = 20;     // number of available bullets of MODE_MINLOT size
+extern int AccountSize.MaxUnitRisk.Pct   = 10;     // max. risk per bullet in % on an ADR move against it
+extern int AccountSize.MaxUsedMargin.Pct = 75;     // max. margin utilization in %
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -257,7 +257,7 @@ int UpdateInstrumentInfos() {
       sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShort, "+.+") +" "+ swapCalcModeDescr[swapMode]);
    }
 
-   double usedLeverage   = symbolLeverage * AccountSize.MaxUsedMarginPct/100;
+   double usedLeverage   = symbolLeverage * AccountSize.MaxUsedMargin.Pct/100;
    double maxUnits       = MathDiv(symbolLeverage, usedLeverage) * AccountSize.NumberOfUnits;
    double minAccountSize = maxUnits * marginMinLot;
 
@@ -370,8 +370,8 @@ double GetADR() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("AccountSize.NumberOfUnits=",    AccountSize.NumberOfUnits,    ";", NL,
-                            "AccountSize.MaxUnitRiskPct=",   AccountSize.MaxUnitRiskPct,   ";", NL,
-                            "AccountSize.MaxUsedMarginPct=", AccountSize.MaxUsedMarginPct, ";")
+   return(StringConcatenate("AccountSize.NumberOfUnits=",    AccountSize.NumberOfUnits,     ";", NL,
+                            "AccountSize.MaxUnitRiskPct=",   AccountSize.MaxUnitRisk.Pct,   ";", NL,
+                            "AccountSize.MaxUsedMarginPct=", AccountSize.MaxUsedMargin.Pct, ";")
    );
 }

@@ -31,6 +31,18 @@
  *      terminal with Dukascopy data
  *      comfortable update/generation/synchronization of new test data (e.g. from 2007)
  *
+ *
+ *  - more simple systems
+ *     @rraygun    https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks
+ *     @tdion      https://www.forexfactory.com/thread/95892-ma-cross-optimization-ea-very-cool     statt MACD(16,18) MACD(ALMA(38,46))
+ *                 https://www.mql5.com/en/market/product/23557                                     [MACD Twister]
+ *     @zee        https://www.youtube.com/watch?v=gv1jiVcntLk                                      [Channel breakout system]
+ *     @pakistani  https://invidious.nerdvpn.de/watch?v=Pyyg3_dSuD8                                 [Phoenix Swing Trading System]
+ *     @pakistani  https://invidious.nerdvpn.de/watch?v=lD1IS7ZfuqY                                 [Green Fire Scalping]
+ *     @pakistani  https://invidious.nerdvpn.de/watch?v=_MaD9IXYfUA                                 [Simple Trading System]
+ *     @nthusiw    https://www.forexfactory.com/thread/561195-daytrading-scalping-strategy-m5-m1    [Buffer Scalping]
+ *
+ *
  *  - rewrite CCI indicator: histogram, signaling, colored bars
  *  - update ChartInfos::CustomConfig()  (OH|HO) datetime
  *  - daily range projection, @see https://www.forexfactory.com/thread/993524-roadmap-a-way-to-read-markets#
@@ -106,8 +118,6 @@
  *  - ObjectCreateRegister()
  *     13.739 initial calls on terminal start with 6 open charts
  *     SuperBars in offline charts: 271 calls on every tick
- *
- *  - ZigZag Twister (123 Trader)
  *
  *  -------------------------------------------------------------------------------------------------------------------------
  *  - input TradingTimeframe
