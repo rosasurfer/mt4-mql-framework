@@ -1561,16 +1561,15 @@ bool UpdateOrderCounter() {
    static color defaultColor=SlateGray, warnColor=DarkOrange, alertColor=Red;
 
    if (!maxOpenTickets) {
-      maxOpenTickets = GetAccountConfigInt("Accounts", "MaxOpenTickets", -1);
+      maxOpenTickets = GetAccountConfigInt("Account", "MaxOpenTickets", -1);
       if (!maxOpenTickets) maxOpenTickets = -1;
 
       if (maxOpenTickets > 0) {
-         alertLimit = Min(Round(0.9 * maxOpenTickets), maxOpenTickets-5);
-         warnLimit  = Min(Round(0.8 * maxOpenTickets), alertLimit    -5);
-         showLimit  = Min(Round(0.7 * maxOpenTickets), warnLimit     -5);
+         alertLimit = Min(Round(0.9 * maxOpenTickets), maxOpenTickets-1);
+         warnLimit  = Min(Round(0.8 * maxOpenTickets), alertLimit    -1);
+         showLimit  = Min(Round(0.7 * maxOpenTickets), warnLimit     -1);
       }
    }
-
    string sText = " ";
    color objectColor = defaultColor;
 
