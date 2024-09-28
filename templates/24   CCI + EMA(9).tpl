@@ -202,8 +202,7 @@ MA.Periods=10
 Histogram.Color.Upper=3329330
 Histogram.Color.Lower=255
 Histogram.Style.Width= 2
-Signal.onCross=0
-Signal.onCross.Types=sound
+Signal.onTrendChange=1
 AutoConfiguration=0
 </inputs>
 </expert>

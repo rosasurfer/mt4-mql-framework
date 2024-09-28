@@ -1,15 +1,20 @@
 /**
  * Signal indicator for the "L'mas system"
  *
+ * The indicator changes direction if Close of the current bar and MovingAverage are above/below the tunnel.
+ *
  *
  * TODO:
+ *  - merge bufferMain[] and bufferTrend[]
+ *
+ *
+ *
+ * --------------------------------------------------------------------------------------------------------------------------
  *  - MACD + Tunnel signal
  *     invalid signals at terminal startup
  *
  *  - Inside Bars
  *     prevent double-signaling of parallel events
- *
- *  - merge bufferMain[] and bufferTrend[]
  *
  *  - ChartInfos
  *     unitsize configuration: manual leverage doesn't work (limits to 10% risk)
@@ -42,11 +47,11 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Tunnel.MA.Method               = "SMA | LWMA* | EMA | SMMA | ALMA";
+extern string Tunnel.MA.Method               = "SMA | LWMA* | EMA | SMMA | ALMA";   // required
 extern int    Tunnel.MA.Periods              = 55;
 
 extern string MA.Method                      = "SMA | LWMA | EMA | SMMA | ALMA*";
-extern int    MA.Periods                     = 10;                                  // original: EMA(5)
+extern int    MA.Periods                     = 10;                                  // optional, original EMA(5)
 
 extern string ___a__________________________ = "=== Display settings ===";
 extern color  Histogram.Color.Upper          = LimeGreen;
@@ -55,8 +60,8 @@ extern int    Histogram.Width                = 2;
 extern int    MaxBarsBack                    = 10000;                               // max. values to calculate (-1: all available)
 
 extern string ___b__________________________ = "=== Signaling ===";
-extern bool   Signal.onCross                 = false;
-extern string Signal.onCross.Types           = "sound* | alert | mail | sms";
+extern bool   Signal.onTrendChange           = false;
+extern string Signal.onTrendChange.Types     = "sound* | alert | mail | sms";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -74,8 +79,8 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 
 #define MODE_MAIN             0                 // indicator buffer ids
 #define MODE_TREND            1
-#define MODE_UPPER_SECTION    2
-#define MODE_LOWER_SECTION    3
+#define MODE_UPTREND          2
+#define MODE_DOWNTREND        3
 
 #define HINT_CLOSE            1                 // trend hint ids
 #define HINT_MA               2
@@ -103,7 +108,7 @@ string tunnel.definition = "";
 int    ma.method;
 int    ma.periods;
 
-int    longestPeriods;
+int    longestPeriod;
 
 bool   signal.sound;
 bool   signal.alert;
@@ -112,7 +117,7 @@ bool   signal.sms;
 
 string indicatorName = "";
 
-string trendHintCloseLabel = "";
+string trendHintCloseLabel = "";                // colored display of current bar and MA status (green/yellow/red)
 string trendHintMaLabel    = "";
 string trendHintFontName   = "Arial Black";
 int    trendHintFontSize   = 8;
@@ -157,7 +162,7 @@ int onInit() {
    if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
    if (MA.Periods < 1)                        return(catch("onInit(4)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
-   longestPeriods = Max(tunnel.periods, ma.periods);
+   longestPeriod = Max(tunnel.periods, ma.periods);
    // Histogram.Color.*: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
    if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
@@ -171,14 +176,14 @@ int onInit() {
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)                      return(catch("onInit(13)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
-   // Signal.onCross
-   string signalId = "Signal.onCross";
-   ConfigureSignals(signalId, AutoConfiguration, Signal.onCross);
-   if (Signal.onCross) {
-      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
-         return(catch("onInit(14)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
+   // Signal.onTrendChange
+   string signalId = "Signal.onTrendChange";
+   ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange);
+   if (Signal.onTrendChange) {
+      if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+         return(catch("onInit(14)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onCross = (signal.sound || signal.alert || signal.mail || signal.sms);
+      Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.sms);
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -219,7 +224,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-longestPeriods);
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-longestPeriod);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    double upperBand, lowerBand, ma;
@@ -262,13 +267,13 @@ int onTick() {
       }
 
       // monitor signals
-      if (Signal.onCross) /*&&*/ if (IsBarOpen()) {
+      if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {
          int trend     = Round(bufferMain[1]);
          int prevTrend = Round(bufferMain[2]);
 
          if (Sign(trend) != Sign(prevTrend)) {
-            if      (trend == +1) onCross(MODE_UPPER_SECTION);
-            else if (trend == -1) onCross(MODE_LOWER_SECTION);
+            if      (trend == +1) onTrendChange(MODE_UPTREND);
+            else if (trend == -1) onTrendChange(MODE_DOWNTREND);
          }
       }
    }
@@ -277,33 +282,33 @@ int onTick() {
 
 
 /**
- * Event handler called on BarOpen if one of the tunnel bands was crossed.
+ * Event handler called on BarOpen if direction of the trend changed.
  *
  * @param  int direction
  *
  * @return bool - success status
  */
-bool onCross(int direction) {
-   if (direction!=MODE_UPPER_SECTION && direction!=MODE_LOWER_SECTION) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+bool onTrendChange(int direction) {
+   if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    // skip the signal if it was already signaled elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
    SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
 
-   string message = "Tunnel signal "+ ifString(direction==MODE_UPPER_SECTION, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
-   if (IsLogInfo()) logInfo("onCross(2)  "+ message);
+   string message = "Tunnel signal "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
 
    message = Symbol() +","+ PeriodDescription() +": "+ message;
-   string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   string sAccount = "("+ TimeToStr(TimeLocalEx("onTrendChange(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
    if (signal.alert) Alert(message);
-   if (signal.sound) PlaySoundEx(ifString(direction==MODE_UPPER_SECTION, Signal.Sound.Up, Signal.Sound.Down));
+   if (signal.sound) PlaySoundEx(ifString(direction==MODE_UPTREND, Signal.Sound.Up, Signal.Sound.Down));
    if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
    if (signal.sms)   SendSMS("", message + NL + sAccount);
-   return(!catch("onCross(4)"));
+   return(!catch("onTrendChange(4)"));
 }
 
 
@@ -421,17 +426,17 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_MAIN,          bufferMain ); SetIndexEmptyValue(MODE_MAIN,          0); SetIndexLabel(MODE_MAIN,  indicatorName);
-   SetIndexBuffer(MODE_TREND,         bufferTrend); SetIndexEmptyValue(MODE_TREND,         0); SetIndexLabel(MODE_TREND, "Tunnel trend");
-   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper); SetIndexEmptyValue(MODE_UPPER_SECTION, 0); SetIndexLabel(MODE_UPPER_SECTION, NULL);
-   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower); SetIndexEmptyValue(MODE_LOWER_SECTION, 0); SetIndexLabel(MODE_LOWER_SECTION, NULL);
+   SetIndexBuffer(MODE_MAIN,      bufferMain ); SetIndexEmptyValue(MODE_MAIN,      0); SetIndexLabel(MODE_MAIN,      indicatorName);
+   SetIndexBuffer(MODE_TREND,     bufferTrend); SetIndexEmptyValue(MODE_TREND,     0); SetIndexLabel(MODE_TREND,     "Tunnel trend");
+   SetIndexBuffer(MODE_UPTREND,   bufferUpper); SetIndexEmptyValue(MODE_UPTREND,   0); SetIndexLabel(MODE_UPTREND,   NULL);
+   SetIndexBuffer(MODE_DOWNTREND, bufferLower); SetIndexEmptyValue(MODE_DOWNTREND, 0); SetIndexLabel(MODE_DOWNTREND, NULL);
    IndicatorDigits(0);
 
    int drawType = ifInt(Histogram.Width, DRAW_HISTOGRAM, DRAW_NONE);
-   SetIndexStyle(MODE_MAIN,          DRAW_NONE);
-   SetIndexStyle(MODE_TREND,         DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_SECTION, drawType, EMPTY, Histogram.Width, Histogram.Color.Upper);
-   SetIndexStyle(MODE_LOWER_SECTION, drawType, EMPTY, Histogram.Width, Histogram.Color.Lower);
+   SetIndexStyle(MODE_MAIN,      DRAW_NONE);
+   SetIndexStyle(MODE_TREND,     DRAW_NONE);
+   SetIndexStyle(MODE_UPTREND,   drawType, EMPTY, Histogram.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_DOWNTREND, drawType, EMPTY, Histogram.Width, Histogram.Color.Lower);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -444,20 +449,20 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Tunnel.MA.Method=",      DoubleQuoteStr(Tunnel.MA.Method),     ";"+ NL,
-                            "Tunnel.MA.Periods=",     Tunnel.MA.Periods,                    ";"+ NL,
+   return(StringConcatenate("Tunnel.MA.Method=",           DoubleQuoteStr(Tunnel.MA.Method),           ";"+ NL,
+                            "Tunnel.MA.Periods=",          Tunnel.MA.Periods,                          ";"+ NL,
 
-                            "MA.Method=",             DoubleQuoteStr(MA.Method),            ";"+ NL,
-                            "MA.Periods=",            MA.Periods,                           ";"+ NL,
+                            "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";"+ NL,
+                            "MA.Periods=",                 MA.Periods,                                 ";"+ NL,
 
-                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";"+ NL,
-                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";"+ NL,
-                            "Histogram.Width=",       Histogram.Width,                      ";"+ NL,
-                            "MaxBarsBack=",           MaxBarsBack,                          ";"+ NL,
+                            "Histogram.Color.Upper=",      ColorToStr(Histogram.Color.Upper),          ";"+ NL,
+                            "Histogram.Color.Lower=",      ColorToStr(Histogram.Color.Lower),          ";"+ NL,
+                            "Histogram.Width=",            Histogram.Width,                            ";"+ NL,
+                            "MaxBarsBack=",                MaxBarsBack,                                ";"+ NL,
 
-                            "Signal.onCross=",        BoolToStr(Signal.onCross),            ";"+ NL,
-                            "Signal.onCross.Types=",  DoubleQuoteStr(Signal.onCross.Types), ";"+ NL,
-                            "Signal.Sound.Up=",       DoubleQuoteStr(Signal.Sound.Up),      ";"+ NL,
-                            "Signal.Sound.Down=",     DoubleQuoteStr(Signal.Sound.Down),    ";")
+                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
+                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
+                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
+                            "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
    );
 }
