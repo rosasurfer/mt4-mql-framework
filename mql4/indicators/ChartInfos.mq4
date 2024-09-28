@@ -15,6 +15,8 @@
  *
  * TODO:
  *  - CustomPosition()
+ *     signal on new MFE/MAE: marker "MFES"... @see line 2233 ff.
+ *
  *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice and so on...
  *     history parsing/config term HT... freezes the terminal if the full history is active
  *      ExtractPosition()
