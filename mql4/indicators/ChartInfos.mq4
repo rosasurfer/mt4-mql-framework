@@ -238,18 +238,19 @@ int onTick() {
    mm.done = false;
    positions.analyzed = false;
 
-   if (!HandleCommands())                  return(last_error);                      // process incoming commands
-   if (!UpdatePrice())                     return(last_error);                      // update the current price (top-right)
+   if (!HandleCommands()) return(last_error);                                       // process incoming commands
 
    if (mode.extern) {
       if (!QC.HandleLfxTerminalMessages()) if (IsLastError()) return(last_error);   // process incoming LFX commands
-      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom PnL statistics (bottom-left) and total open position (bottom-right)
+      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // update the current price (top-right)
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom positions (bottom-left) and total open position (bottom-right)
    }
    else {
       if (!QC.HandleTradeCommands())       if (IsLastError()) return(last_error);   // process incoming trade commands
+      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // update the current price (top-right)
       if (!UpdateSpread())                 if (IsLastError()) return(last_error);   // current spread (top-right)
       if (!UpdateUnitSize())               if (IsLastError()) return(last_error);   // unit size of a standard position (bottom-right)
-      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom PnL statistics (bottom-left) and total open position (bottom-right)
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom positions (bottom-left) and total open position (bottom-right)
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // stopout level marker
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // counter for the account's open order limit
 
@@ -4712,10 +4713,16 @@ bool onNewMFE(string configKey, double profit) {
    if (GetPropA(hWnd, sEvent) >= iProfit) return(true);
    SetPropA(hWnd, sEvent, iProfit);
 
-   PlaySoundEx("Beacon notification.wav");
+   PlaySoundEx("Beacon.wav");
 
-   debug("onNewMFE(1)  "+ configKey +": new PnL high");
+   if (IsLogDebug()) logDebug("onNewMFE(1)  "+ configKey +": new PnL high");
    return(!catch("onNewMFE(2)"));
+
+   // used sound files:
+   //  Windows Chord.wav
+   //  Windows Confirm.wav
+   //  Windows Notify.wav
+   //  Windows Ping.wav
 }
 
 
@@ -4739,7 +4746,7 @@ bool onNewMAE(string configKey, double profit) {
 
    PlaySoundEx("Windows Ping.wav");
 
-   debug("onNewMAE(1)  "+ configKey +": new PnL low");
+   if (IsLogDebug()) logDebug("onNewMAE(1)  "+ configKey +": new PnL low");
    return(!catch("onNewMAE(2)"));
 }
 
