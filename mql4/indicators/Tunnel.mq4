@@ -223,7 +223,7 @@ bool onCross(int direction) {
    if (!Signal.onBarCross) return(false);
    if (ChangedBars > 2)    return(false);
 
-   // skip the signal if it was already signaled elsewhere
+   // skip the signal if it has already been processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);

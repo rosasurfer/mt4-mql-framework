@@ -46,12 +46,12 @@
  *  • Signal.onBreakout.123Only:    Whether to signal valid 1-2-3 pattern breakouts only.
  *  • Signal.onBreakout.Types:      Breakout signaling methods, can be a combination of "sound", "alert", "mail", "sms".
  *
- *  • Signal.Sound.Up:              Sound file to use for signal type "sound".
- *  • Signal.Sound.Down:            Sound file to use for signal type "sound".
+ *  • Signal.Sound.Up:              Sound file for reversal and breakout signals.
+ *  • Signal.Sound.Down:            Sound file for reversal and breakout signals.
  *
- *  • Sound.onChannelWidening:      Whether to play a sound on Donchian channel widenings (channel crossings).
- *  • Sound.onNewChannelHigh:       Sound file to use for Donchian channel widenings to the upside.
- *  • Sound.onNewChannelLow:        Sound file to use for Donchian channel widenings to the downside.
+ *  • Sound.onChannelWidening:      Whether to play a sound on Donchian channel widening (channel crossings).
+ *  • Sound.onNewChannelHigh:       Sound file for Donchian channel widenings.
+ *  • Sound.onNewChannelLow:        Sound file for Donchian channel widenings.
  *
  *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom default values.
  *
@@ -1030,7 +1030,7 @@ bool onBreakout(int direction, bool is123Pattern) {
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
-   // skip the signal if it was already signaled elsewhere
+   // skip the signal if it has already been processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]);
