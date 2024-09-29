@@ -1839,9 +1839,24 @@ bool UpdateStopoutLevel() {
             return(false);
          }
 
-         if (line > -1) {
+         if (line >= 0) {
             if (lineSkipped) {
-               config.dData[line][I_PROFIT_MFE] = 0;                             // reset existing stats
+               // reset an existing MFE/MAE signaling flag
+               int hWnd;
+               string sEvent = "";
+               if (config.dData[line][I_PROFIT_MFE] != 0) {
+                  hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
+                  sEvent = GetMfeMaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE);
+                  SetPropA(hWnd, sEvent, 0);
+               }
+               if (config.dData[line][I_PROFIT_MAE] != 0) {
+                  hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
+                  sEvent = GetMfeMaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE);
+                  SetPropA(hWnd, sEvent, 0);
+               }
+
+               // reset existing stats
+               config.dData[line][I_PROFIT_MFE] = 0;
                config.dData[line][I_PROFIT_MAE] = 0;
                config.dData[line][I_MAX_LOTS  ] = 0;
                config.dData[line][I_MAX_RISK  ] = 0;
@@ -2112,12 +2127,13 @@ int SearchLfxTicket(int ticket) {
  * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]  | Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)          | [TERM_HISTORY_TOTAL, 2014.02.01 08:00, 2014.02.10 18:00, ..., ...] |
  * | 12.34                                           | dem PL einer Position zuzuschlagender Betrag                                  | [TERM_ADJUSTMENT,    12.34,            ...,              ..., ...] |
  * | E[Q][=]123.00                                   | equity value to use                                                           | [TERM_EQUITY,        123.00,           ...,              ..., ...] |
- * | PM=1.2345                                       | draw a profit marker and calculate PL at the specified price                  | [TERM_PROFIT_MARKER, 1.2345,           ...,              ..., ...] |
- * | PM=3%                                           | draw a profit marker at a PL of the specified percent amount                  | [TERM_PROFIT_MARKER, ...,              3.0,              ..., ...] |
- * | LM=2.3456                                       | draw a loss marker and calculate PL at the specified price                    | [TERM_LOSS_MARKER,   2.3456,           ...,              ..., ...] |
- * | LM=-5%                                          | draw a loss marker at a PL of the specified percent amount                    | [TERM_LOSS_MARKER,   ...,              -5.0,             ..., ...] |
+ * | PM=1.2345                                       | draw a profit marker and calculate % PL at the specified price                | [TERM_PROFIT_MARKER, 1.2345,           ...,              ..., ...] |
+ * | PM=3%                                           | calculate price of the specified % PL and draw a profit marker                | [TERM_PROFIT_MARKER, ...,              3.0,              ..., ...] |
+ * | LM=2.3456                                       | draw a loss marker and calculate % PL at the specified price                  | [TERM_LOSS_MARKER,   2.3456,           ...,              ..., ...] |
+ * | LM=-5%                                          | calculate price of the specified %PL and draw a loss marker                   | [TERM_LOSS_MARKER,   ...,              -5.0,             ..., ...] |
  * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
- * | MFE                                             | enables tracking of MFE/MAE                                                   | TERM_MFE, stored in config.dData[]                                 |
+ * | MFE                                             | track MFE/MAE                                                                 | TERM_MFE, stored in config.dData[]                                 |
+ * | MFES                                            | track MFE/MAE and signal new PL high/lows                                     | TERM_MFE + flag, stored in config.dData[]                          |
  * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
  * | any text after a semicolon ";" aka .ini comment | displayed as position description                                             | stored in config.sData[]                                           |
  * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                                |                                                                    |
@@ -2214,14 +2230,14 @@ bool CustomPositions.ReadConfig() {
             containsLossMarker   = false;                            // whether the position entry contains a SL marker
             isBemEnabled         = false;                            // whether to display the BE marker for the position entry
             isMfeEnabled         = false;                            // whether to enable the MFE/MAE tracker for the position entry
-            isMfeSignal          = false;                            // whether the MFE/MAE tracker signals new highs
+            isMfeSignal          = false;                            // whether the MFE/MAE tracker signals new highs/lows
             valuesSize           = Explode(StrToUpper(iniValue), ",", values, NULL);
 
             for (int n=0; n < valuesSize; n++) {
                values[n] = StrTrim(values[n]);
                if (!StringLen(values[n])) continue;                  // empty string
 
-               if (StrStartsWith(values[n], "BEM")) {                // flag: enable/display BE marker
+               if (StrStartsWith(values[n], "BEM")) {                // flag: display BE marker
                   if (values[n] != "BEM")                            return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isBemEnabled = true;
                   continue;
@@ -2229,7 +2245,7 @@ bool CustomPositions.ReadConfig() {
                if (StrStartsWith(values[n], "MFE")) {                // flag: enable MFE/MAE tracker
                   if (!StrStartsWith("MFES", values[n]))             return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isMfeEnabled = true;
-                  isMfeSignal = (values[n] == "MFES");
+                  isMfeSignal = (values[n] == "MFES");               // flag: signal new PL highs/lows
                   continue;
                }
 
@@ -3559,7 +3575,7 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
    isVirtual = isVirtual!=0;
 
    double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, swap, commission, openProfit, floatingProfit, hedgedProfit, totalProfit, terminalProfit, totalProfitMT4, equity, equity100Pct, pipValue, pipDistance;
-   bool isNewProfitHigh;
+   bool isNewMFE, isNewMAE;
    int ticketsSize = ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit (History) noch AdjustedProfit, wird sie übersprungen.
@@ -3732,7 +3748,8 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
       totalProfit = NormalizeDouble(totalProfit, 2);
 
       if (configLine >= 0) {
-         isNewProfitHigh = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMFE = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMAE = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
 
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,    config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,    config.dData[configLine][I_PROFIT_MAE]);
@@ -3740,7 +3757,8 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
          positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
 
-         if (isNewProfitHigh) onNewProfitHigh(configLine);
+         if (isNewMFE) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMAE) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
       }
 
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
@@ -3825,7 +3843,8 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
       totalProfit = NormalizeDouble(totalProfit, 2);
 
       if (configLine >= 0) {
-         isNewProfitHigh = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMFE = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMAE = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
 
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,     config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,     config.dData[configLine][I_PROFIT_MAE]);
@@ -3833,7 +3852,8 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
          positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
 
-         if (isNewProfitHigh) onNewProfitHigh(configLine);
+         if (isNewMFE) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMAE) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
       }
 
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
@@ -4675,20 +4695,69 @@ bool onOrderFail(int tickets[]) {
 
 
 /**
- * Event handler signaling new PnL highs of custom positions.
+ * Event handler signaling a new PnL high of a custom position.
  *
- * @param  int i - index of the custom position making a new high
+ * @param  string configKey - key of the custom position
+ * @param  double profit    - new PnL value in money
  *
  * @return bool - success status
  */
-bool onNewProfitHigh(int i) {
+bool onNewMFE(string configKey, double profit) {
+   // convert profit value to cent units (simplifies Get/SetProp)
+   int iProfit = MathRound(profit * 100);
 
-   debug("onNewProfitHigh(0.1)  "+ config.sData[i][I_CONFIG_KEY] +": new profit high = "+ DoubleToStr(config.dData[i][I_PROFIT_MFE], 2));
-   return(true);
+   // skip the signal if it has already been processed elsewhere
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
+   string sEvent = GetMfeMaeSignalKey(configKey, I_PROFIT_MFE);
+   if (GetPropA(hWnd, sEvent) >= iProfit) return(true);
+   SetPropA(hWnd, sEvent, iProfit);
 
-   // TODO: sound signal
-   // @see ZigZag::onChannelCross(int direction)
-   //int lastSoundSignal;                      // GetTickCount() value of the last signal
+   PlaySoundEx("Beacon notification.wav");
+
+   debug("onNewMFE(1)  "+ configKey +": new PnL high");
+   return(!catch("onNewMFE(2)"));
+}
+
+
+/**
+ * Event handler signaling a new PnL low of a custom position.
+ *
+ * @param  string configKey - key of the custom position
+ * @param  double profit    - new PnL value in money
+ *
+ * @return bool - success status
+ */
+bool onNewMAE(string configKey, double profit) {
+   // convert profit value to cent units (simplifies Get/SetProp)
+   int iProfit = MathRound(profit * 100);
+
+   // skip the signal if it has already been processed elsewhere
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
+   string sEvent = GetMfeMaeSignalKey(configKey, I_PROFIT_MAE);
+   if (GetPropA(hWnd, sEvent) <= iProfit) return(true);
+   SetPropA(hWnd, sEvent, iProfit);
+
+   PlaySoundEx("Windows Ping.wav");
+
+   debug("onNewMAE(1)  "+ configKey +": new PnL low");
+   return(!catch("onNewMAE(2)"));
+}
+
+
+/**
+ * Return the window properties key for a MFE/MAE event.
+ *
+ * @param  string configKey - configuration key of the custom position
+ * @param  int    type      - resulting key type: I_PROFIT_MFE | I_PROFIT_MAE
+ *
+ * @return string - properties key or an empty string in case of errors
+ */
+string GetMfeMaeSignalKey(string configKey, int type) {
+   switch (type) {
+      case I_PROFIT_MFE: return("rsf::"+ GetAccountNumber() +"."+ configKey +".MFE");
+      case I_PROFIT_MAE: return("rsf::"+ GetAccountNumber() +"."+ configKey +".MAE");
+   }
+   return(_EMPTY_STR(catch("GetMfeMaeSignalKey(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
