@@ -4714,8 +4714,6 @@ bool onNewMFE(string configKey, double profit) {
    SetPropA(hWnd, sEvent, iProfit);
 
    PlaySoundEx("Beacon.wav");
-
-   if (IsLogDebug()) logDebug("onNewMFE(1)  "+ configKey +": new PnL high");
    return(!catch("onNewMFE(2)"));
 
    // used sound files:
@@ -4745,8 +4743,6 @@ bool onNewMAE(string configKey, double profit) {
    SetPropA(hWnd, sEvent, iProfit);
 
    PlaySoundEx("Windows Ping.wav");
-
-   if (IsLogDebug()) logDebug("onNewMAE(1)  "+ configKey +": new PnL low");
    return(!catch("onNewMAE(2)"));
 }
 

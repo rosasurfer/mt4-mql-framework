@@ -202,6 +202,7 @@ flags=339
 <inputs>
 CCI.Periods=14
 CCI.AppliedPrice=Open | High | Low | Close | Median | Typical* | Weighted
+Signal.onTrendChange=1
 AutoConfiguration=0
 </inputs>
 </expert>

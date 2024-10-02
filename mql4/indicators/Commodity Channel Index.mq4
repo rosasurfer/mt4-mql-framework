@@ -1,8 +1,8 @@
 /**
  * Commodity Channel Index - a momentum indicator
  *
- * Defined as the upscaled ratio of current distance to average distance from a Moving Average. The scaling factor of 66.67
- * was chosen so that the majority of indicator values falls between -200 and +200.
+ * Defined as the upscaled ratio of current distance to average distance from a Moving Average (default: SMA).
+ * The scaling factor of 66.67 was chosen so that the majority of indicator values falls between -200 and +200.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -13,17 +13,25 @@ int __DeinitFlags[];
 extern int    CCI.Periods           = 14;
 extern string CCI.AppliedPrice      = "Open | High | Low | Close | Median | Typical* | Weighted";
 
+extern string ___a__________________________ = "=== Display settings ===";
 extern color  Histogram.Color.Long  = LimeGreen;
 extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Width       = 2;
-
 extern int    MaxBarsBack           = 10000;       // max. values to calculate (-1: all available)
+
+extern string ___b__________________________ = "=== Signaling ===";
+extern bool   Signal.onTrendChange           = false;
+extern string Signal.onTrendChange.Types     = "sound* | alert | mail | sms";
+extern string Signal.Sound.Up                = "Signal Up.wav";
+extern string Signal.Sound.Down              = "Signal Down.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
+#include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
 
 #define MODE_MAIN            0                     // indicator buffer ids
 #define MODE_TREND           1
@@ -45,12 +53,17 @@ extern int    MaxBarsBack           = 10000;       // max. values to calculate (
 #property indicator_maximum  +180
 #property indicator_minimum  -180
 
-double cci     [];                                 // all CCI values: displayed in "Data" window
+double cci     [];                                 // all CCI values
 double cciLong [];                                 // long trade segments
 double cciShort[];                                 // short trade segments
 double trend   [];                                 // trade segment length
 
-int cci.appliedPrice;
+int    cci.appliedPrice;
+
+bool   signal.sound;
+bool   signal.alert;
+bool   signal.mail;
+bool   signal.sms;
 
 string indicatorName = "";
 
@@ -97,8 +110,21 @@ int onInit() {
    if (MaxBarsBack < -1)       return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
+   // Signal.onTrendChange
+   string signalId = "Signal.onTrendChange";
+   ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange);
+   if (Signal.onTrendChange) {
+      if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+         return(catch("onInit(6)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
+      }
+      Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.sms);
+   }
+   // Signal.Sound.*
+   if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
+   if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
+
    SetIndicatorOptions();
-   return(catch("onInit(6)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -143,7 +169,7 @@ int onTick() {
       //    sum += MathAbs(GetPrice(n) - ma);
       // }
       // double avgDistance = sum / CCI.Periods;
-      // cci[bar] = MathDiv(distance, avgDistance) / 0.015;                // 1/0.015 = 66.6667
+      // cci[bar] = MathDiv(distance, avgDistance) / 0.015;    // 1/0.015 = 66.6667
 
       cci[bar] = iCCI(NULL, NULL, CCI.Periods, cci.appliedPrice, bar);
 
@@ -183,7 +209,48 @@ int onTick() {
          }
       }
    }
+
+   if (!__isSuperContext) {
+      // monitor signals
+      if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {
+         int iTrend = trend[1];
+
+         if      (iTrend == +1) onTrendChange(MODE_LONG);
+         else if (iTrend == -1) onTrendChange(MODE_SHORT);
+      }
+   }
    return(catch("onTick(2)"));
+}
+
+
+/**
+ * Event handler called on BarOpen if direction of the trend changed.
+ *
+ * @param  int direction
+ *
+ * @return bool - success status
+ */
+bool onTrendChange(int direction) {
+   if (direction!=MODE_LONG && direction!=MODE_SHORT) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   // skip the signal if it has already been processed elsewhere
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
+   string sPeriod = PeriodDescription();
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]);
+   if (GetPropA(hWnd, sEvent) != 0) return(true);
+   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
+
+   string message = indicatorName +" signal "+ ifString(direction==MODE_LONG, "long", "short") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
+
+   message = Symbol() +","+ PeriodDescription() +": "+ message;
+   string sAccount = "("+ TimeToStr(TimeLocalEx("onTrendChange(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+
+   if (signal.alert) Alert(message);
+   if (signal.sound) PlaySoundEx(ifString(direction==MODE_LONG, Signal.Sound.Up, Signal.Sound.Down));
+   if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
+   if (signal.sms)   SendSMS("", message + NL + sAccount);
+   return(!catch("onTrendChange(4)"));
 }
 
 
@@ -210,10 +277,10 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexDrawBegin(MODE_LONG,  drawBegin);
    SetIndexDrawBegin(MODE_SHORT, drawBegin);
 
-   SetIndexLabel(MODE_MAIN,  indicatorName);
+   SetIndexLabel(MODE_MAIN,  indicatorName);    // displays values in indicator and "Data" window
    SetIndexLabel(MODE_LONG,  NULL);
    SetIndexLabel(MODE_SHORT, NULL);
-   SetIndexLabel(MODE_TREND, NULL);
+   SetIndexLabel(MODE_TREND, NULL);             // prevents trend value in indicator window
 
    SetIndexStyle(MODE_MAIN,  DRAW_NONE);
    SetIndexStyle(MODE_TREND, DRAW_NONE);
@@ -233,11 +300,17 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("CCI.Periods=",           CCI.Periods,                       ";", NL,
-                            "CCI.AppliedPrice=",      DoubleQuoteStr(CCI.AppliedPrice),  ";", NL,
-                            "Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),  ";", NL,
-                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short), ";", NL,
-                            "Histogram.Width=",       Histogram.Width,                   ";", NL,
-                            "MaxBarsBack=",           MaxBarsBack,                       ";")
+   return(StringConcatenate("CCI.Periods=",                CCI.Periods,                                ";", NL,
+                            "CCI.AppliedPrice=",           DoubleQuoteStr(CCI.AppliedPrice),           ";", NL,
+
+                            "Histogram.Color.Long=",       ColorToStr(Histogram.Color.Long),           ";", NL,
+                            "Histogram.Color.Short=",      ColorToStr(Histogram.Color.Short),          ";", NL,
+                            "Histogram.Width=",            Histogram.Width,                            ";", NL,
+                            "MaxBarsBack=",                MaxBarsBack,                                ";", NL,
+
+                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
+                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
+                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
+                            "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
    );
 }
