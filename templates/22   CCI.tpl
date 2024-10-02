@@ -181,7 +181,7 @@ MA.Periods=10
 Histogram.Color.Upper=3329330
 Histogram.Color.Lower=255
 Histogram.Style.Width= 2
-Signal.onTrendChange=1
+Signal.onTrendChange=0
 AutoConfiguration=0
 </inputs>
 </expert>
