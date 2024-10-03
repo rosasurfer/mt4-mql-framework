@@ -2,7 +2,7 @@
  * Commodity Channel Index - a momentum indicator
  *
  * Defined as the upscaled ratio of current distance to average distance from a Moving Average (default: SMA).
- * The scaling factor of 66.67 was chosen so that the majority of indicator values falls between -200 and +200.
+ * The scaling factor of 66.67 was chosen so that the majority of indicator values falls between +200 and -200.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];

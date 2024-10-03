@@ -218,7 +218,7 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Commodity Channel Index
+name=CCI
 flags=339
 <inputs>
 CCI.Periods=14
