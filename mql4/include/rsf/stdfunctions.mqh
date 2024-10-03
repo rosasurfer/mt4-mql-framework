@@ -5455,23 +5455,27 @@ int StrToOperationType(string value) {
       if (str == "buylimit"  ) return(OP_BUYLIMIT );
       if (str == "buy-limit" ) return(OP_BUYLIMIT );
       if (str == "buy limit" ) return(OP_BUYLIMIT );
+      if (str == "limitbuy"  ) return(OP_BUYLIMIT );
+      if (str == "limit-buy" ) return(OP_BUYLIMIT );
+      if (str == "limit buy" ) return(OP_BUYLIMIT );
 
       if (str == "selllimit" ) return(OP_SELLLIMIT);
       if (str == "sell-limit") return(OP_SELLLIMIT);
       if (str == "sell limit") return(OP_SELLLIMIT);
+      if (str == "limitsell" ) return(OP_SELLLIMIT);
+      if (str == "limit-sell") return(OP_SELLLIMIT);
+      if (str == "limit sell") return(OP_SELLLIMIT);
 
       if (str == "buystop"   ) return(OP_BUYSTOP  );
       if (str == "buy-stop"  ) return(OP_BUYSTOP  );
       if (str == "buy stop"  ) return(OP_BUYSTOP  );
-
-      if (str == "sellstop"  ) return(OP_SELLSTOP );
-      if (str == "sell-stop" ) return(OP_SELLSTOP );
-      if (str == "sell stop" ) return(OP_SELLSTOP );
-
       if (str == "stopbuy"   ) return(OP_BUYSTOP  );
       if (str == "stop-buy"  ) return(OP_BUYSTOP  );
       if (str == "stop buy"  ) return(OP_BUYSTOP  );
 
+      if (str == "sellstop"  ) return(OP_SELLSTOP );
+      if (str == "sell-stop" ) return(OP_SELLSTOP );
+      if (str == "sell stop" ) return(OP_SELLSTOP );
       if (str == "stopsell"  ) return(OP_SELLSTOP );
       if (str == "stop-sell" ) return(OP_SELLSTOP );
       if (str == "stop sell" ) return(OP_SELLSTOP );
