@@ -96,8 +96,8 @@ name=Trend Bars
 flags=339
 window_num=0
 <inputs>
-Tunnel.Periods=55
 Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Tunnel.Periods=55
 Color.UpTrend=16711680
 Color.DownTrend=255
 Color.NoTrend=11119017
@@ -126,11 +126,36 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
+name=CCI Bands
+flags=339
+window_num=0
+<inputs>
+CCIPeriod=14
+CCILevel1=100
+</inputs>
+</expert>
+color_0=4294967295
+color_1=4294967295
+
+color_2=16711680
+weight_2=1
+color_3=16711680
+weight_3=1
+
+color_4=4294967295
+color_5=4294967295
+
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=Moving Average
 flags=339
 <inputs>
-MA.Periods=200
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=200
 MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
 Draw.Type=Line* | Dot
 Draw.Width=3
@@ -157,27 +182,6 @@ Draw.Width=3
 UpTrend.Color=16711680
 DownTrend.Color=16776960
 Background.Color=16711680
-ShowChartLegend=1
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Moving Average
-flags=339
-<inputs>
-MA.Periods=9
-MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-Draw.Type=Line* | Dot
-Draw.Width=1
-UpTrend.Color=65535
-DownTrend.Color=65535
-Background.Width=2
 ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
