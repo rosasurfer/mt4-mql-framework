@@ -1,5 +1,5 @@
 /**
- * CustomPositions.ShowRisk
+ * CustomPositions.ToggleRisk
  *
  * Send a command to the ChartInfos indicator to toggle the MaxRisk display of custom positions.
  */
