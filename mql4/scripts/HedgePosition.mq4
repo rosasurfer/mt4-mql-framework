@@ -18,6 +18,25 @@ int __DeinitFlags[];
 
 
 /**
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onInit() {
+   // enable auto-trading if disabled
+   if (!IsExpertEnabled()) {
+      int error = Toolbar.Experts(true);
+      if (IsError(error)) return(error);
+
+      PlaySoundEx("Windows Notify.wav");                          // we must return as scripts don't update their internal auto-trading status
+      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", ProgramName(), MB_ICONINFORMATION|MB_OK);
+      return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
+   }
+   return(catch("onInit(1)"));
+}
+
+
+/**
  * Main function
  *
  * @return int - error status
@@ -55,7 +74,9 @@ int onStart() {
          PlaySoundEx("Plonk.wav");
          MessageBox("The total position is already flat.", ProgramName(), MB_ICONEXCLAMATION|MB_OK);
       }
-      else return(error);
+      else {
+         return(SetLastError(error));
+      }
    }
    return(catch("onStart(3)"));
 }

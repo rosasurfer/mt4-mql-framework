@@ -66,13 +66,14 @@ int init() {
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
-   // Pre/Postprocessing-Hook
+   // pre/postprocessing hooks
    error = onInit();                                                 // Preprocessing-Hook
-   if (error != -1) {
-      afterInit();                                                   // Postprocessing-Hook nur ausführen, wenn Preprocessing-Hook
-   }                                                                 // nicht mit -1 zurückkehrt.
+   if (CheckErrors("init(10)", error)) return(last_error);
 
-   CheckErrors("init(10)");
+   if (error != -1) {                                                // Postprocessing-Hook nur ausführen, wenn Preprocessing-Hook
+      error = afterInit();                                           // nicht mit -1 zurückkehrt.
+      if (CheckErrors("init(11)", error)) return(last_error);
+   }
    return(last_error);
 }
 

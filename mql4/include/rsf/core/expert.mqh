@@ -90,7 +90,7 @@ int init() {
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}              // not yet implemented
 
-   // enable experts if they are disabled
+   // enable auto-trading if disabled
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!__isTesting) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                              // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
@@ -169,11 +169,11 @@ int init() {
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
+   if (CheckErrors("init(13)", error)) return(last_error);                 //
                                                                            //
-   if (!error && !__STATUS_OFF)                                            //
-      afterInit();                                                         // postprocessing hook
+   error = afterInit();                                                    // postprocessing hook
+   if (CheckErrors("init(13)", error)) return(last_error);
 
-   if (CheckErrors("init(13)")) return(last_error);
    ShowStatus(last_error);
 
    // setup virtual ticks
@@ -184,8 +184,9 @@ int init() {
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
-   if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the window message queue may be processed
+   if (UninitializeReason() != UR_CHARTCHANGE) {                           // At the very end, otherwise the window message queue may be processed
       Chart.SendTick();                                                    // before this function is left and the tick might get lost.
+   }
    return(last_error);
 }
 

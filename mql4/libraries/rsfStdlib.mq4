@@ -6085,8 +6085,9 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
  *            value of that symbol.
  *
  *        (3) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
- *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
- *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
+ *            - ERR_INVALID_TICKET:              one of the ids is not a valid ticket id
+ *            - ERR_INVALID_TRADE_PARAMETERS:    one of the tickets is not an open position (anymore)
+ *            - ERR_TERMINAL_AUTOTRADE_DISABLED: the "auto-trading" option in the terminal is disabled
  */
 bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, int oes[][]) {
    // validate parameters

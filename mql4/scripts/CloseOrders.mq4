@@ -57,7 +57,6 @@ int    hedgedShort[];         // hedged part: short tickets of the position
  */
 int onInit() {
    // validate inputs
-
    // Close.Symbols
    closeAllSymbols = false;
    string sValues[], sValue=Close.Symbols;
@@ -74,7 +73,6 @@ int onInit() {
          else                       ArrayPushString(closeSymbols, sValue);
       }
    }
-
    // Close.OrderTypes
    size = Explode(StrToLower(Close.OrderTypes), ",", sValues, NULL);
    for (i=0; i < size; i++) {
@@ -93,7 +91,6 @@ int onInit() {
          }
       }
    }
-
    // Close.Tickets
    sValue = Close.Tickets;
    if (StrContains(sValue, "{") && StrEndsWith(sValue, "}")) {    // extract the ticket substring from an AnalyzePositions(F_LOG_TICKETS) message: "log-message {#ticket1, ..., #ticketN}"
@@ -117,7 +114,6 @@ int onInit() {
          ArrayPushInt(closeTickets, iValue);
       }
    }
-
    // Close.MagicNumbers
    size = Explode(Close.MagicNumbers, ",", sValues, NULL);
    for (i=0; i < size; i++) {
@@ -129,20 +125,28 @@ int onInit() {
          ArrayPushInt(closeMagics, iValue);
       }
    }
-
    // Close.Comments
    size = Explode(Close.Comments, ",", sValues, NULL);
    for (i=0; i < size; i++) {
       sValue = StrTrim(sValues[i]);
       if (StringLen(sValue) > 0) ArrayPushString(closeComments, sValue);
    }
-
    // Close.HedgedPart
    if (Close.HedgedPart) {
       size = ArraySize(closeTypes);
       for (i=0; i < size; i++) {
          if (IsPendingOrderType(closeTypes[i])) return(catch("onInit(6)  invalid input combination: can't close HedgedPart of OrderType \""+ OperationTypeDescription(closeTypes[i]) +"\"", ERR_INVALID_INPUT_PARAMETER));
       }
+   }
+
+   // enable auto-trading if disabled
+   if (!IsExpertEnabled()) {
+      int error = Toolbar.Experts(true);
+      if (IsError(error)) return(error);
+
+      PlaySoundEx("Windows Notify.wav");                             // we must return as scripts don't update their internal auto-trading status
+      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", ProgramName(), MB_ICONINFORMATION|MB_OK);
+      return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
    }
    return(catch("onInit(7)"));
 }
@@ -213,10 +217,10 @@ int onStart() {
 
       if (button == IDOK) {
          if (sizeOfOpenPositions > 0) {
-            if (!OrdersClose(openPositions, 1, CLR_NONE, oeFlags, oes))  return(ERR_RUNTIME_ERROR);
+            if (!OrdersClose(openPositions, 1, CLR_NONE, oeFlags, oes))  return(SetLastError(oes.Error(oes)));
          }
          for (i=0; i < sizeOfPendingOrders; i++) {
-            if (!OrderDeleteEx(pendingOrders[i], CLR_NONE, oeFlags, oe)) return(ERR_RUNTIME_ERROR);
+            if (!OrderDeleteEx(pendingOrders[i], CLR_NONE, oeFlags, oe)) return(SetLastError(oe.Error(oe)));
          }
       }
    }
@@ -233,7 +237,7 @@ int onStart() {
             sizeOfHedgedLong--;
             sizeOfHedgedShort--;
 
-            if (!OrderCloseByEx(longTicket, shortTicket, CLR_NONE, oeFlags, oe)) return(oe.Error(oe));
+            if (!OrderCloseByEx(longTicket, shortTicket, CLR_NONE, oeFlags, oe)) return(SetLastError(oe.Error(oe)));
 
             int remainder = oe.RemainingTicket(oe);
             if (remainder != 0) {
