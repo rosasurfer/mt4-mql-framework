@@ -82,7 +82,7 @@ flags=339
 window_num=0
 <inputs>
 Timeframe=H1
-NumberOfInsideBars=2
+NumberOfInsideBars=3
 </inputs>
 </expert>
 period_flags=3
