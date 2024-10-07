@@ -3749,8 +3749,8 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
       totalProfit = NormalizeDouble(totalProfit, 2);
 
       if (configLine >= 0) {
-         isNewMFE = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMAE = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
+         isNewMFE = (config.dData[configLine][I_MFE_SIGNAL] && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMAE = (config.dData[configLine][I_MFE_SIGNAL] && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
 
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,    config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,    config.dData[configLine][I_PROFIT_MAE]);
@@ -3844,8 +3844,8 @@ bool StorePosition(bool isVirtual, double lLongPosition, double lShortPosition, 
       totalProfit = NormalizeDouble(totalProfit, 2);
 
       if (configLine >= 0) {
-         isNewMFE = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMAE = (config.dData[configLine][I_MFE_SIGNAL] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
+         isNewMFE = (config.dData[configLine][I_MFE_SIGNAL] && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMAE = (config.dData[configLine][I_MFE_SIGNAL] && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
 
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,     config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,     config.dData[configLine][I_PROFIT_MAE]);
