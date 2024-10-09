@@ -1230,7 +1230,7 @@ bool UpdateUnitSize() {
       }
 
       if (mm.leverage != NULL) {
-         text = StringConcatenate(text, "     L", DoubleToStr(mm.leverage, 1), "      ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
+         text = StringConcatenate(text, "     L", DoubleToStr(mm.leverage, 1), "     ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
       }
    }
    ObjectSetText(label.unitSize, text, 9, "Tahoma", SlateGray);
@@ -1274,7 +1274,7 @@ bool UpdatePositions() {
          sRisk = StringConcatenate("R", NumberToStr(mm.riskPercent * currentUnits, ",'.0R"), "%    ");
       }
       string sCurrentLeverage = "";
-      if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", NumberToStr(MathAbs(totalPosition)/mm.unleveragedLots, ",'.1R"), "    ");
+      if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", NumberToStr(MathAbs(totalPosition)/mm.unleveragedLots, ",'.1R"), "   ");
 
       sCurrentPosition = StringConcatenate("Position:    ", sRisk, sCurrentUnits, sCurrentLeverage, NumberToStr(totalPosition, "+,'.+"), " lot");
    }
