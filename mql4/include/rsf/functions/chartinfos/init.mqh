@@ -45,13 +45,6 @@ int onInit() {
    if (!InitTradeAccount())     return(last_error);
    if (!UpdateAccountDisplay()) return(last_error);
 
-   if (mode.intern) {
-      // resolve unitsize configuration, after InitTradeAccount()
-      if (!ReadUnitSizeConfigValue("Leverage",    sValue)) return(last_error); mm.cfgLeverage    = StrToDouble(sValue);
-      if (!ReadUnitSizeConfigValue("RiskPercent", sValue)) return(last_error); mm.cfgRiskPercent = StrToDouble(sValue);
-      if (!ReadUnitSizeConfigValue("RiskRange",   sValue)) return(last_error); mm.cfgRiskRange   = StrToDouble(sValue);
-      mm.cfgRiskRangeIsADR = StrCompareI(sValue, "ADR");
-   }
    return(catch("onInit(2)"));
 }
 
@@ -179,84 +172,4 @@ int afterInit() {
       }
    }
    return(catch("afterInit(3)"));
-}
-
-/**
- * Find the applicable configuration for the [UnitSize] calculation and return the configured value.
- *
- * @param _In_  string name   - unitsize configuration identifier
- * @param _Out_ string &value - configuration value
- *
- * @return bool - success status
- */
-bool ReadUnitSizeConfigValue(string name, string &value) {
-   string section="Unitsize", sValue="";
-   value = "";
-
-   string key = Symbol() +"."+ name;
-   if (IsConfigKey(section, key)) {
-      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
-      value = sValue;
-      return(true);
-   }
-
-   key = StdSymbol() +"."+ name;
-   if (IsConfigKey(section, key)) {
-      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
-      value = sValue;
-      return(true);
-   }
-
-   key = "Default."+ name;
-   if (IsConfigKey(section, key)) {
-      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
-      value = sValue;
-      return(true);
-   }
-
-   return(true);           // success also if no configuration was found (returns an empty string)
-}
-
-
-/**
- * Validate the specified [UnitSize] configuration key and return the configured value.
- *
- * @param _In_  string section - configuration section
- * @param _In_  string key     - configuration key
- * @param _Out_ string &value  - configured value
- *
- * @return bool - success status
- */
-bool ValidateUnitSizeConfigValue(string section, string key, string &value) {
-   string sValue = GetConfigString(section, key), sValueBak = sValue;
-
-   if (StrEndsWithI(key, ".RiskPercent") || StrEndsWithI(key, ".Leverage")) {
-      if (!StrIsNumeric(sValue))    return(!catch("GetUnitSizeConfigValue(1)  invalid configuration value ["+ section +"]->"+ key +": \""+ sValueBak +"\" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
-      double dValue = StrToDouble(sValue);
-      if (dValue < 0)               return(!catch("GetUnitSizeConfigValue(2)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
-      value = sValue;
-      return(true);
-   }
-
-   if (StrEndsWithI(key, ".RiskRange")) {
-      if (StrCompareI(sValue, "ADR")) {
-         value = sValue;
-         return(true);
-      }
-      if (!StrEndsWith(sValue, "pip")) {
-         if (!StrIsNumeric(sValue)) return(!catch("GetUnitSizeConfigValue(3)  invalid configuration value ["+ section +"]->"+ key +": \""+ sValueBak +"\" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
-         dValue = StrToDouble(sValue);
-         if (dValue < 0)            return(!catch("GetUnitSizeConfigValue(4)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
-         value = sValue;
-         return(true);
-      }
-      sValue = StrTrim(StrLeft(sValue, -3));
-      if (!StrIsNumeric(sValue))    return(!catch("GetUnitSizeConfigValue(5)  invalid configuration value ["+ section +"]->"+ key +": \""+ sValueBak +"\" (non-numeric pip value)", ERR_INVALID_CONFIG_VALUE));
-      dValue = StrToDouble(sValue);
-      if (dValue < 0)               return(!catch("GetUnitSizeConfigValue(6)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
-      value = dValue * Pip;
-      return(true);
-   }
-
-   return(!catch("GetUnitSizeConfigValue(7)  unsupported [UnitSize] config key: \""+ key +"\"", ERR_INVALID_PARAMETER));
 }

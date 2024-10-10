@@ -15,9 +15,7 @@
  *
  * TODO:
  *  - CustomPosition()
- *     signal on new MFE/MAE: marker "MFES"... @see line 2233 ff.
- *
- *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice and so on...
+ *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice...
  *     history parsing/config term HT... freezes the terminal if the full history is active
  *      ExtractPosition()
  *       SortClosedTickets()    time=0.271 sec  => move to Expander
@@ -34,7 +32,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string UnitSize.Corner = "top | bottom*";                  // can be shortened
+extern string UnitSize.Corner = "top | bottom*";                  // can be shortened to a single char
 extern bool   Track.Orders    = true;                             // whether to track and signal position open/close events
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,10 +59,11 @@ double  mm.externalAssets;                                        // external as
 bool    mm.externalAssetsCached;                                  // whether mm.externalAssets holds a valid cached value
 double  mm.equity;                                                // equity value used for calculations, incl. external assets and floating losses (but w/o floating/unrealized profits)
 
-double  mm.cfgLeverage;
-double  mm.cfgRiskPercent;
-double  mm.cfgRiskRange;
+bool    mm.cfgIsValid;                                            // whether the unitsize configuration is valid/initialized
+double  mm.cfgRiskRange;                                          //
 bool    mm.cfgRiskRangeIsADR;                                     // whether the price range is configured as "ADR"
+double  mm.cfgRiskPercent;                                        //
+double  mm.cfgLeverage;                                           //
 
 double  mm.lotValue;                                              // value of 1 lot in account currency
 double  mm.unleveragedLots;                                       // unleveraged unitsize
@@ -302,7 +301,7 @@ bool onCommand(string cmd, string params, int keys) {
 
             // write updated value back to the config file
             if (WriteIniString(GetAccountConfigPath(), "Account", "ExternalAssets", sConfigValue)) {
-               mm.externalAssetsCached = false;                         // invalidate cached value
+               mm.externalAssetsCached = false;                         // invalidate cached external assets
                ArrayResize(configTerms, 0);                             // trigger reparsing of the configuration
             }
             PlaySoundEx("Bell 1.wav");
@@ -316,6 +315,7 @@ bool onCommand(string cmd, string params, int keys) {
       flags = NULL;
       if (keys & F_VK_SHIFT && 1) {
          flags = F_SHOW_CUSTOM_POSITIONS;                               // with VK_SHIFT: show custom positions only
+         mm.cfgIsValid = false;                                         // invalidate cached unitsize configuration
          mm.externalAssetsCached = false;                               // invalidate cached external assets
          ArrayResize(configTerms, 0);                                   // trigger reparsing of the configuration
       }
@@ -326,6 +326,7 @@ bool onCommand(string cmd, string params, int keys) {
       flags = NULL;
       if (keys & F_VK_SHIFT && 1) {
          flags = F_SHOW_CUSTOM_HISTORY;                                 // with VK_SHIFT: show custom history only
+         mm.cfgIsValid = false;                                         // invalidate cached unitsize configuration
          mm.externalAssetsCached = false;                               // invalidate cached external assets
          ArrayResize(configTerms, 0);                                   // trigger reparsing of the configuration
       }
@@ -344,10 +345,13 @@ bool onCommand(string cmd, string params, int keys) {
       string key = StrReplace(params, ",", ":");
       if (!InitTradeAccount(key))  return(false);
       if (!UpdateAccountDisplay()) return(false);
+         mm.cfgIsValid = false;                                         // invalidate cached unitsize configuration
       mm.externalAssetsCached = false;                                  // invalidate cached external assets
       ArrayResize(configTerms, 0);                                      // trigger reparsing of the configuration
    }
-   else return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
+   else {
+      return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
+   }
 
    return(!catch("onCommand(2)"));
 }
@@ -1951,27 +1955,19 @@ bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL)
 /**
  * Calculate the unitsize according to the configuration. Calculation is risk-based and/or leverage-based.
  *
- *  - Default configuration settings for risk-based calculation:
- *    [Unitsize]
- *    Default.RiskPercent = <numeric>                    ; risked percent of account equity
- *    Default.RiskRange   = (<numeric> [pip] | ADR)      ; price range (absolute, in pip or the value "ADR") for the risked percent
+ *  Default configuration
+ *  [Unitsize]
+ *  RiskRange   = (<numeric> [pip] | ADR)                ; range for risk calculation: absolute value or "ADR" = ADR(20)
+ *  RiskPercent = <numeric>                              ; max. risked percent per RiskRange and unit (0: no restriction)
+ *  Leverage    = <numeric>                              ; max. leverage per unit (0: no restriction)
  *
- *  - Default configuration settings for leverage-based calculation:
- *    [Unitsize]
- *    Default.Leverage = <numeric>                       ; leverage per unit
+ *  Symbol-specific configuration (merged with defaults)
+ *  [Unitsize]
+ *  GBPUSD.RiskPercent = <numeric>
+ *  EURUSD.Leverage    = <numeric>
  *
- *  - Symbol-specific configuration:
- *    [Unitsize]
- *    GBPUSD.RiskPercent = <numeric>                     ; per symbol: risked percent of account equity
- *    EURUSD.Leverage    = <numeric>                     ; per symbol: leverage per unit
- *
- * This default settings apply if no symbol-specific settings are provided. For symbol-specific settings the term "Default"
- * gets replaced by the actual symbol.
- *
- * If multiple settings are found for the same standard symbol (e.g. "EURUSDm.Leverage" and "EURUSD.Leverage"), then a broker
- * specific settings is preferred.
- *
- * If both risk and leverage settings are configured the resulting unitsize is the smaller of both calculations.
+ * Symbol-specific settings take precedence over default settings. If multiple settings are found for the same standard
+ * symbol (e.g. "EURUSDm.Leverage" and "EURUSD.Leverage"), the broker-specific settings take precedence.
  *
  * @return bool - success status
  */
@@ -2007,6 +2003,11 @@ bool CalculateUnitSize() {
    }
    mm.lotValue        = Close[0]/tickSize * tickValue;                  // value of 1 lot in account currency
    mm.unleveragedLots = mm.equity/mm.lotValue;                          // unleveraged unitsize
+
+   // ensure a valid unitsize configuration
+   if (!mm.cfgIsValid) {
+      if (!ReadUnitSizeConfiguration()) return(last_error == ERS_TERMINAL_NOT_YET_READY);
+   }
 
    // update the current ADR
    if (mm.cfgRiskRangeIsADR) {
@@ -2060,6 +2061,103 @@ bool CalculateUnitSize() {
 
    mm.done = true;
    return(!catch("CalculateUnitSize(2)"));
+}
+
+
+/**
+ * Read the unitsize configuration.
+ *
+ * @return bool - success status
+ */
+bool ReadUnitSizeConfiguration() {
+   string sValue = "";
+   if (!ReadUnitSizeConfigValue("Leverage",    sValue)) return(false); mm.cfgLeverage    = StrToDouble(sValue);
+   if (!ReadUnitSizeConfigValue("RiskPercent", sValue)) return(false); mm.cfgRiskPercent = StrToDouble(sValue);
+   if (!ReadUnitSizeConfigValue("RiskRange",   sValue)) return(false); mm.cfgRiskRange   = StrToDouble(sValue);
+   mm.cfgRiskRangeIsADR = StrCompareI(sValue, "ADR");
+
+   mm.cfgIsValid = true;
+   return(!catch("ReadUnitSizeConfiguration(1)"));
+}
+
+
+/**
+ * Find the applicable configuration value for the unitsize calculation.
+ *
+ * @param _In_  string name   - unitsize configuration identifier
+ * @param _Out_ string &value - configuration value
+ *
+ * @return bool - success status
+ */
+bool ReadUnitSizeConfigValue(string name, string &value) {
+   string section="Unitsize", sValue="";
+   value = "";
+
+   string key = Symbol() +"."+ name;
+   if (IsConfigKey(section, key)) {
+      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+      value = sValue;
+      return(true);
+   }
+
+   key = StdSymbol() +"."+ name;
+   if (IsConfigKey(section, key)) {
+      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+      value = sValue;
+      return(true);
+   }
+
+   key = name;
+   if (IsConfigKey(section, key)) {
+      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+      value = sValue;
+      return(true);
+   }
+   return(true);           // success also if no configuration was found (returns an empty string)
+}
+
+
+/**
+ * Validate the specified unitsize configuration value.
+ *
+ * @param _In_  string section - configuration section
+ * @param _In_  string key     - configuration key
+ * @param _Out_ string &value  - configured value
+ *
+ * @return bool - success status
+ */
+bool ValidateUnitSizeConfigValue(string section, string key, string &value) {
+   string sValue = GetConfigString(section, key), sValueBak = sValue;
+
+   if (StrEndsWithI(key, "RiskPercent") || StrEndsWithI(key, "Leverage")) {
+      if (!StrIsNumeric(sValue))    return(!catch("ValidateUnitSizeConfigValue(1)  invalid configuration value ["+ section +"]->"+ key +": \""+ sValueBak +"\" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
+      double dValue = StrToDouble(sValue);
+      if (dValue < 0)               return(!catch("ValidateUnitSizeConfigValue(2)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
+      value = sValue;
+      return(true);
+   }
+
+   if (StrEndsWithI(key, "RiskRange")) {
+      if (StrCompareI(sValue, "ADR")) {
+         value = sValue;
+         return(true);
+      }
+      if (!StrEndsWith(sValue, "pip")) {
+         if (!StrIsNumeric(sValue)) return(!catch("ValidateUnitSizeConfigValue(3)  invalid configuration value ["+ section +"]->"+ key +": \""+ sValueBak +"\" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
+         dValue = StrToDouble(sValue);
+         if (dValue < 0)            return(!catch("ValidateUnitSizeConfigValue(4)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
+         value = sValue;
+         return(true);
+      }
+      sValue = StrTrim(StrLeft(sValue, -3));
+      if (!StrIsNumeric(sValue))    return(!catch("ValidateUnitSizeConfigValue(5)  invalid configuration value ["+ section +"]->"+ key +": \""+ sValueBak +"\" (non-numeric pip value)", ERR_INVALID_CONFIG_VALUE));
+      dValue = StrToDouble(sValue);
+      if (dValue < 0)               return(!catch("ValidateUnitSizeConfigValue(6)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
+      value = dValue * Pip;
+      return(true);
+   }
+
+   return(!catch("ValidateUnitSizeConfigValue(7)  unsupported [UnitSize] config key: \""+ key +"\"", ERR_INVALID_PARAMETER));
 }
 
 
