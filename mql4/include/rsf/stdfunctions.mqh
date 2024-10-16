@@ -3481,8 +3481,8 @@ bool Chart.StoreDouble(string key, double value) {
 /**
  * Store a named string in the chart.
  *
- * @param  string key   - value identifier (max. 63 chars)
- * @param  string value - value to store (max. 63 chars)
+ * @param  string key   - value identifier (max. 60 chars)
+ * @param  string value - value to store
  *
  * @return bool - success status
  */
@@ -3490,18 +3490,29 @@ bool Chart.StoreString(string key, string value) {
    if (!__isChart)       return(!catch("Chart.StoreString(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63) return(!catch("Chart.StoreString(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 60) return(!catch("Chart.StoreString(2)  invalid parameter key: \""+ key +"\" (1 to 60 chars)", ERR_INVALID_PARAMETER));
 
+   // mark empty strings with a magic value as the terminal deserializes "" to "Text"
    len = StringLen(value);
-   if (len > 63)         return(!catch("Chart.StoreString(3)  invalid parameter value: \""+ value +"\" (max. 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len) value = "…(empty)…";
 
-   if (!len) value = "…(empty)…";                                 // mark empty strings with a magic value (0x85) as the terminal deserializes "" to "Text"
+   int i = 0;
+   string index = "";
 
-   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, value);                                     // string
+   for (i=0; StringLen(value) > 0; i++) {
+      index = StringConcatenate(key, ".", i);
+      if (ObjectFind(index) == -1) ObjectCreate(index, OBJ_LABEL, 0, 0, 0);
+      ObjectSet    (index, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      ObjectSetText(index, StrLeft(value, 63));
+      value = StrRight(value, -63);
+   }
 
-   return(!catch("Chart.StoreString(4)"));
+   // make sure an existing following string index is removed
+   index = StringConcatenate(key, ".", i);
+   if (ObjectFind(index) != -1) {
+      ObjectDelete(index);
+   }
+   return(!catch("Chart.StoreString(3)"));
 }
 
 
@@ -3623,7 +3634,7 @@ bool Chart.RestoreDouble(string key, double &var, bool remove = true) {
 /**
  * Restore a named string from the chart.
  *
- * @param  _In_  string key               - value identifier (max. 63 chars)
+ * @param  _In_  string key               - value identifier (max. 60 chars)
  * @param  _Out_ string var               - variable to restore
  * @param  _In_  bool   remove [optional] - whether to remove the stored value (default: yes)
  *
@@ -3634,17 +3645,24 @@ bool Chart.RestoreString(string key, string &var, bool remove = true) {
    if (!__isChart)       return(!catch("Chart.RestoreString(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 63) return(!catch("Chart.RestoreString(2)  invalid parameter key: \""+ key +"\" (1 to 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 60) return(!catch("Chart.RestoreString(2)  invalid parameter key: \""+ key +"\" (1 to 60 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) != -1) {
-      string sValue = ObjectDescription(key);
-      if (remove) ObjectDelete(key);
-      if (sValue == "…(empty)…") var = "";                  // convert magic value back to empty string as the terminal deserializes "" to "Text"
-      else                       var = sValue;              // string
+   string sValue = "";
 
-      return(!catch("Chart.RestoreString(3)"));
+   for (int i=0; true; i++) {
+      string index = StringConcatenate(key, ".", i);
+      if (ObjectFind(index) == -1) break;
+
+      sValue = StringConcatenate(sValue, ObjectDescription(index));
+      if (remove) ObjectDelete(index);
    }
-   return(false);
+
+   if (sValue == "") return(false);             // string not found
+
+   if (sValue == "…(empty)…") var = "";         // convert magic value back to empty string as the terminal deserializes "" to "Text"
+   else                       var = sValue;
+
+   return(!catch("Chart.RestoreString(3)"));
 }
 
 

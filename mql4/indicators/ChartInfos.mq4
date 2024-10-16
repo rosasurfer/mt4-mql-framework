@@ -14,6 +14,7 @@
  *
  *
  * TODO:
+ *  - visualize MFE/MAE levels
  *  - CustomPosition()
  *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice...
  *     history parsing/config term HT... freezes the terminal if the full history is active
@@ -1789,7 +1790,7 @@ bool UpdateStopoutLevel() {
    isPosition    = longPosition || shortPosition;
 
    // signal potential errors if the position increased by more than 1 x unitsize
-   if (!__isTesting && Track.Orders && mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
+   if (false) /*&&*/ if (!__isTesting && Track.Orders && mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
       double diff = MathAbs(totalPosition);
       if (Sign(totalPosition) == Sign(prevTotalPosition)) diff -= MathAbs(prevTotalPosition);
       if (NormalizeDouble(diff, 2) > mm.leveragedLotsNormalized) {

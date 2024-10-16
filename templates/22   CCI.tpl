@@ -126,6 +126,32 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
+name=CCI Bands
+flags=339
+window_num=0
+<inputs>
+CCIPeriod=14
+CCILevel1=100
+</inputs>
+</expert>
+color_0=4294967295
+color_1=4294967295
+
+color_2=16711680
+weight_2=1
+color_3=16711680
+weight_3=1
+
+color_4=4294967295
+color_5=4294967295
+
+period_flags=256
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=Moving Average
 flags=339
 <inputs>
