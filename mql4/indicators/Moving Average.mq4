@@ -274,7 +274,7 @@ int onTick() {
 bool onTrendChange(int direction) {
    if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // skip the signal if it has already been processed elsewhere
+   // skip the signal if it already has been signaled elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sName   = MA.Method +"("+ MA.Periods +", "+ PriceTypeDescription(maAppliedPrice) +")";

@@ -1030,7 +1030,7 @@ bool onBreakout(int direction, bool is123Pattern) {
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
-   // skip the signal if it has already been processed elsewhere
+   // skip the signal if it already has been signaled elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]);
@@ -1066,6 +1066,8 @@ bool onBreakout(int direction, bool is123Pattern) {
  */
 bool onChannelWidening(int direction) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelWidening(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   // TODO: skip the signal if it already has been signaled elsewhere
 
    if (lastSoundSignal+2000 < GetTickCount()) {                      // at least 2 sec pause between consecutive sound signals
       int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onNewChannelHigh, Sound.onNewChannelLow));
