@@ -105,7 +105,10 @@ ZigZag.Type=Line* | Semaphores
 ZigZag.Width=2
 Donchian.ShowChannel=1
 Donchian.ShowCrossings=off | first* | all
-Show123Projections=1
+Donchian.Crossings.Wingdings=108
+Show123Projections=0
+Signal.onReversal=1
+Signal.onBreakout=1
 </inputs>
 </expert>
 style_2=2
