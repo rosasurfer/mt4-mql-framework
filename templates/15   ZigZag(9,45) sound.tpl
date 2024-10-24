@@ -117,7 +117,6 @@ Donchian.ShowCrossings=off* | first | all
 Donchian.Crossings.Wingdings=108
 Signal.onReversal=0
 Signal.onBreakout=1
-Signal.onBreakout.123Only=1
 Sound.onChannelWidening=1
 </inputs>
 </expert>
