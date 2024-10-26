@@ -54,7 +54,9 @@
  *
  *
  * TODO:
+ *  - fix channel crossing down at XAUUSD.M4 2024.10.22 03:00, ZigZag(9)
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
+ *  - track swing sizes and display zero sum projection (ZigZag mean reversion)
  *  - keep bar status in IsUpperCrossLast()
  *  - document usage of iCustom()
  */

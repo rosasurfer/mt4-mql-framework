@@ -8,9 +8,9 @@
 //  Syntax of input parameter "EA.Recorder":
 //   off:  Recording is disabled (default).
 //   on:   Records a timeseries representing the EA's equity graph as reported by the built-in function AccountEquity().
-//   <id>[=<base-value>]:  Records a timeseries representing a custom metric identified by a postive <id> (integer). Specify
+//   <id>[=<base-value>]:  Records a timeseries representing a custom metric identified by a positive id (integer). Specify
 //         an appropriate base value (numeric) to ensure that all recorded values are positive (MT4 charts cannot display
-//         negative values). Without a value the recorder queries the framework configuration.
+//         negative values). Without a base value the recorder queries the framework configuration.
 //
 // To enable recording call function 'Recorder_ValidateInputs()'.
 //
@@ -175,7 +175,7 @@ bool Recorder_ValidateInputs(bool isTest) {
 
          int metrics, digits, multiplier;
          double baseValue;
-         string symbol="", description="", group="", sInput="";
+         string symbol="", descr="", group="", sInput="";
 
          size = Explode(sValue, ",", sValues, NULL);
          for (int i=0; i < size; i++) {
@@ -199,7 +199,7 @@ bool Recorder_ValidateInputs(bool isTest) {
 
             // logical metric validation
             bool ready;
-            int error = GetMT4SymbolDefinition(metricId, ready, symbol, description, group, digits, baseValue, multiplier);
+            int error = GetMT4SymbolDefinition(metricId, ready, symbol, descr, group, digits, baseValue, multiplier);
             if (IsError(error)) {
                if (error == ERR_INVALID_INPUT_PARAMETER) return(!Recorder_onInputError("Recorder_ValidateInputs(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (unsupported metric id "+ metricId +")"));
                return(false);                            // a runtime error (already raised)
@@ -207,7 +207,7 @@ bool Recorder_ValidateInputs(bool isTest) {
             if (dValue > 0) baseValue = dValue;
 
             // store metric details
-            if (!Recorder_AddMetric(metricId, ready, symbol, description, group, digits, baseValue, multiplier)) return(false);
+            if (!Recorder_AddMetric(metricId, ready, symbol, descr, group, digits, baseValue, multiplier)) return(false);
             metrics++;
             sInput = StringConcatenate(sInput, ",", metricId, ifString(IsEmpty(baseValue), "", "="+ NumberToStr(baseValue, ".+")));
          }
@@ -227,7 +227,7 @@ bool Recorder_ValidateInputs(bool isTest) {
 
 
 /**
- * Error handler for invalid input parameters. Depending on the execution context a non-/terminating error is set.
+ * Error handler for invalid input parameters. Depending on the execution context a non/terminating error is set.
  *
  * @param  string message - error message
  *
