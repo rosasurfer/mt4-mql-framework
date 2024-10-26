@@ -337,10 +337,8 @@ ZigZag.Width=0
 ZigZag.Color=16711680
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off* | first | all
-Show123Projections=0
 Signal.onReversal=0
 Signal.onBreakout=1
-Signal.onBreakout.123Only=1
 Signal.onBreakout.Types=sound, alert
 </inputs>
 </expert>

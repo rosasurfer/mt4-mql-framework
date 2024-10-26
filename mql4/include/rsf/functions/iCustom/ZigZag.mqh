@@ -24,7 +24,7 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    }
 
    double value = iCustom(NULL, timeframe, "ZigZag",
-                          "",                         // string ____________________________
+                          "separator",                // string ____________________________
                           periods,                    // int    ZigZag.Periods
                           0,                          // int    ZigZag.Periods.Step
                           "Line",                     // string ZigZag.Type
@@ -32,32 +32,33 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           108,                        // int    ZigZag.Semaphores.Wingdings
                           CLR_NONE,                   // color  ZigZag.Color
 
-                          "",                         // string ____________________________
+                          "separator",                // string ____________________________
                           false,                      // bool   Donchian.ShowChannel
                           "all",                      // string Donchian.ShowCrossings
                           1,                          // int    Donchian.Crossings.Width
-                          161,                        // int    Donchian.Crossings.Wingdings
+                          163,                        // int    Donchian.Crossings.Wingdings
                           CLR_NONE,                   // color  Donchian.Upper.Color
                           CLR_NONE,                   // color  Donchian.Lower.Color
 
-                          "",                         // string ____________________________
-                          0,                          // int    Show123Projections
+                          "separator",                // string ____________________________
                           false,                      // bool   ShowChartLegend
                           -1,                         // int    MaxBarsBack
 
-                          "",                         // string ____________________________
+                          "separator",                // string ____________________________
                           false,                      // bool   Signal.onReversal
                           "",                         // string Signal.onReversal.Types
+
                           false,                      // bool   Signal.onBreakout
-                          false,                      // bool   Signal.onBreakout.123Only
                           "",                         // string Signal.onBreakout.Types
+
                           "",                         // string Signal.Sound.Up
                           "",                         // string Signal.Sound.Down
+
                           false,                      // bool   Sound.onChannelWidening
                           "",                         // string Sound.onNewChannelHigh
                           "",                         // string Sound.onNewChannelLow
 
-                          "",                         // string ____________________________
+                          "separator",                // string ____________________________
                           false,                      // bool   AutoConfiguration
                           lpSuperContext,             // int    __lpSuperContext
 

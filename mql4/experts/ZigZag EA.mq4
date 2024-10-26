@@ -1,5 +1,5 @@
 /**
- * A system trading ZigZag reversals (i.e. Donchian channel breakouts).
+ * A system trading ZigZag reversals.
  *
  *
  * Requirements
@@ -48,7 +48,7 @@
  *  - daily range projection, @see https://www.forexfactory.com/thread/993524-roadmap-a-way-to-read-markets#
  *
  *  - monitor and auto-reload changed config files
- *  - realtime equity charts (don't learn afterwards about what happened in the account)
+ *  - realtime equity charts (don't learn afterwards about what happened in the account in the past)
  *
  *  - all indicators
  *     add period stepping

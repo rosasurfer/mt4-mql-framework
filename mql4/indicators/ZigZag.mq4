@@ -12,8 +12,6 @@
  * develops over time. Also it supports manual period stepping via hotkey (keyboard). Finally the indicator supports multiple
  * signaling and sound options.
  *
- * For the signaled ZigZag 1-2-3 pattern see https://www.forexfactory.com/thread/210023-123-pattern-ea#
- *
  *
  * Input parameters
  * ----------------
@@ -36,14 +34,12 @@
  *  • Donchian.Lower.Color:         Color of lower Donchian channel band/lower crossings.
  *
  *  • ShowChartLegend:              Whether do display the chart legend.
- *  • Show123Projections            Number of 1-2-3 projections to display.
  *  • MaxBarsBack:                  Maximum number of bars back to calculate the indicator (performance).
  *
  *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
  *  • Signal.onReversal.Types:      Reversal signaling methods, can be a combination of "sound", "alert", "mail", "sms".
  *
  *  • Signal.onBreakout:            Whether to signal ZigZag breakouts (price exceeding the previous swing's ZigZag semaphore).
- *  • Signal.onBreakout.123Only:    Whether to signal valid 1-2-3 pattern breakouts only.
  *  • Signal.onBreakout.Types:      Breakout signaling methods, can be a combination of "sound", "alert", "mail", "sms".
  *
  *  • Signal.Sound.Up:              Sound file for reversal and breakout signals.
@@ -58,7 +54,6 @@
  *
  *
  * TODO:
- *  - fix missing break condition in Draw123Projections()
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
  *  - keep bar status in IsUpperCrossLast()
  *  - document usage of iCustom()
@@ -86,7 +81,6 @@ extern color  Donchian.Upper.Color           = Blue;
 extern color  Donchian.Lower.Color           = Magenta;
 
 extern string ___c__________________________ = "=== Display settings ===";
-extern int    Show123Projections             = 0;                             // number of 1-2-3 projections to display
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                         // max. values to calculate (-1: all available)
 
@@ -95,7 +89,6 @@ extern bool   Signal.onReversal              = false;                         //
 extern string Signal.onReversal.Types        = "sound* | alert | mail | sms";
 
 extern bool   Signal.onBreakout              = false;                         // signal ZigZag breakouts
-extern bool   Signal.onBreakout.123Only      = false;                         // signal valid 1-2-3 breakouts only
 extern string Signal.onBreakout.Types        = "sound* | alert | mail | sms";
 
 extern string Signal.Sound.Up                = "Signal Up.wav";
@@ -269,10 +262,6 @@ int onInit() {
    if (ZigZag.Color         == 0xFF000000) ZigZag.Color         = CLR_NONE;
    if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
    if (Donchian.Lower.Color == 0xFF000000) Donchian.Lower.Color = CLR_NONE;
-   // Show123Projections
-   if (AutoConfiguration) Show123Projections = GetConfigInt(indicator, "Show123Projections", Show123Projections);
-   if (Show123Projections < -1)            return(catch("onInit(11)  invalid input parameter Show123Projections: "+ Show123Projections, ERR_INVALID_INPUT_PARAMETER));
-   if (Show123Projections == -1) Show123Projections = INT_MAX;
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
@@ -300,8 +289,6 @@ int onInit() {
       }
       Signal.onBreakout = (signal.onBreakout.sound || signal.onBreakout.alert || signal.onBreakout.mail || signal.onBreakout.sms);
    }
-   // Signal.onBreakout.123Only
-   if (AutoConfiguration) Signal.onBreakout.123Only = GetConfigBool(indicator, "Signal.onBreakout.123Only", Signal.onBreakout.123Only);
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
@@ -316,7 +303,7 @@ int onInit() {
    lastSoundSignal = 0;
 
    // reset an active command handler
-   if (__isChart && (ZigZag.Periods.Step || Show123Projections)) {
+   if (__isChart && (ZigZag.Periods.Step)) {
       GetChartCommand("ParameterStepper", sValues);
    }
 
@@ -362,11 +349,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  sizeof(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart) /*&&*/ if (ZigZag.Periods.Step || Show123Projections) {
+   if (__isChart) /*&&*/ if (ZigZag.Periods.Step != 0) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
    }
 
@@ -421,7 +405,7 @@ int onTick() {
 
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-ZigZag.Periods);
-   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ ZigZag.Periods, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ ZigZag.Periods, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    if (startbar > 2) {
@@ -534,24 +518,19 @@ int onTick() {
          sema2 = ifDouble(type==MODE_HIGH, High[bar], Low[bar]);
          bar   = FindPrevSemaphore(bar, type);
          sema3 = ifDouble(type==MODE_HIGH, High[bar], Low[bar]);
-
-         // draw 123 projections
-         if (!Draw123Projections()) return(last_error);
       }
       else {
          // detect ZigZag breakouts (comparing legs against bands also detect breakouts on missed ticks)
          if (Signal.onBreakout && sema3) {
             if (knownTrend[0] > 0) {
                if (lastLegHigh < sema2+HalfPoint && upperBand[0] > sema2+HalfPoint) {
-                  bool is123Pattern = (sema3 < sema1+HalfPoint);
-                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_LONG, is123Pattern);
+                  onBreakout(D_LONG);
                }
                lastLegHigh = High[unknownTrend[0]];                     // leg high for comparison at the nex tick
             }
             else if (knownTrend[0] < 0) {
                if ((!lastLegLow || lastLegLow > sema2-HalfPoint) && lowerBand[0] < sema2-HalfPoint) {
-                  is123Pattern = (sema3 > sema1-HalfPoint);
-                  if (!Signal.onBreakout.123Only || is123Pattern) onBreakout(D_SHORT, is123Pattern);
+                  onBreakout(D_SHORT);
                }
                lastLegLow = Low[unknownTrend[0]];                       // leg low for comparison at the nex tick
             }
@@ -863,123 +842,6 @@ void UpdateTrend(int fromBar, int fromValue, int toBar, bool resetReversalBuffer
 
 
 /**
- * Draw 1-2-3 breakout projections.
- *
- * @return bool - success status
- */
-bool Draw123Projections() {
-   Delete123Projections();                      // delete all existing projections
-   if (!Show123Projections) return(true);
-
-   int type = NULL;
-   int    bar1 = FindPrevSemaphore(0, type);
-   double sem1 = ifDouble(type==MODE_HIGH, High[bar1], Low[bar1]);
-   int    bar2 = FindPrevSemaphore(bar1, type);
-   double sem2 = ifDouble(type==MODE_HIGH, High[bar2], Low[bar2]);
-   int    bar3 = FindPrevSemaphore(bar2, type);
-   double sem3 = ifDouble(type==MODE_HIGH, High[bar3], Low[bar3]);
-   int    bar4 = FindPrevSemaphore(bar3, type);
-   double sem4 = ifDouble(type==MODE_HIGH, High[bar4], Low[bar4]);
-
-   // find and redraw 123 projections
-   int foundPatterns = 0;
-   while (foundPatterns < Show123Projections) {
-      if (type == MODE_HIGH) {
-         if (sem2 < sem4+HalfPoint && sem1 < sem3-HalfPoint) {
-            foundPatterns++;
-            if (!Create123Projection(bar2, sem2, bar3, sem3)) return(false);
-         }
-      }
-      else /*type==MODE_LOW*/ {
-         if (sem2 > sem4-HalfPoint && sem1 > sem3+HalfPoint) {
-            foundPatterns++;
-            if (!Create123Projection(bar2, sem2, bar3, sem3)) return(false);
-         }
-      }
-      bar1=bar2; bar2=bar3; bar3=bar4; bar4=FindPrevSemaphore(bar4, type);
-      sem1=sem2; sem2=sem3; sem3=sem4; sem4=ifDouble(type==MODE_HIGH, High[bar4], Low[bar4]);
-   }
-   return(!catch("Draw123Projections(1)"));
-}
-
-
-/**
- * Delete all 1-2-3 projections created by this indicator from the chart.
- *
- * @return bool - success status
- */
-bool Delete123Projections() {
-   int size = ArraySize(labels);
-
-   for (int i=0; i < size; i++) {
-      if (!ObjectDelete(labels[i])) {
-         int error = GetLastError();
-         if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("Delete123Projections(1)->ObjectDelete(label=\""+ labels[i] +"\")", intOr(error, ERR_RUNTIME_ERROR)));
-      }
-   }
-   ArrayResize(labels, 0);
-   return(!catch("Delete123Projections(2)"));
-}
-
-
-/**
- * Draw a new inside bar for the specified data.
- *
- * @param  int      stopBar      - bar offset of the stop semaphore
- * @param  double   stopLevel    - price level of the stop semaphore
- * @param  int      triggerBar   - bar offset of the trigger semaphore
- * @param  double   triggerLevel - price level of the trigger semaphore
- *
- * @return bool - success status
- */
-bool Create123Projection(int stopBar, double stopLevel, int breakoutBar, double breakoutLevel) {
-   static int counter = 0;
-   int pid = __ExecutionContext[EC.pid];
-   double targetLevel = breakoutLevel - (stopLevel-breakoutLevel);
-
-   // vertical line
-   counter++;
-   string label = "123 projection: "+ NumberToStr(targetLevel, PriceFormat) +"-"+ NumberToStr(breakoutLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
-   if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], targetLevel, Time[stopBar], breakoutLevel)) {
-      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet(label, OBJPROP_WIDTH, 2);
-      ObjectSet(label, OBJPROP_COLOR, Red);
-      ObjectSet(label, OBJPROP_RAY,   false);
-      ObjectSet(label, OBJPROP_BACK,  true);
-      ArrayPushString(labels, label);
-   }
-
-   int toBar = stopBar-3;
-   if (toBar >= 0) datetime toTime = Time[toBar];
-   else                     toTime = Time[stopBar] + 3*Period()*MINUTES;
-
-   // horizontal marker at breakout level
-   label = "123 projection: BO = "+ NumberToStr(breakoutLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
-   if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], breakoutLevel, toTime, breakoutLevel)) {
-      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet(label, OBJPROP_COLOR, Red);
-      ObjectSet(label, OBJPROP_RAY,   false);
-      ObjectSet(label, OBJPROP_BACK,  true);
-      ArrayPushString(labels, label);
-   }
-
-   // horizontal marker at target level
-   label = "123 projection: TP = "+ NumberToStr(targetLevel, PriceFormat) +" ["+ counter +"]["+ pid +"]";
-   if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, Time[stopBar], targetLevel, toTime, targetLevel)) {
-      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet(label, OBJPROP_COLOR, Red);
-      ObjectSet(label, OBJPROP_RAY,   false);
-      ObjectSet(label, OBJPROP_BACK,  true);
-      ArrayPushString(labels, label);
-   }
-   return(!catch("Create123Projection(1)"));
-}
-
-
-/**
  * Event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple running instances.
  *
  * @param  int direction - reversal direction: D_LONG | D_SHORT
@@ -1017,15 +879,13 @@ bool onReversal(int direction) {
 
 
 /**
- * Event handler signaling new ZigZag breakouts. Prevents duplicate signals triggered by multiple running instances.
+ * Event handler signaling new ZigZag breakouts.
  *
- * @param  int  direction    - breakout direction: D_LONG | D_SHORT
- * @param  bool is123Pattern - whether the breakout represents a valid 1-2-3 pattern
+ * @param  int direction - breakout direction: D_LONG | D_SHORT
  *
  * @return bool - success status
  */
-bool onBreakout(int direction, bool is123Pattern) {
-   is123Pattern = is123Pattern!=0;
+bool onBreakout(int direction) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onBreakout(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
@@ -1039,14 +899,14 @@ bool onBreakout(int direction, bool is123Pattern) {
 
    string sDirection = ifString(direction==D_LONG, "long", "short");
    string sBid       = NumberToStr(_Bid, PriceFormat);
-   if (IsLogInfo()) logInfo("onBreakout(P="+ ZigZag.Periods +")  "+ ifString(is123Pattern, "1-2-3 breakout ", "") + sDirection +" (bid: "+ sBid +")");
+   if (IsLogInfo()) logInfo("onBreakout(P="+ ZigZag.Periods +")  "+ sDirection +" (bid: "+ sBid +")");
 
    if (signal.onBreakout.sound) {
       int error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
       if (!error) lastSoundSignal = GetTickCount();
    }
 
-   string message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +")"+ ifString(is123Pattern, " 1-2-3", "") +" breakout "+ sDirection +" (bid: "+ sBid +")";
+   string message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") breakout "+ sDirection +" (bid: "+ sBid +")";
    string sAccount = "";
    if (signal.onReversal.mail || signal.onReversal.sms) sAccount = "("+ TimeToStr(TimeLocalEx("onBreakout(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
@@ -1096,7 +956,7 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Step up/down input parameters "ZigZag.Periods" or "Show123Projections".
+ * Step up/down input parameter "ZigZag.Periods".
  *
  * @param  int direction - STEP_UP | STEP_DOWN
  * @param  int keys      - modifier keys
@@ -1106,19 +966,6 @@ bool onCommand(string cmd, string params, int keys) {
 bool ParameterStepper(int direction, int keys) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // with VK_SHIFT: control parameter Show123Projections
-   if (keys & F_VK_SHIFT && 1) {
-      if (Show123Projections + direction < 0) {             // stop if parameter limit reached
-         PlaySoundEx("Plonk.wav");
-         return(false);
-      }
-      Show123Projections += direction;
-      ChangedBars = Bars;                                   // Draw123Projections() can't be called directly. It must be called
-      ValidBars   = 0;                                      // by onTick() after buffers have been updated.
-      return(true);
-   }
-
-   // w/o VK_SHIFT: control parameter ZigZag.Periods
    int step = ZigZag.Periods.Step;
    if (!step || ZigZag.Periods + direction*step < 2) {      // stop if parameter limit reached
       PlaySoundEx("Plonk.wav");
@@ -1291,14 +1138,12 @@ string InputsToStr() {
                             "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)        +";"+ NL,
                             "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)        +";"+ NL,
 
-                            "Show123Projections=",           Show123Projections                      +";"+ NL,
                             "ShowChartLegend=",              BoolToStr(ShowChartLegend)              +";"+ NL,
                             "MaxBarsBack=",                  MaxBarsBack                             +";"+ NL,
 
                             "Signal.onReversal=",            BoolToStr(Signal.onReversal)            +";"+ NL,
                             "Signal.onReversal.Types=",      DoubleQuoteStr(Signal.onReversal.Types) +";"+ NL,
                             "Signal.onBreakout=",            BoolToStr(Signal.onBreakout)            +";"+ NL,
-                            "Signal.onBreakout.123Only=",    BoolToStr(Signal.onBreakout.123Only)    +";"+ NL,
                             "Signal.onBreakout.Types=",      DoubleQuoteStr(Signal.onBreakout.Types) +";"+ NL,
                             "Signal.Sound.Up=",              DoubleQuoteStr(Signal.Sound.Up)         +";"+ NL,
                             "Signal.Sound.Down=",            DoubleQuoteStr(Signal.Sound.Down)       +";"+ NL,

@@ -174,11 +174,9 @@ ZigZag.Width=3
 ZigZag.Color=9639167
 Donchian.ShowChannel=1
 Donchian.ShowCrossings=off | first* | all
-Show123Projections=0
 ShowChartLegend=1
 Signal.onReversal=0
 Signal.onBreakout=1
-Signal.onBreakout.123Only=1
 Signal.onBreakout.Types=sound
 </inputs>
 </expert>
@@ -203,11 +201,9 @@ ZigZag.Color=16711680
 Donchian.ShowChannel=0
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossings.Wingdings=108
-Show123Projections=0
 ShowChartLegend=0
 Signal.onReversal=0
 Signal.onBreakout=1
-Signal.onBreakout.123Only=1
 Signal.onBreakout.Types=sound
 </inputs>
 </expert>
