@@ -77,6 +77,21 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Inside Bars
+flags=339
+window_num=0
+<inputs>
+Timeframe=H1
+NumberOfInsideBars=3
+</inputs>
+</expert>
+period_flags=31
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=ZigZag
 flags=339
 window_num=0
