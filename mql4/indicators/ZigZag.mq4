@@ -54,7 +54,6 @@
  *
  *
  * TODO:
- *  - fix channel crossing down at XAUUSD.M4 2024.10.22 03:00, ZigZag(9)
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
  *  - track swing sizes and display zero sum projection (ZigZag mean reversion)
  *  - keep bar status in IsUpperCrossLast()
@@ -115,18 +114,18 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #include <rsf/win32api.mqh>
 
 // indicator buffer ids
-#define MODE_SEMAPHORE_OPEN      ZigZag.MODE_SEMAPHORE_OPEN    //  0: semaphore open price
-#define MODE_SEMAPHORE_CLOSE     ZigZag.MODE_SEMAPHORE_CLOSE   //  1: semaphore close price
+#define MODE_SEMAPHORE_OPEN      ZigZag.MODE_SEMAPHORE_OPEN    //  0: semaphore open prices
+#define MODE_SEMAPHORE_CLOSE     ZigZag.MODE_SEMAPHORE_CLOSE   //  1: semaphore close prices
 #define MODE_UPPER_BAND          ZigZag.MODE_UPPER_BAND        //  2: upper channel band
 #define MODE_LOWER_BAND          ZigZag.MODE_LOWER_BAND        //  3: lower channel band
 #define MODE_UPPER_CROSS         ZigZag.MODE_UPPER_CROSS       //  4: upper channel band crossings
 #define MODE_LOWER_CROSS         ZigZag.MODE_LOWER_CROSS       //  5: lower channel band crossings
-#define MODE_REVERSAL            ZigZag.MODE_REVERSAL          //  6: offset of last ZigZag reversal to previous ZigZag semaphore
+#define MODE_REVERSAL            ZigZag.MODE_REVERSAL          //  6: offset of the previous reversal pount to the preceeding ZigZag semaphore
 #define MODE_COMBINED_TREND      ZigZag.MODE_TREND             //  7: trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 #define MODE_HIGHER_HIGH         8                             //  8: new High after an upper channel band crossing (potential new semaphore)
 #define MODE_LOWER_LOW           9                             //  9: new Low after a lower channel band crossing (potential new semaphore)
-#define MODE_KNOWN_TREND         10                            // 10: known trend
-#define MODE_UNKNOWN_TREND       11                            // 11: not yet known trend
+#define MODE_KNOWN_TREND         10                            // 10: known direction and duration of a ZigZag leg
+#define MODE_UNKNOWN_TREND       11                            // 11: not yet known ZigZag direction and duration after the last High/Low
 
 #property indicator_chart_window
 #property indicator_buffers   8                                // visible buffers
@@ -150,18 +149,18 @@ int       framework_buffers = 4;                               // buffers manage
 #property indicator_color7    CLR_NONE                         // offset of last ZigZag reversal to previous ZigZag semaphore
 #property indicator_color8    CLR_NONE                         // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 
-double   semaphoreOpen [];                                     // ZigZag semaphore open price (draws a vertical line if open != close)
-double   semaphoreClose[];                                     // ZigZag semaphore close price (draws a vertical line if open != close)
+double   semaphoreOpen [];                                     // ZigZag semaphore open prices  (yields a vertical line segment if open != close)
+double   semaphoreClose[];                                     // ZigZag semaphore close prices (yields a vertical line segment if open != close)
 double   upperBand     [];                                     // upper channel band
 double   lowerBand     [];                                     // lower channel band
 double   upperCross    [];                                     // upper channel band crossings
 double   lowerCross    [];                                     // lower channel band crossings
 double   higherHigh    [];                                     // new High after an upper channel band crossing (potential new semaphore)
 double   lowerLow      [];                                     // new Low after a lower channel band crossing (potential new semaphore)
-double   reversal      [];                                     // offset of last ZigZag reversal to previous ZigZag semaphore
-int      knownTrend    [];                                     // known direction and length of a ZigZag reversal
-int      unknownTrend  [];                                     // not yet known direction and length after a ZigZag reversal
-double   combinedTrend [];                                     // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
+double   reversal      [];                                     // offset of the previous reversal point to the preceeding ZigZag semaphore
+int      knownTrend    [];                                     // known direction and duration of a ZigZag leg
+int      unknownTrend  [];                                     // not yet known ZigZag direction and duration after the last High/Low
+double   combinedTrend [];                                     // resulting trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 
 #define MODE_FIRST_CROSSING   1                                // crossing draw types
 #define MODE_ALL_CROSSINGS    2
@@ -456,7 +455,7 @@ int onTick() {
       // if two channel crossings (upper and lower band crossed by the same bar)
       else if (upperCross[bar] && lowerCross[bar]) {
          if (IsUpperCrossLast(bar)) {
-            if (!knownTrend[bar]) ProcessLowerCross(bar);         // if bar not yet processed process both crossings
+            if (!knownTrend[bar]) ProcessLowerCross(bar);         // if bar not yet processed then process both crossings in order,
             ProcessUpperCross(bar);                               // otherwise process only the last crossing
          }
          else {
@@ -472,22 +471,25 @@ int onTick() {
       // calculate combinedTrend[]
       combinedTrend[bar] = Sign(knownTrend[bar]) * unknownTrend[bar] * 100000 + knownTrend[bar];
 
-      // hide non-configured crossing buffers
-      if (!crossingDrawType) {                                    // hide all crossings
+      // hide non-configured crossings
+      if (!crossingDrawType) {                                             // hide all crossings
          upperCross[bar] = 0;
          lowerCross[bar] = 0;
       }
-      else if (crossingDrawType == MODE_FIRST_CROSSING) {         // hide all crossings except the 1st
+      else if (crossingDrawType == MODE_FIRST_CROSSING) {                  // hide all crossings except the 1st
          bool isReversal = false;
 
          if (!unknownTrend[bar]) {
             int absTrend = MathAbs(knownTrend[bar]);
-            if      (absTrend == reversal[bar])       isReversal = true;
-            else if (absTrend == 1 && !reversal[bar]) isReversal = true;
+            if      (absTrend == reversal[bar])       isReversal = true;   // reversal offset is 0 if the reversal occurred
+            else if (absTrend == 1 && !reversal[bar]) isReversal = true;   // on the same bar as the preceeding semaphore
          }
+
          if (isReversal) {
-            if (knownTrend[bar] > 0) lowerCross[bar] = 0;
-            else                     upperCross[bar] = 0;
+            if (reversal[bar+1] >= 0) {                                    // keep preceeding reversals on the same bar
+               if (knownTrend[bar] > 0) lowerCross[bar] = 0;
+               else                     upperCross[bar] = 0;
+            }
          }
          else {
             upperCross[bar] = 0;
@@ -522,7 +524,7 @@ int onTick() {
          sema3 = ifDouble(type==MODE_HIGH, High[bar], Low[bar]);
       }
       else {
-         // detect ZigZag breakouts (comparing legs against bands also detect breakouts on missed ticks)
+         // detect ZigZag breakouts (comparing legs against bands also detects breakouts on missed ticks)
          if (Signal.onBreakout && sema3) {
             if (knownTrend[0] > 0) {
                if (lastLegHigh < sema2+HalfPoint && upperBand[0] > sema2+HalfPoint) {
