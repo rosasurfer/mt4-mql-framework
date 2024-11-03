@@ -1,10 +1,10 @@
-#define ZigZag.MODE_SEMAPHORE_OPEN     0              // semaphore open price
-#define ZigZag.MODE_SEMAPHORE_CLOSE    1              // semaphore close price
+#define ZigZag.MODE_SEMAPHORE_OPEN     0              // semaphore open prices
+#define ZigZag.MODE_SEMAPHORE_CLOSE    1              // semaphore close prices
 #define ZigZag.MODE_UPPER_BAND         2              // upper channel band
 #define ZigZag.MODE_LOWER_BAND         3              // lower channel band
 #define ZigZag.MODE_UPPER_CROSS        4              // upper channel band crossings
 #define ZigZag.MODE_LOWER_CROSS        5              // lower channel band crossings
-#define ZigZag.MODE_REVERSAL           6              // offset of last ZigZag reversal to previous ZigZag semaphore
+#define ZigZag.MODE_REVERSAL           6              // offset of the previous ZigZag reversal to the preceeding semaphore
 #define ZigZag.MODE_TREND              7              // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 
 
@@ -24,43 +24,49 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    }
 
    double value = iCustom(NULL, timeframe, "ZigZag",
-                          "separator",                // string ____________________________
-                          periods,                    // int    ZigZag.Periods
-                          0,                          // int    ZigZag.Periods.Step
-                          "Line",                     // string ZigZag.Type
-                          1,                          // int    ZigZag.Width
-                          108,                        // int    ZigZag.Semaphores.Wingdings
-                          CLR_NONE,                   // color  ZigZag.Color
+                          "separator",                // string   ____________________________
+                          periods,                    // int      ZigZag.Periods
+                          0,                          // int      ZigZag.Periods.Step
+                          "Line",                     // string   ZigZag.Type
+                          1,                          // int      ZigZag.Width
+                          108,                        // int      ZigZag.Semaphores.Wingdings
+                          CLR_NONE,                   // color    ZigZag.Color
 
-                          "separator",                // string ____________________________
-                          false,                      // bool   Donchian.ShowChannel
-                          "all",                      // string Donchian.ShowCrossings
-                          1,                          // int    Donchian.Crossings.Width
-                          163,                        // int    Donchian.Crossings.Wingdings
-                          CLR_NONE,                   // color  Donchian.Upper.Color
-                          CLR_NONE,                   // color  Donchian.Lower.Color
+                          "separator",                // string   ____________________________
+                          false,                      // bool     Donchian.ShowChannel
+                          "all",                      // string   Donchian.ShowCrossings
+                          1,                          // int      Donchian.Crossings.Width
+                          163,                        // int      Donchian.Crossings.Wingdings
+                          CLR_NONE,                   // color    Donchian.Upper.Color
+                          CLR_NONE,                   // color    Donchian.Lower.Color
 
-                          "separator",                // string ____________________________
-                          false,                      // bool   ShowChartLegend
-                          -1,                         // int    MaxBarsBack
+                          "separator",                // string   ____________________________
+                          false,                      // bool     TrackReversalBalance
+                          0,                          // datetime TrackReversalBalance.Since
+                          0,                          // double   ReversalBalance.MarkerOffset
+                          false,                      // bool     ProjectReversalBalance
 
-                          "separator",                // string ____________________________
-                          false,                      // bool   Signal.onReversal
-                          "",                         // string Signal.onReversal.Types
+                          "separator",                // string   ____________________________
+                          false,                      // bool     ShowChartLegend
+                          -1,                         // int      MaxBarsBack
 
-                          false,                      // bool   Signal.onBreakout
-                          "",                         // string Signal.onBreakout.Types
+                          "separator",                // string   ____________________________
+                          false,                      // bool     Signal.onReversal
+                          "",                         // string   Signal.onReversal.Types
 
-                          "",                         // string Signal.Sound.Up
-                          "",                         // string Signal.Sound.Down
+                          false,                      // bool     Signal.onBreakout
+                          "",                         // string   Signal.onBreakout.Types
 
-                          false,                      // bool   Sound.onChannelWidening
-                          "",                         // string Sound.onNewChannelHigh
-                          "",                         // string Sound.onNewChannelLow
+                          "",                         // string   Signal.Sound.Up
+                          "",                         // string   Signal.Sound.Down
 
-                          "separator",                // string ____________________________
-                          false,                      // bool   AutoConfiguration
-                          lpSuperContext,             // int    __lpSuperContext
+                          false,                      // bool     Sound.onChannelWidening
+                          "",                         // string   Sound.onNewChannelHigh
+                          "",                         // string   Sound.onNewChannelLow
+
+                          "separator",                // string   ____________________________
+                          false,                      // bool     AutoConfiguration
+                          lpSuperContext,             // int      __lpSuperContext
 
                           iBuffer, iBar);
 
