@@ -1,5 +1,5 @@
 /**
- * Calculate and return the Average Daily Range of the current symbol. Implemented as LWMA(20, ATR(1)).
+ * Calculate and return the Average Daily Range of the current symbol. Implemented as LWMA(20, TrueRange).
  *
  * @param  int flags [optional] - controls error behavior (default: trigger a fatal error)
  *                                F_ERR_NO_HISTORY_DATA: silently handle ERR_NO_HISTORY_DATA

@@ -1,5 +1,5 @@
 /**
- * Average Range/Average True Range
+ * Average (True) Range
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -7,13 +7,16 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods      = 20;                            // averaging periods
-extern int    MA.Periods.Step = 0;                             // step size for a stepped input parameter (hotkey)
-extern string MA.Method       = "SMA | LWMA* | EMA | SMMA";    // averaging type
-extern bool   TrueRange       = true;                          // whether to calculate the standard or true range
+extern bool   TrueRange                      = true;                       // whether to reflect the traded or the true range
 
-extern int    Line.Width      = 2;
-extern color  Line.Color      = Blue;
+extern string ___a__________________________ = "=== MA settings ===";
+extern int    MA.Periods                     = 20;                         // averaging periods
+extern int    MA.Periods.Step                = 0;                          // step size for a stepped input parameter
+extern string MA.Method                      = "SMA | LWMA* | EMA | SMMA"; // averaging type
+
+extern string ___b__________________________ = "=== Display settings ===";
+extern int    Line.Width                     = 2;
+extern color  Line.Color                     = Blue;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -266,10 +269,10 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",      MA.Periods,                ";", NL,
+   return(StringConcatenate("TrueRange=",       BoolToStr(TrueRange),      ";", NL,
+                            "MA.Periods=",      MA.Periods,                ";", NL,
                             "MA.Periods.Step=", MA.Periods.Step,           ";", NL,
                             "MA.Method=",       DoubleQuoteStr(MA.Method), ";", NL,
-                            "TrueRange=",       BoolToStr(TrueRange),      ";", NL,
                             "Line.Width=",      Line.Width,                ";", NL,
                             "Line.Color=",      ColorToStr(Line.Color),    ";")
    );
