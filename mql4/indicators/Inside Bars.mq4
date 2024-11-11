@@ -584,7 +584,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    static int counter = 0; counter++;
 
    // vertical line at IB open
-   string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +") ["+ counter +"]";
+   string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/pUnit, pDigits) +") ["+ counter +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
    if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
@@ -595,7 +595,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    }
 
    // horizontal line at long projection
-   label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
+   label = sTimeframe +" inside bar: +100% = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
    if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, closeTime, longTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
@@ -607,7 +607,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    }
 
    // horizontal line at short projection
-   label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
+   label = sTimeframe +" inside bar: -100% = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
    if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, shortTarget, closeTime, shortTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
