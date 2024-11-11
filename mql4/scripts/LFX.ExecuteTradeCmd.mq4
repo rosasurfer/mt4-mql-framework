@@ -33,8 +33,8 @@ int __DeinitFlags[];
 #include <rsf/functions/lfx.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/scriptrunner.mqh>
-#include <rsf/struct/LFXOrder.mqh>
-#include <rsf/struct/OrderExecution.mqh>
+#include <rsf/structs/LFXOrder.mqh>
+#include <rsf/structs/OrderExecution.mqh>
 
 
 /**

@@ -25,7 +25,7 @@ extern double StopLossPrice;
 #include <rsf/functions/InitializeByteBuffer.mqh>
 #include <rsf/functions/lfx.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/struct/LFXOrder.mqh>
+#include <rsf/structs/LFXOrder.mqh>
 
 
 int limitType;                                                       // OP_SELLLIMIT | OP_SELLSTOP

@@ -36,7 +36,7 @@ extern bool   Close.HedgedPart   = false;          // close hedged part of the p
 #include <rsf/core/script.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/struct/OrderExecution.mqh>
+#include <rsf/structs/OrderExecution.mqh>
 
 bool   closeAllSymbols = false;
 

@@ -24,8 +24,8 @@ extern double Units        = 0.2;                                    // Position
 #include <rsf/functions/InitializeByteBuffer.mqh>
 #include <rsf/functions/lfx.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/struct/LFXOrder.mqh>
-#include <rsf/struct/OrderExecution.mqh>
+#include <rsf/structs/LFXOrder.mqh>
+#include <rsf/structs/OrderExecution.mqh>
 
 
 int    direction;

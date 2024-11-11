@@ -30,21 +30,21 @@ string Instance.ID = "999";                  // dummy, needed by StoreVolatileSt
 
 
 // EA definitions
-#include <rsf/ea/instance/defines.mqh>
-#include <rsf/ea/metric/defines.mqh>
-#include <rsf/ea/status/defines.mqh>
-#include <rsf/ea/trade/defines.mqh>
+#include <rsf/experts/instance/defines.mqh>
+#include <rsf/experts/metric/defines.mqh>
+#include <rsf/experts/status/defines.mqh>
+#include <rsf/experts/trade/defines.mqh>
 
 // EA functions
-#include <rsf/ea/status/ShowOpenOrders.mqh>
-#include <rsf/ea/status/ShowTradeHistory.mqh>
+#include <rsf/experts/status/ShowOpenOrders.mqh>
+#include <rsf/experts/status/ShowTradeHistory.mqh>
 
-#include <rsf/ea/status/volatile/StoreVolatileStatus.mqh>
-#include <rsf/ea/status/volatile/RemoveVolatileStatus.mqh>
-#include <rsf/ea/status/volatile/ToggleOpenOrders.mqh>
-#include <rsf/ea/status/volatile/ToggleTradeHistory.mqh>
+#include <rsf/experts/status/volatile/StoreVolatileStatus.mqh>
+#include <rsf/experts/status/volatile/RemoveVolatileStatus.mqh>
+#include <rsf/experts/status/volatile/ToggleOpenOrders.mqh>
+#include <rsf/experts/status/volatile/ToggleTradeHistory.mqh>
 
-#include <rsf/ea/trade/AddHistoryRecord.mqh>
+#include <rsf/experts/trade/AddHistoryRecord.mqh>
 
 
 /**

@@ -279,79 +279,79 @@ extern bool   ShowProfitInPercent            = false;                // whether 
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/ParseDateTime.mqh>
 #include <rsf/functions/iCustom/ZigZag.mqh>
-#include <rsf/struct/OrderExecution.mqh>
+#include <rsf/structs/OrderExecution.mqh>
 
 // EA definitions
-#include <rsf/ea/instance/defines.mqh>
-#include <rsf/ea/metric/defines.mqh>
-#include <rsf/ea/status/defines.mqh>
-#include <rsf/ea/test/defines.mqh>
-#include <rsf/ea/trade/defines.mqh>
-#include <rsf/ea/trade/signal/defines.mqh>
-#include <rsf/ea/trade/stats/defines.mqh>
+#include <rsf/experts/instance/defines.mqh>
+#include <rsf/experts/metric/defines.mqh>
+#include <rsf/experts/status/defines.mqh>
+#include <rsf/experts/test/defines.mqh>
+#include <rsf/experts/trade/defines.mqh>
+#include <rsf/experts/trade/signal/defines.mqh>
+#include <rsf/experts/trade/stats/defines.mqh>
 
 // EA functions
-#include <rsf/ea/instance/CreateInstanceId.mqh>
-#include <rsf/ea/instance/IsTestInstance.mqh>
-#include <rsf/ea/instance/RestoreInstance.mqh>
-#include <rsf/ea/instance/SetInstanceId.mqh>
+#include <rsf/experts/instance/CreateInstanceId.mqh>
+#include <rsf/experts/instance/IsTestInstance.mqh>
+#include <rsf/experts/instance/RestoreInstance.mqh>
+#include <rsf/experts/instance/SetInstanceId.mqh>
 
-#include <rsf/ea/log/GetLogFilename.mqh>
+#include <rsf/experts/log/GetLogFilename.mqh>
 
-#include <rsf/ea/metric/GetMT4SymbolDefinition.mqh>
-#include <rsf/ea/metric/RecordMetrics.mqh>
+#include <rsf/experts/metric/GetMT4SymbolDefinition.mqh>
+#include <rsf/experts/metric/RecordMetrics.mqh>
 
-#include <rsf/ea/status/ShowOpenOrders.mqh>
-#include <rsf/ea/status/ShowTradeHistory.mqh>
-#include <rsf/ea/status/SS.MetricDescription.mqh>
-#include <rsf/ea/status/SS.OpenLots.mqh>
-#include <rsf/ea/status/SS.ClosedTrades.mqh>
-#include <rsf/ea/status/SS.TotalProfit.mqh>
-#include <rsf/ea/status/SS.ProfitStats.mqh>
-#include <rsf/ea/status/StatusToStr.mqh>
-#include <rsf/ea/status/StatusDescription.mqh>
+#include <rsf/experts/status/ShowOpenOrders.mqh>
+#include <rsf/experts/status/ShowTradeHistory.mqh>
+#include <rsf/experts/status/SS.MetricDescription.mqh>
+#include <rsf/experts/status/SS.OpenLots.mqh>
+#include <rsf/experts/status/SS.ClosedTrades.mqh>
+#include <rsf/experts/status/SS.TotalProfit.mqh>
+#include <rsf/experts/status/SS.ProfitStats.mqh>
+#include <rsf/experts/status/StatusToStr.mqh>
+#include <rsf/experts/status/StatusDescription.mqh>
 
-#include <rsf/ea/status/file/FindStatusFile.mqh>
-#include <rsf/ea/status/file/GetStatusFilename.mqh>
-#include <rsf/ea/status/file/SetStatusFilename.mqh>
-#include <rsf/ea/status/file/ReadStatus.General.mqh>
-#include <rsf/ea/status/file/ReadStatus.HistoryRecord.mqh>
-#include <rsf/ea/status/file/ReadStatus.OpenPosition.mqh>
-#include <rsf/ea/status/file/ReadStatus.TradeHistory.mqh>
-#include <rsf/ea/status/file/ReadStatus.TradeStats.mqh>
-#include <rsf/ea/status/file/SaveStatus.General.mqh>
-#include <rsf/ea/status/file/SaveStatus.OpenPosition.mqh>
-#include <rsf/ea/status/file/SaveStatus.TradeHistory.mqh>
-#include <rsf/ea/status/file/SaveStatus.TradeStats.mqh>
+#include <rsf/experts/status/file/FindStatusFile.mqh>
+#include <rsf/experts/status/file/GetStatusFilename.mqh>
+#include <rsf/experts/status/file/SetStatusFilename.mqh>
+#include <rsf/experts/status/file/ReadStatus.General.mqh>
+#include <rsf/experts/status/file/ReadStatus.HistoryRecord.mqh>
+#include <rsf/experts/status/file/ReadStatus.OpenPosition.mqh>
+#include <rsf/experts/status/file/ReadStatus.TradeHistory.mqh>
+#include <rsf/experts/status/file/ReadStatus.TradeStats.mqh>
+#include <rsf/experts/status/file/SaveStatus.General.mqh>
+#include <rsf/experts/status/file/SaveStatus.OpenPosition.mqh>
+#include <rsf/experts/status/file/SaveStatus.TradeHistory.mqh>
+#include <rsf/experts/status/file/SaveStatus.TradeStats.mqh>
 
-#include <rsf/ea/status/volatile/StoreVolatileStatus.mqh>
-#include <rsf/ea/status/volatile/RestoreVolatileStatus.mqh>
-#include <rsf/ea/status/volatile/RemoveVolatileStatus.mqh>
-#include <rsf/ea/status/volatile/ToggleOpenOrders.mqh>
-#include <rsf/ea/status/volatile/ToggleTradeHistory.mqh>
-#include <rsf/ea/status/volatile/ToggleMetrics.mqh>
+#include <rsf/experts/status/volatile/StoreVolatileStatus.mqh>
+#include <rsf/experts/status/volatile/RestoreVolatileStatus.mqh>
+#include <rsf/experts/status/volatile/RemoveVolatileStatus.mqh>
+#include <rsf/experts/status/volatile/ToggleOpenOrders.mqh>
+#include <rsf/experts/status/volatile/ToggleTradeHistory.mqh>
+#include <rsf/experts/status/volatile/ToggleMetrics.mqh>
 
-#include <rsf/ea/test/ReadTestConfiguration.mqh>
+#include <rsf/experts/test/ReadTestConfiguration.mqh>
 
-#include <rsf/ea/trade/AddHistoryRecord.mqh>
-#include <rsf/ea/trade/CalculateMagicNumber.mqh>
-#include <rsf/ea/trade/ComposePositionCloseMsg.mqh>
-#include <rsf/ea/trade/HistoryRecordToStr.mqh>
-#include <rsf/ea/trade/IsMyOrder.mqh>
-#include <rsf/ea/trade/MovePositionToHistory.mqh>
-#include <rsf/ea/trade/onPositionClose.mqh>
+#include <rsf/experts/trade/AddHistoryRecord.mqh>
+#include <rsf/experts/trade/CalculateMagicNumber.mqh>
+#include <rsf/experts/trade/ComposePositionCloseMsg.mqh>
+#include <rsf/experts/trade/HistoryRecordToStr.mqh>
+#include <rsf/experts/trade/IsMyOrder.mqh>
+#include <rsf/experts/trade/MovePositionToHistory.mqh>
+#include <rsf/experts/trade/onPositionClose.mqh>
 
-#include <rsf/ea/trade/signal/SignalOperationToStr.mqh>
-#include <rsf/ea/trade/signal/SignalTypeToStr.mqh>
+#include <rsf/experts/trade/signal/SignalOperationToStr.mqh>
+#include <rsf/experts/trade/signal/SignalTypeToStr.mqh>
 
-#include <rsf/ea/trade/stats/CalculateStats.mqh>
+#include <rsf/experts/trade/stats/CalculateStats.mqh>
 
-#include <rsf/ea/validation/ValidateInputs.ID.mqh>
-#include <rsf/ea/validation/onInputError.mqh>
+#include <rsf/experts/validation/ValidateInputs.ID.mqh>
+#include <rsf/experts/validation/onInputError.mqh>
 
 // init/deinit
-#include <rsf/ea/init.mqh>
-#include <rsf/ea/deinit.mqh>
+#include <rsf/experts/init.mqh>
+#include <rsf/experts/deinit.mqh>
 
 
 // shorter metric aliases

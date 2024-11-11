@@ -42,7 +42,7 @@ int __DeinitFlags[];
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
 #include <rsf/functions/InitializeByteBuffer.mqh>
-#include <rsf/struct/mt4/HistoryHeader.mqh>
+#include <rsf/structs/mt4/HistoryHeader.mqh>
 
 
 // Standard-Timeframes ------------------------------------------------------------------------------------------------------------------------------------

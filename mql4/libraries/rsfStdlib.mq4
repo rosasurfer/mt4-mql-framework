@@ -35,7 +35,7 @@ int __DeinitFlags[];
 #include <rsf/functions/JoinDoubles.mqh>
 #include <rsf/functions/JoinDoublesEx.mqh>
 #include <rsf/functions/JoinInts.mqh>
-#include <rsf/struct/OrderExecution.mqh>
+#include <rsf/structs/OrderExecution.mqh>
 
 
 /**

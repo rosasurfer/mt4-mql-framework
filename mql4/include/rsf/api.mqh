@@ -218,19 +218,6 @@ string   UrlEncode(string value);;
 bool     WaitForTicket(int ticket, bool select=false);;
 
 
-// include/rsf/common/
-int      Abs(int value);;
-string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
-int      Max(int a, int b, int c=INT_MIN);;
-int      Min(int a, int b, int c=INT_MAX);;
-string   PeriodDescription(int period=NULL);;
-bool     StrContains(string str, string substr);;
-string   StrLeft(string value, int n);;
-string   StrPadRight(string str, int padLength, string padString=" ");;
-string   StrSubstr(string str, int start, int length=INT_MAX);;
-string   StrTrim(string str);;
-
-
 // include/rsf/functions/
 double   ComputeFloatingProfit(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
 bool     ComputeFloatingProfits(string &symbols[], double &profits[], bool includePendings=false, bool ignoreSpread=false);;
@@ -359,6 +346,19 @@ double   icTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar)
 double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 
 
+// include/rsf/functions/shared/
+int      Abs(int value);;
+string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
+int      Max(int a, int b, int c=INT_MIN);;
+int      Min(int a, int b, int c=INT_MAX);;
+string   PeriodDescription(int period=NULL);;
+bool     StrContains(string str, string substr);;
+string   StrLeft(string value, int n);;
+string   StrPadRight(string str, int padLength, string padString=" ");;
+string   StrSubstr(string str, int start, int length=INT_MAX);;
+string   StrTrim(string str);;
+
+
 // include/rsf/functions/ta/
 bool     ALMA.CalculateWeights(int periods, double offset, double sigma, double &weights[]);;
 double   ATR(string symbol, int timeframe, int periods, int offset);;
@@ -367,7 +367,7 @@ double   JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, dou
 bool     NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]);;
 
 
-// include/rsf/struct/Bar.mqh
+// include/rsf/structs/Bar.mqh
 datetime bar.Time      (double bar[]);;
 double   bar.Open      (double bar[]);;
 double   bar.Low       (double bar[]);;
@@ -399,7 +399,7 @@ int      bars.setVolume(double &bar[][], int i, int    volume);;
 string   BAR.toStr     (double bar[]);;
 
 
-// include/rsf/struct/OrderExecution.mqh
+// include/rsf/structs/OrderExecution.mqh
 int      oe.Error              (/*ORDER_EXECUTION*/int oe[]);;
 bool     oe.IsError            (/*ORDER_EXECUTION*/int oe[]);;
 string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]);;
@@ -515,8 +515,8 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[]);;
 
 
-// include/rsf/struct/mt4/
-// include/rsf/struct/win32/
+// include/rsf/structs/mt4/
+// include/rsf/structs/win32/
 
 
 // libraries/rsfHistory1.ex4

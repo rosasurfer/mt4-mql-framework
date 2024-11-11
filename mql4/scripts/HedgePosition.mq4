@@ -14,7 +14,7 @@ int __DeinitFlags[];
 #include <rsf/core/script.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/struct/OrderExecution.mqh>
+#include <rsf/structs/OrderExecution.mqh>
 
 
 /**

@@ -50,7 +50,7 @@ extern bool   Track.Orders    = true;                             // whether to 
 #include <rsf/functions/SortClosedTickets.mqh>
 #include <rsf/functions/scriptrunner.mqh>
 #include <rsf/functions/ta/ADR.mqh>
-#include <rsf/struct/LFXOrder.mqh>
+#include <rsf/structs/LFXOrder.mqh>
 
 #property indicator_chart_window
 
@@ -223,8 +223,8 @@ string  orderTracker.positionStepSize = "MarginLow.wav";          // position in
 #define CLOSE_STOPOUT      3
 
 // initialization/deinitialization
-#include <rsf/functions/chartinfos/init.mqh>
-#include <rsf/functions/chartinfos/deinit.mqh>
+#include <rsf/indicators/chartinfos/init.mqh>
+#include <rsf/indicators/chartinfos/deinit.mqh>
 
 
 /**

@@ -1,15 +1,15 @@
 /**
  * Commonly used framework functions
  */
-#include <rsf/common/Abs.mqh>
-#include <rsf/common/LoglevelDescription.mqh>
-#include <rsf/common/Max.mqh>
-#include <rsf/common/PeriodDescription.mqh>
-#include <rsf/common/StrContains.mqh>
-#include <rsf/common/StrLeft.mqh>
-#include <rsf/common/StrPadRight.mqh>
-#include <rsf/common/StrSubstr.mqh>
-#include <rsf/common/StrTrim.mqh>
+#include <rsf/functions/shared/Abs.mqh>
+#include <rsf/functions/shared/LoglevelDescription.mqh>
+#include <rsf/functions/shared/Max.mqh>
+#include <rsf/functions/shared/PeriodDescription.mqh>
+#include <rsf/functions/shared/StrContains.mqh>
+#include <rsf/functions/shared/StrLeft.mqh>
+#include <rsf/functions/shared/StrPadRight.mqh>
+#include <rsf/functions/shared/StrSubstr.mqh>
+#include <rsf/functions/shared/StrTrim.mqh>
 
 //#include <rsf/functions/configuration.mqh>
 #include <rsf/functions/log.mqh>

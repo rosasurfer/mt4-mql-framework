@@ -8,7 +8,7 @@
                                                                   // (some even claim 1-8MB). In build 225 the default stacksize was 16KB which had to be increased.
 #include <rsf/shared.mqh>                                         // Using 32KB has always been sufficient.
 #include <rsf/win32defines.mqh>                                   //
-#include <rsf/struct/sizes.mqh>                                      // @see  https://docs.mql4.com/basis/variables/local#stack
+#include <rsf/structs/sizes.mqh>                                      // @see  https://docs.mql4.com/basis/variables/local#stack
                                                                   // @see  https://docs.mql4.com/basis/preprosessor/compilation
 
 // global variables
