@@ -10,9 +10,9 @@ int __DeinitFlags[];
 extern bool   TrueRange                      = true;                       // whether to reflect the traded or the true range
 
 extern string ___a__________________________ = "=== MA settings ===";
+extern string MA.Method                      = "SMA | LWMA* | EMA | SMMA"; // averaging type
 extern int    MA.Periods                     = 20;                         // averaging periods
 extern int    MA.Periods.Step                = 0;                          // step size for a stepped input parameter
-extern string MA.Method                      = "SMA | LWMA* | EMA | SMMA"; // averaging type
 
 extern string ___b__________________________ = "=== Display settings ===";
 extern int    Line.Width                     = 2;
@@ -270,9 +270,9 @@ bool RestoreStatus() {
  */
 string InputsToStr() {
    return(StringConcatenate("TrueRange=",       BoolToStr(TrueRange),      ";", NL,
+                            "MA.Method=",       DoubleQuoteStr(MA.Method), ";", NL,
                             "MA.Periods=",      MA.Periods,                ";", NL,
                             "MA.Periods.Step=", MA.Periods.Step,           ";", NL,
-                            "MA.Method=",       DoubleQuoteStr(MA.Method), ";", NL,
                             "Line.Width=",      Line.Width,                ";", NL,
                             "Line.Color=",      ColorToStr(Line.Color),    ";")
    );

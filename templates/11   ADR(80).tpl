@@ -84,9 +84,9 @@ name=Average Range
 flags=339
 window_num=1
 <inputs>
-MA.Periods=20
-MA.Method=SMA | LWMA* | EMA | SMMA
 TrueRange=1
+MA.Method=SMA | LWMA* | EMA | SMMA
+MA.Periods=80
 </inputs>
 </expert>
 color_0=16711680
