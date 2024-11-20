@@ -35,7 +35,7 @@
  *  • TrackZigZagBalance:           Whether to track and mark ZigZag balances.
  *  • TrackZigZagBalance.Since:     Start date-time to track and mark ZigZag balances.
  *  • BalanceMarkers.Offset:        Vertical chart offset of ZigZag balance markers.
- *  • ProjectNextBalance:           Whether to project price levels of the next zero balance.
+ *  • ProjectNextBalance:           Whether to project price levels of the next zero-balance.
  *
  *  • ShowChartLegend:              Whether do display the chart legend.
  *  • MaxBarsBack:                  Maximum number of bars back to calculate the indicator for (performance).
@@ -88,8 +88,8 @@ extern color    Donchian.Lower.Color           = Magenta;
 extern string   ___c__________________________ = "=== ZigZag projections ===";
 extern bool     TrackZigZagBalance             = false;                        // whether to track ZigZag balances
 extern datetime TrackZigZagBalance.Since       = 0;                            // mark ZigZag balances since this time
-extern double   BalanceMarkers.Offset          = 0;                            // vertical marker offset
-extern bool     ProjectNextBalance             = false;                        // whether to project the next zero balance
+extern double   BalanceMarkers.Offset          = 0;                            // vertical marker offset                      TODO: replace by 0.8% of view port (dynamic)
+extern bool     ProjectNextBalance             = false;                        // whether to project zero-balance levels
 
 extern string   ___d__________________________ = "=== Display settings ===";
 extern bool     ShowChartLegend                = true;
