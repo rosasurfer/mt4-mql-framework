@@ -43,7 +43,6 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           "separator",                // string   ____________________________
                           false,                      // bool     TrackReversalBalance
                           0,                          // datetime TrackReversalBalance.Since
-                          0,                          // double   ReversalBalance.MarkerOffset
                           false,                      // bool     ProjectReversalBalance
 
                           "separator",                // string   ____________________________

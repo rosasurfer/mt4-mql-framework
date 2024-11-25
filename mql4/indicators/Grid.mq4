@@ -124,9 +124,9 @@ bool UpdateHorizontalGrid() {
 /**
  * Get current horizontal chart dimensions.
  *
- * @param  _Out_ int    chartHeight   - variable receiving the chart height in pixel
- * @param  _Out_ double chartMinPrice - variable receiving the min chart price
- * @param  _Out_ double chartMaxPrice - variable receiving the max chart price
+ * @param  _Out_ int    chartHeight   - variable receiving the current chart height in pixel
+ * @param  _Out_ double chartMinPrice - variable receiving the current minimum chart price
+ * @param  _Out_ double chartMaxPrice - variable receiving the current maximum chart price
  *
  * @return bool - success status; FALSE if there's currently no visible chart
  */

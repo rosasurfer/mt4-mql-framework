@@ -2,12 +2,12 @@
  * A non-repainting ZigZag indicator suitable for automation
  *
  *
- * MetaQuotes' ZigZag indicator is flawed and poorly implemented. It repaints calculated ZigZag points and cannot be used for
+ * MetaQuotes' ZigZag indicator is flawed and poorly implemented. It repaints finished ZigZag extremes and cannot be used for
  * automation. This indicator corrects those issues. Once the ZigZag direction has changed, the change is permanent.
  *
- * Internally the indicator uses a Donchian channel for calculation. The indicator can draw vertical ZigZag line segments if
- * a long price bar crosses both upper and lower Donchian channel. Additionally, it can display the trail of a ZigZag leg as
- * it develops over time. The display can be switched from ZigZag lines to ZigZag markers (aka semaphores).
+ * Internally the indicator uses a Donchian channel for calculation. The indicator can draw vertical line segments if a long
+ * price bar crosses both upper and lower Donchian channel. Additionally, it can display the trail of a ZigZag leg as it
+ * develops over time. The display can be switched from ZigZag lines to ZigZag markers (aka semaphores).
  *
  * The indicator allows manual stepping of the ZigZag period via hotkey. Finally it supports multiple signal options.
  *
@@ -34,7 +34,6 @@
  *
  *  • TrackZigZagBalance:           Whether to track and mark ZigZag balances.
  *  • TrackZigZagBalance.Since:     Start date-time to track and mark ZigZag balances.
- *  • BalanceMarkers.Offset:        Vertical chart offset of ZigZag balance markers.
  *  • ProjectNextBalance:           Whether to project price levels of the next zero-balance.
  *
  *  • ShowChartLegend:              Whether do display the chart legend.
@@ -88,7 +87,6 @@ extern color    Donchian.Lower.Color           = Magenta;
 extern string   ___c__________________________ = "=== ZigZag projections ===";
 extern bool     TrackZigZagBalance             = false;                        // whether to track ZigZag balances
 extern datetime TrackZigZagBalance.Since       = 0;                            // mark ZigZag balances since this time
-extern double   BalanceMarkers.Offset          = 0;                            // vertical marker offset                      TODO: replace by 0.8% of view port (dynamic)
 extern bool     ProjectNextBalance             = false;                        // whether to project zero-balance levels
 
 extern string   ___d__________________________ = "=== Display settings ===";
@@ -225,9 +223,9 @@ int      lastSoundSignal;                                      // GetTickCount()
  * @return int - error status
  */
 int onInit() {
-   // validate inputs
    string indicator = WindowExpertName();
 
+   // validate inputs
    // ZigZag.Periods
    if (AutoConfiguration) ZigZag.Periods = GetConfigInt(indicator, "ZigZag.Periods", ZigZag.Periods);
    if (ZigZag.Periods < 2)                 return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -296,8 +294,6 @@ int onInit() {
          TrackZigZagBalance.Since = DateTime2(result);
       }
    }
-   // BalanceMarkers.Offset
-   if (AutoConfiguration) BalanceMarkers.Offset = GetConfigDouble(indicator, "BalanceMarkers.Offset", BalanceMarkers.Offset);
    // ProjectNextBalance
    if (AutoConfiguration) ProjectNextBalance = GetConfigBool(indicator, "ProjectNextBalance", ProjectNextBalance);
 
@@ -353,8 +349,8 @@ int onInit() {
    SetIndicatorOptions();
    if (ShowChartLegend) legendLabel = CreateChartLegend();
 
-   // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
-   // invalid signals caused by ticks during data pumping.
+   // Indicator events like reversals occur "on tick" and not on "bar open" or "bar close".
+   // We need a chart ticker to prevent invalid signals caused by ticks during data pumping.
    if (!__tickTimerId && !__isTesting) {
       int hWnd = __ExecutionContext[EC.chart];
       int millis = 2000;                                         // a virtual tick every 2 seconds
@@ -463,13 +459,13 @@ int onTick() {
    }
    for (int bar=startbar; bar >= 0; bar--) {
       // recalculate Donchian channel
-      if (bar == 0) {
-         upperBand[bar] = MathMax(upperBand[1], High[0]);
-         lowerBand[bar] = MathMin(lowerBand[1],  Low[0]);
-      }
-      else {
+      if (bar > 0) {
          upperBand[bar] = High[iHighest(NULL, NULL, MODE_HIGH, ZigZag.Periods, bar)];
          lowerBand[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  ZigZag.Periods, bar)];
+      }
+      else {
+         upperBand[0] = MathMax(upperBand[1], High[0]);
+         lowerBand[0] = MathMin(lowerBand[1],  Low[0]);
       }
 
       // recalculate channel crossings
@@ -603,8 +599,10 @@ int onTick() {
             size = ArrayRange(events, 0);
 
             if (size > 0) {
-               double balance=0, prevSemaphore, prevReversal=events[0][2];
+               double balance=0, prevSemaphore, prevReversal=events[0][2], markerOffset = CalculateMarkerOffset();
                bool prevBalanceReset = false;
+
+               //debug("onTick(0.1)  markerOffset="+ NumberToStr(markerOffset, ".1+"));
 
                string fontName = "Microsoft Tai Le Bold";
                int    fontSize = 9;
@@ -625,7 +623,7 @@ int onTick() {
                         else if (prevBalanceReset)     fontColor = Blue;
                         else                           fontColor = Red;
                         string name = shortName + ifString(eventType==EVENT_REVERSAL_UP, ".reversal-up.", ".reversal-down.") + TimeToStr(eventTime);
-                        ObjectCreateRegister(name, OBJ_TEXT, 0, eventTime, eventPrice-BalanceMarkers.Offset);
+                        ObjectCreateRegister(name, OBJ_TEXT, 0, eventTime, eventPrice-markerOffset);
                         ObjectSetText(name, NumberToStr(balance, PriceFormat), fontSize, fontName, fontColor);
 
                         // reset positive balances
@@ -682,6 +680,24 @@ int onTick() {
       }
    }
    return(last_error);
+}
+
+
+/**
+ * Calculate the balance marker offset for the current view port of the chart.
+ *
+ * @return double
+ */
+double CalculateMarkerOffset() {
+   double minPrice = NormalizeDouble(WindowPriceMin(), Digits);
+   double maxPrice = NormalizeDouble(WindowPriceMax(), Digits);
+   if (!minPrice || !maxPrice) return(0);                         // chart not yet ready
+
+   double priceRange = maxPrice - minPrice;
+   if (priceRange < HalfPoint) return(0);                         // chart with ScaleFix=1 after resizing to zero height
+
+   double offset = NormalizeDouble(priceRange * 0.007, Digits);   // 7%
+   return(offset);
 }
 
 
@@ -1202,7 +1218,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, Donchian.Lower.Color);
 
    drawType  = ifInt(crossingDrawType && Donchian.Crossings.Width, DRAW_ARROW, DRAW_NONE);
-   drawWidth = Donchian.Crossings.Width-1;                     // minus 1 to use the same scale as ZigZag.Semaphore.Width
+   drawWidth = Donchian.Crossings.Width - 1;                   // minus 1 to use the same scale as ZigZag.Semaphore.Width
    SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, drawWidth, Donchian.Upper.Color); SetIndexArrow(MODE_UPPER_CROSS, Donchian.Crossings.Wingdings);
    SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, drawWidth, Donchian.Lower.Color); SetIndexArrow(MODE_LOWER_CROSS, Donchian.Crossings.Wingdings);
 
@@ -1254,38 +1270,37 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",               ZigZag.Periods                                  +";"+ NL,
-                            "ZigZag.Periods.Step=",          ZigZag.Periods.Step                             +";"+ NL,
-                            "ZigZag.Type=",                  DoubleQuoteStr(ZigZag.Type)                     +";"+ NL,
-                            "ZigZag.Width=",                 ZigZag.Width                                    +";"+ NL,
-                            "ZigZag.Semaphores.Wingdings=",  ZigZag.Semaphores.Wingdings                     +";"+ NL,
-                            "ZigZag.Color=",                 ColorToStr(ZigZag.Color)                        +";"+ NL,
+   return(StringConcatenate("ZigZag.Periods=",               ZigZag.Periods                          +";"+ NL,
+                            "ZigZag.Periods.Step=",          ZigZag.Periods.Step                     +";"+ NL,
+                            "ZigZag.Type=",                  DoubleQuoteStr(ZigZag.Type)             +";"+ NL,
+                            "ZigZag.Width=",                 ZigZag.Width                            +";"+ NL,
+                            "ZigZag.Semaphores.Wingdings=",  ZigZag.Semaphores.Wingdings             +";"+ NL,
+                            "ZigZag.Color=",                 ColorToStr(ZigZag.Color)                +";"+ NL,
 
-                            "Donchian.ShowChannel=",         BoolToStr(Donchian.ShowChannel)                 +";"+ NL,
-                            "Donchian.ShowCrossings=",       DoubleQuoteStr(Donchian.ShowCrossings)          +";"+ NL,
-                            "Donchian.Crossings.Width=",     Donchian.Crossings.Width                        +";"+ NL,
-                            "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings                    +";"+ NL,
-                            "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)                +";"+ NL,
-                            "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)                +";"+ NL,
+                            "Donchian.ShowChannel=",         BoolToStr(Donchian.ShowChannel)         +";"+ NL,
+                            "Donchian.ShowCrossings=",       DoubleQuoteStr(Donchian.ShowCrossings)  +";"+ NL,
+                            "Donchian.Crossings.Width=",     Donchian.Crossings.Width                +";"+ NL,
+                            "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings            +";"+ NL,
+                            "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)        +";"+ NL,
+                            "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)        +";"+ NL,
 
-                            "TrackZigZagBalance=",           BoolToStr(TrackZigZagBalance)                   +";"+ NL,
-                            "TrackZigZagBalance.Since=",     TimeToStr(TrackZigZagBalance.Since)             +";"+ NL,
-                            "BalanceMarkers.Offset=",        NumberToStr(BalanceMarkers.Offset, PriceFormat) +";"+ NL,
-                            "ProjectNextBalance=",           BoolToStr(ProjectNextBalance)                   +";"+ NL,
+                            "TrackZigZagBalance=",           BoolToStr(TrackZigZagBalance)           +";"+ NL,
+                            "TrackZigZagBalance.Since=",     TimeToStr(TrackZigZagBalance.Since)     +";"+ NL,
+                            "ProjectNextBalance=",           BoolToStr(ProjectNextBalance)           +";"+ NL,
 
-                            "ShowChartLegend=",              BoolToStr(ShowChartLegend)                      +";"+ NL,
-                            "MaxBarsBack=",                  MaxBarsBack                                     +";"+ NL,
+                            "ShowChartLegend=",              BoolToStr(ShowChartLegend)              +";"+ NL,
+                            "MaxBarsBack=",                  MaxBarsBack                             +";"+ NL,
 
-                            "Signal.onReversal=",            BoolToStr(Signal.onReversal)                    +";"+ NL,
-                            "Signal.onReversal.Types=",      DoubleQuoteStr(Signal.onReversal.Types)         +";"+ NL,
-                            "Signal.onBreakout=",            BoolToStr(Signal.onBreakout)                    +";"+ NL,
-                            "Signal.onBreakout.Types=",      DoubleQuoteStr(Signal.onBreakout.Types)         +";"+ NL,
-                            "Signal.Sound.Up=",              DoubleQuoteStr(Signal.Sound.Up)                 +";"+ NL,
-                            "Signal.Sound.Down=",            DoubleQuoteStr(Signal.Sound.Down)               +";"+ NL,
+                            "Signal.onReversal=",            BoolToStr(Signal.onReversal)            +";"+ NL,
+                            "Signal.onReversal.Types=",      DoubleQuoteStr(Signal.onReversal.Types) +";"+ NL,
+                            "Signal.onBreakout=",            BoolToStr(Signal.onBreakout)            +";"+ NL,
+                            "Signal.onBreakout.Types=",      DoubleQuoteStr(Signal.onBreakout.Types) +";"+ NL,
+                            "Signal.Sound.Up=",              DoubleQuoteStr(Signal.Sound.Up)         +";"+ NL,
+                            "Signal.Sound.Down=",            DoubleQuoteStr(Signal.Sound.Down)       +";"+ NL,
 
-                            "Sound.onChannelWidening=",      BoolToStr(Sound.onChannelWidening)              +";"+ NL,
-                            "Sound.onNewChannelHigh=",       DoubleQuoteStr(Sound.onNewChannelHigh)          +";"+ NL,
-                            "Sound.onNewChannelLow=",        DoubleQuoteStr(Sound.onNewChannelLow)           +";")
+                            "Sound.onChannelWidening=",      BoolToStr(Sound.onChannelWidening)      +";"+ NL,
+                            "Sound.onNewChannelHigh=",       DoubleQuoteStr(Sound.onNewChannelHigh)  +";"+ NL,
+                            "Sound.onNewChannelLow=",        DoubleQuoteStr(Sound.onNewChannelLow)   +";")
    );
 
    // suppress compiler warnings
