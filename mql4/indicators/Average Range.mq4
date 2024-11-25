@@ -115,9 +115,6 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(ranges)) return(logInfo("onTick(1)  sizeof(ranges) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
    // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
    if (__isChart && MA.Periods.Step) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
@@ -152,7 +149,7 @@ int onTick() {
    for (bar=startbar; bar >= 0; bar--) {
       ma[bar] = iMAOnArray(ranges, WHOLE_ARRAY, MA.Periods, 0, maMethod, bar);
    }
-   return(catch("onTick(2)"));
+   return(catch("onTick(1)"));
 }
 
 

@@ -130,9 +130,9 @@ bool   trendHintsCreated   = false;
  * @return int - error status
  */
 int onInit() {
-   // validate inputs
    string indicator = WindowExpertName();
 
+   // validate inputs
    // Tunnel.MA.Method
    string sValues[], sValue = Tunnel.MA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Tunnel.MA.Method", sValue);
@@ -200,9 +200,6 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMain)) return(logInfo("onTick(1)  sizeof(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMain,  0);
@@ -225,7 +222,7 @@ int onTick() {
 
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-longestPeriod);
-   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    double upperBand, lowerBand, ma;
 
@@ -277,7 +274,7 @@ int onTick() {
          }
       }
    }
-   return(catch("onTick(4)"));
+   return(catch("onTick(2)"));
 }
 
 

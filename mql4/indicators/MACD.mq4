@@ -103,9 +103,9 @@ bool   signal.sms;
  * @return int - error status
  */
 int onInit() {
-   // validate inputs
    string indicator = WindowExpertName();
 
+   // validate inputs
    // FastMA.Method
    string values[], sValue = FastMA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "FastMA.Method", sValue);

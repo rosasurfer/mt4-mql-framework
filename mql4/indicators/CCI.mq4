@@ -74,13 +74,12 @@ string indicatorName = "";
  * @return int - error status
  */
 int onInit() {
-   // validate inputs
    string indicator = WindowExpertName();
 
+   // validate inputs
    // CCI.Periods
    if (AutoConfiguration) CCI.Periods = GetConfigInt(indicator, "CCI.Periods", CCI.Periods);
    if (CCI.Periods < 1)        return(catch("onInit(1)  invalid input parameter CCI.Periods: "+ CCI.Periods +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
-
    // CCI.AppliedPrice
    string sValues[], sValue = CCI.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "CCI.AppliedPrice", sValue);
@@ -93,18 +92,15 @@ int onInit() {
    cci.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (cci.appliedPrice == -1) return(catch("onInit(2)  invalid input parameter CCI.AppliedPrice: "+ DoubleQuoteStr(CCI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    CCI.AppliedPrice = PriceTypeDescription(cci.appliedPrice);
-
    // Histogram.Width
    if (AutoConfiguration) Histogram.Width = GetConfigInt(indicator, "Histogram.Width", Histogram.Width);
    if (Histogram.Width < 0)    return(catch("onInit(3)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Width > 5)    return(catch("onInit(4)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
-
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Histogram.Color.Long  = GetConfigColor(indicator, "Histogram.Color.Long",  Histogram.Color.Long);
    if (AutoConfiguration) Histogram.Color.Short = GetConfigColor(indicator, "Histogram.Color.Short", Histogram.Color.Short);
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
-
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)       return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
