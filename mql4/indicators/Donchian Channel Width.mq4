@@ -119,8 +119,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
    indicatorName = "Donchian Channel("+ Donchian.Periods +") Width";
-   string shortName = "Donchian("+ Donchian.Periods +") Width";
-   IndicatorShortName(shortName);
+   IndicatorShortName(indicatorName);
 
    IndicatorBuffers(terminal_buffers);
    SetIndexBuffer(MODE_MAIN,       main     ); SetIndexEmptyValue(MODE_MAIN,       0);
@@ -129,7 +128,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorDigits(Digits);
 
    SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, EMPTY, LineColor);
-   SetIndexLabel(MODE_MAIN, shortName);
+   SetIndexLabel(MODE_MAIN, "Donchian("+ Donchian.Periods +") Width");
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));

@@ -97,8 +97,7 @@ flags=339
 window_num=0
 <inputs>
 ZigZag.Periods=45
-ZigZag.Type=Line* | Semaphores
-ZigZag.Width=2
+ZigZag.Width=0
 ZigZag.Color=9639167
 Donchian.ShowChannel=1
 Donchian.ShowCrossings=off | first* | all
@@ -125,7 +124,7 @@ Donchian.Periods=45
 </inputs>
 </expert>
 color_0=16711680
-min=0.0
+weight_0=2
 period_flags=0
 show_data=1
 </indicator>
