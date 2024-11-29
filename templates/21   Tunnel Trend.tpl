@@ -85,7 +85,7 @@ Timeframe=H1
 NumberOfInsideBars=3
 </inputs>
 </expert>
-period_flags=31
+period_flags=3
 show_data=0
 </indicator>
 

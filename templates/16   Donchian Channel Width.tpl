@@ -15,7 +15,7 @@ days=0
 descriptions=1
 scroll=0
 shift=1
-shift_size=35
+shift_size=50
 
 fixed_pos=620
 window_left=0
@@ -85,7 +85,7 @@ Timeframe=H1
 NumberOfInsideBars=3
 </inputs>
 </expert>
-period_flags=31
+period_flags=3
 show_data=0
 </indicator>
 
