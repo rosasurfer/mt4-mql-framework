@@ -102,7 +102,7 @@ int onTick() {
          upperBand[0] = MathMax(upperBand[1], High[0]);
          lowerBand[0] = MathMin(lowerBand[1],  Low[0]);
       }
-      main[bar] = upperBand[bar] - lowerBand[bar];
+      main[bar] = (upperBand[bar] - lowerBand[bar])/pUnit;
    }
    return(last_error);
 }
@@ -125,7 +125,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(MODE_MAIN,       main     ); SetIndexEmptyValue(MODE_MAIN,       0);
    SetIndexBuffer(MODE_UPPER_BAND, upperBand); SetIndexEmptyValue(MODE_UPPER_BAND, 0);
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand); SetIndexEmptyValue(MODE_LOWER_BAND, 0);
-   IndicatorDigits(Digits);
+   IndicatorDigits(pDigits);
 
    SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, EMPTY, LineColor);
    SetIndexLabel(MODE_MAIN, "Donchian("+ Donchian.Periods +") Width");

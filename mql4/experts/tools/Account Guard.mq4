@@ -1,7 +1,7 @@
 /**
  * Account Guard
  *
- * The EA monitors orders and positions of all symbols and enforces defined trading rules.
+ * The EA monitors orders and positions of all symbols and enforces defined limits/restrictions.
  *
  * Orders/positions of symbols without trade permission or outside of the permitted time range are immediately closed.
  *

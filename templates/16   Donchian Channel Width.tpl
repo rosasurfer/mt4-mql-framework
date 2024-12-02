@@ -129,6 +129,7 @@ Donchian.Periods=45
 </expert>
 color_0=16711680
 weight_0=2
+min=0.0
 period_flags=0
 show_data=1
 </indicator>
