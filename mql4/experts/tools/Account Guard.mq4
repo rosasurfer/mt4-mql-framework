@@ -11,9 +11,9 @@
  *
  * Input parameters:
  * -----------------
- * • PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*" permits all available symbols).
+ * • PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*": all symbols permitted).
  * • PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
- * • DrawdownLimit:      Either an absolute money amount or a percentage value describing the drawdown limit of an open position.
+ * • DrawdownLimit:      Either an absolute money amount or a percent value describing the drawdown limit of open positions.
  * • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
  *                       prevents DDL triggering by spread widening.
  *
@@ -56,9 +56,9 @@ int __virtualTicks = 800;                             // milliseconds (must be s
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string PermittedSymbols   = "";                // symbols allowed to trade ("*": all symbols)
-extern string PermittedTimeRange = "";                // time range trading is allowed (empty: no time restriction)
-extern string DrawdownLimit      = "200.00 | 5%*";    // absolute money amount or percentage drawdown limit
+extern string PermittedSymbols   = "*";               // symbols allowed to trade ("*": all symbols)
+extern string PermittedTimeRange = "";                // time range when trading is allowed (empty: no restriction)
+extern string DrawdownLimit      = "200.00 | 5%*";    // drawdown limit as absolute amount in account currency or percent of account size
 extern bool   IgnoreSpread       = true;              // whether to ignore the spread of floating positions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
