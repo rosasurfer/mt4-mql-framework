@@ -11,7 +11,7 @@
  *    - section: positive values denote a RSI above 50 (+1...+n), negative values a RSI below 50 (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of level 50)
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -27,16 +27,16 @@ extern color  Histogram.Color.Upper = Blue;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    MaxBarsBack           = 10000;                // max. values to calculate (-1: all available)
+extern int    MaxBarsBack           = 10000;          // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
-#define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
-#define MODE_SECTION          MACD.MODE_SECTION
+#define MODE_MAIN             0                       // indicator buffer ids
+#define MODE_SECTION          1
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
 
@@ -44,10 +44,10 @@ extern int    MaxBarsBack           = 10000;                // max. values to ca
 #property indicator_buffers   4
 #property indicator_level1    0
 
-double bufferRSI    [];                                     // RSI main value:            visible, displayed in "Data" window
-double bufferSection[];                                     // RSI section and length:    invisible
-double bufferUpper  [];                                     // positive histogram values: visible
-double bufferLower  [];                                     // negative histogram values: visible
+double bufferRSI    [];                               // RSI main value:            visible, displayed in "Data" window
+double bufferSection[];                               // RSI section and length:    invisible
+double bufferUpper  [];                               // positive histogram values: visible
+double bufferLower  [];                               // negative histogram values: visible
 
 int rsi.periods;
 int rsi.appliedPrice;
@@ -73,9 +73,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                               // default price type
    rsi.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (IsEmpty(rsi.appliedPrice) || rsi.appliedPrice > PRICE_WEIGHTED) {
-                                  return(catch("onInit(2)  invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   }
+   if (rsi.appliedPrice == -1)    return(catch("onInit(2)  invalid input parameter RSI.AppliedPrice: "+ DoubleQuoteStr(RSI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    RSI.AppliedPrice = PriceTypeDescription(rsi.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -180,10 +178,14 @@ int onTick() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(indicator_buffers);
 
    int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
@@ -193,11 +195,14 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SECTION,       DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

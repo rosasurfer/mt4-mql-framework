@@ -9,16 +9,16 @@
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA - Smoothed Moving Average:        same as EMA, it holds: SMMA(n) = EMA(2*n-1)
+ *  • SMMA - Smoothed Moving Average:        an EMA, it holds: SMMA(n) = EMA(2*n-1)
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string MA.Method       = "SMA* | LWMA | EMA | ALMA";
+extern string MA.Method       = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern int    MA.Periods      = 10;
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern color  MA.Color        = CLR_NONE;
@@ -31,11 +31,12 @@ extern int    MaxBarsBack     = 10000;                            // max. values
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ta/ALMA.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA                       // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER
@@ -77,14 +78,13 @@ string legendLabel   = "";
  */
 int onInit() {
    // validate inputs
-   // MA
+   // MA.Method
    string sValues[], sValue = MA.Method;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   sValue = StrTrim(sValue);
-   maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maMethod == -1)        return(catch("onInit(1)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.Periods
@@ -99,8 +99,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                            // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
-                              return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice == -1)  return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // ATR
@@ -232,20 +231,27 @@ bool RecalcALMAChannel(int startbar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    int drawType = ifInt(MA.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
 
    SetIndexStyle(MODE_MA,    drawType,  EMPTY, EMPTY, MA.Color   );
    SetIndexStyle(MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Bands.Color);
    SetIndexStyle(MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, Bands.Color);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

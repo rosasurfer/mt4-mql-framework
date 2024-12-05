@@ -5,10 +5,9 @@
  *
  *
  * TODO:
- *  - finish projection sound alerts
  *  - check bar alignment of all timeframes and use the largest correctly aligned instead of M5
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -21,19 +20,20 @@ extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onInsideBar             = false;
 extern bool   Signal.onInsideBar.Sound       = true;
 extern string Signal.onInsideBar.SoundFile   = "Inside Bar.wav";
-extern bool   Signal.onInsideBar.Popup       = false;
+extern bool   Signal.onInsideBar.Alert       = false;
 extern bool   Signal.onInsideBar.Mail        = false;
 extern bool   Signal.onInsideBar.SMS         = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iCopyRates.mqh>
-#include <functions/IsBarOpen.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/iCopyRates.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
 
@@ -75,17 +75,16 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onInsideBar)) return(last_error);
    if (Signal.onInsideBar) {
       if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onInsideBar.Sound)) return(last_error);
-      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onInsideBar.Popup)) return(last_error);
+      if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onInsideBar.Alert)) return(last_error);
       if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onInsideBar.Mail))  return(last_error);
       if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onInsideBar.SMS))   return(last_error);
-      if (Signal.onInsideBar.Sound || Signal.onInsideBar.Popup || Signal.onInsideBar.Mail || Signal.onInsideBar.SMS) {
-         signalInfo = "  ("+ StrLeft(ifString(Signal.onInsideBar.Sound, "sound,", "") + ifString(Signal.onInsideBar.Popup, "popup,", "") + ifString(Signal.onInsideBar.Mail, "mail,", "") + ifString(Signal.onInsideBar.SMS, "sms,", ""), -1) +")";
+      if (Signal.onInsideBar.Sound || Signal.onInsideBar.Alert || Signal.onInsideBar.Mail || Signal.onInsideBar.SMS) {
+         signalInfo = "  ("+ StrLeft(ifString(Signal.onInsideBar.Sound, "sound,", "") + ifString(Signal.onInsideBar.Alert, "alert,", "") + ifString(Signal.onInsideBar.Mail, "mail,", "") + ifString(Signal.onInsideBar.SMS, "sms,", ""), -1) +")";
       }
       else Signal.onInsideBar = false;
    }
 
    // display options
-   SetIndexLabel(0, NULL);                                     // disable "Data" window display
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => system menu font family
    int    fontSize = 8;                                        // 8  => system menu font size
@@ -112,6 +111,10 @@ int onTick() {
       if (!CopyRates(rates, changedBars, PERIOD_M5)) return(last_error);
    }
 
+   if (!ValidBars) {                         // if the chart changed rates must be marked as changed accordingly
+      changedBars = ArrayRange(rates, 0);    // TODO: find rates offset of the actual change and modify 'changedBars'
+   }
+
    switch (timeframeIB) {
       case PERIOD_M1 :
       case PERIOD_M5 : CheckInsideBars   (rates, changedBars, timeframeIB); break;
@@ -128,29 +131,16 @@ int onTick() {
 
 
 /**
- * Handle AccountChange events.
- *
- * @param  int previous - previous account number
- * @param  int current  - new account number
- *
- * @return int - error status
- */
-int onAccountChange(int previous, int current) {
-   return(onInit());
-}
-
-
-/**
  * Copy the rates of the specified timeframe to the target array and resolve the number of changed bars since the last tick.
  *
- * @param  _Out_ double rates[][]   - array receiving the rates
+ * @param  _Out_ double target[][]  - array receiving the rates
  * @param  _Out_ int    changedBars - variable receiving the number of changed bars
  * @param  _In_  int    timeframe   - rates timeframe
  *
  * @return bool - success status
  */
-bool CopyRates(double &rates[][], int &changedBars, int timeframe) {
-   int changed = iCopyRates(rates, NULL, timeframe);
+bool CopyRates(double &target[][], int &changedBars, int timeframe) {
+   int changed = iCopyRates(target, NULL, timeframe);
    if (changed < 0) return(false);
    changedBars = changed;
    return(true);
@@ -581,8 +571,9 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
  */
 bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) {
    datetime chartOpenTime = openTime;
-   int chartOffset = iBarShiftNext(NULL, NULL, openTime);         // offset of the first matching chart bar
-   if (chartOffset >= 0) chartOpenTime = Time[chartOffset];
+   int chartOffset = iBarShiftNext(NULL, NULL, openTime);      // offset of the first matching chart bar
+   if (chartOffset < 0) return(true);                          // no chart data yet available: skip the inside bar, it will be drawn after chart bars arrived
+   chartOpenTime = Time[chartOffset];
 
    datetime closeTime   = openTime + timeframe*MINUTES;
    double   barSize     = (high-low);
@@ -593,44 +584,44 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    static int counter = 0; counter++;
 
    // vertical line at IB open
-   string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +") ["+ counter +"]";
+   string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/pUnit, pDigits) +") ["+ counter +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget, 0, 0)) {
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet      (label, OBJPROP_COLOR, Blue);
       ObjectSet      (label, OBJPROP_RAY,   false);
-      ObjectSet      (label, OBJPROP_BACK,  true);
+      ObjectSet      (label, OBJPROP_BACK,  false);
       ArrayPushString(labels, label);
-   } else debug("CreateInsideBar(1)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
+   }
 
    // horizontal line at long projection
-   label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
+   label = sTimeframe +" inside bar: +100% = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, closeTime, longTarget, 0, 0)) {
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, closeTime, longTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet      (label, OBJPROP_COLOR, Blue);
       ObjectSet      (label, OBJPROP_RAY,   false);
       ObjectSet      (label, OBJPROP_BACK,  true);
       ObjectSetText  (label, " "+ sTimeframe);
       ArrayPushString(labels, label);
-   } else debug("CreateInsideBar(2)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
+   }
 
    // horizontal line at short projection
-   label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
+   label = sTimeframe +" inside bar: -100% = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
    if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, shortTarget, closeTime, shortTarget, 0, 0)) {
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, shortTarget, closeTime, shortTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet      (label, OBJPROP_COLOR, Blue);
       ObjectSet      (label, OBJPROP_RAY,   false);
       ObjectSet      (label, OBJPROP_BACK,  true);
       ArrayPushString(labels, label);
-   } else debug("CreateInsideBar(3)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
+   }
 
    // signal new inside bars
    if (!__isSuperContext && Signal.onInsideBar) /*&&*/ if (IsBarOpen(timeframe)) {
       return(onInsideBar(timeframe, closeTime, high, low));
    }
-   return(true);
+   return(!catch("CreateInsideBar(1)"));
 }
 
 
@@ -651,21 +642,20 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    string sTimeframe = TimeframeDescription(timeframe);
    string sBarHigh   = NumberToStr(high, PriceFormat);
    string sBarLow    = NumberToStr(low, PriceFormat);
-   string sBarTime   = TimeToStr(closeTime, TIME_DATE|TIME_MINUTES);
+   string sBarTime   = TimeToStr(closeTime);
    string sLocalTime = "("+ GmtTimeFormat(TimeLocalEx("onInsideBar(1)"), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
    string message    = "new "+ sTimeframe +" inside bar";
 
    if (IsLogInfo()) logInfo("onInsideBar(2)  "+ message +" at "+ sBarTime +"  H="+ sBarHigh +"  L="+ sBarLow);
    message = Symbol() +": "+ message;
 
-   int error = NO_ERROR;
-   if (Signal.onInsideBar.Popup)          Alert(message);
-   if (Signal.onInsideBar.Sound) error |= PlaySoundEx(Signal.onInsideBar.SoundFile);
-   if (Signal.onInsideBar.Mail)  error |= !SendEmail("", "", message, message + NL + sLocalTime);
-   if (Signal.onInsideBar.SMS)   error |= !SendSMS("", message + NL + sLocalTime);
+   if (Signal.onInsideBar.Alert) Alert(message);
+   if (Signal.onInsideBar.Sound) PlaySoundEx(Signal.onInsideBar.SoundFile);
+   if (Signal.onInsideBar.Mail)  SendEmail("", "", message, message + NL + sLocalTime);
+   if (Signal.onInsideBar.SMS)   SendSMS("", message + NL + sLocalTime);
 
    if (__isTesting) Tester.Pause();
-   return(!error);
+   return(!catch("onInsideBar(3)"));
 }
 
 
@@ -684,7 +674,7 @@ bool DeleteInsideBars(int timeframe) {
       if (StrStartsWith(labels[i], prefix)) {
          if (!ObjectDelete(labels[i])) {
             int error = GetLastError();
-            if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("DeleteInsideBars(2)->ObjectDelete(label="+ DoubleQuoteStr(labels[i]) +")", intOr(error, ERR_RUNTIME_ERROR)));
+            if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("DeleteInsideBars(1)->ObjectDelete(label=\""+ labels[i] +"\")", intOr(error, ERR_RUNTIME_ERROR)));
          }
          ArraySpliceStrings(labels, i, 1);
       }
@@ -701,7 +691,7 @@ bool DeleteInsideBars(int timeframe) {
 string CreateStatusLabel() {
    string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return("");
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 500);            // the SuperBars label starts at xDist=300
    ObjectSet    (label, OBJPROP_YDISTANCE,   3);
@@ -714,7 +704,7 @@ string CreateStatusLabel() {
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */
@@ -725,7 +715,7 @@ string InputsToStr() {
                             "Signal.onInsideBar=",           BoolToStr(Signal.onInsideBar),                ";", NL,
                             "Signal.onInsideBar.Sound=",     BoolToStr(Signal.onInsideBar.Sound),          ";", NL,
                             "Signal.onInsideBar.SoundFile=", DoubleQuoteStr(Signal.onInsideBar.SoundFile), ";", NL,
-                            "Signal.onInsideBar.Popup=",     BoolToStr(Signal.onInsideBar.Popup),          ";", NL,
+                            "Signal.onInsideBar.Alert=",     BoolToStr(Signal.onInsideBar.Alert),          ";", NL,
                             "Signal.onInsideBar.Mail=",      BoolToStr(Signal.onInsideBar.Mail),           ";", NL,
                             "Signal.onInsideBar.SMS=",       BoolToStr(Signal.onInsideBar.SMS),            ";")
    );

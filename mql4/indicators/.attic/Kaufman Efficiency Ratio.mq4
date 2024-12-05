@@ -3,7 +3,7 @@
  *
  * Ratio between the amount price moved in one way (direction) to the amount price moved in any way (volatility).
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -13,9 +13,9 @@ extern int Periods = 32;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #property indicator_separate_window
 #property indicator_buffers   1
@@ -126,16 +126,23 @@ double Volatility(int bar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(indicator_buffers);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

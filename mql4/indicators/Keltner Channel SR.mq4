@@ -5,13 +5,14 @@
  * Moving Average). The SR line changes direction when it's crossed by the Moving Average. ATR values can be smoothed by a
  * second Moving Average.
  *
+ *
  * Supported Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA - Smoothed Moving Average:        same as EMA, it holds: SMMA(n) = EMA(2*n-1)
+ *  • SMMA - Smoothed Moving Average:        an EMA, it holds: SMMA(n) = EMA(2*n-1)
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -33,10 +34,11 @@ extern color  ATR.Channel.Color     = CLR_NONE;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/chartlegend.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER_BAND       Bands.MODE_UPPER
@@ -110,11 +112,12 @@ int onInit() {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maMethod == -1)              return(catch("onInit(1)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == MODE_ALMA)       return(catch("onInit(2)  unsuported input parameter MA.Method: \"ALMA\"", ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.Periods
-   if (MA.Periods < 0)              return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 0)              return(catch("onInit(3)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    maPeriods = ifInt(!MA.Periods, 1, MA.Periods);
    if (maPeriods == 1) maMethod = MODE_SMA;
    // MA.AppliedPrice
@@ -126,15 +129,14 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                            // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
-                                    return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice == -1)        return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // ATR.Periods
-   if (ATR.Periods < 1)             return(catch("onInit(4)  invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods < 1)             return(catch("onInit(5)  invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
    atrPeriods = ATR.Periods;
    // ATR.Multiplier
-   if (ATR.Multiplier < 0)          return(catch("onInit(5)  invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)          return(catch("onInit(6)  invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
    atrMultiplier = ATR.Multiplier;
    // ATR.Smoothing.Method
    sValue = ATR.Smoothing.Method;
@@ -142,18 +144,19 @@ int onInit() {
       size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   sValue= StrTrim(sValue);
-   if (!StringLen(sValue) || StrCompareI(sValue, "none")) {
+   sValue = StrToLower(StrTrim(sValue));
+   if (!StringLen(sValue) || StrCompare(sValue, "none")) {
       atrSmoothingMethod = EMPTY;
       ATR.Smoothing.Method = "none";
    }
    else {
-      atrSmoothingMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-      if (atrSmoothingMethod == -1) return(catch("onInit(6)  invalid input parameter ATR.Smoothing.Method: "+ DoubleQuoteStr(ATR.Smoothing.Method), ERR_INVALID_INPUT_PARAMETER));
+      atrSmoothingMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+      if (atrSmoothingMethod == -1) return(catch("onInit(7)  invalid input parameter ATR.Smoothing.Method: "+ DoubleQuoteStr(ATR.Smoothing.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (maMethod == MODE_ALMA)    return(catch("onInit(8)  unsuported input parameter ATR.Smoothing.Method: \"ALMA\"", ERR_INVALID_INPUT_PARAMETER));
       ATR.Smoothing.Method = MaMethodDescription(atrSmoothingMethod);
    }
    // ATR.Smoothing.Periods
-   if (ATR.Smoothing.Periods < 0)   return(catch("onInit(7)  invalid input parameter ATR.Smoothing.Periods: "+ ATR.Smoothing.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Smoothing.Periods < 0)   return(catch("onInit(9)  invalid input parameter ATR.Smoothing.Periods: "+ ATR.Smoothing.Periods, ERR_INVALID_INPUT_PARAMETER));
    atrSmoothingPeriods = ifInt(atrSmoothingMethod==EMPTY || !ATR.Smoothing.Periods, 1, ATR.Smoothing.Periods);
    if (atrSmoothingPeriods == 1) atrSmoothingMethod = MODE_SMA;
 
@@ -187,7 +190,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(4)"));
+   return(catch("onInit(10)"));
 }
 
 
@@ -300,10 +303,14 @@ int onTick() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
    int drawType = ifInt(MA.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
@@ -330,11 +337,14 @@ void SetIndicatorOptions() {
       SetIndexStyle(MODE_LINE_DOWN,      DRAW_LINE,  EMPTY, EMPTY, Resistance.Color);
       SetIndexStyle(MODE_LINE_DOWNSTART, DRAW_ARROW, EMPTY, EMPTY, Resistance.Color); SetIndexArrow(MODE_LINE_DOWNSTART, 159);
    }
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

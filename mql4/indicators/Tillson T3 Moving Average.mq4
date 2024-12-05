@@ -10,14 +10,14 @@
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  *
  *
- *  @link  http://unicorn.us.com/trading/el.html#_T3Average                                     [T3 Moving Average, Matulich]
- *  @see   additional notes at the end of this file
+ *  @see  http://unicorn.us.com/trading/el.html#_T3Average                                      [T3 Moving Average, Matulich]
+ *  @see  additional notes at the end of this file
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -29,7 +29,7 @@ extern int    T3.Periods.Step                = 0;                 // step size f
 extern bool   T3.Periods.MatulichScale       = true;
 extern double T3.VolumeFactor                = 0.7;
 extern double T3.VolumeFactor.Step           = 0;                 // step size for a stepped input parameter (hotkeys + VK_LWIN)
-extern string T3.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
+extern string T3.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern string ___b__________________________ = "=== Trend reversal filter ===";
 extern double MA.ReversalFilter              = 0.1;               // min. MA change in std-deviations for a trend reversal
@@ -47,21 +47,22 @@ extern bool   Signal.onTrendChange           = false;
 extern bool   Signal.onTrendChange.Sound     = true;
 extern string Signal.onTrendChange.SoundUp   = "Signal Up.wav";
 extern string Signal.onTrendChange.SoundDown = "Signal Down.wav";
-extern bool   Signal.onTrendChange.Popup     = false;
+extern bool   Signal.onTrendChange.Alert     = false;
 extern bool   Signal.onTrendChange.Mail      = false;
 extern bool   Signal.onTrendChange.SMS       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/HandleCommands.mqh>
-#include <functions/IsBarOpen.mqh>
-#include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/trend.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
+#include <rsf/functions/ManageDoubleIndicatorBuffer.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/trend.mqh>
 
 #define MODE_MA_FILTERED      MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
@@ -133,23 +134,23 @@ bool   enableMultiColoring;
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
    string indicator = WindowExpertName();
 
-   // validate inputs
    // T3.Periods
    if (AutoConfiguration) T3.Periods = GetConfigInt(indicator, "T3.Periods", T3.Periods);
-   if (T3.Periods < 1)                                   return(catch("onInit(1)  invalid input parameter T3.Periods: "+ T3.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (T3.Periods < 1)                             return(catch("onInit(1)  invalid input parameter T3.Periods: "+ T3.Periods, ERR_INVALID_INPUT_PARAMETER));
    // T3.Periods.Step
    if (AutoConfiguration) T3.Periods.Step = GetConfigInt(indicator, "T3.Periods.Step", T3.Periods.Step);
-   if (T3.Periods.Step < 0)                              return(catch("onInit(2)  invalid input parameter T3.Periods.Step: "+ T3.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (T3.Periods.Step < 0)                        return(catch("onInit(2)  invalid input parameter T3.Periods.Step: "+ T3.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // T3.Periods.MatulichScale
    if (AutoConfiguration) T3.Periods.MatulichScale = GetConfigBool(indicator, "T3.Periods.MatulichScale", T3.Periods.MatulichScale);
    // T3.VolumeFactor
    if (AutoConfiguration) T3.VolumeFactor = GetConfigDouble(indicator, "T3.VolumeFactor", T3.VolumeFactor);
-   if (T3.VolumeFactor < 0 || T3.VolumeFactor > 1)       return(catch("onInit(3)  invalid input parameter T3.VolumeFactor: "+ NumberToStr(T3.VolumeFactor, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
+   if (T3.VolumeFactor < 0 || T3.VolumeFactor > 1) return(catch("onInit(3)  invalid input parameter T3.VolumeFactor: "+ NumberToStr(T3.VolumeFactor, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
    // T3.VolumeFactor.Step
    if (AutoConfiguration) T3.VolumeFactor.Step = GetConfigDouble(indicator, "T3.VolumeFactor.Step", T3.VolumeFactor.Step);
-   if (T3.VolumeFactor.Step < 0)                         return(catch("onInit(4)  invalid input parameter T3.VolumeFactor.Step: "+ NumberToStr(T3.VolumeFactor.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (T3.VolumeFactor.Step < 0)                   return(catch("onInit(4)  invalid input parameter T3.VolumeFactor.Step: "+ NumberToStr(T3.VolumeFactor.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // T3.AppliedPrice
    string sValues[], sValue = T3.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "T3.AppliedPrice", sValue);
@@ -159,14 +160,14 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (appliedPrice==-1 || appliedPrice > PRICE_AVERAGE) return(catch("onInit(5)  invalid input parameter T3.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   if (appliedPrice == -1)                         return(catch("onInit(5)  invalid input parameter T3.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    T3.AppliedPrice = PriceTypeDescription(appliedPrice);
    // MA.ReversalFilter
    if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
-   if (MA.ReversalFilter < 0)                            return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter < 0)                      return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.ReversalFilter.StepS
    if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
-   if (MA.ReversalFilter.Step < 0)                       return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter.Step < 0)                 return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -177,10 +178,10 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                                                  return(catch("onInit(8)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else                                            return(catch("onInit(8)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)                                   return(catch("onInit(9)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)                             return(catch("onInit(9)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
@@ -188,7 +189,7 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)                                 return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)                           return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
@@ -197,14 +198,19 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
       if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onTrendChange.Sound)) return(last_error);
-      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onTrendChange.Popup)) return(last_error);
+      if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onTrendChange.Alert)) return(last_error);
       if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onTrendChange.Mail))  return(last_error);
       if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onTrendChange.SMS))   return(last_error);
-      if (Signal.onTrendChange.Sound || Signal.onTrendChange.Popup || Signal.onTrendChange.Mail || Signal.onTrendChange.SMS) {
-         legendInfo = StrLeft(ifString(Signal.onTrendChange.Sound, "sound,", "") + ifString(Signal.onTrendChange.Popup, "popup,", "") + ifString(Signal.onTrendChange.Mail, "mail,", "") + ifString(Signal.onTrendChange.SMS, "sms,", ""), -1);
+      if (Signal.onTrendChange.Sound || Signal.onTrendChange.Alert || Signal.onTrendChange.Mail || Signal.onTrendChange.SMS) {
+         legendInfo = StrLeft(ifString(Signal.onTrendChange.Sound, "sound,", "") + ifString(Signal.onTrendChange.Alert, "alert,", "") + ifString(Signal.onTrendChange.Mail, "mail,", "") + ifString(Signal.onTrendChange.SMS, "sms,", ""), -1);
          legendInfo = "("+ legendInfo +")";
       }
       else Signal.onTrendChange = false;
+   }
+
+   // reset an active command handler
+   if (__isChart && (T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step)) {
+      GetChartCommand("ParameterStepper", sValues);
    }
 
    // restore a stored runtime status
@@ -280,7 +286,9 @@ int onTick() {
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && (T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper", false);
+   if (__isChart && (T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step)) {
+      if (!HandleCommands("ParameterStepper")) return(last_error);
+   }
 
    ManageDoubleIndicatorBuffer(MODE_EMA1, ema1);
    ManageDoubleIndicatorBuffer(MODE_EMA2, ema2);
@@ -335,7 +343,7 @@ int onTick() {
 
    // initialize an empty previous bar
    if (!ema1[limit]) {
-      price = GetPrice(appliedPrice, limit);
+      price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, limit);
       ema1      [limit] = price;
       ema2      [limit] = price;
       ema3      [limit] = price;
@@ -348,7 +356,7 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      price = GetPrice(appliedPrice, bar);
+      price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
       ema1[bar] = ema1[bar+1] + alpha * (price     - ema1[bar+1]);
       ema2[bar] = ema2[bar+1] + alpha * (ema1[bar] - ema2[bar+1]);
       ema3[bar] = ema3[bar+1] + alpha * (ema2[bar] - ema3[bar+1]);
@@ -380,7 +388,7 @@ int onTick() {
             }
          }
       }
-      UpdateTrendDirection(maFiltered, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
+      UpdateTrend(maFiltered, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
    }
 
    if (!__isSuperContext) {
@@ -406,33 +414,32 @@ int onTick() {
  */
 bool onTrendChange(int trend) {
    string message="", accountTime="("+ TimeToStr(TimeLocalEx("onTrendChange(1)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-   int error = NO_ERROR;
 
    if (trend == MODE_UPTREND) {
       message = shortName +" turned up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onTrendChange.Popup)          Alert(message);
-      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
-      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
-      return(!error);
+      if (Signal.onTrendChange.Alert) Alert(message);
+      if (Signal.onTrendChange.Sound) PlaySoundEx(Signal.onTrendChange.SoundUp);
+      if (Signal.onTrendChange.Mail)  SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onTrendChange.SMS)   SendSMS("", message + NL + accountTime);
+      return(!catch("onTrendChange(3)"));
    }
 
    if (trend == MODE_DOWNTREND) {
       message = shortName +" turned down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(4)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onTrendChange.Popup)          Alert(message);
-      if (Signal.onTrendChange.Sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
-      if (Signal.onTrendChange.Mail)  error |= !SendEmail("", "", message, message + NL + accountTime);
-      if (Signal.onTrendChange.SMS)   error |= !SendSMS("", message + NL + accountTime);
-      return(!error);
+      if (Signal.onTrendChange.Alert) Alert(message);
+      if (Signal.onTrendChange.Sound) PlaySoundEx(Signal.onTrendChange.SoundDown);
+      if (Signal.onTrendChange.Mail)  SendEmail("", "", message, message + NL + accountTime);
+      if (Signal.onTrendChange.SMS)   SendSMS("", message + NL + accountTime);
+      return(!catch("onTrendChange(5)"));
    }
 
-   return(!catch("onTrendChange(4)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(6)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 
 
@@ -446,28 +453,11 @@ bool onTrendChange(int trend) {
  * @return bool - success status of the executed command
  */
 bool onCommand(string cmd, string params, int keys) {
-   static int lastTickcount = 0;
-   int tickcount = StrToInteger(params);
-
-   // stepper cmds are not removed from the queue: compare tickcount with last processed command and skip if old
-   if (__isChart) {
-      string label = "rsf."+ WindowExpertName() +".cmd.tickcount";
-      bool objExists = (ObjectFind(label) != -1);
-
-      if (objExists) lastTickcount = StrToInteger(ObjectDescription(label));
-      if (tickcount <= lastTickcount) return(false);
-
-      if (!objExists) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      ObjectSetText(label, ""+ tickcount);
+   if (cmd == "parameter") {
+      if (params == "up")   return(ParameterStepper(STEP_UP, keys));
+      if (params == "down") return(ParameterStepper(STEP_DOWN, keys));
    }
-   else if (tickcount <= lastTickcount) return(false);
-   lastTickcount = tickcount;
-
-   if (cmd == "parameter-up")   return(ParameterStepper(STEP_UP, keys));
-   if (cmd == "parameter-down") return(ParameterStepper(STEP_DOWN, keys));
-
-   return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(cmd +":"+ params +":"+ keys)));
 }
 
 
@@ -523,7 +513,6 @@ bool ParameterStepper(int direction, int keys) {
 
    ChangedBars = Bars;
    ValidBars   = 0;
-   ShiftedBars = 0;
 
    PlaySoundEx("Parameter Step.wav");
    return(true);
@@ -531,36 +520,15 @@ bool ParameterStepper(int direction, int keys) {
 
 
 /**
- * Get the price of the specified type at the given bar offset.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
  *
- * @param  int type - price type
- * @param  int i    - bar offset
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
  *
- * @return double - price or NULL in case of errors
+ * @return bool - success status
  */
-double GetPrice(int type, int i) {
-   if (i < 0 || i >= Bars) return(!catch("GetPrice(1)  invalid parameter i: "+ i +" (out of range)", ERR_INVALID_PARAMETER));
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
 
-   switch (type) {
-      case PRICE_CLOSE:                                                          // 0
-      case PRICE_BID:      return(Close[i]);                                     // 8
-      case PRICE_OPEN:     return( Open[i]);                                     // 1
-      case PRICE_HIGH:     return( High[i]);                                     // 2
-      case PRICE_LOW:      return(  Low[i]);                                     // 3
-      case PRICE_MEDIAN:                                                         // 4: (H+L)/2
-      case PRICE_TYPICAL:                                                        // 5: (H+L+C)/3
-      case PRICE_WEIGHTED: return(iMA(NULL, NULL, 1, 0, MODE_SMA, type, i));     // 6: (H+L+C+C)/4
-      case PRICE_AVERAGE:  return((Open[i] + High[i] + Low[i] + Close[i])/4);    // 7: (O+H+L+C)/4
-   }
-   return(!catch("GetPrice(2)  invalid or unsupported price type: "+ type, ERR_INVALID_PARAMETER));
-}
-
-
-/**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
- */
-void SetIndicatorOptions() {
    string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
    indicatorName        = WindowExpertName() +"("+ ifString(T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step, "step:", "") + T3.Periods +","+ NumberToStr(T3.VolumeFactor, ".1+") + sMaFilter + sAppliedPrice +")";
@@ -576,6 +544,9 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_DOWNTREND,   draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND,   NULL);
    SetIndexStyle(MODE_UPTREND2,    draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,    NULL);
    IndicatorDigits(Digits);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
@@ -624,7 +595,7 @@ bool RestoreStatus() {
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */
@@ -649,7 +620,7 @@ string InputsToStr() {
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,
                             "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";"+ NL,
                             "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";"+ NL,
-                            "Signal.onTrendChange.Popup=",     BoolToStr(Signal.onTrendChange.Popup),          ";"+ NL,
+                            "Signal.onTrendChange.Alert=",     BoolToStr(Signal.onTrendChange.Alert),          ";"+ NL,
                             "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";"+ NL,
                             "Signal.onTrendChange.SMS=",       BoolToStr(Signal.onTrendChange.SMS),            ";")
    );

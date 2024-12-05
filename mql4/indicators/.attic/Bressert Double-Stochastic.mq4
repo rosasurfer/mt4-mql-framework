@@ -5,7 +5,7 @@
  * EMA(EMA(Stochastics(N))). The Double-Stochastic Oszillator by Walter Bressert calculates a second stochastics from the
  * standard Stochastic Oszillator. The formula is Stochastics(Stochastics(N)).
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -16,9 +16,9 @@ extern int Stochastic.Periods = 13;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #property indicator_separate_window
 #property indicator_minimum   0

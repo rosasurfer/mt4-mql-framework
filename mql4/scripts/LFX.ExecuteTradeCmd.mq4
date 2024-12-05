@@ -22,19 +22,19 @@
  *  LfxOrderModifyCommand    extends LfxTradeCommand { int ticket; ... }
  *  LfxOrderDeleteCommand    extends LfxTradeCommand { int ticket; ... }
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
-#include <core/script.mqh>
-#include <stdfunctions.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <rsfLib.mqh>
-
-#include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
-#include <scriptrunner.mqh>
-#include <structs/rsf/LFXOrder.mqh>
-#include <structs/rsf/OrderExecution.mqh>
+#include <rsf/core/script.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/MT4iQuickChannel.mqh>
+#include <rsf/functions/InitializeByteBuffer.mqh>
+#include <rsf/functions/lfx.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/scriptrunner.mqh>
+#include <rsf/structs/LFXOrder.mqh>
+#include <rsf/structs/OrderExecution.mqh>
 
 
 /**
@@ -251,7 +251,6 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    int    direction   = IsShortOrderType(lo.Type(lo));
    double units       = lo.Units(lo);
 
-
    // (2) zu handelnde Pairs bestimmen
    string symbols    [7]; ArrayResize(symbols    , 0); ArrayResize(symbols    , 7);    // setzt die Größe und den Inhalt der Arrays zurück
    double exactLots  [7]; ArrayResize(exactLots  , 0); ArrayResize(exactLots  , 7);
@@ -270,7 +269,6 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    else if (lfxCurrency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "GBPNZD"; symbols[3] = "NZDCAD"; symbols[4] = "NZDCHF"; symbols[5] = "NZDJPY"; symbols[6] = "NZDUSD"; symbolsSize = 7; }
    else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
 
-
    // (3) Leverage-Konfiguration einlesen und validieren
    double static.leverage;
    if (!static.leverage) {
@@ -284,12 +282,10 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    }
    double leverage = static.leverage;
 
-
    // (4) Lotsizes je Pair berechnen
-   double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
-   double visibleEquity  = AccountEquity()-AccountCredit();                            // bei negativer AccountBalance wird nur visibleEquity benutzt
-      if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
-   double equity = visibleEquity + externalAssets;
+   double equity = AccountEquity() - AccountCredit();
+   if (AccountBalance() > 0) equity = MathMin(AccountBalance(), equity);               // bei negativer AccountBalance wird nur 'equity' benutzt
+   equity += GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
    string errorMsg="", overLeverageMsg="";
 
@@ -536,7 +532,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    int orders = OrdersTotal();
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: in einem anderen Thread wurde eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: an open order was closed/deleted in another thread
          break;
       if (OrderType() > OP_SELL)
          continue;

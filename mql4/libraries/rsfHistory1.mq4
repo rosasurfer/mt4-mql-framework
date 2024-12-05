@@ -35,14 +35,14 @@
  */
 #property library
 
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
-#include <core/library.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <structs/mt4/HistoryHeader.mqh>
+#include <rsf/core/library.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/InitializeByteBuffer.mqh>
+#include <rsf/structs/mt4/HistoryHeader.mqh>
 
 
 // Standard-Timeframes ------------------------------------------------------------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
  * symbol return a new handle on every call. Previously open history set handles are closed.
  *
  * @param  string symbol               - symbol
- * @param  string description          - symbol description
+ * @param  string descr                - symbol description
  * @param  int    digits               - digits of the timeseries
  * @param  int    format               - bar format of the timeseries, one of
  *                                        400: compatible with all MetaTrader builds
@@ -145,14 +145,15 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
  *
  * @return int - history set handle or NULL (0) in case of errors
  */
-int HistorySet1.Create(string symbol, string description, int digits, int format, string directory = "") {
+int HistorySet1.Create(string symbol, string descr, int digits, int format, string directory = "") {
    // validate parameters
    if (!StringLen(symbol))                    return(!catch("HistorySet1.Create(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet1.Create(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet1.Create(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolU = StrToUpper(symbol);
-   if (StringLen(description) > 63) {             logNotice("HistorySet1.Create(4)  truncating too long history description "+ DoubleQuoteStr(description) +" to 63 chars...");
-      description = StrLeft(description, 63);
+   if (StringLen(descr) > 63) {
+      logNotice("HistorySet1.Create(4)  truncating too long history description "+ DoubleQuoteStr(descr) +" to 63 chars...");
+      descr = StrLeft(descr, 63);
    }
    if (digits < 0)                            return(!catch("HistorySet1.Create(5)  invalid parameter digits: "+ digits +" (symbol="+ DoubleQuoteStr(symbol) +")", ERR_INVALID_PARAMETER));
    if (format!=400 && format!=401)            return(!catch("HistorySet1.Create(6)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ DoubleQuoteStr(symbol) +")", ERR_INVALID_PARAMETER));
@@ -189,10 +190,10 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
    string filename = "", basename = "";
 
    InitializeByteBuffer(hh, HISTORY_HEADER_size);
-   hh_SetBarFormat  (hh, format     );
-   hh_SetDescription(hh, description);
-   hh_SetSymbol     (hh, symbol     );
-   hh_SetDigits     (hh, digits     );
+   hh_SetBarFormat  (hh, format);
+   hh_SetDescription(hh, descr );
+   hh_SetSymbol     (hh, symbol);
+   hh_SetDigits     (hh, digits);
 
    if (directory == "") {                                               // current trade server, use MQL::FileOpenHistory()
       string serverPath = GetAccountServerPath();
@@ -249,7 +250,7 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
    hs.hSet       [iH] = hSet;
    hs.symbol     [iH] = symbol;
    hs.symbolU    [iH] = symbolU;
-   hs.description[iH] = description;
+   hs.description[iH] = descr;
    hs.digits     [iH] = digits;
    hs.directory  [iH] = directory;
    hs.format     [iH] = format;

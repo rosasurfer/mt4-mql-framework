@@ -26,7 +26,7 @@
  *  - workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
  *  - ETH/RTH separation for Frankfurt session
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -35,6 +35,7 @@ int __DeinitFlags[];
 extern color  UpBars.Color        = PaleGreen;        // bullish bars
 extern color  DownBars.Color      = Pink;             // bearish bars
 extern color  UnchangedBars.Color = Lavender;         // unchanged bars
+extern bool   FillBars            = true;             //
 extern color  CloseMarker.Color   = Gray;             // bar close marker
 extern color  ETH.Color           = LemonChiffon;     // ETH sessions
 extern string ETH.Symbols         = "";               // comma-separated list of symbols with RTH/ETH sessions
@@ -42,15 +43,16 @@ extern string Weekend.Symbols     = "";               // comma-separated list of
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/HandleCommands.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
-#include <functions/iChangedBars.mqh>
-#include <functions/iPreviousPeriod.mqh>
-#include <win32api.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/iBarShiftPrevious.mqh>
+#include <rsf/functions/iChangedBars.mqh>
+#include <rsf/functions/iPreviousPeriod.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/win32api.mqh>
 
 #property indicator_chart_window
 
@@ -135,6 +137,9 @@ int onInit() {
    SetIndexLabel(0, NULL);                               // no entries in "Data" window
    legendLabel = CreateStatusLabel();
 
+   // reset the command handler
+   if (__isChart) GetChartCommand("", sValues);
+
    // restore a stored runtime status
    if (!RestoreStatus()) return(last_error);
 
@@ -161,11 +166,14 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   if (!__isChart) return(last_error);
+
    serverTime = TimeServer("onTick(1)", true);
    if (!serverTime) return(last_error);
 
-   HandleCommands();                                     // process incoming commands
-   UpdateSuperBars();                                    // update superbars
+   if (HandleCommands()) {                               // process incoming commands
+      UpdateSuperBars();                                 // update superbars
+   }
    return(last_error);
 }
 
@@ -447,12 +455,12 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
    // define object names
    switch (superTimeframe) {
-      case PERIOD_H1    : nameRectangle =          GmtTimeFormat(openTimeFxt, "%d.%m.%Y %H:%M");                   break;
+      case PERIOD_H1:  nameRectangle =          GmtTimeFormat(openTimeFxt, "%d.%m.%Y %H:%M");                   break;
       case PERIOD_D1_ETH:
-      case PERIOD_D1    : nameRectangle =          GmtTimeFormat(openTimeFxt, "%a %d.%m.%Y ");                     break;  // plus an extra space as "%a %d.%m.%Y" is already used by the Grid indicator
-      case PERIOD_W1    : nameRectangle = "Week "+ GmtTimeFormat(openTimeFxt,    "%d.%m.%Y");                      break;
-      case PERIOD_MN1   : nameRectangle =          GmtTimeFormat(openTimeFxt,       "%B %Y");                      break;
-      case PERIOD_Q1    : nameRectangle = ((TimeMonth(openTimeFxt)-1)/3+1) +". Quarter "+ TimeYearEx(openTimeFxt); break;
+      case PERIOD_D1:  nameRectangle =          GmtTimeFormat(openTimeFxt, "%a %d.%m.%Y ");                     break;  // plus an extra space as "%a %d.%m.%Y" is already used by the Grid indicator
+      case PERIOD_W1:  nameRectangle = "Week "+ GmtTimeFormat(openTimeFxt,    "%d.%m.%Y");                      break;
+      case PERIOD_MN1: nameRectangle =          GmtTimeFormat(openTimeFxt,       "%B %Y");                      break;
+      case PERIOD_Q1:  nameRectangle = ((TimeMonth(openTimeFxt)-1)/3+1) +". Quarter "+ TimeYearEx(openTimeFxt); break;
    }
 
    // draw SuperBar body
@@ -462,13 +470,13 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          adjustedCloseBar--;
       }
    }
-   if (ObjectFind(nameRectangle) == -1) if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, 0, 0, 0, 0, 0, 0)) return(false);
-   ObjectSet(nameRectangle, OBJPROP_COLOR,  barColor);
-   ObjectSet(nameRectangle, OBJPROP_BACK,   true);
+   if (ObjectFind(nameRectangle) == -1) if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE)) return(false);
    ObjectSet(nameRectangle, OBJPROP_TIME1,  Time[openBar]);
    ObjectSet(nameRectangle, OBJPROP_PRICE1, High[highBar]);
    ObjectSet(nameRectangle, OBJPROP_TIME2,  Time[adjustedCloseBar]);
    ObjectSet(nameRectangle, OBJPROP_PRICE2, Low[lowBar]);
+   ObjectSet(nameRectangle, OBJPROP_COLOR,  barColor);
+   ObjectSet(nameRectangle, OBJPROP_BACK,   FillBars);
 
    // draw SuperBar close marker and referencing label
    if (closeBar > 0) {                                                           // except for the youngest (still unfinished) SuperBar
@@ -485,19 +493,19 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
             }
          }
 
-         if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL)) return(false);
          ObjectSet    (nameLabel, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          ObjectSetText(nameLabel, nameTrendline);
 
-         if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
-         ObjectSet(nameTrendline, OBJPROP_RAY,    false);
-         ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
-         ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
-         ObjectSet(nameTrendline, OBJPROP_BACK,   true);
+         if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND)) return(false);
          ObjectSet(nameTrendline, OBJPROP_TIME1,  Time[centerBar]);
          ObjectSet(nameTrendline, OBJPROP_PRICE1, Close[closeBar]);
          ObjectSet(nameTrendline, OBJPROP_TIME2,  Time[closeBar]);
          ObjectSet(nameTrendline, OBJPROP_PRICE2, Close[closeBar]);
+         ObjectSet(nameTrendline, OBJPROP_RAY,    false);
+         ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
+         ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
+         ObjectSet(nameTrendline, OBJPROP_BACK,   true);
       }
    }
 
@@ -534,23 +542,23 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       nameRectangleBg = nameRectangle +" background";
 
       // draw ETH background (creates an optical hole in the SuperBar)
-      if (ObjectFind(nameRectangleBg) == -1) if (!ObjectCreateRegister(nameRectangleBg, OBJ_RECTANGLE, 0, 0, 0, 0, 0, 0, 0)) return(false);
-      ObjectSet(nameRectangleBg, OBJPROP_COLOR,  barColor);                      // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
-      ObjectSet(nameRectangleBg, OBJPROP_BACK,   true);                          // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
-      ObjectSet(nameRectangleBg, OBJPROP_TIME1,  Time[ethOpenBar]);              // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
-      ObjectSet(nameRectangleBg, OBJPROP_PRICE1, ethHigh);                       // of the chart background in the SuperBar. Then we draw the ETH bar into this "hole". It's color doesn't get mixed with the
-      ObjectSet(nameRectangleBg, OBJPROP_TIME2,  Time[ethCloseBar]);             // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.
-      ObjectSet(nameRectangleBg, OBJPROP_PRICE2, ethLow);
+      if (ObjectFind(nameRectangleBg) == -1) if (!ObjectCreateRegister(nameRectangleBg, OBJ_RECTANGLE)) return(false);
+      ObjectSet(nameRectangleBg, OBJPROP_TIME1,  Time[ethOpenBar]);              // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
+      ObjectSet(nameRectangleBg, OBJPROP_PRICE1, ethHigh);                       // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
+      ObjectSet(nameRectangleBg, OBJPROP_TIME2,  Time[ethCloseBar]);             // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
+      ObjectSet(nameRectangleBg, OBJPROP_PRICE2, ethLow);                        // of the chart background in the SuperBar. Then we draw the ETH bar into this "hole". It's color doesn't get mixed with the
+      ObjectSet(nameRectangleBg, OBJPROP_COLOR,  barColor);                      // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.
+      ObjectSet(nameRectangleBg, OBJPROP_BACK,   true);
 
       // draw ETH bar (fills the hole with the ETH color)
       if (ObjectFind(nameRectangle) == -1)
-         if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, 0, 0, 0, 0, 0, 0)) return(false);
-      ObjectSet(nameRectangle, OBJPROP_COLOR,  ETH.Color);
-      ObjectSet(nameRectangle, OBJPROP_BACK,   true);
+         if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE)) return(false);
       ObjectSet(nameRectangle, OBJPROP_TIME1,  Time[ethOpenBar]);
       ObjectSet(nameRectangle, OBJPROP_PRICE1, ethHigh);
       ObjectSet(nameRectangle, OBJPROP_TIME2,  Time[ethCloseBar]);
       ObjectSet(nameRectangle, OBJPROP_PRICE2, ethLow);
+      ObjectSet(nameRectangle, OBJPROP_COLOR,  ETH.Color);
+      ObjectSet(nameRectangle, OBJPROP_BACK,   true);
 
       // draw ETH close marker if the RTH session has started
       if (serverTime >= ethCloseTimeSrv) {
@@ -567,19 +575,19 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
                }
             }
 
-            if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+            if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL)) return(false);
             ObjectSet    (nameLabel, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
             ObjectSetText(nameLabel, nameTrendline);
 
-            if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
-            ObjectSet(nameTrendline, OBJPROP_RAY,    false);
-            ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
-            ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
-            ObjectSet(nameTrendline, OBJPROP_BACK,   true);
+            if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND)) return(false);
             ObjectSet(nameTrendline, OBJPROP_TIME1,  Time[ethCenterBar]);
             ObjectSet(nameTrendline, OBJPROP_PRICE1, ethClose);
             ObjectSet(nameTrendline, OBJPROP_TIME2,  Time[ethCloseBar]);
             ObjectSet(nameTrendline, OBJPROP_PRICE2, ethClose);
+            ObjectSet(nameTrendline, OBJPROP_RAY,    false);
+            ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
+            ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
+            ObjectSet(nameTrendline, OBJPROP_BACK,   true);
          }
       }
       break;
@@ -660,7 +668,7 @@ string CreateStatusLabel() {
 
    string name = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
-   if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
+   if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_LABEL)) return("");
    ObjectSet    (name, OBJPROP_CORNER,    legendCorner);
    ObjectSet    (name, OBJPROP_XDISTANCE, legend_xDistance);
    ObjectSet    (name, OBJPROP_YDISTANCE, legend_yDistance);
@@ -684,7 +692,7 @@ bool StoreStatus() {
    string label = "rsf."+ ProgramName() +".superTimeframe";
 
    // store timeframe in the window
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    SetWindowIntegerA(hWnd, label, superTimeframe);
 
    // store timeframe in the chart
@@ -707,7 +715,7 @@ bool RestoreStatus() {
    string label = "rsf."+ ProgramName() +".superTimeframe";
 
    // look-up a stored timeframe in the window
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    int result = RemoveWindowIntegerA(hWnd, label);
 
    // on error look-up a stored timeframe in the chart
@@ -725,7 +733,7 @@ bool RestoreStatus() {
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

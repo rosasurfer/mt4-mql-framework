@@ -7,7 +7,7 @@
  * TODO:
  *  - document both equity curves
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -18,12 +18,13 @@ extern int    HistoryFormat    = 401;                      // written history fo
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <rsfHistory.mqh>
-#include <functions/ComputeFloatingPnL.mqh>
-#include <functions/chartlegend.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/history.mqh>
+#include <rsf/functions/ComputeFloatingProfit.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   1                          // there's a minimum of 1 buffer
@@ -76,8 +77,8 @@ int onInit() {
    historyFormat = HistoryFormat;
 
    // setup a chart ticker (online only)
-   if (!__isTesting) {
-      int hWnd = __ExecutionContext[EC.hChart];
+   if (!__tickTimerId && !__isTesting) {
+      int hWnd = __ExecutionContext[EC.chart];
       int millis = 1000;                                 // a virtual tick every second (1000 milliseconds)
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
       if (!__tickTimerId) return(catch("onInit(5)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
@@ -89,6 +90,31 @@ int onInit() {
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);
    return(catch("onInit(6)"));
+}
+
+
+/**
+ * Called after a finished account change. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitAccountChange() {
+   // close open history sets
+   int size = ArraySize(hSet);
+   for (int i=0; i < size; i++) {
+      if (hSet[i] != 0) {
+         int tmp = hSet[i]; hSet[i] = NULL;
+         if (!HistorySet1.Close(tmp)) return(ERR_RUNTIME_ERROR);
+      }
+   }
+
+   // reset global vars
+   ArrayResize(hSet,       0);
+   ArrayResize(currEquity, 0);
+   ArrayResize(prevEquity, 0);
+   isOpenPosition = false;
+   lastTickTime = NULL;
+   return(catch("onInitAccountChange(1)"));
 }
 
 
@@ -145,15 +171,15 @@ int onTick() {
  * @return bool - success status
  */
 bool CalculateEquity() {
-   // calculate PL per symbol
+   // calculate PnL per symbol
    string symbols[];
    double profits[];
-   if (!ComputeFloatingPnLs(symbols, profits)) return(false);
+   if (!ComputeFloatingProfits(symbols, profits)) return(false);
 
    // calculate current equity
-   int size = ArraySize(symbols);
+   int size = ArraySize(symbols), error;
    double equity = AccountBalance();
-   for (int error, i=0; i < size; i++) {
+   for (int i=0; i < size; i++) {
       equity      += profits[i];
       lastTickTime = Max(lastTickTime, MarketInfoEx(symbols[i], MODE_TIME, error, "CalculateEquity(1)")); if (error != NULL) return(false);
    }
@@ -163,9 +189,7 @@ bool CalculateEquity() {
    currEquity[I_EQUITY_ACCOUNT_EXT] = NormalizeDouble(equity + GetExternalAssets(), 2);
    isOpenPosition = (size > 0);
 
-   if (!last_error)
-      return(!catch("CalculateEquity(2)"));
-   return(false);
+   return(!last_error);
 }
 
 
@@ -189,7 +213,7 @@ bool RecordEquity() {
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
       if (!hSet[i]) {
-         string symbol      = StrLeft(GetAccountNumber(), 8) + symbolSuffixes[i];
+         string symbol = StrLeft(GetAccountNumber(), 8) + symbolSuffixes[i];
          string description = StrReplace(symbolDescriptions[i], "{account-number}", GetAccountNumber());
 
          hSet[i] = HistorySet1.Get(symbol, historyDirectory);
@@ -204,7 +228,7 @@ bool RecordEquity() {
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

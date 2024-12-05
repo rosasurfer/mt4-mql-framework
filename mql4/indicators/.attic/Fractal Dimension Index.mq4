@@ -29,7 +29,7 @@
  * @link  http://beathespread.com/pages/view/2228/fractal-dimension-indicators-and-their-use#             [FDI Usage, JohnLast, 2010]
  * @link  https://www.mql5.com/en/code/8997#                                                              [FGDI with fixed FDI issues, LastViking]
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -44,9 +44,9 @@ extern int    MaxBarsBack    = 10000;                    // max. values to calcu
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
 
 #define MODE_MAIN             FDI.MODE_MAIN
 #define MODE_UPPER            1                          // indicator buffer ids
@@ -213,10 +213,14 @@ bool UpdateChangedBars(int startbar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    SetIndexStyle(MODE_MAIN, DRAW_NONE);
 
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
@@ -225,11 +229,13 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_UPPER, draw_type, EMPTY, drawWidth, Color.Ranging ); SetIndexArrow(MODE_UPPER, 158);
    SetIndexStyle(MODE_LOWER, draw_type, EMPTY, drawWidth, Color.Trending); SetIndexArrow(MODE_LOWER, 158);
 
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

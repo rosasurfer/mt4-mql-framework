@@ -1,21 +1,47 @@
 /**
- * A Heikin-Ashi indicator with optional smoothing of input and output values.
+ * A Heikin-Ashi indicator with optional smoothing of input and/or output values.
  *
  *
- * Supported Moving-Averages:
+ * Heikin-Ashi calculation is fundamentally not different from defining new/different price types:
+ *  haClose = (O + H + L + C)/4
+ *  haOpen  = (prevHaOpen + prevHaClose)/2
+ *  haHigh  = Max(H, haOpen, haClose)
+ *  haLow   = Min(L, haOpen, haClose)
+ *
+ *
+ * Smoothed Heikin-Ashi bars are fundamentally not different from regular Moving Averages. Available averaging methods:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA - Smoothed Moving Average:        same as EMA, it holds: SMMA(n) = EMA(2*n-1)
+ *  • SMMA - Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes 2)
+ *
+ *
+ * When smoothing input values the Heikin-Ashi calculation operates on averaged prices instead of standard prices:
+ * O-H-L-C becomes MA(Open,n), MA(High,n), MA(Low,n), MA(Close,n) with n = Input.MA.Periods
+ *
+ * When smoothing output values the calculated Heikin-Ashi bar prices are averaged another time:
+ * haOpen, haHigh, haLow, haClose becomes MA(haOpen,n), MA(haHigh,n), MA(haLow,n), MA(haClose,n) with n = Output.MA.Periods
+ *
  *
  * Indicator buffers for iCustom():
  *  • HeikinAshi.MODE_OPEN:  Heikin-Ashi bar open price
  *  • HeikinAshi.MODE_CLOSE: Heikin-Ashi bar close price
  *  • HeikinAshi.MODE_TREND: Heikin-Ashi trend direction and length
- *    - trend direction:     positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:        the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:     positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:        the absolute value of the direction is the trend length in bars since the last reversal
+ *
+ *
+ * Notes:
+ *  (1) EMA calculation:
+ *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+ *
+ *  (2) SMMA calculation: The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
+ *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
+ *
+ *  (3) ALMA calculation:
+ *      @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -35,21 +61,22 @@ extern int    MaxBarsBack       = 10000;                                // max. 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/chartlegend.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ManageDoubleIndicatorBuffer.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
-#define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids
-#define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   //
+#define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // 0 indicator buffer ids
+#define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   // 1
 #define MODE_OUT_HIGHLOW      2                       //
 #define MODE_OUT_LOWHIGH      3                       //
 #define MODE_TREND            HeikinAshi.MODE_TREND   // 4
 #define MODE_HA_OPEN          5                       //
 #define MODE_HA_HIGH          6                       //
 #define MODE_HA_LOW           7                       //
-#define MODE_HA_CLOSE         8                       // managed by the framework
+#define MODE_HA_CLOSE         8                       //
 
 #property indicator_chart_window
 #property indicator_buffers   4                       // visible buffers
@@ -101,12 +128,13 @@ int onInit() {
       inputMaMethod = EMPTY;
    }
    else {
-      inputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-      if (inputMaMethod == -1)   return(catch("onInit(1)  invalid input parameter Input.MA.Method: "+ DoubleQuoteStr(Input.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      inputMaMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+      if (inputMaMethod == -1)         return(catch("onInit(1)  invalid input parameter Input.MA.Method: "+ DoubleQuoteStr(Input.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (inputMaMethod == MODE_ALMA)  return(catch("onInit(2)  unsupported input parameter Input.MA.Method: \"ALMA\"", ERR_INVALID_INPUT_PARAMETER));
    }
    Input.MA.Method = MaMethodDescription(inputMaMethod, false);
    if (!IsEmpty(inputMaMethod)) {
-      if (Input.MA.Periods < 0)  return(catch("onInit(2)  invalid input parameter Input.MA.Periods: "+ Input.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+      if (Input.MA.Periods < 0)        return(catch("onInit(3)  invalid input parameter Input.MA.Periods: "+ Input.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
       inputMaPeriods = ifInt(!Input.MA.Periods, 1, Input.MA.Periods);
       if (inputMaPeriods == 1) inputMaMethod = EMPTY;
    }
@@ -121,12 +149,13 @@ int onInit() {
       outputMaMethod = EMPTY;
    }
    else {
-      outputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-      if (outputMaMethod == -1)  return(catch("onInit(3)  invalid input parameter Output.MA.Method: "+ DoubleQuoteStr(Output.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      outputMaMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+      if (outputMaMethod == -1)        return(catch("onInit(4)  invalid input parameter Output.MA.Method: "+ DoubleQuoteStr(Output.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (outputMaMethod == MODE_ALMA) return(catch("onInit(5)  unsupported input parameter Output.MA.Method: \"ALMA\"", ERR_INVALID_INPUT_PARAMETER));
    }
    Output.MA.Method = MaMethodDescription(outputMaMethod, false);
    if (!IsEmpty(outputMaMethod)) {
-      if (Output.MA.Periods < 0) return(catch("onInit(4)  invalid input parameter Output.MA.Periods: "+ Output.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+      if (Output.MA.Periods < 0)       return(catch("onInit(6)  invalid input parameter Output.MA.Periods: "+ Output.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
       outputMaPeriods = ifInt(!Output.MA.Periods, 1, Output.MA.Periods);
       if (outputMaPeriods == 1) outputMaMethod = EMPTY;
    }
@@ -136,11 +165,11 @@ int onInit() {
    if (Color.BarDown == 0xFF000000) Color.BarDown = CLR_NONE;
 
    // CandleWidth
-   if (CandleWidth < 0)          return(catch("onInit(5)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (CandleWidth > 5)          return(catch("onInit(6)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (CandleWidth < 0)                return(catch("onInit(7)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (CandleWidth > 5)                return(catch("onInit(8)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // MaxBarsBack
-   if (MaxBarsBack < -1)         return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)               return(catch("onInit(9)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // buffer management
@@ -155,9 +184,9 @@ int onInit() {
 
    // names, labels and display options
    legendLabel = CreateChartLegend();
-   indicatorName = WindowExpertName();          // or  Heikin-Ashi(SMA(10))  or  EMA(Heikin-Ashi(SMA(10)), 5)
-   if (!IsEmpty(inputMaMethod))  indicatorName = indicatorName +"("+ Input.MA.Method +"("+ inputMaPeriods +"))";
-   if (!IsEmpty(outputMaMethod)) indicatorName = Output.MA.Method +"("+ indicatorName +", "+ outputMaPeriods +")";
+   indicatorName = WindowExpertName();
+   if (!IsEmpty(inputMaMethod))  indicatorName = indicatorName +"("+ Input.MA.Method +"("+ inputMaPeriods +"))";     // e.g. "Heikin-Ashi(SMA(10))"
+   if (!IsEmpty(outputMaMethod)) indicatorName = Output.MA.Method +"("+ indicatorName +", "+ outputMaPeriods +")";   // e.g. "EMA(Heikin-Ashi, 5)"
 
    IndicatorShortName(indicatorName);           // chart tooltips and context menu
    SetIndexLabel(MODE_OUT_OPEN,    NULL);       // chart tooltips and "Data" window
@@ -181,7 +210,7 @@ int onInit() {
    inputInitPeriods  = ifInt( inputMaMethod==MODE_EMA ||  inputMaMethod==MODE_SMMA, Max(10,  inputMaPeriods*3),  inputMaPeriods);
    outputInitPeriods = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), outputMaPeriods);
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(10)"));
 }
 
 
@@ -326,10 +355,14 @@ void UpdateTrend(int bar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
    int drawTypeCandles = ifInt(CandleWidth, DRAW_HISTOGRAM, DRAW_NONE);
@@ -339,11 +372,14 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_OUT_CLOSE,   drawTypeCandles, EMPTY, CandleWidth, Color.BarUp  );   // determines the applied color
    SetIndexStyle(MODE_OUT_HIGHLOW, drawTypeWicks,   EMPTY, 1,           Color.BarDown);
    SetIndexStyle(MODE_OUT_LOWHIGH, drawTypeWicks,   EMPTY, 1,           Color.BarUp  );
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

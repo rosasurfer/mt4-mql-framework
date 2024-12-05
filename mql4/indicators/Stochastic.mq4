@@ -13,31 +13,32 @@
  *    - signal direction:     positive values denote a long signal (+1...+n), negative values a short signal (-1...-n)
  *    - signal age:           the absolute value is the age of the signal in bars since its occurrence
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MainLine.Periods      = 15;                // %K line                                                        // EURJPY: 15        14
-extern int    SlowedMain.MA.Periods = 1;                 // slowed %K line (MA 1)                                          //         1          3
-extern int    SignalLine.MA.Periods = 1;                 // %D line (MA 2 of resulting %K)                                 //         1          3
-extern color  MainLine.Color        = DodgerBlue;
-extern color  SignalLine.Color      = Red;
-extern int    MaxBarsBack           = 10000;             // max. number of values to calculate (-1: all available)
-extern string ___a__________________________;
+extern int    MainLine.Periods               = 15;          // %K line                                                        // EURJPY: 15        14
+extern int    SlowedMain.MA.Periods          = 1;           // slowed %K line (MA 1)                                          //         1          3
+extern int    SignalLine.MA.Periods          = 1;           // %D line (MA 2 of resulting %K)                                 //         1          3
+extern color  MainLine.Color                 = DodgerBlue;
+extern color  SignalLine.Color               = Red;
+extern int    MaxBarsBack                    = 10000;       // max. number of values to calculate (-1: all available)
+extern string ___a__________________________ = "";
 
-extern int    SignalLevel.Long      = 73;                // signal level to cross upwards to trigger a long signal         //         73        70
-extern int    SignalLevel.Short     = 27;                // signal level to cross downwards to trigger a short signal      //         27        30
-extern color  SignalColor.Long      = Blue;
-extern color  SignalColor.Short     = Magenta;
-extern int    SignalBars            = 1000;              // max. number of bars to mark signals for
+extern int    SignalLevel.Long               = 73;          // signal level to cross upwards to trigger a long signal         //         73        70
+extern int    SignalLevel.Short              = 27;          // signal level to cross downwards to trigger a short signal      //         27        30
+extern color  SignalColor.Long               = Blue;
+extern color  SignalColor.Short              = Magenta;
+extern int    SignalBars                     = 1000;        // max. number of bars to mark signals for
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 #define MODE_MAIN             Stochastic.MODE_MAIN       // 0 indicator buffer ids
 #define MODE_SIGNAL           Stochastic.MODE_SIGNAL     // 1
@@ -193,12 +194,12 @@ bool UpdateSignalMarker(int bar) {
    static string prefix = ""; if (!StringLen(prefix)) {
       prefix = StringConcatenate(ProgramName(), "[", __ExecutionContext[EC.pid], "] Signal ");
    }
-   string label = StringConcatenate(prefix, TimeToStr(Time[bar]+Period()*MINUTES, TIME_DATE|TIME_MINUTES));
+   string label = StringConcatenate(prefix, TimeToStr(Time[bar]+Period()*MINUTES));
    bool objExists = (ObjectFind(label) != -1);
    double price;
 
    if (trend[bar]==1 || trend[bar]==-1) {                                     // set marker long|short
-      if (!objExists) if (!ObjectCreateRegister(label, OBJ_ARROW, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (!objExists) if (!ObjectCreateRegister(label, OBJ_ARROW)) return(false);
       if (trend[bar]==1) price =  Low[bar] - iATR(NULL, NULL, 10, bar) * 1.1;
       else               price = High[bar] + iATR(NULL, NULL, 10, bar) * 1.1;
 
@@ -262,10 +263,14 @@ int CalculateTrend(int bar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    int signalType = ifInt(SignalLine.Color==CLR_NONE, DRAW_NONE, DRAW_LINE);
 
    SetIndexStyle(MODE_MAIN,   DRAW_LINE,  EMPTY, EMPTY, MainLine.Color);
@@ -274,11 +279,14 @@ void SetIndicatorOptions() {
 
    SetLevelValue(0, signalLevelLong);
    SetLevelValue(1, signalLevelShort);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

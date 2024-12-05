@@ -5,26 +5,27 @@
  *
  * TODDO: input TimeWindow must support timezone ids (09:00-09:30 NY, 09:15-09:30 FF)
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string TimeWindow       = "09:00-10:00";          // server timezone
-extern int    NumberOfBrackets = 1;                      // -1: process all available data
+extern int    NumberOfBrackets = 3;                      // -1: process all available data
 extern color  BracketsColor    = Blue;                   //
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
-#include <functions/iCopyRates.mqh>
-#include <functions/ParseDateTime.mqh>
-#include <functions/ParseTimeRange.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/iBarShiftPrevious.mqh>
+#include <rsf/functions/iCopyRates.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/ParseDateTime.mqh>
+#include <rsf/functions/ParseTimeRange.mqh>
 
 #property indicator_chart_window
 
@@ -74,8 +75,6 @@ int onInit() {
    if (AutoConfiguration) {
       BracketsColor = GetConfigColor(indicator, "BracketsColor", BracketsColor);
    }
-
-   SetIndexLabel(0, NULL);                                                // disable "Data" window display
    return(catch("onInit(4)"));
 }
 
@@ -110,7 +109,7 @@ bool UpdateBrackets() {
    // re-calculate brackets
    if (changedRateBars > 2) {                                                                            // skip single ticks
       ArrayResize(brackets, maxBrackets);
-      ArrayInitialize(brackets, NULL);
+      ArrayInitialize(brackets, 0);
 
       int i=0, fromBar, toBar, highBar, lowBar;
       datetime opentime=rates[0][BAR.time], midnight=opentime - opentime%DAYS + 1*DAY, rangeStart, rangeEnd;
@@ -120,8 +119,8 @@ bool UpdateBrackets() {
          midnight  -= 1*DAY;
          rangeStart = midnight + bracketStart*MINUTES;
          rangeEnd   = midnight + bracketEnd*MINUTES;
-         fromBar    = iBarShiftNext    (NULL, ratesTimeframe, rangeStart); if (fromBar == -1) continue;  // no such data (rangeStart too young)
-         toBar      = iBarShiftPrevious(NULL, ratesTimeframe, rangeEnd-1); if (toBar   == -1) break;     // no such data (rangeEnd too old)
+         fromBar    = iBarShiftNext    (NULL, ratesTimeframe, rangeStart); if (fromBar == -1) continue;  // -1: no such data (rangeStart too young)
+         toBar      = iBarShiftPrevious(NULL, ratesTimeframe, rangeEnd-1); if (toBar   == -1) break;     // -1: no such data (rangeEnd too old)
          if (fromBar < toBar) continue;                                                                  // no such data (gap in rates)
 
          highBar = iHighest(NULL, ratesTimeframe, MODE_HIGH, fromBar-toBar+1, toBar);
@@ -153,7 +152,7 @@ bool UpdateBrackets() {
 
          // high
          label = "Bracket "+ TimeWindow +" High "+ NumberToStr(high, PriceFormat) +" ["+ i +"]["+ pid +"]";
-         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND)) return(false);
          ObjectSet(label, OBJPROP_TIME1,  rangeStart);
          ObjectSet(label, OBJPROP_PRICE1, high);
          ObjectSet(label, OBJPROP_TIME2,  rangeEnd);
@@ -166,7 +165,7 @@ bool UpdateBrackets() {
 
          // low
          label = "Bracket "+ TimeWindow +" Low "+ NumberToStr(low, PriceFormat) +" ["+ i +"]["+ pid +"]";
-         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND)) return(false);
          ObjectSet(label, OBJPROP_TIME1,  rangeStart);
          ObjectSet(label, OBJPROP_PRICE1, low);
          ObjectSet(label, OBJPROP_TIME2,  rangeEnd);
@@ -183,7 +182,7 @@ bool UpdateBrackets() {
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

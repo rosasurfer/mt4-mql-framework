@@ -11,12 +11,12 @@
  * Indicator buffers for iCustom():
  *  • Slope.MODE_MAIN:   Trix main value
  *  • Slope.MODE_TREND:  trend direction and length
- *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
+ *    - trend direction: positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
+ *    - trend length:    the absolute value of the direction is the trend length in bars since the last reversal
  *
  * To detect a crossing of the zero line use MovingAverage.MODE_TREND of the underlying TriEMA.
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -36,10 +36,10 @@ extern int    MaxBarsBack           = 10000;                // max. values to ca
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/trend.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/trend.mqh>
 
 #property indicator_separate_window
 #property indicator_buffers   4                             // buffers visible to the user
@@ -90,8 +90,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                           // default price type
    ema.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (ema.appliedPrice==-1 || ema.appliedPrice > PRICE_WEIGHTED)
-                                  return(catch("onInit(2)  invalid input parameter EMA.AppliedPrice: "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (ema.appliedPrice == -1)    return(catch("onInit(2)  invalid input parameter EMA.AppliedPrice: "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -199,17 +198,21 @@ int onTick() {
       else                   { trixUpper[bar] = EMPTY_VALUE;   trixLower[bar] = trixMain[bar]; }
 
       // trend direction and length
-      UpdateTrendDirection(trixMain, bar, trixTrend, dNull, dNull, dNull);
+      UpdateTrend(trixMain, bar, trixTrend, dNull, dNull, dNull);
    }
    return(last_error);
 }
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
    int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
@@ -219,11 +222,14 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
    SetIndexStyle(MODE_TREND,         DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

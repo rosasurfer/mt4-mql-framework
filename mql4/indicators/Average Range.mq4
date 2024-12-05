@@ -1,26 +1,29 @@
 /**
- * Average Range/Average True Range
+ * Average (True) Range
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods      = 20;                            // averaging periods
-extern int    MA.Periods.Step = 0;                             // step size for a stepped input parameter (hotkey)
-extern string MA.Method       = "SMA | LWMA* | EMA | SMMA";    // averaging type
-extern bool   TrueRange       = true;                          // whether to calculate the standard or true range
+extern bool   TrueRange                      = true;                       // whether to reflect the traded or the true range
 
-extern int    Line.Width      = 2;
-extern color  Line.Color      = Blue;
+extern string ___a__________________________ = "=== MA settings ===";
+extern string MA.Method                      = "SMA | LWMA* | EMA | SMMA"; // averaging type
+extern int    MA.Periods                     = 20;                         // averaging periods
+extern int    MA.Periods.Step                = 0;                          // step size for a stepped input parameter
+
+extern string ___b__________________________ = "=== Display settings ===";
+extern int    Line.Width                     = 2;
+extern color  Line.Color                     = Blue;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/HandleCommands.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/HandleCommands.mqh>
 
 // parameter stepper directions
 #define STEP_UP               1
@@ -65,7 +68,7 @@ int onInit() {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maMethod == -1)       return(catch("onInit(3)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    if (maMethod > MODE_LWMA) return(catch("onInit(4)  unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
@@ -76,6 +79,11 @@ int onInit() {
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Line.Color = GetConfigColor(indicator, "Line.Color", Line.Color);
    if (Line.Color == 0xFF000000) Line.Color = CLR_NONE;
+
+   // reset an active command handler
+   if (__isChart && MA.Periods.Step) {
+      GetChartCommand("ParameterStepper", sValues);
+   }
 
    // restore a stored runtime status
    RestoreStatus();
@@ -107,11 +115,10 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(ranges)) return(logInfo("onTick(1)  sizeof(ranges) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
    // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && MA.Periods.Step) HandleCommands("ParameterStepper", false);
+   if (__isChart && MA.Periods.Step) {
+      if (!HandleCommands("ParameterStepper")) return(last_error);
+   }
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -142,7 +149,7 @@ int onTick() {
    for (bar=startbar; bar >= 0; bar--) {
       ma[bar] = iMAOnArray(ranges, WHOLE_ARRAY, MA.Periods, 0, maMethod, bar);
    }
-   return(catch("onTick(2)"));
+   return(catch("onTick(1)"));
 }
 
 
@@ -156,28 +163,11 @@ int onTick() {
  * @return bool - success status of the executed command
  */
 bool onCommand(string cmd, string params, int keys) {
-   static int lastTickcount = 0;
-   int tickcount = StrToInteger(params);
-
-   // stepper cmds are not removed from the queue: compare tickcount with last processed command and skip if old
-   if (__isChart) {
-      string label = "rsf."+ WindowExpertName() +".cmd.tickcount";
-      bool objExists = (ObjectFind(label) != -1);
-
-      if (objExists) lastTickcount = StrToInteger(ObjectDescription(label));
-      if (tickcount <= lastTickcount) return(false);
-
-      if (!objExists) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      ObjectSetText(label, ""+ tickcount);
+   if (cmd == "parameter") {
+      if (params == "up")   return(ParameterStepper(STEP_UP, keys));
+      if (params == "down") return(ParameterStepper(STEP_DOWN, keys));
    }
-   else if (tickcount <= lastTickcount) return(false);
-   lastTickcount = tickcount;
-
-   if (cmd == "parameter-up")   return(ParameterStepper(STEP_UP, keys));
-   if (cmd == "parameter-down") return(ParameterStepper(STEP_DOWN, keys));
-
-   return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(cmd +":"+ params +":"+ keys)));
 }
 
 
@@ -204,7 +194,6 @@ bool ParameterStepper(int direction, int keys) {
 
    ChangedBars = Bars;
    ValidBars   = 0;
-   ShiftedBars = 0;
 
    PlaySoundEx("Parameter Step.wav");
    return(true);
@@ -212,10 +201,14 @@ bool ParameterStepper(int direction, int keys) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
    string name = ifString(TrueRange, "ATR", "AvgRange") +"("+ ifString(MA.Periods.Step, "step:", "") + MA.Periods +")";
@@ -226,6 +219,9 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_RANGE, DRAW_NONE, EMPTY, EMPTY,      CLR_NONE);
    SetIndexStyle(MODE_MA,    drawType,  EMPTY, Line.Width, Line.Color); SetIndexLabel(MODE_MA, name);
    IndicatorDigits(Digits);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
@@ -265,15 +261,15 @@ bool RestoreStatus() {
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",      MA.Periods,                ";", NL,
-                            "MA.Periods.Step=", MA.Periods.Step,           ";", NL,
+   return(StringConcatenate("TrueRange=",       BoolToStr(TrueRange),      ";", NL,
                             "MA.Method=",       DoubleQuoteStr(MA.Method), ";", NL,
-                            "TrueRange=",       BoolToStr(TrueRange),      ";", NL,
+                            "MA.Periods=",      MA.Periods,                ";", NL,
+                            "MA.Periods.Step=", MA.Periods.Step,           ";", NL,
                             "Line.Width=",      Line.Width,                ";", NL,
                             "Line.Color=",      ColorToStr(Line.Color),    ";")
    );

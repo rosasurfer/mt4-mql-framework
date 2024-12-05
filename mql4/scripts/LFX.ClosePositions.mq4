@@ -9,7 +9,7 @@
  *       kann der ClosePrice der Gesamtposition noch nicht korrekt berechnet werden. Beim einzelnen Schlieﬂen mehrerer
  *       Positionen werden dadurch Commission und Spread mehrfach berechnet.
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -20,15 +20,15 @@ extern string LFX.Labels = "";                           // Label_1 [, Label_n [
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/script.mqh>
-#include <stdfunctions.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <rsfLib.mqh>
-
-#include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
-#include <structs/rsf/LFXOrder.mqh>
-#include <structs/rsf/OrderExecution.mqh>
+#include <rsf/core/script.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/MT4iQuickChannel.mqh>
+#include <rsf/functions/InitializeByteBuffer.mqh>
+#include <rsf/functions/lfx.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/structs/LFXOrder.mqh>
+#include <rsf/structs/OrderExecution.mqh>
 
 
 string inputLabels[];
@@ -83,7 +83,7 @@ int onStart() {
 
    // (1) zu schlieﬂende Positionen selektieren
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: w‰hrend des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: an open order was closed/deleted in another thread
          break;
       if (LFX.IsMyOrder()) {
          if (OrderType() > OP_SELL)

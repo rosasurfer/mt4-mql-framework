@@ -4,7 +4,7 @@
  * TODO: Fehler im Position-Marker, wenn gleichzeitig zwei Orders erzeugt und die finalen Bestätigungsdialoge gehalten
  *       werden (2 x CHF.3).
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -17,15 +17,15 @@ extern double Units        = 0.2;                                    // Position
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/script.mqh>
-#include <stdfunctions.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <rsfLib.mqh>
-
-#include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
-#include <structs/rsf/LFXOrder.mqh>
-#include <structs/rsf/OrderExecution.mqh>
+#include <rsf/core/script.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/MT4iQuickChannel.mqh>
+#include <rsf/functions/InitializeByteBuffer.mqh>
+#include <rsf/functions/lfx.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/structs/LFXOrder.mqh>
+#include <rsf/structs/OrderExecution.mqh>
 
 
 int    direction;
@@ -100,7 +100,6 @@ int onStart() {
    int    directions[7];
    int    tickets   [7];
 
-
    // (1) zu handelnde Pairs bestimmen
    //     TODO: Brokerspezifische Symbole ermitteln
    if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD";                        symbolsSize = 6; }
@@ -112,14 +111,12 @@ int onStart() {
    else if (lfxCurrency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "GBPNZD"; symbols[3] = "NZDCAD"; symbols[4] = "NZDCHF"; symbols[5] = "NZDJPY"; symbols[6] = "NZDUSD"; symbolsSize = 7; }
    else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
 
-
    // (2) Lotsizes berechnen
-   double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
-   double visibleEquity  = AccountEquity()-AccountCredit();                            // bei negativer AccountBalance wird nur visibleEquity benutzt
-      if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
-   double equity = visibleEquity + externalAssets;
+   double equity = AccountEquity() - AccountCredit();
+   if (AccountBalance() > 0) equity = MathMin(AccountBalance(), equity);               // bei negativer AccountBalance wird nur 'equity' benutzt
+   equity += GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
-   int    button;
+   int button;
    string errorMsg="", overLeverageMsg="";
 
    for (int retry, i=0; i < symbolsSize; i++) {

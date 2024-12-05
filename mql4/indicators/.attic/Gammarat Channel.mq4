@@ -10,35 +10,36 @@
  * @link  https://forex-station.com/viewtopic.php?f=579496&t=8423458#                    [Centered Triangular Moving Average]
  * @link  http://www.gammarat.com/Forex/#                                                                    [GammaRat Forex]
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods       = 111;
-extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
+extern int    MA.Periods                     = 111;
+extern string MA.AppliedPrice                = "Open | High | Low | Close | Median | Typical | Weighted*";
 
-extern double Bands.Deviations = 2.5;
-extern color  Bands.Color      = LightSkyBlue;
-extern int    Bands.LineWidth  = 3;
+extern double Bands.Deviations               = 2.5;
+extern color  Bands.Color                    = LightSkyBlue;
+extern int    Bands.LineWidth                = 3;
 
-extern string ___a__________________________;
-extern bool   RepaintingMode   = true;             // toggle repainting mode (a full recalculation is way too slow when disabled)
-extern bool   MarkReversals    = true;
-extern int    MaxBarsBack      = 10000;            // max. values to calculate (-1: all available)
+extern string ___a__________________________ = "";
+extern bool   RepaintingMode                 = true;    // toggle repainting mode (a full recalculation is way too slow when disabled)
+extern bool   MarkReversals                  = true;
+extern int    MaxBarsBack                    = 10000;   // max. values to calculate (-1: all available)
 
-extern string ___b__________________________;
-extern bool   AlertsOn         = false;
+extern string ___b__________________________ = "";
+extern bool   AlertsOn                       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/IsBarOpen.mqh>
-#include <functions/chartlegend.mqh>
-#include <functions/ManageDoubleIndicatorBuffer.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
+#include <rsf/functions/chartlegend.mqh>
+#include <rsf/functions/ManageDoubleIndicatorBuffer.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
 #define MODE_UPPER_BAND_RP       1                 //
@@ -96,8 +97,8 @@ bool   test.onSignalPause = false;                 // whether to pause a test on
 int onInit() {
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1)                                        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (MA.Periods & 1 == 0)                                   return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods +" (must be an odd value)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)       return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods & 1 == 0)  return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods +" (must be an odd value)", ERR_INVALID_INPUT_PARAMETER));
    maPeriods = MA.Periods;
    // MA.AppliedPrice
    string sValues[], sValue = StrToLower(MA.AppliedPrice);
@@ -107,16 +108,16 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice == -1) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // Bands.Deviations
-   if (Bands.Deviations < 0)                                  return(catch("onInit(4)  invalid input parameter Bands.Deviations: "+ NumberToStr(Bands.Deviations, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.Deviations < 0) return(catch("onInit(4)  invalid input parameter Bands.Deviations: "+ NumberToStr(Bands.Deviations, ".1+"), ERR_INVALID_INPUT_PARAMETER));
    // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
    // Bands.LineWidth
-   if (Bands.LineWidth < 0)                                   return(catch("onInit(5)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth < 0)  return(catch("onInit(5)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
-   if (MaxBarsBack < -1)                                      return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)     return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // buffer management
@@ -243,15 +244,15 @@ void CalculateRepaintingTMA(int startbar) {
 
    for (int i=startbar; i >= 0; i--) {
       // TMA calculation
-      double price = GetPrice(i);
+      double price = iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, i);
       double sum = (maHalfLength+1) * price;
       int   sumw = (maHalfLength+1);
 
       for (j=1, w=maHalfLength; j <= maHalfLength; j++, w--) {
-         sum  += w * GetPrice(i+j);
+         sum  += w * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, i+j);
          sumw += w;
          if (j <= i) {
-            sum  += w * GetPrice(i-j);
+            sum  += w * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, i-j);
             sumw += w;
          }
       }
@@ -298,7 +299,7 @@ bool RecalculateChannel(int startbar) {
       lowerVariance = lowerVarianceRP[i+maHalfLength+1];
 
       for (int n=i+maHalfLength; n >= i; n--) {
-         diff = GetPrice(n) - tmaWindow[n-i];
+         diff = iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, n) - tmaWindow[n-i];
 
          if (diff > 0) {
             upperVariance = (upperVariance * (maPeriods-1) + MathPow(diff, 2))/maPeriods;
@@ -347,18 +348,18 @@ double CalculateTMA(int bar, int limit) {
    int maHalfLength = maPeriods/2;
 
    // initialize weigth summing with the center point
-   double sum = (maHalfLength+1) * GetPrice(bar);
+   double sum = (maHalfLength+1) * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar);
    int   sumW = (maHalfLength+1);
 
    // add LHS and RHS weigths of the triangle
-   int weight = maHalfLength;                         // the weight next to the center point
+   int weight = maHalfLength;                                                       // the weight next to the center point
    for (int i=1; weight > 0; i++, weight--) {
-      sum  += weight * GetPrice(bar+i);               // walk backward and sum-up the LHS of the triangle
+      sum  += weight * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+1);      // walk backward and sum-up the LHS of the triangle
       sumW += weight;
 
-      int rOffset = bar-i;                            // RHS bar offset
+      int rOffset = bar-i;                                                          // RHS bar offset
       if (rOffset >= limit) {
-         sum  += weight * GetPrice(rOffset);          // walk forward and sum-up the available RHS of the triangle
+         sum  += weight * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, rOffset); // walk forward and sum-up the available RHS of the triangle
          sumW += weight;
       }
    }
@@ -532,34 +533,6 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
    }
 
    return(!catch("CheckSignals(1)"));
-}
-
-
-/**
- * Get the price of the configured type at the specified bar offset.
- *
- * @param  int bar - bar offset
- *
- * @return double - price or NULL (0) in case of errors
- */
-double GetPrice(int bar) {
-   if (bar >= Bars || bar < 0) return(!catch("GetPrice(1)  invalid parameter bar: "+ bar + ifString(bar>=Bars, " (must be lower then Bars="+ Bars +")", ""), ERR_INVALID_INPUT_PARAMETER));
-   return(iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar));
-
-   GetLWMA(NULL);
-}
-
-
-/**
- * Get the LWMA at the specified bar offset.
- *
- * @param  int bar - bar offset
- *
- * @return double - value or NULL (0) in case of errors
- */
-double GetLWMA(int bar) {
-   if (bar >= Bars || bar < 0) return(!catch("GetLWMA(1)  invalid parameter bar: "+ bar + ifString(bar>=Bars, " (must be lower then Bars="+ Bars +")", ""), ERR_INVALID_INPUT_PARAMETER));
-   return(iMA(NULL, NULL, maPeriods/2+1, 0, MODE_LWMA, maAppliedPrice, bar));
 }
 
 
@@ -748,10 +721,14 @@ void onReversal() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
    //SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
@@ -769,11 +746,14 @@ void SetIndicatorOptions() {
    else               drawType = DRAW_NONE;
    SetIndexStyle(MODE_REVERSAL_MARKER, drawType); SetIndexArrow(MODE_REVERSAL_MARKER, 82);
    SetIndexStyle(MODE_REVERSAL_AGE,    DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */

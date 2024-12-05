@@ -13,7 +13,7 @@
  *
  * @link  https://github.com/rosasurfer/bfx-core-volume
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
@@ -30,17 +30,17 @@ extern bool   Signal.onCross                 = false;
 extern bool   Signal.onCross.Sound           = true;
 extern string Signal.onCross.SoundUp         = "Signal Up.wav";
 extern string Signal.onCross.SoundDown       = "Signal Down.wav";
-extern bool   Signal.onCross.Popup           = false;
+extern bool   Signal.onCross.Alert           = false;
 extern bool   Signal.onCross.Mail            = false;
 extern bool   Signal.onCross.SMS             = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <functions/ConfigureSignals.mqh>
-#include <functions/IsBarOpen.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/IsBarOpen.mqh>
 
 #define MODE_DELTA_MAIN       0                                // this indicator's buffer ids
 #define MODE_DELTA_SIGNAL     1
@@ -94,10 +94,10 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
    if (Signal.onCross) {
       if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onCross.Sound)) return(last_error);
-      if (!ConfigureSignalsByPopup(signalId, AutoConfiguration, Signal.onCross.Popup)) return(last_error);
+      if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onCross.Alert)) return(last_error);
       if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onCross.Mail))  return(last_error);
       if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onCross.SMS))   return(last_error);
-      Signal.onCross = (Signal.onCross.Sound || Signal.onCross.Popup || Signal.onCross.Mail || Signal.onCross.SMS);
+      Signal.onCross = (Signal.onCross.Sound || Signal.onCross.Alert || Signal.onCross.Mail || Signal.onCross.SMS);
    }
 
    // check BFX indicator and license
@@ -222,33 +222,32 @@ int onTick() {
  */
 bool onLevelCross(int mode) {
    string message = "";
-   int error = 0;
 
    if (mode == MODE_UPPER) {
       message = indicatorName +" crossed level "+ Signal.Level;
       if (IsLogInfo()) logInfo("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onCross.Popup)          Alert(message);
-      if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundUp);
-      if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
-      if (Signal.onCross.SMS)   error |= !SendSMS("", message);
-      return(!error);
+      if (Signal.onCross.Alert) Alert(message);
+      if (Signal.onCross.Sound) PlaySoundEx(Signal.onCross.SoundUp);
+      if (Signal.onCross.Mail)  SendEmail("", "", message, message);
+      if (Signal.onCross.SMS)   SendSMS("", message);
+      return(!catch("onLevelCross(2)"));
    }
 
    if (mode == MODE_LOWER) {
       message = indicatorName +" crossed level "+ (-Signal.Level);
-      if (IsLogInfo()) logInfo("onLevelCross(2)  "+ message);
+      if (IsLogInfo()) logInfo("onLevelCross(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onCross.Popup)          Alert(message);
-      if (Signal.onCross.Sound) error |= PlaySoundEx(Signal.onCross.SoundDown);
-      if (Signal.onCross.Mail)  error |= !SendEmail("", "", message, message);
-      if (Signal.onCross.SMS)   error |= !SendSMS("", message);
-      return(!error);
+      if (Signal.onCross.Alert) Alert(message);
+      if (Signal.onCross.Sound) PlaySoundEx(Signal.onCross.SoundDown);
+      if (Signal.onCross.Mail)  SendEmail("", "", message, message);
+      if (Signal.onCross.SMS)   SendSMS("", message);
+      return(!catch("onLevelCross(4)"));
    }
 
-   return(!catch("onLevelCross(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
+   return(!catch("onLevelCross(5)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
 }
 
 
@@ -309,10 +308,14 @@ double GetBfxCoreVolume(int buffer, int bar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
    IndicatorBuffers(indicator_buffers);
 
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
@@ -324,11 +327,14 @@ void SetIndicatorOptions() {
 
    SetLevelValue(0,  Signal.Level);
    SetLevelValue(1, -Signal.Level);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */
@@ -343,7 +349,7 @@ string InputsToStr() {
                             "Signal.onCross.Sound=",     BoolToStr(Signal.onCross.Sound),          ";", NL,
                             "Signal.onCross.SoundUp=",   DoubleQuoteStr(Signal.onCross.SoundUp),   ";", NL,
                             "Signal.onCross.SoundDown=", DoubleQuoteStr(Signal.onCross.SoundDown), ";", NL,
-                            "Signal.onCross.Popup=",     BoolToStr(Signal.onCross.Popup),          ";", NL,
+                            "Signal.onCross.Alert=",     BoolToStr(Signal.onCross.Alert),          ";", NL,
                             "Signal.onCross.Mail=",      BoolToStr(Signal.onCross.Mail),           ";", NL,
                             "Signal.onCross.SMS=",       BoolToStr(Signal.onCross.SMS),            ";")
    );

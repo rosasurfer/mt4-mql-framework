@@ -67,7 +67,7 @@
  *  - improve cache flushing for the different timeframes
  *  - move history libraries to MT4Expander
  */
-#include <stddefines.mqh>
+#include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
@@ -101,15 +101,16 @@ extern string Broker.SymbolSuffix            = "";                     // symbol
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/indicator.mqh>
-#include <stdfunctions.mqh>
-#include <rsfLib.mqh>
-#include <rsfHistory.mqh>
-#include <functions/HandleCommands.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
-#include <structs/rsf/LFXOrder.mqh>
+#include <rsf/core/indicator.mqh>
+#include <rsf/stdfunctions.mqh>
+#include <rsf/stdlib.mqh>
+#include <rsf/history.mqh>
+#include <rsf/MT4iQuickChannel.mqh>
+#include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/InitializeByteBuffer.mqh>
+#include <rsf/functions/lfx.mqh>
+#include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/structs/LFXOrder.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers      1                       // there's a minimum of 1 buffer
@@ -307,8 +308,14 @@ int onInit() {
    CreateLabels();
    SetIndicatorOptions();
 
+   // reset the command handler
+   if (__isChart) {
+      string sValues[];
+      GetChartCommand("", sValues);
+   }
+
    // only online
-   if (!__isTesting) {
+   if (!__tickTimerId && !__isTesting) {
       // restore a configured trade account and initialize order/limit monitoring
       string accountId = GetStoredTradeAccount();
       if (!InitTradeAccount(accountId)) return(last_error);
@@ -317,7 +324,7 @@ int onInit() {
 
       // setup a chart ticker
       int millis = 500;                                 // a virtual tick every 500 milliseconds
-      int hWnd = __ExecutionContext[EC.hChart];
+      int hWnd = __ExecutionContext[EC.chart];
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
       if (!__tickTimerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
@@ -362,7 +369,7 @@ int onDeinit() {
 int onTick() {
    if (!ValidBars) SetIndicatorOptions();                   // reset indicator options
 
-   HandleCommands();                                        // process incoming commands
+   if (!HandleCommands()) return(last_error);               // process incoming commands
 
    ArrayResize(missingSymbols, 0);
    staleLimit = GetServerTime() - 10*MINUTES;               // exotic instruments may show rather large pauses between ticks
@@ -463,7 +470,7 @@ bool CreateLabels() {
 
    // trade account
    statusLabelTradeAccount = indicatorName +".TradeAccount";
-   if (ObjectFind(statusLabelTradeAccount) == -1) if (!ObjectCreateRegister(statusLabelTradeAccount, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(statusLabelTradeAccount) == -1) if (!ObjectCreateRegister(statusLabelTradeAccount, OBJ_LABEL)) return(false);
    ObjectSet    (statusLabelTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet    (statusLabelTradeAccount, OBJPROP_XDISTANCE, 6);
    ObjectSet    (statusLabelTradeAccount, OBJPROP_YDISTANCE, 4);
@@ -476,7 +483,7 @@ bool CreateLabels() {
 
    // background rectangles
    string label = StringConcatenate(indicatorName, ".", counter, ".Background");
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
    ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
@@ -485,7 +492,7 @@ bool CreateLabels() {
    counter++;
    yCoord += 74;
    label = StringConcatenate(indicatorName, ".", counter, ".Background");
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
    ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
@@ -497,7 +504,7 @@ bool CreateLabels() {
    counter++;
    yCoord -= 72;
    label = StringConcatenate(indicatorName, ".", counter, ".Header.animation");
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 3);
    ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
@@ -506,7 +513,7 @@ bool CreateLabels() {
 
    // recording status
    label = StringConcatenate(indicatorName, ".", counter, ".Recording.status");
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 23);
    ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
@@ -521,7 +528,7 @@ bool CreateLabels() {
 
       // symbol
       label = StringConcatenate(indicatorName, ".", counter, ".", syntheticSymbols[i]);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 122);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
@@ -530,7 +537,7 @@ bool CreateLabels() {
 
       // price
       label = StringConcatenate(statusLabels[i], ".quote");
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 57);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
@@ -539,7 +546,7 @@ bool CreateLabels() {
 
       // spread
       label = StringConcatenate(statusLabels[i], ".spread");
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 8);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
@@ -1002,7 +1009,7 @@ bool StoreTradeAccount() {
    if (!__isChart) return(true);
 
    // account company id
-   int    hWnd = __ExecutionContext[EC.hChart];
+   int    hWnd = __ExecutionContext[EC.chart];
    string key  = ProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
@@ -1029,7 +1036,7 @@ bool StoreTradeAccount() {
  */
 string GetStoredTradeAccount() {
    // account company id
-   int hWnd = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.chart];
    string key = ProgramName() +".runtime.tradeAccount.company";
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {
@@ -1071,17 +1078,25 @@ string SpreadToStr(int index, double value) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
- * recompilation options must be set in start() to not be ignored.
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
  */
-void SetIndicatorOptions() {
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
+
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
 /**
- * Return a string representation of the input parameters (for logging purposes).
+ * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string
  */
