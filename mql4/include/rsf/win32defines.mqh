@@ -1,7 +1,7 @@
 /**
  * Windows constants
  *
- * In MQL4 the redefinition of constants (with the same value) is allowed, in MQL5 it's not.
+ * Unlike in MQL4, the redefinition of constants with the same value is not allowed in MQL5.
  */
 
 

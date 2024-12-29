@@ -1,7 +1,7 @@
 /**
- * MQL constants shared with the MT4Expander DLL.
+ * MQL constants shared with the MT4Expander.
  *
- * In MQL4 the redefinition of builtin constants with the same value is allowed. Not so in MQL5.
+ * In MQL4 the redefinition of built-in constants with the same value is allowed. Not so in MQL5.
  */
 
 // in C++ already defined
@@ -9,17 +9,17 @@
 #define INT_MAX   0x7FFFFFFF                 // maximum signed int value (+2147483647)
 
 
-// fully shared
+// fully shared constants
 #include <rsf/expander/defines.h>
 #include <rsf/expander/errors.h>
 
 
-// already defined in C++ with a different type, but the same value
+// in C++ defined with the same value but a different type
 #define NO_ERROR  ERR_NO_ERROR               // 0x0L
 #define CLR_NONE  0xFFFFFFFF                 // 0xFFFFFFFFL
 
 
-// MetaQuotes constants replaced by framework aliases and intentionally not shared (the wording is odd)
+// MetaQuotes constants replaced by framework aliases (too long names or odd wording)
 #define ERR_DLLFUNC_CRITICALERROR            ERR_DLL_EXCEPTION
 #define ERR_EXTERNAL_CALLS_NOT_ALLOWED       ERR_EX4_CALLS_NOT_ALLOWED
 #define ERR_FILE_BUFFER_ALLOCATION_ERROR     ERR_FILE_BUFFER_ALLOC_ERROR

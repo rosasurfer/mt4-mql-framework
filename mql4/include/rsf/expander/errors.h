@@ -1,5 +1,5 @@
 /**
- * MQL error codes shared with the MT4Expander DLL (C++).
+ * MQL error codes shared with the MT4Expander.
  *
  * @link  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */

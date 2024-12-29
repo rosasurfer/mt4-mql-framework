@@ -47,7 +47,7 @@
 int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
    // Note: This function MUST NOT call MQL library functions. Calling DLL functions is fine.
    if (!IsDllsAllowed()) {
-      Alert("debug(1)  DLLs are not enabled (", message, ", error: ", error, ")");
+      Alert("debug(1)  DLL calls are not enabled (", message, ", error: ", error, ")");
       return(error);
    }
    static bool isRecursion = false; if (isRecursion) {

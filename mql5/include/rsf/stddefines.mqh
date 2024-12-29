@@ -1,7 +1,7 @@
 /**
- * Custom constants, macros and global variables.
+ * Constants, macros and global variables.
  *
- * Unlike MQL4, the redefinition of constants (even with the same value) in MQL5 is not allowed.
+ * Unlike in MQL4, the redefinition of constants with the same value is not allowed in MQL5.
  */
 #include <rsf/shared.mqh>
 #include <rsf/win32defines.mqh>
@@ -34,8 +34,8 @@ double  INF;                                                      //  1.#INF |  
 //     -INF                                                       // -1.#INF | -inf:      negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
 
 // magic characters to represent non-printable chars in binry strings, @see BufferToStr()
-#define PLACEHOLDER_NUL_CHAR        '…'                           // 0x85 (133) - replacement for NUL chars in strings
-#define PLACEHOLDER_CTRL_CHAR       '•'                           // 0x95 (149) - replacement for Control chars in strings
+#define PLACEHOLDER_NUL_CHAR        'ï¿½'                           // 0x85 (133) - replacement for NUL chars in strings
+#define PLACEHOLDER_CTRL_CHAR       'ï¿½'                           // 0x95 (149) - replacement for Control chars in strings
 
 
 // mathematical constants (internally 15 correct digits)
