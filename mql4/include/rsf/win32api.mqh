@@ -38,7 +38,6 @@
    int  GetTempPathA(int bufferSize, string lpBuffer);
    int  LoadLibraryA(string lpLibFileName);
    bool MoveFileA(string lpOldFileName, string lpNewFileName);
-   void OutputDebugStringA(string lpMessage);                     // without admin rights calls are ignored
    bool ReadProcessMemory(int hProcess, int baseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    void RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int  SleepEx(int milliseconds, int alertable);

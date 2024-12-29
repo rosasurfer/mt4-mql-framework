@@ -4,12 +4,12 @@
  *
  * @param  string message             - message
  * @param  int    error    [optional] - error code (default: none)
- * @param  int    loglevel [optional] - loglevel to add to the message (default: debug)
+ * @param  int    loglevel [optional] - loglevel to add to the message (default: LOG_DEBUG)
  *
  * @return int - the same error
  */
 int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
-   // Note: This function MUST NOT call MQL library functions. Calling DLL functions is fine.
+   // Note: This function MUST NOT call MQL library functions. Calling DLL functions is OK.
    if (!IsDllsAllowed()) {
       Alert("debug(1)  DLL calls are not enabled (", message, ", error: ", error, ")");
       return(error);
@@ -47,7 +47,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
  * After return the internal MQL error as returned by GetLastError() is always reset.
  *
  * @param  string caller           - location identifier of the caller
- * @param  int    error [optional] - trigger a specific error (default: no)
+ * @param  int    error [optional] - trigger a custom error (default: no)
  *
  * @return int - the same error
  */
@@ -59,7 +59,7 @@ int catch(string caller, int error = NO_ERROR) {
 
    if (error != 0) {
       if (isRecursion) {
-         Alert("catch(1)  recursion: ", caller, ", error: ", error, M_PI);
+         Alert("catch(1)  recursion: ", caller, ", error: ", error);
          return(debug("catch(1)  recursion: "+ caller, error, LOG_ERROR));
       }
       isRecursion = true;
@@ -80,12 +80,12 @@ int catch(string caller, int error = NO_ERROR) {
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription();
          int pos = StringFind(message, ") ");                                       // insert a line-wrap after the first closing function brace
          if (pos != -1) message = StrLeft(message, pos+1) + NL + StrTrim(StrSubstr(message, pos+2));
-         message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LoglevelDescription(level) +" in "+ ModuleName(true) +"::"+ message + (error ? "  ["+ ErrorToStr(error) +"]" : "");
+         message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LoglevelDescription(level) +" in "+ ModuleName(true) +"::"+ message + (error ? "  ["+ sError +"]" : "");
          PlaySoundEx("alert.wav");
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
       }
       else {
-         Alert(LoglevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(), "  ", ModuleName(true), "::", message, (error ? "  ["+ ErrorToStr(error) +"]" : ""));
+         Alert(LoglevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(), "  ", ModuleName(true), "::", message, (error ? "  ["+ sError +"]" : ""));
       }
 
       // set the error

@@ -40,12 +40,12 @@
  *
  * @param  string message             - message
  * @param  int    error    [optional] - error code (default: none)
- * @param  int    loglevel [optional] - loglevel to add to the message (default: debug)
+ * @param  int    loglevel [optional] - loglevel to add to the message (default: LOG_DEBUG)
  *
  * @return int - the same error
  */
 int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
-   // Note: This function MUST NOT call MQL library functions. Calling DLL functions is fine.
+   // Note: This function MUST NOT call MQL library functions. Calling DLL functions is OK.
    if (!IsDllsAllowed()) {
       Alert("debug(1)  DLL calls are not enabled (", message, ", error: ", error, ")");
       return(error);
@@ -83,7 +83,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
  * After return the internal MQL error as returned by GetLastError() is always reset.
  *
  * @param  string caller              - location identifier of the caller
- * @param  int    error    [optional] - trigger a specific error (default: no)
+ * @param  int    error    [optional] - trigger a custom error (default: no)
  * @param  bool   popOrder [optional] - whether the last order context on the order stack should be restored (default: no)
  *
  * @return int - the same error
@@ -654,6 +654,9 @@ bool SetLogfile(string filename) {
    return(SetLogfileA(__ExecutionContext, filename));
 }
 
+
+#import "kernel32.dll"
+   void   OutputDebugStringA(string message);
 
 #import "rsfMT4Expander.dll"
    int    ec_SuperLoglevel        (int pid);

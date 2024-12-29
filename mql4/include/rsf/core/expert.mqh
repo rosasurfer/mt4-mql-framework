@@ -10,7 +10,7 @@ double  _Ask;                                                     // ...
 
 
 /**
- * Global init() function for experts.
+ * Core initialization handler of experts.
  *
  * @return int - error status
  */
@@ -290,7 +290,7 @@ int start() {
 
 
 /**
- * Expert deinitialization
+ * Core deinitialization handler of experts.
  *
  * @return int - error status
  *
