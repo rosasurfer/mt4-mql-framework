@@ -1,5 +1,5 @@
 
-# MetaTrader 4 MQL framework
+# MQL framework for MetaTrader 4
 
 -----
 
