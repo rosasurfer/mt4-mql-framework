@@ -1,12 +1,12 @@
 /**
- * MQL error codes shared with the MT4Expander DLL (C++).
+ * MQL error codes shared with the MT4Expander.
  *
  * @link  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//efine NO_ERROR                                           ERR_NO_ERROR    // in C++ already defined (Win32)
+//efine NO_ERROR                                           ERR_NO_ERROR    // in C++ already defined (Win32 API)
 
-// Trading errors
+// Trade errors
 #define ERR_NO_RESULT                                                 1
 //      No status returned, unknown result. OrderModify() attempted to replace values already set. May also happen if the trade server changes during OrderModify().
 #define ERR_COMMON_ERROR                                              2    // trade request failed (trade server error)

@@ -10,6 +10,7 @@
 # ignore the following directories and files
 /bin/experts/include
 /etc/windows/appdata/*
+/src/
 mqlcache.dat
 *.ex4
 *.ex5

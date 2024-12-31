@@ -10,20 +10,20 @@
 #
 # @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0 
 #
-set -e
+set -eu -o pipefail
 
 
 # print a message to STDERR
 function error() {
-    echo "$@" 1>&2
+  echo "$@" 1>&2
 }
 
 
 # find the compiler
 SCRIPT_DIR=$(dirname "$(readlink -e "$0")")
 mqlc=
-[ -z "$mqlc" ] &&   command -v metalang >/dev/null  && mqlc="metalang"                      `# prefer a compiler in the system PATH `
-[ -z "$mqlc" ] && [ -f "$SCRIPT_DIR/metalang.exe" ] && mqlc="$SCRIPT_DIR/metalang.exe"      `# or use the included compiler         `
+[ -z "$mqlc" ] &&   command -v metalang >/dev/null  && mqlc="metalang"                      # prefer a compiler in the system PATH
+[ -z "$mqlc" ] && [ -f "$SCRIPT_DIR/metalang.exe" ] && mqlc="$SCRIPT_DIR/metalang.exe"      # or use the included compiler
 [ -z "$mqlc" ] && { error "ERROR: MQL compiler not found."; exit 1; }
 
 

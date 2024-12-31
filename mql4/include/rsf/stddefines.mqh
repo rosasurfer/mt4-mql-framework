@@ -1,7 +1,7 @@
 /**
- * Custom constants and global variables.
+ * Constants and global variables.
  *
- * In MQL4 the redefinition of constants (with the same value) is allowed. Redefined entries exist for documentation
+ * In MQL4 the redefinition of constants with the same value is allowed. Redefined entries exist for documentation
  * purposes only.
  */
 #property stacksize 32768                                         // According to different MetaQuotes infos the default stacksize per MQL module in 2019 is 256KB

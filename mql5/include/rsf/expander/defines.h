@@ -1,10 +1,10 @@
 /**
- * MQL constants shared with the MT4Expander DLL (C++).
+ * MQL constants shared with the MT4Expander.
  *
  * During compilation of the DLL definitions are read from directory "mql4/include/rsf/expander" and not from here.
  * Nevertheless, these constants exists in both MQL versions and the DLL and have everywhere the same values.
  *
- * Unlike MQL4, the redefinition of constants (even with the same value) in MQL5 is not allowed.
+ * Unlike in MQL4, the redefinition of constants with the same value is not allowed in MQL5.
  */
 
 // special constants

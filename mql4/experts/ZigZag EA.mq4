@@ -86,10 +86,10 @@
  *     optimization report
  *
  *     optimizer performance:
- *      empty tester template, 100 permutations:
+ *      empty template "Tester.tpl", 100 optimizer permutations:
  *       build 500:   4.8 sec
  *       build 1408:  4.3 sec (1.1 times faster than build 500)
- *      tester template with custom indicator and lib-calls, 100 permutations:
+ *      template "Tester.tpl" with custom indicator and lib-calls, 100 optimizer permutations:
  *       build 500:   7.2 sec
  *       build 1408: 23.4 sec (3.2 times slower than build 500)
  *

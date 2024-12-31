@@ -10,7 +10,7 @@ double  _Ask;                                                     // ...
 
 
 /**
- * Global init() function for experts.
+ * Core initialization handler of experts.
  *
  * @return int - error status
  */
@@ -139,7 +139,7 @@ int init() {
       }
    }
 
-   // Execute init() event handlers. The reason-specific handlers are executed only if onInit() returns without errors.
+   // Execute custom init() event handlers. The reason-specific handlers are executed only if onInit() returns without errors.
    //
    // +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
    // | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   | I = indicators
@@ -290,7 +290,7 @@ int start() {
 
 
 /**
- * Expert deinitialization
+ * Core deinitialization handler of experts.
  *
  * @return int - error status
  *
@@ -325,7 +325,7 @@ int deinit() {
    // close a running recorder
    if (recorder.mode != NULL) Recorder_deinit();
 
-   // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
+   // Execute custom deinit() handlers. Execution stops if a handler returns with an error.
    //
    if (!error) error = onDeinit();                                      // preprocessing hook
    if (!error) {                                                        //

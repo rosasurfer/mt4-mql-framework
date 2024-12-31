@@ -6886,7 +6886,6 @@ void __DummyCalls() {
    int      GetCurrentProcessId();
    int      GetCurrentThreadId();
    int      GetPrivateProfileIntA(string section, string key, int nDefault, string fileName);
-   void     OutputDebugStringA(string message);
    void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int      WinExec(string cmdLine, int cmdShow);
    bool     WritePrivateProfileStringA(string section, string key, string value, string fileName);

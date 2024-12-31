@@ -338,7 +338,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(MODE_UPPER_SECTION, macdUpper);                       // positive histogram values: visible
    SetIndexBuffer(MODE_LOWER_SECTION, macdLower);                       // negative histogram values: visible
    SetIndexBuffer(MODE_TREND,         trend    );                       // trend and trend length:    invisible
-   IndicatorDigits(pDigits + 1);
+   IndicatorDigits(pDigits);
 
    int mainType = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
