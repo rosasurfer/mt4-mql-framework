@@ -126,32 +126,6 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=CCI Bands
-flags=339
-window_num=0
-<inputs>
-CCIPeriod=14
-CCILevel1=100
-</inputs>
-</expert>
-color_0=4294967295
-color_1=4294967295
-
-color_2=16711680
-weight_2=1
-color_3=16711680
-weight_3=1
-
-color_4=4294967295
-color_5=4294967295
-
-period_flags=256
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=Moving Average
 flags=339
 <inputs>
@@ -187,32 +161,6 @@ ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=11
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=Tunnel signal
-flags=339
-<inputs>
-Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Tunnel.MA.Periods=55
-MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
-MA.Periods=10
-Histogram.Color.Upper=3329330
-Histogram.Color.Lower=255
-Histogram.Style.Width= 2
-Signal.onTrendChange=0
-AutoConfiguration=0
-</inputs>
-</expert>
-min=-1.0
-max=1.0
 show_data=1
 </indicator>
 </window>
