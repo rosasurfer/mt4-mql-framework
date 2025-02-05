@@ -1,6 +1,8 @@
 
 # MQL framework for MetaTrader 4
 
+[<img src="https://api.gitsponsors.com/api/badge/img?id=98562802" height="40">](https://api.gitsponsors.com/api/badge/link?p=siJPuuNmHD8NWqtbPUP8QmW+l+2mKhgfeqSIS08CnLbsL5nZJbABhLRdacm1hbCtLxj9mHUpslsnxaCPgb3JQm38C12lPDiZl8dMpzn1Exw=)
+
 -----
 
 ### MetaTrader 4 News
