@@ -84,6 +84,8 @@ int onInit() {
             ArrayPushInt(closeTypes, OP_BUYSTOP  );
             ArrayPushInt(closeTypes, OP_SELLSTOP );
          }
+         else if (sValue == "bl") ArrayPushInt(closeTypes, OP_BUYLIMIT);
+         else if (sValue == "bs") ArrayPushInt(closeTypes, OP_BUYSTOP);
          else {
             int type = StrToOperationType(sValue);
             if (type < OP_BUY || type > OP_SELLSTOP) return(catch("onInit(1)  invalid input parameter Close.OrderTypes: "+ DoubleQuoteStr(Close.OrderTypes), ERR_INVALID_INPUT_PARAMETER));

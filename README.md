@@ -5,7 +5,7 @@
 
 ### MetaTrader 4 News
 
-###### June 2024:
+###### December 2024:
 - MetaQuotes stops supporting terminals older than build 1420.
 
 ###### Mai 2024:
