@@ -156,7 +156,7 @@ Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=16711680
 DownTrend.Color=16776960
-Background.Color=16711680
+Background.Color=16748574
 ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
