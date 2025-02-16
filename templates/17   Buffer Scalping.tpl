@@ -1,4 +1,8 @@
-<!-- Buffer Scalping.tpl: ZigZag(10) + NLMA(20, 1.36) -->
+<!-- 
+Buffer Scalping.tpl: ZigZag(10) + NLMA(20, 1.36)
+
+@see  https://www.forexfactory.com/thread/561195-daytrading-scalping-strategy-m5-m1 
+-->
 
 <chart>
 symbol=GBPUSD
