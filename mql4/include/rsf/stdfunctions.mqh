@@ -6451,18 +6451,18 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           0,                                // double MA.ReversalFilter.Step
                           "Dot",                            // string Draw.Type
                           1,                                // int    Draw.Width
-                          CLR_NONE,                         // color  Color.UpTrend
-                          CLR_NONE,                         // color  Color.DownTrend
+                          CLR_NONE,                         // color  UpTrend.Color
+                          CLR_NONE,                         // color  DownTrend.Color
+                          CLR_NONE,                         // color  Background.Color
+                          0,                                // int    Background.Width
+                          false,                            // bool   ShowChartLegend
                           -1,                               // int    MaxBarsBack
 
-                          "",                               // string ______________________________
+                          "",                               // string __________________________
                           false,                            // bool   Signal.onTrendChange
-                          false,                            // bool   Signal.onTrendChange.Sound
-                          "",                               // string Signal.onTrendChange.SoundUp
-                          "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Alert
-                          false,                            // bool   Signal.onTrendChange.Mail
-                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string Signal.onTrendChange.Types
+                          "",                               // string Signal.Sound.Up
+                          "",                               // string Signal.Sound.Down
 
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration

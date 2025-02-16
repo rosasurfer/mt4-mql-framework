@@ -23,7 +23,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           maAppliedPrice,             // string MA.AppliedPrice
                           distributionOffset,         // double Distribution.Offset
                           distributionSigma,          // double Distribution.Sigma
-                          maReversalFilter,           // double MA.ReversalFilter
+                          maReversalFilter,           // double MA.ReversalFilter.StdDev
                           0,                          // double MA.ReversalFilter.Step
 
                           "Line",                     // string Draw.Type

@@ -32,7 +32,7 @@ extern double T3.VolumeFactor.Step           = 0;                 // step size f
 extern string T3.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern string ___b__________________________ = "=== Trend reversal filter ===";
-extern double MA.ReversalFilter              = 0.1;               // min. MA change in std-deviations for a trend reversal
+extern double MA.ReversalFilter.StdDev       = 0.1;               // min. MA change in std-deviations for a trend reversal
 extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (hotkeys + VK_SHIFT)
 
 extern string ___c__________________________ = "=== Drawing options ===";
@@ -162,9 +162,9 @@ int onInit() {
    appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (appliedPrice == -1)                         return(catch("onInit(5)  invalid input parameter T3.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    T3.AppliedPrice = PriceTypeDescription(appliedPrice);
-   // MA.ReversalFilter
-   if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
-   if (MA.ReversalFilter < 0)                      return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.ReversalFilter.StdDev
+   if (AutoConfiguration) MA.ReversalFilter.StdDev = GetConfigDouble(indicator, "MA.ReversalFilter.StdDev", MA.ReversalFilter.StdDev);
+   if (MA.ReversalFilter.StdDev < 0)               return(catch("onInit(6)  invalid input parameter MA.ReversalFilter.StdDev: "+ NumberToStr(MA.ReversalFilter.StdDev, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.ReversalFilter.StepS
    if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
    if (MA.ReversalFilter.Step < 0)                 return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
@@ -367,7 +367,7 @@ int onTick() {
       maRaw     [bar] = c1 * ema6[bar] + c2 * ema5[bar] + c3 * ema4[bar] + c4 * ema3[bar];
       maFiltered[bar] = maRaw[bar];
 
-      if (MA.ReversalFilter > 0) {
+      if (MA.ReversalFilter.StdDev > 0) {
          maChange[bar] = maFiltered[bar] - maFiltered[bar+1];        // calculate the change of current raw to previous filtered MA
          sum = 0;
          for (int i=0; i < maFilterPeriods; i++) {                   // calculate average(change) over last 'maFilterPeriods'
@@ -381,7 +381,7 @@ int onTick() {
                sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
             }
             stdDev = MathSqrt(sum/maFilterPeriods);
-            minChange = MA.ReversalFilter * stdDev;                  // calculate required min. change
+            minChange = MA.ReversalFilter.StdDev * stdDev;           // calculate required min. change
 
             if (MathAbs(maChange[bar]) < minChange) {
                maFiltered[bar] = maFiltered[bar+1];                  // discard trend reversal if MA change is smaller
@@ -475,7 +475,7 @@ bool ParameterStepper(int direction, int keys) {
    if (keys & F_VK_LWIN != 0) {
       // step up/down input parameter "T3.VolumeFactor"
       double step = T3.VolumeFactor.Step;
-                                                               // no stepping if parameter limit reached
+                                                                     // no stepping if parameter limit reached
       if (!step || T3.VolumeFactor + direction*step < 0 || T3.VolumeFactor + direction*step > 1) {
          PlaySoundEx("Plonk.wav");
          return(false);
@@ -490,18 +490,18 @@ bool ParameterStepper(int direction, int keys) {
       // step up/down input parameter "MA.ReversalFilter"
       step = MA.ReversalFilter.Step;
 
-      if (!step || MA.ReversalFilter + direction*step < 0) {   // no stepping if parameter limit reached
+      if (!step || MA.ReversalFilter.StdDev + direction*step < 0) {  // no stepping if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
-      if (direction == STEP_UP) MA.ReversalFilter += step;
-      else                      MA.ReversalFilter -= step;
+      if (direction == STEP_UP) MA.ReversalFilter.StdDev += step;
+      else                      MA.ReversalFilter.StdDev -= step;
    }
    else {
       // step up/down input parameter "T3.Periods"
       step = T3.Periods.Step;
 
-      if (!step || T3.Periods + direction*step < 1) {          // no stepping if parameter limit reached
+      if (!step || T3.Periods + direction*step < 1) {                // no stepping if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
@@ -529,7 +529,7 @@ bool ParameterStepper(int direction, int keys) {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
-   string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
+   string sMaFilter     = ifString(MA.ReversalFilter.StdDev || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter.StdDev, ".1+"), "");
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
    indicatorName        = WindowExpertName() +"("+ ifString(T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step, "step:", "") + T3.Periods +","+ NumberToStr(T3.VolumeFactor, ".1+") + sMaFilter + sAppliedPrice +")";
    shortName            = "T3MA("+ T3.Periods +")";
@@ -559,8 +559,8 @@ bool StoreStatus() {
    if (__isChart && (T3.Periods.Step || MA.ReversalFilter.Step)) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      Chart.StoreInt   (prefix +"T3.Periods",        T3.Periods);
-      Chart.StoreDouble(prefix +"MA.ReversalFilter", MA.ReversalFilter);
+      Chart.StoreInt   (prefix +"T3.Periods",               T3.Periods);
+      Chart.StoreDouble(prefix +"MA.ReversalFilter.StdDev", MA.ReversalFilter.StdDev);
    }
    return(catch("StoreStatus(1)"));
 }
@@ -579,14 +579,14 @@ bool RestoreStatus() {
       int iValue;
       if (Chart.RestoreInt(prefix +"T3.Periods", iValue)) {
          if (T3.Periods.Step > 0) {
-            if (iValue >= 1) T3.Periods = iValue;              // silent validation
+            if (iValue >= 1) T3.Periods = iValue;                 // silent validation
          }
       }
 
       double dValue;
       if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
          if (MA.ReversalFilter.Step > 0) {
-            if (dValue >= 0) MA.ReversalFilter = dValue;       // silent validation
+            if (dValue >= 0) MA.ReversalFilter.StdDev = dValue;   // silent validation
          }
       }
    }
@@ -607,7 +607,7 @@ string InputsToStr() {
                             "T3.VolumeFactor.Step=",           NumberToStr(T3.VolumeFactor.Step, ".1+"),       ";"+ NL,
                             "T3.AppliedPrice=",                DoubleQuoteStr(T3.AppliedPrice),                ";"+ NL,
 
-                            "MA.ReversalFilter=",              NumberToStr(MA.ReversalFilter, ".1+"),          ";"+ NL,
+                            "MA.ReversalFilter.StdDev=",       NumberToStr(MA.ReversalFilter.StdDev, ".1+"),   ";"+ NL,
                             "MA.ReversalFilter.Step=",         NumberToStr(MA.ReversalFilter.Step, ".1+"),     ";"+ NL,
 
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,
