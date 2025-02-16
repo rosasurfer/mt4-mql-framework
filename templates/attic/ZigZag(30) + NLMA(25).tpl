@@ -127,7 +127,6 @@ flags=339
 window_num=0
 <inputs>
 WaveCycle.Periods=25
-MA.ReversalFilter=0.7
 Draw.Width=3
 Color.UpTrend=16711935
 Color.DownTrend=65535

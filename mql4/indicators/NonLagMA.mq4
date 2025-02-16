@@ -25,7 +25,7 @@ int __DeinitFlags[];
 extern int    WaveCycle.Periods              = 20;                // bar periods per cosine wave cycle
 extern int    WaveCycle.Periods.Step         = 0;                 // step size for a stepped input parameter (hotkey)
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern double MA.ReversalFilter              = 0.7;               // min. MA change in std-deviations for a trend reversal
+extern double MA.ReversalFilter.StdDev       = 0.7;               // min. MA change in std-deviations for a trend reversal
 extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (hotkey + VK_SHIFT)
 
 extern string Draw.Type                      = "Line* | Dot";
@@ -113,10 +113,10 @@ int onInit() {
 
    // WaveCycle.Periods
    if (AutoConfiguration) WaveCycle.Periods = GetConfigInt(indicator, "WaveCycle.Periods", WaveCycle.Periods);
-   if (WaveCycle.Periods < 3)      return(catch("onInit(1)  invalid input parameter WaveCycle.Periods: "+ WaveCycle.Periods +" (min. 3)", ERR_INVALID_INPUT_PARAMETER));
+   if (WaveCycle.Periods < 3)        return(catch("onInit(1)  invalid input parameter WaveCycle.Periods: "+ WaveCycle.Periods +" (min. 3)", ERR_INVALID_INPUT_PARAMETER));
    // WaveCycle.Periods.Step
    if (AutoConfiguration) WaveCycle.Periods.Step = GetConfigInt(indicator, "WaveCycle.Periods.Step", WaveCycle.Periods.Step);
-   if (WaveCycle.Periods.Step < 0) return(catch("onInit(2)  invalid input parameter WaveCycle.Periods.Step: "+ WaveCycle.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (WaveCycle.Periods.Step < 0)   return(catch("onInit(2)  invalid input parameter WaveCycle.Periods.Step: "+ WaveCycle.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.AppliedPrice
    string sValues[], sValue = MA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.AppliedPrice", sValue);
@@ -126,14 +126,14 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice == -1)       return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice == -1)         return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
-   // MA.ReversalFilter
-   if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
-   if (MA.ReversalFilter < 0)      return(catch("onInit(4)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
-   // MA.ReversalFilter.StepS
+   // MA.ReversalFilter.StdDev
+   if (AutoConfiguration) MA.ReversalFilter.StdDev = GetConfigDouble(indicator, "MA.ReversalFilter.StdDev", MA.ReversalFilter.StdDev);
+   if (MA.ReversalFilter.StdDev < 0) return(catch("onInit(4)  invalid input parameter MA.ReversalFilter.StdDev: "+ NumberToStr(MA.ReversalFilter.StdDev, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.ReversalFilter.Step
    if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
-   if (MA.ReversalFilter.Step < 0) return(catch("onInit(5)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter.Step < 0)   return(catch("onInit(5)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -144,10 +144,10 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                            return(catch("onInit(6)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else                              return(catch("onInit(6)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)             return(catch("onInit(7)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)               return(catch("onInit(7)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
@@ -155,7 +155,7 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)           return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)             return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signaling
@@ -269,7 +269,7 @@ int onTick() {
       }
       maFiltered[bar] = maRaw[bar];
 
-      if (MA.ReversalFilter > 0) {
+      if (MA.ReversalFilter.StdDev != 0) {
          maChange[bar] = maFiltered[bar] - maFiltered[bar+1];        // calculate the change of current raw to previous filtered MA
          sum = 0;
          for (i=0; i < WaveCycle.Periods; i++) {                     // calculate average(change) over last 'WaveCycle.Periods'
@@ -278,12 +278,12 @@ int onTick() {
          maAverage[bar] = sum/WaveCycle.Periods;
 
          if (maChange[bar] * trend[bar+1] < 0) {                     // on opposite signs = trend reversal
-            sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'WaveCycle.Periods'
+            sum = 0;                                                 // calculate StdDeviation(maChange[]) over last 'WaveCycle.Periods'
             for (i=0; i < WaveCycle.Periods; i++) {
                sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
             }
             stdDev = MathSqrt(sum/WaveCycle.Periods);
-            minChange = MA.ReversalFilter * stdDev;                  // calculate required min. change
+            minChange = MA.ReversalFilter.StdDev * stdDev;           // calculate required min. change
 
             if (MathAbs(maChange[bar]) < minChange) {
                maFiltered[bar] = maFiltered[bar+1];                  // discard trend reversal if MA change is smaller
@@ -377,7 +377,7 @@ bool ParameterStepper(int direction, int keys) {
       // step up/down input parameter "WaveCycle.Periods"
       double step = WaveCycle.Periods.Step;
 
-      if (!step || WaveCycle.Periods + direction*step < 3) {   // no stepping if parameter limit reached
+      if (!step || WaveCycle.Periods + direction*step < 3) {         // no stepping if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
@@ -391,12 +391,12 @@ bool ParameterStepper(int direction, int keys) {
       // step up/down input parameter "MA.ReversalFilter"
       step = MA.ReversalFilter.Step;
 
-      if (!step || MA.ReversalFilter + direction*step < 0) {   // no stepping if parameter limit reached
+      if (!step || MA.ReversalFilter.StdDev + direction*step < 0) {  // no stepping if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
-      if (direction == STEP_UP) MA.ReversalFilter += step;
-      else                      MA.ReversalFilter -= step;
+      if (direction == STEP_UP) MA.ReversalFilter.StdDev += step;
+      else                      MA.ReversalFilter.StdDev -= step;
    }
 
    ChangedBars = Bars;
@@ -417,7 +417,7 @@ bool ParameterStepper(int direction, int keys) {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
-   string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
+   string sMaFilter     = ifString(MA.ReversalFilter.StdDev || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter.StdDev, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName        = WindowExpertName() +"("+ ifString(WaveCycle.Periods.Step || MA.ReversalFilter.Step, "step:", "") + WaveCycle.Periods + sMaFilter + sAppliedPrice +")";
    shortName            = "NLMA("+ WaveCycle.Periods +")";
@@ -447,8 +447,8 @@ bool StoreStatus() {
    if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      Chart.StoreInt   (prefix +"WaveCycle.Periods", WaveCycle.Periods);
-      Chart.StoreDouble(prefix +"MA.ReversalFilter", MA.ReversalFilter);
+      Chart.StoreInt   (prefix +"WaveCycle.Periods",        WaveCycle.Periods);
+      Chart.StoreDouble(prefix +"MA.ReversalFilter.StdDev", MA.ReversalFilter.StdDev);
    }
    return(catch("StoreStatus(1)"));
 }
@@ -467,14 +467,14 @@ bool RestoreStatus() {
       int iValue;
       if (Chart.RestoreInt(prefix +"WaveCycle.Periods", iValue)) {
          if (WaveCycle.Periods.Step > 0) {
-            if (iValue >= 3) WaveCycle.Periods = iValue;       // silent validation
+            if (iValue >= 3) WaveCycle.Periods = iValue;          // silent validation
          }
       }
 
       double dValue;
       if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
          if (MA.ReversalFilter.Step > 0) {
-            if (dValue >= 0) MA.ReversalFilter = dValue;       // silent validation
+            if (dValue >= 0) MA.ReversalFilter.StdDev = dValue;   // silent validation
          }
       }
    }
@@ -491,7 +491,7 @@ string InputsToStr() {
    return(StringConcatenate("WaveCycle.Periods=",              WaveCycle.Periods,                              ";"+ NL,
                             "WaveCycle.Periods.Step=",         WaveCycle.Periods.Step,                         ";"+ NL,
                             "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
-                            "MA.ReversalFilter=",              NumberToStr(MA.ReversalFilter, ".1+"),          ";"+ NL,
+                            "MA.ReversalFilter.StdDev=",       NumberToStr(MA.ReversalFilter.StdDev, ".1+"),   ";"+ NL,
                             "MA.ReversalFilter.Step=",         NumberToStr(MA.ReversalFilter.Step, ".1+"),     ";"+ NL,
 
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,

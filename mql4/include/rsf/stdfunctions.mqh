@@ -6447,7 +6447,7 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           waveCyclePeriods,                 // int    WaveCycle.Periods
                           0,                                // int    WaveCycle.Periods.Step
                           maAppliedPrice,                   // string MA.AppliedPrice
-                          maReversalFilter,                 // double MA.ReversalFilter
+                          maReversalFilter,                 // double MA.ReversalFilter.StdDev
                           0,                                // double MA.ReversalFilter.Step
                           "Dot",                            // string Draw.Type
                           1,                                // int    Draw.Width

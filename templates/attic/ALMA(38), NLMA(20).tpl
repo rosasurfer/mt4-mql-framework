@@ -100,7 +100,7 @@ flags=339
 window_num=0
 <inputs>
 WaveCycle.Periods=20
-MA.ReversalFilter=0
+MA.ReversalFilter.StdDev=0
 Color.UpTrend=14772545
 Color.DownTrend=65535
 </inputs>

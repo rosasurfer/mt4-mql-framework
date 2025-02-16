@@ -128,7 +128,8 @@ flags=339
 window_num=0
 <inputs>
 WaveCycle.Periods=20
-MA.ReversalFilter=1.36
+MA.ReversalFilter.StdDev=0.7
+MA.ReversalFilter.Step=0.1
 Draw.Type=Line* | Dot
 Draw.Width=3
 Signal.onTrendChange=1
