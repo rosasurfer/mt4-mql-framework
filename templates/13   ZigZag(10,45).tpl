@@ -5,7 +5,7 @@ digits=5
 
 leftpos=9229
 scale=2
-graph=1
+graph=0
 fore=0
 grid=0
 volume=0
@@ -96,17 +96,37 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=10
-ZigZag.Type=Line* | Semaphores
+ZigZag.Periods=45
 ZigZag.Width=0
-ZigZag.Color=9639167
 Donchian.ShowChannel=1
+Donchian.ShowCrossings=off* | first | all
+Donchian.Upper.Color=16711680
+Donchian.Lower.Color=16711680
+Signal.onReversal=1
+Signal.onBreakout=1
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ZigZag
+flags=339
+window_num=0
+<inputs>
+ZigZag.Periods=10
+ZigZag.Width=0
+Donchian.ShowChannel=0
 Donchian.ShowCrossings=off | first* | all
+Donchian.Crossings.Wingdings=108
 Donchian.Crossings.Width=1
 Donchian.Upper.Color=16711680
 Donchian.Lower.Color=16711935
 Signal.onReversal=1
 Signal.onBreakout=1
+Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_2=2
@@ -115,6 +135,5 @@ color_6=4294967295
 color_7=4294967295
 show_data=1
 </indicator>
-
 </window>
 </chart>

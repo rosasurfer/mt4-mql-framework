@@ -5,7 +5,7 @@ digits=5
 
 leftpos=9229
 scale=2
-graph=1
+graph=0
 fore=0
 grid=0
 volume=0
@@ -97,22 +97,15 @@ flags=339
 window_num=0
 <inputs>
 ZigZag.Periods=45
-ZigZag.Type=Line* | Semaphores
 ZigZag.Width=0
-ZigZag.Color=9639167
 Donchian.ShowChannel=1
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossings.Width=2
+Donchian.ShowCrossings=off* | first | all
 Donchian.Upper.Color=16711680
-Donchian.Lower.Color=16711935
+Donchian.Lower.Color=16711680
 Signal.onReversal=1
 Signal.onBreakout=1
 </inputs>
 </expert>
-style_2=2
-style_3=2
-color_6=4294967295
-color_7=4294967295
 show_data=1
 </indicator>
 
@@ -123,16 +116,17 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=9
-ZigZag.Type=Line | Semaphores*
-ZigZag.Width=1
-ZigZag.Color=16748574
+ZigZag.Periods=10
+ZigZag.Width=0
 Donchian.ShowChannel=0
-Donchian.ShowCrossings=off* | first | all
+Donchian.ShowCrossings=off | first* | all
 Donchian.Crossings.Wingdings=108
-Signal.onReversal=0
+Donchian.Crossings.Width=1
+Donchian.Upper.Color=16711680
+Donchian.Lower.Color=16711935
+Signal.onReversal=1
 Signal.onBreakout=1
-Sound.onChannelWidening=0
+Sound.onChannelWidening=1
 </inputs>
 </expert>
 style_2=2
@@ -141,6 +135,5 @@ color_6=4294967295
 color_7=4294967295
 show_data=1
 </indicator>
-
 </window>
 </chart>
