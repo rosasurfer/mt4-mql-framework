@@ -34,11 +34,12 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
 
                           "separator",                // string   ____________________________
                           false,                      // bool     Donchian.ShowChannel
+                          CLR_NONE,                   // color    Donchian.Channel.UpperColor
+                          CLR_NONE,                   // color    Donchian.Channel.LowerColor
                           "all",                      // string   Donchian.ShowCrossings
                           1,                          // int      Donchian.Crossings.Width
                           163,                        // int      Donchian.Crossings.Wingdings
-                          CLR_NONE,                   // color    Donchian.Upper.Color
-                          CLR_NONE,                   // color    Donchian.Lower.Color
+                          CLR_NONE,                   // color    Donchian.Crossings.Color
 
                           "separator",                // string   ____________________________
                           false,                      // bool     TrackReversalBalance

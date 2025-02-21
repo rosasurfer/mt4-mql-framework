@@ -1224,6 +1224,21 @@ string ifString(bool condition, string thenValue, string elseValue) {
 
 
 /**
+ * Inlined color OR statement. Returns the first color or the second color if the first color is CLR_NONE.
+ *
+ * @param  color value
+ * @param  color altValue
+ *
+ * @return int
+ */
+color colorOr(color value, color altValue) {
+   if (value != CLR_NONE)
+      return(value);
+   return(altValue);
+}
+
+
+/**
  * Inlined integer OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to NULL.
  *
  * @param  int value

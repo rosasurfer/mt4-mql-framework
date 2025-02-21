@@ -33,6 +33,7 @@ bool     Chart.StoreColor (string key, color  value);;
 bool     Chart.StoreDouble(string key, double value);;
 bool     Chart.StoreInt   (string key, int    value);;
 bool     Chart.StoreString(string key, string value);;
+color    colorOr(color value, color altValue);;
 string   ColorToHtmlStr(color value);;
 string   ColorToRGBStr(color value);;
 string   ColorToStr(color value);;

@@ -23,14 +23,16 @@
  *  • ZigZag.Color:                 Color of ZigZag line/semaphores.
  *
  *  • Donchian.ShowChannel:         Whether to display the internal Donchian channel.
+ *  • Donchian.Channel.UpperColor:  Color of upper Donchian channel band.
+ *  • Donchian.Channel.LowerColor:  Color of lower Donchian channel band.
+ *
  *  • Donchian.ShowCrossings:       Which Donchian channel crossings to display, one of:
  *                                   "off":   No crossings are displayed.
  *                                   "first": Only the first crossing per direction is displayed (the moment when ZigZag creates a new leg).
  *                                   "all":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
  *  • Donchian.Crossings.Width:     Size of displayed Donchian channel crossings.
  *  • Donchian.Crossings.Wingdings: WingDing symbol used for Donchian channel crossings.
- *  • Donchian.Upper.Color:         Color of upper Donchian channel band and crossings.
- *  • Donchian.Lower.Color:         Color of lower Donchian channel band and crossings.
+ *  • Donchian.Crossings.Color:     Custom color of channel crossings (default: color of channel bands).
  *
  *  • TrackZigZagBalance:           Whether to track and mark ZigZag balances.
  *  • TrackZigZagBalance.Since:     Start date-time to track and mark ZigZag balances.
@@ -78,11 +80,12 @@ extern color    ZigZag.Color                   = Blue;
 
 extern string   ___b__________________________ = "=== Donchian settings ===";
 extern bool     Donchian.ShowChannel           = true;                         // whether to display the Donchian channel
+extern color    Donchian.Channel.UpperColor    = Blue;
+extern color    Donchian.Channel.LowerColor    = Magenta;
 extern string   Donchian.ShowCrossings         = "off | first* | all";         // which channel crossings to display
 extern int      Donchian.Crossings.Width       = 1;
 extern int      Donchian.Crossings.Wingdings   = 163;                          // a small ring
-extern color    Donchian.Upper.Color           = Blue;
-extern color    Donchian.Lower.Color           = Magenta;
+extern color    Donchian.Crossings.Color       = CLR_NONE;
 
 extern string   ___c__________________________ = "=== ZigZag projections ===";
 extern bool     TrackZigZagBalance             = false;                        // whether to track ZigZag balances
@@ -273,12 +276,14 @@ int onInit() {
    if (Donchian.Crossings.Wingdings <  32) return(catch("onInit(9)  invalid input parameter Donchian.Crossings.Wingdings: "+ Donchian.Crossings.Wingdings, ERR_INVALID_INPUT_PARAMETER));
    if (Donchian.Crossings.Wingdings > 255) return(catch("onInit(10)  invalid input parameter Donchian.Crossings.Wingdings: "+ Donchian.Crossings.Wingdings, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (AutoConfiguration) ZigZag.Color         = GetConfigColor(indicator, "ZigZag.Color",         ZigZag.Color);
-   if (AutoConfiguration) Donchian.Upper.Color = GetConfigColor(indicator, "Donchian.Upper.Color", Donchian.Upper.Color);
-   if (AutoConfiguration) Donchian.Lower.Color = GetConfigColor(indicator, "Donchian.Lower.Color", Donchian.Lower.Color);
-   if (ZigZag.Color         == 0xFF000000) ZigZag.Color         = CLR_NONE;
-   if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
-   if (Donchian.Lower.Color == 0xFF000000) Donchian.Lower.Color = CLR_NONE;
+   if (AutoConfiguration) ZigZag.Color                = GetConfigColor(indicator, "ZigZag.Color",                ZigZag.Color);
+   if (AutoConfiguration) Donchian.Channel.UpperColor = GetConfigColor(indicator, "Donchian.Channel.UpperColor", Donchian.Channel.UpperColor);
+   if (AutoConfiguration) Donchian.Channel.LowerColor = GetConfigColor(indicator, "Donchian.Channel.LowerColor", Donchian.Channel.LowerColor);
+   if (AutoConfiguration) Donchian.Crossings.Color    = GetConfigColor(indicator, "Donchian.Crossings.Color",    Donchian.Crossings.Color);
+   if (ZigZag.Color                == 0xFF000000) ZigZag.Color                = CLR_NONE;
+   if (Donchian.Channel.UpperColor == 0xFF000000) Donchian.Channel.UpperColor = CLR_NONE;
+   if (Donchian.Channel.LowerColor == 0xFF000000) Donchian.Channel.LowerColor = CLR_NONE;
+   if (Donchian.Crossings.Color    == 0xFF000000) Donchian.Crossings.Color    = CLR_NONE;
 
    // TrackZigZagBalance
    if (AutoConfiguration) TrackZigZagBalance = GetConfigBool(indicator, "TrackZigZagBalance", TrackZigZagBalance);
@@ -1214,13 +1219,13 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_SEMAPHORE_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_CLOSE, ZigZag.Semaphores.Wingdings);
 
    drawType = ifInt(Donchian.ShowChannel, DRAW_LINE, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, Donchian.Upper.Color);
-   SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, Donchian.Lower.Color);
+   SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, Donchian.Channel.UpperColor);
+   SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, Donchian.Channel.LowerColor);
 
    drawType  = ifInt(crossingDrawType && Donchian.Crossings.Width, DRAW_ARROW, DRAW_NONE);
    drawWidth = Donchian.Crossings.Width - 1;                   // minus 1 to use the same scale as ZigZag.Semaphore.Width
-   SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, drawWidth, Donchian.Upper.Color); SetIndexArrow(MODE_UPPER_CROSS, Donchian.Crossings.Wingdings);
-   SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, drawWidth, Donchian.Lower.Color); SetIndexArrow(MODE_LOWER_CROSS, Donchian.Crossings.Wingdings);
+   SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, drawWidth, colorOr(Donchian.Crossings.Color, Donchian.Channel.UpperColor)); SetIndexArrow(MODE_UPPER_CROSS, Donchian.Crossings.Wingdings);
+   SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, drawWidth, colorOr(Donchian.Crossings.Color, Donchian.Channel.LowerColor)); SetIndexArrow(MODE_LOWER_CROSS, Donchian.Crossings.Wingdings);
 
    SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
@@ -1278,11 +1283,12 @@ string InputsToStr() {
                             "ZigZag.Color=",                 ColorToStr(ZigZag.Color)                +";"+ NL,
 
                             "Donchian.ShowChannel=",         BoolToStr(Donchian.ShowChannel)         +";"+ NL,
+                            "Donchian.Channel.UpperColor=",  ColorToStr(Donchian.Channel.UpperColor) +";"+ NL,
+                            "Donchian.Channel.LowerColor=",  ColorToStr(Donchian.Channel.LowerColor) +";"+ NL,
                             "Donchian.ShowCrossings=",       DoubleQuoteStr(Donchian.ShowCrossings)  +";"+ NL,
                             "Donchian.Crossings.Width=",     Donchian.Crossings.Width                +";"+ NL,
                             "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings            +";"+ NL,
-                            "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)        +";"+ NL,
-                            "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)        +";"+ NL,
+                            "Donchian.Crossings.Color=",     ColorToStr(Donchian.Crossings.Color)    +";"+ NL,
 
                             "TrackZigZagBalance=",           BoolToStr(TrackZigZagBalance)           +";"+ NL,
                             "TrackZigZagBalance.Since=",     TimeToStr(TrackZigZagBalance.Since)     +";"+ NL,
