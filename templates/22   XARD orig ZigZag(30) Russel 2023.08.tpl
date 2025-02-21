@@ -323,11 +323,11 @@ window_num=0
 ZigZag.Periods=30
 ZigZag.Width=0
 Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711935
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossings.Width=3
 Donchian.Crossings.Wingdings=163
-Donchian.Upper.Color=16711680
-Donchian.Lower.Color=16711935
 </inputs>
 </expert>
 style_2=2

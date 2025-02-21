@@ -105,10 +105,10 @@ window_num=0
 ZigZag.Periods=10
 ZigZag.Width=0
 Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711935
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossings.Width=2
-Donchian.Upper.Color=16711680
-Donchian.Lower.Color=16711935
 Signal.onReversal=1
 Signal.onBreakout=1
 </inputs>

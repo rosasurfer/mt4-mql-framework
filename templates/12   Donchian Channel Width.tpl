@@ -100,10 +100,10 @@ ZigZag.Periods=45
 ZigZag.Width=0
 ZigZag.Color=9639167
 Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711935
+Donchian.Channel.LowerColor=16711935
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossings.Width=2
-Donchian.Upper.Color=16711935
-Donchian.Lower.Color=16711935
 </inputs>
 </expert>
 style_2=2
