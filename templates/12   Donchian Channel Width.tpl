@@ -103,7 +103,7 @@ Donchian.ShowChannel=1
 Donchian.Channel.UpperColor=16711935
 Donchian.Channel.LowerColor=16711935
 Donchian.ShowCrossings=off | first* | all
-Donchian.Crossings.Width=2
+Donchian.Crossing.Width=2
 </inputs>
 </expert>
 style_2=2

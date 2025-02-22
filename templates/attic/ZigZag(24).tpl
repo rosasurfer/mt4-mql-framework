@@ -105,7 +105,7 @@ ZigZag.Type=Line* | Semaphores
 ZigZag.Width=2
 Donchian.ShowChannel=1
 Donchian.ShowCrossings=off | first* | all
-Donchian.Crossings.Wingdings=108
+Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
 Signal.onReversal=1
 Signal.onBreakout=1
 </inputs>

@@ -326,8 +326,8 @@ Donchian.ShowChannel=1
 Donchian.Channel.UpperColor=16711680
 Donchian.Channel.LowerColor=16711935
 Donchian.ShowCrossings=off | first* | all
-Donchian.Crossings.Width=3
-Donchian.Crossings.Wingdings=163
+Donchian.Crossing.Symbol=bold-ring
+Donchian.Crossing.Width=3
 </inputs>
 </expert>
 style_2=2
