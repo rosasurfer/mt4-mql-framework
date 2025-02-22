@@ -6641,6 +6641,7 @@ void __DummyCalls() {
    Chart.StoreDouble(NULL, NULL);
    Chart.StoreInt(NULL, NULL);
    Chart.StoreString(NULL, NULL);
+   colorOr(NULL, NULL);
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);
    CompareDoubles(NULL, NULL);

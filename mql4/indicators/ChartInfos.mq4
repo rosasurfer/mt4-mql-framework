@@ -1221,20 +1221,21 @@ bool UpdateUnitSize() {
    string text = "";
 
    if (mode.intern) {
+      if (mm.riskPercent != NULL) {
+         text = StringConcatenate(text, "R", NumberToStr(NormalizeDouble(mm.riskPercent, 1), ".+"), "%");
+      }
+
       if (mm.riskRange != NULL) {
          double range = mm.riskRange;
+         string sRiskRange = "";
          if (mm.cfgRiskRangeIsADR) {
             if (Close[0] > 300 && range >= 3) range = MathRound(range);
             else                              range = NormalizeDouble(range, PipDigits);
-            text = StringConcatenate(text, "ADR=");
+            sRiskRange = "ADR=";
          }
-         if (Close[0] > 300 && range >= 3) string sRange = NumberToStr(range, ",'.2+");
-         else                                     sRange = NumberToStr(NormalizeDouble(range/Pip, 1), ".+") +" pip";
-         text = StringConcatenate(text, sRange);
-      }
-
-      if (mm.riskPercent != NULL) {
-         text = StringConcatenate(text, "/R", DoubleToStr(mm.riskPercent, 0), "%");
+         if (Close[0] > 300 && range >= 3) sRiskRange = StringConcatenate(sRiskRange, NumberToStr(range, ",'.2+"));
+         else                              sRiskRange = StringConcatenate(sRiskRange, NumberToStr(NormalizeDouble(range/Pip, 1), ".+"), " pip");
+         text = StringConcatenate(text, "/", sRiskRange);
       }
 
       if (mm.leverage != NULL) {
@@ -2088,32 +2089,32 @@ bool ReadUnitSizeConfiguration() {
 /**
  * Find the applicable configuration value for the unitsize calculation.
  *
- * @param _In_  string name   - unitsize configuration identifier
+ * @param _In_  string key    - unitsize configuration identifier
  * @param _Out_ string &value - configuration value
  *
  * @return bool - success status
  */
-bool ReadUnitSizeConfigValue(string name, string &value) {
+bool ReadUnitSizeConfigValue(string key, string &value) {
    string section="Unitsize", sValue="";
    value = "";
 
-   string key = Symbol() +"."+ name;
-   if (IsConfigKey(section, key)) {
-      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+   string iniKey = Symbol() +"."+ key;
+   if (IsConfigKey(section, iniKey)) {
+      if (!ValidateUnitSizeConfigValue(section, iniKey, sValue)) return(false);
       value = sValue;
       return(true);
    }
 
-   key = StdSymbol() +"."+ name;
-   if (IsConfigKey(section, key)) {
-      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+   iniKey = StdSymbol() +"."+ key;
+   if (IsConfigKey(section, iniKey)) {
+      if (!ValidateUnitSizeConfigValue(section, iniKey, sValue)) return(false);
       value = sValue;
       return(true);
    }
 
-   key = name;
-   if (IsConfigKey(section, key)) {
-      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+   iniKey = key;
+   if (IsConfigKey(section, iniKey)) {
+      if (!ValidateUnitSizeConfigValue(section, iniKey, sValue)) return(false);
       value = sValue;
       return(true);
    }
@@ -2122,11 +2123,11 @@ bool ReadUnitSizeConfigValue(string name, string &value) {
 
 
 /**
- * Validate the specified unitsize configuration value.
+ * Validate the passed unitsize configuration value.
  *
  * @param _In_  string section - configuration section
  * @param _In_  string key     - configuration key
- * @param _Out_ string &value  - configured value
+ * @param _Out_ string &value  - configuration value
  *
  * @return bool - success status
  */
