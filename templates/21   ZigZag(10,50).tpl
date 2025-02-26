@@ -106,7 +106,7 @@ Donchian.Crossing.Symbol=dot | narrow-ring | ring | bold-ring*
 Donchian.Crossing.Width=2
 Donchian.Crossing.Color=255
 Signal.onReversal=1
-Signal.onBreakout=1
+Signal.onBreakout=0
 </inputs>
 </expert>
 show_data=1
@@ -127,9 +127,9 @@ Donchian.Channel.LowerColor=16711935
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
 Donchian.Crossing.Width=1
-Signal.onReversal=1
-Signal.onBreakout=1
-Sound.onChannelWidening=1
+Signal.onReversal=0
+Signal.onBreakout=0
+Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_2=2

@@ -1,17 +1,11 @@
-<!-- 
-Buffer Scalping.tpl: ZigZag(10) + NLMA(20, 1.36)
-
-@see  https://www.forexfactory.com/thread/561195-daytrading-scalping-strategy-m5-m1 
--->
-
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=8
-graph=1
+scale=2
+graph=0
 fore=0
 grid=0
 volume=0
@@ -102,15 +96,40 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=10
+ZigZag.Periods=50
 ZigZag.Width=0
 Donchian.ShowChannel=1
 Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711680
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Symbol=dot | narrow-ring | ring | bold-ring*
+Donchian.Crossing.Width=2
+Donchian.Crossing.Color=255
+Signal.onReversal=1
+Signal.onBreakout=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ZigZag
+flags=339
+window_num=0
+<inputs>
+ZigZag.Periods=10
+ZigZag.Width=0
+Donchian.ShowChannel=0
+Donchian.Channel.UpperColor=16711680
 Donchian.Channel.LowerColor=16711935
 Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Width=2
-Signal.onReversal=1
-Signal.onBreakout=1
+Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
+Donchian.Crossing.Width=1
+Signal.onReversal=0
+Signal.onBreakout=0
+Sound.onChannelWidening=1
 </inputs>
 </expert>
 style_2=2
@@ -119,22 +138,5 @@ color_6=4294967295
 color_7=4294967295
 show_data=1
 </indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=NonLagMA
-flags=339
-window_num=0
-<inputs>
-WaveCycle.Periods=20
-Draw.Type=Line* | Dot
-Draw.Width=3
-Signal.onTrendChange=1
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
 </window>
 </chart>
