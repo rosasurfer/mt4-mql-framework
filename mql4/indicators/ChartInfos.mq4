@@ -33,8 +33,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string UnitSize.Corner = "top | bottom*";                  // can be shortened to a single char
-extern bool   Track.Orders    = true;                             // whether to track and signal position open/close events
+extern bool Track.Orders = true;                                  // whether to track and signal position open/close events
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -196,9 +195,8 @@ string  label.orderCounter   = "";
 string  label.tradeAccount   = "";
 string  label.stopoutLevel   = "";
 
-// chart position of total position and unitsize
-int     totalPosition.corner = CORNER_BOTTOM_RIGHT;
-int     unitSize.corner      = CORNER_BOTTOM_RIGHT;
+// chart location of total position and unitsize
+int     position_unitsize.corner = CORNER_BOTTOM_RIGHT;
 
 // font settings for custom positions
 string  positions.fontName          = "MS Sans Serif";
@@ -353,10 +351,15 @@ bool onCommand(string cmd, string params, int keys) {
       mm.externalAssetsCached = false;                                  // invalidate cached external assets
       ArrayResize(configTerms, 0);                                      // trigger reparsing of the configuration
    }
+
+   else if (cmd == "toggle-unit-size") {
+      position_unitsize.corner = ifInt(position_unitsize.corner == CORNER_BOTTOM_RIGHT, CORNER_TOP_RIGHT, CORNER_BOTTOM_RIGHT);
+      if (!CreateLabels()) return(false);
+   }
+
    else {
       return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
    }
-
    return(!catch("onCommand(2)"));
 }
 
@@ -1121,7 +1124,7 @@ bool CreateLabels() {
    ObjectSetText(label.spread, " ", 1);
 
    // unit size
-   corner = unitSize.corner;
+   corner = position_unitsize.corner;
    xDist  = 9;
    switch (corner) {
       case CORNER_TOP_RIGHT:    yDist = 58; break;                // y(spread) + 20
@@ -1134,7 +1137,7 @@ bool CreateLabels() {
    ObjectSetText(label.unitSize, " ", 1);
 
    // total position
-   corner = totalPosition.corner;
+   corner = position_unitsize.corner;
    xDist  = 9;
    yDist += 20;                                                   // 1 line above/below unitsize
    if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL)) return(false);
@@ -4999,9 +5002,9 @@ string ConfigTermTypeToStr(int type) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("UnitSize.Corner=", DoubleQuoteStr(UnitSize.Corner), ";", NL,
-                            "Track.Orders=",    BoolToStr(Track.Orders),         ";")
-   );
+   return(StringConcatenate("Track.Orders=", BoolToStr(Track.Orders), ";"));
+
+   // dummy call to prevent compiler warnings
    ConfigTermTypeToStr(NULL);
 }
 
