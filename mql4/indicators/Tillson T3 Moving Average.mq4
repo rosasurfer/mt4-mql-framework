@@ -282,9 +282,6 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
    // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
    if (__isChart && (T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step)) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
@@ -337,7 +334,7 @@ int onTick() {
    // calculate start bar
    int limit = Min(ChangedBars, Bars-1, MaxBarsBack+requiredBars-1);    // how many bars need recalculation
    int startbar = limit-1;
-   if (Bars < requiredBars) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  required="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
+   if (Bars < requiredBars) return(logInfo("onTick(1)  Tick="+ Ticks +"  Bars="+ Bars +"  required="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
 
    double price, sum, stdDev, minChange, maFilterPeriods=T3.Periods;
 

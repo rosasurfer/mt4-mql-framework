@@ -224,9 +224,6 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
    if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
@@ -259,7 +256,7 @@ int onTick() {
 
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maPeriods);
-   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ maPeriods, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ maPeriods, ERR_HISTORY_INSUFFICIENT));
 
    double sum, stdDev, minChange;
 
