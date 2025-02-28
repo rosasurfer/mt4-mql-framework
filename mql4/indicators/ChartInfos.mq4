@@ -196,7 +196,7 @@ string  label.tradeAccount   = "";
 string  label.stopoutLevel   = "";
 
 // chart location of total position and unitsize
-int     position_unitsize.corner = CORNER_BOTTOM_RIGHT;
+int     position_unitsize.corner;
 
 // font settings for custom positions
 string  positions.fontName          = "MS Sans Serif";
@@ -4415,31 +4415,38 @@ bool AnalyzePos.ProcessLfxProfits() {
  */
 bool StoreStatus() {
    if (!__isChart) return(true);
+   string indicatorName = ProgramName();
+
+   // int position_unitsize.corner
+   string key = indicatorName +".position_unitsize.corner";
+   string sValue = position_unitsize.corner;                               // GetWindowInteger() cannot restore integer 0
+   SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);            // chart window
+   Chart.StoreString(key, sValue);                                         // chart
 
    // bool positions.showAbsProfits
-   string key = ProgramName() +".positions.showAbsProfits";
+   key = indicatorName +".positions.showAbsProfits";
    int iValue = ifInt(positions.showAbsProfits, 1, -1);                    // GetWindowInteger() cannot restore integer 0
    SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
    // bool positions.showMaxRisk
-   key = ProgramName() +".positions.showMaxRisk";
+   key = indicatorName +".positions.showMaxRisk";
    iValue = ifInt(positions.showMaxRisk, 1, -1);                           // GetWindowInteger() cannot restore integer 0
    SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
    // Risk/MFE/MAE stats of custom positions
-   string keys="", configKey="", sValue="";
+   string keys="", configKey="";
    int size = ArrayRange(config.sData, 0);
    for (int i=0; i < size; i++) {
       configKey = config.sData[i][I_CONFIG_KEY];
-      key = ProgramName() +"."+ Symbol() +".config."+ configKey +".risk";
+      key = indicatorName +"."+ Symbol() +".config."+ configKey +".risk";
       sValue = NumberToStr(config.dData[i][I_MAX_LOTS], ".1+") +"|"+ NumberToStr(config.dData[i][I_MAX_RISK], ".1+");
       SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);         // chart window
       Chart.StoreString(key, sValue);                                      // chart
 
       if (config.dData[i][I_MFE_ENABLED] > 0) {
-         key = ProgramName() +"."+ Symbol() +".config."+ configKey +".mfe|mae";
+         key = indicatorName +"."+ Symbol() +".config."+ configKey +".mfe|mae";
          sValue = NumberToStr(config.dData[i][I_PROFIT_MFE], ".1+") +"|"+ NumberToStr(config.dData[i][I_PROFIT_MAE], ".1+");
          SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);      // chart window
          Chart.StoreString(key, sValue);                                   // chart
@@ -4449,7 +4456,7 @@ bool StoreStatus() {
 
    // config keys of custom positions
    if (size > 0) {
-      key = ProgramName() +"."+ Symbol() +".config.keys";
+      key = indicatorName +"."+ Symbol() +".config.keys";
       sValue = StrRight(keys, -1);
       SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);         // chart window
       Chart.StoreString(key, sValue);                                      // chart
@@ -4465,32 +4472,41 @@ bool StoreStatus() {
  */
 bool RestoreStatus() {
    if (!__isChart) return(true);
+   string indicatorName = ProgramName();
+
+   // int position_unitsize.corner
+   string key = indicatorName +".position_unitsize.corner";
+   string sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key), sValue2="";
+   Chart.RestoreString(key, sValue2);
+   if (!StringLen(sValue1)) sValue1 = sValue2;
+   int iValue = StrToInteger(sValue1);
+   position_unitsize.corner = ifInt(iValue == CORNER_TOP_RIGHT, iValue, CORNER_BOTTOM_RIGHT);
 
    // bool positions.showAbsProfits
-   string key = ProgramName() +".positions.showAbsProfits";
+   key = indicatorName +".positions.showAbsProfits";
    int iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);  // +1 || -1
    int iValue2 = 0;
    Chart.RestoreInt(key, iValue2);
    positions.showAbsProfits = (iValue1==1 || iValue2==1);
 
    // bool positions.showMaxRisk
-   key = ProgramName() +".positions.showMaxRisk";
+   key = indicatorName +".positions.showMaxRisk";
    iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);      // +1 || -1
    iValue2 = 0;
    Chart.RestoreInt(key, iValue2);
    positions.showMaxRisk = (iValue1==1 || iValue2==1);
 
    // config keys of custom positions
-   string configKeys[], sValue="", sValue2="";
-   key = ProgramName() +"."+ Symbol() +".config.keys";
-   sValue = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
+   string configKeys[];
+   key = indicatorName +"."+ Symbol() +".config.keys";
+   sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
    Chart.RestoreString(key, sValue2);
-   if (!StringLen(sValue)) sValue = sValue2;
+   if (!StringLen(sValue1)) sValue1 = sValue2;
 
    // Risk/MFE/MAE stats of custom positions
    ArrayResize(config.sData, 0);
    ArrayResize(config.dData, 0);
-   int size = Explode(sValue, "=", configKeys, NULL);
+   int size = Explode(sValue1, "=", configKeys, NULL);
 
    for (int i=0; i < size; i++) {
       ArrayResize(config.sData, i+1);
@@ -4498,22 +4514,22 @@ bool RestoreStatus() {
       config.sData[i][I_CONFIG_KEY    ] = configKeys[i];
       config.sData[i][I_CONFIG_COMMENT] = "";
 
-      key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".risk";
-      sValue = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
+      key = indicatorName +"."+ Symbol() +".config."+ configKeys[i] +".risk";
+      sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
       sValue2 = "";
       Chart.RestoreString(key, sValue2);
-      if (!StringLen(sValue)) sValue = sValue2;
-      config.dData[i][I_MAX_LOTS] = StrToDouble(StrLeftTo(sValue, "|"));
-      config.dData[i][I_MAX_RISK] = StrToDouble(StrRightFrom(sValue, "|"));
+      if (!StringLen(sValue1)) sValue1 = sValue2;
+      config.dData[i][I_MAX_LOTS] = StrToDouble(StrLeftTo(sValue1, "|"));
+      config.dData[i][I_MAX_RISK] = StrToDouble(StrRightFrom(sValue1, "|"));
 
-      key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".mfe|mae";
-      sValue = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
+      key = indicatorName +"."+ Symbol() +".config."+ configKeys[i] +".mfe|mae";
+      sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
       sValue2 = "";
       Chart.RestoreString(key, sValue2);
-      if (!StringLen(sValue)) sValue = sValue2;
-      config.dData[i][I_MFE_ENABLED] = (sValue != "");
-      config.dData[i][I_PROFIT_MFE ] = StrToDouble(StrLeftTo(sValue, "|"));
-      config.dData[i][I_PROFIT_MAE ] = StrToDouble(StrRightFrom(sValue, "|"));
+      if (!StringLen(sValue1)) sValue1 = sValue2;
+      config.dData[i][I_MFE_ENABLED] = (sValue1 != "");
+      config.dData[i][I_PROFIT_MFE ] = StrToDouble(StrLeftTo(sValue1, "|"));
+      config.dData[i][I_PROFIT_MAE ] = StrToDouble(StrRightFrom(sValue1, "|"));
    }
    return(!catch("RestoreStatus(1)"));
 }

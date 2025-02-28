@@ -27,8 +27,8 @@ int onInit() {
    }
 
    // init labels, status and used trade account
-   if (!CreateLabels())         return(last_error);
    if (!RestoreStatus())        return(last_error);
+   if (!CreateLabels())         return(last_error);
    if (!InitTradeAccount())     return(last_error);
    if (!UpdateAccountDisplay()) return(last_error);
 
