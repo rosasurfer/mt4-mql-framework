@@ -1633,11 +1633,15 @@ bool UpdateStopoutLevel() {
       return(true);
    }
 
-   // Stopout-Preis berechnen
-   double equity     = AccountEquity();
+   // calculate the stopout level
+   double equity = AccountEquity();
+   double extAssets = GetExternalBalance();
+   if (extAssets < 0) {
+      equity += extAssets;                                                             // let the stopout level reflect the decreased equity
+   }
    double usedMargin = AccountMargin();
    int    soMode     = AccountStopoutMode();
-   double soEquity   = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity = usedMargin * soEquity/100;
+   double soEquity   = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity *= usedMargin/100;
    double tickSize   = MarketInfoEx(Symbol(), MODE_TICKSIZE, error);
    double tickValue  = MarketInfoEx(Symbol(), MODE_TICKVALUE, error) * MathAbs(totalPosition);
    if (!_Bid || !tickSize || !tickValue) {
@@ -1649,7 +1653,7 @@ bool UpdateStopoutLevel() {
    if (totalPosition > 0) double soPrice = _Bid - soDistance;
    else                          soPrice = _Ask + soDistance;
 
-   // Stopout-Preis anzeigen
+   // display stopout level
    if (ObjectFind(label.stopoutLevel) == -1) if (!ObjectCreateRegister(label.stopoutLevel, OBJ_HLINE)) return(false);
    ObjectSet(label.stopoutLevel, OBJPROP_STYLE,  STYLE_SOLID);
    ObjectSet(label.stopoutLevel, OBJPROP_COLOR,  OrangeRed);
