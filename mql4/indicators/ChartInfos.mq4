@@ -290,27 +290,7 @@ bool onCommand(string cmd, string params, int keys) {
    }
 
    else if (cmd == "toggle-account-balance") {
-      if (keys & F_VK_SHIFT && 1) {
-         // update external assets
-         double multiplier = GetAccountConfigDouble("Account", "ExternalAssets.Multiplier", 0);
-         double externalAssets = AccountBalance() * multiplier;         // get scaling multiplier and calculate new external assets
-
-         if (externalAssets != 0) {                                     // compose new config value
-            string sConfigValue = GetAccountConfigStringRaw("Account", "ExternalAssets", "");
-            string comment = StrRightFrom(sConfigValue, ";");
-            sConfigValue = " "+ DoubleToStr(externalAssets, 2);
-            if (comment != "") sConfigValue = StringConcatenate(sConfigValue, "            ; ", comment);
-
-            // write updated value back to the config file
-            if (WriteIniString(GetAccountConfigPath(), "Account", "ExternalAssets", sConfigValue)) {
-               mm.externalAssetsCached = false;                         // invalidate cached external assets
-               ArrayResize(configTerms, 0);                             // trigger reparsing of the configuration
-            }
-            PlaySoundEx("Bell 1.wav");
-            return(true);
-         }
-      }
-      if (!ToggleAccountBalance()) return(false);
+      if (!ToggleAccountBalance(keys & F_VK_SHIFT)) return(false);
    }
 
    else if (cmd == "toggle-open-orders") {
@@ -1009,15 +989,26 @@ bool CustomPositions.ToggleProfits() {
 /**
  * Toggle the chart display of the account balance.
  *
+ * @param  bool details - whether to display external asset details (if any)
+ *
  * @return bool - success status
  */
-bool ToggleAccountBalance() {
+bool ToggleAccountBalance(bool details) {
    bool enabled = !GetAccountBalanceDisplayStatus();           // get current display status and toggle it
 
    if (enabled) {
       string sBalance = " ";
       if (mode.intern) {
-         sBalance = "Balance: " + NumberToStr(AccountBalance(), ",'.2") +" "+ AccountCurrency();
+         double realBalance = AccountBalance();
+         double extAssets   = GetExternalAssets(tradeAccount.company, tradeAccount.number);
+         double virtBalance = realBalance + extAssets;
+
+         if (details) {
+            sBalance = "Balance: "+ NumberToStr(virtBalance, ",'.2") +" "+ AccountCurrency() +" ("+ NumberToStr(extAssets, "+,'.2") +")";
+         }
+         else {
+            sBalance = "Balance: " + NumberToStr(realBalance, ",'.2") +" "+ AccountCurrency();
+         }
       }
       else {
          enabled = false;                                      // mode.extern not yet implemented
