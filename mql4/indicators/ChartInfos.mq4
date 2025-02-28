@@ -1634,10 +1634,11 @@ bool UpdateStopoutLevel() {
    }
 
    // calculate the stopout level
-   double equity = AccountEquity();
-   double extAssets = GetExternalBalance();
+   double extAssets   = GetExternalBalance();
+   double realBalance = AccountBalance(), virtBalance = realBalance + extAssets;
+   double realEquity  = AccountEquity(),  virtEquity  = realEquity;
    if (extAssets < 0) {
-      equity += extAssets;                                                             // let the stopout level reflect the decreased equity
+      virtEquity += extAssets;                                                         // let the stopout level reflect the decreased equity
    }
    double usedMargin = AccountMargin();
    int    soMode     = AccountStopoutMode();
@@ -1649,7 +1650,7 @@ bool UpdateStopoutLevel() {
          return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // Symbol noch nicht subscribed (possible on start, change of account/template, offline chart, MarketWatch -> Hide all)
       return(!catch("UpdateStopoutLevel(2)", error));
    }
-   double soDistance = (equity - soEquity)/tickValue * tickSize;
+   double soDistance = (virtEquity - soEquity)/tickValue * tickSize;
    if (totalPosition > 0) double soPrice = _Bid - soDistance;
    else                          soPrice = _Ask + soDistance;
 
@@ -1657,11 +1658,9 @@ bool UpdateStopoutLevel() {
    if (ObjectFind(label.stopoutLevel) == -1) if (!ObjectCreateRegister(label.stopoutLevel, OBJ_HLINE)) return(false);
    ObjectSet(label.stopoutLevel, OBJPROP_STYLE,  STYLE_SOLID);
    ObjectSet(label.stopoutLevel, OBJPROP_COLOR,  OrangeRed);
-   ObjectSet(label.stopoutLevel, OBJPROP_BACK,   false);                               // FALSE causes the price level to be displayed on the scala
-   ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);
-      if (soMode == MSM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%");
-      else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency());
-   ObjectSetText(label.stopoutLevel, text);
+   ObjectSet(label.stopoutLevel, OBJPROP_BACK,   false);
+   ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);                             // TODO: fix the drawdown percentage relative to the start balance of the position
+   ObjectSetText(label.stopoutLevel, StringConcatenate("Stopout: ", DoubleToStr(100 * (soEquity/virtBalance - 1), 0), "%"));
 
    error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
