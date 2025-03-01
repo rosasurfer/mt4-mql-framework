@@ -54,5 +54,6 @@ window_num=0
 </expert>
 show_data=1
 </indicator>
+
 </window>
 </chart>

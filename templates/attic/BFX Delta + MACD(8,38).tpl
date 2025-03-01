@@ -1,10 +1,10 @@
 <chart>
-symbol=GBPUSD
+symbol=USDCHF
 period=60
 digits=5
 
 leftpos=9229
-scale=2
+scale=4
 graph=1
 fore=0
 grid=0
@@ -30,15 +30,14 @@ barup_color=30720
 bardown_color=210
 bullcandle_color=30720
 bearcandle_color=210
-chartline_color=11119017
+chartline_color=8421504
 volumes_color=30720
 grid_color=14474460
 askline_color=11823615
 stops_color=17919
 
 <window>
-height=405
-fixed_height=0
+height=281
 
 <indicator>
 name=main
@@ -77,68 +76,16 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Inside Bars
-flags=339
-window_num=0
-<inputs>
-Timeframe=H1
-NumberOfInsideBars=3
-</inputs>
-</expert>
-period_flags=3
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Trend Bars
-flags=339
-window_num=0
-<inputs>
-Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Tunnel.Periods=55
-Color.UpTrend=16711680
-Color.DownTrend=255
-Color.NoTrend=11119017
-BarWidth=2
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Tunnel
-flags=339
-window_num=0
-<inputs>
-Tunnel.Definition=LWMA(55)
-ShowChartLegend=1
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=Moving Average
 flags=339
+window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=200
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=65535
-DownTrend.Color=65535
-Background.Color=11119017
-ShowChartLegend=0
-AutoConfiguration=0
+Draw.Width=2
+UpTrend.Color=16711935
+DownTrend.Color=16711935
+Background.Color=-1
 </inputs>
 </expert>
 show_data=1
@@ -152,17 +99,49 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=38
-MA.ReversalFilter=0.1
-Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=16711680
-DownTrend.Color=16776960
-Background.Color=16748574
-ShowChartLegend=1
-AutoConfiguration=0
+MA.ReversalFilter.StdDev=0.2
+UpTrend.Color=16760576
+DownTrend.Color=65535
 </inputs>
 </expert>
 show_data=1
 </indicator>
+</window>
+
+<window>
+height=50
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=MACD
+flags=339
+window_num=1
+<inputs>
+FastMA.Periods=8
+FastMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
+SlowMA.Periods=38
+SlowMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
+</inputs>
+</expert>
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=50
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=BFX Delta
+flags=339
+window_num=1
+<inputs>
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
 </window>
 </chart>

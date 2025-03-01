@@ -5,7 +5,7 @@ digits=5
 
 leftpos=9229
 scale=2
-graph=1
+graph=0
 fore=0
 grid=0
 volume=0
@@ -37,7 +37,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=405
+height=800
 fixed_height=0
 
 <indicator>
@@ -92,135 +92,71 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Trend Bars
-flags=339
-window_num=0
-<inputs>
-Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Tunnel.Periods=55
-Color.UpTrend=16711680
-Color.DownTrend=255
-Color.NoTrend=11119017
-BarWidth=2
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Tunnel
-flags=339
-window_num=0
-<inputs>
-Tunnel.Definition=LWMA(55)
-ShowChartLegend=1
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=Moving Average
 flags=339
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=200
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
+MA.Periods.Step=50
 Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
-ShowChartLegend=0
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ALMA
-flags=339
-window_num=0
-<inputs>
-MA.Periods=38
-MA.ReversalFilter=0.1
-Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=16711680
-DownTrend.Color=16776960
-Background.Color=16748574
 ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
 show_data=1
 </indicator>
-</window>
 
-<window>
-height=11
-fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Tunnel signal
+name=ZigZag
 flags=339
+window_num=0
 <inputs>
-Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Tunnel.MA.Periods=55
-MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
-MA.Periods=10
-Histogram.Color.Upper=3329330
-Histogram.Color.Lower=255
-Histogram.Style.Width= 2
-Signal.onTrendChange=0
-AutoConfiguration=0
+ZigZag.Periods=50
+ZigZag.Type=Lines* | Semaphores
+ZigZag.Width=2
+ZigZag.Color=255
+Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711680
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Width=2
+Donchian.Crossing.Color=255
+Signal.onReversal=1
 </inputs>
 </expert>
-min=-1.0
-max=1.0
 show_data=1
 </indicator>
-</window>
 
-<window>
-height=45
-fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=CCI
+name=ZigZag
 flags=339
+window_num=0
 <inputs>
-CCI.Periods=14
-CCI.AppliedPrice=Open | High | Low | Close | Median | Typical* | Weighted
-Signal.onTrendChange=1
-AutoConfiguration=0
+ZigZag.Periods=10
+ZigZag.Width=0
+Donchian.ShowChannel=0
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711935
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
+Donchian.Crossing.Width=1
+Signal.onReversal=0
+Signal.onBreakout=0
+Sound.onChannelWidening=0
 </inputs>
 </expert>
-draw_2=2
-color_2=3329330
-weight_2=2
-draw_3=2
-color_3=255
-weight_3=2
-min=-180
-max=180
-levels_color=12632256
-levels_style=2
-levels_weight=1
-level_0=100
-level_1=0
-level_2=-100
+style_2=2
+style_3=2
+color_6=4294967295
+color_7=4294967295
 show_data=1
 </indicator>
 

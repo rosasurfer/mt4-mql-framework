@@ -4,8 +4,8 @@ period=60
 digits=5
 
 leftpos=9229
-scale=4
-graph=0
+scale=2
+graph=1
 fore=0
 grid=0
 volume=0
@@ -37,7 +37,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=800
+height=405
 fixed_height=0
 
 <indicator>
@@ -92,21 +92,30 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Moving Average
+name=Trend Bars
 flags=339
 window_num=0
 <inputs>
-MA.Periods=144
-MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-UpTrend.Color=16760576
-DownTrend.Color=55295
-Draw.Type=Line* | Dot
-Draw.Width=4
-Background.Color=6908265
-Background.Width=2
-ShowChartLegend=0
-Signal.onTrendChange=0
+Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Tunnel.Periods=55
+Color.UpTrend=16711680
+Color.DownTrend=255
+Color.NoTrend=11119017
+BarWidth=2
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Tunnel
+flags=339
+window_num=0
+<inputs>
+Tunnel.Definition=LWMA(55)
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -118,43 +127,16 @@ name=Custom Indicator
 <expert>
 name=Moving Average
 flags=339
-window_num=0
 <inputs>
-MA.Periods=36
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-UpTrend.Color=16760576
-DownTrend.Color=55295
-Draw.Type=Line* | Dot
-Draw.Width=4
-Background.Color=6908265
-Background.Width=2
-ShowChartLegend=0
-Signal.onTrendChange=0
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Moving Average
-flags=339
-window_num=0
-<inputs>
-MA.Periods=9
-MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-UpTrend.Color=16760576
-DownTrend.Color=55295
+MA.Periods=200
+MA.Periods.Step=50
 Draw.Type=Line* | Dot
 Draw.Width=3
-Background.Color=6908265
-Background.Width=2
-ShowChartLegend=0
-Signal.onTrendChange=0
+UpTrend.Color=65535
+DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -164,53 +146,18 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=ALMA
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=36
-ZigZag.Type=Line | Semaphores*
-ZigZag.Width=3
-ZigZag.Color=9639167
-Donchian.ShowChannel=1
-Donchian.ShowCrossings=off | first* | all
-ShowChartLegend=1
-Signal.onReversal=0
-Signal.onBreakout=1
-Signal.onBreakout.Types=sound
+MA.Periods=38
+MA.ReversalFilter.StdDev=0.2
+UpTrend.Color=16711680
+DownTrend.Color=16776960
+Background.Color=16748574
+AutoConfiguration=0
 </inputs>
 </expert>
-style_2=2
-style_3=2
-color_6=4294967295
-color_7=4294967295
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ZigZag
-flags=339
-window_num=0
-<inputs>
-ZigZag.Periods=9
-ZigZag.Type=Line* | Semaphores
-ZigZag.Width=2
-ZigZag.Color=16711680
-Donchian.ShowChannel=0
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
-ShowChartLegend=0
-Signal.onReversal=0
-Signal.onBreakout=1
-Signal.onBreakout.Types=sound
-</inputs>
-</expert>
-style_2=2
-style_3=2
-color_6=4294967295
-color_7=4294967295
 show_data=1
 </indicator>
 

@@ -118,6 +118,6 @@ style2=0
 weight2=2
 show_data=1
 </indicator>
-</window>
 
+</window>
 </chart>

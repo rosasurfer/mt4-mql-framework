@@ -1,17 +1,11 @@
-<!-- 
-Buffer Scalping.tpl
--------------------
-ZigZag(10) + NLMA(20)
--->
-
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=8
-graph=1
+scale=2
+graph=0
 fore=0
 grid=0
 volume=0
@@ -98,41 +92,71 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=Moving Average
 flags=339
-window_num=0
 <inputs>
-ZigZag.Periods=10
-ZigZag.Width=0
-Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=16711680
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Width=2
-Signal.onReversal=1
-Signal.onBreakout=1
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=200
+MA.Periods.Step=50
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=1
+AutoConfiguration=0
 </inputs>
 </expert>
-style_2=2
-style_3=2
-color_6=4294967295
-color_7=4294967295
 show_data=1
 </indicator>
 
 <indicator>
 name=Custom Indicator
 <expert>
-name=NonLagMA
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
-WaveCycle.Periods=20
-Draw.Type=Line* | Dot
-Draw.Width=3
-Signal.onTrendChange=1
+ZigZag.Periods=50
+ZigZag.Type=Lines* | Semaphores
+ZigZag.Width=2
+ZigZag.Color=255
+Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711680
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Width=2
+Donchian.Crossing.Color=255
+Signal.onReversal=1
 </inputs>
 </expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ZigZag
+flags=339
+window_num=0
+<inputs>
+ZigZag.Periods=10
+ZigZag.Width=0
+Donchian.ShowChannel=0
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711935
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
+Donchian.Crossing.Width=1
+Signal.onReversal=0
+Signal.onBreakout=0
+Sound.onChannelWidening=1
+</inputs>
+</expert>
+style_2=2
+style_3=2
+color_6=4294967295
+color_7=4294967295
 show_data=1
 </indicator>
 

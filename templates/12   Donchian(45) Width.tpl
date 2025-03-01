@@ -3,7 +3,6 @@ symbol=GBPUSD
 period=60
 digits=5
 
-leftpos=9229
 scale=1
 graph=1
 fore=0
@@ -13,11 +12,13 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
-shift=1
-shift_size=50
 
 fixed_pos=620
+leftpos=48782
+scroll=1
+shift=1
+shift_size=16
+
 window_left=0
 window_top=0
 window_right=1292
@@ -37,7 +38,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=700
+height=800
 fixed_height=0
 
 <indicator>
@@ -92,6 +93,26 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Moving Average
+flags=339
+<inputs>
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=200
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=0
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=ZigZag
 flags=339
 window_num=0
@@ -115,7 +136,7 @@ show_data=1
 </window>
 
 <window>
-height=200
+height=120
 fixed_height=0
 <indicator>
 name=Custom Indicator
@@ -125,13 +146,31 @@ flags=339
 window_num=1
 <inputs>
 Donchian.Periods=45
+LineColor=16711680
 </inputs>
 </expert>
-color_0=16711680
-weight_0=2
-min=0.0
+min=100
+max=1200
 period_flags=0
 show_data=1
 </indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Donchian Channel Width
+flags=339
+window_num=1
+<inputs>
+Donchian.Periods=39
+LineColor=16711935
+</inputs>
+</expert>
+min=100
+max=1200
+period_flags=0
+show_data=1
+</indicator>
+
 </window>
 </chart>

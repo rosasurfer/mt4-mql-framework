@@ -5,7 +5,7 @@ digits=5
 
 leftpos=9229
 scale=2
-graph=0
+graph=1
 fore=0
 grid=0
 volume=0
@@ -37,7 +37,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=800
+height=405
 fixed_height=0
 
 <indicator>
@@ -92,51 +92,46 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=Moving Average
 flags=339
-window_num=0
 <inputs>
-ZigZag.Periods=50
-ZigZag.Width=0
-Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=16711680
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Symbol=dot | narrow-ring | ring | bold-ring*
-Donchian.Crossing.Width=2
-Donchian.Crossing.Color=255
-Signal.onReversal=1
-Signal.onBreakout=0
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=200
+MA.Periods.Step=50
+MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=1
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=37
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=MACD
+flags=339
+window_num=1
+<inputs>
+FastMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
+FastMA.Periods=9
+SlowMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
+SlowMA.Periods=36
+VScale.Unit=price | bps-price* | bps-adr
+AutoConfiguration=0
 </inputs>
 </expert>
 show_data=1
 </indicator>
 
-<indicator>
-name=Custom Indicator
-<expert>
-name=ZigZag
-flags=339
-window_num=0
-<inputs>
-ZigZag.Periods=10
-ZigZag.Width=0
-Donchian.ShowChannel=0
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=16711935
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
-Donchian.Crossing.Width=1
-Signal.onReversal=0
-Signal.onBreakout=0
-Sound.onChannelWidening=0
-</inputs>
-</expert>
-style_2=2
-style_3=2
-color_6=4294967295
-color_7=4294967295
-show_data=1
-</indicator>
 </window>
 </chart>

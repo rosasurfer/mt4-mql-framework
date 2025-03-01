@@ -1,11 +1,19 @@
+<!-- 
+On M5:
+-----_
+ZigZag(10) = 50xM1   trend direction
+EMA(40)    = 200xM1  filter: above only long, below only short
+NLMA(20)             trend confirmation
+-->
+
 <chart>
-symbol=USDCHF
+symbol=GBPUSD
 period=60
 digits=5
 
-leftpos=13564
-scale=4
-graph=1
+leftpos=9229
+scale=8
+graph=0
 fore=0
 grid=0
 volume=0
@@ -20,8 +28,8 @@ shift_size=10
 fixed_pos=620
 window_left=0
 window_top=0
-window_right=1304
-window_bottom=1032
+window_right=1292
+window_bottom=812
 window_type=3
 
 background_color=16316664
@@ -37,7 +45,8 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=118
+height=800
+fixed_height=0
 
 <indicator>
 name=main
@@ -93,14 +102,15 @@ name=Custom Indicator
 <expert>
 name=Moving Average
 flags=339
-window_num=0
 <inputs>
-MA.Periods=38
-MA.Method=ALMA
-UpTrend.Color=255
-DownTrend.Color=255
-Draw.Type=Line
-Draw.Width=2
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=40
+MA.Periods.Step=10
+Draw.Type=Line* | Dot
+UpTrend.Color=16760576
+DownTrend.Color=16760576
+Background.Color=11119017
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -110,38 +120,38 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Moving Average
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
-MA.Periods=46
-MA.Method=ALMA
-UpTrend.Color=16711680
-DownTrend.Color=16711680
-Draw.Type=Line
-Draw.Width=2
-AutoConfiguration=0
+ZigZag.Periods=10
+ZigZag.Type=Lines* | Semaphores
+ZigZag.Width=2
+ZigZag.Color=255
+Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711680
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Width=2
+Signal.onReversal=1
 </inputs>
 </expert>
+style_2=2
+style_3=2
+color_6=4294967295
+color_7=4294967295
 show_data=1
 </indicator>
-</window>
 
-<window>
-height=25
-fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD
+name=NonLagMA
 flags=339
-window_num=1
+window_num=0
 <inputs>
-FastMA.Periods=38
-FastMA.Method=ALMA
-SlowMA.Periods=46
-SlowMA.Method=ALMA
-MainLine.Width=0
+WaveCycle.Periods=20
+Draw.Type=Line* | Dot
 </inputs>
 </expert>
 show_data=1
