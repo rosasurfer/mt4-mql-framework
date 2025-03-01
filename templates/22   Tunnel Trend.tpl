@@ -152,13 +152,11 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=38
-MA.ReversalFilter=0.1
-Draw.Type=Line* | Dot
+MA.ReversalFilter.StdDev=0.2
 Draw.Width=3
 UpTrend.Color=16711680
 DownTrend.Color=16776960
 Background.Color=16748574
-ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>

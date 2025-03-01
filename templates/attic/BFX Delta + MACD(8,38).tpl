@@ -3,25 +3,25 @@ symbol=USDCHF
 period=60
 digits=5
 
-leftpos=13564
+leftpos=9229
 scale=4
 graph=1
 fore=0
 grid=0
 volume=0
-scroll=0
-shift=1
 ohlc=0
 askline=0
 days=0
 descriptions=1
-shift_size=50
-fixed_pos=620
+scroll=1
+shift=1
+shift_size=10
 
+fixed_pos=620
 window_left=0
 window_top=0
-window_right=1304
-window_bottom=1032
+window_right=1292
+window_bottom=812
 window_type=3
 
 background_color=16316664
@@ -76,15 +76,32 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=200
+Draw.Width=2
+UpTrend.Color=16711935
+DownTrend.Color=16711935
+Background.Color=-1
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=ALMA
 flags=339
 window_num=0
 <inputs>
 MA.Periods=38
-UpTrend.Color=16711680
-DownTrend.Color=255
-Draw.Type=Dot
-Draw.Width=3
+MA.ReversalFilter.StdDev=0.2
+UpTrend.Color=16760576
+DownTrend.Color=65535
 </inputs>
 </expert>
 show_data=1
@@ -92,7 +109,27 @@ show_data=1
 </window>
 
 <window>
-height=70
+height=50
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=MACD
+flags=339
+window_num=1
+<inputs>
+FastMA.Periods=8
+FastMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
+SlowMA.Periods=38
+SlowMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
+</inputs>
+</expert>
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=50
 fixed_height=0
 <indicator>
 name=Custom Indicator
