@@ -149,6 +149,6 @@ level_0=30
 level_1=70
 show_data=1
 </indicator>
-</window>
 
+</window>
 </chart>

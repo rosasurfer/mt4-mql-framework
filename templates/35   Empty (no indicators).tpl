@@ -45,4 +45,3 @@ name=main
 
 </window>
 </chart>
-

@@ -93,5 +93,6 @@ color_0=16711680
 weight_0=2
 show_data=1
 </indicator>
+
 </window>
 </chart>

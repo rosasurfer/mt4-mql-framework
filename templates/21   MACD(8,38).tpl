@@ -151,5 +151,6 @@ level_0=200
 level_1=-200
 show_data=1
 </indicator>
+
 </window>
 </chart>
