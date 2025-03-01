@@ -370,23 +370,21 @@ bool ToggleOpenOrders(int flags = NULL) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
 
-         if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name)==OBJ_ARROW) {
-               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR);
+         if (StringGetChar(name, 0)=='#' && ObjectType(name)==OBJ_ARROW) {
+            int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+            color clr = ObjectGet(name, OBJPROP_COLOR);
 
-               if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) {
-                     continue;
-                  }
+            if (arrow == SYMBOL_ORDEROPEN) {
+               if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) {
+                  continue;
                }
-               else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) {
-                     continue;
-                  }
-               }
-               ObjectDelete(name);
             }
+            else if (arrow == SYMBOL_ORDERCLOSE) {
+               if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) {
+                  continue;
+               }
+            }
+            ObjectDelete(name);
          }
       }
    }
@@ -1351,7 +1349,7 @@ bool UpdatePositions() {
       xPrev = 0;
       yDist = yStart + (lines-1)*(positions.fontSize+8);
 
-      // test existence of labels again (on terminal shutdown via power button deinit() is not always executed)
+      // test existence of labels again: on terminal shutdown via power button deinit() is not always executed
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
          xDist = xPrev + xOffset[col];

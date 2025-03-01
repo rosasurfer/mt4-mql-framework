@@ -42,7 +42,7 @@ extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  UpTrend.Color                  = DeepSkyBlue;
 extern color  DownTrend.Color                = Gold;
-extern color  Background.Color               = DimGray;           // background for Draw.Type = "Line"
+extern color  Background.Color               = DarkGray;          // background for Draw.Type = "Line"
 extern int    Background.Width               = 2;
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)

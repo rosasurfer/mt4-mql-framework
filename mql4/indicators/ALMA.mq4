@@ -29,8 +29,8 @@ extern double MA.ReversalFilter.Step         = 0;                 // step size f
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern color  UpTrend.Color                  = Blue;
-extern color  DownTrend.Color                = Red;
+extern color  UpTrend.Color                  = DeepSkyBlue;
+extern color  DownTrend.Color                = Yellow;
 extern color  Background.Color               = DimGray;           // background for Draw.Type = "Line"
 extern int    Background.Width               = 2;
 extern bool   ShowChartLegend                = true;
