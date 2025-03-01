@@ -370,23 +370,21 @@ bool ToggleOpenOrders(int flags = NULL) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
 
-         if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name)==OBJ_ARROW) {
-               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR);
+         if (StringGetChar(name, 0)=='#' && ObjectType(name)==OBJ_ARROW) {
+            int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+            color clr = ObjectGet(name, OBJPROP_COLOR);
 
-               if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) {
-                     continue;
-                  }
+            if (arrow == SYMBOL_ORDEROPEN) {
+               if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) {
+                  continue;
                }
-               else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) {
-                     continue;
-                  }
-               }
-               ObjectDelete(name);
             }
+            else if (arrow == SYMBOL_ORDERCLOSE) {
+               if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) {
+                  continue;
+               }
+            }
+            ObjectDelete(name);
          }
       }
    }
@@ -1351,7 +1349,7 @@ bool UpdatePositions() {
       xPrev = 0;
       yDist = yStart + (lines-1)*(positions.fontSize+8);
 
-      // test existence of labels again (on terminal shutdown via power button deinit() is not always executed)
+      // test existence of labels again: on terminal shutdown via power button deinit() is not always executed
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
          xDist = xPrev + xOffset[col];
@@ -1636,23 +1634,21 @@ bool UpdateStopoutLevel() {
    // calculate the stopout level
    double extAssets   = GetExternalBalance();
    double realBalance = AccountBalance(), virtBalance = realBalance + extAssets;
-   double realEquity  = AccountEquity(),  virtEquity  = realEquity;
-   if (extAssets < 0) {
-      virtEquity += extAssets;                                                         // let the stopout level reflect the decreased equity
-   }
-   double usedMargin = AccountMargin();
-   int    soMode     = AccountStopoutMode();
-   double soEquity   = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity *= usedMargin/100;
-   double tickSize   = MarketInfoEx(Symbol(), MODE_TICKSIZE, error);
-   double tickValue  = MarketInfoEx(Symbol(), MODE_TICKVALUE, error) * MathAbs(totalPosition);
+   double realEquity  = AccountEquity();
+   double usedMargin  = AccountMargin();
+   int    soMode      = AccountStopoutMode();
+   double soEquity    = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity *= usedMargin/100;
+   double tickSize    = MarketInfoEx(Symbol(), MODE_TICKSIZE, error);
+   double tickValue   = MarketInfoEx(Symbol(), MODE_TICKVALUE, error) * MathAbs(totalPosition);
    if (!_Bid || !tickSize || !tickValue) {
       if (!_Bid || error==ERR_SYMBOL_NOT_AVAILABLE)
          return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // Symbol noch nicht subscribed (possible on start, change of account/template, offline chart, MarketWatch -> Hide all)
       return(!catch("UpdateStopoutLevel(2)", error));
    }
-   double soDistance = (virtEquity - soEquity)/tickValue * tickSize;
+   double soDistance = (realEquity - soEquity)/tickValue * tickSize;
    if (totalPosition > 0) double soPrice = _Bid - soDistance;
    else                          soPrice = _Ask + soDistance;
+   double soDrawdown = MathMax((soEquity + extAssets)/virtBalance - 1, -1);
 
    // display stopout level
    if (ObjectFind(label.stopoutLevel) == -1) if (!ObjectCreateRegister(label.stopoutLevel, OBJ_HLINE)) return(false);
@@ -1660,7 +1656,7 @@ bool UpdateStopoutLevel() {
    ObjectSet(label.stopoutLevel, OBJPROP_COLOR,  OrangeRed);
    ObjectSet(label.stopoutLevel, OBJPROP_BACK,   false);
    ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);                             // TODO: fix the drawdown percentage relative to the start balance of the position
-   ObjectSetText(label.stopoutLevel, StringConcatenate("Stopout: ", DoubleToStr(100 * (soEquity/virtBalance - 1), 0), "%"));
+   ObjectSetText(label.stopoutLevel, StringConcatenate("Stopout: ", DoubleToStr(100 * soDrawdown, 0), "%"));
 
    error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
