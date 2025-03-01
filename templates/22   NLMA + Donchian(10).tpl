@@ -1,11 +1,17 @@
+<!-- 
+ZigZag(10) trend direction
+NLMA(20)   trend confirmation
+EMA(200)   filter (above only long, below only short)
+-->
+
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=2
-graph=1
+scale=8
+graph=0
 fore=0
 grid=0
 volume=0
@@ -37,7 +43,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=405
+height=800
 fixed_height=0
 
 <indicator>
@@ -92,52 +98,15 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Trend Bars
-flags=339
-window_num=0
-<inputs>
-Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Tunnel.Periods=55
-Color.UpTrend=16711680
-Color.DownTrend=255
-Color.NoTrend=11119017
-BarWidth=2
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Tunnel
-flags=339
-window_num=0
-<inputs>
-Tunnel.Definition=LWMA(55)
-ShowChartLegend=1
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=Moving Average
 flags=339
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=200
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
+MA.Periods=40
 Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=65535
-DownTrend.Color=65535
+UpTrend.Color=16760576
+DownTrend.Color=16760576
 Background.Color=11119017
-ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -147,20 +116,43 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=ALMA
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
-MA.Periods=38
-MA.ReversalFilter.StdDev=0.2
-Draw.Width=3
-UpTrend.Color=16711680
-DownTrend.Color=16776960
-Background.Color=16748574
-AutoConfiguration=0
+ZigZag.Periods=10
+ZigZag.Type=Lines* | Semaphores
+ZigZag.Width=2
+ZigZag.Color=255
+Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711680
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Width=2
+Signal.onReversal=1
+</inputs>
+</expert>
+style_2=2
+style_3=2
+color_6=4294967295
+color_7=4294967295
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=NonLagMA
+flags=339
+window_num=0
+<inputs>
+WaveCycle.Periods=20
+Draw.Type=Line* | Dot
+Signal.onTrendChange=1
 </inputs>
 </expert>
 show_data=1
 </indicator>
+
 </window>
 </chart>
