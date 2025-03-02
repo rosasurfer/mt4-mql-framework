@@ -1184,15 +1184,24 @@ bool UpdatePrice() {
  * @return bool - success status
  */
 bool UpdateSpread() {
-   string sSpread = " ";                                 // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
-   if (_Bid > 0) {                                       // no display if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
-      if (pUnit == 1) sSpread = NumberToStr(_Ask-_Bid, "R.2");
-      else            sSpread = NumberToStr((_Ask-_Bid)/pUnit, "R."+ (Digits & 1));
+   string sSpread = " ";
+   color spreadColor = SlateGray;
+                                                            // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
+   if (_Bid > 0) {                                          // skip if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
+      double spread = NormalizeDouble(_Ask - _Bid, Digits);
+      if (pUnit == 1) sSpread = DoubleToStr(spread, 2);
+      else            sSpread = DoubleToStr(spread/pUnit, (Digits & 1));
+
+      if (Symbol() == "BTCUSD") {
+         if      (spread >= 40) spreadColor = Red;
+         else if (spread >= 30) spreadColor = DarkOrange;
+      }
    }
-   ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
+
+   ObjectSetText(label.spread, sSpread, 9, "Tahoma", spreadColor);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on ObjectDrag or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)          // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
