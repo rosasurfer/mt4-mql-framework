@@ -12,12 +12,14 @@
  * @param  string slowMaMethod       - indicator parameter
  * @param  int    slowMaPeriods      - indicator parameter
  * @param  string slowMaAppliedPrice - indicator parameter
+ * @param  string unit               - indicator parameter
+ * @param  int    adrPeriods         - indicator parameter
  * @param  int    iBuffer            - indicator buffer index of the value to return
  * @param  int    iBar               - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icMACD(int timeframe, string fastMaMethod, int fastMaPeriods, string fastMaAppliedPrice, string slowMaMethod, int slowMaPeriods, string slowMaAppliedPrice, int iBuffer, int iBar) {
+double icMACD(int timeframe, string fastMaMethod, int fastMaPeriods, string fastMaAppliedPrice, string slowMaMethod, int slowMaPeriods, string slowMaAppliedPrice, string unit, int adrPeriods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
    }
@@ -26,14 +28,20 @@ double icMACD(int timeframe, string fastMaMethod, int fastMaPeriods, string fast
                           fastMaMethod,               // string Fast.MA.Method
                           fastMaPeriods,              // int    Fast.MA.Periods
                           fastMaAppliedPrice,         // string Fast.MA.AppliedPrice
+
                           slowMaMethod,               // string Slow.MA.Method
                           slowMaPeriods,              // int    Slow.MA.Periods
                           slowMaAppliedPrice,         // string Slow.MA.AppliedPrice
-                          Blue,                       // color  MainLine.Color
-                          1,                          // int    MainLine.Width
+
+                          unit,                       // string VScale.Unit
+                          adrPeriods,                 // int    VScale.ADR.Periods
+
                           Green,                      // color  Histogram.Color.Upper
                           Red,                        // color  Histogram.Color.Lower
                           2,                          // int    Histogram.Style.Width
+
+                          Blue,                       // color  MainLine.Color
+                          1,                          // int    MainLine.Width
                           -1,                         // int    MaxBarsBack
 
                           "",                         // string _____________________

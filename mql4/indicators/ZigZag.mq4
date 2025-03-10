@@ -586,7 +586,7 @@ int onTick() {
 
 
          if (Ticks==1 && TrackZigZagBalance && TrackZigZagBalance.Since) {
-            debug("onTick(0.1)  TrackZigZagBalance.Since="+ TimeToStr(TrackZigZagBalance.Since));
+            //debug("onTick(0.1)  TrackZigZagBalance.Since="+ TimeToStr(TrackZigZagBalance.Since));
 
             int currSem, prevBar, prevSem, size;
             int currBar = FindPrevSemaphore(0, currSem); if (currBar == -1) return(last_error);
@@ -629,7 +629,7 @@ int onTick() {
                double balance=0, prevSemaphore, prevReversal=events[0][2], markerOffset = CalculateMarkerOffset();
                bool prevBalanceReset = false;
 
-               //debug("onTick(0.1)  markerOffset="+ NumberToStr(markerOffset, ".1+"));
+               //debug("onTick(0.2)  markerOffset="+ NumberToStr(markerOffset, ".1+"));
 
                string fontName = "Microsoft Tai Le Bold";
                int    fontSize = 9;
@@ -651,7 +651,7 @@ int onTick() {
                         else                           fontColor = Red;
                         string name = shortName + ifString(eventType==EVENT_REVERSAL_UP, ".reversal-up.", ".reversal-down.") + TimeToStr(eventTime);
                         ObjectCreateRegister(name, OBJ_TEXT, 0, eventTime, eventPrice-markerOffset);
-                        ObjectSetText(name, NumberToStr(balance, PriceFormat), fontSize, fontName, fontColor);
+                        ObjectSetText(name, NumberToStr(balance/pUnit, ",'R."+ pDigits), fontSize, fontName, fontColor);
 
                         // reset positive balances
                         if (balance > -HalfPoint) balance = 0;

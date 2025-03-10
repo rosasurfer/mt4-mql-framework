@@ -1,5 +1,5 @@
 /**
- * A system trading ZigZag reversals.
+ * An EA trading ZigZag reversals.
  *
  *
  * Requirements
@@ -11,11 +11,11 @@
  * ----------------
  *  • EA.Start: When a "start" command is received the EA opens a position in direction of the current ZigZag leg. There are
  *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction.
- *              The command has no effect if the EA already manages an open position.
- *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for trade signals.
- *              The command has no effect if the EA is already in status "stopped".
- *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new trade signals and start trading.
- *              The command has no effect if the EA is already in status "waiting".
+ *              The command is ignored if the EA already manages an open position.
+ *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for new reversals.
+ *              The command is ignored if the EA is already in status "stopped".
+ *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new reversals and start trading accordingly.
+ *              The command is ignored if the EA is already in status "waiting".
  *  • EA.ToggleMetrics
  *  • Chart.ToggleOpenOrders
  *  • Chart.ToggleTradeHistory
@@ -264,7 +264,7 @@ extern string ___b__________________________ = "=== Trade settings ===";
 extern int    EntryOrder.Distance            = 0;                    // in punits: entry order distance from the signal level
 extern double Lots                           = 0.1;
 
-extern string ___c__________________________ = "=== Other ===";
+extern string ___c__________________________ = "=== Status ===";
 extern bool   ShowProfitInPercent            = false;                // whether PnL is displayed in money or percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

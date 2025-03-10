@@ -1,5 +1,5 @@
 /**
- * A MACD indicator with support for different "Moving Average" methods and additional features.
+ * A MACD indicator with support for different MA methods and additional features.
  *
  *
  * Moving Average types:
@@ -34,6 +34,9 @@ extern string SlowMA.Method                  = "SMA | LWMA | EMA* | ALMA";
 extern int    SlowMA.Periods                 = 26;
 extern string SlowMA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 
+extern string VScale.Unit                    = "price* | bps-price | bps-adr";
+extern int    VScale.ADR.Periods             = 20;
+
 extern color  Histogram.Color.Upper          = LimeGreen;
 extern color  Histogram.Color.Lower          = Red;
 extern int    Histogram.Style.Width          = 2;
@@ -59,10 +62,14 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ta/ALMA.mqh>
 #include <rsf/win32api.mqh>
 
-#define MODE_MAIN             MACD.MODE_MAIN                // 0 indicator buffer ids
-#define MODE_TREND            MACD.MODE_TREND               // 1
+#define MODE_MAIN             MACD.MODE_MAIN       // 0 indicator buffer ids
+#define MODE_TREND            MACD.MODE_TREND      // 1
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
+
+#define VSCALE_UNIT_PRICE     1                    // vscale unit ids
+#define VSCALE_UNIT_BPS_PRICE 2                    //
+#define VSCALE_UNIT_BPS_ADR   3                    //
 
 #property indicator_separate_window
 #property indicator_buffers   4
@@ -74,22 +81,25 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 
 #property indicator_level1    0
 
-double macd[];                                              // all histogram values:      visible, displayed in "Data" window
-double macdUpper[];                                         // positive histogram values: visible
-double macdLower[];                                         // negative histogram values: visible
-double trend[];                                             // trend and trend length:    invisible
+double macd[];                                     // all histogram values:      visible, displayed in "Data" window
+double macdUpper[];                                // positive histogram values: visible
+double macdLower[];                                // negative histogram values: visible
+double trend[];                                    // trend and trend length:    invisible
 
 int    fastMA.periods;
 int    fastMA.method;
 int    fastMA.appliedPrice;
-double fastALMA.weights[];                                  // fast ALMA weights
+double fastALMA.weights[];                         // fast ALMA weights
 
 int    slowMA.periods;
 int    slowMA.method;
 int    slowMA.appliedPrice;
-double slowALMA.weights[];                                  // slow ALMA weights
+double slowALMA.weights[];                         // slow ALMA weights
 
-string indicatorName = "";                                  // "Data" window and signal notification name
+int    vscaleUnit;
+int    vscaleAdrPeriods;
+
+string indicatorName = "";                         // "Data" window and signal notification name
 
 bool   signal.sound;
 bool   signal.alert;
@@ -107,11 +117,11 @@ int onInit() {
 
    // validate inputs
    // FastMA.Method
-   string values[], sValue = FastMA.Method;
+   string sValues[], sValue = FastMA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "FastMA.Method", sValue);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      int size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    fastMA.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (fastMA.method == -1)             return(catch("onInit(1)  invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
@@ -123,9 +133,9 @@ int onInit() {
    // FastMA.AppliedPrice
    sValue = FastMA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "FastMA.AppliedPrice", sValue);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
@@ -135,9 +145,9 @@ int onInit() {
    // SlowMA.Method
    sValue = SlowMA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "SlowMA.Method", sValue);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    slowMA.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (slowMA.method == -1)             return(catch("onInit(4)  invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
@@ -150,9 +160,9 @@ int onInit() {
    // SlowMA.AppliedPrice
    sValue = SlowMA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "SlowMA.AppliedPrice", sValue);
-   if (Explode(sValue, "*", values, 2) > 1) {
-      size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
@@ -166,6 +176,23 @@ int onInit() {
       }
    }
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
+   // VScale.Unit
+   sValue = VScale.Unit;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "VScale.Unit", sValue);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrToLower(StrTrim(sValue));
+   if      (sValue == "price")     vscaleUnit = VSCALE_UNIT_PRICE;
+   else if (sValue == "bps-price") vscaleUnit = VSCALE_UNIT_BPS_PRICE;
+   else if (sValue == "bps-adr")   vscaleUnit = VSCALE_UNIT_BPS_ADR;
+   else                                 return(catch("onInit(9)  invalid input parameter VScale.Unit: "+ DoubleQuoteStr(VScale.Unit), ERR_INVALID_INPUT_PARAMETER));
+   VScale.Unit = sValue;
+   // VScale.ADR.Periods
+   if (AutoConfiguration) VScale.ADR.Periods = GetConfigInt(indicator, "VScale.ADR.Periods", VScale.ADR.Periods);
+   if (VScale.ADR.Periods < 1)          return(catch("onInit(10)  invalid input parameter VScale.ADR.Periods: "+ VScale.ADR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   vscaleAdrPeriods = VScale.ADR.Periods;
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
    if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
@@ -175,14 +202,14 @@ int onInit() {
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
    // Histogram.Style.Width
    if (AutoConfiguration) Histogram.Style.Width = GetConfigInt(indicator, "Histogram.Style.Width", Histogram.Style.Width);
-   if (Histogram.Style.Width < 0)       return(catch("onInit(9)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)       return(catch("onInit(10)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0)       return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)       return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
    // MainLine.Width
    if (AutoConfiguration) MainLine.Width = GetConfigInt(indicator, "MainLine.Width", MainLine.Width);
-   if (MainLine.Width < 0)              return(catch("onInit(11)  invalid input parameter MainLine.Width: "+ MainLine.Width +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width < 0)              return(catch("onInit(13)  invalid input parameter MainLine.Width: "+ MainLine.Width +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)                return(catch("onInit(12)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)                return(catch("onInit(14)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // signal configuration
@@ -190,7 +217,7 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
    if (Signal.onCross) {
       if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
-         return(catch("onInit(13)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(15)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onCross = (signal.sound || signal.alert || signal.mail || signal.sms);
    }
@@ -204,7 +231,7 @@ int onInit() {
    if (slowMA.method == MODE_ALMA) ALMA.CalculateWeights(slowMA.periods, almaOffset, almaSigma, slowALMA.weights);
 
    SetIndicatorOptions();
-   return(catch("onInit(14)"));
+   return(catch("onInit(16)"));
 }
 
 
@@ -261,8 +288,28 @@ int onTick() {
          slowMA = iMA(NULL, NULL, slowMA.periods, 0, slowMA.method, slowMA.appliedPrice, bar);
       }
 
-      // final MACD
-      macd[bar] = (fastMA - slowMA)/pUnit;
+      // MACD
+      if (vscaleUnit == VSCALE_UNIT_PRICE) {
+         macd[bar] = (fastMA - slowMA)/pUnit;               // nominal difference
+      }
+      else if (vscaleUnit == VSCALE_UNIT_BPS_PRICE) {
+         macd[bar] = 10000 * (fastMA/slowMA - 1);           // ratio difference/price in bps
+      }
+      else if (vscaleUnit == VSCALE_UNIT_BPS_ADR) {
+         int offset = iBarShift(NULL, PERIOD_D1, Time[bar], true);
+         if (offset < 0) {
+            debug("onTick(0.1)  iBarShift(D1, Time["+ bar +"]="+ TimeToStr(Time[bar]) +") = 0", GetLastError());
+         }
+         else {
+            double adr = iATR(NULL, PERIOD_D1, VScale.ADR.Periods, offset+1);
+            if (adr == 0) {
+               debug("onTick(0.2)  iATR(D1, bar="+ (offset+1) +") = 0", GetLastError());
+            }
+            else {
+               macd[bar] = 10000 * (fastMA - slowMA)/adr;   // ratio difference/ADR in bps
+            }
+         }
+      }
 
       if (macd[bar] > 0) {
          macdUpper[bar] = macd[bar];
@@ -338,7 +385,6 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(MODE_UPPER_SECTION, macdUpper);                       // positive histogram values: visible
    SetIndexBuffer(MODE_LOWER_SECTION, macdLower);                       // negative histogram values: visible
    SetIndexBuffer(MODE_TREND,         trend    );                       // trend and trend length:    invisible
-   IndicatorDigits(pDigits);
 
    int mainType = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
@@ -355,19 +401,24 @@ bool SetIndicatorOptions(bool redraw = false) {
    if (fastMA.appliedPrice!=slowMA.appliedPrice || slowMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(slowMA.appliedPrice);
    string slowMA.name = SlowMA.Method +"("+ slowMA.periods + sAppliedPrice +")";
 
-   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
-   else                                                                          indicatorName = "MACD "+ fastMA.name +", "+ slowMA.name;
-   if (FastMA.Method==SlowMA.Method)                                             dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
-   else                                                                          dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
+   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = "MACD("+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +"))";
+   else                                                                          indicatorName = "MACD("+ fastMA.name +", "+ slowMA.name +")";
+   if (FastMA.Method==SlowMA.Method)                                             dataName      = "MACD("+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +"))";
+   else                                                                          dataName      = "MACD("+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +"))";
 
-   string signalInfo = "";
-   if (Signal.onCross) signalInfo = "  "+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.sms, "sms,", ""), -1);
+   string sUnit = "";
+   int digits = 2;
+   if      (vscaleUnit == VSCALE_UNIT_PRICE)     digits = pDigits;
+   else if (vscaleUnit == VSCALE_UNIT_BPS_PRICE) sUnit  = " in bps/price";
+   else if (vscaleUnit == VSCALE_UNIT_BPS_ADR)   sUnit  = " in bps/ADR";
 
-   IndicatorShortName(indicatorName + signalInfo +"  ");                // chart subwindow and context menu
+   IndicatorShortName(indicatorName + sUnit +"  ");                     // chart subwindow and context menu
    SetIndexLabel(MODE_MAIN,          dataName);                         // chart tooltips and "Data" window
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
    SetIndexLabel(MODE_TREND,         NULL);
+
+   IndicatorDigits(digits);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -380,25 +431,31 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("FastMA.Method=",         DoubleQuoteStr(FastMA.Method),        ";", NL,
-                            "FastMA.Periods=",        FastMA.Periods,                       ";", NL,
-                            "FastMA.AppliedPrice=",   DoubleQuoteStr(FastMA.AppliedPrice),  ";", NL,
-                            "SlowMA.Method=",         DoubleQuoteStr(SlowMA.Method),        ";", NL,
-                            "SlowMA.Periods=",        SlowMA.Periods,                       ";", NL,
-                            "SlowMA.AppliedPrice=",   DoubleQuoteStr(SlowMA.AppliedPrice),  ";", NL,
-                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";", NL,
-                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";", NL,
-                            "Histogram.Style.Width=", Histogram.Style.Width,                ";", NL,
-                            "MainLine.Color=",        ColorToStr(MainLine.Color),           ";", NL,
-                            "MainLine.Width=",        MainLine.Width,                       ";", NL,
-                            "MaxBarsBack=",           MaxBarsBack,                          ";", NL,
+   return(StringConcatenate("FastMA.Method=",         DoubleQuoteStr(FastMA.Method),        ";"+ NL,
+                            "FastMA.Periods=",        FastMA.Periods,                       ";"+ NL,
+                            "FastMA.AppliedPrice=",   DoubleQuoteStr(FastMA.AppliedPrice),  ";"+ NL,
 
-                            "Signal.onCross=",        BoolToStr(Signal.onCross),            ";", NL,
-                            "Signal.onCross.Types=",  DoubleQuoteStr(Signal.onCross.Types), ";", NL,
-                            "Signal.Sound.Up=",       DoubleQuoteStr(Signal.Sound.Up),      ";", NL,
+                            "SlowMA.Method=",         DoubleQuoteStr(SlowMA.Method),        ";"+ NL,
+                            "SlowMA.Periods=",        SlowMA.Periods,                       ";"+ NL,
+                            "SlowMA.AppliedPrice=",   DoubleQuoteStr(SlowMA.AppliedPrice),  ";"+ NL,
+
+                            "VScale.Unit=",           DoubleQuoteStr(VScale.Unit),          ";"+ NL,
+                            "VScale.ADR.Periods=",    VScale.ADR.Periods,                   ";"+ NL,
+
+                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";"+ NL,
+                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";"+ NL,
+                            "Histogram.Style.Width=", Histogram.Style.Width,                ";"+ NL,
+
+                            "MainLine.Color=",        ColorToStr(MainLine.Color),           ";"+ NL,
+                            "MainLine.Width=",        MainLine.Width,                       ";"+ NL,
+                            "MaxBarsBack=",           MaxBarsBack,                          ";"+ NL,
+
+                            "Signal.onCross=",        BoolToStr(Signal.onCross),            ";"+ NL,
+                            "Signal.onCross.Types=",  DoubleQuoteStr(Signal.onCross.Types), ";"+ NL,
+                            "Signal.Sound.Up=",       DoubleQuoteStr(Signal.Sound.Up),      ";"+ NL,
                             "Signal.Sound.Down=",     DoubleQuoteStr(Signal.Sound.Down),    ";")
    );
 
    // suppress compiler warnings
-   icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
