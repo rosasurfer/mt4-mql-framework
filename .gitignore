@@ -10,12 +10,13 @@
 # ignore the following directories and files
 /bin/experts/include
 /etc/windows/appdata/*
+/profiles/
 /src/
 mqlcache.dat
 *.ex4
 *.ex5
 
-# ignore log related/generated/linked files in legacy MQL4 structure
+# ignore generated+linked+log files in MQL4.0 structure
 /mql4/experts/config
 /mql4/experts/files
 /mql4/experts/include
@@ -26,7 +27,7 @@ mqlcache.dat
 /mql4/experts/scripts
 /mql4/experts/templates
 
-# ignore log related/generated/linked files in MQL4.5 structure
+# ignore generated+linked+log files in MQL4.0 structure
 /mql*/files
 /mql*/images
 /mql*/logs
