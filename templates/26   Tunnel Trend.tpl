@@ -37,7 +37,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=405
+height=5000
 fixed_height=0
 
 <indicator>
@@ -158,6 +158,30 @@ Background.Color=16748574
 AutoConfiguration=0
 </inputs>
 </expert>
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=1
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=MACD
+flags=339
+window_num=1
+<inputs>
+FastMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
+FastMA.Periods=9
+SlowMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
+SlowMA.Periods=36
+VScale.Unit=price* | bps-price | bps-adr
+AutoConfiguration=0
+</inputs>
+</expert>
+min=-60
+max=60
 show_data=1
 </indicator>
 
