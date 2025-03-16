@@ -26,7 +26,7 @@ int __DeinitFlags[];
 
 extern string Close.Symbols      = "(current)";    // symbols separated by comma (default: current symbol, *: all symbols)
 extern string Close.Tickets      = "";             // tickets separated by comma (with or w/o leading "#")                    // or a full logmessage produced by CustomPositions.LogOrders(); or the text of an order arrow
-extern string Close.OrderTypes   = "";             // order types separated by comma (Buy, Sell, P[ending], BuyLimit, SellLimit, StopBuy, StopSell)
+extern string Close.OrderTypes   = "";             // order types separated by comma (Buy, Sell, P[ending], Buy[-]Limit, Sell[-]Limit, Stop[-]Buy, Stop[-]Sell)
 extern string Close.MagicNumbers = "";             // magic numbers separated by comma
 extern string Close.Comments     = "";             // prefix/start of order comments separated by comma
 extern bool   Close.HedgedPart   = false;          // close hedged part of resulting tickets only

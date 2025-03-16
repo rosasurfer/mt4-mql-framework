@@ -97,7 +97,7 @@ flags=339
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=200
-MA.Periods.Step=50
+MA.Periods.Step=56
 MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
 Draw.Type=Line* | Dot
 Draw.Width=3
@@ -126,12 +126,12 @@ FastMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
 FastMA.Periods=9
 SlowMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
 SlowMA.Periods=36
-VScale.Unit=price | bps-price | bps-adr*
+VScale.Unit=price* | bps-price | bps-adr
 AutoConfiguration=0
 </inputs>
 </expert>
 show_data=1
 </indicator>
-
 </window>
+
 </chart>

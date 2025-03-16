@@ -184,6 +184,6 @@ min=-60
 max=60
 show_data=1
 </indicator>
-
 </window>
+
 </chart>
