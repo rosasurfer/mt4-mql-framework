@@ -130,8 +130,8 @@ name=Moving Average
 flags=339
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=200
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
+MA.Periods=144
+MA.Periods.Step=56
 Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535

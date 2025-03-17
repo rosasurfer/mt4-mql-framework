@@ -81,7 +81,8 @@ flags=339
 window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=200
+MA.Periods=144
+MA.Periods.Step=56
 Draw.Width=2
 UpTrend.Color=16711935
 DownTrend.Color=16711935
