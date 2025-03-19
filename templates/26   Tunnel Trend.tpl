@@ -173,9 +173,9 @@ flags=339
 window_num=1
 <inputs>
 FastMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
-FastMA.Periods=9
+FastMA.Periods=12
 SlowMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
-SlowMA.Periods=36
+SlowMA.Periods=26
 VScale.Unit=price* | bps-price | bps-adr
 AutoConfiguration=0
 </inputs>
