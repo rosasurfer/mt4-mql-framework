@@ -218,6 +218,10 @@ string  orderTracker.positionOpened   = "speech/OrderFilled.wav";
 string  orderTracker.positionClosed   = "speech/PositionClosed.wav";
 string  orderTracker.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
 
+// status display flags
+bool    status.displayBalance    = false;
+bool    status.displayBalanceExt = false;
+
 // types for server-side closed positions
 #define CLOSE_TAKEPROFIT   1
 #define CLOSE_STOPLOSS     2
@@ -243,12 +247,12 @@ int onTick() {
 
    if (mode.extern) {
       if (!QC.HandleLfxTerminalMessages()) if (IsLastError()) return(last_error);   // process incoming LFX commands
-      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // update the current price (top-right)
+      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // current price (top-right)
       if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom positions (bottom-left) and total open position (bottom-right)
    }
    else {
       if (!QC.HandleTradeCommands())       if (IsLastError()) return(last_error);   // process incoming trade commands
-      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // update the current price (top-right)
+      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // current price (top-right)
       if (!UpdateSpread())                 if (IsLastError()) return(last_error);   // current spread (top-right)
       if (!UpdateUnitSize())               if (IsLastError()) return(last_error);   // unit size of a standard position (bottom-right)
       if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom positions (bottom-left) and total open position (bottom-right)
@@ -266,6 +270,8 @@ int onTick() {
          if (ArraySize(failedOrders   ) > 0) onOrderFail(failedOrders);
       }
    }
+   UpdateBalanceDisplay();                                                          // account balance with/wo external assets
+
    return(last_error);
 }
 
@@ -985,47 +991,28 @@ bool CustomPositions.ToggleProfits() {
 
 
 /**
- * Toggle the chart display of the account balance.
+ * Toggle the display of the current account balance.
  *
- * @param  bool details - whether to display external asset details (if any)
+ * @param  bool externalAssets - whether to include external assets (if any)
  *
  * @return bool - success status
  */
-bool ToggleAccountBalance(bool details) {
-   bool enabled = !GetAccountBalanceDisplayStatus();           // get current display status and toggle it
+bool ToggleAccountBalance(bool externalAssets) {
+   status.displayBalance = !GetAccountBalanceDisplayStatus();  // get current display status and toggle it
 
-   if (enabled) {
-      string sBalance = " ";
-      if (mode.intern) {
-         double realBalance = AccountBalance();
-         double extAssets   = GetExternalAssets(tradeAccount.company, tradeAccount.number);
-         double virtBalance = realBalance + extAssets;
-
-         if (details) {
-            sBalance = "Balance: "+ NumberToStr(virtBalance, ",'.2") +" "+ AccountCurrency() +" ("+ NumberToStr(extAssets, "+,'.2") +")";
-         }
-         else {
-            sBalance = "Balance: " + NumberToStr(realBalance, ",'.2") +" "+ AccountCurrency();
-         }
-      }
-      else {
-         enabled = false;                                      // mode.extern not yet implemented
+   if (status.displayBalance) {
+      if (!mode.intern) {
+         status.displayBalance = false;                        // mode.extern not yet implemented
          PlaySoundEx("Plonk.wav");
+         return(true);
       }
-      ObjectSetText(label.accountBalance, sBalance, 9, "Tahoma", SlateGray);
    }
-   else {
-      ObjectSetText(label.accountBalance, " ", 1);
-   }
-
-   int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
-      return(!catch("AccountBalance(1)", error));
-
-   SetAccountBalanceDisplayStatus(enabled);                    // store new display status
-
+   status.displayBalanceExt = externalAssets;
+   UpdateBalanceDisplay();
    if (__isTesting) WindowRedraw();
-   return(!catch("ToggleAccountBalance(2)"));
+
+   SetAccountBalanceDisplayStatus(status.displayBalance);      // store new display status
+   return(!catch("ToggleAccountBalance(1)"));
 }
 
 
@@ -1116,7 +1103,7 @@ bool CreateLabels() {
    corner = position_unitsize.corner;
    xDist  = 9;
    switch (corner) {
-      case CORNER_TOP_RIGHT:    yDist = 58; break;                // y(spread) + 20
+      case CORNER_TOP_RIGHT:    yDist = 58; break;                // yDist of spread + 20
       case CORNER_BOTTOM_RIGHT: yDist = 9;  break;
    }
    if (ObjectFind(label.unitSize) == -1) if (!ObjectCreateRegister(label.unitSize, OBJ_LABEL)) return(false);
@@ -1600,7 +1587,49 @@ bool UpdateOrderCounter() {
 
 
 /**
- * Aktualisiert die Anzeige eines externen oder Remote-Accounts.
+ * Update the display of the current account balance.
+ *
+ * @return bool - success status
+ */
+bool UpdateBalanceDisplay() {
+   if (__isSuperContext) return(true);
+   static bool   lastStatus = -1;
+   static double lastBalance = -1;
+   double realBalance = -1;
+
+   if (status.displayBalance) {
+      realBalance = AccountBalance();
+
+      if (status.displayBalance != lastStatus || realBalance != lastBalance) {
+         string sBalance = "";
+
+         if (status.displayBalanceExt) {
+            double extAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
+            double virtBalance = realBalance + extAssets;
+            sBalance = "Balance: "+ NumberToStr(virtBalance, ",'.2") +" "+ AccountCurrency() +" ("+ NumberToStr(extAssets, "+,'.2") +")";
+         }
+         else {
+            sBalance = "Balance: " + NumberToStr(realBalance, ",'.2") +" "+ AccountCurrency();
+         }
+         ObjectSetText(label.accountBalance, sBalance, 9, "Tahoma", SlateGray);
+         ObjectSet(label.accountBalance, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
+      }
+   }
+   else if (status.displayBalance != lastStatus) {
+      ObjectSet(label.accountBalance, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   }
+   lastStatus = status.displayBalance;
+   lastBalance = realBalance;
+
+   int error = GetLastError();
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
+      return(true);
+   return(!catch("UpdateAccountBalance(1)", error));
+}
+
+
+/**
+ * Update the display indicating an external or remote account.
  *
  * @return bool - success status
  */
@@ -1612,7 +1641,7 @@ bool UpdateAccountDisplay() {
    }
    else {
       ObjectSetText(label.unitSize, " ", 1);
-      text = tradeAccount.name +": "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
+      text = StringConcatenate(tradeAccount.name, ": ", tradeAccount.company, ", ", tradeAccount.number, ", ", tradeAccount.currency);
       ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
 
