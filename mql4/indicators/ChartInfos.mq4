@@ -219,8 +219,8 @@ string  orderTracker.positionClosed   = "speech/PositionClosed.wav";
 string  orderTracker.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
 
 // status display flags
-bool    status.displayBalance    = false;
-bool    status.displayBalanceExt = false;
+bool    status.displayBalance         = false;
+bool    status.displayExternalBalance = false;
 
 // types for server-side closed positions
 #define CLOSE_TAKEPROFIT   1
@@ -286,9 +286,6 @@ int onTick() {
  * @return bool - success status of the executed command
  */
 bool onCommand(string cmd, string params, int keys) {
-   double equity = AccountEquity() - AccountCredit();
-   if (AccountBalance() > 0.005) equity = MathMin(AccountBalance(), equity);
-
    if (cmd == "log-custom-positions") {
       int flags = F_LOG_TICKETS;                                        // log tickets
       if (!keys & F_VK_SHIFT) flags |= F_LOG_SKIP_EMPTY;                // without VK_SHIFT: skip empty tickets (default)
@@ -296,7 +293,7 @@ bool onCommand(string cmd, string params, int keys) {
    }
 
    else if (cmd == "toggle-account-balance") {
-      if (!ToggleAccountBalance(keys & F_VK_SHIFT)) return(false);
+      if (!ToggleAccountBalance(keys & F_VK_SHIFT && 1)) return(false);
    }
 
    else if (cmd == "toggle-open-orders") {
@@ -993,11 +990,12 @@ bool CustomPositions.ToggleProfits() {
 /**
  * Toggle the display of the current account balance.
  *
- * @param  bool externalAssets - whether to include external assets (if any)
+ * @param  bool externalAssets - whether to show external assets (if any)
  *
  * @return bool - success status
  */
 bool ToggleAccountBalance(bool externalAssets) {
+   externalAssets = externalAssets!=0;
    status.displayBalance = !GetAccountBalanceDisplayStatus();  // get current display status and toggle it
 
    if (status.displayBalance) {
@@ -1006,8 +1004,9 @@ bool ToggleAccountBalance(bool externalAssets) {
          PlaySoundEx("Plonk.wav");
          return(true);
       }
+      mm.externalAssetsCached = false;                         // invalidate cached external assets
    }
-   status.displayBalanceExt = externalAssets;
+   status.displayExternalBalance = externalAssets;
    UpdateBalanceDisplay();
    if (__isTesting) WindowRedraw();
 
@@ -1594,22 +1593,21 @@ bool UpdateOrderCounter() {
 bool UpdateBalanceDisplay() {
    if (__isSuperContext) return(true);
    static bool   lastStatus = -1;
-   static double lastBalance = -1;
-   double realBalance = -1;
+   static double lastBalance = -1, lastExternalAssets = EMPTY_VALUE;
+   double balance = -1, externalAssets = EMPTY_VALUE;
 
    if (status.displayBalance) {
-      realBalance = AccountBalance();
+      balance = AccountBalance();
+      externalAssets = GetExternalBalance();
 
-      if (status.displayBalance != lastStatus || realBalance != lastBalance) {
+      if (status.displayBalance!=lastStatus || balance!=lastBalance || (status.displayExternalBalance && externalAssets!=lastExternalAssets)) {
          string sBalance = "";
 
-         if (status.displayBalanceExt) {
-            double extAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
-            double virtBalance = realBalance + extAssets;
-            sBalance = "Balance: "+ NumberToStr(virtBalance, ",'.2") +" "+ AccountCurrency() +" ("+ NumberToStr(extAssets, "+,'.2") +")";
+         if (status.displayExternalBalance) {
+            sBalance = "Balance: "+ NumberToStr(balance + externalAssets, ",'.2") +" "+ AccountCurrency() +" ("+ NumberToStr(externalAssets, "+,'.2") +")";
          }
          else {
-            sBalance = "Balance: " + NumberToStr(realBalance, ",'.2") +" "+ AccountCurrency();
+            sBalance = "Balance: " + NumberToStr(balance, ",'.2") +" "+ AccountCurrency();
          }
          ObjectSetText(label.accountBalance, sBalance, 9, "Tahoma", SlateGray);
          ObjectSet(label.accountBalance, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
@@ -1618,8 +1616,9 @@ bool UpdateBalanceDisplay() {
    else if (status.displayBalance != lastStatus) {
       ObjectSet(label.accountBalance, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
-   lastStatus = status.displayBalance;
-   lastBalance = realBalance;
+   lastStatus         = status.displayBalance;
+   lastBalance        = balance;
+   lastExternalAssets = externalAssets;
 
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
