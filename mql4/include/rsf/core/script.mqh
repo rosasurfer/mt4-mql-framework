@@ -103,6 +103,8 @@ bool initGlobals() {
       pDigits = 2;
       spUnit  = "point";
    }
+   pUnitFormat = ",'R."+ pDigits;
+
    _Bid = NormalizeDouble(Bid, Digits);                     // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                     //
 

@@ -13,8 +13,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframe                      = "H1";                          // inside bar timeframe to process
-extern int    NumberOfInsideBars             = 2;                             // number of inside bars to display (-1: all)
+extern string Timeframe                      = "H1";                          // IB timeframe
+extern int    NumberOfInsideBars             = 3;                             // number of IBs to display (-1: all)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onInsideBar             = false;
@@ -584,7 +584,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    static int counter = 0; counter++;
 
    // vertical line at IB open
-   string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/pUnit, pDigits) +") ["+ counter +"]";
+   string label = StringConcatenate(sTimeframe, " inside bar: ", NumberToStr(high, PriceFormat), "-", NumberToStr(low, PriceFormat), " (", NumberToStr(barSize/pUnit, pUnitFormat), ") [", counter, "]");
    if (ObjectFind(label) != -1) ObjectDelete(label);
    if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget)) {
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
