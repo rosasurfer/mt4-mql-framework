@@ -33,15 +33,16 @@ double icMACD(int timeframe, string fastMaMethod, int fastMaPeriods, string fast
                           slowMaPeriods,              // int    Slow.MA.Periods
                           slowMaAppliedPrice,         // string Slow.MA.AppliedPrice
 
-                          unit,                       // string VScale.Unit
-                          adrPeriods,                 // int    VScale.ADR.Periods
-
                           Green,                      // color  Histogram.Color.Upper
                           Red,                        // color  Histogram.Color.Lower
                           2,                          // int    Histogram.Style.Width
 
                           Blue,                       // color  MainLine.Color
                           1,                          // int    MainLine.Width
+
+                          "",                         // string _____________________
+                          unit,                       // string VScale.Unit
+                          adrPeriods,                 // int    VScale.ADR.Periods
                           -1,                         // int    MaxBarsBack
 
                           "",                         // string _____________________

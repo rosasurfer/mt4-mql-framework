@@ -34,18 +34,19 @@ extern string SlowMA.Method                  = "SMA | LWMA | EMA* | ALMA";
 extern int    SlowMA.Periods                 = 26;
 extern string SlowMA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern string VScale.Unit                    = "price* | bps-price | bps-adr";
-extern int    VScale.ADR.Periods             = 20;
-
 extern color  Histogram.Color.Upper          = LimeGreen;
 extern color  Histogram.Color.Lower          = Red;
 extern int    Histogram.Style.Width          = 2;
 
 extern color  MainLine.Color                 = DodgerBlue;
 extern int    MainLine.Width                 = 1;
+
+extern string ___a__________________________ = "=== Display settings ===";
+extern string VScale.Unit                    = "price* | bps-price | bps-adr";
+extern int    VScale.ADR.Periods             = 20;
 extern int    MaxBarsBack                    = 10000;                // max. values to calculate (-1: all available)
 
-extern string ___a__________________________ = "=== Signaling ===";
+extern string ___b__________________________ = "=== Signaling ===";
 extern bool   Signal.onCross                 = false;
 extern string Signal.onCross.Types           = "sound* | alert | mail | sms";
 extern string Signal.Sound.Up                = "Signal Up.wav";
@@ -176,6 +177,20 @@ int onInit() {
       }
    }
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
+   if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
+   if (AutoConfiguration) MainLine.Color        = GetConfigColor(indicator, "MainLine.Color",        MainLine.Color);
+   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
+   if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
+   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
+   // Histogram.Style.Width
+   if (AutoConfiguration) Histogram.Style.Width = GetConfigInt(indicator, "Histogram.Style.Width", Histogram.Style.Width);
+   if (Histogram.Style.Width < 0)       return(catch("onInit(9)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)       return(catch("onInit(10)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   // MainLine.Width
+   if (AutoConfiguration) MainLine.Width = GetConfigInt(indicator, "MainLine.Width", MainLine.Width);
+   if (MainLine.Width < 0)              return(catch("onInit(11)  invalid input parameter MainLine.Width: "+ MainLine.Width +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // VScale.Unit
    sValue = VScale.Unit;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "VScale.Unit", sValue);
@@ -187,26 +202,12 @@ int onInit() {
    if      (sValue == "price")     vscaleUnit = VSCALE_UNIT_PRICE;
    else if (sValue == "bps-price") vscaleUnit = VSCALE_UNIT_BPS_PRICE;
    else if (sValue == "bps-adr")   vscaleUnit = VSCALE_UNIT_BPS_ADR;
-   else                                 return(catch("onInit(9)  invalid input parameter VScale.Unit: "+ DoubleQuoteStr(VScale.Unit), ERR_INVALID_INPUT_PARAMETER));
+   else                                 return(catch("onInit(12)  invalid input parameter VScale.Unit: "+ DoubleQuoteStr(VScale.Unit), ERR_INVALID_INPUT_PARAMETER));
    VScale.Unit = sValue;
    // VScale.ADR.Periods
    if (AutoConfiguration) VScale.ADR.Periods = GetConfigInt(indicator, "VScale.ADR.Periods", VScale.ADR.Periods);
-   if (VScale.ADR.Periods < 1)          return(catch("onInit(10)  invalid input parameter VScale.ADR.Periods: "+ VScale.ADR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (VScale.ADR.Periods < 1)          return(catch("onInit(13)  invalid input parameter VScale.ADR.Periods: "+ VScale.ADR.Periods, ERR_INVALID_INPUT_PARAMETER));
    vscaleAdrPeriods = VScale.ADR.Periods;
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
-   if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
-   if (AutoConfiguration) MainLine.Color        = GetConfigColor(indicator, "MainLine.Color",        MainLine.Color);
-   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
-   if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
-   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
-   // Histogram.Style.Width
-   if (AutoConfiguration) Histogram.Style.Width = GetConfigInt(indicator, "Histogram.Style.Width", Histogram.Style.Width);
-   if (Histogram.Style.Width < 0)       return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)       return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
-   // MainLine.Width
-   if (AutoConfiguration) MainLine.Width = GetConfigInt(indicator, "MainLine.Width", MainLine.Width);
-   if (MainLine.Width < 0)              return(catch("onInit(13)  invalid input parameter MainLine.Width: "+ MainLine.Width +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)                return(catch("onInit(14)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
@@ -401,8 +402,8 @@ bool SetIndicatorOptions(bool redraw = false) {
    if (fastMA.appliedPrice!=slowMA.appliedPrice || slowMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(slowMA.appliedPrice);
    string slowMA.name = SlowMA.Method +"("+ slowMA.periods + sAppliedPrice +")";
 
-   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = "MACD  "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
-   else                                                                          indicatorName = "MACD  "+ fastMA.name +", "+ slowMA.name;
+   if (FastMA.Method==SlowMA.Method && fastMA.appliedPrice==slowMA.appliedPrice) indicatorName = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods + sAppliedPrice +")";
+   else                                                                          indicatorName = "MACD "+ fastMA.name +", "+ slowMA.name;
    if (FastMA.Method==SlowMA.Method)                                             dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +","+ slowMA.periods +")";
    else                                                                          dataName      = "MACD "+ FastMA.Method +"("+ fastMA.periods +"), "+ SlowMA.Method +"("+ slowMA.periods +")";
 
@@ -412,7 +413,8 @@ bool SetIndicatorOptions(bool redraw = false) {
    else if (vscaleUnit == VSCALE_UNIT_BPS_PRICE) sUnit  = " in bps/price";
    else if (vscaleUnit == VSCALE_UNIT_BPS_ADR)   sUnit  = " in bps/ADR";
 
-   IndicatorShortName(indicatorName + sUnit +"  ");                     // chart subwindow and context menu
+   string subWindowName = "MACD  "+ StrRight(indicatorName, -5);
+   IndicatorShortName(subWindowName + sUnit +"  ");                     // chart subwindow and context menu
    SetIndexLabel(MODE_MAIN,          dataName);                         // chart tooltips and "Data" window
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
@@ -439,15 +441,15 @@ string InputsToStr() {
                             "SlowMA.Periods=",        SlowMA.Periods,                       ";"+ NL,
                             "SlowMA.AppliedPrice=",   DoubleQuoteStr(SlowMA.AppliedPrice),  ";"+ NL,
 
-                            "VScale.Unit=",           DoubleQuoteStr(VScale.Unit),          ";"+ NL,
-                            "VScale.ADR.Periods=",    VScale.ADR.Periods,                   ";"+ NL,
-
                             "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";"+ NL,
                             "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";"+ NL,
                             "Histogram.Style.Width=", Histogram.Style.Width,                ";"+ NL,
 
                             "MainLine.Color=",        ColorToStr(MainLine.Color),           ";"+ NL,
                             "MainLine.Width=",        MainLine.Width,                       ";"+ NL,
+
+                            "VScale.Unit=",           DoubleQuoteStr(VScale.Unit),          ";"+ NL,
+                            "VScale.ADR.Periods=",    VScale.ADR.Periods,                   ";"+ NL,
                             "MaxBarsBack=",           MaxBarsBack,                          ";"+ NL,
 
                             "Signal.onCross=",        BoolToStr(Signal.onCross),            ";"+ NL,

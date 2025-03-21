@@ -2006,7 +2006,7 @@ string StrLeftTo(string value, string substring, int count = 1) {
 
 
 /**
- * Gibt einen rechten Teilstring eines Strings zurück.
+ * Return a right-side substring of a string.
  *
  * Ist N positiv, gibt StrRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
  *    z.B.  StrRight("ABCDEFG",  2)  =>  "FG"
