@@ -1,15 +1,14 @@
 /**
  * Trend Bars
  *
- * Colors chart bars according to the last signal of the configured indicator:
- *  - Close prices above the tunnel are interpreted as "up trend".
- *  - Close prices below the tunnel are interpreted as "down trend".
- *  - Close prices in the tunnel are interpreted as "no trend".
+ * Colors price bars according to the defined MovingAverages tunnel:
+ *  - UpTrend:   the close price is above the tunnel
+ *  - DownTrend: the close price is below the tunnel
+ *  - NoTrend:   the close price is in the tunnel
  *
  *
  * TODO:
- *  - CCI as data source
- *  - MQL5 indicator as source for MQL5 chart properties
+ *  - MQL4.5 indicator as helper to get chart properties
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];

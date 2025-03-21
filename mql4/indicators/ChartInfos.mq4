@@ -33,8 +33,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string UnitSize.Corner = "top | bottom*";                  // can be shortened to a single char
-extern bool   Track.Orders    = true;                             // whether to track and signal position open/close events
+extern bool Track.Orders = true;                                  // whether to track and signal position open/close events
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -196,9 +195,8 @@ string  label.orderCounter   = "";
 string  label.tradeAccount   = "";
 string  label.stopoutLevel   = "";
 
-// chart position of total position and unitsize
-int     totalPosition.corner = CORNER_BOTTOM_RIGHT;
-int     unitSize.corner      = CORNER_BOTTOM_RIGHT;
+// chart location of unitsize and total position
+int     position.unitsize.corner;
 
 // font settings for custom positions
 string  positions.fontName          = "MS Sans Serif";
@@ -219,6 +217,10 @@ string  orderTracker.orderFailed      = "speech/OrderCancelled.wav";
 string  orderTracker.positionOpened   = "speech/OrderFilled.wav";
 string  orderTracker.positionClosed   = "speech/PositionClosed.wav";
 string  orderTracker.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
+
+// display flags
+bool    display.balance         = false;
+bool    display.externalBalance = false;
 
 // types for server-side closed positions
 #define CLOSE_TAKEPROFIT   1
@@ -245,12 +247,12 @@ int onTick() {
 
    if (mode.extern) {
       if (!QC.HandleLfxTerminalMessages()) if (IsLastError()) return(last_error);   // process incoming LFX commands
-      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // update the current price (top-right)
+      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // current price (top-right)
       if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom positions (bottom-left) and total open position (bottom-right)
    }
    else {
       if (!QC.HandleTradeCommands())       if (IsLastError()) return(last_error);   // process incoming trade commands
-      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // update the current price (top-right)
+      if (!UpdatePrice())                  if (IsLastError()) return(last_error);   // current price (top-right)
       if (!UpdateSpread())                 if (IsLastError()) return(last_error);   // current spread (top-right)
       if (!UpdateUnitSize())               if (IsLastError()) return(last_error);   // unit size of a standard position (bottom-right)
       if (!UpdatePositions())              if (IsLastError()) return(last_error);   // custom positions (bottom-left) and total open position (bottom-right)
@@ -268,6 +270,8 @@ int onTick() {
          if (ArraySize(failedOrders   ) > 0) onOrderFail(failedOrders);
       }
    }
+   UpdateBalanceDisplay();                                                          // account balance with/wo external assets
+
    return(last_error);
 }
 
@@ -282,9 +286,6 @@ int onTick() {
  * @return bool - success status of the executed command
  */
 bool onCommand(string cmd, string params, int keys) {
-   double equity = AccountEquity() - AccountCredit();
-   if (AccountBalance() > 0.005) equity = MathMin(AccountBalance(), equity);
-
    if (cmd == "log-custom-positions") {
       int flags = F_LOG_TICKETS;                                        // log tickets
       if (!keys & F_VK_SHIFT) flags |= F_LOG_SKIP_EMPTY;                // without VK_SHIFT: skip empty tickets (default)
@@ -292,27 +293,7 @@ bool onCommand(string cmd, string params, int keys) {
    }
 
    else if (cmd == "toggle-account-balance") {
-      if (keys & F_VK_SHIFT && 1) {
-         // update external assets
-         double multiplier = GetAccountConfigDouble("Account", "ExternalAssets.Multiplier", 0);
-         double externalAssets = AccountBalance() * multiplier;         // get scaling multiplier and calculate new external assets
-
-         if (externalAssets != 0) {                                     // compose new config value
-            string sConfigValue = GetAccountConfigStringRaw("Account", "ExternalAssets", "");
-            string comment = StrRightFrom(sConfigValue, ";");
-            sConfigValue = " "+ DoubleToStr(externalAssets, 2);
-            if (comment != "") sConfigValue = StringConcatenate(sConfigValue, "            ; ", comment);
-
-            // write updated value back to the config file
-            if (WriteIniString(GetAccountConfigPath(), "Account", "ExternalAssets", sConfigValue)) {
-               mm.externalAssetsCached = false;                         // invalidate cached external assets
-               ArrayResize(configTerms, 0);                             // trigger reparsing of the configuration
-            }
-            PlaySoundEx("Bell 1.wav");
-            return(true);
-         }
-      }
-      if (!ToggleAccountBalance()) return(false);
+      if (!ToggleAccountBalance(keys & F_VK_SHIFT && 1)) return(false);
    }
 
    else if (cmd == "toggle-open-orders") {
@@ -353,10 +334,15 @@ bool onCommand(string cmd, string params, int keys) {
       mm.externalAssetsCached = false;                                  // invalidate cached external assets
       ArrayResize(configTerms, 0);                                      // trigger reparsing of the configuration
    }
+
+   else if (cmd == "toggle-unit-size") {
+      position.unitsize.corner = ifInt(position.unitsize.corner == CORNER_BOTTOM_RIGHT, CORNER_TOP_RIGHT, CORNER_BOTTOM_RIGHT);
+      if (!CreateLabels()) return(false);
+   }
+
    else {
       return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
    }
-
    return(!catch("onCommand(2)"));
 }
 
@@ -387,23 +373,21 @@ bool ToggleOpenOrders(int flags = NULL) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
 
-         if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name)==OBJ_ARROW) {
-               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR);
+         if (StringGetChar(name, 0)=='#' && ObjectType(name)==OBJ_ARROW) {
+            int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+            color clr = ObjectGet(name, OBJPROP_COLOR);
 
-               if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) {
-                     continue;
-                  }
+            if (arrow == SYMBOL_ORDEROPEN) {
+               if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) {
+                  continue;
                }
-               else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) {
-                     continue;
-                  }
-               }
-               ObjectDelete(name);
             }
+            else if (arrow == SYMBOL_ORDERCLOSE) {
+               if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) {
+                  continue;
+               }
+            }
+            ObjectDelete(name);
          }
       }
    }
@@ -1004,36 +988,30 @@ bool CustomPositions.ToggleProfits() {
 
 
 /**
- * Toggle the chart display of the account balance.
+ * Toggle the display of the current account balance.
+ *
+ * @param  bool externalAssets - whether to show external assets (if any)
  *
  * @return bool - success status
  */
-bool ToggleAccountBalance() {
-   bool enabled = !GetAccountBalanceDisplayStatus();           // get current display status and toggle it
+bool ToggleAccountBalance(bool externalAssets) {
+   externalAssets = externalAssets!=0;
+   display.balance = !GetAccountBalanceDisplayStatus();        // get current display status and toggle it
 
-   if (enabled) {
-      string sBalance = " ";
-      if (mode.intern) {
-         sBalance = "Balance: " + NumberToStr(AccountBalance(), ",'.2") +" "+ AccountCurrency();
-      }
-      else {
-         enabled = false;                                      // mode.extern not yet implemented
+   if (display.balance) {
+      if (!mode.intern) {
+         display.balance = false;                              // mode.extern not yet implemented
          PlaySoundEx("Plonk.wav");
+         return(true);
       }
-      ObjectSetText(label.accountBalance, sBalance, 9, "Tahoma", SlateGray);
+      mm.externalAssetsCached = false;                         // invalidate cached external assets
    }
-   else {
-      ObjectSetText(label.accountBalance, " ", 1);
-   }
-
-   int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
-      return(!catch("AccountBalance(1)", error));
-
-   SetAccountBalanceDisplayStatus(enabled);                    // store new display status
-
+   display.externalBalance = externalAssets;
+   UpdateBalanceDisplay();
    if (__isTesting) WindowRedraw();
-   return(!catch("ToggleAccountBalance(2)"));
+
+   SetAccountBalanceDisplayStatus(display.balance);            // store new display status
+   return(!catch("ToggleAccountBalance(1)"));
 }
 
 
@@ -1121,10 +1099,10 @@ bool CreateLabels() {
    ObjectSetText(label.spread, " ", 1);
 
    // unit size
-   corner = unitSize.corner;
+   corner = position.unitsize.corner;
    xDist  = 9;
    switch (corner) {
-      case CORNER_TOP_RIGHT:    yDist = 58; break;                // y(spread) + 20
+      case CORNER_TOP_RIGHT:    yDist = 58; break;                // yDist of spread + 20
       case CORNER_BOTTOM_RIGHT: yDist = 9;  break;
    }
    if (ObjectFind(label.unitSize) == -1) if (!ObjectCreateRegister(label.unitSize, OBJ_LABEL)) return(false);
@@ -1134,7 +1112,7 @@ bool CreateLabels() {
    ObjectSetText(label.unitSize, " ", 1);
 
    // total position
-   corner = totalPosition.corner;
+   corner = position.unitsize.corner;
    xDist  = 9;
    yDist += 20;                                                   // 1 line above/below unitsize
    if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL)) return(false);
@@ -1192,15 +1170,24 @@ bool UpdatePrice() {
  * @return bool - success status
  */
 bool UpdateSpread() {
-   string sSpread = " ";                                 // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
-   if (_Bid > 0) {                                       // no display if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
-      if (pUnit == 1) sSpread = NumberToStr(_Ask-_Bid, "R.2");
-      else            sSpread = NumberToStr((_Ask-_Bid)/pUnit, "R."+ (Digits & 1));
+   string sSpread = " ";
+   color spreadColor = SlateGray;
+                                                            // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
+   if (_Bid > 0) {                                          // skip if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
+      double spread = NormalizeDouble(_Ask - _Bid, Digits);
+      if (pUnit == 1) sSpread = DoubleToStr(spread, 2);
+      else            sSpread = DoubleToStr(spread/pUnit, (Digits & 1));
+
+      if (Symbol() == "BTCUSD") {
+         if      (spread >= 40) spreadColor = Red;
+         else if (spread >= 30) spreadColor = DarkOrange;
+      }
    }
-   ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
+
+   ObjectSetText(label.spread, sSpread, 9, "Tahoma", spreadColor);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on ObjectDrag or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)          // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
@@ -1221,20 +1208,21 @@ bool UpdateUnitSize() {
    string text = "";
 
    if (mode.intern) {
+      if (mm.riskPercent != NULL) {
+         text = StringConcatenate(text, "R", NumberToStr(NormalizeDouble(mm.riskPercent, 1), ".+"), "%");
+      }
+
       if (mm.riskRange != NULL) {
          double range = mm.riskRange;
+         string sRiskRange = "";
          if (mm.cfgRiskRangeIsADR) {
             if (Close[0] > 300 && range >= 3) range = MathRound(range);
             else                              range = NormalizeDouble(range, PipDigits);
-            text = StringConcatenate(text, "ADR=");
+            sRiskRange = "ADR=";
          }
-         if (Close[0] > 300 && range >= 3) string sRange = NumberToStr(range, ",'.2+");
-         else                                     sRange = NumberToStr(NormalizeDouble(range/Pip, 1), ".+") +" pip";
-         text = StringConcatenate(text, sRange);
-      }
-
-      if (mm.riskPercent != NULL) {
-         text = StringConcatenate(text, "/R", DoubleToStr(mm.riskPercent, 0), "%");
+         if (Close[0] > 300 && range >= 3) sRiskRange = StringConcatenate(sRiskRange, NumberToStr(range, ",'.2+"));
+         else                              sRiskRange = StringConcatenate(sRiskRange, NumberToStr(NormalizeDouble(range/Pip, 1), ".+"), " pip");
+         text = StringConcatenate(text, "/", sRiskRange);
       }
 
       if (mm.leverage != NULL) {
@@ -1356,7 +1344,7 @@ bool UpdatePositions() {
       xPrev = 0;
       yDist = yStart + (lines-1)*(positions.fontSize+8);
 
-      // test existence of labels again (on terminal shutdown via power button deinit() is not always executed)
+      // test existence of labels again: on terminal shutdown via power button deinit() is not always executed
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
          xDist = xPrev + xOffset[col];
@@ -1598,7 +1586,49 @@ bool UpdateOrderCounter() {
 
 
 /**
- * Aktualisiert die Anzeige eines externen oder Remote-Accounts.
+ * Update the display of the current account balance.
+ *
+ * @return bool - success status
+ */
+bool UpdateBalanceDisplay() {
+   if (__isSuperContext) return(true);
+   static bool   lastStatus = -1;
+   static double lastBalance = -1, lastExternalAssets = EMPTY_VALUE;
+   double balance = -1, externalAssets = EMPTY_VALUE;
+
+   if (display.balance) {
+      balance = AccountBalance();
+      externalAssets = GetExternalBalance();
+
+      if (display.balance!=lastStatus || balance!=lastBalance || (display.externalBalance && externalAssets!=lastExternalAssets)) {
+         string sBalance = "";
+
+         if (display.externalBalance) {
+            sBalance = "Balance: "+ NumberToStr(balance + externalAssets, ",'.2") +" "+ AccountCurrency() +" ("+ NumberToStr(externalAssets, "+,'.2") +")";
+         }
+         else {
+            sBalance = "Balance: " + NumberToStr(balance, ",'.2") +" "+ AccountCurrency();
+         }
+         ObjectSetText(label.accountBalance, sBalance, 9, "Tahoma", SlateGray);
+         ObjectSet(label.accountBalance, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
+      }
+   }
+   else if (display.balance != lastStatus) {
+      ObjectSet(label.accountBalance, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   }
+   lastStatus         = display.balance;
+   lastBalance        = balance;
+   lastExternalAssets = externalAssets;
+
+   int error = GetLastError();
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
+      return(true);
+   return(!catch("UpdateAccountBalance(1)", error));
+}
+
+
+/**
+ * Update the display indicating an external or remote account.
  *
  * @return bool - success status
  */
@@ -1610,7 +1640,7 @@ bool UpdateAccountDisplay() {
    }
    else {
       ObjectSetText(label.unitSize, " ", 1);
-      text = tradeAccount.name +": "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
+      text = StringConcatenate(tradeAccount.name, ": ", tradeAccount.company, ", ", tradeAccount.number, ", ", tradeAccount.currency);
       ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
 
@@ -1638,31 +1668,32 @@ bool UpdateStopoutLevel() {
       return(true);
    }
 
-   // Stopout-Preis berechnen
-   double equity     = AccountEquity();
-   double usedMargin = AccountMargin();
-   int    soMode     = AccountStopoutMode();
-   double soEquity   = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity = usedMargin * soEquity/100;
-   double tickSize   = MarketInfoEx(Symbol(), MODE_TICKSIZE, error);
-   double tickValue  = MarketInfoEx(Symbol(), MODE_TICKVALUE, error) * MathAbs(totalPosition);
+   // calculate the stopout level
+   double extAssets   = GetExternalBalance();
+   double realBalance = AccountBalance(), virtBalance = realBalance + extAssets;
+   double realEquity  = AccountEquity();
+   double usedMargin  = AccountMargin();
+   int    soMode      = AccountStopoutMode();
+   double soEquity    = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity *= usedMargin/100;
+   double tickSize    = MarketInfoEx(Symbol(), MODE_TICKSIZE, error);
+   double tickValue   = MarketInfoEx(Symbol(), MODE_TICKVALUE, error) * MathAbs(totalPosition);
    if (!_Bid || !tickSize || !tickValue) {
       if (!_Bid || error==ERR_SYMBOL_NOT_AVAILABLE)
          return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // Symbol noch nicht subscribed (possible on start, change of account/template, offline chart, MarketWatch -> Hide all)
       return(!catch("UpdateStopoutLevel(2)", error));
    }
-   double soDistance = (equity - soEquity)/tickValue * tickSize;
+   double soDistance = (realEquity - soEquity)/tickValue * tickSize;
    if (totalPosition > 0) double soPrice = _Bid - soDistance;
    else                          soPrice = _Ask + soDistance;
+   double soDrawdown = MathMax((soEquity + extAssets)/virtBalance - 1, -1);
 
-   // Stopout-Preis anzeigen
+   // display stopout level
    if (ObjectFind(label.stopoutLevel) == -1) if (!ObjectCreateRegister(label.stopoutLevel, OBJ_HLINE)) return(false);
    ObjectSet(label.stopoutLevel, OBJPROP_STYLE,  STYLE_SOLID);
    ObjectSet(label.stopoutLevel, OBJPROP_COLOR,  OrangeRed);
-   ObjectSet(label.stopoutLevel, OBJPROP_BACK,   false);                               // FALSE causes the price level to be displayed on the scala
-   ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);
-      if (soMode == MSM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%");
-      else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency());
-   ObjectSetText(label.stopoutLevel, text);
+   ObjectSet(label.stopoutLevel, OBJPROP_BACK,   false);
+   ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);                             // TODO: fix the drawdown percentage relative to the start balance of the position
+   ObjectSetText(label.stopoutLevel, StringConcatenate("Stopout: ", DoubleToStr(100 * soDrawdown, 0), "%"));
 
    error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
@@ -2088,32 +2119,32 @@ bool ReadUnitSizeConfiguration() {
 /**
  * Find the applicable configuration value for the unitsize calculation.
  *
- * @param _In_  string name   - unitsize configuration identifier
+ * @param _In_  string key    - unitsize configuration identifier
  * @param _Out_ string &value - configuration value
  *
  * @return bool - success status
  */
-bool ReadUnitSizeConfigValue(string name, string &value) {
+bool ReadUnitSizeConfigValue(string key, string &value) {
    string section="Unitsize", sValue="";
    value = "";
 
-   string key = Symbol() +"."+ name;
-   if (IsConfigKey(section, key)) {
-      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+   string iniKey = Symbol() +"."+ key;
+   if (IsConfigKey(section, iniKey)) {
+      if (!ValidateUnitSizeConfigValue(section, iniKey, sValue)) return(false);
       value = sValue;
       return(true);
    }
 
-   key = StdSymbol() +"."+ name;
-   if (IsConfigKey(section, key)) {
-      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+   iniKey = StdSymbol() +"."+ key;
+   if (IsConfigKey(section, iniKey)) {
+      if (!ValidateUnitSizeConfigValue(section, iniKey, sValue)) return(false);
       value = sValue;
       return(true);
    }
 
-   key = name;
-   if (IsConfigKey(section, key)) {
-      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+   iniKey = key;
+   if (IsConfigKey(section, iniKey)) {
+      if (!ValidateUnitSizeConfigValue(section, iniKey, sValue)) return(false);
       value = sValue;
       return(true);
    }
@@ -2122,11 +2153,11 @@ bool ReadUnitSizeConfigValue(string name, string &value) {
 
 
 /**
- * Validate the specified unitsize configuration value.
+ * Validate the passed unitsize configuration value.
  *
  * @param _In_  string section - configuration section
  * @param _In_  string key     - configuration key
- * @param _Out_ string &value  - configured value
+ * @param _Out_ string &value  - configuration value
  *
  * @return bool - success status
  */
@@ -4411,31 +4442,38 @@ bool AnalyzePos.ProcessLfxProfits() {
  */
 bool StoreStatus() {
    if (!__isChart) return(true);
+   string indicatorName = ProgramName();
+
+   // int position.unitsize.corner
+   string key = indicatorName +".position.unitsize.corner";
+   string sValue = position.unitsize.corner;                               // GetWindowInteger() cannot restore integer 0
+   SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);            // chart window
+   Chart.StoreString(key, sValue);                                         // chart
 
    // bool positions.showAbsProfits
-   string key = ProgramName() +".positions.showAbsProfits";
+   key = indicatorName +".positions.showAbsProfits";
    int iValue = ifInt(positions.showAbsProfits, 1, -1);                    // GetWindowInteger() cannot restore integer 0
    SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
    // bool positions.showMaxRisk
-   key = ProgramName() +".positions.showMaxRisk";
+   key = indicatorName +".positions.showMaxRisk";
    iValue = ifInt(positions.showMaxRisk, 1, -1);                           // GetWindowInteger() cannot restore integer 0
    SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
    // Risk/MFE/MAE stats of custom positions
-   string keys="", configKey="", sValue="";
+   string keys="", configKey="";
    int size = ArrayRange(config.sData, 0);
    for (int i=0; i < size; i++) {
       configKey = config.sData[i][I_CONFIG_KEY];
-      key = ProgramName() +"."+ Symbol() +".config."+ configKey +".risk";
+      key = indicatorName +"."+ Symbol() +".config."+ configKey +".risk";
       sValue = NumberToStr(config.dData[i][I_MAX_LOTS], ".1+") +"|"+ NumberToStr(config.dData[i][I_MAX_RISK], ".1+");
       SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);         // chart window
       Chart.StoreString(key, sValue);                                      // chart
 
       if (config.dData[i][I_MFE_ENABLED] > 0) {
-         key = ProgramName() +"."+ Symbol() +".config."+ configKey +".mfe|mae";
+         key = indicatorName +"."+ Symbol() +".config."+ configKey +".mfe|mae";
          sValue = NumberToStr(config.dData[i][I_PROFIT_MFE], ".1+") +"|"+ NumberToStr(config.dData[i][I_PROFIT_MAE], ".1+");
          SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);      // chart window
          Chart.StoreString(key, sValue);                                   // chart
@@ -4445,11 +4483,24 @@ bool StoreStatus() {
 
    // config keys of custom positions
    if (size > 0) {
-      key = ProgramName() +"."+ Symbol() +".config.keys";
+      key = indicatorName +"."+ Symbol() +".config.keys";
       sValue = StrRight(keys, -1);
       SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);         // chart window
       Chart.StoreString(key, sValue);                                      // chart
    }
+
+   // bool display.balance
+   key = indicatorName +".display.balance";
+   iValue = ifInt(display.balance, 1, -1);                                 // GetWindowInteger() cannot restore integer 0
+   SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
+   Chart.StoreInt(key, iValue);                                            // chart
+
+   // bool display.externalBalance
+   key = indicatorName +".display.externalBalance";
+   iValue = ifInt(display.externalBalance, 1, -1);                         // GetWindowInteger() cannot restore integer 0
+   SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
+   Chart.StoreInt(key, iValue);                                            // chart
+
    return(!catch("StoreStatus(1)"));
 }
 
@@ -4461,32 +4512,41 @@ bool StoreStatus() {
  */
 bool RestoreStatus() {
    if (!__isChart) return(true);
+   string indicatorName = ProgramName();
+
+   // int position.unitsize.corner
+   string key = indicatorName +".position.unitsize.corner";
+   string sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key), sValue2="";
+   Chart.RestoreString(key, sValue2);
+   if (!StringLen(sValue1)) sValue1 = sValue2;
+   int iValue = StrToInteger(sValue1);
+   position.unitsize.corner = ifInt(iValue == CORNER_TOP_RIGHT, iValue, CORNER_BOTTOM_RIGHT);
 
    // bool positions.showAbsProfits
-   string key = ProgramName() +".positions.showAbsProfits";
+   key = indicatorName +".positions.showAbsProfits";
    int iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);  // +1 || -1
    int iValue2 = 0;
    Chart.RestoreInt(key, iValue2);
    positions.showAbsProfits = (iValue1==1 || iValue2==1);
 
    // bool positions.showMaxRisk
-   key = ProgramName() +".positions.showMaxRisk";
+   key = indicatorName +".positions.showMaxRisk";
    iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);      // +1 || -1
    iValue2 = 0;
    Chart.RestoreInt(key, iValue2);
    positions.showMaxRisk = (iValue1==1 || iValue2==1);
 
    // config keys of custom positions
-   string configKeys[], sValue="", sValue2="";
-   key = ProgramName() +"."+ Symbol() +".config.keys";
-   sValue = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
+   string configKeys[];
+   key = indicatorName +"."+ Symbol() +".config.keys";
+   sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
    Chart.RestoreString(key, sValue2);
-   if (!StringLen(sValue)) sValue = sValue2;
+   if (!StringLen(sValue1)) sValue1 = sValue2;
 
    // Risk/MFE/MAE stats of custom positions
    ArrayResize(config.sData, 0);
    ArrayResize(config.dData, 0);
-   int size = Explode(sValue, "=", configKeys, NULL);
+   int size = Explode(sValue1, "=", configKeys, NULL);
 
    for (int i=0; i < size; i++) {
       ArrayResize(config.sData, i+1);
@@ -4494,23 +4554,38 @@ bool RestoreStatus() {
       config.sData[i][I_CONFIG_KEY    ] = configKeys[i];
       config.sData[i][I_CONFIG_COMMENT] = "";
 
-      key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".risk";
-      sValue = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
+      key = indicatorName +"."+ Symbol() +".config."+ configKeys[i] +".risk";
+      sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
       sValue2 = "";
       Chart.RestoreString(key, sValue2);
-      if (!StringLen(sValue)) sValue = sValue2;
-      config.dData[i][I_MAX_LOTS] = StrToDouble(StrLeftTo(sValue, "|"));
-      config.dData[i][I_MAX_RISK] = StrToDouble(StrRightFrom(sValue, "|"));
+      if (!StringLen(sValue1)) sValue1 = sValue2;
+      config.dData[i][I_MAX_LOTS] = StrToDouble(StrLeftTo(sValue1, "|"));
+      config.dData[i][I_MAX_RISK] = StrToDouble(StrRightFrom(sValue1, "|"));
 
-      key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".mfe|mae";
-      sValue = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
+      key = indicatorName +"."+ Symbol() +".config."+ configKeys[i] +".mfe|mae";
+      sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
       sValue2 = "";
       Chart.RestoreString(key, sValue2);
-      if (!StringLen(sValue)) sValue = sValue2;
-      config.dData[i][I_MFE_ENABLED] = (sValue != "");
-      config.dData[i][I_PROFIT_MFE ] = StrToDouble(StrLeftTo(sValue, "|"));
-      config.dData[i][I_PROFIT_MAE ] = StrToDouble(StrRightFrom(sValue, "|"));
+      if (!StringLen(sValue1)) sValue1 = sValue2;
+      config.dData[i][I_MFE_ENABLED] = (sValue1 != "");
+      config.dData[i][I_PROFIT_MFE ] = StrToDouble(StrLeftTo(sValue1, "|"));
+      config.dData[i][I_PROFIT_MAE ] = StrToDouble(StrRightFrom(sValue1, "|"));
    }
+
+   // bool display.balance
+   key = indicatorName +".display.balance";
+   iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);      // +1 || -1
+   iValue2 = 0;
+   Chart.RestoreInt(key, iValue2);
+   display.balance = (iValue1==1 || iValue2==1);
+
+   // bool display.externalBalance
+   key = indicatorName +".display.externalBalance";
+   iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);      // +1 || -1
+   iValue2 = 0;
+   Chart.RestoreInt(key, iValue2);
+   display.externalBalance = (iValue1==1 || iValue2==1);
+
    return(!catch("RestoreStatus(1)"));
 }
 
@@ -4998,9 +5073,9 @@ string ConfigTermTypeToStr(int type) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("UnitSize.Corner=", DoubleQuoteStr(UnitSize.Corner), ";", NL,
-                            "Track.Orders=",    BoolToStr(Track.Orders),         ";")
-   );
+   return(StringConcatenate("Track.Orders=", BoolToStr(Track.Orders), ";"));
+
+   // dummy call to prevent compiler warnings
    ConfigTermTypeToStr(NULL);
 }
 

@@ -19,7 +19,7 @@ bool NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]) {
    int phase, weightsSize;
    double weightsSum, t, g, coeff;
 
-   // version 4
+   // disabled: version 4
    // -----------------------------------------------------------------------------------------------------------------------
    if (false) {
       coeff       = 3 * M_PI;

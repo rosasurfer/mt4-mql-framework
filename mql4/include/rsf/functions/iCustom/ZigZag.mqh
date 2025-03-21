@@ -28,17 +28,18 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           periods,                    // int      ZigZag.Periods
                           0,                          // int      ZigZag.Periods.Step
                           "Line",                     // string   ZigZag.Type
+                          "dot",                      // string   ZigZag.Semaphores.Symbol
                           1,                          // int      ZigZag.Width
-                          108,                        // int      ZigZag.Semaphores.Wingdings
                           CLR_NONE,                   // color    ZigZag.Color
 
                           "separator",                // string   ____________________________
                           false,                      // bool     Donchian.ShowChannel
+                          CLR_NONE,                   // color    Donchian.Channel.UpperColor
+                          CLR_NONE,                   // color    Donchian.Channel.LowerColor
                           "all",                      // string   Donchian.ShowCrossings
-                          1,                          // int      Donchian.Crossings.Width
-                          163,                        // int      Donchian.Crossings.Wingdings
-                          CLR_NONE,                   // color    Donchian.Upper.Color
-                          CLR_NONE,                   // color    Donchian.Lower.Color
+                          "ring",                     // string   Donchian.Crossing.Symbol
+                          1,                          // int      Donchian.Crossing.Width
+                          CLR_NONE,                   // color    Donchian.Crossing.Color
 
                           "separator",                // string   ____________________________
                           false,                      // bool     TrackReversalBalance

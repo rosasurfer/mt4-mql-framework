@@ -32,6 +32,7 @@ string   PriceFormat = "";                                        // price forma
 
 double   pUnit;                                                   // 1 price unit of the current symbol (1 pip for Forex or 1 full point otherwise, e.g. 0.0001 for EURUSD, 1.00 for DAX)
 int      pDigits;                                                 // number of decimal places to represent a unit amount (1 or 2, e.g. 1 for EURUSD, 2 for DAX)
+string   pUnitFormat = "";                                        // price format of a unit for NumberToStr()
 string   spUnit = "";                                             // string representation of the unit (e.g. "pip" for EURUSD, "point" for DAX)
 
 int      Ticks;                                                   // number of times MQL::start() was called (value survives init cycles, also in indicators)

@@ -83,8 +83,9 @@ window_num=0
 MA.Periods=38
 UpTrend.Color=16711680
 DownTrend.Color=255
+Background.Color=16748574
 Draw.Type=Line | Dot*
-Draw.Width=3
+Draw.Width=4
 </inputs>
 </expert>
 show_data=1

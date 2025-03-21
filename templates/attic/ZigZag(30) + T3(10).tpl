@@ -85,9 +85,9 @@ ZigZag.Type=Line* | Semaphores
 ZigZag.Width=0
 ZigZag.Color=16711680
 Donchian.ShowChannel=1
-Donchian.Crossings.Wingdings=108
-Donchian.Upper.Color=16711680
-Donchian.Lower.Color=16711935
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711935
+Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
 </inputs>
 </expert>
 style_2=2

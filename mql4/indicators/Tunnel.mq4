@@ -1,7 +1,7 @@
 /**
  * Tunnel
  *
- * An indicator for price crossing a High/Low channel (aka a tunnel) built from one or more Moving Averages.
+ * An indicator forming a High/Low channel built from one or more Moving Averages.
  *
  *
  * TODO:
@@ -14,8 +14,8 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Tunnel.Definition              = "EMA(144)";              // one or more MAs separated by ","
-extern string Supported.MA.Methods           = "SMA, LWMA, EMA, SMMA";
 extern color  Tunnel.Color                   = Magenta;
+extern string Supported.MovingAverages       = "SMA, LWMA, EMA, SMMA";
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 

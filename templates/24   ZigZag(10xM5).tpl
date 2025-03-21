@@ -1,4 +1,9 @@
-<!-- BollingerBands.tpl -->
+<!-- 
+On M5:
+-----_
+ZigZag(10) = 50xM1 	trend direction
+EMA(40)    = 200xM1	filter: above only long, below only short
+-->
 
 <chart>
 symbol=GBPUSD
@@ -6,8 +11,8 @@ period=60
 digits=5
 
 leftpos=9229
-scale=1
-graph=1
+scale=8
+graph=0
 fore=0
 grid=0
 volume=0
@@ -39,7 +44,8 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=300
+height=800
+fixed_height=0
 
 <indicator>
 name=main
@@ -71,8 +77,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -95,33 +99,17 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Bollinger Bands
-flags=339
-window_num=0
-<inputs>
-MA.Periods=100
-MA.Method=SMA* | LWMA | EMA | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-Bands.StdDevs=2
-AutoConfiguration=0
-</inputs>
-</expert>
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=Moving Average
 flags=339
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=144
-MA.Periods.Step=56
+MA.Periods=40
+MA.Periods.Step=10
 Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=65535
-DownTrend.Color=65535
-ShowChartLegend=0
+UpTrend.Color=16760576
+DownTrend.Color=16760576
+Background.Color=11119017
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -131,35 +119,27 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
-TimeWindow=08:00-09:00
-NumberOfBrackets=20
-BracketsColor=9639167   ; DeepPink
-AutoConfiguration=0
+ZigZag.Periods=10
+ZigZag.Type=Lines* | Semaphores
+ZigZag.Width=2
+ZigZag.Color=255
+Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711680
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Width=2
+Signal.onReversal=1
 </inputs>
 </expert>
-period_flags=7
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Brackets
-flags=339
-window_num=0
-<inputs>
-TimeWindow=09:00-10:00
-NumberOfBrackets=20
-BracketsColor=16711680  ; Blue
-AutoConfiguration=0
-</inputs>
-</expert>
-period_flags=7
-show_data=0
+style_2=2
+style_3=2
+color_6=4294967295
+color_7=4294967295
+show_data=1
 </indicator>
 
 </window>

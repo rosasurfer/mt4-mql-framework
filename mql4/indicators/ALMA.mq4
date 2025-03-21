@@ -24,14 +24,14 @@ extern int    MA.Periods.Step                = 0;                 // step size f
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern double Distribution.Offset            = 0.85;              // Gaussian distribution offset (offset of parabola vertex: 0..1)
 extern double Distribution.Sigma             = 6.0;               // Gaussian distribution sigma (parabola steepness)
-extern double MA.ReversalFilter              = 0.1;               // min. MA change in std-deviations for a trend reversal
+extern double MA.ReversalFilter.StdDev       = 0.1;               // min. MA change in std-deviations for a trend reversal
 extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (hotkey + VK_SHIFT)
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern color  UpTrend.Color                  = Blue;
-extern color  DownTrend.Color                = Red;
-extern color  Background.Color               = DimGray;           // background for Draw.Type = "Line"
+extern color  UpTrend.Color                  = DeepSkyBlue;
+extern color  DownTrend.Color                = Yellow;
+extern color  Background.Color               = DarkGray;          // background for Draw.Type = "Line"
 extern int    Background.Width               = 2;
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
@@ -137,9 +137,9 @@ int onInit() {
    // Distribution.Sigma
    if (AutoConfiguration) Distribution.Sigma = GetConfigDouble(indicator, "Distribution.Sigma", Distribution.Sigma);
    if (Distribution.Sigma <= 0)                            return(catch("onInit(5)  invalid input parameter Distribution.Sigma: "+ NumberToStr(Distribution.Sigma, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   // MA.ReversalFilter
-   if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
-   if (MA.ReversalFilter < 0)                              return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.ReversalFilter.StdDev
+   if (AutoConfiguration) MA.ReversalFilter.StdDev = GetConfigDouble(indicator, "MA.ReversalFilter.StdDev", MA.ReversalFilter.StdDev);
+   if (MA.ReversalFilter.StdDev < 0)                       return(catch("onInit(6)  invalid input parameter MA.ReversalFilter.StdDev: "+ NumberToStr(MA.ReversalFilter.StdDev, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.ReversalFilter.Step
    if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
    if (MA.ReversalFilter.Step < 0)                         return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
@@ -270,7 +270,7 @@ int onTick() {
       }
       maFiltered[bar] = maRaw[bar];
 
-      if (MA.ReversalFilter > 0) {
+      if (MA.ReversalFilter.StdDev > 0) {
          maChange[bar] = maFiltered[bar] - maFiltered[bar+1];        // calculate the change of current raw to previous filtered MA
          sum = 0;
          for (i=0; i < MA.Periods; i++) {                            // calculate average(change) over last 'MA.Periods'
@@ -284,7 +284,7 @@ int onTick() {
                sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
             }
             stdDev = MathSqrt(sum/MA.Periods);
-            minChange = MA.ReversalFilter * stdDev;                  // calculate required min. change
+            minChange = MA.ReversalFilter.StdDev * stdDev;           // calculate required min. change
 
             if (MathAbs(maChange[bar]) < minChange) {
                maFiltered[bar] = maFiltered[bar+1];                  // discard trend reversal if MA change is smaller
@@ -412,7 +412,7 @@ bool ParameterStepper(int direction, int keys) {
       // step up/down input parameter "MA.Periods"
       double step = MA.Periods.Step;
 
-      if (!step || MA.Periods + direction*step < 1) {          // no stepping if parameter limit reached
+      if (!step || MA.Periods + direction*step < 1) {                // no stepping if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
@@ -425,12 +425,12 @@ bool ParameterStepper(int direction, int keys) {
       // step up/down input parameter "MA.ReversalFilter"
       step = MA.ReversalFilter.Step;
 
-      if (!step || MA.ReversalFilter + direction*step < 0) {   // no stepping if parameter limit reached
+      if (!step || MA.ReversalFilter.StdDev + direction*step < 0) {  // no stepping if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
-      if (direction == STEP_UP) MA.ReversalFilter += step;
-      else                      MA.ReversalFilter -= step;
+      if (direction == STEP_UP) MA.ReversalFilter.StdDev += step;
+      else                      MA.ReversalFilter.StdDev -= step;
    }
 
    ChangedBars = Bars;
@@ -451,7 +451,7 @@ bool ParameterStepper(int direction, int keys) {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
-   string sMaFilter     = ifString((UpTrend.Color!=DownTrend.Color) && (MA.ReversalFilter || MA.ReversalFilter.Step), "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
+   string sMaFilter     = ifString(MA.ReversalFilter.StdDev || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter.StdDev, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName        = WindowExpertName() +"("+ ifString(MA.Periods.Step || MA.ReversalFilter.Step, "step:", "") + MA.Periods + sMaFilter + sAppliedPrice +")";
    shortName            = "ALMA("+ MA.Periods +")";
@@ -459,7 +459,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    IndicatorBuffers(terminal_buffers);
    SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // MA raw main values:      invisible
-   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // MA filtered main values: invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // MA filtered main values: visible as background, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,       trend     );   // trend direction:         invisible, displayed in "Data" window
    SetIndexBuffer(MODE_UPTREND,     uptrend   );   // uptrend values:          visible
    SetIndexBuffer(MODE_DOWNTREND,   downtrend );   // downtrend values:        visible
@@ -497,8 +497,8 @@ bool StoreStatus() {
    if (__isChart && (MA.Periods.Step || MA.ReversalFilter.Step)) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      Chart.StoreInt   (prefix +"MA.Periods",        MA.Periods);
-      Chart.StoreDouble(prefix +"MA.ReversalFilter", MA.ReversalFilter);
+      Chart.StoreInt   (prefix +"MA.Periods",               MA.Periods);
+      Chart.StoreDouble(prefix +"MA.ReversalFilter.StdDev", MA.ReversalFilter.StdDev);
    }
    return(catch("StoreStatus(1)"));
 }
@@ -517,14 +517,14 @@ bool RestoreStatus() {
       int iValue;
       if (Chart.RestoreInt(prefix +"MA.Periods", iValue)) {
          if (MA.Periods.Step > 0) {
-            if (iValue >= 1) MA.Periods = iValue;              // silent validation
+            if (iValue >= 1) MA.Periods = iValue;                 // silent validation
          }
       }
 
       double dValue;
       if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
          if (MA.ReversalFilter.Step > 0) {
-            if (dValue >= 0) MA.ReversalFilter = dValue;       // silent validation
+            if (dValue >= 0) MA.ReversalFilter.StdDev = dValue;   // silent validation
          }
       }
    }
@@ -538,26 +538,26 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",                 MA.Periods,                                 ";"+ NL,
-                            "MA.Periods.Step=",            MA.Periods.Step,                            ";"+ NL,
-                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";"+ NL,
-                            "Distribution.Offset=",        NumberToStr(Distribution.Offset, ".1+"),    ";"+ NL,
-                            "Distribution.Sigma=",         NumberToStr(Distribution.Sigma, ".1+"),     ";"+ NL,
-                            "MA.ReversalFilter=",          NumberToStr(MA.ReversalFilter, ".1+"),      ";"+ NL,
-                            "MA.ReversalFilter.Step=",     NumberToStr(MA.ReversalFilter.Step, ".1+"), ";"+ NL,
+   return(StringConcatenate("MA.Periods=",                 MA.Periods,                                   ";"+ NL,
+                            "MA.Periods.Step=",            MA.Periods.Step,                              ";"+ NL,
+                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),              ";"+ NL,
+                            "Distribution.Offset=",        NumberToStr(Distribution.Offset, ".1+"),      ";"+ NL,
+                            "Distribution.Sigma=",         NumberToStr(Distribution.Sigma, ".1+"),       ";"+ NL,
+                            "MA.ReversalFilter.StdDev=",   NumberToStr(MA.ReversalFilter.StdDev, ".1+"), ";"+ NL,
+                            "MA.ReversalFilter.Step=",     NumberToStr(MA.ReversalFilter.Step, ".1+"),   ";"+ NL,
 
-                            "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";"+ NL,
-                            "Draw.Width=",                 Draw.Width,                                 ";"+ NL,
-                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";"+ NL,
-                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";"+ NL,
-                            "Background.Color=",           ColorToStr(Background.Color),               ";", NL,
-                            "Background.Width=",           Background.Width,                           ";", NL,
-                            "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";"+ NL,
-                            "MaxBarsBack=",                MaxBarsBack,                                ";"+ NL,
+                            "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                    ";"+ NL,
+                            "Draw.Width=",                 Draw.Width,                                   ";"+ NL,
+                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                    ";"+ NL,
+                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                  ";"+ NL,
+                            "Background.Color=",           ColorToStr(Background.Color),                 ";", NL,
+                            "Background.Width=",           Background.Width,                             ";", NL,
+                            "ShowChartLegend=",            BoolToStr(ShowChartLegend),                   ";"+ NL,
+                            "MaxBarsBack=",                MaxBarsBack,                                  ";"+ NL,
 
-                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
-                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
-                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
-                            "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
+                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),              ";"+ NL,
+                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types),   ";"+ NL,
+                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),              ";"+ NL,
+                            "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),            ";")
    );
 }

@@ -1,9 +1,5 @@
 /**
  * Helper EA to visualize the trade history of an exported MT4 account statement or tester report.
- *
- *
- * TODO:
- *  - process account statements
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];

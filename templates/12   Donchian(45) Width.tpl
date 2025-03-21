@@ -1,11 +1,8 @@
-<!-- BollingerBands.tpl -->
-
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
-leftpos=9229
 scale=1
 graph=1
 fore=0
@@ -15,11 +12,13 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=1
-shift=1
-shift_size=10
 
 fixed_pos=620
+leftpos=48782
+scroll=1
+shift=1
+shift_size=16
+
 window_left=0
 window_top=0
 window_right=1292
@@ -39,7 +38,8 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=300
+height=800
+fixed_height=0
 
 <indicator>
 name=main
@@ -71,8 +71,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -95,22 +93,6 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Bollinger Bands
-flags=339
-window_num=0
-<inputs>
-MA.Periods=100
-MA.Method=SMA* | LWMA | EMA | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-Bands.StdDevs=2
-AutoConfiguration=0
-</inputs>
-</expert>
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=Moving Average
 flags=339
 <inputs>
@@ -121,7 +103,8 @@ Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
-ShowChartLegend=0
+Background.Color=11119017
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -131,35 +114,63 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
-TimeWindow=08:00-09:00
-NumberOfBrackets=20
-BracketsColor=9639167   ; DeepPink
-AutoConfiguration=0
+ZigZag.Periods=45
+ZigZag.Width=0
+ZigZag.Color=9639167
+Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711935
+Donchian.Channel.LowerColor=16711935
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Width=2
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+style_2=2
+style_3=2
+color_6=4294967295
+color_7=4294967295
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=120
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=Donchian Channel Width
+flags=339
+window_num=1
+<inputs>
+Donchian.Periods=45
+LineColor=16711680
+</inputs>
+</expert>
+min=100
+max=1200
+period_flags=0
+show_data=1
 </indicator>
 
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=Donchian Channel Width
 flags=339
-window_num=0
+window_num=1
 <inputs>
-TimeWindow=09:00-10:00
-NumberOfBrackets=20
-BracketsColor=16711680  ; Blue
-AutoConfiguration=0
+Donchian.Periods=39
+LineColor=16711935
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+min=100
+max=1200
+period_flags=0
+show_data=1
 </indicator>
 
 </window>

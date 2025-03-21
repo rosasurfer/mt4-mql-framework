@@ -146,6 +146,6 @@ MainLine.Width=0
 </expert>
 show_data=1
 </indicator>
-</window>
 
+</window>
 </chart>

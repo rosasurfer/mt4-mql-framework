@@ -86,10 +86,10 @@ ZigZag.Width=2
 ZigZag.Color=16711680
 
 Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=255
 Donchian.ShowCrossings=off | first* | all
-Donchian.Crossings.Wingdings=108
-Donchian.Upper.Color=16711680
-Donchian.Lower.Color=255
+Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
 </inputs>
 </expert>
 style_2=2

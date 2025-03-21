@@ -1,7 +1,7 @@
 /**
  * EquityRecorder
  *
- * Records the trade account's equity curve.
+ * Records the current trade account's equity curves. One original curve and another one with external assets.
  *
  *
  * TODO:

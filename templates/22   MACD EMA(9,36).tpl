@@ -1,12 +1,10 @@
-<!-- BollingerBands.tpl -->
-
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=1
+scale=4
 graph=1
 fore=0
 grid=0
@@ -39,7 +37,8 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=300
+height=405
+fixed_height=0
 
 <indicator>
 name=main
@@ -71,8 +70,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -95,22 +92,6 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Bollinger Bands
-flags=339
-window_num=0
-<inputs>
-MA.Periods=100
-MA.Method=SMA* | LWMA | EMA | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-Bands.StdDevs=2
-AutoConfiguration=0
-</inputs>
-</expert>
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=Moving Average
 flags=339
 <inputs>
@@ -121,46 +102,35 @@ Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
-ShowChartLegend=0
+Background.Color=11119017
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
 show_data=1
 </indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Brackets
-flags=339
-window_num=0
-<inputs>
-TimeWindow=08:00-09:00
-NumberOfBrackets=20
-BracketsColor=9639167   ; DeepPink
-AutoConfiguration=0
-</inputs>
-</expert>
-period_flags=7
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Brackets
-flags=339
-window_num=0
-<inputs>
-TimeWindow=09:00-10:00
-NumberOfBrackets=20
-BracketsColor=16711680  ; Blue
-AutoConfiguration=0
-</inputs>
-</expert>
-period_flags=7
-show_data=0
-</indicator>
-
 </window>
+
+<window>
+height=37
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=MACD
+flags=339
+window_num=1
+<inputs>
+FastMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
+FastMA.Periods=9
+SlowMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
+SlowMA.Periods=36
+VScale.Unit=price* | bps-price | bps-adr
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+</window>
+
 </chart>

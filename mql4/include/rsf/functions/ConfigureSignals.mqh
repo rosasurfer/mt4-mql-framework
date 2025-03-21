@@ -115,7 +115,7 @@ bool ConfigureSignalsBySMS(string signalId, bool autoConfig, bool &enabled) {
  * Validate and configure the passed signal types.
  *
  * @param  _In_    string signalId     - case-insensitive signal identifier
- * @param  _In_    string signalTypes  - input paramter Signal.*.Types
+ * @param  _In_    string signalTypes  - input parameter Signal.*.Types
  * @param  _In_    bool   autoConfig   - input parameter AutoConfiguration
  * @param  _InOut_ bool   soundEnabled - current (in) and final activation status (out) for signaling by sound
  * @param  _InOut_ bool   alertEnabled - current (in) and final activation status (out) for signaling by alert

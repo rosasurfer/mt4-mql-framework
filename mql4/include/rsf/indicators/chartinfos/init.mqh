@@ -21,27 +21,14 @@ int onInit() {
    lfxOrders.openPositions    = 0;
    lfxOrders.pendingPositions = 0;
 
-   // validate inputs
-   string indicator = WindowExpertName();
-
-   // UnitSize.Corner: "top | bottom*" (may be shortened)
-   string sValues[], sValue = UnitSize.Corner;
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
+   // configuration
+   if (AutoConfiguration) {
+      Track.Orders = GetConfigBool(WindowExpertName(), "Track.Orders", Track.Orders);
    }
-   sValue = StrToLower(StrTrim(sValue));
-   if      (StrStartsWith("top",    sValue)) unitSize.corner = CORNER_TOP_RIGHT;
-   else if (StrStartsWith("bottom", sValue)) unitSize.corner = CORNER_BOTTOM_RIGHT;
-   else return(catch("onInit(1)  invalid input parameter UnitSize.Corner: "+ UnitSize.Corner, ERR_INVALID_INPUT_PARAMETER));
-   totalPosition.corner = unitSize.corner;
-   UnitSize.Corner      = ifString(unitSize.corner==CORNER_TOP_RIGHT, "top", "bottom");
-   // Track.Orders
-   if (AutoConfiguration) Track.Orders = GetConfigBool(indicator, "Track.Orders", Track.Orders);
 
    // init labels, status and used trade account
-   if (!CreateLabels())         return(last_error);
    if (!RestoreStatus())        return(last_error);
+   if (!CreateLabels())         return(last_error);
    if (!InitTradeAccount())     return(last_error);
    if (!UpdateAccountDisplay()) return(last_error);
 

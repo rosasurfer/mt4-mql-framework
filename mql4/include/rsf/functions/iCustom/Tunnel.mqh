@@ -20,8 +20,8 @@ double icTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar) {
 
    double value = iCustom(NULL, timeframe, "Tunnel",
                           tunnelDefinition,           // string Tunnel.Definition
-                          "",                         // string Supported.MA.Methods
                           Blue,                       // color  Tunnel.Color
+                          "",                         // string Supported.MovingAverages
                           false,                      // bool   ShowChartLegend
                           -1,                         // int    MaxBarsBack
 

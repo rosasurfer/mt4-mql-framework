@@ -1,9 +1,9 @@
 <chart>
-symbol=GBPUSD
+symbol=GBPAUD
 period=60
 digits=5
 
-leftpos=9229
+leftpos=17392
 scale=1
 graph=1
 fore=0
@@ -13,9 +13,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
+scroll=1
 shift=1
-shift_size=50
+shift_size=10
 
 fixed_pos=620
 window_left=0
@@ -37,7 +37,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=250
+height=300
 
 <indicator>
 name=main
@@ -46,51 +46,12 @@ name=main
 <indicator>
 name=Custom Indicator
 <expert>
-name=Grid
-flags=347
-window_num=0
-</expert>
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ChartInfos
-flags=347
-window_num=0
-</expert>
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=SuperBars
+name=EquityRecorder
 flags=339
 window_num=0
-</expert>
-show_data=0
-</indicator>
-</window>
-
-<window>
-height=100
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=Average Range
-flags=339
-window_num=1
 <inputs>
-TrueRange=1
-MA.Method=SMA | LWMA* | EMA | SMMA
-MA.Periods=80
 </inputs>
 </expert>
-color_0=16711680
-weight_0=2
 show_data=1
 </indicator>
 

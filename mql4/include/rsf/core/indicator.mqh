@@ -201,6 +201,7 @@ bool initGlobals() {
       pDigits = 2;
       spUnit  = "point";
    }
+   pUnitFormat = ",'R."+ pDigits;
 
    Ticks     = __ExecutionContext[EC.ticks];
    Tick.time = __ExecutionContext[EC.currTickTime];

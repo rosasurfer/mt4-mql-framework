@@ -1224,6 +1224,21 @@ string ifString(bool condition, string thenValue, string elseValue) {
 
 
 /**
+ * Inlined color OR statement. Returns the first color or the second color if the first color is CLR_NONE.
+ *
+ * @param  color value
+ * @param  color altValue
+ *
+ * @return int
+ */
+color colorOr(color value, color altValue) {
+   if (value != CLR_NONE)
+      return(value);
+   return(altValue);
+}
+
+
+/**
  * Inlined integer OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to NULL.
  *
  * @param  int value
@@ -1991,7 +2006,7 @@ string StrLeftTo(string value, string substring, int count = 1) {
 
 
 /**
- * Gibt einen rechten Teilstring eines Strings zurück.
+ * Return a right-side substring of a string.
  *
  * Ist N positiv, gibt StrRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
  *    z.B.  StrRight("ABCDEFG",  2)  =>  "FG"
@@ -6447,22 +6462,22 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           waveCyclePeriods,                 // int    WaveCycle.Periods
                           0,                                // int    WaveCycle.Periods.Step
                           maAppliedPrice,                   // string MA.AppliedPrice
-                          maReversalFilter,                 // double MA.ReversalFilter
+                          maReversalFilter,                 // double MA.ReversalFilter.StdDev
                           0,                                // double MA.ReversalFilter.Step
                           "Dot",                            // string Draw.Type
                           1,                                // int    Draw.Width
-                          CLR_NONE,                         // color  Color.UpTrend
-                          CLR_NONE,                         // color  Color.DownTrend
+                          CLR_NONE,                         // color  UpTrend.Color
+                          CLR_NONE,                         // color  DownTrend.Color
+                          CLR_NONE,                         // color  Background.Color
+                          0,                                // int    Background.Width
+                          false,                            // bool   ShowChartLegend
                           -1,                               // int    MaxBarsBack
 
-                          "",                               // string ______________________________
+                          "",                               // string __________________________
                           false,                            // bool   Signal.onTrendChange
-                          false,                            // bool   Signal.onTrendChange.Sound
-                          "",                               // string Signal.onTrendChange.SoundUp
-                          "",                               // string Signal.onTrendChange.SoundDown
-                          false,                            // bool   Signal.onTrendChange.Alert
-                          false,                            // bool   Signal.onTrendChange.Mail
-                          false,                            // bool   Signal.onTrendChange.SMS
+                          "",                               // string Signal.onTrendChange.Types
+                          "",                               // string Signal.Sound.Up
+                          "",                               // string Signal.Sound.Down
 
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
@@ -6626,6 +6641,7 @@ void __DummyCalls() {
    Chart.StoreDouble(NULL, NULL);
    Chart.StoreInt(NULL, NULL);
    Chart.StoreString(NULL, NULL);
+   colorOr(NULL, NULL);
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);
    CompareDoubles(NULL, NULL);

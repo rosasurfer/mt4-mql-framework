@@ -1,12 +1,10 @@
-<!-- BollingerBands.tpl -->
-
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=1
+scale=2
 graph=1
 fore=0
 grid=0
@@ -39,7 +37,8 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=300
+height=5000
+fixed_height=0
 
 <indicator>
 name=main
@@ -71,8 +70,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -95,17 +92,34 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Bollinger Bands
+name=Trend Bars
 flags=339
 window_num=0
 <inputs>
-MA.Periods=100
-MA.Method=SMA* | LWMA | EMA | SMMA | ALMA
-MA.AppliedPrice=Open | High | Low | Close* | Median | Typical | Weighted
-Bands.StdDevs=2
+Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Tunnel.Periods=55
+Color.UpTrend=16711680
+Color.DownTrend=255
+Color.NoTrend=11119017
+BarWidth=2
 AutoConfiguration=0
 </inputs>
 </expert>
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Tunnel
+flags=339
+window_num=0
+<inputs>
+Tunnel.Definition=LWMA(55)
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
 </indicator>
 
 <indicator>
@@ -121,7 +135,8 @@ Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
-ShowChartLegend=0
+Background.Color=11119017
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -131,36 +146,44 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=ALMA
 flags=339
 window_num=0
 <inputs>
-TimeWindow=08:00-09:00
-NumberOfBrackets=20
-BracketsColor=9639167   ; DeepPink
+MA.Periods=38
+MA.ReversalFilter.StdDev=0.2
+UpTrend.Color=16711680
+DownTrend.Color=16776960
+Background.Color=16748574
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+show_data=1
 </indicator>
+</window>
 
+<window>
+height=1
+fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=MACD
 flags=339
-window_num=0
+window_num=1
 <inputs>
-TimeWindow=09:00-10:00
-NumberOfBrackets=20
-BracketsColor=16711680  ; Blue
+FastMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
+FastMA.Periods=12
+SlowMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
+SlowMA.Periods=26
+VScale.Unit=price* | bps-price | bps-adr
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+min=-60
+max=60
+show_data=1
 </indicator>
-
 </window>
+
 </chart>

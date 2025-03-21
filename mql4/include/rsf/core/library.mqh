@@ -64,6 +64,7 @@ int init() {
       pDigits = 2;
       spUnit  = "point";
    }
+   pUnitFormat = ",'R."+ pDigits;
 
    prev_error = NO_ERROR;
    last_error = NO_ERROR;
