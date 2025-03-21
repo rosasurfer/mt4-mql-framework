@@ -195,8 +195,8 @@ string  label.orderCounter   = "";
 string  label.tradeAccount   = "";
 string  label.stopoutLevel   = "";
 
-// chart location of total position and unitsize
-int     position_unitsize.corner;
+// chart location of unitsize and total position
+int     position.unitsize.corner;
 
 // font settings for custom positions
 string  positions.fontName          = "MS Sans Serif";
@@ -218,9 +218,9 @@ string  orderTracker.positionOpened   = "speech/OrderFilled.wav";
 string  orderTracker.positionClosed   = "speech/PositionClosed.wav";
 string  orderTracker.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
 
-// status display flags
-bool    status.displayBalance         = false;
-bool    status.displayExternalBalance = false;
+// display flags
+bool    display.balance         = false;
+bool    display.externalBalance = false;
 
 // types for server-side closed positions
 #define CLOSE_TAKEPROFIT   1
@@ -336,7 +336,7 @@ bool onCommand(string cmd, string params, int keys) {
    }
 
    else if (cmd == "toggle-unit-size") {
-      position_unitsize.corner = ifInt(position_unitsize.corner == CORNER_BOTTOM_RIGHT, CORNER_TOP_RIGHT, CORNER_BOTTOM_RIGHT);
+      position.unitsize.corner = ifInt(position.unitsize.corner == CORNER_BOTTOM_RIGHT, CORNER_TOP_RIGHT, CORNER_BOTTOM_RIGHT);
       if (!CreateLabels()) return(false);
    }
 
@@ -996,21 +996,21 @@ bool CustomPositions.ToggleProfits() {
  */
 bool ToggleAccountBalance(bool externalAssets) {
    externalAssets = externalAssets!=0;
-   status.displayBalance = !GetAccountBalanceDisplayStatus();  // get current display status and toggle it
+   display.balance = !GetAccountBalanceDisplayStatus();        // get current display status and toggle it
 
-   if (status.displayBalance) {
+   if (display.balance) {
       if (!mode.intern) {
-         status.displayBalance = false;                        // mode.extern not yet implemented
+         display.balance = false;                              // mode.extern not yet implemented
          PlaySoundEx("Plonk.wav");
          return(true);
       }
       mm.externalAssetsCached = false;                         // invalidate cached external assets
    }
-   status.displayExternalBalance = externalAssets;
+   display.externalBalance = externalAssets;
    UpdateBalanceDisplay();
    if (__isTesting) WindowRedraw();
 
-   SetAccountBalanceDisplayStatus(status.displayBalance);      // store new display status
+   SetAccountBalanceDisplayStatus(display.balance);            // store new display status
    return(!catch("ToggleAccountBalance(1)"));
 }
 
@@ -1099,7 +1099,7 @@ bool CreateLabels() {
    ObjectSetText(label.spread, " ", 1);
 
    // unit size
-   corner = position_unitsize.corner;
+   corner = position.unitsize.corner;
    xDist  = 9;
    switch (corner) {
       case CORNER_TOP_RIGHT:    yDist = 58; break;                // yDist of spread + 20
@@ -1112,7 +1112,7 @@ bool CreateLabels() {
    ObjectSetText(label.unitSize, " ", 1);
 
    // total position
-   corner = position_unitsize.corner;
+   corner = position.unitsize.corner;
    xDist  = 9;
    yDist += 20;                                                   // 1 line above/below unitsize
    if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL)) return(false);
@@ -1596,14 +1596,14 @@ bool UpdateBalanceDisplay() {
    static double lastBalance = -1, lastExternalAssets = EMPTY_VALUE;
    double balance = -1, externalAssets = EMPTY_VALUE;
 
-   if (status.displayBalance) {
+   if (display.balance) {
       balance = AccountBalance();
       externalAssets = GetExternalBalance();
 
-      if (status.displayBalance!=lastStatus || balance!=lastBalance || (status.displayExternalBalance && externalAssets!=lastExternalAssets)) {
+      if (display.balance!=lastStatus || balance!=lastBalance || (display.externalBalance && externalAssets!=lastExternalAssets)) {
          string sBalance = "";
 
-         if (status.displayExternalBalance) {
+         if (display.externalBalance) {
             sBalance = "Balance: "+ NumberToStr(balance + externalAssets, ",'.2") +" "+ AccountCurrency() +" ("+ NumberToStr(externalAssets, "+,'.2") +")";
          }
          else {
@@ -1613,10 +1613,10 @@ bool UpdateBalanceDisplay() {
          ObjectSet(label.accountBalance, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
       }
    }
-   else if (status.displayBalance != lastStatus) {
+   else if (display.balance != lastStatus) {
       ObjectSet(label.accountBalance, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
-   lastStatus         = status.displayBalance;
+   lastStatus         = display.balance;
    lastBalance        = balance;
    lastExternalAssets = externalAssets;
 
@@ -4444,9 +4444,9 @@ bool StoreStatus() {
    if (!__isChart) return(true);
    string indicatorName = ProgramName();
 
-   // int position_unitsize.corner
-   string key = indicatorName +".position_unitsize.corner";
-   string sValue = position_unitsize.corner;                               // GetWindowInteger() cannot restore integer 0
+   // int position.unitsize.corner
+   string key = indicatorName +".position.unitsize.corner";
+   string sValue = position.unitsize.corner;                               // GetWindowInteger() cannot restore integer 0
    SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);            // chart window
    Chart.StoreString(key, sValue);                                         // chart
 
@@ -4488,6 +4488,19 @@ bool StoreStatus() {
       SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);         // chart window
       Chart.StoreString(key, sValue);                                      // chart
    }
+
+   // bool display.balance
+   key = indicatorName +".display.balance";
+   iValue = ifInt(display.balance, 1, -1);                                 // GetWindowInteger() cannot restore integer 0
+   SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
+   Chart.StoreInt(key, iValue);                                            // chart
+
+   // bool display.externalBalance
+   key = indicatorName +".display.externalBalance";
+   iValue = ifInt(display.externalBalance, 1, -1);                         // GetWindowInteger() cannot restore integer 0
+   SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
+   Chart.StoreInt(key, iValue);                                            // chart
+
    return(!catch("StoreStatus(1)"));
 }
 
@@ -4501,13 +4514,13 @@ bool RestoreStatus() {
    if (!__isChart) return(true);
    string indicatorName = ProgramName();
 
-   // int position_unitsize.corner
-   string key = indicatorName +".position_unitsize.corner";
+   // int position.unitsize.corner
+   string key = indicatorName +".position.unitsize.corner";
    string sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key), sValue2="";
    Chart.RestoreString(key, sValue2);
    if (!StringLen(sValue1)) sValue1 = sValue2;
    int iValue = StrToInteger(sValue1);
-   position_unitsize.corner = ifInt(iValue == CORNER_TOP_RIGHT, iValue, CORNER_BOTTOM_RIGHT);
+   position.unitsize.corner = ifInt(iValue == CORNER_TOP_RIGHT, iValue, CORNER_BOTTOM_RIGHT);
 
    // bool positions.showAbsProfits
    key = indicatorName +".positions.showAbsProfits";
@@ -4558,6 +4571,21 @@ bool RestoreStatus() {
       config.dData[i][I_PROFIT_MFE ] = StrToDouble(StrLeftTo(sValue1, "|"));
       config.dData[i][I_PROFIT_MAE ] = StrToDouble(StrRightFrom(sValue1, "|"));
    }
+
+   // bool display.balance
+   key = indicatorName +".display.balance";
+   iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);      // +1 || -1
+   iValue2 = 0;
+   Chart.RestoreInt(key, iValue2);
+   display.balance = (iValue1==1 || iValue2==1);
+
+   // bool display.externalBalance
+   key = indicatorName +".display.externalBalance";
+   iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);      // +1 || -1
+   iValue2 = 0;
+   Chart.RestoreInt(key, iValue2);
+   display.externalBalance = (iValue1==1 || iValue2==1);
+
    return(!catch("RestoreStatus(1)"));
 }
 
