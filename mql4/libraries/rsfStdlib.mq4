@@ -3733,12 +3733,12 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
  * @see  http://en.wikipedia.org/wiki/Tz_database#    [Olson Timezone Database]
  */
 string GetServerTimezone() {
-   // - The resolved timezone can only change when the trade account changes.
-   // - On account change indicators do not perform an init cycle.
-   // - The built-in account functions can't be used to detect an account change. They already return new account data even if
-   //   the program still operates on previous chart data and processes old ticks. On the first tick received for the new
+   // - The resolved timezone is cached and changes only on full reload or if the trade account changes.
+   // - The built-in account functions can't be used to detect an account change. They already return new account data even
+   //   if the program still operates on previous chart data and processes old ticks. On the first tick received for the new
    //   account ValidBars is 0 (zero). This is used to invalidate and refresh a cached timezone id.
-   // - This function is stored in the library to make the cache survive an indicator init cyle.
+   // - The function is stored in the library to let the cache survive indicator init cyles.
+   // - Indicators do not perform an init cycle if the trade account changes.
 
    #define IDX_SERVER   0
    #define IDX_COMPANY  1
@@ -3746,13 +3746,13 @@ string GetServerTimezone() {
 
    int tick=__ExecutionContext[EC.ticks], validBars=__ExecutionContext[EC.validBars];
    static int lastTick = -1;
-   static string lastResult[3]; // {lastServer, lastCompany, lastTimezone};
+   static string lastResult[3];                 // cache: {lastServer, lastCompanyId, lastTimezoneId};
 
    if (tick != lastTick) {
       if (StringLen(lastResult[IDX_TIMEZONE]) && !validBars) {
          string server = GetAccountServer(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
-            lastResult[IDX_TIMEZONE] = "";
+            lastResult[IDX_TIMEZONE] = "";      // invalidate the cache if the server name changes
          }
       }
    }
@@ -3761,8 +3761,8 @@ string GetServerTimezone() {
       lastResult[IDX_SERVER ] = GetAccountServer();    if (!StringLen(lastResult[IDX_SERVER ])) return("");
       lastResult[IDX_COMPANY] = GetAccountCompanyId(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
 
-      // prefer a custom company mapping of a full server name
-      string customMapping = GetGlobalConfigString("AccountCompanies", lastResult[IDX_SERVER]);    // global only to prevent recursion
+      // prefer a custom company mapping of a full server name (check global config only to prevent recursion)
+      string customMapping = GetGlobalConfigString("AccountCompanies", lastResult[IDX_SERVER]);
 
       if (StringLen(customMapping) > 0) {
          lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", customMapping);
