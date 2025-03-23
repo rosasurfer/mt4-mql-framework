@@ -89,8 +89,6 @@
    int      BufferGetChar(int buffer[], int pos);
    //int    BufferSetChar(int buffer[], int pos, int chr);
 
-   string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // alias
-
 
    // configuration
    int      GetIniSections(string fileName, string &names[]);

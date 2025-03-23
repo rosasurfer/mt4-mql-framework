@@ -616,7 +616,6 @@ string   BoolsToStr(bool &array[], string separator);;
 int      BufferGetChar(int &buffer[], int pos);;
 string   BufferToHexStr(int &buffer[]);;
 string   BufferToStr(int &buffer[]);;
-string   BufferWCharsToStr(int &buffer[], int from, int length);;
 string   CharsToStr(int &array[], string separator);;
 string   CharToHexStr(int chr);;
 bool     ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor);;

@@ -2472,52 +2472,6 @@ int BufferGetChar(int buffer[], int pos) {
 
 
 /**
- * Konvertiert den in einem Buffer gespeicherten Unicode-String in einen ANSI-String und gibt ihn zurück.
- *
- * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
- * @param  int from     - Index des ersten Integers der Zeichensequenz
- * @param  int length   - Anzahl der für die Zeichensequenz reservierten Integers
- *
- * @return string - ANSI-String oder Leerstring, falls ein Fehler auftrat
- *
- *
- * TODO: Zur Zeit kann diese Funktion nur mit Integer-Boundaries, nicht mit WCHAR-Boundaries (words) umgehen.
- */
-string BufferWCharsToStr(int buffer[], int from, int length) {
-   if (from   < 0) return(_EMPTY_STR(catch("BufferWCharsToStr(1)  invalid parameter from: "+ from, ERR_INVALID_PARAMETER)));
-   if (length < 0) return(_EMPTY_STR(catch("BufferWCharsToStr(2)  invalid parameter length: "+ length, ERR_INVALID_PARAMETER)));
-   int to = from+length, size=ArraySize(buffer);
-   if (to > size)  return(_EMPTY_STR(catch("BufferWCharsToStr(3)  invalid parameter length: "+ length, ERR_INVALID_PARAMETER)));
-
-   string result = "";
-
-   for (int i=from; i < to; i++) {
-      string sChar = "";
-      int word, shift=0, integer=buffer[i];
-
-      for (int n=0; n < 2; n++) {
-         word = integer >> shift & 0xFFFF;
-         if (word == 0)                                              // termination character (0x00)
-            break;
-         int byte1 = word      & 0xFF;
-         int byte2 = word >> 8 & 0xFF;
-
-         if (byte1 && !byte2) sChar = CharToStr(byte1);
-         else                 sChar = "¿";                           // multibyte character
-         result = StringConcatenate(result, sChar);
-         shift += 16;
-      }
-      if (word == 0)
-         break;
-   }
-
-   if (!catch("BufferWCharsToStr(4)"))
-      return(result);
-   return("");
-}
-
-
-/**
  * Resolve the name of the file a Windows shortcut (.lnk file) is pointing to.
  *
  * @return string lnkFilename - Windows shortcut filename
