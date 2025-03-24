@@ -73,12 +73,18 @@ double  mm.leverage;                                              // resulting l
 double  mm.riskPercent;                                           // resulting risk
 double  mm.riskRange;                                             // resulting price range
 
-// internal + external position data
+// internal or external position data
 bool    isPendings;                                               // ob Pending-Limits im Markt liegen (Orders oder Positions)
-bool    isPosition;                                               // ob offene Positionen existieren, die Gesamtposition kann flat sein: (longPosition || shortPosition)
+bool    isPosition;                                               // ob offene Positionen existieren, die Gesamtposition kann flat sein: longPosition || shortPosition
 double  totalPosition;
 double  longPosition;
 double  shortPosition;
+
+// a custom virtual position (if any)
+bool    isVirtualPosition;
+double  virtualTotalPosition;
+double  virtualLongPosition;
+double  virtualShortPosition;
 
 // configuration of custom positions
 string  config.sData[][2];                                        // config line details: [Key, Comment]
@@ -1239,40 +1245,60 @@ bool UpdateUnitSize() {
 
 
 /**
- * Update total open position (bottom-right) and detailed PnL stats (bottom-left).
+ * Update total open position (bottom-right) and custom positions (bottom-left).
  *
  * @return bool - success status
  */
 bool UpdatePositions() {
    if (mode.intern && !mm.done) {
       if (!CalculateUnitSize()) return(false);
-      if (!mm.done)             return(true);                              // terminal not yet ready
+      if (!mm.done)             return(true);            // terminal not yet ready
    }
 
    if (!positions.analyzed) {
       if (!AnalyzePositions())  return(false);
-      if (!positions.analyzed)  return(true);                              // terminal not yet ready
+      if (!positions.analyzed)  return(true);            // terminal not yet ready
    }
 
-   // total open position bottom-right
-   string sCurrentPosition = "";
-   if      (!isPosition)    sCurrentPosition = " ";
-   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:    ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
-   else {
-      double currentUnits = 0;
-      string sCurrentUnits = "";
-      if (mm.leveragedLots != 0) {
-         currentUnits  = MathAbs(totalPosition)/mm.leveragedLots;
-         sCurrentUnits = StringConcatenate("U", NumberToStr(currentUnits, ",'.1R"), "    ");
-      }
-      string sRisk = "";
-      if (mm.riskPercent && currentUnits) {
-         sRisk = StringConcatenate("R", NumberToStr(mm.riskPercent * currentUnits, ",'.0R"), "%    ");
-      }
-      string sCurrentLeverage = "";
-      if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", NumberToStr(MathAbs(totalPosition)/mm.unleveragedLots, ",'.1R"), "   ");
+   // total virtual/real position bottom-right
+   bool   _isPosition = false;
+   double _totalPosition, _longPosition, _shortPosition;
+   string sCurrentPosition = " ";
 
-      sCurrentPosition = StringConcatenate("Position:    ", sRisk, sCurrentUnits, sCurrentLeverage, NumberToStr(totalPosition, "+,'.+"), " lot");
+   if (isPosition) {                                     // real position data
+      _isPosition    = isPosition;
+      _totalPosition = totalPosition;
+      _longPosition  = longPosition;
+      _shortPosition = shortPosition;
+   }
+   else if (isVirtualPosition) {                         // virtual position data
+      _isPosition    = isVirtualPosition;
+      _totalPosition = virtualTotalPosition;
+      _longPosition  = virtualLongPosition;
+      _shortPosition = virtualShortPosition;
+      sCurrentPosition = "Virt. ";
+   }
+
+   if (_isPosition) {
+      if (!_totalPosition) {
+         sCurrentPosition = StringConcatenate(sCurrentPosition, "Position:    ±", NumberToStr(_longPosition, ",'.+"), " lot (hedged)");
+      }
+      else {
+         double currentUnits = 0;
+         string sCurrentUnits = "";
+         if (mm.leveragedLots != 0) {
+            currentUnits  = MathAbs(_totalPosition)/mm.leveragedLots;
+            sCurrentUnits = StringConcatenate("U", NumberToStr(currentUnits, ",'.1R"), "    ");
+         }
+         string sRisk = "";
+         if (mm.riskPercent && currentUnits) {
+            sRisk = StringConcatenate("R", NumberToStr(mm.riskPercent * currentUnits, ",'.0R"), "%    ");
+         }
+         string sCurrentLeverage = "";
+         if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", NumberToStr(MathAbs(_totalPosition)/mm.unleveragedLots, ",'.1R"), "   ");
+
+         sCurrentPosition = StringConcatenate(sCurrentPosition, "Position:    ", sRisk, sCurrentUnits, sCurrentLeverage, NumberToStr(_totalPosition, "+,'.+"), " lot");
+      }
    }
    ObjectSetText(label.totalPosition, sCurrentPosition, 9, "Tahoma", SlateGray);
 
@@ -1818,10 +1844,11 @@ bool UpdateStopoutLevel() {
 
    // results intern + extern
    double prevTotalPosition = totalPosition;
-   longPosition  = NormalizeDouble(longPosition,  2);
-   shortPosition = NormalizeDouble(shortPosition, 2);
-   totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
-   isPosition    = longPosition || shortPosition;
+   longPosition      = NormalizeDouble(longPosition,  2);
+   shortPosition     = NormalizeDouble(shortPosition, 2);
+   totalPosition     = NormalizeDouble(longPosition - shortPosition, 2);
+   isPosition        = longPosition || shortPosition;
+   isVirtualPosition = false;
 
    // signal potential errors if the position increased by more than 1 x unitsize
    if (false) /*&&*/ if (!__isTesting && Track.Orders && mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
@@ -1857,7 +1884,7 @@ bool UpdateStopoutLevel() {
    double termValue1, termValue2, termResult1, termResult2, customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct=EMPTY_VALUE, lossMarkerPrice, lossMarkerPct=EMPTY_VALUE, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
    int    customTickets[], customTypes[];
    double customLots[], customOpenPrices[], customCommissions[], customSwaps[], customProfits[];
-   bool   lineSkipped, isCustomVirtual;
+   bool   lineSkipped, isVirtual;
 
    ArrayResize(positions.data, 0);
    positions.showMfe = false;                                                    // global var to control positioning/display width of chart objects
@@ -1875,7 +1902,7 @@ bool UpdateStopoutLevel() {
          if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
 
          // store custom position for display
-         if (!StoreCustomPosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct, line, lineSkipped)) {
+         if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct, line, lineSkipped)) {
             return(false);
          }
 
@@ -1903,10 +1930,18 @@ bool UpdateStopoutLevel() {
             }
             else {
                positions.showMfe = positions.showMfe || config.dData[line][I_MFE_ENABLED];
+
+               // track the first (top-most) virtual position
+               if (isVirtual && !isVirtualPosition) {
+                  isVirtualPosition    = true;
+                  virtualTotalPosition = customTotalPosition;
+                  virtualLongPosition  = customLongPosition;
+                  virtualShortPosition = customShortPosition;
+               }
             }
          }
 
-         isCustomVirtual     = false;
+         isVirtual           = false;
          customLongPosition  = 0;
          customShortPosition = 0;
          customTotalPosition = 0;
@@ -1932,7 +1967,7 @@ bool UpdateStopoutLevel() {
       if (!ExtractPosition(termType, termValue1, termValue2, termResult1, termResult2,
                            _longPosition,      _shortPosition,      _totalPosition,      tickets,       types,       lots, openTimes, openPrices,       commissions,       swaps,       profits,
                            customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,      customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct,
-                           isCustomVirtual, flags)) {
+                           isVirtual, flags)) {
          return(false);
       }
       configTerms[i][I_TERM_RESULT1] = termResult1;
@@ -2237,49 +2272,48 @@ int SearchLfxTicket(int ticket) {
 
 
 /**
- * Read/parse the custom position configuration and store it in a binary format.
+ * Read and parse the configuration of custom positions, and store it in a binary format.
  *
  * @return bool - success status
- *
  *
  * Fills config.sData[], config.dData[] und configTerms[] with parsed configuration data of the current chart symbol. On return
  * configTerms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL) marks the end of a
  * configuration line and also an empty configuration. On return configTerms[] is never empty and holds at least one EOL marker.
  *
- * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
- * | Notation                                        | Description                                                                   | Content of configTerms[][] (7)                                     |
- * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
- * |    #123456                                      | komplettes Ticket oder verbleibender Rest eines Tickets                       | [TERM_TICKET,        123456,           EMPTY,            ..., ...] |
- * | 0.1#123456                                      | O.1 Lot eines Tickets (1)                                                     | [TERM_TICKET,        123456,           0.1,              ..., ...] |
- * |    L                                            | ohne Lotsize: alle übrigen offenen Long-Positionen                            | [TERM_OPEN_LONG,     EMPTY,            ...,              ..., ...] |
- * |    S                                            | ohne Lotsize: alle übrigen offenen Short-Positionen                           | [TERM_OPEN_SHORT,    EMPTY,            ...,              ..., ...] |
- * | 0.2L                                            | mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)                  | [TERM_OPEN_LONG,     0.2,              NULL,             ..., ...] |
- * | 0.3S[@]1.2345                                   | mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)               | [TERM_OPEN_SHORT,    0.3,              1.2345,           ..., ...] |
- * | O{DateTime}                                     | offene Positionen des aktuellen Symbols eines Standard-Zeitraums (3)          | [TERM_OPEN,          2014.01.01 00:00, 2014.12.31 23:59, ..., ...] |
- * | O{DateTime}-{DateTime}                          | offene Positionen des aktuellen Symbols von und bis zu einem Zeitpunkt (3)(4) | [TERM_OPEN,          2014.02.01 08:00, 2014.02.10 18:00, ..., ...] |
- * | H{DateTime}             [Monthly|Weekly|Daily]  | Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)           | [TERM_HISTORY,       2014.01.01 00:00, 2014.12.31 23:59, ..., ...] |
- * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]  | Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)          | [TERM_HISTORY_TOTAL, 2014.02.01 08:00, 2014.02.10 18:00, ..., ...] |
- * | 12.34                                           | dem PL einer Position zuzuschlagender Betrag                                  | [TERM_ADJUSTMENT,    12.34,            ...,              ..., ...] |
- * | E[Q][=]123.00                                   | equity value to use                                                           | [TERM_EQUITY,        123.00,           ...,              ..., ...] |
- * | PM=1.2345                                       | draw a profit marker and calculate % PL at the specified price                | [TERM_PROFIT_MARKER, 1.2345,           ...,              ..., ...] |
- * | PM=3%                                           | calculate price of the specified % PL and draw a profit marker                | [TERM_PROFIT_MARKER, ...,              3.0,              ..., ...] |
- * | LM=2.3456                                       | draw a loss marker and calculate % PL at the specified price                  | [TERM_LOSS_MARKER,   2.3456,           ...,              ..., ...] |
- * | LM=-5%                                          | calculate price of the specified %PL and draw a loss marker                   | [TERM_LOSS_MARKER,   ...,              -5.0,             ..., ...] |
- * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
- * | MFE                                             | track MFE/MAE                                                                 | TERM_MFE, stored in config.dData[]                                 |
- * | MFES                                            | track MFE/MAE and signal new PL high/lows                                     | TERM_MFE + flag, stored in config.dData[]                          |
- * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
- * | any text after a semicolon ";" aka .ini comment | displayed as position description                                             | stored in config.sData[]                                           |
- * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                                |                                                                    |
- * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
+ * | Syntax                                          | Description                                                              | Content of configTerms[][] (7)                                     |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
+ * |    #123456                                      | complete unprocessed ticket or remainder of processed ticket             | [TERM_TICKET,        123456,           EMPTY,            ..., ...] |
+ * | 0.1#123456                                      | O.1 lot of a ticket (1)                                                  | [TERM_TICKET,        123456,           0.1,              ..., ...] |
+ * |    L                                            | w/o lotsize: all remaining long positions                                | [TERM_OPEN_LONG,     EMPTY,            ...,              ..., ...] |
+ * |    S                                            | w/o lotsize: all remaining short positions                               | [TERM_OPEN_SHORT,    EMPTY,            ...,              ..., ...] |
+ * | 0.2L                                            | with lotsize: virtual long position at current price (2)                 | [TERM_OPEN_LONG,     0.2,              NULL,             ..., ...] |
+ * | 0.3S[@]1.2345                                   | with lotsize: virtual short position at specified price (2)              | [TERM_OPEN_SHORT,    0.3,              1.2345,           ..., ...] |
+ * | O{DateTime}                                     | current symbol: all positions opened in a standard time period (3)       | [TERM_OPEN,          2014.01.01 00:00, 2014.12.31 23:59, ..., ...] |
+ * | O{DateTime}-{DateTime}                          | current symbol: all positions opened in the specified time period (3)(4) | [TERM_OPEN,          2014.02.01 08:00, 2014.02.10 18:00, ..., ...] |
+ * | H{DateTime}             [Monthly|Weekly|Daily]  | current symbol: all trades closed in a standard time period (3)(5)       | [TERM_HISTORY,       2014.01.01 00:00, 2014.12.31 23:59, ..., ...] |
+ * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]  | all symbols: all trades closed in the specified time period (3)(4)(5)    | [TERM_HISTORY_TOTAL, 2014.02.01 08:00, 2014.02.10 18:00, ..., ...] |
+ * | 12.34                                           | PnL amount to add to a custom position                                   | [TERM_ADJUSTMENT,    12.34,            ...,              ..., ...] |
+ * | E=123.00                                        | equity value to use                                                      | [TERM_EQUITY,        123.00,           ...,              ..., ...] |
+ * | PM=1.2345                                       | draw a profit marker and calculate % PnL at the specified price          | [TERM_PROFIT_MARKER, 1.2345,           ...,              ..., ...] |
+ * | PM=3%                                           | calculate price of the specified % PnL and draw a profit marker          | [TERM_PROFIT_MARKER, ...,              3.0,              ..., ...] |
+ * | LM=2.3456                                       | draw a loss marker and calculate % PnL at the specified price            | [TERM_LOSS_MARKER,   2.3456,           ...,              ..., ...] |
+ * | LM=-5%                                          | calculate price of the specified %PnL and draw a loss marker             | [TERM_LOSS_MARKER,   ...,              -5.0,             ..., ...] |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
+ * | MFE                                             | track MFE/MAE                                                            | TERM_MFE, stored in config.dData[]                                 |
+ * | MFES                                            | track MFE/MAE and signal new PL high/lows                                | TERM_MFE + flag, stored in config.dData[]                          |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
+ * | any text after a semicolon ";" aka .ini comment | displayed as position description                                        | stored in config.sData[]                                           |
+ * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                           |                                                                    |
+ * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
  *
  *  Example configuration (6)
  *  -------------------------
- *   [CustomPositions]
- *   GBPAUD.a = #111111, 0.1#222222                   // full ticket #111111, plus 0.1 lot of ticket #222222
- *   GBPAUD.b = 0.2L, #222222                         // virtual long position of 0.2 lot, plus remainder of #222222 (2)
- *   GBPAUD.c = L,S,-34.56,LM=-3%                     // all remaining positions incl. remainder of #222222, plus loss of -34.56, loss marker at PL=-3%
- *   GBPAUD.d = 0.3S                                  // virtual short position of 0.3 lot
+ *  [CustomPositions]
+ *  GBPAUD.a = #111111, 0.1#222222                    // full ticket #111111, plus 0.1 lot of ticket #222222
+ *  GBPAUD.b = 0.2L@1.6500, #222222                   // virtual long position of 0.2 lot at 1.6500, plus remainder of #222222 (2)
+ *  GBPAUD.c = L, S, -34.56, LM=-3%                   // all remaining positions incl. remainder of #222222, plus loss of -34.56, loss marker at PL=-3%
+ *  GBPAUD.d = 0.3S                                   // virtual short position of 0.3 lot at current price
  *
  *
  *  Resulting array configTerms[] for the above example (7)
@@ -2305,13 +2339,13 @@ int SearchLfxTicket(int ticket) {
  *
  *
  *  (1) Bei einer Lotsize von 0 wird die Teilposition ignoriert.
- *  (2) Werden reale mit virtuellen Positionen kombiniert, wird die Position virtuell und nicht von der aktuellen Gesamtposition abgezogen.
+ *  (2) Werden reale mit virtuellen Positionen kombiniert, wird die gesamte Position virtuell und nicht von der aktuellen Gesamtposition abgezogen.
  *      Dies kann in Verbindung mit (1) benutzt werden, um eine virtuelle Position zu konfigurieren, die die folgenden Positionen nicht
  *      beeinflußt (z.B. durch "0L").
  *  (3) Zeitangaben im Format: 2014[.01[.15 [W|12:30[:45]]]]
  *  (4) Einer der beiden Zeitpunkte kann leer sein und steht jeweils für "von Beginn" oder "bis Ende".
  *  (5) Ein Historyzeitraum kann tages-, wochen- oder monatsweise gruppiert werden, solange er nicht mit anderen Positionen kombiniert wird.
- *  (6) Die Positionen werden nicht sortiert und in der Reihenfolge ihrer Notierung angezeigt.
+ *  (6) Die Positionen werden unabhängig von den Schlüsseln in der Reihenfolge ihrer Notierung angezeigt.
  *  (7) "..." denotes fields not used by the term
  */
 bool CustomPositions.ReadConfig() {
@@ -2421,10 +2455,8 @@ bool CustomPositions.ReadConfig() {
                   termResult2 = EMPTY_VALUE;
                }
 
-               else if (StrStartsWith(values[n], "E")) {             // equity value: E[Q][=]123.56
-                  sValue = StrTrimLeft(StrSubstr(values[n], 1));
-                  if (StrStartsWith(sValue, "Q")) sValue = StrTrimLeft(StrSubstr(sValue, 1));
-                  if (StrStartsWith(sValue, "=")) sValue = StrTrimLeft(StrSubstr(sValue, 1));
+               else if (StrStartsWith(values[n], "E=")) {            // equity value: E=123.56
+                  sValue = StrTrimLeft(StrSubstr(values[n], 2));
                   if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in equity term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_EQUITY;
                   termValue1 = StrToDouble(sValue);
@@ -4462,7 +4494,7 @@ bool StoreStatus() {
    SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
-   // Risk/MFE/MAE stats of custom positions
+   // risk/MFE/MAE stats of custom positions
    string keys="", configKey="";
    int size = ArrayRange(config.sData, 0);
    for (int i=0; i < size; i++) {
@@ -4543,7 +4575,7 @@ bool RestoreStatus() {
    Chart.RestoreString(key, sValue2);
    if (!StringLen(sValue1)) sValue1 = sValue2;
 
-   // Risk/MFE/MAE stats of custom positions
+   // risk/MFE/MAE stats of custom positions
    ArrayResize(config.sData, 0);
    ArrayResize(config.dData, 0);
    int size = Explode(sValue1, "=", configKeys, NULL);
