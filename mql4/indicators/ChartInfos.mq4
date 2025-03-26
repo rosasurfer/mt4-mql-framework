@@ -1308,15 +1308,24 @@ bool UpdatePositions() {
    // pending order marker bottom-right
    string label = ProgramName() +".PendingTickets";
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
-   ObjectSet(label, OBJPROP_CORNER,     CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE,  12);
-   ObjectSet(label, OBJPROP_YDISTANCE,  ifInt(isPosition, 48, 30));
+   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+   ObjectSet(label, OBJPROP_XDISTANCE, 12);
+      int yDist = 12;
+      if (position.unitsize.corner == CORNER_BOTTOM_RIGHT) {
+         yDist += 18;
+         if (isPosition || isVirtualPosition) {
+            yDist += 18;
+         }
+      }
+   ObjectSet(label, OBJPROP_YDISTANCE, yDist);
    ObjectSet(label, OBJPROP_TIMEFRAMES, ifInt(isPendings, OBJ_PERIODS_ALL, OBJ_PERIODS_NONE));
    ObjectSetText(label, "n", 6, "Webdings", Orange);                       // a Webdings "dot"
 
    // prepare rows for custom positions bottom-left
-   static int lines, cols, maxCols=9, percentCol=-1, mfeCol=-1, commentCol=-1, xOffset[], xPrev, xDist, yStart=6, yDist;
+   int xDist, xPrev, yStart=6, maxCols=9;
+   static int lines, cols, percentCol=-1, mfeCol=-1, commentCol=-1, xOffset[];
    static bool lastShowAbsProfits, lastShowMfe;
+
    if (!ArraySize(xOffset) || positions.showAbsProfits!=lastShowAbsProfits || positions.showMfe!=lastShowMfe) {
       // offsets:     Type:  Lots  BE:  BePrice  Profit:  Percent  Comment
       int offsets[] = {9,    46,   83,  28,      68,      39,      61};
