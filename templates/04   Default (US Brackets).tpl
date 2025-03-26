@@ -16,7 +16,7 @@ askline=0
 days=0
 descriptions=1
 scroll=1
-shift=0
+shift=1
 shift_size=10
 
 fixed_pos=620

@@ -15,7 +15,7 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
+scroll=1
 shift=1
 shift_size=10
 
