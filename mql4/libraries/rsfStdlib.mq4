@@ -463,31 +463,32 @@ int GetServerToFxtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
    int offset1 = 0;
    if (timezone != "gmt") {
       offset1 = GetServerToGmtTimeOffset(serverTime);
-      if (offset1 == EMPTY_VALUE)
-         return(EMPTY_VALUE);
+      if (offset1 == EMPTY_VALUE) return(EMPTY_VALUE);
    }
 
    // Offset GMT zu FXT
    int offset2 = GetGmtToFxtTimeOffset(serverTime - offset1);
-   if (offset2 == EMPTY_VALUE)
-      return(EMPTY_VALUE);
+   if (offset2 == EMPTY_VALUE) return(EMPTY_VALUE);
 
    return(offset1 + offset2);
 }
 
 
 /**
- * Gibt den Offset der angegebenen Serverzeit zu GMT (Greenwich Mean Time) zurück.
+ * Returns the offset of the specified server time to GMT.
  *
- * @param  datetime serverTime - Serverzeit
+ * @param  datetime serverTime          - server time
+ * @param  string   timezone [optional] - server timezone (default: current server timezone)
  *
- * @return int - Offset in Sekunden, es gilt: GMT + Offset = Serverzeit (positive Werte für östlich von GMT laufende Server)
- *               EMPTY_VALUE, falls ein Fehler auftrat
+ * @return int - offset in seconds, it holds: GMT + offset = server-time (positive values for locations east of GMT);
+ *               EMPTY_VALUE in case of errors
  */
-int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
-   if (!StringLen(timezone))
-      return(EMPTY_VALUE);
+int GetServerToGmtTimeOffset(datetime serverTime, string timezone = "") {
+   if (timezone=="" || timezone=="0") {
+      timezone = GetServerTimezone();
+      if (timezone == "") return(EMPTY_VALUE);
+   }
+   string lTimezone = StrToLower(timezone);
 
    // schnelle Rückkehr, wenn der Server unter einer zu GMT festen Zeitzone läuft
    if (lTimezone == "gmt") return(0);
@@ -3665,17 +3666,20 @@ int GetFxtToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_
 
 
 /**
- * Gibt den Offset der angegebenen GMT-Zeit zur Serverzeit zurück.
+ * Returns the offset of the specified GMT time to server time.
  *
- * @param  datetime gmtTime - GMT-Zeit
+ * @param  datetime gmtTime             - GMT time
+ * @param  string   timezone [optional] - server timezone (default: current server timezone)
  *
- * @return int - Offset in Sekunden, es gilt: Serverzeit + Offset = GMT (positive Werte für westlich von GMT laufende Server)
- *               EMPTY_VALUE, falls ein Fehler auftrat
+ * @return int - offset in seconds, it holds: server-time + offset = GMT (positive values for locations west of GMT);
+ *               EMPTY_VALUE in case of errors
  */
-int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
-   if (!StringLen(timezone))
-      return(EMPTY_VALUE);
+int GetGmtToServerTimeOffset(datetime gmtTime, string timezone = "") {
+   if (timezone=="" || timezone=="0") {
+      timezone = GetServerTimezone();
+      if (timezone == "") return(EMPTY_VALUE);
+   }
+   string lTimezone = StrToLower(timezone);
 
    // schnelle Rückkehr, wenn der Server unter einer zu GMT festen Zeitzone läuft
    if (lTimezone == "gmt") return(0);
@@ -3719,8 +3723,9 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET] + PLUS_2h;
       else                                                                  offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2h;
    }
-   else return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(2)  unknown server timezone configuration \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
-
+   else {
+      return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(2)  unknown server timezone configuration \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+   }
    return(offset);
 }
 
@@ -3761,7 +3766,7 @@ string GetServerTimezone() {
       lastResult[IDX_SERVER ] = GetAccountServer();    if (!StringLen(lastResult[IDX_SERVER ])) return("");
       lastResult[IDX_COMPANY] = GetAccountCompanyId(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
 
-      // prefer a custom company mapping of a full server name (check global config only to prevent recursion)
+      // prefer a custom company mapping of a full server name (global config only to prevent recursion)
       string customMapping = GetGlobalConfigString("AccountCompanies", lastResult[IDX_SERVER]);
 
       if (StringLen(customMapping) > 0) {

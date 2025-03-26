@@ -99,10 +99,10 @@
    int      GetFxtToServerTimeOffset(datetime fxtTime);
 
    int      GetGmtToFxtTimeOffset   (datetime gmtTime);
-   int      GetGmtToServerTimeOffset(datetime gmtTime);
+   int      GetGmtToServerTimeOffset(datetime gmtTime, string timezone);
 
    int      GetServerToFxtTimeOffset(datetime serverTime);
-   int      GetServerToGmtTimeOffset(datetime serverTime);
+   int      GetServerToGmtTimeOffset(datetime serverTime, string timezone);
 
    bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);
 

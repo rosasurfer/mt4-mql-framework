@@ -4085,7 +4085,7 @@ datetime GmtToFxtTime(datetime time) {
  * @return datetime - server time or NaT in case of errors
  */
 datetime GmtToServerTime(datetime time) {
-   int offset = GetGmtToServerTimeOffset(time);
+   int offset = GetGmtToServerTimeOffset(time, NULL);
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
 }
@@ -4113,7 +4113,7 @@ datetime ServerToFxtTime(datetime time) {
  * @return datetime - GMT time or NaT in case of errors
  */
 datetime ServerToGmtTime(datetime time) {
-   int offset = GetServerToGmtTimeOffset(time);
+   int offset = GetServerToGmtTimeOffset(time, NULL);
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
 }
@@ -6886,12 +6886,12 @@ void __DummyCalls() {
    int      GetFxtToGmtTimeOffset(datetime time);
    int      GetFxtToServerTimeOffset(datetime time);
    int      GetGmtToFxtTimeOffset(datetime time);
-   int      GetGmtToServerTimeOffset(datetime time);
+   int      GetGmtToServerTimeOffset(datetime time, string timezone);
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetServerTimezone();
    int      GetServerToFxtTimeOffset(datetime serverTime);
-   int      GetServerToGmtTimeOffset(datetime serverTime);
+   int      GetServerToGmtTimeOffset(datetime serverTime, string timezone);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ReleaseLock(string mutex);
    bool     ReverseStringArray(string array[]);
