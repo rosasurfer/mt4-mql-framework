@@ -930,21 +930,22 @@ string FindStandardSymbol(string symbol, bool strict = false) {
    else if (StrEndsWith(_symbol, "_AVG")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, "^"   )) _symbol = StrLeft(_symbol, -1);
    else if (StrEndsWith(_symbol, "."   )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, "+"   )) _symbol = StrLeft(_symbol, -1);
 
    string result = "";
 
    switch (StringGetChar(_symbol, 0)) {
       case '#': if      (              _symbol=="#GERMANY40") result = "DAX";
-                else if (StrStartsWith(_symbol, "#DAX."))     result = "DAX";
-                else if (StrStartsWith(_symbol, "#DJ30_"))    result = "DJIA";
-                else if (StrStartsWith(_symbol, "#DJI."))     result = "DJIA";
-                else if (StrStartsWith(_symbol, "#DJT."))     result = "DJTA";
-                else if (StrStartsWith(_symbol, "#GER40_"))   result = "DAX";
-                else if (StrStartsWith(_symbol, "#JP225_"))   result = "NIKKEI";
-                else if (StrStartsWith(_symbol, "#SPX."))     result = "SP500";
-                else if (StrStartsWith(_symbol, "#US100_"))   result = "NASDAQ";
-                else if (StrStartsWith(_symbol, "#US2000_"))  result = "RUSSELL";
-                else if (StrStartsWith(_symbol, "#US500_"))   result = "SP500";
+                else if (StrStartsWith(_symbol, "#DAX."    )) result = "DAX";
+                else if (StrStartsWith(_symbol, "#DJ30_"   )) result = "DJIA";
+                else if (StrStartsWith(_symbol, "#DJI."    )) result = "DJIA";
+                else if (StrStartsWith(_symbol, "#DJT."    )) result = "DJTA";
+                else if (StrStartsWith(_symbol, "#GER40_"  )) result = "DAX";
+                else if (StrStartsWith(_symbol, "#JP225_"  )) result = "NIKKEI";
+                else if (StrStartsWith(_symbol, "#SPX."    )) result = "SP500";
+                else if (StrStartsWith(_symbol, "#US100_"  )) result = "NASDAQ";
+                else if (StrStartsWith(_symbol, "#US2000_" )) result = "RUSSELL";
+                else if (StrStartsWith(_symbol, "#US500_"  )) result = "SP500";
                 break;
 
       case '0':
@@ -986,14 +987,17 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (              _symbol=="CRUDE_OIL")   result = "WTI";
                 break;
 
-      case 'D': if      (              _symbol=="DE30")        result = "DAX";
-                else if (              _symbol=="DE40")        result = "DAX";
-                else if (              _symbol=="DJI ")        result = "DJIA";
-                else if (              _symbol=="DJT" )        result = "DJTA";
-                else if (StrStartsWith(_symbol, "DXY_"))       result = "USDX";
+      case 'D': if      (StrStartsWith(_symbol, "DAX30"))      result = "DAX";
+                else if (StrStartsWith(_symbol, "DAX40"))      result = "DAX";
+                else if (StrStartsWith(_symbol, "DE30" ))      result = "DAX";
+                else if (StrStartsWith(_symbol, "DE40" ))      result = "DAX";
+                else if (              _symbol=="DJ30"  )      result = "DJIA";
+                else if (              _symbol=="DJI "  )      result = "DJIA";
+                else if (              _symbol=="DJT"   )      result = "DJTA";
+                else if (StrStartsWith(_symbol, "DXY_" ))      result = "USDX";
                 break;
 
-      case 'E': if      (              _symbol=="ECX"   )      result = "EURX";
+      case 'E': if      (              _symbol=="ECX"    )     result = "EURX";
                 else if (StrStartsWith(_symbol, "EURAUD"))     result = "EURAUD";
                 else if (StrStartsWith(_symbol, "EURCAD"))     result = "EURCAD";
                 else if (StrStartsWith(_symbol, "EURCCK"))     result = "EURCZK";
@@ -1017,27 +1021,27 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "EURTRY"))     result = "EURTRY";
                 else if (StrStartsWith(_symbol, "EURUSD"))     result = "EURUSD";
                 else if (StrStartsWith(_symbol, "EURZAR"))     result = "EURZAR";
-                else if (              _symbol=="EURX"  )      result = "EURX";
+                else if (              _symbol=="EURX"   )     result = "EURX";
                 break;
 
       case 'F': break;
 
-      case 'G': if      (StrStartsWith(_symbol, "GBPAUD") )    result = "GBPAUD";
-                else if (StrStartsWith(_symbol, "GBPCAD") )    result = "GBPCAD";
-                else if (StrStartsWith(_symbol, "GBPCHF") )    result = "GBPCHF";
-                else if (StrStartsWith(_symbol, "GBPDKK") )    result = "GBPDKK";
-                else if (StrStartsWith(_symbol, "GBPJPY") )    result = "GBPJPY";
-                else if (StrStartsWith(_symbol, "GBPLFX") )    result = "GBPLFX";
-                else if (StrStartsWith(_symbol, "GBPNOK") )    result = "GBPNOK";
-                else if (StrStartsWith(_symbol, "GBPNZD") )    result = "GBPNZD";
-                else if (StrStartsWith(_symbol, "GBPPLN") )    result = "GBPPLN";
-                else if (StrStartsWith(_symbol, "GBPRUB") )    result = "GBPRUB";
-                else if (StrStartsWith(_symbol, "GBPRUR") )    result = "GBPRUB";
-                else if (StrStartsWith(_symbol, "GBPSEK") )    result = "GBPSEK";
-                else if (StrStartsWith(_symbol, "GBPUSD") )    result = "GBPUSD";
-                else if (StrStartsWith(_symbol, "GBPZAR") )    result = "GBPZAR";
-                else if (              _symbol=="GER30"   )    result = "DAX";
-                else if (              _symbol=="GER40"   )    result = "DAX";
+      case 'G': if      (StrStartsWith(_symbol, "GBPAUD" ))    result = "GBPAUD";
+                else if (StrStartsWith(_symbol, "GBPCAD" ))    result = "GBPCAD";
+                else if (StrStartsWith(_symbol, "GBPCHF" ))    result = "GBPCHF";
+                else if (StrStartsWith(_symbol, "GBPDKK" ))    result = "GBPDKK";
+                else if (StrStartsWith(_symbol, "GBPJPY" ))    result = "GBPJPY";
+                else if (StrStartsWith(_symbol, "GBPLFX" ))    result = "GBPLFX";
+                else if (StrStartsWith(_symbol, "GBPNOK" ))    result = "GBPNOK";
+                else if (StrStartsWith(_symbol, "GBPNZD" ))    result = "GBPNZD";
+                else if (StrStartsWith(_symbol, "GBPPLN" ))    result = "GBPPLN";
+                else if (StrStartsWith(_symbol, "GBPRUB" ))    result = "GBPRUB";
+                else if (StrStartsWith(_symbol, "GBPRUR" ))    result = "GBPRUB";
+                else if (StrStartsWith(_symbol, "GBPSEK" ))    result = "GBPSEK";
+                else if (StrStartsWith(_symbol, "GBPUSD" ))    result = "GBPUSD";
+                else if (StrStartsWith(_symbol, "GBPZAR" ))    result = "GBPZAR";
+                else if (StrStartsWith(_symbol, "GER30"  ))    result = "DAX";
+                else if (StrStartsWith(_symbol, "GER40"  ))    result = "DAX";
                 else if (              _symbol=="GOLD"    )    result = "XAUUSD";
                 else if (              _symbol=="GOLDEURO")    result = "XAUEUR";
                 break;
@@ -1060,18 +1064,19 @@ string FindStandardSymbol(string symbol, bool strict = false) {
       case 'M': if      (StrStartsWith(_symbol, "MXNJPY"))     result = "MXNJPY";
                 break;
 
-      case 'N': if      (              _symbol=="N225"   )     result = "NIKKEI";
-                else if (              _symbol=="NAS100" )     result = "NASDAQ";
-                else if (StrStartsWith(_symbol, "NOKJPY"))     result = "NOKJPY";
-                else if (StrStartsWith(_symbol, "NOKSEK"))     result = "NOKSEK";
-                else if (              _symbol=="NQ100"  )     result = "NASDAQ";
-                else if (              _symbol=="NQCOMP" )     result = "NASCOMP";
-                else if (StrStartsWith(_symbol, "NZDCAD"))     result = "NZDCAD";
-                else if (StrStartsWith(_symbol, "NZDCHF"))     result = "NZDCHF";
-                else if (StrStartsWith(_symbol, "NZDJPY"))     result = "NZDJPY";
-                else if (StrStartsWith(_symbol, "NZDLFX"))     result = "NZDLFX";
-                else if (StrStartsWith(_symbol, "NZDSGD"))     result = "NZDSGD";
-                else if (StrStartsWith(_symbol, "NZDUSD"))     result = "NZDUSD";
+      case 'N': if      (              _symbol=="N225"     )   result = "NIKKEI";
+                else if (              _symbol=="NAS100"   )   result = "NASDAQ";
+                else if (              _symbol=="NIKKEI225")   result = "NIKKEI";
+                else if (StrStartsWith(_symbol, "NOKJPY")  )   result = "NOKJPY";
+                else if (StrStartsWith(_symbol, "NOKSEK")  )   result = "NOKSEK";
+                else if (              _symbol=="NQ100"    )   result = "NASDAQ";
+                else if (              _symbol=="NQCOMP"   )   result = "NASCOMP";
+                else if (StrStartsWith(_symbol, "NZDCAD")  )   result = "NZDCAD";
+                else if (StrStartsWith(_symbol, "NZDCHF")  )   result = "NZDCHF";
+                else if (StrStartsWith(_symbol, "NZDJPY")  )   result = "NZDJPY";
+                else if (StrStartsWith(_symbol, "NZDLFX")  )   result = "NZDLFX";
+                else if (StrStartsWith(_symbol, "NZDSGD")  )   result = "NZDSGD";
+                else if (StrStartsWith(_symbol, "NZDUSD")  )   result = "NZDUSD";
                 break;
 
       case 'O': break;
@@ -1089,6 +1094,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "SGDJPY")   )  result = "SGDJPY";
                 else if (              _symbol=="SILVER"    )  result = "XAGUSD";
                 else if (              _symbol=="SILVEREURO")  result = "XAGEUR";
+                else if (              _symbol=="SPI200"    )  result = "ASX200";
                 break;
 
       case 'T': if      (StrStartsWith(_symbol, "TRYJPY"))     result = "TRYJPY";
@@ -1097,6 +1103,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
       case 'U':
                 if      (              _symbol=="UK100"  )     result = "FTSE";
                 else if (              _symbol=="UKOIL"  )     result = "BRENT";
+                else if (              _symbol=="UKOUSD" )     result = "BRENT";
                 else if (              _symbol=="US2000" )     result = "RUSSELL";
                 else if (              _symbol=="US30"   )     result = "DJIA";
                 else if (              _symbol=="US500"  )     result = "SP500";
@@ -1127,6 +1134,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "USDTWD"))     result = "USDTWD";
                 else if (              _symbol=="USDX"   )     result = "USDX";
                 else if (StrStartsWith(_symbol, "USDZAR"))     result = "USDZAR";
+                else if (              _symbol=="USOUSD" )     result = "WTI";
                 else if (              _symbol=="USTEC"  )     result = "NASDAQ";
                 break;
 
@@ -1142,8 +1150,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "XAUEUR"))     result = "XAUEUR";
                 else if (StrStartsWith(_symbol, "XAUJPY"))     result = "XAUJPY";
                 else if (StrStartsWith(_symbol, "XAUUSD"))     result = "XAUUSD";
-                else if (              _symbol=="XBRUSD")      result = "BRENT";
-                else if (              _symbol=="XTIUSD")      result = "WTI";
+                else if (              _symbol=="XBRUSD" )     result = "BRENT";
+                else if (              _symbol=="XTIUSD" )     result = "WTI";
                 break;
 
       case 'Y': break;
@@ -4077,7 +4085,7 @@ datetime GmtToFxtTime(datetime time) {
  * @return datetime - server time or NaT in case of errors
  */
 datetime GmtToServerTime(datetime time) {
-   int offset = GetGmtToServerTimeOffset(time);
+   int offset = GetGmtToServerTimeOffset(time, NULL);
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
 }
@@ -4105,7 +4113,7 @@ datetime ServerToFxtTime(datetime time) {
  * @return datetime - GMT time or NaT in case of errors
  */
 datetime ServerToGmtTime(datetime time) {
-   int offset = GetServerToGmtTimeOffset(time);
+   int offset = GetServerToGmtTimeOffset(time, NULL);
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
 }
@@ -6878,12 +6886,12 @@ void __DummyCalls() {
    int      GetFxtToGmtTimeOffset(datetime time);
    int      GetFxtToServerTimeOffset(datetime time);
    int      GetGmtToFxtTimeOffset(datetime time);
-   int      GetGmtToServerTimeOffset(datetime time);
+   int      GetGmtToServerTimeOffset(datetime time, string timezone);
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetServerTimezone();
    int      GetServerToFxtTimeOffset(datetime serverTime);
-   int      GetServerToGmtTimeOffset(datetime serverTime);
+   int      GetServerToGmtTimeOffset(datetime serverTime, string timezone);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ReleaseLock(string mutex);
    bool     ReverseStringArray(string array[]);

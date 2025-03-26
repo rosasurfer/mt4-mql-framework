@@ -372,9 +372,9 @@
 #define DEC                              DECEMBER
 
 
-// timezone identifiers
-#define TZ_SERVER                               1        // the current trade server's timezone
-#define TZ_LOCAL                                2        // the timezone of the local system
+// timezone modes
+#define TZ_SERVER                               1        // timezone of the current trade server
+#define TZ_LOCAL                                2        // timezone of the local system
 #define TZ_FXT                                  3        // FXT (Forex Standard Time, aka America/New_York+0700)
 #define TZ_GMT                                  4        // GMT (Greenwich Mean Time, aka UTC)
 #define TZ_UTC                             TZ_GMT        // alias

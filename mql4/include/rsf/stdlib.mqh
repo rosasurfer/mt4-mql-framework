@@ -89,8 +89,6 @@
    int      BufferGetChar(int buffer[], int pos);
    //int    BufferSetChar(int buffer[], int pos, int chr);
 
-   string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // alias
-
 
    // configuration
    int      GetIniSections(string fileName, string &names[]);
@@ -101,10 +99,10 @@
    int      GetFxtToServerTimeOffset(datetime fxtTime);
 
    int      GetGmtToFxtTimeOffset   (datetime gmtTime);
-   int      GetGmtToServerTimeOffset(datetime gmtTime);
+   int      GetGmtToServerTimeOffset(datetime gmtTime, string timezone);
 
    int      GetServerToFxtTimeOffset(datetime serverTime);
-   int      GetServerToGmtTimeOffset(datetime serverTime);
+   int      GetServerToGmtTimeOffset(datetime serverTime, string timezone);
 
    bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);
 

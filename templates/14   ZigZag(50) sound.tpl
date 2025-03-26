@@ -126,7 +126,6 @@ Donchian.Channel.UpperColor=16711680
 Donchian.Channel.LowerColor=16711680
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Width=2
-Donchian.Crossing.Color=255
 Signal.onReversal=1
 </inputs>
 </expert>
