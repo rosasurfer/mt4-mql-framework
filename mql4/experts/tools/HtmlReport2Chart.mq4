@@ -3,10 +3,11 @@
  *
  *
  * TODO
+ *  - optional timezone config for current and statement server
+ *     implement file mode MODE_COMMON
  *  - account statements
- *     process open orders
  *     on-load initialize display status with "show"
- *  - optional timezone configs (2) for runtime and statement server
+ *     process open orders
  *  - cache the parsed data over init cycles
  */
 #include <rsf/stddefines.mqh>
