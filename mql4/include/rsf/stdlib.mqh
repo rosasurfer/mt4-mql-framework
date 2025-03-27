@@ -95,16 +95,13 @@
 
 
    // date/time
-   int      GetFxtToGmtTimeOffset   (datetime fxtTime);
-   int      GetFxtToServerTimeOffset(datetime fxtTime);
+   int      GetTimezoneToGmtOffset(datetime time, string timezone);
+   int      GetGmtToTimezoneOffset(datetime time, string timezone);
 
-   int      GetGmtToFxtTimeOffset   (datetime gmtTime);
-   int      GetGmtToServerTimeOffset(datetime gmtTime, string timezone);
+   int      GetTimezoneToFxtOffset(datetime time, string timezone);
+   int      GetFxtToTimezoneOffset(datetime time, string timezone);
 
-   int      GetServerToFxtTimeOffset(datetime serverTime);
-   int      GetServerToGmtTimeOffset(datetime serverTime, string timezone);
-
-   bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);
+   bool     GetTimezoneTransitions(datetime time, int prev[], int next[]);
 
 
    // colors

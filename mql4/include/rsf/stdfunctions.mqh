@@ -4043,8 +4043,8 @@ datetime GetServerTime() {
  * @return datetime - GMT timestamp (seconds since 01.01.1970 00:00 GMT) or NaT in case of errors
  */
 datetime FxtToGmtTime(datetime time) {
-   int offset = GetFxtToGmtTimeOffset(time);
-   if (offset == EMPTY_VALUE) return(_NaT(logInfo("FxtToGmtTime(1)->GetFxtToGmtTimeOffset() => EMPTY_VALUE", __ExecutionContext[EC.mqlError])));
+   int offset = GetTimezoneToGmtOffset(time, "fxt");
+   if (offset == EMPTY_VALUE) return(_NaT(logInfo("FxtToGmtTime(1)->GetTimezoneToGmtOffset() => EMPTY_VALUE", __ExecutionContext[EC.mqlError])));
    return(time - offset);
 }
 
@@ -4057,7 +4057,7 @@ datetime FxtToGmtTime(datetime time) {
  * @return datetime - server time or NaT in case of errors
  */
 datetime FxtToServerTime(datetime time) {
-   int offset = GetFxtToServerTimeOffset(time);
+   int offset = GetFxtToTimezoneOffset(time, NULL);
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
 }
@@ -4071,7 +4071,7 @@ datetime FxtToServerTime(datetime time) {
  * @return datetime - FXT time or NaT in case of errors
  */
 datetime GmtToFxtTime(datetime time) {
-   int offset = GetGmtToFxtTimeOffset(time);
+   int offset = GetGmtToTimezoneOffset(time, "fxt");
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
 }
@@ -4085,7 +4085,7 @@ datetime GmtToFxtTime(datetime time) {
  * @return datetime - server time or NaT in case of errors
  */
 datetime GmtToServerTime(datetime time) {
-   int offset = GetGmtToServerTimeOffset(time, NULL);
+   int offset = GetGmtToTimezoneOffset(time, NULL);
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
 }
@@ -4099,7 +4099,7 @@ datetime GmtToServerTime(datetime time) {
  * @return datetime - FXT time or NaT in case of errors
  */
 datetime ServerToFxtTime(datetime time) {
-   int offset = GetServerToFxtTimeOffset(time);
+   int offset = GetTimezoneToFxtOffset(time, NULL);
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
 }
@@ -4113,7 +4113,7 @@ datetime ServerToFxtTime(datetime time) {
  * @return datetime - GMT time or NaT in case of errors
  */
 datetime ServerToGmtTime(datetime time) {
-   int offset = GetServerToGmtTimeOffset(time, NULL);
+   int offset = GetTimezoneToGmtOffset(time, NULL);
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
 }
@@ -6883,15 +6883,13 @@ void __DummyCalls() {
    string   CreateTempFile(string path, string prefix);
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
-   int      GetFxtToGmtTimeOffset(datetime time);
-   int      GetFxtToServerTimeOffset(datetime time);
-   int      GetGmtToFxtTimeOffset(datetime time);
-   int      GetGmtToServerTimeOffset(datetime time, string timezone);
+   int      GetFxtToTimezoneOffset(datetime time, string timezone);
+   int      GetGmtToTimezoneOffset(datetime time, string timezone);
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetServerTimezone();
-   int      GetServerToFxtTimeOffset(datetime serverTime);
-   int      GetServerToGmtTimeOffset(datetime serverTime, string timezone);
+   int      GetTimezoneToFxtOffset(datetime time, string timezone);
+   int      GetTimezoneToGmtOffset(datetime time, string timezone);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ReleaseLock(string mutex);
    bool     ReverseStringArray(string array[]);

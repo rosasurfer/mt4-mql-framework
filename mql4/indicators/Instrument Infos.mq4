@@ -266,7 +266,7 @@ int UpdateInstrumentInfos() {
    if (serverTimezone != "") {
       datetime lastTime = MarketInfo(symbol, MODE_TIME);
       if (lastTime > 0) {
-         int tzOffset = GetServerToFxtTimeOffset(lastTime);
+         int tzOffset = GetTimezoneToFxtOffset(lastTime, NULL);
          if (!IsEmptyValue(tzOffset)) strOffset = ifString(tzOffset>= 0, "+", "-") + StrRight("0"+ Abs(tzOffset/HOURS), 2) + StrRight("0"+ tzOffset%HOURS, 2);
       }
       serverTimezone = serverTimezone + ifString(StrStartsWithI(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");

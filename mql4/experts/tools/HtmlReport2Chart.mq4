@@ -548,12 +548,12 @@ bool UpdateHistoryRecord(int ticket, double stopLoss, double takeProfit, datetim
  */
 datetime ReportToServerTime(datetime time) {
    // convert report time to GMT
-   int offset = GetServerToGmtTimeOffset(time, reportTimezone);
+   int offset = GetTimezoneToGmtOffset(time, reportTimezone);
    if (offset == EMPTY_VALUE) return(NaT);
    datetime gmtTime = time - offset;
 
    // convert GMT to server time
-   offset = GetGmtToServerTimeOffset(gmtTime, NULL);
+   offset = GetGmtToTimezoneOffset(gmtTime, NULL);
    if (offset == EMPTY_VALUE) return(NaT);
    return(gmtTime - offset);
 }
