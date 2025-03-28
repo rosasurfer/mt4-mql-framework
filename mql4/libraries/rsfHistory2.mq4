@@ -17,8 +17,8 @@
  *
  * Notes:
  * ------
- *  - MQL4 in terminal builds <= 509 imposes a limit of 16 open files per MQL module. In terminal builds > 509 this limit was
- *    extended to 64 open files per MQL module. This means older terminals can manage max. 1 full history set and newer
+ *  - MQL4.0 in terminal builds <= 509 imposes a limit of 16 open files per MQL module. In terminal builds > 509 this limit
+ *    is extended to 64 open files per MQL module. This means older terminals can manage max. 1 full history set and newer
  *    terminals max. 7 full history sets per MQL module. That's still not sufficient. To overcome the limits there are 3
  *    identical history libraries, extending the limits for newer terminals to max. 21 history sets per MQL program.
  *

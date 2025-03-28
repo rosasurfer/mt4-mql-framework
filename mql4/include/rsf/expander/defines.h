@@ -21,7 +21,7 @@
 #define EOL_UNIX                             "\n"        // Unix line separator:      0x0A (MQL/Win32 file functions in text mode auto-convert EOL_UNIX to EOL_WINDOWS)
 #define EOL_WINDOWS                        "\r\n"        // Windows line separator:   0x0D0A
 
-#define NL                                   "\n"        // MQL4 bug: string constants cannot reference each other
+#define NL                                   "\n"        // MQL4.0 bug: string constants cannot reference each other
 #define CRLF                               "\r\n"
 #define TAB                                  "\t"        // tabulator: 0x09
 
