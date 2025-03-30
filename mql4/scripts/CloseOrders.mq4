@@ -26,7 +26,7 @@ int __DeinitFlags[];
 
 extern string Close.Symbols      = "(current)";    // symbols separated by comma (default: current symbol, *: all symbols)
 extern string Close.Tickets      = "";             // tickets separated by comma (with or w/o leading "#")                    // or a full logmessage produced by CustomPositions.LogOrders(); or the text of an order arrow
-extern string Close.OrderTypes   = "";             // order types separated by comma (Buy, Sell, P[ending], Buy[-]Limit, Sell[-]Limit, Stop[-]Buy, Stop[-]Sell)
+extern string Close.OrderTypes   = "";             // order types separated by comma (Buy, Sell, Long, Short, P[ending], Buy[-]Limit, Sell[-]Limit, Stop[-]Buy, Stop[-]Sell)
 extern string Close.MagicNumbers = "";             // magic numbers separated by comma
 extern string Close.Comments     = "";             // prefix/start of order comments separated by comma
 extern bool   Close.HedgedPart   = false;          // close hedged part of resulting tickets only
@@ -84,8 +84,12 @@ int onInit() {
             ArrayPushInt(closeTypes, OP_BUYSTOP  );
             ArrayPushInt(closeTypes, OP_SELLSTOP );
          }
-         else if (sValue == "bl") ArrayPushInt(closeTypes, OP_BUYLIMIT);
-         else if (sValue == "bs") ArrayPushInt(closeTypes, OP_BUYSTOP);
+         else if (sValue == "l"    ) ArrayPushInt(closeTypes, OP_BUY);
+         else if (sValue == "long" ) ArrayPushInt(closeTypes, OP_BUY);
+         else if (sValue == "s"    ) ArrayPushInt(closeTypes, OP_SELL);
+         else if (sValue == "short") ArrayPushInt(closeTypes, OP_SELL);
+         else if (sValue == "bl"   ) ArrayPushInt(closeTypes, OP_BUYLIMIT);
+         else if (sValue == "bs"   ) ArrayPushInt(closeTypes, OP_BUYSTOP);
          else {
             int type = StrToOperationType(sValue);
             if (type < OP_BUY || type > OP_SELLSTOP) return(catch("onInit(1)  invalid input parameter Close.OrderTypes: "+ DoubleQuoteStr(Close.OrderTypes), ERR_INVALID_INPUT_PARAMETER));
