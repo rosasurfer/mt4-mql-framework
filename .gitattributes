@@ -30,8 +30,7 @@
 
 # set content encodings
 *                 encoding=UTF-8
-/mql4/            encoding=CP1252
-/mql5/            encoding=CP1251
+/mql*/            encoding=CP1252
 *.md              encoding=UTF-8
 
 
