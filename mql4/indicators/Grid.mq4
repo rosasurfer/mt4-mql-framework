@@ -1,7 +1,7 @@
 /**
  * Chart grid
  *
- * Dynamically maintains horizontal (price) and vertical (date/time) chart separators.
+ * Dynamically maintains horizontal price and vertical date separators in the chart.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -10,10 +10,10 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    PriceGrid.MinDistance.Pixel    = 40;             // adjust to your screen and DPI scaling
-
-extern string ___a__________________________ = "";
-extern color  Color.RegularGrid              = Gainsboro;      // C'220,220,220'
-extern color  Color.SuperGrid                = LightGray;      // C'211,211,211' (slightly darker)
+                                                               //
+extern string ___a__________________________ = "";             //
+extern color  Color.RegularGrid              = Gainsboro;      //
+extern color  Color.SuperGrid                = LightGray;      // slightly darker
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -31,7 +31,7 @@ double lastChartMinPrice;
 double lastChartMaxPrice;
 double lastGridSize;
 
-string hSeparatorLabels[];       // horizontal price separator labels
+string hSeparatorLabels[];             // horizontal price separators
 
 
 /**
@@ -261,8 +261,6 @@ bool CreatePriceSeparators(double fromPrice, double toPrice, double gridSize) {
 
       gridLevel = NormalizeDouble(gridLevel + gridSize, Digits);
    }
-   //debug("CreatePriceSeparators(0.1)  created "+ i +" separators (gridSize="+ NumberToStr(gridSize, PriceFormat) +")");
-
    return(!catch("CreatePriceSeparators(1)"));
 }
 
