@@ -322,19 +322,17 @@ int onTick() {
       }
 
       // update trend length (duration)
-      if      (trend[bar+1] > 0 && macd[bar] >= 0) trend[bar] = trend[bar+1] + 1;
-      else if (trend[bar+1] < 0 && macd[bar] <= 0) trend[bar] = trend[bar+1] - 1;
-      else                                         trend[bar] = Sign(macd[bar]);
+      if      (trend[bar+1] > 0 && macd[bar] >= 0) trend[bar] = _int(trend[bar+1]) + 1;
+      else if (trend[bar+1] < 0 && macd[bar] <= 0) trend[bar] = _int(trend[bar+1]) - 1;
+      else                                         trend[bar] =  Sign(macd[bar]);
    }
 
    // detect zero line crossings
    if (!__isSuperContext) {
       if (Signal.onCross) /*&&*/ if (IsBarOpen()) {
-         static int lastSide; if (!lastSide) lastSide = trend[2];
-         int side = trend[1];
-         if      (lastSide <= 0 && side > 0) onCross(MODE_UPPER_SECTION);  // this also detects crosses on bars without ticks (e.g. on slow M1)
-         else if (lastSide >= 0 && side < 0) onCross(MODE_LOWER_SECTION);
-         lastSide = side;
+         // TODO: check signals on bars without ticks (e.g. on slow M1)
+         if      (trend[2] < 0 && trend[1] > 0) onCross(MODE_UPPER_SECTION);
+         else if (trend[2] > 0 && trend[1] < 0) onCross(MODE_LOWER_SECTION);
       }
    }
    return(last_error);
