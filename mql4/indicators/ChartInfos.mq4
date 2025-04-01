@@ -4931,9 +4931,13 @@ bool onOrderFail(int tickets[]) {
             string sType   = OperationTypeDescription(OrderType() & 1);    // BuyLimit => Buy, SellStop => Sell...
             string sLots   = NumberToStr(OrderLots(), ".+");
             string sPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
-            string sError  = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", " (unknown error)");
-            string message = "order failed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + sError;
-            logWarn("onOrderFail(2)  "+ message);
+
+            string comment = OrderComment();
+            int error = ifInt(comment=="deleted [no money]", ERR_NOT_ENOUGH_MONEY, ERR_RUNTIME_ERROR);
+            if (comment != "") comment = " (\""+ comment +"\")";
+
+            string message = "order failed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
+            logError("onOrderFail(2)  "+ message, error);
             PlaySoundEx(orderTracker.orderFailed);
          }
       }
