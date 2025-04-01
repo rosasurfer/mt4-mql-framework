@@ -265,7 +265,7 @@ int start() {
    ArrayCopyRates(__rates);
    _Bid = NormalizeDouble(Bid, Digits);                                    // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                                    //
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, _Bid, _Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Tick.isVirtual, _Bid, _Ask) != NO_ERROR) {
       if (CheckErrors("start(6)->SyncMainContext_start()")) return(last_error);
    }
 
@@ -625,7 +625,7 @@ datetime Test.GetEndDate() {
    string symbols_Name(int symbols[], int i);
 
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
-   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, int isVirtual, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"

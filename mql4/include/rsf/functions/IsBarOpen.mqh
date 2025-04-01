@@ -62,8 +62,8 @@ bool IsBarOpen(int timeframe = NULL) {
    bool result = false;
 
    // resolve event status by checking the previous tick
-   if (__ExecutionContext[EC.prevTickTime] < timeframes[i][IBO_OPENTIME]) {
-      if (!__ExecutionContext[EC.prevTickTime]) {
+   if (__ExecutionContext[EC.lastRealTick] < timeframes[i][IBO_OPENTIME]) {
+      if (!__ExecutionContext[EC.lastRealTick]) {
          if (IsExpert()) /*&&*/ if (IsTesting()) {                         // in tester the first tick is always a BarOpen event
             result = true;
          }
