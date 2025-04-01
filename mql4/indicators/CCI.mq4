@@ -210,8 +210,7 @@ int onTick() {
       // monitor signals
       if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {
          int iTrend = trend[1];
-
-         if      (iTrend == +1) onTrendChange(MODE_LONG);
+         if      (iTrend ==  1) onTrendChange(MODE_LONG);
          else if (iTrend == -1) onTrendChange(MODE_SHORT);
       }
    }

@@ -193,8 +193,8 @@ int onTick() {
       lowerBand[bar] = low;
 
       prevBarTrend = barTrend[bar+1];
-      if      (Close[bar] > upperBand[bar]) barTrend[bar] = _int(MathMax(prevBarTrend, 0)) + 1;
-      else if (Close[bar] < lowerBand[bar]) barTrend[bar] = _int(MathMin(prevBarTrend, 0)) - 1;
+      if      (Close[bar] > upperBand[bar]) barTrend[bar] = Max(prevBarTrend, 0) + 1;
+      else if (Close[bar] < lowerBand[bar]) barTrend[bar] = Min(prevBarTrend, 0) - 1;
       else                                  barTrend[bar] = prevBarTrend + Sign(prevBarTrend);
    }
 
@@ -203,7 +203,7 @@ int onTick() {
 
       // monitor signals
       if (Signal.onBarCross) /*&&*/ if (IsBarOpen()) {
-         if      (barTrend[1] == +1) onCross(D_LONG);
+         if      (barTrend[1] ==  1) onCross(D_LONG);
          else if (barTrend[1] == -1) onCross(D_SHORT);
       }
    }

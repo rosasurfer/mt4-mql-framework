@@ -269,8 +269,8 @@ int onTick() {
          int prevTrend = Round(bufferMain[2]);
 
          if (Sign(trend) != Sign(prevTrend)) {
-            if      (trend == +1) onTrendChange(MODE_UPTREND);
-            else if (trend == -1) onTrendChange(MODE_DOWNTREND);
+            if      (trend > 0) onTrendChange(MODE_UPTREND);
+            else if (trend < 0) onTrendChange(MODE_DOWNTREND);
          }
       }
    }

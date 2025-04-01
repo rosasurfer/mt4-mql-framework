@@ -141,18 +141,14 @@ int onInit() {
  */
 int onTick() {
    // wait for account number initialization (required for BFX license validation)
-   if (!AccountNumber())
-      return(logInfo("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMain)) return(logInfo("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!AccountNumber()) return(logInfo("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferMain,   EMPTY_VALUE);
-      ArrayInitialize(bufferSignal,           0);
-      ArrayInitialize(bufferLong,   EMPTY_VALUE);
-      ArrayInitialize(bufferShort,  EMPTY_VALUE);
+      ArrayInitialize(bufferMain,  EMPTY_VALUE);
+      ArrayInitialize(bufferSignal,          0);
+      ArrayInitialize(bufferLong,  EMPTY_VALUE);
+      ArrayInitialize(bufferShort, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
@@ -164,13 +160,11 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(bufferShort,  Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-
-   // (1) calculate start bar
+   // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(3)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
-
-   // (2) recalculate changed bars
+   // recalculate changed bars
    double delta;
    for (int bar=startbar; bar >= 0; bar--) {
       bufferLong [bar] = GetBfxCoreVolume(MODE_CVI_LONG, bar);  if (last_error != NO_ERROR) return(last_error);
@@ -205,9 +199,12 @@ int onTick() {
    }
 
    // signal zero line crossings
-   if (Signal.onCross && !__isSuperContext) /*&&*/ if (IsBarOpen()) {
-      if      (bufferSignal[1] ==  1) onLevelCross(MODE_UPPER);
-      else if (bufferSignal[1] == -1) onLevelCross(MODE_LOWER);
+   if (!__isSuperContext) {
+      if (Signal.onCross) /*&&*/ if (IsBarOpen()) {
+         int iSignal = Round(bufferSignal[1]);
+         if      (iSignal ==  1) onLevelCross(MODE_UPPER);
+         else if (iSignal == -1) onLevelCross(MODE_LOWER);
+      }
    }
    return(last_error);
 }
