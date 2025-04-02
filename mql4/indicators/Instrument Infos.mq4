@@ -16,8 +16,8 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int AccountSize.NumberOfUnits     = 20;     // number of available bullets of MODE_MINLOT size
-       int AccountSize.MaxUnitRisk.Pct   = 10;     // unused: max. risk per bullet in % on an ADR move against it
-extern int AccountSize.MaxUsedMargin.Pct = 75;     // max. margin utilization in %
+       int AccountSize.MaxUnitRisk.Pct   = 10;     // NOT YET USED: max. risk per bullet in % on an ADR move against it
+extern int AccountSize.MaxUsedMargin.Pct = 100;    // max. margin utilization in %
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -17,10 +17,10 @@
  *  - visualize MFE/MAE levels
  *  - CustomPosition()
  *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice...
- *     history parsing/config term HT... freezes the terminal if the full history is active
+ *     history parsing/config term HT... freezes the terminal if full history is active
  *      ExtractPosition()
- *       SortClosedTickets()    time=0.271 sec  => move to Expander
- *       loop "correct hedges"  time=13.5 sec   => move to Expander
+ *       SortClosedTickets()           time=0.271 sec => move to Expander
+ *       nested loop "correct hedges"  time=13.5 sec  => move to Expander
  *     weekend configuration/timespans don't work (H Today on Bitcoin)
  *     including/excluding a specific strategy is not supported
  *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
@@ -3530,7 +3530,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          }
          orders = n;
          ArrayResize(sortKeys, orders);
-         SortClosedTickets(sortKeys);                                         // TODO: move to Expander (bad performance)
+         SortClosedTickets(sortKeys);                       // TODO: move to Expander (bad performance)
 
          // Tickets sortiert einlesen
          int      hst.tickets    []; ArrayResize(hst.tickets,     orders);
@@ -3563,7 +3563,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          }
 
          // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen (auch Positionen mehrerer Symbole werden korrekt zugeordnet)
-         // TODO: the nested loop freezes the terminal if the full history is visible => move to Expander
+         // TODO: the nested loop freezes the terminal if full history is active => move to Expander
          for (i=0; i < orders; i++) {
             if (!hst.valid[i]) continue;                                      // skip processed hedging orders
 
@@ -3575,7 +3575,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 
                // Gegenstück suchen
                hst.ticket = StrToInteger(StringSubstr(hst.comments[i], 16));
-               for (n=0; n < orders; n++) {
+               for (n=0; n < orders; n++) {                                   // TODO: move to Expander
                   if (hst.tickets[n] == hst.ticket) break;
                }
                if (n == orders) return(!catch("ExtractPosition(3)  cannot find counterpart for hedging position #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));

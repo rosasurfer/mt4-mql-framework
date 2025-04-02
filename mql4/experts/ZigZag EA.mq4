@@ -150,11 +150,11 @@
  *     FxtToServerTime
  *
  *     GmtToFxtTime
- *     GmtToLocalTime      OK    finish unit tests
+ *     GmtToLocalTime      OK
  *     GmtToServerTime
  *
  *     LocalToFxtTime
- *     LocalToGmtTime      OK    finish unit tests
+ *     LocalToGmtTime      OK
  *     LocalToServerTime
  *
  *     ServerToFxtTime
