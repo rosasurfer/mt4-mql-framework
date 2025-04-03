@@ -59,6 +59,7 @@
  *
  *
  * TODO:
+ *  - rename Donchian.Crossing.Symbol values to "dot | thin-ring | ring | thick-ring"
  *  - calculate/display ZigZag zero balance projections
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
  *  - keep bar status in IsUpperCrossLast()
