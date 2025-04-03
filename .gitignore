@@ -1,5 +1,6 @@
-# do not ignore the following files
+# never ignore the following files
 !.gitattributes
+!.gitkeep
 
 # ignore Eclipse directories and files
 /.externalToolBuilders/
@@ -10,30 +11,39 @@
 # ignore the following directories and files
 /bin/debugview/dbgview.*
 /bin/experts/include
-/etc/windows/appdata/*
+/etc/windows/user.appdata/*
+/files/
 /profiles/
 mqlcache.dat
 *.ex4
 *.ex5
 
 # ignore distributed/linked/log folders in legacy MT4 file structure
-/mql4/experts/config
-/mql4/experts/files
-/mql4/experts/include
-/mql4/experts/indicators
-/mql4/experts/libraries
-/mql4/experts/logs
-/mql4/experts/presets
-/mql4/experts/scripts
-/mql4/experts/templates
+/mql4.0/experts/config
+/mql4.0/experts/files
+/mql4.0/experts/include
+/mql4.0/experts/indicators
+/mql4.0/experts/libraries
+/mql4.0/experts/logs
+/mql4.0/experts/presets
+/mql4.0/experts/scripts
+/mql4.0/experts/templates
 
 # ignore distributed/linked/log folders in current MT4 file structure
-/mql4/files
-/mql4/images
-/mql4/logs
-/mql4/presets
-/mql4/projects
-/mql4/shared projects
+/mql4.0/files
+/mql4.0/images
+/mql4.0/logs
+/mql4.0/presets
+/mql4.0/projects
+/mql4.0/shared projects
+
+# ignore distributed/linked/log folders in MQL4.5 file structure
+/mql4.5/files
+/mql4.5/images
+/mql4.5/logs
+/mql4.5/presets
+/mql4.5/projects
+/mql4.5/shared projects
 
 # ignore files created by the tester
 /tester/
