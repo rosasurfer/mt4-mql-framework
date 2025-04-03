@@ -254,8 +254,8 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID                    = "";                   // instance to load from a status file, format "[T]123"
-extern string Instance.StartAt               = "";                   // @time(datetime|time)
-extern string Instance.StopAt                = "";                   // @time(datetime|time) | @profit(numeric[%])
+extern string Instance.StartAt               = "@time(01:02)";       // @time(datetime|time)
+extern string Instance.StopAt                = "@time(22:59)";       // @time(datetime|time) | @profit(numeric[%])
 
 extern string ___a__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 30;
