@@ -1,4 +1,4 @@
 
-For runtime creation of symbols the framework uses symbol templates in `mql4/files/templates`.
+For runtime creation of symbols the framework uses symbol templates in `/etc/symbols/`.
 
-@see `int rsfHistory::CreateSymbol(string name, ...)`
+@see `int rsfStdlib::CreateRawSymbol(string name, string description, string group, int digits, ...)`

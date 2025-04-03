@@ -16,7 +16,7 @@ askline=0
 days=0
 descriptions=1
 scroll=1
-shift=0
+shift=1
 shift_size=10
 
 fixed_pos=620
@@ -116,9 +116,9 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-BracketsColor=16711680  ; Blue
-NumberOfBrackets=20
 TimeWindow=16:00-16:30
+NumberOfBrackets=20
+BracketsColor=16711680  ; Blue
 AutoConfiguration=0
 </inputs>
 </expert>
