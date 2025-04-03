@@ -116,9 +116,9 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-BracketsColor=16711680  ; Blue
-NumberOfBrackets=20
 TimeWindow=16:00-16:30
+NumberOfBrackets=20
+BracketsColor=16711680  ; Blue
 AutoConfiguration=0
 </inputs>
 </expert>
