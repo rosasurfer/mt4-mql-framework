@@ -1,7 +1,7 @@
 /**
- * BFX Delta
+ * BFX Volume Delta
  *
- * Displays oscillator values calculated by the fraudulent BankersFX Core Volume indicator.
+ * Displays pseudo "Volume Delta" as calculated by the BankersFX Core Volume indicator.
  *
  *
  * Indicator buffers for iCustom():
@@ -64,8 +64,8 @@ double bufferSignal[];                                         // direction and 
 double bufferLong  [];                                         // long values:          visible
 double bufferShort [];                                         // short values:         visible
 
-string indicatorName = "";                                     // "Data" window and signal notification name
-string bfxName       = "MQL5/BFX Core Volume v1.20.0";         // BFX indicator name
+string indicatorName = "";
+string bfxName       = "BFX Core Volume v1.20.0";              // BFX indicator name
 string bfxLicense    = "";                                     // BFX indicator license
 
 
@@ -100,13 +100,19 @@ int onInit() {
       Signal.onCross = (Signal.onCross.Sound || Signal.onCross.Alert || Signal.onCross.Mail || Signal.onCross.SMS);
    }
 
-   // check BFX indicator and license
-   string indicatorFile = GetMqlDirectoryA() +"/indicators/"+ bfxName +".ex4";
-   if (!IsFile(indicatorFile, MODE_SYSTEM)) return(catch("onInit(6)  BankersFX Core Volume indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+   // find BFX indicator files
+   string dataPath = GetTerminalDataPathA(), mqlPath = GetMqlDirectoryA(), indicatorPath = mqlPath +"/indicators/";
+   if (!IsFile(indicatorPath + bfxName +".ex4", MODE_SYSTEM)) {
+      if (!IsFile(indicatorPath +"MQL5/"+ bfxName +".ex4", MODE_SYSTEM)) return(catch("onInit(6)  BankersFX Core Volume indicator not found: "+ DoubleQuoteStr(StrRightFrom(indicatorPath, dataPath +"\\") + bfxName), ERR_FILE_NOT_FOUND));
+      bfxName = "MQL5/"+ bfxName;
+   }
+   string libPath = mqlPath +"/libraries/BankersFX Lib.ex4";
+   if (!IsFile(libPath, MODE_SYSTEM)) return(catch("onInit(7)  BankersFX Core Volume library not found: "+ DoubleQuoteStr(StrRightFrom(libPath, dataPath +"\\")), ERR_FILE_NOT_FOUND));
 
+   // get license key
    string section = "bankersfx.com", key = "CoreVolume.License";
    bfxLicense = GetConfigString(section, key);
-   if (!StringLen(bfxLicense))          return(!catch("onInit(7)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (!StringLen(bfxLicense)) return(!catch("onInit(8)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
    // setup buffer management
    SetIndexBuffer(MODE_DELTA_MAIN,   bufferMain  );            // all values:           invisible, displayed in "Data" window
@@ -130,7 +136,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_DELTA_SHORT, startDraw);
    SetIndicatorOptions();
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(9)"));
 }
 
 
