@@ -25,8 +25,8 @@ extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
 extern color  Color.NoTrend                  = Silver;
 extern int    BarWidth                       = 2;
-extern int    MaxBarsBack                    = 10000;       // max. values to calculate (-1: all available)
 extern bool   ShowChartLegend                = false;
+extern int    MaxBarsBack                    = 10000;       // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -317,7 +317,7 @@ string InputsToStr() {
                             "Color.DownTrend=", ColorToStr(Color.DownTrend),   ";", NL,
                             "Color.NoTrend=",   ColorToStr(Color.NoTrend),     ";", NL,
                             "BarWidth=",        BarWidth,                      ";", NL,
-                            "MaxBarsBack=",     MaxBarsBack,                   ";", NL,
-                            "ShowChartLegend=", BoolToStr(ShowChartLegend),    ";")
+                            "ShowChartLegend=", BoolToStr(ShowChartLegend),    ";", NL,
+                            "MaxBarsBack=",     MaxBarsBack,                   ";")
    );
 }
