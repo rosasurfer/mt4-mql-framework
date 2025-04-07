@@ -1,10 +1,13 @@
 /**
  * An EA trading ZigZag reversals.
  *
+ * The EA must not run permanently. If run permanently, it will not be profitable.
+ * Instead, it must be activated/deactivated depending on market sentiment.
+ *
  *
  * Requirements
  * ------------
- *  • ZigZag indicator: @see https://github.com/rosasurfer/mt4-mql-framework/blob/master/mql4.0/indicators/ZigZag.mq4
+ *  • /mql4.0/indicators/ZigZag.mq4
  *
  *
  * External control
@@ -234,7 +237,7 @@ int onTick() {
    double signal[3];
 
    if (__isChart) {
-      if (!HandleCommands()) return(last_error);         // process incoming commands, may switch on/off the instance
+      if (!HandleCommands()) return(last_error);         // process incoming commands (may switch the instance on/off)
    }
 
    if (instance.status != STATUS_STOPPED) {

@@ -379,6 +379,7 @@ bool onCross(int direction) {
  */
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
+
    IndicatorBuffers(indicator_buffers);
    SetIndexBuffer(MODE_MAIN,          macd     );                       // all histogram values:      visible, displayed in "Data" window
    SetIndexBuffer(MODE_UPPER_SECTION, macdUpper);                       // positive histogram values: visible

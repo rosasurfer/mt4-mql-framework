@@ -1,1 +1,0 @@
-../../../mql4.0/include/rsf/MT4iQuickChannel.mqh

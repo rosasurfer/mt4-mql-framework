@@ -1,0 +1,1 @@
+../../../mql40/include/rsf/win32defines.mqh

@@ -926,10 +926,12 @@ string FindStandardSymbol(string symbol, bool strict = false) {
    if      (StrStartsWith(_symbol, "." )) _symbol = StrRight(_symbol, -1);
    else if (StrStartsWith(_symbol, "_" )) _symbol = StrRight(_symbol, -1);
 
-   if      (StrEndsWith(_symbol, "_ASK")) _symbol = StrLeft(_symbol, -4);
+   if      (StrEndsWith(_symbol, "i"   )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, "_ASK")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, "_AVG")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, "^"   )) _symbol = StrLeft(_symbol, -1);
    else if (StrEndsWith(_symbol, "."   )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, ".r"  )) _symbol = StrLeft(_symbol, -2);
    else if (StrEndsWith(_symbol, "+"   )) _symbol = StrLeft(_symbol, -1);
 
    string result = "";
