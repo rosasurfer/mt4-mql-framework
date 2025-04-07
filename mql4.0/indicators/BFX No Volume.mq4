@@ -1,8 +1,8 @@
 /**
- * BFX Volume Delta
+ * BFX No Volume
  *
- * Displays pseudo "Volume Delta" as calculated by the BankersFX Core Volume indicator.
- *
+ * Wrapper for the "BankersFX Core Volume" indicator which displays an oscillator promoted as real "Trading Floor Volume",
+ * feeded by institutional data. In fact the indicator is calculated client-side using price only (no external data source).
  *
  * Indicator buffers for iCustom():
  *  • MODE_DELTA_MAIN:   delta values
@@ -19,7 +19,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color  Histogram.Color.Long           = LimeGreen;
+extern color  Histogram.Color.Long           = Blue;
 extern color  Histogram.Color.Short          = Red;
 extern int    Histogram.Style.Width          = 2;
 extern int    MaxBarsBack                    = 10000;          // max. values to calculate (-1: all available)
