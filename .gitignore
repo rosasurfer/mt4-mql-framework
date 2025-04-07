@@ -18,12 +18,12 @@ mqlcache.dat
 *.ex5
 
 # ignore distributed/linked/log folders
-/mql4.*/files
-/mql4.*/images
-/mql4.*/logs
-/mql4.*/presets
-/mql4.*/projects
-/mql4.*/shared projects
+/mql*/files
+/mql*/images
+/mql*/logs
+/mql*/presets
+/mql*/projects
+/mql*/shared projects
 
 # ignore files created by the tester
 /tester/
