@@ -1,53 +1,67 @@
 #!/bin/bash
 #
-# Compiler script for MQL4.0, MQL4.5 and MQL5 supporting batch-processing of multiple files/directories.
+# A multi-compiler script for MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple files/directories.
 # Prints results to STDOUT and follows standard rules for the exit status.
 #
-# Configuration via environment and/or config file (see "/.env.dist").
+# Configuration via environment or config file (see "/.env.dist").
+#
+# The syntax is compatible with the command line syntax of MetaEditor.
+#
+# @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
+#
+#
+# TODO:
+#  - parse glob patterns in path arguments
+#  - normalize source file/directories and filter duplicates
 #
 set -eu -o pipefail
+
+
+# --- start of functions -------------------------------------------------------------------------------------------------------------------
 
 
 #
 # Show the help screen.
 #
 function help() {
-  cat << 'DOC_BLOCK'
+  cat << 'SYNTAX'
 Compiles one or more MQL4.0, MQL4.5 or MQL5 source files or directories.
 
 Usage: mqlc  [options] [--] SOURCE...
-       mqlc  [options] /compile:(FILE|PATH)... [/include:DIR] [/log[:FILE]]
+       mqlc  [options] /compile:(FILE|DIR) [/include:DIR] [/log[:FILE]]
 
 Arguments:
-  SOURCE         Source file or directory to compile (supports multiple values).
+  SOURCE         One or more source files or directories to compile. Supports wildcards.
 
 Options:
   -h --help      This screen.
-  -f=VERSION     Format of ".mql4" source files, one of "mql40" or "mql45" (default: see below).
-  /compile:FILE  Source file to compile.
-  /compile:PATH  Source directory to compile. Recompiles new or modified source files (not subdirectories).
+  /compile:FILE  Source file to compile. Doesn't support wildcards.
+  /compile:DIR   Source directory to compile. Recompiles new and modified source files (not subdirectories).
   /include:DIR   Custom MQL resources directory (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
-  /log           Writes output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
-  /log:FILE      Writes output to a custom log file.
-  -c --clean     Recompiles all source files of a directory.
+  /log           Write output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
+  /log:FILE      Write output to a custom log file.
+  -f=VERSION     MQL4 source file format, either "mql40" or "mql45" (default: see below).
+  -c --clean     With /compile:DIR, recompiles all source files of a directory.
   -s --syntax    Syntax check only, no compilation.
   -v --verbose   Verbose results, adds include infos and progress status.
-  -q --quiet     Quiet mode, doesn't output results to the screen.
-  -w             Treat warnings as errors, controls the exit status for warnings.
+  -q --quiet     Quiet mode, doesn't write to STDOUT.
+  -w             Treat compiler warnings as errors, modifies the exit status for warnings.
 
-Supported option prefixes are "-" and "/", supported argument separators are ":" and "=".
+Supported short option prefixes are "-" and "/", supported argument separators are ":" and "=". This makes the syntax
+compatible with the CLI syntax of MetaEditor.
 
-Used compilers:
- The MQL compilers to be used may be specified in the environment or predefined in the configuration (see "/.env.dist").
+Used MQL compilers:
+ The compilers to be used can be specified in the environment or predefined in the configuration (see "/.env.dist").
 
 Auto-detection of MQL4 source file formats:
  If the base name of the MQL resources directory resolves to "experts" or "mql40", source file format "mql40" is assumed.
  If the base name of the MQL resources directory resolves to "mql4" or "mql45", source file format "mql45" is assumed.
- Default source file formats for custom directories may be predefined in the configuration (see "/.env.dist").
+ A specified source format For MQL5 files is ignored.
+ Default source file formats for custom directories can be predefined in the configuration (see "/.env.dist").
 
 On success the script exits with 0 (zero), a non-zero exit status indicates processing or compilation errors.
 
-DOC_BLOCK
+SYNTAX
 }
 
 
@@ -59,7 +73,189 @@ function error() {
 }
 
 
-# backup environment values
+#
+# Normalize a path argument. Strips enclosing double quotes and trims white-space.
+#
+function normalizeArg() {
+  local str="$1"
+
+  # strip enclosing double quotes
+  [[ "$str" =~ ^\"(.*)\"$ ]] && str="${BASH_REMATCH[1]}"
+
+  # trim leading white space
+  str="${str#"${str%%[![:space:]]*}"}"
+
+  # trim trailing white-space
+  str="${str%"${str##*[![:space:]]}"}"
+
+  echo "$str"
+}
+
+
+#
+# Get the file extension of the argument.
+#
+function getFileExtension() {
+  local ext="${1##*.}"
+  [[ "$1" == "$ext" ]] && ext=
+  echo "$ext"
+}
+
+
+#
+# Resolve the MQL version of a file, taking into account an explicit or configured value.
+#
+function resolveMqlVersion() {
+  local ext="$(getFileExtension "$1")"
+  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$format"
+}
+
+
+#
+# Compile an MQL4.0 source file.
+#
+function compileMql40() {
+  local srcFile="$1"
+  echo "compileMql40 $srcFile"
+}
+
+
+#
+# Compile an MQL4.5 source file.
+#
+function compileMql45() {
+  local srcFile="$1"
+  echo "compileMql45 $srcFile"
+}
+
+
+#
+# Compile an MQL5 source file.
+#
+function compileMql5() {
+  local srcFile="$1"
+  echo "compileMql5 $srcFile"
+}
+
+
+# --- end of functions ---------------------------------------------------------------------------------------------------------------------
+
+
+# parse command line arguments
+[[ "$#" -eq 0 ]] && { help; exit 0; }
+
+srcFiles=() && srcDirs=() && includeDir= && log=0 && customLog= && format= 
+delimiterPassed=0 && clean=0 && syntax=0 && quiet=0 && verbose=0 && warn2err=0
+
+while [[ "$#" -gt 0 ]]; do
+  if (( !$delimiterPassed )); then    # enter case only before an argument delimiter
+    case "$1" in
+      --)
+        delimiterPassed=1
+        shift; continue;;
+
+      [-/]h|--help)
+        help; exit 0;;
+
+      [-/]c|--clean)
+        clean=1
+        shift; continue;;
+
+      [-/]s|--syntax)
+        syntax=1
+        shift; continue;;
+
+      [-/]q|--quiet)
+        quiet=1
+        shift; continue;;
+
+      [-/]v|--verbose)
+        verbose=1
+        shift; continue;;
+
+      [-/]w)
+        warn2err=1
+        shift; continue;;
+
+      [-/]f|[-/]f[=:]*)
+        [[ -n "$format" ]] && { error "ERROR: multiple MQL4 version format options"; exit 1; }
+        [[ ${#1} -gt 3  ]] || { error "ERROR: missing MQL4 version identifier: $1"; exit 1; }
+        format="${1:3}"
+        format="${format,,}"
+        [[ "$format" == mql4[05] ]] || { error "ERROR: invalid MQL4 version identifier \"${1:3}\" (expect \"mql40\" or \"mql45\")"; exit 1; }
+        shift; continue;;
+
+      /include|/include[=:]*)
+        [[ -n "$includeDir" ]] && { error "ERROR: multiple /include options"; exit 1; }
+        includeDir="$(normalizeArg "${1:9}")"
+        [[ -z "$includeDir" ]] && { error "ERROR: missing argument: $1"; exit 1; }
+        [[ -d "$includeDir" ]] || { error "ERROR: directory not found: $1"; exit 1; }
+        shift; continue;;
+
+      /log|/log[=:]*)
+        [[ "$log" -eq 1 ]] && { error "ERROR: multiple /log options"; exit 1; }
+        log=1
+        if [[ ${#1} -gt 4 ]]; then
+          customLog="$(normalizeArg "${1:5}")"
+          [[ -z "$customLog" ]] && { error "ERROR: missing argument: $1"; exit 1; }
+        fi
+        shift; continue;;
+
+      /compile[=:]*)
+        arg="$(normalizeArg "${1:9}")"
+        [[ -z "$arg" ]] && { error "ERROR: missing argument: $1"; exit 1; }
+        # processing continues after case/esac
+        ;;
+    esac
+  fi
+
+  # source files/directories before/after an argument delimiter, standalone or as /compile argument
+  if (( $delimiterPassed )) || [[ "$1" != /compile* ]]; then
+    arg="$(normalizeArg "$1")"
+  fi
+  if [[ -d "$arg" ]]; then
+    srcDirs+=("$arg")
+  elif [[ -f "$arg" ]]; then
+    ext="$(getFileExtension "$arg")"
+    [[ "${ext,,}" == mq[45] ]] || { error "ERROR: cannot compile file: \"$arg\""; exit 1; }
+    srcFiles+=("$arg")
+  else
+    arg="$1"
+    [[ "$arg" =~ ^[[:space:]]*$ ]] && arg="\"$arg\""
+    error "ERROR: file or directory not found: $arg"
+    exit 1
+  fi
+  shift
+done
+readonly srcFiles srcDirs includeDir log customLog format clean syntax quiet verbose warn2err
+
+(( ${#srcFiles[@]} || ${#srcDirs[@]} )) || { error "ERROR: missing source file/directory argument"; exit 1; }
+
+
+# process each source file
+for file in "${srcFiles[@]}"; do
+  version="$(resolveMqlVersion "$file")"
+
+  case "$version" in
+    mql40)
+      compileMql40 "$file";;
+    mql45)
+      compileMql45 "$file";;
+    mql5)
+      compileMql5 "$file";;
+    *)
+      error "ERROR: cannot resolve MQL version of \"$file\"" 
+      exit 1;;
+  esac
+done
+
+exit
+
+
+
+
+
+# read configuration: backup environment values
 ENV_MT4_METALANG="${MT4_METALANG:-}"
 ENV_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
 ENV_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
@@ -69,19 +265,27 @@ SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 ENV_FILE="$SCRIPT_DIR/../.env"
 [[ -f "$ENV_FILE" ]] && . "$ENV_FILE"
 
-# resolve configuration: environment precedes config file
+# resolve final configuration: environment precedes config file
 MT4_METALANG="${ENV_MT4_METALANG:-${MT4_METALANG:-}}"
 MT4_METAEDITOR="${ENV_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
 MT5_METAEDITOR="${ENV_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
 
 
 
-echo "MT4_METALANG:   $MT4_METALANG"
-echo "MT4_METAEDITOR: $MT4_METAEDITOR"
-echo "MT5_METAEDITOR: $MT5_METAEDITOR"
 
-exit
 
+IFS=,
+echo "format:      $format"
+echo "clean:       $clean"
+echo "syntax:      $syntax"
+echo "quiet:       $quiet"
+echo "verbose:     $verbose"
+echo "warn2err:    $warn2err"
+echo "log:         $log"
+echo "customLog:   $customLog"
+echo "includeDir:  $includeDir"
+echo "sourceFiles: ${sourceFiles[*]}"
+echo "sourceDirs:  ${sourceDirs[*]}"
 
 
 
@@ -122,27 +326,14 @@ MQL4.5 + MQL5
   $ metaeditor.exe /compile:"<source>" /s
 
 
-MT4 (setup compilation)
------------------------
+MT4 after installation
+----------------------
 metaeditor.exe /packed:21 /compile:"103304111_21238" /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
-metaeditor.exe /packed:1  /compile:"103310975_8855"  /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
-metaeditor.exe /packed:2  /compile:"103428382_7719"  /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
 
 
-MT5 (setup compilation)
------------------------
+MT5 after installation
+----------------------
 metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1743564639 /flg:0 /stop:se5296_103760508
-metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1744094521 /flg:0 /stop:se6692_104480967
-
-
-old multi-compiler (MT4 terminal builds < 616)
-----------------------------------------------
-mql.exe [<flags>] filename.mq5
-        /mql5     - compile mql5 source
-        /mql4     - compile mql4 source
-        /s        - syntax check only
-        /i:<path> - set working directory
-        /o        - use code optimizer
 
 
 metalang.exe -h
@@ -155,8 +346,14 @@ options:
 -q : quiet mode
 
 
-
-
+old multi-compiler (MT4 terminal builds 510..615)
+-------------------------------------------------
+mql.exe [<flags>] filename.mq5
+        /mql5     - compile mql5 source
+        /mql4     - compile mql4 source
+        /s        - syntax check only
+        /i:<path> - set working directory
+        /o        - use code optimizer
 
 
 
