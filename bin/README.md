@@ -11,7 +11,6 @@ For the command line options of the compiler built into MetaEditor builds 600+ s
 ```bash
 $ mqlc -?
 MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-Copyright notice
 
 Usage:
   mqlc [options...] FILENAME

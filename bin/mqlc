@@ -1,22 +1,89 @@
 #!/bin/bash
 #
-# Make sure a symlink or junction "./experts/include" exists and points to the framework's "include" directory.
+# Compiler script for MQL4.0, MQL4.5 and MQL5 supporting batch-processing of multiple files/directories.
+# Prints results to STDOUT and follows standard rules for the exit status.
 #
-#
-# @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
-# @see  https://www.mql5.com/en/forum/155846
-# @see  https://stackoverflow.com/questions/14539064/how-to-compile-an-mql4-file-with-a-command-line-tool
-# @see  https://stackoverflow.com/questions/41580912/compiler-outputs-the-errors-under-wine-but-not-on-windows
-#
-# @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0 
+# Configuration via environment and/or config file (see "/.env.dist").
 #
 set -eu -o pipefail
 
 
-# print a message to STDERR
+#
+# Show the help screen.
+#
+function help() {
+  cat << 'DOC_BLOCK'
+Compiles one or more MQL4.0, MQL4.5 or MQL5 source files or directories.
+
+Usage: mqlc  [options] [--] SOURCE...
+       mqlc  [options] /compile:(FILE|PATH)... [/include:DIR] [/log[:FILE]]
+
+Arguments:
+  SOURCE         Source file or directory to compile (supports multiple values).
+
+Options:
+  -h --help      This screen.
+  -f=VERSION     Format of ".mql4" source files, one of "mql40" or "mql45" (default: see below).
+  /compile:FILE  Source file to compile.
+  /compile:PATH  Source directory to compile. Recompiles new or modified source files (not subdirectories).
+  /include:DIR   Custom MQL resources directory (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
+  /log           Writes output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
+  /log:FILE      Writes output to a custom log file.
+  -c --clean     Recompiles all source files of a directory.
+  -s --syntax    Syntax check only, no compilation.
+  -v --verbose   Verbose results, adds include infos and progress status.
+  -q --quiet     Quiet mode, doesn't output results to the screen.
+  -w             Treat warnings as errors, controls the exit status for warnings.
+
+Supported option prefixes are "-" and "/", supported argument separators are ":" and "=".
+
+Used compilers:
+ The MQL compilers to be used may be specified in the environment or predefined in the configuration (see "/.env.dist").
+
+Auto-detection of MQL4 source file formats:
+ If the base name of the MQL resources directory resolves to "experts" or "mql40", source file format "mql40" is assumed.
+ If the base name of the MQL resources directory resolves to "mql4" or "mql45", source file format "mql45" is assumed.
+ Default source file formats for custom directories may be predefined in the configuration (see "/.env.dist").
+
+On success the script exits with 0 (zero), a non-zero exit status indicates processing or compilation errors.
+
+DOC_BLOCK
+}
+
+
+#
+# Print a message to STDERR.
+#
 function error() {
   echo "$@" 1>&2
 }
+
+
+# backup environment values
+ENV_MT4_METALANG="${MT4_METALANG:-}"
+ENV_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
+ENV_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
+
+# source an existing .env file
+SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+ENV_FILE="$SCRIPT_DIR/../.env"
+[[ -f "$ENV_FILE" ]] && . "$ENV_FILE"
+
+# resolve configuration: environment precedes config file
+MT4_METALANG="${ENV_MT4_METALANG:-${MT4_METALANG:-}}"
+MT4_METAEDITOR="${ENV_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
+MT5_METAEDITOR="${ENV_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
+
+
+
+echo "MT4_METALANG:   $MT4_METALANG"
+echo "MT4_METAEDITOR: $MT4_METAEDITOR"
+echo "MT5_METAEDITOR: $MT5_METAEDITOR"
+
+exit
+
+
+
 
 
 # find the compiler
@@ -29,3 +96,71 @@ mqlc=
 
 # call it
 $mqlc "$@"
+
+exit $?
+
+'
+MQL4.5 + MQL5
+-------------
+- compile single file
+  $ metaeditor.exe /compile:<filename-without-spaces>
+  $ metaeditor.exe /compile:"<filename with spaces>"
+
+- compile whole directory (recompiles only if a source file is newer than the compiled version, no subdirectories)
+  $ metaeditor.exe /compile:"<target-directory>"
+
+- use custom include directory (default: "mql4/5" in directory containing metaeditor.exe)
+  $ metaeditor.exe /include:"<separate-mql-directory>"                                                      # can be shortened to /inc:
+
+- create log file named <source-file.log> (without this option errors are logged to "<data-dir>/logs/metaeditor.log")
+  $ metaeditor.exe /compile:"<source>" /log
+
+- create custom log file
+  $ metaeditor.exe /compile:"<source>" /log:"<log-filename>"
+
+- check syntax only (no compilation)
+  $ metaeditor.exe /compile:"<source>" /s
+
+
+MT4 (setup compilation)
+-----------------------
+metaeditor.exe /packed:21 /compile:"103304111_21238" /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
+metaeditor.exe /packed:1  /compile:"103310975_8855"  /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
+metaeditor.exe /packed:2  /compile:"103428382_7719"  /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
+
+
+MT5 (setup compilation)
+-----------------------
+metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1743564639 /flg:0 /stop:se5296_103760508
+metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1744094521 /flg:0 /stop:se6692_104480967
+
+
+old multi-compiler (MT4 terminal builds < 616)
+----------------------------------------------
+mql.exe [<flags>] filename.mq5
+        /mql5     - compile mql5 source
+        /mql4     - compile mql4 source
+        /s        - syntax check only
+        /i:<path> - set working directory
+        /o        - use code optimizer
+
+
+metalang.exe -h
+---------------
+MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+Copyright 2001-2009, MetaQuotes Software Corp.
+
+usage: metalang.exe [options] filename
+options:
+-q : quiet mode
+
+
+
+
+
+
+
+Make sure a symlink or junction "./experts/include" exists and points to the framework's "include" directory.
+
+@see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0
+
