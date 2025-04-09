@@ -1,3 +1,4 @@
 #
-# Prevents the "metaeditor.exe" in this folder from creating an "mql4" directory if started from the Windows UI.
+# Prevents a MetaEditor in this folder from creating a "config" directory if started from the Windows UI.
+# Must be write-protected.
 #

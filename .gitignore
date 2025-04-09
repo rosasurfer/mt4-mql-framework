@@ -9,13 +9,11 @@
 /.project*
 
 # ignore the following directories and files
-/bin/debugview/dbgview.*
-/bin/experts
+/bin
 /etc/windows/user.appdata
 /files
 mqlcache.dat
-*.ex4
-*.ex5
+*.ex[45]
 .env
 
 # ignore distributed/linked/log folders
