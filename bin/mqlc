@@ -47,7 +47,6 @@ Options:
   -s --syntax    Syntax check only, no compilation.
   -o --original  Display the original and unmodified compiler output only.
   -q --quiet     Quiet mode, doesn't write anything to STDOUT.
-  -v --verbose   Verbose results, adds include infos to the output.
   -w             Treat compiler warnings as errors, modifies the exit status for warnings.
 
 Supported short option prefixes are "-" and "/", supported option argument separators are ":" and "=".
@@ -476,7 +475,7 @@ EOF
 ((!"$#")) && { help; exit 0; }
 
 srcFiles=() && srcDirs=() && includeDir= && log=0 && customLog= && format=
-delimiterPassed=0 && clean=0 && syntax=0 && original=0 quiet=0 && verbose=0 && warn2err=0
+delimiterPassed=0 && clean=0 && syntax=0 && original=0 quiet=0 && && warn2err=0
 
 while [[ "$#" -gt 0 ]]; do
   if ((!$delimiterPassed)); then      # enter case only before an argument delimiter
@@ -502,10 +501,6 @@ while [[ "$#" -gt 0 ]]; do
 
       [-/]q|--quiet)
         quiet=1
-        shift; continue;;
-
-      [-/]v|--verbose)
-        verbose=1
         shift; continue;;
 
       [-/]w)
@@ -567,7 +562,7 @@ while [[ "$#" -gt 0 ]]; do
   fi
   shift
 done
-readonly srcFiles srcDirs includeDir log customLog format clean syntax original quiet verbose warn2err
+readonly srcFiles srcDirs includeDir log customLog format clean syntax original quiet warn2err
 
 ((${#srcFiles[@]} || ${#srcDirs[@]})) || { error "ERROR: missing source file/directory argument"; exit 1; }
 
