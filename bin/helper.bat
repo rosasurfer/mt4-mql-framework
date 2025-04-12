@@ -14,7 +14,6 @@ set arg=%1
 if not defined arg goto run
 
 call set "arg=%%arg:\"="%%"
-call set "arg=%%arg:\\=\%%"
 
 if not defined command (
   set command=%arg%

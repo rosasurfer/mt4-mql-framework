@@ -42,15 +42,14 @@ Arguments:
 Options:
   -h --help      This screen.
   /compile:FILE  Source file to compile. Doesn't support wildcards.
-  /compile:DIR   Source directory to compile. Recompiles new and modified source files (not subdirectories).
+  /compile:DIR   Source directory to compile. Recompiles new and modified source files (not in subdirectories).
   /include:DIR   Custom MQL resources directory (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
   /log           Write output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
-  /log:FILE      Write output to custom log file.
+  /log:FILE      Write output to a custom log file.
   -f=VERSION     MQL4 source file format, either "mql40" or "mql45" (default: see below).
   -c --clean     With /compile:DIR, recompiles all source files of a directory.
   -s --syntax    Syntax check only, no compilation.
   -o --original  Displays the original and unmodified compiler output.
-  -q --quiet     Quiet mode, doesn't write anything to STDOUT.
   -w             Treat compiler warnings as errors, modifies the exit status for warnings.
 
 Supported short option prefixes are "-" and "/", supported option argument separators are ":" and "=".
@@ -479,7 +478,7 @@ EOF
 ((!"$#")) && { help; exit 0; }
 
 srcFiles=() && srcDirs=() && includeDir= && log=0 && customLog= && format=
-delimiterPassed=0 && clean=0 && syntax=0 && original=0 quiet=0 && && warn2err=0
+delimiterPassed=0 && clean=0 && syntax=0 && original=0 && warn2err=0
 
 while [[ "$#" -gt 0 ]]; do
   if ((!$delimiterPassed)); then      # enter case only before an argument delimiter
@@ -501,10 +500,6 @@ while [[ "$#" -gt 0 ]]; do
 
       [-/]o|--original)
         original=1
-        shift; continue;;
-
-      [-/]q|--quiet)
-        quiet=1
         shift; continue;;
 
       [-/]w)
@@ -566,7 +561,7 @@ while [[ "$#" -gt 0 ]]; do
   fi
   shift
 done
-readonly srcFiles srcDirs includeDir log customLog format clean syntax original quiet warn2err
+readonly srcFiles srcDirs includeDir log customLog format clean syntax original warn2err
 
 ((${#srcFiles[@]} || ${#srcDirs[@]})) || { error "ERROR: missing source file/directory argument"; exit 1; }
 
