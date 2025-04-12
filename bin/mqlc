@@ -16,10 +16,14 @@
 #  - normalize source file/directories and filter duplicates
 #  - create helper.bat dynamically
 #  - move config to standard location
+#  - add compiler version to output
 #  - colored output
 #  - silently support /inc:
 #
 set -eu -o pipefail
+
+
+# --- functions ----------------------------------------------------------------------------------------------------------------------------
 
 
 #
@@ -30,7 +34,7 @@ function help() {
 Compiles one or more MQL4.0, MQL4.5 or MQL5 source files or directories.
 
 Usage: mqlc  [options] [--] SOURCE...
-       mqlc  [options] /compile:(FILE|DIR) [/include:DIR] [/log[:FILE]]
+       mqlc  [options] /compile:(FILE|DIR)... [/include:DIR] [/log[:FILE]]
 
 Arguments:
   SOURCE         One or more source files or directories to compile. Supports wildcards.
@@ -45,7 +49,7 @@ Options:
   -f=VERSION     MQL4 source file format, either "mql40" or "mql45" (default: see below).
   -c --clean     With /compile:DIR, recompiles all source files of a directory.
   -s --syntax    Syntax check only, no compilation.
-  -o --original  Display the original and unmodified compiler output only.
+  -o --original  Displays the original and unmodified compiler output.
   -q --quiet     Quiet mode, doesn't write anything to STDOUT.
   -w             Treat compiler warnings as errors, modifies the exit status for warnings.
 
@@ -61,7 +65,7 @@ Auto-detection of MQL4 source file formats:
  Default source file formats for custom directories can be predefined in the configuration (see "/.env.dist").
 
 On success the script exits with 0 (zero), a non-zero exit status indicates processing or compilation errors.
-Errors and warnings are always logged to file, either to "<source-file.log>" or to a specified custom log file.
+Errors and warnings are always logged to a file, either to "<source-file.log>" or to a specified custom log file.
 
 SYNTAX
 }
@@ -226,7 +230,7 @@ function compileMql40() {
   for line in "${output[@]}"; do
     echo "$line"
   done
-  return "$status"
+  return $status
 
   notes << EOF
   metalang.exe's exit code is the number of encountered errors (0 = no errors but possibly warnings).
@@ -368,7 +372,7 @@ function compileMql45() {
   for line in "${output[@]}"; do
     echo "$line"
   done
-  return "$status"
+  return $status
 
   notes << EOF
   Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
@@ -440,7 +444,7 @@ function compileMql5() {
   for line in "${output[@]}"; do
     echo "$line"
   done
-  return "$status"
+  return $status
 
   notes << EOF
   Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
@@ -570,9 +574,11 @@ readConfig
 
 
 # process each source file
-status=0
+exitCode=0
+
 for file in "${srcFiles[@]}"; do
   version="$(resolveMqlVersion "$file")"
+  status=0
 
   case "$version" in
     mql40)
@@ -585,9 +591,10 @@ for file in "${srcFiles[@]}"; do
       error "ERROR: cannot resolve MQL version of \"$file\""
       exit 1;;
   esac
+  (($status)) && exitCode=$status
 done
 
-exit $status
+exit $exitCode
 
 
 
