@@ -14,11 +14,11 @@
 #  - parse glob patterns in path arguments
 #  - improve error messages for filenames looking like options
 #  - normalize source file/directories and filter duplicates
-#  - create helper.bat dynamically
 #  - move config to standard location
 #  - add compiler version to output
 #  - colored output
 #  - silently support /inc:
+#  - check for Bash version 4.4+
 #
 set -eu -o pipefail
 
@@ -331,14 +331,9 @@ function compileMql45() {
   [[ -z "$MT4_METAEDITOR" ]] && { error "ERROR: MQL4.5 compiler is not configured"; exit 1; }
   [[ -f "$MT4_METAEDITOR" ]] || { error "ERROR: MQL4.5 compiler not found: \"$MT4_METAEDITOR\""; exit 1; }
 
-  local helper="$(dirname "$(realpath "$0")")/helper.bat"
-  [[ -f "$helper" ]] || { error "ERROR: compiler helper not found: \"$helper\""; exit 1; }
-  [[ "$helper" =~ \  ]] && helper="$(cygpath -d "$helper")"   # the DOS name prevents argument mangling of quotes (which would break the call)
-
-  local mqlc="$(cygpath -w "$(prefixHyphen "$MT4_METAEDITOR")")" srcFile="$1" logFile="${1%.*}.log"
-  local compilerCmd="\"$mqlc\" /compile:\"$srcFile\"" status=0
-  [[ -n "$includeDir" ]] && compilerCmd="$compilerCmd /include:\"$includeDir\""
-  compilerCmd="$compilerCmd /log:\"$logFile\""
+  local helper="$(createCmdHelper)" mqlc="$(cygpath -w "$(prefixHyphen "$MT4_METAEDITOR")")" srcFile="$1" logFile="${1%.*}.log" includeOption= status=0
+  [[ -n "$includeDir" ]] && includeOption="/include:\"$includeDir\""
+  local compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\"" 
 
   (($original)) || echo "Compiling \"$srcFile\" as MQL4.5"
   MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || status=$?
@@ -376,7 +371,7 @@ function compileMql45() {
   notes << EOF
   Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
   breaks Cygwin's POSIX launcher. So we go with "cmd" and manually demangle in the helper batch file.
-  The helper file does not simply hold the final command to allow multiple parallel compilations.
+  The helper file cannot just hold the final command as it disallows parallel executions.
 
   metaeditor.exe's exit code is the number of successfully processed files (0 = error). It doesn't
   produce any error messages.
@@ -403,14 +398,9 @@ function compileMql5() {
   [[ -z "$MT5_METAEDITOR" ]] && { error "ERROR: MQL5 compiler is not configured"; exit 1; }
   [[ -f "$MT5_METAEDITOR" ]] || { error "ERROR: MQL5 compiler not found: \"$MT5_METAEDITOR\""; exit 1; }
 
-  local helper="$(dirname "$(realpath "$0")")/helper.bat"
-  [[ -f "$helper" ]] || { error "ERROR: compiler helper not found: \"$helper\""; exit 1; }
-  [[ "$helper" =~ \  ]] && helper="$(cygpath -d "$helper")"   # the DOS name prevents argument mangling of quotes (which would break the call)
-
-  local mqlc="$(cygpath -w "$(prefixHyphen "$MT5_METAEDITOR")")" srcFile="$1" logFile="${1%.*}.log"
-  local compilerCmd="\"$mqlc\" /compile:\"$srcFile\"" status=0
-  [[ -n "$includeDir" ]] && compilerCmd="$compilerCmd /include:\"$includeDir\""
-  compilerCmd="$compilerCmd /log:\"$logFile\""
+  local helper="$(createCmdHelper)" mqlc="$(cygpath -w "$(prefixHyphen "$MT5_METAEDITOR")")" srcFile="$1" logFile="${1%.*}.log" includeOption= status=0
+  [[ -n "$includeDir" ]] && includeOption="/include:\"$includeDir\""
+  local compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\"" 
 
   (($original)) || echo "Compiling \"$srcFile\" as MQL5"
   MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || status=$?
@@ -468,6 +458,59 @@ function compileMql5() {
   $ MSYS_NO_PATHCONV=1 metaeditor64.exe /compile:Exists.mq5; echo $?
   0 (summary in "metaeditor.log")
 EOF
+}
+
+
+#
+# Creates a helper batch file for "cmd.exe" and returns its full Windows name.
+# The name doesn't contain any spaces and needs no quoting.
+#
+function createCmdHelper() {
+  local batch=$(cat << 'EOF'
+@echo off
+
+set arg=%1
+if not defined arg (
+  echo ERROR: %~nx0 - missing arguments
+  exit /b 1
+)
+
+set command=
+set args=
+
+:loop
+set arg=%1
+if not defined arg goto run
+
+call set "arg=%%arg:\"="%%"
+
+if not defined command (
+  set command=%arg%
+) else if not defined args (
+  set args=%arg%
+) else (
+  set args=%args% %arg%
+)
+shift
+goto loop
+
+:run
+%command% %args%
+
+exit /b %ERRORLEVEL%
+EOF
+)
+  local helper="$(dirname "$(realpath "$0")")/helper.bat"
+  [[ -f "$helper" && "$batch" == "$(< "$helper")" ]] || printf "%s\n" "$batch" > "$helper"
+
+  # the DOS name prevents argument mangling of quotes (which would break the call)
+  if [[ "$helper" =~ \  ]]; then
+    helper="$(cygpath -d "$helper")"
+  else
+    helper="$(cygpath -w "$helper")"
+  fi
+
+  echo "$helper"
 }
 
 
