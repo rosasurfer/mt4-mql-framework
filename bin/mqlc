@@ -221,6 +221,9 @@ function compileMql40() {
       output+=("Error")
     fi
 
+    # more compact output
+    (($compact)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'
+
     # remove copyright
     [[ "${output[1]}" =~ ^Copyright\ [0-9]+-[0-9]+,\ MetaQuotes ]] && unset 'output[1]'
   fi
@@ -333,7 +336,7 @@ function compileMql45() {
 
   local helper="$(createCmdHelper)" mqlc="$(cygpath -w "$(prefixHyphen "$MT4_METAEDITOR")")" srcFile="$1" logFile="${1%.*}.log" includeOption= status=0
   [[ -n "$includeDir" ]] && includeOption="/include:\"$includeDir\""
-  local compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\"" 
+  local compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
 
   (($original)) || echo "Compiling \"$srcFile\" as MQL4.5"
   MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || status=$?
@@ -400,7 +403,7 @@ function compileMql5() {
 
   local helper="$(createCmdHelper)" mqlc="$(cygpath -w "$(prefixHyphen "$MT5_METAEDITOR")")" srcFile="$1" logFile="${1%.*}.log" includeOption= status=0
   [[ -n "$includeDir" ]] && includeOption="/include:\"$includeDir\""
-  local compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\"" 
+  local compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
 
   (($original)) || echo "Compiling \"$srcFile\" as MQL5"
   MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || status=$?
@@ -503,7 +506,7 @@ EOF
   local helper="$(dirname "$(realpath "$0")")/helper.bat"
   [[ -f "$helper" && "$batch" == "$(< "$helper")" ]] || printf "%s\n" "$batch" > "$helper"
 
-  # the DOS name prevents argument mangling of quotes (which would break the call)
+  # the DOS name prevents argument mangling of double quotes which would break the call
   if [[ "$helper" =~ \  ]]; then
     helper="$(cygpath -d "$helper")"
   else
@@ -521,7 +524,7 @@ EOF
 ((!"$#")) && { help; exit 0; }
 
 srcFiles=() && srcDirs=() && includeDir= && log=0 && customLog= && format=
-delimiterPassed=0 && clean=0 && syntax=0 && original=0 && warn2err=0
+delimiterPassed=0 && clean=0 && syntax=0 && original=0 && warn2err=0 compact=0
 
 while [[ "$#" -gt 0 ]]; do
   if ((!$delimiterPassed)); then      # enter case only before an argument delimiter
@@ -604,17 +607,22 @@ while [[ "$#" -gt 0 ]]; do
   fi
   shift
 done
-readonly srcFiles srcDirs includeDir log customLog format clean syntax original warn2err
 
 ((${#srcFiles[@]} || ${#srcDirs[@]})) || { error "ERROR: missing source file/directory argument"; exit 1; }
+((${#srcFiles[@]} > 1 || ${#srcDirs[@]})) && compact=1
+readonly srcFiles srcDirs includeDir log customLog format clean syntax original warn2err compact
 
+
+# read configuration
 readConfig
 
 
 # process each source file
-exitCode=0
+i=1 && exitCode=0
 
 for file in "${srcFiles[@]}"; do
+  (($i > 1)) && echo
+
   version="$(resolveMqlVersion "$file")"
   status=0
 
@@ -624,16 +632,17 @@ for file in "${srcFiles[@]}"; do
     mql45)
       compileMql45 "$file" || status=$?;;
     mql5)
-      compileMql5 "$file" || status=$?;;
+      compileMql5  "$file" || status=$?;;
     *)
       error "ERROR: cannot resolve MQL version of \"$file\""
       exit 1;;
   esac
+
   (($status)) && exitCode=$status
+  ((i++))
 done
 
 exit $exitCode
-
 
 
 '
