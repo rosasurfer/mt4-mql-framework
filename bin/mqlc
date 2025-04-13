@@ -11,6 +11,7 @@
 #
 #
 # TODO:
+#  - rename -f to --version
 #  - auto-detect MQL version of source files
 #  - auto-detect include directory to use
 #  - improve error messages for filenames looking like options
@@ -49,7 +50,7 @@ Options:
   -f=VERSION     MQL4 source file format, either "mql40" or "mql45" (default: see below).
   -c --clean     With /compile:DIR, recompiles all source files of a directory.
   -s --syntax    Syntax check only, no compilation.
-  -o --original  Displays the original and unmodified compiler output.
+  -o --original  Displays the original and unmodified compiler output, followed by the original exit status.
   -w             Treat compiler warnings as errors, modifies the exit status for warnings.
 
 Supported short option prefixes are "-" and "/", supported option argument separators are ":" and "=".
@@ -180,9 +181,11 @@ function compileMql40() {
   status="${output[-1]}"                                              # fetch exit status from output and remove it
   unset 'output[-1]'
 
-  if ((!original)); then
+  if ((original)); then
+    output+=("$status")
+  else
     # on success
-    if [[ $status -eq 0 ]]; then
+    if ((!status)); then
       [[ "${output[-1]}" =~ ^(Exp|Library exp)\ file\ .+\ produced\ -\ ([0-9]+)\ error.+\ ([0-9]+)\ warning.+ ]] || {
         error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""
         exit 1
@@ -195,7 +198,7 @@ function compileMql40() {
     fi
 
     # on error
-    if [[ $status -ne 0 ]]; then
+    if ((status)); then
       if [[ ${#output[@]} -lt 4 ]]; then                              # no error messages happen for empty source files only
         [[ "$status" -ne 127 ]] && { error "ERROR: unexpected compiler output for status $status: no error message"; exit 1; }
         output+=("2;356;$srcFile;1:1;'' - event handling function not found")
@@ -204,7 +207,7 @@ function compileMql40() {
         # count errors and warnings
         local i
         for ((i=3; i < ${#output[@]}; i++)); do
-          [[ "${output[i]}" == [0-9]* ]] || break
+          [[ "${output[i]}" != [0-9]* ]] && break
           [[ "${output[i]}" == [1]* ]] && { ((warnings++)) || :; continue; }
           [[ "${output[i]}" == [2]* ]] && { ((errors++))   || :; continue; }
           error "ERROR: unknown message type in: ${output[i]}"
@@ -214,7 +217,7 @@ function compileMql40() {
 
       [[ "${output[-1]}" =~ ^[[:space:]]*$ ]] && unset 'output[-1]'   # remove an empty last line
       [[ "${output[-1]}" == See\ logfile*  ]] && unset 'output[-1]'   # remove a logfile hint
-      [[ "${output[-1]}" == Errors--[0-9]+ ]] && unset 'output[-1]'   # remove an error counter
+      [[ "${output[-1]}" == Errors--[0-9]* ]] && unset 'output[-1]'   # remove an error counter
       [[ "${output[-1]}" =~ ^[[:space:]]*$ ]] && unset 'output[-1]'   # remove another empty last line
 
       # add final results
@@ -270,6 +273,7 @@ function compileMql40() {
 
   Errors--1
   See logfile "Dow Jones Breakout.log"
+
   1
 
   parser errors
@@ -303,8 +307,8 @@ function compileMql40() {
   MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
   Copyright 2001-2009, MetaQuotes Software Corp.
 
-  1;41;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ??' - expression on global scope not allowed
-  2;75;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ??' - variable not defined
+  1;41;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ???' - expression on global scope not allowed
+  2;75;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ???' - variable not defined
   1
 
   input file not found
@@ -354,7 +358,9 @@ function compileMql45() {
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)"
   )
 
-  if ((!original)); then
+  if ((original)); then
+      output+=("$status")
+  else
     [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
     errors="${BASH_REMATCH[1]}"
     warnings="${BASH_REMATCH[2]}"
@@ -423,7 +429,9 @@ function compileMql5() {
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)"
   )
 
-  if ((!original)); then
+  if ((original)); then
+      output+=("$status")
+  else
     [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
     errors="${BASH_REMATCH[1]}"
     warnings="${BASH_REMATCH[2]}"
