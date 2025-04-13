@@ -1,0 +1,10 @@
+# .shellcheckrc
+
+enable=avoid-nullary-conditions
+enable=deprecate-which
+enable=quote-safe-variables
+enable=require-double-brackets
+
+disable=SC1090      # can't follow non-constant source
+disable=SC2317      # command appears to be unreachable
+disable=SC2034      # var appears unused
