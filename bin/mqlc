@@ -47,7 +47,7 @@ Options:
   /include:DIR   Custom MQL resources directory (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
   /log           Write output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
   /log:FILE      Write output to a custom log file.
-  -f=VERSION     MQL4 source file format, either "mql40" or "mql45" (default: see below).
+  -v=VERSION     MQL4 version of the ".mq4" files to process, either "mql40" or "mql45" (default: see below).
   -c --clean     With /compile:DIR, recompiles all source files of a directory.
   -s --syntax    Syntax check only, no compilation.
   -o --original  Displays the original and unmodified compiler output, followed by the original exit status.
@@ -55,17 +55,17 @@ Options:
 
 Supported short option prefixes are "-" and "/", supported option argument separators are ":" and "=".
 
-Used MQL compilers:
- Compilers to be used can be specified in the environment or predefined in the configuration (see "/.env.dist").
+MQL compilers:
+ The compilers to be used can be specified in the environment or predefined in the configuration (see "/.env.dist").
 
-Auto-detection of MQL4 source file formats:
- If the base name of the MQL resources directory resolves to "experts" or "mql40", source file format "mql40" is assumed.
- If the base name of the MQL resources directory resolves to "mql4" or "mql45", source file format "mql45" is assumed.
- A specified source format For MQL5 files is ignored.
- Default source file formats for custom directories can be predefined in the configuration (see "/.env.dist").
+Auto-detection of MQL versions:
+ ".mq5" files are always handled as MQL5.
+ ".mq4" files: If the base name of the MQL include directory resolves to "experts" or "mql40", version "mql40" is assumed.
+ ".mq4" files: If the base name of the MQL include directory resolves to "mql4" or "mql45", version "mql45" is assumed.
+ Default versions for custom directories can be predefined in the configuration (see "/.env.dist").
 
 On success the script exits with 0 (zero), a non-zero exit status indicates processing or compilation errors.
-Errors and warnings are always logged to a file, either to "<source-file.log>" or to a specified custom log file.
+Errors and warnings are always logged to file, either to "<source-file.log>" or to a specified custom log file.
 
 SYNTAX
 }
@@ -130,7 +130,7 @@ function getFileExtension() {
 #
 function resolveMqlVersion() {
   local ext; ext="$(getFileExtension "$1")"
-  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$format"
+  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$version"
 }
 
 
@@ -539,7 +539,7 @@ EOF
 # parse command line arguments
 ((!"$#")) && { help; exit 0; }
 
-declare delimiterPassed=0 srcFiles=() srcDirs=() includeDir='' log=0 customLog='' format='' clean=0 syntax=0 original=0 warn2err=0 compact=0
+declare delimiterPassed=0 srcFiles=() srcDirs=() includeDir='' log=0 customLog='' version='' clean=0 syntax=0 original=0 warn2err=0 compact=0
 
 while [[ "$#" -gt 0 ]]; do
   if ((!delimiterPassed)); then       # enter case only before an argument delimiter
@@ -567,12 +567,20 @@ while [[ "$#" -gt 0 ]]; do
         warn2err=1
         shift; continue;;
 
-      [-/]f|[-/]f[=:]*)
-        [[ -n "$format" ]] && { error "ERROR: multiple MQL4 version options"; exit 1; }
+      [-/]v|[-/]v[=:]*)
+        [[ -n "$version" ]] && { error "ERROR: multiple MQL4 version options"; exit 1; }
         [[ ${#1} -gt 3  ]] || { error "ERROR: missing MQL4 version identifier: $1"; exit 1; }
-        format="${1:3}"
-        format="${format,,}"
-        [[ "$format" == mql4[05] ]] || { error "ERROR: invalid MQL4 version identifier \"${1:3}\" (expect \"mql40\" or \"mql45\")"; exit 1; }
+        version="${1:3}"
+        version="${version,,}"
+        [[ "$version" != mql4[05] ]] && { error "ERROR: invalid MQL4 version identifier \"${1:3}\" (expecting \"mql40\" or \"mql45\")"; exit 1; }
+        shift; continue;;
+
+      --version|--version[=:]*)
+        [[ -n "$version" ]] && { error "ERROR: multiple MQL4 version options"; exit 1; }
+        [[ ${#1} -gt 10  ]] || { error "ERROR: missing MQL4 version identifier: $1"; exit 1; }
+        version="${1:10}"
+        version="${version,,}"
+        [[ "$version" != mql4[05] ]] && { error "ERROR: invalid MQL4 version identifier \"${1:10}\" (expecting \"mql40\" or \"mql45\")"; exit 1; }
         shift; continue;;
 
       /include|/include[=:]*)
@@ -623,7 +631,7 @@ done
 
 ((${#srcFiles[@]} || ${#srcDirs[@]})) || { error "ERROR: missing source file/directory argument"; exit 1; }
 ((${#srcFiles[@]} > 1 || ${#srcDirs[@]})) && compact=1
-readonly srcFiles srcDirs includeDir log customLog format clean syntax original warn2err compact
+readonly srcFiles srcDirs includeDir log customLog version clean syntax original warn2err compact
 
 
 # read configuration
