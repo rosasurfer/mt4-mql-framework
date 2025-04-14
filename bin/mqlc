@@ -11,8 +11,6 @@
 #
 #
 # TODO:
-#  - process directories
-#
 #  - preconfigured versions per directory
 #  - auto-detect version
 #
@@ -25,6 +23,7 @@
 #  - add elapsed time to mql40 output
 #  - reformat compiler messages
 #  - normalize source names and filter duplicates
+#  - support Windows filenames/paths as arguments
 #  - improve error messages for filenames looking like options
 #  - move config to standard location
 #  - colored output
@@ -57,21 +56,21 @@ Options:
   /include:DIR    Custom MQL resources directory (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
   /log            Write output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
   /log:FILE       Write output to a custom log file.
-  -v= --version=  Auto-detect the MQL4 version of all source files following the option (default). See below.
-  -v=VERSION      Explicit MQL4 version of all source files following the option, either "mql40" or "mql45".
+  -v= --version=  Auto-detect the version of all MQL4 source files following the option (default). See below.
+  -v=VERSION      Explicit version of all MQL4 source files following the option, either "mql40" or "mql45".
   -c --clean      With /compile:DIR, recompiles all source files of a directory.
   -s --syntax     Syntax check only, no compilation.
   -o --original   Preserve the original and unmodified compiler output, followed by the original exit status.
   -w              Treat compiler warnings as errors, modifies the exit status for warnings.
-
-MQL compilers:
- The compilers to be used can be specified in the environment or predefined in the configuration (see "/.env.dist").
 
 Auto-detection of MQL versions:
  ".mq5" files are always processed as MQL5, a specified version has no effect.
  ".mq4" files: If the base name of the MQL include directory resolves to "experts" or "mql40", version "mql40" is assumed.
  ".mq4" files: If the base name of the MQL include directory resolves to "mql4" or "mql45", version "mql45" is assumed.
  Default versions for custom directories can be predefined in the configuration (see "/.env.dist").
+
+MQL compilers:
+ Compilers to be used can be specified in the environment or must be predefined in the configuration (see "/.env.dist").
 
 On success the script exits with 0 (zero), a non-zero exit status indicates processing or compilation errors.
 Errors and warnings are always logged to file, either to "<source-file.log>" or to a specified custom log file.
@@ -549,8 +548,8 @@ EOF
 # parse command line arguments
 ((!"$#")) && { help; exit 0; }
 
-declare srcFiles=() srcFileVersions=() srcDirs=() srcDirVersions=()
-declare delimiterPassed=0 includeDir='' log=0 customLog='' version='auto' clean=0 syntax=0 original=0 warn2err=0 compactOutput=0
+declare srcFiles=() srcFileVersions=() srcDirs=() srcArg='' srcArgW='' file=''
+declare delimiterPassed=0 includeDir='' log=0 customLog='' version='' clean=0 syntax=0 original=0 warn2err=0 compactOutput=0
 
 while [[ "$#" -gt 0 ]]; do
   if ((!delimiterPassed)); then       # enter case only before an argument delimiter
@@ -607,38 +606,39 @@ while [[ "$#" -gt 0 ]]; do
         shift; continue;;
 
       /compile[=:]*)
-        arg="$(sanitizeName "${1:9}")"
-        [[ -z "$arg" ]] && { error "ERROR: missing argument: $1"; exit 1; }
+        srcArg="$(sanitizeName "${1:9}")"
+        [[ -z "$srcArg" ]] && { error "ERROR: missing argument: $1"; exit 1; }
         # processing continues after the case block
         ;;
     esac
   fi
 
   # source files/directories before/after an argument delimiter, standalone or as /compile: argument
-  ((delimiterPassed)) || [[ "$1" != /compile* ]] && arg="$1"
-  argBak="$arg"
-  arg="$(cygpath -w "$arg")"
+  ((delimiterPassed)) || [[ "$1" != /compile* ]] && srcArg="$1"
 
-  if [[ -d "$arg" ]]; then
-    srcDirs+=("$arg")
-    srcDirVersions+=("${version:-auto}")
-  elif [[ -f "$arg" ]]; then
-    ext="$(getFileExtension "$arg")"
-    [[ "${ext,,}" == mq[45] ]] || { error "ERROR: cannot compile file \"$argBak\""; exit 1; }
-    srcFiles+=("$arg")
+  if [[ -d "$srcArg" ]]; then
+    srcDirs+=("$srcArg")
+    while IFS= read -r file; do
+      srcFiles+=("$file")
+      srcFileVersions+=("${version:-auto}")
+    done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
+  elif [[ -f "$srcArg" ]]; then
+    ext="$(getFileExtension "$srcArg")"
+    [[ "${ext,,}" != mq[45] ]] && { error "ERROR: cannot compile file \"$srcArg\""; exit 1; }
+    srcFiles+=("$srcArg")
     srcFileVersions+=("${version:-auto}")
   else
-    arg="$1"
-    [[ "$arg" =~ ^[[:space:]]*$ ]] && arg="\"$arg\""
-    error "ERROR: file or directory not found: $arg"
+    srcArg="$1"
+    [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
+    error "ERROR: file or directory not found: $srcArg"
     exit 1
   fi
   shift
 done
 
-((${#srcFiles[@]} || ${#srcDirs[@]})) || { error "ERROR: missing source file/directory argument"; exit 1; }
-((${#srcFiles[@]} > 1 || ${#srcDirs[@]})) && compactOutput=1
-readonly srcFiles srcFileVersions srcDirs srcDirVersions includeDir log customLog clean syntax original warn2err compactOutput
+((!${#srcFiles[@]})) && { error "ERROR: missing source file/directory argument"; exit 1; }
+((${#srcFiles[@]} > 1)) && compactOutput=1
+readonly srcFiles srcFileVersions srcDirs includeDir log customLog clean syntax original warn2err compactOutput
 
 
 # read configuration
