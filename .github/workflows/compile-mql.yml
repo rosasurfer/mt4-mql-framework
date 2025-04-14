@@ -45,21 +45,19 @@ jobs:
         run: |
           echo "Downloading MT4 compiler..."
           curl -o metalang.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METALANG_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
-          echo "MT4_METALANG='$(cygpath -m "$(realpath ./metalang.exe)")'" >> "$GITHUB_ENV"
+          echo "MT4_METALANG=$(cygpath -m "$(realpath ./metalang.exe)")" >> "$GITHUB_ENV"
+          MSYS_NO_PATHCONV=1 cmd.exe /c 'mklink /D experts mql40'
 
           echo "Downloading MT4 MetaEditor..."
           curl -o metaeditor.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METAEDITOR_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
-          echo "MT4_METAEDITOR='$(cygpath -m "$(realpath ./metaeditor.exe)")'" >> "$GITHUB_ENV"
-          
-          MSYS_NO_PATHCONV=1 cmd.exe /c 'mklink /D experts mql40'
-          MSYS_NO_PATHCONV=1 cmd.exe /c 'mklink /D mql4 mql45'
+          echo "MT4_METAEDITOR=$(cygpath -m "$(realpath ./metaeditor.exe)")" >> "$GITHUB_ENV"
 
       - name: Compile MQL files
         if:   env.SKIP_CI != 'true'
         run: |
-          bin/mqlc -v=mql40 mql40/experts mql40/experts/tools mql40/indicators mql40/indicators/.attic mql40/scripts mql40/libraries -v=mql45 mql45/experts mql45/indicators mql45/scripts mql45/libraries
-          rm -fv experts mql4
-          
+          bin/mqlc -v=mql40 mql40/experts mql40/experts/tools mql40/indicators mql40/indicators/.attic mql40/scripts mql40/libraries \
+                   -v=mql45 mql45/experts mql45/indicators mql45/scripts mql45/libraries /include:"mql45"
+          rm -fv experts
           echo "TIMESTAMP=$(date +'%Y.%m.%d_%H.%M')" >> "$GITHUB_ENV"
 
       - name: Upload compiled files

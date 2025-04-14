@@ -649,7 +649,7 @@ readConfig
 declare i file exitCode=0
 
 for i in "${!srcFiles[@]}"; do
-  ((i)) && echo
+  ((i)) && echo ""
 
   file="${srcFiles[i]}"
   version="$(resolveMqlVersion "$file" "${srcFileVersions[i]}")"
