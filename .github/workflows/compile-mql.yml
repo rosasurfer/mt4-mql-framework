@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  compile:
+  compile-mql:
     runs-on: windows-latest
     defaults:
       run:
@@ -28,7 +28,7 @@ jobs:
       - name: Check commit message for "[skip ci]"
         run: |
           SKIP_CI=false
-          [[ "$GITHUB_EVENT_NAME" == "push" ]] && REF_NAME="$GITHUB_REF_NAME" || { echo "unsupported event: $GITHUB_EVENT_NAME"; exit 1; }
+          [[ "$GITHUB_EVENT_NAME" == "push" ]] && REF_NAME="$GITHUB_REF_NAME" || { echo "unsupported ci event: $GITHUB_EVENT_NAME"; exit 1; }
           COMMIT_MSG="$(git log -1 --format="%B" "origin/$REF_NAME")"
           MAGIC_KEY="$(echo "$COMMIT_MSG" | (grep -io "\[skip ci\]" || :) | tail -1)"
           [[ -n "$MAGIC_KEY" ]] && { echo "Magic commit message found: $MAGIC_KEY"; SKIP_CI=true; }
@@ -45,37 +45,28 @@ jobs:
         run: |
           echo "Downloading MT4 compiler..."
           curl -o metalang.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METALANG_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
-          echo "MT4_METALANG='$(cygpath -m "$(realpath metalang.exe)")'" >> .env
-          MSYS_NO_PATHCONV=1 cmd.exe /c 'mklink /D experts mql40'
+          echo "MT4_METALANG='$(cygpath -m "$(realpath ./metalang.exe)")'" >> "$GITHUB_ENV"
 
           echo "Downloading MT4 MetaEditor..."
           curl -o metaeditor.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METAEDITOR_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
-          echo "MT4_METAEDITOR='$(cygpath -m "$(realpath metaeditor.exe)")'" >> .env
+          echo "MT4_METAEDITOR='$(cygpath -m "$(realpath ./metaeditor.exe)")'" >> "$GITHUB_ENV"
+          
+          MSYS_NO_PATHCONV=1 cmd.exe /c 'mklink /D experts mql40'
           MSYS_NO_PATHCONV=1 cmd.exe /c 'mklink /D mql4 mql45'
-
-          echo
-          echo "directory:"
-          echo "----------"
-          ls -l
-          echo
-          echo "config file:"
-          echo "------------"
-          cat .env
 
       - name: Compile MQL files
         if:   env.SKIP_CI != 'true'
         run: |
           bin/mqlc -v=mql40 mql40/experts mql40/experts/tools mql40/indicators mql40/indicators/.attic mql40/scripts mql40/libraries -v=mql45 mql45/experts mql45/indicators mql45/scripts mql45/libraries
           rm -fv experts mql4
-
-          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY##*/}" >> "$GITHUB_ENV"
-          echo "TIMESTAMP=$(date +'%Y.%m.%d-%H.%M.%S')"          >> "$GITHUB_ENV"
+          
+          echo "TIMESTAMP=$(date +'%Y.%m.%d_%H.%M')" >> "$GITHUB_ENV"
 
       - name: Upload compiled files
         if:   env.SKIP_CI != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.GITHUB_REPOSITORY_NAME }}-${{ env.TIMESTAMP }}.bin
+          name: rosasurfer-mt4-mql-${{ env.TIMESTAMP }}.bin
           path: |
             mql*/**/*.mq[h4]
             mql*/**/*.ex4

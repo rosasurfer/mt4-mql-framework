@@ -11,19 +11,25 @@
 #
 #
 # TODO:
+#  - process directories
+#
 #  - preconfigured versions per directory
 #  - auto-detect version
 #
 #  - multiple /include options
 #  - preconfigured include dir per directory
-#  - support /inc:
 #  - auto-detect include directory to use
+#  - support /inc:
 #
-#  - normalize source file/directory names and filter duplicates
-#  - move config to standard location
 #  - add compiler version to output
+#  - add elapsed time to mql40 output
+#  - reformat compiler messages
+#  - normalize source names and filter duplicates
 #  - improve error messages for filenames looking like options
+#  - move config to standard location
 #  - colored output
+#
+#  - parallel compilation of multiple files
 #
 set -eu -o pipefail
 
@@ -51,11 +57,11 @@ Options:
   /include:DIR    Custom MQL resources directory (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
   /log            Write output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
   /log:FILE       Write output to a custom log file.
-  -v= --version=  Auto-detect the MQL4 version of the source files following the option (default). See below.
-  -v=VERSION      Explicit MQL4 version of the source files following the option, either "mql40" or "mql45".
+  -v= --version=  Auto-detect the MQL4 version of all source files following the option (default). See below.
+  -v=VERSION      Explicit MQL4 version of all source files following the option, either "mql40" or "mql45".
   -c --clean      With /compile:DIR, recompiles all source files of a directory.
   -s --syntax     Syntax check only, no compilation.
-  -o --original   Displays the original and unmodified compiler output, followed by the original exit status.
+  -o --original   Preserve the original and unmodified compiler output, followed by the original exit status.
   -w              Treat compiler warnings as errors, modifies the exit status for warnings.
 
 MQL compilers:
@@ -160,7 +166,7 @@ function readConfig() {
   # validate base names
   if [[ -n "$MT5_METAEDITOR" ]]; then
     basename="$(basename "$MT5_METAEDITOR")"
-    [[ "${basename,,}" == "metaeditor64.exe" ]] || { error "ERROR: The base name of the configured MQL5 compiler must be: \"metaeditor64.exe\""; exit 1; }
+    [[ "${basename,,}" != "metaeditor64.exe" ]] && { error "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""; exit 1; }
   fi
   readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR
 }
@@ -179,7 +185,7 @@ function compileMql40() {
 
   # call the compiler
   ((original)) || echo "Compiling \"$srcFile\" as MQL4.0"
-  mapfile -t output < <(                                              # TODO: make sure "./experts/include" exists and points to the right location
+  mapfile -t output < <(
     { MSYS_NO_PATHCONV=1 "$mqlc" "$srcFile" < /dev/null 2>&1 || status=$?; echo "$status"; } | tr -d '\r'
   )
   status="${output[-1]}"                                              # fetch exit status from output and remove it
@@ -197,7 +203,7 @@ function compileMql40() {
       errors="${BASH_REMATCH[2]}";   ((errors   == 1)) && ple='' || ple="s"
       warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && plw='' || plw="s"
 
-      output[-1]="Result: $errors error$ple, $warnings warning$plw"   # TODO: , ??? msec elapsed
+      output[-1]="Result: $errors error$ple, $warnings warning$plw"
       ((!warnings)) && output+=("Success")
     fi
 
@@ -227,7 +233,7 @@ function compileMql40() {
       # add final results
       ((errors   == 1)) && ple='' || ple="s"
       ((warnings == 1)) && plw='' || plw="s"
-      output+=("Result: $errors error$ple, $warnings warning$plw")    # TODO: , ??? msec elapsed
+      output+=("Result: $errors error$ple, $warnings warning$plw")
       output+=("Error")
     fi
 
