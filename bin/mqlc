@@ -17,8 +17,10 @@
 #  - multiple /include options
 #  - preconfigured include dir per directory
 #  - auto-detect include directory to use
+#  - fix /portable issue without /include option
 #  - support /inc:
 #
+#  - fix error when a specified directory doesn't contain sources
 #  - add compiler version to output
 #  - add elapsed time to mql40 output
 #  - reformat compiler messages
@@ -548,11 +550,11 @@ EOF
 # parse command line arguments
 ((!"$#")) && { help; exit 0; }
 
-declare srcFiles=() srcFileVersions=() srcDirs=() srcArg='' srcArgW='' file=''
-declare delimiterPassed=0 includeDir='' log=0 customLog='' version='' clean=0 syntax=0 original=0 warn2err=0 compactOutput=0
+declare i srcFileNames=() srcFileVersions=() srcArg='' file=''
+declare includeDir='' log=0 customLog='' version='' firstVersion=-1 clean=0 syntax=0 original=0 warn2err=0 compactOutput=0 delimiterPassed=0
 
 while [[ "$#" -gt 0 ]]; do
-  if ((!delimiterPassed)); then       # enter case only before an argument delimiter
+  if ((!delimiterPassed)); then                           # enter case only before an argument delimiter
     case "$1" in
       --)
         delimiterPassed=1
@@ -565,7 +567,7 @@ while [[ "$#" -gt 0 ]]; do
         clean=1
         shift; continue;;
 
-      [-/]s|--syntax)                 # support MetaEditor's option separator
+      [-/]s|--syntax)                                     # support MetaEditor's option separator
         syntax=1
         shift; continue;;
 
@@ -585,6 +587,12 @@ while [[ "$#" -gt 0 ]]; do
         version="${1#*=}"
         version="${version,,}"
         [[ -n "$version" && "$version" != mql4[05] ]] && { error "ERROR: invalid MQL4 version identifier in \"$1\" (expecting \"mql40\" or \"mql45\")"; exit 1; }
+        if ((firstVersion < 0)); then
+          for i in "${!srcFileVersions[@]}"; do
+            srcFileVersions[i]="$version"                 # the first --version affects previous sources if no more sources follow
+          done
+          firstVersion="${#srcFileVersions[@]}"           # track position
+        fi
         shift; continue;;
 
       /include|/include[=:]*)
@@ -617,15 +625,14 @@ while [[ "$#" -gt 0 ]]; do
   ((delimiterPassed)) || [[ "$1" != /compile* ]] && srcArg="$1"
 
   if [[ -d "$srcArg" ]]; then
-    srcDirs+=("$srcArg")
     while IFS= read -r file; do
-      srcFiles+=("$file")
+      srcFileNames+=("$file")
       srcFileVersions+=("${version:-auto}")
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(getFileExtension "$srcArg")"
     [[ "${ext,,}" != mq[45] ]] && { error "ERROR: cannot compile file \"$srcArg\""; exit 1; }
-    srcFiles+=("$srcArg")
+    srcFileNames+=("$srcArg")
     srcFileVersions+=("${version:-auto}")
   else
     srcArg="$1"
@@ -633,12 +640,19 @@ while [[ "$#" -gt 0 ]]; do
     error "ERROR: file or directory not found: $srcArg"
     exit 1
   fi
+
+  if ((firstVersion > 0)); then
+    for i in "${!srcFileVersions[@]}"; do
+      ((i < firstVersion)) && srcFileVersions[i]="auto"   # the first --version affects previous sources only if no more sources follow
+    done
+    firstVersion=0                                        # position of the first implied version = start of arguments
+  fi
   shift
 done
 
-((!${#srcFiles[@]})) && { error "ERROR: missing source file/directory argument"; exit 1; }
-((${#srcFiles[@]} > 1)) && compactOutput=1
-readonly srcFiles srcFileVersions srcDirs includeDir log customLog clean syntax original warn2err compactOutput
+((!${#srcFileNames[@]})) && { error "ERROR: missing source file/directory argument"; exit 1; }
+((${#srcFileNames[@]} > 1)) && compactOutput=1
+readonly srcFileNames srcFileVersions includeDir log customLog clean syntax original warn2err compactOutput
 
 
 # read configuration
@@ -646,12 +660,16 @@ readConfig
 
 
 # process each source file
-declare i file exitCode=0
+declare file exitCode=0
 
-for i in "${!srcFiles[@]}"; do
+for i in "${!srcFileNames[@]}"; do
+  version="${srcFileVersions[i]} "
+  echo "${version:0:5}  file: ${srcFileNames[i]}"
+  continue;
+
   ((i)) && echo ""
 
-  file="${srcFiles[i]}"
+  file="${srcFileNames[i]}"
   version="$(resolveMqlVersion "$file" "${srcFileVersions[i]}")"
   status=0
 
