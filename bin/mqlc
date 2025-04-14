@@ -11,13 +11,18 @@
 #
 #
 # TODO:
-#  - auto-detect MQL version of source files
+#  - preconfigured versions per directory
+#  - auto-detect version
+#
+#  - multiple /include options
+#  - preconfigured include dir per directory
+#  - support /inc:
 #  - auto-detect include directory to use
-#  - improve error messages for filenames looking like options
+#
 #  - normalize source file/directory names and filter duplicates
 #  - move config to standard location
 #  - add compiler version to output
-#  - silently support /inc:
+#  - improve error messages for filenames looking like options
 #  - colored output
 #
 set -eu -o pipefail
@@ -37,28 +42,27 @@ Usage: mqlc  [options] [--] SOURCE...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR] [/log[:FILE]]
 
 Arguments:
-  SOURCE         One or more source files or directories to compile. Supports wildcards.
+  SOURCE          One or more source files or directories to compile. Supports wildcards.
 
 Options:
-  -h --help      This screen.
-  /compile:FILE  Source file to compile. Doesn't support wildcards.
-  /compile:DIR   Source directory to compile. Recompiles new and modified source files (not in subdirectories).
-  /include:DIR   Custom MQL resources directory (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
-  /log           Write output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
-  /log:FILE      Write output to a custom log file.
-  -v=VERSION     MQL4 version of the ".mq4" files to process, either "mql40" or "mql45" (default: see below).
-  -c --clean     With /compile:DIR, recompiles all source files of a directory.
-  -s --syntax    Syntax check only, no compilation.
-  -o --original  Displays the original and unmodified compiler output, followed by the original exit status.
-  -w             Treat compiler warnings as errors, modifies the exit status for warnings.
-
-Supported short option prefixes are "-" and "/", supported option argument separators are ":" and "=".
+  -h --help       This screen.
+  /compile:FILE   Source file to compile. Doesn't support wildcards.
+  /compile:DIR    Source directory to compile. Recompiles new and modified source files (not in subdirectories).
+  /include:DIR    Custom MQL resources directory (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
+  /log            Write output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
+  /log:FILE       Write output to a custom log file.
+  -v= --version=  Auto-detect the MQL4 version of the source files following the option (default). See below.
+  -v=VERSION      Explicit MQL4 version of the source files following the option, either "mql40" or "mql45".
+  -c --clean      With /compile:DIR, recompiles all source files of a directory.
+  -s --syntax     Syntax check only, no compilation.
+  -o --original   Displays the original and unmodified compiler output, followed by the original exit status.
+  -w              Treat compiler warnings as errors, modifies the exit status for warnings.
 
 MQL compilers:
  The compilers to be used can be specified in the environment or predefined in the configuration (see "/.env.dist").
 
 Auto-detection of MQL versions:
- ".mq5" files are always handled as MQL5.
+ ".mq5" files are always processed as MQL5, a specified version has no effect.
  ".mq4" files: If the base name of the MQL include directory resolves to "experts" or "mql40", version "mql40" is assumed.
  ".mq4" files: If the base name of the MQL include directory resolves to "mql4" or "mql45", version "mql45" is assumed.
  Default versions for custom directories can be predefined in the configuration (see "/.env.dist").
@@ -126,10 +130,11 @@ function getFileExtension() {
 # Resolve the MQL version of a source file, taking into account an explicit or configured value.
 #
 # @param $1 - filename
+# @param $2 - input version
 #
 function resolveMqlVersion() {
   local ext; ext="$(getFileExtension "$1")"
-  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$inpVersion"
+  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
 }
 
 
@@ -227,7 +232,7 @@ function compileMql40() {
     fi
 
     # more compact output
-    ((compact)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'
+    ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'
 
     # remove copyright
     [[ "${output[1]}" =~ ^Copyright\ [0-9]+-[0-9]+,\ MetaQuotes ]] && unset 'output[1]'
@@ -538,7 +543,8 @@ EOF
 # parse command line arguments
 ((!"$#")) && { help; exit 0; }
 
-declare delimiterPassed=0 srcFiles=() srcDirs=() includeDir='' log=0 customLog='' inpVersion='' clean=0 syntax=0 original=0 warn2err=0 compact=0
+declare srcFiles=() srcFileVersions=() srcDirs=() srcDirVersions=()
+declare delimiterPassed=0 includeDir='' log=0 customLog='' version='auto' clean=0 syntax=0 original=0 warn2err=0 compactOutput=0
 
 while [[ "$#" -gt 0 ]]; do
   if ((!delimiterPassed)); then       # enter case only before an argument delimiter
@@ -547,39 +553,33 @@ while [[ "$#" -gt 0 ]]; do
         delimiterPassed=1
         shift; continue;;
 
-      [-/]h|--help)
+      -h|--help)
         help; exit 0;;
 
-      [-/]c|--clean)
+      -c|--clean)
         clean=1
         shift; continue;;
 
-      [-/]s|--syntax)
+      [-/]s|--syntax)                 # support MetaEditor's option separator
         syntax=1
         shift; continue;;
 
-      [-/]o|--original)
+      -o|--original)
         original=1
         shift; continue;;
 
-      [-/]w)
+      -w)
         warn2err=1
         shift; continue;;
 
-      [-/]v|[-/]v[=:]*)
-        [[ -n "$inpVersion" ]] && { error "ERROR: multiple MQL4 version options"; exit 1; }
-        [[ ${#1} -gt 3  ]] || { error "ERROR: missing MQL4 version identifier: $1"; exit 1; }
-        inpVersion="${1:3}"
-        inpVersion="${inpVersion,,}"
-        [[ "$inpVersion" != mql4[05] ]] && { error "ERROR: invalid MQL4 version identifier \"${1:3}\" (expecting \"mql40\" or \"mql45\")"; exit 1; }
-        shift; continue;;
+      -v|--version)
+        error "ERROR: missing MQL4 version identifier: $1"
+        exit 1;;
 
-      --version|--version[=:]*)
-        [[ -n "$inpVersion" ]] && { error "ERROR: multiple MQL4 version options"; exit 1; }
-        [[ ${#1} -gt 10  ]] || { error "ERROR: missing MQL4 version identifier: $1"; exit 1; }
-        inpVersion="${1:10}"
-        inpVersion="${inpVersion,,}"
-        [[ "$inpVersion" != mql4[05] ]] && { error "ERROR: invalid MQL4 version identifier \"${1:10}\" (expecting \"mql40\" or \"mql45\")"; exit 1; }
+      -v=*|--version=*)
+        version="${1#*=}"
+        version="${version,,}"
+        [[ -n "$version" && "$version" != mql4[05] ]] && { error "ERROR: invalid MQL4 version identifier in \"$1\" (expecting \"mql40\" or \"mql45\")"; exit 1; }
         shift; continue;;
 
       /include|/include[=:]*)
@@ -615,10 +615,12 @@ while [[ "$#" -gt 0 ]]; do
 
   if [[ -d "$arg" ]]; then
     srcDirs+=("$arg")
+    srcDirVersions+=("${version:-auto}")
   elif [[ -f "$arg" ]]; then
     ext="$(getFileExtension "$arg")"
     [[ "${ext,,}" == mq[45] ]] || { error "ERROR: cannot compile file \"$argBak\""; exit 1; }
     srcFiles+=("$arg")
+    srcFileVersions+=("${version:-auto}")
   else
     arg="$1"
     [[ "$arg" =~ ^[[:space:]]*$ ]] && arg="\"$arg\""
@@ -629,8 +631,8 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 ((${#srcFiles[@]} || ${#srcDirs[@]})) || { error "ERROR: missing source file/directory argument"; exit 1; }
-((${#srcFiles[@]} > 1 || ${#srcDirs[@]})) && compact=1
-readonly srcFiles srcDirs includeDir log customLog inpVersion clean syntax original warn2err compact
+((${#srcFiles[@]} > 1 || ${#srcDirs[@]})) && compactOutput=1
+readonly srcFiles srcFileVersions srcDirs srcDirVersions includeDir log customLog clean syntax original warn2err compactOutput
 
 
 # read configuration
@@ -638,15 +640,16 @@ readConfig
 
 
 # process each source file
-declare i=1 exitCode=0 fileVersion=''
+declare i file exitCode=0
 
-for file in "${srcFiles[@]}"; do
-  ((i > 1)) && echo
+for i in "${!srcFiles[@]}"; do
+  ((i)) && echo
 
-  fileVersion="$(resolveMqlVersion "$file")"
+  file="${srcFiles[i]}"
+  version="$(resolveMqlVersion "$file" "${srcFileVersions[i]}")"
   status=0
 
-  case "$fileVersion" in
+  case "$version" in
     mql40)
       compileMql40 "$file" || status=$?;;
     mql45)
@@ -659,7 +662,6 @@ for file in "${srcFiles[@]}"; do
   esac
 
   ((status)) && exitCode=$status
-  ((i++))
 done
 
 exit "$exitCode"
@@ -721,7 +723,7 @@ exit "$exitCode"
 # ---------
 # bash /f/Projects/mt4/mql/bin/mqlc "%f" -f=mql40
 # bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql45 -f=mql45
-# bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql50
+# bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql5
 #
 #
 # @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0
