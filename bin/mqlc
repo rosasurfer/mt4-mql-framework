@@ -14,7 +14,6 @@
 #  - preconfigured versions per directory
 #  - auto-detect version
 #
-#  - multiple /include options
 #  - preconfigured include dir per directory
 #  - auto-detect include directory to use
 #  - fix /portable issue without /include option
@@ -58,8 +57,8 @@ Options:
   /include:DIR     Custom MQL directory for all sources following the option (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
   /log             Writes all output to file "<source-file.log>" (default: no log on success, always log errors/warnings).
   /log:FILE        Writes all output to a custom log file.
-  -v= --version=   Auto-detects the version of all MQL4 source files following the option (default). See below.
-  -v=VERSION       Explicit version of all MQL4 source files following the option, either "mql40" or "mql45".
+  -v= --version=   Auto-detects the version of all MQL4 sources following the option (default). See below.
+  -v=VERSION       Explicit version of all MQL4 sources following the option, either "mql40" or "mql45".
   -s --syntax      Syntax check only, no compilation.
   -o --original    Preserves the original and unmodified compiler output, followed by the original exit status.
   -w --warn2error  Treats compiler warnings as errors, affects the exit status for warnings.
@@ -72,7 +71,7 @@ Auto-detection of MQL versions:
 
 The compilers to be used can be specified in the environment or predefined in the configuration (see "/.env.dist").
 
-The script exits with 0 (success) or the number of errors of the last failing compilation.
+The script exits with 0 (success) or with the number of errors of the last failing compilation.
 
 SYNTAX
 }
@@ -143,6 +142,18 @@ function resolveMqlVersion() {
 
 
 #
+# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
+#
+# @param $1 - filename
+# @param $2 - MQL version id
+# @param $3 - input include dir
+#
+function resolveIncludeDir() {
+  echo "$3"
+}
+
+
+#
 # Read the configuration into global vars.
 #
 function readConfig() {
@@ -174,17 +185,18 @@ function readConfig() {
 # Compile an MQL4.0 source file.
 #
 # @param $1 - filename
-# @param $2 - MQL version id (not used here)
+# @param $2 - MQL version id (not used)
+# @param $3 - include directory
 #
 function compileMql40() {
-  local versionName='MQL4.0' srcFile="$1" mqlc='' errorStatus=0 output=() line='' errors=0 epl='' warnings=0 wpl='' retVal
+  local srcFile="$1" include="$3" mqlc='' errorStatus=0 output=() line='' errors=0 epl='' warnings=0 wpl='' retVal
 
-  [[ -z "$MT4_METALANG" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
-  [[ -f "$MT4_METALANG" ]] || { error "ERROR: $versionName compiler not found: \"$MT4_METALANG\""; exit 1; }
+  [[ -z "$MT4_METALANG" ]] && { error "ERROR: MQL4.0 compiler is not configured"; exit 1; }
+  [[ -f "$MT4_METALANG" ]] || { error "ERROR: MQL4.0 compiler not found: \"$MT4_METALANG\""; exit 1; }
   mqlc="$MT4_METALANG"
 
   # call the compiler
-  ((originalOutput)) || echo "Compiling \"$srcFile\" as $versionName"
+  ((originalOutput)) || echo "Compiling \"$srcFile\" as MQL4.0"
   mapfile -t output < <(
     { MSYS_NO_PATHCONV=1 "$mqlc" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
   )
@@ -355,9 +367,10 @@ EOF
 #
 # @param $1 - filename
 # @param $2 - MQL version id
+# @param $3 - include directory
 #
 function compileMql5() {
-  local version="$2" versionName='' helper='' compilerCmd='' mqlc='' srcFile="$1" logFile="${1%.*}.log" includeOption='' errorStatus=0
+  local version="$2" versionName='' helper='' compilerCmd='' mqlc='' srcFile="$1" include="$3" logFile="${1%.*}.log" includeOption='' errorStatus=0
 
   if [[ "$version" == 'mql45' ]]; then
     versionName='MQL4.5'
@@ -372,7 +385,7 @@ function compileMql5() {
   fi
 
   helper="$(getCmdHelper)"
-  [[ -n "$includeDir" ]] && includeOption="/include:\"$includeDir\""
+  [[ -n "$include" ]] && includeOption="/include:\"$include\""
   compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
 
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $versionName"
@@ -442,7 +455,7 @@ EOF
 
 
 #
-# Creates a helper batch file for "cmd.exe" and returns its full Windows name.
+# Creates a helper batch file for "cmd.exe" and returns its full DOS name.
 # The name doesn't contain any spaces and needs no quoting.
 #
 function getCmdHelper() {
@@ -501,8 +514,10 @@ EOF
 # parse command line arguments
 ((!"$#")) && { help; exit 0; }
 
-declare i srcFileNames=() srcFileVersions=() srcArg='' file=''
-declare includeDir='' log=0 customLog='' version='' firstVersion=-1 syntax=0 originalOutput=0 compactOutput=0 warn2error=0 delimiterPassed=0
+declare srcFileNames=() srcArg=''
+declare srcFileVersions=() version='' firstVersion=-1
+declare srcFileIncludes=() include='' firstInclude=-1
+declare log=0 customLog='' syntaxOnly=0 originalOutput=0 compactOutput=0 warn2error=0 delimiterPassed=0
 
 while [[ "$#" -gt 0 ]]; do
   if ((!delimiterPassed)); then                           # enter case only before an option terminator
@@ -515,7 +530,7 @@ while [[ "$#" -gt 0 ]]; do
         help; exit 0;;
 
       [-/]s|--syntax)                                     # also support MetaEditor's option prefix
-        syntax=1
+        syntaxOnly=1
         shift; continue;;
 
       -o|--original)
@@ -543,11 +558,16 @@ while [[ "$#" -gt 0 ]]; do
         shift; continue;;
 
       /include|/include[=:]*)
-        [[ -n "$includeDir" ]] && { error "ERROR: multiple /include options"; exit 1; }
-        includeDir="$(sanitizeName "${1:9}")"
-        [[ -z "$includeDir" ]] && { error "ERROR: missing argument: $1"; exit 1; }
-        [[ -d "$includeDir" ]] || { error "ERROR: directory not found: $1"; exit 1; }
-        includeDir="$(cygpath -w "$includeDir")"
+        include="$(sanitizeName "${1:9}")"
+        [[ -z "$include" ]] && { error "ERROR: missing argument: $1"; exit 1; }
+        [[ -d "$include" ]] || { error "ERROR: directory not found: $1"; exit 1; }
+        include="$(cygpath -w "$include")"
+        if ((firstInclude < 0)); then
+          for i in "${!srcFileIncludes[@]}"; do
+            srcFileIncludes[i]="$include"                 # the first /include affects previous sources if no more sources follow
+          done
+          firstInclude="${#srcFileIncludes[@]}"           # track position
+        fi
         shift; continue;;
 
       /log|/log[=:]*)
@@ -575,12 +595,14 @@ while [[ "$#" -gt 0 ]]; do
     while IFS= read -r file; do
       srcFileNames+=("$file")
       srcFileVersions+=("${version:-auto}")
+      srcFileIncludes+=("${include:-auto}")
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(getFileExtension "$srcArg")"
     [[ "${ext,,}" != mq[45] ]] && { error "ERROR: cannot compile file \"$srcArg\""; exit 1; }
     srcFileNames+=("$srcArg")
     srcFileVersions+=("${version:-auto}")
+    srcFileIncludes+=("${include:-auto}")
   else
     srcArg="$1"
     [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
@@ -594,12 +616,23 @@ while [[ "$#" -gt 0 ]]; do
     done
     firstVersion=0                                        # position of the first implied version = start of arguments
   fi
+
+  if ((firstInclude > 0)); then
+    for i in "${!srcFileIncludes[@]}"; do
+      ((i < firstInclude)) && srcFileIncludes[i]="auto"   # the first /include affects previous sources only if no more sources follow
+    done
+    firstInclude=0                                        # position of the first implied /include = start of arguments
+  fi
   shift
 done
 
 ((!${#srcFileNames[@]})) && { error "ERROR: missing source file/directory argument"; exit 1; }
 ((${#srcFileNames[@]} > 1)) && compactOutput=1
-readonly srcFileNames srcFileVersions includeDir log customLog syntax originalOutput compactOutput warn2error
+
+readonly srcFileNames
+readonly srcFileVersions firstVersion
+readonly srcFileIncludes firstInclude
+readonly log customLog syntaxOnly originalOutput compactOutput warn2error
 
 
 # read configuration
@@ -614,13 +647,14 @@ for i in "${!srcFileNames[@]}"; do
 
   file="${srcFileNames[i]}"
   version="$(resolveMqlVersion "$file" "${srcFileVersions[i]}")"
+  include="$(resolveIncludeDir "$file" "$version" "${srcFileIncludes[i]}")"
   status=0
 
   case "$version" in
     mql40)
-      compileMql40 "$file" "$version" || status=$?;;
+      compileMql40 "$file" "$version" "$include" || status=$?;;
     mql45|mql5)
-      compileMql5  "$file" "$version" || status=$?;;
+      compileMql5  "$file" "$version" "$include" || status=$?;;
     *)
       error "ERROR: cannot resolve MQL version of \"$file\""
       exit 1;;

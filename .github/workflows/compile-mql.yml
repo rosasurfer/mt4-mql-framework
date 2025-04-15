@@ -57,8 +57,8 @@ jobs:
       - name: Compile MQL files
         if:   env.SKIP_CI != 'true'
         run: |
-          bin/mqlc -v=mql40 mql40/experts mql40/experts/tools mql40/indicators mql40/indicators/.attic mql40/scripts mql40/libraries \
-                   -v=mql45 mql45/experts mql45/indicators mql45/scripts mql45/libraries /include:"mql45" \
+          bin/mqlc -v=mql40 /include:mql40 mql40/experts mql40/experts/tools mql40/indicators mql40/indicators/.attic mql40/scripts mql40/libraries \
+                   -v=mql45 /include:mql45 mql45/experts mql45/indicators mql45/scripts mql45/libraries \
                    --warn2error
           rm -fv experts
           echo "TIMESTAMP=$(date +'%Y.%m.%d_%H.%M')" >> "$GITHUB_ENV"
