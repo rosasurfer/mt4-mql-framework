@@ -46,24 +46,23 @@ function help() {
 Compiles one or more MQL4.0, MQL4.5 or MQL5 source files or directories.
 
 Usage: mqlc  [options] [--] SOURCE...
-       mqlc  [options] /compile:(FILE|DIR)... [/include:DIR] [/log[:FILE]]
+       mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
 
 Arguments:
-  SOURCE          One or more source files or directories to compile. Supports wildcards.
+  SOURCE           One or more source files or directories to compile. Supports wildcards.
 
 Options:
-  -h --help       This screen.
-  /compile:FILE   Source file to compile. Doesn't support wildcards.
-  /compile:DIR    Source directory to compile. Recompiles new and modified source files (not in subdirectories).
-  /include:DIR    Custom MQL resources directory (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
-  /log            Write output to log file "<source-file.log>" (default: "<data-dir>/logs/metaeditor.log").
-  /log:FILE       Write output to a custom log file.
-  -v= --version=  Auto-detect the version of all MQL4 source files following the option (default). See below.
-  -v=VERSION      Explicit version of all MQL4 source files following the option, either "mql40" or "mql45".
-  -c --clean      With /compile:DIR, recompiles all source files of a directory.
-  -s --syntax     Syntax check only, no compilation.
-  -o --original   Preserve the original and unmodified compiler output, followed by the original exit status.
-  -w              Treat compiler warnings as errors, modifies the exit status for warnings.
+  -h --help        This screen.
+  /compile:FILE    Source file to compile. Doesn't support wildcards.
+  /compile:DIR     Source directory to compile. Recompiles new and modified source files (not in subdirectories).
+  /include:DIR     Custom MQL directory for all sources following the option (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
+  /log             Writes all output to file "<source-file.log>" (default: no log on success, always log errors/warnings).
+  /log:FILE        Writes all output to a custom log file.
+  -v= --version=   Auto-detects the version of all MQL4 source files following the option (default). See below.
+  -v=VERSION       Explicit version of all MQL4 source files following the option, either "mql40" or "mql45".
+  -s --syntax      Syntax check only, no compilation.
+  -o --original    Preserves the original and unmodified compiler output, followed by the original exit status.
+  -w --warn2error  Treats compiler warnings as errors, affects the exit status for warnings.
 
 Auto-detection of MQL versions:
  ".mq5" files are always processed as MQL5, a specified version has no effect.
@@ -71,11 +70,9 @@ Auto-detection of MQL versions:
  ".mq4" files: If the base name of the MQL include directory resolves to "mql4" or "mql45", version "mql45" is assumed.
  Default versions for custom directories can be predefined in the configuration (see "/.env.dist").
 
-MQL compilers:
- Compilers to be used can be specified in the environment or must be predefined in the configuration (see "/.env.dist").
+The compilers to be used can be specified in the environment or predefined in the configuration (see "/.env.dist").
 
-On success the script exits with 0 (zero), a non-zero exit status indicates processing or compilation errors.
-Errors and warnings are always logged to file, either to "<source-file.log>" or to a specified custom log file.
+The script exits with 0 (success) or the number of errors of the last failing compilation.
 
 SYNTAX
 }
@@ -182,65 +179,69 @@ function compileMql40() {
   [[ -z "$MT4_METALANG" ]] && { error "ERROR: MQL4.0 compiler is not configured"; exit 1; }
   [[ -f "$MT4_METALANG" ]] || { error "ERROR: MQL4.0 compiler not found: \"$MT4_METALANG\""; exit 1; }
 
-  local srcFile="$1" mqlc="$MT4_METALANG" status=0 output=() errors=0 ple='' warnings=0 plw='' line=''
+  local srcFile="$1" mqlc="$MT4_METALANG" errorStatus=0 output=() line='' errors=0 epl='' warnings=0 wpl='' retVal
 
   # call the compiler
   ((original)) || echo "Compiling \"$srcFile\" as MQL4.0"
   mapfile -t output < <(
-    { MSYS_NO_PATHCONV=1 "$mqlc" "$srcFile" < /dev/null 2>&1 || status=$?; echo "$status"; } | tr -d '\r'
+    { MSYS_NO_PATHCONV=1 "$mqlc" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
   )
-  status="${output[-1]}"                                              # fetch exit status from output and remove it
+  errorStatus="${output[-1]}"                                         # fetch error status from output and remove it
   unset 'output[-1]'
 
-  if ((original)); then
-    output+=("$status")
-  else
-    # on success
-    if ((!status)); then
-      [[ "${output[-1]}" =~ ^(Exp|Library exp)\ file\ .+\ produced\ -\ ([0-9]+)\ error.+\ ([0-9]+)\ warning.+ ]] || {
-        error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""
-        exit 1
-      }
-      errors="${BASH_REMATCH[2]}";   ((errors   == 1)) && ple='' || ple="s"
-      warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && plw='' || plw="s"
+  # on success
+  if ((!errorStatus)); then
+    [[ "${output[-1]}" =~ ^(Exp|Library exp)\ file\ .+\ produced\ -\ ([0-9]+)\ error.+\ ([0-9]+)\ warning.+ ]] || {
+      error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""
+      exit 1
+    }
+    errors="${BASH_REMATCH[2]}";   ((errors   == 1)) && epl='' || epl='s'
+    warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && wpl='' || wpl='s'
 
-      output[-1]="Result: $errors error$ple, $warnings warning$plw"
-      ((!warnings)) && output+=("Success")
+    if ((!original)); then
+      output[-1]="Result: $errors error$epl, $warnings warning$wpl"
+      ((!warnings))              && output+=("Success")
+      ((warnings && warn2error)) && output+=("Error")
+    fi
+  fi
+
+  # on error
+  if ((errorStatus)); then
+    if [[ ${#output[@]} -lt 4 ]]; then                              # no error messages happen for empty source files only
+      ((errorStatus != 127)) && { error "ERROR: unexpected compiler output for status $errorStatus: no error message"; exit 1; }
+      ((original)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
+      ((errors++)) || :
+    else
+      # count errors and warnings
+      local i
+      for ((i=3; i < ${#output[@]}; i++)); do
+        [[ "${output[i]}" != [0-9]* ]] && break
+        [[ "${output[i]}" == [1]* ]] && { ((warnings++)) || :; continue; }
+        [[ "${output[i]}" == [2]* ]] && { ((errors++))   || :; continue; }
+        error "ERROR: unknown message type in: ${output[i]}"
+        exit 1
+      done
     fi
 
-    # on error
-    if ((status)); then
-      if [[ ${#output[@]} -lt 4 ]]; then                              # no error messages happen for empty source files only
-        [[ "$status" -ne 127 ]] && { error "ERROR: unexpected compiler output for status $status: no error message"; exit 1; }
-        output+=("2;356;$srcFile;1:1;'' - event handling function not found")
-        ((errors++)) || :
-      else
-        # count errors and warnings
-        local i
-        for ((i=3; i < ${#output[@]}; i++)); do
-          [[ "${output[i]}" != [0-9]* ]] && break
-          [[ "${output[i]}" == [1]* ]] && { ((warnings++)) || :; continue; }
-          [[ "${output[i]}" == [2]* ]] && { ((errors++))   || :; continue; }
-          error "ERROR: unknown message type in: ${output[i]}"
-          exit 1
-        done
-      fi
-
+    if ((!original)); then
       [[ "${output[-1]}" =~ ^[[:space:]]*$ ]] && unset 'output[-1]'   # remove an empty last line
       [[ "${output[-1]}" == See\ logfile*  ]] && unset 'output[-1]'   # remove a logfile hint
       [[ "${output[-1]}" == Errors--[0-9]* ]] && unset 'output[-1]'   # remove an error counter
       [[ "${output[-1]}" =~ ^[[:space:]]*$ ]] && unset 'output[-1]'   # remove another empty last line
 
       # add final results
-      ((errors   == 1)) && ple='' || ple="s"
-      ((warnings == 1)) && plw='' || plw="s"
-      output+=("Result: $errors error$ple, $warnings warning$plw")
+      ((errors   == 1)) && epl='' || epl='s'
+      ((warnings == 1)) && wpl='' || wpl='s'
+      output+=("Result: $errors error$epl, $warnings warning$wpl")
       output+=("Error")
     fi
+  fi
 
+  if ((original)); then
+    output+=("$errorStatus")
+  else
     # more compact output
     ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'
-
     # remove copyright
     [[ "${output[1]}" =~ ^Copyright\ [0-9]+-[0-9]+,\ MetaQuotes ]] && unset 'output[1]'
   fi
@@ -249,7 +250,11 @@ function compileMql40() {
   for line in "${output[@]}"; do
     echo "$line"
   done
-  return "$status"
+
+  ((warn2error)) || warnings=0
+  ((retVal = errors + warnings))
+  ((retVal > 255)) && retVal=255
+  return "$retVal"
 
   notes << EOF
   metalang.exe's exit code is the number of encountered errors (0 = no errors but possibly warnings).
@@ -352,15 +357,15 @@ function compileMql45() {
   [[ -z "$MT4_METAEDITOR" ]] && { error "ERROR: MQL4.5 compiler is not configured"; exit 1; }
   [[ -f "$MT4_METAEDITOR" ]] || { error "ERROR: MQL4.5 compiler not found: \"$MT4_METAEDITOR\""; exit 1; }
 
-  local helper='' compilerCmd='' mqlc='' srcFile="$1" logFile="${1%.*}.log" includeOption='' status=0
-  helper="$(createCmdHelper)"
+  local helper='' compilerCmd='' mqlc='' srcFile="$1" logFile="${1%.*}.log" includeOption='' errorStatus=0
+  helper="$(getCmdHelper)"
   mqlc="$(cygpath -w "$MT4_METAEDITOR")"
   [[ -n "$includeDir" ]] && includeOption="/include:\"$includeDir\""
   compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
 
   ((original)) || echo "Compiling \"$srcFile\" as MQL4.5"
-  MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || status=$?
-  [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $status)."; exit 1; }
+  MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || errorStatus=$?
+  [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $errorStatus)."; exit 1; }
 
   # store the logfile in an array (convert to Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
@@ -369,29 +374,27 @@ function compileMql45() {
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)"
   )
 
-  if ((original)); then
-      output+=("$status")
-  else
-    [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
-    errors="${BASH_REMATCH[1]}"
-    warnings="${BASH_REMATCH[2]}"
+  [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
+  errors="${BASH_REMATCH[1]}"
+  warnings="${BASH_REMATCH[2]}"
+  ((!errors && !warnings)) || rm -f "$logFile"
 
-    # append success or error message
-    status=0
-    if ((errors)); then
-      output+=("Error")
-      status="$errors"
-    elif ((!warnings)); then
-      output+=("Success")
-      rm -f "$logFile"
-    fi
+  if ((original)); then
+    output+=("$errorStatus")
+  else
+    ((!errors && !warnings))               && output+=("Success")
+    ((errors || (warn2error && warnings))) && output+=("Error")
   fi
 
   # print everything to STDOUT
   for line in "${output[@]}"; do
     echo "$line"
   done
-  return "$status"
+
+  ((warn2error)) || warnings=0
+  ((retVal = errors + warnings))
+  ((retVal > 255)) && retVal=255
+  return "$retVal"
 
   notes << EOF
   Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
@@ -423,15 +426,15 @@ function compileMql5() {
   [[ -z "$MT5_METAEDITOR" ]] && { error "ERROR: MQL5 compiler is not configured"; exit 1; }
   [[ -f "$MT5_METAEDITOR" ]] || { error "ERROR: MQL5 compiler not found: \"$MT5_METAEDITOR\""; exit 1; }
 
-  local helper='' compilerCmd='' mqlc='' srcFile="$1" logFile="${1%.*}.log" includeOption='' status=0
-  helper="$(createCmdHelper)"
+  local helper='' compilerCmd='' mqlc='' srcFile="$1" logFile="${1%.*}.log" includeOption='' errorStatus=0
+  helper="$(getCmdHelper)"
   mqlc="$(cygpath -w "$MT5_METAEDITOR")"
   [[ -n "$includeDir" ]] && includeOption="/include:\"$includeDir\""
   compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
 
   ((original)) || echo "Compiling \"$srcFile\" as MQL5"
-  MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || status=$?
-  [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $status)."; exit 1; }
+  MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || errorStatus=$?
+  [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $errorStatus)."; exit 1; }
 
   # store the logfile in an array (convert to Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
@@ -440,29 +443,27 @@ function compileMql5() {
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)"
   )
 
-  if ((original)); then
-      output+=("$status")
-  else
-    [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
-    errors="${BASH_REMATCH[1]}"
-    warnings="${BASH_REMATCH[2]}"
+  [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
+  errors="${BASH_REMATCH[1]}"
+  warnings="${BASH_REMATCH[2]}"
+  ((!errors && !warnings)) || rm -f "$logFile"
 
-    # append success or error message
-    status=0
-    if ((errors)); then
-      output+=("Error")
-      status="$errors"
-    elif ((!warnings)); then
-      output+=("Success")
-      rm -f "$logFile"
-    fi
+  if ((original)); then
+    output+=("$errorStatus")
+  else
+    ((!errors && !warnings))               && output+=("Success")
+    ((errors || (warn2error && warnings))) && output+=("Error")
   fi
 
   # print everything to STDOUT
   for line in "${output[@]}"; do
     echo "$line"
   done
-  return "$status"
+
+  ((warn2error)) || warnings=0
+  ((retVal = errors + warnings))
+  ((retVal > 255)) && retVal=255
+  return "$retVal"
 
   notes << EOF
   Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
@@ -494,7 +495,7 @@ EOF
 # Creates a helper batch file for "cmd.exe" and returns its full Windows name.
 # The name doesn't contain any spaces and needs no quoting.
 #
-function createCmdHelper() {
+function getCmdHelper() {
   local helper='' code;
   code=$(cat << 'EOF'
 @echo off
@@ -551,7 +552,7 @@ EOF
 ((!"$#")) && { help; exit 0; }
 
 declare i srcFileNames=() srcFileVersions=() srcArg='' file=''
-declare includeDir='' log=0 customLog='' version='' firstVersion=-1 clean=0 syntax=0 original=0 warn2err=0 compactOutput=0 delimiterPassed=0
+declare includeDir='' log=0 customLog='' version='' firstVersion=-1 syntax=0 original=0 warn2error=0 compactOutput=0 delimiterPassed=0
 
 while [[ "$#" -gt 0 ]]; do
   if ((!delimiterPassed)); then                           # enter case only before an argument delimiter
@@ -563,10 +564,6 @@ while [[ "$#" -gt 0 ]]; do
       -h|--help)
         help; exit 0;;
 
-      -c|--clean)
-        clean=1
-        shift; continue;;
-
       [-/]s|--syntax)                                     # support MetaEditor's option separator
         syntax=1
         shift; continue;;
@@ -575,8 +572,8 @@ while [[ "$#" -gt 0 ]]; do
         original=1
         shift; continue;;
 
-      -w)
-        warn2err=1
+      -w|--warn2error)
+        warn2error=1
         shift; continue;;
 
       -v|--version)
@@ -652,7 +649,7 @@ done
 
 ((!${#srcFileNames[@]})) && { error "ERROR: missing source file/directory argument"; exit 1; }
 ((${#srcFileNames[@]} > 1)) && compactOutput=1
-readonly srcFileNames srcFileVersions includeDir log customLog clean syntax original warn2err compactOutput
+readonly srcFileNames srcFileVersions includeDir log customLog syntax original warn2error compactOutput
 
 
 # read configuration
@@ -660,13 +657,9 @@ readConfig
 
 
 # process each source file
-declare file exitCode=0
+exitCode=0
 
 for i in "${!srcFileNames[@]}"; do
-  version="${srcFileVersions[i]} "
-  echo "${version:0:5}  file: ${srcFileNames[i]}"
-  continue;
-
   ((i)) && echo ""
 
   file="${srcFileNames[i]}"
@@ -685,7 +678,7 @@ for i in "${!srcFileNames[@]}"; do
       exit 1;;
   esac
 
-  ((status)) && exitCode=$status
+  ((status)) && exitCode="$status"
 done
 
 exit "$exitCode"
