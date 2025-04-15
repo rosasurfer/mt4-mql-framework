@@ -30,8 +30,10 @@ jobs:
           SKIP_CI=false
           [[ "$GITHUB_EVENT_NAME" == "push" ]] && REF_NAME="$GITHUB_REF_NAME" || { echo "unsupported ci event: $GITHUB_EVENT_NAME"; exit 1; }
           COMMIT_MSG="$(git log -1 --format="%B" "origin/$REF_NAME")"
-          MAGIC_KEY="$(echo "$COMMIT_MSG" | (grep -io "\[skip ci\]" || :) | tail -1)"
-          [[ -n "$MAGIC_KEY" ]] && { echo "Magic commit message found: $MAGIC_KEY"; SKIP_CI=true; }
+          if grep -q '\[skip ci\]' <<< "$COMMIT_MSG"; then
+            echo "Magic commit message found: [skip ci]"
+            SKIP_CI=true
+          fi
           echo "Skip CI: $SKIP_CI"
           echo "SKIP_CI=$SKIP_CI" >> "$GITHUB_ENV"
 
