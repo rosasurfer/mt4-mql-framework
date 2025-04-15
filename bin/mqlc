@@ -119,7 +119,7 @@ function cygpath() {
 
 
 #
-# Get the file extension of the passed name.
+# Return the file extension of the passed name.
 #
 # @param $1 - filename
 #
@@ -174,15 +174,17 @@ function readConfig() {
 # Compile an MQL4.0 source file.
 #
 # @param $1 - filename
+# @param $2 - MQL version id (not used here)
 #
 function compileMql40() {
-  [[ -z "$MT4_METALANG" ]] && { error "ERROR: MQL4.0 compiler is not configured"; exit 1; }
-  [[ -f "$MT4_METALANG" ]] || { error "ERROR: MQL4.0 compiler not found: \"$MT4_METALANG\""; exit 1; }
+  local versionName='MQL4.0' srcFile="$1" mqlc='' errorStatus=0 output=() line='' errors=0 epl='' warnings=0 wpl='' retVal
 
-  local srcFile="$1" mqlc="$MT4_METALANG" errorStatus=0 output=() line='' errors=0 epl='' warnings=0 wpl='' retVal
+  [[ -z "$MT4_METALANG" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
+  [[ -f "$MT4_METALANG" ]] || { error "ERROR: $versionName compiler not found: \"$MT4_METALANG\""; exit 1; }
+  mqlc="$MT4_METALANG"
 
   # call the compiler
-  ((original)) || echo "Compiling \"$srcFile\" as MQL4.0"
+  ((originalOutput)) || echo "Compiling \"$srcFile\" as $versionName"
   mapfile -t output < <(
     { MSYS_NO_PATHCONV=1 "$mqlc" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
   )
@@ -198,7 +200,7 @@ function compileMql40() {
     errors="${BASH_REMATCH[2]}";   ((errors   == 1)) && epl='' || epl='s'
     warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && wpl='' || wpl='s'
 
-    if ((!original)); then
+    if ((!originalOutput)); then
       output[-1]="Result: $errors error$epl, $warnings warning$wpl"
       ((!warnings))              && output+=("Success")
       ((warnings && warn2error)) && output+=("Error")
@@ -209,7 +211,7 @@ function compileMql40() {
   if ((errorStatus)); then
     if [[ ${#output[@]} -lt 4 ]]; then                              # no error messages happen for empty source files only
       ((errorStatus != 127)) && { error "ERROR: unexpected compiler output for status $errorStatus: no error message"; exit 1; }
-      ((original)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
+      ((originalOutput)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
       ((errors++)) || :
     else
       # count errors and warnings
@@ -223,7 +225,7 @@ function compileMql40() {
       done
     fi
 
-    if ((!original)); then
+    if ((!originalOutput)); then
       [[ "${output[-1]}" =~ ^[[:space:]]*$ ]] && unset 'output[-1]'   # remove an empty last line
       [[ "${output[-1]}" == See\ logfile*  ]] && unset 'output[-1]'   # remove a logfile hint
       [[ "${output[-1]}" == Errors--[0-9]* ]] && unset 'output[-1]'   # remove an error counter
@@ -237,7 +239,7 @@ function compileMql40() {
     fi
   fi
 
-  if ((original)); then
+  if ((originalOutput)); then
     output+=("$errorStatus")
   else
     # more compact output
@@ -349,28 +351,38 @@ EOF
 
 
 #
-# Compile an MQL4.5 source file.
+# Compile an MQL4.5/MQL5 source file.
 #
 # @param $1 - filename
+# @param $2 - MQL version id
 #
-function compileMql45() {
-  [[ -z "$MT4_METAEDITOR" ]] && { error "ERROR: MQL4.5 compiler is not configured"; exit 1; }
-  [[ -f "$MT4_METAEDITOR" ]] || { error "ERROR: MQL4.5 compiler not found: \"$MT4_METAEDITOR\""; exit 1; }
+function compileMql5() {
+  local version="$2" versionName='' helper='' compilerCmd='' mqlc='' srcFile="$1" logFile="${1%.*}.log" includeOption='' errorStatus=0
 
-  local helper='' compilerCmd='' mqlc='' srcFile="$1" logFile="${1%.*}.log" includeOption='' errorStatus=0
+  if [[ "$version" == 'mql45' ]]; then
+    versionName='MQL4.5'
+    [[ -z "$MT4_METAEDITOR" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
+    [[ -f "$MT4_METAEDITOR" ]] || { error "ERROR: $versionName compiler not found: \"$MT4_METAEDITOR\""; exit 1; }
+    mqlc="$(cygpath -w "$MT4_METAEDITOR")"
+  else
+    versionName='MQL5'
+    [[ -z "$MT5_METAEDITOR" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
+    [[ -f "$MT5_METAEDITOR" ]] || { error "ERROR: $versionName compiler not found: \"$MT5_METAEDITOR\""; exit 1; }
+    mqlc="$(cygpath -w "$MT5_METAEDITOR")"
+  fi
+
   helper="$(getCmdHelper)"
-  mqlc="$(cygpath -w "$MT4_METAEDITOR")"
   [[ -n "$includeDir" ]] && includeOption="/include:\"$includeDir\""
   compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
 
-  ((original)) || echo "Compiling \"$srcFile\" as MQL4.5"
+  ((originalOutput)) || echo "Compiling \"$srcFile\" as $versionName"
   MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || errorStatus=$?
   [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $errorStatus)."; exit 1; }
 
   # store the logfile in an array (convert to Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
   mapfile -t output < <(
-    ((original)) && M="rosasurfer"                            # marker to skip filtering if option --original is enabled
+    ((originalOutput)) && M="rosasurfer"                      # marker to skip filtering if option --original is enabled
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)"
   )
 
@@ -379,7 +391,7 @@ function compileMql45() {
   warnings="${BASH_REMATCH[2]}"
   ((!errors && !warnings)) || rm -f "$logFile"
 
-  if ((original)); then
+  if ((originalOutput)); then
     output+=("$errorStatus")
   else
     ((!errors && !warnings))               && output+=("Success")
@@ -399,94 +411,32 @@ function compileMql45() {
   notes << EOF
   Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
   breaks Cygwin's POSIX launcher. So we go with "cmd" and manually demangle in the helper batch file.
-  The helper file cannot just hold the final command as it disallows parallel executions.
+  The helper file cannot just hold the final command as that doesn't support parallel executions.
 
-  metaeditor.exe's exit code is the number of successfully processed files (0 = error). It doesn't
-  produce any error messages.
+  MetaEditor's exit code is the number of successfully processed files (0 = error). It doesn't produce
+  any error messages.
+
+
+  renamed executable
+  ------------------
+  $ MSYS_NO_PATHCONV=1 metaeditor64_.exe /compile:Exists.mq5 /log:custom.log; echo $?
+  0 (no "custom.log", no "metaeditor.log")
+
 
   syntax errors without /log option
   ---------------------------------
   $ MSYS_NO_PATHCONV=1 metaeditor.exe /compile:Exists.mq4; echo $?
   0 (no "metaeditor.log")
 
-  input file not found
-  --------------------
-  $ MSYS_NO_PATHCONV=1 metaeditor.exe /compile:DoesntExist.mq4 /log:custom.log; echo $?
-  0 (no "custom.log", no "metaeditor.log")
-EOF
-}
-
-
-#
-# Compile an MQL5 source file.
-#
-# @param $1 - filename
-#
-function compileMql5() {
-  [[ -z "$MT5_METAEDITOR" ]] && { error "ERROR: MQL5 compiler is not configured"; exit 1; }
-  [[ -f "$MT5_METAEDITOR" ]] || { error "ERROR: MQL5 compiler not found: \"$MT5_METAEDITOR\""; exit 1; }
-
-  local helper='' compilerCmd='' mqlc='' srcFile="$1" logFile="${1%.*}.log" includeOption='' errorStatus=0
-  helper="$(getCmdHelper)"
-  mqlc="$(cygpath -w "$MT5_METAEDITOR")"
-  [[ -n "$includeDir" ]] && includeOption="/include:\"$includeDir\""
-  compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
-
-  ((original)) || echo "Compiling \"$srcFile\" as MQL5"
-  MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || errorStatus=$?
-  [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $errorStatus)."; exit 1; }
-
-  # store the logfile in an array (convert to Unix EOL, filter blank lines and infos)
-  local output=() line='' M='' errors=0 warnings=0
-  mapfile -t output < <(
-    ((original)) && M="rosasurfer"                            # marker to skip filtering if option --original is enabled
-    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)"
-  )
-
-  [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
-  errors="${BASH_REMATCH[1]}"
-  warnings="${BASH_REMATCH[2]}"
-  ((!errors && !warnings)) || rm -f "$logFile"
-
-  if ((original)); then
-    output+=("$errorStatus")
-  else
-    ((!errors && !warnings))               && output+=("Success")
-    ((errors || (warn2error && warnings))) && output+=("Error")
-  fi
-
-  # print everything to STDOUT
-  for line in "${output[@]}"; do
-    echo "$line"
-  done
-
-  ((warn2error)) || warnings=0
-  ((retVal = errors + warnings))
-  ((retVal > 255)) && retVal=255
-  return "$retVal"
-
-  notes << EOF
-  Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
-  breaks Cygwin's POSIX launcher. So we go with "cmd" and manually demangle in the helper batch file.
-  The helper file does not simply hold the final command to allow multiple parallel compilations.
-
-  metaeditor64.exe's exit code is the number of successfully processed files (0 = error). It doesn't
-  produce any error messages.
-
-  executable renamed
-  ------------------
-  $ MSYS_NO_PATHCONV=1 metaeditor64_.exe /compile:Exists.mq5 /log:custom.log; echo $?
-  0 (no "custom.log", no "metaeditor.log")
-
-  input file not found
-  --------------------
-  $ MSYS_NO_PATHCONV=1 metaeditor64.exe /compile:DoesntExist.mq5 /log:custom.log; echo $?
-  0 (no "custom.log", no "metaeditor.log")
-
-  syntax errors without /log option
-  ---------------------------------
   $ MSYS_NO_PATHCONV=1 metaeditor64.exe /compile:Exists.mq5; echo $?
   0 (summary in "metaeditor.log")
+
+
+  input file not found
+  --------------------
+  $ MSYS_NO_PATHCONV=1 metaeditor*.exe /compile:DoesntExist.mq4 /log:custom.log; echo $?
+  0 (no "custom.log", no "metaeditor.log")
+
 EOF
 }
 
@@ -552,10 +502,10 @@ EOF
 ((!"$#")) && { help; exit 0; }
 
 declare i srcFileNames=() srcFileVersions=() srcArg='' file=''
-declare includeDir='' log=0 customLog='' version='' firstVersion=-1 syntax=0 original=0 warn2error=0 compactOutput=0 delimiterPassed=0
+declare includeDir='' log=0 customLog='' version='' firstVersion=-1 syntax=0 originalOutput=0 compactOutput=0 warn2error=0 delimiterPassed=0
 
 while [[ "$#" -gt 0 ]]; do
-  if ((!delimiterPassed)); then                           # enter case only before an argument delimiter
+  if ((!delimiterPassed)); then                           # enter case only before an option terminator
     case "$1" in
       --)
         delimiterPassed=1
@@ -564,12 +514,12 @@ while [[ "$#" -gt 0 ]]; do
       -h|--help)
         help; exit 0;;
 
-      [-/]s|--syntax)                                     # support MetaEditor's option separator
+      [-/]s|--syntax)                                     # also support MetaEditor's option prefix
         syntax=1
         shift; continue;;
 
       -o|--original)
-        original=1
+        originalOutput=1
         shift; continue;;
 
       -w|--warn2error)
@@ -649,7 +599,7 @@ done
 
 ((!${#srcFileNames[@]})) && { error "ERROR: missing source file/directory argument"; exit 1; }
 ((${#srcFileNames[@]} > 1)) && compactOutput=1
-readonly srcFileNames srcFileVersions includeDir log customLog syntax original warn2error compactOutput
+readonly srcFileNames srcFileVersions includeDir log customLog syntax originalOutput compactOutput warn2error
 
 
 # read configuration
@@ -668,11 +618,9 @@ for i in "${!srcFileNames[@]}"; do
 
   case "$version" in
     mql40)
-      compileMql40 "$file" || status=$?;;
-    mql45)
-      compileMql45 "$file" || status=$?;;
-    mql5)
-      compileMql5  "$file" || status=$?;;
+      compileMql40 "$file" "$version" || status=$?;;
+    mql45|mql5)
+      compileMql5  "$file" "$version" || status=$?;;
     *)
       error "ERROR: cannot resolve MQL version of \"$file\""
       exit 1;;
