@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# A multi-version wrapper for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple files
-# and directories. Prints results to STDOUT and follows standard rules for the exit status. The syntax is compatible with
-# the syntax of MetaEditor.
+# A script for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple
+# file and directories. Prints results to STDOUT and follows standard rules for the exit status.
+# The syntax is compatible with the syntax of MetaEditor.
 #
 # Configuration via environment or config file.
 #
@@ -11,24 +11,24 @@
 #
 #
 # TODO:
-#  - preconfigured versions per directory
-#  - auto-detect version
-#
-#  - preconfigured include dir per directory
-#  - auto-detect include directory to use
-#  - fix /portable issue without /include option
-#  - support /inc:
-#
 #  - fix error when a specified directory doesn't contain sources
+#  - create include dirs for mql40
+#  - support Windows filenames/paths as arguments
 #  - add compiler version to output
 #  - add elapsed time to mql40 output
 #  - reformat compiler messages
-#  - normalize source names and filter duplicates
-#  - support Windows filenames/paths as arguments
 #  - improve error messages for filenames looking like options
 #  - move config to standard location
-#  - colored output
+#  - implement download tracker
 #
+#  - preconfigured versions per directory
+#  - preconfigured include dir per directory
+#  - auto-detect version
+#  - auto-detect include directory
+#  - fix /portable issue without /include option
+#
+#  - normalize source names and filter duplicates
+#  - colored output
 #  - parallel compilation of multiple files
 #
 set -eu -o pipefail
@@ -557,8 +557,9 @@ while [[ "$#" -gt 0 ]]; do
         fi
         shift; continue;;
 
-      /include|/include[=:]*)
-        include="$(sanitizeName "${1:9}")"
+      /inc|/include|/inc[=:]*|/include[=:]*)
+        [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
+        include="$(sanitizeName "$include")"
         [[ -z "$include" ]] && { error "ERROR: missing argument: $1"; exit 1; }
         [[ -d "$include" ]] || { error "ERROR: directory not found: $1"; exit 1; }
         include="$(cygpath -w "$include")"
