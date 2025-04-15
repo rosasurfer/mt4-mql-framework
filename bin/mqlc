@@ -68,7 +68,7 @@ Auto-detection of MQL versions:
  ".mq5" files are always processed as MQL5, a specified version has no effect.
  ".mq4" files: If the base name of the MQL include directory resolves to "experts" or "mql40", version "mql40" is assumed.
  ".mq4" files: If the base name of the MQL include directory resolves to "mql4" or "mql45", version "mql45" is assumed.
- Default versions for custom directories can be predefined in the configuration (see "/.env.dist").
+ Default MQL versions for custom directories can be predefined in the configuration (see "/.env.dist").
 
 The compilers to be used can be specified in the environment or predefined in the configuration (see "/.env.dist").
 
@@ -531,7 +531,7 @@ goto loop
 exit /b %ERRORLEVEL%
 EOF
 )
-  helper="$(dirname "$(realpath "$0")")/helper.bat"
+  helper="$(dirname "$(realpath "$0")")/.helper.bat"
   [[ -f "$helper" && "$code" == "$(< "$helper")" ]] || printf "%s\n" "$code" > "$helper"
 
   # the DOS name prevents argument mangling of double quotes which would break the call
