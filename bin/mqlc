@@ -11,14 +11,15 @@
 #
 #
 # TODO:
+#  - add elapsed time to mql40 output
 #  - fix error when a specified directory doesn't contain sources
 #  - create include dirs for mql40
 #  - support Windows filenames/paths as arguments
-#  - add elapsed time to mql40 output
 #  - reformat compiler messages
 #  - improve error messages for filenames looking like options
 #  - move config to standard location
 #  - implement download tracker
+#  - remove cmd helper on exit
 #
 #  - preconfigured versions per directory
 #  - preconfigured include dir per directory
@@ -27,7 +28,7 @@
 #  - fix /portable issue without /include option
 #
 #  - normalize source names and filter duplicates
-#  - colored output
+#  - colored output (test also in command console)
 #  - parallel compilation of multiple files
 #
 set -eu -o pipefail
@@ -53,11 +54,11 @@ Options:
   -h --help        This screen.
   /compile:FILE    Source file to compile. Doesn't support wildcards.
   /compile:DIR     Source directory to compile. Recompiles new and modified source files (not in subdirectories).
-  /include:DIR     Custom MQL directory for all sources following the option (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
+  /include:DIR     Include directory for all source files following the option (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
   /log             Writes all output to file "<source-file.log>" (default: no log on success, always log errors/warnings).
   /log:FILE        Writes all output to a custom log file.
-  -v= --version=   Auto-detects the version of all MQL4 sources following the option (default). See below.
-  -v=VERSION       Explicit version of all MQL4 sources following the option, either "mql40" or "mql45".
+  -v=VERSION       Explicit version of MQL4 source files following the option: either "mql40" or "mql45".
+  -v= --version=   Empty version argument: auto-detects the version of MQL4 source files following the option (default).
   -s --syntax      Syntax check only, no compilation.
   -o --original    Preserves the original and unmodified compiler output, followed by the original exit status.
   -w --warn2error  Treats compiler warnings as errors, affects the exit status for warnings.
@@ -68,9 +69,9 @@ Auto-detection of MQL versions:
  ".mq4" files: If the base name of the MQL include directory resolves to "mql4" or "mql45", version "mql45" is assumed.
  Default MQL versions for custom directories can be predefined in the configuration (see "/.env.dist").
 
-The compilers to be used can be specified in the environment or predefined in the configuration (see "/.env.dist").
+Compilers may be specified via environment variables or predefined in the configuration (see "/.env.dist").
 
-The script exits with 0 (success) or with the number of errors of the last failing compilation.
+The script exits with 0 (success) or the number of errors of the last failing compilation.
 
 SYNTAX
 }
@@ -129,12 +130,39 @@ function fileExtension() {
 
 
 #
+# Return the compiler filename for the specified MQL version.
+#
+# @param $1 - version id
+#
+function getCompiler() {
+  local version="$1" versionName="${mqlVersions["$1"]}" compiler
+
+  case "$version" in
+    mql40)
+      compiler='MT4_METALANG';;
+    mql45)
+      compiler='MT4_METAEDITOR';;
+    mql5)
+      compiler='MT5_METAEDITOR';;
+    *)
+      error "ERROR: unknown MQL version \"$version\""
+      exit 1;;
+  esac
+
+  [[ -z "${!compiler}" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
+  [[ -f "${!compiler}" ]] || { error "ERROR: $versionName compiler not found: \"${!compiler}\""; exit 1; }
+
+  echo "${!compiler}"
+}
+
+
+#
 # Return a version string of the passed compiler filename.
 #
 # @param $1 - filename
 #
 function compilerVersion() {
-  local dosName; dosName="$(cygpath -d "$1")"                     # the DOS name saves us quoting which would get mangled and breaks the call
+  local dosName; dosName="$(cygpath -d "$1")"                     # the DOS name spares us quoting which would get mangled and then breaks the call
   local fileVersion; fileVersion="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "(Get-Item $dosName).VersionInfo.FileVersion" < /dev/null)"
 
   fileVersion="${fileVersion#$'\xEF\xBB\xBF'}"                    # cut-off a BOM header if present
@@ -146,30 +174,6 @@ function compilerVersion() {
     exit 1
   }
   echo "${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
-}
-
-
-#
-# Resolve the MQL version of a source file, taking into account an explicit or configured value.
-#
-# @param $1 - filename
-# @param $2 - input version
-#
-function resolveMqlVersion() {
-  local ext; ext="$(fileExtension "$1")"
-  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
-}
-
-
-#
-# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
-#
-# @param $1 - filename
-# @param $2 - MQL version id
-# @param $3 - input include dir
-#
-function resolveIncludeDir() {
-  echo "$3"
 }
 
 
@@ -202,23 +206,47 @@ function readConfig() {
 
 
 #
+# Resolve the MQL version of a source file, taking into account an explicit or configured value.
+# If neither input nor configuration exist, the function tries to auto-detect the MQL version.
+#
+# @param $1 - filename
+# @param $2 - input version
+#
+function resolveMqlVersion() {
+  local ext; ext="$(fileExtension "$1")"
+  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
+}
+
+
+#
+# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
+# If neither input nor configuration exist, the function tries to auto-detect the include directory.
+#
+# @param $1 - filename
+# @param $2 - MQL version id
+# @param $3 - input include dir
+#
+function resolveIncludeDir() {
+  echo "$3"
+}
+
+
+#
 # Compile an MQL4.0 source file.
 #
 # @param $1 - filename
-# @param $2 - MQL version id (not used)
+# @param $2 - MQL version id
 # @param $3 - include directory
 #
 function compileMql40() {
-  local srcFile="$1" include="$3" mqlc='' errorStatus=0 output=() line='' errors=0 epl='' warnings=0 wpl='' retVal
-
-  [[ -z "$MT4_METALANG" ]] && { error "ERROR: MQL4.0 compiler is not configured"; exit 1; }
-  [[ -f "$MT4_METALANG" ]] || { error "ERROR: MQL4.0 compiler not found: \"$MT4_METALANG\""; exit 1; }
-  mqlc="$MT4_METALANG"
+  local srcFile="$1" version="$2" versionName="${mqlVersions["$2"]}" include="$3"
+  local compiler errorStatus=0 output=() line errors=0 epl='' warnings=0 wpl='' retVal
+  compiler="$(getCompiler "$version")"
 
   # call the compiler
-  ((originalOutput)) || echo "Compiling \"$srcFile\" as MQL4.0"
+  ((originalOutput)) || echo "Compiling \"$srcFile\" as $versionName"
   mapfile -t output < <(
-    { MSYS_NO_PATHCONV=1 "$mqlc" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
+    { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
   )
   errorStatus="${output[-1]}"                                         # fetch error status from output and remove it
   unset 'output[-1]'
@@ -387,22 +415,12 @@ EOF
 #
 # @param $1 - filename
 # @param $2 - MQL version id
-# @param $3 - include directory
+# @param $3 - include directory to use
 #
 function compileMql5() {
-  local version="$2" versionName='' helper='' compiler='' compilerCmd='' srcFile="$1" include="$3" logFile="${1%.*}.log" includeOption='' errorStatus=0
-
-  if [[ "$version" == 'mql45' ]]; then
-    versionName='MQL4.5'
-    [[ -z "$MT4_METAEDITOR" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
-    [[ -f "$MT4_METAEDITOR" ]] || { error "ERROR: $versionName compiler not found: \"$MT4_METAEDITOR\""; exit 1; }
-    compiler="$MT4_METAEDITOR"
-  else
-    versionName='MQL5'
-    [[ -z "$MT5_METAEDITOR" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
-    [[ -f "$MT5_METAEDITOR" ]] || { error "ERROR: $versionName compiler not found: \"$MT5_METAEDITOR\""; exit 1; }
-    compiler="$MT5_METAEDITOR"
-  fi
+  local srcFile="$1" logFile="${1%.*}.log" version="$2" versionName="${mqlVersions["$2"]}" include="$3"
+  local helper compiler compilerCmd includeOption='' errorStatus=0
+  compiler="$(getCompiler "$version")"
 
   if ((!originalOutput)); then
     echo "Compiling \"$srcFile\" as $versionName"
@@ -418,11 +436,11 @@ function compileMql5() {
   MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || errorStatus=$?
   [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $errorStatus)."; exit 1; }
 
-  # store the logfile in an array (convert to UTF-8, Unix EOL, filter blank lines and infos)
+  # store logfile in array (convert to UTF-8, Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
   mapfile -t output < <(
-    ((originalOutput)) && M="rosasurfer"                      # marker to prevent result filtering
-    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)"
+    ((originalOutput)) && M="rosasurfer"                      # marker to toggle result filtering
+    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)" || :
   )
 
   [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
@@ -537,14 +555,20 @@ EOF
 # --- end of functions ---------------------------------------------------------------------------------------------------------------------
 
 
-# parse command line arguments
-((!"$#")) && { help; exit 0; }
+# declare and initialize vars
+declare -A mqlVersions=()
+mqlVersions['mql40']='MQL 4.0'
+mqlVersions['mql45']='MQL 4.5'
+mqlVersions['mql5' ]='MQL 5'
 
 declare srcFileNames=() srcArg=''
 declare srcFileVersions=() version='' firstVersion=-1
 declare srcFileIncludes=() include='' firstInclude=-1
 declare log=0 customLog='' syntaxOnly=0 originalOutput=0 compactOutput=0 warn2error=0 delimiterPassed=0
 
+
+# parse command line arguments
+((!"$#")) && { help; exit 0; }
 while [[ "$#" -gt 0 ]]; do
   if ((!delimiterPassed)); then                           # enter case only before an option terminator
     case "$1" in
