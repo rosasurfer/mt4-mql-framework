@@ -14,7 +14,6 @@
 #  - fix error when a specified directory doesn't contain sources
 #  - create include dirs for mql40
 #  - support Windows filenames/paths as arguments
-#  - add compiler version to output
 #  - add elapsed time to mql40 output
 #  - reformat compiler messages
 #  - improve error messages for filenames looking like options
@@ -122,10 +121,31 @@ function cygpath() {
 #
 # @param $1 - filename
 #
-function getFileExtension() {
+function fileExtension() {
   local ext="${1##*.}"
   [[ "$1" == "$ext" ]] && ext=
   echo "$ext"
+}
+
+
+#
+# Return a version string of the passed compiler filename.
+#
+# @param $1 - filename
+#
+function compilerVersion() {
+  local dosName; dosName="$(cygpath -d "$1")"                     # the DOS name saves us quoting which would get mangled and breaks the call
+  local fileVersion; fileVersion="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "(Get-Item $dosName).VersionInfo.FileVersion" < /dev/null)"
+
+  fileVersion="${fileVersion#$'\xEF\xBB\xBF'}"                    # cut-off a BOM header if present
+  fileVersion="${fileVersion#"${fileVersion%%[![:space:]]*}"}"    # trim leading white space
+  fileVersion="${fileVersion%"${fileVersion##*[![:space:]]}"}"    # trim trailing white space
+
+  [[ "$fileVersion" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
+    error "ERROR: unexpected VersionInfo.FileVersion \"$fileVersion\" for \"$1\""
+    exit 1
+  }
+  echo "${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
 }
 
 
@@ -136,7 +156,7 @@ function getFileExtension() {
 # @param $2 - input version
 #
 function resolveMqlVersion() {
-  local ext; ext="$(getFileExtension "$1")"
+  local ext; ext="$(fileExtension "$1")"
   [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
 }
 
@@ -370,39 +390,45 @@ EOF
 # @param $3 - include directory
 #
 function compileMql5() {
-  local version="$2" versionName='' helper='' compilerCmd='' mqlc='' srcFile="$1" include="$3" logFile="${1%.*}.log" includeOption='' errorStatus=0
+  local version="$2" versionName='' helper='' compiler='' compilerCmd='' srcFile="$1" include="$3" logFile="${1%.*}.log" includeOption='' errorStatus=0
 
   if [[ "$version" == 'mql45' ]]; then
     versionName='MQL4.5'
     [[ -z "$MT4_METAEDITOR" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
     [[ -f "$MT4_METAEDITOR" ]] || { error "ERROR: $versionName compiler not found: \"$MT4_METAEDITOR\""; exit 1; }
-    mqlc="$(cygpath -w "$MT4_METAEDITOR")"
+    compiler="$MT4_METAEDITOR"
   else
     versionName='MQL5'
     [[ -z "$MT5_METAEDITOR" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
     [[ -f "$MT5_METAEDITOR" ]] || { error "ERROR: $versionName compiler not found: \"$MT5_METAEDITOR\""; exit 1; }
-    mqlc="$(cygpath -w "$MT5_METAEDITOR")"
+    compiler="$MT5_METAEDITOR"
   fi
 
-  helper="$(getCmdHelper)"
-  [[ -n "$include" ]] && includeOption="/include:\"$include\""
-  compilerCmd="\"$mqlc\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
+  if ((!originalOutput)); then
+    echo "Compiling \"$srcFile\" as $versionName"
+    echo "MetaEditor version $(compilerVersion "$compiler")"
+    ((compactOutput)) || echo ""
+  fi
 
-  ((originalOutput)) || echo "Compiling \"$srcFile\" as $versionName"
+  helper="$(cmdHelper)"
+  compiler="$(cygpath -w "$compiler")"
+  [[ -n "$include" ]] && includeOption="/include:\"$include\""
+  compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
+
   MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || errorStatus=$?
   [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $errorStatus)."; exit 1; }
 
-  # store the logfile in an array (convert to Unix EOL, filter blank lines and infos)
+  # store the logfile in an array (convert to UTF-8, Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
   mapfile -t output < <(
-    ((originalOutput)) && M="rosasurfer"                      # marker to skip filtering if option --original is enabled
+    ((originalOutput)) && M="rosasurfer"                      # marker to prevent result filtering
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)"
   )
 
   [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
   errors="${BASH_REMATCH[1]}"
   warnings="${BASH_REMATCH[2]}"
-  ((!errors && !warnings)) || rm -f "$logFile"
+  ((!errors && !warnings)) && rm -f "$logFile"
 
   if ((originalOutput)); then
     output+=("$errorStatus")
@@ -458,7 +484,7 @@ EOF
 # Creates a helper batch file for "cmd.exe" and returns its full DOS name.
 # The name doesn't contain any spaces and needs no quoting.
 #
-function getCmdHelper() {
+function cmdHelper() {
   local helper='' code;
   code=$(cat << 'EOF'
 @echo off
@@ -599,7 +625,7 @@ while [[ "$#" -gt 0 ]]; do
       srcFileIncludes+=("${include:-auto}")
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
-    ext="$(getFileExtension "$srcArg")"
+    ext="$(fileExtension "$srcArg")"
     [[ "${ext,,}" != mq[45] ]] && { error "ERROR: cannot compile file \"$srcArg\""; exit 1; }
     srcFileNames+=("$srcArg")
     srcFileVersions+=("${version:-auto}")
