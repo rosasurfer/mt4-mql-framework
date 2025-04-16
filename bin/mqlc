@@ -11,14 +11,14 @@
 #
 #
 # TODO:
-#  - fix error when a specified directory doesn't contain sources
 #  - create include dirs for mql40
+#  - block creation of directory structures by compilers
+#  - move config to standard location
+#  - fix error when a specified directory doesn't contain sources
 #  - support Windows filenames/paths as arguments
 #  - reformat compiler messages
 #  - improve error messages for filenames looking like options
-#  - move config to standard location
 #  - implement download tracker
-#  - remove cmd helper on exit
 #  - long help, short usage
 #
 #  - preconfigured versions per directory
@@ -27,12 +27,13 @@
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
+#  - add --no-rc option
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
 #  - colored output (test also in cmd shell)
 #  - parallel compilation of multiple files
 #
-set -eu -o pipefail
+set -eEu -o pipefail
 
 
 # --- functions ----------------------------------------------------------------------------------------------------------------------------
@@ -75,6 +76,54 @@ Compilers may be specified via environment variables or predefined in the config
 The script exits with 0 (success) or the number of errors of the last failing compilation.
 
 SYNTAX
+}
+
+
+#
+# Initialization.
+#
+function init() {
+  trap onExit EXIT                            # setup exit handler *first*
+  registerTmpFile ""                          # initialize management of tmp. files
+}
+
+
+_tmpFiles=''                                  # file holding the names of managed tmp. files
+
+
+#
+# Register a file path for automatic deletion on script termination.
+#
+# @param $1 - filename/path
+#
+function registerTmpFile() {
+  if [[ -z "$_tmpFiles" ]]; then              # initialization on first call
+    _tmpFiles="$(mktemp --tmpdir "$(basename "$0").XXXXXX")"
+    readonly _tmpFiles
+    registerTmpFile "$_tmpFiles"              # register the file itself as first entry
+  fi
+
+  # add new tmp file
+  if [[ -n "$1" ]]; then
+    echo "$1" >> "$_tmpFiles"                 # never use short-circuit logic containing && and redirection
+  fi
+}
+
+
+#
+# Exit handler. Cleans-up temporary files before script termination.
+#
+function onExit() {
+  local lines=() file i
+  mapfile -t lines < "$_tmpFiles"
+
+  # delete paths in LIFO order to prevent orphans behind tmp. reparse points
+  for ((i=${#lines[@]}-1; i >= 0; i--)); do
+    file="${lines[i]}"
+    rm -rf -- "$file"
+
+    ((debug)) && echo "onExit: rm $file"
+  done
 }
 
 
@@ -136,7 +185,7 @@ function fileExtension() {
 # @param $1 - version id
 #
 function getCompiler() {
-  local version="$1" versionName="${mqlVersions["$1"]}" compiler
+  local compiler version="$1"
 
   case "$version" in
     mql40)
@@ -146,12 +195,12 @@ function getCompiler() {
     mql5)
       compiler='MT5_METAEDITOR';;
     *)
-      error "ERROR: unknown MQL version \"$version\""
+      error "ERROR: unknown MQL version id \"$version\""
       exit 1;;
   esac
 
-  [[ -z "${!compiler}" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
-  [[ -f "${!compiler}" ]] || { error "ERROR: $versionName compiler not found: \"${!compiler}\""; exit 1; }
+  [[ -z "${!compiler-}" ]] && { error "ERROR: $(versionName "$version") compiler is not configured"; exit 1; }
+  [[ -f "${!compiler}"  ]] || { error "ERROR: $(versionName "$version") compiler not found: \"${!compiler}\""; exit 1; }
 
   echo "${!compiler}"
 }
@@ -255,6 +304,25 @@ function resolveIncludeDir() {
 }
 
 
+declare -A _mqlVersions=()
+_mqlVersions['mql40']='MQL 4.0'
+_mqlVersions['mql45']='MQL 4.5'
+_mqlVersions['mql5' ]='MQL 5'
+readonly _mqlVersions
+
+
+#
+# Return the name of an MQL version.
+#
+# @param $1 - MQL version id
+#
+function versionName() {
+  local name="${_mqlVersions["$1"]}"
+  [[ -z "$name" ]] && { error "ERROR: unknown MQL versin id: \"$1}\""; exit 1; }
+  echo "$name"
+}
+
+
 #
 # Compile an MQL4.0 source file.
 #
@@ -263,12 +331,12 @@ function resolveIncludeDir() {
 # @param $3 - include directory
 #
 function compileMql40() {
-  local srcFile="$1" version="$2" versionName="${mqlVersions["$2"]}" include="$3"
+  local srcFile="$1" version="$2" include="$3"
   local compiler errorStatus=0 startms endms time output=() line errors=0 epl='' warnings=0 wpl='' retVal
   compiler="$(getCompiler "$version")"
 
   # call the compiler and measure execution time
-  ((originalOutput)) || echo "Compiling \"$srcFile\" as $versionName"
+  ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
   startms="$(date +%s%3N)"
   mapfile -t output < <(
     { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
@@ -344,96 +412,6 @@ function compileMql40() {
   ((retVal = errors + warnings))
   ((retVal > 255)) && retVal=255
   return "$retVal"
-
-  notes << EOF
-  metalang.exe's exit code is the number of encountered errors (0 = no errors but possibly warnings).
-
-  success w/o warnings
-  --------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  Exp file "Dow Jones Breakout.ex4" produced - 0 error(s), 0 warning(s)
-  0
-
-  success with warnings
-  ---------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  1;33;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;149:8;'5' - comparison expression expected
-  Exp file "Dow Jones Breakout.ex4" produced - 0 error(s), 1 warning(s)
-  0
-
-  syntax errors
-  -------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;124;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;146:12;'HandleCommand' - function is not defined
-  1;33;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;149:8;'5' - comparison expression expected
-
-  Errors--1
-  See logfile "Dow Jones Breakout.log"
-
-  1
-
-  parser errors
-  -------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;89;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;526:1;'\end_of_program' - unbalanced left parenthesis
-  1
-
-  empty source file
-  -----------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe empty.mq4; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-  127
-
-  regular text file as source
-  ---------------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe output.txt; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;114;C:\z\F\Projects\mt4\mql\bin\output.txt;11:53;'some pewa text' - more than 1 symbol
-  127
-
-  binary source file
-  ------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe metalang.exe; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  1;41;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ???' - expression on global scope not allowed
-  2;75;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ???' - variable not defined
-  1
-
-  input file not found
-  --------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe no-exist.mq4; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;76;;;cannot open the program file
-  127
-
-  access to output file denied
-  ----------------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe ChartInfos.mq4; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;52;;;cannot open the output expert file
-  1
-EOF
 }
 
 
@@ -445,12 +423,12 @@ EOF
 # @param $3 - include directory to use
 #
 function compileMql5() {
-  local srcFile="$1" logFile="${1%.*}.log" version="$2" versionName="${mqlVersions["$2"]}" include="$3"
+  local srcFile="$1" logFile="${1%.*}.log" version="$2" include="$3"
   local helper compiler compilerCmd includeOption='' errorStatus=0
   compiler="$(getCompiler "$version")"
 
   if ((!originalOutput)); then
-    echo "Compiling \"$srcFile\" as $versionName"
+    echo "Compiling \"$srcFile\" as $(versionName "$version")"
     compilerInfo "$compiler"
     ((compactOutput)) || echo ""
   fi
@@ -491,37 +469,6 @@ function compileMql5() {
   ((retVal = errors + warnings))
   ((retVal > 255)) && retVal=255
   return "$retVal"
-
-  notes << EOF
-  Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
-  breaks Cygwin's POSIX launcher. So we go with "cmd" and manually demangle in the helper batch file.
-  The helper file cannot just hold the final command as that doesn't support parallel executions.
-
-  MetaEditor's exit code is the number of successfully processed files (0 = error). It doesn't produce
-  any error messages.
-
-
-  renamed executable
-  ------------------
-  $ MSYS_NO_PATHCONV=1 metaeditor64_.exe /compile:Exists.mq5 /log:custom.log; echo $?
-  0 (no "custom.log", no "metaeditor.log")
-
-
-  syntax errors without /log option
-  ---------------------------------
-  $ MSYS_NO_PATHCONV=1 metaeditor.exe /compile:Exists.mq4; echo $?
-  0 (no "metaeditor.log")
-
-  $ MSYS_NO_PATHCONV=1 metaeditor64.exe /compile:Exists.mq5; echo $?
-  0 (summary in "metaeditor.log")
-
-
-  input file not found
-  --------------------
-  $ MSYS_NO_PATHCONV=1 metaeditor*.exe /compile:DoesntExist.mq4 /log:custom.log; echo $?
-  0 (no "custom.log", no "metaeditor.log")
-
-EOF
 }
 
 
@@ -566,7 +513,10 @@ exit /b %ERRORLEVEL%
 EOF
 )
   helper="$(dirname "$(realpath "$0")")/.helper.bat"
-  [[ -f "$helper" && "$code" == "$(< "$helper")" ]] || printf "%s\n" "$code" > "$helper"
+  [[ -f "$helper" && "$code" == "$(< "$helper")" ]] || {
+    echo "$code" > "$helper"
+    registerTmpFile "$helper"
+  }
 
   # the DOS name prevents argument mangling of double quotes which would break the call
   if [[ "$helper" =~ \  ]]; then
@@ -582,16 +532,15 @@ EOF
 # --- end of functions ---------------------------------------------------------------------------------------------------------------------
 
 
-# declare and initialize vars
-declare -A mqlVersions=()
-mqlVersions['mql40']='MQL 4.0'
-mqlVersions['mql45']='MQL 4.5'
-mqlVersions['mql5' ]='MQL 5'
-
+# define vars
 declare srcFileNames=() srcArg=''
 declare srcFileVersions=() version='' firstVersion=-1
 declare srcFileIncludes=() include='' firstInclude=-1
-declare log=0 customLog='' syntaxOnly=0 originalOutput=0 compactOutput=0 warn2error=0 delimiterPassed=0
+declare log=0 customLog='' syntaxOnly=0 originalOutput=0 compactOutput=0 warn2error=0 debug=0 delimiterPassed=0
+
+
+# initialization
+init
 
 
 # parse command line arguments
@@ -601,6 +550,10 @@ while [[ "$#" -gt 0 ]]; do
     case "$1" in
       --)
         delimiterPassed=1
+        shift; continue;;
+
+      --debug)
+        debug=1
         shift; continue;;
 
       -h|--help)
@@ -710,7 +663,7 @@ done
 readonly srcFileNames
 readonly srcFileVersions firstVersion
 readonly srcFileIncludes firstInclude
-readonly log customLog syntaxOnly originalOutput compactOutput warn2error
+readonly log customLog syntaxOnly originalOutput compactOutput warn2error debug
 
 
 # read configuration
@@ -744,63 +697,190 @@ done
 exit "$exitCode"
 
 
-# MQL4.5 + MQL5
-# -------------
-# - compile single file
-#   $ metaeditor.exe /compile:<filename-without-spaces>
-#   $ metaeditor.exe /compile:"<filename with spaces>"
-#
-# - compile whole directory (recompiles only if a source file is newer than the compiled version, no subdirectories)
-#   $ metaeditor.exe /compile:"<target-directory>"
-#
-# - use custom include directory (default: "mql4/5" in directory containing metaeditor.exe)
-#   $ metaeditor.exe /include:"<separate-mql-directory>"                                                      # can be shortened to /inc:
-#
-# - create log file named <source-file.log>, without errors are logged to "<data-dir>/logs/metaeditor.log"
-#   $ metaeditor.exe /compile:"<source>" /log
-#
-# - create custom log file, not supported when compiling directories
-#   $ metaeditor.exe /compile:"<source>" /log:"<log-filename>"
-#
-# - check syntax only (no compilation)
-#   $ metaeditor.exe /compile:"<source>" /s
-#
-#
-# MT4 after installation
-# ----------------------
-# metaeditor.exe /packed:21 /compile:"103304111_21238" /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
-#
-#
-# MT5 after installation
-# ----------------------
-# metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1743564639 /flg:0 /stop:se5296_103760508
-#
-#
-# metalang.exe -h
-# ---------------
-# MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-# Copyright 2001-2009, MetaQuotes Software Corp.
-#
-# usage: metalang.exe [options] filename
-# options:
-# -q : quiet mode
-#
-#
-# old multi-compiler (MT4 builds 600...615)
-# -----------------------------------------
-# mql.exe [<flags>] filename.mq5
-#         /mql5     - compile mql5 source
-#         /mql4     - compile mql4 source
-#         /s        - syntax check only
-#         /i:<path> - set working directory
-#         /o        - use code optimizer
-#
-#
-# UltraEdit
-# ---------
-# bash /f/Projects/mt4/mql/bin/mqlc "%f" -f=mql40
-# bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql45 -f=mql45
-# bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql5
-#
-#
-# @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0
+notes << NOTES_METALANG
+
+  metalang.exe's exit code is the number of encountered errors (0 = no errors but possibly warnings).
+
+  success w/o warnings
+  --------------------
+  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+
+  Exp file "Dow Jones Breakout.ex4" produced - 0 error(s), 0 warning(s)
+  0
+
+  success with warnings
+  ---------------------
+  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+
+  1;33;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;149:8;'5' - comparison expression expected
+  Exp file "Dow Jones Breakout.ex4" produced - 0 error(s), 1 warning(s)
+  0
+
+  syntax errors
+  -------------
+  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+
+  2;124;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;146:12;'HandleCommand' - function is not defined
+  1;33;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;149:8;'5' - comparison expression expected
+
+  Errors--1
+  See logfile "Dow Jones Breakout.log"
+
+  1
+
+  parser errors
+  -------------
+  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+
+  2;89;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;526:1;'\end_of_program' - unbalanced left parenthesis
+  1
+
+  empty source file
+  -----------------
+  $ MSYS_NO_PATHCONV=1 metalang.exe empty.mq4; echo $?
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+  127
+
+  regular text file as source
+  ---------------------------
+  $ MSYS_NO_PATHCONV=1 metalang.exe output.txt; echo $?
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+
+  2;114;C:\z\F\Projects\mt4\mql\bin\output.txt;11:53;'some pewa text' - more than 1 symbol
+  127
+
+  binary source file
+  ------------------
+  $ MSYS_NO_PATHCONV=1 metalang.exe metalang.exe; echo $?
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+
+  1;41;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ???' - expression on global scope not allowed
+  2;75;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ???' - variable not defined
+  1
+
+  input file not found
+  --------------------
+  $ MSYS_NO_PATHCONV=1 metalang.exe no-exist.mq4; echo $?
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+
+  2;76;;;cannot open the program file
+  127
+
+  access to output file denied
+  ----------------------------
+  $ MSYS_NO_PATHCONV=1 metalang.exe ChartInfos.mq4; echo $?
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+
+  2;52;;;cannot open the output expert file
+  1
+NOTES_METALANG
+
+
+notes << METAEDITOR_NOTES
+
+  Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
+  breaks Cygwin's POSIX launcher. So we go with "cmd" and manually demangle in the helper batch file.
+  The helper file cannot just hold the final command as that doesn't support parallel executions.
+
+  MetaEditor's exit code is the number of successfully processed files (0 = error). It doesn't produce
+  any error messages.
+
+
+  renamed executable
+  ------------------
+  $ MSYS_NO_PATHCONV=1 metaeditor64_.exe /compile:Exists.mq5 /log:custom.log; echo $?
+  0 (no "custom.log", no "metaeditor.log")
+
+
+  syntax errors without /log option
+  ---------------------------------
+  $ MSYS_NO_PATHCONV=1 metaeditor.exe /compile:Exists.mq4; echo $?
+  0 (no "metaeditor.log")
+
+  $ MSYS_NO_PATHCONV=1 metaeditor64.exe /compile:Exists.mq5; echo $?
+  0 (summary in "metaeditor.log")
+
+
+  input file not found
+  --------------------
+  $ MSYS_NO_PATHCONV=1 metaeditor*.exe /compile:DoesntExist.mq4 /log:custom.log; echo $?
+  0 (no "custom.log", no "metaeditor.log")
+METAEDITOR_NOTES
+
+
+notes << OTHER_NOTES
+
+  Syntax MQL4.5 + MQL5
+  --------------------
+  - compile single file
+    $ metaeditor.exe /compile:<filename-without-spaces>
+    $ metaeditor.exe /compile:"<filename with spaces>"
+
+  - compile whole directory (recompiles only if a source file is newer than the compiled version, no subdirectories)
+    $ metaeditor.exe /compile:"<target-directory>"
+
+  - use custom include directory (default: "mql4/5" in directory containing metaeditor.exe)
+    $ metaeditor.exe /include:"<separate-mql-directory>"                                                      # can be shortened to /inc:
+
+  - create log file named <source-file.log>, without errors are logged to "<data-dir>/logs/metaeditor.log"
+    $ metaeditor.exe /compile:"<source>" /log
+
+  - create custom log file, not supported when compiling directories
+    $ metaeditor.exe /compile:"<source>" /log:"<log-filename>"
+
+  - check syntax only (no compilation)
+    $ metaeditor.exe /compile:"<source>" /s
+
+
+  MT4 after installation
+  ----------------------
+  metaeditor.exe /packed:21 /compile:"103304111_21238" /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
+
+
+  MT5 after installation
+  ----------------------
+  metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1743564639 /flg:0 /stop:se5296_103760508
+
+
+  metalang.exe -h
+  ---------------
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
+
+  usage: metalang.exe [options] filename
+  options:
+  -q : quiet mode
+
+
+  old multi-compiler (MT4 builds 600...615)
+  -----------------------------------------
+  mql.exe [<flags>] filename.mq5
+          /mql5     - compile mql5 source
+          /mql4     - compile mql4 source
+          /s        - syntax check only
+          /i:<path> - set working directory
+          /o        - use code optimizer
+
+
+  UltraEdit
+  ---------
+  bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql40 -f=mql40
+  bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql45 -f=mql45
+  bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql5
+
+  @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0
+
+OTHER_NOTES
