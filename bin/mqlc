@@ -19,6 +19,7 @@
 #  - move config to standard location
 #  - implement download tracker
 #  - remove cmd helper on exit
+#  - long help, short usage
 #
 #  - preconfigured versions per directory
 #  - preconfigured include dir per directory
@@ -295,7 +296,7 @@ function compileMql40() {
 
   # on error
   if ((errorStatus)); then
-    if [[ ${#output[@]} -lt 4 ]]; then                              # no error messages happen for empty source files only
+    if [[ ${#output[@]} -lt 4 ]]; then                                # no error message happens for empty source file only
       ((errorStatus != 127)) && { error "ERROR: unexpected compiler output for status $errorStatus: no error message"; exit 1; }
       ((originalOutput)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
       ((errors++)) || :
@@ -329,12 +330,9 @@ function compileMql40() {
   if ((originalOutput)); then
     output+=("$errorStatus")
   else
-    # update compiler version
-    output[0]="${output[0]//compiler build/compiler version 4.00 build}"
-    # remove copyright
-    [[ "${output[1]}" =~ ^Copyright\ [0-9]+-[0-9]+,\ MetaQuotes ]] && unset 'output[1]'
-    # more compact output
-    ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'
+    output[0]="${output[0]//compiler build/compiler version 4.00 build}"              # update compiler version
+    [[ "${output[1]}" =~ ^Copyright ]] && unset 'output[1]'                           # remove copyright
+    ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'  # more compact output
   fi
 
   # print everything to STDOUT

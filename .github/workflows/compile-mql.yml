@@ -9,7 +9,12 @@ name: Compile MQL programs
 on:
   push:
     branches:
+      - master
       - feature/mql-cross-compiler
+
+  pull_request:
+    branches:
+      - master
 
 permissions:
   contents: read
@@ -24,13 +29,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0                                # fetch all branches and history (to access the source branch of PRs)
 
       - name: Check commit message for "[skip ci]"
         run: |
           SKIP_CI=false
-          [[ "$GITHUB_EVENT_NAME" == "push" ]] && REF_NAME="$GITHUB_REF_NAME" || { echo "unsupported ci event: $GITHUB_EVENT_NAME"; exit 1; }
+          REF_NAME=
+          if   [[ "$GITHUB_EVENT_NAME" == "push"         ]]; then REF_NAME="$GITHUB_REF_NAME"
+          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then REF_NAME="$GITHUB_HEAD_REF"
+          else
+            echo "unsupported ci event: $GITHUB_EVENT_NAME"
+            exit 1
+          fi
           COMMIT_MSG="$(git log -1 --format="%B" "origin/$REF_NAME")"
-          grep -q '\[skip ci\]' <<< "$COMMIT_MSG" && { echo "Magic commit message found: [skip ci]"; SKIP_CI=true; }
+
+          grep -iq '\[skip ci\]' <<< "$COMMIT_MSG" && { echo "Magic commit message found: [skip ci]"; SKIP_CI=true; }
           echo "Skip CI: $SKIP_CI"
           echo "SKIP_CI=$SKIP_CI" >> "$GITHUB_ENV"
 
