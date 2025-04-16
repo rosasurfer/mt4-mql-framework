@@ -3,19 +3,18 @@
 !.gitkeep
 
 # ignore Eclipse directories and files
-/.externalToolBuilders/
-/.settings/
+/.externalToolBuilders
+/.settings
 /.buildpath
 /.project*
 
 # ignore the following directories and files
-/bin/debugview/dbgview.*
-/bin/experts
-/etc/windows/user.appdata/*
-/files/
+/bin
+/etc/windows/user.appdata
+/files
 mqlcache.dat
-*.ex4
-*.ex5
+*.ex[45]
+.env
 
 # ignore distributed/linked/log folders
 /mql*/files
@@ -25,5 +24,5 @@ mqlcache.dat
 /mql*/projects
 /mql*/shared projects
 
-# ignore files created by the tester
-/tester/
+# ignore tester related files
+/tester
