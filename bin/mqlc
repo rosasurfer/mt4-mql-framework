@@ -11,7 +11,6 @@
 #
 #
 # TODO:
-#  - add elapsed time to mql40 output
 #  - fix error when a specified directory doesn't contain sources
 #  - create include dirs for mql40
 #  - support Windows filenames/paths as arguments
@@ -178,6 +177,25 @@ function compilerVersion() {
 
 
 #
+# Caluclate the duration time of two timestamps and return a formatted result.
+#
+# @param $1 - start time in msec
+# @param $2 - end time in msec
+#
+function duration() {
+  local startms="$1" endms="$2" duration
+
+  ((duration = endms-startms))
+
+  if ((duration < 1000)); then
+    echo "$duration msec"
+  else
+    printf '%d.%03d sec' $((duration / 1000)) $((duration % 1000))
+  fi
+}
+
+
+#
 # Read the configuration into global vars.
 #
 function readConfig() {
@@ -240,14 +258,16 @@ function resolveIncludeDir() {
 #
 function compileMql40() {
   local srcFile="$1" version="$2" versionName="${mqlVersions["$2"]}" include="$3"
-  local compiler errorStatus=0 output=() line errors=0 epl='' warnings=0 wpl='' retVal
+  local compiler errorStatus=0 startms endms time output=() line errors=0 epl='' warnings=0 wpl='' retVal
   compiler="$(getCompiler "$version")"
 
-  # call the compiler
+  # call the compiler and measure execution time
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $versionName"
+  startms="$(date +%s%3N)"
   mapfile -t output < <(
     { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
   )
+  endms="$(date +%s%3N)"
   errorStatus="${output[-1]}"                                         # fetch error status from output and remove it
   unset 'output[-1]'
 
@@ -261,9 +281,10 @@ function compileMql40() {
     warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && wpl='' || wpl='s'
 
     if ((!originalOutput)); then
-      output[-1]="Result: $errors error$epl, $warnings warning$wpl"
-      ((!warnings))              && output+=("Success")
-      ((warnings && warn2error)) && output+=("Error")
+      time="$(duration "$startms" "$endms")"
+      output[-1]="Result: $errors error$epl, $warnings warning$wpl, $time elapsed"
+      ((!warnings))              && output+=('Success')
+      ((warnings && warn2error)) && output+=('Error')
     fi
   fi
 
@@ -294,7 +315,8 @@ function compileMql40() {
       # add final results
       ((errors   == 1)) && epl='' || epl='s'
       ((warnings == 1)) && wpl='' || wpl='s'
-      output+=("Result: $errors error$epl, $warnings warning$wpl")
+      time="$(duration "$startms" "$endms")"
+      output+=("Result: $errors error$epl, $warnings warning$wpl, $time elapsed")
       output+=("Error")
     fi
   fi
