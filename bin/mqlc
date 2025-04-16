@@ -26,8 +26,9 @@
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
+#  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
-#  - colored output (test also in command console)
+#  - colored output (test also in cmd shell)
 #  - parallel compilation of multiple files
 #
 set -eu -o pipefail
@@ -41,7 +42,7 @@ set -eu -o pipefail
 #
 function help() {
   cat << 'SYNTAX'
-Compiles one or more MQL4.0, MQL4.5 or MQL5 source files or directories.
+Compiles one or more MQL4.0, MQL4.5 and MQL5 source files or directories.
 
 Usage: mqlc  [options] [--] SOURCE...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
@@ -156,23 +157,27 @@ function getCompiler() {
 
 
 #
-# Return a version string of the passed compiler filename.
+# Return product and version infos for the passed compiler filename.
 #
 # @param $1 - filename
 #
-function compilerVersion() {
-  local dosName; dosName="$(cygpath -d "$1")"                     # the DOS name spares us quoting which would get mangled and then breaks the call
-  local fileVersion; fileVersion="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "(Get-Item $dosName).VersionInfo.FileVersion" < /dev/null)"
+function compilerInfo() {
+  local file output product version
+  file="$(cygpath -d "$1")"                       # the DOS name spares us quoting which would get mangled which would break the call
 
-  fileVersion="${fileVersion#$'\xEF\xBB\xBF'}"                    # cut-off a BOM header if present
-  fileVersion="${fileVersion#"${fileVersion%%[![:space:]]*}"}"    # trim leading white space
-  fileVersion="${fileVersion%"${fileVersion##*[![:space:]]}"}"    # trim trailing white space
+  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" < /dev/null)"
+  output="${output#$'\xEF\xBB\xBF'}"              # cut-off a BOM header if present
+  output="${output%$'\r'}"                        # cut-off a Windows EOL if present
 
-  [[ "$fileVersion" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
-    error "ERROR: unexpected VersionInfo.FileVersion \"$fileVersion\" for \"$1\""
+  IFS=$'\t' read -r product version <<< "$output"
+
+  [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
+    error "ERROR: unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
     exit 1
   }
-  echo "${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
+  version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
+
+  echo "$product version $version"
 }
 
 
@@ -324,10 +329,12 @@ function compileMql40() {
   if ((originalOutput)); then
     output+=("$errorStatus")
   else
-    # more compact output
-    ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'
+    # update compiler version
+    output[0]="${output[0]//compiler build/compiler version 4.00 build}"
     # remove copyright
     [[ "${output[1]}" =~ ^Copyright\ [0-9]+-[0-9]+,\ MetaQuotes ]] && unset 'output[1]'
+    # more compact output
+    ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'
   fi
 
   # print everything to STDOUT
@@ -446,7 +453,7 @@ function compileMql5() {
 
   if ((!originalOutput)); then
     echo "Compiling \"$srcFile\" as $versionName"
-    echo "MetaEditor version $(compilerVersion "$compiler")"
+    compilerInfo "$compiler"
     ((compactOutput)) || echo ""
   fi
 
