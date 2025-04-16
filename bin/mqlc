@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # A script for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple
-# file and directories. Prints results to STDOUT and follows standard rules for the exit status.
+# files and directories. Prints results to STDOUT and follows standard rules for the exit status.
 # The syntax is compatible with the syntax of MetaEditor.
 #
 # Configuration via environment or config file.

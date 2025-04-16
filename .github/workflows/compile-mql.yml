@@ -80,7 +80,6 @@ jobs:
         with:
           name: rosasurfer-mt4-mql-${{ env.TIMESTAMP }}.bin
           path: |
+            mql*/**/*.dll
+            mql*/**/*.ex[e4]
             mql*/**/*.mq[h4]
-            mql*/**/*.ex4
-            mql*/**/.attic/*.mq4
-            mql*/**/.attic/*.ex4
