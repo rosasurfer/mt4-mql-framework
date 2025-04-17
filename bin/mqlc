@@ -112,14 +112,15 @@ function registerTmpFile() {
 # Exit handler. Cleans-up temporary files before script termination.
 #
 function onExit() {
-  local lines=() file i
+  local lines=() file i exists
   mapfile -t lines < "$_tmpFiles"
 
   # delete paths in LIFO order to prevent orphans behind tmp. reparse points
   for ((i=${#lines[@]}-1; i >= 0; i--)); do
     file="${lines[i]}"
+    [[ -e "$file" ]] && exists=1 || exists=0
     rm -rf -- "$file"
-    ((debug)) && echo "onExit: rm $file" || :
+    ((debug && exists)) && echo "onExit: rm $file" || :
   done
 }
 
@@ -428,15 +429,16 @@ function compileMql5() {
   compiler="$(cygpath -w "$compiler")"
   [[ -n "$include" ]] && includeOption="/include:\"$include\""
   compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
+  ((debug)) && echo "cmd: $compilerCmd"
 
   helper="$(cmdHelper)"
   echo '@echo off'     > "$helper"
   echo "$compilerCmd" >> "$helper"
-  ((debug)) && echo "helper: $helper" && cat "$helper"
 
   rm -f -- "$logFile"
   MSYS_NO_PATHCONV=1 cmd /c "$helper" < /dev/null 2>&1 || errorStatus=$?
   [[ -f "$logFile" ]] || fail "ERROR: logfile \"$logFile\" not found (status $errorStatus)."
+  rm -f "$helper"
 
   # store logfile in array (convert to UTF-8, Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
