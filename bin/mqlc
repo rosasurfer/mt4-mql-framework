@@ -11,8 +11,8 @@
 #
 #
 # TODO:
+#  - block directory creation by compilers
 #  - create include dirs for mql40
-#  - block creation of directory structures by compilers
 #  - move config to standard location
 #  - fix error when a specified directory doesn't contain sources
 #  - support Windows filenames/paths as arguments
@@ -26,12 +26,11 @@
 #  - auto-detect version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
-#  - don't write to the script directory
 #
 #  - add --no-rc option
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
-#  - colored output (test also in cmd shell)
+#  - colored output (and test in command window)
 #  - parallel compilation of multiple files
 #
 set -eEu -o pipefail
@@ -105,7 +104,7 @@ function registerTmpFile() {
   fi
 
   # add new tmp file
-  [[ -n "$1" ]] && echo "$1" >> "$_tmpFiles" || :   # make sure the last command doesn't return false
+  [[ -n "$1" ]] && echo "$1" >> "$_tmpFiles" || :
 }
 
 
@@ -120,13 +119,13 @@ function onExit() {
   for ((i=${#lines[@]}-1; i >= 0; i--)); do
     file="${lines[i]}"
     rm -rf -- "$file"
-    ((debug)) && echo "onExit: rm $file" || :       # make sure the last command doesn't return false
+    ((debug)) && echo "onExit: rm $file" || :
   done
 }
 
 
 #
-# Print a message to STDERR and exit the script/sub shell.
+# Print a message to STDERR and exit the script/subshell.
 #
 # @param $@ - any number of arguments
 #
@@ -301,22 +300,20 @@ function resolveIncludeDir() {
 }
 
 
-declare -A _mqlVersions=()
-_mqlVersions['mql40']='MQL 4.0'
-_mqlVersions['mql45']='MQL 4.5'
-_mqlVersions['mql5' ]='MQL 5'
-readonly _mqlVersions
+#
+# Creates a tmp. helper batch file and returns its full name. The name doesn't contain spaces
+# and needs no quoting. On script termination the file is automatically removed.
+#
+function cmdHelper() {
+  local helper=''; helper="$(mktemp --tmpdir --suffix=.bat "$(basename "$0").XXXXXX")"
+  registerTmpFile "$helper"
 
-
-#
-# Return the name of an MQL version.
-#
-# @param $1 - MQL version id
-#
-function versionName() {
-  local name="${_mqlVersions["$1"]}"
-  [[ -z "$name" ]] && fail "ERROR: unknown MQL versin id: \"$1}\""
-  echo "$name"
+  if [[ "$helper" =~ \  ]]; then
+    helper="$(cygpath -d "$helper")"      # the DOS name prevents argument mangling of double quotes which would break the call
+  else
+    helper="$(cygpath -w "$helper")"
+  fi
+  echo "$helper"
 }
 
 
@@ -428,14 +425,17 @@ function compileMql5() {
     ((compactOutput)) || echo ""
   fi
 
-  helper="$(cmdHelper)"
   compiler="$(cygpath -w "$compiler")"
   [[ -n "$include" ]] && includeOption="/include:\"$include\""
   compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
-  ((debug)) && echo "shell: $compilerCmd"
-  rm -f -- "$logFile"
 
-  MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || errorStatus=$?
+  helper="$(cmdHelper)"
+  echo '@echo off'     > "$helper"
+  echo "$compilerCmd" >> "$helper"
+  ((debug)) && echo "helper: $helper" && cat "$helper"
+
+  rm -f -- "$logFile"
+  MSYS_NO_PATHCONV=1 cmd /c "$helper" < /dev/null 2>&1 || errorStatus=$?
   [[ -f "$logFile" ]] || fail "ERROR: logfile \"$logFile\" not found (status $errorStatus)."
 
   # store logfile in array (convert to UTF-8, Unix EOL, filter blank lines and infos)
@@ -470,62 +470,16 @@ function compileMql5() {
 
 
 #
-# Creates a helper batch file for "cmd.exe" and returns its full DOS name.
-# The name doesn't contain any spaces and needs no quoting.
+# Return the name of an MQL version.
 #
-function cmdHelper() {
-  local helper='' code;
-  code=$(cat << 'EOF'
-@echo off
+# @param $1 - MQL version id
+#
+function versionName() {
+  [[ "$1" == 'mql40' ]] && { echo 'MQL 4.0'; return; }
+  [[ "$1" == 'mql45' ]] && { echo 'MQL 4.5'; return; }
+  [[ "$1" == 'mql5'  ]] && { echo 'MQL 5';   return; }
 
-set arg=%1
-if not defined arg (
-  echo ERROR: %~nx0 - missing arguments
-  exit /b 1
-)
-
-set command=
-set args=
-
-:loop
-set arg=%1
-if not defined arg goto run
-
-call set "arg=%%arg:\"="%%"
-
-if not defined command (
-  set command=%arg%
-) else if not defined args (
-  set args=%arg%
-) else (
-  set args=%args% %arg%
-)
-shift
-goto loop
-
-:run
-if "%debug%"=="1" (
-  echo batch: %command% %args%
-)
-%command% %args%
-
-exit /b %ERRORLEVEL%
-EOF
-)
-  helper="$(dirname "$(realpath "$0")")/.helper.bat"
-  [[ -f "$helper" && "$code" == "$(< "$helper")" ]] || {
-    echo "$code" > "$helper"
-    registerTmpFile "$helper"
-  }
-
-  # the DOS name prevents argument mangling of double quotes which would break the call
-  if [[ "$helper" =~ \  ]]; then
-    helper="$(cygpath -d "$helper")"
-  else
-    helper="$(cygpath -w "$helper")"
-  fi
-
-  echo "$helper"
+  fail "ERROR: unknown MQL version id: \"$1\""
 }
 
 
@@ -623,15 +577,15 @@ while [[ "$#" -gt 0 ]]; do
   if [[ -d "$srcArg" ]]; then
     while IFS= read -r file; do
       srcFileNames+=("$file")
-      srcFileVersions+=("${version:-auto}")
-      srcFileIncludes+=("${include:-auto}")
+      srcFileVersions+=("${version:-<auto>}")
+      srcFileIncludes+=("${include:-<auto>}")
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(fileExtension "$srcArg")"
     [[ "${ext,,}" != mq[45] ]] && fail "ERROR: cannot compile file \"$srcArg\""
     srcFileNames+=("$srcArg")
-    srcFileVersions+=("${version:-auto}")
-    srcFileIncludes+=("${include:-auto}")
+    srcFileVersions+=("${version:-<auto>}")
+    srcFileIncludes+=("${include:-<auto>}")
   else
     srcArg="$1"
     [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
