@@ -26,6 +26,7 @@
 #  - auto-detect version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
+#  - don't write to the script directory
 #
 #  - add --no-rc option
 #  - add bitness and sigdate to compiler infos
@@ -83,12 +84,12 @@ SYNTAX
 # Initialization.
 #
 function init() {
-  trap onExit EXIT                            # setup exit handler *first*
-  registerTmpFile ""                          # initialize management of tmp. files
+  trap onExit EXIT                                  # setup exit handler *first*
+  registerTmpFile ""                                # initialize management of tmp. files
 }
 
 
-_tmpFiles=''                                  # file holding the names of managed tmp. files
+_tmpFiles=''                                        # file holding the names of managed tmp. files
 
 
 #
@@ -97,16 +98,14 @@ _tmpFiles=''                                  # file holding the names of manage
 # @param $1 - filename/path
 #
 function registerTmpFile() {
-  if [[ -z "$_tmpFiles" ]]; then              # initialization on first call
+  if [[ -z "$_tmpFiles" ]]; then                    # initialization on first call
     _tmpFiles="$(mktemp --tmpdir "$(basename "$0").XXXXXX")"
     readonly _tmpFiles
-    registerTmpFile "$_tmpFiles"              # register the file itself as first entry
+    registerTmpFile "$_tmpFiles"                    # register the file itself as first entry
   fi
 
   # add new tmp file
-  if [[ -n "$1" ]]; then
-    echo "$1" >> "$_tmpFiles"                 # never use short-circuit logic containing && and redirection
-  fi
+  [[ -n "$1" ]] && echo "$1" >> "$_tmpFiles" || :   # make sure the last command doesn't return false
 }
 
 
@@ -121,19 +120,19 @@ function onExit() {
   for ((i=${#lines[@]}-1; i >= 0; i--)); do
     file="${lines[i]}"
     rm -rf -- "$file"
-
-    ((debug)) && echo "onExit: rm $file"
+    ((debug)) && echo "onExit: rm $file" || :       # make sure the last command doesn't return false
   done
 }
 
 
 #
-# Print a message to STDERR.
+# Print a message to STDERR and exit the script/sub shell.
 #
 # @param $@ - any number of arguments
 #
-function error() {
+function fail() {
   echo "$@" 1>&2
+  exit 1
 }
 
 
@@ -195,12 +194,11 @@ function getCompiler() {
     mql5)
       compiler='MT5_METAEDITOR';;
     *)
-      error "ERROR: unknown MQL version id \"$version\""
-      exit 1;;
+      fail "ERROR: unknown MQL version id \"$version\"";;
   esac
 
-  [[ -z "${!compiler-}" ]] && { error "ERROR: $(versionName "$version") compiler is not configured"; exit 1; }
-  [[ -f "${!compiler}"  ]] || { error "ERROR: $(versionName "$version") compiler not found: \"${!compiler}\""; exit 1; }
+  [[ -z "${!compiler-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
+  [[ -f "${!compiler}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compiler}\""
 
   echo "${!compiler}"
 }
@@ -222,8 +220,7 @@ function compilerInfo() {
   IFS=$'\t' read -r product version <<< "$output"
 
   [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
-    error "ERROR: unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
-    exit 1
+    fail "ERROR: unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
   }
   version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
 
@@ -272,7 +269,7 @@ function readConfig() {
   # validate base names
   if [[ -n "$MT5_METAEDITOR" ]]; then
     basename="$(basename "$MT5_METAEDITOR")"
-    [[ "${basename,,}" != "metaeditor64.exe" ]] && { error "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""; exit 1; }
+    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
   fi
   readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR
 }
@@ -318,7 +315,7 @@ readonly _mqlVersions
 #
 function versionName() {
   local name="${_mqlVersions["$1"]}"
-  [[ -z "$name" ]] && { error "ERROR: unknown MQL versin id: \"$1}\""; exit 1; }
+  [[ -z "$name" ]] && fail "ERROR: unknown MQL versin id: \"$1}\""
   echo "$name"
 }
 
@@ -348,8 +345,7 @@ function compileMql40() {
   # on success
   if ((!errorStatus)); then
     [[ "${output[-1]}" =~ ^(Exp|Library exp)\ file\ .+\ produced\ -\ ([0-9]+)\ error.+\ ([0-9]+)\ warning.+ ]] || {
-      error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""
-      exit 1
+      fail "ERROR: unexpected compiler output in last line: \"${output[-1]}\"";
     }
     errors="${BASH_REMATCH[2]}";   ((errors   == 1)) && epl='' || epl='s'
     warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && wpl='' || wpl='s'
@@ -365,7 +361,7 @@ function compileMql40() {
   # on error
   if ((errorStatus)); then
     if [[ ${#output[@]} -lt 4 ]]; then                                # no error message happens for empty source file only
-      ((errorStatus != 127)) && { error "ERROR: unexpected compiler output for status $errorStatus: no error message"; exit 1; }
+      ((errorStatus != 127)) && fail "ERROR: unexpected compiler output for status $errorStatus: no error message"
       ((originalOutput)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
       ((errors++)) || :
     else
@@ -375,8 +371,7 @@ function compileMql40() {
         [[ "${output[i]}" != [0-9]* ]] && break
         [[ "${output[i]}" == [1]* ]] && { ((warnings++)) || :; continue; }
         [[ "${output[i]}" == [2]* ]] && { ((errors++))   || :; continue; }
-        error "ERROR: unknown message type in: ${output[i]}"
-        exit 1
+        fail "ERROR: unknown message type in: ${output[i]}"
       done
     fi
 
@@ -437,9 +432,11 @@ function compileMql5() {
   compiler="$(cygpath -w "$compiler")"
   [[ -n "$include" ]] && includeOption="/include:\"$include\""
   compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
+  ((debug)) && echo "shell: $compilerCmd"
+  rm -f -- "$logFile"
 
   MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || errorStatus=$?
-  [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $errorStatus)."; exit 1; }
+  [[ -f "$logFile" ]] || fail "ERROR: logfile \"$logFile\" not found (status $errorStatus)."
 
   # store logfile in array (convert to UTF-8, Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
@@ -448,7 +445,7 @@ function compileMql5() {
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)" || :
   )
 
-  [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
+  [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || fail "ERROR: unexpected compiler output in last line: \"${output[-1]}\""
   errors="${BASH_REMATCH[1]}"
   warnings="${BASH_REMATCH[2]}"
   ((!errors && !warnings)) && rm -f "$logFile"
@@ -507,6 +504,9 @@ shift
 goto loop
 
 :run
+if "%debug%"=="1" (
+  echo batch: %command% %args%
+)
 %command% %args%
 
 exit /b %ERRORLEVEL%
@@ -572,13 +572,12 @@ while [[ "$#" -gt 0 ]]; do
         shift; continue;;
 
       -v|--version)
-        error "ERROR: missing MQL4 version identifier: $1"
-        exit 1;;
+        fail "ERROR: missing MQL4 version identifier: $1";;
 
       -v=*|--version=*)
         version="${1#*=}"
         version="${version,,}"
-        [[ -n "$version" && "$version" != mql4[05] ]] && { error "ERROR: invalid MQL4 version identifier in \"$1\" (expecting \"mql40\" or \"mql45\")"; exit 1; }
+        [[ -n "$version" && "$version" != mql4[05] ]] && fail "ERROR: invalid MQL4 version identifier in \"$1\" (expecting \"mql40\" or \"mql45\")"
         if ((firstVersion < 0)); then
           for i in "${!srcFileVersions[@]}"; do
             srcFileVersions[i]="$version"                 # the first --version affects previous sources if no more sources follow
@@ -590,8 +589,8 @@ while [[ "$#" -gt 0 ]]; do
       /inc|/include|/inc[=:]*|/include[=:]*)
         [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
         include="$(sanitizeName "$include")"
-        [[ -z "$include" ]] && { error "ERROR: missing argument: $1"; exit 1; }
-        [[ -d "$include" ]] || { error "ERROR: directory not found: $1"; exit 1; }
+        [[ -z "$include" ]] && fail "ERROR: missing argument: $1"
+        [[ -d "$include" ]] || fail "ERROR: directory not found: $1"
         include="$(cygpath -w "$include")"
         if ((firstInclude < 0)); then
           for i in "${!srcFileIncludes[@]}"; do
@@ -602,20 +601,19 @@ while [[ "$#" -gt 0 ]]; do
         shift; continue;;
 
       /log|/log[=:]*)
-        [[ "$log" -eq 1 ]] && { error "ERROR: multiple /log options"; exit 1; }
+        [[ "$log" -eq 1 ]] && fail "ERROR: multiple /log options"
         log=1
         if [[ ${#1} -gt 4 ]]; then
           customLog="$(sanitizeName "${1:5}")"
-          [[ -z "$customLog" ]] && { error "ERROR: missing argument: $1"; exit 1; }
+          [[ -z "$customLog" ]] && fail "ERROR: missing argument: $1"
           customLog="$(cygpath -w "$customLog")"
         fi
         shift; continue;;
 
       /compile[=:]*)
         srcArg="$(sanitizeName "${1:9}")"
-        [[ -z "$srcArg" ]] && { error "ERROR: missing argument: $1"; exit 1; }
+        [[ -z "$srcArg" ]] && fail "ERROR: missing argument: $1";;
         # processing continues after the case block
-        ;;
     esac
   fi
 
@@ -630,15 +628,14 @@ while [[ "$#" -gt 0 ]]; do
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(fileExtension "$srcArg")"
-    [[ "${ext,,}" != mq[45] ]] && { error "ERROR: cannot compile file \"$srcArg\""; exit 1; }
+    [[ "${ext,,}" != mq[45] ]] && fail "ERROR: cannot compile file \"$srcArg\""
     srcFileNames+=("$srcArg")
     srcFileVersions+=("${version:-auto}")
     srcFileIncludes+=("${include:-auto}")
   else
     srcArg="$1"
     [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
-    error "ERROR: file or directory not found: $srcArg"
-    exit 1
+    fail "ERROR: file or directory not found: $srcArg"
   fi
 
   if ((firstVersion > 0)); then
@@ -657,13 +654,14 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
-((!${#srcFileNames[@]})) && { error "ERROR: missing source file/directory argument"; exit 1; }
+((!${#srcFileNames[@]}))    && fail "ERROR: missing source file/directory argument"
 ((${#srcFileNames[@]} > 1)) && compactOutput=1
 
 readonly srcFileNames
 readonly srcFileVersions firstVersion
 readonly srcFileIncludes firstInclude
 readonly log customLog syntaxOnly originalOutput compactOutput warn2error debug
+export debug
 
 
 # read configuration
@@ -687,8 +685,7 @@ for i in "${!srcFileNames[@]}"; do
     mql45|mql5)
       compileMql5  "$file" "$version" "$include" || status=$?;;
     *)
-      error "ERROR: cannot resolve MQL version of \"$file\""
-      exit 1;;
+      fail "ERROR: cannot resolve MQL version of \"$file\"";;
   esac
 
   ((status)) && exitCode="$status"
