@@ -11,7 +11,9 @@
 #
 #
 # TODO:
-#  - create include dirs for mql40
+#  - create include dir for mql40
+#  - preconfigured versions per directory
+#  - preconfigured include dir per directory
 #  - move config to standard location
 #  - fix error when a specified directory doesn't contain sources
 #  - support Windows filenames/paths as arguments
@@ -20,8 +22,6 @@
 #  - implement download tracker
 #  - long help, short usage
 #
-#  - preconfigured versions per directory
-#  - preconfigured include dir per directory
 #  - auto-detect version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
@@ -29,7 +29,7 @@
 #  - add --no-rc option
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
-#  - colored output (and test in command window)
+#  - colored output
 #  - parallel compilation of multiple files
 #
 set -eEu -o pipefail
@@ -82,12 +82,12 @@ SYNTAX
 # Initialization.
 #
 function init() {
-  trap onExit EXIT                                  # setup exit handler *first*
-  registerTmpFile ""                                # initialize management of tmp. files
+  trap onExit EXIT                                          # setup exit handler *first*
+  registerTmpFile ""                                        # initialize management of tmp. files
 }
 
 
-_tmpFiles=''                                        # file holding the names of managed tmp. files
+_tmpFiles=''                                                # file holding the names of managed tmp. files
 
 
 #
@@ -96,10 +96,10 @@ _tmpFiles=''                                        # file holding the names of 
 # @param $1 - filename/path
 #
 function registerTmpFile() {
-  if [[ -z "$_tmpFiles" ]]; then                    # initialization on first call
+  if [[ -z "$_tmpFiles" ]]; then                            # initialization on first call
     _tmpFiles="$(mktemp --tmpdir "$(basename "$0").XXXXXX")"
     readonly _tmpFiles
-    registerTmpFile "$_tmpFiles"                    # register the file itself as first entry
+    registerTmpFile "$_tmpFiles"                            # register the file itself as first entry
   fi
 
   # add new tmp file
@@ -178,32 +178,6 @@ function fileExtension() {
 
 
 #
-# Return the compiler filename for the specified MQL version.
-#
-# @param $1 - version id
-#
-function getCompiler() {
-  local compiler version="$1"
-
-  case "$version" in
-    mql40)
-      compiler='MT4_METALANG';;
-    mql45)
-      compiler='MT4_METAEDITOR';;
-    mql5)
-      compiler='MT5_METAEDITOR';;
-    *)
-      fail "ERROR: unknown MQL version id \"$version\"";;
-  esac
-
-  [[ -z "${!compiler-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
-  [[ -f "${!compiler}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compiler}\""
-
-  echo "${!compiler}"
-}
-
-
-#
 # Return product and version infos for the passed compiler filename.
 #
 # @param $1 - filename
@@ -224,6 +198,26 @@ function compilerInfo() {
   version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
 
   echo "$product version $version"
+}
+
+
+#
+# Return the compiler filename for the specified MQL version.
+#
+# @param $1 - MQL version id
+#
+function compilerPath() {
+  local version="$1" compiler=''
+
+  [[ "$version" == 'mql40' ]] && compiler='MT4_METALANG'
+  [[ "$version" == 'mql45' ]] && compiler='MT4_METAEDITOR'
+  [[ "$version" == 'mql5'  ]] && compiler='MT5_METAEDITOR'
+
+  [[ -z "$compiler"     ]] && fail "ERROR: unknown MQL version id \"$version\""
+  [[ -z "${!compiler-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
+  [[ -f "${!compiler}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compiler}\""
+
+  echo "${!compiler}"
 }
 
 
@@ -363,7 +357,7 @@ function cleanupCompilerDir() {
 function compileMql40() {
   local srcFile="$1" version="$2" include="$3"
   local compiler errorStatus=0 startms endms time output=() line errors=0 epl='' warnings=0 wpl='' retVal
-  compiler="$(getCompiler "$version")"
+  compiler="$(compilerPath "$version")"
 
   # call the compiler and measure execution time
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
@@ -454,7 +448,7 @@ function compileMql40() {
 function compileMql5() {
   local srcFile="$1" logFile="${1%.*}.log" version="$2" include="$3"
   local helper compiler compilerCmd includeOption='' errorStatus=0
-  compiler="$(getCompiler "$version")"
+  compiler="$(compilerPath "$version")"
 
   if ((!originalOutput)); then
     echo "Compiling \"$srcFile\" as $(versionName "$version")"
