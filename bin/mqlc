@@ -11,7 +11,6 @@
 #
 #
 # TODO:
-#  - block directory creation by compilers
 #  - create include dirs for mql40
 #  - move config to standard location
 #  - fix error when a specified directory doesn't contain sources
@@ -318,6 +317,42 @@ function cmdHelper() {
 }
 
 
+declare isConfig=0 isLogs=0 isMql4=0 isMql5=0
+
+
+#
+# Remember directories in a compiler directory. Used by cleanupCompilerDir() to cleanup.
+#
+# @param $1 - compiler filename
+#
+function checkCompilerDir() {
+  local dir; dir="$(dirname "$(realpath "$1")")"
+
+  [[ -d "$dir/config" ]] && isConfig=1 || isConfig=0
+  [[ -d "$dir/logs"   ]] && isLogs=1   || isLogs=0
+  [[ -d "$dir/mql4"   ]] && isMql4=1   || isMql4=0
+  [[ -d "$dir/mql5"   ]] && isMql5=1   || isMql5=0
+}
+
+
+#
+# Clean-up directories created by the MetaEditor compiler.
+# (metalang.exe doesn't create any directories by itself)
+#
+# @param $1 - compiler filename
+#
+function cleanupCompilerDir() {
+  local dir; dir="$(dirname "$(realpath "$1")")"
+
+  ((!isConfig)) && [[ -d "$dir/config" ]] && rm -rf "$dir/config"
+  ((!isLogs  )) && [[ -d "$dir/logs"   ]] && rm -rf "$dir/logs"
+  ((!isMql4  )) && [[ -d "$dir/mql4"   ]] && rm -rf "$dir/mql4"
+  ((!isMql5  )) && [[ -d "$dir/mql5"   ]] && rm -rf "$dir/mql5"
+
+  return 0
+}
+
+
 #
 # Compile an MQL4.0 source file.
 #
@@ -332,6 +367,7 @@ function compileMql40() {
 
   # call the compiler and measure execution time
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
+  ((debug)) && echo "cmd: $compiler $srcFile"
   startms="$(date +%s%3N)"
   mapfile -t output < <(
     { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
@@ -435,10 +471,13 @@ function compileMql5() {
   echo '@echo off'     > "$helper"
   echo "$compilerCmd" >> "$helper"
 
+  # run the compiler
+  checkCompilerDir "$compiler"
   rm -f -- "$logFile"
   MSYS_NO_PATHCONV=1 cmd /c "$helper" < /dev/null 2>&1 || errorStatus=$?
   [[ -f "$logFile" ]] || fail "ERROR: logfile \"$logFile\" not found (status $errorStatus)."
   rm -f "$helper"
+  cleanupCompilerDir "$compiler"
 
   # store logfile in array (convert to UTF-8, Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
