@@ -36,14 +36,11 @@ jobs:
         run: |
           SKIP_CI=false
           REF_NAME=
-          if   [[ "$GITHUB_EVENT_NAME" == "push"         ]]; then REF_NAME="$GITHUB_REF_NAME"
-          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then REF_NAME="$GITHUB_HEAD_REF"
-          else
-            echo "unsupported ci event: $GITHUB_EVENT_NAME"
-            exit 1
-          fi
-          COMMIT_MSG="$(git log -1 --format="%B" "origin/$REF_NAME")"
+          [[ "$GITHUB_EVENT_NAME" == "push"         ]] && REF_NAME="$GITHUB_REF_NAME"
+          [[ "$GITHUB_EVENT_NAME" == "pull_request" ]] && REF_NAME="$GITHUB_HEAD_REF"
+          [[ -z "$REF_NAME" ]] && { echo "ERROR: unsupported CI event: $GITHUB_EVENT_NAME"; exit 1; }
 
+          COMMIT_MSG="$(git log -1 --format="%B" "origin/$REF_NAME")"
           grep -iq '\[skip ci\]' <<< "$COMMIT_MSG" && { echo "Magic commit message found: [skip ci]"; SKIP_CI=true; }
           echo "Skip CI: $SKIP_CI"
           echo "SKIP_CI=$SKIP_CI" >> "$GITHUB_ENV"
@@ -56,12 +53,12 @@ jobs:
           AUTH_USERNAME:      ${{ secrets.MT4_URL_AUTH_USERNAME }}
           AUTH_PASSWORD:      ${{ secrets.MT4_URL_AUTH_PASSWORD }}
         run: |
-          echo "Downloading MT4 compiler..."
+          echo "Downloading MT4 compiler from ../mt4${MT4_METALANG_URL#*/mt4}"
           curl -o metalang.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METALANG_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
           echo "MT4_METALANG=$(cygpath -m "$(realpath metalang.exe)")" >> "$GITHUB_ENV"
-          MSYS_NO_PATHCONV=1 cmd.exe /c 'mklink /D experts mql40'
+          MSYS_NO_PATHCONV=1 cmd /c 'mklink /D experts mql40'
 
-          echo "Downloading MT4 MetaEditor..."
+          echo "Downloading MT4 MetaEditor from ../mt4${MT4_METAEDITOR_URL#*/mt4}"
           curl -o metaeditor.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METAEDITOR_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
           echo "MT4_METAEDITOR=$(cygpath -m "$(realpath metaeditor.exe)")" >> "$GITHUB_ENV"
 
