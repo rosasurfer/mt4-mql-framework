@@ -13,14 +13,14 @@
 # TODO:
 #  - create include dir for mql40
 #  - preconfigured versions per directory
-#  - preconfigured include dir per directory
+#  - preconfigured include dirs per directory
 #  - move config to standard location
 #  - fix error when a specified directory doesn't contain sources
+#  - improve error messages for filenames looking like options
+#  - long help, short usage on syntax errors
 #  - support Windows filenames/paths as arguments
 #  - reformat compiler messages
-#  - improve error messages for filenames looking like options
 #  - implement download tracker
-#  - long help, short usage
 #
 #  - auto-detect version
 #  - auto-detect include directory
@@ -177,140 +177,6 @@ function fileExtension() {
 }
 
 
-#
-# Return product and version infos for the passed compiler filename.
-#
-# @param $1 - filename
-#
-function compilerInfo() {
-  local file output product version
-  file="$(cygpath -d "$1")"                       # the DOS name spares us quoting which would get mangled which would break the call
-
-  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" < /dev/null)"
-  output="${output#$'\xEF\xBB\xBF'}"              # cut-off a BOM header if present
-  output="${output%$'\r'}"                        # cut-off a Windows EOL if present
-
-  IFS=$'\t' read -r product version <<< "$output"
-
-  [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
-    fail "ERROR: unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
-  }
-  version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
-
-  echo "$product version $version"
-}
-
-
-#
-# Return the compiler filename for the specified MQL version.
-#
-# @param $1 - MQL version id
-#
-function compilerPath() {
-  local version="$1" compiler=''
-
-  [[ "$version" == 'mql40' ]] && compiler='MT4_METALANG'
-  [[ "$version" == 'mql45' ]] && compiler='MT4_METAEDITOR'
-  [[ "$version" == 'mql5'  ]] && compiler='MT5_METAEDITOR'
-
-  [[ -z "$compiler"     ]] && fail "ERROR: unknown MQL version id \"$version\""
-  [[ -z "${!compiler-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
-  [[ -f "${!compiler}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compiler}\""
-
-  echo "${!compiler}"
-}
-
-
-#
-# Caluclate the duration time of two timestamps and return a formatted result.
-#
-# @param $1 - start time in msec
-# @param $2 - end time in msec
-#
-function duration() {
-  local startms="$1" endms="$2" duration
-
-  ((duration = endms-startms))
-
-  if ((duration < 1000)); then
-    echo "$duration msec"
-  else
-    printf '%d.%03d sec' $((duration / 1000)) $((duration % 1000))
-  fi
-}
-
-
-#
-# Read the configuration into global vars.
-#
-function readConfig() {
-  # backup existing env vars
-  local BAK_MT4_METALANG="${MT4_METALANG:-}"
-  local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
-  local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
-
-  # source an existing .env file
-  local scriptDir; scriptDir="$(dirname "$(realpath "$0")")"
-  local envFile="$scriptDir/../.env"
-  [[ -f "$envFile" ]] && . "$envFile"
-
-  # resolve final values: environment precedes config file
-  MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
-  MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
-  MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
-
-  # validate base names
-  if [[ -n "$MT5_METAEDITOR" ]]; then
-    basename="$(basename "$MT5_METAEDITOR")"
-    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
-  fi
-  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR
-}
-
-
-#
-# Resolve the MQL version of a source file, taking into account an explicit or configured value.
-# If neither input nor configuration exist, the function tries to auto-detect the MQL version.
-#
-# @param $1 - filename
-# @param $2 - input version
-#
-function resolveMqlVersion() {
-  local ext; ext="$(fileExtension "$1")"
-  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
-}
-
-
-#
-# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
-# If neither input nor configuration exist, the function tries to auto-detect the include directory.
-#
-# @param $1 - filename
-# @param $2 - MQL version id
-# @param $3 - input include dir
-#
-function resolveIncludeDir() {
-  echo "$3"
-}
-
-
-#
-# Creates a tmp. helper batch file and returns its full name. The name doesn't contain spaces
-# and needs no quoting. On script termination the file is automatically removed.
-#
-function cmdHelper() {
-  local helper=''; helper="$(mktemp --tmpdir --suffix=.bat "$(basename "$0").XXXXXX")"
-  registerTmpFile "$helper"
-
-  if [[ "$helper" =~ \  ]]; then
-    helper="$(cygpath -d "$helper")"      # the DOS name prevents argument mangling of double quotes which would break the call
-  else
-    helper="$(cygpath -w "$helper")"
-  fi
-  echo "$helper"
-}
-
-
 declare isConfig=0 isLogs=0 isMql4=0 isMql5=0
 
 
@@ -348,6 +214,23 @@ function cleanupCompilerDir() {
 
 
 #
+# Creates a tmp. helper batch file and returns its full name. The name doesn't contain spaces
+# and needs no quoting. On script termination the file is automatically removed.
+#
+function cmdHelper() {
+  local helper; helper="$(mktemp --tmpdir --suffix=.bat "$(basename "$0").XXXXXX")"
+  registerTmpFile "$helper"
+
+  if [[ "$helper" =~ \  ]]; then
+    helper="$(cygpath -d "$helper")"      # the DOS name prevents argument mangling of double quotes which would break the call
+  else
+    helper="$(cygpath -w "$helper")"
+  fi
+  echo "$helper"
+}
+
+
+#
 # Compile an MQL4.0 source file.
 #
 # @param $1 - filename
@@ -356,8 +239,8 @@ function cleanupCompilerDir() {
 #
 function compileMql40() {
   local srcFile="$1" version="$2" include="$3"
-  local compiler errorStatus=0 startms endms time output=() line errors=0 epl='' warnings=0 wpl='' retVal
-  compiler="$(compilerPath "$version")"
+  local compiler errorStatus=0 startms endms time='' output=() line errors=0 epl='' warnings=0 wpl='' retVal
+  compiler="$(compilerPath "$version" "$include")"
 
   # call the compiler and measure execution time
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
@@ -448,7 +331,7 @@ function compileMql40() {
 function compileMql5() {
   local srcFile="$1" logFile="${1%.*}.log" version="$2" include="$3"
   local helper compiler compilerCmd includeOption='' errorStatus=0
-  compiler="$(compilerPath "$version")"
+  compiler="$(compilerPath "$version" "")"
 
   if ((!originalOutput)); then
     echo "Compiling \"$srcFile\" as $(versionName "$version")"
@@ -501,6 +384,139 @@ function compileMql5() {
   ((retVal = errors + warnings))
   ((retVal > 255)) && retVal=255
   return "$retVal"
+}
+
+
+#
+# Return product and version infos for the passed compiler filename.
+#
+# @param $1 - filename
+#
+function compilerInfo() {
+  local file output product version
+  file="$(cygpath -d "$1")"                       # the DOS name spares us quoting which would get mangled which would break the call
+
+  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" < /dev/null)"
+  output="${output#$'\xEF\xBB\xBF'}"              # cut-off a BOM header if present
+  output="${output%$'\r'}"                        # cut-off a Windows EOL if present
+
+  IFS=$'\t' read -r product version <<< "$output"
+
+  [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
+    fail "ERROR: unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
+  }
+  version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
+
+  echo "$product version $version"
+}
+
+
+#
+# Return the compiler filepath for the specified MQL version.
+#
+# @param $1 - MQL version id
+# @param $2 - include directory; will be linked into the compiler's path (MQL4.0 only)
+#
+function compilerPath() {
+  local compiler='' version="$1" includeDir="$2"
+
+  [[ "$version" == 'mql40' ]] && compiler='MT4_METALANG'
+  [[ "$version" == 'mql45' ]] && compiler='MT4_METAEDITOR'
+  [[ "$version" == 'mql5'  ]] && compiler='MT5_METAEDITOR'
+
+  [[ -z "$compiler"     ]] && fail "ERROR: unknown MQL version id \"$version\""
+  [[ -z "${!compiler-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
+  [[ -f "${!compiler}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compiler}\""
+
+  if [[ "$version" == 'mql40' ]]; then
+    #compilerDir = dirName(compiler)
+    #if (is_dir(compilerDir.'/experts')) {
+    #  if (realPath(compilerDir.'/experts') != realPath(includeDir)) {
+    #    if (isCached('mql40:'.includeDir)) {
+    #    }
+    #    // create temp directory
+    #    // copy compiler to tmp directory
+    #    // link includeDir to tmpDir/experts
+    #    return tmpDir/compiler
+    #  }
+    #}
+    :
+  fi
+
+  echo "${!compiler}"
+}
+
+
+#
+# Caluclate the duration time of two timestamps and return a formatted result.
+#
+# @param $1 - start time in msec
+# @param $2 - end time in msec
+#
+function duration() {
+  local startms="$1" endms="$2" duration
+
+  ((duration = endms-startms))
+
+  if ((duration < 1000)); then
+    echo "$duration msec"
+  else
+    printf '%d.%03d sec' $((duration / 1000)) $((duration % 1000))
+  fi
+}
+
+
+#
+# Read the configuration into global vars.
+#
+function readConfig() {
+  # backup existing env vars
+  local BAK_MT4_METALANG="${MT4_METALANG:-}"
+  local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
+  local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
+
+  # source an existing .env file
+  local scriptDir; scriptDir="$(dirname "$(realpath "$0")")"
+  local envFile="$scriptDir/../.env"
+  [[ -f "$envFile" ]] && . "$envFile"
+
+  # resolve final values: environment precedes config file
+  MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
+  MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
+  MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
+
+  # validate base names
+  if [[ -n "$MT5_METAEDITOR" ]]; then
+    basename="$(basename "$MT5_METAEDITOR")"
+    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
+  fi
+  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR
+}
+
+
+#
+# Resolve the MQL version of a source file, taking into account an explicit or configured value.
+# If neither input nor configuration exist, the function tries to auto-detect the MQL version.
+#
+# @param $1 - filename
+# @param $2 - input version
+#
+function resolveMqlVersion() {
+  local ext; ext="$(fileExtension "$1")"
+  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
+}
+
+
+#
+# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
+# If neither input nor configuration exist, the function tries to auto-detect the include directory.
+#
+# @param $1 - filename
+# @param $2 - MQL version id
+# @param $3 - input include dir
+#
+function resolveIncludeDir() {
+  echo "$3"
 }
 
 
