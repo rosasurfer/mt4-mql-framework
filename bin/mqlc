@@ -11,7 +11,7 @@
 #
 #
 # TODO:
-#  - create include dir for mql40
+#  - implement compareDirs()
 #  - preconfigured versions per directory
 #  - preconfigured include dirs per directory
 #  - move config to standard location
@@ -88,8 +88,6 @@ function init() {
 
 
 _tmpFiles=''                                                # file holding the names of managed tmp. files
-
-
 #
 # Register a file path for automatic deletion on script termination.
 #
@@ -132,22 +130,6 @@ function onExit() {
 function fail() {
   echo "$@" 1>&2
   exit 1
-}
-
-
-#
-# Sanitize a filename/path argument. Strips enclosing double quotes and trims white-space.
-#
-# @param $1 - name
-#
-function sanitizeName() {
-  local str="$1"
-  [[ "$str" =~ ^\"(.*)\"$ ]] && str="${BASH_REMATCH[1]}"    # strip enclosing double quotes
-
-  str="${str#"${str%%[![:space:]]*}"}"                      # trim leading white space
-  str="${str%"${str##*[![:space:]]}"}"                      # trim trailing white space
-
-  echo "$str"
 }
 
 
@@ -227,6 +209,18 @@ function cmdHelper() {
     helper="$(cygpath -w "$helper")"
   fi
   echo "$helper"
+}
+
+
+#
+# Test whether two logical directories are physically the same.
+# Returns 1 if directories are the same, and 0 otherwise.
+#
+# @param $1 - first directory
+# @param $2 - second directory
+#
+function compareDirs() {
+  echo "0"
 }
 
 
@@ -411,39 +405,41 @@ function compilerInfo() {
 }
 
 
+declare -A _cachedCompilerPaths                   # cached results
+_cachedCompilerPaths=()
+
 #
-# Return the compiler filepath for the specified MQL version.
+# Return the full compiler filename for the specified MQL version.
 #
 # @param $1 - MQL version id
-# @param $2 - include directory; will be linked into the compiler's path (MQL4.0 only)
+# @param $2 - include directory, will be linked into the compiler's path (MQL4.0 only)
 #
 function compilerPath() {
-  local compiler='' version="$1" includeDir="$2"
+  local compiler version="$1" includeDir="$2"
+  [[ "$version" != 'mql40' || "$includeDir" == 'auto' || "$includeDir" == '<auto>' ]] && includeDir=
+
+  # check the cache for a matching result
+  if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
+    echo "${_cachedCompilerPaths["$version|$includeDir"]}"
+    return
+  fi
 
   [[ "$version" == 'mql40' ]] && compiler='MT4_METALANG'
   [[ "$version" == 'mql45' ]] && compiler='MT4_METAEDITOR'
   [[ "$version" == 'mql5'  ]] && compiler='MT5_METAEDITOR'
 
-  [[ -z "$compiler"     ]] && fail "ERROR: unknown MQL version id \"$version\""
+  [[ -z "${compiler:-}" ]] && fail "ERROR: unknown MQL version id \"$version\""
   [[ -z "${!compiler-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
   [[ -f "${!compiler}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compiler}\""
+  compiler="${!compiler}"
 
-  if [[ "$version" == 'mql40' ]]; then
-    #compilerDir = dirName(compiler)
-    #if (is_dir(compilerDir.'/experts')) {
-    #  if (realPath(compilerDir.'/experts') != realPath(includeDir)) {
-    #    if (isCached('mql40:'.includeDir)) {
-    #    }
-    #    // create temp directory
-    #    // copy compiler to tmp directory
-    #    // link includeDir to tmpDir/experts
-    #    return tmpDir/compiler
-    #  }
-    #}
-    :
+  if [[ "$version" == 'mql40' && -n "$includeDir" ]]; then
+    compiler="$(prepareCompiler40Dir "$compiler" "$includeDir")"
   fi
 
-  echo "${!compiler}"
+  # cache the result
+  _cachedCompilerPaths["$version|$includeDir"]="$compiler"
+  echo "$compiler"
 }
 
 
@@ -463,6 +459,39 @@ function duration() {
   else
     printf '%d.%03d sec' $((duration / 1000)) $((duration % 1000))
   fi
+}
+
+
+#
+# Prepare a compiler path for MQL4.0 and link the specified include directory into it.
+# Return the prepared full compiler path
+#
+# @param $1 - compiler path
+# @param $2 - include directory
+#
+function prepareCompiler40Dir() {
+  local compiler="$1" includeDir="$2" includeDirW expertsDir expertsDirW tmpDir
+  expertsDir="$(dirname "$compiler")/experts"
+
+  # quick return if expertsDir already matches includeDir
+  if [[ -d "$expertsDir" && "$(compareDirs "$expertsDir" "$includeDir")" == "1" ]]; then
+    echo "$compiler"
+    return
+  fi
+
+  # create tmp directory
+  tmpDir="$(mktemp -d --tmpdir "$(basename "$0").XXXXXX")"
+  registerTmpFile "$tmpDir"
+
+  # copy compiler to tmp directory and link includeDir to experts
+  cp "$compiler" "$tmpDir"
+  expertsDirW="$(cygpath -wa "$tmpDir/experts")"
+  includeDirW="$(cygpath -wa "$includeDir")"
+  MSYS_NO_PATHCONV=1 cmd /c mklink /D "$expertsDirW" "$includeDirW" < /dev/null > /dev/null || fail "ERROR: mklink /D \"$expertsDirW\" \"$includeDirW\" failed with status $?"
+
+  # return tmpDir/compiler
+  compiler="$tmpDir/$(basename "$compiler")"
+  echo "$compiler"
 }
 
 
@@ -517,6 +546,22 @@ function resolveMqlVersion() {
 #
 function resolveIncludeDir() {
   echo "$3"
+}
+
+
+#
+# Sanitize a filename/path argument. Strips enclosing double quotes and trims white-space.
+#
+# @param $1 - name
+#
+function sanitizeName() {
+  local str="$1"
+  [[ "$str" =~ ^\"(.*)\"$ ]] && str="${BASH_REMATCH[1]}"    # strip enclosing double quotes
+
+  str="${str#"${str%%[![:space:]]*}"}"                      # trim leading white space
+  str="${str%"${str##*[![:space:]]}"}"                      # trim trailing white space
+
+  echo "$str"
 }
 
 
@@ -595,7 +640,7 @@ while [[ "$#" -gt 0 ]]; do
         [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
         include="$(sanitizeName "$include")"
         [[ -z "$include" ]] && fail "ERROR: missing argument: $1"
-        [[ -d "$include" ]] || fail "ERROR: directory not found: $1"
+        [[ -d "$include" ]] || fail "ERROR: include directory not found: \"$include\""
         include="$(cygpath -w "$include")"
         if ((firstInclude < 0)); then
           for i in "${!srcFileIncludes[@]}"; do
