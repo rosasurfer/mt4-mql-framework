@@ -9,7 +9,6 @@
 /.project*
 
 # ignore the following directories and files
-/bin
 /etc/windows/user.appdata
 /files
 mqlcache.dat

@@ -11,7 +11,6 @@
 #
 #
 # TODO:
-#  - implement compareDirs()
 #  - preconfigured versions per directory
 #  - preconfigured include dirs per directory
 #  - move config to standard location
@@ -21,6 +20,7 @@
 #  - support Windows filenames/paths as arguments
 #  - reformat compiler messages
 #  - implement download tracker
+#  - in WSL: move tmp dir to Windows fs
 #
 #  - auto-detect version
 #  - auto-detect include directory
@@ -32,7 +32,7 @@
 #  - colored output
 #  - parallel compilation of multiple files
 #
-set -eEu -o pipefail
+set -euo pipefail
 
 
 # --- functions ----------------------------------------------------------------------------------------------------------------------------
@@ -83,21 +83,22 @@ SYNTAX
 #
 function init() {
   trap onExit EXIT                                          # setup exit handler *first*
-  registerTmpFile ""                                        # initialize management of tmp. files
+  registerTmpPath ""                                        # initialize management of tmp files
 }
 
 
-_tmpFiles=''                                                # file holding the names of managed tmp. files
+declare _tmpFiles=''                                        # file holding the names of managed tmp files
+
 #
 # Register a file path for automatic deletion on script termination.
 #
 # @param $1 - filename/path
 #
-function registerTmpFile() {
+function registerTmpPath() {
   if [[ -z "$_tmpFiles" ]]; then                            # initialization on first call
     _tmpFiles="$(mktemp --tmpdir "$(basename "$0").XXXXXX")"
     readonly _tmpFiles
-    registerTmpFile "$_tmpFiles"                            # register the file itself as first entry
+    registerTmpPath "$_tmpFiles"                            # register the file itself as first entry
   fi
 
   # add new tmp file
@@ -109,17 +110,17 @@ function registerTmpFile() {
 # Exit handler. Cleans-up temporary files before script termination.
 #
 function onExit() {
-  local lines=() file i exists isDir
+  local lastExitStatus=$? lines=() file i
+  [[ -f "$_tmpFiles" ]] || return "$lastExitStatus"
   mapfile -t lines < "$_tmpFiles"
 
-  # delete paths in LIFO order to prevent orphans behind tmp. reparse points
+  # delete paths in LIFO order to prevent orphans behind tmp reparse points
   for ((i=${#lines[@]}-1; i >= 0; i--)); do
-    file="${lines[i]}"
-    [[ -e "$file" ]] && exists=1 || exists=0
-    [[ -d "$file" ]] && isDir="(dir)" || isDir=
+    file="${lines[i]}" && [[ -e "$file" ]] || continue
+    ((debug)) && echo "${FUNCNAME[0]}: rm $file $([[ -d "$file" ]] && echo '(dir)' || :)"
     rm -rf -- "$file"
-    ((debug && exists)) && echo "onExit: rm $file $isDir" || :
   done
+  return "$lastExitStatus"
 }
 
 
@@ -159,12 +160,12 @@ function cleanupCompilerDir() {
 
 
 #
-# Creates a tmp. helper batch file and returns its full name. The name doesn't contain spaces
+# Creates a helper batch file and returns its full name. The name doesn't contain spaces
 # and needs no quoting. On script termination the file is automatically removed.
 #
 function cmdHelper() {
   local helper; helper="$(mktemp --tmpdir --suffix=.bat "$(basename "$0").XXXXXX")"
-  registerTmpFile "$helper"
+  registerTmpPath "$helper"
 
   if [[ "$helper" =~ \  ]]; then
     helper="$(cygpath -d "$helper")"      # the DOS name prevents argument mangling of double quotes which would break the call
@@ -177,13 +178,21 @@ function cmdHelper() {
 
 #
 # Test whether two logical directories are physically the same.
-# Returns 1 if directories are the same, and 0 otherwise.
+# Returns with exit status 0 (success) if they are the same, and a non-zero exit status otherwise (not the same).
 #
-# @param $1 - first directory
-# @param $2 - second directory
+# @param $1 - directory A
+# @param $2 - directory B
 #
 function compareDirs() {
-  echo "0"
+  local dirA="$1" dirB="$2" status=0
+  [[ -d "$dirA" && -d "$dirB" ]] || return 1
+  (
+    cd "$dirA" && realDirA="$(realpath .)" &&
+    cd "$dirB" && realDirB="$(realpath .)" &&
+    [[ "${realDirA,,}" == "${realDirB,,}" ]]
+    exit $?
+  ) || status=$?
+  return "$status"
 }
 
 
@@ -197,7 +206,7 @@ function compareDirs() {
 function compileMql40() {
   local srcFile="$1" version="$2" include="$3"
   local compiler errorStatus=0 startms endms time='' output=() line errors=0 epl='' warnings=0 wpl='' retVal
-  compilerPath "$version" "$include"                                  # sets local compiler
+  compilerPath "$version" "$include"                                  # sets local var compiler
 
   # call the compiler and measure execution time
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
@@ -288,7 +297,7 @@ function compileMql40() {
 function compileMql5() {
   local srcFile="$1" logFile="${1%.*}.log" version="$2" include="$3"
   local helper compiler compilerCmd includeOption='' errorStatus=0
-  compilerPath "$version"                                             # sets local compiler
+  compilerPath "$version"                                             # sets local var compiler
 
   if ((!originalOutput)); then
     echo "Compiling \"$srcFile\" as $(versionName "$version")"
@@ -378,7 +387,7 @@ _cachedCompilerPaths=()
 # @param $2 - include directory, will be linked into the compiler path (MQL4.0 only)
 #
 function compilerPath() {
-  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't modify outer scope from subshell"
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't modify caller scope from subshell"
   local compilerVar version="$1" includeDir="${2:-}"
   [[ "$version" != 'mql40' || "$includeDir" == 'auto' || "$includeDir" == '<auto>' ]] && includeDir=
 
@@ -484,14 +493,14 @@ function prepareCompiler40Dir() {
   expertsDir="$(dirname "$compiler")/experts"
 
   # quick return if expertsDir already matches includeDir
-  if [[ -d "$expertsDir" && "$(compareDirs "$expertsDir" "$includeDir")" == "1" ]]; then
+  if [[ -d "$expertsDir" ]] && compareDirs "$expertsDir" "$includeDir"; then
     echo "$compiler"
     return
   fi
 
   # create tmp directory
   tmpDir="$(mktemp -d --tmpdir "$(basename "$0").XXXXXX")"
-  registerTmpFile "$tmpDir"
+  registerTmpPath "$tmpDir"
 
   # copy compiler to tmp directory and link includeDir to experts
   cp "$compiler" "$tmpDir"
@@ -581,9 +590,9 @@ function sanitizeName() {
 # @param $1 - MQL version id
 #
 function versionName() {
-  [[ "$1" == 'mql40' ]] && { echo 'MQL 4.0'; return; }
-  [[ "$1" == 'mql45' ]] && { echo 'MQL 4.5'; return; }
-  [[ "$1" == 'mql5'  ]] && { echo 'MQL 5';   return; }
+  [[ "$1" == 'mql40' ]] && { echo 'MQL4.0'; return; }
+  [[ "$1" == 'mql45' ]] && { echo 'MQL4.5'; return; }
+  [[ "$1" == 'mql5'  ]] && { echo 'MQL5';   return; }
 
   fail "ERROR: unknown MQL version id: \"$1\""
 }
@@ -721,7 +730,6 @@ readonly srcFileNames
 readonly srcFileVersions firstVersion
 readonly srcFileIncludes firstInclude
 readonly log customLog syntaxOnly originalOutput compactOutput warn2error debug
-export debug
 
 
 # read configuration
