@@ -53,12 +53,12 @@ jobs:
           AUTH_USERNAME:      ${{ secrets.MT4_URL_AUTH_USERNAME }}
           AUTH_PASSWORD:      ${{ secrets.MT4_URL_AUTH_PASSWORD }}
         run: |
-          echo "Downloading MT4 compiler from ../mt4${MT4_METALANG_URL#*/mt4}"
+          echo "Downloading MT4 compiler from https://.../mt4/${MT4_METALANG_URL#*/mt4/}"
           curl -o metalang.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METALANG_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
           echo "MT4_METALANG=$(cygpath -m "$(realpath metalang.exe)")" >> "$GITHUB_ENV"
           MSYS_NO_PATHCONV=1 cmd /c 'mklink /D experts mql40'
 
-          echo "Downloading MT4 MetaEditor from ../mt4${MT4_METAEDITOR_URL#*/mt4}"
+          echo "Downloading MT4 MetaEditor from https://.../mt4/${MT4_METAEDITOR_URL#*/mt4/}"
           curl -o metaeditor.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METAEDITOR_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
           echo "MT4_METAEDITOR=$(cygpath -m "$(realpath metaeditor.exe)")" >> "$GITHUB_ENV"
 
