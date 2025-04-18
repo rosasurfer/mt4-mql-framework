@@ -109,58 +109,21 @@ function registerTmpFile() {
 # Exit handler. Cleans-up temporary files before script termination.
 #
 function onExit() {
-  local lines=() file i exists
+  local lines=() file i exists isDir
   mapfile -t lines < "$_tmpFiles"
 
   # delete paths in LIFO order to prevent orphans behind tmp. reparse points
   for ((i=${#lines[@]}-1; i >= 0; i--)); do
     file="${lines[i]}"
     [[ -e "$file" ]] && exists=1 || exists=0
+    [[ -d "$file" ]] && isDir="(dir)" || isDir=
     rm -rf -- "$file"
-    ((debug && exists)) && echo "onExit: rm $file" || :
+    ((debug && exists)) && echo "onExit: rm $file $isDir" || :
   done
 }
 
 
-#
-# Print a message to STDERR and exit the script/subshell.
-#
-# @param $@ - any number of arguments
-#
-function fail() {
-  echo "$@" 1>&2
-  exit 1
-}
-
-
-#
-# cygpath doesn't support the "--" option separator. If the passed name starts with "-" it breaks.
-# This function works around that issue.
-#
-# @param $1 - cygpath conversion modifier
-# @param $2 - filename/path
-#
-function cygpath() {
-  local name="$2"
-  [[ "$name" == -* ]] && name="./$name"
-  command cygpath "$1" "$name"
-}
-
-
-#
-# Return the file extension of the passed name.
-#
-# @param $1 - filename
-#
-function fileExtension() {
-  local ext="${1##*.}"
-  [[ "$1" == "$ext" ]] && ext=
-  echo "$ext"
-}
-
-
 declare isConfig=0 isLogs=0 isMql4=0 isMql5=0
-
 
 #
 # Remember directories in a compiler directory. Used by cleanupCompilerDir() to cleanup.
@@ -234,7 +197,7 @@ function compareDirs() {
 function compileMql40() {
   local srcFile="$1" version="$2" include="$3"
   local compiler errorStatus=0 startms endms time='' output=() line errors=0 epl='' warnings=0 wpl='' retVal
-  compiler="$(compilerPath "$version" "$include")"
+  compilerPath "$version" "$include"                                  # sets local compiler
 
   # call the compiler and measure execution time
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
@@ -325,7 +288,7 @@ function compileMql40() {
 function compileMql5() {
   local srcFile="$1" logFile="${1%.*}.log" version="$2" include="$3"
   local helper compiler compilerCmd includeOption='' errorStatus=0
-  compiler="$(compilerPath "$version" "")"
+  compilerPath "$version"                                             # sets local compiler
 
   if ((!originalOutput)); then
     echo "Compiling \"$srcFile\" as $(versionName "$version")"
@@ -405,33 +368,34 @@ function compilerInfo() {
 }
 
 
-declare -A _cachedCompilerPaths                   # cached results
+declare -A _cachedCompilerPaths                   # cached results (requires BASH_SUBSHELL=0)
 _cachedCompilerPaths=()
 
 #
-# Return the full compiler filename for the specified MQL version.
+# Resolves the full compiler filename for the specified MQL version, and sets variable 'compiler' in the outer scope.
 #
 # @param $1 - MQL version id
-# @param $2 - include directory, will be linked into the compiler's path (MQL4.0 only)
+# @param $2 - include directory, will be linked into the compiler path (MQL4.0 only)
 #
 function compilerPath() {
-  local compiler version="$1" includeDir="$2"
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't modify outer scope from subshell"
+  local compilerVar version="$1" includeDir="${2:-}"
   [[ "$version" != 'mql40' || "$includeDir" == 'auto' || "$includeDir" == '<auto>' ]] && includeDir=
 
   # check the cache for a matching result
   if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
-    echo "${_cachedCompilerPaths["$version|$includeDir"]}"
+    compiler="${_cachedCompilerPaths["$version|$includeDir"]}"
     return
   fi
 
-  [[ "$version" == 'mql40' ]] && compiler='MT4_METALANG'
-  [[ "$version" == 'mql45' ]] && compiler='MT4_METAEDITOR'
-  [[ "$version" == 'mql5'  ]] && compiler='MT5_METAEDITOR'
+  [[ "$version" == 'mql40' ]] && compilerVar='MT4_METALANG'
+  [[ "$version" == 'mql45' ]] && compilerVar='MT4_METAEDITOR'
+  [[ "$version" == 'mql5'  ]] && compilerVar='MT5_METAEDITOR'
 
-  [[ -z "${compiler:-}" ]] && fail "ERROR: unknown MQL version id \"$version\""
-  [[ -z "${!compiler-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
-  [[ -f "${!compiler}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compiler}\""
-  compiler="${!compiler}"
+  [[ -z "${compilerVar:-}" ]] && fail "ERROR: unknown MQL version id \"$version\""
+  [[ -z "${!compilerVar-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
+  [[ -f "${!compilerVar}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compilerVar}\""
+  compiler="${!compilerVar}"
 
   if [[ "$version" == 'mql40' && -n "$includeDir" ]]; then
     compiler="$(prepareCompiler40Dir "$compiler" "$includeDir")"
@@ -439,7 +403,20 @@ function compilerPath() {
 
   # cache the result
   _cachedCompilerPaths["$version|$includeDir"]="$compiler"
-  echo "$compiler"
+}
+
+
+#
+# cygpath doesn't support the "--" option separator. If the passed name starts with "-" it breaks.
+# This function works around that issue.
+#
+# @param $1 - cygpath conversion modifier
+# @param $2 - filename/path
+#
+function cygpath() {
+  local name="$2"
+  [[ "$name" == -* ]] && name="./$name"
+  command cygpath "$1" "$name"
 }
 
 
@@ -459,6 +436,39 @@ function duration() {
   else
     printf '%d.%03d sec' $((duration / 1000)) $((duration % 1000))
   fi
+}
+
+
+#
+# Prints a message to STDERR but doesn't exit the script/subshell.
+#
+# @param $@ - any number of arguments
+#
+function error() {
+  echo "$@" 1>&2
+}
+
+
+#
+# Prints a message to STDERR and exits the script/subshell.
+#
+# @param $@ - any number of arguments
+#
+function fail() {
+  echo "$@" 1>&2
+  exit 1
+}
+
+
+#
+# Return the file extension of the passed name.
+#
+# @param $1 - filename
+#
+function fileExtension() {
+  local ext="${1##*.}"
+  [[ "$1" == "$ext" ]] && ext=
+  echo "$ext"
 }
 
 
@@ -524,19 +534,6 @@ function readConfig() {
 
 
 #
-# Resolve the MQL version of a source file, taking into account an explicit or configured value.
-# If neither input nor configuration exist, the function tries to auto-detect the MQL version.
-#
-# @param $1 - filename
-# @param $2 - input version
-#
-function resolveMqlVersion() {
-  local ext; ext="$(fileExtension "$1")"
-  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
-}
-
-
-#
 # Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
 # If neither input nor configuration exist, the function tries to auto-detect the include directory.
 #
@@ -546,6 +543,19 @@ function resolveMqlVersion() {
 #
 function resolveIncludeDir() {
   echo "$3"
+}
+
+
+#
+# Resolve the MQL version of a source file, taking into account an explicit or configured value.
+# If neither input nor configuration exist, the function tries to auto-detect the MQL version.
+#
+# @param $1 - filename
+# @param $2 - input version
+#
+function resolveMqlVersion() {
+  local ext; ext="$(fileExtension "$1")"
+  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
 }
 
 
