@@ -13,6 +13,7 @@
 # TODO:
 #  - preconfigured versions per directory
 #  - preconfigured include dirs per directory
+#  - config must be parsed, not sourced
 #  - move config to standard location
 #  - fix error when a specified directory doesn't contain sources
 #  - improve error messages for filenames looking like options
@@ -20,19 +21,20 @@
 #  - support Windows filenames/paths as arguments
 #  - reformat compiler messages
 #  - implement download tracker
-#  - in WSL: move tmp dir to Windows fs
+#  - in WSL: move tmp dir to Windows file system
 #
 #  - auto-detect version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
+#  - move basename validation from readConfig() to compilerPath()                        
 #  - add --no-rc option
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
 #  - colored output
 #  - parallel compilation of multiple files
 #
-set -euo pipefail
+set -eEuo pipefail
 
 
 # --- functions ----------------------------------------------------------------------------------------------------------------------------
@@ -78,11 +80,18 @@ SYNTAX
 }
 
 
+declare debug=0 test=0
+
 #
 # Initialization.
 #
 function init() {
-  trap onExit EXIT                                          # setup exit handler *first*
+  [[ "${DEBUG:-0}" != "0" ]] && debug=1
+  [[ "${TEST:-0}"  != "0" ]] && test=1
+  readonly debug test
+
+  trap onError ERR
+  trap onExit  EXIT
   registerTmpPath ""                                        # initialize management of tmp files
 }
 
@@ -103,6 +112,24 @@ function registerTmpPath() {
 
   # add new tmp file
   [[ -n "$1" ]] && echo "$1" >> "$_tmpFiles" || :
+}
+
+
+#
+# Error handler. Displays the location of the last error.
+#
+function onError() {
+  local lastExitStatus=$? size=${#FUNCNAME[@]} i func
+
+  if ((size > 2 || BASH_LINENO[0] != 1)); then              # skip a regular exit code at end of program
+    error "ERROR: command failed with status $lastExitStatus"
+
+    for ((i=1; i < size; i++)); do
+      func="${FUNCNAME[i]}()                        "
+      error " in ${func:0:24} file: ${BASH_SOURCE[i]}, line ${BASH_LINENO[i-1]}"
+    done
+  fi
+  return "$lastExitStatus"
 }
 
 
@@ -142,8 +169,7 @@ function checkCompilerDir() {
 
 
 #
-# Clean-up directories created by the MetaEditor compiler.
-# (metalang.exe doesn't create any directories by itself)
+# Clean-up directories created by MetaEditor (metalang.exe doesn't create any directories).
 #
 # @param $1 - compiler filename
 #
@@ -206,14 +232,14 @@ function compareDirs() {
 function compileMql40() {
   local srcFile="$1" version="$2" include="$3"
   local compiler errorStatus=0 startms endms time='' output=() line errors=0 epl='' warnings=0 wpl='' retVal
-  compilerPath "$version" "$include"                                  # sets local var compiler
+  compilerPath 'compiler' "$version" "$include"                       # writes to var 'compiler'
 
   # call the compiler and measure execution time
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
   ((debug)) && echo "cmd: $compiler $srcFile"
   startms="$(date +%s%3N)"
   mapfile -t output < <(
-    { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
+    { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
   )
   endms="$(date +%s%3N)"
   errorStatus="${output[-1]}"                                         # fetch error status from output and remove it
@@ -297,7 +323,7 @@ function compileMql40() {
 function compileMql5() {
   local srcFile="$1" logFile="${1%.*}.log" version="$2" include="$3"
   local helper compiler compilerCmd includeOption='' errorStatus=0
-  compilerPath "$version"                                             # sets local var compiler
+  compilerPath 'compiler' "$version"                                  # writes to var 'compiler'
 
   if ((!originalOutput)); then
     echo "Compiling \"$srcFile\" as $(versionName "$version")"
@@ -317,7 +343,7 @@ function compileMql5() {
   # run the compiler
   checkCompilerDir "$compiler"
   rm -f -- "$logFile"
-  MSYS_NO_PATHCONV=1 cmd /c "$helper" < /dev/null 2>&1 || errorStatus=$?
+  MSYS_NO_PATHCONV=1 cmd /c "$helper" < /dev/null || errorStatus=$?
   [[ -f "$logFile" ]] || fail "ERROR: logfile \"$logFile\" not found (status $errorStatus)."
   rm -f "$helper"
   cleanupCompilerDir "$compiler"
@@ -377,23 +403,26 @@ function compilerInfo() {
 }
 
 
-declare -A _cachedCompilerPaths                   # cached results (requires BASH_SUBSHELL=0)
+declare -A _cachedCompilerPaths
 _cachedCompilerPaths=()
 
 #
-# Resolves the full compiler filename for the specified MQL version, and sets variable 'compiler' in the outer scope.
+# Resolves the full compiler filename for the specified MQL version.
 #
-# @param $1 - MQL version id
-# @param $2 - include directory, will be linked into the compiler path (MQL4.0 only)
+# @param _Out_ $1 - variable to write the result to
+# @param _In_  $2 - MQL version id
+# @param _In_  $3 - include directory, will be linked into the compiler path (MQL4.0 only)
 #
 function compilerPath() {
-  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't modify caller scope from subshell"
-  local compilerVar version="$1" includeDir="${2:-}"
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to caller from subshell"
+  local -n result="$1"
+  local version="$2" includeDir="${3:-}" compilerVar
+
   [[ "$version" != 'mql40' || "$includeDir" == 'auto' || "$includeDir" == '<auto>' ]] && includeDir=
 
   # check the cache for a matching result
   if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
-    compiler="${_cachedCompilerPaths["$version|$includeDir"]}"
+    result="${_cachedCompilerPaths["$version|$includeDir"]}"
     return
   fi
 
@@ -404,14 +433,14 @@ function compilerPath() {
   [[ -z "${compilerVar:-}" ]] && fail "ERROR: unknown MQL version id \"$version\""
   [[ -z "${!compilerVar-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
   [[ -f "${!compilerVar}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compilerVar}\""
-  compiler="${!compilerVar}"
+  result="${!compilerVar}"
 
   if [[ "$version" == 'mql40' && -n "$includeDir" ]]; then
-    compiler="$(prepareCompiler40Dir "$compiler" "$includeDir")"
+    result="$(prepareCompiler40Dir "$result" "$includeDir")"
   fi
 
   # cache the result
-  _cachedCompilerPaths["$version|$includeDir"]="$compiler"
+  _cachedCompilerPaths["$version|$includeDir"]="$result"
 }
 
 
@@ -430,7 +459,7 @@ function cygpath() {
 
 
 #
-# Caluclate the duration time of two timestamps and return a formatted result.
+# Calculate the duration time of two timestamps and return a formatted result.
 #
 # @param $1 - start time in msec
 # @param $2 - end time in msec
@@ -514,31 +543,81 @@ function prepareCompiler40Dir() {
 }
 
 
+#declare mql40Dirs=() mql45Dirs=()
+declare -A includeDirs; includeDirs=()
+
 #
 # Read the configuration into global vars.
 #
 function readConfig() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  
   # backup existing env vars
   local BAK_MT4_METALANG="${MT4_METALANG:-}"
   local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
   local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
 
-  # source an existing .env file
+  # resolve config file location
   local scriptDir; scriptDir="$(dirname "$(realpath "$0")")"
   local envFile="$scriptDir/../.env"
-  [[ -f "$envFile" ]] && . "$envFile"
 
-  # resolve final values: environment precedes config file
+  # source the config file                                    # TODO: parse the file                                              
+  local mql40Dirs=() mql45Dirs=() i
+  [[ -f "$envFile" ]] && . "$envFile"
+  
+  # normalize configured MQL versions
+  normalizeVersionDirs 'mql40Dirs'
+  normalizeVersionDirs 'mql45Dirs'
+
+  # resolve compiler settings: environment precedes configuration
   MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
   MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
   MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
-
-  # validate base names
-  if [[ -n "$MT5_METAEDITOR" ]]; then
-    basename="$(basename "$MT5_METAEDITOR")"
+  if [[ -n "$MT5_METAEDITOR" ]]; then                         # validate MT5 base name    # TODO: move to compilerPath()
+    local basename; basename="$(basename "$MT5_METAEDITOR")"
     [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
   fi
-  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR
+
+  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR mql40Dirs mql45Dirs includeDirs
+  
+  ((0)) && {
+    local startms endms time
+    startms="$(date +%s%3N)"
+    endms="$(date +%s%3N)"
+    time="$(duration "$startms" "$endms")"
+    error "$time elapsed"
+  } || :
+}
+
+
+#
+# Normalize, sort and order the passed version directories.
+#
+# @param _InOut_ $1 - variable to read input from and write results to
+#
+function normalizeVersionDirs() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local -n inout="$1"
+
+  # normalize defined paths
+  local i path lines lPath pPath logical=() physical=()           
+  for i in "${!inout[@]}"; do             
+    path="${inout[i]}"
+    if [[ -d "$path" ]]; then
+      mapfile -t lines < <(cd "$path" && pwd -L && pwd -P)
+      lPath="${lines[0]}"
+      pPath="${lines[1]}"
+      logical+=("${#lPath} ${lPath,,}")                       # prepend length suffix for sorting
+      physical+=("${#pPath} ${pPath,,}")
+    fi
+  done
+
+  # sort --unique --reverse by length=desc, name=asc
+  logical=("$(printf "%s\n" "${logical[@]}" | sort -u -k1,1nr -k2 | cut -d' ' -f2-)")
+  physical=("$(printf "%s\n" "${physical[@]}" | sort -u -k1,1nr -k2 | cut -d' ' -f2-)") 
+
+  # merge logical & physical back into inout
+  inout=("${logical[@]}" "${physical[@]}")
 }
 
 
@@ -605,7 +684,7 @@ function versionName() {
 declare srcFileNames=() srcArg=''
 declare srcFileVersions=() version='' firstVersion=-1
 declare srcFileIncludes=() include='' firstInclude=-1
-declare log=0 customLog='' syntaxOnly=0 originalOutput=0 compactOutput=0 warn2error=0 debug=0 delimiterPassed=0
+declare log=0 customLog='' syntaxOnly=0 originalOutput=0 compactOutput=0 warn2error=0 delimiterPassed=0
 
 
 # initialization
@@ -619,10 +698,6 @@ while [[ "$#" -gt 0 ]]; do
     case "$1" in
       --)
         delimiterPassed=1
-        shift; continue;;
-
-      --debug)
-        debug=1
         shift; continue;;
 
       -h|--help)
@@ -729,7 +804,7 @@ done
 readonly srcFileNames
 readonly srcFileVersions firstVersion
 readonly srcFileIncludes firstInclude
-readonly log customLog syntaxOnly originalOutput compactOutput warn2error debug
+readonly log customLog syntaxOnly originalOutput compactOutput warn2error
 
 
 # read configuration
@@ -762,8 +837,11 @@ done
 exit "$exitCode"
 
 
-notes << NOTES_METALANG
+notes << NOTES
 
+  ==========================================================================================================================================
+  metalang.exe
+  ==========================================================================================================================================
   metalang.exe's exit code is the number of encountered errors (0 = no errors but possibly warnings).
 
   success w/o warnings
@@ -851,15 +929,11 @@ notes << NOTES_METALANG
 
   2;52;;;cannot open the output expert file
   1
-NOTES_METALANG
 
 
-notes << METAEDITOR_NOTES
-
-  Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
-  breaks Cygwin's POSIX launcher. So we go with "cmd" and manually demangle in the helper batch file.
-  The helper file cannot just hold the final command as that doesn't support parallel executions.
-
+  ==========================================================================================================================================
+  MetaEditor
+  ==========================================================================================================================================
   MetaEditor's exit code is the number of successfully processed files (0 = error). It doesn't produce
   any error messages.
 
@@ -883,11 +957,11 @@ notes << METAEDITOR_NOTES
   --------------------
   $ MSYS_NO_PATHCONV=1 metaeditor*.exe /compile:DoesntExist.mq4 /log:custom.log; echo $?
   0 (no "custom.log", no "metaeditor.log")
-METAEDITOR_NOTES
 
 
-notes << OTHER_NOTES
-
+  ==========================================================================================================================================
+  Other
+  ==========================================================================================================================================
   Syntax MQL4.5 + MQL5
   --------------------
   - compile single file
@@ -948,4 +1022,4 @@ notes << OTHER_NOTES
 
   @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0
 
-OTHER_NOTES
+NOTES
