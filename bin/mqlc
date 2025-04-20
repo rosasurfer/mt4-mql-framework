@@ -51,7 +51,7 @@ Usage: mqlc  [options] [--] SOURCE...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
 
 Arguments:
-  SOURCE           One or more source files or directories to compile. Supports wildcards.
+  SOURCE           One or more MQL files or directories to compile. Supports wildcards.
 
 Options:
   -h --help        This screen.
@@ -60,19 +60,18 @@ Options:
   /include:DIR     Include directory for all source files following the option (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
   /log             Writes all output to file "<source-file.log>" (default: no log on success, always log errors/warnings).
   /log:FILE        Writes all output to a custom log file.
-  -v=VERSION       Explicit version of MQL4 source files following the option: either "mql40" or "mql45".
-  -v= --version=   Empty version argument: auto-detects the version of MQL4 source files following the option (default).
+  -v=VERSION       Explicit version of MQL4 files following the option: either "mql40" or "mql45".
+  -v= --version=   Empty argument: auto-detects the version of MQL4 files following the option (default).
   -s --syntax      Syntax check only, no compilation.
-  -o --original    Preserves the original and unmodified compiler output, followed by the original exit status.
-  -w --warn2error  Treats compiler warnings as errors, affects the exit status for warnings.
+  -w --warn2error  Treats compiler warnings as errors, affects the exit status.
 
 Auto-detection of MQL versions:
- ".mq5" files are always processed as MQL5, a specified version has no effect.
- ".mq4" files: If the base name of the MQL include directory resolves to "experts" or "mql40", version "mql40" is assumed.
- ".mq4" files: If the base name of the MQL include directory resolves to "mql4" or "mql45", version "mql45" is assumed.
- Default MQL versions for custom directories can be predefined in the configuration (see "/.env.dist").
+ ".mq5" files are always processed as MQL5, regardless of a specified MQL4 version.
+ ".mq4" files: If the MQL directory of the source file resolves to "experts" or "mql40", version MQL4.0 is assumed.
+ ".mq4" files: If the MQL directory of the source file resolves to "mql4" or "mql45", version MQL4.5 is assumed.
+ Default MQL4 versions for custom directories can be predefined in the configuration (see "/.env.dist").
 
-Compilers may be specified via environment variables or predefined in the configuration (see "/.env.dist").
+Compilers may be specified via environment or predefined in the configuration (see "/.env.dist").
 
 The script exits with 0 (success) or the number of errors of the last failing compilation.
 
@@ -80,15 +79,18 @@ SYNTAX
 }
 
 
-declare debug=0 test=0
+declare originalOutput=0 debug=0 trace=0 test=0
 
 #
 # Initialization.
 #
 function init() {
-  [[ "${DEBUG:-0}" != "0" ]] && debug=1
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  [[ "${ORIG:-0}"  != "0" ]] && originalOutput=1
+  [[ "${DEBUG:-0}" != "0" ]] && ((!originalOutput)) && debug=1
+  [[ "${TRACE:-0}" != "0" ]] && trace=1
   [[ "${TEST:-0}"  != "0" ]] && test=1
-  readonly debug test
+  readonly originalOutput debug trace test
 
   trap onError ERR
   trap onExit  EXIT
@@ -116,14 +118,13 @@ function registerTmpPath() {
 
 
 #
-# Error handler. Displays the location of the last error.
+# Error handler. If TRACE is enabled it shows the location of the last error.
 #
 function onError() {
   local lastExitStatus=$? size=${#FUNCNAME[@]} i func
 
-  if ((size > 2 || BASH_LINENO[0] != 1)); then              # skip a regular exit code at end of program
+  if ((trace)); then
     error "ERROR: command failed with status $lastExitStatus"
-
     for ((i=1; i < size; i++)); do
       func="${FUNCNAME[i]}()                        "
       error " in ${func:0:24} file: ${BASH_SOURCE[i]}, line ${BASH_LINENO[i-1]}"
@@ -159,6 +160,7 @@ declare isConfig=0 isLogs=0 isMql4=0 isMql5=0
 # @param $1 - compiler filename
 #
 function checkCompilerDir() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
   local dir; dir="$(dirname "$(realpath "$1")")"
 
   [[ -d "$dir/config" ]] && isConfig=1 || isConfig=0
@@ -180,7 +182,6 @@ function cleanupCompilerDir() {
   ((!isLogs  )) && [[ -d "$dir/logs"   ]] && rm -rf "$dir/logs"
   ((!isMql4  )) && [[ -d "$dir/mql4"   ]] && rm -rf "$dir/mql4"
   ((!isMql5  )) && [[ -d "$dir/mql5"   ]] && rm -rf "$dir/mql5"
-
   return 0
 }
 
@@ -624,10 +625,10 @@ function normalizeVersionDirs() {
   local path lines lPath pPath logical=() physical=() merged=()
   for path in "${inout[@]}"; do
     if [[ -d "$path" ]]; then
-      mapfile -t lines < <(cd "$path" && pwd -L && pwd -P)
+      mapfile -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
       lPath="${lines[0]}"
       pPath="${lines[1]}"
-      logical+=("${#lPath} ${lPath,,}")             # prepend length for sorting
+      logical+=("${#lPath} ${lPath,,}")                     # prepend length prefix for sorting
       physical+=("${#pPath} ${pPath,,}")
     fi
   done
@@ -640,8 +641,8 @@ function normalizeVersionDirs() {
   merged=("${logical[@]}" "${physical[@]}")
   inout=()
   local -A seen
-  for path in "${merged[@]}"; do                    # remove duplicates while keeping sort order
-    path="${path#* }"                               # cut-off the length prefix
+  for path in "${merged[@]}"; do                            # remove duplicates while keeping sort order
+    path="${path#* }"                                       # remove the length prefix
     [[ -z "${seen[$path]:-}" ]] && { inout+=("$path"); seen["$path"]=1; } || :
   done
 }
@@ -698,7 +699,6 @@ function versionName() {
   [[ "$1" == 'mql40' ]] && { echo 'MQL4.0'; return; }
   [[ "$1" == 'mql45' ]] && { echo 'MQL4.5'; return; }
   [[ "$1" == 'mql5'  ]] && { echo 'MQL5';   return; }
-
   fail "ERROR: unknown MQL version id: \"$1\""
 }
 
@@ -710,7 +710,7 @@ function versionName() {
 declare srcFileNames=() srcArg=''
 declare srcFileVersions=() version='' firstVersion=-1
 declare srcFileIncludes=() include='' firstInclude=-1
-declare log=0 customLog='' syntaxOnly=0 originalOutput=0 compactOutput=0 warn2error=0 delimiterPassed=0
+declare log=0 customLog='' syntaxOnly=0 compactOutput=0 warn2error=0 delimiterPassed=0
 
 
 # initialization
@@ -731,10 +731,6 @@ while [[ "$#" -gt 0 ]]; do
 
       [-/]s|--syntax)                                     # also support MetaEditor's option prefix
         syntaxOnly=1
-        shift; continue;;
-
-      -o|--original)
-        originalOutput=1
         shift; continue;;
 
       -w|--warn2error)
@@ -827,10 +823,8 @@ done
 ((!${#srcFileNames[@]}))    && fail "ERROR: missing source file/directory argument"
 ((${#srcFileNames[@]} > 1)) && compactOutput=1
 
-readonly srcFileNames
-readonly srcFileVersions firstVersion
-readonly srcFileIncludes firstInclude
-readonly log customLog syntaxOnly originalOutput compactOutput warn2error
+readonly srcFileNames srcFileVersions srcFileIncludes
+readonly log customLog syntaxOnly compactOutput warn2error
 
 
 # read configuration
