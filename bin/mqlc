@@ -27,7 +27,7 @@
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
-#  - move basename validation from readConfig() to compilerPath()                        
+#  - move basename validation from readConfig() to compilerPath()
 #  - add --no-rc option
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
@@ -327,14 +327,17 @@ function compileMql5() {
 
   if ((!originalOutput)); then
     echo "Compiling \"$srcFile\" as $(versionName "$version")"
-    compilerInfo "$compiler"
-    ((compactOutput)) || echo ""
   fi
 
   compiler="$(cygpath -w "$compiler")"
   [[ -n "$include" ]] && includeOption="/include:\"$include\""
   compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
   ((debug)) && echo "cmd: $compilerCmd"
+
+  if ((!originalOutput)); then
+    compilerInfo "$compiler"
+    ((compactOutput)) || echo ""
+  fi
 
   helper="$(cmdHelper)"
   echo '@echo off'     > "$helper"
@@ -543,7 +546,7 @@ function prepareCompiler40Dir() {
 }
 
 
-#declare mql40Dirs=() mql45Dirs=()
+declare mql40Dirs=() mql45Dirs=()
 declare -A includeDirs; includeDirs=()
 
 #
@@ -551,35 +554,53 @@ declare -A includeDirs; includeDirs=()
 #
 function readConfig() {
   ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
-  
+
   # backup existing env vars
   local BAK_MT4_METALANG="${MT4_METALANG:-}"
   local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
   local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
 
-  # resolve config file location
+  # resolve config file location and source the file
   local scriptDir; scriptDir="$(dirname "$(realpath "$0")")"
   local envFile="$scriptDir/../.env"
-
-  # source the config file                                    # TODO: parse the file                                              
-  local mql40Dirs=() mql45Dirs=() i
-  [[ -f "$envFile" ]] && . "$envFile"
-  
-  # normalize configured MQL versions
-  normalizeVersionDirs 'mql40Dirs'
-  normalizeVersionDirs 'mql45Dirs'
+  [[ -f "$envFile" ]] && . "$envFile"                         # TODO: parse the file instead of sourcing
 
   # resolve compiler settings: environment precedes configuration
   MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
   MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
   MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
-  if [[ -n "$MT5_METAEDITOR" ]]; then                         # validate MT5 base name    # TODO: move to compilerPath()
+  if [[ -n "$MT5_METAEDITOR" ]]; then                         # TODO: move to compilerPath()
     local basename; basename="$(basename "$MT5_METAEDITOR")"
     [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
   fi
+  ((debug)) && {
+    error "configured compilers:"
+    [[ -n "$MT4_METALANG"   ]] && error "MT4_METALANG:   $MT4_METALANG"
+    [[ -n "$MT4_METAEDITOR" ]] && error "MT4_METAEDITOR: $MT4_METAEDITOR"
+    [[ -n "$MT5_METAEDITOR" ]] && error "MT5_METAEDITOR: $MT5_METAEDITOR"
+    error ""
+  }
+
+  # normalize configured MQL versions
+  normalizeVersionDirs 'mql40Dirs'
+  normalizeVersionDirs 'mql45Dirs'
+  ((debug)) && {
+    local size path
+    ((size = ${#mql40Dirs[@]} + ${#mql45Dirs[@]}))
+    error "configured MQL4 directories: $size"
+    for path in "${mql40Dirs[@]}"; do
+      error "mql40: $path"
+    done
+    for path in "${mql45Dirs[@]}"; do
+      error "mql45: $path"
+    done
+    error ""
+  }
+
+  # normalize configured include directories
 
   readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR mql40Dirs mql45Dirs includeDirs
-  
+
   ((0)) && {
     local startms endms time
     startms="$(date +%s%3N)"
@@ -600,24 +621,29 @@ function normalizeVersionDirs() {
   local -n inout="$1"
 
   # normalize defined paths
-  local i path lines lPath pPath logical=() physical=()           
-  for i in "${!inout[@]}"; do             
-    path="${inout[i]}"
+  local path lines lPath pPath logical=() physical=() merged=()
+  for path in "${inout[@]}"; do
     if [[ -d "$path" ]]; then
       mapfile -t lines < <(cd "$path" && pwd -L && pwd -P)
       lPath="${lines[0]}"
       pPath="${lines[1]}"
-      logical+=("${#lPath} ${lPath,,}")                       # prepend length suffix for sorting
+      logical+=("${#lPath} ${lPath,,}")             # prepend length for sorting
       physical+=("${#pPath} ${pPath,,}")
     fi
   done
 
-  # sort --unique --reverse by length=desc, name=asc
-  logical=("$(printf "%s\n" "${logical[@]}" | sort -u -k1,1nr -k2 | cut -d' ' -f2-)")
-  physical=("$(printf "%s\n" "${physical[@]}" | sort -u -k1,1nr -k2 | cut -d' ' -f2-)") 
+  # sort --reverse by length=desc, name=asc
+  readarray -t logical  < <(printf "%s\n" "${logical[@]}"  | sort -k1,1nr -k2)
+  readarray -t physical < <(printf "%s\n" "${physical[@]}" | sort -k1,1nr -k2)
 
   # merge logical & physical back into inout
-  inout=("${logical[@]}" "${physical[@]}")
+  merged=("${logical[@]}" "${physical[@]}")
+  inout=()
+  local -A seen
+  for path in "${merged[@]}"; do                    # remove duplicates while keeping sort order
+    path="${path#* }"                               # cut-off the length prefix
+    [[ -z "${seen[$path]:-}" ]] && { inout+=("$path"); seen["$path"]=1; } || :
+  done
 }
 
 
