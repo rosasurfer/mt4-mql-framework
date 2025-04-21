@@ -121,13 +121,19 @@ function registerTmpPath() {
 # Error handler. If TRACE is enabled it shows the location of the last error.
 #
 function onError() {
-  local lastExitStatus=$? size=${#FUNCNAME[@]} i func
+  local lastExitStatus=$? size=${#FUNCNAME[@]} i func file line
 
   if ((trace)); then
     error "ERROR: command failed with status $lastExitStatus"
     for ((i=1; i < size; i++)); do
       func="${FUNCNAME[i]}()                        "
-      error " in ${func:0:24} file: ${BASH_SOURCE[i]}, line ${BASH_LINENO[i-1]}"
+      file="${BASH_SOURCE[i]}"
+      line="${BASH_LINENO[i-1]}"
+      ((i==1 && line==1)) && {
+        [[ "$func" == 'fail()'* ]] && continue
+        line='?'
+      }
+      error " in ${func:0:24} file: $file, line $line"
     done
   fi
   return "$lastExitStatus"
@@ -589,12 +595,8 @@ function readConfig() {
     local size path
     ((size = ${#mql40Dirs[@]} + ${#mql45Dirs[@]}))
     error "configured MQL4 directories: $size"
-    for path in "${mql40Dirs[@]}"; do
-      error "mql40: $path"
-    done
-    for path in "${mql45Dirs[@]}"; do
-      error "mql45: $path"
-    done
+    error "$(printf "mql40: %s\n" "${mql40Dirs[@]}")"
+    error "$(printf "mql45: %s\n" "${mql45Dirs[@]}")"
     error ""
   }
 
@@ -620,12 +622,13 @@ function readConfig() {
 function normalizeVersionDirs() {
   ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n inout="$1"
+  ((!${#inout[@]})) && return
 
   # normalize defined paths
   local path lines lPath pPath logical=() physical=() merged=()
   for path in "${inout[@]}"; do
     if [[ -d "$path" ]]; then
-      mapfile -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
+      readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
       lPath="${lines[0]}"
       pPath="${lines[1]}"
       logical+=("${#lPath} ${lPath,,}")                     # prepend length prefix for sorting
@@ -633,17 +636,17 @@ function normalizeVersionDirs() {
     fi
   done
 
-  # sort --reverse by length=desc, name=asc
-  readarray -t logical  < <(printf "%s\n" "${logical[@]}"  | sort -k1,1nr -k2)
-  readarray -t physical < <(printf "%s\n" "${physical[@]}" | sort -k1,1nr -k2)
+  # sort by length=desc, name=asc
+  ((${#logical[@]}  > 1)) && readarray -t logical  < <(printf "%s\n" "${logical[@]}"  | sort -k1,1nr -k2)
+  ((${#physical[@]} > 1)) && readarray -t physical < <(printf "%s\n" "${physical[@]}" | sort -k1,1nr -k2)
 
   # merge logical & physical back into inout
   merged=("${logical[@]}" "${physical[@]}")
-  inout=()
   local -A seen
+  inout=()
   for path in "${merged[@]}"; do                            # remove duplicates while keeping sort order
-    path="${path#* }"                                       # remove the length prefix
-    [[ -z "${seen[$path]:-}" ]] && { inout+=("$path"); seen["$path"]=1; } || :
+    path="${path#* }"                                       # remove length prefix
+    [[ -z "${seen[$path]:-}" ]] && { seen["$path"]=1; inout+=("$path"); } || :
   done
 }
 
