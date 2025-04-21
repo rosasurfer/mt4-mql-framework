@@ -11,9 +11,8 @@
 #
 #
 # TODO:
-#  - preconfigured versions per directory
-#  - preconfigured include dirs per directory
-#  - config must be parsed, not sourced
+#  - apply configured MQL4 versions
+#  - apply configured include dirs
 #  - move config to standard location
 #  - fix error when a specified directory doesn't contain sources
 #  - improve error messages for filenames looking like options
@@ -21,6 +20,7 @@
 #  - support Windows filenames/paths as arguments
 #  - reformat compiler messages
 #  - implement download tracker
+#  - config must be parsed, not sourced
 #  - in WSL: move tmp dir to Windows file system
 #
 #  - auto-detect version
@@ -146,7 +146,7 @@ function onError() {
 function onExit() {
   local lastExitStatus=$? lines=() file i
   [[ -f "$_tmpFiles" ]] || return "$lastExitStatus"
-  mapfile -t lines < "$_tmpFiles"
+  readarray -t lines < "$_tmpFiles"
 
   # delete paths in LIFO order to prevent orphans behind tmp reparse points
   for ((i=${#lines[@]}-1; i >= 0; i--)); do
@@ -245,7 +245,7 @@ function compileMql40() {
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
   ((debug)) && echo "cmd: $compiler $srcFile"
   startms="$(date +%s%3N)"
-  mapfile -t output < <(
+  readarray -t output < <(
     { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
   )
   endms="$(date +%s%3N)"
@@ -342,7 +342,7 @@ function compileMql5() {
   ((debug)) && echo "cmd: $compilerCmd"
 
   if ((!originalOutput)); then
-    compilerInfo "$compiler"
+    printProductInfo "$compiler"
     ((compactOutput)) || echo ""
   fi
 
@@ -360,7 +360,7 @@ function compileMql5() {
 
   # store logfile in array (convert to UTF-8, Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
-  mapfile -t output < <(
+  readarray -t output < <(
     ((originalOutput)) && M="rosasurfer"                      # marker to toggle result filtering
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)" || :
   )
@@ -390,11 +390,11 @@ function compileMql5() {
 
 
 #
-# Return product and version infos for the passed compiler filename.
+# Print product and version infos of the passed file.
 #
 # @param $1 - filename
 #
-function compilerInfo() {
+function printProductInfo() {
   local file output product version
   file="$(cygpath -d "$1")"                       # the DOS name spares us quoting which would get mangled which would break the call
 
@@ -417,7 +417,7 @@ declare -A _cachedCompilerPaths
 _cachedCompilerPaths=()
 
 #
-# Resolves the full compiler filename for the specified MQL version.
+# Resolves the full compiler filename for the specified MQL version and include directory.
 #
 # @param _Out_ $1 - variable to write the result to
 # @param _In_  $2 - MQL version id
@@ -475,9 +475,8 @@ function cygpath() {
 # @param $2 - end time in msec
 #
 function duration() {
-  local startms="$1" endms="$2" duration
-
-  ((duration = endms-startms))
+  local startms="$1" endms="$2"
+  local duration=$((endms-startms))
 
   if ((duration < 1000)); then
     echo "$duration msec"
@@ -553,8 +552,7 @@ function prepareCompiler40Dir() {
 }
 
 
-declare mql40Dirs=() mql45Dirs=()
-declare -A includeDirs; includeDirs=()
+declare mql40Dirs=() mql45Dirs=() sourcePaths=() includePaths=()
 
 #
 # Read the configuration into global vars.
@@ -567,10 +565,12 @@ function readConfig() {
   local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
   local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
 
+  local -A includeDirs; includeDirs=()
+
   # resolve config file location and source the file
   local scriptDir; scriptDir="$(dirname "$(realpath "$0")")"
   local envFile="$scriptDir/../.env"
-  [[ -f "$envFile" ]] && . "$envFile"                         # TODO: parse the file instead of sourcing
+  [[ -f "$envFile" ]] && . "$envFile"                         # TODO: parse the file
 
   # resolve compiler settings: environment precedes configuration
   MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
@@ -592,17 +592,24 @@ function readConfig() {
   normalizeVersionDirs 'mql40Dirs'
   normalizeVersionDirs 'mql45Dirs'
   ((debug)) && {
-    local size path
-    ((size = ${#mql40Dirs[@]} + ${#mql45Dirs[@]}))
-    error "configured MQL4 directories: $size"
+    error "configured MQL4 directories:"
     error "$(printf "mql40: %s\n" "${mql40Dirs[@]}")"
     error "$(printf "mql45: %s\n" "${mql45Dirs[@]}")"
     error ""
   }
 
   # normalize configured include directories
+  normalizeIncludeDirs 'includeDirs' 'sourcePaths' 'includePaths'
+  ((debug)) && {
+    local i
+    error "configured include directories:"
+    for i in "${!sourcePaths[@]}"; do
+      error "${sourcePaths[i]} => ${includePaths[i]}"
+    done
+    error ""
+  }
 
-  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR mql40Dirs mql45Dirs includeDirs
+  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR mql40Dirs mql45Dirs sourcePaths includePaths
 
   ((0)) && {
     local startms endms time
@@ -615,7 +622,7 @@ function readConfig() {
 
 
 #
-# Normalize, sort and order the passed version directories.
+# Normalize, sort and order the passed MQL4 version directories.
 #
 # @param _InOut_ $1 - variable to read input from and write results to
 #
@@ -624,29 +631,84 @@ function normalizeVersionDirs() {
   local -n inout="$1"
   ((!${#inout[@]})) && return
 
-  # normalize defined paths
-  local path lines lPath pPath logical=() physical=() merged=()
+  # normalize configured paths
+  local path lines lPath pPath paths=()
   for path in "${inout[@]}"; do
     if [[ -d "$path" ]]; then
       readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
       lPath="${lines[0]}"
       pPath="${lines[1]}"
-      logical+=("${#lPath} ${lPath,,}")                     # prepend length prefix for sorting
-      physical+=("${#pPath} ${pPath,,}")
+      paths+=("$((200000 + ${#lPath})) ${lPath,,}")           # prepend length prefix for sorting
+      paths+=("$((100000 + ${#pPath})) ${pPath,,}")           # group logical before physical
     fi
   done
 
   # sort by length=desc, name=asc
-  ((${#logical[@]}  > 1)) && readarray -t logical  < <(printf "%s\n" "${logical[@]}"  | sort -k1,1nr -k2)
-  ((${#physical[@]} > 1)) && readarray -t physical < <(printf "%s\n" "${physical[@]}" | sort -k1,1nr -k2)
+  ((${#paths[@]} > 1)) && readarray -t paths < <(printf "%s\n" "${paths[@]}" | sort -k1,1nr -k2)
 
-  # merge logical & physical back into inout
-  merged=("${logical[@]}" "${physical[@]}")
+  # write paths back to inout
   local -A seen
   inout=()
-  for path in "${merged[@]}"; do                            # remove duplicates while keeping sort order
-    path="${path#* }"                                       # remove length prefix
-    [[ -z "${seen[$path]:-}" ]] && { seen["$path"]=1; inout+=("$path"); } || :
+  for path in "${paths[@]}"; do                               # remove duplicates while keeping sort order
+    path="${path#* }"                                         # remove length prefix
+    if [[ -z "${seen[$path]:-}" ]]; then
+      seen["$path"]=1
+      inout+=("$path")
+    fi
+  done
+
+  local size=${#inout[@]} lastPath="${inout[-1]}" i
+  for ((i=size-1; i>=0; i--)); do
+    path="${inout[i]}"
+    if [[ "$path" == "$lastPath/"* ]]; then                   # remove subdirs covered by parent dirs
+      unset "inout[$i]"
+      continue
+    fi
+    lastPath="$path"
+  done                                                        # re-index if changed
+  ((${#inout[@]} < size)) && readarray -t inout < <(printf "%s\n" "${inout[@]}") || :
+}
+
+
+#
+# Normalize, sort and order the passed include directories.
+#
+# @param _In_  $1 - variable to read configured directories from
+# @param _Out_ $2 - variable to write source paths to
+# @param _Out_ $3 - variable to write corresponding include directories to
+#
+function normalizeIncludeDirs() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local -n in="$1"
+  local -n outPaths="$2"
+  local -n outIncludes="$3"
+  ((!${#in[@]})) && return
+
+  # normalize configured paths
+  local path lines lPath pPath include paths=() value
+  for path in "${!in[@]}"; do
+    if [[ -d "$path" ]]; then
+      readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
+      lPath="${lines[0]}"
+      pPath="${lines[1]}"
+      include="${in[$path]}"
+      [[ -d "$include" ]] && include="$(cd -- "$include" && echo "$PWD")" || include="$(cygpath -u "$include")"
+
+      paths+=("$((200000 + ${#lPath}))|${lPath,,}|$include")  # prepend length prefix for sorting
+      paths+=("$((100000 + ${#pPath}))|${pPath,,}|$include")  # group logical before physical
+    fi
+  done
+
+  # sort by length=desc, name=asc
+  ((${#paths[@]} > 1)) && readarray -t paths < <(printf "%s\n" "${paths[@]}" | sort -t '|' -k1,1nr -k2,2)
+
+  # write paths back to outPaths + outIncludes
+  outPaths=()
+  outIncludes=()
+  for value in "${paths[@]}"; do
+    IFS='|' read -r _ path include <<< "$value"
+    outPaths+=("$path")
+    outIncludes+=("$include")
   done
 }
 
