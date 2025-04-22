@@ -11,7 +11,6 @@
 #
 #
 # TODO:
-#  - apply configured MQL4 versions
 #  - apply configured include dirs
 #  - move config to standard location
 #  - fix error when a specified directory doesn't contain sources
@@ -642,11 +641,11 @@ function normalizeMQL4Paths() {
   for path in "${in[@]}"; do
     if [[ -d "$path" ]]; then
       readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
-      lPath="${lines[0],,}"                         # logical path
-      pPath="${lines[1],,}"                         # physical path
-      lPath="${lPath////${S}}"                      # replace slashes with a separator that's alphabetically first
+      lPath="${lines[0],,}"                           # logical path
+      pPath="${lines[1],,}"                           # physical path
+      lPath="${lPath////${S}}"                        # replace slashes with a separator that's alphabetically first
       pPath="${pPath////${S}}"
-      grouped+=("2 $lPath")                         # add prefix to order logical paths after physicals
+      grouped+=("2 $lPath")                           # add prefix to order logical paths after physicals
       grouped+=("1 $pPath")
     fi
   done
@@ -654,10 +653,10 @@ function normalizeMQL4Paths() {
 
   readarray -t grouped < <(printf "%s\n" "${grouped[@]}" | sort)
 
-  # write grouped paths to out                      # no filtering of duplicates and overlaps (performance)
+  # write grouped paths to out                        # no filtering of duplicates and overlaps (performance)
   for path in "${grouped[@]}"; do
-    path="${path#* }"                               # cut-off leading group id
-    out+=("${path//${S}//}")                        # revert back separators to slashes
+    path="${path#* }"                                 # cut-off leading group id
+    out+=("${path//${S}//}")                          # revert back separators to slashes
   done
 }
 
@@ -681,13 +680,13 @@ function normalizeIncludeDirs() {
   for path in "${!in[@]}"; do
     if [[ -d "$path" ]]; then
       readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
-      lPath="${lines[0],,}"                         # logical path
-      pPath="${lines[1],,}"                         # physical path
-      lPath="${lPath////${S}}"                      # replace slashes with a separator that's alphabetically first
+      lPath="${lines[0],,}"                           # logical path
+      pPath="${lines[1],,}"                           # physical path
+      lPath="${lPath////${S}}"                        # replace slashes with a separator that's alphabetically first
       pPath="${pPath////${S}}"
-      include="${in[$path]}"                        # convert to logical name (even non-existing)
+      include="${in[$path]}"                          # convert to logical name (even non-existing)
       [[ -d "$include" ]] && include="$(cd -- "$include" && echo "$PWD")" || include="$(cygpath -u "$include")"
-      grouped+=("2|$lPath|$include")                # add prefix to order logical paths after physicals
+      grouped+=("2|$lPath|$include")                  # add prefix to order logical paths after physicals
       grouped+=("1|$pPath|$include")
     fi
   done
@@ -695,12 +694,12 @@ function normalizeIncludeDirs() {
 
   readarray -t grouped < <(printf "%s\n" "${grouped[@]}" | sort -t '|' -k1,2) # by group=asc, path=asc
 
-  # write paths back to out1 + out2                 # no filtering of duplicates and overlaps (performance)
+  # write paths back to out1 + out2                   # no filtering of duplicates and overlaps (performance)
   out1=()
   out2=()
   for line in "${grouped[@]}"; do
     IFS='|' read -r _ path include <<< "$line"
-    out1+=("${path//${S}//}")                       # revert back separators to slashes
+    out1+=("${path//${S}//}")                         # revert back separators to slashes
     out2+=("$include")
   done
 }
@@ -710,12 +709,37 @@ function normalizeIncludeDirs() {
 # Resolve the MQL version of a source file, taking into account an explicit or configured value.
 # If neither input nor configuration exist, the function tries to auto-detect the MQL version.
 #
-# @param $1 - filename
+# @param $1 - filename (exists and is either .mq4 or .mq5)
 # @param $2 - input version
 #
 function resolveMqlVersion() {
-  local ext; ext="$(fileExtension "$1")"
-  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
+  local file="${1,,}" version="${2,,}" i
+  [[ "$file" == *.mq5 ]] && { echo "mql5"; return; }  # the file extension was already validated
+  [[ "$version" == mql4[05] ]] && { echo "$version"; return; }
+  [[ -z "$version" ]] || fail "ERROR: unsupported input version: \"$version\""
+
+  local dir base lines lFile pFile
+  file="${file//\\//}"
+  dir="${file%/*}"; [[ -z "$dir" ]] && dir='.'
+  base="${file##*/}"
+  readarray -t lines < <(cd -- "$dir" && echo "$PWD" && pwd -P)
+  lFile="${lines[0],,}/$base"                         # logical filename
+  pFile="${lines[1],,}/$base"                         # physical filename
+
+  for ((i=${#_mql45Paths[@]}-1; i>=0; i--)); do
+    [[ "$lFile" == "${_mql45Paths[i]}/"* ]] && { echo "mql45"; return; }
+  done
+  for ((i=${#_mql40Paths[@]}-1; i>=0; i--)); do
+    [[ "$lFile" == "${_mql40Paths[i]}/"* ]] && { echo "mql40"; return; }
+  done
+
+  for ((i=${#_mql45Paths[@]}-1; i>=0; i--)); do
+    [[ "$pFile" == "${_mql45Paths[i]}/"* ]] && { echo "mql45"; return; }
+  done
+  for ((i=${#_mql40Paths[@]}-1; i>=0; i--)); do
+    [[ "$pFile" == "${_mql40Paths[i]}/"* ]] && { echo "mql40"; return; } || :
+  done
+  # TODO: auto-detect MQL4 version
 }
 
 
@@ -847,14 +871,14 @@ while [[ "$#" -gt 0 ]]; do
   if [[ -d "$srcArg" ]]; then
     while IFS= read -r file; do
       srcFileNames+=("$file")
-      srcFileVersions+=("${version:-<auto>}")
+      srcFileVersions+=("${version:-}")
       srcFileIncludes+=("${include:-<auto>}")
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(fileExtension "$srcArg")"
     [[ "${ext,,}" != mq[45] ]] && fail "ERROR: cannot compile file \"$srcArg\""
     srcFileNames+=("$srcArg")
-    srcFileVersions+=("${version:-<auto>}")
+    srcFileVersions+=("${version:-}")
     srcFileIncludes+=("${include:-<auto>}")
   else
     srcArg="$1"
