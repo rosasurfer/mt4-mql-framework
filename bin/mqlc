@@ -51,7 +51,7 @@ Usage: mqlc  [options] [--] SOURCE...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
 
 Arguments:
-  SOURCE           One or more MQL files or directories to compile. Supports wildcards.
+  SOURCE           One or more MQL files or source directories to compile. Supports wildcards.
 
 Options:
   -h --help        This screen.
@@ -60,8 +60,8 @@ Options:
   /include:DIR     Include directory for all source files following the option (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
   /log             Writes all output to file "<source-file.log>" (default: no log on success, always log errors/warnings).
   /log:FILE        Writes all output to a custom log file.
-  -v=VERSION       Explicit version of MQL4 files following the option: either "mql40" or "mql45".
-  -v= --version=   Empty argument: auto-detects the version of MQL4 files following the option (default).
+  -v=VERSION       MQL version of all MQL4 files following the option, either "mql40" or "mql45".
+  -v= --version=   Empty argument: auto-detect the MQL version of all MQL4 files following the option (default).
   -s --syntax      Syntax check only, no compilation.
   -w --warn2error  Treats compiler warnings as errors, affects the exit status.
 
@@ -552,7 +552,7 @@ function prepareCompiler40Dir() {
 }
 
 
-declare mql40Dirs=() mql45Dirs=() sourcePaths=() includePaths=()
+declare _mqlPaths=() _includeDirs=() _mql40Paths=() _mql45Paths=()
 
 #
 # Read the configuration into global vars.
@@ -565,6 +565,7 @@ function readConfig() {
   local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
   local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
 
+  local mql40Paths=() mql45Paths=()
   local -A includeDirs; includeDirs=()
 
   # resolve config file location and source the file
@@ -588,28 +589,30 @@ function readConfig() {
     error ""
   }
 
-  # normalize configured MQL versions
-  normalizeVersionDirs 'mql40Dirs'
-  normalizeVersionDirs 'mql45Dirs'
+  # normalize configured MQL4 paths
+  normalizeMQL4Paths 'mql40Paths' '_mql40Paths'
+  normalizeMQL4Paths 'mql45Paths' '_mql45Paths'
   ((debug)) && {
-    error "configured MQL4 directories:"
-    error "$(printf "mql40: %s\n" "${mql40Dirs[@]}")"
-    error "$(printf "mql45: %s\n" "${mql45Dirs[@]}")"
+    error "configured MQL4.0 paths:"
+    error "$(printf "%s\n" "${_mql40Paths[@]}")"
+    error ""
+    error "configured MQL4.5 paths:"
+    error "$(printf "%s\n" "${_mql45Paths[@]}")"
     error ""
   }
 
   # normalize configured include directories
-  normalizeIncludeDirs 'includeDirs' 'sourcePaths' 'includePaths'
+  normalizeIncludeDirs 'includeDirs' '_mqlPaths' '_includeDirs'
   ((debug)) && {
     local i
     error "configured include directories:"
-    for i in "${!sourcePaths[@]}"; do
-      error "${sourcePaths[i]} => ${includePaths[i]}"
+    for i in "${!_mqlPaths[@]}"; do
+      error "${_mqlPaths[i]} => ${_includeDirs[i]}"
     done
     error ""
   }
 
-  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR mql40Dirs mql45Dirs sourcePaths includePaths
+  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR _mqlPaths _includeDirs _mql40Paths _mql45Paths
 
   ((0)) && {
     local startms endms time
@@ -622,51 +625,40 @@ function readConfig() {
 
 
 #
-# Normalize, sort and order the passed MQL4 version directories.
+# Normalize, sort and order the passed MQL4 version paths.
 #
-# @param _InOut_ $1 - variable to read input from and write results to
+# @param _In_  $1 - input variable
+# @param _Out_ $2 - output variable
 #
-function normalizeVersionDirs() {
+function normalizeMQL4Paths() {
   ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
-  local -n inout="$1"
-  ((!${#inout[@]})) && return
+  local -n in="$1"
+  local -n out="$2"
+  out=()
+  ((!${#in[@]})) && return
 
-  # normalize configured paths
-  local path lines lPath pPath paths=()
-  for path in "${inout[@]}"; do
+  # normalize input
+  local path lines lPath pPath grouped=() S=$'\x01'
+  for path in "${in[@]}"; do
     if [[ -d "$path" ]]; then
       readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
-      lPath="${lines[0]}"
-      pPath="${lines[1]}"
-      paths+=("$((200000 + ${#lPath})) ${lPath,,}")           # prepend length prefix for sorting
-      paths+=("$((100000 + ${#pPath})) ${pPath,,}")           # group logical before physical
+      lPath="${lines[0],,}"                         # logical path
+      pPath="${lines[1],,}"                         # physical path
+      lPath="${lPath////${S}}"                      # replace slashes with a separator that's alphabetically first
+      pPath="${pPath////${S}}"
+      grouped+=("2 $lPath")                         # add prefix to order logical paths after physicals
+      grouped+=("1 $pPath")
     fi
   done
+  ((!${#grouped[@]})) && return
 
-  # sort by length=desc, name=asc
-  ((${#paths[@]} > 1)) && readarray -t paths < <(printf "%s\n" "${paths[@]}" | sort -k1,1nr -k2)
+  readarray -t grouped < <(printf "%s\n" "${grouped[@]}" | sort)
 
-  # write paths back to inout
-  local -A seen
-  inout=()
-  for path in "${paths[@]}"; do                               # remove duplicates while keeping sort order
-    path="${path#* }"                                         # remove length prefix
-    if [[ -z "${seen[$path]:-}" ]]; then
-      seen["$path"]=1
-      inout+=("$path")
-    fi
+  # write grouped paths to out                      # no filtering of duplicates and overlaps (performance)
+  for path in "${grouped[@]}"; do
+    path="${path#* }"                               # cut-off leading group id
+    out+=("${path//${S}//}")                        # revert back separators to slashes
   done
-
-  local size=${#inout[@]} lastPath="${inout[-1]}" i
-  for ((i=size-1; i>=0; i--)); do
-    path="${inout[i]}"
-    if [[ "$path" == "$lastPath/"* ]]; then                   # remove subdirs covered by parent dirs
-      unset "inout[$i]"
-      continue
-    fi
-    lastPath="$path"
-  done                                                        # re-index if changed
-  ((${#inout[@]} < size)) && readarray -t inout < <(printf "%s\n" "${inout[@]}") || :
 }
 
 
@@ -680,49 +672,37 @@ function normalizeVersionDirs() {
 function normalizeIncludeDirs() {
   ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n in="$1"
-  local -n outPaths="$2"
-  local -n outIncludes="$3"
+  local -n out1="$2"
+  local -n out2="$3"
   ((!${#in[@]})) && return
 
-  # normalize configured paths
-  local path lines lPath pPath include paths=() value
+  # normalize input
+  local path lines line lPath pPath include grouped=() S=$'\x01'
   for path in "${!in[@]}"; do
     if [[ -d "$path" ]]; then
       readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
-      lPath="${lines[0]}"
-      pPath="${lines[1]}"
-      include="${in[$path]}"
+      lPath="${lines[0],,}"                         # logical path
+      pPath="${lines[1],,}"                         # physical path
+      lPath="${lPath////${S}}"                      # replace slashes with a separator that's alphabetically first
+      pPath="${pPath////${S}}"
+      include="${in[$path]}"                        # convert to logical name (even non-existing)
       [[ -d "$include" ]] && include="$(cd -- "$include" && echo "$PWD")" || include="$(cygpath -u "$include")"
-
-      paths+=("$((200000 + ${#lPath}))|${lPath,,}|$include")  # prepend length prefix for sorting
-      paths+=("$((100000 + ${#pPath}))|${pPath,,}|$include")  # group logical before physical
+      grouped+=("2|$lPath|$include")                # add prefix to order logical paths after physicals
+      grouped+=("1|$pPath|$include")
     fi
   done
+  ((!${#grouped[@]})) && return
 
-  # sort by length=desc, name=asc
-  ((${#paths[@]} > 1)) && readarray -t paths < <(printf "%s\n" "${paths[@]}" | sort -t '|' -k1,1nr -k2,2)
+  readarray -t grouped < <(printf "%s\n" "${grouped[@]}" | sort -t '|' -k1,2) # by group=asc, path=asc
 
-  # write paths back to outPaths + outIncludes
-  outPaths=()
-  outIncludes=()
-  for value in "${paths[@]}"; do
-    IFS='|' read -r _ path include <<< "$value"
-    outPaths+=("$path")
-    outIncludes+=("$include")
+  # write paths back to out1 + out2                 # no filtering of duplicates and overlaps (performance)
+  out1=()
+  out2=()
+  for line in "${grouped[@]}"; do
+    IFS='|' read -r _ path include <<< "$line"
+    out1+=("${path//${S}//}")                       # revert back separators to slashes
+    out2+=("$include")
   done
-}
-
-
-#
-# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
-# If neither input nor configuration exist, the function tries to auto-detect the include directory.
-#
-# @param $1 - filename
-# @param $2 - MQL version id
-# @param $3 - input include dir
-#
-function resolveIncludeDir() {
-  echo "$3"
 }
 
 
@@ -736,6 +716,19 @@ function resolveIncludeDir() {
 function resolveMqlVersion() {
   local ext; ext="$(fileExtension "$1")"
   [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
+}
+
+
+#
+# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
+# If neither input nor configuration exist, the function tries to auto-detect the include directory.
+#
+# @param $1 - filename
+# @param $2 - MQL version id
+# @param $3 - input include dir
+#
+function resolveIncludeDir() {
+  echo "$3"
 }
 
 
