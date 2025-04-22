@@ -335,7 +335,7 @@ function compileMql5() {
   fi
 
   compiler="$(cygpath -w "$compiler")"
-  [[ -n "$include" ]] && includeOption="/include:\"$include\""
+  [[ -n "$include" ]] && includeOption="/include:\"$(cygpath -w "$include")\""
   compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
   ((debug)) && echo "cmd: $compilerCmd"
 
@@ -426,7 +426,7 @@ function compilerPath() {
   local -n result="$1"
   local version="$2" includeDir="${3:-}" compilerVar
 
-  [[ "$version" != 'mql40' ]] && includeDir=
+  [[ "$version" == 'mql40' ]] && includeDir="$(cd -- "$includeDir" && pwd -P)" || includeDir=
 
   # check the cache for a matching result
   if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
@@ -500,7 +500,7 @@ function error() {
 # @param $@ - any number of arguments
 #
 function fail() {
-  echo "$@" 1>&2
+  error "$@"
   exit 1
 }
 
@@ -767,7 +767,7 @@ function resolveIncludeDir() {
     [[ "$lFile" == "${_mqlPaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; }
   done
   for ((i=${#_mqlPaths[@]}-1; i>=0; i--)); do
-    [[ "$pFile" == "${_mqlPaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; }
+    [[ "$pFile" == "${_mqlPaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; } || :
   done
 
   # TODO: auto-detect include directory
@@ -857,7 +857,6 @@ while [[ "$#" -gt 0 ]]; do
         include="$(sanitizeName "$include")"
         [[ -z "$include" ]] && fail "ERROR: missing argument: $1"
         [[ -d "$include" ]] || fail "ERROR: include directory not found: \"$include\""
-        include="$(cygpath -w "$include")"
         if ((firstInclude < 0)); then
           for i in "${!srcFileIncludes[@]}"; do
             srcFileIncludes[i]="$include"                 # the first /include affects previous sources if no more sources follow
