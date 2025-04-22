@@ -11,7 +11,6 @@
 #
 #
 # TODO:
-#  - apply configured include dirs
 #  - move config to standard location
 #  - fix error when a specified directory doesn't contain sources
 #  - improve error messages for filenames looking like options
@@ -57,12 +56,12 @@ Options:
   /compile:FILE    Source file to compile. Doesn't support wildcards.
   /compile:DIR     Source directory to compile. Recompiles new and modified source files (not in subdirectories).
   /include:DIR     Include directory for all source files following the option (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
-  /log             Writes all output to file "<source-file.log>" (default: no log on success, always log errors/warnings).
+  /log             Writes all output to file "<source-file.log>" (default: no logfile on success, always logfile on errors/warnings).
   /log:FILE        Writes all output to a custom log file.
-  -v=VERSION       MQL version of all MQL4 files following the option, either "mql40" or "mql45".
-  -v= --version=   Empty argument: auto-detect the MQL version of all MQL4 files following the option (default).
+  -v=VERSION       MQL version of all MQL4 files following the option, either "mql40" or "mql45". May appear multiple times.
+  -v= --version=   Empty version argument: auto-detect the version of all MQL4 files following the option (default).
   -s --syntax      Syntax check only, no compilation.
-  -w --warn2error  Treats compiler warnings as errors, affects the exit status.
+  -w --warn2error  Treat compiler warnings as errors, affects the exit status.
 
 Auto-detection of MQL versions:
  ".mq5" files are always processed as MQL5, regardless of a specified MQL4 version.
@@ -420,14 +419,14 @@ _cachedCompilerPaths=()
 #
 # @param _Out_ $1 - variable to write the result to
 # @param _In_  $2 - MQL version id
-# @param _In_  $3 - include directory, will be linked into the compiler path (MQL4.0 only)
+# @param _In_  $3 - include directory, will be linked into the compiler path if MQL4.0
 #
 function compilerPath() {
   ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to caller from subshell"
   local -n result="$1"
   local version="$2" includeDir="${3:-}" compilerVar
 
-  [[ "$version" != 'mql40' || "$includeDir" == 'auto' || "$includeDir" == '<auto>' ]] && includeDir=
+  [[ "$version" != 'mql40' ]] && includeDir=
 
   # check the cache for a matching result
   if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
@@ -713,12 +712,12 @@ function normalizeIncludeDirs() {
 # @param $2 - input version
 #
 function resolveMqlVersion() {
-  local file="${1,,}" version="${2,,}" i
+  local file="${1,,}" version="${2,,}"
   [[ "$file" == *.mq5 ]] && { echo "mql5"; return; }  # the file extension was already validated
   [[ "$version" == mql4[05] ]] && { echo "$version"; return; }
   [[ -z "$version" ]] || fail "ERROR: unsupported input version: \"$version\""
 
-  local dir base lines lFile pFile
+  local dir base lines lFile pFile i
   file="${file//\\//}"
   dir="${file%/*}"; [[ -z "$dir" ]] && dir='.'
   base="${file##*/}"
@@ -739,6 +738,7 @@ function resolveMqlVersion() {
   for ((i=${#_mql40Paths[@]}-1; i>=0; i--)); do
     [[ "$pFile" == "${_mql40Paths[i]}/"* ]] && { echo "mql40"; return; } || :
   done
+
   # TODO: auto-detect MQL4 version
 }
 
@@ -747,12 +747,30 @@ function resolveMqlVersion() {
 # Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
 # If neither input nor configuration exist, the function tries to auto-detect the include directory.
 #
-# @param $1 - filename
-# @param $2 - MQL version id
+# @param $1 - filename (exists and is either .mq4 or .mq5)
+# @param $2 - resolved MQL version id
 # @param $3 - input include dir
 #
 function resolveIncludeDir() {
-  echo "$3"
+  local file="${1,,}" version="$2" includeDir="$3"
+  [[ -n "$includeDir" ]] && { echo "$includeDir"; return; }
+
+  local dir base lines i
+  file="${file//\\//}"
+  dir="${file%/*}"; [[ -z "$dir" ]] && dir='.'
+  base="${file##*/}"
+  readarray -t lines < <(cd -- "$dir" && echo "$PWD" && pwd -P)
+  lFile="${lines[0],,}/$base"                         # logical filename
+  pFile="${lines[1],,}/$base"                         # physical filename
+
+  for ((i=${#_mqlPaths[@]}-1; i>=0; i--)); do
+    [[ "$lFile" == "${_mqlPaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; }
+  done
+  for ((i=${#_mqlPaths[@]}-1; i>=0; i--)); do
+    [[ "$pFile" == "${_mqlPaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; }
+  done
+
+  # TODO: auto-detect include directory
 }
 
 
@@ -872,14 +890,14 @@ while [[ "$#" -gt 0 ]]; do
     while IFS= read -r file; do
       srcFileNames+=("$file")
       srcFileVersions+=("${version:-}")
-      srcFileIncludes+=("${include:-<auto>}")
+      srcFileIncludes+=("${include:-}")
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(fileExtension "$srcArg")"
     [[ "${ext,,}" != mq[45] ]] && fail "ERROR: cannot compile file \"$srcArg\""
     srcFileNames+=("$srcArg")
     srcFileVersions+=("${version:-}")
-    srcFileIncludes+=("${include:-<auto>}")
+    srcFileIncludes+=("${include:-}")
   else
     srcArg="$1"
     [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
@@ -888,14 +906,14 @@ while [[ "$#" -gt 0 ]]; do
 
   if ((firstVersion > 0)); then
     for i in "${!srcFileVersions[@]}"; do
-      ((i < firstVersion)) && srcFileVersions[i]="auto"   # the first --version affects previous sources only if no more sources follow
+      ((i < firstVersion)) && srcFileVersions[i]=''       # the first --version affects previous sources only if no more sources follow
     done
     firstVersion=0                                        # position of the first implied version = start of arguments
   fi
 
   if ((firstInclude > 0)); then
     for i in "${!srcFileIncludes[@]}"; do
-      ((i < firstInclude)) && srcFileIncludes[i]="auto"   # the first /include affects previous sources only if no more sources follow
+      ((i < firstInclude)) && srcFileIncludes[i]=''       # the first /include affects previous sources only if no more sources follow
     done
     firstInclude=0                                        # position of the first implied /include = start of arguments
   fi
