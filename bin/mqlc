@@ -568,13 +568,13 @@ function readConfig() {
   local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
   local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
 
-  local mql40Paths=() mql45Paths=()
+  local mql40Paths=() mql45Paths=() scriptDir config
   local -A includeDirs; includeDirs=()
 
   # resolve config file location and source the file
-  local scriptDir; scriptDir="$(dirname "$(realpath "$0")")"
-  local envFile="$scriptDir/../.env"
-  [[ -f "$envFile" ]] && . "$envFile"                         # TODO: parse the file
+  scriptDir="$(dirname "$(realpath "$(type -p "$0")")")"
+  config="$scriptDir/../.env"
+  [[ -f "$config" ]] && . "$config"                           # TODO: parse the file
 
   # resolve compiler settings: environment precedes configuration
   MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
@@ -597,10 +597,10 @@ function readConfig() {
   normalizeMQL4Paths 'mql45Paths' '_mql45Paths'
   ((debug)) && {
     error "configured MQL4.0 paths:"
-    error "$(printf "%s\n" "${_mql40Paths[@]}")"
+    ((${#_mql40Paths[@]})) && error "$(printf "%s\n" "${_mql40Paths[@]}")"
     error ""
     error "configured MQL4.5 paths:"
-    error "$(printf "%s\n" "${_mql45Paths[@]}")"
+    ((${#_mql45Paths[@]})) && error "$(printf "%s\n" "${_mql45Paths[@]}")"
     error ""
   }
 
@@ -614,16 +614,7 @@ function readConfig() {
     done
     error ""
   }
-
   readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR _mqlPaths _includeDirs _mql40Paths _mql45Paths
-
-  ((0)) && {
-    local startms endms time
-    startms="$(date +%s%3N)"
-    endms="$(date +%s%3N)"
-    time="$(duration "$startms" "$endms")"
-    error "$time elapsed"
-  } || :
 }
 
 
