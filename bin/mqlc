@@ -15,18 +15,18 @@
 #  - fix error when a specified directory doesn't contain sources
 #  - improve error messages for filenames looking like options
 #  - long help, short usage on syntax errors
-#  - support Windows filenames/paths as arguments
 #  - reformat compiler messages
 #  - implement download tracker
 #  - config must be parsed, not sourced
 #  - in WSL: move tmp dir to Windows file system
+#  - documentation
 #
 #  - auto-detect version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
-#  - move basename validation from readConfig() to compilerPath()
-#  - add --no-rc option
+#  - move basename validation from readConfig() to setCompilerPath()
+#  - add --norc option
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
 #  - colored output
@@ -159,7 +159,7 @@ function onExit() {
 declare isConfig=0 isLogs=0 isMql4=0 isMql5=0
 
 #
-# Remember directories in a compiler directory. Used by cleanupCompilerDir() to cleanup.
+# Remember changes in a compiler directory. Used by cleanupCompilerDir() to cleanup.
 #
 # @param $1 - compiler filename
 #
@@ -175,7 +175,7 @@ function checkCompilerDir() {
 
 
 #
-# Clean-up directories created by MetaEditor (metalang.exe doesn't create any directories).
+# Clean-up changes in a compiler directory, caused by MetaEditor (metalang.exe doesn't cause any changes).
 #
 # @param $1 - compiler filename
 #
@@ -235,13 +235,22 @@ function compareDirs() {
 # @param $3 - include directory
 #
 function compileMql40() {
-  local srcFile="$1" version="$2" include="$3"
+  local srcFile="$1" version="$2" include="$3" s_compiler s_srcFile
   local compiler errorStatus=0 startms endms time='' output=() line errors=0 epl='' warnings=0 wpl='' retVal
-  compilerPath 'compiler' "$version" "$include"                       # writes to var 'compiler'
+
+  ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
+
+  # compose compiler command
+  setCompilerPath 'compiler' "$version" "$include"
+  [[ "$compiler" == /* ]] && compiler="$(cygpath -w "$compiler")"
+  [[ "$srcFile" == /* ]] && srcFile="$(cygpath -w "$srcFile")"
+  ((debug)) && {
+    [[ "$compiler" == *\ * ]] && s_compiler="\"$compiler\"" || s_compiler="$compiler"
+    [[ "$srcFile"  == *\ * ]] && s_srcFile="\"$srcFile\""   || s_srcFile="$srcFile"
+    echo "cmd: $s_compiler $s_srcFile"
+  }
 
   # call the compiler and measure execution time
-  ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
-  ((debug)) && echo "cmd: $compiler $srcFile"
   startms="$(date +%s%3N)"
   readarray -t output < <(
     { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
@@ -326,32 +335,34 @@ function compileMql40() {
 # @param $3 - include directory to use
 #
 function compileMql5() {
-  local srcFile="$1" logFile="${1%.*}.log" version="$2" include="$3"
-  local helper compiler compilerCmd includeOption='' errorStatus=0
-  compilerPath 'compiler' "$version"                                  # writes to var 'compiler'
+  local srcFile="$1" version="$2" include="$3"
+  local helper compiler compilerCmd includeOption='' logFile errorStatus=0
 
   if ((!originalOutput)); then
     echo "Compiling \"$srcFile\" as $(versionName "$version")"
   fi
 
+  # compose the compiler command
+  setCompilerPath 'compiler' "$version"
   [[ "$compiler" == /* ]] && compiler="$(cygpath -w "$compiler")"
   if [[ -n "$include" ]]; then
     [[ "$include" == /* ]] && include="$(cygpath -w "$include")"
     includeOption="/include:\"$(cygpath -w "$include")\""
   fi
+  [[ "$srcFile" == /* ]] && srcFile="$(cygpath -w "$srcFile")"
+  logFile="${srcFile%.*}.log"
   compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
   ((debug)) && echo "cmd: $compilerCmd"
-
-  if ((!originalOutput)); then
-    printProductInfo "$compiler"
-    ((compactOutput)) || echo ""
-  fi
 
   helper="$(cmdHelper)"
   echo '@echo off'     > "$helper"
   echo "$compilerCmd" >> "$helper"
 
   # run the compiler
+  if ((!originalOutput)); then
+    printProductInfo "$compiler"
+    ((compactOutput)) || echo ""
+  fi
   checkCompilerDir "$compiler"
   rm -f -- "$logFile"
   MSYS_NO_PATHCONV=1 cmd /c "$helper" < /dev/null || errorStatus=$?
@@ -424,7 +435,7 @@ _cachedCompilerPaths=()
 # @param _In_  $2 - MQL version id
 # @param _In_  $3 - MQL4.0 only: include directory to be linked into the compiler path
 #
-function compilerPath() {
+function setCompilerPath() {
   ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to caller from subshell"
   local -n result="$1"
   local version="$2" includeDir="${3:-}" compilerVar
@@ -568,19 +579,24 @@ function readConfig() {
   local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
   local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
 
-  local mql40Paths=() mql45Paths=() scriptDir config
+  local mql40Paths=() mql45Paths=() scriptDir config notFound='(not found)'
   local -A includeDirs; includeDirs=()
 
   # resolve config file location and source the file
   scriptDir="$(dirname "$(realpath "$(type -p "$0")")")"
   config="$scriptDir/../.env"
+  ((debug)) && {
+    [[ -f "$config" ]] && notFound=
+    error "config file: $config $notFound"
+    error ""
+  }
   [[ -f "$config" ]] && . "$config"                           # TODO: parse the file
 
   # resolve compiler settings: environment precedes configuration
   MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
   MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
   MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
-  if [[ -n "$MT5_METAEDITOR" ]]; then                         # TODO: move to compilerPath()
+  if [[ -n "$MT5_METAEDITOR" ]]; then                         # TODO: move to setCompilerPath()
     local basename; basename="$(basename "$MT5_METAEDITOR")"
     [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
   fi
@@ -1128,12 +1144,6 @@ notes << NOTES
           /i:<path> - set working directory
           /o        - use code optimizer
 
-
-  UltraEdit
-  ---------
-  bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql40 -f=mql40
-  bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql45 -f=mql45
-  bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql5
 
   @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0
 
