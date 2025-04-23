@@ -319,7 +319,7 @@ function compileMql40() {
 
 
 #
-# Compile an MQL4.5/MQL5 source file.
+# Compile an MQL4.5 or MQL5 source file.
 #
 # @param $1 - filename
 # @param $2 - MQL version id
@@ -334,8 +334,11 @@ function compileMql5() {
     echo "Compiling \"$srcFile\" as $(versionName "$version")"
   fi
 
-  compiler="$(cygpath -w "$compiler")"
-  [[ -n "$include" ]] && includeOption="/include:\"$(cygpath -w "$include")\""
+  [[ "$compiler" == /* ]] && compiler="$(cygpath -w "$compiler")"
+  if [[ -n "$include" ]]; then
+    [[ "$include" == /* ]] && include="$(cygpath -w "$include")"
+    includeOption="/include:\"$(cygpath -w "$include")\""
+  fi
   compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
   ((debug)) && echo "cmd: $compilerCmd"
 
@@ -356,7 +359,7 @@ function compileMql5() {
   rm -f "$helper"
   cleanupCompilerDir "$compiler"
 
-  # store logfile in array (convert to UTF-8, Unix EOL, filter blank lines and infos)
+  # store logfile in array (convert to UTF-8 + Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
   readarray -t output < <(
     ((originalOutput)) && M="rosasurfer"                      # marker to toggle result filtering
@@ -419,14 +422,16 @@ _cachedCompilerPaths=()
 #
 # @param _Out_ $1 - variable to write the result to
 # @param _In_  $2 - MQL version id
-# @param _In_  $3 - include directory, will be linked into the compiler path if MQL4.0
+# @param _In_  $3 - MQL4.0 only: include directory to be linked into the compiler path
 #
 function compilerPath() {
   ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to caller from subshell"
   local -n result="$1"
   local version="$2" includeDir="${3:-}" compilerVar
 
-  [[ "$version" == 'mql40' ]] && includeDir="$(cd -- "$includeDir" && pwd -P)" || includeDir=
+  if [[ -n "$includeDir" ]]; then
+    includeDir="$(cd -- "$includeDir" && pwd -P)"
+  fi
 
   # check the cache for a matching result
   if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
@@ -443,7 +448,7 @@ function compilerPath() {
   [[ -f "${!compilerVar}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compilerVar}\""
   result="${!compilerVar}"
 
-  if [[ "$version" == 'mql40' && -n "$includeDir" ]]; then
+  if [[ -n "$includeDir" ]]; then
     result="$(prepareCompiler40Dir "$result" "$includeDir")"
   fi
 
@@ -645,7 +650,7 @@ function normalizeMQL4Paths() {
       lPath="${lPath////${S}}"                        # replace slashes with a separator that's alphabetically first
       pPath="${pPath////${S}}"
       grouped+=("2 $lPath")                           # add prefix to order logical paths after physicals
-      grouped+=("1 $pPath")
+      [[ "$lPath" == "$pPath" ]] || grouped+=("1 $pPath")
     fi
   done
   ((!${#grouped[@]})) && return
@@ -655,7 +660,7 @@ function normalizeMQL4Paths() {
   # write grouped paths to out                        # no filtering of duplicates and overlaps (performance)
   for path in "${grouped[@]}"; do
     path="${path#* }"                                 # cut-off leading group id
-    out+=("${path//${S}//}")                          # revert back separators to slashes
+    out+=("${path//${S}//}")                          # revert separators back to slashes
   done
 }
 
@@ -686,7 +691,7 @@ function normalizeIncludeDirs() {
       include="${in[$path]}"                          # convert to logical name (even non-existing)
       [[ -d "$include" ]] && include="$(cd -- "$include" && echo "$PWD")" || include="$(cygpath -u "$include")"
       grouped+=("2|$lPath|$include")                  # add prefix to order logical paths after physicals
-      grouped+=("1|$pPath|$include")
+      [[ "$lPath" == "$pPath" ]] || grouped+=("1|$pPath|$include")
     fi
   done
   ((!${#grouped[@]})) && return
@@ -698,7 +703,7 @@ function normalizeIncludeDirs() {
   out2=()
   for line in "${grouped[@]}"; do
     IFS='|' read -r _ path include <<< "$line"
-    out1+=("${path//${S}//}")                         # revert back separators to slashes
+    out1+=("${path//${S}//}")                         # revert separators back to slashes
     out2+=("$include")
   done
 }
@@ -719,7 +724,7 @@ function resolveMqlVersion() {
 
   local dir base lines lFile pFile i
   file="${file//\\//}"
-  dir="${file%/*}"; [[ -z "$dir" ]] && dir='.'
+  dir="${file%/*}"; dir="${dir:-.}"
   base="${file##*/}"
   readarray -t lines < <(cd -- "$dir" && echo "$PWD" && pwd -P)
   lFile="${lines[0],,}/$base"                         # logical filename
