@@ -9,12 +9,10 @@
 /.project*
 
 # ignore the following directories and files
-/bin
-/etc/windows/user.appdata
+/bin/.mqlcrc
 /files
 mqlcache.dat
 *.ex[45]
-.env
 
 # ignore distributed/linked/log folders
 /mql*/files

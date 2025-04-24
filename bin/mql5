@@ -1,4 +1,0 @@
-#
-# Prevents a MetaEditor in this folder from creating an "MQL5" directory if started from the Windows UI.
-# Must be write-protected.
-#

@@ -1,38 +1,38 @@
 #!/bin/bash
 #
 # A script for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple
-# file and directories. Prints results to STDOUT and follows standard rules for the exit status.
+# files and directories. Prints results to STDOUT and follows standard rules for the exit status.
 # The syntax is compatible with the syntax of MetaEditor.
 #
 # Configuration via environment or config file.
 #
-# @see  "/.env.dist"
+# @see  "/bin/.mqlcrc.dist"
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
 # TODO:
-#  - fix error when a specified directory doesn't contain sources
-#  - create include dirs for mql40
-#  - support Windows filenames/paths as arguments
+#  - improve error message when a specified directory doesn't contain sources
+#  - improve error message for filenames looking like options
+#  - long help, short usage on syntax errors
 #  - reformat compiler messages
-#  - improve error messages for filenames looking like options
-#  - move config to standard location
+#  - search config standard locations
 #  - implement download tracker
-#  - remove cmd helper on exit
-#  - long help, short usage
+#  - config must be parsed, not sourced
+#  - in WSL: move tmp dir to Windows file system
+#  - documentation
 #
-#  - preconfigured versions per directory
-#  - preconfigured include dir per directory
 #  - auto-detect version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
+#  - move basename validation from readConfig() to setCompilerPath()
+#  - add --norc option
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
-#  - colored output (test also in cmd shell)
+#  - colored output
 #  - parallel compilation of multiple files
 #
-set -eu -o pipefail
+set -eEuo pipefail
 
 
 # --- functions ----------------------------------------------------------------------------------------------------------------------------
@@ -49,28 +49,29 @@ Usage: mqlc  [options] [--] SOURCE...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
 
 Arguments:
-  SOURCE           One or more source files or directories to compile. Supports wildcards.
+  SOURCE           One or more MQL files or source directories to compile. Supports wildcards.
 
 Options:
   -h --help        This screen.
   /compile:FILE    Source file to compile. Doesn't support wildcards.
   /compile:DIR     Source directory to compile. Recompiles new and modified source files (not in subdirectories).
   /include:DIR     Include directory for all source files following the option (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
-  /log             Writes all output to file "<source-file.log>" (default: no log on success, always log errors/warnings).
+  /log             Writes all output to file "<source-file.log>" (default: no logfile on success, always logfile on errors/warnings).
   /log:FILE        Writes all output to a custom log file.
-  -v=VERSION       Explicit version of MQL4 source files following the option: either "mql40" or "mql45".
-  -v= --version=   Empty version argument: auto-detects the version of MQL4 source files following the option (default).
+  -v=VERSION       MQL version of all MQL4 files following the option, either "mql40" or "mql45". May appear multiple times.
+  -v= --version=   Empty version argument: auto-detect the version of all MQL4 files following the option (default).
   -s --syntax      Syntax check only, no compilation.
-  -o --original    Preserves the original and unmodified compiler output, followed by the original exit status.
-  -w --warn2error  Treats compiler warnings as errors, affects the exit status for warnings.
+  -w --warn2error  Treat compiler warnings as errors, affects the exit status.
 
 Auto-detection of MQL versions:
- ".mq5" files are always processed as MQL5, a specified version has no effect.
- ".mq4" files: If the base name of the MQL include directory resolves to "experts" or "mql40", version "mql40" is assumed.
- ".mq4" files: If the base name of the MQL include directory resolves to "mql4" or "mql45", version "mql45" is assumed.
- Default MQL versions for custom directories can be predefined in the configuration (see "/.env.dist").
+ ".mq5" files are always processed as MQL5, regardless of a specified MQL4 version.
+ ".mq4" files: If the MQL directory of the source file resolves to "experts" or "mql40", version MQL4.0 is assumed.
+ ".mq4" files: If the MQL directory of the source file resolves to "mql4" or "mql45", version MQL4.5 is assumed.
+ Default MQL4 versions for custom directories can be predefined in the configuration (see config file).
 
-Compilers may be specified via environment variables or predefined in the configuration (see "/.env.dist").
+Compilers may be specified via environment or predefined in the configuration (see config file).
+
+Config file: "/bin/.mqlcrc"
 
 The script exits with 0 (success) or the number of errors of the last failing compilation.
 
@@ -78,180 +79,153 @@ SYNTAX
 }
 
 
+declare originalOutput=0 debug=0 trace=0 test=0
+
 #
-# Print a message to STDERR.
+# Initialization.
 #
-# @param $@ - any number of arguments
+function init() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  [[ "${ORIG:-0}"  != "0" ]] && originalOutput=1
+  [[ "${DEBUG:-0}" != "0" ]] && ((!originalOutput)) && debug=1
+  [[ "${TRACE:-0}" != "0" ]] && trace=1
+  [[ "${TEST:-0}"  != "0" ]] && test=1
+  readonly originalOutput debug trace test
+
+  trap onError ERR
+  trap onExit  EXIT
+  registerTmpPath ""                                        # initialize management of tmp files
+}
+
+
+declare _tmpFiles=''                                        # file holding the names of managed tmp files
+
 #
-function error() {
-  echo "$@" 1>&2
+# Register a file path for automatic deletion on script termination.
+#
+# @param $1 - filename/path
+#
+function registerTmpPath() {
+  if [[ -z "$_tmpFiles" ]]; then                            # initialization on first call
+    _tmpFiles="$(mktemp --tmpdir "$(basename "$0").XXXXXX")"
+    readonly _tmpFiles
+    registerTmpPath "$_tmpFiles"                            # register the file itself as first entry
+  fi
+
+  # add new tmp file
+  [[ -n "$1" ]] && echo "$1" >> "$_tmpFiles" || :
 }
 
 
 #
-# Sanitize a filename/path argument. Strips enclosing double quotes and trims white-space.
+# Error handler. If TRACE is enabled it shows the location of the last error.
 #
-# @param $1 - name
-#
-function sanitizeName() {
-  local str="$1"
-  [[ "$str" =~ ^\"(.*)\"$ ]] && str="${BASH_REMATCH[1]}"    # strip enclosing double quotes
+function onError() {
+  local lastExitStatus=$? size=${#FUNCNAME[@]} i func file line
 
-  str="${str#"${str%%[![:space:]]*}"}"                      # trim leading white space
-  str="${str%"${str##*[![:space:]]}"}"                      # trim trailing white space
-
-  echo "$str"
+  if ((trace)); then
+    error "ERROR: command failed with status $lastExitStatus"
+    for ((i=1; i < size; i++)); do
+      func="${FUNCNAME[i]}()                        "
+      file="${BASH_SOURCE[i]}"
+      line="${BASH_LINENO[i-1]}"
+      ((i==1 && line==1)) && {
+        [[ "$func" == 'fail()'* ]] && continue
+        line='?'
+      }
+      error " in ${func:0:24} file: $file, line $line"
+    done
+  fi
+  return "$lastExitStatus"
 }
 
 
 #
-# cygpath doesn't support the "--" option separator. If the passed name starts with "-" it breaks.
-# This function works around that issue.
+# Exit handler. Cleans-up temporary files before script termination.
 #
-# @param $1 - cygpath conversion modifier
-# @param $2 - filename/path
+function onExit() {
+  local lastExitStatus=$? lines=() file i
+  [[ -f "$_tmpFiles" ]] || return "$lastExitStatus"
+  readarray -t lines < "$_tmpFiles"
+
+  # delete paths in LIFO order to prevent orphans behind tmp reparse points
+  for ((i=${#lines[@]}-1; i >= 0; i--)); do
+    file="${lines[i]}" && [[ -e "$file" ]] || continue
+    ((debug)) && echo "${FUNCNAME[0]}: rm $file $([[ -d "$file" ]] && echo '(dir)' || :)"
+    rm -rf -- "$file"
+  done
+  return "$lastExitStatus"
+}
+
+
+declare isConfig=0 isLogs=0 isMql4=0 isMql5=0
+
 #
-function cygpath() {
-  local name="$2"
-  [[ "$name" == -* ]] && name="./$name"
-  command cygpath "$1" "$name"
+# Remember changes in a compiler directory. Used by cleanupCompilerDir() to cleanup.
+#
+# @param $1 - compiler filename
+#
+function checkCompilerDir() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local dir; dir="$(dirname "$(realpath "$1")")"
+
+  [[ -d "$dir/config" ]] && isConfig=1 || isConfig=0
+  [[ -d "$dir/logs"   ]] && isLogs=1   || isLogs=0
+  [[ -d "$dir/mql4"   ]] && isMql4=1   || isMql4=0
+  [[ -d "$dir/mql5"   ]] && isMql5=1   || isMql5=0
 }
 
 
 #
-# Return the file extension of the passed name.
+# Clean-up changes in a compiler directory, caused by MetaEditor (metalang.exe doesn't cause any changes).
 #
-# @param $1 - filename
+# @param $1 - compiler filename
 #
-function fileExtension() {
-  local ext="${1##*.}"
-  [[ "$1" == "$ext" ]] && ext=
-  echo "$ext"
+function cleanupCompilerDir() {
+  local dir; dir="$(dirname "$(realpath "$1")")"
+
+  ((!isConfig)) && [[ -d "$dir/config" ]] && rm -rf "$dir/config"
+  ((!isLogs  )) && [[ -d "$dir/logs"   ]] && rm -rf "$dir/logs"
+  ((!isMql4  )) && [[ -d "$dir/mql4"   ]] && rm -rf "$dir/mql4"
+  ((!isMql5  )) && [[ -d "$dir/mql5"   ]] && rm -rf "$dir/mql5"
+  return 0
 }
 
 
 #
-# Return the compiler filename for the specified MQL version.
+# Creates a helper batch file and returns its full name. The name doesn't contain spaces
+# and needs no quoting. On script termination the file is automatically removed.
 #
-# @param $1 - version id
-#
-function getCompiler() {
-  local version="$1" versionName="${mqlVersions["$1"]}" compiler
+function cmdHelper() {
+  local helper; helper="$(mktemp --tmpdir --suffix=.bat "$(basename "$0").XXXXXX")"
+  registerTmpPath "$helper"
 
-  case "$version" in
-    mql40)
-      compiler='MT4_METALANG';;
-    mql45)
-      compiler='MT4_METAEDITOR';;
-    mql5)
-      compiler='MT5_METAEDITOR';;
-    *)
-      error "ERROR: unknown MQL version \"$version\""
-      exit 1;;
-  esac
-
-  [[ -z "${!compiler}" ]] && { error "ERROR: $versionName compiler is not configured"; exit 1; }
-  [[ -f "${!compiler}" ]] || { error "ERROR: $versionName compiler not found: \"${!compiler}\""; exit 1; }
-
-  echo "${!compiler}"
-}
-
-
-#
-# Return product and version infos for the passed compiler filename.
-#
-# @param $1 - filename
-#
-function compilerInfo() {
-  local file output product version
-  file="$(cygpath -d "$1")"                       # the DOS name spares us quoting which would get mangled which would break the call
-
-  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" < /dev/null)"
-  output="${output#$'\xEF\xBB\xBF'}"              # cut-off a BOM header if present
-  output="${output%$'\r'}"                        # cut-off a Windows EOL if present
-
-  IFS=$'\t' read -r product version <<< "$output"
-
-  [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
-    error "ERROR: unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
-    exit 1
-  }
-  version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
-
-  echo "$product version $version"
-}
-
-
-#
-# Caluclate the duration time of two timestamps and return a formatted result.
-#
-# @param $1 - start time in msec
-# @param $2 - end time in msec
-#
-function duration() {
-  local startms="$1" endms="$2" duration
-
-  ((duration = endms-startms))
-
-  if ((duration < 1000)); then
-    echo "$duration msec"
+  if [[ "$helper" =~ \  ]]; then
+    helper="$(cygpath -d "$helper")"      # the DOS name prevents argument mangling of double quotes which would break the call
   else
-    printf '%d.%03d sec' $((duration / 1000)) $((duration % 1000))
+    helper="$(cygpath -w "$helper")"
   fi
+  echo "$helper"
 }
 
 
 #
-# Read the configuration into global vars.
+# Test whether two logical directories are physically the same.
+# Returns with exit status 0 (success) if they are the same, and a non-zero exit status otherwise (not the same).
 #
-function readConfig() {
-  # backup existing env vars
-  local BAK_MT4_METALANG="${MT4_METALANG:-}"
-  local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
-  local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
-
-  # source an existing .env file
-  local scriptDir; scriptDir="$(dirname "$(realpath "$0")")"
-  local envFile="$scriptDir/../.env"
-  [[ -f "$envFile" ]] && . "$envFile"
-
-  # resolve final values: environment precedes config file
-  MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
-  MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
-  MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
-
-  # validate base names
-  if [[ -n "$MT5_METAEDITOR" ]]; then
-    basename="$(basename "$MT5_METAEDITOR")"
-    [[ "${basename,,}" != "metaeditor64.exe" ]] && { error "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""; exit 1; }
-  fi
-  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR
-}
-
-
+# @param $1 - directory A
+# @param $2 - directory B
 #
-# Resolve the MQL version of a source file, taking into account an explicit or configured value.
-# If neither input nor configuration exist, the function tries to auto-detect the MQL version.
-#
-# @param $1 - filename
-# @param $2 - input version
-#
-function resolveMqlVersion() {
-  local ext; ext="$(fileExtension "$1")"
-  [[ "${ext,,}" == "mq5" ]] && echo "mql5" || echo "$2"
-}
-
-
-#
-# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
-# If neither input nor configuration exist, the function tries to auto-detect the include directory.
-#
-# @param $1 - filename
-# @param $2 - MQL version id
-# @param $3 - input include dir
-#
-function resolveIncludeDir() {
-  echo "$3"
+function compareDirs() {
+  local dirA="$1" dirB="$2" status=0
+  [[ -d "$dirA" && -d "$dirB" ]] || return 1
+  (
+    cd "$dirA" && realDirA="$(realpath .)" &&
+    cd "$dirB" && realDirB="$(realpath .)" &&
+    [[ "${realDirA,,}" == "${realDirB,,}" ]]
+    exit $?
+  ) || status=$?
+  return "$status"
 }
 
 
@@ -263,15 +237,25 @@ function resolveIncludeDir() {
 # @param $3 - include directory
 #
 function compileMql40() {
-  local srcFile="$1" version="$2" versionName="${mqlVersions["$2"]}" include="$3"
-  local compiler errorStatus=0 startms endms time output=() line errors=0 epl='' warnings=0 wpl='' retVal
-  compiler="$(getCompiler "$version")"
+  local srcFile="$1" version="$2" include="$3" s_compiler s_srcFile
+  local compiler errorStatus=0 startms endms time='' output=() line errors=0 epl='' warnings=0 wpl='' retVal
+
+  ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
+
+  # compose compiler command
+  setCompilerPath 'compiler' "$version" "$include"
+  [[ "$compiler" == /* ]] && compiler="$(cygpath -w "$compiler")"
+  [[ "$srcFile" == /* ]] && srcFile="$(cygpath -w "$srcFile")"
+  ((debug)) && {
+    [[ "$compiler" == *\ * ]] && s_compiler="\"$compiler\"" || s_compiler="$compiler"
+    [[ "$srcFile"  == *\ * ]] && s_srcFile="\"$srcFile\""   || s_srcFile="$srcFile"
+    echo "cmd: $s_compiler $s_srcFile"
+  }
 
   # call the compiler and measure execution time
-  ((originalOutput)) || echo "Compiling \"$srcFile\" as $versionName"
   startms="$(date +%s%3N)"
-  mapfile -t output < <(
-    { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null 2>&1 || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
+  readarray -t output < <(
+    { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
   )
   endms="$(date +%s%3N)"
   errorStatus="${output[-1]}"                                         # fetch error status from output and remove it
@@ -280,8 +264,7 @@ function compileMql40() {
   # on success
   if ((!errorStatus)); then
     [[ "${output[-1]}" =~ ^(Exp|Library exp)\ file\ .+\ produced\ -\ ([0-9]+)\ error.+\ ([0-9]+)\ warning.+ ]] || {
-      error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""
-      exit 1
+      fail "ERROR: unexpected compiler output in last line: \"${output[-1]}\"";
     }
     errors="${BASH_REMATCH[2]}";   ((errors   == 1)) && epl='' || epl='s'
     warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && wpl='' || wpl='s'
@@ -297,7 +280,7 @@ function compileMql40() {
   # on error
   if ((errorStatus)); then
     if [[ ${#output[@]} -lt 4 ]]; then                                # no error message happens for empty source file only
-      ((errorStatus != 127)) && { error "ERROR: unexpected compiler output for status $errorStatus: no error message"; exit 1; }
+      ((errorStatus != 127)) && fail "ERROR: unexpected compiler output for status $errorStatus: no error message"
       ((originalOutput)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
       ((errors++)) || :
     else
@@ -307,8 +290,7 @@ function compileMql40() {
         [[ "${output[i]}" != [0-9]* ]] && break
         [[ "${output[i]}" == [1]* ]] && { ((warnings++)) || :; continue; }
         [[ "${output[i]}" == [2]* ]] && { ((errors++))   || :; continue; }
-        error "ERROR: unknown message type in: ${output[i]}"
-        exit 1
+        fail "ERROR: unknown message type in: ${output[i]}"
       done
     fi
 
@@ -344,8 +326,657 @@ function compileMql40() {
   ((retVal = errors + warnings))
   ((retVal > 255)) && retVal=255
   return "$retVal"
+}
 
-  notes << EOF
+
+#
+# Compile an MQL4.5 or MQL5 source file.
+#
+# @param $1 - filename
+# @param $2 - MQL version id
+# @param $3 - include directory to use
+#
+function compileMql5() {
+  local srcFile="$1" version="$2" include="$3"
+  local helper compiler compilerCmd includeOption='' logFile errorStatus=0
+
+  if ((!originalOutput)); then
+    echo "Compiling \"$srcFile\" as $(versionName "$version")"
+  fi
+
+  # compose the compiler command
+  setCompilerPath 'compiler' "$version"
+  [[ "$compiler" == /* ]] && compiler="$(cygpath -w "$compiler")"
+  if [[ -n "$include" ]]; then
+    [[ "$include" == /* ]] && include="$(cygpath -w "$include")"
+    includeOption="/include:\"$(cygpath -w "$include")\""
+  fi
+  [[ "$srcFile" == /* ]] && srcFile="$(cygpath -w "$srcFile")"
+  logFile="${srcFile%.*}.log"
+  compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
+  ((debug)) && echo "cmd: $compilerCmd"
+
+  helper="$(cmdHelper)"
+  echo '@echo off'     > "$helper"
+  echo "$compilerCmd" >> "$helper"
+
+  # run the compiler
+  if ((!originalOutput)); then
+    printProductInfo "$compiler"
+    ((compactOutput)) || echo ""
+  fi
+  checkCompilerDir "$compiler"
+  rm -f -- "$logFile"
+  MSYS_NO_PATHCONV=1 cmd /c "$helper" < /dev/null || errorStatus=$?
+  [[ -f "$logFile" ]] || fail "ERROR: logfile \"$logFile\" not found (status $errorStatus)."
+  rm -f "$helper"
+  cleanupCompilerDir "$compiler"
+
+  # store logfile in array (convert to UTF-8 + Unix EOL, filter blank lines and infos)
+  local output=() line='' M='' errors=0 warnings=0
+  readarray -t output < <(
+    ((originalOutput)) && M="rosasurfer"                      # marker to toggle result filtering
+    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)" || :
+  )
+
+  [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || fail "ERROR: unexpected compiler output in last line: \"${output[-1]}\""
+  errors="${BASH_REMATCH[1]}"
+  warnings="${BASH_REMATCH[2]}"
+  ((!errors && !warnings)) && rm -f "$logFile"
+
+  if ((originalOutput)); then
+    output+=("$errorStatus")
+  else
+    ((!errors && !warnings))               && output+=("Success")
+    ((errors || (warn2error && warnings))) && output+=("Error")
+  fi
+
+  # print everything to STDOUT
+  for line in "${output[@]}"; do
+    echo "$line"
+  done
+
+  ((warn2error)) || warnings=0
+  ((retVal = errors + warnings))
+  ((retVal > 255)) && retVal=255
+  return "$retVal"
+}
+
+
+#
+# Print product and version infos of the passed file.
+#
+# @param $1 - filename
+#
+function printProductInfo() {
+  local file output product version
+  file="$(cygpath -d "$1")"                       # the DOS name spares us quoting which would get mangled which would break the call
+
+  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" < /dev/null)"
+  output="${output#$'\xEF\xBB\xBF'}"              # cut-off a BOM header if present
+  output="${output%$'\r'}"                        # cut-off a Windows EOL if present
+
+  IFS=$'\t' read -r product version <<< "$output"
+
+  [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
+    fail "ERROR: unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
+  }
+  version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
+
+  echo "$product version $version"
+}
+
+
+declare -A _cachedCompilerPaths
+_cachedCompilerPaths=()
+
+#
+# Resolves the full compiler filename for the specified MQL version and include directory.
+#
+# @param _Out_ $1 - variable to write the result to
+# @param _In_  $2 - MQL version id
+# @param _In_  $3 - MQL4.0 only: include directory to be linked into the compiler path
+#
+function setCompilerPath() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to caller from subshell"
+  local -n result="$1"
+  local version="$2" includeDir="${3:-}" compilerVar
+
+  if [[ -n "$includeDir" ]]; then
+    includeDir="$(cd -- "$includeDir" && pwd -P)"
+  fi
+
+  # check the cache for a matching result
+  if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
+    result="${_cachedCompilerPaths["$version|$includeDir"]}"
+    return
+  fi
+
+  [[ "$version" == 'mql40' ]] && compilerVar='MT4_METALANG'
+  [[ "$version" == 'mql45' ]] && compilerVar='MT4_METAEDITOR'
+  [[ "$version" == 'mql5'  ]] && compilerVar='MT5_METAEDITOR'
+
+  [[ -z "${compilerVar:-}" ]] && fail "ERROR: unknown MQL version id \"$version\""
+  [[ -z "${!compilerVar-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
+  [[ -f "${!compilerVar}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compilerVar}\""
+  result="${!compilerVar}"
+
+  if [[ -n "$includeDir" ]]; then
+    result="$(prepareCompiler40Dir "$result" "$includeDir")"
+  fi
+
+  # cache the result
+  _cachedCompilerPaths["$version|$includeDir"]="$result"
+}
+
+
+#
+# cygpath doesn't support the "--" option separator. If the passed name starts with "-" it breaks.
+# This function works around that issue.
+#
+# @param $1 - cygpath conversion modifier
+# @param $2 - filename/path
+#
+function cygpath() {
+  local name="$2"
+  [[ "$name" == -* ]] && name="./$name"
+  command cygpath "$1" "$name"
+}
+
+
+#
+# Calculate the duration time of two timestamps and return a formatted result.
+#
+# @param $1 - start time in msec
+# @param $2 - end time in msec
+#
+function duration() {
+  local startms="$1" endms="$2"
+  local duration=$((endms-startms))
+
+  if ((duration < 1000)); then
+    echo "$duration msec"
+  else
+    printf '%d.%03d sec' $((duration / 1000)) $((duration % 1000))
+  fi
+}
+
+
+#
+# Prints a message to STDERR but doesn't exit the script/subshell.
+#
+# @param $@ - any number of arguments
+#
+function error() {
+  echo "$@" 1>&2
+}
+
+
+#
+# Prints a message to STDERR and exits the script/subshell.
+#
+# @param $@ - any number of arguments
+#
+function fail() {
+  error "$@"
+  exit 1
+}
+
+
+#
+# Return the file extension of the passed name.
+#
+# @param $1 - filename
+#
+function fileExtension() {
+  local ext="${1##*.}"
+  [[ "$1" == "$ext" ]] && ext=
+  echo "$ext"
+}
+
+
+#
+# Prepare a compiler path for MQL4.0 and link the specified include directory into it.
+# Return the prepared full compiler path
+#
+# @param $1 - compiler path
+# @param $2 - include directory
+#
+function prepareCompiler40Dir() {
+  local compiler="$1" includeDir="$2" includeDirW expertsDir expertsDirW tmpDir
+  expertsDir="$(dirname "$compiler")/experts"
+
+  # quick return if expertsDir already matches includeDir
+  if [[ -d "$expertsDir" ]] && compareDirs "$expertsDir" "$includeDir"; then
+    echo "$compiler"
+    return
+  fi
+
+  # create tmp directory
+  tmpDir="$(mktemp -d --tmpdir "$(basename "$0").XXXXXX")"
+  registerTmpPath "$tmpDir"
+
+  # copy compiler to tmp directory and link includeDir to experts
+  cp "$compiler" "$tmpDir"
+  expertsDirW="$(cygpath -wa "$tmpDir/experts")"
+  includeDirW="$(cygpath -wa "$includeDir")"
+  MSYS_NO_PATHCONV=1 cmd /c mklink /D "$expertsDirW" "$includeDirW" < /dev/null > /dev/null || fail "ERROR: mklink /D \"$expertsDirW\" \"$includeDirW\" failed with status $?"
+
+  # return tmpDir/compiler
+  compiler="$tmpDir/$(basename "$compiler")"
+  echo "$compiler"
+}
+
+
+declare _mqlPaths=() _includeDirs=() _mql40Paths=() _mql45Paths=()
+
+#
+# Read the configuration into global vars.
+#
+function readConfig() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+
+  # backup existing env vars
+  local BAK_MT4_METALANG="${MT4_METALANG:-}"
+  local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
+  local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
+
+  local mql40Paths=() mql45Paths=() scriptDir config
+  local -A includeDirs; includeDirs=()
+
+  # resolve config file location and source the file
+  scriptDir="$(dirname "$(realpath "$(type -p "$0")")")"
+  config="$scriptDir/.mqlcrc"
+  [[ -f "$config" ]] && . "$config" || config='(not found)'   # TODO: parse the file
+  ((debug)) && {
+    error "config file: $config"
+    error ""
+  }
+
+  # resolve compiler settings: environment precedes configuration
+  [[ "${MT4_METALANG:-}"   == '<'* ]] && MT4_METALANG=        # skip distributed values
+  [[ "${MT4_METAEDITOR:-}" == '<'* ]] && MT4_METAEDITOR=
+  [[ "${MT5_METAEDITOR:-}" == '<'* ]] && MT5_METAEDITOR=
+  MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
+  MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
+  MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
+  if [[ -n "$MT5_METAEDITOR" ]]; then                         # TODO: move to setCompilerPath()
+    local basename; basename="$(basename "$MT5_METAEDITOR")"
+    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
+  fi
+  ((debug)) && {
+    error "configured compilers:"
+    [[ -n "$MT4_METALANG"   ]] && error "MT4_METALANG:   $MT4_METALANG"
+    [[ -n "$MT4_METAEDITOR" ]] && error "MT4_METAEDITOR: $MT4_METAEDITOR"
+    [[ -n "$MT5_METAEDITOR" ]] && error "MT5_METAEDITOR: $MT5_METAEDITOR"
+    error ""
+  }
+
+  # normalize configured MQL4 paths
+  normalizeMQL4Paths 'mql40Paths' '_mql40Paths'
+  normalizeMQL4Paths 'mql45Paths' '_mql45Paths'
+  ((debug)) && {
+    error "configured MQL4.0 paths:"
+    ((${#_mql40Paths[@]})) && error "$(printf "%s\n" "${_mql40Paths[@]}")"
+    error ""
+    error "configured MQL4.5 paths:"
+    ((${#_mql45Paths[@]})) && error "$(printf "%s\n" "${_mql45Paths[@]}")"
+    error ""
+  }
+
+  # normalize configured include directories
+  normalizeIncludeDirs 'includeDirs' '_mqlPaths' '_includeDirs'
+  ((debug)) && {
+    local i
+    error "configured include directories:"
+    for i in "${!_mqlPaths[@]}"; do
+      error "${_mqlPaths[i]} => ${_includeDirs[i]}"
+    done
+    error ""
+  }
+  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR _mqlPaths _includeDirs _mql40Paths _mql45Paths
+}
+
+
+#
+# Normalize, sort and order the passed MQL4 version paths.
+#
+# @param _In_  $1 - input variable
+# @param _Out_ $2 - output variable
+#
+function normalizeMQL4Paths() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local -n in="$1"
+  local -n out="$2"
+  out=()
+  ((!${#in[@]})) && return
+
+  # normalize input
+  local path lines lPath pPath grouped=() S=$'\x01'
+  for path in "${in[@]}"; do
+    if [[ -d "$path" ]]; then
+      readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
+      lPath="${lines[0],,}"                           # logical path
+      pPath="${lines[1],,}"                           # physical path
+      lPath="${lPath////${S}}"                        # replace slashes with a separator that's alphabetically first
+      pPath="${pPath////${S}}"
+      grouped+=("2 $lPath")                           # add prefix to order logical paths after physicals
+      [[ "$lPath" == "$pPath" ]] || grouped+=("1 $pPath")
+    fi
+  done
+  ((!${#grouped[@]})) && return
+
+  readarray -t grouped < <(printf "%s\n" "${grouped[@]}" | sort)
+
+  # write grouped paths to out                        # no filtering of duplicates and overlaps (performance)
+  for path in "${grouped[@]}"; do
+    path="${path#* }"                                 # cut-off leading group id
+    out+=("${path//${S}//}")                          # revert separators back to slashes
+  done
+}
+
+
+#
+# Normalize, sort and order the passed include directories.
+#
+# @param _In_  $1 - variable to read configured directories from
+# @param _Out_ $2 - variable to write source paths to
+# @param _Out_ $3 - variable to write corresponding include directories to
+#
+function normalizeIncludeDirs() {
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local -n in="$1"
+  local -n out1="$2"
+  local -n out2="$3"
+  ((!${#in[@]})) && return
+
+  # normalize input
+  local path lines line lPath pPath include grouped=() S=$'\x01'
+  for path in "${!in[@]}"; do
+    if [[ -d "$path" ]]; then
+      readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
+      lPath="${lines[0],,}"                           # logical path
+      pPath="${lines[1],,}"                           # physical path
+      lPath="${lPath////${S}}"                        # replace slashes with a separator that's alphabetically first
+      pPath="${pPath////${S}}"
+      include="${in[$path]}"                          # convert to logical name (even non-existing)
+      [[ -d "$include" ]] && include="$(cd -- "$include" && echo "$PWD")" || include="$(cygpath -u "$include")"
+      grouped+=("2|$lPath|$include")                  # add prefix to order logical paths after physicals
+      [[ "$lPath" == "$pPath" ]] || grouped+=("1|$pPath|$include")
+    fi
+  done
+  ((!${#grouped[@]})) && return
+
+  readarray -t grouped < <(printf "%s\n" "${grouped[@]}" | sort -t '|' -k1,2) # by group=asc, path=asc
+
+  # write paths back to out1 + out2                   # no filtering of duplicates and overlaps (performance)
+  out1=()
+  out2=()
+  for line in "${grouped[@]}"; do
+    IFS='|' read -r _ path include <<< "$line"
+    out1+=("${path//${S}//}")                         # revert separators back to slashes
+    out2+=("$include")
+  done
+}
+
+
+#
+# Resolve the MQL version of a source file, taking into account an explicit or configured value.
+# If neither input nor configuration exist, the function tries to auto-detect the MQL version.
+#
+# @param $1 - filename (exists and is either .mq4 or .mq5)
+# @param $2 - input version
+#
+function resolveMqlVersion() {
+  local file="${1,,}" version="${2,,}"
+  [[ "$file" == *.mq5 ]] && { echo "mql5"; return; }  # the file extension was already validated
+  [[ "$version" == mql4[05] ]] && { echo "$version"; return; }
+  [[ -z "$version" ]] || fail "ERROR: unsupported input version: \"$version\""
+
+  local dir base lines lFile pFile i
+  file="${file//\\//}"
+  dir="${file%/*}"; dir="${dir:-.}"
+  base="${file##*/}"
+  readarray -t lines < <(cd -- "$dir" && echo "$PWD" && pwd -P)
+  lFile="${lines[0],,}/$base"                         # logical filename
+  pFile="${lines[1],,}/$base"                         # physical filename
+
+  for ((i=${#_mql45Paths[@]}-1; i>=0; i--)); do
+    [[ "$lFile" == "${_mql45Paths[i]}/"* ]] && { echo "mql45"; return; }
+  done
+  for ((i=${#_mql40Paths[@]}-1; i>=0; i--)); do
+    [[ "$lFile" == "${_mql40Paths[i]}/"* ]] && { echo "mql40"; return; }
+  done
+
+  for ((i=${#_mql45Paths[@]}-1; i>=0; i--)); do
+    [[ "$pFile" == "${_mql45Paths[i]}/"* ]] && { echo "mql45"; return; }
+  done
+  for ((i=${#_mql40Paths[@]}-1; i>=0; i--)); do
+    [[ "$pFile" == "${_mql40Paths[i]}/"* ]] && { echo "mql40"; return; } || :
+  done
+
+  # TODO: auto-detect MQL4 version
+}
+
+
+#
+# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
+# If neither input nor configuration exist, the function tries to auto-detect the include directory.
+#
+# @param $1 - filename (exists and is either .mq4 or .mq5)
+# @param $2 - resolved MQL version id
+# @param $3 - input include dir
+#
+function resolveIncludeDir() {
+  local file="${1,,}" version="$2" includeDir="$3"
+  [[ -n "$includeDir" ]] && { echo "$includeDir"; return; }
+
+  local dir base lines i
+  file="${file//\\//}"
+  dir="${file%/*}"; [[ -z "$dir" ]] && dir='.'
+  base="${file##*/}"
+  readarray -t lines < <(cd -- "$dir" && echo "$PWD" && pwd -P)
+  lFile="${lines[0],,}/$base"                         # logical filename
+  pFile="${lines[1],,}/$base"                         # physical filename
+
+  for ((i=${#_mqlPaths[@]}-1; i>=0; i--)); do
+    [[ "$lFile" == "${_mqlPaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; }
+  done
+  for ((i=${#_mqlPaths[@]}-1; i>=0; i--)); do
+    [[ "$pFile" == "${_mqlPaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; } || :
+  done
+
+  # TODO: auto-detect include directory
+}
+
+
+#
+# Sanitize a filename/path argument. Strips enclosing double quotes and trims white-space.
+#
+# @param $1 - name
+#
+function sanitizeName() {
+  local str="$1"
+  [[ "$str" =~ ^\"(.*)\"$ ]] && str="${BASH_REMATCH[1]}"    # strip enclosing double quotes
+
+  str="${str#"${str%%[![:space:]]*}"}"                      # trim leading white space
+  str="${str%"${str##*[![:space:]]}"}"                      # trim trailing white space
+
+  echo "$str"
+}
+
+
+#
+# Return the name of an MQL version.
+#
+# @param $1 - MQL version id
+#
+function versionName() {
+  [[ "$1" == 'mql40' ]] && { echo 'MQL4.0'; return; }
+  [[ "$1" == 'mql45' ]] && { echo 'MQL4.5'; return; }
+  [[ "$1" == 'mql5'  ]] && { echo 'MQL5';   return; }
+  fail "ERROR: unknown MQL version id: \"$1\""
+}
+
+
+# --- end of functions ---------------------------------------------------------------------------------------------------------------------
+
+
+# define vars
+declare srcFileNames=() srcArg=''
+declare srcFileVersions=() version='' firstVersion=-1
+declare srcFileIncludes=() include='' firstInclude=-1
+declare log=0 customLog='' syntaxOnly=0 compactOutput=0 warn2error=0 delimiterPassed=0
+
+
+# initialization
+init
+
+
+# parse command line arguments
+((!"$#")) && { help; exit 0; }
+while [[ "$#" -gt 0 ]]; do
+  if ((!delimiterPassed)); then                           # enter case only before an option terminator
+    case "$1" in
+      --)
+        delimiterPassed=1
+        shift; continue;;
+
+      -h|--help)
+        help; exit 0;;
+
+      [-/]s|--syntax)                                     # also support MetaEditor's option prefix
+        syntaxOnly=1
+        shift; continue;;
+
+      -w|--warn2error)
+        warn2error=1
+        shift; continue;;
+
+      -v|--version)
+        fail "ERROR: missing MQL4 version identifier: $1";;
+
+      -v=*|--version=*)
+        version="${1#*=}"
+        version="${version,,}"
+        [[ -n "$version" && "$version" != mql4[05] ]] && fail "ERROR: invalid MQL4 version identifier in \"$1\" (expecting \"mql40\" or \"mql45\")"
+        if ((firstVersion < 0)); then
+          for i in "${!srcFileVersions[@]}"; do
+            srcFileVersions[i]="$version"                 # the first --version affects previous sources if no more sources follow
+          done
+          firstVersion="${#srcFileVersions[@]}"           # track position
+        fi
+        shift; continue;;
+
+      /inc|/include|/inc[=:]*|/include[=:]*)
+        [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
+        include="$(sanitizeName "$include")"
+        [[ -z "$include" ]] && fail "ERROR: missing argument: $1"
+        [[ -d "$include" ]] || fail "ERROR: include directory not found: \"$include\""
+        if ((firstInclude < 0)); then
+          for i in "${!srcFileIncludes[@]}"; do
+            srcFileIncludes[i]="$include"                 # the first /include affects previous sources if no more sources follow
+          done
+          firstInclude="${#srcFileIncludes[@]}"           # track position
+        fi
+        shift; continue;;
+
+      /log|/log[=:]*)
+        [[ "$log" -eq 1 ]] && fail "ERROR: multiple /log options"
+        log=1
+        if [[ ${#1} -gt 4 ]]; then
+          customLog="$(sanitizeName "${1:5}")"
+          [[ -z "$customLog" ]] && fail "ERROR: missing argument: $1"
+          customLog="$(cygpath -w "$customLog")"
+        fi
+        shift; continue;;
+
+      /compile[=:]*)
+        srcArg="$(sanitizeName "${1:9}")"
+        [[ -z "$srcArg" ]] && fail "ERROR: missing argument: $1";;
+        # processing continues after the case block
+    esac
+  fi
+
+  # source files/directories before/after an argument delimiter, standalone or as /compile: argument
+  ((delimiterPassed)) || [[ "$1" != /compile* ]] && srcArg="$1"
+
+  if [[ -d "$srcArg" ]]; then
+    while IFS= read -r file; do
+      srcFileNames+=("$file")
+      srcFileVersions+=("${version:-}")
+      srcFileIncludes+=("${include:-}")
+    done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
+  elif [[ -f "$srcArg" ]]; then
+    ext="$(fileExtension "$srcArg")"
+    [[ "${ext,,}" != mq[45] ]] && fail "ERROR: cannot compile file \"$srcArg\""
+    srcFileNames+=("$srcArg")
+    srcFileVersions+=("${version:-}")
+    srcFileIncludes+=("${include:-}")
+  else
+    srcArg="$1"
+    [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
+    fail "ERROR: file or directory not found: $srcArg"
+  fi
+
+  if ((firstVersion > 0)); then
+    for i in "${!srcFileVersions[@]}"; do
+      ((i < firstVersion)) && srcFileVersions[i]=''       # the first --version affects previous sources only if no more sources follow
+    done
+    firstVersion=0                                        # position of the first implied version = start of arguments
+  fi
+
+  if ((firstInclude > 0)); then
+    for i in "${!srcFileIncludes[@]}"; do
+      ((i < firstInclude)) && srcFileIncludes[i]=''       # the first /include affects previous sources only if no more sources follow
+    done
+    firstInclude=0                                        # position of the first implied /include = start of arguments
+  fi
+  shift
+done
+
+((!${#srcFileNames[@]}))    && fail "ERROR: missing source file/directory argument"
+((${#srcFileNames[@]} > 1)) && compactOutput=1
+
+readonly srcFileNames srcFileVersions srcFileIncludes
+readonly log customLog syntaxOnly compactOutput warn2error
+
+
+# read configuration
+readConfig
+
+
+# process each source file
+exitCode=0
+
+for i in "${!srcFileNames[@]}"; do
+  ((i)) && echo ""
+
+  file="${srcFileNames[i]}"
+  version="$(resolveMqlVersion "$file" "${srcFileVersions[i]}")"
+  include="$(resolveIncludeDir "$file" "$version" "${srcFileIncludes[i]}")"
+  status=0
+
+  case "$version" in
+    mql40)
+      compileMql40 "$file" "$version" "$include" || status=$?;;
+    mql45|mql5)
+      compileMql5  "$file" "$version" "$include" || status=$?;;
+    *)
+      fail "ERROR: cannot resolve MQL version of \"$file\"";;
+  esac
+
+  ((status)) && exitCode="$status"
+done
+
+exit "$exitCode"
+
+
+notes << NOTES
+
+  ==========================================================================================================================================
+  metalang.exe
+  ==========================================================================================================================================
   metalang.exe's exit code is the number of encountered errors (0 = no errors but possibly warnings).
 
   success w/o warnings
@@ -433,70 +1064,11 @@ function compileMql40() {
 
   2;52;;;cannot open the output expert file
   1
-EOF
-}
 
 
-#
-# Compile an MQL4.5/MQL5 source file.
-#
-# @param $1 - filename
-# @param $2 - MQL version id
-# @param $3 - include directory to use
-#
-function compileMql5() {
-  local srcFile="$1" logFile="${1%.*}.log" version="$2" versionName="${mqlVersions["$2"]}" include="$3"
-  local helper compiler compilerCmd includeOption='' errorStatus=0
-  compiler="$(getCompiler "$version")"
-
-  if ((!originalOutput)); then
-    echo "Compiling \"$srcFile\" as $versionName"
-    compilerInfo "$compiler"
-    ((compactOutput)) || echo ""
-  fi
-
-  helper="$(cmdHelper)"
-  compiler="$(cygpath -w "$compiler")"
-  [[ -n "$include" ]] && includeOption="/include:\"$include\""
-  compilerCmd="\"$compiler\" /compile:\"$srcFile\" $includeOption /log:\"$logFile\""
-
-  MSYS_NO_PATHCONV=1 cmd /c "$helper $compilerCmd" < /dev/null 2>&1 || errorStatus=$?
-  [[ -f "$logFile" ]] || { error "ERROR: logfile \"$logFile\" not found (status $errorStatus)."; exit 1; }
-
-  # store logfile in array (convert to UTF-8, Unix EOL, filter blank lines and infos)
-  local output=() line='' M='' errors=0 warnings=0
-  mapfile -t output < <(
-    ((originalOutput)) && M="rosasurfer"                      # marker to toggle result filtering
-    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)" || :
-  )
-
-  [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || { error "ERROR: unexpected compiler output in last line: \"${output[-1]}\""; exit 1; }
-  errors="${BASH_REMATCH[1]}"
-  warnings="${BASH_REMATCH[2]}"
-  ((!errors && !warnings)) && rm -f "$logFile"
-
-  if ((originalOutput)); then
-    output+=("$errorStatus")
-  else
-    ((!errors && !warnings))               && output+=("Success")
-    ((errors || (warn2error && warnings))) && output+=("Error")
-  fi
-
-  # print everything to STDOUT
-  for line in "${output[@]}"; do
-    echo "$line"
-  done
-
-  ((warn2error)) || warnings=0
-  ((retVal = errors + warnings))
-  ((retVal > 255)) && retVal=255
-  return "$retVal"
-
-  notes << EOF
-  Git Bash's "cmd.exe" is the only syntax variant which doesn't mangle arguments. However, that syntax
-  breaks Cygwin's POSIX launcher. So we go with "cmd" and manually demangle in the helper batch file.
-  The helper file cannot just hold the final command as that doesn't support parallel executions.
-
+  ==========================================================================================================================================
+  MetaEditor
+  ==========================================================================================================================================
   MetaEditor's exit code is the number of successfully processed files (0 = error). It doesn't produce
   any error messages.
 
@@ -521,286 +1093,62 @@ function compileMql5() {
   $ MSYS_NO_PATHCONV=1 metaeditor*.exe /compile:DoesntExist.mq4 /log:custom.log; echo $?
   0 (no "custom.log", no "metaeditor.log")
 
-EOF
-}
+
+  ==========================================================================================================================================
+  Other
+  ==========================================================================================================================================
+  Syntax MQL4.5 + MQL5
+  --------------------
+  - compile single file
+    $ metaeditor.exe /compile:<filename-without-spaces>
+    $ metaeditor.exe /compile:"<filename with spaces>"
+
+  - compile whole directory (recompiles only if a source file is newer than the compiled version, no subdirectories)
+    $ metaeditor.exe /compile:"<target-directory>"
+
+  - use custom include directory (default: "mql4/5" in directory containing metaeditor.exe)
+    $ metaeditor.exe /include:"<separate-mql-directory>"                                                      # can be shortened to /inc:
+
+  - create log file named <source-file.log>, without errors are logged to "<data-dir>/logs/metaeditor.log"
+    $ metaeditor.exe /compile:"<source>" /log
+
+  - create custom log file, not supported when compiling directories
+    $ metaeditor.exe /compile:"<source>" /log:"<log-filename>"
+
+  - check syntax only (no compilation)
+    $ metaeditor.exe /compile:"<source>" /s
 
 
-#
-# Creates a helper batch file for "cmd.exe" and returns its full DOS name.
-# The name doesn't contain any spaces and needs no quoting.
-#
-function cmdHelper() {
-  local helper='' code;
-  code=$(cat << 'EOF'
-@echo off
-
-set arg=%1
-if not defined arg (
-  echo ERROR: %~nx0 - missing arguments
-  exit /b 1
-)
-
-set command=
-set args=
-
-:loop
-set arg=%1
-if not defined arg goto run
-
-call set "arg=%%arg:\"="%%"
-
-if not defined command (
-  set command=%arg%
-) else if not defined args (
-  set args=%arg%
-) else (
-  set args=%args% %arg%
-)
-shift
-goto loop
-
-:run
-%command% %args%
-
-exit /b %ERRORLEVEL%
-EOF
-)
-  helper="$(dirname "$(realpath "$0")")/.helper.bat"
-  [[ -f "$helper" && "$code" == "$(< "$helper")" ]] || printf "%s\n" "$code" > "$helper"
-
-  # the DOS name prevents argument mangling of double quotes which would break the call
-  if [[ "$helper" =~ \  ]]; then
-    helper="$(cygpath -d "$helper")"
-  else
-    helper="$(cygpath -w "$helper")"
-  fi
-
-  echo "$helper"
-}
+  MT4 after installation
+  ----------------------
+  metaeditor.exe /packed:21 /compile:"103304111_21238" /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
 
 
-# --- end of functions ---------------------------------------------------------------------------------------------------------------------
+  MT5 after installation
+  ----------------------
+  metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1743564639 /flg:0 /stop:se5296_103760508
 
 
-# declare and initialize vars
-declare -A mqlVersions=()
-mqlVersions['mql40']='MQL 4.0'
-mqlVersions['mql45']='MQL 4.5'
-mqlVersions['mql5' ]='MQL 5'
+  metalang.exe -h
+  ---------------
+  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
+  Copyright 2001-2009, MetaQuotes Software Corp.
 
-declare srcFileNames=() srcArg=''
-declare srcFileVersions=() version='' firstVersion=-1
-declare srcFileIncludes=() include='' firstInclude=-1
-declare log=0 customLog='' syntaxOnly=0 originalOutput=0 compactOutput=0 warn2error=0 delimiterPassed=0
+  usage: metalang.exe [options] filename
+  options:
+  -q : quiet mode
 
 
-# parse command line arguments
-((!"$#")) && { help; exit 0; }
-while [[ "$#" -gt 0 ]]; do
-  if ((!delimiterPassed)); then                           # enter case only before an option terminator
-    case "$1" in
-      --)
-        delimiterPassed=1
-        shift; continue;;
-
-      -h|--help)
-        help; exit 0;;
-
-      [-/]s|--syntax)                                     # also support MetaEditor's option prefix
-        syntaxOnly=1
-        shift; continue;;
-
-      -o|--original)
-        originalOutput=1
-        shift; continue;;
-
-      -w|--warn2error)
-        warn2error=1
-        shift; continue;;
-
-      -v|--version)
-        error "ERROR: missing MQL4 version identifier: $1"
-        exit 1;;
-
-      -v=*|--version=*)
-        version="${1#*=}"
-        version="${version,,}"
-        [[ -n "$version" && "$version" != mql4[05] ]] && { error "ERROR: invalid MQL4 version identifier in \"$1\" (expecting \"mql40\" or \"mql45\")"; exit 1; }
-        if ((firstVersion < 0)); then
-          for i in "${!srcFileVersions[@]}"; do
-            srcFileVersions[i]="$version"                 # the first --version affects previous sources if no more sources follow
-          done
-          firstVersion="${#srcFileVersions[@]}"           # track position
-        fi
-        shift; continue;;
-
-      /inc|/include|/inc[=:]*|/include[=:]*)
-        [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
-        include="$(sanitizeName "$include")"
-        [[ -z "$include" ]] && { error "ERROR: missing argument: $1"; exit 1; }
-        [[ -d "$include" ]] || { error "ERROR: directory not found: $1"; exit 1; }
-        include="$(cygpath -w "$include")"
-        if ((firstInclude < 0)); then
-          for i in "${!srcFileIncludes[@]}"; do
-            srcFileIncludes[i]="$include"                 # the first /include affects previous sources if no more sources follow
-          done
-          firstInclude="${#srcFileIncludes[@]}"           # track position
-        fi
-        shift; continue;;
-
-      /log|/log[=:]*)
-        [[ "$log" -eq 1 ]] && { error "ERROR: multiple /log options"; exit 1; }
-        log=1
-        if [[ ${#1} -gt 4 ]]; then
-          customLog="$(sanitizeName "${1:5}")"
-          [[ -z "$customLog" ]] && { error "ERROR: missing argument: $1"; exit 1; }
-          customLog="$(cygpath -w "$customLog")"
-        fi
-        shift; continue;;
-
-      /compile[=:]*)
-        srcArg="$(sanitizeName "${1:9}")"
-        [[ -z "$srcArg" ]] && { error "ERROR: missing argument: $1"; exit 1; }
-        # processing continues after the case block
-        ;;
-    esac
-  fi
-
-  # source files/directories before/after an argument delimiter, standalone or as /compile: argument
-  ((delimiterPassed)) || [[ "$1" != /compile* ]] && srcArg="$1"
-
-  if [[ -d "$srcArg" ]]; then
-    while IFS= read -r file; do
-      srcFileNames+=("$file")
-      srcFileVersions+=("${version:-auto}")
-      srcFileIncludes+=("${include:-auto}")
-    done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
-  elif [[ -f "$srcArg" ]]; then
-    ext="$(fileExtension "$srcArg")"
-    [[ "${ext,,}" != mq[45] ]] && { error "ERROR: cannot compile file \"$srcArg\""; exit 1; }
-    srcFileNames+=("$srcArg")
-    srcFileVersions+=("${version:-auto}")
-    srcFileIncludes+=("${include:-auto}")
-  else
-    srcArg="$1"
-    [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
-    error "ERROR: file or directory not found: $srcArg"
-    exit 1
-  fi
-
-  if ((firstVersion > 0)); then
-    for i in "${!srcFileVersions[@]}"; do
-      ((i < firstVersion)) && srcFileVersions[i]="auto"   # the first --version affects previous sources only if no more sources follow
-    done
-    firstVersion=0                                        # position of the first implied version = start of arguments
-  fi
-
-  if ((firstInclude > 0)); then
-    for i in "${!srcFileIncludes[@]}"; do
-      ((i < firstInclude)) && srcFileIncludes[i]="auto"   # the first /include affects previous sources only if no more sources follow
-    done
-    firstInclude=0                                        # position of the first implied /include = start of arguments
-  fi
-  shift
-done
-
-((!${#srcFileNames[@]})) && { error "ERROR: missing source file/directory argument"; exit 1; }
-((${#srcFileNames[@]} > 1)) && compactOutput=1
-
-readonly srcFileNames
-readonly srcFileVersions firstVersion
-readonly srcFileIncludes firstInclude
-readonly log customLog syntaxOnly originalOutput compactOutput warn2error
+  old multi-compiler (MT4 builds 600...615)
+  -----------------------------------------
+  mql.exe [<flags>] filename.mq5
+          /mql5     - compile mql5 source
+          /mql4     - compile mql4 source
+          /s        - syntax check only
+          /i:<path> - set working directory
+          /o        - use code optimizer
 
 
-# read configuration
-readConfig
+  @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0
 
-
-# process each source file
-exitCode=0
-
-for i in "${!srcFileNames[@]}"; do
-  ((i)) && echo ""
-
-  file="${srcFileNames[i]}"
-  version="$(resolveMqlVersion "$file" "${srcFileVersions[i]}")"
-  include="$(resolveIncludeDir "$file" "$version" "${srcFileIncludes[i]}")"
-  status=0
-
-  case "$version" in
-    mql40)
-      compileMql40 "$file" "$version" "$include" || status=$?;;
-    mql45|mql5)
-      compileMql5  "$file" "$version" "$include" || status=$?;;
-    *)
-      error "ERROR: cannot resolve MQL version of \"$file\""
-      exit 1;;
-  esac
-
-  ((status)) && exitCode="$status"
-done
-
-exit "$exitCode"
-
-
-# MQL4.5 + MQL5
-# -------------
-# - compile single file
-#   $ metaeditor.exe /compile:<filename-without-spaces>
-#   $ metaeditor.exe /compile:"<filename with spaces>"
-#
-# - compile whole directory (recompiles only if a source file is newer than the compiled version, no subdirectories)
-#   $ metaeditor.exe /compile:"<target-directory>"
-#
-# - use custom include directory (default: "mql4/5" in directory containing metaeditor.exe)
-#   $ metaeditor.exe /include:"<separate-mql-directory>"                                                      # can be shortened to /inc:
-#
-# - create log file named <source-file.log>, without errors are logged to "<data-dir>/logs/metaeditor.log"
-#   $ metaeditor.exe /compile:"<source>" /log
-#
-# - create custom log file, not supported when compiling directories
-#   $ metaeditor.exe /compile:"<source>" /log:"<log-filename>"
-#
-# - check syntax only (no compilation)
-#   $ metaeditor.exe /compile:"<source>" /s
-#
-#
-# MT4 after installation
-# ----------------------
-# metaeditor.exe /packed:21 /compile:"103304111_21238" /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
-#
-#
-# MT5 after installation
-# ----------------------
-# metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1743564639 /flg:0 /stop:se5296_103760508
-#
-#
-# metalang.exe -h
-# ---------------
-# MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-# Copyright 2001-2009, MetaQuotes Software Corp.
-#
-# usage: metalang.exe [options] filename
-# options:
-# -q : quiet mode
-#
-#
-# old multi-compiler (MT4 builds 600...615)
-# -----------------------------------------
-# mql.exe [<flags>] filename.mq5
-#         /mql5     - compile mql5 source
-#         /mql4     - compile mql4 source
-#         /s        - syntax check only
-#         /i:<path> - set working directory
-#         /o        - use code optimizer
-#
-#
-# UltraEdit
-# ---------
-# bash /f/Projects/mt4/mql/bin/mqlc "%f" -f=mql40
-# bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql45 -f=mql45
-# bash /f/Projects/mt4/mql/bin/mqlc "%f" /include:/f/Projects/mt4/mql/mql5
-#
-#
-# @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0
+NOTES
