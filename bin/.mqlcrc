@@ -2,8 +2,8 @@
 # Configuration for command line tools. All configurations can also be specified in environment variables.
 # Environment settings have higher priority than settings in the configuration file.
 #
-# Copy this file to ".env" and adjust it to your system. File paths support simple forward and double
-# backward slashes. File names with spaces must be quoted.
+# Copy this file to ".mqlcrc" and adjust it to your system. File names support Unix and Windows notation,
+# simple forward and double backward slashes. File names with spaces must be quoted.
 #
 
 # absolute path to the MQL4.0 compiler (MT4 terminal builds <= 509)

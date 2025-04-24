@@ -6,16 +6,17 @@
 #
 # Configuration via environment or config file.
 #
-# @see  "/.env.dist"
+# @see  "/bin/.mqlcrc.dist"
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
 # TODO:
-#  - move config to standard location
-#  - fix error when a specified directory doesn't contain sources
-#  - improve error messages for filenames looking like options
+#  - improve error message when a specified directory doesn't contain sources
+#  - improve error message for filenames looking like options
 #  - long help, short usage on syntax errors
 #  - reformat compiler messages
+#  - search config standard locations
+#  - .mqlcrc: skip entries starting with "<" (distribution values)
 #  - implement download tracker
 #  - config must be parsed, not sourced
 #  - in WSL: move tmp dir to Windows file system
@@ -67,9 +68,11 @@ Auto-detection of MQL versions:
  ".mq5" files are always processed as MQL5, regardless of a specified MQL4 version.
  ".mq4" files: If the MQL directory of the source file resolves to "experts" or "mql40", version MQL4.0 is assumed.
  ".mq4" files: If the MQL directory of the source file resolves to "mql4" or "mql45", version MQL4.5 is assumed.
- Default MQL4 versions for custom directories can be predefined in the configuration (see "/.env.dist").
+ Default MQL4 versions for custom directories can be predefined in the configuration (see config file).
 
-Compilers may be specified via environment or predefined in the configuration (see "/.env.dist").
+Compilers may be specified via environment or predefined in the configuration (see config file).
+
+Config file: "/bin/.mqlcrc"
 
 The script exits with 0 (success) or the number of errors of the last failing compilation.
 
@@ -579,18 +582,17 @@ function readConfig() {
   local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
   local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
 
-  local mql40Paths=() mql45Paths=() scriptDir config notFound='(not found)'
+  local mql40Paths=() mql45Paths=() scriptDir config
   local -A includeDirs; includeDirs=()
 
   # resolve config file location and source the file
   scriptDir="$(dirname "$(realpath "$(type -p "$0")")")"
-  config="$scriptDir/../.env"
+  config="$scriptDir/.mqlcrc"
+  [[ -f "$config" ]] && . "$config" || config='(not found)'   # TODO: parse the file
   ((debug)) && {
-    [[ -f "$config" ]] && notFound=
-    error "config file: $config $notFound"
+    error "config file: $config"
     error ""
   }
-  [[ -f "$config" ]] && . "$config"                           # TODO: parse the file
 
   # resolve compiler settings: environment precedes configuration
   MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
