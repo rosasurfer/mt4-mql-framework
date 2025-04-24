@@ -6,7 +6,7 @@
 #
 # Configuration via environment or config file.
 #
-# @see  "/bin/.mqlcrc.dist"
+# @see  "/bin/.mqlcrc"
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
@@ -438,7 +438,7 @@ _cachedCompilerPaths=()
 # @param _In_  $3 - MQL4.0 only: include directory to be linked into the compiler path
 #
 function setCompilerPath() {
-  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to caller from subshell"
+  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n result="$1"
   local version="$2" includeDir="${3:-}" compilerVar
 
