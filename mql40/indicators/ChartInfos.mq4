@@ -1720,7 +1720,7 @@ bool UpdateStopoutLevel() {
    double soDistance = (realEquity - soEquity)/tickValue * tickSize;
    if (totalPosition > 0) double soPrice = _Bid - soDistance;
    else                          soPrice = _Ask + soDistance;
-   double soDrawdown = MathMax((soEquity + extAssets)/virtBalance - 1, -1);
+   double soDrawdown = MathMax(MathDiv(soEquity + extAssets, virtBalance) - 1, -1);
 
    // display stopout level
    if (ObjectFind(label.stopoutLevel) == -1) if (!ObjectCreateRegister(label.stopoutLevel, OBJ_HLINE)) return(false);
