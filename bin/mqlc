@@ -16,7 +16,6 @@
 #  - long help, short usage on syntax errors
 #  - reformat compiler messages
 #  - search config standard locations
-#  - .mqlcrc: skip entries starting with "<" (distribution values)
 #  - implement download tracker
 #  - config must be parsed, not sourced
 #  - in WSL: move tmp dir to Windows file system
@@ -595,6 +594,9 @@ function readConfig() {
   }
 
   # resolve compiler settings: environment precedes configuration
+  [[ "${MT4_METALANG:-}"   == '<'* ]] && MT4_METALANG=        # skip distributed values
+  [[ "${MT4_METAEDITOR:-}" == '<'* ]] && MT4_METAEDITOR=
+  [[ "${MT5_METAEDITOR:-}" == '<'* ]] && MT5_METAEDITOR=
   MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
   MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
   MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
