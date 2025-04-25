@@ -2,34 +2,34 @@
 #
 # A script for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple
 # files and directories. Prints results to STDOUT and follows standard rules for the exit status.
-# The syntax is compatible with the syntax of MetaEditor.
+# The syntax is backward compatible to MetaEditor.
 #
-# Configuration via environment or config file.
+# Configuration via environment and config file.
 #
-# @see  "/bin/.mqlcrc"
+# @see  "/bin/.mqlcrc.dist" for an example configuration
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
 # TODO:
+#  - search standard locations for config
+#  - support relative paths in configuration
+#  - add --rc/--norc option
 #  - improve error message when a specified directory doesn't contain sources
 #  - improve error message for filenames looking like options
 #  - long help, short usage on syntax errors
 #  - reformat compiler messages
-#  - search config standard locations
 #  - implement download tracker
-#  - config must be parsed, not sourced
+#  - the config must be parsed, not sourced
 #  - in WSL: move tmp dir to Windows file system
-#  - documentation
 #
 #  - auto-detect version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
 #  - move basename validation from readConfig() to setCompilerPath()
-#  - add --norc option
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
-#  - colored output
+#  - colored output and option
 #  - parallel compilation of multiple files
 #
 set -eEuo pipefail
@@ -43,37 +43,41 @@ set -eEuo pipefail
 #
 function help() {
   cat << 'SYNTAX'
-Compiles one or more MQL4.0, MQL4.5 and MQL5 source files or directories.
+Compiles one or more MQL4.0, MQL4.5 or MQL5 source files and directories.
 
-Usage: mqlc  [options] [--] SOURCE...
+Usage: mqlc  [options] [--] SOURCES...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
 
 Arguments:
-  SOURCE           One or more MQL files or source directories to compile. Supports wildcards.
+  SOURCES           One or more MQL files or source directories to compile. Supports wildcards.
 
 Options:
-  -h --help        This screen.
-  /compile:FILE    Source file to compile. Doesn't support wildcards.
-  /compile:DIR     Source directory to compile. Recompiles new and modified source files (not in subdirectories).
-  /include:DIR     Include directory for all source files following the option (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
-  /log             Writes all output to file "<source-file.log>" (default: no logfile on success, always logfile on errors/warnings).
-  /log:FILE        Writes all output to a custom log file.
-  -v=VERSION       MQL version of all MQL4 files following the option, either "mql40" or "mql45". May appear multiple times.
-  -v= --version=   Empty version argument: auto-detect the version of all MQL4 files following the option (default).
-  -s --syntax      Syntax check only, no compilation.
-  -w --warn2error  Treat compiler warnings as errors, affects the exit status.
+  -h --help         This screen.
+  /compile:FILE     Source file to compile. Doesn't support wildcards.
+  /compile:DIR      Source directory to compile. Recompiles new and modified sources (not in subdirectories).
+  /include:DIR      Include directory for the following sources (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
+  /log              Writes output to "<source-file.log>" (default: no logfile on success, logfile on errors/warnings).
+  /log:FILE         Writes output to the specified logfile.
+  -v=VERSION        MQL version of the following MQL4 sources: either "mql40" or "mql45". May appear multiple times.
+  -v= --version=    Empty version argument: auto-detect the version of the following MQL4 sources (default).
+  -s --syntax       Syntax check only, no compilation.
+  -w --warn2error   Treat compiler warnings as errors, affects the exit status.
+  --[no]color       Enforce or disable colored output (default: auto).
+  --rc=FILE --norc  Use the specified configuration file, or no file at all (default: see configuration section).
+
+The script exits with 0 (success) or the number of errors of the last failing compilation.
 
 Auto-detection of MQL versions:
  ".mq5" files are always processed as MQL5, regardless of a specified MQL4 version.
  ".mq4" files: If the MQL directory of the source file resolves to "experts" or "mql40", version MQL4.0 is assumed.
  ".mq4" files: If the MQL directory of the source file resolves to "mql4" or "mql45", version MQL4.5 is assumed.
- Default MQL4 versions for custom directories can be predefined in the configuration (see config file).
+ Default MQL4 versions and include directories can be predefined in the configuration.
 
-Compilers may be specified via environment or predefined in the configuration (see config file).
-
-Config file: "/bin/.mqlcrc"
-
-The script exits with 0 (success) or the number of errors of the last failing compilation.
+Configuration:
+ Unless option --rc/--norc is used, the script will look for a file named ".mqlcrc" in the source directory and each
+ parent directory. If no file is found in any of the parent directories, the script will look in the user's home
+ directory. Only the first file found will be used. Compiler locations can also be specified using environment vars.
+ See "/bin/.mqlcrc.dist" for an example.
 
 SYNTAX
 }
@@ -584,10 +588,10 @@ function readConfig() {
   local mql40Paths=() mql45Paths=() scriptDir config
   local -A includeDirs; includeDirs=()
 
-  # resolve config file location and source the file
+  # resolve config file location and source the file          # TODO: parse the file
   scriptDir="$(dirname "$(realpath "$(type -p "$0")")")"
-  config="$scriptDir/.mqlcrc"
-  [[ -f "$config" ]] && . "$config" || config='(not found)'   # TODO: parse the file
+  config="$scriptDir/../.mqlcrc"
+  [[ -f "$config" ]] && . "$config" || config='(not found)'
   ((debug)) && {
     error "config file: $config"
     error ""

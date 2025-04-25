@@ -1,0 +1,31 @@
+#
+# Copy this file to "/.mqlcrc" and adjust the settings to your system.
+# ----------------------------------------------------------------------------------------------------
+# Configuration for the MQL compiler script. Compiler locations may also be specified via environment.
+# Environment settings have higher priority than settings in this file.
+#
+# Paths support Unix and Windows notation.
+# Names with spaces must be quoted. Backward slashes must be doubled.
+#
+
+# path to the MT4 compiler for MQL4.0 (terminal builds <= 509)
+MT4_METALANG='<drive>:\\<path>\\metalang.exe'
+
+# path to the MT4 MetaEditor for MQL4.5 (terminal builds > 509)
+MT4_METAEDITOR='<drive>:/windows-path/metaeditor.exe'
+
+# path to the MT5 MetaEditor for MQL5 (all MT5 builds)
+MT5_METAEDITOR='/c/unix-path/metaeditor64.exe'
+
+
+# source paths and predefined MQL4 versions
+mql40Dirs+=('<source-path1>')
+mql40Dirs+=('<source-path2>')
+
+mql45Dirs+=('<source-path3>')
+mql45Dirs+=('<source-path4>')
+
+
+# source paths and predefined include directories
+includeDirs['<source-path1>']='<include-dir1>';
+includeDirs['<source-path3>']='<include-dir2>';
