@@ -11,14 +11,13 @@
 #
 #
 # TODO:
-#  - search standard locations for config
-#  - support relative paths in configuration
-#  - add --rc/--norc option
 #  - improve error message when a specified directory doesn't contain sources
 #  - improve error message for filenames looking like options
 #  - long help, short usage on syntax errors
 #  - reformat compiler messages
 #  - implement download tracker
+#  - add --rc/--norc option
+#  - support relative paths in configuration
 #  - the config must be parsed, not sourced
 #  - in WSL: move tmp dir to Windows file system
 #
@@ -89,7 +88,7 @@ declare originalOutput=0 debug=0 trace=0 test=0
 # Initialization.
 #
 function init() {
-  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   [[ "${ORIG:-0}"  != "0" ]] && originalOutput=1
   [[ "${DEBUG:-0}" != "0" ]] && ((!originalOutput)) && debug=1
   [[ "${TRACE:-0}" != "0" ]] && trace=1
@@ -128,7 +127,7 @@ function onError() {
   local lastExitStatus=$? size=${#FUNCNAME[@]} i func file line
 
   if ((trace)); then
-    error "ERROR: command failed with status $lastExitStatus"
+    stderr "ERROR: command failed with status $lastExitStatus"
     for ((i=1; i < size; i++)); do
       func="${FUNCNAME[i]}()                        "
       file="${BASH_SOURCE[i]}"
@@ -137,7 +136,7 @@ function onError() {
         [[ "$func" == 'fail()'* ]] && continue
         line='?'
       }
-      error " in ${func:0:24} file: $file, line $line"
+      stderr " in ${func:0:24} file: $file, line $line"
     done
   fi
   return "$lastExitStatus"
@@ -170,7 +169,7 @@ declare isConfig=0 isLogs=0 isMql4=0 isMql5=0
 # @param $1 - compiler filename
 #
 function checkCompilerDir() {
-  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local dir; dir="$(dirname "$(realpath "$1")")"
 
   [[ -d "$dir/config" ]] && isConfig=1 || isConfig=0
@@ -268,7 +267,7 @@ function compileMql40() {
   # on success
   if ((!errorStatus)); then
     [[ "${output[-1]}" =~ ^(Exp|Library exp)\ file\ .+\ produced\ -\ ([0-9]+)\ error.+\ ([0-9]+)\ warning.+ ]] || {
-      fail "ERROR: unexpected compiler output in last line: \"${output[-1]}\"";
+      fail "unexpected compiler output in last line: \"${output[-1]}\"";
     }
     errors="${BASH_REMATCH[2]}";   ((errors   == 1)) && epl='' || epl='s'
     warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && wpl='' || wpl='s'
@@ -284,7 +283,7 @@ function compileMql40() {
   # on error
   if ((errorStatus)); then
     if [[ ${#output[@]} -lt 4 ]]; then                                # no error message happens for empty source file only
-      ((errorStatus != 127)) && fail "ERROR: unexpected compiler output for status $errorStatus: no error message"
+      ((errorStatus != 127)) && fail "unexpected compiler output for status $errorStatus: no error message"
       ((originalOutput)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
       ((errors++)) || :
     else
@@ -294,7 +293,7 @@ function compileMql40() {
         [[ "${output[i]}" != [0-9]* ]] && break
         [[ "${output[i]}" == [1]* ]] && { ((warnings++)) || :; continue; }
         [[ "${output[i]}" == [2]* ]] && { ((errors++))   || :; continue; }
-        fail "ERROR: unknown message type in: ${output[i]}"
+        fail "unknown message type in: ${output[i]}"
       done
     fi
 
@@ -372,7 +371,7 @@ function compileMql5() {
   checkCompilerDir "$compiler"
   rm -f -- "$logFile"
   MSYS_NO_PATHCONV=1 cmd /c "$helper" < /dev/null || errorStatus=$?
-  [[ -f "$logFile" ]] || fail "ERROR: logfile \"$logFile\" not found (status $errorStatus)."
+  [[ -f "$logFile" ]] || fail "logfile \"$logFile\" not found (status $errorStatus)."
   rm -f "$helper"
   cleanupCompilerDir "$compiler"
 
@@ -383,7 +382,7 @@ function compileMql5() {
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)" || :
   )
 
-  [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || fail "ERROR: unexpected compiler output in last line: \"${output[-1]}\""
+  [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || fail "unexpected compiler output in last line: \"${output[-1]}\""
   errors="${BASH_REMATCH[1]}"
   warnings="${BASH_REMATCH[2]}"
   ((!errors && !warnings)) && rm -f "$logFile"
@@ -423,7 +422,7 @@ function printProductInfo() {
   IFS=$'\t' read -r product version <<< "$output"
 
   [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
-    fail "ERROR: unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
+    fail "unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
   }
   version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
 
@@ -442,7 +441,7 @@ _cachedCompilerPaths=()
 # @param _In_  $3 - MQL4.0 only: include directory to be linked into the compiler path
 #
 function setCompilerPath() {
-  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n result="$1"
   local version="$2" includeDir="${3:-}" compilerVar
 
@@ -460,9 +459,9 @@ function setCompilerPath() {
   [[ "$version" == 'mql45' ]] && compilerVar='MT4_METAEDITOR'
   [[ "$version" == 'mql5'  ]] && compilerVar='MT5_METAEDITOR'
 
-  [[ -z "${compilerVar:-}" ]] && fail "ERROR: unknown MQL version id \"$version\""
-  [[ -z "${!compilerVar-}" ]] && fail "ERROR: $(versionName "$version") compiler is not configured"
-  [[ -f "${!compilerVar}"  ]] || fail "ERROR: $(versionName "$version") compiler not found: \"${!compilerVar}\""
+  [[ -z "${compilerVar:-}" ]] && fail "unknown MQL version id \"$version\""
+  [[ -z "${!compilerVar-}" ]] && fail "$(versionName "$version") compiler is not configured"
+  [[ -f "${!compilerVar}"  ]] || fail "$(versionName "$version") compiler not found: \"${!compilerVar}\""
   result="${!compilerVar}"
 
   if [[ -n "$includeDir" ]]; then
@@ -511,7 +510,7 @@ function duration() {
 #
 # @param $@ - any number of arguments
 #
-function error() {
+function stderr () {
   echo "$@" 1>&2
 }
 
@@ -522,7 +521,7 @@ function error() {
 # @param $@ - any number of arguments
 #
 function fail() {
-  error "$@"
+  stderr "ERROR: $*"
   exit 1
 }
 
@@ -564,7 +563,7 @@ function prepareCompiler40Dir() {
   cp "$compiler" "$tmpDir"
   expertsDirW="$(cygpath -wa "$tmpDir/experts")"
   includeDirW="$(cygpath -wa "$includeDir")"
-  MSYS_NO_PATHCONV=1 cmd /c mklink /D "$expertsDirW" "$includeDirW" < /dev/null > /dev/null || fail "ERROR: mklink /D \"$expertsDirW\" \"$includeDirW\" failed with status $?"
+  MSYS_NO_PATHCONV=1 cmd /c mklink /D "$expertsDirW" "$includeDirW" < /dev/null > /dev/null || fail "mklink /D \"$expertsDirW\" \"$includeDirW\" failed with status $?"
 
   # return tmpDir/compiler
   compiler="$tmpDir/$(basename "$compiler")"
@@ -572,30 +571,47 @@ function prepareCompiler40Dir() {
 }
 
 
-declare _mqlPaths=() _includeDirs=() _mql40Paths=() _mql45Paths=()
+declare _mql40Sources=() _mql45Sources=() sourcePaths=() _includeDirs=()
 
 #
 # Read the configuration into global vars.
 #
+# @param $1 - currently processed source file
+#
 function readConfig() {
-  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local srcFile="$1" dir config='' rcFile='.mqlcrc'
 
-  # backup existing env vars
+  # resolve config file location for the source file
+  srcFile="${srcFile//\\//}"
+  dir="${srcFile%/*}"; dir="${dir:-.}"
+  dir="$(cd -- "$dir" && pwd -P)/."                           # physical dir name
+  while :; do
+    dir="${dir%/*}"
+    [[ -z "$dir" ]] && break
+    [[ -f "$dir/$rcFile" ]] && { config="$dir/$rcFile"; break; }
+  done
+  if [[ -z "$config" && -n "${HOME:-}" ]]; then
+    [[ -f "$HOME/$rcFile" ]] && config="$HOME/$rcFile"
+  fi
+  if [[ -z "$config" && -n "${USERPROFILE:-}" ]]; then
+    [[ -f "$USERPROFILE/$rcFile" ]] && config="$USERPROFILE/$rcFile"
+  fi
+  ((debug)) && {
+    stderr "config file: ${config:-(not found)}"
+    stderr ""
+  }
+
+  # backup existing environment vars
   local BAK_MT4_METALANG="${MT4_METALANG:-}"
   local BAK_MT4_METAEDITOR="${MT4_METAEDITOR:-}"
   local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
 
-  local mql40Paths=() mql45Paths=() scriptDir config
+  local mql40Sources=() mql45Sources=()
   local -A includeDirs; includeDirs=()
 
-  # resolve config file location and source the file          # TODO: parse the file
-  scriptDir="$(dirname "$(realpath "$(type -p "$0")")")"
-  config="$scriptDir/../.mqlcrc"
-  [[ -f "$config" ]] && . "$config" || config='(not found)'
-  ((debug)) && {
-    error "config file: $config"
-    error ""
-  }
+  # source the config file                                    # TODO: parse the file
+  [[ -n "$config" ]] && . "$config"
 
   # resolve compiler settings: environment precedes configuration
   [[ "${MT4_METALANG:-}"   == '<'* ]] && MT4_METALANG=        # skip distributed values
@@ -606,39 +622,39 @@ function readConfig() {
   MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
   if [[ -n "$MT5_METAEDITOR" ]]; then                         # TODO: move to setCompilerPath()
     local basename; basename="$(basename "$MT5_METAEDITOR")"
-    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "ERROR: The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
+    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
   fi
   ((debug)) && {
-    error "configured compilers:"
-    [[ -n "$MT4_METALANG"   ]] && error "MT4_METALANG:   $MT4_METALANG"
-    [[ -n "$MT4_METAEDITOR" ]] && error "MT4_METAEDITOR: $MT4_METAEDITOR"
-    [[ -n "$MT5_METAEDITOR" ]] && error "MT5_METAEDITOR: $MT5_METAEDITOR"
-    error ""
+    stderr "configured compilers:"
+    [[ -n "$MT4_METALANG"   ]] && stderr "MT4_METALANG:   $MT4_METALANG"
+    [[ -n "$MT4_METAEDITOR" ]] && stderr "MT4_METAEDITOR: $MT4_METAEDITOR"
+    [[ -n "$MT5_METAEDITOR" ]] && stderr "MT5_METAEDITOR: $MT5_METAEDITOR"
+    stderr ""
   }
 
   # normalize configured MQL4 paths
-  normalizeMQL4Paths 'mql40Paths' '_mql40Paths'
-  normalizeMQL4Paths 'mql45Paths' '_mql45Paths'
+  normalizeMQL4Paths 'mql40Sources' '_mql40Sources'
+  normalizeMQL4Paths 'mql45Sources' '_mql45Sources'
   ((debug)) && {
-    error "configured MQL4.0 paths:"
-    ((${#_mql40Paths[@]})) && error "$(printf "%s\n" "${_mql40Paths[@]}")"
-    error ""
-    error "configured MQL4.5 paths:"
-    ((${#_mql45Paths[@]})) && error "$(printf "%s\n" "${_mql45Paths[@]}")"
-    error ""
+    stderr "configured MQL4.0 paths:"
+    ((${#_mql40Sources[@]})) && stderr "$(printf "%s\n" "${_mql40Sources[@]}")"
+    stderr ""
+    stderr "configured MQL4.5 paths:"
+    ((${#_mql45Sources[@]})) && stderr "$(printf "%s\n" "${_mql45Sources[@]}")"
+    stderr ""
   }
 
   # normalize configured include directories
-  normalizeIncludeDirs 'includeDirs' '_mqlPaths' '_includeDirs'
+  normalizeIncludeDirs 'includeDirs' 'sourcePaths' '_includeDirs'
   ((debug)) && {
     local i
-    error "configured include directories:"
-    for i in "${!_mqlPaths[@]}"; do
-      error "${_mqlPaths[i]} => ${_includeDirs[i]}"
+    stderr "configured include directories:"
+    for i in "${!sourcePaths[@]}"; do
+      stderr "${sourcePaths[i]} => ${_includeDirs[i]}"
     done
-    error ""
+    stderr ""
   }
-  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR _mqlPaths _includeDirs _mql40Paths _mql45Paths
+  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR _mql40Sources _mql45Sources sourcePaths _includeDirs
 }
 
 
@@ -649,7 +665,7 @@ function readConfig() {
 # @param _Out_ $2 - output variable
 #
 function normalizeMQL4Paths() {
-  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n in="$1"
   local -n out="$2"
   out=()
@@ -688,7 +704,7 @@ function normalizeMQL4Paths() {
 # @param _Out_ $3 - variable to write corresponding include directories to
 #
 function normalizeIncludeDirs() {
-  ((BASH_SUBSHELL)) && fail "ERROR: ${FUNCNAME[0]}() can't write to outer scope from subshell"
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n in="$1"
   local -n out1="$2"
   local -n out2="$3"
@@ -728,14 +744,14 @@ function normalizeIncludeDirs() {
 # Resolve the MQL version of a source file, taking into account an explicit or configured value.
 # If neither input nor configuration exist, the function tries to auto-detect the MQL version.
 #
-# @param $1 - filename (exists and is either .mq4 or .mq5)
+# @param $1 - filename (exists and is either an ".mq4" or ".mq5" file)
 # @param $2 - input version
 #
 function resolveMqlVersion() {
   local file="${1,,}" version="${2,,}"
   [[ "$file" == *.mq5 ]] && { echo "mql5"; return; }  # the file extension was already validated
   [[ "$version" == mql4[05] ]] && { echo "$version"; return; }
-  [[ -z "$version" ]] || fail "ERROR: unsupported input version: \"$version\""
+  [[ -z "$version" ]] || fail "unsupported input version: \"$version\""
 
   local dir base lines lFile pFile i
   file="${file//\\//}"
@@ -745,18 +761,18 @@ function resolveMqlVersion() {
   lFile="${lines[0],,}/$base"                         # logical filename
   pFile="${lines[1],,}/$base"                         # physical filename
 
-  for ((i=${#_mql45Paths[@]}-1; i>=0; i--)); do
-    [[ "$lFile" == "${_mql45Paths[i]}/"* ]] && { echo "mql45"; return; }
+  for ((i=${#_mql45Sources[@]}-1; i>=0; i--)); do
+    [[ "$lFile" == "${_mql45Sources[i]}/"* ]] && { echo "mql45"; return; }
   done
-  for ((i=${#_mql40Paths[@]}-1; i>=0; i--)); do
-    [[ "$lFile" == "${_mql40Paths[i]}/"* ]] && { echo "mql40"; return; }
+  for ((i=${#_mql40Sources[@]}-1; i>=0; i--)); do
+    [[ "$lFile" == "${_mql40Sources[i]}/"* ]] && { echo "mql40"; return; }
   done
 
-  for ((i=${#_mql45Paths[@]}-1; i>=0; i--)); do
-    [[ "$pFile" == "${_mql45Paths[i]}/"* ]] && { echo "mql45"; return; }
+  for ((i=${#_mql45Sources[@]}-1; i>=0; i--)); do
+    [[ "$pFile" == "${_mql45Sources[i]}/"* ]] && { echo "mql45"; return; }
   done
-  for ((i=${#_mql40Paths[@]}-1; i>=0; i--)); do
-    [[ "$pFile" == "${_mql40Paths[i]}/"* ]] && { echo "mql40"; return; } || :
+  for ((i=${#_mql40Sources[@]}-1; i>=0; i--)); do
+    [[ "$pFile" == "${_mql40Sources[i]}/"* ]] && { echo "mql40"; return; } || :
   done
 
   # TODO: auto-detect MQL4 version
@@ -783,11 +799,11 @@ function resolveIncludeDir() {
   lFile="${lines[0],,}/$base"                         # logical filename
   pFile="${lines[1],,}/$base"                         # physical filename
 
-  for ((i=${#_mqlPaths[@]}-1; i>=0; i--)); do
-    [[ "$lFile" == "${_mqlPaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; }
+  for ((i=${#sourcePaths[@]}-1; i>=0; i--)); do
+    [[ "$lFile" == "${sourcePaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; }
   done
-  for ((i=${#_mqlPaths[@]}-1; i>=0; i--)); do
-    [[ "$pFile" == "${_mqlPaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; } || :
+  for ((i=${#sourcePaths[@]}-1; i>=0; i--)); do
+    [[ "$pFile" == "${sourcePaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; } || :
   done
 
   # TODO: auto-detect include directory
@@ -819,7 +835,7 @@ function versionName() {
   [[ "$1" == 'mql40' ]] && { echo 'MQL4.0'; return; }
   [[ "$1" == 'mql45' ]] && { echo 'MQL4.5'; return; }
   [[ "$1" == 'mql5'  ]] && { echo 'MQL5';   return; }
-  fail "ERROR: unknown MQL version id: \"$1\""
+  fail "unknown MQL version id: \"$1\""
 }
 
 
@@ -858,12 +874,12 @@ while [[ "$#" -gt 0 ]]; do
         shift; continue;;
 
       -v|--version)
-        fail "ERROR: missing MQL4 version identifier: $1";;
+        fail "missing MQL4 version identifier: $1";;
 
       -v=*|--version=*)
         version="${1#*=}"
         version="${version,,}"
-        [[ -n "$version" && "$version" != mql4[05] ]] && fail "ERROR: invalid MQL4 version identifier in \"$1\" (expecting \"mql40\" or \"mql45\")"
+        [[ -n "$version" && "$version" != mql4[05] ]] && fail "invalid MQL4 version identifier in \"$1\" (expecting \"mql40\" or \"mql45\")"
         if ((firstVersion < 0)); then
           for i in "${!srcFileVersions[@]}"; do
             srcFileVersions[i]="$version"                 # the first --version affects previous sources if no more sources follow
@@ -875,8 +891,8 @@ while [[ "$#" -gt 0 ]]; do
       /inc|/include|/inc[=:]*|/include[=:]*)
         [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
         include="$(sanitizeName "$include")"
-        [[ -z "$include" ]] && fail "ERROR: missing argument: $1"
-        [[ -d "$include" ]] || fail "ERROR: include directory not found: \"$include\""
+        [[ -z "$include" ]] && fail "missing argument: $1"
+        [[ -d "$include" ]] || fail "include directory not found: \"$include\""
         if ((firstInclude < 0)); then
           for i in "${!srcFileIncludes[@]}"; do
             srcFileIncludes[i]="$include"                 # the first /include affects previous sources if no more sources follow
@@ -886,18 +902,18 @@ while [[ "$#" -gt 0 ]]; do
         shift; continue;;
 
       /log|/log[=:]*)
-        [[ "$log" -eq 1 ]] && fail "ERROR: multiple /log options"
+        [[ "$log" -eq 1 ]] && fail "multiple /log options"
         log=1
         if [[ ${#1} -gt 4 ]]; then
           customLog="$(sanitizeName "${1:5}")"
-          [[ -z "$customLog" ]] && fail "ERROR: missing argument: $1"
+          [[ -z "$customLog" ]] && fail "missing argument: $1"
           customLog="$(cygpath -w "$customLog")"
         fi
         shift; continue;;
 
       /compile[=:]*)
         srcArg="$(sanitizeName "${1:9}")"
-        [[ -z "$srcArg" ]] && fail "ERROR: missing argument: $1";;
+        [[ -z "$srcArg" ]] && fail "missing argument: $1";;
         # processing continues after the case block
     esac
   fi
@@ -913,14 +929,14 @@ while [[ "$#" -gt 0 ]]; do
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(fileExtension "$srcArg")"
-    [[ "${ext,,}" != mq[45] ]] && fail "ERROR: cannot compile file \"$srcArg\""
+    [[ "${ext,,}" != mq[45] ]] && fail "cannot compile file \"$srcArg\""
     srcFileNames+=("$srcArg")
     srcFileVersions+=("${version:-}")
     srcFileIncludes+=("${include:-}")
   else
     srcArg="$1"
     [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
-    fail "ERROR: file or directory not found: $srcArg"
+    fail "file or directory not found: $srcArg"
   fi
 
   if ((firstVersion > 0)); then
@@ -939,7 +955,7 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
-((!${#srcFileNames[@]}))    && fail "ERROR: missing source file/directory argument"
+((!${#srcFileNames[@]}))    && fail "missing source file/directory argument"
 ((${#srcFileNames[@]} > 1)) && compactOutput=1
 
 readonly srcFileNames srcFileVersions srcFileIncludes
@@ -947,7 +963,7 @@ readonly log customLog syntaxOnly compactOutput warn2error
 
 
 # read configuration
-readConfig
+readConfig "${srcFileNames[0]}"
 
 
 # process each source file
@@ -967,7 +983,7 @@ for i in "${!srcFileNames[@]}"; do
     mql45|mql5)
       compileMql5  "$file" "$version" "$include" || status=$?;;
     *)
-      fail "ERROR: cannot resolve MQL version of \"$file\"";;
+      fail "cannot resolve MQL version of \"$file\"";;
   esac
 
   ((status)) && exitCode="$status"

@@ -19,11 +19,11 @@ MT5_METAEDITOR='/c/unix-path/metaeditor64.exe'
 
 
 # source paths and predefined MQL4 versions
-mql40Dirs+=('<source-path1>')
-mql40Dirs+=('<source-path2>')
+mql40Sources+=('<source-path1>')
+mql40Sources+=('<source-path2>')
 
-mql45Dirs+=('<source-path3>')
-mql45Dirs+=('<source-path4>')
+mql45Sources+=('<source-path3>')
+mql45Sources+=('<source-path4>')
 
 
 # source paths and predefined include directories
