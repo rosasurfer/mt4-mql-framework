@@ -6,15 +6,16 @@
 #
 # Configuration via environment and config file.
 #
-# @see  "/bin/.mqlcrc.dist" for an example configuration
+# @see  "/bin/.mqlcrc.dist" for an example
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
 # TODO:
+#  - short usage on syntax errors
 #  - improve error message when a specified directory doesn't contain sources
 #  - improve error message for filenames looking like options
-#  - long help, short usage on syntax errors
 #  - reformat compiler messages
+#  - colored output
 #  - implement download tracker
 #  - add --rc/--norc option
 #  - support relative paths in configuration
@@ -28,7 +29,6 @@
 #  - move basename validation from readConfig() to setCompilerPath()
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
-#  - colored output and option
 #  - parallel compilation of multiple files
 #
 set -eEuo pipefail
@@ -38,7 +38,7 @@ set -eEuo pipefail
 
 
 #
-# Show the help screen.
+# Show the long help screen.
 #
 function help() {
   cat << 'SYNTAX'
@@ -78,6 +78,23 @@ Configuration:
  directory. Only the first file found will be used. Compiler locations can also be specified using environment vars.
  See "/bin/.mqlcrc.dist" for an example.
 
+SYNTAX
+}
+
+
+#
+# Show the short help screen.
+#
+# @param $@ - any number of arguments
+#
+function usage() {
+  local msg='' syntax
+  (("$#")) && msg="$*"$'\n\n'
+
+  cat << SYNTAX
+${msg}Usage: mqlc  [options] [--] SOURCES...
+       mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
+       mqlc  --help
 SYNTAX
 }
 
@@ -854,8 +871,9 @@ init
 
 
 # parse command line arguments
-((!"$#")) && { help; exit 0; }
-while [[ "$#" -gt 0 ]]; do
+((!"$#")) && { usage; exit 127; }
+
+while (("$#")); do
   if ((!delimiterPassed)); then                           # enter case only before an option terminator
     case "$1" in
       --)
