@@ -11,7 +11,6 @@
 #
 #
 # TODO:
-#  - improve error message when a specified directory doesn't contain sources
 #  - improve error message for filenames looking like options
 #  - reformat compiler messages
 #  - colored output
@@ -861,7 +860,7 @@ function versionName() {
 
 
 # define vars
-declare srcFileNames=() srcArg=''
+declare srcFileNames=() srcArg='' srcDirGiven=0
 declare srcFileVersions=() version='' firstVersion=-1
 declare srcFileIncludes=() include='' firstInclude=-1
 declare log=0 customLog='' syntaxOnly=0 compactOutput=0 warn2error=0 delimiterPassed=0
@@ -945,6 +944,7 @@ while (("$#")); do
   ((delimiterPassed)) || [[ "$1" != /compile* ]] && srcArg="$1"
 
   if [[ -d "$srcArg" ]]; then
+    srcDirGiven=1
     while IFS= read -r file; do
       srcFileNames+=("$file")
       srcFileVersions+=("${version:-}")
@@ -978,8 +978,11 @@ while (("$#")); do
   shift
 done
 
-((!${#srcFileNames[@]}))    && syntaxError "No source file specified."
-((${#srcFileNames[@]} > 1)) && compactOutput=1
+size=${#srcFileNames[@]}
+if ((!size)); then
+  ((srcDirGiven == 0)) && syntaxError "No source file specified." || syntaxError "No source files found."
+fi
+((size > 1)) && compactOutput=1
 
 readonly srcFileNames srcFileVersions srcFileIncludes
 readonly log customLog syntaxOnly compactOutput warn2error
