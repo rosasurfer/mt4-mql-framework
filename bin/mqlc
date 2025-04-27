@@ -15,6 +15,7 @@
 #  - colored output
 #  - implement download tracker
 #  - add --rc/--norc option
+#  - resolve config per source dir
 #  - support relative paths in configuration
 #  - the config must be parsed, not sourced
 #  - in WSL: move tmp dir to Windows file system
@@ -23,7 +24,6 @@
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
-#  - move basename validation from readConfig() to setCompilerPath()
 #  - add bitness and sigdate to compiler infos
 #  - normalize source names and filter duplicates
 #  - parallel compilation of multiple files
@@ -459,7 +459,7 @@ _cachedCompilerPaths=()
 function setCompilerPath() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n result="$1"
-  local version="$2" includeDir="${3:-}" compilerVar
+  local version="$2" includeDir="${3:-}" compilerVar filename basename
 
   if [[ -n "$includeDir" ]]; then
     includeDir="$(cd -- "$includeDir" && pwd -P)"
@@ -477,9 +477,15 @@ function setCompilerPath() {
 
   [[ -z "${compilerVar:-}" ]] && fail "unknown MQL version id \"$version\""
   [[ -z "${!compilerVar-}" ]] && fail "$(versionName "$version") compiler is not configured"
-  [[ -f "${!compilerVar}"  ]] || fail "$(versionName "$version") compiler not found: \"${!compilerVar}\""
-  result="${!compilerVar}"
+  filename="${!compilerVar}"
+  [[ -f "$filename" ]] || fail "$(versionName "$version") compiler not found: \"$filename\""
 
+  if [[ "$version" == 'mql5' ]]; then
+    basename="$(basename "$filename")"
+    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "The name of MetaEditor5 must be: \"metaeditor64.exe\" (...so say the criminals at MetaQuotes)"
+  fi
+
+  result="$filename"
   if [[ -n "$includeDir" ]]; then
     result="$(prepareCompiler40Dir "$result" "$includeDir")"
   fi
@@ -630,16 +636,12 @@ function readConfig() {
   [[ -n "$config" ]] && . "$config"
 
   # resolve compiler settings: environment precedes configuration
-  [[ "${MT4_METALANG:-}"   == '<'* ]] && MT4_METALANG=        # skip distributed values
+  [[ "${MT4_METALANG:-}"   == '<'* ]] && MT4_METALANG=        # skip distributed/example values
   [[ "${MT4_METAEDITOR:-}" == '<'* ]] && MT4_METAEDITOR=
   [[ "${MT5_METAEDITOR:-}" == '<'* ]] && MT5_METAEDITOR=
   MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
   MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
   MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
-  if [[ -n "$MT5_METAEDITOR" ]]; then                         # TODO: move to setCompilerPath()
-    local basename; basename="$(basename "$MT5_METAEDITOR")"
-    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "The base name of the MT5 MetaEditor must be: \"metaeditor64.exe\""
-  fi
   ((debug)) && {
     stderr "configured compilers:"
     [[ -n "$MT4_METALANG"   ]] && stderr "MT4_METALANG:   $MT4_METALANG"
