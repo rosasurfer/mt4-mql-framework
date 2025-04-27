@@ -6,26 +6,32 @@
 #
 # Configuration via environment and config file.
 #
-# @see  "/bin/.mqlcrc.dist" for an example
+# @see  "/bin/.mqlcrc" for an example
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
 # TODO:
-#  - reformat compiler messages
+#  - format compiler messages
 #  - colored output
 #  - implement download tracker
-#  - add --rc/--norc option
+#  - option --rc/--norc
+#  - option --clean
+#  - option --syntax
+#  - option --info
+#  - option /log
 #  - resolve config per source dir
+#  - in WSL: move tmp dir to Windows file system
 #  - support relative paths in configuration
 #  - the config must be parsed, not sourced
-#  - in WSL: move tmp dir to Windows file system
 #
 #  - auto-detect version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
-#  - add bitness and sigdate to compiler infos
+#  - support cross-compilation (for testing purposes)
+#  - support multiple output formats
 #  - normalize source names and filter duplicates
+#  - add bitness and sigdate to compiler infos
 #  - parallel compilation of multiple files
 #
 set -eEuo pipefail
@@ -73,7 +79,7 @@ Configuration:
  Unless option --rc/--norc is used, the script will look for a file named ".mqlcrc" in the source directory and each
  parent directory. If no file is found in any of the parent directories, the script will look in the user's home
  directory. Only the first file found will be used. Compiler locations can also be specified using environment vars.
- See "/bin/.mqlcrc.dist" for an example.
+ See "/bin/.mqlcrc" for an example.
 
 SYNTAX
 }
@@ -271,7 +277,7 @@ function compileMql40() {
     echo "cmd: $s_compiler $s_srcFile"
   }
 
-  # call the compiler and measure execution time
+  # call the compiler: The exit code is the number of detected errors (0 = no errors but possibly warnings).
   startms="$(date +%s%3N)"
   readarray -t output < <(
     { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
@@ -301,15 +307,13 @@ function compileMql40() {
     if [[ ${#output[@]} -lt 4 ]]; then                                # no error message happens for empty source file only
       ((errorStatus != 127)) && fail "unexpected compiler output for status $errorStatus: no error message"
       ((originalOutput)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
-      ((errors++)) || :
+      ((errors++))
     else
       # count errors and warnings
       local i
       for ((i=3; i < ${#output[@]}; i++)); do
-        [[ "${output[i]}" != [0-9]* ]] && break
-        [[ "${output[i]}" == [1]* ]] && { ((warnings++)) || :; continue; }
-        [[ "${output[i]}" == [2]* ]] && { ((errors++))   || :; continue; }
-        fail "unknown message type in: ${output[i]}"
+        [[ "${output[i]}" == '1;'* ]] && ((warnings++))
+        [[ "${output[i]}" == '2;'* ]] && ((errors++))
       done
     fi
 
@@ -331,9 +335,14 @@ function compileMql40() {
   if ((originalOutput)); then
     output+=("$errorStatus")
   else
-    output[0]="${output[0]//compiler build/compiler version 4.00 build}"              # update compiler version
+    output[0]="${output[0]//compiler build/compiler version 4.00 build}"              # update compiler info
     [[ "${output[1]}" =~ ^Copyright ]] && unset 'output[1]'                           # remove copyright
     ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'  # more compact output
+
+    local keys=("${!output[@]}")
+    for i in "${keys[@]:2}"; do                                                       # format compiler messages
+      [[ "${output[i]:-}" == [12]';'* ]] && formatCompiler40Msg "output[$i]" "$srcFile" "$errors" "$warnings"
+    done
   fi
 
   # print everything to STDOUT
@@ -345,6 +354,38 @@ function compileMql40() {
   ((retVal = errors + warnings))
   ((retVal > 255)) && retVal=255
   return "$retVal"
+}
+
+
+#
+# Format a log message produced by the MQL4.0 compiler.
+#
+# @param _InOut_ $1 - named reference to the log message
+# @param _In_    $2 - source file of the compilation
+# @param _In_    $3 - number of error messages during the compilation
+# @param _In_    $4 - number of warning messages during the compilation
+#
+function formatCompiler40Msg() {
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local -n msg="$1"
+  local srcFile="$2" errors="$3" warnings="$4" cols type='' level='' levelS='' file='' location='' descr='' len
+
+  mapfile -t cols < <(printf '%s\n' "${msg//;/$'\n'}")
+  ((${#cols[@]} != 5)) && fail "unexpected number of fields (${#cols[@]}) in compiler message: \"$msg\""
+
+  type="${cols[0]}"
+  [[ "$type" == [12] ]] || fail "unexpected message type ($type) in compiler message: \"$msg\""
+  ((type == 1)) && level='warn' || level='error'
+  ((errors)) && len=6 || len=5
+  levelS="$level: "
+  levelS="${levelS:0:$len}"
+
+  file="${cols[2]}"
+  [[ -n "${cols[3]}" ]] && location=" (${cols[3]})"
+  descr="${cols[4]}"
+
+  msg="${levelS} ${file}${location}: ${descr}"
+  #msg="${file}${location}: ${level}: ${descr}"
 }
 
 
@@ -381,7 +422,7 @@ function compileMql5() {
 
   # run the compiler
   if ((!originalOutput)); then
-    printProductInfo "$compiler"
+    printCompilerInfo "$compiler"
     ((compactOutput)) || echo ""
   fi
   checkCompilerDir "$compiler"
@@ -423,19 +464,30 @@ function compileMql5() {
 
 
 #
-# Print product and version infos of the passed file.
+# Format a log message produced by the MQL4.5 or MQL5 compiler.
+#
+# @param _In_    $1 - source file causing the message
+# @param _InOut_ $2 - named reference to the message
+#
+function formatCompiler5Msg() {
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
+}
+
+
+#
+# Print product and version infos of the passed compiler file.
 #
 # @param $1 - filename
 #
-function printProductInfo() {
+function printCompilerInfo() {
   local file output product version
-  file="$(cygpath -d "$1")"                       # the DOS name spares us quoting which would get mangled which would break the call
+  file="$(cygpath -d "$1")"                           # the DOS name spares us quoting which would get mangled which would break the call
 
   output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" < /dev/null)"
-  output="${output#$'\xEF\xBB\xBF'}"              # cut-off a BOM header if present
-  output="${output%$'\r'}"                        # cut-off a Windows EOL if present
+  output="${output#$'\xEF\xBB\xBF'}"                  # cut-off a BOM header if present
+  output="${output%$'\r'}"                            # cut-off a Windows EOL if present
 
-  IFS=$'\t' read -r product version <<< "$output"
+  IFS=$'\t' read -r product version <<< "$output"     # TODO: replace PowerShell crap
 
   [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
     fail "unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
@@ -598,7 +650,7 @@ declare _mql40Sources=() _mql45Sources=() sourcePaths=() _includeDirs=()
 #
 # Read the configuration into global vars.
 #
-# @param $1 - currently processed source file
+# @param $1 - source file (exists)
 #
 function readConfig() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
@@ -606,7 +658,7 @@ function readConfig() {
 
   # resolve config file location for the source file
   srcFile="${srcFile//\\//}"
-  dir="${srcFile%/*}"; dir="${dir:-.}"
+  [[ "$srcFile" == */* ]] && dir="${srcFile%/*}" || dir='.'
   dir="$(cd -- "$dir" && pwd -P)/."                           # physical dir name
   while :; do
     dir="${dir%/*}"
@@ -619,8 +671,8 @@ function readConfig() {
   if [[ -z "$config" && -n "${USERPROFILE:-}" ]]; then
     [[ -f "$USERPROFILE/$rcFile" ]] && config="$USERPROFILE/$rcFile"
   fi
-  ((debug)) && {
-    stderr "config file: ${config:-(not found)}"
+  [[ "$debug" -eq 1 && -n "$config" ]] && {
+    stderr "reading config file: $config"
     stderr ""
   }
 
@@ -773,7 +825,7 @@ function resolveMqlVersion() {
 
   local dir base lines lFile pFile i
   file="${file//\\//}"
-  dir="${file%/*}"; dir="${dir:-.}"
+  [[ "$file" == */* ]] && dir="${file%/*}" || dir='.'
   base="${file##*/}"
   readarray -t lines < <(cd -- "$dir" && echo "$PWD" && pwd -P)
   lFile="${lines[0],,}/$base"                         # logical filename
@@ -811,7 +863,7 @@ function resolveIncludeDir() {
 
   local dir base lines i
   file="${file//\\//}"
-  dir="${file%/*}"; [[ -z "$dir" ]] && dir='.'
+  [[ "$file" == */* ]] && dir="${file%/*}" || dir='.'
   base="${file##*/}"
   readarray -t lines < <(cd -- "$dir" && echo "$PWD" && pwd -P)
   lFile="${lines[0],,}/$base"                         # logical filename
@@ -1023,162 +1075,35 @@ exit "$exitCode"
 
 
 notes << NOTES
-
-  ==========================================================================================================================================
-  metalang.exe
-  ==========================================================================================================================================
-  metalang.exe's exit code is the number of encountered errors (0 = no errors but possibly warnings).
-
-  success w/o warnings
-  --------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  Exp file "Dow Jones Breakout.ex4" produced - 0 error(s), 0 warning(s)
-  0
-
-  success with warnings
-  ---------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  1;33;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;149:8;'5' - comparison expression expected
-  Exp file "Dow Jones Breakout.ex4" produced - 0 error(s), 1 warning(s)
-  0
-
-  syntax errors
-  -------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;124;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;146:12;'HandleCommand' - function is not defined
-  1;33;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;149:8;'5' - comparison expression expected
-
-  Errors--1
-  See logfile "Dow Jones Breakout.log"
-
-  1
-
-  parser errors
-  -------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe "Dow Jones Breakout.mq4"; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;89;C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4;526:1;'\end_of_program' - unbalanced left parenthesis
-  1
-
-  empty source file
-  -----------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe empty.mq4; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-  127
-
-  regular text file as source
-  ---------------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe output.txt; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;114;C:\z\F\Projects\mt4\mql\bin\output.txt;11:53;'some pewa text' - more than 1 symbol
-  127
-
-  binary source file
-  ------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe metalang.exe; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  1;41;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ???' - expression on global scope not allowed
-  2;75;C:\z\F\Projects\mt4\mql\bin\metalang.exe;1:1;'MZ???' - variable not defined
-  1
-
-  input file not found
-  --------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe no-exist.mq4; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;76;;;cannot open the program file
-  127
-
-  access to output file denied
-  ----------------------------
-  $ MSYS_NO_PATHCONV=1 metalang.exe ChartInfos.mq4; echo $?
-  MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
-  Copyright 2001-2009, MetaQuotes Software Corp.
-
-  2;52;;;cannot open the output expert file
-  1
-
-
   ==========================================================================================================================================
   MetaEditor
   ==========================================================================================================================================
-  MetaEditor's exit code is the number of successfully processed files (0 = error). It doesn't produce
-  any error messages.
-
+  The exit code is the number of successfully processed files (0 = error). It doesn't produce any error messages.
 
   renamed executable
   ------------------
-  $ MSYS_NO_PATHCONV=1 metaeditor64_.exe /compile:Exists.mq5 /log:custom.log; echo $?
+  $ metaeditor64_.exe /compile:Exists.mq5 /log:custom.log; echo $?
   0 (no "custom.log", no "metaeditor.log")
 
 
-  syntax errors without /log option
-  ---------------------------------
-  $ MSYS_NO_PATHCONV=1 metaeditor.exe /compile:Exists.mq4; echo $?
+  syntax errors w/o /log option
+  -----------------------------
+  $ metaeditor.exe /compile:Exists.mq4; echo $?
   0 (no "metaeditor.log")
 
-  $ MSYS_NO_PATHCONV=1 metaeditor64.exe /compile:Exists.mq5; echo $?
+  $ metaeditor64.exe /compile:Exists.mq5; echo $?
   0 (summary in "metaeditor.log")
 
 
   input file not found
   --------------------
-  $ MSYS_NO_PATHCONV=1 metaeditor*.exe /compile:DoesntExist.mq4 /log:custom.log; echo $?
+  $ metaeditor*.exe /compile:DoesntExist.mq4 /log:custom.log; echo $?
   0 (no "custom.log", no "metaeditor.log")
 
 
   ==========================================================================================================================================
-  Other
+  Syntax
   ==========================================================================================================================================
-  Syntax MQL4.5 + MQL5
-  --------------------
-  - compile single file
-    $ metaeditor.exe /compile:<filename-without-spaces>
-    $ metaeditor.exe /compile:"<filename with spaces>"
-
-  - compile whole directory (recompiles only if a source file is newer than the compiled version, no subdirectories)
-    $ metaeditor.exe /compile:"<target-directory>"
-
-  - use custom include directory (default: "mql4/5" in directory containing metaeditor.exe)
-    $ metaeditor.exe /include:"<separate-mql-directory>"                                                      # can be shortened to /inc:
-
-  - create log file named <source-file.log>, without errors are logged to "<data-dir>/logs/metaeditor.log"
-    $ metaeditor.exe /compile:"<source>" /log
-
-  - create custom log file, not supported when compiling directories
-    $ metaeditor.exe /compile:"<source>" /log:"<log-filename>"
-
-  - check syntax only (no compilation)
-    $ metaeditor.exe /compile:"<source>" /s
-
-
-  MT4 after installation
-  ----------------------
-  metaeditor.exe /packed:21 /compile:"103304111_21238" /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
-
-
-  MT5 after installation
-  ----------------------
-  metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1743564639 /flg:0 /stop:se5296_103760508
-
-
   metalang.exe -h
   ---------------
   MetaQuotes Language 4 compiler version 4.00 build 224 (14 May 2009)
@@ -1199,6 +1124,89 @@ notes << NOTES
           /o        - use code optimizer
 
 
+  MetaEditor
+  ----------
+  - compile single file
+    $ metaeditor.exe /compile:<filename-without-spaces>
+    $ metaeditor.exe /compile:"<filename with spaces>"
+
+  - compile whole directory (recompiles only if a source file is newer than the compiled version, no subdirectories)
+    $ metaeditor.exe /compile:"<target-directory>"
+
+  - use custom include directory (default: "mql4/5" in directory containing metaeditor.exe)
+    $ metaeditor.exe /include:"<separate-mql-directory>"                                                      # can be shortened to /inc:
+
+  - create log file named <source-file.log>, without errors are logged to "<data-dir>/logs/metaeditor.log"
+    $ metaeditor.exe /compile:"<source>" /log
+
+  - create custom log file, not supported when compiling directories
+    $ metaeditor.exe /compile:"<source>" /log:"<log-filename>"
+
+  - check syntax only (no compilation)
+    $ metaeditor.exe /compile:"<source>" /s
+
+  after installation
+  ------------------
+  metaeditor.exe /packed:21 /compile:"103304111_21238" /inc:"E:\Trading\MetaTrader\versions\1417\MQL4" /flg:2
+  metaeditor64.exe /portable /compile:"E:\Trading\MetaTrader5\MQL5" /inc:"E:\Trading\MetaTrader5\MQL5" /time:1743564639 /flg:0 /stop:se5296_103760508
+
+
   @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0
+
+
+metalang.exe
+------------
+1=warn
+2=error
+
+2 ; 124 ; C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4 ; 146:12 ; 'HandleCommand' - function is not defined
+1 ; 33  ; C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4 ; 149:8  ; '5' - comparison expression expected
+2 ; 89  ; C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4 ; 526:1  ; '\end_of_program' - unbalanced left parenthesis
+2 ; 114 ; C:\z\F\Projects\mt4\mql\bin\output.txt             ; 11:53  ; 'some text' - more than 1 symbol
+1 ; 41  ; C:\z\F\Projects\mt4\mql\bin\metalang.exe           ; 1:1    ; 'MZ???' - expression on global scope not allowed
+2 ; 75  ; C:\z\F\Projects\mt4\mql\bin\metalang.exe           ; 1:1    ; 'MZ???' - variable not defined
+2 ; 76  ;                                                    ;        ; cannot open the source file
+2 ; 52  ;                                                    ;        ; cannot open the output file
+
+
+metaeditor.exe
+--------------
+F:\Projects\mt4\uedit\other\mql5\experts\ZigZag EA.mq5(60,7) : error 256: 'ObjectSettInteger' - undeclared identifier
+F:\Projects\mt4\uedit\other\mql5\experts\ZigZag EA.mq5(60,32) : error 149: ',' - unexpected token
+F:\Projects\mt4\uedit\other\mql5\experts\ZigZag EA.mq5(60,25) : error 152: 'chartId' - some operator expected
+F:\Projects\mt4\uedit\other\mql5\experts\ZigZag EA.mq5(60,46) : error 149: ',' - unexpected token
+F:\Projects\mt4\uedit\other\mql5\experts\ZigZag EA.mq5(60,65) : error 149: ',' - unexpected token
+F:\Projects\mt4\uedit\other\mql5\experts\ZigZag EA.mq5(60,48) : warning 95: expression has no effect
+F:\Projects\mt4\uedit\other\mql5\experts\ZigZag EA.mq5(60,69) : error 149: ')' - unexpected token
+F:\Projects\mt4\uedit\other\mql5\experts\ZigZag EA.mq5(60,67) : warning 95: expression has no effect
+
+../../mql5/experts/ZigZag EA.mq5                  : information : compiling 'ZigZag EA.mq5'
+../../mql5/experts/ZigZag EA.mq5                  : information : including F:\Projects\mt4\mql5\Include\rsf\stddefines.mqh
+F:\Projects\mt4\mql5\Include\rsf\stddefines.mqh   : information : including F:\Projects\mt4\mql5\Include\rsf\shared.mqh
+F:\Projects\mt4\mql5\Include\rsf\shared.mqh       : information : including F:\Projects\mt4\mql5\Include\rsf\expander\defines.h
+F:\Projects\mt4\mql5\Include\rsf\shared.mqh       : information : including F:\Projects\mt4\mql5\Include\rsf\expander\errors.h
+F:\Projects\mt4\mql5\Include\rsf\stddefines.mqh   : information : including F:\Projects\mt4\mql5\Include\rsf\win32defines.mqh
+../../mql5/experts/ZigZag EA.mq5                  : information : including F:\Projects\mt4\mql5\Include\rsf\core\expert.mqh
+../../mql5/experts/ZigZag EA.mq5                  : information : including F:\Projects\mt4\mql5\Include\rsf\stdfunctions.mqh
+F:\Projects\mt4\mql5\Include\rsf\stdfunctions.mqh : information : including F:\Projects\mt4\mql5\Include\rsf\functions\log.mqh
+
+
+metaeditor64.exe
+----------------
+                                                  : information : generating code
+                                                  : information : generating code 3%
+                                                  : information : generating code 6%
+                                                  : information : generating code 9%
+                                                  : information : generating code 12%
+
+UltraEdit
+---------
+If a tool is configured that returns errors to the output window (such as a compiler), UltraEdit and UEStudio will open the referenced
+file at the specified line if the user double-clicks on the error listing. For this to be supported the file must be referenced in the
+following format "FULL PATH(Line Number,Column Number): Error Message" i.e.:
+
+ C:\Development Path\ProjectDev\EditWindow.c(341): Undefined variable "GeneralError"
+
+- doesn't find the file if path or basename contain dots            (really??)
 
 NOTES
