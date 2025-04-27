@@ -11,7 +11,6 @@
 #
 #
 # TODO:
-#  - improve error message for filenames looking like options
 #  - reformat compiler messages
 #  - colored output
 #  - implement download tracker
@@ -909,6 +908,9 @@ while (("$#")); do
           firstVersion="${#srcFileVersions[@]}"           # track position
         fi
         shift; continue;;
+
+      -*)
+        syntaxError "unrecognized option \"$1\" (use the -- delimiter if source arguments start with a hyphen)";;
 
       /inc|/include|/inc[=:]*|/include[=:]*)
         [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
