@@ -11,7 +11,6 @@
 #
 #
 # TODO:
-#  - short usage on syntax errors
 #  - improve error message when a specified directory doesn't contain sources
 #  - improve error message for filenames looking like options
 #  - reformat compiler messages
@@ -83,19 +82,21 @@ SYNTAX
 
 
 #
-# Show the short help screen.
+# Show the short help screen prefixed by an optional error message, and terminate the script.
 #
-# @param $@ - any number of arguments
+# @param $@ - optional message
 #
-function usage() {
+function syntaxError() {
   local msg='' syntax
   (("$#")) && msg="$*"$'\n\n'
 
-  cat << SYNTAX
-${msg}Usage: mqlc  [options] [--] SOURCES...
+  IFS= read -r -d '' syntax << 'SYNTAX' || true
+Usage: mqlc  [options] [--] SOURCES...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
        mqlc  --help
 SYNTAX
+  stderr "${msg}${syntax}"
+  exit 127
 }
 
 
@@ -523,23 +524,23 @@ function duration() {
 
 
 #
-# Prints a message to STDERR but doesn't exit the script/subshell.
-#
-# @param $@ - any number of arguments
-#
-function stderr () {
-  echo "$@" 1>&2
-}
-
-
-#
-# Prints a message to STDERR and exits the script/subshell.
+# Print a message to STDERR and exit the script/subshell.
 #
 # @param $@ - any number of arguments
 #
 function fail() {
   stderr "ERROR: $*"
-  exit 1
+  exit 127
+}
+
+
+#
+# Print a message to STDERR but don't exit the script/subshell.
+#
+# @param $@ - any number of arguments
+#
+function stderr () {
+  echo "$@" >&2
 }
 
 
@@ -871,33 +872,37 @@ init
 
 
 # parse command line arguments
-((!"$#")) && { usage; exit 127; }
+((!"$#")) && syntaxError 'No source file specified.'
 
 while (("$#")); do
   if ((!delimiterPassed)); then                           # enter case only before an option terminator
     case "$1" in
       --)
         delimiterPassed=1
-        shift; continue;;
+        shift
+        continue;;
 
       -h|--help)
-        help; exit 0;;
+        help
+        exit 0;;
 
-      [-/]s|--syntax)                                     # also support MetaEditor's option prefix
+      [-/]s|--syntax)                                     # support MetaEditor's option prefix
         syntaxOnly=1
-        shift; continue;;
+        shift
+        continue;;
 
       -w|--warn2error)
         warn2error=1
-        shift; continue;;
+        shift
+        continue;;
 
       -v|--version)
-        fail "missing MQL4 version identifier: $1";;
+        syntaxError "missing version argument: $1";;
 
       -v=*|--version=*)
         version="${1#*=}"
         version="${version,,}"
-        [[ -n "$version" && "$version" != mql4[05] ]] && fail "invalid MQL4 version identifier in \"$1\" (expecting \"mql40\" or \"mql45\")"
+        [[ -n "$version" && "$version" != mql4[05] ]] && syntaxError "invalid version argument in \"$1\" (expecting \"mql40\" or \"mql45\")"
         if ((firstVersion < 0)); then
           for i in "${!srcFileVersions[@]}"; do
             srcFileVersions[i]="$version"                 # the first --version affects previous sources if no more sources follow
@@ -909,8 +914,8 @@ while (("$#")); do
       /inc|/include|/inc[=:]*|/include[=:]*)
         [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
         include="$(sanitizeName "$include")"
-        [[ -z "$include" ]] && fail "missing argument: $1"
-        [[ -d "$include" ]] || fail "include directory not found: \"$include\""
+        [[ -z "$include" ]] && syntaxError "missing argument: $1"
+        [[ -d "$include" ]] || syntaxError "include directory not found: \"$include\""
         if ((firstInclude < 0)); then
           for i in "${!srcFileIncludes[@]}"; do
             srcFileIncludes[i]="$include"                 # the first /include affects previous sources if no more sources follow
@@ -920,18 +925,18 @@ while (("$#")); do
         shift; continue;;
 
       /log|/log[=:]*)
-        [[ "$log" -eq 1 ]] && fail "multiple /log options"
+        [[ "$log" -eq 1 ]] && syntaxError "multiple /log options"
         log=1
         if [[ ${#1} -gt 4 ]]; then
           customLog="$(sanitizeName "${1:5}")"
-          [[ -z "$customLog" ]] && fail "missing argument: $1"
+          [[ -z "$customLog" ]] && syntaxError "missing argument: $1"
           customLog="$(cygpath -w "$customLog")"
         fi
         shift; continue;;
 
       /compile[=:]*)
         srcArg="$(sanitizeName "${1:9}")"
-        [[ -z "$srcArg" ]] && fail "missing argument: $1";;
+        [[ -z "$srcArg" ]] && syntaxError "missing argument: $1";;
         # processing continues after the case block
     esac
   fi
@@ -947,14 +952,14 @@ while (("$#")); do
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(fileExtension "$srcArg")"
-    [[ "${ext,,}" != mq[45] ]] && fail "cannot compile file \"$srcArg\""
+    [[ "${ext,,}" != mq[45] ]] && syntaxError "cannot compile file \"$srcArg\""
     srcFileNames+=("$srcArg")
     srcFileVersions+=("${version:-}")
     srcFileIncludes+=("${include:-}")
   else
     srcArg="$1"
     [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
-    fail "file or directory not found: $srcArg"
+    syntaxError "file or directory not found: $srcArg"
   fi
 
   if ((firstVersion > 0)); then
@@ -973,7 +978,7 @@ while (("$#")); do
   shift
 done
 
-((!${#srcFileNames[@]}))    && fail "missing source file/directory argument"
+((!${#srcFileNames[@]}))    && syntaxError "No source file specified."
 ((${#srcFileNames[@]} > 1)) && compactOutput=1
 
 readonly srcFileNames srcFileVersions srcFileIncludes
