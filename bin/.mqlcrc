@@ -1,29 +1,31 @@
 #
-# Configuration for command line tools. All configurations can also be specified in environment variables.
-# Environment settings have higher priority than settings in the configuration file.
+# Copy this file to "/.mqlcrc" and adjust the settings to your system.
+# ----------------------------------------------------------------------------------------------------
+# Configuration for the MQL compiler script. Compiler locations may also be specified via environment.
+# Environment settings have higher priority than settings in this file.
 #
-# Copy this file to ".mqlcrc" and adjust it to your system. File names support Unix and Windows notation,
-# simple forward and double backward slashes. File names with spaces must be quoted.
+# Paths support Unix and Windows notation.
+# Names with spaces must be quoted. Backward slashes must be doubled.
 #
 
-# absolute path to the MQL4.0 compiler (MT4 terminal builds <= 509)
-MT4_METALANG='<drive>:/<path>/metalang.exe'
+# path to the MT4 compiler for MQL4.0 (terminal builds <= 509)
+MT4_METALANG='<drive>:\\<path>\\metalang.exe'
 
-# absolute path to the MQL4.5 MetaEditor (MT4 terminal builds > 509)
-MT4_METAEDITOR="<drive>:\\<path>\\metaeditor.exe"
+# path to the MT4 MetaEditor for MQL4.5 (terminal builds > 509)
+MT4_METAEDITOR='<drive>:/windows-path/metaeditor.exe'
 
-# absolute path to the MQL5 MetaEditor (all MT5 builds)
-MT5_METAEDITOR="<drive>:\\<path>\\metaeditor64.exe"
-
-
-# source paths and configured MQL4 versions
-mql40Dirs+=('<path1>')
-mql40Dirs+=('<path2>')
-
-mql45Dirs+=('<path3>')
-mql45Dirs+=('<path4>')
+# path to the MT5 MetaEditor for MQL5 (all MT5 builds)
+MT5_METAEDITOR='/c/unix-path/metaeditor64.exe'
 
 
-# source paths and configured include directories
-includeDirs['<path5>']='<include-dir1>';
-includeDirs['<path6>']='<include-dir2>';
+# source paths and predefined MQL4 versions
+mql40Sources+=('<source-path1>')
+mql40Sources+=('<source-path2>')
+
+mql45Sources+=('<source-path3>')
+mql45Sources+=('<source-path4>')
+
+
+# source paths and predefined include directories
+includeDirs['<source-path1>']='<include-dir1>';
+includeDirs['<source-path3>']='<include-dir2>';
