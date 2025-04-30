@@ -11,7 +11,6 @@
 #
 #
 # TODO:
-#  - format compiler messages
 #  - colored output
 #  - implement download tracker
 #  - option --rc/--norc
@@ -20,7 +19,7 @@
 #  - option --info
 #  - option /log
 #  - resolve config per source dir
-#  - in WSL: move tmp dir to Windows file system
+#  - WSL: move tmp dir to Windows file system
 #  - support relative paths in configuration
 #  - the config must be parsed, not sourced
 #
@@ -28,7 +27,7 @@
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
-#  - support cross-compilation (for testing purposes)
+#  - cross-compilation for testing purposes
 #  - support multiple output formats
 #  - normalize source names and filter duplicates
 #  - add bitness and sigdate to compiler infos
@@ -362,15 +361,15 @@ function compileMql40() {
 #
 # @param _InOut_ $1 - named reference to the log message
 # @param _In_    $2 - source file of the compilation
-# @param _In_    $3 - number of error messages during the compilation
-# @param _In_    $4 - number of warning messages during the compilation
+# @param _In_    $3 - number of errors during the compilation
+# @param _In_    $4 - number of warnings during the compilation
 #
 function formatCompiler40Msg() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n msg="$1"
-  local srcFile="$2" errors="$3" warnings="$4" cols type='' level='' levelS='' file='' location='' descr='' len
+  local srcFile="$2" errors="$3" warnings="$4" cols type level levelS file location='' descr len
 
-  mapfile -t cols < <(printf '%s\n' "${msg//;/$'\n'}")
+  readarray -t cols < <(printf '%s\n' "${msg//;/$'\n'}")
   ((${#cols[@]} != 5)) && fail "unexpected number of fields (${#cols[@]}) in compiler message: \"$msg\""
 
   type="${cols[0]}"
@@ -447,6 +446,10 @@ function compileMql5() {
   if ((originalOutput)); then
     output+=("$errorStatus")
   else
+    local keys=("${!output[@]}") size="${#output[@]}"
+    for i in "${keys[@]:0:$(($size-1))}"; do                  # format compiler messages
+      formatCompiler5Msg "output[$i]" "$srcFile" "$errors" "$warnings"
+    done
     ((!errors && !warnings))               && output+=("Success")
     ((errors || (warn2error && warnings))) && output+=("Error")
   fi
@@ -466,11 +469,38 @@ function compileMql5() {
 #
 # Format a log message produced by the MQL4.5 or MQL5 compiler.
 #
-# @param _In_    $1 - source file causing the message
-# @param _InOut_ $2 - named reference to the message
+# @param _InOut_ $1 - named reference to the log message
+# @param _In_    $2 - source file of the compilation
+# @param _In_    $3 - number of errors during the compilation
+# @param _In_    $4 - number of warnings during the compilation
 #
 function formatCompiler5Msg() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local -n msg="$1"
+  [[ -z "$msg" ]] && { unset "$1"; return; }
+  local srcFile="$2" errors="$3" warnings="$4" cols level levelS file location='' descr len
+
+  [[ "$msg" =~ ^(.*):\ (info|warn|error)[^:]*:\ (.+)$ ]] || fail "unexpected format of compiler message: \"$msg\""
+
+  descr="${BASH_REMATCH[3]}"
+
+  level="${BASH_REMATCH[2]}"
+  ((errors)) && len=6 || len=5
+  levelS="$level: "
+  levelS="${levelS:0:$len}"
+
+  file="${BASH_REMATCH[1]}"
+  file="${file%"${file##*[![:space:]]}"}"                     # trim trailing white space
+  if [[ "$file" =~ \([0-9,]+\)$ ]]; then
+    file="${file%${BASH_REMATCH[0]}}"
+    location=" ${BASH_REMATCH[0]}"
+  fi
+
+  if [[ -z "$file" ]]; then
+    msg="$levelS $descr"
+  else
+    msg="$levelS ${file}${location}: $descr"
+  fi
 }
 
 
