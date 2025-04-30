@@ -119,11 +119,11 @@ window_num=0
 <inputs>
 ZigZag.Periods=50
 ZigZag.Type=Lines* | Semaphores
-ZigZag.Width=2
-ZigZag.Color=255
+ZigZag.Width=1
+ZigZag.Color=16748574
 Donchian.ShowChannel=1
 Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=16711680
+Donchian.Channel.LowerColor=255
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Width=2
 Signal.onReversal=1
