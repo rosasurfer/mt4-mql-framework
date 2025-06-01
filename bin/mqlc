@@ -6,14 +6,14 @@
 #
 # Configuration via environment and config file.
 #
-# @see  "/bin/.mqlcrc" for an example
+# @see  "/bin/.mqlcrc.dist" for an example
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
 # TODO:
 #  - colored output
 #  - implement download tracker
-#  - option --rc/--norc
+#  - option --rc/--no-rc
 #  - option --clean
 #  - option --syntax
 #  - option --info
@@ -50,21 +50,21 @@ Usage: mqlc  [options] [--] SOURCES...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
 
 Arguments:
-  SOURCES           One or more MQL files or source directories to compile. Supports wildcards.
-
-Options:
-  -h --help         This screen.
-  /compile:FILE     Source file to compile. Doesn't support wildcards.
-  /compile:DIR      Source directory to compile. Recompiles new and modified sources (not in subdirectories).
-  /include:DIR      Include directory for the following sources (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
-  /log              Writes output to "<source-file.log>" (default: no logfile on success, logfile on errors/warnings).
-  /log:FILE         Writes output to the specified logfile.
-  -v=VERSION        MQL version of the following MQL4 sources: either "mql40" or "mql45". May appear multiple times.
-  -v= --version=    Empty version argument: auto-detect the version of the following MQL4 sources (default).
-  -s --syntax       Syntax check only, no compilation.
-  -w --warn2error   Treat compiler warnings as errors, affects the exit status.
-  --[no]color       Enforce or disable colored output (default: auto).
-  --rc=FILE --norc  Use the specified configuration file, or no file at all (default: see configuration section).
+  SOURCES              One or more MQL files or source directories to compile. Supports wildcards.
+                       
+Options:               
+  -h, --help           This screen.
+  /compile:FILE        Source file to compile. Doesn't support wildcards.
+  /compile:DIR         Source directory to compile. Recompiles new and modified sources (not in subdirectories).
+  /include:DIR         Include directory for the following sources (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
+  /log                 Writes output to "<source-file.log>" (default: no logfile on success, logfile on errors/warnings).
+  /log:FILE            Writes output to the specified logfile.
+  -v=VERSION           MQL version of the following MQL4 sources: either "mql40" or "mql45". Can appear multiple times.
+  -v=, --version=      Empty version argument: auto-detect the version of the following MQL4 sources (default).
+  -s, --syntax         Syntax check only, no compilation.
+  -w, --warn2error     Treat compiler warnings as errors, affects the exit status.
+  --color, --no-color  Enforce or disable colored output (default: auto).
+  --rc=FILE, --no-rc   Use the specified configuration file, or no file at all (default: see configuration section).
 
 The script exits with 0 (success) or the number of errors of the last failing compilation.
 
@@ -625,7 +625,7 @@ function fail() {
 #
 # @param $@ - any number of arguments
 #
-function stderr () {
+function stderr() {
   echo "$@" >&2
 }
 
@@ -979,12 +979,12 @@ while (("$#")); do
         continue;;
 
       -v|--version)
-        syntaxError "missing version argument: $1";;
+        syntaxError "Missing version argument: $1";;
 
       -v=*|--version=*)
         version="${1#*=}"
         version="${version,,}"
-        [[ -n "$version" && "$version" != mql4[05] ]] && syntaxError "invalid version argument in \"$1\" (expecting \"mql40\" or \"mql45\")"
+        [[ -n "$version" && "$version" != mql4[05] ]] && syntaxError "Invalid version argument in \"$1\" (expecting \"mql40\" or \"mql45\")"
         if ((firstVersion < 0)); then
           for i in "${!srcFileVersions[@]}"; do
             srcFileVersions[i]="$version"                 # the first --version affects previous sources if no more sources follow
@@ -994,13 +994,13 @@ while (("$#")); do
         shift; continue;;
 
       -*)
-        syntaxError "unrecognized option \"$1\" (use the -- delimiter if source arguments start with a hyphen)";;
+        syntaxError "Unrecognized option \"$1\" (use the -- delimiter if source arguments start with a hyphen)";;
 
       /inc|/include|/inc[=:]*|/include[=:]*)
         [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
         include="$(sanitizeName "$include")"
-        [[ -z "$include" ]] && syntaxError "missing argument: $1"
-        [[ -d "$include" ]] || syntaxError "include directory not found: \"$include\""
+        [[ -z "$include" ]] && syntaxError "Missing argument: $1"
+        [[ -d "$include" ]] || syntaxError "Include directory not found: \"$include\""
         if ((firstInclude < 0)); then
           for i in "${!srcFileIncludes[@]}"; do
             srcFileIncludes[i]="$include"                 # the first /include affects previous sources if no more sources follow
@@ -1010,18 +1010,18 @@ while (("$#")); do
         shift; continue;;
 
       /log|/log[=:]*)
-        [[ "$log" -eq 1 ]] && syntaxError "multiple /log options"
+        [[ "$log" -eq 1 ]] && syntaxError "Multiple /log options"
         log=1
         if [[ ${#1} -gt 4 ]]; then
           customLog="$(sanitizeName "${1:5}")"
-          [[ -z "$customLog" ]] && syntaxError "missing argument: $1"
+          [[ -z "$customLog" ]] && syntaxError "Missing argument: $1"
           customLog="$(cygpath -w "$customLog")"
         fi
         shift; continue;;
 
       /compile[=:]*)
         srcArg="$(sanitizeName "${1:9}")"
-        [[ -z "$srcArg" ]] && syntaxError "missing argument: $1";;
+        [[ -z "$srcArg" ]] && syntaxError "Missing argument: $1";;
         # processing continues after the case block
     esac
   fi
@@ -1038,14 +1038,14 @@ while (("$#")); do
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(fileExtension "$srcArg")"
-    [[ "${ext,,}" != mq[45] ]] && syntaxError "cannot compile file \"$srcArg\""
+    [[ "${ext,,}" != mq[45] ]] && syntaxError "Cannot compile file \"$srcArg\""
     srcFileNames+=("$srcArg")
     srcFileVersions+=("${version:-}")
     srcFileIncludes+=("${include:-}")
   else
     srcArg="$1"
     [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
-    syntaxError "file or directory not found: $srcArg"
+    syntaxError "File or directory not found: $srcArg"
   fi
 
   if ((firstVersion > 0)); then

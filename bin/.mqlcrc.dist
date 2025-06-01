@@ -1,5 +1,5 @@
 #
-# Copy this file to "/.mqlcrc" and adjust the settings to your system.
+# Copy this file to "~/.mqlcrc" and adjust the settings to your system.
 # ----------------------------------------------------------------------------------------------------
 # Configuration for the MQL compiler script. Compiler locations may also be specified via environment.
 # Environment settings have higher priority than settings in this file.
