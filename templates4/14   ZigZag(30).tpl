@@ -1,6 +1,5 @@
 <!-- 
-Default + preFF Brackets + 
-Donchian Channel(30) Width (hidden) 
+ZigZag(30) + Donchian Channel Width 
 -->
 
 <chart>
@@ -9,8 +8,8 @@ period=60
 digits=5
 
 leftpos=9229
-scale=1
-graph=1
+scale=2
+graph=0
 fore=0
 grid=0
 volume=0
@@ -75,8 +74,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -99,35 +96,71 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=Moving Average
 flags=339
-window_num=0
 <inputs>
-TimeWindow=08:00-09:00
-NumberOfBrackets=20
-BracketsColor=9639167   ; DeepPink
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=144
+MA.Periods.Step=56
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+show_data=1
 </indicator>
 
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
-TimeWindow=09:00-10:00
-NumberOfBrackets=20
-BracketsColor=16711680  ; Blue
-AutoConfiguration=0
+ZigZag.Periods=50
+ZigZag.Type=Lines* | Semaphores
+ZigZag.Width=0
+ZigZag.Color=16711935
+Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=255
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Width=2
+Signal.onReversal=1
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ZigZag
+flags=339
+window_num=0
+<inputs>
+ZigZag.Periods=30
+ZigZag.Width=0
+Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=16711935
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
+Donchian.Crossing.Width=1
+Signal.onReversal=1
+Signal.onBreakout=0
+Sound.onChannelWidening=1
+</inputs>
+</expert>
+style_2=2
+style_3=2
+color_6=4294967295
+color_7=4294967295
+show_data=1
 </indicator>
 </window>
 

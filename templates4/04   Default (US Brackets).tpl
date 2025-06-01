@@ -1,4 +1,6 @@
-<!-- Default (US Brackets).tpl -->
+<!-- 
+Default + preUS Brackets 
+-->
 
 <chart>
 symbol=GBPUSD
