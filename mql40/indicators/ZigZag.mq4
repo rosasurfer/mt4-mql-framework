@@ -89,25 +89,25 @@ extern int      Donchian.Crossing.Width        = 1;
 extern color    Donchian.Crossing.Color        = CLR_NONE;
 
 extern string   ___c__________________________ = "=== ZigZag projections ===";
-extern bool     TrackZigZagBalance             = false;                        // whether to track ZigZag balances
-extern datetime TrackZigZagBalance.Since       = 0;                            // mark ZigZag balances since this time
-extern bool     ProjectNextBalance             = false;                        // whether to project zero-balance levels
+extern bool     TrackZigZagBalance             = false;                          // whether to track ZigZag balances
+extern datetime TrackZigZagBalance.Since       = 0;                              // mark ZigZag balances since this time
+extern bool     ProjectNextBalance             = false;                          // whether to project zero-balance levels
 
 extern string   ___d__________________________ = "=== Display settings ===";
 extern bool     ShowChartLegend                = true;
-extern int      MaxBarsBack                    = 10000;                        // max. values to calculate (-1: all available)
+extern int      MaxBarsBack                    = 10000;                          // max. values to calculate (-1: all available)
 
 extern string   ___e__________________________ = "=== Signaling ===";
-extern bool     Signal.onReversal              = false;                        // signal ZigZag reversals (first Donchian channel crossing)
+extern bool     Signal.onReversal              = false;                          // signal ZigZag reversals (first Donchian channel crossing)
 extern string   Signal.onReversal.Types        = "sound* | alert | mail | sms";
 
-extern bool     Signal.onBreakout              = false;                        // signal ZigZag breakouts
+extern bool     Signal.onBreakout              = false;                          // signal ZigZag breakouts
 extern string   Signal.onBreakout.Types        = "sound* | alert | mail | sms";
 
 extern string   Signal.Sound.Up                = "Signal Up.wav";
 extern string   Signal.Sound.Down              = "Signal Down.wav";
 
-extern bool     Sound.onChannelWidening        = false;                        // signal Donchian channel widenings
+extern bool     Sound.onChannelWidening        = false;                          // signal Donchian channel widenings
 extern string   Sound.onNewChannelHigh         = "Price Advance.wav";
 extern string   Sound.onNewChannelLow          = "Price Decline.wav";
 
@@ -162,8 +162,8 @@ int       framework_buffers = 4;                               // buffers manage
 #property indicator_color7    CLR_NONE                         // offset of last ZigZag reversal to previous ZigZag semaphore
 #property indicator_color8    CLR_NONE                         // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
 
-double   semaphoreOpen [];                                     // ZigZag semaphore open prices  (yields a vertical line segment if open != close)
-double   semaphoreClose[];                                     // ZigZag semaphore close prices (yields a vertical line segment if open != close)
+double   semaphoreOpen [];                                     // semaphore open prices
+double   semaphoreClose[];                                     // semaphore close prices (yields a vertical line segment if open != close)
 double   upperBand     [];                                     // upper channel band
 double   lowerBand     [];                                     // lower channel band
 double   upperCross    [];                                     // upper channel band crossings
@@ -485,6 +485,7 @@ int onTick() {
       unknownTrend  [startbar] =  0;
       combinedTrend [startbar] =  0;
    }
+
    for (int bar=startbar; bar >= 0; bar--) {
       // recalculate Donchian channel
       if (bar > 0) {
@@ -650,7 +651,7 @@ int onTick() {
                         if      (balance > -HalfPoint) fontColor = C'45,181,45';
                         else if (prevBalanceReset)     fontColor = Blue;
                         else                           fontColor = Red;
-                        string name = shortName + ifString(eventType==EVENT_REVERSAL_UP, ".reversal-up.", ".reversal-down.") + TimeToStr(eventTime);
+                        string name = shortName + ifString(eventType==EVENT_REVERSAL_UP, ".up.", ".down.") + TimeToStr(eventTime);
                         ObjectCreateRegister(name, OBJ_TEXT, 0, eventTime, eventPrice-markerOffset);
                         ObjectSetText(name, NumberToStr(balance/pUnit, ",'R."+ pDigits), fontSize, fontName, fontColor);
 
@@ -730,7 +731,7 @@ double CalculateMarkerOffset() {
 
 
 /**
- * Whether a bar crossing both channel bands crossed the upper band first. The returned result is only a "best guess".
+ * Whether a bar crossing both channel bands crossed the upper band first. The result is just a "best guess".
  *
  * @param  int bar - bar offset
  *
@@ -771,7 +772,7 @@ bool IsUpperCrossFirst(int bar) {
 
 
 /**
- * Whether a bar crossing both channel bands crossed the upper band last.  The returned result is only a "best guess".
+ * Whether a bar crossing both channel bands crossed the upper band last. The result is just a "best guess".
  *
  * @param  int bar - bar offset
  *
