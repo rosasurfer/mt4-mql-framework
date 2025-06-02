@@ -10,7 +10,6 @@ on:
   push:
     branches:
       - master
-      - feature/mql-cross-compiler
 
   pull_request:
     branches:

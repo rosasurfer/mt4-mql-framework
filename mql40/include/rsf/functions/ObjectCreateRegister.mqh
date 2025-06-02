@@ -52,6 +52,8 @@ bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NU
    // OBJ_ARROW         - Arrows. Uses 1 coordinate pair.
    // OBJ_LABEL         - Text label. Uses 1 coordinate pair in pixels.
 
+   // @todo: delete an existing object
+
    // create the object
    bool success = ObjectCreate(name, type, window, time1, price1, time2, price2, time3, price3);
    if (!success) return(!catch("ObjectCreateRegister(2)  name=\""+ name +"\", type="+ ObjectTypeToStr(type, F_ERR_INVALID_PARAMETER) +", window="+ window, intOr(GetLastError(), ERR_RUNTIME_ERROR)));

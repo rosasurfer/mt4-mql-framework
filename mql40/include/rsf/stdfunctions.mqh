@@ -931,6 +931,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
    else if (StrEndsWith(_symbol, "_AVG")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, "^"   )) _symbol = StrLeft(_symbol, -1);
    else if (StrEndsWith(_symbol, "."   )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, ".a"  )) _symbol = StrLeft(_symbol, -2);
    else if (StrEndsWith(_symbol, ".m"  )) _symbol = StrLeft(_symbol, -2);
    else if (StrEndsWith(_symbol, ".pro")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, ".r"  )) _symbol = StrLeft(_symbol, -2);

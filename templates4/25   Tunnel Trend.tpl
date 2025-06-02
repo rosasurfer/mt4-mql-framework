@@ -180,10 +180,7 @@ VScale.Unit=price* | bps-price | bps-adr
 AutoConfiguration=0
 </inputs>
 </expert>
-min=-60
-max=60
 show_data=1
 </indicator>
 </window>
-
 </chart>

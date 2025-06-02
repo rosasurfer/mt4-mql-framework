@@ -84,12 +84,14 @@ int onInit() {
             ArrayPushInt(closeTypes, OP_BUYSTOP  );
             ArrayPushInt(closeTypes, OP_SELLSTOP );
          }
-         else if (sValue == "l"    ) ArrayPushInt(closeTypes, OP_BUY);
-         else if (sValue == "long" ) ArrayPushInt(closeTypes, OP_BUY);
-         else if (sValue == "s"    ) ArrayPushInt(closeTypes, OP_SELL);
-         else if (sValue == "short") ArrayPushInt(closeTypes, OP_SELL);
-         else if (sValue == "bl"   ) ArrayPushInt(closeTypes, OP_BUYLIMIT);
-         else if (sValue == "bs"   ) ArrayPushInt(closeTypes, OP_BUYSTOP);
+         else if (sValue == "l"    )                 ArrayPushInt(closeTypes, OP_BUY);
+         else if (sValue == "long" )                 ArrayPushInt(closeTypes, OP_BUY);
+         else if (sValue == "s"    )                 ArrayPushInt(closeTypes, OP_SELL);
+         else if (sValue == "short")                 ArrayPushInt(closeTypes, OP_SELL);
+         else if (sValue == "bl" || sValue == "b-l") ArrayPushInt(closeTypes, OP_BUYLIMIT);
+         else if (sValue == "bs" || sValue == "b-s") ArrayPushInt(closeTypes, OP_BUYSTOP);
+         else if (sValue == "sl" || sValue == "s-l") ArrayPushInt(closeTypes, OP_SELLLIMIT);
+         else if (sValue == "ss" || sValue == "s-s") ArrayPushInt(closeTypes, OP_SELLSTOP);
          else {
             int type = StrToOperationType(sValue);
             if (type < OP_BUY || type > OP_SELLSTOP) return(catch("onInit(1)  invalid input parameter Close.OrderTypes: "+ DoubleQuoteStr(Close.OrderTypes), ERR_INVALID_INPUT_PARAMETER));
