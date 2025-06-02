@@ -144,6 +144,9 @@ window_num=1
 Donchian.Periods=30
 </inputs>
 </expert>
+min=100
+max=700
+level_0=200
 show_data=1
 </indicator>
 </window>

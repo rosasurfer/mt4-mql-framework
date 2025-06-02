@@ -121,28 +121,6 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=50
-ZigZag.Type=Lines* | Semaphores
-ZigZag.Width=0
-ZigZag.Color=16711935
-Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=255
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Width=2
-Signal.onReversal=1
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ZigZag
-flags=339
-window_num=0
-<inputs>
 ZigZag.Periods=30
 ZigZag.Width=0
 Donchian.ShowChannel=1
@@ -152,6 +130,7 @@ Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
 Donchian.Crossing.Width=1
 Signal.onReversal=1
+Signal.onReversal.Types=sound* | alert* | mail | sms
 Signal.onBreakout=0
 Sound.onChannelWidening=1
 </inputs>
@@ -177,6 +156,9 @@ window_num=1
 Donchian.Periods=30
 </inputs>
 </expert>
+min=100
+max=700
+level_0=200
 show_data=1
 </indicator>
 </window>
