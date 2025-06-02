@@ -1941,7 +1941,7 @@ bool UpdateStopoutLevel() {
                positions.showMfe = positions.showMfe || config.dData[line][I_MFE_ENABLED];
 
                // track the first (top-most) virtual position
-               if (isVirtual && !isVirtualPosition) {
+               if (!isVirtualPosition && isVirtual && (customLongPosition || customShortPosition)) {
                   isVirtualPosition    = true;
                   virtualTotalPosition = customTotalPosition;
                   virtualLongPosition  = customLongPosition;
