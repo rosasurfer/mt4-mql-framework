@@ -1,5 +1,5 @@
 <!-- 
-ZigZag(30) + Donchian Channel Width 
+ZigZag(30) + TMA + Donchian Channel Width 
 -->
 
 <chart>
@@ -132,13 +132,36 @@ Donchian.Crossing.Width=1
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | sms
 Signal.onBreakout=0
-Sound.onChannelWidening=1
+Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_2=2
 style_3=2
 color_6=4294967295
 color_7=4294967295
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=TMA
+flags=339
+window_num=0
+<inputs>
+TimeFrame=5
+HalfLength=20
+Price=0
+ATRMultiplier=2
+ATRPeriod=100
+Interpolate=1
+</inputs>
+</expert>
+color_0=4294967295
+color_1=255
+weight_1=2
+color_2=16711680
+weight_2=2
 show_data=1
 </indicator>
 </window>
@@ -156,8 +179,6 @@ window_num=1
 Donchian.Periods=30
 </inputs>
 </expert>
-min=100
-max=700
 level_0=200
 show_data=1
 </indicator>
