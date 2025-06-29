@@ -15,26 +15,9 @@
  *
  * TODO:
  *  - visualize MFE/MAE levels
- *
- *     location of BEM calculation
- *      AnalyzePositions() -> StoreCustomPosition()
- *       stores all data of a single config line in positions.data[]
- *       calculates current PnL
- *       calculates the BE level (if enabled)
- *       calculates profit/loss marker levels (if enabled)
- *
- *
- *     location of MFE/MAE tracking
- *
- *
- *     define logic to calculate MFE/MAE price levels
- *
- *
- *     define storage fields for MFE/MAE price levels
- *
- *
- *
- *
+ *     define config id to toggle visualization
+ *     parse config
+ *     apply config and calculated values (test various markers)
  *
  *  - CustomPosition()
  *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice...
@@ -108,8 +91,8 @@ double  virtualLongPosition;
 double  virtualShortPosition;
 
 // configured custom positions: size(config.sData) == size(config.dData) == number-of-configured-custom-positions
-string  config.sData[][2];                                        // config line details: string     [Key, Comment]
-double  config.dData[][7];                                        // config line details: int|double [BemEnabled, MfaeEnabled, MfaeSignal, MfeValueM, MaeValueM, MaxLots, MaxRisk]
+string  config.sData[][2];                                        // data: {Key, Comment}
+double  config.dData[][7];                                        // data: {BemEnabled, MfaeEnabled, MfaeSignal, MfeValueM, MaeValueM, MaxLots, MaxRisk}
 
 // indexes of config.sData[]
 #define I_CONFIG_KEY                    0                         //
@@ -119,8 +102,8 @@ double  config.dData[][7];                                        // config line
 #define I_BEM_ENABLED                   0                         // whether to display the breakeven marker of a custom position
 #define I_MFAE_ENABLED                  1                         // whether to track MFE/MAE of a custom position
 #define I_MFAE_SIGNAL                   2                         // whether to signal new MFE/MAE of a custom position
-#define I_PROFIT_MFE                    3                         // last observed MFE value in money
-#define I_PROFIT_MAE                    4                         // last observed MAE value in money
+#define I_PROFIT_MFE                    3                         // MFE in money
+#define I_PROFIT_MAE                    4                         // MAE in money
 #define I_MAX_LOTS                      5                         //
 #define I_MAX_RISK                      6                         //
 
@@ -148,7 +131,7 @@ double  configTerms[][5];                                         // parsed conf
 #define TERM_LOSS_MARKER               13                         //
 
 // displayed custom position entries (may be larger than configured entries)
-double  positions.data[][15];                                     // position details: [ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, AdjustedProfit, TotalProfit, TotalProfitMin, TotalProfitMax, TotalProfitPct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct]
+double  positions.data[][17];                                     // data: {ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, AdjustedProfit, TotalProfitM, TotalProfitPct, MfePrice, MfePct, MaePrice, MaePct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct}
 bool    positions.analyzed;                                       //
 bool    positions.showAbsProfits;                                 // for column adjustment (default: online=FALSE, tester=TRUE)
 bool    positions.showMfae;                                       // for column adjustment: whether at least one active config entry has the MFAE tracker enabled
@@ -166,7 +149,8 @@ bool    positions.showMaxRisk;                                    // default: FA
 #define POSITION_HISTORY                4                         //
 string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 
-#define I_CONFIG_LINE                   0                         // indexes of positions.data[]
+// indexes of positions.data[]
+#define I_CONFIG_LINE                   0                         //
 #define I_CUSTOM_TYPE                   1                         //
 #define I_POSITION_TYPE                 2                         //
 #define I_DIRECTIONAL_LOTS              3                         //
@@ -174,14 +158,16 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_PIP_DISTANCE                  5                         //
 #define I_BREAKEVEN_PRICE  I_PIP_DISTANCE                         // union: on-position=BreakevenPrice, on-hedged=PipDistance
 #define I_ADJUSTED_PROFIT               6                         //
-#define I_PROFIT                        7                         // total profit
-#define I_PROFIT_PCT                    8                         //
-#define I_PROFIT_PCT_MFE                9                         //
-#define I_PROFIT_PCT_MAE               10                         //
-#define I_PROFIT_MARKER_PRICE          11                         //
-#define I_PROFIT_MARKER_PCT            12                         //
-#define I_LOSS_MARKER_PRICE            13                         //
-#define I_LOSS_MARKER_PCT              14                         //
+#define I_PROFIT                        7                         // total profit in money
+#define I_PROFIT_PCT                    8                         // total profit in percent
+#define I_PROFIT_MFE_PRICE              9                         // MFE price
+#define I_PROFIT_MFE_PCT               10                         // MFE in percent
+#define I_PROFIT_MAE_PRICE             11                         // MAE price
+#define I_PROFIT_MAE_PCT               12                         // MAE in percent
+#define I_PROFIT_MARKER_PRICE          13                         //
+#define I_PROFIT_MARKER_PCT            14                         //
+#define I_LOSS_MARKER_PRICE            15                         //
+#define I_LOSS_MARKER_PCT              16                         //
 
 // control flags for AnalyzePositions()
 #define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions
@@ -1468,7 +1454,7 @@ bool UpdatePositions() {
          configLine = positions.data[i][I_CONFIG_LINE];                    // (int) double
          if (configLine > -1) {
             if (positions.showMfae && config.dData[configLine][I_MFAE_ENABLED]) {
-               sProfitMinMax = StringConcatenate("(", DoubleToStr(positions.data[i][I_PROFIT_PCT_MAE], 2), "/", DoubleToStr(positions.data[i][I_PROFIT_PCT_MFE], 2), ")");
+               sProfitMinMax = StringConcatenate("(", DoubleToStr(positions.data[i][I_PROFIT_MAE_PCT], 2), "/", DoubleToStr(positions.data[i][I_PROFIT_MFE_PCT], 2), ")");
             }
             sComment = config.sData[configLine][I_CONFIG_COMMENT];
             if (positions.showMaxRisk) {
@@ -3768,8 +3754,9 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
    double openProfitTerminal;                                              // open profit as seen by the terminal (not optimized for hedged positions)
    double totalProfitTerminal;                                             // total profit as seen by the terminal (not optimized for hedged positions)
    double equity, equity100Pct;                                            // current equity value of the position and 100% base value for calculation of MFE/MAE
-   bool isNewMFE, isNewMAE;
-   int ticketsSize = ArraySize(tickets);
+   double mfePrice, maePrice;
+   bool   isMfaeEnabled, isNewMfe, isNewMae;
+   int    ticketsSize = ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit (History) noch AdjustedProfit, wird sie übersprungen.
    // Ein Test auf size(tickets) != 0 reicht nicht aus, da einige Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
@@ -3884,10 +3871,12 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (configLine >= 0) {
             config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
             config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
-            positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-            positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+            positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+            positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
          }
 
+         positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
+         positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
          positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
          positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
          positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
@@ -3953,20 +3942,24 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
       totalProfit = NormalizeDouble(totalProfit, 2);
 
+      isMfaeEnabled = false;
       if (configLine >= 0) {
-         isNewMFE = (config.dData[configLine][I_MFAE_SIGNAL] && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMAE = (config.dData[configLine][I_MFAE_SIGNAL] && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
+         isMfaeEnabled = (config.dData[configLine][I_MFAE_ENABLED] != 0);
+         isNewMfe      = (config.dData[configLine][I_MFAE_SIGNAL] && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMae      = (config.dData[configLine][I_MFAE_SIGNAL] && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
 
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,   config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,   config.dData[configLine][I_PROFIT_MAE]);
          config.dData[configLine][I_MAX_LOTS  ] = MathMax(totalPosition, config.dData[configLine][I_MAX_LOTS  ]);
-         positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-         positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
 
-         if (isNewMFE) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
-         if (isNewMAE) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMfe) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMae) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
       }
 
+      positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
+      positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
       positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
       positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
@@ -3974,8 +3967,20 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       pipValue = PipValue(totalPosition, true);                         // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
+         // re-calculate BE level
          positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit)/pipValue*Pip, 8);
 
+         // re-calculate MFE/MAE levels
+         if (isMfaeEnabled) {
+            if (config.dData[configLine][I_PROFIT_MFE] != 0) {
+               positions.data[n][I_PROFIT_MFE_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MFE])/pipValue*Pip, 8);
+            }
+            if (config.dData[configLine][I_PROFIT_MAE] != 0) {
+               positions.data[n][I_PROFIT_MAE_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MAE])/pipValue*Pip, 8);
+            }
+         }
+
+         // re-calculate PM level
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
             positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (openPrice/totalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
@@ -3985,6 +3990,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
          }
 
+         // re-calculate LM level
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
             positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit + (lossMarkerPrice-openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
@@ -4052,20 +4058,24 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
       totalProfit = NormalizeDouble(totalProfit, 2);
 
+      isMfaeEnabled = false;
       if (configLine >= 0) {
-         isNewMFE = (config.dData[configLine][I_MFAE_SIGNAL] && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMAE = (config.dData[configLine][I_MFAE_SIGNAL] && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
+         isMfaeEnabled = (config.dData[configLine][I_MFAE_ENABLED] != 0);
+         isNewMfe      = (config.dData[configLine][I_MFAE_SIGNAL] && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMae      = (config.dData[configLine][I_MFAE_SIGNAL] && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
 
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,    config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,    config.dData[configLine][I_PROFIT_MAE]);
          config.dData[configLine][I_MAX_LOTS  ] = MathMax(-totalPosition, config.dData[configLine][I_MAX_LOTS  ]);
-         positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-         positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
 
-         if (isNewMFE) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
-         if (isNewMAE) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMfe) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMae) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
       }
 
+      positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
+      positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
       positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
       positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
@@ -4073,8 +4083,20 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       pipValue = PipValue(-totalPosition, true);                        // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
+         // re-calculate BE level
          positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble((totalProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, 8);
 
+         // re-calculate MFE/MAE levels
+         if (isMfaeEnabled) {
+            if (config.dData[configLine][I_PROFIT_MFE] != 0) {
+               positions.data[n][I_PROFIT_MFE_PRICE] = NormalizeDouble((totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MFE])/pipValue*Pip - openPrice/totalPosition, 8);
+            }
+            if (config.dData[configLine][I_PROFIT_MAE] != 0) {
+               positions.data[n][I_PROFIT_MAE_PRICE] = NormalizeDouble((totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MAE])/pipValue*Pip - openPrice/totalPosition, 8);
+            }
+         }
+
+         // re-calculate PM level
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
             positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (profitMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
@@ -4084,6 +4106,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
          }
 
+         // re-calculate LM level
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
             positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (lossMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
@@ -4113,10 +4136,12 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
    if (configLine >= 0) {
       config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
       config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
-      positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-      positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+      positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+      positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
    }
 
+   positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
+   positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
    positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
    positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
    positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
