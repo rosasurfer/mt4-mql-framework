@@ -14,14 +14,23 @@
  *
  *
  * TODO:
- *  • visualize MFE/MAE levels
- *    - identify location of MFE/MAE tracking
+ *  - visualize MFE/MAE levels
+ *
+ *     location of BEM calculation
+ *      AnalyzePositions() -> StoreCustomPosition()
+ *       stores all data of a single config line in positions.data[]
+ *       calculates current PnL
+ *       calculates the BE level (if enabled)
+ *       calculates profit/loss marker levels (if enabled)
  *
  *
- *    - define logic to calculate MFE/MAE price levels
+ *     location of MFE/MAE tracking
  *
  *
- *    - define storage fields for MFE/MAE price levels
+ *     define logic to calculate MFE/MAE price levels
+ *
+ *
+ *     define storage fields for MFE/MAE price levels
  *
  *
  *
@@ -102,7 +111,8 @@ double  virtualShortPosition;
 string  config.sData[][2];                                        // config line details: string     [Key, Comment]
 double  config.dData[][7];                                        // config line details: int|double [BemEnabled, MfaeEnabled, MfaeSignal, MfeValueM, MaeValueM, MaxLots, MaxRisk]
 
-#define I_CONFIG_KEY                    0                         // indexes of config.sData[]
+// indexes of config.sData[]
+#define I_CONFIG_KEY                    0                         //
 #define I_CONFIG_COMMENT                1                         //
 
 // indexes of config.dData[]
@@ -232,10 +242,9 @@ color   positions.fontColor.history = C'128,128,0';
 int     hWndDesktop;                                              // handle of the desktop main window (for listener registration)
 double  trackedOrders[][3];                                       // {ticket, orderType, openLimit}
 string  orderTracker.key = "";                                    // prefix for listener registration
-string  orderTracker.orderFailed      = "speech/OrderCancelled.wav";
-string  orderTracker.positionOpened   = "speech/OrderFilled.wav";
-string  orderTracker.positionClosed   = "speech/PositionClosed.wav";
-string  orderTracker.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
+string  orderTracker.orderFailed    = "speech/OrderCancelled.wav";
+string  orderTracker.positionOpened = "speech/OrderFilled.wav";
+string  orderTracker.positionClosed = "speech/PositionClosed.wav";
 
 // display flags
 bool    display.balance         = false;
@@ -1872,28 +1881,10 @@ bool UpdateStopoutLevel() {
    isPosition        = longPosition || shortPosition;
    isVirtualPosition = false;
 
-   // signal potential errors if the position increased by more than 1 x unitsize
-   if (false) /*&&*/ if (!__isTesting && Track.Orders && mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
-      double diff = MathAbs(totalPosition);
-      if (Sign(totalPosition) == Sign(prevTotalPosition)) diff -= MathAbs(prevTotalPosition);
-      if (NormalizeDouble(diff, 2) > mm.leveragedLotsNormalized) {
-         bool eventLogged = false;
-         if (IsLogInfo()) {
-            string msgDetail = NumberToStr(prevTotalPosition, ".+") +" => "+ NumberToStr(totalPosition, ".+") +" (unitsize "+ NumberToStr(mm.leveragedLotsNormalized, ".+") +")";
-            string event = "IncreasePosition::"+ msgDetail +" ("+ TimeToStr(Tick.time-Tick.time%10, TIME_MINUTES|TIME_SECONDS) +")";
-            if (!IsOrderEventLogged(event)) {
-               logInfo("AnalyzePositions(2)  position "+ msgDetail);
-               eventLogged = SetOrderEventLogged(event, true);
-            }
-         }
-         if (eventLogged && Track.Orders) PlaySoundEx(orderTracker.positionStepSize);
-      }
-   }
-
-   // parse custom configuration
    int prevError = last_error;
    SetLastError(NO_ERROR);
 
+   // make sure the configuration of custom positions is parsed
    if (!ArraySize(configTerms)) /*&&*/ if (!CustomPositions.ReadConfig()) {
       positions.analyzed = !last_error;                                          // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
       if (!last_error) SetLastError(prevError);                                  // in diesem Fall nächster Versuch beim nächsten Tick.
@@ -1901,7 +1892,7 @@ bool UpdateStopoutLevel() {
    }
    SetLastError(prevError);
 
-   // individuelle Positionen aus offenen Positionen extrahieren und in positions.data[] speichern
+   // extract individual tickets/partial positions from all open positions and store it in positions.data[]
    int    line, termType, termsSize = ArrayRange(configTerms, 0);
    double termValue1, termValue2, termResult1, termResult2, customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct=EMPTY_VALUE, lossMarkerPrice, lossMarkerPct=EMPTY_VALUE, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
    int    customTickets[], customTypes[];
@@ -1909,7 +1900,7 @@ bool UpdateStopoutLevel() {
    bool   lineSkipped, isVirtual;
 
    ArrayResize(positions.data, 0);
-   positions.showMfae = false;                                                   // global var to control positioning/display width of chart objects
+   positions.showMfae = false;                                                   // global flag to control positioning/display width of chart objects
 
    for (i=0, line=0; i < termsSize; i++) {
       termType    = configTerms[i][I_TERM_TYPE   ];
@@ -1918,7 +1909,7 @@ bool UpdateStopoutLevel() {
       termResult1 = configTerms[i][I_TERM_RESULT1];
       termResult2 = configTerms[i][I_TERM_RESULT2];
 
-      if (!termType) {                                                           // termType NULL => EOL (Ende einer CustomPositions-Konfigurationszeile)
+      if (!termType) {                                                           // termType NULL => EOL of a config line for costum positions
          if (i == 0) line = -1;                                                  // an empty configuration has no lines
          if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(customTickets, line, flags);
          if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
@@ -1930,7 +1921,7 @@ bool UpdateStopoutLevel() {
 
          if (line >= 0) {
             if (lineSkipped) {
-               // reset an existing MFE/MAE signaling flag
+               // if the line is skipped we can reset a set MFE/MAE signaling flag
                int hWnd;
                string sEvent = "";
                if (config.dData[line][I_PROFIT_MFE] != 0) {
@@ -1985,7 +1976,7 @@ bool UpdateStopoutLevel() {
          continue;
       }
 
-      // individuelle Position extrahieren
+      // extract individual tickets/partial positions
       if (!ExtractPosition(termType, termValue1, termValue2, termResult1, termResult2,
                            _longPosition,      _shortPosition,      _totalPosition,      tickets,       types,       lots, openTimes, openPrices,       commissions,       swaps,       profits,
                            customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,      customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct,
@@ -1996,7 +1987,7 @@ bool UpdateStopoutLevel() {
       configTerms[i][I_TERM_RESULT2] = termResult2;
    }
 
-   // eine verbleibende offene Position als letzten Eintrag behandeln (wird von keiner Konfigurationszeile abgedeckt)
+   // handle a remaining open position as implicit last config entry (not covered by any previous configuration)
    line = -1;
    if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(tickets, line, flags);
 
@@ -3738,8 +3729,8 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 
 
 /**
- * Stores the collected tickets of a single custom config line as a new record in positions.data[].
- * This record represents a single row displayed in the chart.
+ * Stores all collected data of a single custom config line as a new record in positions.data[].
+ * The record n positions.data[] represents a single row displayed in the chart.
  *
  * @param  _In_    bool   isVirtual
  *
