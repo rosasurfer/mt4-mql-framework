@@ -90,7 +90,31 @@ double  virtualTotalPosition;
 double  virtualLongPosition;
 double  virtualShortPosition;
 
-// configured custom positions: size(config.sData) == size(config.dData) == number-of-configured-custom-positions
+// parsed configuration of custom positions
+double  config.terms[][5];                                        // @see CustomPositions.ReadConfig() for format
+
+// indexes of config.terms[]
+#define I_TERM_TYPE                     0                         //
+#define I_TERM_VALUE1                   1                         //
+#define I_TERM_VALUE2                   2                         //
+#define I_TERM_RESULT1                  3                         // intermediate calculation results
+#define I_TERM_RESULT2                  4                         // ...
+
+#define TERM_TICKET                     1                         // supported config terms (possible values of config.terms[][I_TERM_TYPE])
+#define TERM_OPEN_LONG                  2                         //
+#define TERM_OPEN_SHORT                 3                         //
+#define TERM_OPEN                       4                         // intentionally there's no TERM_OPEN_TOTAL
+#define TERM_HISTORY                    5                         //
+#define TERM_HISTORY_TOTAL              6                         //
+#define TERM_PL_ADJUSTMENT              7                         //
+#define TERM_EQUITY                     8                         //
+#define TERM_MFAE                       9                         //
+#define TERM_MFAE_SIGNAL               10                         //
+#define TERM_BE_MARKER                 11                         //
+#define TERM_PROFIT_MARKER             12                         //
+#define TERM_LOSS_MARKER               13                         //
+
+// data of configured custom positions: size(config.sData) == size(config.dData) == number-of-configured-custom-positions
 string  config.sData[][2];                                        // data: {Key, Comment}
 double  config.dData[][7];                                        // data: {BemEnabled, MfaeEnabled, MfaeSignal, MfeValueM, MaeValueM, MaxLots, MaxRisk}
 
@@ -106,29 +130,6 @@ double  config.dData[][7];                                        // data: {BemE
 #define I_PROFIT_MAE                    4                         // MAE in money
 #define I_MAX_LOTS                      5                         //
 #define I_MAX_RISK                      6                         //
-
-double  configTerms[][5];                                         // parsed configuration of all custom positions, @see CustomPositions.ReadConfig() for format
-
-// indexes of configTerms[]
-#define I_TERM_TYPE                     0                         //
-#define I_TERM_VALUE1                   1                         //
-#define I_TERM_VALUE2                   2                         //
-#define I_TERM_RESULT1                  3                         // intermediate calculation results
-#define I_TERM_RESULT2                  4                         // ...
-
-#define TERM_TICKET                     1                         // supported config terms (possible values of configTerms[][I_TERM_TYPE])
-#define TERM_OPEN_LONG                  2                         //
-#define TERM_OPEN_SHORT                 3                         //
-#define TERM_OPEN                       4                         // intentionally there's no TERM_OPEN_TOTAL
-#define TERM_HISTORY                    5                         //
-#define TERM_HISTORY_TOTAL              6                         //
-#define TERM_PL_ADJUSTMENT              7                         //
-#define TERM_EQUITY                     8                         //
-#define TERM_MFAE                       9                         //
-#define TERM_MFAE_SIGNAL               10                         //
-#define TERM_BE_MARKER                 11                         //
-#define TERM_PROFIT_MARKER             12                         //
-#define TERM_LOSS_MARKER               13                         //
 
 // displayed custom position entries (may be larger than configured entries)
 double  positions.data[][17];                                     // data: {ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, AdjustedProfit, TotalProfitM, TotalProfitPct, MfePrice, MfePct, MaePrice, MaePct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct}
@@ -316,7 +317,7 @@ bool onCommand(string cmd, string params, int keys) {
          flags = F_SHOW_CUSTOM_POSITIONS;                               // with VK_SHIFT: show custom positions only
          mm.cfgIsValid = false;                                         // invalidate cached unitsize configuration
          mm.externalAssetsCached = false;                               // invalidate cached external assets
-         ArrayResize(configTerms, 0);                                   // trigger reparsing of the configuration
+         ArrayResize(config.terms, 0);                                  // trigger reparsing of the configuration
       }
       if (!ToggleOpenOrders(flags)) return(false);
    }
@@ -327,7 +328,7 @@ bool onCommand(string cmd, string params, int keys) {
          flags = F_SHOW_CUSTOM_HISTORY;                                 // with VK_SHIFT: show custom history only
          mm.cfgIsValid = false;                                         // invalidate cached unitsize configuration
          mm.externalAssetsCached = false;                               // invalidate cached external assets
-         ArrayResize(configTerms, 0);                                   // trigger reparsing of the configuration
+         ArrayResize(config.terms, 0);                                  // trigger reparsing of the configuration
       }
       if (!ToggleTradeHistory(flags)) return(false);
    }
@@ -346,7 +347,7 @@ bool onCommand(string cmd, string params, int keys) {
       if (!UpdateAccountDisplay()) return(false);
          mm.cfgIsValid = false;                                         // invalidate cached unitsize configuration
       mm.externalAssetsCached = false;                                  // invalidate cached external assets
-      ArrayResize(configTerms, 0);                                      // trigger reparsing of the configuration
+      ArrayResize(config.terms, 0);                                     // trigger reparsing of the configuration
    }
 
    else if (cmd == "toggle-unit-size") {
@@ -1871,7 +1872,7 @@ bool UpdateStopoutLevel() {
    SetLastError(NO_ERROR);
 
    // make sure the configuration of custom positions is parsed
-   if (!ArraySize(configTerms)) /*&&*/ if (!CustomPositions.ReadConfig()) {
+   if (!ArraySize(config.terms)) /*&&*/ if (!CustomPositions.ReadConfig()) {
       positions.analyzed = !last_error;                                          // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
       if (!last_error) SetLastError(prevError);                                  // in diesem Fall nächster Versuch beim nächsten Tick.
       return(positions.analyzed);
@@ -1879,7 +1880,7 @@ bool UpdateStopoutLevel() {
    SetLastError(prevError);
 
    // extract individual tickets/partial positions from all open positions and store it in positions.data[]
-   int    line, termType, termsSize = ArrayRange(configTerms, 0);
+   int    line, termType, termsSize = ArrayRange(config.terms, 0);
    double termValue1, termValue2, termResult1, termResult2, customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct=EMPTY_VALUE, lossMarkerPrice, lossMarkerPct=EMPTY_VALUE, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
    int    customTickets[], customTypes[];
    double customLots[], customOpenPrices[], customCommissions[], customSwaps[], customProfits[];
@@ -1889,11 +1890,11 @@ bool UpdateStopoutLevel() {
    positions.showMfae = false;                                                   // global flag to control positioning/display width of chart objects
 
    for (i=0, line=0; i < termsSize; i++) {
-      termType    = configTerms[i][I_TERM_TYPE   ];
-      termValue1  = configTerms[i][I_TERM_VALUE1 ];
-      termValue2  = configTerms[i][I_TERM_VALUE2 ];
-      termResult1 = configTerms[i][I_TERM_RESULT1];
-      termResult2 = configTerms[i][I_TERM_RESULT2];
+      termType    = config.terms[i][I_TERM_TYPE   ];
+      termValue1  = config.terms[i][I_TERM_VALUE1 ];
+      termValue2  = config.terms[i][I_TERM_VALUE2 ];
+      termResult1 = config.terms[i][I_TERM_RESULT1];
+      termResult2 = config.terms[i][I_TERM_RESULT2];
 
       if (!termType) {                                                           // termType NULL => EOL of a config line for costum positions
          if (i == 0) line = -1;                                                  // an empty configuration has no lines
@@ -1969,8 +1970,8 @@ bool UpdateStopoutLevel() {
                            isVirtual, flags)) {
          return(false);
       }
-      configTerms[i][I_TERM_RESULT1] = termResult1;
-      configTerms[i][I_TERM_RESULT2] = termResult2;
+      config.terms[i][I_TERM_RESULT1] = termResult1;
+      config.terms[i][I_TERM_RESULT2] = termResult2;
    }
 
    // handle a remaining open position as implicit last config entry (not covered by any previous configuration)
@@ -2275,12 +2276,12 @@ int SearchLfxTicket(int ticket) {
  *
  * @return bool - success status
  *
- * Fills config.sData[], config.dData[] und configTerms[] with parsed configuration data of the current chart symbol. On return
- * configTerms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL) marks the end of a
- * configuration line and also an empty configuration. On return configTerms[] is never empty and holds at least one EOL marker.
+ * Fills config.sData[], config.dData[] und config.terms[] with parsed configuration data of the current chart symbol. On return
+ * config.terms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL) marks the end of a
+ * configuration line and also an empty configuration. On return config.terms[] is never empty and holds at least one EOL marker.
  *
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
- * | Syntax                                          | Description                                                              | Content of configTerms[][] (7)                                     |
+ * | Syntax                                          | Description                                                              | Content of config.terms[][] (7)                                    |
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
  * |    #123456                                      | complete unprocessed ticket or remainder of processed ticket             | [TERM_TICKET,        123456,           EMPTY,            ..., ...] |
  * | 0.1#123456                                      | O.1 lot of a ticket (1)                                                  | [TERM_TICKET,        123456,           0.1,              ..., ...] |
@@ -2300,7 +2301,10 @@ int SearchLfxTicket(int ticket) {
  * | LM=-5%                                          | calculate price of the specified %PnL and draw a loss marker             | [TERM_LOSS_MARKER,   ...,              -5.0,             ..., ...] |
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
  * | MFE                                             | track MFE/MAE                                                            | TERM_MFAE, stored in config.dData[]                                |
- * | MFES                                            | track MFE/MAE and signal new PL high/lows                                | TERM_MFAE + flag, stored in config.dData[]                         |
+ * | MFES                                            | track MFE/MAE and signal new PnL high/lows                               | TERM_MFAE + flag, stored in config.dData[]                         |
+ * |                                                 |                                                                          |                                                                    |
+ * |                                                 |                                                                          |                                                                    |
+ * |                                                 |                                                                          |                                                                    |
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
  * | any text after a semicolon ";" aka .ini comment | displayed as position description                                        | stored in config.sData[]                                           |
  * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                           |                                                                    |
@@ -2315,9 +2319,9 @@ int SearchLfxTicket(int ticket) {
  *  GBPAUD.d = 0.3S                                   // virtual short position of 0.3 lot at current price
  *
  *
- *  Resulting array configTerms[] for the above example (7)
- *  -------------------------------------------------------
- *  double configTerms = [
+ *  Resulting array config.terms[] for the above example (7)
+ *  --------------------------------------------------------
+ *  double config.terms = [
  *     [TERM_TICKET,      111111, EMPTY, ..., ...],
  *     [TERM_TICKET,      222222, 0.1,   ..., ...],
  *     [NULL,             ...,    ...,   ..., ...],   // EOL marker of line GBPAUD.a
@@ -2348,7 +2352,7 @@ int SearchLfxTicket(int ticket) {
  *  (7) "..." denotes fields not used by the term
  */
 bool CustomPositions.ReadConfig() {
-   double confTerms[][5]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(configTerms,  1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match configTerms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
+   double confTerms[][5]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(config.terms, 1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match config.terms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
    string confsData[][2]; ArrayResize(confsData, 0); if (ArrayRange(confsData, 1) != ArrayRange(config.sData, 1)) return(!catch("CustomPositions.ReadConfig(2)  array mis-match config.sData[] / confsData[]", ERR_INCOMPATIBLE_ARRAY));
    double confdData[][7]; ArrayResize(confdData, 0); if (ArrayRange(confdData, 1) != ArrayRange(config.dData, 1)) return(!catch("CustomPositions.ReadConfig(3)  array mis-match config.dData[] / confdData[]", ERR_INCOMPATIBLE_ARRAY));
 
@@ -2532,7 +2536,7 @@ bool CustomPositions.ReadConfig() {
                   termResult2 = NULL;
                }
 
-               else if (StrIsNumeric(values[n])) {                   // PL adjustment
+               else if (StrIsNumeric(values[n])) {                   // PnL adjustment
                   termType    = TERM_PL_ADJUSTMENT;
                   termValue1  = StrToDouble(values[n]);
                   termValue2  = NULL;
@@ -2672,7 +2676,7 @@ bool CustomPositions.ReadConfig() {
    }
 
    // finally overwrite global vars (thus on error they are not touched)
-   ArrayResize(configTerms,  0); if (ArraySize(confTerms) > 0) ArrayCopy(configTerms,  confTerms);
+   ArrayResize(config.terms, 0); if (ArraySize(confTerms) > 0) ArrayCopy(config.terms, confTerms);
    ArrayResize(config.sData, 0); if (ArraySize(confsData) > 0) ArrayCopy(config.sData, confsData);
    ArrayResize(config.dData, 0); if (ArraySize(confdData) > 0) ArrayCopy(config.dData, confdData);
    return(!catch("CustomPositions.ReadConfig(46)"));
@@ -5114,7 +5118,7 @@ double GetADR() {
 
 
 /**
- * Return a readable version of a custom position config term type (values of configTerms[][I_TERM_TYPE]).
+ * Return a readable version of a custom position config term type (values of config.terms[][I_TERM_TYPE]).
  *
  * @param  int type
  *
