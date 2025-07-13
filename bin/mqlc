@@ -1,12 +1,11 @@
 #!/bin/bash
 #
-# A script for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple
-# files and directories. Prints results to STDOUT and follows standard rules for the exit status.
-# The syntax is backward compatible to MetaEditor.
+# A script for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple files and directories. 
+# Prints results to STDOUT and follows standard rules for the exit status. The syntax is backward compatible to MetaEditor.
 #
-# Configuration via environment and config file.
+# Configuration via environment and/or config file.
 #
-# @see  "/bin/.mqlcrc.dist" for an example
+# @see  "<repository>/bin/.mqlcrc.dist" for an example
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
@@ -78,7 +77,7 @@ Configuration:
  Unless option --rc/--norc is used, the script will look for a file named ".mqlcrc" in the source directory and each
  parent directory. If no file is found in any of the parent directories, the script will look in the user's home
  directory. Only the first file found will be used. Compiler locations can also be specified using environment vars.
- See "/bin/.mqlcrc" for an example.
+ See "<repository>/bin/.mqlcrc" for an example.
 
 SYNTAX
 }
@@ -1231,11 +1230,10 @@ metaeditor64.exe
 
 UltraEdit
 ---------
-If a tool is configured that returns errors to the output window (such as a compiler), UltraEdit and UEStudio will open the referenced
-file at the specified line if the user double-clicks on the error listing. For this to be supported the file must be referenced in the
-following format "FULL PATH(Line Number,Column Number): Error Message" i.e.:
+If a tool returns errors to the output window, UltraEdit and UEStudio will open the referenced file at the specified line on double-click. 
+For this to work the error message must in the following format "FULL PATH(Line Number,Column Number): Error Message" i.e.:
 
- C:\Development Path\ProjectDev\EditWindow.c(341): Undefined variable "GeneralError"
+ C:\Development Path\ProjectDev\EditWindow.c(341): some error message
 
 - doesn't find the file if path or basename contain dots            (really??)
 
