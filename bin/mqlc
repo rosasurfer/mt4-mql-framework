@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# A script for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple files and directories. 
+# A script for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple files and directories.
 # Prints results to STDOUT and follows standard rules for the exit status. The syntax is backward compatible to MetaEditor.
 #
 # Configuration via environment and/or config file.
@@ -34,6 +34,8 @@
 #
 set -eEuo pipefail
 
+NL=$'\n'
+
 
 # --- functions ----------------------------------------------------------------------------------------------------------------------------
 
@@ -50,8 +52,8 @@ Usage: mqlc  [options] [--] SOURCES...
 
 Arguments:
   SOURCES              One or more MQL files or source directories to compile. Supports wildcards.
-                       
-Options:               
+
+Options:
   -h, --help           This screen.
   /compile:FILE        Source file to compile. Doesn't support wildcards.
   /compile:DIR         Source directory to compile. Recompiles new and modified sources (not in subdirectories).
@@ -356,38 +358,6 @@ function compileMql40() {
 
 
 #
-# Format a log message produced by the MQL4.0 compiler.
-#
-# @param _InOut_ $1 - named reference to the log message
-# @param _In_    $2 - source file of the compilation
-# @param _In_    $3 - number of errors during the compilation
-# @param _In_    $4 - number of warnings during the compilation
-#
-function formatCompiler40Msg() {
-  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
-  local -n msg="$1"
-  local srcFile="$2" errors="$3" warnings="$4" cols type level levelS file location='' descr len
-
-  readarray -t cols < <(printf '%s\n' "${msg//;/$'\n'}")
-  ((${#cols[@]} != 5)) && fail "unexpected number of fields (${#cols[@]}) in compiler message: \"$msg\""
-
-  type="${cols[0]}"
-  [[ "$type" == [12] ]] || fail "unexpected message type ($type) in compiler message: \"$msg\""
-  ((type == 1)) && level='warn' || level='error'
-  ((errors)) && len=6 || len=5
-  levelS="$level: "
-  levelS="${levelS:0:$len}"
-
-  file="${cols[2]}"
-  [[ -n "${cols[3]}" ]] && location=" (${cols[3]})"
-  descr="${cols[4]}"
-
-  msg="${levelS} ${file}${location}: ${descr}"
-  #msg="${file}${location}: ${level}: ${descr}"
-}
-
-
-#
 # Compile an MQL4.5 or MQL5 source file.
 #
 # @param $1 - filename
@@ -466,7 +436,40 @@ function compileMql5() {
 
 
 #
-# Format a log message produced by the MQL4.5 or MQL5 compiler.
+# Reformat a single log message produced by the MQL4.0 compiler.
+#
+# @param _InOut_ $1 - named reference to the log message
+# @param _In_    $2 - source file of the compilation
+# @param _In_    $3 - number of errors during the compilation
+# @param _In_    $4 - number of warnings during the compilation
+#
+function formatCompiler40Msg() {
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local -n logmsg="$1"
+  local srcFile="$2" errors="$3" warnings="$4" type code level levelS file location message len
+
+  [[ "$logmsg" =~ ^([0-9]+)\;([0-9]+)\;(.+)\;([0-9]+:[0-9]+)?\;(.*)$ ]] || fail "unexpected format of compiler message:$NL\"$logmsg\""
+  type="${BASH_REMATCH[1]}"
+  code="${BASH_REMATCH[2]}"
+  file="${BASH_REMATCH[3]}"
+  location="${BASH_REMATCH[4]}"
+  message="${BASH_REMATCH[5]}"
+
+  [[ "$type" == [12] ]] || fail "unexpected message type $type in compiler message:$NL\"$logmsg\""
+  ((type == 1)) && level='warn' || level='error'
+  ((errors)) && len=6 || len=5
+  levelS="$level: "
+  levelS="${levelS:0:$len}"
+
+  [[ -n "$location" ]] && location=" ($location)"
+
+  logmsg="${levelS} ${file}${location}: ${message}"
+  #logmsg="${file}${location}: ${level}: ${message}"
+}
+
+
+#
+# Reformat a single log message produced by the MQL4.5 or MQL5 compiler.
 #
 # @param _InOut_ $1 - named reference to the log message
 # @param _In_    $2 - source file of the compilation
@@ -475,18 +478,11 @@ function compileMql5() {
 #
 function formatCompiler5Msg() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
-  local -n msg="$1"
-  [[ -z "$msg" ]] && { unset "$1"; return; }
-  local srcFile="$2" errors="$3" warnings="$4" cols level levelS file location='' descr len
+  local -n logmsg="$1"
+  [[ -z "$logmsg" ]] && { unset "$1"; return; }
+  local srcFile="$2" errors="$3" warnings="$4" level levelS file location='' message len
 
-  [[ "$msg" =~ ^(.*):\ (info|warn|error)[^:]*:\ (.+)$ ]] || fail "unexpected format of compiler message: \"$msg\""
-
-  descr="${BASH_REMATCH[3]}"
-
-  level="${BASH_REMATCH[2]}"
-  ((errors)) && len=6 || len=5
-  levelS="$level: "
-  levelS="${levelS:0:$len}"
+  [[ "$logmsg" =~ ^(.*):\ (info|warn|error)[^:]*:\ (.+)$ ]] || fail "unexpected format of compiler message:$NL\"$logmsg\""
 
   file="${BASH_REMATCH[1]}"
   file="${file%"${file##*[![:space:]]}"}"                     # trim trailing white space
@@ -495,10 +491,17 @@ function formatCompiler5Msg() {
     location=" ${BASH_REMATCH[0]}"
   fi
 
+  level="${BASH_REMATCH[2]}"
+  ((errors)) && len=6 || len=5
+  levelS="$level: "
+  levelS="${levelS:0:$len}"
+
+  message="${BASH_REMATCH[3]}"
+
   if [[ -z "$file" ]]; then
-    msg="$levelS $descr"
+    logmsg="$levelS $message"
   else
-    msg="$levelS ${file}${location}: $descr"
+    logmsg="$levelS ${file}${location}: $message"
   fi
 }
 
@@ -1230,7 +1233,7 @@ metaeditor64.exe
 
 UltraEdit
 ---------
-If a tool returns errors to the output window, UltraEdit and UEStudio will open the referenced file at the specified line on double-click. 
+If a tool returns errors to the output window, UltraEdit and UEStudio will open the referenced file at the specified line on double-click.
 For this to work the error message must in the following format "FULL PATH(Line Number,Column Number): Error Message" i.e.:
 
  C:\Development Path\ProjectDev\EditWindow.c(341): some error message
