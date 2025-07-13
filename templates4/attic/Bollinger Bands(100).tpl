@@ -116,7 +116,7 @@ flags=339
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
-MA.Periods.Step=56
+MA.Periods.Step=0
 Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535

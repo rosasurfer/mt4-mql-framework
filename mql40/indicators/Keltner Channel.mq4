@@ -9,8 +9,8 @@
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA - Smoothed Moving Average:        an EMA, it holds: SMMA(n) = EMA(2*n-1)
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
+ *  • SMMA - Smoothed Moving Average:        an EMA, it holds: SMMA(n) = EMA(2*n-1)
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
