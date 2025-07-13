@@ -1,5 +1,5 @@
 <!-- 
-ZigZag(30) + Donchian Channel Width 
+ZigZag(30) + TMA + Donchian Channel Width 
 -->
 
 <chart>
@@ -101,7 +101,7 @@ flags=339
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
-MA.Periods.Step=56
+MA.Periods.Step=0
 Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535
@@ -109,28 +109,6 @@ DownTrend.Color=65535
 Background.Color=11119017
 ShowChartLegend=1
 AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ZigZag
-flags=339
-window_num=0
-<inputs>
-ZigZag.Periods=50
-ZigZag.Type=Lines* | Semaphores
-ZigZag.Width=0
-ZigZag.Color=16711935
-Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=255
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Width=2
-Signal.onReversal=1
 </inputs>
 </expert>
 show_data=1
@@ -152,14 +130,38 @@ Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
 Donchian.Crossing.Width=1
 Signal.onReversal=1
+Signal.onReversal.Types=sound* | alert* | mail | sms
 Signal.onBreakout=0
-Sound.onChannelWidening=1
+Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_2=2
 style_3=2
 color_6=4294967295
 color_7=4294967295
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=TMA
+flags=339
+window_num=0
+<inputs>
+TimeFrame=5
+HalfLength=20
+Price=0
+ATRMultiplier=2
+ATRPeriod=100
+Interpolate=1
+</inputs>
+</expert>
+color_0=4294967295
+color_1=255
+weight_1=2
+color_2=16711680
+weight_2=2
 show_data=1
 </indicator>
 </window>
@@ -177,6 +179,7 @@ window_num=1
 Donchian.Periods=30
 </inputs>
 </expert>
+level_0=200
 show_data=1
 </indicator>
 </window>

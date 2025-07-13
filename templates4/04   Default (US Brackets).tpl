@@ -41,7 +41,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=300
+height=5000
 
 <indicator>
 name=main
@@ -127,6 +127,23 @@ AutoConfiguration=0
 period_flags=7
 show_data=0
 </indicator>
+</window>
 
+<window>
+height=1
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=Donchian Channel Width
+flags=339
+window_num=1
+<inputs>
+Donchian.Periods=30
+</inputs>
+</expert>
+level_0=200
+show_data=1
+</indicator>
 </window>
 </chart>
