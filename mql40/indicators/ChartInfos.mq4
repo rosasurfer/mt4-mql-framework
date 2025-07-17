@@ -2422,12 +2422,12 @@ bool CustomPositions.ReadConfig() {
                      if (!StrStartsWith(sValue, "-"))                return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      sValue = StrSubstr(sValue, 1);
                      len = StringLen(sValue);
-                     if (!len || len > 2)                            return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     if (len > 2)                                    return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                      while (len > 0) {
                         len--;
                         switch (StringGetChar(sValue, len)) {
                            case 'M': markMfe = true;      break;     // flag: mark MFE level
-                           case 'S': isMfaeSignal = true; break;     // flag: signal new PnL highs/lows
+                           case 'S': isMfaeSignal = true; break;     // flag: signal new MFE/MAE
                            default:                                  return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                         }
                      }
