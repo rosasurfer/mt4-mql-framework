@@ -8,9 +8,9 @@ int onInit() {
    mm.done                 = false;
    mm.externalAssetsCached = false;                      // invalidate cached external assets
    positions.analyzed      = false;                      // reparse configuration
+   ArrayResize(config.terms,   0);                       //
    ArrayResize(config.sData,   0);                       //
    ArrayResize(config.dData,   0);                       //
-   ArrayResize(configTerms,    0);                       //
    ArrayResize(positions.data, 0);                       //
    ArrayResize(trackedOrders,  0);
 

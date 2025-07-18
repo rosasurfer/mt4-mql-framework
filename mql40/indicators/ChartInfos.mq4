@@ -1,20 +1,24 @@
 /**
  * ChartInfos
  *
- * This indicator displays various market data, trade statistics and account infos in the chart.
+ * The indicator displays various market infos, account infos and trade statistics.
  *
+ *  - The current instrument name (in terminals <= build 509).
  *  - The current price and spread.
- *  - The current instrument name (only in terminals <= build 509).
  *  - The pre-calculated unitsize for a standard position.
- *  - The currently open total position with resulting risk and leverage values.
+ *  - The total open position with resulting risk and leverage values.
  *  - PnL of customizable open positions and/or trade history.
  *  - Breakeven and PnL target levels.
- *  - The current account stopout level.
+ *  - The account's current stopout level.
  *  - A visual warning with increasing intensity when the account's open order limit is approached.
  *
  *
  * TODO:
  *  - visualize MFE/MAE levels
+ *     config id to toggle visualization: MFE[-MS]
+ *     parse config
+ *     apply config and calculated values (test various markers)
+ *
  *  - CustomPosition()
  *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice...
  *     history parsing/config term HT... freezes the terminal if full history is active
@@ -86,31 +90,17 @@ double  virtualTotalPosition;
 double  virtualLongPosition;
 double  virtualShortPosition;
 
-// configuration of custom positions
-string  config.sData[][2];                                        // config line details: [Key, Comment]
-double  config.dData[][8];                                        // ...                  [BemEnabled, MfeEnabled, MfeSignal, MfeLastSignal, MfeValueM, MaeValueM, MaxLots, MaxRisk]
+// parsed configuration of custom positions
+double  config.terms[][5];                                        // @see CustomPositions.ReadConfig() for format
 
-#define I_CONFIG_KEY                    0                         // indexes of config.sData[]
-#define I_CONFIG_COMMENT                1                         //
-
-#define I_BEM_ENABLED                   0                         // indexes of config.dData[]
-#define I_MFE_ENABLED                   1                         //
-#define I_MFE_SIGNAL                    2                         //
-#define I_MFE_LAST_SIGNAL               3                         //
-#define I_PROFIT_MFE                    4                         //
-#define I_PROFIT_MAE                    5                         //
-#define I_MAX_LOTS                      6                         //
-#define I_MAX_RISK                      7                         //
-
-double  configTerms[][5];                                         // parsed custom position configuration, @see CustomPositions.ReadConfig() for format
-
-#define I_TERM_TYPE                     0                         // indexes of configTerms[]
-#define I_TERM_VALUE1                   1
-#define I_TERM_VALUE2                   2
+// indexes of config.terms[]
+#define I_TERM_TYPE                     0                         //
+#define I_TERM_VALUE1                   1                         //
+#define I_TERM_VALUE2                   2                         //
 #define I_TERM_RESULT1                  3                         // intermediate calculation results
 #define I_TERM_RESULT2                  4                         // ...
 
-#define TERM_TICKET                     1                         // supported config terms (possible values of configTerms[][I_TERM_TYPE])
+#define TERM_TICKET                     1                         // supported config terms (possible values of config.terms[][I_TERM_TYPE])
 #define TERM_OPEN_LONG                  2                         //
 #define TERM_OPEN_SHORT                 3                         //
 #define TERM_OPEN                       4                         // intentionally there's no TERM_OPEN_TOTAL
@@ -118,17 +108,35 @@ double  configTerms[][5];                                         // parsed cust
 #define TERM_HISTORY_TOTAL              6                         //
 #define TERM_PL_ADJUSTMENT              7                         //
 #define TERM_EQUITY                     8                         //
-#define TERM_MFE                        9                         //
-#define TERM_MFE_SIGNAL                10                         //
+#define TERM_MFAE                       9                         //
+#define TERM_MFAE_SIGNAL               10                         //
 #define TERM_BE_MARKER                 11                         //
 #define TERM_PROFIT_MARKER             12                         //
 #define TERM_LOSS_MARKER               13                         //
 
-// custom positions
-double  positions.data[][15];                                     // position details: [ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, AdjustedProfit, TotalProfit, TotalProfitMin, TotalProfitMax, TotalProfitPct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct]
+// data of configured custom positions: size(config.sData) == size(config.dData) == number-of-configured-custom-positions
+string  config.sData[][2];                                        // data: {Key, Comment}
+double  config.dData[][8];                                        // data: {BemEnabled, MfaeEnabled, MfaeSignal, MfeMark, MfeValueM, MaeValueM, MaxLots, MaxRisk}
+
+// indexes of config.sData[]
+#define I_CONFIG_KEY                    0                         //
+#define I_CONFIG_COMMENT                1                         //
+
+// indexes of config.dData[]
+#define I_BEM_ENABLED                   0                         // whether to display the breakeven marker of a custom position
+#define I_MFAE_ENABLED                  1                         // whether to track MFE/MAE of a custom position
+#define I_MFAE_SIGNAL                   2                         // whether to signal new MFE/MAE of a custom position
+#define I_MARK_MFE                      3                         // whether to mark MFE levels
+#define I_PROFIT_MFE                    4                         // MFE in money
+#define I_PROFIT_MAE                    5                         // MAE in money
+#define I_MAX_LOTS                      6                         //
+#define I_MAX_RISK                      7                         //
+
+// displayed custom position entries (may be larger than configured entries)
+double  positions.data[][17];                                     // data: {ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, AdjustedProfit, TotalProfitM, TotalProfitPct, MfePrice, MfePct, MaePrice, MaePct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct}
 bool    positions.analyzed;                                       //
 bool    positions.showAbsProfits;                                 // for column adjustment (default: online=FALSE, tester=TRUE)
-bool    positions.showMfe;                                        // for column adjustment: whether at least one active config entry has the MFE tracker enabled
+bool    positions.showMfae;                                       // for column adjustment: whether at least one active config entry has the MFAE tracker enabled
 bool    positions.showMaxRisk;                                    // default: FALSE
 
 #define CUSTOM_REAL_POSITION            1                         // config line types: real position
@@ -143,7 +151,8 @@ bool    positions.showMaxRisk;                                    // default: FA
 #define POSITION_HISTORY                4                         //
 string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 
-#define I_CONFIG_LINE                   0                         // indexes of positions.data[]
+// indexes of positions.data[]
+#define I_CONFIG_LINE                   0                         //
 #define I_CUSTOM_TYPE                   1                         //
 #define I_POSITION_TYPE                 2                         //
 #define I_DIRECTIONAL_LOTS              3                         //
@@ -151,14 +160,16 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_PIP_DISTANCE                  5                         //
 #define I_BREAKEVEN_PRICE  I_PIP_DISTANCE                         // union: on-position=BreakevenPrice, on-hedged=PipDistance
 #define I_ADJUSTED_PROFIT               6                         //
-#define I_PROFIT                        7                         // total profit
-#define I_PROFIT_PCT                    8                         //
-#define I_PROFIT_PCT_MFE                9                         //
-#define I_PROFIT_PCT_MAE               10                         //
-#define I_PROFIT_MARKER_PRICE          11                         //
-#define I_PROFIT_MARKER_PCT            12                         //
-#define I_LOSS_MARKER_PRICE            13                         //
-#define I_LOSS_MARKER_PCT              14                         //
+#define I_PROFIT                        7                         // total profit in money
+#define I_PROFIT_PCT                    8                         // total profit in percent
+#define I_PROFIT_MFE_PRICE              9                         // MFE price
+#define I_PROFIT_MFE_PCT               10                         // MFE in percent
+#define I_PROFIT_MAE_PRICE             11                         // MAE price
+#define I_PROFIT_MAE_PCT               12                         // MAE in percent
+#define I_PROFIT_MARKER_PRICE          13                         //
+#define I_PROFIT_MARKER_PCT            14                         //
+#define I_LOSS_MARKER_PRICE            15                         //
+#define I_LOSS_MARKER_PCT              16                         //
 
 // control flags for AnalyzePositions()
 #define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions
@@ -219,10 +230,9 @@ color   positions.fontColor.history = C'128,128,0';
 int     hWndDesktop;                                              // handle of the desktop main window (for listener registration)
 double  trackedOrders[][3];                                       // {ticket, orderType, openLimit}
 string  orderTracker.key = "";                                    // prefix for listener registration
-string  orderTracker.orderFailed      = "speech/OrderCancelled.wav";
-string  orderTracker.positionOpened   = "speech/OrderFilled.wav";
-string  orderTracker.positionClosed   = "speech/PositionClosed.wav";
-string  orderTracker.positionStepSize = "MarginLow.wav";          // position increased by more than 1 x unitsize
+string  orderTracker.orderFailed    = "speech/OrderCancelled.wav";
+string  orderTracker.positionOpened = "speech/OrderFilled.wav";
+string  orderTracker.positionClosed = "speech/PositionClosed.wav";
 
 // display flags
 bool    display.balance         = false;
@@ -308,7 +318,7 @@ bool onCommand(string cmd, string params, int keys) {
          flags = F_SHOW_CUSTOM_POSITIONS;                               // with VK_SHIFT: show custom positions only
          mm.cfgIsValid = false;                                         // invalidate cached unitsize configuration
          mm.externalAssetsCached = false;                               // invalidate cached external assets
-         ArrayResize(configTerms, 0);                                   // trigger reparsing of the configuration
+         ArrayResize(config.terms, 0);                                  // trigger reparsing of the configuration
       }
       if (!ToggleOpenOrders(flags)) return(false);
    }
@@ -319,7 +329,7 @@ bool onCommand(string cmd, string params, int keys) {
          flags = F_SHOW_CUSTOM_HISTORY;                                 // with VK_SHIFT: show custom history only
          mm.cfgIsValid = false;                                         // invalidate cached unitsize configuration
          mm.externalAssetsCached = false;                               // invalidate cached external assets
-         ArrayResize(configTerms, 0);                                   // trigger reparsing of the configuration
+         ArrayResize(config.terms, 0);                                  // trigger reparsing of the configuration
       }
       if (!ToggleTradeHistory(flags)) return(false);
    }
@@ -338,7 +348,7 @@ bool onCommand(string cmd, string params, int keys) {
       if (!UpdateAccountDisplay()) return(false);
          mm.cfgIsValid = false;                                         // invalidate cached unitsize configuration
       mm.externalAssetsCached = false;                                  // invalidate cached external assets
-      ArrayResize(configTerms, 0);                                      // trigger reparsing of the configuration
+      ArrayResize(config.terms, 0);                                     // trigger reparsing of the configuration
    }
 
    else if (cmd == "toggle-unit-size") {
@@ -1323,10 +1333,10 @@ bool UpdatePositions() {
 
    // prepare rows for custom positions bottom-left
    int xDist, xPrev, yStart=6, maxCols=9;
-   static int lines, cols, percentCol=-1, mfeCol=-1, commentCol=-1, xOffset[];
-   static bool lastShowAbsProfits, lastShowMfe;
+   static int lines, cols, percentCol=-1, mfaeCol=-1, commentCol=-1, xOffset[];
+   static bool lastShowAbsProfits, lastShowMfae;
 
-   if (!ArraySize(xOffset) || positions.showAbsProfits!=lastShowAbsProfits || positions.showMfe!=lastShowMfe) {
+   if (!ArraySize(xOffset) || positions.showAbsProfits!=lastShowAbsProfits || positions.showMfae!=lastShowMfae) {
       // offsets:     Type:  Lots  BE:  BePrice  Profit:  Percent  Comment
       int offsets[] = {9,    46,   83,  28,      68,      39,      61};
       ArrayResize(offsets, 7);
@@ -1340,21 +1350,21 @@ bool UpdatePositions() {
          percentCol++;
          commentCol++;
       }
-      if (positions.showMfe) {
-         //           Type:  Lots  BE:  BePrice  Profit:  Abs   Percent  MAE/MFE  Comment
+      if (positions.showMfae) {
+         //           Type:  Lots  BE:  BePrice  Profit:  Abs   Percent  MFE/MAE  Comment
          // offsets = {9,    46,   83,  28,      68,      39,   87,      51,      90};
-         ArrayPushInt(offsets, 90);                                        // add column for MAE/MFE
-         mfeCol = percentCol + 1;
-         offsets[mfeCol] = 51;
+         ArrayPushInt(offsets, 90);                                        // add column for MFE/MAE
+         mfaeCol = percentCol + 1;
+         offsets[mfaeCol] = 51;
          commentCol++;
       }
       ArrayResize(xOffset, 0);
       cols = ArrayCopy(xOffset, offsets);
 
       lastShowAbsProfits = positions.showAbsProfits;
-      lastShowMfe        = positions.showMfe;
+      lastShowMfae       = positions.showMfae;
 
-      // nach Reinitialisierung alle vorhandenen Zeilen löschen
+      // after re-initialization: delete all existing lines and markers
       while (lines > 0) {
          for (int col=0; col < maxCols; col++) {                           // test for all possible columns
             label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
@@ -1365,6 +1375,8 @@ bool UpdatePositions() {
          label = StringConcatenate(label.customPosition, ".line", lines, "_pm");
          if (ObjectFind(label) != -1) ObjectDelete(label);
          label = StringConcatenate(label.customPosition, ".line", lines, "_lm");
+         if (ObjectFind(label) != -1) ObjectDelete(label);
+         label = StringConcatenate(label.customPosition, ".line", lines, "_mfem");
          if (ObjectFind(label) != -1) ObjectDelete(label);
          lines--;
       }
@@ -1399,6 +1411,9 @@ bool UpdatePositions() {
       label = StringConcatenate(label.customPosition, ".line", lines, "_lm");
       if (ObjectFind(label) == -1) /*&&*/ if (!ObjectCreateRegister(label, OBJ_HLINE)) return(false);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      label = StringConcatenate(label.customPosition, ".line", lines, "_mfem");
+      if (ObjectFind(label) == -1) /*&&*/ if (!ObjectCreateRegister(label, OBJ_ARROW)) return(false);
+      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
 
    // remove existing surplus rows
@@ -1413,11 +1428,13 @@ bool UpdatePositions() {
       if (ObjectFind(label) != -1) ObjectDelete(label);
       label = StringConcatenate(label.customPosition, ".line", lines, "_lm");
       if (ObjectFind(label) != -1) ObjectDelete(label);
+      label = StringConcatenate(label.customPosition, ".line", lines, "_mfem");
+      if (ObjectFind(label) != -1) ObjectDelete(label);
       lines--;
    }
 
    // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
-   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMinMax="", sMaxRisk="", sComment="", pmText="", priceFormat="", _spUnit=ifString(pUnit==1, "", " "+ spUnit);
+   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMin="", sProfitMax="", sProfitMinMax="", sMaxRisk="", sComment="", markerText="", priceFormat="", _spUnit=ifString(pUnit==1, "", " "+ spUnit);
    color fontColor;
    int line, configLine, index;
 
@@ -1440,13 +1457,17 @@ bool UpdatePositions() {
             if (positions.data[i][I_ADJUSTED_PROFIT] != NULL) sProfitAbs = StringConcatenate(sProfitAbs, " (", NumberToStr(positions.data[i][I_ADJUSTED_PROFIT], "+,'.2"), ")");
          }
          sProfitPct    = StringConcatenate(DoubleToStr(positions.data[i][I_PROFIT_PCT], 2), "%");
+         sProfitMin    = " ";
+         sProfitMax    = " ";
          sProfitMinMax = " ";
          sComment      = " ";
 
          configLine = positions.data[i][I_CONFIG_LINE];                    // (int) double
          if (configLine > -1) {
-            if (positions.showMfe && config.dData[configLine][I_MFE_ENABLED]) {
-               sProfitMinMax = StringConcatenate("(", DoubleToStr(positions.data[i][I_PROFIT_PCT_MAE], 2), "/", DoubleToStr(positions.data[i][I_PROFIT_PCT_MFE], 2), ")");
+            if (positions.showMfae && config.dData[configLine][I_MFAE_ENABLED]) {
+               sProfitMin    = DoubleToStr(positions.data[i][I_PROFIT_MAE_PCT], 2);
+               sProfitMax    = DoubleToStr(positions.data[i][I_PROFIT_MFE_PCT], 2);
+               sProfitMinMax = StringConcatenate("(", sProfitMin, "/", sProfitMax, ")");
             }
             sComment = config.sData[configLine][I_CONFIG_COMMENT];
             if (positions.showMaxRisk) {
@@ -1465,8 +1486,8 @@ bool UpdatePositions() {
             if (positions.showAbsProfits)
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), sProfitAbs,                                            positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), sProfitPct,                                            positions.fontSize, positions.fontName, fontColor);
-            if (positions.showMfe)
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", mfeCol    ), sProfitMinMax,                                         positions.fontSize, positions.fontName, fontColor);
+            if (positions.showMfae)
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", mfaeCol   ), sProfitMinMax,                                         positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                              positions.fontSize, positions.fontName, fontColor);
          }
 
@@ -1500,8 +1521,8 @@ bool UpdatePositions() {
             if (positions.showAbsProfits)
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), sProfitAbs,                                            positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), sProfitPct,                                            positions.fontSize, positions.fontName, fontColor);
-            if (positions.showMfe)
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", mfeCol    ), sProfitMinMax,                                         positions.fontSize, positions.fontName, fontColor);
+            if (positions.showMfae)
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", mfaeCol   ), sProfitMinMax,                                         positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                              positions.fontSize, positions.fontName, fontColor);
          }
 
@@ -1515,13 +1536,13 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   BE";
+            markerText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   BE";
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet(label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet(label, OBJPROP_COLOR,      DarkTurquoise);
             ObjectSet(label, OBJPROP_BACK,       false);
             ObjectSet(label, OBJPROP_PRICE1,     positions.data[i][I_BREAKEVEN_PRICE]);
-            ObjectSetText(label, pmText);
+            ObjectSetText(label, markerText);
          }
 
          // update PL markers
@@ -1530,13 +1551,13 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_PROFIT_MARKER_PCT], 2), "+.+") +"%";
+            markerText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_PROFIT_MARKER_PCT], 2), "+.+") +"%";
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet(label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet(label, OBJPROP_COLOR,      ifInt(positions.data[i][I_PROFIT_MARKER_PCT] < 0, OrangeRed, DodgerBlue));
             ObjectSet(label, OBJPROP_BACK,       false);
             ObjectSet(label, OBJPROP_PRICE1,     positions.data[i][I_PROFIT_MARKER_PRICE]);
-            ObjectSetText(label, pmText);
+            ObjectSetText(label, markerText);
          }
 
          label = StringConcatenate(label.customPosition, ".line", line, "_lm");
@@ -1544,13 +1565,28 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_LOSS_MARKER_PCT], 2), "+.+") +"%";
+            markerText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"   PL "+ NumberToStr(NormalizeDouble(positions.data[i][I_LOSS_MARKER_PCT], 2), "+.+") +"%";
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet    (label, OBJPROP_COLOR,      ifInt(positions.data[i][I_LOSS_MARKER_PCT] < 0, OrangeRed, DodgerBlue));
             ObjectSet    (label, OBJPROP_BACK,       false);
             ObjectSet    (label, OBJPROP_PRICE1,     positions.data[i][I_LOSS_MARKER_PRICE]);
-            ObjectSetText(label, pmText);
+            ObjectSetText(label, markerText);
+         }
+
+         // update MFE marker
+         label = StringConcatenate(label.customPosition, ".line", line, "_mfem");
+         if (!positions.data[i][I_PROFIT_MFE_PRICE]) {
+            ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+         }
+         else {
+            markerText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +"  MFE  "+ NumberToStr(positions.data[i][I_PROFIT_MFE_PRICE], PriceFormat) +"  "+ sProfitMax +"%";
+            ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
+            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_DASH);
+            ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_LONG);
+            ObjectSet    (label, OBJPROP_TIME1,     Time[0] + 5*Period()*MINUTES);
+            ObjectSet    (label, OBJPROP_PRICE1,    positions.data[i][I_PROFIT_MFE_PRICE]);
+            ObjectSetText(label, markerText);
          }
       }
    }
@@ -1859,53 +1895,35 @@ bool UpdateStopoutLevel() {
    isPosition        = longPosition || shortPosition;
    isVirtualPosition = false;
 
-   // signal potential errors if the position increased by more than 1 x unitsize
-   if (false) /*&&*/ if (!__isTesting && Track.Orders && mm.leveragedLotsNormalized && __ExecutionContext[EC.cycleTicks] > 1) {
-      double diff = MathAbs(totalPosition);
-      if (Sign(totalPosition) == Sign(prevTotalPosition)) diff -= MathAbs(prevTotalPosition);
-      if (NormalizeDouble(diff, 2) > mm.leveragedLotsNormalized) {
-         bool eventLogged = false;
-         if (IsLogInfo()) {
-            string msgDetail = NumberToStr(prevTotalPosition, ".+") +" => "+ NumberToStr(totalPosition, ".+") +" (unitsize "+ NumberToStr(mm.leveragedLotsNormalized, ".+") +")";
-            string event = "IncreasePosition::"+ msgDetail +" ("+ TimeToStr(Tick.time-Tick.time%10, TIME_MINUTES|TIME_SECONDS) +")";
-            if (!IsOrderEventLogged(event)) {
-               logInfo("AnalyzePositions(2)  position "+ msgDetail);
-               eventLogged = SetOrderEventLogged(event, true);
-            }
-         }
-         if (eventLogged && Track.Orders) PlaySoundEx(orderTracker.positionStepSize);
-      }
-   }
-
-   // parse custom configuration
    int prevError = last_error;
    SetLastError(NO_ERROR);
 
-   if (!ArraySize(configTerms)) /*&&*/ if (!CustomPositions.ReadConfig()) {
+   // make sure the configuration of custom positions is parsed
+   if (!ArraySize(config.terms)) /*&&*/ if (!CustomPositions.ReadConfig()) {
       positions.analyzed = !last_error;                                          // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
       if (!last_error) SetLastError(prevError);                                  // in diesem Fall nächster Versuch beim nächsten Tick.
       return(positions.analyzed);
    }
    SetLastError(prevError);
 
-   // individuelle Positionen aus offenen Positionen extrahieren und in positions.data[] speichern
-   int    line, termType, termsSize = ArrayRange(configTerms, 0);
+   // extract individual tickets/partial positions from all open positions and store it in positions.data[]
+   int    line, termType, termsSize = ArrayRange(config.terms, 0);
    double termValue1, termValue2, termResult1, termResult2, customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct=EMPTY_VALUE, lossMarkerPrice, lossMarkerPct=EMPTY_VALUE, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
    int    customTickets[], customTypes[];
    double customLots[], customOpenPrices[], customCommissions[], customSwaps[], customProfits[];
    bool   lineSkipped, isVirtual;
 
    ArrayResize(positions.data, 0);
-   positions.showMfe = false;                                                    // global var to control positioning/display width of chart objects
+   positions.showMfae = false;                                                   // global flag to control positioning/display width of chart objects
 
    for (i=0, line=0; i < termsSize; i++) {
-      termType    = configTerms[i][I_TERM_TYPE   ];
-      termValue1  = configTerms[i][I_TERM_VALUE1 ];
-      termValue2  = configTerms[i][I_TERM_VALUE2 ];
-      termResult1 = configTerms[i][I_TERM_RESULT1];
-      termResult2 = configTerms[i][I_TERM_RESULT2];
+      termType    = config.terms[i][I_TERM_TYPE   ];
+      termValue1  = config.terms[i][I_TERM_VALUE1 ];
+      termValue2  = config.terms[i][I_TERM_VALUE2 ];
+      termResult1 = config.terms[i][I_TERM_RESULT1];
+      termResult2 = config.terms[i][I_TERM_RESULT2];
 
-      if (!termType) {                                                           // termType NULL => EOL (Ende einer CustomPositions-Konfigurationszeile)
+      if (!termType) {                                                           // termType NULL => EOL of a config line for costum positions
          if (i == 0) line = -1;                                                  // an empty configuration has no lines
          if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(customTickets, line, flags);
          if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
@@ -1917,17 +1935,17 @@ bool UpdateStopoutLevel() {
 
          if (line >= 0) {
             if (lineSkipped) {
-               // reset an existing MFE/MAE signaling flag
+               // if the line is skipped we can reset a set MFE/MAE signaling flag
                int hWnd;
                string sEvent = "";
                if (config.dData[line][I_PROFIT_MFE] != 0) {
                   hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-                  sEvent = GetMfeMaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE);
+                  sEvent = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE);
                   SetPropA(hWnd, sEvent, 0);
                }
                if (config.dData[line][I_PROFIT_MAE] != 0) {
                   hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-                  sEvent = GetMfeMaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE);
+                  sEvent = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE);
                   SetPropA(hWnd, sEvent, 0);
                }
 
@@ -1938,7 +1956,7 @@ bool UpdateStopoutLevel() {
                config.dData[line][I_MAX_RISK  ] = 0;
             }
             else {
-               positions.showMfe = positions.showMfe || config.dData[line][I_MFE_ENABLED];
+               positions.showMfae = positions.showMfae || config.dData[line][I_MFAE_ENABLED];
 
                // track the first (top-most) virtual position
                if (!isVirtualPosition && isVirtual && (customLongPosition || customShortPosition)) {
@@ -1972,18 +1990,18 @@ bool UpdateStopoutLevel() {
          continue;
       }
 
-      // individuelle Position extrahieren
+      // extract individual tickets/partial positions
       if (!ExtractPosition(termType, termValue1, termValue2, termResult1, termResult2,
                            _longPosition,      _shortPosition,      _totalPosition,      tickets,       types,       lots, openTimes, openPrices,       commissions,       swaps,       profits,
                            customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,      customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPct, lossMarkerPrice, lossMarkerPct,
                            isVirtual, flags)) {
          return(false);
       }
-      configTerms[i][I_TERM_RESULT1] = termResult1;
-      configTerms[i][I_TERM_RESULT2] = termResult2;
+      config.terms[i][I_TERM_RESULT1] = termResult1;
+      config.terms[i][I_TERM_RESULT2] = termResult2;
    }
 
-   // eine verbleibende offene Position als letzten Eintrag behandeln (wird von keiner Konfigurationszeile abgedeckt)
+   // handle a remaining open position as implicit last config entry (not covered by any previous configuration)
    line = -1;
    if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(tickets, line, flags);
 
@@ -2285,12 +2303,12 @@ int SearchLfxTicket(int ticket) {
  *
  * @return bool - success status
  *
- * Fills config.sData[], config.dData[] und configTerms[] with parsed configuration data of the current chart symbol. On return
- * configTerms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL) marks the end of a
- * configuration line and also an empty configuration. On return configTerms[] is never empty and holds at least one EOL marker.
+ * Fills config.sData[], config.dData[] und config.terms[] with parsed configuration data of the current chart symbol. On return
+ * config.terms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL) marks the end of a
+ * configuration line and also an empty configuration. On return config.terms[] is never empty and holds at least one EOL marker.
  *
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
- * | Syntax                                          | Description                                                              | Content of configTerms[][] (7)                                     |
+ * | Syntax                                          | Description                                                              | Content of config.terms[][] (7)                                    |
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
  * |    #123456                                      | complete unprocessed ticket or remainder of processed ticket             | [TERM_TICKET,        123456,           EMPTY,            ..., ...] |
  * | 0.1#123456                                      | O.1 lot of a ticket (1)                                                  | [TERM_TICKET,        123456,           0.1,              ..., ...] |
@@ -2309,8 +2327,9 @@ int SearchLfxTicket(int ticket) {
  * | LM=2.3456                                       | draw a loss marker and calculate % PnL at the specified price            | [TERM_LOSS_MARKER,   2.3456,           ...,              ..., ...] |
  * | LM=-5%                                          | calculate price of the specified %PnL and draw a loss marker             | [TERM_LOSS_MARKER,   ...,              -5.0,             ..., ...] |
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
- * | MFE                                             | track MFE/MAE                                                            | TERM_MFE, stored in config.dData[]                                 |
- * | MFES                                            | track MFE/MAE and signal new PL high/lows                                | TERM_MFE + flag, stored in config.dData[]                          |
+ * | MFE                                             | track MFE/MAE                                                            | TERM_MFAE, stored in config.dData[]                                |
+ * | MFES                                            | track MFE/MAE and signal new PnL high/lows                               | TERM_MFAE + flag, stored in config.dData[]                         |
+ * | MFE[-MS]                                        | additional flags: M - mark level, S - signal new high/low                | TERM_MFAE + flags, stored in config.dData[]                        |
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
  * | any text after a semicolon ";" aka .ini comment | displayed as position description                                        | stored in config.sData[]                                           |
  * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                           |                                                                    |
@@ -2325,9 +2344,9 @@ int SearchLfxTicket(int ticket) {
  *  GBPAUD.d = 0.3S                                   // virtual short position of 0.3 lot at current price
  *
  *
- *  Resulting array configTerms[] for the above example (7)
- *  -------------------------------------------------------
- *  double configTerms = [
+ *  Resulting array config.terms[] for the above example (7)
+ *  --------------------------------------------------------
+ *  double config.terms = [
  *     [TERM_TICKET,      111111, EMPTY, ..., ...],
  *     [TERM_TICKET,      222222, 0.1,   ..., ...],
  *     [NULL,             ...,    ...,   ..., ...],   // EOL marker of line GBPAUD.a
@@ -2358,16 +2377,16 @@ int SearchLfxTicket(int ticket) {
  *  (7) "..." denotes fields not used by the term
  */
 bool CustomPositions.ReadConfig() {
-   double confTerms[][5]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(configTerms,  1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match configTerms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
+   double confTerms[][5]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(config.terms, 1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match config.terms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
    string confsData[][2]; ArrayResize(confsData, 0); if (ArrayRange(confsData, 1) != ArrayRange(config.sData, 1)) return(!catch("CustomPositions.ReadConfig(2)  array mis-match config.sData[] / confsData[]", ERR_INCOMPATIBLE_ARRAY));
    double confdData[][8]; ArrayResize(confdData, 0); if (ArrayRange(confdData, 1) != ArrayRange(config.dData, 1)) return(!catch("CustomPositions.ReadConfig(3)  array mis-match config.dData[] / confdData[]", ERR_INCOMPATIBLE_ARRAY));
 
    // parse configuration
    string   keys[], values[], iniValue="", sValue="", comment="", confComment="", openComment="", hstComment="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   termType, termValue1, termValue2, termResult1, termResult2, dValue, lotSize, minLotSize=MarketInfo(symbol, MODE_MINLOT), lotStep=MarketInfo(symbol, MODE_LOTSTEP);
-   int      valuesSize, termsSize, pos, ticket, nextPositionStartOffset;
+   int      valuesSize, termsSize, pos, len, ticket, nextPositionStartOffset;
    datetime from, to;
-   bool     isEmptyPosition, isVirtualPosition, isGroupedPosition, containsEquityValue, containsProfitMarker, containsLossMarker, isBemEnabled, isMfeEnabled, isMfeSignal, isTotal, isPercent;
+   bool     isEmptyPosition, isVirtualPosition, isGroupedPosition, containsEquityValue, containsProfitMarker, containsLossMarker, isBemEnabled, isMfaeEnabled, isMfaeSignal, markMfe, isTotal, isPercent;
 
    if (!minLotSize || !lotStep) return(false);                       // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(4)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
@@ -2405,9 +2424,10 @@ bool CustomPositions.ReadConfig() {
             containsEquityValue  = false;                            // whether the position entry contains a custom equity value
             containsProfitMarker = false;                            // whether the position entry contains a TP marker
             containsLossMarker   = false;                            // whether the position entry contains a SL marker
-            isBemEnabled         = false;                            // whether to display the BE marker for the position entry
-            isMfeEnabled         = false;                            // whether to enable the MFE/MAE tracker for the position entry
-            isMfeSignal          = false;                            // whether the MFE/MAE tracker signals new highs/lows
+            isBemEnabled         = false;                            // whether to display the BE marker for the position
+            isMfaeEnabled        = false;                            // whether to enable the MFE/MAE tracker for the position
+            isMfaeSignal         = false;                            // whether the MFE/MAE tracker signals new highs/lows
+            markMfe              = false;                            // whether to visualize the MFE level
             valuesSize           = Explode(StrToUpper(iniValue), ",", values, NULL);
 
             for (int n=0; n < valuesSize; n++) {
@@ -2420,15 +2440,29 @@ bool CustomPositions.ReadConfig() {
                   continue;
                }
                if (StrStartsWith(values[n], "MFE")) {                // flag: enable MFE/MAE tracker
-                  if (!StrStartsWith("MFES", values[n]))             return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  isMfeEnabled = true;
-                  isMfeSignal = (values[n] == "MFES");               // flag: signal new PL highs/lows
+                  sValue = values[n];
+                  if (sValue != "MFE") {
+                     sValue = StrSubstr(sValue, 3);
+                     if (!StrStartsWith(sValue, "-"))                return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     sValue = StrSubstr(sValue, 1);
+                     len = StringLen(sValue);
+                     if (len > 2)                                    return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                     while (len > 0) {
+                        len--;
+                        switch (StringGetChar(sValue, len)) {
+                           case 'M': markMfe = true;      break;     // flag: mark MFE level
+                           case 'S': isMfaeSignal = true; break;     // flag: signal new MFE/MAE
+                           default:                                  return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                        }
+                     }
+                  }
+                  isMfaeEnabled = true;
                   continue;
                }
 
                if (StrStartsWith(values[n], "#")) {                  // ticket: #123456
                   sValue = StrTrim(StrSubstr(values[n], 1));
-                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType    = TERM_TICKET;
                   termValue1  = StrToInteger(sValue);
                   termValue2  = EMPTY;                               // all remaining lots
@@ -2439,13 +2473,13 @@ bool CustomPositions.ReadConfig() {
                else if (StrContains(values[n], "#")) {               // partial ticket: 0.1#123456
                   pos = StringFind(values[n], "#");
                   sValue = StrTrim(StrLeft(values[n], pos));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_TICKET;
                   termValue2 = StrToDouble(sValue);
-                  if (termValue2 && LT(termValue2, minLotSize))      return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue2, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue2 && LT(termValue2, minLotSize))      return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue2, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(values[n], pos+1));
-                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsDigits(sValue))                          return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1  = StrToInteger(sValue);
                   termResult1 = NULL;
                   termResult2 = NULL;
@@ -2466,57 +2500,57 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrStartsWith(values[n], "E=")) {            // equity value: E=123.56
                   sValue = StrTrimLeft(StrSubstr(values[n], 2));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in equity term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in equity term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_EQUITY;
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 <= 0)                               return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in equity term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 <= 0)                               return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in equity term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
-                  if (containsEquityValue)                           return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple equity terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (containsEquityValue)                           return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple equity terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   containsEquityValue = true;
                }
 
                else if (StrStartsWith(values[n], "PM")) {            // profit marker: PM=3.0[%]
                   sValue = StrTrim(StrSubstr(values[n], 2));
-                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(sValue, 1));
                   isPercent = StrEndsWith(sValue, "%");
                   if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   dValue = StrToDouble(sValue);
                   termType   = TERM_PROFIT_MARKER;
                   termValue1 = ifDouble(isPercent, NULL, NormalizeDouble(dValue, Digits));
-                  if (!isPercent && termValue1 <= 0)                 return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!isPercent && termValue1 <= 0)                 return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = ifDouble(isPercent, dValue, NULL);
-                  if (isPercent && termValue2 <= -100)               return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (isPercent && termValue2 <= -100)               return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termResult1 = NULL;
                   termResult2 = NULL;
-                  if (containsProfitMarker)                          return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple PM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (containsProfitMarker)                          return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple PM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   containsProfitMarker = true;
                }
 
                else if (StrStartsWith(values[n], "LM")) {            // loss marker: LM=-5.0[%]
                   sValue = StrTrim(StrSubstr(values[n], 2));
-                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(sValue, 1));
                   isPercent = StrEndsWith(sValue, "%");
                   if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   dValue = StrToDouble(sValue);
                   termType   = TERM_LOSS_MARKER;
                   termValue1 = ifDouble(isPercent, NULL, NormalizeDouble(dValue, Digits));
-                  if (!isPercent && termValue1 <= 0)                 return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!isPercent && termValue1 <= 0)                 return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > 0) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = ifDouble(isPercent, dValue, NULL);
-                  if (isPercent && termValue2 <= -100)               return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (isPercent && termValue2 <= -100)               return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termResult1 = NULL;
                   termResult2 = NULL;
-                  if (containsLossMarker)                            return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple LM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (containsLossMarker)                            return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple LM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   containsLossMarker = true;
                }
 
                else if (StrStartsWith(values[n], "L")) {             // alle verbleibenden Long-Positionen
-                  if (values[n] != "L")                              return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (values[n] != "L")                              return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType    = TERM_OPEN_LONG;
                   termValue1  = EMPTY;
                   termValue2  = NULL;
@@ -2525,7 +2559,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "S")) {             // alle verbleibenden Short-Positionen
-                  if (values[n] != "S")                              return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (values[n] != "S")                              return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType    = TERM_OPEN_SHORT;
                   termValue1  = EMPTY;
                   termValue2  = NULL;
@@ -2542,7 +2576,7 @@ bool CustomPositions.ReadConfig() {
                   termResult2 = NULL;
                }
 
-               else if (StrIsNumeric(values[n])) {                   // PL adjustment
+               else if (StrIsNumeric(values[n])) {                   // PnL adjustment
                   termType    = TERM_PL_ADJUSTMENT;
                   termValue1  = StrToDouble(values[n]);
                   termValue2  = NULL;
@@ -2553,10 +2587,10 @@ bool CustomPositions.ReadConfig() {
                else if (StrEndsWith(values[n], "L")) {               // virtuelle Longposition zum aktuellen Preis
                   termType = TERM_OPEN_LONG;
                   sValue   = StrTrim(StrLeft(values[n], -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(29)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(29)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(30)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(30)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(31)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
@@ -2565,10 +2599,10 @@ bool CustomPositions.ReadConfig() {
                else if (StrEndsWith(values[n], "S")) {               // virtuelle Shortposition zum aktuellen Preis
                   termType = TERM_OPEN_SHORT;
                   sValue   = StrTrim(StrLeft(values[n], -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(31)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(32)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(32)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(33)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(33)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(34)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2  = NULL;
                   termResult1 = NULL;
                   termResult2 = NULL;
@@ -2578,16 +2612,16 @@ bool CustomPositions.ReadConfig() {
                   termType = TERM_OPEN_LONG;
                   pos = StringFind(values[n], "L");
                   sValue = StrTrim(StrLeft(values[n], pos));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(34)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(35)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(35)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(36)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(36)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(37)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(values[n], pos+1));
                   if (StrStartsWith(sValue, "@"))
                      sValue = StrTrim(StrSubstr(sValue, 1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(37)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(38)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(sValue);
-                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(38)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(39)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
@@ -2596,23 +2630,23 @@ bool CustomPositions.ReadConfig() {
                   termType = TERM_OPEN_SHORT;
                   pos = StringFind(values[n], "S");
                   sValue = StrTrim(StrLeft(values[n], pos));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(39)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(40)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(40)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(41)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(41)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(42)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(values[n], pos+1));
                   if (StrStartsWith(sValue, "@"))
                      sValue = StrTrim(StrSubstr(sValue, 1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(42)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(43)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(sValue);
-                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(43)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(44)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termResult1 = NULL;
                   termResult2 = NULL;
                }
-               else                                                  return(!catch("CustomPositions.ReadConfig(44)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+               else                                                  return(!catch("CustomPositions.ReadConfig(45)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
 
                // Eine gruppierte Trade-History kann nicht mit anderen Termen kombiniert werden
-               if (isGroupedPosition && termType!=TERM_EQUITY)       return(!catch("CustomPositions.ReadConfig(45)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (cannot combine grouped trade history with other entries) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+               if (isGroupedPosition && termType!=TERM_EQUITY)       return(!catch("CustomPositions.ReadConfig(46)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (cannot combine grouped trade history with other entries) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
 
                // Die Konfiguration virtueller Positionen muß mit einem virtuellen Term beginnen, damit die realen Lots nicht um die virtuellen Lots reduziert werden, siehe (2).
                if ((termType==TERM_OPEN_LONG || termType==TERM_OPEN_SHORT) && termValue1!=EMPTY) {
@@ -2646,9 +2680,10 @@ bool CustomPositions.ReadConfig() {
                confsData[lines][I_CONFIG_COMMENT] = comment;
 
                ArrayResize(confdData, lines+1);
-               if (isBemEnabled) confdData[lines][I_BEM_ENABLED] = 1;
-               if (isMfeEnabled) confdData[lines][I_MFE_ENABLED] = 1;
-               if (isMfeSignal)  confdData[lines][I_MFE_SIGNAL ] = 1;
+               if (isBemEnabled)  confdData[lines][I_BEM_ENABLED ] = 1;
+               if (isMfaeEnabled) confdData[lines][I_MFAE_ENABLED] = 1;
+               if (isMfaeSignal)  confdData[lines][I_MFAE_SIGNAL ] = 1;
+               if (markMfe)       confdData[lines][I_MARK_MFE    ] = 1;
 
                nextPositionStartOffset = termsSize + 1;              // Start-Offset der nächsten Custom-Position merken (falls eine weitere Position folgt)
             }
@@ -2669,7 +2704,7 @@ bool CustomPositions.ReadConfig() {
       for (i=0; i < newLines; i++) {
          for (n=0; n < oldLines; n++) {
             if (confsData[i][I_CONFIG_KEY] == config.sData[n][I_CONFIG_KEY]) {
-               if (confdData[i][I_MFE_ENABLED] && 1) {
+               if (confdData[i][I_MFAE_ENABLED] && 1) {
                   confdData[i][I_PROFIT_MFE] = config.dData[n][I_PROFIT_MFE];
                   confdData[i][I_PROFIT_MAE] = config.dData[n][I_PROFIT_MAE];
                }
@@ -2681,11 +2716,11 @@ bool CustomPositions.ReadConfig() {
       }
    }
 
-   // finally overwrite global vars (on error global var stay untouched)
-   ArrayResize(configTerms,  0); if (ArraySize(confTerms) > 0) ArrayCopy(configTerms,  confTerms);
+   // finally overwrite global vars (thus on error they are not touched)
+   ArrayResize(config.terms, 0); if (ArraySize(confTerms) > 0) ArrayCopy(config.terms, confTerms);
    ArrayResize(config.sData, 0); if (ArraySize(confsData) > 0) ArrayCopy(config.sData, confsData);
    ArrayResize(config.dData, 0); if (ArraySize(confdData) > 0) ArrayCopy(config.dData, confdData);
-   return(!catch("CustomPositions.ReadConfig(46)"));
+   return(!catch("CustomPositions.ReadConfig(47)"));
 }
 
 
@@ -3715,7 +3750,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       }
    }
 
-   else if (termType==TERM_MFE || termType==TERM_MFE_SIGNAL || termType==TERM_BE_MARKER) {
+   else if (termType==TERM_MFAE || termType==TERM_MFAE_SIGNAL || termType==TERM_BE_MARKER) {
       // flags: nothing to do
    }
    else return(!catch("ExtractPosition(6)  illegal or unknown termType: "+ termType, ERR_RUNTIME_ERROR));
@@ -3725,8 +3760,8 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 
 
 /**
- * Stores the collected tickets of a single custom config line as a new record in positions.data[].
- * This record represents a single row displayed in the chart.
+ * Stores all collected data of a single custom config line as a new record in positions.data[].
+ * The record n positions.data[] represents a single row displayed in the chart.
  *
  * @param  _In_    bool   isVirtual
  *
@@ -3764,8 +3799,9 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
    double openProfitTerminal;                                              // open profit as seen by the terminal (not optimized for hedged positions)
    double totalProfitTerminal;                                             // total profit as seen by the terminal (not optimized for hedged positions)
    double equity, equity100Pct;                                            // current equity value of the position and 100% base value for calculation of MFE/MAE
-   bool isNewMFE, isNewMAE;
-   int ticketsSize = ArraySize(tickets);
+   double mfePrice, maePrice;
+   bool   isNewMfe, isNewMae, markMfe;
+   int    ticketsSize = ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit (History) noch AdjustedProfit, wird sie übersprungen.
    // Ein Test auf size(tickets) != 0 reicht nicht aus, da einige Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
@@ -3880,10 +3916,12 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (configLine >= 0) {
             config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
             config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
-            positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-            positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+            positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+            positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
          }
 
+         positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
+         positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
          positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
          positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
          positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
@@ -3949,20 +3987,24 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
       totalProfit = NormalizeDouble(totalProfit, 2);
 
+      markMfe = false;
       if (configLine >= 0) {
-         isNewMFE = (config.dData[configLine][I_MFE_SIGNAL] && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMAE = (config.dData[configLine][I_MFE_SIGNAL] && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
+         isNewMfe = (config.dData[configLine][I_MFAE_SIGNAL]  && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMae = (config.dData[configLine][I_MFAE_SIGNAL]  && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
+         markMfe  = (config.dData[configLine][I_MFAE_ENABLED] && config.dData[configLine][I_MARK_MFE]);
 
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,   config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,   config.dData[configLine][I_PROFIT_MAE]);
          config.dData[configLine][I_MAX_LOTS  ] = MathMax(totalPosition, config.dData[configLine][I_MAX_LOTS  ]);
-         positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-         positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
 
-         if (isNewMFE) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
-         if (isNewMAE) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMfe) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMae) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
       }
 
+      positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
+      positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
       positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
       positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
@@ -3970,8 +4012,20 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       pipValue = PipValue(totalPosition, true);                         // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
+         // re-calculate BE level
          positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit)/pipValue*Pip, 8);
 
+         // re-calculate MFE/MAE levels
+         if (markMfe) {
+            if (config.dData[configLine][I_PROFIT_MFE] != 0) {
+               positions.data[n][I_PROFIT_MFE_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MFE])/pipValue*Pip, 8);
+            }
+            if (config.dData[configLine][I_PROFIT_MAE] != 0) {
+               positions.data[n][I_PROFIT_MAE_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MAE])/pipValue*Pip, 8);
+            }
+         }
+
+         // re-calculate PM level
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
             positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (openPrice/totalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
@@ -3981,6 +4035,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
          }
 
+         // re-calculate LM level
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
             positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit + (lossMarkerPrice-openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
@@ -4048,20 +4103,24 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
       totalProfit = NormalizeDouble(totalProfit, 2);
 
+      markMfe = false;
       if (configLine >= 0) {
-         isNewMFE = (config.dData[configLine][I_MFE_SIGNAL] && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMAE = (config.dData[configLine][I_MFE_SIGNAL] && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
+         isNewMfe = (config.dData[configLine][I_MFAE_SIGNAL]  && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMae = (config.dData[configLine][I_MFAE_SIGNAL]  && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
+         markMfe  = (config.dData[configLine][I_MFAE_ENABLED] && config.dData[configLine][I_MARK_MFE]);
 
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,    config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,    config.dData[configLine][I_PROFIT_MAE]);
          config.dData[configLine][I_MAX_LOTS  ] = MathMax(-totalPosition, config.dData[configLine][I_MAX_LOTS  ]);
-         positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-         positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
 
-         if (isNewMFE) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
-         if (isNewMAE) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMfe) onNewMFE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
+         if (isNewMae) onNewMAE(config.sData[configLine][I_CONFIG_KEY], totalProfit);
       }
 
+      positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
+      positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
       positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
       positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
@@ -4069,8 +4128,20 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       pipValue = PipValue(-totalPosition, true);                        // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
+         // re-calculate BE level
          positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble((totalProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, 8);
 
+         // re-calculate MFE/MAE levels
+         if (markMfe) {
+            if (config.dData[configLine][I_PROFIT_MFE] != 0) {
+               positions.data[n][I_PROFIT_MFE_PRICE] = NormalizeDouble((totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MFE])/pipValue*Pip - openPrice/totalPosition, 8);
+            }
+            if (config.dData[configLine][I_PROFIT_MAE] != 0) {
+               positions.data[n][I_PROFIT_MAE_PRICE] = NormalizeDouble((totalProfit-floatingProfit-config.dData[configLine][I_PROFIT_MAE])/pipValue*Pip - openPrice/totalPosition, 8);
+            }
+         }
+
+         // re-calculate PM level
          if (profitMarkerPrice != NULL) {
             positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
             positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (profitMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
@@ -4080,6 +4151,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPct;
          }
 
+         // re-calculate LM level
          if (lossMarkerPrice != NULL) {
             positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
             positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (lossMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
@@ -4109,10 +4181,12 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
    if (configLine >= 0) {
       config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
       config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
-      positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
-      positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
+      positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+      positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
    }
 
+   positions.data[n][I_PROFIT_MFE_PRICE   ] = NULL;
+   positions.data[n][I_PROFIT_MAE_PRICE   ] = NULL;
    positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
    positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
    positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
@@ -4513,8 +4587,8 @@ bool StoreStatus() {
       SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);         // chart window
       Chart.StoreString(key, sValue);                                      // chart
 
-      if (config.dData[i][I_MFE_ENABLED] > 0) {
-         key = indicatorName +"."+ Symbol() +".config."+ configKey +".mfe|mae";
+      if (config.dData[i][I_MFAE_ENABLED] > 0) {
+         key = indicatorName +"."+ Symbol() +".config."+ configKey +".mfae";
          sValue = NumberToStr(config.dData[i][I_PROFIT_MFE], ".1+") +"|"+ NumberToStr(config.dData[i][I_PROFIT_MAE], ".1+");
          SetWindowStringA(__ExecutionContext[EC.chart], key, sValue);      // chart window
          Chart.StoreString(key, sValue);                                   // chart
@@ -4603,14 +4677,14 @@ bool RestoreStatus() {
       config.dData[i][I_MAX_LOTS] = StrToDouble(StrLeftTo(sValue1, "|"));
       config.dData[i][I_MAX_RISK] = StrToDouble(StrRightFrom(sValue1, "|"));
 
-      key = indicatorName +"."+ Symbol() +".config."+ configKeys[i] +".mfe|mae";
+      key = indicatorName +"."+ Symbol() +".config."+ configKeys[i] +".mfae";
       sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
       sValue2 = "";
       Chart.RestoreString(key, sValue2);
       if (!StringLen(sValue1)) sValue1 = sValue2;
-      config.dData[i][I_MFE_ENABLED] = (sValue1 != "");
-      config.dData[i][I_PROFIT_MFE ] = StrToDouble(StrLeftTo(sValue1, "|"));
-      config.dData[i][I_PROFIT_MAE ] = StrToDouble(StrRightFrom(sValue1, "|"));
+      config.dData[i][I_MFAE_ENABLED] = (sValue1 != "");
+      config.dData[i][I_PROFIT_MFE  ] = StrToDouble(StrLeftTo(sValue1, "|"));
+      config.dData[i][I_PROFIT_MAE  ] = StrToDouble(StrRightFrom(sValue1, "|"));
    }
 
    // bool display.balance
@@ -4962,7 +5036,7 @@ bool onNewMFE(string configKey, double profit) {
 
    // skip the signal if it already has been signaled elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sEvent = GetMfeMaeSignalKey(configKey, I_PROFIT_MFE);
+   string sEvent = GetMfaeSignalKey(configKey, I_PROFIT_MFE);
    if (GetPropA(hWnd, sEvent) >= iProfit) return(true);
    SetPropA(hWnd, sEvent, iProfit);
 
@@ -4991,7 +5065,7 @@ bool onNewMAE(string configKey, double profit) {
 
    // skip the signal if it already has been signaled elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sEvent = GetMfeMaeSignalKey(configKey, I_PROFIT_MAE);
+   string sEvent = GetMfaeSignalKey(configKey, I_PROFIT_MAE);
    if (GetPropA(hWnd, sEvent) <= iProfit) return(true);
    SetPropA(hWnd, sEvent, iProfit);
 
@@ -5008,12 +5082,12 @@ bool onNewMAE(string configKey, double profit) {
  *
  * @return string - properties key or an empty string in case of errors
  */
-string GetMfeMaeSignalKey(string configKey, int type) {
+string GetMfaeSignalKey(string configKey, int type) {
    switch (type) {
       case I_PROFIT_MFE: return("rsf::"+ GetAccountNumber() +"."+ configKey +".MFE");
       case I_PROFIT_MAE: return("rsf::"+ GetAccountNumber() +"."+ configKey +".MAE");
    }
-   return(_EMPTY_STR(catch("GetMfeMaeSignalKey(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("GetMfaeSignalKey(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5085,7 +5159,7 @@ double GetADR() {
 
 
 /**
- * Return a readable version of a custom position config term type (values of configTerms[][I_TERM_TYPE]).
+ * Return a readable version of a custom position config term type (values of config.terms[][I_TERM_TYPE]).
  *
  * @param  int type
  *
@@ -5102,8 +5176,8 @@ string ConfigTermTypeToStr(int type) {
       case TERM_HISTORY_TOTAL: return("TERM_HISTORY_TOTAL");
       case TERM_PL_ADJUSTMENT: return("TERM_PL_ADJUSTMENT");
       case TERM_EQUITY       : return("TERM_EQUITY"       );
-      case TERM_MFE          : return("TERM_MFE"          );
-      case TERM_MFE_SIGNAL   : return("TERM_MFE_SIGNAL"   );
+      case TERM_MFAE         : return("TERM_MFAE"         );
+      case TERM_MFAE_SIGNAL  : return("TERM_MFAE_SIGNAL"  );
       case TERM_BE_MARKER    : return("TERM_BE_MARKER"    );
       case TERM_PROFIT_MARKER: return("TERM_PROFIT_MARKER");
       case TERM_LOSS_MARKER  : return("TERM_LOSS_MARKER"  );
