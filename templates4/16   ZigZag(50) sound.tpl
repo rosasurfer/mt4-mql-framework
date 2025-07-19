@@ -5,7 +5,7 @@ digits=5
 
 leftpos=9229
 scale=2
-graph=0
+graph=1
 fore=0
 grid=0
 volume=0
@@ -97,7 +97,7 @@ flags=339
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
-MA.Periods.Step=56
+MA.Periods.Step=0
 Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535
@@ -124,7 +124,7 @@ ZigZag.Color=16711935
 Donchian.ShowChannel=1
 Donchian.Channel.UpperColor=16711680
 Donchian.Channel.LowerColor=255
-Donchian.ShowCrossings=off | first* | all
+Donchian.ShowCrossings=off* | first | all
 Donchian.Crossing.Width=2
 Signal.onReversal=1
 </inputs>

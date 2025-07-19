@@ -13,7 +13,7 @@ digits=5
 
 leftpos=9229
 scale=8
-graph=0
+graph=1
 fore=0
 grid=0
 volume=0
