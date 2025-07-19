@@ -14,11 +14,6 @@
  *
  *
  * TODO:
- *  - visualize MFE/MAE levels
- *     config id to toggle visualization: MFE[-MS]
- *     parse config
- *     apply config and calculated values (test various markers)
- *
  *  - CustomPosition()
  *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice...
  *     history parsing/config term HT... freezes the terminal if full history is active
@@ -73,9 +68,8 @@ double  mm.lotValue;                                              // value of 1 
 double  mm.unleveragedLots;                                       // unleveraged unitsize
 double  mm.leveragedLots;                                         // leveraged unitsize
 double  mm.leveragedLotsNormalized;                               // leveraged unitsize normalized to MODE_LOTSTEP
-double  mm.leverage;                                              // resulting leverage
-double  mm.riskPercent;                                           // resulting risk
-double  mm.riskRange;                                             // resulting price range
+double  mm.leveragePerUnit;                                       // resulting leverage per unit
+bool    mm.usesLeverage;                                          // whether the calculated unitsize uses leverage or a risk range
 
 // internal or external position data
 bool    isPendings;                                               // ob Pending-Limits im Markt liegen (Orders oder Positions)
@@ -214,6 +208,8 @@ string  label.stopoutLevel   = "";
 
 // chart location of unitsize and total position
 int     position.unitsize.corner;
+int     position.unitsize.yLine1;
+int     position.unitsize.yLine2;
 
 // font settings for custom positions
 string  positions.fontName          = "MS Sans Serif";
@@ -1118,9 +1114,10 @@ bool CreateLabels() {
    corner = position.unitsize.corner;
    xDist  = 9;
    switch (corner) {
-      case CORNER_TOP_RIGHT:    yDist = 58; break;                // yDist of spread + 20
-      case CORNER_BOTTOM_RIGHT: yDist = 9;  break;
+      case CORNER_TOP_RIGHT:    yDist = 58; break;    // yDist of spread + 20
+      case CORNER_BOTTOM_RIGHT: yDist =  9; break;
    }
+   position.unitsize.yLine1 = yDist;
    if (ObjectFind(label.unitSize) == -1) if (!ObjectCreateRegister(label.unitSize, OBJ_LABEL)) return(false);
    ObjectSet    (label.unitSize, OBJPROP_CORNER,   corner);
    ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, xDist);
@@ -1131,6 +1128,7 @@ bool CreateLabels() {
    corner = position.unitsize.corner;
    xDist  = 9;
    yDist += 20;                                                   // 1 line above/below unitsize
+   position.unitsize.yLine2 = yDist;
    if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL)) return(false);
    ObjectSet    (label.totalPosition, OBJPROP_CORNER,   corner);
    ObjectSet    (label.totalPosition, OBJPROP_XDISTANCE, xDist);
@@ -1220,16 +1218,11 @@ bool UpdateUnitSize() {
       if (!CalculateUnitSize()) return(false);           // on error
       if (!mm.done)             return(true);            // on terminal not yet ready
    }
-
-   string text = "";
+   string text = " ";
 
    if (mode.intern) {
-      if (mm.riskPercent != NULL) {
-         text = StringConcatenate(text, "R", NumberToStr(NormalizeDouble(mm.riskPercent, 1), ".+"), "%");
-      }
-
-      if (mm.riskRange != NULL) {
-         double range = mm.riskRange;
+      if (mm.cfgRiskRange != NULL) {
+         double range = mm.cfgRiskRange;
          string sRiskRange = "";
          if (mm.cfgRiskRangeIsADR) {
             if (Close[0] > 300 && range >= 3) range = MathRound(range);
@@ -1238,13 +1231,16 @@ bool UpdateUnitSize() {
          }
          if (Close[0] > 300 && range >= 3) sRiskRange = StringConcatenate(sRiskRange, NumberToStr(range, ",'.2+"));
          else                              sRiskRange = StringConcatenate(sRiskRange, NumberToStr(NormalizeDouble(range/Pip, 1), ".+"), " pip");
-         text = StringConcatenate(text, "/", sRiskRange);
+         text = sRiskRange;
       }
 
-      if (mm.leverage != NULL) {
-         text = StringConcatenate(text, "     L", DoubleToStr(mm.leverage, 1), "     ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
-      }
+      if (mm.usesLeverage) text = StringConcatenate(text, "     L", DoubleToStr(mm.leveragePerUnit, 1));
+      else                 text = StringConcatenate(text, "     R", NumberToStr(NormalizeDouble(mm.cfgRiskPercent, 1), ".+"), "%");
+      text = StringConcatenate(text, "     ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
    }
+
+   bool noPosition = !isPosition && !isVirtualPosition;
+   ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, ifInt(position.unitsize.corner == CORNER_BOTTOM_RIGHT || noPosition, position.unitsize.yLine1, position.unitsize.yLine2));
    ObjectSetText(label.unitSize, text, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
@@ -1300,16 +1296,12 @@ bool UpdatePositions() {
             currentUnits  = MathAbs(_totalPosition)/mm.leveragedLots;
             sCurrentUnits = StringConcatenate("U", NumberToStr(currentUnits, ",'.1R"), "    ");
          }
-         string sRisk = "";
-         if (mm.riskPercent && currentUnits) {
-            sRisk = StringConcatenate("R", NumberToStr(mm.riskPercent * currentUnits, ",'.0R"), "%    ");
-         }
          string sCurrentLeverage = "";
          if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", NumberToStr(MathAbs(_totalPosition)/mm.unleveragedLots, ",'.1R"), "   ");
-
-         sCurrentPosition = StringConcatenate(sCurrentPosition, "Position:    ", sRisk, sCurrentUnits, sCurrentLeverage, NumberToStr(_totalPosition, "+,'.+"), " lot");
+         sCurrentPosition = StringConcatenate(sCurrentPosition, "Position:    ", sCurrentUnits, sCurrentLeverage, NumberToStr(_totalPosition, "+,'.+"), " lot");
       }
    }
+   ObjectSet    (label.totalPosition, OBJPROP_YDISTANCE, ifInt(position.unitsize.corner == CORNER_BOTTOM_RIGHT, position.unitsize.yLine2, position.unitsize.yLine1));
    ObjectSetText(label.totalPosition, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();                                             // on ObjectDrag or opened "Properties" dialog
@@ -2077,9 +2069,7 @@ bool CalculateUnitSize() {
    mm.unleveragedLots         = 0;
    mm.leveragedLots           = 0;
    mm.leveragedLotsNormalized = 0;
-   mm.leverage                = 0;
-   mm.riskPercent             = 0;
-   mm.riskRange               = 0;
+   mm.leveragePerUnit         = 0;
 
    if (mode.extern) return(true);                                       // skip everything else for external accounts
 
@@ -2118,23 +2108,15 @@ bool CalculateUnitSize() {
       double ticks        = mm.cfgRiskRange/tickSize;                   // risk range in tick
       double riskPerTick  = riskedAmount/ticks;                         // risked amount per tick
       mm.leveragedLots    = riskPerTick/tickValue;                      // resulting unitsize
-      mm.leverage         = mm.leveragedLots/mm.unleveragedLots;        // resulting leverage
-      mm.riskPercent      = mm.cfgRiskPercent;
-      mm.riskRange        = mm.cfgRiskRange;
+      mm.leveragePerUnit  = mm.leveragedLots/mm.unleveragedLots;        // resulting leverage per unit
+      mm.usesLeverage     = false;
    }
 
    if (mm.cfgLeverage != NULL) {
-      if (!mm.leverage || mm.leverage > mm.cfgLeverage) {               // if both risk and leverage are configured the smaller result of both calculations is used
-         mm.leverage      = mm.cfgLeverage;
-         mm.leveragedLots = mm.unleveragedLots * mm.leverage;           // resulting unitsize
-
-         if (mm.cfgRiskRange != NULL) {
-            ticks          = mm.cfgRiskRange/tickSize;                  // risk range in tick
-            riskPerTick    = mm.leveragedLots * tickValue;              // risked amount per tick
-            riskedAmount   = riskPerTick * ticks;                       // total risked amount
-            mm.riskPercent = riskedAmount/mm.equity * 100;              // resulting risked percent for the configured range
-            mm.riskRange   = mm.cfgRiskRange;
-         }
+      if (!mm.leveragePerUnit || mm.leveragePerUnit > mm.cfgLeverage) { // if both risk and leverage are configured the smaller result of both calculations is used
+         mm.leveragePerUnit = mm.cfgLeverage;
+         mm.leveragedLots   = mm.unleveragedLots * mm.leveragePerUnit;  // resulting unitsize
+         mm.usesLeverage    = true;
       }
    }
 
@@ -2328,8 +2310,7 @@ int SearchLfxTicket(int ticket) {
  * | LM=-5%                                          | calculate price of the specified %PnL and draw a loss marker             | [TERM_LOSS_MARKER,   ...,              -5.0,             ..., ...] |
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
  * | MFE                                             | track MFE/MAE                                                            | TERM_MFAE, stored in config.dData[]                                |
- * | MFES                                            | track MFE/MAE and signal new PnL high/lows                               | TERM_MFAE + flag, stored in config.dData[]                         |
- * | MFE[-MS]                                        | additional flags: M - mark level, S - signal new high/low                | TERM_MFAE + flags, stored in config.dData[]                        |
+ * | MFE[-MS]                                        | track MFE/MAE + flags: M - mark level, S - signal new high/low           | TERM_MFAE + flags, stored in config.dData[]                        |
  * +-------------------------------------------------+--------------------------------------------------------------------------+--------------------------------------------------------------------+
  * | any text after a semicolon ";" aka .ini comment | displayed as position description                                        | stored in config.sData[]                                           |
  * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                           |                                                                    |
