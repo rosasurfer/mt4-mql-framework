@@ -14,11 +14,6 @@
  *
  *
  * TODO:
- *  - visualize MFE/MAE levels
- *     config id to toggle visualization: MFE[-MS]
- *     parse config
- *     apply config and calculated values (test various markers)
- *
  *  - CustomPosition()
  *     "L,S, O 2024.06.06 19:17-" counts open positions twice, "L,S, O 2024.06.06-, O 2024.06.06-" counts them thrice...
  *     history parsing/config term HT... freezes the terminal if full history is active
@@ -213,6 +208,8 @@ string  label.stopoutLevel   = "";
 
 // chart location of unitsize and total position
 int     position.unitsize.corner;
+int     position.unitsize.yLine1;
+int     position.unitsize.yLine2;
 
 // font settings for custom positions
 string  positions.fontName          = "MS Sans Serif";
@@ -1117,9 +1114,10 @@ bool CreateLabels() {
    corner = position.unitsize.corner;
    xDist  = 9;
    switch (corner) {
-      case CORNER_TOP_RIGHT:    yDist = 58; break;                // yDist of spread + 20
-      case CORNER_BOTTOM_RIGHT: yDist = 9;  break;
+      case CORNER_TOP_RIGHT:    yDist = 58; break;    // yDist of spread + 20
+      case CORNER_BOTTOM_RIGHT: yDist =  9; break;
    }
+   position.unitsize.yLine1 = yDist;
    if (ObjectFind(label.unitSize) == -1) if (!ObjectCreateRegister(label.unitSize, OBJ_LABEL)) return(false);
    ObjectSet    (label.unitSize, OBJPROP_CORNER,   corner);
    ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, xDist);
@@ -1130,6 +1128,7 @@ bool CreateLabels() {
    corner = position.unitsize.corner;
    xDist  = 9;
    yDist += 20;                                                   // 1 line above/below unitsize
+   position.unitsize.yLine2 = yDist;
    if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL)) return(false);
    ObjectSet    (label.totalPosition, OBJPROP_CORNER,   corner);
    ObjectSet    (label.totalPosition, OBJPROP_XDISTANCE, xDist);
@@ -1219,7 +1218,6 @@ bool UpdateUnitSize() {
       if (!CalculateUnitSize()) return(false);           // on error
       if (!mm.done)             return(true);            // on terminal not yet ready
    }
-
    string text = " ";
 
    if (mode.intern) {
@@ -1240,6 +1238,9 @@ bool UpdateUnitSize() {
       else                 text = StringConcatenate(text, "     R", NumberToStr(NormalizeDouble(mm.cfgRiskPercent, 1), ".+"), "%");
       text = StringConcatenate(text, "     ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
    }
+
+   bool noPosition = !isPosition && !isVirtualPosition;
+   ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, ifInt(position.unitsize.corner == CORNER_BOTTOM_RIGHT || noPosition, position.unitsize.yLine1, position.unitsize.yLine2));
    ObjectSetText(label.unitSize, text, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
@@ -1300,6 +1301,7 @@ bool UpdatePositions() {
          sCurrentPosition = StringConcatenate(sCurrentPosition, "Position:    ", sCurrentUnits, sCurrentLeverage, NumberToStr(_totalPosition, "+,'.+"), " lot");
       }
    }
+   ObjectSet    (label.totalPosition, OBJPROP_YDISTANCE, ifInt(position.unitsize.corner == CORNER_BOTTOM_RIGHT, position.unitsize.yLine2, position.unitsize.yLine1));
    ObjectSetText(label.totalPosition, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();                                             // on ObjectDrag or opened "Properties" dialog
