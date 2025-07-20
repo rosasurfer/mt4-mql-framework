@@ -164,6 +164,34 @@ color_2=16711680
 weight_2=2
 show_data=1
 </indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=TMA\TMA-Babon.orig
+flags=339
+window_num=0
+<inputs>
+TimeFrame=M5
+HalfLength=20
+Price=0
+ATRMultiplier=2.0
+ATRPeriod=100
+Interpolate=1
+</inputs>
+</expert>
+color_0=4294967295
+style_0=2
+weight_0=1
+color_1=255
+style_1=0
+weight_1=2
+color_2=16711680
+style_2=0
+weight_2=2
+period_flags=0
+show_data=1
+</indicator>
 </window>
 
 <window>
