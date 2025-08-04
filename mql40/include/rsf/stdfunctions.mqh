@@ -263,34 +263,34 @@ string ErrorDescription(int error) {
 /**
  * Replace all occurences of a substring in a string by another string.
  *
- * @param  string str                  - string to process
+ * @param  string subject              - string to process
  * @param  string search               - search string
  * @param  string replace              - replacement string
  * @param  bool   recursive [optional] - whether to replace recursively (default: no)
  *
  * @return string - resulting string or an empty string in case of errors
  */
-string StrReplace(string str, string search, string replace, bool recursive = false) {
+string StrReplace(string subject, string search, string replace, bool recursive = false) {
    recursive = recursive!=0;
-   if (!StringLen(str))    return(str);
-   if (!StringLen(search)) return(str);
-   if (search == replace)  return(str);
+   if (!StringLen(subject)) return(subject);
+   if (!StringLen(search))  return(subject);
+   if (search == replace)   return(subject);
 
    string result="", lastResult="";
 
    if (!recursive) {
-      int from=0, found=StringFind(str, search);
+      int from=0, found=StringFind(subject, search);
 
       while (found > -1) {
-         result = StringConcatenate(result, StrSubstr(str, from, found-from), replace);
+         result = StringConcatenate(result, StrSubstr(subject, from, found-from), replace);
          from   = found + StringLen(search);
-         found  = StringFind(str, search, from);
+         found  = StringFind(subject, search, from);
       }
-      result = StringConcatenate(result, StrSubstr(str, from));
+      result = StringConcatenate(result, StrSubstr(subject, from));
    }
    else {
       int counter = 0;
-      result = str;
+      result = subject;
 
       while (result != lastResult) {
          lastResult = result;

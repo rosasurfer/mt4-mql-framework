@@ -341,7 +341,10 @@ int onInit() {
          return(catch("onInit(11)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onReversal = (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail || signal.onReversal.sms);
-      if (Signal.onReversal) legendInfo = "("+ StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", "") + ifString(signal.onReversal.sms, "sms,", ""), -1) +")";
+      if (Signal.onReversal) {
+         legendInfo = "("+ StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", "") + ifString(signal.onReversal.sms, "sms,", ""), -1) +")";
+         legendInfo = StrReplace(legendInfo, "sound,alert", "alert");
+      }
    }
    // Signal.onBreakout
    signalId = "Signal.onBreakout";
@@ -359,6 +362,10 @@ int onInit() {
    if (AutoConfiguration) Sound.onChannelWidening = GetConfigBool(indicator, "Sound.onChannelWidening", Sound.onChannelWidening);
    if (AutoConfiguration) Sound.onNewChannelHigh  = GetConfigString(indicator, "Sound.onNewChannelHigh", Sound.onNewChannelHigh);
    if (AutoConfiguration) Sound.onNewChannelLow   = GetConfigString(indicator, "Sound.onNewChannelLow", Sound.onNewChannelLow);
+   if (Sound.onChannelWidening) {
+      if (legendInfo == "") legendInfo = "(w)";
+      else                  legendInfo = StrLeft(legendInfo, -1) +",w)";
+   }
 
    // reset global vars used by the various event handlers
    skipSignals     = 0;
@@ -1188,9 +1195,8 @@ void UpdateChartLegend() {
       string sKnown    = "   "+ NumberToStr(knownTrend[0], "+.");
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
-      string sSignal   = ifString(Signal.onReversal, "  "+ legendInfo, ""), sInfo="";
-      if (Sound.onChannelWidening) sInfo = " (s)";
-      string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal, sInfo);
+      string sSignal   = ifString(Signal.onReversal, "  "+ legendInfo, "");
+      string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal);
 
       color clr = ZigZag.Color;
       if      (clr == Aqua        ) clr = DodgerBlue;

@@ -179,7 +179,7 @@ bool     StrIsPhoneNumber(string value);;
 string   StrLeftTo(string value, string substring, int count=1);;
 string   StrPadLeft(string str, int pad_length, string pad_string=" ");;
 string   StrRepeat(string str, int times);;
-string   StrReplace(string str, string search, string replace, bool recursive=false);;
+string   StrReplace(string subject, string search, string replace, bool recursive=false);;
 string   StrRight(string value, int n);;
 string   StrRightFrom(string value, string substring, int count=1);;
 bool     StrStartsWithI(string value, string prefix);;
