@@ -141,7 +141,7 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=10
+ZigZag.Periods=30
 ZigZag.Width=0
 Donchian.ShowChannel=0
 Donchian.Channel.UpperColor=16711680
@@ -152,7 +152,7 @@ Donchian.Crossing.Width=1
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | sms
 Signal.onBreakout=0
-Sound.onChannelWidening=0
+Sound.onChannelWidening=1
 </inputs>
 </expert>
 style_2=2
