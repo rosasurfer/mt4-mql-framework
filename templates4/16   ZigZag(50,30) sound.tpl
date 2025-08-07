@@ -121,12 +121,15 @@ ZigZag.Periods=50
 ZigZag.Type=Lines* | Semaphores
 ZigZag.Width=0
 ZigZag.Color=16711935
-Donchian.ShowChannel=1
+Donchian.ShowChannel=0
 Donchian.Channel.UpperColor=16711680
 Donchian.Channel.LowerColor=255
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Width=2
 Signal.onReversal=1
+Signal.onReversal.Types=sound* | alert* | mail | sms
+Signal.onBreakout=0
+Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_2=2
@@ -143,7 +146,7 @@ window_num=0
 <inputs>
 ZigZag.Periods=30
 ZigZag.Width=0
-Donchian.ShowChannel=0
+Donchian.ShowChannel=1
 Donchian.Channel.UpperColor=16711680
 Donchian.Channel.LowerColor=16711935
 Donchian.ShowCrossings=off | first* | all
