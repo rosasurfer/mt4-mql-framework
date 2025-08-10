@@ -1031,27 +1031,33 @@ void UpdateTrend(int fromBar, int fromValue, int toBar, bool resetReversalBuffer
 bool onReversal(int direction) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
-   if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
+   if (IsPossibleDataPumping())                 return(true);  // skip signals during possible data pumping
 
    // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[0]);
-   if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                                        // mark immediately to prevent duplicates from other instances
+   if (GetWindowPropertyA(hWnd, sEvent) != 0) return(true);
+   SetWindowPropertyA(hWnd, sEvent, 1);                        // mark immediately to prevent duplicates from other instances
 
-   string message = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")", accountTime="";
-   if (IsLogInfo()) logInfo("onReversal(P="+ ZigZag.Periods +")  "+ message);
+   string message1 = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message2 = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message1;
 
+   // log: once per terminal
+   if (IsLogInfo()) logInfo("onReversal(P="+ ZigZag.Periods +")  "+ message1);
+
+   // sound: once per system
    if (signal.onReversal.sound) {
       int error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
       if (!error) lastSoundSignal = GetTickCount();
    }
 
-   message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message;
+   // alert: once per terminal
+   if (signal.onReversal.alert) Alert(message2);
 
-   if (signal.onReversal.alert) Alert(message);
-   if (signal.onReversal.mail)  SendEmail("", "", message, message + NL + "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+   // mail: once per system
+   if (signal.onReversal.mail) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+
    return(!catch("onReversal(3)"));
 }
 
@@ -1066,14 +1072,14 @@ bool onReversal(int direction) {
 bool onBreakout(int direction) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onBreakout(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
-   if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
+   if (IsPossibleDataPumping())                 return(true);  // skip signals during possible data pumping
 
    // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]);
-   if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                                        // mark immediately to prevent duplicates from other instances
+   if (GetWindowPropertyA(hWnd, sEvent) != 0) return(true);
+   SetWindowPropertyA(hWnd, sEvent, 1);                        // mark immediately to prevent duplicates from other instances
 
    string sDirection = ifString(direction==D_LONG, "long", "short");
    string sBid       = NumberToStr(_Bid, PriceFormat);

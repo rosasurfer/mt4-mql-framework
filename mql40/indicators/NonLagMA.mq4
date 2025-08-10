@@ -319,8 +319,8 @@ bool onTrendChange(int direction) {
    string sPeriod = PeriodDescription();
    string sName   = "NLMA("+ WaveCycle.Periods +", "+ PriceTypeDescription(maAppliedPrice) +")";
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ sName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]);
-   if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                         // mark immediately to prevent duplicates from other instances
+   if (GetWindowPropertyA(hWnd, sEvent) != 0) return(true);
+   SetWindowPropertyA(hWnd, sEvent, 1);                        // mark immediately to prevent duplicates from other instances
 
    string message = shortName +" turned "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);

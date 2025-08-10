@@ -231,8 +231,8 @@ bool onLevelCross(int direction) {
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level) +")."+ TimeToStr(Time[0]);
-   if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                         // mark immediately to prevent duplicates from other instances
+   if (GetWindowPropertyA(hWnd, sEvent) != 0) return(true);
+   SetWindowPropertyA(hWnd, sEvent, 1);                        // mark immediately to prevent duplicates from other instances
 
    string message = indicatorName +" crossed level "+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level);
    if (IsLogInfo()) logInfo("onLevelCross(2)  "+ message);

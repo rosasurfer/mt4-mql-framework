@@ -4503,7 +4503,7 @@ string GetAccountServer() {
 
       if (serverName == "") {
          // check main window properties
-         int lpString = GetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER);
+         int lpString = GetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER);
          if (lpString != NULL) serverName = GetStringA(lpString);
       }
 
@@ -4527,8 +4527,8 @@ string GetAccountServer() {
       // update EXECUTION_CONTEXT and main window properties
       sAccountServer = ec_SetAccountServer(__ExecutionContext, serverName);
       lpAccountServer = __ExecutionContext[EC.accountServer];
-      if (!GetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER)) {
-         SetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER, lpAccountServer);
+      if (!GetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER)) {
+         SetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER, lpAccountServer);
       }
 
       isRecursion = false;
@@ -4576,7 +4576,7 @@ int GetAccountNumber() {
       // check main window properties
       int hMainWnd = GetTerminalMainWindow();
       if (!accountNumber) {
-         accountNumber = GetPropA(hMainWnd, PROP_INT_ACCOUNT_NUMBER);
+         accountNumber = GetWindowPropertyA(hMainWnd, PROP_INT_ACCOUNT_NUMBER);
       }
 
       // evaluate title bar of the main window
@@ -4595,7 +4595,7 @@ int GetAccountNumber() {
 
       // update EXECUTION_CONTEXT and window properties
       ec_SetAccountNumber(__ExecutionContext, accountNumber);
-      SetPropA(hMainWnd, PROP_INT_ACCOUNT_NUMBER, accountNumber);
+      SetWindowPropertyA(hMainWnd, PROP_INT_ACCOUNT_NUMBER, accountNumber);
 
       isRecursion = false;
    }
@@ -6923,7 +6923,6 @@ void __DummyCalls() {
    int      GetDlgCtrlID(int hWndCtl);
    int      GetDlgItem(int hDlg, int itemId);
    int      GetParent(int hWnd);
-   int      GetPropA(int hWnd, string name);
    int      GetTopWindow(int hWnd);
    int      GetWindow(int hWnd, int cmd);
    bool     IsWindow(int hWnd);
@@ -6931,5 +6930,4 @@ void __DummyCalls() {
    bool     PostMessageA(int hWnd, int msg, int wParam, int lParam);
    int      RegisterWindowMessageA(string str);
    int      SendMessageA(int hWnd, int msg, int wParam, int lParam);
-   bool     SetPropA(int hWnd, string name, int hData);
 #import

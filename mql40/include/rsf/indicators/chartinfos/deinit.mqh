@@ -13,8 +13,8 @@ int onDeinit() {
    // unregister the order event listener
    if (Track.Orders) {
       string name = orderTracker.key + StrToLower(Symbol());
-      int counter = Max(GetPropA(hWndDesktop, name), 1) - 1;
-      SetPropA(hWndDesktop, name, counter);
+      int counter = Max(GetWindowPropertyA(hWndDesktop, name), 1) - 1;
+      SetWindowPropertyA(hWndDesktop, name, counter);
    }
 
    StoreStatus();
