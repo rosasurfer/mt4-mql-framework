@@ -1,4 +1,4 @@
-<!-- BFX Volume Delta.tpl -->
+<!-- BFX Fake Volume.tpl -->
 
 <chart>
 symbol=GBPUSD
@@ -141,7 +141,7 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=BFX No Volume
+name=BFX Volume
 flags=339
 window_num=1
 <inputs>

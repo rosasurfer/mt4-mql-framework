@@ -1,5 +1,5 @@
 /**
- * BFX No Volume
+ * BFX Volume
  *
  * Wrapper for the "BankersFX Core Volume" indicator which displays an oscillator promoted as real "Trading Floor Volume",
  * feeded by institutional data. In fact the indicator is calculated client-side using price only (no external data source).
