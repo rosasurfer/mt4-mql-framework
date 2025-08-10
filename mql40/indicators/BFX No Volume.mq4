@@ -33,7 +33,7 @@ extern int    MaxBarsBack                    = 10000;          // max. values to
 extern string ___c__________________________ = "=== Signaling ===";
 extern int    Signal.Level                   = 20;
 extern bool   Signal.onCross                 = false;
-extern string Signal.onCross.Types           = "sound* | alert | mail | sms";
+extern string Signal.onCross.Types           = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -73,7 +73,6 @@ string bfxLibraryName    = "BankersFX Lib";
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
-bool   signal.sms;
 
 
 /**
@@ -123,10 +122,10 @@ int onInit() {
    string signalId = "Signal.onCross";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
    if (Signal.onCross) {
-      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
          return(catch("onInit(9)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onCross = (signal.sound || signal.alert || signal.mail || signal.sms);
+      Signal.onCross = (signal.sound || signal.alert || signal.mail);
    }
 
    // Signal.Sound.*
@@ -228,12 +227,12 @@ bool onLevelCross(int direction) {
    if (direction!=MODE_LONG && direction!=MODE_SHORT) return(!catch("onLevelCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    string indicatorName = ProgramName();
 
-   // skip the signal if it already has been signaled elsewhere
+   // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level) +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
+   SetPropA(hWnd, sEvent, 1);                         // mark immediately to prevent duplicates from other instances
 
    string message = indicatorName +" crossed level "+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level);
    if (IsLogInfo()) logInfo("onLevelCross(2)  "+ message);
@@ -244,7 +243,6 @@ bool onLevelCross(int direction) {
    if (signal.alert) Alert(message);
    if (signal.sound) PlaySoundEx(ifString(direction==MODE_LONG, Signal.Sound.Up, Signal.Sound.Down));
    if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   SendSMS("", message + NL + sAccount);
    return(!catch("onLevelCross(4)"));
 }
 

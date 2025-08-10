@@ -40,7 +40,7 @@ extern int    MaxBarsBack                    = 10000;             // max. values
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
-extern string Signal.onTrendChange.Types     = "sound* | alert | mail | sms";
+extern string Signal.onTrendChange.Types     = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -101,7 +101,6 @@ bool   enableMultiColoring;
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
-bool   signal.sms;
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -176,11 +175,11 @@ int onInit() {
    legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
-      if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
          return(catch("onInit(10)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.sms);
-      if (Signal.onTrendChange) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.sms, "sms,", ""), -1) +")";
+      Signal.onTrendChange = (signal.sound || signal.alert || signal.mail);
+      if (Signal.onTrendChange) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", ""), -1) +")";
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -315,13 +314,13 @@ int onTick() {
 bool onTrendChange(int direction) {
    if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // skip the signal if it already has been signaled elsewhere
+   // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sName   = "NLMA("+ WaveCycle.Periods +", "+ PriceTypeDescription(maAppliedPrice) +")";
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ sName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
+   SetPropA(hWnd, sEvent, 1);                         // mark immediately to prevent duplicates from other instances
 
    string message = shortName +" turned "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
@@ -332,7 +331,6 @@ bool onTrendChange(int direction) {
    if (signal.alert) Alert(message);
    if (signal.sound) PlaySoundEx(ifString(direction==MODE_UPTREND, Signal.Sound.Up, Signal.Sound.Down));
    if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   SendSMS("", message + NL + sAccount);
    return(!catch("onTrendChange(4)"));
 }
 

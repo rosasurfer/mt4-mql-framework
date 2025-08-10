@@ -21,7 +21,7 @@ extern int    MaxBarsBack                    = 10000;                   // max. 
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onBarCross              = false;                   // onBarClose: on channel cross at opposite side of the last crossing
-extern string Signal.onBarCross.Types        = "sound* | alert | mail | sms";
+extern string Signal.onBarCross.Types        = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -66,7 +66,6 @@ string legendInfo    = "";
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
-bool   signal.sms;
 
 #define D_LONG    TRADE_DIRECTION_LONG                   // signal direction types
 #define D_SHORT   TRADE_DIRECTION_SHORT                  //
@@ -133,11 +132,11 @@ int onInit() {
    legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onBarCross)) return(last_error);
    if (Signal.onBarCross) {
-      if (!ConfigureSignalTypes(signalId, Signal.onBarCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onBarCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
          return(catch("onInit(9)  invalid input parameter Signal.onBarCross.Types: "+ DoubleQuoteStr(Signal.onBarCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onBarCross = (signal.sound || signal.alert || signal.mail || signal.sms);
-      if (Signal.onBarCross) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.sms, "sms,", ""), -1) +")";
+      Signal.onBarCross = (signal.sound || signal.alert || signal.mail);
+      if (Signal.onBarCross) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", ""), -1) +")";
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -223,12 +222,12 @@ bool onCross(int direction) {
    if (!Signal.onBarCross) return(false);
    if (ChangedBars > 2)    return(false);
 
-   // skip the signal if it already has been signaled elsewhere
+   // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals on slow CPU)
+   SetPropA(hWnd, sEvent, 1);                                        // mark immediately to prevent duplicates from other instances
 
    string message = "bar close "+ ifString(direction==D_LONG, "above ", "below ") + indicatorName;
    if (IsLogInfo()) logInfo("onCross(2)  "+ message);
@@ -239,7 +238,6 @@ bool onCross(int direction) {
    if (signal.alert) Alert(message);
    if (signal.sound) PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
    if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   SendSMS("", message + NL + sAccount);
    return(!catch("onCross(4)"));
 }
 

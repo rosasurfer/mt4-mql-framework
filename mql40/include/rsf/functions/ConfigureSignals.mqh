@@ -22,8 +22,7 @@ bool ConfigureSignals(string signalId, bool autoConfig, bool &enabled) {
    ConfigureSignalsBySound(NULL, NULL, bNull);
    ConfigureSignalsByAlert(NULL, NULL, bNull);
    ConfigureSignalsByMail(NULL, NULL, bNull);
-   ConfigureSignalsBySMS(NULL, NULL, bNull);
-   ConfigureSignalTypes(NULL, NULL, NULL, bNull, bNull, bNull, bNull);
+   ConfigureSignalTypes(NULL, NULL, NULL, bNull, bNull, bNull);
 }
 
 
@@ -91,27 +90,6 @@ bool ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled) {
 
 
 /**
- * Configure signaling by text message.
- *
- * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
- * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
- *
- * @return bool - validation success status
- */
-bool ConfigureSignalsBySMS(string signalId, bool autoConfig, bool &enabled) {
-   autoConfig = autoConfig!=0;
-   enabled = enabled!=0;
-
-   if (autoConfig) {
-      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
-      enabled = GetConfigBool(section, signalId +".SMS", enabled);
-   }
-   return(true);
-}
-
-
-/**
  * Validate and configure the passed signal types.
  *
  * @param  _In_    string signalId     - case-insensitive signal identifier
@@ -120,18 +98,16 @@ bool ConfigureSignalsBySMS(string signalId, bool autoConfig, bool &enabled) {
  * @param  _InOut_ bool   soundEnabled - current (in) and final activation status (out) for signaling by sound
  * @param  _InOut_ bool   alertEnabled - current (in) and final activation status (out) for signaling by alert
  * @param  _InOut_ bool   mailEnabled  - current (in) and final activation status (out) for signaling by mail
- * @param  _InOut_ bool   smsEnabled   - current (in) and final activation status (out) for signaling by text message
  *
  * @return bool - validation success status
  */
-bool ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled, bool &smsEnabled) {
+bool ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled) {
    autoConfig = autoConfig!=0;                                             // supported syntax variants:
-   soundEnabled = soundEnabled!=0;                                         //  "sound* | alert | mail | sms"
-   alertEnabled = alertEnabled!=0;                                         //  "sound* | alert* | mail | sms"
-   mailEnabled = mailEnabled!=0;                                           //  "sound | alert | mail | sms"
-   smsEnabled = smsEnabled!=0;                                             //  "sound, alert, mail, sms"
-                                                                           //  "sound alert mail sms"
-   if (autoConfig) {
+   soundEnabled = soundEnabled!=0;                                         //  "sound* | alert | mail"
+   alertEnabled = alertEnabled!=0;                                         //  "sound* | alert* | mail"
+   mailEnabled = mailEnabled!=0;                                           //  "sound | alert | mail"
+                                                                           //  "sound, alert, mail"
+   if (autoConfig) {                                                       //  "sound alert mail"
       string section = ifString(__isTesting, "Tester.", "") + ProgramName();
       signalTypes = GetConfigString(section, signalId +".Types", signalTypes);
    }
@@ -158,7 +134,6 @@ bool ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, 
          if      (sValue == "sound") soundEnabled = true;
          else if (sValue == "alert") alertEnabled = true;
          else if (sValue == "mail" ) mailEnabled  = true;
-         else if (sValue == "sms"  ) smsEnabled   = true;
          else                        return(false);
       }
    }

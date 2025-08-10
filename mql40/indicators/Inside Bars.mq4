@@ -22,7 +22,6 @@ extern bool   Signal.onInsideBar.Sound       = true;
 extern string Signal.onInsideBar.SoundFile   = "Inside Bar.wav";
 extern bool   Signal.onInsideBar.Alert       = false;
 extern bool   Signal.onInsideBar.Mail        = false;
-extern bool   Signal.onInsideBar.SMS         = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -77,9 +76,8 @@ int onInit() {
       if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onInsideBar.Sound)) return(last_error);
       if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onInsideBar.Alert)) return(last_error);
       if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onInsideBar.Mail))  return(last_error);
-      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onInsideBar.SMS))   return(last_error);
-      if (Signal.onInsideBar.Sound || Signal.onInsideBar.Alert || Signal.onInsideBar.Mail || Signal.onInsideBar.SMS) {
-         signalInfo = "  ("+ StrLeft(ifString(Signal.onInsideBar.Sound, "sound,", "") + ifString(Signal.onInsideBar.Alert, "alert,", "") + ifString(Signal.onInsideBar.Mail, "mail,", "") + ifString(Signal.onInsideBar.SMS, "sms,", ""), -1) +")";
+      if (Signal.onInsideBar.Sound || Signal.onInsideBar.Alert || Signal.onInsideBar.Mail) {
+         signalInfo = "  ("+ StrLeft(ifString(Signal.onInsideBar.Sound, "sound,", "") + ifString(Signal.onInsideBar.Alert, "alert,", "") + ifString(Signal.onInsideBar.Mail, "mail,", ""), -1) +")";
       }
       else Signal.onInsideBar = false;
    }
@@ -652,7 +650,6 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    if (Signal.onInsideBar.Alert) Alert(message);
    if (Signal.onInsideBar.Sound) PlaySoundEx(Signal.onInsideBar.SoundFile);
    if (Signal.onInsideBar.Mail)  SendEmail("", "", message, message + NL + sLocalTime);
-   if (Signal.onInsideBar.SMS)   SendSMS("", message + NL + sLocalTime);
 
    if (__isTesting) Tester.Pause();
    return(!catch("onInsideBar(3)"));
@@ -716,7 +713,6 @@ string InputsToStr() {
                             "Signal.onInsideBar.Sound=",     BoolToStr(Signal.onInsideBar.Sound),          ";", NL,
                             "Signal.onInsideBar.SoundFile=", DoubleQuoteStr(Signal.onInsideBar.SoundFile), ";", NL,
                             "Signal.onInsideBar.Alert=",     BoolToStr(Signal.onInsideBar.Alert),          ";", NL,
-                            "Signal.onInsideBar.Mail=",      BoolToStr(Signal.onInsideBar.Mail),           ";", NL,
-                            "Signal.onInsideBar.SMS=",       BoolToStr(Signal.onInsideBar.SMS),            ";")
+                            "Signal.onInsideBar.Mail=",      BoolToStr(Signal.onInsideBar.Mail),           ";")
    );
 }

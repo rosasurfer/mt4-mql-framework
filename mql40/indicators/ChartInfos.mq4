@@ -5015,7 +5015,7 @@ bool onNewMFE(string configKey, double profit) {
    // convert profit value to cent units (simplifies Get/SetProp)
    int iProfit = MathRound(profit * 100);
 
-   // skip the signal if it already has been signaled elsewhere
+   // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sEvent = GetMfaeSignalKey(configKey, I_PROFIT_MFE);
    if (GetPropA(hWnd, sEvent) >= iProfit) return(true);
@@ -5044,7 +5044,7 @@ bool onNewMAE(string configKey, double profit) {
    // convert profit value to cent units (simplifies Get/SetProp)
    int iProfit = MathRound(profit * 100);
 
-   // skip the signal if it already has been signaled elsewhere
+   // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sEvent = GetMfaeSignalKey(configKey, I_PROFIT_MAE);
    if (GetPropA(hWnd, sEvent) <= iProfit) return(true);

@@ -102,7 +102,7 @@ extern bool     Signal.onReversal              = false;                         
 extern string   Signal.onReversal.Types        = "sound* | alert | mail | sms";
 
 extern bool     Signal.onBreakout              = false;                          // signal ZigZag breakouts
-extern string   Signal.onBreakout.Types        = "sound* | alert | mail | sms";
+extern string   Signal.onBreakout.Types        = "sound* | alert | mail";
 
 extern string   Signal.Sound.Up                = "Signal Up.wav";
 extern string   Signal.Sound.Down              = "Signal Down.wav";
@@ -197,12 +197,10 @@ string   labels[];                                             // chart object l
 bool     signal.onReversal.sound;
 bool     signal.onReversal.alert;
 bool     signal.onReversal.mail;
-bool     signal.onReversal.sms;
 
 bool     signal.onBreakout.sound;
 bool     signal.onBreakout.alert;
 bool     signal.onBreakout.mail;
-bool     signal.onBreakout.sms;
 
 datetime skipSignals;                                          // skip signals until the specified time to wait for possible data pumping
 datetime lastTick;
@@ -337,12 +335,12 @@ int onInit() {
    legendInfo = "";
    ConfigureSignals(signalId, AutoConfiguration, Signal.onReversal);
    if (Signal.onReversal) {
-      if (!ConfigureSignalTypes(signalId, Signal.onReversal.Types, AutoConfiguration, signal.onReversal.sound, signal.onReversal.alert, signal.onReversal.mail, signal.onReversal.sms)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onReversal.Types, AutoConfiguration, signal.onReversal.sound, signal.onReversal.alert, signal.onReversal.mail)) {
          return(catch("onInit(11)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onReversal = (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail || signal.onReversal.sms);
+      Signal.onReversal = (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail);
       if (Signal.onReversal) {
-         legendInfo = "("+ StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", "") + ifString(signal.onReversal.sms, "sms,", ""), -1) +")";
+         legendInfo = "("+ StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", ""), -1) +")";
          legendInfo = StrReplace(legendInfo, "sound,alert", "alert");
       }
    }
@@ -350,10 +348,10 @@ int onInit() {
    signalId = "Signal.onBreakout";
    ConfigureSignals(signalId, AutoConfiguration, Signal.onBreakout);
    if (Signal.onBreakout) {
-      if (!ConfigureSignalTypes(signalId, Signal.onBreakout.Types, AutoConfiguration, signal.onBreakout.sound, signal.onBreakout.alert, signal.onBreakout.mail, signal.onBreakout.sms)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onBreakout.Types, AutoConfiguration, signal.onBreakout.sound, signal.onBreakout.alert, signal.onBreakout.mail)) {
          return(catch("onInit(12)  invalid input parameter Signal.onBreakout.Types: "+ DoubleQuoteStr(Signal.onBreakout.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onBreakout = (signal.onBreakout.sound || signal.onBreakout.alert || signal.onBreakout.mail || signal.onBreakout.sms);
+      Signal.onBreakout = (signal.onBreakout.sound || signal.onBreakout.alert || signal.onBreakout.mail);
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -1024,7 +1022,7 @@ void UpdateTrend(int fromBar, int fromValue, int toBar, bool resetReversalBuffer
 
 
 /**
- * Event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple running instances.
+ * Event handler signaling new ZigZag reversals.
  *
  * @param  int direction - reversal direction: D_LONG | D_SHORT
  *
@@ -1035,12 +1033,12 @@ bool onReversal(int direction) {
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
-   // skip the signal if it already was signaled before
+   // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals with slow CPU)
+   SetPropA(hWnd, sEvent, 1);                                        // mark immediately to prevent duplicates from other instances
 
    string message = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")", accountTime="";
    if (IsLogInfo()) logInfo("onReversal(P="+ ZigZag.Periods +")  "+ message);
@@ -1051,11 +1049,9 @@ bool onReversal(int direction) {
    }
 
    message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message;
-   if (signal.onReversal.mail || signal.onReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
    if (signal.onReversal.alert) Alert(message);
-   if (signal.onReversal.mail)  SendEmail("", "", message, message + NL + accountTime);
-   if (signal.onReversal.sms)   SendSMS("", message + NL + accountTime);
+   if (signal.onReversal.mail)  SendEmail("", "", message, message + NL + "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
    return(!catch("onReversal(3)"));
 }
 
@@ -1072,12 +1068,12 @@ bool onBreakout(int direction) {
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
-   // skip the signal if it already has been signaled elsewhere
+   // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                                        // immediately mark as signaled (prevents duplicate signals on slow CPU)
+   SetPropA(hWnd, sEvent, 1);                                        // mark immediately to prevent duplicates from other instances
 
    string sDirection = ifString(direction==D_LONG, "long", "short");
    string sBid       = NumberToStr(_Bid, PriceFormat);
@@ -1089,12 +1085,9 @@ bool onBreakout(int direction) {
    }
 
    string message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") breakout "+ sDirection +" (bid: "+ sBid +")";
-   string sAccount = "";
-   if (signal.onReversal.mail || signal.onReversal.sms) sAccount = "("+ TimeToStr(TimeLocalEx("onBreakout(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
    if (signal.onBreakout.alert) Alert(message);
-   if (signal.onBreakout.mail)  SendEmail("", "", message, message + NL + sAccount);
-   if (signal.onBreakout.sms)   SendSMS("", message + NL + sAccount);
+   if (signal.onBreakout.mail)  SendEmail("", "", message, message + NL + "("+ TimeToStr(TimeLocalEx("onBreakout(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
    return(!catch("onBreakout(3)"));
 }
 

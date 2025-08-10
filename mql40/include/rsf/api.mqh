@@ -225,9 +225,8 @@ bool     ComputeFloatingProfits(string &symbols[], double &profits[], bool inclu
 bool     ConfigureSignals(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsByAlert(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalsBySMS(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled, bool &smsEnabled);;
+bool     ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled);;
 int      DeleteRegisteredObjects();;
 int      ExplodeStrings(int &buffer[], string &results[]);;
 bool     GetChartCommand(string channel, string &commands[]);;

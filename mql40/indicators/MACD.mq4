@@ -48,7 +48,7 @@ extern int    MaxBarsBack                    = 10000;                // max. val
 
 extern string ___b__________________________ = "=== Signaling ===";
 extern bool   Signal.onCross                 = false;
-extern string Signal.onCross.Types           = "sound* | alert | mail | sms";
+extern string Signal.onCross.Types           = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -100,12 +100,11 @@ double slowALMA.weights[];                         // slow ALMA weights
 int    vscaleUnit;
 int    vscaleAdrPeriods;
 
-string indicatorName = "";                         // "Data" window and signal notification name
-
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
-bool   signal.sms;
+
+string indicatorName = "";                         // "Data" window and signal notification name
 
 
 /**
@@ -217,10 +216,10 @@ int onInit() {
    string signalId = "Signal.onCross";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
    if (Signal.onCross) {
-      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
          return(catch("onInit(15)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onCross = (signal.sound || signal.alert || signal.mail || signal.sms);
+      Signal.onCross = (signal.sound || signal.alert || signal.mail);
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -349,12 +348,12 @@ int onTick() {
 bool onCross(int direction) {
    if (direction!=MODE_UPPER_SECTION && direction!=MODE_LOWER_SECTION) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // skip the signal if it already has been signaled elsewhere
+   // skip the signal if it was already processed elsewhere
    int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
    if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
+   SetPropA(hWnd, sEvent, 1);                         // mark immediately to prevent duplicates from other instances
 
    string message = indicatorName +" crossed "+ ifString(direction==MODE_UPPER_SECTION, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    if (IsLogInfo()) logInfo("onCross(2)  "+ message);
@@ -365,7 +364,6 @@ bool onCross(int direction) {
    if (signal.alert) Alert(message);
    if (signal.sound) PlaySoundEx(ifString(direction==MODE_UPPER_SECTION, Signal.Sound.Up, Signal.Sound.Down));
    if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   SendSMS("", message + NL + sAccount);
    return(!catch("onCross(4)"));
 }
 

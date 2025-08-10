@@ -33,7 +33,6 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           "",                            // string Signal.onTrendChange.SoundDown
                           false,                         // bool   Signal.onTrendChange.Alert
                           false,                         // bool   Signal.onTrendChange.Mail
-                          false,                         // bool   Signal.onTrendChange.SMS
 
                           "",                            // string ______________________________
                           false,                         // bool   AutoConfiguration
