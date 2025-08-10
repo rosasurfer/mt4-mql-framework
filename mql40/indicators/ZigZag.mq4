@@ -1031,33 +1031,63 @@ void UpdateTrend(int fromBar, int fromValue, int toBar, bool resetReversalBuffer
 bool onReversal(int direction) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
-   if (IsPossibleDataPumping())                 return(true);  // skip signals during possible data pumping
+   if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
    // skip the signal if it was already processed elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sPeriod = PeriodDescription();
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[0]);
-   if (GetWindowPropertyA(hWnd, sEvent) != 0) return(true);
-   SetWindowPropertyA(hWnd, sEvent, 1);                        // mark immediately to prevent duplicates from other instances
+   string sPeriod   = PeriodDescription();
+   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string message1  = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message2  = Symbol() +","+ sPeriod +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message1;
 
-   string message1 = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
-   string message2 = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message1;
+   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   bool eventAction;
 
    // log: once per terminal
-   if (IsLogInfo()) logInfo("onReversal(P="+ ZigZag.Periods +")  "+ message1);
+   if (IsLogInfo()) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|log";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) logInfo("onReversal(P="+ ZigZag.Periods +")  "+ message1);
+   }
 
    // sound: once per system
    if (signal.onReversal.sound) {
-      int error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
-      if (!error) lastSoundSignal = GetTickCount();
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|sound";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) {
+         int error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
+         if (!error) lastSoundSignal = GetTickCount();
+      }
    }
 
    // alert: once per terminal
-   if (signal.onReversal.alert) Alert(message2);
+   if (signal.onReversal.alert) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|alert";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) Alert(message2);
+   }
 
    // mail: once per system
-   if (signal.onReversal.mail) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
-
+   if (signal.onReversal.mail) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|mail";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+   }
    return(!catch("onReversal(3)"));
 }
 
@@ -1072,28 +1102,63 @@ bool onReversal(int direction) {
 bool onBreakout(int direction) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onBreakout(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
-   if (IsPossibleDataPumping())                 return(true);  // skip signals during possible data pumping
+   if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
 
    // skip the signal if it was already processed elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sPeriod = PeriodDescription();
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]);
-   if (GetWindowPropertyA(hWnd, sEvent) != 0) return(true);
-   SetWindowPropertyA(hWnd, sEvent, 1);                        // mark immediately to prevent duplicates from other instances
+   string sPeriod   = PeriodDescription();
+   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string message1  = ifString(direction==D_LONG, "long", "short") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message2  = Symbol() +","+ sPeriod +": "+ WindowExpertName() +"("+ ZigZag.Periods +") breakout "+ message1;
 
-   string sDirection = ifString(direction==D_LONG, "long", "short");
-   string sBid       = NumberToStr(_Bid, PriceFormat);
-   if (IsLogInfo()) logInfo("onBreakout(P="+ ZigZag.Periods +")  "+ sDirection +" (bid: "+ sBid +")");
+   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   bool eventAction;
 
-   if (signal.onBreakout.sound) {
-      int error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
-      if (!error) lastSoundSignal = GetTickCount();
+   // log: once per terminal
+   if (IsLogInfo()) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|log";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) logInfo("onBreakout(P="+ ZigZag.Periods +")  "+ message1);
    }
 
-   string message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"("+ ZigZag.Periods +") breakout "+ sDirection +" (bid: "+ sBid +")";
+   // sound: once per system
+   if (signal.onBreakout.sound) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|sound";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) {
+         int error = PlaySoundEx(ifString(direction==D_LONG, Signal.Sound.Up, Signal.Sound.Down));
+         if (!error) lastSoundSignal = GetTickCount();
+      }
+   }
 
-   if (signal.onBreakout.alert) Alert(message);
-   if (signal.onBreakout.mail)  SendEmail("", "", message, message + NL + "("+ TimeToStr(TimeLocalEx("onBreakout(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+   // alert: once per terminal
+   if (signal.onBreakout.alert) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|alert";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) Alert(message2);
+   }
+
+   // mail: once per system
+   if (signal.onBreakout.mail) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|mail";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onBreakout(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+   }
    return(!catch("onBreakout(3)"));
 }
 

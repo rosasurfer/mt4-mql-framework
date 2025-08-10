@@ -5016,12 +5016,16 @@ bool onNewMFE(string configKey, double profit) {
    int iProfit = MathRound(profit * 100);
 
    // skip the signal if it was already processed elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sEvent = GetMfaeSignalKey(configKey, I_PROFIT_MFE);
-   if (GetWindowPropertyA(hWnd, sEvent) >= iProfit) return(true);
-   SetWindowPropertyA(hWnd, sEvent, iProfit);
+   // sound: once per system
+   if (!__isTesting) {
+      int hWndDesktop = GetDesktopWindow();
+      string propertyName = GetMfaeSignalKey(configKey, I_PROFIT_MFE) +"|sound";
 
-   PlaySoundEx("Beacon.wav");
+      if (GetWindowPropertyA(hWndDesktop, propertyName) < iProfit) {
+         SetWindowPropertyA(hWndDesktop, propertyName, iProfit);
+         PlaySoundEx("Beacon.wav");
+      }
+   }
    return(!catch("onNewMFE(2)"));
 
    // used sound files:
@@ -5045,12 +5049,16 @@ bool onNewMAE(string configKey, double profit) {
    int iProfit = MathRound(profit * 100);
 
    // skip the signal if it was already processed elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sEvent = GetMfaeSignalKey(configKey, I_PROFIT_MAE);
-   if (GetWindowPropertyA(hWnd, sEvent) <= iProfit) return(true);
-   SetWindowPropertyA(hWnd, sEvent, iProfit);
+   // sound: once per system
+   if (!__isTesting) {
+      int hWndDesktop = GetDesktopWindow();
+      string propertyName = GetMfaeSignalKey(configKey, I_PROFIT_MAE) +"|sound";
 
-   PlaySoundEx("Windows Ping.wav");
+      if (GetWindowPropertyA(hWndDesktop, propertyName) > iProfit) {
+         SetWindowPropertyA(hWndDesktop, propertyName, iProfit);
+         PlaySoundEx("Windows Ping.wav");
+      }
+   }
    return(!catch("onNewMAE(2)"));
 }
 

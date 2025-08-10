@@ -228,21 +228,57 @@ bool onLevelCross(int direction) {
    string indicatorName = ProgramName();
 
    // skip the signal if it was already processed elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sPeriod = PeriodDescription();
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level) +")."+ TimeToStr(Time[0]);
-   if (GetWindowPropertyA(hWnd, sEvent) != 0) return(true);
-   SetWindowPropertyA(hWnd, sEvent, 1);                        // mark immediately to prevent duplicates from other instances
+   string sPeriod   = PeriodDescription();
+   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level) +")."+ TimeToStr(Time[0]), propertyName = "";
+   string message1  = indicatorName +" crossed level "+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level);
+   string message2  = Symbol() +","+ sPeriod +": "+ message1;
 
-   string message = indicatorName +" crossed level "+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level);
-   if (IsLogInfo()) logInfo("onLevelCross(2)  "+ message);
+   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   bool eventAction;
 
-   message = Symbol() +","+ PeriodDescription() +": "+ message;
-   string sAccount = "("+ TimeToStr(TimeLocalEx("onLevelCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   // log: once per terminal
+   if (IsLogInfo()) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|log";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) logInfo("onLevelCross(2)  "+ message1);
+   }
 
-   if (signal.alert) Alert(message);
-   if (signal.sound) PlaySoundEx(ifString(direction==MODE_LONG, Signal.Sound.Up, Signal.Sound.Down));
-   if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
+   // sound: once per system
+   if (signal.sound) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|sound";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) PlaySoundEx(ifString(direction==MODE_LONG, Signal.Sound.Up, Signal.Sound.Down));
+   }
+
+   // alert: once per terminal
+   if (signal.alert) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|alert";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) Alert(message2);
+   }
+
+   // mail: once per system
+   if (signal.mail) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|mail";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onLevelCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+   }
    return(!catch("onLevelCross(4)"));
 }
 
