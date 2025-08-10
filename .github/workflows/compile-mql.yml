@@ -44,7 +44,7 @@ jobs:
           echo "Skip CI: $SKIP_CI"
           echo "SKIP_CI=$SKIP_CI" >> "$GITHUB_ENV"
 
-      - name: Setup compilers
+      - name: Setup MQL compilers
         if:   env.SKIP_CI != 'true'
         env:
           MT4_METALANG_URL:   ${{ secrets.MT4_METALANG_URL }}
@@ -69,7 +69,7 @@ jobs:
                    --warn2error
           echo "TIMESTAMP=$(date +'%Y.%m.%d_%H.%M')" >> "$GITHUB_ENV"
 
-      - name: Store compiled files
+      - name: Store compiled MQL files
         if:   env.SKIP_CI != 'true'
         uses: actions/upload-artifact@v4
         with:
