@@ -33,7 +33,6 @@ extern string Signal.onTrendChange.SoundUp   = "Signal Up.wav";
 extern string Signal.onTrendChange.SoundDown = "Signal Down.wav";
 extern bool   Signal.onTrendChange.Alert     = false;
 extern bool   Signal.onTrendChange.Mail      = false;
-extern bool   Signal.onTrendChange.SMS       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -124,10 +123,9 @@ int onInit() {
       if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onTrendChange.Sound)) return(last_error);
       if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onTrendChange.Alert)) return(last_error);
       if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onTrendChange.Mail))  return(last_error);
-      if (!ConfigureSignalsBySMS  (signalId, AutoConfiguration, Signal.onTrendChange.SMS))   return(last_error);
-      Signal.onTrendChange = (Signal.onTrendChange.Sound || Signal.onTrendChange.Alert || Signal.onTrendChange.Mail || Signal.onTrendChange.SMS);
+      Signal.onTrendChange = (Signal.onTrendChange.Sound || Signal.onTrendChange.Alert || Signal.onTrendChange.Mail);
       if (Signal.onTrendChange) {
-         legendInfo = StrLeft(ifString(Signal.onTrendChange.Sound, "sound,", "") + ifString(Signal.onTrendChange.Alert, "alert,", "") + ifString(Signal.onTrendChange.Mail, "mail,", "") + ifString(Signal.onTrendChange.SMS, "sms,", ""), -1);
+         legendInfo = StrLeft(ifString(Signal.onTrendChange.Sound, "sound,", "") + ifString(Signal.onTrendChange.Alert, "alert,", "") + ifString(Signal.onTrendChange.Mail, "mail,", ""), -1);
       }
    }
 
@@ -240,8 +238,7 @@ bool onTrendChange(int trend) {
 
       if (Signal.onTrendChange.Alert) Alert(message);
       if (Signal.onTrendChange.Sound) PlaySoundEx(Signal.onTrendChange.SoundUp);
-      if (Signal.onTrendChange.Mail)  SendEmail("", "", message, message +NL+ accountTime);
-      if (Signal.onTrendChange.SMS)   SendSMS("", message +NL+ accountTime);
+      if (Signal.onTrendChange.Mail)  SendEmail("", "", message, message + NL + accountTime);
       return(!catch("onTrendChange(3)"));
    }
 
@@ -252,8 +249,7 @@ bool onTrendChange(int trend) {
 
       if (Signal.onTrendChange.Alert) Alert(message);
       if (Signal.onTrendChange.Sound) PlaySoundEx(Signal.onTrendChange.SoundDown);
-      if (Signal.onTrendChange.Mail)  SendEmail("", "", message, message +NL+ accountTime);
-      if (Signal.onTrendChange.SMS)   SendSMS("", message +NL+ accountTime);
+      if (Signal.onTrendChange.Mail)  SendEmail("", "", message, message + NL + accountTime);
       return(!catch("onTrendChange(5)"));
    }
 
@@ -302,7 +298,6 @@ string InputsToStr() {
                             "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";", NL,
                             "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";", NL,
                             "Signal.onTrendChange.Alert=",     BoolToStr(Signal.onTrendChange.Alert),          ";", NL,
-                            "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";", NL,
-                            "Signal.onTrendChange.SMS=",       BoolToStr(Signal.onTrendChange.SMS),            ";")
+                            "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";")
    );
 }

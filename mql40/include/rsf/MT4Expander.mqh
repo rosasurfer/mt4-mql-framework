@@ -157,16 +157,20 @@
    string   UninitReasonToStr(int reason);
 
    // window property management
-   bool     SetWindowIntegerA   (int hWnd, string name, int value);
+   int      GetWindowPropertyA   (int hWnd, string name);
+   bool     SetWindowPropertyA   (int hWnd, string name, int value);
+   int      RemoveWindowPropertyA(int hWnd, string name);
+
    int      GetWindowIntegerA   (int hWnd, string name);
+   bool     SetWindowIntegerA   (int hWnd, string name, int value);
    int      RemoveWindowIntegerA(int hWnd, string name);
 
-   bool     SetWindowDoubleA   (int hWnd, string name, double value);
    double   GetWindowDoubleA   (int hWnd, string name);
+   bool     SetWindowDoubleA   (int hWnd, string name, double value);
    double   RemoveWindowDoubleA(int hWnd, string name);
 
-   bool     SetWindowStringA   (int hWnd, string name, string value);
    string   GetWindowStringA   (int hWnd, string name);
+   bool     SetWindowStringA   (int hWnd, string name, string value);
    string   RemoveWindowStringA(int hWnd, string name);
 
    // other

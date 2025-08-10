@@ -717,7 +717,7 @@ function readConfig() {
   local -A includeDirs; includeDirs=()
 
   # source the config file                                    # TODO: parse the file
-  [[ -n "$config" ]] && . "$config"
+  [[ -n "$config" ]] && . "$config" &> /dev/null
 
   # resolve compiler settings: environment precedes configuration
   [[ "${MT4_METALANG:-}"   == '<'* ]] && MT4_METALANG=        # skip distributed/example values

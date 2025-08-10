@@ -129,8 +129,8 @@ int afterInit() {
          hWndDesktop = GetDesktopWindow();
          orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
          string name = orderTracker.key + StrToLower(Symbol());
-         int counter = Max(GetPropA(hWndDesktop, name), 0) + 1;
-         SetPropA(hWndDesktop, name, counter);
+         int counter = Max(GetWindowPropertyA(hWndDesktop, name), 0) + 1;
+         SetWindowPropertyA(hWndDesktop, name, counter);
       }
 
       // setup a chart ticker

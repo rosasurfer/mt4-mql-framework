@@ -1,10 +1,12 @@
+<!-- BFX Fake Volume.tpl -->
+
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=2
+scale=4
 graph=1
 fore=0
 grid=0
@@ -13,9 +15,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=1
+scroll=0
 shift=1
-shift_size=10
+shift_size=50
 
 fixed_pos=620
 window_left=0
@@ -37,8 +39,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=800
-fixed_height=0
+height=300
 
 <indicator>
 name=main
@@ -70,6 +71,8 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
+<inputs>
+</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -97,7 +100,6 @@ flags=339
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
-MA.Periods.Step=0
 Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535
@@ -117,47 +119,39 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=50
-ZigZag.Type=Lines* | Semaphores
+ZigZag.Periods=20
 ZigZag.Width=0
-ZigZag.Color=16711935
 Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=255
-Donchian.ShowCrossings=off* | first | all
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Symbol=dot | narrow-ring | ring* | bold-ring
 Donchian.Crossing.Width=2
 Signal.onReversal=1
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ZigZag
-flags=339
-window_num=0
-<inputs>
-ZigZag.Periods=10
-ZigZag.Width=0
-Donchian.ShowChannel=0
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=16711935
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
-Donchian.Crossing.Width=1
-Signal.onReversal=0
-Signal.onBreakout=0
-Sound.onChannelWidening=0
+Signal.onReversal.Types=sound* | alert* | mail | sms
 </inputs>
 </expert>
 style_2=2
 style_3=2
-color_6=4294967295
-color_7=4294967295
 show_data=1
 </indicator>
+</window>
 
+<window>
+height=50
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=BFX Volume
+flags=339
+window_num=1
+<inputs>
+</inputs>
+</expert>
+min=-40
+max=40
+levels_color=12632256
+levels_style=0
+show_data=1
+</indicator>
 </window>
 </chart>

@@ -48,7 +48,7 @@ extern int    MaxBarsBack                    = 10000;                // max. val
 
 extern string ___b__________________________ = "=== Signaling ===";
 extern bool   Signal.onCross                 = false;
-extern string Signal.onCross.Types           = "sound* | alert | mail | sms";
+extern string Signal.onCross.Types           = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -100,12 +100,11 @@ double slowALMA.weights[];                         // slow ALMA weights
 int    vscaleUnit;
 int    vscaleAdrPeriods;
 
-string indicatorName = "";                         // "Data" window and signal notification name
-
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
-bool   signal.sms;
+
+string indicatorName = "";                         // "Data" window and signal notification name
 
 
 /**
@@ -217,10 +216,10 @@ int onInit() {
    string signalId = "Signal.onCross";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
    if (Signal.onCross) {
-      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
          return(catch("onInit(15)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onCross = (signal.sound || signal.alert || signal.mail || signal.sms);
+      Signal.onCross = (signal.sound || signal.alert || signal.mail);
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -349,23 +348,58 @@ int onTick() {
 bool onCross(int direction) {
    if (direction!=MODE_UPPER_SECTION && direction!=MODE_LOWER_SECTION) return(!catch("onCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // skip the signal if it already has been signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sPeriod = PeriodDescription();
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]);
-   if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
+   // skip the signal if it was already processed elsewhere
+   string sPeriod   = PeriodDescription();
+   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string message1  = indicatorName +" crossed "+ ifString(direction==MODE_UPPER_SECTION, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message2  = Symbol() +","+ sPeriod +": "+ message1;
 
-   string message = indicatorName +" crossed "+ ifString(direction==MODE_UPPER_SECTION, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
-   if (IsLogInfo()) logInfo("onCross(2)  "+ message);
+   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   bool eventAction;
 
-   message = Symbol() +","+ PeriodDescription() +": "+ message;
-   string sAccount = "("+ TimeToStr(TimeLocalEx("onCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   // log: once per terminal
+   if (IsLogInfo()) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|log";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) logInfo("onCross(2)  "+ message1);
+   }
 
-   if (signal.alert) Alert(message);
-   if (signal.sound) PlaySoundEx(ifString(direction==MODE_UPPER_SECTION, Signal.Sound.Up, Signal.Sound.Down));
-   if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   SendSMS("", message + NL + sAccount);
+   // sound: once per system
+   if (signal.sound) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|sound";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) PlaySoundEx(ifString(direction==MODE_UPPER_SECTION, Signal.Sound.Up, Signal.Sound.Down));
+   }
+
+   // alert: once per terminal
+   if (signal.alert) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|alert";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) Alert(message2);
+   }
+
+   // mail: once per system
+   if (signal.mail) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|mail";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+   }
    return(!catch("onCross(4)"));
 }
 

@@ -40,7 +40,7 @@ extern int    MaxBarsBack                    = 10000;             // max. values
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
-extern string Signal.onTrendChange.Types     = "sound* | alert | mail | sms";
+extern string Signal.onTrendChange.Types     = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -101,7 +101,6 @@ bool   enableMultiColoring;
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
-bool   signal.sms;
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -176,11 +175,11 @@ int onInit() {
    legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
-      if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
          return(catch("onInit(10)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.sms);
-      if (Signal.onTrendChange) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.sms, "sms,", ""), -1) +")";
+      Signal.onTrendChange = (signal.sound || signal.alert || signal.mail);
+      if (Signal.onTrendChange) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", ""), -1) +")";
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -315,24 +314,58 @@ int onTick() {
 bool onTrendChange(int direction) {
    if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // skip the signal if it already has been signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sPeriod = PeriodDescription();
-   string sName   = "NLMA("+ WaveCycle.Periods +", "+ PriceTypeDescription(maAppliedPrice) +")";
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ sName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]);
-   if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
+   // skip the signal if it was already processed elsewhere
+   string sPeriod   = PeriodDescription();
+   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +".NLMA("+ WaveCycle.Periods +", "+ PriceTypeDescription(maAppliedPrice) +").onTrendChange("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string message1  = shortName +" turned "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message2  = Symbol() +","+ sPeriod +": "+ message1;
 
-   string message = shortName +" turned "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
-   if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
+   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   bool eventAction;
 
-   message = Symbol() +","+ PeriodDescription() +": "+ message;
-   string sAccount = "("+ TimeToStr(TimeLocalEx("onTrendChange(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   // log: once per terminal
+   if (IsLogInfo()) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|log";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) logInfo("onTrendChange(2)  "+ message1);
+   }
 
-   if (signal.alert) Alert(message);
-   if (signal.sound) PlaySoundEx(ifString(direction==MODE_UPTREND, Signal.Sound.Up, Signal.Sound.Down));
-   if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   SendSMS("", message + NL + sAccount);
+   // sound: once per system
+   if (signal.sound) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|sound";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) PlaySoundEx(ifString(direction==MODE_UPTREND, Signal.Sound.Up, Signal.Sound.Down));
+   }
+
+   // alert: once per terminal
+   if (signal.alert) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|alert";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) Alert(message2);
+   }
+
+   // mail: once per system
+   if (signal.mail) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|mail";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onTrendChange(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+   }
    return(!catch("onTrendChange(4)"));
 }
 

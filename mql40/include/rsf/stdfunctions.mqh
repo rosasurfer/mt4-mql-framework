@@ -263,34 +263,34 @@ string ErrorDescription(int error) {
 /**
  * Replace all occurences of a substring in a string by another string.
  *
- * @param  string str                  - string to process
+ * @param  string subject              - string to process
  * @param  string search               - search string
  * @param  string replace              - replacement string
  * @param  bool   recursive [optional] - whether to replace recursively (default: no)
  *
  * @return string - resulting string or an empty string in case of errors
  */
-string StrReplace(string str, string search, string replace, bool recursive = false) {
+string StrReplace(string subject, string search, string replace, bool recursive = false) {
    recursive = recursive!=0;
-   if (!StringLen(str))    return(str);
-   if (!StringLen(search)) return(str);
-   if (search == replace)  return(str);
+   if (!StringLen(subject)) return(subject);
+   if (!StringLen(search))  return(subject);
+   if (search == replace)   return(subject);
 
    string result="", lastResult="";
 
    if (!recursive) {
-      int from=0, found=StringFind(str, search);
+      int from=0, found=StringFind(subject, search);
 
       while (found > -1) {
-         result = StringConcatenate(result, StrSubstr(str, from, found-from), replace);
+         result = StringConcatenate(result, StrSubstr(subject, from, found-from), replace);
          from   = found + StringLen(search);
-         found  = StringFind(str, search, from);
+         found  = StringFind(subject, search, from);
       }
-      result = StringConcatenate(result, StrSubstr(str, from));
+      result = StringConcatenate(result, StrSubstr(subject, from));
    }
    else {
       int counter = 0;
-      result = str;
+      result = subject;
 
       while (result != lastResult) {
          lastResult = result;
@@ -4503,7 +4503,7 @@ string GetAccountServer() {
 
       if (serverName == "") {
          // check main window properties
-         int lpString = GetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER);
+         int lpString = GetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER);
          if (lpString != NULL) serverName = GetStringA(lpString);
       }
 
@@ -4527,8 +4527,8 @@ string GetAccountServer() {
       // update EXECUTION_CONTEXT and main window properties
       sAccountServer = ec_SetAccountServer(__ExecutionContext, serverName);
       lpAccountServer = __ExecutionContext[EC.accountServer];
-      if (!GetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER)) {
-         SetPropA(hMainWnd, PROP_STRING_ACCOUNT_SERVER, lpAccountServer);
+      if (!GetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER)) {
+         SetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER, lpAccountServer);
       }
 
       isRecursion = false;
@@ -4576,7 +4576,7 @@ int GetAccountNumber() {
       // check main window properties
       int hMainWnd = GetTerminalMainWindow();
       if (!accountNumber) {
-         accountNumber = GetPropA(hMainWnd, PROP_INT_ACCOUNT_NUMBER);
+         accountNumber = GetWindowPropertyA(hMainWnd, PROP_INT_ACCOUNT_NUMBER);
       }
 
       // evaluate title bar of the main window
@@ -4595,7 +4595,7 @@ int GetAccountNumber() {
 
       // update EXECUTION_CONTEXT and window properties
       ec_SetAccountNumber(__ExecutionContext, accountNumber);
-      SetPropA(hMainWnd, PROP_INT_ACCOUNT_NUMBER, accountNumber);
+      SetWindowPropertyA(hMainWnd, PROP_INT_ACCOUNT_NUMBER, accountNumber);
 
       isRecursion = false;
    }
@@ -6544,7 +6544,6 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           "",                               // string Signal.onTrendChange.SoundDown
                           false,                            // bool   Signal.onTrendChange.Alert
                           false,                            // bool   Signal.onTrendChange.Mail
-                          false,                            // bool   Signal.onTrendChange.SMS
 
                           "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
@@ -6924,7 +6923,6 @@ void __DummyCalls() {
    int      GetDlgCtrlID(int hWndCtl);
    int      GetDlgItem(int hDlg, int itemId);
    int      GetParent(int hWnd);
-   int      GetPropA(int hWnd, string name);
    int      GetTopWindow(int hWnd);
    int      GetWindow(int hWnd, int cmd);
    bool     IsWindow(int hWnd);
@@ -6932,5 +6930,4 @@ void __DummyCalls() {
    bool     PostMessageA(int hWnd, int msg, int wParam, int lParam);
    int      RegisterWindowMessageA(string str);
    int      SendMessageA(int hWnd, int msg, int wParam, int lParam);
-   bool     SetPropA(int hWnd, string name, int hData);
 #import

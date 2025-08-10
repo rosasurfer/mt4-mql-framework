@@ -31,7 +31,6 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           "",                                     // string Signal.onTrendChange.SoundDown
                           false,                                  // bool   Signal.onTrendChange.Alert
                           false,                                  // bool   Signal.onTrendChange.Mail
-                          false,                                  // bool   Signal.onTrendChange.SMS
 
                           "",                                     // string ______________________________
                           false,                                  // bool   AutoConfiguration

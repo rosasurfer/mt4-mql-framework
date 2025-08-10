@@ -1,5 +1,5 @@
 /**
- * BFX No Volume
+ * BFX Volume
  *
  * Wrapper for the "BankersFX Core Volume" indicator which displays an oscillator promoted as real "Trading Floor Volume",
  * feeded by institutional data. In fact the indicator is calculated client-side using price only (no external data source).
@@ -33,7 +33,7 @@ extern int    MaxBarsBack                    = 10000;          // max. values to
 extern string ___c__________________________ = "=== Signaling ===";
 extern int    Signal.Level                   = 20;
 extern bool   Signal.onCross                 = false;
-extern string Signal.onCross.Types           = "sound* | alert | mail | sms";
+extern string Signal.onCross.Types           = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -73,7 +73,6 @@ string bfxLibraryName    = "BankersFX Lib";
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
-bool   signal.sms;
 
 
 /**
@@ -123,10 +122,10 @@ int onInit() {
    string signalId = "Signal.onCross";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
    if (Signal.onCross) {
-      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.sms)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
          return(catch("onInit(9)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onCross = (signal.sound || signal.alert || signal.mail || signal.sms);
+      Signal.onCross = (signal.sound || signal.alert || signal.mail);
    }
 
    // Signal.Sound.*
@@ -228,23 +227,58 @@ bool onLevelCross(int direction) {
    if (direction!=MODE_LONG && direction!=MODE_SHORT) return(!catch("onLevelCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    string indicatorName = ProgramName();
 
-   // skip the signal if it already has been signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sPeriod = PeriodDescription();
-   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level) +")."+ TimeToStr(Time[0]);
-   if (GetPropA(hWnd, sEvent) != 0) return(true);
-   SetPropA(hWnd, sEvent, 1);                         // immediately mark as signaled (prevents duplicate signals on slow CPU)
+   // skip the signal if it was already processed elsewhere
+   string sPeriod   = PeriodDescription();
+   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level) +")."+ TimeToStr(Time[0]), propertyName = "";
+   string message1  = indicatorName +" crossed level "+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level);
+   string message2  = Symbol() +","+ sPeriod +": "+ message1;
 
-   string message = indicatorName +" crossed level "+ ifInt(direction==MODE_LONG, Signal.Level, -Signal.Level);
-   if (IsLogInfo()) logInfo("onLevelCross(2)  "+ message);
+   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   bool eventAction;
 
-   message = Symbol() +","+ PeriodDescription() +": "+ message;
-   string sAccount = "("+ TimeToStr(TimeLocalEx("onLevelCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   // log: once per terminal
+   if (IsLogInfo()) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|log";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) logInfo("onLevelCross(2)  "+ message1);
+   }
 
-   if (signal.alert) Alert(message);
-   if (signal.sound) PlaySoundEx(ifString(direction==MODE_LONG, Signal.Sound.Up, Signal.Sound.Down));
-   if (signal.mail)  SendEmail("", "", message, message + NL + sAccount);
-   if (signal.sms)   SendSMS("", message + NL + sAccount);
+   // sound: once per system
+   if (signal.sound) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|sound";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) PlaySoundEx(ifString(direction==MODE_LONG, Signal.Sound.Up, Signal.Sound.Down));
+   }
+
+   // alert: once per terminal
+   if (signal.alert) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|alert";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) Alert(message2);
+   }
+
+   // mail: once per system
+   if (signal.mail) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|mail";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onLevelCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+   }
    return(!catch("onLevelCross(4)"));
 }
 

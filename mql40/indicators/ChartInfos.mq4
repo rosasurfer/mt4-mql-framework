@@ -1933,12 +1933,12 @@ bool UpdateStopoutLevel() {
                if (config.dData[line][I_PROFIT_MFE] != 0) {
                   hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
                   sEvent = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE);
-                  SetPropA(hWnd, sEvent, 0);
+                  SetWindowPropertyA(hWnd, sEvent, 0);
                }
                if (config.dData[line][I_PROFIT_MAE] != 0) {
                   hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
                   sEvent = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE);
-                  SetPropA(hWnd, sEvent, 0);
+                  SetWindowPropertyA(hWnd, sEvent, 0);
                }
 
                // reset existing stats
@@ -5012,16 +5012,20 @@ bool onOrderFail(int tickets[]) {
  * @return bool - success status
  */
 bool onNewMFE(string configKey, double profit) {
-   // convert profit value to cent units (simplifies Get/SetProp)
+   // convert profit value to cent units (simplifies Get/SetProperty)
    int iProfit = MathRound(profit * 100);
 
-   // skip the signal if it already has been signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sEvent = GetMfaeSignalKey(configKey, I_PROFIT_MFE);
-   if (GetPropA(hWnd, sEvent) >= iProfit) return(true);
-   SetPropA(hWnd, sEvent, iProfit);
+   // skip the signal if it was already processed elsewhere
+   // sound: once per system
+   if (!__isTesting) {
+      int hWndDesktop = GetDesktopWindow();
+      string propertyName = GetMfaeSignalKey(configKey, I_PROFIT_MFE) +"|sound";
 
-   PlaySoundEx("Beacon.wav");
+      if (GetWindowPropertyA(hWndDesktop, propertyName) < iProfit) {
+         SetWindowPropertyA(hWndDesktop, propertyName, iProfit);
+         PlaySoundEx("Beacon.wav");
+      }
+   }
    return(!catch("onNewMFE(2)"));
 
    // used sound files:
@@ -5041,16 +5045,20 @@ bool onNewMFE(string configKey, double profit) {
  * @return bool - success status
  */
 bool onNewMAE(string configKey, double profit) {
-   // convert profit value to cent units (simplifies Get/SetProp)
+   // convert profit value to cent units (simplifies Get/SetProperty)
    int iProfit = MathRound(profit * 100);
 
-   // skip the signal if it already has been signaled elsewhere
-   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-   string sEvent = GetMfaeSignalKey(configKey, I_PROFIT_MAE);
-   if (GetPropA(hWnd, sEvent) <= iProfit) return(true);
-   SetPropA(hWnd, sEvent, iProfit);
+   // skip the signal if it was already processed elsewhere
+   // sound: once per system
+   if (!__isTesting) {
+      int hWndDesktop = GetDesktopWindow();
+      string propertyName = GetMfaeSignalKey(configKey, I_PROFIT_MAE) +"|sound";
 
-   PlaySoundEx("Windows Ping.wav");
+      if (GetWindowPropertyA(hWndDesktop, propertyName) > iProfit) {
+         SetWindowPropertyA(hWndDesktop, propertyName, iProfit);
+         PlaySoundEx("Windows Ping.wav");
+      }
+   }
    return(!catch("onNewMAE(2)"));
 }
 
@@ -5084,7 +5092,7 @@ bool IsOrderEventListener(string symbol) {
    if (!hWndDesktop) return(false);
 
    string name = orderTracker.key + StrToLower(symbol);
-   return(GetPropA(hWndDesktop, name) > 0);
+   return(GetWindowPropertyA(hWndDesktop, name) > 0);
 }
 
 
@@ -5099,7 +5107,7 @@ bool IsOrderEventLogged(string event) {
    if (!hWndDesktop) return(false);
 
    string name = orderTracker.key + event;
-   return(GetPropA(hWndDesktop, name) != 0);
+   return(GetWindowPropertyA(hWndDesktop, name) != 0);
 }
 
 
@@ -5116,7 +5124,7 @@ bool SetOrderEventLogged(string event, bool status) {
 
    string name = orderTracker.key + event;
    int value = status!=0;
-   return(SetPropA(hWndDesktop, name, status) != 0);
+   return(SetWindowPropertyA(hWndDesktop, name, status) != 0);
 }
 
 
