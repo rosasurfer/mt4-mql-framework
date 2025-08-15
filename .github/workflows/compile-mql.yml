@@ -1,5 +1,5 @@
 #
-# Compile all MQL programs and create a ZIP file with sources and compiled binaries.
+# Compile all MQL programs, create a ZIP file with sources and compiled binaries and notify the build tracker.
 #
 # TODO:
 # - cache the compilers
@@ -26,11 +26,13 @@ jobs:
         shell: bash
 
     steps:
+      # ------------------------------------------------------------------------------------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0                                # fetch all branches and history (to access the source branch of PRs)
 
+      # ------------------------------------------------------------------------------------------------------------------------------------
       - name: Check commit message for "[skip ci]"
         run: |
           SKIP_CI=false
@@ -44,7 +46,8 @@ jobs:
           echo "Skip CI: $SKIP_CI"
           echo "SKIP_CI=$SKIP_CI" >> "$GITHUB_ENV"
 
-      - name: Setup compilers
+      # ------------------------------------------------------------------------------------------------------------------------------------
+      - name: Setup MQL compilers
         if:   env.SKIP_CI != 'true'
         env:
           MT4_METALANG_URL:   ${{ secrets.MT4_METALANG_URL }}
@@ -52,14 +55,15 @@ jobs:
           AUTH_USERNAME:      ${{ secrets.MT4_URL_AUTH_USERNAME }}
           AUTH_PASSWORD:      ${{ secrets.MT4_URL_AUTH_PASSWORD }}
         run: |
-          echo "Downloading MT4 compiler from https://.../mt4/${MT4_METALANG_URL#*/mt4/}"
+          echo "Downloading MT4 compiler from https://.../mt4${MT4_METALANG_URL#*/mt4}"
           curl -o metalang.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METALANG_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
           echo "MT4_METALANG=$PWD/metalang.exe" >> "$GITHUB_ENV"
 
-          echo "Downloading MT4 MetaEditor from https://.../mt4/${MT4_METAEDITOR_URL#*/mt4/}"
+          echo "Downloading MT4 MetaEditor from https://.../mt4${MT4_METAEDITOR_URL#*/mt4}"
           curl -o metaeditor.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METAEDITOR_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
           echo "MT4_METAEDITOR=$PWD/metaeditor.exe" >> "$GITHUB_ENV"
 
+      # ------------------------------------------------------------------------------------------------------------------------------------
       - name: Compile MQL files
         if:   env.SKIP_CI != 'true'
         run: |
@@ -67,14 +71,59 @@ jobs:
           bin/mqlc -v=mql40 /inc:mql40 mql40/experts mql40/experts/tools mql40/indicators mql40/indicators/.attic mql40/scripts mql40/libraries \
                    -v=mql45 /inc:mql45 mql45/experts mql45/indicators mql45/scripts mql45/libraries \
                    --warn2error
-          echo "TIMESTAMP=$(date +'%Y.%m.%d_%H.%M')" >> "$GITHUB_ENV"
 
-      - name: Store compiled files
-        if:   env.SKIP_CI != 'true'
+      # ------------------------------------------------------------------------------------------------------------------------------------
+      - name: Prepare build artifact
+        if:   github.event_name == 'push' && env.SKIP_CI != 'true'
+        run: |
+          COMMIT_TIMESTAMP='${{ github.event.head_commit.timestamp }}'
+
+          echo "Setting directory tree to commit timestamp: $COMMIT_TIMESTAMP"
+          find . -exec touch -a -m -d "$COMMIT_TIMESTAMP" {} +
+
+          COMMIT_TIME="$(date -u -d "$COMMIT_TIMESTAMP" '+%Y.%m.%d_%H.%M')"
+          echo "COMMIT_TIME=$COMMIT_TIME" >> "$GITHUB_ENV"
+
+      # ------------------------------------------------------------------------------------------------------------------------------------
+      - name: Create build artifact
+        id:   artifact
+        if:   github.event_name == 'push' && env.SKIP_CI != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: rosasurfer-mt4-mql-${{ env.TIMESTAMP }}.bin
+          name: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.COMMIT_TIME }}.bin
           path: |
-            mql*/**/*.dll
-            mql*/**/*.ex[e4]
-            mql*/**/*.mq[h4]
+            bin/
+            config/
+            etc/
+            mql*/
+            !mql40/indicators/.attic/
+            sounds/*.mp3
+            sounds/*.wav
+            templates*/*.tpl
+            !**/.git*
+            LICENSE
+            README.md
+          include-hidden-files: true
+
+      # ------------------------------------------------------------------------------------------------------------------------------------
+      - name: Notify build tracker
+        if:   github.event_name == 'push' && env.SKIP_CI != 'true'
+        env:
+          BUILD_TRACKER_URL:  ${{ secrets.BUILD_TRACKER_URL }}
+          BUILD_TRACKER_USER: ${{ secrets.BUILD_TRACKER_USERNAME }}
+          BUILD_TRACKER_PASS: ${{ secrets.BUILD_TRACKER_PASSWORD }}
+        run: |
+          echo "Notifying build tracker at https://.../mt4${BUILD_TRACKER_URL#*/mt4}"
+
+          response_file="$(mktemp)"
+          status="$(curl -X POST "$BUILD_TRACKER_URL" -L --silent --connect-timeout 10 --max-time 30 \
+                         --digest -u "$BUILD_TRACKER_USER:$BUILD_TRACKER_PASS" \
+                         -o "$response_file" -w '%{http_code}' \
+                         -d 'repository=${{ github.repository }}' \
+                         -d 'artifact-id=${{ steps.artifact.outputs.artifact-id }}')"
+          echo "HTTP status: $status"
+          cat "$response_file"
+
+          ((status >= 400)) && exit 1 || :
+
+      # ------------------------------------------------------------------------------------------------------------------------------------
