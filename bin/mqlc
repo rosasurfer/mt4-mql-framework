@@ -150,7 +150,7 @@ function onError() {
 
   if ((trace)); then
     stderr "ERROR: command failed with status $lastExitStatus"
-    for ((i=1; i < size; i++)); do
+    for ((i=1; i < size; ++i)); do
       func="${FUNCNAME[i]}()                        "
       file="${BASH_SOURCE[i]}"
       line="${BASH_LINENO[i-1]}"
@@ -307,13 +307,13 @@ function compileMql40() {
     if [[ ${#output[@]} -lt 4 ]]; then                                # no error message happens for empty source file only
       ((errorStatus != 127)) && fail "unexpected compiler output for status $errorStatus: no error message"
       ((originalOutput)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
-      ((errors++))
+      ((++errors))
     else
       # count errors and warnings
       local i
-      for ((i=3; i < ${#output[@]}; i++)); do
-        [[ "${output[i]}" == '1;'* ]] && ((warnings++))
-        [[ "${output[i]}" == '2;'* ]] && ((errors++))
+      for ((i=3; i < ${#output[@]}; ++i)); do
+        [[ "${output[i]}" == '1;'* ]] && ((++warnings))
+        [[ "${output[i]}" == '2;'* ]] && ((++errors))
       done
     fi
 
@@ -346,9 +346,7 @@ function compileMql40() {
   fi
 
   # print everything to STDOUT
-  for line in "${output[@]}"; do
-    echo "$line"
-  done
+  printf '%s\n' "${output[@]}"
 
   ((warn2error)) || warnings=0
   ((retVal = errors + warnings))
@@ -424,9 +422,7 @@ function compileMql5() {
   fi
 
   # print everything to STDOUT
-  for line in "${output[@]}"; do
-    echo "$line"
-  done
+  printf '%s\n' "${output[@]}"
 
   ((warn2error)) || warnings=0
   ((retVal = errors + warnings))
