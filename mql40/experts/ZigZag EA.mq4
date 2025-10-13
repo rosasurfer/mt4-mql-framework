@@ -103,7 +103,6 @@ extern string ___a__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 30;
 
 extern string ___b__________________________ = "=== Trade settings ===";
-extern int    EntryOrder.Distance            = 0;                    // in punits: entry order distance from the signal level
 extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Status ===";
@@ -1019,7 +1018,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.StopAt",            /*string  */ Instance.StopAt);
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "EntryOrder.Distance",        /*int     */ EntryOrder.Distance);
    WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
@@ -1088,7 +1086,6 @@ bool ReadStatus() {
    Instance.StopAt            = GetIniStringA(file, section, "Instance.StopAt",  "");              // string   Instance.StopAt            = @time(datetime|time) | @profit(numeric[%])
    ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"      );              // int      ZigZag.Periods             = 40
    Lots                       = GetIniDouble (file, section, "Lots"                );              // double   Lots                       = 0.1
-   EntryOrder.Distance        = GetIniInt    (file, section, "EntryOrder.Distance" );              // int      EntryOrder.Distance        = 12
    ShowProfitInPercent        = GetIniBool   (file, section, "ShowProfitInPercent" );              // bool     ShowProfitInPercent        = 1
    EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",      "");              // string   EA.Recorder                = 1,2,4
 
@@ -1295,7 +1292,6 @@ void BackupInputs() {
    prev.Instance.StopAt     = StringConcatenate(Instance.StopAt, "");
    prev.ZigZag.Periods      = ZigZag.Periods;
    prev.Lots                = Lots;
-   prev.EntryOrder.Distance = EntryOrder.Distance;
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
@@ -1330,7 +1326,6 @@ void RestoreInputs() {
    Instance.StopAt     = prev.Instance.StopAt;
    ZigZag.Periods      = prev.ZigZag.Periods;
    Lots                = prev.Lots;
-   EntryOrder.Distance = prev.EntryOrder.Distance;
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
@@ -1497,16 +1492,11 @@ bool ValidateInputs() {
    if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
    if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
-   // EntryOrder.Distance
-   if (isInitParameters && EntryOrder.Distance!=prev.EntryOrder.Distance) {
-      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(25)  "+ instance.name +" cannot change input parameter EntryOrder.Distance of "+ StatusDescription(instance.status) +" instance"));
-   }
-
    // EA.Recorder: on | off* | 1,2,3=1000,...
    if (!Recorder_ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(26)"));
+   return(!catch("ValidateInputs(25)"));
 }
 
 
@@ -1657,7 +1647,6 @@ string InputsToStr() {
 
                             "ZigZag.Periods=",      ZigZag.Periods,                   ";"+ NL +
                             "Lots=",                NumberToStr(Lots, ".1+"),         ";"+ NL +
-                            "EntryOrder.Distance=", EntryOrder.Distance,              ";"+ NL +
 
                             "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent),   ";")
    );
