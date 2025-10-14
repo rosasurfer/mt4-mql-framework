@@ -1,27 +1,36 @@
 /**
- * An EA trading ZigZag reversals.
+ * ZigZag EA
  *
- * The EA must not run permanently. If run permanently, it will not be profitable.
- * Instead, it must be activated/deactivated depending on market sentiment.
+ * This EA trades ZigZag reversals. That's breakouts from a Donchian Channel which is the basis for ZigZag.
  *
  *
  * Requirements
  * ------------
- *  • /mql4.0/indicators/ZigZag.mq4
+ *  • "mql40/experts/ZigZag EA.ex4" (this EA)
+ *  • "mql40/indicators/ZigZag.ex4" (the MetaQuotes version is not compatible)
+ *  • "mql40/scripts/Config.ex4"
+ *  • "mql40/scripts/Chart.ToggleOpenOrders.ex4"
+ *  • "mql40/scripts/Chart.ToggleTradeHistory.ex4"
+ *  • "mql40/scripts/EA.ToggleMetrics.ex4"
+ *  • "mql40/libraries/rsfMT4Expander.dll"
+ *  • "mql40/libraries/rsfStdlib.ex4"
+ *  • "mql40/libraries/rsfHistory[123].ex4" (three files)
  *
  *
- * External control
- * ----------------
+ * Inputs
+ * ------
+ *  • ZigZag.Periods:  Lookback periods of the Donchian channel.
+ *
+ *
+ * Manual control
+ * --------------
  *  • EA.Start: When a "start" command is received the EA opens a position in direction of the current ZigZag leg. There are
  *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction.
  *              The command is ignored if the EA already manages an open position.
- *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for new reversals.
+ *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops trading.
  *              The command is ignored if the EA is already in status "stopped".
  *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new reversals and start trading accordingly.
  *              The command is ignored if the EA is already in status "waiting".
- *  • EA.ToggleMetrics
- *  • Chart.ToggleOpenOrders
- *  • Chart.ToggleTradeHistory
  *
  *
  *
@@ -236,7 +245,7 @@ int onTick() {
    double signal[3];
 
    if (__isChart) {
-      if (!HandleCommands()) return(last_error);         // process incoming commands (may switch the instance on/off)
+      if (!HandleCommands()) return(last_error);         // process incoming commands
    }
 
    if (instance.status != STATUS_STOPPED) {
