@@ -250,7 +250,7 @@ int onTick() {
 
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
-         if (IsStartSignal(signal)) {
+         if (IsTradeSignal(signal)) {
             StartTrading(signal);
          }
       }
@@ -586,7 +586,7 @@ bool IsTradingTime() {
  *
  * @return bool
  */
-bool IsStartSignal(double &signal[]) {
+bool IsTradeSignal(double &signal[]) {
    if (last_error || instance.status!=STATUS_WAITING) return(false);
    signal[SIG_TYPE ] = 0;
    signal[SIG_PRICE] = 0;
