@@ -123,7 +123,6 @@ jobs:
                          -d 'artifact-id=${{ steps.artifact.outputs.artifact-id }}')"
           echo "HTTP status: $status"
           cat "$response_file"
-
           ((status >= 400)) && exit 1 || :
 
       # ------------------------------------------------------------------------------------------------------------------------------------
