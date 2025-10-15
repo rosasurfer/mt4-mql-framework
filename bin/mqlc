@@ -5,7 +5,7 @@
 #
 # Configuration via environment and/or config file.
 #
-# @see  "<repository>/bin/.mqlcrc.dist" for an example
+# @see  "<repository>/bin/.mqlc.dist" for an example
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
@@ -76,10 +76,10 @@ Auto-detection of MQL versions:
  Default MQL4 versions and include directories can be predefined in the configuration.
 
 Configuration:
- Unless option --rc/--norc is used, the script will look for a file named ".mqlcrc" in the source directory and each
+ Unless option --rc/--norc is used, the script will look for a file named ".mqlc" in the source directory and each
  parent directory. If no file is found in any of the parent directories, the script will look in the user's home
  directory. Only the first file found will be used. Compiler locations can also be specified using environment vars.
- See "<repository>/bin/.mqlcrc" for an example.
+ See "<repository>/bin/.mqlc" for an example.
 
 SYNTAX
 }
@@ -150,7 +150,7 @@ function onError() {
 
   if ((trace)); then
     stderr "ERROR: command failed with status $lastExitStatus"
-    for ((i=1; i < size; i++)); do
+    for ((i=1; i < size; ++i)); do
       func="${FUNCNAME[i]}()                        "
       file="${BASH_SOURCE[i]}"
       line="${BASH_LINENO[i-1]}"
@@ -307,13 +307,13 @@ function compileMql40() {
     if [[ ${#output[@]} -lt 4 ]]; then                                # no error message happens for empty source file only
       ((errorStatus != 127)) && fail "unexpected compiler output for status $errorStatus: no error message"
       ((originalOutput)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
-      ((errors++))
+      ((++errors))
     else
       # count errors and warnings
       local i
-      for ((i=3; i < ${#output[@]}; i++)); do
-        [[ "${output[i]}" == '1;'* ]] && ((warnings++))
-        [[ "${output[i]}" == '2;'* ]] && ((errors++))
+      for ((i=3; i < ${#output[@]}; ++i)); do
+        [[ "${output[i]}" == '1;'* ]] && ((++warnings))
+        [[ "${output[i]}" == '2;'* ]] && ((++errors))
       done
     fi
 
@@ -346,9 +346,7 @@ function compileMql40() {
   fi
 
   # print everything to STDOUT
-  for line in "${output[@]}"; do
-    echo "$line"
-  done
+  printf '%s\n' "${output[@]}"
 
   ((warn2error)) || warnings=0
   ((retVal = errors + warnings))
@@ -424,9 +422,7 @@ function compileMql5() {
   fi
 
   # print everything to STDOUT
-  for line in "${output[@]}"; do
-    echo "$line"
-  done
+  printf '%s\n' "${output[@]}"
 
   ((warn2error)) || warnings=0
   ((retVal = errors + warnings))
@@ -530,8 +526,7 @@ function printCompilerInfo() {
 }
 
 
-declare -A _cachedCompilerPaths
-_cachedCompilerPaths=()
+declare -A _cachedCompilerPaths=()
 
 #
 # Resolves the full compiler filename for the specified MQL version and include directory.
@@ -686,7 +681,7 @@ declare _mql40Sources=() _mql45Sources=() sourcePaths=() _includeDirs=()
 #
 function readConfig() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
-  local srcFile="$1" dir config='' rcFile='.mqlcrc'
+  local srcFile="$1" dir config='' rcFile='.mqlc'
 
   # resolve config file location for the source file
   srcFile="${srcFile//\\//}"
