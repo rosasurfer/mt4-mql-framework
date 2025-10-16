@@ -24,14 +24,12 @@
  *
  * Manual control
  * --------------
- *  • EA.Start: When a "start" command is received the EA opens a position in direction of the current ZigZag leg. There are
- *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction.
- *              The command is ignored if the EA already manages an open position.
- *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops trading.
+ *  • EA.Start: When a "start" command is received a stopped EA switches to status "waiting", waits for new signals
+ *              and trades accordingly. The command is ignored if the EA is not in status "stopped".
+ *  • EA.Entry: When an "entry" command is received the EA switches to status "trading" and opens a position in direction
+ *              of the current ZigZag leg. The command is ignored if the EA already is in status "trading".
+ *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and switches to status "stopped".
  *              The command is ignored if the EA is already in status "stopped".
- *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new reversals and start trading accordingly.
- *              The command is ignored if the EA is already in status "waiting".
- *
  *
  *
  * TODO:
@@ -284,24 +282,19 @@ bool onCommand(string cmd, string params, int keys) {
 
    if (cmd == "start") {
       switch (instance.status) {
+         case STATUS_STOPPED:
+            logInfo("onCommand(3)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            instance.status = STATUS_WAITING;
+            return(SaveStatus());
+      }
+   }
+   else if (cmd == "entry") {
+      switch (instance.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            string sDetail = " ";
-            int logLevel = LOG_INFO;
-
-            double signal[3];
-            signal[SIG_TYPE ] = 0;
-            signal[SIG_PRICE] = 0;
-            if      (params == "long")  signal[SIG_OP] = SIG_OP_LONG;
-            else if (params == "short") signal[SIG_OP] = SIG_OP_SHORT;
-            else {
-               signal[SIG_OP] = ifInt(GetZigZagTrend(0) > 0, SIG_OP_LONG, SIG_OP_SHORT);
-               if (params != "") {
-                  sDetail  = " skipping unsupported parameter in command ";
-                  logLevel = LOG_NOTICE;
-               }
-            }
-            log("onCommand(1)  "+ instance.name + sDetail + DoubleQuoteStr(fullCmd), NO_ERROR, logLevel);
+            double signal[] = {0,0,0};
+            signal[SIG_OP] = ifInt(GetZigZagTrend(0) > 0, SIG_OP_LONG, SIG_OP_SHORT);
+            log("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd), NO_ERROR, LOG_INFO);
             return(StartTrading(signal));
       }
    }
@@ -314,14 +307,6 @@ bool onCommand(string cmd, string params, int keys) {
             return(StopTrading(dNull));
       }
    }
-   else if (cmd == "wait") {
-      switch (instance.status) {
-         case STATUS_STOPPED:
-            logInfo("onCommand(3)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            instance.status = STATUS_WAITING;
-            return(SaveStatus());
-      }
-   }
    else if (cmd == "toggle-metrics") {
       int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
       return(ToggleMetrics(direction, METRIC_NET_MONEY, METRIC_SIG_UNITS));
@@ -332,7 +317,9 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
-   else return(!logNotice("onCommand(4)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
+   else {
+      return(!logNotice("onCommand(4)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
+   }
 
    return(!logWarn("onCommand(5)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
 }
@@ -582,7 +569,7 @@ bool IsTradingTime() {
 /**
  * Whether conditions are fullfilled to start trading.
  *
- * @param  _Out_ double &signal[] - array receiving entry signal details
+ * @param  _Out_ double &signal[] - array receiving the entry signal
  *
  * @return bool
  */
@@ -852,19 +839,19 @@ double stop.profitPct.AbsValue() {
 
 
 /**
- * Stop trading and close open positions (if any).
+ * Close open positions and stop trading. Depending on the passed trigger condition status changes to "waiting" or "stopped".
  *
- * @param  double signal[] - signal infos causing the call
+ * @param  double trigger[] - trigger condition causing the call
  *
  * @return bool - success status
  */
-bool StopTrading(double signal[]) {
+bool StopTrading(double trigger[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   int    sigType  = signal[SIG_TYPE];
-   double sigPrice = signal[SIG_PRICE];
-   int    sigOp    = signal[SIG_OP];
+   int    sigType  = trigger[SIG_TYPE];
+   double sigPrice = trigger[SIG_PRICE];
+   int    sigOp    = trigger[SIG_OP];
 
    // close an open position
    if (instance.status == STATUS_TRADING) {

@@ -1,7 +1,7 @@
 /**
- * EA.Wait
+ * EA.Entry
  *
- * Send a "wait" command to a running EA.
+ * Send an "entry" command to a running EA.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -32,9 +32,9 @@ int onStart() {
       if (__isTesting) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to enable status \"wait\" on EA instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to trigger an \"entry\" for EA instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
-      SendChartCommand("EA.command", "wait");
+      SendChartCommand("EA.command", "entry");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
