@@ -1,5 +1,5 @@
 /**
- * Toggle the EA display status between available metrics.
+ * Toggle the EA display between available metrics.
  *
  * @param  int direction - METRIC_NEXT|METRIC_PREVIOUS
  * @param  int minId     - min metric id

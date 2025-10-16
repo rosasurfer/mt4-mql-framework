@@ -1,20 +1,23 @@
 /**
  * ZigZag EA
  *
- * This EA trades ZigZag reversals. That's breakouts from a Donchian Channel which is the basis for ZigZag.
+ * The EA trades ZigZag reversals. That's breakouts from a Donchian Channel which is the basis for ZigZag.
  *
  *
  * Requirements
  * ------------
- *  • "mql40/experts/ZigZag EA.ex4" (this EA)
- *  • "mql40/indicators/ZigZag.ex4" (the MetaQuotes version is not compatible)
- *  • "mql40/scripts/Config.ex4"
- *  • "mql40/scripts/Chart.ToggleOpenOrders.ex4"
- *  • "mql40/scripts/Chart.ToggleTradeHistory.ex4"
- *  • "mql40/scripts/EA.ToggleMetrics.ex4"
+ *  • "mql40/experts/ZigZag EA" - this EA
+ *  • "mql40/indicators/ZigZag" - the MetaQuotes version is not compatible
+ *  • "mql40/scripts/Config"
+ *  • "mql40/scripts/Chart.ToggleOpenOrders"
+ *  • "mql40/scripts/Chart.ToggleTradeHistory"
+ *  • "mql40/scripts/EA.ToggleMetrics"
+ *  • "mql40/scripts/EA.Start"
+ *  • "mql40/scripts/EA.Entry"
+ *  • "mql40/scripts/EA.Stop"
  *  • "mql40/libraries/rsfMT4Expander.dll"
- *  • "mql40/libraries/rsfStdlib.ex4"
- *  • "mql40/libraries/rsfHistory[123].ex4" (three files)
+ *  • "mql40/libraries/rsfStdlib"
+ *  • "mql40/libraries/rsfHistory[123]" - three files
  *
  *
  * Inputs
@@ -66,10 +69,6 @@
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
- *
- *  - trading functionality
- *     support command "wait" in status "progressing"
- *     reverse trading and command EA.Reverse
  *
  *  - performance tracking
  *     notifications for price feed outages
