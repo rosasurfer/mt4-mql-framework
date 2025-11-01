@@ -152,15 +152,16 @@ bool CalculateStats(bool fullRecalculation = false) {
       }
    }
 
-   // calculate number of workdays the instance was running (don't use OpenTime/CloseTime)
+   // calculate number of trading days the instance was running (don't use OpenTime/CloseTime)
    datetime startTime = instance.started;
    datetime endTime = ifInt(instance.stopped, instance.stopped, Tick.time);
-   int workdays = CountWorkdays(startTime, endTime);
+   int days = ComputeCalendarDays(startTime, endTime);
+   if (days < 0) return(false);
 
    // calculate summaries, percentages, averages, ratios
    for (m=1; m <= metrics; m++) {
-      stats[m][S_TRADES  ] = hstTrades;
-      stats[m][S_WORKDAYS] = workdays;
+      stats[m][S_TRADES] = hstTrades;
+      stats[m][S_DAYS  ] = days;
 
       stats[m][S_TRADES_LONG_PCT     ] = MathDiv(stats[m][S_TRADES_LONG         ], stats[m][S_TRADES ]);
       stats[m][S_TRADES_SHORT_PCT    ] = MathDiv(stats[m][S_TRADES_SHORT        ], stats[m][S_TRADES ]);
@@ -222,9 +223,9 @@ double CalculateSharpeRatio(int metric) {
    if (trades > ArrayRange(history, 0)) return(!catch("CalculateSharpeRatio(1)  illegal value of stats["+ metric +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
 
    // annualize total return
-   int workdays = stats[metric][S_WORKDAYS];
-   if (workdays <= 0)                   return(!catch("CalculateSharpeRatio(2)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedReturn = totalReturn/workdays * 252;                      // commonly used number of working days
+   int days = stats[metric][S_DAYS];
+   if (days <= 0)                       return(!catch("CalculateSharpeRatio(2)  illegal value of stats["+ metric +"][S_DAYS]: "+ days +" (must be positive)", ERR_ILLEGAL_STATE));
+   double annualizedReturn = totalReturn/days * 365;
 
    // prepare dataset for iStdDevOnArray()
    int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
@@ -276,9 +277,9 @@ double CalculateSortinoRatio(int metric) {
    if (trades > ArrayRange(history, 0)) return(!catch("CalculateSortinoRatio(1)  illegal value of stats["+ metric +"][S_TRADES]: "+ trades +" (out-of-range)", ERR_ILLEGAL_STATE));
 
    // annualize total return
-   int workdays = stats[metric][S_WORKDAYS];
-   if (workdays <= 0)                   return(!catch("CalculateSortinoRatio(2)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedReturn = totalReturn/workdays * 252;                      // commonly used number of working days
+   int days = stats[metric][S_DAYS];
+   if (days <= 0)                       return(!catch("CalculateSortinoRatio(2)  illegal value of stats["+ metric +"][S_DAYS]: "+ days +" (must be positive)", ERR_ILLEGAL_STATE));
+   double annualizedReturn = totalReturn/days * 365;
 
    // prepare dataset for iStdDevOnArray()
    int profitFields[] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P}, iProfit=profitFields[metric];
@@ -329,9 +330,9 @@ double CalculateCalmarRatio(int metric) {
    if (!trades) return(0);
 
    // annualize total return
-   int workdays = stats[metric][S_WORKDAYS];
-   if (workdays <= 0) return(!catch("CalculateCalmarRatio(1)  illegal value of stats["+ metric +"][S_WORKDAYS]: "+ workdays +" (must be positive)", ERR_ILLEGAL_STATE));
-   double annualizedReturn = totalReturn/workdays * 252;                      // commonly used number of working days
+   int days = stats[metric][S_DAYS];
+   if (days <= 0) return(!catch("CalculateCalmarRatio(1)  illegal value of stats["+ metric +"][S_DAYS]: "+ days +" (must be positive)", ERR_ILLEGAL_STATE));
+   double annualizedReturn = totalReturn/days * 365;
 
    // calculate final ratio
    double drawdown = stats[metric][S_MAX_REL_DRAWDOWN];

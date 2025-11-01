@@ -102,8 +102,8 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID                    = "";                   // instance to load from a status file, format "[T]123"
-extern string Instance.StartAt               = "@time(01:02)";       // @time(datetime|time)
-extern string Instance.StopAt                = "@time(22:59)";       // @time(datetime|time) | @profit(numeric[%])
+extern string Instance.StartAt               = "@time(00:02)";       // @time(datetime|time)
+extern string Instance.StopAt                = "@time(23:59)";       // @time(datetime|time) | @profit(numeric[%])
 
 extern string ___a__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 30;
@@ -112,7 +112,7 @@ extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Status ===";
-extern bool   ShowProfitInPercent            = false;                // whether PnL is displayed in money or percent
+extern bool   ShowProfitInPercent            = true;                 // whether PnL is displayed in money or percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1525,7 +1525,7 @@ void SS.StartStopConditions() {
       // start conditions
       string sValue = "";
       if (start.time.descr != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition, "@", "!") + start.time.descr;
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(start.time.condition, "@", "!") + start.time.descr;
       }
       if (sValue == "") status.startConditions = "-";
       else              status.startConditions = sValue;
@@ -1533,13 +1533,13 @@ void SS.StartStopConditions() {
       // stop conditions
       sValue = "";
       if (stop.time.descr != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition, "@", "!") + stop.time.descr;
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.time.condition, "@", "!") + stop.time.descr;
       }
       if (stop.profitPct.descr != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.descr;
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.descr;
       }
       if (stop.profitPunit.descr != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPunit.condition, "@", "!") + stop.profitPunit.descr;
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPunit.condition, "@", "!") + stop.profitPunit.descr;
       }
       if (sValue == "") status.stopConditions = "-";
       else              status.stopConditions = sValue;
@@ -1568,10 +1568,10 @@ int ShowStatus(int error = NO_ERROR) {
    string sStatus="", sError="";
 
    switch (instance.status) {
-      case NULL:           sStatus = "  not initialized"; break;
-      case STATUS_WAITING: sStatus = "  waiting";         break;
-      case STATUS_TRADING: sStatus = "  trading";         break;
-      case STATUS_STOPPED: sStatus = "  stopped";         break;
+      case NULL:           sStatus = "  not initialized";    break;
+      case STATUS_WAITING: sStatus = "  waiting for signal"; break;
+      case STATUS_TRADING: sStatus = "  trading";            break;
+      case STATUS_STOPPED: sStatus = "  stopped";            break;
       default:
          return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
    }

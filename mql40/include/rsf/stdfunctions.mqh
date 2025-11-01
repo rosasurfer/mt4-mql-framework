@@ -2598,35 +2598,60 @@ int TimeYearEx(datetime time) {
 
 
 /**
- * Count the number of non-weekend days between two times. This function doesn't account for Holidays.
+ * Compute the full number of days between two times. Includes weekends and Holidays.
  *
- * @param  datetime from - start time (the whole day is included in the calculation)
- * @param  datetime to   - end time (the whole day is included in the calculation)
+ * @param  datetime from - start time (the day is included in the result)
+ * @param  datetime to   - end time (the day is included in the result)
  *
- * @return int
+ * @return int - number of days or EMPTY (-1) in case of errors
  */
-int CountWorkdays(datetime from, datetime to) {
+int ComputeCalendarDays(datetime from, datetime to) {
    datetime startDate = from - from % DAYS;
+   datetime endDate = to - to % DAYS;
+
+   if (startDate > endDate) {
+      return(_EMPTY(catch("ComputeCalendarDays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
+   }
+
+   int days = (endDate - startDate) / DAYS;
+   return(days);
+}
+
+
+/**
+ * Compute the number of trading days between two times. Doesn't account for Holidays.
+ *
+ * @param  datetime from - start time (the day is included in the result)
+ * @param  datetime to   - end time (the day is included in the result)
+ *
+ * @return int - number of trading days or EMPTY (-1) in case of errors
+ */
+int ComputeTradingDays(datetime from, datetime to) {
+   datetime startDate = from - from % DAYS;
+   datetime endDate = to - to % DAYS;
+   if (startDate > endDate) {
+      return(_EMPTY(catch("ComputeTradingDays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
+   }
+
    int startDow = TimeDayOfWeekEx(startDate);
    if      (startDow == SAT) { startDate += 2*DAYS; startDow = MON; }
    else if (startDow == SUN) { startDate += 1*DAY;  startDow = MON; }
 
-   datetime endDate = to - to % DAYS;
    int endDow = TimeDayOfWeekEx(endDate);
    if      (endDow == SAT) { endDate -= 1*DAY;  endDow = FRI; }
    else if (endDow == SUN) { endDate -= 2*DAYS; endDow = FRI; }
 
-   int workdays = 0;
+   int tradingDays = 0;
    if (startDate <= endDate) {
       int days = (endDate-startDate)/DAYS + 1;
-      workdays = days/7 * 5;
+      tradingDays = days/7 * 5;
       days %= 7;
       if (days > 0) {
          if (endDow < startDow) days -= 2;
-         workdays += days;
+         tradingDays += days;
       }
    }
-   return(workdays);
+   return(tradingDays);
 }
 
 
@@ -6657,9 +6682,10 @@ void __DummyCalls() {
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);
    CompareDoubles(NULL, NULL);
+   ComputeCalendarDays(NULL, NULL);
+   ComputeTradingDays(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);
-   CountWorkdays(NULL, NULL);
    CreateDirectory(NULL, NULL);
    CreateString(NULL);
    DateTime1(NULL);
