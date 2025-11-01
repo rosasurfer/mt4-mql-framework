@@ -35,6 +35,7 @@ bool ReadStatus.TradeStats(string file) {
    stats[METRIC_SIG_UNITS][S_MAX_ABS_DRAWDOWN] = GetIniDouble(file, section, "MaxAbsDrawdown") * pUnit;     // double maxAbsDrawdown = -2345.6
    stats[METRIC_SIG_UNITS][S_MAX_REL_DRAWDOWN] = GetIniDouble(file, section, "MaxRelDrawdown") * pUnit;     // double maxRelDrawdown = -2345.6
 
-   CalculateStats();
-   return(!catch("ReadStatus.TradeStats(1)"));
+   if (CalculateStats())
+      return(!catch("ReadStatus.TradeStats(1)"));
+   return(false);
 }

@@ -201,7 +201,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    }
 
    if (__isChart) {
-      CalculateStats();
+      if (!CalculateStats()) return(false);
       SS.OpenLots();
       SS.ClosedTrades();
    }

@@ -9,7 +9,7 @@
  *
  * @param  bool fullRecalculation [optional] - whether to process new history entries only or to perform a full recalculation
  *                                             (default: new history entries only)
- * @return void
+ * @return bool - success status
  *
  *
  * TODO:
@@ -18,16 +18,16 @@
  *  - Zephyr Pain Index:   https://investexcel.net/zephyr-pain-index/
  *  - Zephyr K-Ratio:      http://web.archive.org/web/20210116024652/https://www.styleadvisor.com/resources/statfacts/zephyr-k-ratio
  *
- *  @link  https://invidious.nerdvpn.de/watch?v=GhrxgbQnEEU#   [Linear Regression by Hand]
+ *  @link  https://www.youtube.com/watch?v=GhrxgbQnEEU#   [Linear Regression by Hand]
  */
-void CalculateStats(bool fullRecalculation = false) {
+bool CalculateStats(bool fullRecalculation = false) {
    int hstTrades = ArrayRange(history, 0);
    int processedTrades = stats[1][S_TRADES];
 
    if (!hstTrades || hstTrades < processedTrades || fullRecalculation) {
       processedTrades = 0;
    }
-   if (processedTrades >= hstTrades) return;
+   if (processedTrades >= hstTrades) return(true);
 
    int metrics = ArrayRange(stats, 0) - 1;
    int profitFields     [] = {0, H_NETPROFIT_M, H_NETPROFIT_P, H_SIG_PROFIT_P }, iProfitField;
@@ -187,10 +187,12 @@ void CalculateStats(bool fullRecalculation = false) {
       stats[m][S_LOSERS_AVG_DRAWDOWN ] = MathDiv(stats[m][S_LOSERS_SUM_DRAWDOWN ], stats[m][S_LOSERS ]);
 
       stats[m][S_PROFIT_FACTOR] = MathAbs(MathDiv(stats[m][S_WINNERS_GROSS_PROFIT], stats[m][S_LOSERS_GROSS_LOSS], 99999));   // 99999: alias for +Infinity
-      stats[m][S_SHARPE_RATIO ] = CalculateSharpeRatio(m);
-      stats[m][S_SORTINO_RATIO] = CalculateSortinoRatio(m);
-      stats[m][S_CALMAR_RATIO ] = CalculateCalmarRatio(m);
+      stats[m][S_SHARPE_RATIO ] = CalculateSharpeRatio(m);  if (!stats[m][S_SHARPE_RATIO ]) return(false);
+      stats[m][S_SORTINO_RATIO] = CalculateSortinoRatio(m); if (!stats[m][S_SORTINO_RATIO]) return(false);
+      stats[m][S_CALMAR_RATIO ] = CalculateCalmarRatio(m);  if (!stats[m][S_CALMAR_RATIO ]) return(false);
    }
+
+   return(!catch("CalculateStats(1)"));
 }
 
 

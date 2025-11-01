@@ -7,12 +7,12 @@ void SS.ClosedTrades() {
       status.closedTrades = "-";
    }
    else {
-      CalculateStats();
+      if (!CalculateStats()) return;
       string trades = " trade"+ Pluralize(size);
 
       switch (status.activeMetric) {
          case METRIC_NET_MONEY:
-            status.closedTrades = size +" trades    avg: "+ NumberToStr(stats[METRIC_NET_MONEY][S_TRADES_AVG_PROFIT], "R+.2") +" "+ AccountCurrency();
+            status.closedTrades = size + trades +"    avg: "+ NumberToStr(stats[METRIC_NET_MONEY][S_TRADES_AVG_PROFIT], "R+.2") +" "+ AccountCurrency();
             break;
          case METRIC_NET_UNITS:
             status.closedTrades = size + trades +"    avg: "+ NumberToStr(stats[METRIC_NET_UNITS][S_TRADES_AVG_PROFIT]/pUnit, "R+."+ pDigits) +" "+ spUnit;
