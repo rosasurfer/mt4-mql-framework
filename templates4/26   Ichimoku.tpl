@@ -1,15 +1,10 @@
-<!-- 
-Default + preFF Brackets + 
-Donchian Channel(30) Width (hidden) 
--->
-
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=1
+scale=2
 graph=1
 fore=0
 grid=0
@@ -75,8 +70,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -129,22 +122,49 @@ AutoConfiguration=0
 period_flags=7
 show_data=0
 </indicator>
-</window>
 
-<window>
-height=1
-fixed_height=0
+<indicator>
+name=Ichimoku Kinko Hyo
+tenkan=9
+kijun=26
+senkou=52
+color=4294967295
+style=0
+weight=1
+color2=4294967295
+style2=0
+weight2=1
+color3=4294967295
+style3=0
+weight3=1
+color4=16760576
+style4=2
+weight4=1
+color5=16760576
+style5=2
+weight5=1
+period_flags=0
+show_data=1
+</indicator>
+
 <indicator>
 name=Custom Indicator
 <expert>
-name=Donchian Channel Width
+name=Moving Average
 flags=339
-window_num=1
 <inputs>
-Donchian.Periods=30
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=144
+MA.Periods.Step=0
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=1
+AutoConfiguration=0
 </inputs>
 </expert>
-level_0=200
 show_data=1
 </indicator>
 </window>
