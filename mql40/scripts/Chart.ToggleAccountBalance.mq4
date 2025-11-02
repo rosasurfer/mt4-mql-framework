@@ -16,7 +16,7 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   string command   = "toggle-open-orders";
+   string command   = "toggle-account-balance";
    string params    = "";
    string modifiers = ",";
    if (IsVirtualKeyDown(VK_ESCAPE))  modifiers = modifiers +",VK_ESCAPE";
