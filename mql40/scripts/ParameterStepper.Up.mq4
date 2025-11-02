@@ -1,7 +1,7 @@
 /**
  * ParameterStepper Up
  *
- * Send a command to listening programs to increase a program-specific parameter.
+ * Sends a command to listening programs to increase a program-specific parameter.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -18,7 +18,9 @@ int __DeinitFlags[];
 int onStart() {
    if (__isTesting) Tester.Pause();
 
-   string modifiers = "";
+   string command   = "parameter";
+   string params    = "up";
+   string modifiers = ",";
    if (IsVirtualKeyDown(VK_ESCAPE))  modifiers = modifiers +",VK_ESCAPE";
    if (IsVirtualKeyDown(VK_TAB))     modifiers = modifiers +",VK_TAB";
    if (IsVirtualKeyDown(VK_CAPITAL)) modifiers = modifiers +",VK_CAPITAL";    // CAPSLOCK key
@@ -27,7 +29,10 @@ int onStart() {
    if (IsVirtualKeyDown(VK_MENU))    modifiers = modifiers +",VK_MENU";       // ALT key
    if (IsVirtualKeyDown(VK_LWIN))    modifiers = modifiers +",VK_LWIN";
    if (IsVirtualKeyDown(VK_RWIN))    modifiers = modifiers +",VK_RWIN";
+   modifiers = StrRight(modifiers, -1);
 
-   SendChartCommand("ParameterStepper.command", "parameter:up:"+ StrRight(modifiers, -1));
+   command = command +":"+ params +":"+ modifiers;
+
+   SendChartCommand("ParameterStepper.command", command);
    return(catch("onStart(1)"));
 }

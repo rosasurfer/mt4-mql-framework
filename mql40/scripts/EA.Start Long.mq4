@@ -1,7 +1,7 @@
 /**
  * EA.Start Long
  *
- * Send a "start:long" command to a running EA.
+ * Send a "start:long" command to an EA in the current chart.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};

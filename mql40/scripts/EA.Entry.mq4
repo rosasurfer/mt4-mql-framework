@@ -1,7 +1,7 @@
 /**
  * EA.Entry
  *
- * Send an "entry" command to a running EA.
+ * Send an "entry" command to an EA in the current chart.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};

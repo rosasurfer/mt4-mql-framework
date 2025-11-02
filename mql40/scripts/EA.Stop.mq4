@@ -1,7 +1,7 @@
 /**
  * EA.Stop
  *
- * Send a "stop" command to a running EA.
+ * Sends a "stop" command to an EA in the current chart.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -42,10 +42,3 @@ int onStart() {
    }
    return(catch("onStart(2)"));
 }
-
-
-
-
-
-
-
