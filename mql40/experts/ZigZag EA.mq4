@@ -1565,24 +1565,24 @@ int ShowStatus(int error = NO_ERROR) {
    string sStatus="", sError="";
 
    switch (instance.status) {
-      case NULL:           sStatus = "  not initialized";    break;
-      case STATUS_WAITING: sStatus = "  waiting for signal"; break;
-      case STATUS_TRADING: sStatus = "  trading";            break;
-      case STATUS_STOPPED: sStatus = "  stopped";            break;
+      case NULL:           sStatus = "    not initialized";    break;
+      case STATUS_WAITING: sStatus = "    waiting for signal"; break;
+      case STATUS_TRADING: sStatus = "    trading";            break;
+      case STATUS_STOPPED: sStatus = "    stopped";            break;
       default:
          return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(WindowExpertName(), "    ID: ", sInstanceId, sStatus, sError, NL,
-                                                                                                 NL,
-                                  "Start:    ",  status.startConditions,                         NL,
-                                  "Stop:     ",  status.stopConditions,                          NL,
-                                                                                                 NL,
-                                  status.metricDescription,                                      NL,
-                                  "Open:    ",   status.openLots,                                NL,
-                                  "Closed:  ",   status.closedTrades,                            NL,
-                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,   NL
+   string text = StringConcatenate(WindowExpertName(), "    ID ", sInstanceId, sStatus, sError, NL,
+                                                                                                NL,
+                                  "Start: ", status.startConditions,                            NL,
+                                  "Stop:  ", status.stopConditions,                             NL,
+                                                                                                NL,
+                                  status.metricDescription,                                     NL,
+                                  "Open:    ",   status.openLots,                               NL,
+                                  "Closed:  ",   status.closedTrades,                           NL,
+                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,  NL
    );
 
    // 3 lines margin-top for instrument and indicator legends

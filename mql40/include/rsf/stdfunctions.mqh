@@ -1237,7 +1237,7 @@ string ifString(bool condition, string thenValue, string elseValue) {
 
 
 /**
- * Inlined color OR statement. Returns the first color or the second color if the first color is CLR_NONE.
+ * Inlined OR statement for colors. Returns the first value or the second one if the first value is CLR_NONE.
  *
  * @param  color value
  * @param  color altValue
@@ -1252,7 +1252,7 @@ color colorOr(color value, color altValue) {
 
 
 /**
- * Inlined integer OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to NULL.
+ * Inlined OR statement for integers. Returns the first value or the second one if the first value evaluates to NULL.
  *
  * @param  int value
  * @param  int altValue
@@ -1267,7 +1267,7 @@ int intOr(int value, int altValue) {
 
 
 /**
- * Inlined double OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to NULL.
+ * Inlined OR statement for doubles. Returns the first value or the second one if the first value evaluates to NULL.
  *
  * @param  double value
  * @param  double altValue
@@ -1282,7 +1282,7 @@ double doubleOr(double value, double altValue) {
 
 
 /**
- * Inlined string OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to empty.
+ * Inlined OR statement for strings. Returns the first value or the second one if the first value evaluates to empty.
  *
  * @param  string value
  * @param  string altValue
@@ -2598,37 +2598,37 @@ int TimeYearEx(datetime time) {
 
 
 /**
- * Compute the full number of days between two times. Includes weekends and Holidays.
+ * Count the number of days covering two times.
  *
- * @param  datetime from - start time (the day is included in the result)
- * @param  datetime to   - end time (the day is included in the result)
+ * @param  datetime from - start time
+ * @param  datetime to   - end time
  *
- * @return int - number of calendar days (min 1) or NULL in case of errors
+ * @return int - number of days (min 1) or EMPTY (-1) in case of errors
  */
-int CountCalendarDays(datetime from, datetime to) {
+int CountDays(datetime from, datetime to) {
    if (from > to) {
-      return(_EMPTY(catch("CountCalendarDays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
+      return(_EMPTY(catch("CountDays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
    }
 
    datetime startDate = from - from % DAYS;
    datetime endDate = to - to % DAYS;
 
    int days = (endDate - startDate) / DAYS;
-   return(days + 1);                            // include the end day
+   return(days + 1);
 }
 
 
 /**
- * Compute the number of trading days between two times. Doesn't account for Holidays.
+ * Count the number of weekdays (Monday-Fridy) covering two times.
  *
- * @param  datetime from - start time (the day is included in the result)
- * @param  datetime to   - end time (the day is included in the result)
+ * @param  datetime from - start time
+ * @param  datetime to   - end time
  *
- * @return int - number of trading days (min 1) or NULL in case of errors
+ * @return int - number of weekdays or EMPTY (-1) in case of errors
  */
-int CountTradingDays(datetime from, datetime to) {
+int CountWeekdays(datetime from, datetime to) {
    if (from > to) {
-      return(_EMPTY(catch("CountTradingDays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
+      return(_EMPTY(catch("CountWeekdays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
    }
 
    datetime startDate = from - from % DAYS;
@@ -2641,14 +2641,14 @@ int CountTradingDays(datetime from, datetime to) {
    if      (endDow == SAT) { endDate -= 1*DAY;  endDow = FRI; }
    else if (endDow == SUN) { endDate -= 2*DAYS; endDow = FRI; }
 
-   int days = (endDate-startDate)/DAYS + 1;     // include the end day
-   int tradingDays = days/7 * 5;
+   int days = CountDays(startDate, endDate);
+   int weekdays = days/7 * 5;
    days %= 7;
    if (days > 0) {
       if (endDow < startDow) days -= 2;
-      tradingDays += days;
+      weekdays += days;
    }
-   return(tradingDays);
+   return(weekdays);
 }
 
 
@@ -6680,9 +6680,9 @@ void __DummyCalls() {
    ColorToStr(NULL);
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
-   CountCalendarDays(NULL, NULL);
+   CountDays(NULL, NULL);
    CountDecimals(NULL);
-   CountTradingDays(NULL, NULL);
+   CountWeekdays(NULL, NULL);
    CreateDirectory(NULL, NULL);
    CreateString(NULL);
    DateTime1(NULL);

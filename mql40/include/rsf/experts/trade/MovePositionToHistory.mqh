@@ -135,7 +135,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
          // validate the aggregated record and add it to history[]
          if (a.fromTicket != 0) return(!catch("MovePositionToHistory(3)  "+ instance.name +" fromTicket #"+ a.fromTicket +" not found in partialClose[]", ERR_ILLEGAL_STATE));
          if (NE(a.part, 1, 2))  return(!catch("MovePositionToHistory(4)  "+ instance.name +" not all partial closes from ticket #"+ open.ticket +" found (found "+ NumberToStr(a.part, ".1+") +" of 1.0)", ERR_ILLEGAL_STATE));
-         a.lots         = NormalizeDouble(a.lots, 2);           // normalize calculated fields
+         a.lots         = NormalizeDouble(a.lots, 2);          // normalize calculated fields
          a.part         = 1;
          a.slippageP    = NormalizeDouble(a.slippageP, Digits);
          a.swapM        = NormalizeDouble(a.swapM,        2);
@@ -143,7 +143,7 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
          a.grossProfitM = NormalizeDouble(a.grossProfitM, 2);
          a.netProfitM   = NormalizeDouble(a.netProfitM,   2);
 
-         // we can't use AddHistoryRecord() as it invalidates the cache used by CalculateStats(), thus negatively impacting test speed
+         // we can't use AddHistoryRecord() as it invalidates the cache used by CalculateStats(), thus negatively impacting tester speed
          i = ArrayRange(history, 0);
          ArrayResize(history, i+1);
          history[i][H_TICKET        ] = a.ticket;

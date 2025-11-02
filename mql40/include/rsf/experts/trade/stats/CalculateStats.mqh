@@ -1,5 +1,5 @@
 /**
- * Update/re-calculate trade statistics. Most important numbers:
+ * Update/re-calculate statistics for the trade history. Most important numbers:
  *
  *  - Profit factor       = GrossProfit / GrossLoss
  *  - MaxRelativeDrawdown = Max(EquityPeak - EquityValley)
@@ -7,8 +7,8 @@
  *  - Sortino ratio       = AnnualizedReturn / DownsideVolatility
  *  - Calmar ratio        = AnnualizedReturn / MaxRelativeDrawdown
  *
- * @param  bool fullRecalculation [optional] - whether to process new history entries only or to perform a full recalculation
- *                                             (default: new history entries only)
+ * @param  bool recalculate [optional] - whether to process new history entries only or to perform a full recalculation
+ *                                       (default: new history entries only)
  * @return bool - success status
  *
  *
@@ -20,11 +20,11 @@
  *
  *  @link  https://www.youtube.com/watch?v=GhrxgbQnEEU#   [Linear Regression by Hand]
  */
-bool CalculateStats(bool fullRecalculation = false) {
+bool CalculateStats(bool recalculate = false) {
    int hstTrades = ArrayRange(history, 0);
    int processedTrades = stats[1][S_TRADES];
 
-   if (!hstTrades || hstTrades < processedTrades || fullRecalculation) {
+   if (!hstTrades || hstTrades < processedTrades || recalculate) {
       processedTrades = 0;
    }
    if (processedTrades >= hstTrades) return(true);
@@ -152,11 +152,11 @@ bool CalculateStats(bool fullRecalculation = false) {
       }
    }
 
-   // calculate number of trading days the instance was running (don't use OpenTime/CloseTime)
-   datetime startTime = instance.started;
-   datetime endTime = ifInt(instance.stopped, instance.stopped, Tick.time);
-   int days = CountCalendarDays(startTime, endTime);
-   if (!days) return(false);
+   // calculate number of days the instance was trading
+   datetime startTime = history[0][H_OPENTIME];
+   datetime endTime = history[i-1][H_CLOSETIME];
+   int days = CountDays(startTime, endTime);
+   if (days < 1) return(false);
 
    // calculate summaries, percentages, averages, ratios
    for (m=1; m <= metrics; m++) {
