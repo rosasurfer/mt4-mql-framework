@@ -2603,18 +2603,18 @@ int TimeYearEx(datetime time) {
  * @param  datetime from - start time (the day is included in the result)
  * @param  datetime to   - end time (the day is included in the result)
  *
- * @return int - number of days or EMPTY (-1) in case of errors
+ * @return int - number of calendar days (min 1) or NULL in case of errors
  */
-int ComputeCalendarDays(datetime from, datetime to) {
+int CountCalendarDays(datetime from, datetime to) {
+   if (from > to) {
+      return(_EMPTY(catch("CountCalendarDays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
+   }
+
    datetime startDate = from - from % DAYS;
    datetime endDate = to - to % DAYS;
 
-   if (startDate > endDate) {
-      return(_EMPTY(catch("ComputeCalendarDays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
-   }
-
    int days = (endDate - startDate) / DAYS;
-   return(days);
+   return(days + 1);                            // include the end day
 }
 
 
@@ -2624,32 +2624,29 @@ int ComputeCalendarDays(datetime from, datetime to) {
  * @param  datetime from - start time (the day is included in the result)
  * @param  datetime to   - end time (the day is included in the result)
  *
- * @return int - number of trading days or EMPTY (-1) in case of errors
+ * @return int - number of trading days (min 1) or NULL in case of errors
  */
-int ComputeTradingDays(datetime from, datetime to) {
-   datetime startDate = from - from % DAYS;
-   datetime endDate = to - to % DAYS;
-   if (startDate > endDate) {
-      return(_EMPTY(catch("ComputeTradingDays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
+int CountTradingDays(datetime from, datetime to) {
+   if (from > to) {
+      return(_EMPTY(catch("CountTradingDays(1)  illegal time range of parameters from="+ TimeToStr(from, TIME_FULL) +" / to="+ TimeToStr(to, TIME_FULL), ERR_INVALID_PARAMETER)));
    }
 
+   datetime startDate = from - from % DAYS;
    int startDow = TimeDayOfWeekEx(startDate);
    if      (startDow == SAT) { startDate += 2*DAYS; startDow = MON; }
    else if (startDow == SUN) { startDate += 1*DAY;  startDow = MON; }
 
+   datetime endDate = to - to % DAYS;
    int endDow = TimeDayOfWeekEx(endDate);
    if      (endDow == SAT) { endDate -= 1*DAY;  endDow = FRI; }
    else if (endDow == SUN) { endDate -= 2*DAYS; endDow = FRI; }
 
-   int tradingDays = 0;
-   if (startDate <= endDate) {
-      int days = (endDate-startDate)/DAYS + 1;
-      tradingDays = days/7 * 5;
-      days %= 7;
-      if (days > 0) {
-         if (endDow < startDow) days -= 2;
-         tradingDays += days;
-      }
+   int days = (endDate-startDate)/DAYS + 1;     // include the end day
+   int tradingDays = days/7 * 5;
+   days %= 7;
+   if (days > 0) {
+      if (endDow < startDow) days -= 2;
+      tradingDays += days;
    }
    return(tradingDays);
 }
@@ -6682,10 +6679,10 @@ void __DummyCalls() {
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);
    CompareDoubles(NULL, NULL);
-   ComputeCalendarDays(NULL, NULL);
-   ComputeTradingDays(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
+   CountCalendarDays(NULL, NULL);
    CountDecimals(NULL);
+   CountTradingDays(NULL, NULL);
    CreateDirectory(NULL, NULL);
    CreateString(NULL);
    DateTime1(NULL);

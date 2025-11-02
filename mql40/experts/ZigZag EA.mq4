@@ -6,18 +6,19 @@
  *
  * Requirements
  * ------------
- *  • "mql40/experts/ZigZag EA" - this EA
- *  • "mql40/indicators/ZigZag" - the MetaQuotes version is not compatible
+ *  • "mql40/experts/ZigZag EA"                (this EA)
+ *  • "mql40/indicators/ZigZag"                (the MetaQuotes version is not suitable)
  *  • "mql40/scripts/Config"
  *  • "mql40/scripts/Chart.ToggleOpenOrders"
  *  • "mql40/scripts/Chart.ToggleTradeHistory"
- *  • "mql40/scripts/EA.ToggleMetrics"
  *  • "mql40/scripts/EA.Start"
  *  • "mql40/scripts/EA.Entry"
  *  • "mql40/scripts/EA.Stop"
+ *  • "mql40/scripts/EA.TogglePercent"
+ *  • "mql40/scripts/EA.ToggleMetrics"
  *  • "mql40/libraries/rsfMT4Expander.dll"
  *  • "mql40/libraries/rsfStdlib"
- *  • "mql40/libraries/rsfHistory[123]" - three files
+ *  • "mql40/libraries/rsfHistory[123]"        (three files)
  *
  *
  * Inputs

@@ -155,8 +155,8 @@ bool CalculateStats(bool fullRecalculation = false) {
    // calculate number of trading days the instance was running (don't use OpenTime/CloseTime)
    datetime startTime = instance.started;
    datetime endTime = ifInt(instance.stopped, instance.stopped, Tick.time);
-   int days = ComputeCalendarDays(startTime, endTime);
-   if (days < 0) return(false);
+   int days = CountCalendarDays(startTime, endTime);
+   if (!days) return(false);
 
    // calculate summaries, percentages, averages, ratios
    for (m=1; m <= metrics; m++) {
