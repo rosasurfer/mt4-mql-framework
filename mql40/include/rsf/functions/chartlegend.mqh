@@ -1,7 +1,3 @@
-
-#define CHARTLEGEND_PREFIX  "rsf.Legend."
-
-
 /**
  * Create a text label object in the main chart for an indicator's chart legend.
  *
@@ -85,7 +81,7 @@ bool RearrangeChartLegends() {
    if (size > 0) {
       ArraySort(pids);
       for (i=0; i < size; i++) {
-         name = CHARTLEGEND_PREFIX + pids[i] +"."+ __ExecutionContext[EC.chart];
+         name = StringConcatenate(CHARTLEGEND_PREFIX, pids[i], ".", __ExecutionContext[EC.chart]);
          ObjectSet(name, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet(name, OBJPROP_XDISTANCE, xDist);
          ObjectSet(name, OBJPROP_YDISTANCE, yDist + i*lineHeight);

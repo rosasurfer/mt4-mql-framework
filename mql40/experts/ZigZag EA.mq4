@@ -146,6 +146,7 @@ extern double Lots                           = 0.1;
 #include <rsf/experts/metric/GetMT4SymbolDefinition.mqh>
 #include <rsf/experts/metric/RecordMetrics.mqh>
 
+#include <rsf/experts/status/ResolveTopDistance.mqh>
 #include <rsf/experts/status/ShowOpenOrders.mqh>
 #include <rsf/experts/status/ShowTradeHistory.mqh>
 #include <rsf/experts/status/SS.MetricDescription.mqh>
@@ -1585,9 +1586,14 @@ int ShowStatus(int error = NO_ERROR) {
                                   "Profit:    ", status.totalProfit, "  ", status.profitStats,  NL
    );
 
-   // 3 lines margin-top for instrument and indicator legends
-   Comment(NL, NL, NL, text);
+   // some lines margin-top for instrument and indicator legends
+   Comment(NL, NL, NL, NL, NL, text);
    if (__CoreFunction == CF_INIT) WindowRedraw();
+
+   // 0 legends: 20
+   // 1 legends: 39
+   // 2 legends: 58 => 4*NL
+   // 3 legends: 77 => 5*NL
 
    // store status in the chart to enable sending of chart commands
    string label = "EA.status";
@@ -1612,7 +1618,8 @@ int ShowStatus(int error = NO_ERROR) {
 bool CreateStatusBox() {
    if (!__isChart) return(true);
 
-   int x[]={2, 102}, y=50, fontSize=76, sizeofX=ArraySize(x);
+   int x[]={2, 102}, fontSize=76, sizeofX=ArraySize(x);
+   int y = ResolveTopDistance();
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {
