@@ -13,6 +13,13 @@ bool RemoveVolatileStatus() {
       Chart.RestoreString(key, sValue, true);
    }
 
+   // bool status.profitInPercent
+   if (__isChart) {
+      key = name +".status.profitInPercent";
+      bool bValue = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);
+      Chart.RestoreBool(key, bValue, true);
+   }
+
    // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";
@@ -23,7 +30,7 @@ bool RemoveVolatileStatus() {
    // bool status.showOpenOrders
    if (__isChart) {
       key = name +".status.showOpenOrders";
-      bool bValue = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);
+      bValue = RemoveWindowIntegerA(__ExecutionContext[EC.chart], key);
       Chart.RestoreBool(key, bValue, true);
    }
 

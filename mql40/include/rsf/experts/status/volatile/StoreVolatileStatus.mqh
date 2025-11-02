@@ -15,6 +15,13 @@ bool StoreVolatileStatus() {
       Chart.StoreString(key, value);
    }
 
+   // bool status.profitInPercent
+   if (__isChart) {
+      key = name +".status.profitInPercent";
+      SetWindowIntegerA(__ExecutionContext[EC.chart], key, ifInt(status.profitInPercent, 1, -1));
+      Chart.StoreBool(key, status.profitInPercent);
+   }
+
    // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";

@@ -12,7 +12,7 @@ void SS.ProfitStats() {
 
       switch (metric) {
          case METRIC_NET_MONEY:
-            if (ShowProfitInPercent) {
+            if (status.profitInPercent) {
                sMaxProfit   = NumberToStr(MathDiv(stats[metric][S_MAX_PROFIT      ], instance.startEquity) * 100, "R+.2");
                sMaxDrawdown = NumberToStr(MathDiv(stats[metric][S_MAX_ABS_DRAWDOWN], instance.startEquity) * 100, "R+.2");
             }

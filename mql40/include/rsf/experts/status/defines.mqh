@@ -8,6 +8,7 @@
 
 // volatile status vars
 string status.filename = "";              // filepath relative to the MQL sandbox directory
+bool   status.profitInPercent = true;
 int    status.activeMetric = 1;
 bool   status.showOpenOrders;
 bool   status.showTradeHistory;

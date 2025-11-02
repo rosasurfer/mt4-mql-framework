@@ -24,11 +24,23 @@ bool RestoreVolatileStatus() {
       }
    }
 
+   // bool status.profitInPercent
+   if (__isChart) {
+      key = name +".status.profitInPercent";
+      int iValue = GetWindowIntegerA(__ExecutionContext[EC.chart], key);
+      if (iValue != 0) {
+         status.profitInPercent = (iValue > 0);
+      }
+      else if (!Chart.RestoreBool(key, status.profitInPercent, false)) {
+         status.profitInPercent = true;                     // reset to default value
+      }
+   }
+
    // int status.activeMetric
    if (__isChart) {
       key = name +".status.activeMetric";
       while (true) {
-         int iValue = GetWindowIntegerA(__ExecutionContext[EC.chart], key);
+         iValue = GetWindowIntegerA(__ExecutionContext[EC.chart], key);
          if (iValue != 0) {
             if (iValue > 0 && iValue <= 3) {                // valid metrics: 1-3
                status.activeMetric = iValue;

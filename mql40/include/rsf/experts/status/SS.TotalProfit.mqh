@@ -10,8 +10,8 @@ void SS.TotalProfit() {
       int metric = status.activeMetric;
       switch (metric) {
          case METRIC_NET_MONEY:
-            if (ShowProfitInPercent) status.totalProfit = NumberToStr(MathDiv(stats[metric][S_TOTAL_PROFIT], instance.startEquity) * 100, "R+.2") +"%";
-            else                     status.totalProfit = NumberToStr(stats[metric][S_TOTAL_PROFIT], "R+.2") +" "+ AccountCurrency();
+            if (status.profitInPercent) status.totalProfit = NumberToStr(MathDiv(stats[metric][S_TOTAL_PROFIT], instance.startEquity) * 100, "R+.2") +"%";
+            else                        status.totalProfit = NumberToStr(stats[metric][S_TOTAL_PROFIT], "R+.2") +" "+ AccountCurrency();
             break;
 
          case METRIC_NET_UNITS:

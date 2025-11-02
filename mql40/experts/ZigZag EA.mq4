@@ -111,9 +111,6 @@ extern int    ZigZag.Periods                 = 30;
 extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
 
-extern string ___c__________________________ = "=== Status ===";
-extern bool   ShowProfitInPercent            = true;                 // whether PnL is displayed in money or percent
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // framework
@@ -177,6 +174,7 @@ extern bool   ShowProfitInPercent            = true;                 // whether 
 #include <rsf/experts/status/volatile/ToggleOpenOrders.mqh>
 #include <rsf/experts/status/volatile/ToggleTradeHistory.mqh>
 #include <rsf/experts/status/volatile/ToggleMetrics.mqh>
+#include <rsf/experts/status/volatile/ToggleProfitUnit.mqh>
 
 #include <rsf/experts/test/ReadTestConfiguration.mqh>
 
@@ -305,6 +303,9 @@ bool onCommand(string cmd, string params, int keys) {
             double dNull[] = {0,0,0};
             return(StopTrading(dNull));
       }
+   }
+   else if (cmd == "toggle-percent") {
+      return(ToggleProfitUnit());
    }
    else if (cmd == "toggle-metrics") {
       int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
@@ -1013,7 +1014,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.StopAt",            /*string  */ Instance.StopAt);
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
    // trade stats
@@ -1081,7 +1081,6 @@ bool ReadStatus() {
    Instance.StopAt            = GetIniStringA(file, section, "Instance.StopAt",  "");              // string   Instance.StopAt            = @time(datetime|time) | @profit(numeric[%])
    ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"      );              // int      ZigZag.Periods             = 40
    Lots                       = GetIniDouble (file, section, "Lots"                );              // double   Lots                       = 0.1
-   ShowProfitInPercent        = GetIniBool   (file, section, "ShowProfitInPercent" );              // bool     ShowProfitInPercent        = 1
    EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",      "");              // string   EA.Recorder                = 1,2,4
 
    // [Runtime status]
@@ -1251,7 +1250,6 @@ string   prev.Instance.StopAt = "";
 int      prev.ZigZag.Periods;
 double   prev.Lots;
 int      prev.EntryOrder.Distance;
-bool     prev.ShowProfitInPercent;
 
 // backed-up runtime variables affected by changing input parameters
 bool     prev.start.time.condition;
@@ -1287,7 +1285,6 @@ void BackupInputs() {
    prev.Instance.StopAt     = StringConcatenate(Instance.StopAt, "");
    prev.ZigZag.Periods      = ZigZag.Periods;
    prev.Lots                = Lots;
-   prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
    prev.start.time.condition       = start.time.condition;
@@ -1321,7 +1318,6 @@ void RestoreInputs() {
    Instance.StopAt     = prev.Instance.StopAt;
    ZigZag.Periods      = prev.ZigZag.Periods;
    Lots                = prev.Lots;
-   ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
    start.time.condition       = prev.start.time.condition;
@@ -1636,13 +1632,11 @@ bool CreateStatusBox() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",         DoubleQuoteStr(Instance.ID),      ";"+ NL +
-                            "Instance.StartAt=",    DoubleQuoteStr(Instance.StartAt), ";"+ NL +
-                            "Instance.StopAt=",     DoubleQuoteStr(Instance.StopAt),  ";"+ NL +
+   return(StringConcatenate("Instance.ID=",      DoubleQuoteStr(Instance.ID),      ";"+ NL +
+                            "Instance.StartAt=", DoubleQuoteStr(Instance.StartAt), ";"+ NL +
+                            "Instance.StopAt=",  DoubleQuoteStr(Instance.StopAt),  ";"+ NL +
 
-                            "ZigZag.Periods=",      ZigZag.Periods,                   ";"+ NL +
-                            "Lots=",                NumberToStr(Lots, ".1+"),         ";"+ NL +
-
-                            "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent),   ";")
+                            "ZigZag.Periods=",   ZigZag.Periods,                   ";"+ NL +
+                            "Lots=",             NumberToStr(Lots, ".1+"),         ";")
    );
 }
