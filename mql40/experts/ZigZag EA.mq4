@@ -12,7 +12,7 @@
  *  • "mql40/scripts/Chart.ToggleOpenOrders"
  *  • "mql40/scripts/Chart.ToggleTradeHistory"
  *  • "mql40/scripts/EA.Start"
- *  • "mql40/scripts/EA.Entry"
+ *  • "mql40/scripts/EA.EntrySignal"
  *  • "mql40/scripts/EA.Stop"
  *  • "mql40/scripts/EA.TogglePercent"
  *  • "mql40/scripts/EA.ToggleMetrics"
@@ -28,12 +28,12 @@
  *
  * Manual control
  * --------------
- *  • EA.Start: When a "start" command is received a stopped EA switches to status "waiting", waits for new signals
- *              and trades accordingly. The command is ignored if the EA is not in status "stopped".
- *  • EA.Entry: When an "entry" command is received the EA switches to status "trading" and opens a position in direction
- *              of the current ZigZag leg. The command is ignored if the EA already is in status "trading".
- *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and switches to status "stopped".
- *              The command is ignored if the EA is already in status "stopped".
+ *  • EA.Start:       When a "start" command is received a stopped EA switches to status "waiting", waits for new signals
+ *                    and trades accordingly. The command is ignored if the EA is not in status "stopped".
+ *  • EA.EntrySignal: When an "entry-signal" command is received the EA switches to status "trading" and opens a position in
+ *                    direction of the current ZigZag leg. The command is ignored if the EA already is in status "trading".
+ *  • EA.Stop:        When a "stop" command is received the EA closes all open positions and switches to status "stopped".
+ *                    The command is ignored if the EA already is in status "stopped".
  *
  *
  * TODO:
@@ -286,7 +286,7 @@ bool onCommand(string cmd, string params, int keys) {
             return(SaveStatus());
       }
    }
-   else if (cmd == "entry") {
+   else if (cmd == "entry-signal") {
       switch (instance.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
