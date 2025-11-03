@@ -5,6 +5,6 @@
  */
 string GetLogFilename() {
    string name = GetStatusFilename();
-   if (!StringLen(name)) return("");
+   if (name == "") return("");
    return(StrLeftTo(name, ".", -1) +".log");
 }

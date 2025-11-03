@@ -1,5 +1,5 @@
 /**
- * Return the name of the status file. If the name is not yet set, an attempt is made to find an existing status file.
+ * Return the name of the status file. If the name is not yet set, an attempt is made to find an existing file.
  *
  * @param  bool relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
  *                                    (default: absolute path)

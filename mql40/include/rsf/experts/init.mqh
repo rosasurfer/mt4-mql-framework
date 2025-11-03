@@ -118,7 +118,7 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   if (__isTesting || !IsTestInstance()) {         // open the log file (flushes the log buffer) except if a finished test
+   if (__isTesting || !IsTestInstance()) {         // open the log file (flushes the log buffer) except if in a finished test
       string filename = GetLogFilename();
       if (filename == "")        return(last_error);
       if (!SetLogfile(filename)) return(catch("afterInit(1)"));

@@ -66,16 +66,12 @@
  *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), ControlPoints:  3.0 sec,  93 trades    243.000 ticks
  *
  *  - stop on reverse signal
- *  - signals MANUAL_LONG|MANUAL_SHORT
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
  *
  *  - performance tracking
  *     notifications for price feed outages
- *
- *  - status display
- *     parameter: ZigZag.Periods
  *
  *  - trade breaks
  *    - full session (24h) with trade breaks
@@ -1372,13 +1368,13 @@ bool ValidateInputs() {
 
       for (int i=0; i < sizeOfExprs; i++) {             // validate each expression
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) continue;
+         if (expr == "") continue;
          if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(2)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
          if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
          if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+         if (sValue == "")                              return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
 
          if (key == "@time") {
             if (isTimeCondition)                        return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt) +" (multiple time conditions)"));
@@ -1411,13 +1407,13 @@ bool ValidateInputs() {
 
       for (i=0; i < sizeOfExprs; i++) {                 // validate each expression
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) continue;                // support both OR operators "||" and "|"
+         if (expr == "") continue;                      // support both OR operators "||" and "|"
          if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(9)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
          if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
          if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         if (sValue == "")                              return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
 
          if (key == "@time") {
             if (isTimeCondition)                        return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple time conditions)"));
@@ -1511,7 +1507,13 @@ void SS.All() {
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "Z."+ StrPadLeft(instance.id, 3, "0");
+   if (!instance.id) {
+      // calling SS.All() and thus SS.InstanceName() before CreateInstanceId() is valid (e.g. after input validation of a new instance)
+      instance.name = "Z.";
+   }
+   else {
+      instance.name = "Z."+ StrPadLeft(instance.id, 3, "0");
+   }
 }
 
 
