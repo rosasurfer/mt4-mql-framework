@@ -107,7 +107,7 @@ extern string Instance.StartAt               = "@time(00:02)";       // @time(da
 extern string Instance.StopAt                = "@time(23:59)";       // @time(datetime|time) | @profit(numeric[%])
 
 extern string ___a__________________________ = "=== Signal settings ===";
-extern int    ZigZag.Periods                 = 30;
+extern int    ZigZag.Periods                 = 100;
 
 extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
