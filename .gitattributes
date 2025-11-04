@@ -1,18 +1,14 @@
-# default: self-detect the content type (text vs. binary)
-*      text=auto
-
 
 # set content encodings
 *     encoding=UTF-8
-*.mqh encoding=CP1252
-*.mq4 encoding=CP1252
-*.mq5 encoding=CP1252
-*.tpl encoding=CP1252
+*.mqh encoding=CP1252 text
+*.mq4 encoding=CP1252 text
+*.mq5 encoding=CP1252 text
+*.tpl encoding=CP1252 text
 
 
 # checkout with Windows line-endings (not yet supported by EGit)
-*.tpl       text eol=crlf
-hotkeys.ini text eol=crlf
+hotkeys.ini   text eol=crlf
 
 
 # Gitgub Linguist overrides
