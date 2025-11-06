@@ -6,7 +6,7 @@
  * @return string
  */
 string ComposePositionCloseMsg(int &error) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 was [unexpectedly ]closed [by SL|TP ]at 1.5457'2 ([slippage: -0.3 pip, ]market: Bid/Ask) [sl|tp|so: 47.7%/169.20/354.40]
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 was [unexpectedly ]closed [by SL|TP ]at 1.5457'2 ([better|worse: -0.3 pip, ]market: Bid/Ask) [sl|tp|so: 47.7%/169.20/354.40]
    error = NO_ERROR;
 
    int    ticket      = OrderTicket();
@@ -48,7 +48,7 @@ string ComposePositionCloseMsg(int &error) {
    string sUnexpected = ifString(closedBySL || closedByTP || (__isTesting && __CoreFunction==CF_DEINIT), "", "unexpectedly ");
    string sBySL       = ifString(closedBySL, "by SL ", "");
    string sByTP       = ifString(closedByTP, "by TP ", "");
-   string sSlippage   = ifString(!slippage, "", "slippage: "+ NumberToStr(slippage/pUnit, "R+."+ pDigits) + ifString(pUnit==1, "", " "+ spUnit) +", ");
+   string sSlippage   = ifString(!slippage, "", ifString(GT(slippage, 0, Digits), "better: ", "worse: ") + NumberToStr(slippage/pUnit, "R+."+ pDigits) + ifString(pUnit==1, "", " "+ spUnit) +", ");
    string sComment    = ifString(comment==instance.name, "", " "+ comment);
 
    string msg = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" was "+ sUnexpected +"closed "+ sBySL + sByTP +"at "+ sClosePrice;

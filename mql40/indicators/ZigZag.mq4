@@ -1291,7 +1291,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
    string name   = ProgramName(), donchianName="";
-   indicatorName = name +"("+ ifString(ZigZag.Periods.Step, "step:", "") + ZigZag.Periods +")";
+   indicatorName = name +"("+ ZigZag.Periods + ifString(ZigZag.Periods.Step, ":"+ ZigZag.Periods.Step, "") +")";
    shortName     = name +"("+ ZigZag.Periods +")";
    donchianName  = "Donchian("+ ZigZag.Periods +")";
    IndicatorShortName(shortName);
