@@ -121,8 +121,8 @@ double  config.dData[][6];                                        // data: {BemE
 #define I_MFAE_ENABLED                  1                         // whether to track MFE/MAE of a custom position
 #define I_MFAE_SIGNAL                   2                         // whether to signal new MFE/MAE of a custom position
 #define I_MARK_MFE                      3                         // whether to mark MFE levels
-#define I_PROFIT_MFE                    4                         // MFE in money
-#define I_PROFIT_MAE                    5                         // MAE in money
+#define I_PROFIT_MFE                    4                         // current MFE maximum in money
+#define I_PROFIT_MAE                    5                         // current MAE minimum in money
 
 // displayed custom position entries (may be larger than configured entries)
 double  positions.data[][17];                                     // data: {ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, AdjustedProfit, TotalProfitM, TotalProfitPct, MfePrice, MfePct, MaePrice, MaePct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct}
@@ -1907,14 +1907,14 @@ bool UpdateStopoutLevel() {
 
          if (line >= 0) {
             if (lineSkipped) {
-               // if the line gets skipped we must reset tracked MFAE signaling levels
+               // if the line gets skipped reset tracked MFAE signal levels
                int hWnd;
                string property = "";
                if (!__isTesting && config.dData[line][I_PROFIT_MFE]) {
                   property = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE);
                   SetWindowPropertyA(hWndDesktop, property, 0);
                }
-               if (__isTesting && config.dData[line][I_PROFIT_MAE]) {
+               if (!__isTesting && config.dData[line][I_PROFIT_MAE]) {
                   property = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE);
                   SetWindowPropertyA(hWndDesktop, property, 0);
                }
@@ -3869,6 +3869,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          totalProfit = NormalizeDouble(totalProfit, 2);
 
          if (configLine >= 0) {
+            // theoretically there can be a single tick with new MFE/MAE which should be signaled if configured
             config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
             config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
             positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
@@ -3944,12 +3945,12 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       markMfe = false;
       if (configLine >= 0) {
-         isNewMfe = (config.dData[configLine][I_MFAE_SIGNAL]  && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMae = (config.dData[configLine][I_MFAE_SIGNAL]  && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
          markMfe  = (config.dData[configLine][I_MFAE_ENABLED] && config.dData[configLine][I_MARK_MFE]);
+         isNewMfe = (config.dData[configLine][I_MFAE_SIGNAL]  && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMae = (config.dData[configLine][I_MFAE_SIGNAL]  && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
 
-         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,   config.dData[configLine][I_PROFIT_MFE]);
-         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,   config.dData[configLine][I_PROFIT_MAE]);
+         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
+         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
          positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
          positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
 
@@ -4059,12 +4060,12 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       markMfe = false;
       if (configLine >= 0) {
-         isNewMfe = (config.dData[configLine][I_MFAE_SIGNAL]  && config.dData[configLine][I_PROFIT_MFE] && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
-         isNewMae = (config.dData[configLine][I_MFAE_SIGNAL]  && config.dData[configLine][I_PROFIT_MAE] && totalProfit < config.dData[configLine][I_PROFIT_MAE]);
          markMfe  = (config.dData[configLine][I_MFAE_ENABLED] && config.dData[configLine][I_MARK_MFE]);
+         isNewMfe = (config.dData[configLine][I_MFAE_SIGNAL]  && totalProfit > config.dData[configLine][I_PROFIT_MFE]);
+         isNewMae = (config.dData[configLine][I_MFAE_SIGNAL]  && totalProfit < config.dData[configLine][I_PROFIT_MAE];);
 
-         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit,    config.dData[configLine][I_PROFIT_MFE]);
-         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit,    config.dData[configLine][I_PROFIT_MAE]);
+         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
+         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
          positions.data[n][I_PROFIT_MFE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
          positions.data[n][I_PROFIT_MAE_PCT]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
 
@@ -4964,8 +4965,9 @@ bool onNewMFE(string configKey, double profit) {
    // sound: once per system
    if (!__isTesting) {
       string property = GetMfaeSignalKey(configKey, I_PROFIT_MFE);
+      int iStored = GetWindowPropertyA(hWndDesktop, property);
 
-      if (GetWindowPropertyA(hWndDesktop, property) < iProfit) {
+      if (iProfit > iStored) {
          SetWindowPropertyA(hWndDesktop, property, iProfit);
          PlaySoundEx("Beacon.wav");
       }
@@ -4996,8 +4998,9 @@ bool onNewMAE(string configKey, double profit) {
    // sound: once per system
    if (!__isTesting) {
       string property = GetMfaeSignalKey(configKey, I_PROFIT_MAE);
+      int iStored = GetWindowPropertyA(hWndDesktop, property);
 
-      if (GetWindowPropertyA(hWndDesktop, property) > iProfit) {
+      if (iProfit < iStored) {
          SetWindowPropertyA(hWndDesktop, property, iProfit);
          PlaySoundEx("Windows Ping.wav");
       }
