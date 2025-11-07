@@ -33,7 +33,7 @@ int onInitUser() {
          Instance.ID      = ifString(instance.isTest, "T", "") + StrPadLeft(instance.id, 3, "0"); SS.InstanceName();
          instance.created = GetLocalTime();        // local system time (also in tester)
          instance.started = TimeServer();          // trade server time (modeled in tester)
-         instance.status  = STATUS_WAITING;
+         instance.status  = ifInt(__isTesting, STATUS_WAITING, STATUS_STOPPED);
          SetStatusFilename();
          logInfo("onInitUser(2)  instance "+ instance.name +" created");
          SaveStatus();
