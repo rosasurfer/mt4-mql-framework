@@ -124,13 +124,14 @@ int afterInit() {
       positions.showAbsProfits = true;
    }
    else {
+      hWndDesktop = GetDesktopWindow();
+
       // register an order event listener
       if (mode.intern && Track.Orders) {
-         hWndDesktop = GetDesktopWindow();
          orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
-         string name = orderTracker.key + StrToLower(Symbol());
-         int counter = Max(GetWindowPropertyA(hWndDesktop, name), 0) + 1;
-         SetWindowPropertyA(hWndDesktop, name, counter);
+         string property = orderTracker.key + StrToLower(Symbol());
+         int counter = Max(GetWindowPropertyA(hWndDesktop, property), 0) + 1;
+         SetWindowPropertyA(hWndDesktop, property, counter);
       }
 
       // setup a chart ticker

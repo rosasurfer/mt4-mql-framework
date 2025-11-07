@@ -1842,8 +1842,9 @@ bool UpdateStopoutLevel() {
          if (OrderSymbol() != Symbol()) continue;
          if (OrderType() == OP_BUY) longPosition  += OrderLots();                // Gesamtposition je Richtung aufaddieren
          else                       shortPosition += OrderLots();
-         if (!isPendings) /*&&*/ if (OrderStopLoss() || OrderTakeProfit())       // Pendings-Status tracken
+         if (!isPendings) /*&&*/ if (OrderStopLoss() || OrderTakeProfit()) {     // Pendings-Status tracken
             isPendings = true;
+         }
 
          sortKeys[n][0] = OrderOpenTime();                                       // Sortierschlüssel der Tickets auslesen
          sortKeys[n][1] = OrderTicket();
@@ -1927,18 +1928,16 @@ bool UpdateStopoutLevel() {
 
          if (line >= 0) {
             if (lineSkipped) {
-               // if the line is skipped we can reset a set MFE/MAE signaling flag
+               // if the line gets skipped we must reset tracked MFAE signaling levels
                int hWnd;
-               string sEvent = "";
-               if (config.dData[line][I_PROFIT_MFE] != 0) {
-                  hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-                  sEvent = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE);
-                  SetWindowPropertyA(hWnd, sEvent, 0);
+               string property = "";
+               if (!__isTesting && config.dData[line][I_PROFIT_MFE]) {
+                  property = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE);
+                  SetWindowPropertyA(hWndDesktop, property, 0);
                }
-               if (config.dData[line][I_PROFIT_MAE] != 0) {
-                  hWnd = ifInt(__isTesting, __ExecutionContext[EC.chart], GetDesktopWindow());
-                  sEvent = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE);
-                  SetWindowPropertyA(hWnd, sEvent, 0);
+               if (__isTesting && config.dData[line][I_PROFIT_MAE]) {
+                  property = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE);
+                  SetWindowPropertyA(hWndDesktop, property, 0);
                }
 
                // reset existing stats
@@ -5018,11 +5017,10 @@ bool onNewMFE(string configKey, double profit) {
    // skip the signal if it was already processed elsewhere
    // sound: once per system
    if (!__isTesting) {
-      int hWndDesktop = GetDesktopWindow();
-      string propertyName = GetMfaeSignalKey(configKey, I_PROFIT_MFE) +"|sound";
+      string property = GetMfaeSignalKey(configKey, I_PROFIT_MFE);
 
-      if (GetWindowPropertyA(hWndDesktop, propertyName) < iProfit) {
-         SetWindowPropertyA(hWndDesktop, propertyName, iProfit);
+      if (GetWindowPropertyA(hWndDesktop, property) < iProfit) {
+         SetWindowPropertyA(hWndDesktop, property, iProfit);
          PlaySoundEx("Beacon.wav");
       }
    }
@@ -5051,11 +5049,10 @@ bool onNewMAE(string configKey, double profit) {
    // skip the signal if it was already processed elsewhere
    // sound: once per system
    if (!__isTesting) {
-      int hWndDesktop = GetDesktopWindow();
-      string propertyName = GetMfaeSignalKey(configKey, I_PROFIT_MAE) +"|sound";
+      string property = GetMfaeSignalKey(configKey, I_PROFIT_MAE);
 
-      if (GetWindowPropertyA(hWndDesktop, propertyName) > iProfit) {
-         SetWindowPropertyA(hWndDesktop, propertyName, iProfit);
+      if (GetWindowPropertyA(hWndDesktop, property) > iProfit) {
+         SetWindowPropertyA(hWndDesktop, property, iProfit);
          PlaySoundEx("Windows Ping.wav");
       }
    }
@@ -5064,10 +5061,10 @@ bool onNewMAE(string configKey, double profit) {
 
 
 /**
- * Return the window properties key for a MFE/MAE event.
+ * Return the window property name for a new MFE/MAE event.
  *
  * @param  string configKey - configuration key of the custom position
- * @param  int    type      - resulting key type: I_PROFIT_MFE | I_PROFIT_MAE
+ * @param  int    type      - event type: I_PROFIT_MFE | I_PROFIT_MAE
  *
  * @return string - properties key or an empty string in case of errors
  */
