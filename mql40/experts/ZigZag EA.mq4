@@ -1207,7 +1207,7 @@ bool SynchronizeStatus() {
    }
    SS.All();
 
-   if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize) {
+   if (open.ticket != prevOpenTicket || ArrayRange(history, 0) != prevHistorySize) {
       CalculateStats(true);
       return(SaveStatus());                                          // immediately save status if orders changed
    }

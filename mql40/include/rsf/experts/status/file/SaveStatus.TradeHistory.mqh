@@ -13,18 +13,20 @@ bool SaveStatus.TradeHistory(string file, bool fileExists) {
    if (!fileExists) separator = CRLF;                        // an empty line separator
 
    double netProfit, netProfitP, sigProfitP;
+   int sizeHistory = ArrayRange(history, 0), sizePartials = ArrayRange(partialClose, 0);
 
-   string section = "Trade history";
-   int size = ArrayRange(history, 0);
-   for (int i=0; i < size; i++) {
-      WriteIniString(file, section, "full."+ i, HistoryRecordToStr(i, false));
+   string section = "Trade history", suffix = "";
+   for (int i=0; i < sizeHistory; i++) {
+      if (sizePartials && i == sizeHistory-1) {
+         suffix = separator;
+      }
+      WriteIniString(file, section, "full."+ i, HistoryRecordToStr(i, false) + suffix);
       netProfit  += history[i][H_NETPROFIT_M ];
       netProfitP += history[i][H_NETPROFIT_P ];
       sigProfitP += history[i][H_SIG_PROFIT_P];
    }
 
-   size = ArrayRange(partialClose, 0);
-   for (i=0; i < size; i++) {
+   for (i=0; i < sizePartials; i++) {
       WriteIniString(file, section, "part."+ i, HistoryRecordToStr(i, true));
    }
 
