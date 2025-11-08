@@ -176,6 +176,7 @@
    // other
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
+   int      GetPressedVirtualKeys(int flags);
    bool     IsProgramType(int type);
    bool     IsVirtualKeyDown(int vKey);
    bool     IsWindowAreaVisible(int hWnd);
