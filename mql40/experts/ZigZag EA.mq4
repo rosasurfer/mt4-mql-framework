@@ -1509,10 +1509,10 @@ void SS.All() {
 void SS.InstanceName() {
    if (!instance.id) {
       // calling SS.All() and thus SS.InstanceName() before CreateInstanceId() is valid (e.g. after input validation of a new instance)
-      instance.name = "Z.";
+      instance.name = "ZZ.";
    }
    else {
-      instance.name = "Z."+ StrPadLeft(instance.id, 3, "0");
+      instance.name = "ZZ."+ StrPadLeft(instance.id, 3, "0");
    }
 }
 
