@@ -2,8 +2,8 @@
  * Retrieve received commands and pass them to the command handler. Command format: "cmd[:params[:modifiers]]"
  *
  *  cmd:       command identifier (required)
- *  params:    one or more command parameters separated by comma "," (optional)
- *  modifiers: one or more virtual key modifiers separated by comma "," (optional)
+ *  params:    one or more command parameters separated by comma (optional)
+ *  modifiers: one or more virtual key modifiers separated by comma (optional)
  *
  * @param  string channel [optional] - channel to check for commands (default: the program's standard command channel)
  *
@@ -19,24 +19,38 @@ bool HandleCommands(string channel = "") {
       int size = ArraySize(commands);
 
       for (int i=0; i < size && !last_error; i++) {
-         string cmd="", params="", modifier="", values[];
+         string cmd="", params="", modifiers="", sValue="", sValues[];
 
-         int parts = Explode(commands[i], ":", values, NULL), virtKeys=0;
-         if (parts > 0) cmd    = StrTrim(values[0]);
-         if (parts > 1) params = StrTrim(values[1]);
+         int parts = Explode(commands[i], ":", sValues, NULL), iValue=0, keys=0;
+         if (parts > 0) cmd    = StrTrim(sValues[0]);
+         if (parts > 1) params = StrTrim(sValues[1]);
          if (parts > 2) {
-            parts = Explode(values[2], ",", values, NULL);
-            for (int n=0; n < parts; n++) {
-               modifier = StrTrim(values[n]);
-               if      (modifier == "VK_ESCAPE")  virtKeys |= F_VK_ESCAPE;
-               else if (modifier == "VK_TAB")     virtKeys |= F_VK_TAB;
-               else if (modifier == "VK_CAPITAL") virtKeys |= F_VK_CAPITAL;   // CAPSLOCK key
-               else if (modifier == "VK_SHIFT")   virtKeys |= F_VK_SHIFT;
-               else if (modifier == "VK_CONTROL") virtKeys |= F_VK_CONTROL;
-               else if (modifier == "VK_MENU")    virtKeys |= F_VK_MENU;      // ALT key
-               else if (modifier == "VK_LWIN")    virtKeys |= F_VK_LWIN;      // left Windows key
-               else if (modifier == "VK_RWIN")    virtKeys |= F_VK_RWIN;      // right Windows key
-               else if (modifier != "") logNotice("HandleCommands(1)  skipping unsupported key modifier: "+ modifier);
+            modifiers = StrTrim(sValues[2]);
+            if (StrIsDigits(modifiers)) {
+               iValue = StrToInteger(modifiers);
+               if (iValue & F_VK_ESCAPE  && 1) keys |= F_VK_ESCAPE;
+               if (iValue & F_VK_TAB     && 1) keys |= F_VK_TAB;
+               if (iValue & F_VK_CAPITAL && 1) keys |= F_VK_CAPITAL;    // CAPSLOCK key
+               if (iValue & F_VK_SHIFT   && 1) keys |= F_VK_SHIFT;
+               if (iValue & F_VK_CONTROL && 1) keys |= F_VK_CONTROL;
+               if (iValue & F_VK_MENU    && 1) keys |= F_VK_MENU;       // ALT key
+               if (iValue & F_VK_LWIN    && 1) keys |= F_VK_LWIN;
+               if (iValue & F_VK_RWIN    && 1) keys |= F_VK_RWIN;
+            }
+            else {
+               parts = Explode(modifiers, ",", sValues, NULL);
+               for (int n=0; n < parts; n++) {
+                  sValue = StrTrim(sValues[n]);
+                  if      (sValue == "VK_ESCAPE")  keys |= F_VK_ESCAPE;
+                  else if (sValue == "VK_TAB")     keys |= F_VK_TAB;
+                  else if (sValue == "VK_CAPITAL") keys |= F_VK_CAPITAL;
+                  else if (sValue == "VK_SHIFT")   keys |= F_VK_SHIFT;
+                  else if (sValue == "VK_CONTROL") keys |= F_VK_CONTROL;
+                  else if (sValue == "VK_MENU")    keys |= F_VK_MENU;
+                  else if (sValue == "VK_LWIN")    keys |= F_VK_LWIN;
+                  else if (sValue == "VK_RWIN")    keys |= F_VK_RWIN;
+                  else if (sValue != "") logNotice("HandleCommands(1)  skipping unsupported key modifier: "+ sValue);
+               }
             }
          }
 
@@ -44,7 +58,7 @@ bool HandleCommands(string channel = "") {
             logNotice("HandleCommands(2)  skipping empty command: \""+ commands[i] +"\"");
             continue;
          }
-         onCommand(cmd, params, virtKeys);
+         onCommand(cmd, params, keys);
       }
    }
    return(!last_error);
