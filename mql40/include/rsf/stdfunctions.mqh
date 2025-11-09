@@ -6243,7 +6243,7 @@ string ShellExecuteErrorDescription(int error) {
  * @return bool - success status
  */
 bool SendChartCommand(string cmdObject, string cmd, string mutex = "") {
-   if (!StringLen(mutex)) {
+   if (mutex == "") {
       mutex = StringConcatenate("mutex.", cmdObject);       // generate mutex if needed
    }
    if (!AquireLock(mutex)) return(false);                   // aquire write-lock
