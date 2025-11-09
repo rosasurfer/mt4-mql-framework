@@ -137,7 +137,7 @@ extern double Lots                           = 0.1;
 #include <rsf/experts/instance/RestoreInstance.mqh>
 #include <rsf/experts/instance/SetInstanceId.mqh>
 
-#include <rsf/experts/log/GetLogFilename.mqh>
+#include <rsf/experts/log/GetLogFileName.mqh>
 
 #include <rsf/experts/metric/GetMT4SymbolDefinition.mqh>
 #include <rsf/experts/metric/RecordMetrics.mqh>
@@ -154,8 +154,8 @@ extern double Lots                           = 0.1;
 #include <rsf/experts/status/StatusDescription.mqh>
 
 #include <rsf/experts/status/file/FindStatusFile.mqh>
-#include <rsf/experts/status/file/GetStatusFilename.mqh>
-#include <rsf/experts/status/file/SetStatusFilename.mqh>
+#include <rsf/experts/status/file/GetStatusFileName.mqh>
+#include <rsf/experts/status/file/SetStatusFileName.mqh>
 #include <rsf/experts/status/file/ReadStatus.General.mqh>
 #include <rsf/experts/status/file/ReadStatus.HistoryRecord.mqh>
 #include <rsf/experts/status/file/ReadStatus.OpenPosition.mqh>
@@ -997,7 +997,7 @@ bool SaveStatus() {
    }
    else if (IsTestInstance()) return(true);                    // don't modify the status file of a finished test
 
-   string section="", separator="", file=GetStatusFilename();
+   string section="", separator="", file=GetStatusFileName();
    bool fileExists = IsFile(file, MODE_SYSTEM);
    if (!fileExists) separator = CRLF;                          // an empty line separator
    SS.All();                                                   // update trade stats and global string representations
@@ -1065,7 +1065,7 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string section="", file=GetStatusFilename();
+   string section="", file=GetStatusFileName();
    if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
    if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file \""+ file +"\" not found", ERR_FILE_NOT_FOUND));
 
@@ -1212,16 +1212,6 @@ bool SynchronizeStatus() {
       return(SaveStatus());                                          // immediately save status if orders changed
    }
    return(!catch("SynchronizeStatus(5)"));
-}
-
-
-/**
- * Return a distinctive instance detail to be inserted in the status/log filename.
- *
- * @return string
- */
-string GetStatusFilenameData() {
-   return("P="+ ZigZag.Periods);
 }
 
 

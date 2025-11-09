@@ -23,7 +23,7 @@ int onInit() {
 int onInitUser() {
    if (ValidateInputs.ID()) {                      // TRUE: a valid instance id was specified
       if (RestoreInstance()) {                     // try to reload the given instance
-         logInfo("onInitUser(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
+         logInfo("onInitUser(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFileName(true) +"\"");
       }
    }
    else if (StrTrim(Instance.ID) == "") {          // no instance id was specified
@@ -34,7 +34,7 @@ int onInitUser() {
          instance.created = GetLocalTime();        // local system time (also in tester)
          instance.started = TimeServer();          // trade server time (modeled in tester)
          instance.status  = ifInt(__isTesting, STATUS_WAITING, STATUS_STOPPED);
-         SetStatusFilename();
+         SetStatusFileName();
          logInfo("onInitUser(2)  instance "+ instance.name +" created");
          SaveStatus();
       }
@@ -88,7 +88,7 @@ int onInitSymbolChange() {
 int onInitTemplate() {
    if (RestoreVolatileStatus()) {                  // an instance id was found and restored
       if (RestoreInstance()) {                     // the instance was restored
-         logInfo("onInitTemplate(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
+         logInfo("onInitTemplate(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFileName(true) +"\"");
       }
       return(last_error);
    }
@@ -104,7 +104,7 @@ int onInitTemplate() {
 int onInitRecompile() {
    if (RestoreVolatileStatus()) {                  // same as for onInitTemplate()
       if (RestoreInstance()) {
-         logInfo("onInitRecompile(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
+         logInfo("onInitRecompile(1)  "+ instance.name +" restored in status \""+ StatusDescription(instance.status) +"\" from file \""+ GetStatusFileName(true) +"\"");
       }
       return(last_error);
    }
@@ -119,7 +119,7 @@ int onInitRecompile() {
  */
 int afterInit() {
    if (__isTesting || !IsTestInstance()) {         // open the log file (flushes the log buffer) except if in a finished test
-      string filename = GetLogFilename();
+      string filename = GetLogFileName();
       if (filename == "")        return(last_error);
       if (!SetLogfile(filename)) return(catch("afterInit(1)"));
    }
@@ -132,8 +132,3 @@ int afterInit() {
    StoreVolatileStatus();                          // store the instance id for template reload/restart/recompilation etc.
    return(catch("afterInit(2)"));
 }
-
-
-#import "rsfMT4Expander.dll"
-   string GetStatusFilenameData();                 // A no-op in the Expander allows the user to optionally provide his own data.
-#import
