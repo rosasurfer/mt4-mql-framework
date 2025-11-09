@@ -182,7 +182,7 @@
    bool     IsWindowAreaVisible(int hWnd);
    int      PlaySoundA(string soundfile);
 
-   // Virtual no-ops. Automatically overwritten by MQL implementations of the same name.
+   // Virtual no-ops. Overridden by custom MQL implementations of the same name.
    int      onInit();
    int      onInitUser();
    int      onInitParameters();
@@ -213,6 +213,7 @@
 
    int      DeleteRegisteredObjects();                         // other virtual no-ops
    void     DummyCalls();
+   string   GetStatusFileNameData();
    string   InputsToStr();
    bool     RemoveChartLegend();
    int      ShowStatus(int error);

@@ -20,8 +20,3 @@ bool SetStatusFileName() {
 
    return(!catch("SetStatusFileName(4)"));
 }
-
-
-#import "rsfMT4Expander.dll"
-   string GetStatusFileNameData();                 // a no-op in the Expander allows optional override in MQL
-#import
