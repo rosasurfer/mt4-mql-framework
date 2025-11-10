@@ -213,7 +213,6 @@
 
    int      DeleteRegisteredObjects();                         // other virtual no-ops
    void     DummyCalls();
-   string   GetStatusFileNameData();
    string   InputsToStr();
    bool     RemoveChartLegend();
    int      ShowStatus(int error);
