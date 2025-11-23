@@ -32,8 +32,9 @@ int CreateInstanceId() {
    else {
       // online: generate a random id
       while (!magicNumber) {
+         instanceId = 0;
          while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
-            instanceId = MathRand();                                                         // select random id between ID_MIN and ID_MAX
+            instanceId = MathRand();                                                         // pseudo-random id between ID_MIN and ID_MAX
          }
          magicNumber = CalculateMagicNumber(instanceId); if (!magicNumber) return(NULL);
 
