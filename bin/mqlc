@@ -262,8 +262,8 @@ function compareDirs() {
 # @param $3 - include directory
 #
 function compileMql40() {
-  local srcFile="$1" version="$2" include="$3" s_compiler s_srcFile
-  local compiler errorStatus=0 startms endms time='' output=() line errors=0 epl='' warnings=0 wpl='' retVal
+  local srcFile="$1" version="$2" include="$3" s_compiler s_srcFile logFile
+  local compiler errorStatus=0 startms endms time='' output=() line i errors=0 epl='' warnings=0 wpl='' retVal
 
   ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
 
@@ -271,6 +271,7 @@ function compileMql40() {
   setCompilerPath 'compiler' "$version" "$include"
   [[ "$compiler" == /* ]] && compiler="$(cygpath -w "$compiler")"
   [[ "$srcFile" == /* ]] && srcFile="$(cygpath -w "$srcFile")"
+  logFile="${srcFile%.*}.log"
   ((debug)) && {
     [[ "$compiler" == *\ * ]] && s_compiler="\"$compiler\"" || s_compiler="$compiler"
     [[ "$srcFile"  == *\ * ]] && s_srcFile="\"$srcFile\""   || s_srcFile="$srcFile"
@@ -291,10 +292,18 @@ function compileMql40() {
     [[ "${output[-1]}" =~ ^(Exp|Library exp)\ file\ .+\ produced\ -\ ([0-9]+)\ error.+\ ([0-9]+)\ warning.+ ]] || {
       fail "unexpected compiler output in last line:${NL}${output[-1]}";
     }
-    errors="${BASH_REMATCH[2]}";   ((errors   == 1)) && epl='' || epl='s'
-    warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && wpl='' || wpl='s'
+    errors="${BASH_REMATCH[2]}"
+    warnings="${BASH_REMATCH[3]}"
 
     if ((!originalOutput)); then
+      # reset some warnings
+      for ((i=3; i < ${#output[@]}; ++i)); do
+        [[ "${output[i]}" == '1;'* ]] && [[ "${output[i]}" == *'is not referenced and will be removed from exp-file' ]] && ((--warnings))
+      done
+
+      # add final results
+      ((errors   == 1)) && epl='' || epl='s'
+      ((warnings == 1)) && wpl='' || wpl='s'
       time="$(duration "$startms" "$endms")"
       output[-1]="Result: $errors error$epl, $warnings warning$wpl, $time elapsed"
       ((!warnings))              && output+=('Success')
@@ -310,9 +319,8 @@ function compileMql40() {
       ((++errors))
     else
       # count errors and warnings
-      local i
       for ((i=3; i < ${#output[@]}; ++i)); do
-        [[ "${output[i]}" == '1;'* ]] && ((++warnings))
+        [[ "${output[i]}" == '1;'* ]] && [[ "${output[i]}" != *'is not referenced and will be removed from exp-file' ]] && ((++warnings))
         [[ "${output[i]}" == '2;'* ]] && ((++errors))
       done
     fi
@@ -349,6 +357,7 @@ function compileMql40() {
   printf '%s\n' "${output[@]}"
 
   ((warn2error)) || warnings=0
+  ((!errors && !warnings)) && rm -f "$logFile"
   ((retVal = errors + warnings))
   ((retVal > 255)) && retVal=255
   return "$retVal"
@@ -434,10 +443,10 @@ function compileMql5() {
 #
 # Reformat a single log message produced by the MQL4.0 compiler.
 #
-# @param _InOut_ $1 - named reference to the log message
+# @param _InOut_ $1 - reference to the log message
 # @param _In_    $2 - source file of the compilation
-# @param _In_    $3 - number of errors during the compilation
-# @param _In_    $4 - number of warnings during the compilation
+# @param _In_    $3 - number of errors during compilation
+# @param _In_    $4 - number of warnings during compilation
 #
 function formatCompiler40Msg() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
@@ -452,7 +461,11 @@ function formatCompiler40Msg() {
   message="${BASH_REMATCH[5]}"
 
   [[ "$type" == [12] ]] || fail "unexpected message type $type in compiler message:${NL}${logmsg}"
-  ((type == 1)) && level='warn' || level='error'
+  if ((type == 1)); then
+    [[ "$message" == *'is not referenced and will be removed from exp-file' ]] && level='info' || level='warn'
+  else
+    level='error'
+  fi
   ((errors)) && len=6 || len=5
   levelS="$level: "
   levelS="${levelS:0:$len}"
