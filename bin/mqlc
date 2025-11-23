@@ -289,7 +289,7 @@ function compileMql40() {
   # on success
   if ((!errorStatus)); then
     [[ "${output[-1]}" =~ ^(Exp|Library exp)\ file\ .+\ produced\ -\ ([0-9]+)\ error.+\ ([0-9]+)\ warning.+ ]] || {
-      fail "unexpected compiler output in last line: \"${output[-1]}\"";
+      fail "unexpected compiler output in last line:${NL}${output[-1]}";
     }
     errors="${BASH_REMATCH[2]}";   ((errors   == 1)) && epl='' || epl='s'
     warnings="${BASH_REMATCH[3]}"; ((warnings == 1)) && wpl='' || wpl='s'
@@ -442,25 +442,26 @@ function compileMql5() {
 function formatCompiler40Msg() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n logmsg="$1"
-  local srcFile="$2" errors="$3" warnings="$4" type code level levelS file location message len
+  local srcFile="$2" errors="$3" warnings="$4" type code level levelS file line location='' message len
 
-  [[ "$logmsg" =~ ^([0-9]+)\;([0-9]+)\;(.+)\;([0-9]+:[0-9]+)?\;(.*)$ ]] || fail "unexpected format of compiler message:$NL\"$logmsg\""
+  [[ "$logmsg" =~ ^([0-9]+)\;([0-9]+)\;(.+)?\;([0-9]+:[0-9]+)?\;(.*)$ ]] || fail "unexpected format of compiler message:${NL}${logmsg}"
   type="${BASH_REMATCH[1]}"
   code="${BASH_REMATCH[2]}"
   file="${BASH_REMATCH[3]}"
-  location="${BASH_REMATCH[4]}"
+  line="${BASH_REMATCH[4]}"
   message="${BASH_REMATCH[5]}"
 
-  [[ "$type" == [12] ]] || fail "unexpected message type $type in compiler message:$NL\"$logmsg\""
+  [[ "$type" == [12] ]] || fail "unexpected message type $type in compiler message:${NL}${logmsg}"
   ((type == 1)) && level='warn' || level='error'
   ((errors)) && len=6 || len=5
   levelS="$level: "
   levelS="${levelS:0:$len}"
 
-  [[ -n "$location" ]] && location=" ($location)"
-
-  logmsg="${levelS} ${file}${location}: ${message}"
-  #logmsg="${file}${location}: ${level}: ${message}"
+  if [[ -n "$file" ]]; then
+    [[ -n "$line" ]] && line=" ($line)"
+    location="${file}${line}: "
+  fi
+  logmsg="${levelS} ${location}${message}"
 }
 
 
@@ -1186,15 +1187,14 @@ metalang.exe
 1=warn
 2=error
 
-2 ; 124 ; C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4 ; 146:12 ; 'HandleCommand' - function is not defined
 1 ; 33  ; C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4 ; 149:8  ; '5' - comparison expression expected
-2 ; 89  ; C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4 ; 526:1  ; '\end_of_program' - unbalanced left parenthesis
+2 ; 124 ; C:\z\F\Projects\mt4\mql\bin\Dow Jones Breakout.mq4 ; 146:12 ; 'HandleCommand' - function is not defined
 2 ; 114 ; C:\z\F\Projects\mt4\mql\bin\output.txt             ; 11:53  ; 'some text' - more than 1 symbol
 1 ; 41  ; C:\z\F\Projects\mt4\mql\bin\metalang.exe           ; 1:1    ; 'MZ???' - expression on global scope not allowed
 2 ; 75  ; C:\z\F\Projects\mt4\mql\bin\metalang.exe           ; 1:1    ; 'MZ???' - variable not defined
 2 ; 76  ;                                                    ;        ; cannot open the source file
 2 ; 52  ;                                                    ;        ; cannot open the output file
-
+1 ; 39  ;                                                    ;        ; Function "Foo" is not referenced and will be removed from exp-file
 
 metaeditor.exe
 --------------
