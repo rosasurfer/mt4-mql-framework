@@ -524,7 +524,7 @@ bool UpdateHistoryRecord(int ticket, double stopLoss, double takeProfit, datetim
    int size = ArrayRange(history, 0);
 
    // find the ticket to update
-   for (int i=size-1; i >= 0; i--) {                  // iterate from the end (in most use cases faster)
+   for (int i=size-1; i >= 0; i--) {                  // iterate from the end (in most cases faster)
       if (ticket == history[i][H_TICKET]) break;
    }
    if (i < 0) return(!catch("UpdateHistoryRecord(1)  ticket #"+ ticket +" not found", ERR_INVALID_PARAMETER));

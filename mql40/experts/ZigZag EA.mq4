@@ -1188,7 +1188,7 @@ bool SynchronizeStatus() {
             double   netProfitP   = grossProfitP + MathDiv(swapM + commissionM, PointValue(lots));
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" orphaned closed position found: #"+ ticket +", adding to instance...");
-            if (IsEmpty(AddHistoryRecord(ticket, 0, 0, lots, 1, openType, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippageP, swapM, commissionM, grossProfitM, netProfitM, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
+            if (IsEmpty(AddHistoryRecord(ticket, 0, 0, openType, lots, 1, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippageP, swapM, commissionM, grossProfitM, netProfitM, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
             stats[NET_MONEY][S_CLOSED_PROFIT] += netProfitM;

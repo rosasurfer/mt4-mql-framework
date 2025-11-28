@@ -179,8 +179,8 @@ window_num=1
 Donchian.Periods=30
 </inputs>
 </expert>
-levels_color=15453831
-levels_style=1
+levels_color=16316664
+levels_style=2
 level_0=200
 
 period_flags=0
