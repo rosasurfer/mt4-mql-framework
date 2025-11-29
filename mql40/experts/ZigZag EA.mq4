@@ -959,6 +959,9 @@ bool UpdateStatus() {
       int error;
       if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ ComposePositionCloseMsg(error), error))) return(false);
       if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                        return(false);
+      if (error == ERR_CONCURRENT_MODIFICATION) {
+         SendChartCommand("EA.command", "stop");            // asynchronously stop the sequence
+      }
    }
 
    // update PnL stats
