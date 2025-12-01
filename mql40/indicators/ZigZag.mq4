@@ -658,7 +658,7 @@ int onTick() {
                         else                           fontColor = Red;
                         string name = shortName + ifString(eventType==EVENT_REVERSAL_UP, ".up.", ".down.") + TimeToStr(eventTime);
                         ObjectCreateRegister(name, OBJ_TEXT, 0, eventTime, eventPrice-markerOffset);
-                        ObjectSetText(name, NumberToStr(balance/pUnit, ",'R."+ pDigits), fontSize, fontName, fontColor);
+                        ObjectSetText(name, NumberToStr(balance/pUnit, ",'R.0"), fontSize, fontName, fontColor);
 
                         // reset positive balances
                         if (balance > -HalfPoint) balance = 0;
