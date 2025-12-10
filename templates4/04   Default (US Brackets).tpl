@@ -143,6 +143,8 @@ Donchian.Periods=30
 </inputs>
 </expert>
 level_0=200
+level_1=500
+level_2=1000
 show_data=1
 </indicator>
 </window>
