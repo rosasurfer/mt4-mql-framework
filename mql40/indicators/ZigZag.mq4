@@ -658,7 +658,7 @@ int onTick() {
                         else                           fontColor = Red;
                         string name = shortName + ifString(eventType==EVENT_REVERSAL_UP, ".up.", ".down.") + TimeToStr(eventTime);
                         ObjectCreateRegister(name, OBJ_TEXT, 0, eventTime, eventPrice-markerOffset);
-                        ObjectSetText(name, NumberToStr(balance/pUnit, ",'R."+ pDigits), fontSize, fontName, fontColor);
+                        ObjectSetText(name, NumberToStr(balance/pUnit, ",'R.0"), fontSize, fontName, fontColor);
 
                         // reset positive balances
                         if (balance > -HalfPoint) balance = 0;
@@ -882,7 +882,7 @@ int FindPrevSemaphore(int bar, int &type) {
 
 
 /**
- * Update buffers after a SINGLE or DOUBLE upper band crossing at the specified bar offset. Resolves the preceeding ZigZag
+ * Update buffers after an upper band crossing at the specified bar offset. Resolves the preceeding ZigZag
  * semaphore and counts the trend forward from there.
  *
  * @param  int bar - offset
@@ -932,14 +932,14 @@ bool ProcessUpperCross(int bar) {
       sema2 = sema1;
       sema1 = Low[prevSem];
       lastLegHigh = 0;                                               // reset last leg high
-      if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_LONG);
+      if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_LONG, upperCross[bar]);
    }
    return(true);
 }
 
 
 /**
- * Update buffers after a SINGLE or DOUBLE lower band crossing at the specified bar offset. Resolves the preceeding ZigZag
+ * Update buffers after a lower band crossing at the specified bar offset. Resolves the preceeding ZigZag
  * semaphore and counts the trend forward from there.
  *
  * @param  int bar - offset
@@ -990,7 +990,7 @@ bool ProcessLowerCross(int bar) {
       sema1 = High[prevSem];
       lastLegLow = 0;                                                // reset last leg low
 
-      if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_SHORT);
+      if (Signal.onReversal && __isChart && ChangedBars <= 2) onReversal(D_SHORT, lowerCross[bar]);
    }
    return(true);
 }
@@ -1024,11 +1024,12 @@ void UpdateTrend(int fromBar, int fromValue, int toBar, bool resetReversalBuffer
 /**
  * Event handler signaling new ZigZag reversals.
  *
- * @param  int direction - reversal direction: D_LONG | D_SHORT
+ * @param  int    direction - reversal direction: D_LONG | D_SHORT
+ * @param  double level     - the crossed price level causing the signal
  *
  * @return bool - success status
  */
-bool onReversal(int direction) {
+bool onReversal(int direction, double level) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping())                 return(true);        // skip signals during possible data pumping
@@ -1036,7 +1037,7 @@ bool onReversal(int direction) {
    // skip the signal if it was already processed elsewhere
    string sPeriod   = PeriodDescription();
    string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1  = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message1  = ifString(direction==D_LONG, "up", "down") +" (level: "+ NumberToStr(level, PriceFormat) +")";
    string message2  = Symbol() +","+ sPeriod +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message1;
 
    int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
@@ -1291,7 +1292,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
    string name   = ProgramName(), donchianName="";
-   indicatorName = name +"("+ ifString(ZigZag.Periods.Step, "step:", "") + ZigZag.Periods +")";
+   indicatorName = name +"("+ ZigZag.Periods + ifString(ZigZag.Periods.Step, ":"+ ZigZag.Periods.Step, "") +")";
    shortName     = name +"("+ ZigZag.Periods +")";
    donchianName  = "Donchian("+ ZigZag.Periods +")";
    IndicatorShortName(shortName);

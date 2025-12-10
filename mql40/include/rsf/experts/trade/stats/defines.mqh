@@ -13,7 +13,7 @@ double stats[4][77];                            // trade statistics with metric 
 #define S_SHARPE_RATIO                     7
 #define S_SORTINO_RATIO                    8
 #define S_CALMAR_RATIO                     9
-#define S_WORKDAYS                        10    // number of trading days the instance was running (for annualization)
+#define S_DAYS                            10    // number of calendar days the instance was running (for annualization)
 
 #define S_TRADES                          11    // all closed trades
 #define S_TRADES_LONG                     12

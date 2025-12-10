@@ -212,6 +212,7 @@
 #define F_VK_MENU                              32        // ALT key
 #define F_VK_LWIN                              64        // left Windows key
 #define F_VK_RWIN                             128        // right Windows key
+#define F_VK_ALL                              255        // F_VK_ESCAPE|F_VK_TAB|F_VK_CAPITAL|F_VK_SHIFT|F_VK_CONTROL|F_VK_MENU|F_VK_LWIN|F_VK_RWIN
 
 
 // order and operation types

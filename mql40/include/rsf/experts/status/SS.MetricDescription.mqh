@@ -4,13 +4,18 @@
 void SS.MetricDescription() {
    switch (status.activeMetric) {
       case METRIC_NET_MONEY:
-         status.metricDescription = "Net PnL after all costs in "+ AccountCurrency() + NL + "-----------------------------------";
+         if (status.profitInPercent) {
+            status.metricDescription = "Net PnL in %"+ NL + "----------------";
+         }
+         else {
+            status.metricDescription = "Net PnL in "+ AccountCurrency() + NL + "------------------";
+         }
          break;
       case METRIC_NET_UNITS:
-         status.metricDescription = "Net PnL after all costs in "+ spUnit + NL + "---------------------------------"+ ifString(spUnit=="point", "--", "");
+         status.metricDescription = "Net PnL in "+ spUnit + NL + "-----------------"+ ifString(spUnit=="point", "--", "");
          break;
       case METRIC_SIG_UNITS:
-         status.metricDescription = "Signal PnL before spread/any costs in "+ spUnit + NL + "-------------------------------------------------"+ ifString(spUnit=="point", "--", "");
+         status.metricDescription = "Signal PnL in "+ spUnit + NL + "--------------------"+ ifString(spUnit=="point", "--", "");
          break;
 
       default:

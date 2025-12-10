@@ -1,5 +1,10 @@
 /**
- * Find an existing status file for the specified instance.
+ * Find an existing status file for the specified instance id. Finds any file matching
+ *
+ *   "<program-name>, <symbol>,* id=<instance-id>.set" (no matter what the custom name is)
+ *
+ * but doesn't scan subdirectories. The EA will use whatever was found for status and logfile.
+ * A more strict pattern is used for name generation in SetStatusFileName().
  *
  * @param  int  instanceId - instance id
  * @param  bool isTest     - whether the instance is a test instance
@@ -13,7 +18,7 @@ string FindStatusFile(int instanceId, bool isTest) {
 
    string sandboxDir  = GetMqlSandboxPath() +"\\";
    string statusDir   = "presets\\"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"\\";
-   string basePattern = ProgramName() +", "+ Symbol() +",* id="+ StrPadLeft(""+ instanceId, 3, "0") +".set";   // matches files with and w/o user-specified data in the name
+   string basePattern = ProgramName() +", "+ Symbol() +",* id="+ StrPadLeft(""+ instanceId, 3, "0") +".set";   // matches files with custom names
    string pathPattern = sandboxDir + statusDir + basePattern;
 
    string result[];

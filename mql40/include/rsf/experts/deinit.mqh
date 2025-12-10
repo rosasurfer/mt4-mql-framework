@@ -95,7 +95,7 @@ int onDeinitTemplate() {
  * @return int - error status
  */
 int onDeinitRemove() {
-   if (instance.status != STATUS_STOPPED) {
+   if (instance.status && instance.status != STATUS_STOPPED) {
       SS.TotalProfit();
       SS.ProfitStats();
       logInfo("onDeinitRemove(1)  "+ instance.name +" expert removed in status \""+ StatusDescription(instance.status) +"\", profit: "+ status.totalProfit +" "+ status.profitStats);

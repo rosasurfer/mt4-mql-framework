@@ -1,6 +1,6 @@
-<!-- 
+<!--
 On M5:
------_
+------
 ZigZag(10) = 50xM1   trend direction
 EMA(40)    = 200xM1  filter: above only long, below only short
 NLMA(20)             trend confirmation

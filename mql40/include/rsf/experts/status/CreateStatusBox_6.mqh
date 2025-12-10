@@ -7,7 +7,8 @@
 bool CreateStatusBox() {
    if (!__isChart) return(true);
 
-   int x[]={2, 66, 136}, y=50, fontSize=54, sizeofX=ArraySize(x);
+   int x[]={2, 66, 136}, fontSize=54, sizeofX=ArraySize(x);
+   int y = ResolveTopDistance();
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {

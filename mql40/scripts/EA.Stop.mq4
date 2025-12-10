@@ -1,7 +1,7 @@
 /**
  * EA.Stop
  *
- * Send a "stop" command to a running EA.
+ * Sends a "stop" command to an EA in the current chart.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -32,7 +32,7 @@ int onStart() {
       if (__isTesting) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop EA instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop the EA?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
       SendChartCommand("EA.command", "stop");
    }
@@ -42,10 +42,3 @@ int onStart() {
    }
    return(catch("onStart(2)"));
 }
-
-
-
-
-
-
-

@@ -1,7 +1,7 @@
 /**
- * Chart.ToggleAccountBalance
+ * EA.TogglePercent
  *
- * Sends a command to the ChartInfos indicator in the current chart to toggle display of the account balance.
+ * Sends a command to an EA in the current chart to toggle displayed profits between absolute and percentage values.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -16,7 +16,7 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   string command   = "toggle-account-balance";
+   string command   = "toggle-percent";
    string params    = "";
    string modifiers = ",";
    if (IsVirtualKeyDown(VK_ESCAPE))  modifiers = modifiers +",VK_ESCAPE";
@@ -31,6 +31,9 @@ int onStart() {
 
    command = command +":"+ params +":"+ modifiers;
 
-   SendChartCommand("ChartInfos.command", command);
-   return(catch("onStart(1)"));
+   // send to an active EA
+   if (ObjectFind("EA.status") == 0) {
+      SendChartCommand("EA.command", command);
+   }
+   return(last_error);
 }

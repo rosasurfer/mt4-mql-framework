@@ -14,7 +14,7 @@ bool SetInstanceId(string value, bool &error, string caller) {
    error = false;
 
    value = StrTrim(value);
-   if (!StringLen(value)) return(false);
+   if (value == "") return(false);
 
    bool isTest = false;
    int instanceId = 0;

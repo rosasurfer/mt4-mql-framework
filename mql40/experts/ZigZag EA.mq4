@@ -1,28 +1,39 @@
 /**
- * An EA trading ZigZag reversals.
+ * ZigZag EA
  *
- * The EA must not run permanently. If run permanently, it will not be profitable.
- * Instead, it must be activated/deactivated depending on market sentiment.
+ * The EA trades ZigZag reversals. That's breakouts from a Donchian Channel which is the basis for ZigZag.
  *
  *
  * Requirements
  * ------------
- *  • /mql4.0/indicators/ZigZag.mq4
+ *  • "mql40/experts/ZigZag EA"                (this EA)
+ *  • "mql40/indicators/ZigZag"                (the MetaQuotes version is not suitable)
+ *  • "mql40/scripts/Config"
+ *  • "mql40/scripts/Chart.ToggleOpenOrders"
+ *  • "mql40/scripts/Chart.ToggleTradeHistory"
+ *  • "mql40/scripts/EA.Start"
+ *  • "mql40/scripts/EA.EntrySignal"
+ *  • "mql40/scripts/EA.Stop"
+ *  • "mql40/scripts/EA.TogglePercent"
+ *  • "mql40/scripts/EA.ToggleMetrics"
+ *  • "mql40/libraries/rsfMT4Expander.dll"
+ *  • "mql40/libraries/rsfStdlib"
+ *  • "mql40/libraries/rsfHistory[123]"        (three files)
  *
  *
- * External control
- * ----------------
- *  • EA.Start: When a "start" command is received the EA opens a position in direction of the current ZigZag leg. There are
- *              two sub-commands "start:long" and "start:short" to start the EA in a predefined direction.
- *              The command is ignored if the EA already manages an open position.
- *  • EA.Stop:  When a "stop" command is received the EA closes all open positions and stops waiting for new reversals.
- *              The command is ignored if the EA is already in status "stopped".
- *  • EA.Wait:  When a "wait" command is received a stopped EA will wait for new reversals and start trading accordingly.
- *              The command is ignored if the EA is already in status "waiting".
- *  • EA.ToggleMetrics
- *  • Chart.ToggleOpenOrders
- *  • Chart.ToggleTradeHistory
+ * Inputs
+ * ------
+ *  • ZigZag.Periods:  Lookback periods of the Donchian channel.
  *
+ *
+ * Manual control
+ * --------------
+ *  • EA.Start:       When a "start" command is received a stopped EA switches to status "waiting", waits for new signals
+ *                    and trades accordingly. The command is ignored if the EA is not in status "stopped".
+ *  • EA.EntrySignal: When an "entry-signal" command is received the EA switches to status "trading" and opens a position in
+ *                    direction of the current ZigZag leg. The command is ignored if the EA already is in status "trading".
+ *  • EA.Stop:        When a "stop" command is received the EA closes all open positions and switches to status "stopped".
+ *                    The command is ignored if the EA already is in status "stopped".
  *
  *
  * TODO:
@@ -55,20 +66,12 @@
  *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), ControlPoints:  3.0 sec,  93 trades    243.000 ticks
  *
  *  - stop on reverse signal
- *  - signals MANUAL_LONG|MANUAL_SHORT
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
  *
- *  - trading functionality
- *     support command "wait" in status "progressing"
- *     reverse trading and command EA.Reverse
- *
  *  - performance tracking
  *     notifications for price feed outages
- *
- *  - status display
- *     parameter: ZigZag.Periods
  *
  *  - trade breaks
  *    - full session (24h) with trade breaks
@@ -96,18 +99,14 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID                    = "";                   // instance to load from a status file, format "[T]123"
-extern string Instance.StartAt               = "@time(01:02)";       // @time(datetime|time)
-extern string Instance.StopAt                = "@time(22:59)";       // @time(datetime|time) | @profit(numeric[%])
+extern string Instance.StartAt               = "@time(00:02)";       // @time(datetime|time)
+extern string Instance.StopAt                = "@time(23:59)";       // @time(datetime|time) | @profit(numeric[%])
 
 extern string ___a__________________________ = "=== Signal settings ===";
-extern int    ZigZag.Periods                 = 30;
+extern int    ZigZag.Periods                 = 100;
 
 extern string ___b__________________________ = "=== Trade settings ===";
-extern int    EntryOrder.Distance            = 0;                    // in punits: entry order distance from the signal level
 extern double Lots                           = 0.1;
-
-extern string ___c__________________________ = "=== Status ===";
-extern bool   ShowProfitInPercent            = false;                // whether PnL is displayed in money or percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -138,11 +137,12 @@ extern bool   ShowProfitInPercent            = false;                // whether 
 #include <rsf/experts/instance/RestoreInstance.mqh>
 #include <rsf/experts/instance/SetInstanceId.mqh>
 
-#include <rsf/experts/log/GetLogFilename.mqh>
+#include <rsf/experts/log/GetLogFileName.mqh>
 
 #include <rsf/experts/metric/GetMT4SymbolDefinition.mqh>
 #include <rsf/experts/metric/RecordMetrics.mqh>
 
+#include <rsf/experts/status/ResolveTopDistance.mqh>
 #include <rsf/experts/status/ShowOpenOrders.mqh>
 #include <rsf/experts/status/ShowTradeHistory.mqh>
 #include <rsf/experts/status/SS.MetricDescription.mqh>
@@ -154,8 +154,8 @@ extern bool   ShowProfitInPercent            = false;                // whether 
 #include <rsf/experts/status/StatusDescription.mqh>
 
 #include <rsf/experts/status/file/FindStatusFile.mqh>
-#include <rsf/experts/status/file/GetStatusFilename.mqh>
-#include <rsf/experts/status/file/SetStatusFilename.mqh>
+#include <rsf/experts/status/file/GetStatusFileName.mqh>
+#include <rsf/experts/status/file/SetStatusFileName.mqh>
 #include <rsf/experts/status/file/ReadStatus.General.mqh>
 #include <rsf/experts/status/file/ReadStatus.HistoryRecord.mqh>
 #include <rsf/experts/status/file/ReadStatus.OpenPosition.mqh>
@@ -172,6 +172,7 @@ extern bool   ShowProfitInPercent            = false;                // whether 
 #include <rsf/experts/status/volatile/ToggleOpenOrders.mqh>
 #include <rsf/experts/status/volatile/ToggleTradeHistory.mqh>
 #include <rsf/experts/status/volatile/ToggleMetrics.mqh>
+#include <rsf/experts/status/volatile/ToggleProfitUnit.mqh>
 
 #include <rsf/experts/test/ReadTestConfiguration.mqh>
 
@@ -237,12 +238,12 @@ int onTick() {
    double signal[3];
 
    if (__isChart) {
-      if (!HandleCommands()) return(last_error);         // process incoming commands (may switch the instance on/off)
+      if (!HandleCommands()) return(last_error);         // process incoming commands
    }
 
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
-         if (IsStartSignal(signal)) {
+         if (IsTradeSignal(signal)) {
             StartTrading(signal);
          }
       }
@@ -276,24 +277,19 @@ bool onCommand(string cmd, string params, int keys) {
 
    if (cmd == "start") {
       switch (instance.status) {
+         case STATUS_STOPPED:
+            logInfo("onCommand(3)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            instance.status = STATUS_WAITING;
+            return(SaveStatus());
+      }
+   }
+   else if (cmd == "entry-signal") {
+      switch (instance.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            string sDetail = " ";
-            int logLevel = LOG_INFO;
-
-            double signal[3];
-            signal[SIG_TYPE ] = 0;
-            signal[SIG_PRICE] = 0;
-            if      (params == "long")  signal[SIG_OP] = SIG_OP_LONG;
-            else if (params == "short") signal[SIG_OP] = SIG_OP_SHORT;
-            else {
-               signal[SIG_OP] = ifInt(GetZigZagTrend(0) > 0, SIG_OP_LONG, SIG_OP_SHORT);
-               if (params != "") {
-                  sDetail  = " skipping unsupported parameter in command ";
-                  logLevel = LOG_NOTICE;
-               }
-            }
-            log("onCommand(1)  "+ instance.name + sDetail + DoubleQuoteStr(fullCmd), NO_ERROR, logLevel);
+            double signal[] = {0,0,0};
+            signal[SIG_OP] = ifInt(GetZigZagTrend(0) > 0, SIG_OP_LONG, SIG_OP_SHORT);
+            log("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd), NO_ERROR, LOG_INFO);
             return(StartTrading(signal));
       }
    }
@@ -306,13 +302,8 @@ bool onCommand(string cmd, string params, int keys) {
             return(StopTrading(dNull));
       }
    }
-   else if (cmd == "wait") {
-      switch (instance.status) {
-         case STATUS_STOPPED:
-            logInfo("onCommand(3)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
-            instance.status = STATUS_WAITING;
-            return(SaveStatus());
-      }
+   else if (cmd == "toggle-percent") {
+      return(ToggleProfitUnit());
    }
    else if (cmd == "toggle-metrics") {
       int direction = ifInt(keys & F_VK_SHIFT, METRIC_PREVIOUS, METRIC_NEXT);
@@ -324,7 +315,9 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
-   else return(!logNotice("onCommand(4)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
+   else {
+      return(!logNotice("onCommand(4)  "+ instance.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
+   }
 
    return(!logWarn("onCommand(5)  "+ instance.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(instance.status)));
 }
@@ -574,11 +567,11 @@ bool IsTradingTime() {
 /**
  * Whether conditions are fullfilled to start trading.
  *
- * @param  _Out_ double &signal[] - array receiving entry signal details
+ * @param  _Out_ double &signal[] - array receiving the entry signal
  *
  * @return bool
  */
-bool IsStartSignal(double &signal[]) {
+bool IsTradeSignal(double &signal[]) {
    if (last_error || instance.status!=STATUS_WAITING) return(false);
    signal[SIG_TYPE ] = 0;
    signal[SIG_PRICE] = 0;
@@ -844,19 +837,19 @@ double stop.profitPct.AbsValue() {
 
 
 /**
- * Stop trading and close open positions (if any).
+ * Close open positions and stop trading. Depending on the passed trigger condition status changes to "waiting" or "stopped".
  *
- * @param  double signal[] - signal infos causing the call
+ * @param  double trigger[] - trigger condition causing the call
  *
  * @return bool - success status
  */
-bool StopTrading(double signal[]) {
+bool StopTrading(double trigger[]) {
    if (last_error != NULL)                                                 return(false);
    if (instance.status!=STATUS_WAITING && instance.status!=STATUS_TRADING) return(!catch("StopTrading(1)  "+ instance.name +" cannot stop "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
 
-   int    sigType  = signal[SIG_TYPE];
-   double sigPrice = signal[SIG_PRICE];
-   int    sigOp    = signal[SIG_OP];
+   int    sigType  = trigger[SIG_TYPE];
+   double sigPrice = trigger[SIG_PRICE];
+   int    sigOp    = trigger[SIG_OP];
 
    // close an open position
    if (instance.status == STATUS_TRADING) {
@@ -966,6 +959,9 @@ bool UpdateStatus() {
       int error;
       if (IsError(onPositionClose("UpdateStatus(2)  "+ instance.name +" "+ ComposePositionCloseMsg(error), error))) return(false);
       if (!MovePositionToHistory(OrderCloseTime(), exitPrice, exitPriceSig))                                        return(false);
+      if (error == ERR_CONCURRENT_MODIFICATION) {
+         SendChartCommand("EA.command", "stop");            // asynchronously stop the sequence
+      }
    }
 
    // update PnL stats
@@ -1004,7 +1000,7 @@ bool SaveStatus() {
    }
    else if (IsTestInstance()) return(true);                    // don't modify the status file of a finished test
 
-   string section="", separator="", file=GetStatusFilename();
+   string section="", separator="", file=GetStatusFileName();
    bool fileExists = IsFile(file, MODE_SYSTEM);
    if (!fileExists) separator = CRLF;                          // an empty line separator
    SS.All();                                                   // update trade stats and global string representations
@@ -1019,8 +1015,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.StopAt",            /*string  */ Instance.StopAt);
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "EntryOrder.Distance",        /*int     */ EntryOrder.Distance);
-   WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
    // trade stats
@@ -1074,7 +1068,7 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string section="", file=GetStatusFilename();
+   string section="", file=GetStatusFileName();
    if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
    if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file \""+ file +"\" not found", ERR_FILE_NOT_FOUND));
 
@@ -1088,8 +1082,6 @@ bool ReadStatus() {
    Instance.StopAt            = GetIniStringA(file, section, "Instance.StopAt",  "");              // string   Instance.StopAt            = @time(datetime|time) | @profit(numeric[%])
    ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"      );              // int      ZigZag.Periods             = 40
    Lots                       = GetIniDouble (file, section, "Lots"                );              // double   Lots                       = 0.1
-   EntryOrder.Distance        = GetIniInt    (file, section, "EntryOrder.Distance" );              // int      EntryOrder.Distance        = 12
-   ShowProfitInPercent        = GetIniBool   (file, section, "ShowProfitInPercent" );              // bool     ShowProfitInPercent        = 1
    EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",      "");              // string   EA.Recorder                = 1,2,4
 
    // [Runtime status]
@@ -1199,7 +1191,7 @@ bool SynchronizeStatus() {
             double   netProfitP   = grossProfitP + MathDiv(swapM + commissionM, PointValue(lots));
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" orphaned closed position found: #"+ ticket +", adding to instance...");
-            if (IsEmpty(AddHistoryRecord(ticket, 0, 0, lots, 1, openType, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippageP, swapM, commissionM, grossProfitM, netProfitM, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
+            if (IsEmpty(AddHistoryRecord(ticket, 0, 0, openType, lots, 1, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippageP, swapM, commissionM, grossProfitM, netProfitM, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
             stats[NET_MONEY][S_CLOSED_PROFIT] += netProfitM;
@@ -1218,21 +1210,11 @@ bool SynchronizeStatus() {
    }
    SS.All();
 
-   if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize) {
+   if (open.ticket != prevOpenTicket || ArrayRange(history, 0) != prevHistorySize) {
       CalculateStats(true);
       return(SaveStatus());                                          // immediately save status if orders changed
    }
    return(!catch("SynchronizeStatus(5)"));
-}
-
-
-/**
- * Return a distinctive instance detail to be inserted in the status/log filename.
- *
- * @return string
- */
-string GetStatusFilenameData() {
-   return("P="+ ZigZag.Periods);
 }
 
 
@@ -1259,7 +1241,6 @@ string   prev.Instance.StopAt = "";
 int      prev.ZigZag.Periods;
 double   prev.Lots;
 int      prev.EntryOrder.Distance;
-bool     prev.ShowProfitInPercent;
 
 // backed-up runtime variables affected by changing input parameters
 bool     prev.start.time.condition;
@@ -1295,8 +1276,6 @@ void BackupInputs() {
    prev.Instance.StopAt     = StringConcatenate(Instance.StopAt, "");
    prev.ZigZag.Periods      = ZigZag.Periods;
    prev.Lots                = Lots;
-   prev.EntryOrder.Distance = EntryOrder.Distance;
-   prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // affected runtime variables
    prev.start.time.condition       = start.time.condition;
@@ -1330,8 +1309,6 @@ void RestoreInputs() {
    Instance.StopAt     = prev.Instance.StopAt;
    ZigZag.Periods      = prev.ZigZag.Periods;
    Lots                = prev.Lots;
-   EntryOrder.Distance = prev.EntryOrder.Distance;
-   ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // affected runtime variables
    start.time.condition       = prev.start.time.condition;
@@ -1384,13 +1361,13 @@ bool ValidateInputs() {
 
       for (int i=0; i < sizeOfExprs; i++) {             // validate each expression
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) continue;
+         if (expr == "") continue;
          if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(2)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
          if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(3)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
          if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(4)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
+         if (sValue == "")                              return(!onInputError("ValidateInputs(5)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt)));
 
          if (key == "@time") {
             if (isTimeCondition)                        return(!onInputError("ValidateInputs(6)  "+ instance.name +" invalid input parameter Instance.StartAt: "+ DoubleQuoteStr(Instance.StartAt) +" (multiple time conditions)"));
@@ -1423,13 +1400,13 @@ bool ValidateInputs() {
 
       for (i=0; i < sizeOfExprs; i++) {                 // validate each expression
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) continue;                // support both OR operators "||" and "|"
+         if (expr == "") continue;                      // support both OR operators "||" and "|"
          if (StringGetChar(expr, 0) != '@')             return(!onInputError("ValidateInputs(9)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
          if (Explode(expr, "(", sValues, NULL) != 2)    return(!onInputError("ValidateInputs(10)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
          if (!StrEndsWith(sValues[1], ")"))             return(!onInputError("ValidateInputs(11)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                        return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
+         if (sValue == "")                              return(!onInputError("ValidateInputs(12)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt)));
 
          if (key == "@time") {
             if (isTimeCondition)                        return(!onInputError("ValidateInputs(13)  "+ instance.name +" invalid input parameter Instance.StopAt: "+ DoubleQuoteStr(Instance.StopAt) +" (multiple time conditions)"));
@@ -1497,16 +1474,11 @@ bool ValidateInputs() {
    if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
    if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
-   // EntryOrder.Distance
-   if (isInitParameters && EntryOrder.Distance!=prev.EntryOrder.Distance) {
-      if (instanceWasStarted)                           return(!onInputError("ValidateInputs(25)  "+ instance.name +" cannot change input parameter EntryOrder.Distance of "+ StatusDescription(instance.status) +" instance"));
-   }
-
    // EA.Recorder: on | off* | 1,2,3=1000,...
    if (!Recorder_ValidateInputs(IsTestInstance())) return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(26)"));
+   return(!catch("ValidateInputs(25)"));
 }
 
 
@@ -1528,7 +1500,13 @@ void SS.All() {
  * ShowStatus: Update the string representation of the instance name.
  */
 void SS.InstanceName() {
-   instance.name = "Z."+ StrPadLeft(instance.id, 3, "0");
+   if (!instance.id) {
+      // calling SS.All() and thus SS.InstanceName() before CreateInstanceId() is valid (e.g. after input validation of a new instance)
+      instance.name = "ZZ.";
+   }
+   else {
+      instance.name = "ZZ."+ StrPadLeft(instance.id, 3, "0");
+   }
 }
 
 
@@ -1540,7 +1518,7 @@ void SS.StartStopConditions() {
       // start conditions
       string sValue = "";
       if (start.time.descr != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition, "@", "!") + start.time.descr;
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(start.time.condition, "@", "!") + start.time.descr;
       }
       if (sValue == "") status.startConditions = "-";
       else              status.startConditions = sValue;
@@ -1548,13 +1526,13 @@ void SS.StartStopConditions() {
       // stop conditions
       sValue = "";
       if (stop.time.descr != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition, "@", "!") + stop.time.descr;
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.time.condition, "@", "!") + stop.time.descr;
       }
       if (stop.profitPct.descr != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.descr;
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.descr;
       }
       if (stop.profitPunit.descr != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPunit.condition, "@", "!") + stop.profitPunit.descr;
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPunit.condition, "@", "!") + stop.profitPunit.descr;
       }
       if (sValue == "") status.stopConditions = "-";
       else              status.stopConditions = sValue;
@@ -1583,29 +1561,34 @@ int ShowStatus(int error = NO_ERROR) {
    string sStatus="", sError="";
 
    switch (instance.status) {
-      case NULL:           sStatus = "  not initialized"; break;
-      case STATUS_WAITING: sStatus = "  waiting";         break;
-      case STATUS_TRADING: sStatus = "  trading";         break;
-      case STATUS_STOPPED: sStatus = "  stopped";         break;
+      case NULL:           sStatus = "    not initialized";    break;
+      case STATUS_WAITING: sStatus = "    waiting for signal"; break;
+      case STATUS_TRADING: sStatus = "    trading";            break;
+      case STATUS_STOPPED: sStatus = "    stopped";            break;
       default:
          return(catch("ShowStatus(1)  "+ instance.name +" illegal instance status: "+ instance.status, ERR_ILLEGAL_STATE));
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(WindowExpertName(), "    ID: ", sInstanceId, sStatus, sError, NL,
-                                                                                                 NL,
-                                  "Start:    ",  status.startConditions,                         NL,
-                                  "Stop:     ",  status.stopConditions,                          NL,
-                                                                                                 NL,
-                                  status.metricDescription,                                      NL,
-                                  "Open:    ",   status.openLots,                                NL,
-                                  "Closed:  ",   status.closedTrades,                            NL,
-                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,   NL
+   string text = StringConcatenate(WindowExpertName(), "    ID ", sInstanceId, sStatus, sError, NL,
+                                                                                                NL,
+                                  "Start: ", status.startConditions,                            NL,
+                                  "Stop:  ", status.stopConditions,                             NL,
+                                                                                                NL,
+                                  status.metricDescription,                                     NL,
+                                  "Open:    ",   status.openLots,                               NL,
+                                  "Closed:  ",   status.closedTrades,                           NL,
+                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,  NL
    );
 
-   // 3 lines margin-top for instrument and indicator legends
-   Comment(NL, NL, NL, text);
+   // some lines margin-top for instrument and indicator legends
+   Comment(NL, NL, NL, NL, NL, text);
    if (__CoreFunction == CF_INIT) WindowRedraw();
+
+   // 0 legends: 20
+   // 1 legends: 39
+   // 2 legends: 58 => 4*NL
+   // 3 legends: 77 => 5*NL
 
    // store status in the chart to enable sending of chart commands
    string label = "EA.status";
@@ -1630,7 +1613,8 @@ int ShowStatus(int error = NO_ERROR) {
 bool CreateStatusBox() {
    if (!__isChart) return(true);
 
-   int x[]={2, 102}, y=50, fontSize=76, sizeofX=ArraySize(x);
+   int x[]={2, 102}, fontSize=76, sizeofX=ArraySize(x);
+   int y = ResolveTopDistance();
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {
@@ -1651,14 +1635,11 @@ bool CreateStatusBox() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",         DoubleQuoteStr(Instance.ID),      ";"+ NL +
-                            "Instance.StartAt=",    DoubleQuoteStr(Instance.StartAt), ";"+ NL +
-                            "Instance.StopAt=",     DoubleQuoteStr(Instance.StopAt),  ";"+ NL +
+   return(StringConcatenate("Instance.ID=",      DoubleQuoteStr(Instance.ID),      ";"+ NL +
+                            "Instance.StartAt=", DoubleQuoteStr(Instance.StartAt), ";"+ NL +
+                            "Instance.StopAt=",  DoubleQuoteStr(Instance.StopAt),  ";"+ NL +
 
-                            "ZigZag.Periods=",      ZigZag.Periods,                   ";"+ NL +
-                            "Lots=",                NumberToStr(Lots, ".1+"),         ";"+ NL +
-                            "EntryOrder.Distance=", EntryOrder.Distance,              ";"+ NL +
-
-                            "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent),   ";")
+                            "ZigZag.Periods=",   ZigZag.Periods,                   ";"+ NL +
+                            "Lots=",             NumberToStr(Lots, ".1+"),         ";")
    );
 }

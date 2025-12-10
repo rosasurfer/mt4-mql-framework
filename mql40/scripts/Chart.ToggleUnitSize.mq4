@@ -1,7 +1,8 @@
 /**
  * Chart.ToggleUnitSize
  *
- * Sends a command to the ChartInfos indicator to toggle the location of the unitsize display between "top" and "bottom".
+ * Sends a command to the ChartInfos indicator in the current chart to toggle the "unitsize" location between
+ * "top" and "bottom".
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -16,7 +17,9 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   string modifiers = "";
+   string command   = "toggle-unit-size";
+   string params    = "";
+   string modifiers = ",";
    if (IsVirtualKeyDown(VK_ESCAPE))  modifiers = modifiers +",VK_ESCAPE";
    if (IsVirtualKeyDown(VK_TAB))     modifiers = modifiers +",VK_TAB";
    if (IsVirtualKeyDown(VK_CAPITAL)) modifiers = modifiers +",VK_CAPITAL";    // CAPSLOCK key
@@ -25,7 +28,10 @@ int onStart() {
    if (IsVirtualKeyDown(VK_MENU))    modifiers = modifiers +",VK_MENU";       // ALT key
    if (IsVirtualKeyDown(VK_LWIN))    modifiers = modifiers +",VK_LWIN";
    if (IsVirtualKeyDown(VK_RWIN))    modifiers = modifiers +",VK_RWIN";
+   modifiers = StrRight(modifiers, -1);
 
-   SendChartCommand("ChartInfos.command", "toggle-unit-size::"+ StrRight(modifiers, -1));
+   command = command +":"+ params +":"+ modifiers;
+
+   SendChartCommand("ChartInfos.command", command);
    return(catch("onStart(1)"));
 }

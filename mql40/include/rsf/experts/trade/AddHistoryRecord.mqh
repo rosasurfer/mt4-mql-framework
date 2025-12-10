@@ -36,7 +36,7 @@ int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double 
    if (isPartial) {
       // resolve the partialClose[] index to insert at
       int size = ArrayRange(partialClose, 0);
-      for (int i=size-1; i >= 0; i--) {                        // iterate from the end (in most use cases faster)
+      for (int i=size-1; i >= 0; i--) {                        // iterate from the end (in most cases faster)
          if (ticket == partialClose[i][H_TICKET]) return(_EMPTY(catch("AddHistoryRecord(1)  "+ instance.name +" cannot add record, ticket #"+ ticket +" already exists (partialClose["+ i +"])", ERR_INVALID_PARAMETER)));
 
          if (openTime > partialClose[i][H_OPENTIME]) {
@@ -92,7 +92,7 @@ int AddHistoryRecord(int ticket, int fromTicket, int toTicket, int type, double 
    else {
       // resolve the history[] index to insert at
       size = ArrayRange(history, 0);
-      for (i=size-1; i >= 0; i--) {                            // iterate from the end (in most use cases faster)
+      for (i=size-1; i >= 0; i--) {                            // iterate from the end (faster in most cases)
          if (ticket == history[i][H_TICKET]) return(_EMPTY(catch("AddHistoryRecord(2)  "+ instance.name +" cannot add record, ticket #"+ ticket +" already exists (history["+ i +"])", ERR_INVALID_PARAMETER)));
 
          if (openTime > history[i][H_OPENTIME]) {

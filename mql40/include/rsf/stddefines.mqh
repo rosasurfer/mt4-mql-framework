@@ -275,6 +275,10 @@ double  INF;                                                      //  1.#INF |  
 #define CLR_CLOSED             Orange           // exit marker
 
 
+// prefix of chart legend labels, used by indicators and experts for ato-positioning
+#define CHARTLEGEND_PREFIX  "rsf.Legend."
+
+
 // timeseries identifiers, see ArrayCopySeries(), iLowest(), iHighest()
 #define MODE_OPEN                         0     // open price
 #define MODE_LOW                          1     // low price
