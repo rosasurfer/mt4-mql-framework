@@ -127,6 +127,7 @@ name=Custom Indicator
 <expert>
 name=Moving Average
 flags=339
+window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144

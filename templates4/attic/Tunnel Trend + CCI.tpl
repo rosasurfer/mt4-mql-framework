@@ -128,6 +128,7 @@ name=Custom Indicator
 <expert>
 name=Moving Average
 flags=339
+window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
@@ -174,6 +175,7 @@ name=Custom Indicator
 <expert>
 name=Tunnel signal
 flags=339
+window_num=1
 <inputs>
 Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
 Tunnel.MA.Periods=55
@@ -200,6 +202,7 @@ name=Custom Indicator
 <expert>
 name=CCI
 flags=339
+window_num=2
 <inputs>
 CCI.Periods=14
 CCI.AppliedPrice=Open | High | Low | Close | Median | Typical* | Weighted

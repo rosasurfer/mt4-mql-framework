@@ -98,6 +98,7 @@ name=Custom Indicator
 <expert>
 name=Moving Average
 flags=339
+window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
@@ -179,13 +180,8 @@ window_num=1
 Donchian.Periods=30
 </inputs>
 </expert>
-levels_color=16316664
-levels_style=2
 level_0=200
-
-period_flags=0
 show_data=1
 </indicator>
-
 </window>
 </chart>

@@ -1,10 +1,12 @@
+<!-- ADR(40) -->
+
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=4
+scale=1
 graph=1
 fore=0
 grid=0
@@ -13,9 +15,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=1
+scroll=0
 shift=1
-shift_size=10
+shift_size=50
 
 fixed_pos=620
 window_left=0
@@ -37,8 +39,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=405
-fixed_height=0
+height=250
 
 <indicator>
 name=main
@@ -73,65 +74,27 @@ window_num=0
 </expert>
 show_data=0
 </indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Inside Bars
-flags=339
-window_num=0
-<inputs>
-Timeframe=H1
-NumberOfInsideBars=3
-</inputs>
-</expert>
-period_flags=3
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Moving Average
-flags=339
-window_num=0
-<inputs>
-MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=144
-MA.Periods.Step=0
-Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=65535
-DownTrend.Color=65535
-Background.Color=11119017
-ShowChartLegend=1
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
 </window>
 
 <window>
-height=37
+height=100
 fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD
+name=Average Range
 flags=339
 window_num=1
 <inputs>
-FastMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
-FastMA.Periods=9
-SlowMA.Method=SMA | LWMA | EMA* | SMMA| ALMA
-SlowMA.Periods=36
-VScale.Unit=price* | bps-price | bps-adr
-AutoConfiguration=0
+TrueRange=1
+MA.Method=SMA | LWMA* | EMA | SMMA
+MA.Periods=40
 </inputs>
 </expert>
+color_0=16711680
+weight_0=2
 show_data=1
 </indicator>
-</window>
 
+</window>
 </chart>

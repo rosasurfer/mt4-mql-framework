@@ -1,3 +1,5 @@
+<!-- ADR(80) -->
+
 <chart>
 symbol=GBPUSD
 period=60
