@@ -412,8 +412,9 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    // names, labels and display options
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = MA.Method +"("+ ifString(MA.Periods.Step, "step:", "") + MA.Periods + sAppliedPrice +")";
-   string shortName = MA.Method +"("+ MA.Periods +")";
+   string stepSize      = ifString(MA.Periods.Step, ":"+ MA.Periods.Step, "");
+   indicatorName        = MA.Method +"("+ MA.Periods + stepSize + sAppliedPrice +")";
+   string shortName     = MA.Method +"("+ MA.Periods +")";
    IndicatorShortName(shortName);                        // chart tooltips and context menu
 
    IndicatorBuffers(indicator_buffers);

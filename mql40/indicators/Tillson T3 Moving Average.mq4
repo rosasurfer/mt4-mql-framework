@@ -521,9 +521,10 @@ bool ParameterStepper(int direction, int keys) {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
+   string stepSize      = ifString(T3.Periods.Step, ":"+ T3.Periods.Step, "");
    string sMaFilter     = ifString(MA.ReversalFilter.StdDev || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter.StdDev, ".1+"), "");
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   indicatorName        = WindowExpertName() +"("+ ifString(T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step, "step:", "") + T3.Periods +","+ NumberToStr(T3.VolumeFactor, ".1+") + sMaFilter + sAppliedPrice +")";
+   indicatorName        = "Tillson-T3 MA("+ T3.Periods + stepSize +","+ NumberToStr(T3.VolumeFactor, ".1+") + sMaFilter + sAppliedPrice +")";
    shortName            = "T3MA("+ T3.Periods +")";
    IndicatorShortName(shortName);
 

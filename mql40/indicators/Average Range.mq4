@@ -211,7 +211,8 @@ bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
-   string name = ifString(TrueRange, "ATR", "AvgRange") +"("+ ifString(MA.Periods.Step, "step:", "") + MA.Periods +")";
+   string stepSize = ifString(MA.Periods.Step, ":"+ MA.Periods.Step, "");
+   string name     = ifString(TrueRange, "ATR", "AvgRange") +"("+ MA.Periods + stepSize +")";
    IndicatorShortName(name);
 
    int drawType = ifInt(Line.Width, DRAW_LINE, DRAW_NONE);

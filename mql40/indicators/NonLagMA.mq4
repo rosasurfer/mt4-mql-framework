@@ -443,9 +443,10 @@ bool ParameterStepper(int direction, int keys) {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
+   string stepSize      = ifString(WaveCycle.Periods.Step, ":"+ WaveCycle.Periods.Step, "");
    string sMaFilter     = ifString(MA.ReversalFilter.StdDev || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter.StdDev, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName        = WindowExpertName() +"("+ ifString(WaveCycle.Periods.Step || MA.ReversalFilter.Step, "step:", "") + WaveCycle.Periods + sMaFilter + sAppliedPrice +")";
+   indicatorName        = "NonLagMA("+ WaveCycle.Periods + stepSize + sMaFilter + sAppliedPrice +")";
    shortName            = "NLMA("+ WaveCycle.Periods +")";
    IndicatorShortName(shortName);
 

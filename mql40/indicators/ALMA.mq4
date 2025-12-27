@@ -484,9 +484,10 @@ bool ParameterStepper(int direction, int keys) {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
+   string stepSize      = ifString(MA.Periods.Step, ":"+ MA.Periods.Step, "");
    string sMaFilter     = ifString(MA.ReversalFilter.StdDev || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter.StdDev, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName        = WindowExpertName() +"("+ ifString(MA.Periods.Step || MA.ReversalFilter.Step, "step:", "") + MA.Periods + sMaFilter + sAppliedPrice +")";
+   indicatorName        = "ALMA("+ MA.Periods + stepSize + sMaFilter + sAppliedPrice +")";
    shortName            = "ALMA("+ MA.Periods +")";
    IndicatorShortName(shortName);
 
