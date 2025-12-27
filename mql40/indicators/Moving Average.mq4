@@ -188,6 +188,14 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
 
+   // reset an active command handler
+   if (__isChart && MA.Periods.Step) {
+      GetChartCommand("ParameterStepper", sValues);
+   }
+
+   // restore a stored runtime status
+   RestoreStatus();
+
    // calculate ALMA bar weights
    if (maMethod == MODE_ALMA) {
       double almaOffset=0.85, almaSigma=6.0;
@@ -198,6 +206,17 @@ int onInit() {
    SetIndicatorOptions();
 
    return(catch("onInit(10)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   StoreStatus();
+   return(last_error);
 }
 
 
@@ -359,9 +378,9 @@ bool ParameterStepper(int direction, int keys) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    // step up/down input parameter "MA.Periods"
-   double step = MA.Periods.Step;
+   int step = MA.Periods.Step;
 
-   if (!step || MA.Periods + direction*step < 1) {       // no stepping if parameter limit reached
+   if (!step || MA.Periods + direction*step < 1) {       // stop if parameter limit reached
       PlaySoundEx("Plonk.wav");
       return(false);
    }
@@ -422,6 +441,39 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
+}
+
+
+/**
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
+ *
+ * @return bool - success status
+ */
+bool StoreStatus() {
+   if (__isChart && MA.Periods.Step) {
+      string prefix = "rsf."+ WindowExpertName() +".";
+      Chart.StoreInt(prefix +"MA.Periods", MA.Periods);
+   }
+   return(catch("StoreStatus(1)"));
+}
+
+
+/**
+ * Restore the status of the parameter stepper from the chart.
+ *
+ * @return bool - success status
+ */
+bool RestoreStatus() {
+   if (!__isChart) return(true);
+   string prefix = "rsf."+ WindowExpertName() +".";
+
+   int iValue;
+   if (Chart.RestoreInt(prefix +"MA.Periods", iValue)) {    // restore and remove it
+      if (MA.Periods.Step > 0) {                            // apply if stepper is still active
+         if (iValue > 0) MA.Periods = iValue;               // silent validation
+      }
+   }
+   return(!catch("RestoreStatus(1)"));
 }
 
 

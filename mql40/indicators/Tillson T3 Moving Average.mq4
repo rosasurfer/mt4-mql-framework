@@ -467,34 +467,33 @@ bool ParameterStepper(int direction, int keys) {
 
    if (keys & F_VK_LWIN != 0) {
       // step up/down input parameter "T3.VolumeFactor"
-      double step = T3.VolumeFactor.Step;
-                                                                     // no stepping if parameter limit reached
-      if (!step || T3.VolumeFactor + direction*step < 0 || T3.VolumeFactor + direction*step > 1) {
+      double dStep = T3.VolumeFactor.Step;
+                                                                        // stop if parameter limit reached
+      if (!dStep || T3.VolumeFactor + direction*dStep < 0 || T3.VolumeFactor + direction*dStep > 1) {
          PlaySoundEx("Plonk.wav");
          return(false);
       }
-
-      if (direction == STEP_UP) T3.VolumeFactor += step;
-      else                      T3.VolumeFactor -= step;
+      if (direction == STEP_UP) T3.VolumeFactor += dStep;
+      else                      T3.VolumeFactor -= dStep;
 
       if (!InitializeT3()) return(false);
    }
    else if (keys & F_VK_SHIFT != 0) {
       // step up/down input parameter "MA.ReversalFilter"
-      step = MA.ReversalFilter.Step;
+      dStep = MA.ReversalFilter.Step;
 
-      if (!step || MA.ReversalFilter.StdDev + direction*step < 0) {  // no stepping if parameter limit reached
+      if (!dStep || MA.ReversalFilter.StdDev + direction*dStep < 0) {   // stop if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
-      if (direction == STEP_UP) MA.ReversalFilter.StdDev += step;
-      else                      MA.ReversalFilter.StdDev -= step;
+      if (direction == STEP_UP) MA.ReversalFilter.StdDev += dStep;
+      else                      MA.ReversalFilter.StdDev -= dStep;
    }
    else {
       // step up/down input parameter "T3.Periods"
-      step = T3.Periods.Step;
+      int step = T3.Periods.Step;
 
-      if (!step || T3.Periods + direction*step < 1) {                // no stepping if parameter limit reached
+      if (!step || T3.Periods + direction*step < 1) {                   // stop if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
@@ -544,7 +543,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
 
 /**
- * Store the status of an active parameter stepper in the chart (for init cyles, template reloads and/or terminal restarts).
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
  *
  * @return bool - success status
  */
@@ -560,27 +559,25 @@ bool StoreStatus() {
 
 
 /**
- * Restore the status of the parameter stepper from the chart if it wasn't changed in between (for init cyles, template
- * reloads and/or terminal restarts).
+ * Restore the status of the parameter stepper from the chart.
  *
  * @return bool - success status
  */
 bool RestoreStatus() {
-   if (__isChart) {
-      string prefix = "rsf."+ WindowExpertName() +".";
+   if (!__isChart) return(true);
+   string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue;
-      if (Chart.RestoreInt(prefix +"T3.Periods", iValue)) {
-         if (T3.Periods.Step > 0) {
-            if (iValue >= 1) T3.Periods = iValue;                 // silent validation
-         }
+   int iValue;
+   if (Chart.RestoreInt(prefix +"T3.Periods", iValue)) {             // restore and remove it
+      if (T3.Periods.Step > 0) {                                     // apply if stepper is still active
+         if (iValue > 0) T3.Periods = iValue;                        // silent validation
       }
+   }
 
-      double dValue;
-      if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
-         if (MA.ReversalFilter.Step > 0) {
-            if (dValue >= 0) MA.ReversalFilter.StdDev = dValue;   // silent validation
-         }
+   double dValue;
+   if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {   // restore and remove it
+      if (MA.ReversalFilter.Step > 0) {                              // apply if stepper is still active
+         if (dValue >= 0) MA.ReversalFilter.StdDev = dValue;         // silent validation
       }
    }
    return(!catch("RestoreStatus(1)"));

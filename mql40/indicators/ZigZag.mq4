@@ -15,8 +15,8 @@
  * Input parameters
  * ----------------
  *  • ZigZag.Periods:               Lookback periods of the Donchian channel.
- *  • ZigZag.Periods.Step:          Controls parameter "ZigZag.Periods" via the keyboard. If non-zero it enables the parameter
- *                                  stepper and defines its step size. If 0 (zero) the parameter stepper is disabled.
+ *  • ZigZag.Periods.Step:          Controls parameter "ZigZag.Periods" via keyboard. If non-zero it defines the step size of
+ *                                  the parameter stepper. If 0 (zero) the parameter stepper is disabled.
  *  • ZigZag.Type:                  Whether to display the ZigZag line or ZigZag semaphores.
  *  • ZigZag.Semaphores.Symbol:     Symbol used for ZigZag semaphores.
  *  • ZigZag.Width:                 The ZigZag's line width or semaphore size.
@@ -1220,8 +1220,10 @@ bool ParameterStepper(int direction, int keys) {
    }
    if (direction == STEP_UP) ZigZag.Periods += step;
    else                      ZigZag.Periods -= step;
+
    ChangedBars = Bars;
    ValidBars   = 0;
+
    PlaySoundEx("Parameter Step.wav");
    return(true);
 }
@@ -1331,7 +1333,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
 
 /**
- * Store the status of an active parameter stepper in the chart (for init cyles, template reloads and/or terminal restarts).
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
  *
  * @return bool - success status
  */
@@ -1345,19 +1347,18 @@ bool StoreStatus() {
 
 
 /**
- * Restore the status of the parameter stepper from the chart if it wasn't changed in between (for init cyles, template
- * reloads and/or terminal restarts).
+ * Restore the status of the parameter stepper from the chart.
  *
  * @return bool - success status
  */
 bool RestoreStatus() {
-   if (__isChart) {
-      string prefix = "rsf."+ WindowExpertName() +".";
-      int iValue;
-      if (Chart.RestoreInt(prefix +"ZigZag.Periods", iValue)) {
-         if (ZigZag.Periods.Step > 0) {
-            if (iValue >= 2) ZigZag.Periods = iValue;          // silent validation
-         }
+   if (!__isChart) return(true);
+   string prefix = "rsf."+ WindowExpertName() +".";
+
+   int iValue;
+   if (Chart.RestoreInt(prefix +"ZigZag.Periods", iValue)) {   // restore and remove it
+      if (ZigZag.Periods.Step > 0) {                           // apply if stepper is still active
+         if (iValue >= 2) ZigZag.Periods = iValue;             // silent validation
       }
    }
    return(!catch("RestoreStatus(1)"));

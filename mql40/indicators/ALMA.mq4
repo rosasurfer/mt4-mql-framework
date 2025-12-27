@@ -443,9 +443,9 @@ bool ParameterStepper(int direction, int keys) {
 
    if (!keys & F_VK_SHIFT) {
       // step up/down input parameter "MA.Periods"
-      double step = MA.Periods.Step;
+      int step = MA.Periods.Step;
 
-      if (!step || MA.Periods + direction*step < 1) {                // no stepping if parameter limit reached
+      if (!step || MA.Periods + direction*step < 1) {                   // stop if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
@@ -456,14 +456,14 @@ bool ParameterStepper(int direction, int keys) {
    }
    else {
       // step up/down input parameter "MA.ReversalFilter"
-      step = MA.ReversalFilter.Step;
+      double dStep = MA.ReversalFilter.Step;
 
-      if (!step || MA.ReversalFilter.StdDev + direction*step < 0) {  // no stepping if parameter limit reached
+      if (!dStep || MA.ReversalFilter.StdDev + direction*dStep < 0) {   // stop if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
-      if (direction == STEP_UP) MA.ReversalFilter.StdDev += step;
-      else                      MA.ReversalFilter.StdDev -= step;
+      if (direction == STEP_UP) MA.ReversalFilter.StdDev += dStep;
+      else                      MA.ReversalFilter.StdDev -= dStep;
    }
 
    ChangedBars = Bars;
@@ -522,7 +522,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
 
 /**
- * Store the status of an active parameter stepper in the chart (for init cyles, template reloads and/or terminal restarts).
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
  *
  * @return bool - success status
  */
@@ -538,27 +538,25 @@ bool StoreStatus() {
 
 
 /**
- * Restore the status of the parameter stepper from the chart if it wasn't changed in between (for init cyles, template
- * reloads and/or terminal restarts).
+ * Restore the status of the parameter stepper from the chart.
  *
  * @return bool - success status
  */
 bool RestoreStatus() {
-   if (__isChart) {
-      string prefix = "rsf."+ WindowExpertName() +".";
+   if (!__isChart) return(true);
+   string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue;
-      if (Chart.RestoreInt(prefix +"MA.Periods", iValue)) {
-         if (MA.Periods.Step > 0) {
-            if (iValue >= 1) MA.Periods = iValue;                 // silent validation
-         }
+   int iValue;
+   if (Chart.RestoreInt(prefix +"MA.Periods", iValue)) {             // restore and remove it
+      if (MA.Periods.Step > 0) {                                     // apply if stepper is still active
+         if (iValue > 0) MA.Periods = iValue;                        // silent validation
       }
+   }
 
-      double dValue;
-      if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
-         if (MA.ReversalFilter.Step > 0) {
-            if (dValue >= 0) MA.ReversalFilter.StdDev = dValue;   // silent validation
-         }
+   double dValue;
+   if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {   // restore and remove it
+      if (MA.ReversalFilter.Step > 0) {                              // apply if stepper is still active
+         if (dValue >= 0) MA.ReversalFilter.StdDev = dValue;         // silent validation
       }
    }
    return(!catch("RestoreStatus(1)"));
