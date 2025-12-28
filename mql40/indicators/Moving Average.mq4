@@ -451,6 +451,8 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return bool - success status
  */
 bool StoreStatus() {
+   //debug("StoreStatus(0.1)    pid="+ __ExecutionContext[EC.pid] +"  legendLabel="+ DoubleQuoteStr(legendLabel));
+
    if (__isChart && MA.Periods.Step) {
       string prefix = "rsf."+ WindowExpertName() +".";
       Chart.StoreInt(prefix +"MA.Periods", MA.Periods);
@@ -465,6 +467,8 @@ bool StoreStatus() {
  * @return bool - success status
  */
 bool RestoreStatus() {
+   //debug("RestoreStatus(0.1)  pid="+ __ExecutionContext[EC.pid] +"  legendLabel="+ DoubleQuoteStr(legendLabel));
+
    if (!__isChart) return(true);
    string prefix = "rsf."+ WindowExpertName() +".";
 

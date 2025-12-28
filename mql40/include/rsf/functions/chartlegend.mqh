@@ -39,7 +39,8 @@ bool RemoveChartLegend() {
 
 
 /**
- * Order and rearrange all chart legends. Discards obsolete legends of removed indicators.
+ * Order and rearrange all chart legends. Discards orphaned legends of removed indicators.
+ * Remaining labels are ordered by indicator pid ascending.
  *
  * @return bool - success status
  */
