@@ -1036,9 +1036,9 @@ bool onReversal(int direction, double level) {
 
    // skip the signal if it was already processed elsewhere
    string sPeriod   = PeriodDescription();
-   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onReversal("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onReversal("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
    string message1  = ifString(direction==D_LONG, "up", "down") +" (level: "+ NumberToStr(level, PriceFormat) +")";
-   string message2  = Symbol() +","+ sPeriod +": "+ WindowExpertName() +"("+ ZigZag.Periods +") reversal "+ message1;
+   string message2  = Symbol() +","+ sPeriod +": "+ indicatorName +" reversal "+ message1;
 
    int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
    bool eventAction;

@@ -3540,7 +3540,7 @@ bool Chart.StoreString(string key, string value) {
    if (!__isChart)       return(!catch("Chart.StoreString(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len || len > 60) return(!catch("Chart.StoreString(2)  invalid parameter key: \""+ key +"\" (1 to 60 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 60) return(!catch("Chart.StoreString(2)  invalid parameter key: \""+ key +"\" (must be 1-60 chars)", ERR_INVALID_PARAMETER));
 
    // mark empty strings with a magic value as the terminal deserializes "" to "Text"
    len = StringLen(value);

@@ -1,7 +1,7 @@
 /**
  * ChartInfos
  *
- * The indicator displays various market infos, account infos and trade statistics.
+ * An indicator which displays various market infos, account infos and trade statistics:
  *
  *  - The current instrument name (in terminals <= build 509).
  *  - The current price and spread.
@@ -1871,13 +1871,12 @@ bool UpdateStopoutLevel() {
    isPosition        = longPosition || shortPosition;
    isVirtualPosition = false;
 
+   // parse configuration of custom positions
    int prevError = last_error;
    SetLastError(NO_ERROR);
-
-   // make sure the configuration of custom positions is parsed
    if (!ArraySize(config.terms)) /*&&*/ if (!CustomPositions.ReadConfig()) {
-      positions.analyzed = !last_error;                                          // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
-      if (!last_error) SetLastError(prevError);                                  // in diesem Fall nächster Versuch beim nächsten Tick.
+      positions.analyzed = !last_error;                                          // MarketInfo() data may be not yet available,
+      if (!last_error) SetLastError(prevError);                                  // we'll try again at the next tick
       return(positions.analyzed);
    }
    SetLastError(prevError);
@@ -1888,6 +1887,7 @@ bool UpdateStopoutLevel() {
    int    customTickets[], customTypes[];
    double customLots[], customOpenPrices[], customCommissions[], customSwaps[], customProfits[];
    bool   lineSkipped, isVirtual;
+   string property = "";
 
    ArrayResize(positions.data, 0);
    positions.showMfae = false;                                                   // global flag to control positioning/display width of chart objects
@@ -1911,16 +1911,10 @@ bool UpdateStopoutLevel() {
 
          if (line >= 0) {
             if (lineSkipped) {
-               // if the line gets skipped reset tracked MFAE signal levels
-               int hWnd;
-               string property = "";
-               if (!__isTesting && config.dData[line][I_PROFIT_MFE]) {
-                  property = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE);
-                  SetWindowPropertyA(hWndDesktop, property, 0);
-               }
-               if (!__isTesting && config.dData[line][I_PROFIT_MAE]) {
-                  property = GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE);
-                  SetWindowPropertyA(hWndDesktop, property, 0);
+               // if the line is skipped reset tracked MFAE signal levels
+               if (!__isTesting) {
+                  RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MFE));
+                  RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[line][I_CONFIG_KEY], I_PROFIT_MAE));
                }
 
                // reset existing stats
@@ -2349,7 +2343,7 @@ bool CustomPositions.ReadConfig() {
    datetime from, to;
    bool     isEmptyPosition, isVirtualPosition, isGroupedPosition, containsEquityValue, containsProfitMarker, containsLossMarker, isBemEnabled, isMfaeEnabled, isMfaeSignal, markMfe, isTotal, isPercent;
 
-   if (!minLotSize || !lotStep) return(false);                       // falls MarketInfo()-Daten noch nicht verfügbar sind
+   if (!minLotSize || !lotStep) return(false);                       // if MarketInfo() data is not yet available
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(4)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
    string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
@@ -2358,7 +2352,7 @@ bool CustomPositions.ReadConfig() {
 
    for (int i=0; i < keysSize; i++) {
       if (StrStartsWithI(keys[i], symbol) || StrStartsWithI(keys[i], stdSymbol)) {
-         if (SearchStringArrayI(keys, keys[i]) == i) {               // bei gleichnamigen Schlüsseln wird nur der erste verarbeitet
+         if (SearchStringArrayI(keys, keys[i]) == i) {               // on duplicate keys only the first entry gets processed
             iniValue = GetIniStringRawA(file, section, keys[i], "");
             iniValue = StrReplace(iniValue, TAB, " ");
 
@@ -2374,8 +2368,9 @@ bool CustomPositions.ReadConfig() {
                pos = StringFind(confComment, ";");
                if (pos == -1) confComment = StrTrim(confComment);
                else           confComment = StrTrim(StrLeft(confComment, pos));
-               if (StrStartsWith(confComment, "\"") && StrEndsWith(confComment, "\"")) // führende und schließende Anführungszeichen entfernen
+               if (StrStartsWith(confComment, "\"") && StrEndsWith(confComment, "\"")) {
                   confComment = StrSubstr(confComment, 1, StringLen(confComment)-2);
+               }                                                     // trim trailing double quotes
             }
 
             // now parse the configuration terms
@@ -2657,25 +2652,30 @@ bool CustomPositions.ReadConfig() {
       ArrayResize(confTerms, 1);                                     // initializes with NULL
    }
 
-   // keep existing position stats
    int oldLines = ArrayRange(config.sData, 0);
    int newLines = ArrayRange(confsData, 0);
 
-   if (oldLines > 0) {
-      for (i=0; i < newLines; i++) {
-         for (n=0; n < oldLines; n++) {
-            if (confsData[i][I_CONFIG_KEY] == config.sData[n][I_CONFIG_KEY]) {
-               if (confdData[i][I_MFAE_ENABLED] && 1) {
-                  confdData[i][I_PROFIT_MFE] = config.dData[n][I_PROFIT_MFE];
-                  confdData[i][I_PROFIT_MAE] = config.dData[n][I_PROFIT_MAE];
-               }
-               break;
+   // keep existing MFAE stats and reset unkept ones
+   for (int o=0; o < oldLines; o++) {
+      for (n=0; n < newLines; n++) {
+         if (config.sData[o][I_CONFIG_KEY] == confsData[n][I_CONFIG_KEY]) {
+            if (confdData[n][I_MFAE_ENABLED] && 1) {
+               confdData[n][I_PROFIT_MFE] = config.dData[o][I_PROFIT_MFE];
+               confdData[n][I_PROFIT_MAE] = config.dData[o][I_PROFIT_MAE];
             }
+            break;
          }
       }
+      if (n >= newLines) {
+         RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[o][I_CONFIG_KEY], I_PROFIT_MFE));
+         RemoveWindowPropertyA(hWndDesktop, GetMfaeSignalKey(config.sData[o][I_CONFIG_KEY], I_PROFIT_MAE));
+         //debug("CustomPositions.ReadConfig(0.2)  resetting "+ config.sData[o][I_CONFIG_KEY]);
+      }
    }
+   //debug("CustomPositions.ReadConfig(0.1)  oldLines="+ oldLines +"  newLines="+ newLines);
+   //EnumWindowPropertiesA(hWndDesktop, "rsf::***");
 
-   // finally overwrite global vars (thus on error they are not touched)
+   // finally overwrite global vars (on error they are not touched)
    ArrayResize(config.terms, 0); if (ArraySize(confTerms) > 0) ArrayCopy(config.terms, confTerms);
    ArrayResize(config.sData, 0); if (ArraySize(confsData) > 0) ArrayCopy(config.sData, confsData);
    ArrayResize(config.dData, 0); if (ArraySize(confdData) > 0) ArrayCopy(config.dData, confdData);
@@ -4529,7 +4529,7 @@ bool StoreStatus() {
    SetWindowIntegerA(__ExecutionContext[EC.chart], key, iValue);           // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
-   // risk/MFE/MAE stats of custom positions
+   // MFAE stats of custom positions
    string keys = "";
    int size = ArrayRange(config.sData, 0);
    for (int i=0; i < size; i++) {
@@ -4576,10 +4576,10 @@ bool RestoreStatus() {
    string indicatorName = ProgramName();
 
    // int position.unitsize.corner
-   string key = indicatorName +".position.unitsize.corner";
-   string sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key), sValue2="";
+   string key = indicatorName +".position.unitsize.corner", mfeKey="", maeKey="";
+   string sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key), sValue2="", sValue3="";
    Chart.RestoreString(key, sValue2);
-   if (!StringLen(sValue1)) sValue1 = sValue2;
+   if (sValue1 == "") sValue1 = sValue2;
    int iValue = StrToInteger(sValue1);
    position.unitsize.corner = ifInt(iValue == CORNER_TOP_RIGHT, iValue, CORNER_BOTTOM_RIGHT);
 
@@ -4595,12 +4595,12 @@ bool RestoreStatus() {
    key = indicatorName +"."+ Symbol() +".config.keys";
    sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
    Chart.RestoreString(key, sValue2);
-   if (!StringLen(sValue1)) sValue1 = sValue2;
+   if (sValue1 == "") sValue1 = sValue2;
+   int size = Explode(sValue1, "=", configKeys, NULL);
 
-   // risk/MFE/MAE stats of custom positions
+   // MFAE stats of custom positions
    ArrayResize(config.sData, 0);
    ArrayResize(config.dData, 0);
-   int size = Explode(sValue1, "=", configKeys, NULL);
 
    for (int i=0; i < size; i++) {
       ArrayResize(config.sData, i+1);
@@ -4608,11 +4608,20 @@ bool RestoreStatus() {
       config.sData[i][I_CONFIG_KEY    ] = configKeys[i];
       config.sData[i][I_CONFIG_COMMENT] = "";
 
+      iValue1 = GetWindowPropertyA(hWndDesktop, GetMfaeSignalKey(configKeys[i], I_PROFIT_MFE));
+      iValue2 = GetWindowPropertyA(hWndDesktop, GetMfaeSignalKey(configKeys[i], I_PROFIT_MAE));
+
       key = indicatorName +"."+ Symbol() +".config."+ configKeys[i] +".mfae";
       sValue1 = RemoveWindowStringA(__ExecutionContext[EC.chart], key);
       sValue2 = "";
       Chart.RestoreString(key, sValue2);
-      if (!StringLen(sValue1)) sValue1 = sValue2;
+
+      if (iValue1 || iValue2) {
+         sValue1 = DoubleToStr(iValue1/100., 2) +"|"+ DoubleToStr(iValue2/100., 2);
+      }
+      else if (sValue1 == "") {
+         sValue1 = sValue2;
+      }
       config.dData[i][I_MFAE_ENABLED] = (sValue1 != "");
       config.dData[i][I_PROFIT_MFE  ] = StrToDouble(StrLeftTo(sValue1, "|"));
       config.dData[i][I_PROFIT_MAE  ] = StrToDouble(StrRightFrom(sValue1, "|"));
@@ -4962,7 +4971,7 @@ bool onOrderFail(int tickets[]) {
  * @return bool - success status
  */
 bool onNewMFE(string configKey, double profit) {
-   // convert profit value to cent units (simplifies Get/SetProperty)
+   // convert profit value to cent units to simplify Get/SetProperty
    int iProfit = MathRound(profit * 100);
 
    // skip the signal if it was already processed elsewhere
@@ -4976,7 +4985,7 @@ bool onNewMFE(string configKey, double profit) {
          PlaySoundEx("Beacon.wav");
       }
    }
-   return(!catch("onNewMFE(2)"));
+   return(!catch("onNewMFE(1)"));
 
    // used sound files:
    //  Windows Chord.wav
@@ -4995,7 +5004,7 @@ bool onNewMFE(string configKey, double profit) {
  * @return bool - success status
  */
 bool onNewMAE(string configKey, double profit) {
-   // convert profit value to cent units (simplifies Get/SetProperty)
+   // convert profit value to cent units to simplify Get/SetProperty
    int iProfit = MathRound(profit * 100);
 
    // skip the signal if it was already processed elsewhere
@@ -5009,7 +5018,7 @@ bool onNewMAE(string configKey, double profit) {
          PlaySoundEx("Windows Ping.wav");
       }
    }
-   return(!catch("onNewMAE(2)"));
+   return(!catch("onNewMAE(1)"));
 }
 
 
