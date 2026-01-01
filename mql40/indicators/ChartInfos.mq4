@@ -1096,7 +1096,7 @@ bool CreateLabels() {
    corner = position.unitsize.corner;
    xDist  = 9;
    switch (corner) {
-      case CORNER_TOP_RIGHT:    yDist = 58; break;    // yDist of spread + 20
+      case CORNER_TOP_RIGHT:    yDist = 58; break;          // yDist of spread + 20
       case CORNER_BOTTOM_RIGHT: yDist =  9; break;
    }
    position.unitsize.yLine1 = yDist;
@@ -1109,7 +1109,7 @@ bool CreateLabels() {
    // total position
    corner = position.unitsize.corner;
    xDist  = 9;
-   yDist += 20;                                                   // 1 line above/below unitsize
+   yDist += 20;                                             // 1 line above/below unitsize
    position.unitsize.yLine2 = yDist;
    if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL)) return(false);
    ObjectSet    (label.totalPosition, OBJPROP_CORNER,   corner);
@@ -1197,9 +1197,14 @@ bool UpdateSpread() {
 bool UpdateUnitSize() {
    if (__isTesting)             return(true);            // skip in tester
    if (!mm.done) {
-      if (!CalculateUnitSize()) return(false);           // on error
-      if (!mm.done)             return(true);            // on terminal not yet ready
+      if (!CalculateUnitSize()) return(false);
+      if (!mm.done)             return(true);            // terminal not yet ready
    }
+   if (!positions.analyzed) {
+      if (!AnalyzePositions()) return(false);
+      if (!positions.analyzed) return(true);             // terminal not yet ready
+   }
+
    string text = " ";
 
    if (mode.intern) {
@@ -1242,10 +1247,9 @@ bool UpdatePositions() {
       if (!CalculateUnitSize()) return(false);
       if (!mm.done)             return(true);            // terminal not yet ready
    }
-
    if (!positions.analyzed) {
-      if (!AnalyzePositions())  return(false);
-      if (!positions.analyzed)  return(true);            // terminal not yet ready
+      if (!AnalyzePositions()) return(false);
+      if (!positions.analyzed) return(true);             // terminal not yet ready
    }
 
    // total virtual/real position bottom-right
