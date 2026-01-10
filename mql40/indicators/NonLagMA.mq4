@@ -401,9 +401,9 @@ bool ParameterStepper(int direction, int keys) {
 
    if (!keys & F_VK_SHIFT) {
       // step up/down input parameter "WaveCycle.Periods"
-      double step = WaveCycle.Periods.Step;
+      int step = WaveCycle.Periods.Step;
 
-      if (!step || WaveCycle.Periods + direction*step < 3) {         // no stepping if parameter limit reached
+      if (!step || WaveCycle.Periods + direction*step < 3) {            // stop if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
@@ -415,14 +415,14 @@ bool ParameterStepper(int direction, int keys) {
    }
    else {
       // step up/down input parameter "MA.ReversalFilter"
-      step = MA.ReversalFilter.Step;
+      double dStep = MA.ReversalFilter.Step;
 
-      if (!step || MA.ReversalFilter.StdDev + direction*step < 0) {  // no stepping if parameter limit reached
+      if (!dStep || MA.ReversalFilter.StdDev + direction*dStep < 0) {   // stop if parameter limit reached
          PlaySoundEx("Plonk.wav");
          return(false);
       }
-      if (direction == STEP_UP) MA.ReversalFilter.StdDev += step;
-      else                      MA.ReversalFilter.StdDev -= step;
+      if (direction == STEP_UP) MA.ReversalFilter.StdDev += dStep;
+      else                      MA.ReversalFilter.StdDev -= dStep;
    }
 
    ChangedBars = Bars;
@@ -443,9 +443,10 @@ bool ParameterStepper(int direction, int keys) {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
+   string stepSize      = ifString(WaveCycle.Periods.Step, ":"+ WaveCycle.Periods.Step, "");
    string sMaFilter     = ifString(MA.ReversalFilter.StdDev || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter.StdDev, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName        = WindowExpertName() +"("+ ifString(WaveCycle.Periods.Step || MA.ReversalFilter.Step, "step:", "") + WaveCycle.Periods + sMaFilter + sAppliedPrice +")";
+   indicatorName        = "NonLagMA("+ WaveCycle.Periods + stepSize + sMaFilter + sAppliedPrice +")";
    shortName            = "NLMA("+ WaveCycle.Periods +")";
    IndicatorShortName(shortName);
 
@@ -481,7 +482,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
 
 /**
- * Store the status of an active parameter stepper in the chart (for init cyles, template reloads and/or terminal restarts).
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
  *
  * @return bool - success status
  */
@@ -497,27 +498,25 @@ bool StoreStatus() {
 
 
 /**
- * Restore the status of the parameter stepper from the chart if it wasn't changed in between (for init cyles, template
- * reloads and/or terminal restarts).
+ * Restore the status of the parameter stepper from the chart.
  *
  * @return bool - success status
  */
 bool RestoreStatus() {
-   if (__isChart) {
-      string prefix = "rsf."+ WindowExpertName() +".";
+   if (!__isChart) return(true);
+   string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue;
-      if (Chart.RestoreInt(prefix +"WaveCycle.Periods", iValue)) {
-         if (WaveCycle.Periods.Step > 0) {
-            if (iValue >= 3) WaveCycle.Periods = iValue;          // silent validation
-         }
+   int iValue;
+   if (Chart.RestoreInt(prefix +"WaveCycle.Periods", iValue)) {      // restore and remove it
+      if (WaveCycle.Periods.Step > 0) {                              // apply if stepper is still active
+         if (iValue >= 3) WaveCycle.Periods = iValue;                // silent validation
       }
+   }
 
-      double dValue;
-      if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
-         if (MA.ReversalFilter.Step > 0) {
-            if (dValue >= 0) MA.ReversalFilter.StdDev = dValue;   // silent validation
-         }
+   double dValue;
+   if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {   // restore and remove it
+      if (MA.ReversalFilter.Step > 0) {                              // apply if stepper is still active
+         if (dValue >= 0) MA.ReversalFilter.StdDev = dValue;         // silent validation
       }
    }
    return(!catch("RestoreStatus(1)"));

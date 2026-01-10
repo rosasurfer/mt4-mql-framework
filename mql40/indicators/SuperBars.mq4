@@ -681,13 +681,13 @@ string CreateStatusLabel() {
 
 
 /**
- * Store the currently active SuperBars timeframe in the window (for init cycle and new chart templates) and in the chart
- * (for terminal restart).
+ * Store the active SuperBars timeframe in the chart (for init cycle and terminal restart) and in
+ * the window (for new chart templates).
  *
  * @return bool - success status
  */
 bool StoreStatus() {
-   if (!__isChart || !superTimeframe) return(true);                              // skip on invalid timeframes
+   if (!__isChart || !superTimeframe) return(true);
 
    string label = "rsf."+ ProgramName() +".superTimeframe";
 
@@ -705,7 +705,7 @@ bool StoreStatus() {
 
 
 /**
- * Restore the active SuperBars timeframe from the window (preferred) or the chart.
+ * Restore the active SuperBars timeframe from the chart or the window.
  *
  * @return bool - success status
  */
@@ -714,11 +714,11 @@ bool RestoreStatus() {
 
    string label = "rsf."+ ProgramName() +".superTimeframe";
 
-   // look-up a stored timeframe in the window
+   // restore timeframe from the window (preferred due to performance)
    int hWnd = __ExecutionContext[EC.chart];
    int result = RemoveWindowIntegerA(hWnd, label);
 
-   // on error look-up a stored timeframe in the chart
+   // on error restore from the chart
    if (!result) {
       if (ObjectFind(label) == 0) {
          string value = ObjectDescription(label);

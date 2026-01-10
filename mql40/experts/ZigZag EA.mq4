@@ -1570,15 +1570,15 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(WindowExpertName(), "    ID ", sInstanceId, sStatus, sError, NL,
-                                                                                                NL,
-                                  "Start: ", status.startConditions,                            NL,
-                                  "Stop:  ", status.stopConditions,                             NL,
-                                                                                                NL,
-                                  status.metricDescription,                                     NL,
-                                  "Open:    ",   status.openLots,                               NL,
-                                  "Closed:  ",   status.closedTrades,                           NL,
-                                  "Profit:    ", status.totalProfit, "  ", status.profitStats,  NL
+   string text = StringConcatenate("ZigZag(", ZigZag.Periods, ") EA    ID ", sInstanceId, sStatus, sError, NL,
+                                                                                                           NL,
+                                   "Start: ", status.startConditions,                                      NL,
+                                   "Stop:  ", status.stopConditions,                                       NL,
+                                                                                                           NL,
+                                   status.metricDescription,                                               NL,
+                                   "Open:    ",   status.openLots,                                         NL,
+                                   "Closed:  ",   status.closedTrades,                                     NL,
+                                   "Profit:    ", status.totalProfit, "  ", status.profitStats,            NL
    );
 
    // some lines margin-top for instrument and indicator legends

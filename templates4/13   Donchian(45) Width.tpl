@@ -1,3 +1,7 @@
+<!--
+Donchian Channel(45) Width
+-->
+
 <chart>
 symbol=GBPUSD
 period=60
@@ -95,6 +99,7 @@ name=Custom Indicator
 <expert>
 name=Moving Average
 flags=339
+window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
@@ -146,7 +151,7 @@ name=Donchian Channel Width
 flags=339
 window_num=1
 <inputs>
-Donchian.Periods=45
+Periods=45
 LineColor=16711680
 </inputs>
 </expert>
@@ -160,7 +165,7 @@ name=Donchian Channel Width
 flags=339
 window_num=1
 <inputs>
-Donchian.Periods=40
+Periods=40
 LineColor=16711935
 </inputs>
 </expert>

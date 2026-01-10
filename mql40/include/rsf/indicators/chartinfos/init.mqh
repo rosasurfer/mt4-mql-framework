@@ -4,6 +4,8 @@
  * @return int - error status
  */
 int onInit() {
+   hWndDesktop = GetDesktopWindow();
+
    // reset global vars with account state (we may be called from an event handler, outside an init cycle)
    mm.done                 = false;
    mm.externalAssetsCached = false;                      // invalidate cached external assets
@@ -124,8 +126,6 @@ int afterInit() {
       positions.showAbsProfits = true;
    }
    else {
-      hWndDesktop = GetDesktopWindow();
-
       // register an order event listener
       if (mode.intern && Track.Orders) {
          orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";

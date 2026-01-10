@@ -94,6 +94,7 @@ name=Custom Indicator
 <expert>
 name=Moving Average
 flags=339
+window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
@@ -162,24 +163,6 @@ style_2=2
 style_3=2
 color_6=4294967295
 color_7=4294967295
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=1
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=Donchian Channel Width
-flags=339
-window_num=1
-<inputs>
-Donchian.Periods=30
-</inputs>
-</expert>
-level_0=200
 show_data=1
 </indicator>
 </window>

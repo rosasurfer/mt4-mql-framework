@@ -160,6 +160,7 @@
    int      GetWindowPropertyA   (int hWnd, string name);
    bool     SetWindowPropertyA   (int hWnd, string name, int value);
    int      RemoveWindowPropertyA(int hWnd, string name);
+   bool     EnumWindowPropertiesA(int hWnd, string prefix);
 
    int      GetWindowIntegerA   (int hWnd, string name);
    bool     SetWindowIntegerA   (int hWnd, string name, int value);

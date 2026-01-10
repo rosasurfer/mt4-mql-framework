@@ -1,6 +1,6 @@
 <!--
 On M5:
-------
+======
 ZigZag(10) = 50xM1 	trend direction
 EMA(40)    = 200xM1	filter: above only long, below only short
 -->
@@ -101,10 +101,10 @@ name=Custom Indicator
 <expert>
 name=Moving Average
 flags=339
+window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=40
-MA.Periods.Step=10
 Draw.Type=Line* | Dot
 UpTrend.Color=16760576
 DownTrend.Color=16760576

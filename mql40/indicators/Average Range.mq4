@@ -182,10 +182,10 @@ bool onCommand(string cmd, string params, int keys) {
 bool ParameterStepper(int direction, int keys) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // step up/down input parameter "T3.Periods"
+   // step up/down input parameter "MA.Periods"
    int step = MA.Periods.Step;
 
-   if (!step || MA.Periods + direction*step < 1) {          // no stepping if parameter limit reached
+   if (!step || MA.Periods + direction*step < 1) {       // stop if parameter limit reached
       PlaySoundEx("Plonk.wav");
       return(false);
    }
@@ -211,7 +211,8 @@ bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
    IndicatorBuffers(terminal_buffers);
 
-   string name = ifString(TrueRange, "ATR", "AvgRange") +"("+ ifString(MA.Periods.Step, "step:", "") + MA.Periods +")";
+   string stepSize = ifString(MA.Periods.Step, ":"+ MA.Periods.Step, "");
+   string name     = ifString(TrueRange, "ATR", "AvgRange") +"("+ MA.Periods + stepSize +")";
    IndicatorShortName(name);
 
    int drawType = ifInt(Line.Width, DRAW_LINE, DRAW_NONE);
@@ -226,7 +227,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
 
 /**
- * Store the status of an active parameter stepper in the chart (for init cyles, template reloads and/or terminal restarts).
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
  *
  * @return bool - success status
  */
@@ -240,20 +241,18 @@ bool StoreStatus() {
 
 
 /**
- * Restore the status of the parameter stepper from the chart if it wasn't changed in between (for init cyles, template
- * reloads and/or terminal restarts).
+ * Restore the status of the parameter stepper from the chart.
  *
  * @return bool - success status
  */
 bool RestoreStatus() {
-   if (__isChart) {
-      string prefix = "rsf."+ WindowExpertName() +".";
+   if (!__isChart) return(true);
+   string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue;
-      if (Chart.RestoreInt(prefix +"MA.Periods", iValue)) {
-         if (MA.Periods.Step > 0) {
-            if (iValue >= 1) MA.Periods = iValue;              // silent validation
-         }
+   int iValue;
+   if (Chart.RestoreInt(prefix +"MA.Periods", iValue)) {    // restore and remove it
+      if (MA.Periods.Step > 0) {                            // apply if stepper is still active
+         if (iValue > 0) MA.Periods = iValue;               // silent validation
       }
    }
    return(!catch("RestoreStatus(1)"));

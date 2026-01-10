@@ -139,7 +139,7 @@ name=Donchian Channel Width
 flags=339
 window_num=1
 <inputs>
-Donchian.Periods=30
+Periods=30
 </inputs>
 </expert>
 level_0=200

@@ -93,17 +93,17 @@
 #define INITREASON_TERMINAL_FAILURE            10        // | terminal failure                              |    input dialog |      E      |   @see  https://github.com/rosasurfer/mt4-mql-framework/issues/1
                                                          // +-----------------------------------------------+-----------------+-------------+
 
-// UninitializeReason codes (matching the MetaQuotes REASON_* codes)
-#define UNINITREASON_UNDEFINED                  0
-#define UNINITREASON_REMOVE                     1
-#define UNINITREASON_RECOMPILE                  2
-#define UNINITREASON_CHARTCHANGE                3
-#define UNINITREASON_CHARTCLOSE                 4
-#define UNINITREASON_PARAMETERS                 5
-#define UNINITREASON_ACCOUNT                    6
-#define UNINITREASON_TEMPLATE                   7
-#define UNINITREASON_INITFAILED                 8
-#define UNINITREASON_CLOSE                      9
+// UninitializeReason codes (same as built-in)
+#define UNINITREASON_UNDEFINED      REASON_UNDEFINED
+#define UNINITREASON_REMOVE         REASON_REMOVE
+#define UNINITREASON_RECOMPILE      REASON_RECOMPILE
+#define UNINITREASON_CHARTCHANGE    REASON_CHARTCHANGE
+#define UNINITREASON_CHARTCLOSE     REASON_CHARTCLOSE
+#define UNINITREASON_PARAMETERS     REASON_PARAMETERS
+#define UNINITREASON_ACCOUNT        REASON_ACCOUNT
+#define UNINITREASON_TEMPLATE       REASON_TEMPLATE
+#define UNINITREASON_INITFAILED     REASON_INITFAILED
+#define UNINITREASON_CLOSE          REASON_CLOSE
 
 
 // CLI debug options (flags)
@@ -111,6 +111,7 @@
 #define DEBUG_ACCOUNT_SERVER                    2           // whether cmd line option /rsf:debug-accountserver is set
 #define DEBUG_ACCOUNT_NUMBER                    4           // whether cmd line option /rsf:debug-accountnumber is set
 #define DEBUG_OBJECT_CREATE                     8           // whether cmd line option /rsf:debug-objectcreate is set
+#define DEBUG_INDICATOR_LIST                   16           // whether cmd line option /rsf:debug-indicatorlist is set
 
 
 // window property names
