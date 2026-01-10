@@ -151,7 +151,7 @@ name=Donchian Channel Width
 flags=339
 window_num=1
 <inputs>
-Donchian.Periods=45
+Periods=45
 LineColor=16711680
 </inputs>
 </expert>
@@ -165,7 +165,7 @@ name=Donchian Channel Width
 flags=339
 window_num=1
 <inputs>
-Donchian.Periods=40
+Periods=40
 LineColor=16711935
 </inputs>
 </expert>
