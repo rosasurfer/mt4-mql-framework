@@ -1173,6 +1173,31 @@ string FindStandardSymbol(string symbol, bool strict = false) {
 
 
 /**
+ * Get the index of the chart subwindow containing the current indicator. The function calls IndicatorShortName() to
+ * temporarly assign a unique name to the indicator.
+ *
+ * @param  string shortName [optional] - short indicator name as defined by the user (default: value of WindowExpertName())
+ *
+ * @return int - subwindow index (0 = main window) or -1 if the indicator was not found
+ *
+ * Note: When a custom indicator is manually added to the chart the function returns -1 in the first onInit() call.
+ *       In this case call the function again in the indicator's onTick() function.
+ */
+int GetChartWindow(string shortName = "") {
+   if (shortName == "") {
+      shortName = WindowExpertName();
+   }
+   string tmpName = "["+ __ExecutionContext[EC.pid] +"]";
+   IndicatorShortName(tmpName);
+
+   int window = WindowFind(tmpName);
+
+   IndicatorShortName(shortName);
+   return(window);
+}
+
+
+/**
  * Inlined conditional boolean statement.
  *
  * @param  bool condition
@@ -6710,6 +6735,7 @@ void __DummyCalls() {
    GetAccountNumber();
    GetAccountServer();
    GetAccountServerPath();
+   GetChartWindow();
    GetCommission();
    GetConfigBool(NULL, NULL);
    GetConfigColor(NULL, NULL);

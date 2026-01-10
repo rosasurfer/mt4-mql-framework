@@ -63,6 +63,7 @@ string   GetAccountCompanyId();;
 int      GetAccountNumber();;
 string   GetAccountServer();;
 string   GetAccountServerPath();;
+int      GetChartWindow(string shortName="");
 string   GetClassName(int hWnd);;
 double   GetCommission(double lots=1.0, int mode=MODE_MONEY);;
 string   GetCurrency(int id);;

@@ -17,11 +17,9 @@ extern int   MaxBarsBack  = 10000;           // max. values to calculate (-1: al
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
+#include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/HandleCommands.mqh>
-
-// parameter stepper directions
-#define STEP_UP              1
-#define STEP_DOWN           -1
+#include <rsf/functions/ObjectCreateRegister.mqh>
 
 // indicator buffer ids
 #define MODE_MAIN            0
@@ -29,14 +27,24 @@ extern int   MaxBarsBack  = 10000;           // max. values to calculate (-1: al
 #define MODE_LOWER_BAND      2
 
 #property indicator_separate_window
-#property indicator_buffers  1
-int       terminal_buffers = 3;
+#property indicator_buffers  1               // visible buffers
+int       terminal_buffers = 3;              // all buffers
 
 #property indicator_color1    CLR_NONE
 
 double main     [];
 double upperBand[];
 double lowerBand[];
+
+string indicatorName = "";
+string shortName     = "";
+string legendLabel   = "";
+int    chartWindow;
+bool   isChartLegend = false;                // chart legend in main window
+
+// parameter stepper directions
+#define STEP_UP    1
+#define STEP_DOWN -1
 
 
 /**
@@ -74,6 +82,10 @@ int onInit() {
    // buffer management and display options
    SetIndicatorOptions();
 
+   // always initialize a chart legend (removed on the first tick if not used)
+   legendLabel = CreateChartLegend();
+   chartWindow = GetChartWindow(shortName);
+
    return(catch("onInit(4)"));
 }
 
@@ -106,6 +118,13 @@ int onTick() {
       ArrayInitialize(upperBand, 0);
       ArrayInitialize(lowerBand, 0);
       SetIndicatorOptions();
+
+      // initialize additional legend in main chart
+      if (__isChart && !__isSuperContext) {
+         if (chartWindow == -1) chartWindow = GetChartWindow(shortName);
+         isChartLegend = (chartWindow == 0);
+         if (!isChartLegend) RemoveChartLegend();
+      }
    }
 
    // synchronize buffers with a shifted offline chart
@@ -135,6 +154,9 @@ int onTick() {
       }
       main[bar] = (upperBand[bar] - lowerBand[bar])/pUnit;
    }
+
+   if (isChartLegend) UpdateChartLegend();
+
    return(last_error);
 }
 
@@ -187,6 +209,29 @@ bool ParameterStepper(int direction, int keys) {
 
 
 /**
+ * Update the chart legend.
+ */
+void UpdateChartLegend() {
+   static int lastTime, lastAccount;
+   static double lastWidth;
+
+   // update on full recalculation or if indicator name, channel width, current bar or the account changed
+   if (!ValidBars || main[0]!=lastWidth || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
+      string text = StringConcatenate(indicatorName, "   ", NumberToStr(main[0], pUnitFormat));
+      color clr = LineColor; clr = Blue;
+
+      ObjectSetText(legendLabel, text, 9, "Arial Fett", clr);
+      int error = GetLastError();
+      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateChartLegend(1)", error);     // on ObjectDrag or opened "Properties" dialog
+
+      lastTime    = Time[0];
+      lastAccount = AccountNumber();
+      lastWidth   = main[0];
+   }
+}
+
+
+/**
  * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
  *
  * @param  bool redraw [optional] - whether to redraw the chart (default: no)
@@ -198,8 +243,9 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorBuffers(terminal_buffers);
 
    string stepSize = ifString(Periods.Step, ":"+ Periods.Step, "");
-   string name     = "Donchian Channel("+ Periods + stepSize +") Width";
-   IndicatorShortName(name);
+   indicatorName = "Donchian Channel("+ Periods + stepSize +") Width";
+   shortName     = "Donchian Channel("+ Periods +") Width";
+   IndicatorShortName(shortName);
 
    SetIndexBuffer(MODE_MAIN,       main     ); SetIndexEmptyValue(MODE_MAIN,       0);
    SetIndexBuffer(MODE_UPPER_BAND, upperBand); SetIndexEmptyValue(MODE_UPPER_BAND, 0);
