@@ -42,10 +42,10 @@
  *  • MaxBarsBack:                  Maximum number of bars back to calculate the indicator for (performance).
  *
  *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
- *  • Signal.onReversal.Types:      Reversal signaling methods, can be a combination of "sound", "alert", "mail", "sms".
+ *  • Signal.onReversal.Types:      Reversal signaling methods, can be a combination of "sound", "alert", "mail".
  *
  *  • Signal.onBreakout:            Whether to signal ZigZag breakouts (price exceeding the previous swing's ZigZag semaphore).
- *  • Signal.onBreakout.Types:      Breakout signaling methods, can be a combination of "sound", "alert", "mail", "sms".
+ *  • Signal.onBreakout.Types:      Breakout signaling methods, can be a combination of "sound", "alert", "mail".
  *
  *  • Signal.Sound.Up:              Sound file for reversal and breakout signals.
  *  • Signal.Sound.Down:            Sound file for reversal and breakout signals.
@@ -99,7 +99,7 @@ extern int      MaxBarsBack                    = 10000;                         
 
 extern string   ___e__________________________ = "=== Signaling ===";
 extern bool     Signal.onReversal              = false;                          // signal ZigZag reversals (first Donchian channel crossing)
-extern string   Signal.onReversal.Types        = "sound* | alert | mail | sms";
+extern string   Signal.onReversal.Types        = "sound* | alert | mail";
 
 extern bool     Signal.onBreakout              = false;                          // signal ZigZag breakouts
 extern string   Signal.onBreakout.Types        = "sound* | alert | mail";
