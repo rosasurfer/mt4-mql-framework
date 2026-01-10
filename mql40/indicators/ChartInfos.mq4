@@ -3477,7 +3477,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       lotsize = termValue1;
 
       if (lotsize == EMPTY) {
-         // alle übrigen Long-Positionen
+         // all remaining long positions
          if (fromLongPosition > 0) {
             for (int i=0; i < sizeFromTickets; i++) {
                if (!fromTickets[i]) continue;
@@ -3527,7 +3527,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       lotsize = termValue1;
 
       if (lotsize == EMPTY) {
-         // alle übrigen Short-Positionen
+         // all remaining short positions
          if (fromShortPosition > 0) {
             for (i=0; i < sizeFromTickets; i++) {
                if (!fromTickets[i]) continue;
@@ -3577,7 +3577,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       from = termValue1;
       to   = termValue2;
 
-      // alle offenen Positionen des aktuellen Symbols eines Zeitraumes
+      // all open positions in the specified time range
       if (fromLongPosition || fromShortPosition) {
          for (i=0; i < sizeFromTickets; i++) {
             if (!fromTickets[i])                 continue;
@@ -3609,42 +3609,41 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
    }
 
    else if (termType==TERM_HISTORY || termType==TERM_HISTORY_TOTAL) {
-      // geschlossene Positionen des aktuellen oder aller Symbole eines Zeitraumes
+      // closed positions of current or all symbols in the specified time range
       from              = termValue1;
       to                = termValue2;
       double lastProfit = termResult1;    // default: EMPTY_VALUE
-      int    lastOrders = termResult2;    // default: EMPTY_VALUE                // Anzahl der Tickets in der History: ändert sie sich, wird der PL neu berechnet
+      int    lastOrders = termResult2;    // default: EMPTY_VALUE                // number of tickets in history: on change the cached PnL is invalid/must be re-calculated
 
       int orders=OrdersHistoryTotal(), _orders=orders;
       if (orders != lastOrders) {
 
-         // Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
-         int sortKeys[][3], n, hst.ticket;                                 // {CloseTime, OpenTime, Ticket}
+         // read sort keys of closed tickets and order tickets by time {0:CloseTime, 1:OpenTime, 2:Ticket}
+         int sortKeys[][3], n, hst.ticket;
          ArrayResize(sortKeys, orders);
 
          for (i=0; i < orders; i++) {
             if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;             // FALSE: the visible history range was modified in another thread
 
-            // wenn OrderType()==OP_BALANCE, dann OrderSymbol()==Leerstring
+            // if OrderType()==OP_BALANCE, then OrderSymbol()=="" (empty)
             if (OrderType() == OP_BALANCE) {
-               // Dividenden                                                     // "Ex Dividend US2000" oder
+               // dividends                                                      // "Ex Dividend US2000" or
                if (StrStartsWithI(OrderComment(), "ex dividend ")) {             // "Ex Dividend 17/03/15 US2000"
-                  if (termType == TERM_HISTORY)                                  // single history
-                     if (!StrEndsWithI(OrderComment(), " "+ Symbol())) continue; // ok, wenn zum aktuellen Symbol gehörend
+                  if (termType == TERM_HISTORY) {                                // on single symbol history:
+                     if (!StrEndsWithI(OrderComment(), " "+ Symbol())) continue; // include balance if it belongs to us
+                  }
                }
-               // Rollover adjustments
+               // rollover adjustments
                else if (StrStartsWithI(OrderComment(), "adjustment ")) {         // "Adjustment BRENT"
-                  if (termType == TERM_HISTORY)                                  // single history
-                     if (!StrEndsWithI(OrderComment(), " "+ Symbol())) continue; // ok, wenn zum aktuellen Symbol gehörend
+                  if (termType == TERM_HISTORY) {                                // on single symbol history:
+                     if (!StrEndsWithI(OrderComment(), " "+ Symbol())) continue; // include balance if it belongs to us
+                  }
                }
-               else continue;                                                    // sonstige Balance-Einträge
+               else continue;                                                    // other balances
             }
             else {
                if (OrderType() > OP_SELL)                                      continue;
-               if (termType==TERM_HISTORY) /*&&*/ if (OrderSymbol()!=Symbol()) continue;    // ggf. Positionen aller Symbole
-               if (filter != NULL) {
-                  if (!ApplyFilter(filter, filterCondition, filterValue, OrderMagicNumber())) continue;
-               }
+               if (termType==TERM_HISTORY) /*&&*/ if (OrderSymbol()!=Symbol()) continue;  // current or all symbols
             }
 
             sortKeys[n][0] = OrderCloseTime();
@@ -3654,63 +3653,67 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          }
          orders = n;
          ArrayResize(sortKeys, orders);
-         SortClosedTickets(sortKeys);                       // TODO: move to Expander (bad performance)
+         SortClosedTickets(sortKeys);                                         // @TODO: move to Expander
 
-         // Tickets sortiert einlesen
-         int      hst.tickets    []; ArrayResize(hst.tickets,     orders);
-         int      hst.types      []; ArrayResize(hst.types,       orders);
-         double   hst.lotSizes   []; ArrayResize(hst.lotSizes,    orders);
-         datetime hst.openTimes  []; ArrayResize(hst.openTimes,   orders);
-         datetime hst.closeTimes []; ArrayResize(hst.closeTimes,  orders);
-         double   hst.openPrices []; ArrayResize(hst.openPrices,  orders);
-         double   hst.closePrices[]; ArrayResize(hst.closePrices, orders);
-         double   hst.commissions[]; ArrayResize(hst.commissions, orders);
-         double   hst.swaps      []; ArrayResize(hst.swaps,       orders);
-         double   hst.profits    []; ArrayResize(hst.profits,     orders);
-         string   hst.comments   []; ArrayResize(hst.comments,    orders);
-         bool     hst.valid      []; ArrayResize(hst.valid,       orders);
+         // now read all tickets in order, so that we can adjust hedges
+         int      hst.tickets     []; ArrayResize(hst.tickets,      orders);
+         int      hst.types       []; ArrayResize(hst.types,        orders);
+         double   hst.lotSizes    []; ArrayResize(hst.lotSizes,     orders);
+         datetime hst.openTimes   []; ArrayResize(hst.openTimes,    orders);
+         datetime hst.closeTimes  []; ArrayResize(hst.closeTimes,   orders);
+         double   hst.openPrices  []; ArrayResize(hst.openPrices,   orders);
+         double   hst.closePrices []; ArrayResize(hst.closePrices,  orders);
+         double   hst.commissions []; ArrayResize(hst.commissions,  orders);
+         double   hst.swaps       []; ArrayResize(hst.swaps,        orders);
+         double   hst.profits     []; ArrayResize(hst.profits,      orders);
+         int      hst.magicNumbers[]; ArrayResize(hst.magicNumbers, orders);
+         string   hst.comments    []; ArrayResize(hst.comments,     orders);
+         bool     hst.discarded   []; ArrayResize(hst.discarded,    orders);
 
          for (i=0; i < orders; i++) {
             if (!SelectTicket(sortKeys[i][2], "ExtractPosition(1)")) return(false);
-            hst.tickets    [i] = OrderTicket();
-            hst.types      [i] = OrderType();
-            hst.lotSizes   [i] = OrderLots();
-            hst.openTimes  [i] = OrderOpenTime();
-            hst.closeTimes [i] = OrderCloseTime();
-            hst.openPrices [i] = OrderOpenPrice();
-            hst.closePrices[i] = OrderClosePrice();
-            hst.commissions[i] = OrderCommission();
-            hst.swaps      [i] = OrderSwap();
-            hst.profits    [i] = OrderProfit();
-            hst.comments   [i] = OrderComment();
-            hst.valid      [i] = true;
+            hst.tickets     [i] = OrderTicket();
+            hst.types       [i] = OrderType();
+            hst.lotSizes    [i] = OrderLots();
+            hst.openTimes   [i] = OrderOpenTime();
+            hst.closeTimes  [i] = OrderCloseTime();
+            hst.openPrices  [i] = OrderOpenPrice();
+            hst.closePrices [i] = OrderClosePrice();
+            hst.commissions [i] = OrderCommission();
+            hst.swaps       [i] = OrderSwap();
+            hst.profits     [i] = OrderProfit();
+            hst.magicNumbers[i] = OrderMagicNumber();
+            hst.comments    [i] = OrderComment();
+            hst.discarded   [i] = false;
          }
 
-         // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen (auch Positionen mehrerer Symbole werden korrekt zugeordnet)
-         // TODO: the nested loop freezes the terminal if full history is active => move to Expander
+         // adjust hedges: link all trade data to the 1st ticket (open), discard the 2nd ticket (close)
+         //
+         // @TODO: with a large history the nested loop freezes the terminal => move to Expander
+         //
          for (i=0; i < orders; i++) {
-            if (!hst.valid[i]) continue;                                      // skip processed hedging orders
+            if (hst.discarded[i]) continue;                                   // skip discarded tickets
 
-            if (hst.lotSizes[i] < 0.005) {                                    // lotSize = 0: Hedge-Position
+            if (hst.lotSizes[i] < 0.005) {                                    // lotSize = 0: hedge position
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
                if (!StrStartsWith(hst.comments[i], "close hedge by #")) {
                   return(!catch("ExtractPosition(2)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
                }
 
-               // Gegenstück suchen
+               // find the counter-part ticket
                hst.ticket = StrToInteger(StringSubstr(hst.comments[i], 16));
-               for (n=0; n < orders; n++) {                                   // TODO: move to Expander
+               for (n=0; n < orders; n++) {                                   // @TODO: move to Expander
                   if (hst.tickets[n] == hst.ticket) break;
                }
-               if (n == orders) return(!catch("ExtractPosition(3)  cannot find counterpart for hedging position #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
-               if (i == n     ) return(!catch("ExtractPosition(4)  both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+               if (n == orders) return(!catch("ExtractPosition(3)  cannot find referenced ticket #"+ hst.ticket +" of hedging position #"+ hst.tickets[i] +" ("+ ifString(hst.magicNumbers[i], "magic: "+ hst.magicNumbers[i] +", ", "") +"comment "+ DoubleQuoteStr(hst.comments[i]) +")", ERR_RUNTIME_ERROR));
+               if (i == n)      return(!catch("ExtractPosition(4)  illegal state: both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" (comment "+ DoubleQuoteStr(hst.comments[i]) +")", ERR_ILLEGAL_STATE));
 
                int first  = Min(i, n);
                int second = Max(i, n);
 
-               // Orderdaten korrigieren
+               // adjust ticket data
                if (i == first) {
-                  hst.lotSizes   [first] = hst.lotSizes   [second];           // alle Transaktionsdaten in der ersten Order speichern
+                  hst.lotSizes   [first] = hst.lotSizes   [second];           // store all trade data in the 1st ticket (open)
                   hst.commissions[first] = hst.commissions[second];
                   hst.swaps      [first] = hst.swaps      [second];
                   hst.profits    [first] = hst.profits    [second];
@@ -3718,12 +3721,12 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                hst.closeTimes [first] = hst.openTimes [second];
                hst.closePrices[first] = hst.openPrices[second];
 
-               hst.closeTimes[second] = hst.closeTimes[first];                // CloseTime des hedgenden Tickets auf die erste Order setzen, damit es durch den Zeitfilter kommt und an ShowTradeHistory() übergeben werden kann
-               hst.valid     [second] = false;                                // hedgendes Ticket als verworfen markieren
+               hst.closeTimes[second] = hst.closeTimes[first];                // set CloseTime of hedging tickets to 1st ticket, damit es durch den Zeitfilter kommt und an ShowTradeHistory() übergeben werden kann
+               hst.discarded [second] = true;                                 // mark hedging ticket as discarded
             }
          }
 
-         // Trades auswerten
+         // calculate resulting PnL
          int showTickets[];
          ArrayResize(showTickets, 0);
          lastProfit=0; n=0;
@@ -3731,14 +3734,19 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          for (i=0; i < orders; i++) {
             if (from && hst.closeTimes[i] < from) continue;
             if (to   && hst.closeTimes[i] > to  ) continue;
-            ArrayPushInt(showTickets, hst.tickets[i]);                        // collect tickets to pass to ShowTradeHistory()
-            if (!hst.valid[i])                    continue;                   // verworfene Hedges überspringen
+            if (flags & F_SHOW_CUSTOM_HISTORY && 1) {
+               ArrayPushInt(showTickets, hst.tickets[i]);                     // collect tickets to pass to ShowTradeHistory()
+            }
+            if (hst.discarded[i])                 continue;                   // skip discarded tickets
+            if (filter != NULL) {                                             // skip filtered tickets
+               if (!ApplyFilter(filter, filterCondition, filterValue, hst.magicNumbers[i])) continue;
+            }
             lastProfit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
             n++;
-         }                                                                    // call ShowTradeHistory() if specified
-         if (flags & F_SHOW_CUSTOM_HISTORY && ArraySize(showTickets)) ShowTradeHistory(showTickets);
+         }
+         if (ArraySize(showTickets) > 0) ShowTradeHistory(showTickets);
 
-         if (!n) lastProfit = EMPTY_VALUE;                                    // keine passenden geschlossenen Trades gefunden
+         if (!n) lastProfit = EMPTY_VALUE;                                    // no matching closed trades found
          else    lastProfit = NormalizeDouble(lastProfit, 2);
          termResult1        = lastProfit;
          termResult2        = _orders;
