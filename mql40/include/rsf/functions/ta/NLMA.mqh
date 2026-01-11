@@ -3,7 +3,7 @@
  *
  * @param  _In_  int    cycles       - number of wave cycles
  * @param  _In_  int    cyclePeriods - wave cycle length in bars
- * @param  _Out_ double &weights[]   - array receiving the resulting MA weights
+ * @param  _Out_ double weights[]    - array receiving the resulting MA weights
  *
  * @return bool - success status
  *

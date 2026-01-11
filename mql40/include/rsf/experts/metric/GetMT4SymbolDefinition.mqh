@@ -1,14 +1,14 @@
 /**
  * Return a symbol definition for the specified metric to be recorded.
  *
- * @param  _In_  int    id          - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
- * @param  _Out_ bool   &ready      - whether metric details are complete and the metric is ready to be recorded
- * @param  _Out_ string &symbol     - unique MT4 timeseries symbol
- * @param  _Out_ string &descr      - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
- * @param  _Out_ string &group      - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
- * @param  _Out_ int    &digits     - symbol digits value
- * @param  _Out_ double &baseValue  - quotes base value (if EMPTY recorder default settings are used)
- * @param  _Out_ int    &multiplier - quotes multiplier
+ * @param  _In_  int    id         - metric id; 0 = standard AccountEquity() symbol, positive integer for custom metrics
+ * @param  _Out_ bool   ready      - whether metric details are complete and the metric is ready to be recorded
+ * @param  _Out_ string symbol     - unique MT4 timeseries symbol
+ * @param  _Out_ string descr      - symbol description as in the MT4 "Symbols" window (if empty a description is generated)
+ * @param  _Out_ string group      - symbol group name as in the MT4 "Symbols" window (if empty a name is generated)
+ * @param  _Out_ int    digits     - symbol digits value
+ * @param  _Out_ double baseValue  - quotes base value (if EMPTY recorder default settings are used)
+ * @param  _Out_ int    multiplier - quotes multiplier
  *
  * @return int - error status; especially ERR_INVALID_INPUT_PARAMETER if the passed metric id is unknown or not supported
  */

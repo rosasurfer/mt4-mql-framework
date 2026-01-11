@@ -796,7 +796,7 @@ double PipValue(double lots=1.0, bool muteErrors=false) {
  *
  * @param  _In_  string symbol            - symbol
  * @param  _In_  double lots              - lot amount
- * @param  _Out_ int    &error            - variable receiving the error status
+ * @param  _Out_ int    error             - variable receiving the error status
  * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
  *                                           if specified errors are logged with level LOG_NOTICE
  *                                           if not specified errors are not logged (default)
@@ -2719,7 +2719,7 @@ int SumInts(int values[]) {
  *
  * @param  _In_  string symbol            - symbol
  * @param  _In_  int    mode              - MarketInfo() data identifier
- * @param  _Out_ int    &error            - variable receiving the error status
+ * @param  _Out_ int    error             - variable receiving the error status
  * @param  _In_  string caller [optional] - location identifier of the caller, controls error handling: if not empty errors
  *                                          are logged (default: no logging)
  *

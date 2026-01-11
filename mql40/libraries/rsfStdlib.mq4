@@ -61,8 +61,8 @@ int onDeinit() {
 /**
  * Add a value to all elements of an integer array.
  *
- * @param  _InOut_ int &array[]
- * @param  _In_    int  value
+ * @param  _InOut_ int array[]
+ * @param  _In_    int value
  *
  * @return bool - success status
  */
@@ -3842,10 +3842,10 @@ color RGB(int red, int green, int blue) {
 /**
  * Convert a RGB color to the HSL color model (hue, saturation, lightness). This model is used by the Windows color picker.
  *
- * @param  _In_  color   rgb              - RGB color
- * @param  _Out_ double &hsl[]            - array the resulting HSL color components are copied to (each in the range 0...1)
- * @param  _In_  bool    human [optional] - whether the color components should be returned in human-readable format
- *                                          (default: no, each in the range 0...1)
+ * @param  _In_  color  rgb              - RGB color
+ * @param  _Out_ double hsl[]            - array the resulting HSL color components are copied to (each in the range 0...1)
+ * @param  _In_  bool   human [optional] - whether the color components should be returned in human-readable format
+ *                                         (default: no, each in the range 0...1)
  * @return int - error status
  */
 int RGBToHSL(color rgb, double &hsl[], bool human = false) {

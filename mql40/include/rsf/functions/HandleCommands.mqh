@@ -68,8 +68,8 @@ bool HandleCommands(string channel = "") {
 /**
  * Retrieve a chart command sent to the specified channel.
  *
- * @param  _In_    string channel     - channel to check for commands
- * @param  _InOut_ string &commands[] - array the command is appended to
+ * @param  _In_    string channel    - channel to check for commands
+ * @param  _InOut_ string commands[] - array the command is appended to
  *
  * @return bool - whether a command was found and successfully retrieved
  */

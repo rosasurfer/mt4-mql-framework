@@ -427,7 +427,7 @@ bool UpdateSuperBars() {
  * @param  _In_    int      closeBar    - chart bar offset of the SuperBar's close bar
  * @param  _In_    datetime openTimeFxt - super period starttime in FXT
  * @param  _In_    datetime openTimeSrv - super period starttime in server time
- * @param  _InOut_ bool     &drawETH    - Whether the ETH period of a D1 SuperBar can be drawn. Switches to FALSE once all
+ * @param  _InOut_ bool     drawETH     - Whether the ETH period of a D1 SuperBar can be drawn. Switches to FALSE once all
  *                                        available M15 data is processed, irrespective of further D1 SuperBars.
  * @return bool - success status
  */

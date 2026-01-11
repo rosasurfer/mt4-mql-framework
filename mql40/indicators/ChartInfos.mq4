@@ -2151,8 +2151,8 @@ bool ReadUnitSizeConfiguration() {
 /**
  * Find the applicable configuration value for the unitsize calculation.
  *
- * @param _In_  string key    - unitsize configuration identifier
- * @param _Out_ string &value - configuration value
+ * @param _In_  string key   - unitsize configuration identifier
+ * @param _Out_ string value - configuration value
  *
  * @return bool - success status
  */
@@ -2189,7 +2189,7 @@ bool ReadUnitSizeConfigValue(string key, string &value) {
  *
  * @param _In_  string section - configuration section
  * @param _In_  string key     - configuration key
- * @param _Out_ string &value  - configuration value
+ * @param _Out_ string value   - configuration value
  *
  * @return bool - success status
  */
@@ -4829,9 +4829,9 @@ bool RestoreStatus() {
  * Monitor execution of pending order limits and opening/closing of positions. Orders with a magic number (managed by an EA)
  * are not monitored as this is the responsibility of the EA.
  *
- * @param  _Out_ double &openedPositions[][] - executed entry limits: {ticket, entryLimit}
- * @param  _Out_ int    &closedPositions[][] - executed exit limits:  {ticket, closeType}
- * @param  _Out_ int    &failedOrders   []   - failed executions:     {ticket}
+ * @param  _Out_ double openedPositions[][] - executed entry limits: {ticket, entryLimit}
+ * @param  _Out_ int    closedPositions[][] - executed exit limits:  {ticket, closeType}
+ * @param  _Out_ int    failedOrders   []   - failed executions:     {ticket}
  *
  * @return bool - success status
  */

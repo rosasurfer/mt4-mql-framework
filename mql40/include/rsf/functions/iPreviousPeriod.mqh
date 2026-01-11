@@ -3,11 +3,11 @@
  * the custom timeframe PERIOD_Q1. If 'openTimeFxt' is NULL the calculated period is the current still unfinished time period.
  *
  * @param  _In_    int      timeframe               - target timeframe (NULL: the current timeframe)
- * @param  _InOut_ datetime &openTimeFxt            - IN:  reference time in FXT (NULL: interpreted as in the future of the current time period
+ * @param  _InOut_ datetime openTimeFxt             - IN:  reference time in FXT (NULL: interpreted as in the future of the current time period
  *                                                    OUT: start time of the resulting time period in FXT
- * @param  _Out_   datetime &closeTimeFxt           - end time of the resulting time period in FXT
- * @param  _Out_   datetime &openTimeSrv            - start time of the resulting time period in server time
- * @param  _Out_   datetime &closeTimeSrv           - end time of the resulting time period in server time
+ * @param  _Out_   datetime closeTimeFxt            - end time of the resulting time period in FXT
+ * @param  _Out_   datetime openTimeSrv             - start time of the resulting time period in server time
+ * @param  _Out_   datetime closeTimeSrv            - end time of the resulting time period in server time
  * @param  _In_    bool     skipWeekends [optional] - skip weekend times in the calculations (default: yes)
  *
  * @return bool - success status

@@ -568,7 +568,7 @@ bool IsBearishPattern(int bar) {
  * @param  _In_  double buffer[] - indicator line buffer
  * @param  _In_  int    from     - start offset of the bar range to check
  * @param  _In_  int    to       - end offset of the bar range to check
- * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
+ * @param  _Out_ int    bar      - offset of the first found bar or EMPTY (-1) if there was none
  *
  * @return bool
  */
@@ -593,7 +593,7 @@ bool WasPriceAbove(double buffer[], int from, int to, int &bar) {
  * @param  _In_  double buffer[] - indicator line buffer
  * @param  _In_  int    from     - start offset of the bar range to check
  * @param  _In_  int    to       - end offset of the bar range to check
- * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
+ * @param  _Out_ int    bar      - offset of the first found bar or EMPTY (-1) if there was none
  *
  * @return bool
  */
@@ -618,7 +618,7 @@ bool WasPriceBelow(double buffer[], int from, int to, int &bar) {
  * @param  _In_  double buffer[] - indicator line buffer
  * @param  _In_  int    from     - start offset of the bar range to check
  * @param  _In_  int    to       - end offset of the bar range to check
- * @param  _Out_ int    &bar     - bar offset of the first crossing or EMPTY (-1) if there was none
+ * @param  _Out_ int    bar      - bar offset of the first crossing or EMPTY (-1) if there was none
  *
  * @return bool
  */
@@ -643,7 +643,7 @@ bool WasPriceCross(double buffer[], int from, int to, int &bar) {
  * @param  _In_  double buffer[] - indicator line buffer
  * @param  _In_  int    from     - start offset of the bar range to check
  * @param  _In_  int    to       - end offset of the bar range to check
- * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
+ * @param  _Out_ int    bar      - offset of the first found bar or EMPTY (-1) if there was none
  *
  * @return bool
  */
@@ -669,7 +669,7 @@ bool WasBarAbove(double buffer[], int from, int to, int &bar) {
  * @param  _In_  double buffer[] - indicator line buffer
  * @param  _In_  int    from     - start offset of the bar range to check
  * @param  _In_  int    to       - end offset of the bar range to check
- * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
+ * @param  _Out_ int    bar      - offset of the first found bar or EMPTY (-1) if there was none
  *
  * @return bool
  */

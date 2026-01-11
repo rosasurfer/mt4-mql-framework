@@ -1,13 +1,13 @@
 /**
  * ZigZag EA
  *
- * The EA trades ZigZag reversals. That's breakouts from a Donchian Channel which is the basis for ZigZag.
+ * This EA trades ZigZag reversals. That's breakouts from a Donchian Channel, which is the basis of the ZigZag.
  *
  *
  * Requirements
  * ------------
  *  • "mql40/experts/ZigZag EA"                (this EA)
- *  • "mql40/indicators/ZigZag"                (the MetaQuotes version is not suitable)
+ *  • "mql40/indicators/ZigZag"                (the MetaQuotes indicator can't be used)
  *  • "mql40/scripts/Config"
  *  • "mql40/scripts/Chart.ToggleOpenOrders"
  *  • "mql40/scripts/Chart.ToggleTradeHistory"
@@ -100,7 +100,7 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 
 extern string Instance.ID                    = "";                   // instance to load from a status file, format "[T]123"
 extern string Instance.StartAt               = "@time(00:02)";       // @time(datetime|time)
-extern string Instance.StopAt                = "@time(23:59)";       // @time(datetime|time) | @profit(numeric[%])
+extern string Instance.StopAt                = "@time(23:59)";       // @time(datetime|time) || @profit(numeric[%])
 
 extern string ___a__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 100;
@@ -326,7 +326,7 @@ bool onCommand(string cmd, string params, int keys) {
 /**
  * Whether a new ZigZag reversal occurred.
  *
- * @param  _Out_ double &signal[] - array receiving signal details
+ * @param  _Out_ double signal[] - array receiving signal details
  *
  * @return bool
  */
@@ -379,10 +379,10 @@ bool IsZigZagSignal(double &signal[]) {
 /**
  * Get ZigZag buffer values at the specified bar offset. The returned values correspond to the documented indicator buffers.
  *
- * @param  _In_  int    bar             - bar offset
- * @param  _Out_ int    &trend          - MODE_TREND: combined buffers MODE_KNOWN_TREND + MODE_UNKNOWN_TREND
- * @param  _Out_ int    &reversalOffset - MODE_REVERSAL: bar offset of most recent ZigZag reversal to previous ZigZag semaphore
- * @param  _Out_ double &reversalPrice  - MODE_UPPER_CROSS|MODE_LOWER_CROSS: reversal price if the bar denotes a ZigZag reversal; 0 otherwise
+ * @param  _In_  int    bar            - bar offset
+ * @param  _Out_ int    trend          - MODE_TREND: combined buffers MODE_KNOWN_TREND + MODE_UNKNOWN_TREND
+ * @param  _Out_ int    reversalOffset - MODE_REVERSAL: bar offset of most recent ZigZag reversal to previous ZigZag semaphore
+ * @param  _Out_ double reversalPrice  - MODE_UPPER_CROSS|MODE_LOWER_CROSS: reversal price if the bar denotes a ZigZag reversal; 0 otherwise
  *
  * @return bool - success status
  */
@@ -421,11 +421,11 @@ int GetZigZagTrend(int bar) {
 /**
  * Whether the current time is outside of the specified trading time range.
  *
- * @param  _In_    int      tradingFrom    - daily trading start time offset in seconds
- * @param  _In_    int      tradingTo      - daily trading stop time offset in seconds
- * @param  _InOut_ datetime &stopTime      - last stop time preceeding 'nextStartTime'
- * @param  _InOut_ datetime &nextStartTime - next start time in the future
- * @param  _In_    int      mode           - one of MODE_TRADESERVER | MODE_STRATEGY
+ * @param  _In_    int      tradingFrom   - daily trading start time offset in seconds
+ * @param  _In_    int      tradingTo     - daily trading stop time offset in seconds
+ * @param  _InOut_ datetime stopTime      - last stop time preceeding 'nextStartTime'
+ * @param  _InOut_ datetime nextStartTime - next start time in the future
+ * @param  _In_    int      mode          - one of MODE_TRADESERVER | MODE_STRATEGY
  *
  * @return bool
  */
@@ -567,7 +567,7 @@ bool IsTradingTime() {
 /**
  * Whether conditions are fullfilled to start trading.
  *
- * @param  _Out_ double &signal[] - array receiving the entry signal
+ * @param  _Out_ double signal[] - array receiving the entry signal
  *
  * @return bool
  */
@@ -593,7 +593,7 @@ bool IsTradeSignal(double &signal[]) {
 /**
  * Whether conditions are fullfilled to stop trading.
  *
- * @param  _Out_ double &signal[] - array receiving exit signal details (if any)
+ * @param  _Out_ double signal[] - array receiving exit signal details (if any)
  *
  * @return bool
  */
