@@ -181,6 +181,7 @@ Periods=30
 </inputs>
 </expert>
 level_0=200
+levels_color=15453831
 show_data=1
 </indicator>
 </window>
