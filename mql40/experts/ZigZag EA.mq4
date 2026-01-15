@@ -107,6 +107,8 @@ extern int    ZigZag.Periods                 = 100;
 
 extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
+
+extern string ___c__________________________ = "=== Entry conditions ===";
 extern bool   Entry.At.ChannelWidening       = false;                // start trading at the next Donchian channel widening
 extern bool   Entry.At.ZigZagReversal        = true;                 // start trading at the next ZigZag reversal
 
@@ -1634,8 +1636,10 @@ void SS.StartStopConditions() {
       if (start.time.descr != "") {
          sValue = sValue + ifString(sValue=="", "", " || ") + ifString(start.time.condition, "@", "!") + start.time.descr;
       }
-      if (Entry.At.ChannelWidening) sValue = sValue + ifString(sValue=="", "", " && ") +"@channel-widening()";
-      else                          sValue = sValue + ifString(sValue=="", "", " && ") +"@zz-reversal()";
+      if (instance.status && instance.status!=STATUS_TRADING) {
+         if (Entry.At.ChannelWidening) sValue = sValue + ifString(sValue=="", "", " && ") +"@ch-widening()";
+         else                          sValue = sValue + ifString(sValue=="", "", " && ") +"@zz-reversal()";
+      }
       if (sValue == "") status.startConditions = "-";
       else              status.startConditions = sValue;
 
