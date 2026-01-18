@@ -9,10 +9,10 @@
 /.project*
 
 # ignore the following directories and files
-/bin/.mqlcrc
+/bin/.mqlc
 /files
-mqlcache.dat
 *.ex[45]
+mqlcache.dat
 
 # ignore distributed/linked/log folders
 /mql*/files
