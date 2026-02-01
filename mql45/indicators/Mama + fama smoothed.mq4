@@ -1,9 +1,8 @@
-//+------------------------------------------------------------------+
-//|                                                  mama - smoothed |
-//+------------------------------------------------------------------+
-#property copyright "mladen"
-#property link      "www.forex-whereever.com"
-
+/**
+ * @name   mama-fama smoothed
+ * @author mrtools
+ * @source https://www.forexfactory.com/thread/post/15550976#post15550976
+ */
 #property indicator_chart_window
 #property indicator_buffers  6
 #property indicator_plots    6
@@ -50,8 +49,8 @@ enum enPrices
             pr_habtbiased2 // Heiken ashi (better formula) trend biased (extreme) price
          };
 input enPrices        inpPrice           = pr_median;      // Mama Price
-input double          inpSlowLimit       = 0.05;           // Mama slow limit  
-input double          inpFastLimit       = 0.5;            // Mama fast limit 
+input double          inpSlowLimit       = 0.05;           // Mama slow limit
+input double          inpFastLimit       = 0.5;            // Mama fast limit
 input double          inpSmthAlpha       = 10;             // Mama + Fama smoothing period
 input string          __ma1__00          = "";             //.Mama settings
 input int             inpMa1LineWidth    = 2;              // Line width
@@ -82,7 +81,7 @@ int OnInit()
    SetIndexBuffer(3,ma2  ,INDICATOR_DATA); SetIndexStyle(3,DRAW_LINE,EMPTY,inpMa2LineWidth,inpMa2ColorUp);
    SetIndexBuffer(4,ma2Da,INDICATOR_DATA); SetIndexStyle(4,DRAW_LINE,EMPTY,inpMa2LineWidth,inpMa2ColorDn);
    SetIndexBuffer(5,ma2Db,INDICATOR_DATA); SetIndexStyle(5,DRAW_LINE,EMPTY,inpMa2LineWidth,inpMa2ColorDn);
-   
+
    glo.alpSmth = (2.0/(1.0+fmax(inpSmthAlpha,1.0)));
 return(INIT_SUCCEEDED);
 }
@@ -107,36 +106,36 @@ int OnCalculate(const int rates_total,
    //
    //
    //
-   
+
    struct sWrkStruct
    {
-      double _prc;     
-      double _smth;    
-      double _detr; 
-      double _per;    
-      double _pha;     
-      double _Q1;        
-      double _I1;        
-      double _JI;        
-      double _JQ;        
-      double _Q2;        
-      double _I2;       
-      double _Re;       
-      double _Im;       
+      double _prc;
+      double _smth;
+      double _detr;
+      double _per;
+      double _pha;
+      double _Q1;
+      double _I1;
+      double _JI;
+      double _JQ;
+      double _Q2;
+      double _I2;
+      double _Re;
+      double _Im;
       double _sa;
       double cMa1;
-      double cMa2;      
+      double cMa2;
    };
    static sWrkStruct wrk[];
    static int        wrkSize = -1;
                  if (wrkSize<=rates_total) wrkSize = ArrayResize(wrk,rates_total+500,2000);
-   
+
    //
    //
    //
 
-   if (wrk[rates_total-glo.lim-1].cMa1==-1) iCleanPoint(glo.lim,rates_total,ma1Da,ma1Db);      
-   if (wrk[rates_total-glo.lim-1].cMa2==-1) iCleanPoint(glo.lim,rates_total,ma2Da,ma2Db);      
+   if (wrk[rates_total-glo.lim-1].cMa1==-1) iCleanPoint(glo.lim,rates_total,ma1Da,ma1Db);
+   if (wrk[rates_total-glo.lim-1].cMa2==-1) iCleanPoint(glo.lim,rates_total,ma2Da,ma2Db);
    for (int i=glo.lim, r=rates_total-i-1; i>=0 && !_StopFlag; i--, r++)
    {
       #define rad2degree (180.0/M_PI)
@@ -148,11 +147,11 @@ int OnCalculate(const int rates_total,
       wrk[r]._I1   = (r>2) ? wrk[r-3]._detr :  wrk[r]._detr;
       wrk[r]._JI   = calcComp(_I1);
       wrk[r]._JQ   = calcComp(_Q1);
-      
+
       //
       //
       //
-      
+
       wrk[r]._I2 = (r==0) ? wrk[r]._I1 : 0.2*(wrk[r]._I1-wrk[r]._JQ)                             + 0.8*wrk[r-1]._I2;
       wrk[r]._Q2 = (r==0) ? wrk[r]._Q1 : 0.2*(wrk[r]._Q1+wrk[r]._JI)                             + 0.8*wrk[r-1]._Q2;
       wrk[r]._Re = (r==0) ? wrk[r]._I2 : 0.2*(wrk[r]._I2*wrk[r-1]._I2 + wrk[r]._Q2*wrk[r-1]._Q2) + 0.8*wrk[r-1]._Re;
@@ -164,12 +163,12 @@ int OnCalculate(const int rates_total,
         wrk[r]._per = (r==0) ?  wrk[r]._per : fmax(wrk[r]._per,0.67*wrk[r-1]._per);
         wrk[r]._per = fmin(fmax(wrk[r]._per,6),50);
         wrk[r]._per = (r==0) ?  wrk[r]._per : 0.2*wrk[r]._per+0.8*wrk[r-1]._per;
-      
+
       if(wrk[r]._I1!=0) wrk[r]._pha = MathArctan(wrk[r]._Q1/wrk[r]._I1)*rad2degree;
         glo.dphase = (r==0) ? 0 : fmax(wrk[r-1]._pha-wrk[r]._pha,1);
         glo.alp    = (glo.dphase!=0) ? fmax(fmin(inpFastLimit/glo.dphase,inpFastLimit),inpSlowLimit) : 1;
         wrk[r]._sa = (r>0) ? wrk[r-1]._sa+glo.alpSmth*(glo.alp-wrk[r-1]._sa) : 0;
-   
+
         ma1[i] = (r==0) ? wrk[r]._prc : wrk[r]._sa*wrk[r]._prc + (1.0- wrk[r]._sa)*ma1[i+1];    //MAMA
         ma2[i] = (r==0) ? wrk[r]._prc : 0.5*wrk[r]._sa*ma1[i]  + (1.0-0.5*wrk[r]._sa)*ma2[i+1]; //FAMA
         wrk[r].cMa1 = (ma1[i]>ma2[i]) ? 1 : (ma1[i]<ma2[i]) ? -1 : (r>0) ? wrk[r-1].cMa2 : 0;
@@ -181,7 +180,7 @@ return(rates_total);
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------------
-//                                                                  
+//
 //--------------------------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
@@ -199,53 +198,53 @@ double iGetPrice(int tprice, T& open[], T& high[], T& low[], T& close[], int i, 
       static sHaStruct m_array[];
       static int       m_arraySize = -1;
                    if (m_arraySize<bars) m_arraySize = ArrayResize(m_array,bars+500);
-                   
+
          //
          //
          //
-                            
-         #ifdef __MQL4__                  
+
+         #ifdef __MQL4__
             int r = bars-i-1;
-         #else            
+         #else
             int r = i;
-         #endif            
-         
+         #endif
+
          //
          //
          //
-         
+
          double haOpen  = (r>0) ? (m_array[r-1].open + m_array[r-1].close)/2.0 : (open[i]+close[i])/2;;
          double haClose = (open[i]+high[i]+low[i]+close[i]) / 4.0;
          #define _prHABF(_prtype) (_prtype>=pr_habclose && _prtype<=pr_habtbiased2)
             if (_prHABF(tprice))
                   if (high[i]!=low[i])
                         haClose = (open[i]+close[i])/2.0+(((close[i]-open[i])/(high[i]-low[i]))*MathAbs((close[i]-open[i])/2.0));
-                  else  haClose = (open[i]+close[i])/2.0; 
-         #undef  _prHABF                  
+                  else  haClose = (open[i]+close[i])/2.0;
+         #undef  _prHABF
          double haHigh  = fmax(high[i], fmax(haOpen,haClose));
          double haLow   = fmin(low[i] , fmin(haOpen,haClose));
 
          //
          //
          //
-         
-         if(haOpen<haClose) { m_array[r].high  = haLow;  m_array[r].low = haHigh; } 
-         else               { m_array[r].high  = haHigh; m_array[r].low = haLow;  } 
+
+         if(haOpen<haClose) { m_array[r].high  = haLow;  m_array[r].low = haHigh; }
+         else               { m_array[r].high  = haHigh; m_array[r].low = haLow;  }
                               m_array[r].open  = haOpen;
                               m_array[r].close = haClose;
          //
          //
          //
-         
+
          switch (tprice)
          {
             case pr_haclose:
             case pr_habclose:    return(haClose);
-            case pr_haopen:   
+            case pr_haopen:
             case pr_habopen:     return(haOpen);
-            case pr_hahigh: 
+            case pr_hahigh:
             case pr_habhigh:     return(haHigh);
-            case pr_halow:    
+            case pr_halow:
             case pr_hablow:      return(haLow);
             case pr_hamedian:
             case pr_habmedian:   return((haHigh+haLow)/2.0);
@@ -255,21 +254,21 @@ double iGetPrice(int tprice, T& open[], T& high[], T& low[], T& close[], int i, 
             case pr_habtypical:  return((haHigh+haLow+haClose)/3.0);
             case pr_haweighted:
             case pr_habweighted: return((haHigh+haLow+haClose+haClose)/4.0);
-            case pr_haaverage:  
+            case pr_haaverage:
             case pr_habaverage:  return((haHigh+haLow+haClose+haOpen)/4.0);
             case pr_hatbiased:
             case pr_habtbiased:
                if (haClose>haOpen)
                      return((haHigh+haClose)/2.0);
-               else  return((haLow+haClose)/2.0);        
+               else  return((haLow+haClose)/2.0);
             case pr_hatbiased2:
             case pr_habtbiased2:
                if (haClose>haOpen)  return(haHigh);
                if (haClose<haOpen)  return(haLow);
-                                    return(haClose);        
+                                    return(haClose);
          }
    }
-   
+
    //
    //
    //
@@ -285,20 +284,20 @@ double iGetPrice(int tprice, T& open[], T& high[], T& low[], T& close[], int i, 
       case pr_typical:   return((high[i]+low[i]+close[i])/3.0);
       case pr_weighted:  return((high[i]+low[i]+close[i]+close[i])/4.0);
       case pr_average:   return((high[i]+low[i]+close[i]+open[i])/4.0);
-      case pr_tbiased:   
+      case pr_tbiased:
                if (close[i]>open[i])
                      return((high[i]+close[i])/2.0);
-               else  return((low[i]+close[i])/2.0);        
-      case pr_tbiased2:   
+               else  return((low[i]+close[i])/2.0);
+      case pr_tbiased2:
                if (close[i]>open[i]) return(high[i]);
                if (close[i]<open[i]) return(low[i]);
-                                     return(close[i]);        
+                                     return(close[i]);
    }
    return(0);
 }
 
 //-------------------------------------------------------------------
-//                                                                  
+//
 //-------------------------------------------------------------------
 
 void iCleanPoint(int i, int bars,double& first[],double& second[])
@@ -315,7 +314,7 @@ void iPlotPoint(int i, int bars,double& first[],double& second[],double& from[])
 {
    if (i>=bars-2) return;
    if (first[i+1] == EMPTY_VALUE)
-      if (first[i+2] == EMPTY_VALUE) 
+      if (first[i+2] == EMPTY_VALUE)
             { first[i]  = from[i]; first[i+1]  = from[i+1]; second[i] = EMPTY_VALUE; }
       else  { second[i] = from[i]; second[i+1] = from[i+1]; first[i]  = EMPTY_VALUE; }
    else     { first[i]  = from[i];                          second[i] = EMPTY_VALUE; }
