@@ -1,6 +1,5 @@
-/**
- * Default init() functions for standard EAs.
- */
+
+// Default init() functions for standard EAs.
 
 
 /**
@@ -126,8 +125,8 @@ int afterInit() {
    if (__isTesting) ReadTestConfiguration();
 
    // reset the command handler
-   string sValues[];
-   GetChartCommand("", sValues);
+   string sNull[];
+   GetChartCommand("", sNull);
 
    StoreVolatileStatus();                          // store the instance id for template reload/restart/recompilation etc.
    return(catch("afterInit(2)"));

@@ -1,6 +1,5 @@
-/**
- * Default deinit() functions for standard EAs.
- */
+
+// Default deinit() functions for standard EAs.
 
 
 /**
