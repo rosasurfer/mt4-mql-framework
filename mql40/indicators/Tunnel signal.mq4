@@ -1,7 +1,7 @@
 /**
  * Signal indicator for the "L'mas system"
  *
- * The indicator changes direction if Close of the current bar and MovingAverage are above/below the tunnel.
+ * The indicator changes direction if Close of the bar and MovingAverage cross the opposite side of the tunnel.
  *
  *
  * TODO:
@@ -20,7 +20,6 @@
  *     unitsize configuration: manual leverage doesn't work (limits to 10% risk)
  *     unitsize configuration is not read if custom positions are reloaded per hotkey
  *     rewrite and better document unitsize configuration (remove "Default.")
- *     fix positioning of UnitSize/PositionSize when in CORNER_TOP_LEFT
  *     option to display 100% margin level
  *     high spread marker (BTCUSD suddenly has an average spread of 70-100 points)
  *
@@ -434,7 +433,7 @@ void UpdateTrendHint(int id, int status) {
    else                       clr = Orange;
 
    switch (id) {
-      case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "B",  trendHintFontSize, trendHintFontName, clr); break;
+      case HINT_CLOSE: ObjectSetText(trendHintCloseLabel, "C",  trendHintFontSize, trendHintFontName, clr); break;
       case HINT_MA:    ObjectSetText(trendHintMaLabel,    "MA", trendHintFontSize, trendHintFontName, clr); break;
       default:
          return(!catch("UpdateTrendHint(1)  invalid parameter id: "+ id, ERR_INVALID_PARAMETER));

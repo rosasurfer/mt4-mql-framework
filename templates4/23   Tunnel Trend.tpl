@@ -1,3 +1,9 @@
+<!--
+Tunnel + Tunnel Trend Bars LWMA(55)
+EMA(144)
+ALMA(38)
+-->
+
 <chart>
 symbol=GBPUSD
 period=60
@@ -161,6 +167,30 @@ ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
 </expert>
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=137
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=Tunnel signal
+flags=339
+window_num=1
+<inputs>
+Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Tunnel.MA.Periods=55
+MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
+MA.Periods=10
+Signal.onTrendChange=1
+Signal.onTrendChange.Types=sound* | alert* | mail
+</inputs>
+</expert>
+min=-1.0
+max=1.0
 show_data=1
 </indicator>
 </window>
