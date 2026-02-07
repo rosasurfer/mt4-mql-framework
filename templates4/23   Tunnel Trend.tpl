@@ -98,6 +98,28 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=144
+MA.Periods.Step=0
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=0
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=Trend Bars
 flags=339
 window_num=0
@@ -122,28 +144,6 @@ flags=339
 window_num=0
 <inputs>
 Tunnel.Definition=LWMA(55)
-ShowChartLegend=0
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Moving Average
-flags=339
-window_num=0
-<inputs>
-MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=144
-MA.Periods.Step=0
-Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=65535
-DownTrend.Color=65535
-Background.Color=11119017
 ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
