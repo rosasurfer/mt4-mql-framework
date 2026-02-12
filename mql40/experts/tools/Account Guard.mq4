@@ -1,9 +1,8 @@
 /**
  * Account Guard
  *
- * The EA monitors orders and positions of all symbols and enforces defined limits/restrictions.
- *
- * Orders/positions of symbols without trade permission or outside of the permitted time range are immediately closed.
+ * This EA monitors all open orders and enforces defined limits/restrictions.
+ * Orders/positions without trade permission are immediately closed.
  *
  * Permitted positions are monitored until the specified drawdown limit is reached. If reached the EA closes all open positions
  * and pending orders. Further trading is prohibited until the end of the day. New orders/positions are immediately closed.
@@ -11,11 +10,11 @@
  *
  * Input parameters:
  * -----------------
- * • PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*": all symbols permitted).
- * • PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
- * • DrawdownLimit:      Either an absolute money amount or a percent value describing the drawdown limit of open positions.
- * • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
- *                       prevents DDL triggering by spread widening.
+ *  • PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*": all symbols permitted).
+ *  • PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
+ *  • DrawdownLimit:      An absolute money amount or a percent value describing the drawdown limit of open positions.
+ *  • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
+ *                        prevents DDL triggering by spread widening.
  *
  *
  * TODO:
