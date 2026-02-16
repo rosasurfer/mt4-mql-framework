@@ -5,8 +5,8 @@
 #
 # Configuration via environment and/or config file.
 #
-# - If environment variable ORIG is set the script displays the original and unmodified compiler output.
 # - If environment variable DEBUG is set the script displays debug infos and the final command to be executed.
+# - If environment variable ORIG is set the script doesn't modify the compiler output.
 # - If environment variable TRACE is set the script shows the location of the last error (if any).
 #
 # @see  "/bin/.mqlc.dist" for a configuration example
