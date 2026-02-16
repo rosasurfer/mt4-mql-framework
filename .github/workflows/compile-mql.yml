@@ -52,8 +52,9 @@ jobs:
         env:
           MT4_METALANG_URL:   ${{ secrets.MT4_METALANG_URL }}
           MT4_METAEDITOR_URL: ${{ secrets.MT4_METAEDITOR_URL }}
-          AUTH_USERNAME:      ${{ secrets.MT4_URL_AUTH_USERNAME }}
-          AUTH_PASSWORD:      ${{ secrets.MT4_URL_AUTH_PASSWORD }}
+          MT5_METAEDITOR_URL: ${{ secrets.MT5_METAEDITOR_URL }}
+          AUTH_USERNAME:      ${{ secrets.METATRADER_USERNAME }}
+          AUTH_PASSWORD:      ${{ secrets.METATRADER_PASSWORD }}
         run: |
           echo "Downloading MT4 compiler from https://.../mt4${MT4_METALANG_URL#*/mt4}"
           curl -o metalang.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METALANG_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
@@ -63,6 +64,10 @@ jobs:
           curl -o metaeditor.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT4_METAEDITOR_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
           echo "MT4_METAEDITOR=$PWD/metaeditor.exe" >> "$GITHUB_ENV"
 
+          echo "Downloading MT5 MetaEditor from https://.../mt5${MT5_METAEDITOR_URL#*/mt5}"
+          curl -o metaeditor64.exe --digest -u "$AUTH_USERNAME:$AUTH_PASSWORD" "$MT5_METAEDITOR_URL" --silent --fail --show-error --connect-timeout 10 --max-time 60
+          echo "MT5_METAEDITOR=$PWD/metaeditor64.exe" >> "$GITHUB_ENV"
+
       # ------------------------------------------------------------------------------------------------------------------------------------
       - name: Compile MQL files
         if:   env.SKIP_CI != 'true'
@@ -70,6 +75,7 @@ jobs:
           TRACE=1 \
           bin/mqlc -v=mql40 /inc:mql40 mql40/experts mql40/experts/tools mql40/indicators mql40/indicators/.attic mql40/scripts mql40/libraries \
                    -v=mql45 /inc:mql45 mql45/experts mql45/indicators mql45/scripts mql45/libraries \
+                            /inc:mql50 mql50/experts mql50/indicators mql50/scripts mql50/libraries \
                    --warn2error
 
       # ------------------------------------------------------------------------------------------------------------------------------------

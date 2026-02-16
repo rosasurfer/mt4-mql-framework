@@ -5,7 +5,11 @@
 #
 # Configuration via environment and/or config file.
 #
-# @see  "<repository>/bin/.mqlc.dist" for an example
+# - If environment variable ORIG is set the script displays the original and unmodified compiler output.
+# - If environment variable DEBUG is set the script displays debug infos and the final command to be executed.
+# - If environment variable TRACE is set the script shows the location of the last error (if any).
+#
+# @see  "/bin/.mqlc.dist" for a configuration example
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
@@ -79,7 +83,7 @@ Configuration:
  Unless option --rc/--norc is used, the script will look for a file named ".mqlc" in the source directory and each
  parent directory. If no file is found in any of the parent directories, the script will look in the user's home
  directory. Only the first file found will be used. Compiler locations can also be specified using environment vars.
- See "<repository>/bin/.mqlc" for an example.
+ See "/bin/.mqlc.dist" for an example.
 
 SYNTAX
 }
@@ -112,7 +116,7 @@ declare originalOutput=0 debug=0 trace=0 test=0
 function init() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   [[ "${ORIG:-0}"  != "0" ]] && originalOutput=1
-  [[ "${DEBUG:-0}" != "0" ]] && ((!originalOutput)) && debug=1
+  [[ "${DEBUG:-0}" != "0" ]] && debug=1
   [[ "${TRACE:-0}" != "0" ]] && trace=1
   [[ "${TEST:-0}"  != "0" ]] && test=1
   readonly originalOutput debug trace test
@@ -265,7 +269,7 @@ function compileMql40() {
   local srcFile="$1" version="$2" include="$3" s_compiler s_srcFile logFile
   local compiler errorStatus=0 startms endms time='' output=() line i errors=0 epl='' warnings=0 wpl='' retVal
 
-  ((originalOutput)) || echo "Compiling \"$srcFile\" as $(versionName "$version")"
+  echo "Compiling \"$srcFile\" as $(versionName "$version")"
 
   # compose compiler command
   setCompilerPath 'compiler' "$version" "$include"
@@ -341,11 +345,11 @@ function compileMql40() {
   fi
 
   if ((originalOutput)); then
-    output+=("$errorStatus")
+    output+=("error status: $errorStatus")
   else
     output[0]="${output[0]//compiler build/compiler version 4.00 build}"              # update compiler info
     [[ "${output[1]}" =~ ^Copyright ]] && unset 'output[1]'                           # remove copyright
-    ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'  # more compact output
+    ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'  # more compact output for compilation of multiple files
 
     local keys=("${!output[@]}")
     for i in "${keys[@]:2}"; do                                                       # format compiler messages
@@ -375,9 +379,7 @@ function compileMql5() {
   local srcFile="$1" version="$2" include="$3"
   local helper compiler compilerCmd includeOption='' logFile errorStatus=0
 
-  if ((!originalOutput)); then
-    echo "Compiling \"$srcFile\" as $(versionName "$version")"
-  fi
+  echo "Compiling \"$srcFile\" as $(versionName "$version")"
 
   # compose the compiler command
   setCompilerPath 'compiler' "$version"
@@ -396,9 +398,9 @@ function compileMql5() {
   echo "$compilerCmd" >> "$helper"
 
   # run the compiler
+  printCompilerInfo "$compiler"
   if ((!originalOutput)); then
-    printCompilerInfo "$compiler"
-    ((compactOutput)) || echo ""
+    ((compactOutput)) || echo ""                              # more compact output for compilation of multiple files
   fi
   checkCompilerDir "$compiler"
   rm -f -- "$logFile"
@@ -410,7 +412,7 @@ function compileMql5() {
   # store logfile in array (convert to UTF-8 + Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
   readarray -t output < <(
-    ((originalOutput)) && M="rosasurfer"                      # marker to toggle result filtering
+    ((originalOutput)) && M="rosasurfer"                      # custom marker to toggle result filtering
     iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)" || :
   )
 
@@ -420,7 +422,7 @@ function compileMql5() {
   ((!errors && !warnings)) && rm -f "$logFile"
 
   if ((originalOutput)); then
-    output+=("$errorStatus")
+    output+=("error status: $errorStatus")
   else
     local keys=("${!output[@]}") size="${#output[@]}"
     for i in "${keys[@]:0:$((size-1))}"; do                   # format compiler messages
@@ -493,7 +495,7 @@ function formatCompiler5Msg() {
   local srcFile="$2" errors="$3" warnings="$4" level levelS file location='' message len
 
   [[ "$logmsg" =~ ^(.*):\ (info|warn|error)[^:]*:\ (.+)$ ]] || fail "unexpected format of compiler message:$NL\"$logmsg\""
-
+  
   file="${BASH_REMATCH[1]}"
   file="${file%"${file##*[![:space:]]}"}"                     # trim trailing white space
   if [[ "$file" =~ \([0-9,]+\)$ ]]; then
