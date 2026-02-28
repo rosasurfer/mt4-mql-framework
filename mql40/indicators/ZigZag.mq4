@@ -1189,7 +1189,7 @@ bool onChannelWidening(int direction) {
  *
  * @param  string cmd    - command name
  * @param  string params - command parameters
- * @param  int    keys   - combination of pressed modifier keys
+ * @param  int    keys   - flags of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
