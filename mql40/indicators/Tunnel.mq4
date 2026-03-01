@@ -13,7 +13,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Tunnel.Definition              = "EMA(144)";              // one or more MAs separated by ","
+extern string Tunnel.Definition              = "EMA(144)";              // one or more MAs, e.g "EMA(144), LWMA(55)"
 extern color  Tunnel.Color                   = Magenta;
 extern string Supported.MovingAverages       = "SMA, LWMA, EMA, SMMA";
 extern bool   ShowChartLegend                = true;
