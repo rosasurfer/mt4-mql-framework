@@ -1,3 +1,7 @@
+<!-- 
+ZigZag/Donchian Channel(50 + 30) + Donchian Channel(30) Width in main window 
+-->
+
 <chart>
 symbol=GBPUSD
 period=60
@@ -104,7 +108,7 @@ Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
-ShowChartLegend=1
+ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -163,6 +167,21 @@ style_2=2
 style_3=2
 color_6=4294967295
 color_7=4294967295
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Donchian Channel Width
+flags=339
+window_num=1
+<inputs>
+Periods=30
+</inputs>
+</expert>
+level_0=200
+levels_color=15453831
 show_data=1
 </indicator>
 </window>

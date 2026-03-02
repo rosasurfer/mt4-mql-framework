@@ -1,5 +1,5 @@
 <!-- 
-ZigZag(50,30) + Donchian Channel(30) Width in main window 
+ZigZag/Donchian Channel(50) 
 -->
 
 <chart>
@@ -108,7 +108,7 @@ Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
-ShowChartLegend=0
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -126,7 +126,7 @@ ZigZag.Periods=50
 ZigZag.Type=Lines* | Semaphores
 ZigZag.Width=0
 ZigZag.Color=16711935
-Donchian.ShowChannel=0
+Donchian.ShowChannel=1
 Donchian.Channel.UpperColor=16711680
 Donchian.Channel.LowerColor=255
 Donchian.ShowCrossings=off | first* | all
@@ -151,13 +151,13 @@ window_num=0
 <inputs>
 ZigZag.Periods=30
 ZigZag.Width=0
-Donchian.ShowChannel=1
+Donchian.ShowChannel=0
 Donchian.Channel.UpperColor=16711680
 Donchian.Channel.LowerColor=16711935
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
 Donchian.Crossing.Width=1
-Signal.onReversal=1
+Signal.onReversal=0
 Signal.onReversal.Types=sound* | alert* | mail | sms
 Signal.onBreakout=0
 Sound.onChannelWidening=0
@@ -167,21 +167,6 @@ style_2=2
 style_3=2
 color_6=4294967295
 color_7=4294967295
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Donchian Channel Width
-flags=339
-window_num=1
-<inputs>
-Periods=30
-</inputs>
-</expert>
-level_0=200
-levels_color=15453831
 show_data=1
 </indicator>
 </window>

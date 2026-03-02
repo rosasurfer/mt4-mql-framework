@@ -1,3 +1,7 @@
+<!-- 
+ZigZag/Donchian Channel(50 + 30) 
+-->
+
 <chart>
 symbol=GBPUSD
 period=60
@@ -156,7 +160,7 @@ Donchian.Crossing.Width=1
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | sms
 Signal.onBreakout=0
-Sound.onChannelWidening=1
+Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_2=2
