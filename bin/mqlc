@@ -14,6 +14,7 @@
 #
 #
 # TODO:
+#  - replace all broken usages of `pwd -P` and `realpath`
 #  - colored output
 #  - implement download tracker
 #  - option --rc/--no-rc
@@ -36,8 +37,10 @@
 #  - add bitness and sigdate to compiler infos
 #  - parallel compilation of multiple files
 #
+shopt -s inherit_errexit 2>/dev/null || :
 set -eEuo pipefail
 
+CR=$'\r'
 NL=$'\n'
 
 
@@ -114,16 +117,17 @@ declare originalOutput=0 debug=0 trace=0 test=0
 # Initialization.
 #
 function init() {
-  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
+  trap onError ERR
+  trap onExit  EXIT
+
   [[ "${ORIG:-0}"  != "0" ]] && originalOutput=1
   [[ "${DEBUG:-0}" != "0" ]] && debug=1
   [[ "${TRACE:-0}" != "0" ]] && trace=1
   [[ "${TEST:-0}"  != "0" ]] && test=1
   readonly originalOutput debug trace test
 
-  trap onError ERR
-  trap onExit  EXIT
   registerTmpPath ""                                        # initialize management of tmp files
+  parseSubstedDrives
 }
 
 
@@ -495,7 +499,7 @@ function formatCompiler5Msg() {
   local srcFile="$2" errors="$3" warnings="$4" level levelS file location='' message len
 
   [[ "$logmsg" =~ ^(.*):\ (info|warn|error)[^:]*:\ (.+)$ ]] || fail "unexpected format of compiler message:$NL\"$logmsg\""
-  
+
   file="${BASH_REMATCH[1]}"
   file="${file%"${file##*[![:space:]]}"}"                     # trim trailing white space
   if [[ "$file" =~ \([0-9,]+\)$ ]]; then
@@ -605,6 +609,68 @@ function cygpath() {
 
 
 #
+# Resolve the real path of the passed argument. Depending on the Linux layer the resulting path may/may not 
+# be prefixed with "/cygwin/".
+#
+# Replacement for the native `realpath` command which may not resolve Windows drive substitutions.
+#
+# @param $1 - path
+#
+function resolveRealPath() {
+  # Other approaches and issues
+  # ---------------------------
+  # realpath <path>         Depending on path/version/OS: may not resolve Windows subst.
+  # readlink -f <path>      Same as `realpath`.
+  # cd <path> && pwd -P     Depending on path/version/OS: may not resolve Windows subst, may resolve links only at the last path segment.
+  # cd <path> && cmd /c cd  Same as `pwd -P`.
+  #
+  # Solution
+  # --------
+  # Use `realpath` and parse Windows drive substitutions manually.
+  #
+  local path="$1" resolvedPath drive target
+  local -A seenPaths=()
+
+  while true; do
+    [[ -n "${seenPaths[$path]:-}" ]] && fail "cycle detected in realpath resolution"
+    seenPaths["$path"]=1
+
+    resolvedPath="$(command realpath "$path")"              # resolve junctions/symlinks
+
+    for drive in "${!substedDrives[@]}"; do                 # resolve drive substitutions
+      if [[ "$resolvedPath" == "$drive"* ]]; then
+        target="${substedDrives[$drive]}"                   # opposite to Windows it ends with a path separator
+        path="${target}${resolvedPath:${#drive}}"
+        continue 2
+      fi
+    done
+
+    echo "$resolvedPath"
+    break
+  done
+}
+
+
+declare -A substedDrives=()
+
+#
+# Parse substituted Windows drives and convert paths to Unix-style.
+#
+function parseSubstedDrives() {
+  local lines i drive target
+  readarray -t lines < <(subst)                             # Windows lines will end with a trailing CR
+
+  for ((i=0; i < ${#lines[@]}; i++)); do
+    [[ "${lines[i]%${CR}}" =~ ^(.+):\ =\>\ (.+)$ ]] || fail "unexpected subst output:${NL}$(printf '%s\n' "${lines[@]}")"
+    drive="$(cygpath -u "${BASH_REMATCH[1]}")"
+    target="$(cygpath -u "${BASH_REMATCH[2]}")"             # Unix-style paths may/may not have the prefix '/cygwin/'
+    substedDrives["$drive"]="$target/"                      # add trailing separator
+  done
+  readonly substedDrives
+}
+
+
+#
 # Calculate the duration time of two timestamps and return a formatted result.
 #
 # @param $1 - start time in msec
@@ -703,7 +769,7 @@ function readConfig() {
   srcFile="${srcFile//\\//}"
   [[ "$srcFile" == */* ]] && dir="${srcFile%/*}" || dir='.'
   dir="$(cd -- "$dir" && pwd -P)/."                           # physical dir name
-  while :; do
+  while true; do
     dir="${dir%/*}"
     [[ -z "$dir" ]] && break
     [[ -f "$dir/$rcFile" ]] && { config="$dir/$rcFile"; break; }
@@ -725,7 +791,7 @@ function readConfig() {
   local BAK_MT5_METAEDITOR="${MT5_METAEDITOR:-}"
 
   local mql40Sources=() mql45Sources=()
-  local -A includeDirs; includeDirs=()
+  local -A includeDirs=()
 
   # source the config file                                    # TODO: parse the file
   [[ -n "$config" ]] && . "$config" &> /dev/null
@@ -750,10 +816,10 @@ function readConfig() {
   normalizeMQL4Paths 'mql45Sources' '_mql45Sources'
   ((debug)) && {
     stderr "configured MQL4.0 paths:"
-    ((${#_mql40Sources[@]})) && stderr "$(printf "%s\n" "${_mql40Sources[@]}")"
+    ((${#_mql40Sources[@]})) && stderr "$(printf '%s\n' "${_mql40Sources[@]}")"
     stderr ""
     stderr "configured MQL4.5 paths:"
-    ((${#_mql45Sources[@]})) && stderr "$(printf "%s\n" "${_mql45Sources[@]}")"
+    ((${#_mql45Sources[@]})) && stderr "$(printf '%s\n' "${_mql45Sources[@]}")"
     stderr ""
   }
 
@@ -774,8 +840,8 @@ function readConfig() {
 #
 # Normalize, sort and order the passed MQL4 version paths.
 #
-# @param _In_  $1 - input variable
-# @param _Out_ $2 - output variable
+# @param _In_  $1 - name of indexed array to read configured paths from
+# @param _Out_ $2 - name of indexed array to write normalized paths to
 #
 function normalizeMQL4Paths() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
@@ -784,26 +850,21 @@ function normalizeMQL4Paths() {
   out=()
   ((!${#in[@]})) && return
 
-  # normalize input
-  local path lines lPath pPath grouped=() S=$'\x01'
+  # convert all paths to real paths
+  local path paths=() S=$'\x01'
   for path in "${in[@]}"; do
     if [[ -d "$path" ]]; then
-      readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
-      lPath="${lines[0],,}"                           # logical path
-      pPath="${lines[1],,}"                           # physical path
-      lPath="${lPath////${S}}"                        # replace slashes with a separator that's alphabetically first
-      pPath="${pPath////${S}}"
-      grouped+=("2 $lPath")                           # add prefix to order logical paths after physicals
-      [[ "$lPath" == "$pPath" ]] || grouped+=("1 $pPath")
+      path="$(resolveRealPath "$path")"
+      paths+=("${path////${S}}")                      # replace slashes with a separator that's alphabetically first
     fi
   done
-  ((!${#grouped[@]})) && return
+  ((!${#paths[@]})) && return
 
-  readarray -t grouped < <(printf "%s\n" "${grouped[@]}" | sort)
+  # sort paths
+  readarray -t paths < <(printf '%s\n' "${paths[@]}" | sort)
 
-  # write grouped paths to out                        # no filtering of duplicates and overlaps (performance)
-  for path in "${grouped[@]}"; do
-    path="${path#* }"                                 # cut-off leading group id
+  # write sorted paths to out                         # no filtering of duplicates and overlaps (performance)
+  for path in "${paths[@]}"; do
     out+=("${path//${S}//}")                          # revert separators back to slashes
   done
 }
@@ -812,9 +873,9 @@ function normalizeMQL4Paths() {
 #
 # Normalize, sort and order the passed include directories.
 #
-# @param _In_  $1 - variable to read configured directories from
-# @param _Out_ $2 - variable to write source paths to
-# @param _Out_ $3 - variable to write corresponding include directories to
+# @param _In_  $1 - name of associative array to read configured directories from
+# @param _Out_ $2 - name of indexed array to write normalized source paths to
+# @param _Out_ $3 - name of indexed array to write normalized include directories to
 #
 function normalizeIncludeDirs() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
@@ -824,102 +885,86 @@ function normalizeIncludeDirs() {
   ((!${#in[@]})) && return
 
   # normalize input
-  local path lines line lPath pPath include grouped=() S=$'\x01'
+  local path includeDir paths=() S=$'\x01' line
   for path in "${!in[@]}"; do
     if [[ -d "$path" ]]; then
-      readarray -t lines < <(cd -- "$path" && echo "$PWD" && pwd -P)
-      lPath="${lines[0],,}"                           # logical path
-      pPath="${lines[1],,}"                           # physical path
-      lPath="${lPath////${S}}"                        # replace slashes with a separator that's alphabetically first
-      pPath="${pPath////${S}}"
-      include="${in[$path]}"                          # convert to logical name (even non-existing)
-      [[ -d "$include" ]] && include="$(cd -- "$include" && echo "$PWD")" || include="$(cygpath -u "$include")"
-      grouped+=("2|$lPath|$include")                  # add prefix to order logical paths after physicals
-      [[ "$lPath" == "$pPath" ]] || grouped+=("1|$pPath|$include")
+      includeDir="${in[$path]}"                       # convert to logical name (even non-existing)
+      [[ -d "$includeDir" ]] && includeDir="$(cd -- "$includeDir" && echo "$PWD")" || includeDir="$(cygpath -u "$includeDir")"
+      
+      path="$(resolveRealPath "$path")"               # convert to real name
+      path="${path////${S}}"                          # replace slashes with a separator that's alphabetically first
+      paths+=("$path|$includeDir")
     fi
   done
-  ((!${#grouped[@]})) && return
+  ((!${#paths[@]})) && return
 
-  readarray -t grouped < <(printf "%s\n" "${grouped[@]}" | sort -t '|' -k1,2) # by group=asc, path=asc
+  # sort paths
+  readarray -t paths < <(printf '%s\n' "${paths[@]}" | sort -t '|' -k1,1) # by path=asc
 
-  # write paths back to out1 + out2                   # no filtering of duplicates and overlaps (performance)
+  # write sorted paths to out1 + out2                 # no filtering of duplicates and overlaps (performance)
   out1=()
   out2=()
-  for line in "${grouped[@]}"; do
-    IFS='|' read -r _ path include <<< "$line"
+  for line in "${paths[@]}"; do
+    IFS='|' read -r path includeDir <<< "$line"
     out1+=("${path//${S}//}")                         # revert separators back to slashes
-    out2+=("$include")
+    out2+=("$includeDir")
   done
 }
 
 
 #
-# Resolve the MQL version of a source file, taking into account an explicit or configured value.
-# If neither input nor configuration exist, the function tries to auto-detect the MQL version.
+# Resolve and print the MQL version of a source file, taking into account an explicitly specified or a configured version.
+# If neither input option nor configuration was provided, the function tries to auto-detect the MQL version.
 #
-# @param $1 - filename (exists and is either an ".mq4" or ".mq5" file)
-# @param $2 - input version
+# @param $1 - filename (exists and is either .mq4 or .mq5)
+# @param $2 - specified input version (if any)
 #
 function resolveMqlVersion() {
-  local file="${1,,}" version="${2,,}"
-  [[ "$file" == *.mq5 ]] && { echo "mql5"; return; }  # the file extension was already validated
-  [[ "$version" == mql4[05] ]] && { echo "$version"; return; }
-  [[ -z "$version" ]] || fail "unsupported input version: \"$version\""
+  local file="$1" version="${2,,}"
+  [[ "${file,,}" == *.mq5 ]]   && echo "mql5"     && return
+  [[ "$version" == mql4[05] ]] && echo "$version" && return
+  [[ -n "$version" ]] && fail "unsupported input version: \"$version\""
 
-  local dir base lines lFile pFile i
-  file="${file//\\//}"
-  [[ "$file" == */* ]] && dir="${file%/*}" || dir='.'
-  base="${file##*/}"
-  readarray -t lines < <(cd -- "$dir" && echo "$PWD" && pwd -P)
-  lFile="${lines[0],,}/$base"                         # logical filename
-  pFile="${lines[1],,}/$base"                         # physical filename
+  local realName i
+  realName="$(resolveRealPath "$file")"
 
+  shopt -s nocasematch
   for ((i=${#_mql45Sources[@]}-1; i>=0; i--)); do
-    [[ "$lFile" == "${_mql45Sources[i]}/"* ]] && { echo "mql45"; return; }
+    [[ "$realName" == "${_mql45Sources[i]}/"* ]] && version='mql45' && break
   done
-  for ((i=${#_mql40Sources[@]}-1; i>=0; i--)); do
-    [[ "$lFile" == "${_mql40Sources[i]}/"* ]] && { echo "mql40"; return; }
+  [[ -z "$version" ]] && for ((i=${#_mql40Sources[@]}-1; i>=0; i--)); do
+    [[ "$realName" == "${_mql40Sources[i]}/"* ]] && version='mql40' && break
   done
-
-  for ((i=${#_mql45Sources[@]}-1; i>=0; i--)); do
-    [[ "$pFile" == "${_mql45Sources[i]}/"* ]] && { echo "mql45"; return; }
-  done
-  for ((i=${#_mql40Sources[@]}-1; i>=0; i--)); do
-    [[ "$pFile" == "${_mql40Sources[i]}/"* ]] && { echo "mql40"; return; } || :
-  done
+  shopt -u nocasematch
 
   # TODO: auto-detect MQL4 version
+  echo "$version"
 }
 
 
 #
-# Resolve the MQL include directory for a source file, taking into account an explicit or configured value.
-# If neither input nor configuration exist, the function tries to auto-detect the include directory.
+# Resolve and print the MQL include directory for a source file, taking into account an explicitly specified or configured directory.
+# If neither input option nor configuration was provided, the function tries to auto-detect the include directory.
 #
 # @param $1 - filename (exists and is either .mq4 or .mq5)
 # @param $2 - resolved MQL version id
-# @param $3 - input include dir
+# @param $3 - specified include dir (if any)
 #
 function resolveIncludeDir() {
-  local file="${1,,}" version="$2" includeDir="$3"
-  [[ -n "$includeDir" ]] && { echo "$includeDir"; return; }
+  local file="$1" version="$2" includeDir="$3"
+  [[ -n "$includeDir" ]] && echo "$includeDir" && return
 
-  local dir base lines i
-  file="${file//\\//}"
-  [[ "$file" == */* ]] && dir="${file%/*}" || dir='.'
-  base="${file##*/}"
-  readarray -t lines < <(cd -- "$dir" && echo "$PWD" && pwd -P)
-  lFile="${lines[0],,}/$base"                         # logical filename
-  pFile="${lines[1],,}/$base"                         # physical filename
+  local realName i
+  realName="$(resolveRealPath "$file")"
 
+  shopt -s nocasematch
   for ((i=${#sourcePaths[@]}-1; i>=0; i--)); do
-    [[ "$lFile" == "${sourcePaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; }
+    [[ "$realName" == "${sourcePaths[i]}/"* ]] && includeDir="${_includeDirs[i]}" && break
   done
-  for ((i=${#sourcePaths[@]}-1; i>=0; i--)); do
-    [[ "$pFile" == "${sourcePaths[i]}/"* ]] && { echo "${_includeDirs[i]}"; return; } || :
-  done
+  shopt -u nocasematch
 
   # TODO: auto-detect include directory
+  echo "$includeDir"
 }
 
 
@@ -934,7 +979,6 @@ function sanitizeName() {
 
   str="${str#"${str%%[![:space:]]*}"}"                      # trim leading white space
   str="${str%"${str##*[![:space:]]}"}"                      # trim trailing white space
-
   echo "$str"
 }
 
@@ -945,9 +989,9 @@ function sanitizeName() {
 # @param $1 - MQL version id
 #
 function versionName() {
-  [[ "$1" == 'mql40' ]] && { echo 'MQL4.0'; return; }
-  [[ "$1" == 'mql45' ]] && { echo 'MQL4.5'; return; }
-  [[ "$1" == 'mql5'  ]] && { echo 'MQL5';   return; }
+  [[ "$1" == 'mql40' ]] && echo 'MQL4.0' && return
+  [[ "$1" == 'mql45' ]] && echo 'MQL4.5' && return
+  [[ "$1" == 'mql5'  ]] && echo 'MQL5'   && return
   fail "unknown MQL version id: \"$1\""
 }
 
