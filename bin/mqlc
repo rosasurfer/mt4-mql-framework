@@ -127,7 +127,7 @@ function init() {
   readonly originalOutput debug trace test
 
   registerTmpPath ""                                        # initialize management of tmp files
-  parseSubstedDrives
+  readSubstedDrives
 }
 
 
@@ -243,22 +243,23 @@ function cmdHelper() {
 
 
 #
-# Test whether two logical directories are physically the same.
-# Returns with exit status 0 (success) if they are the same, and a non-zero exit status otherwise (not the same).
+# Test whether two directories are physically the same.
+# Returns with exit status 0 (success) if they are, and a non-zero exit status otherwise.
 #
 # @param $1 - directory A
 # @param $2 - directory B
 #
 function compareDirs() {
-  local dirA="$1" dirB="$2" status=0
+  local dirA="$1" dirB="$2" realA realB
   [[ -d "$dirA" && -d "$dirB" ]] || return 1
-  (
-    cd "$dirA" && realDirA="$(realpath .)" &&
-    cd "$dirB" && realDirB="$(realpath .)" &&
-    [[ "${realDirA,,}" == "${realDirB,,}" ]]
-    exit $?
-  ) || status=$?
-  return "$status"
+
+  dirA="$(cygpath -u "$dirA")"
+  dirB="$(cygpath -u "$dirB")"
+
+  realA="$(resolveRealPath "$dirA")"
+  realB="$(resolveRealPath "$dirB")"
+
+  [[ "$realA" == "$realB" ]]              # returns with the comparison result
 }
 
 
@@ -560,9 +561,7 @@ function setCompilerPath() {
   local -n result="$1"
   local version="$2" includeDir="${3:-}" compilerVar filename basename
 
-  if [[ -n "$includeDir" ]]; then
-    includeDir="$(cd -- "$includeDir" && pwd -P)"
-  fi
+  [[ -n "$includeDir" ]] && includeDir="$(resolveRealPath "$includeDir")"
 
   # check the cache for a matching result
   if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
@@ -608,8 +607,32 @@ function cygpath() {
 }
 
 
+declare -A substedDrives=()
+
 #
-# Resolve the real path of the passed argument. Depending on the Linux layer the resulting path may/may not 
+# Read substituted Windows drives and convert paths to Unix-style.
+#
+function readSubstedDrives() {
+  local lines i driveW driveU targetW targetU
+  readarray -t lines < <(subst)                             # each Windows line has a trailing CR attached
+
+  for ((i=0; i < ${#lines[@]}; i++)); do
+    [[ "${lines[i]%${CR}}" =~ ^(.+):\ =\>\ (.+)$ ]] || fail "unexpected subst output:${NL}$(printf '%s\n' "${lines[@]}")"
+    driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
+    targetW="$(cygpath -m "${BASH_REMATCH[2]}")"             
+
+    driveU="$(cygpath -u "$driveW")"
+    targetU="$(cygpath -u "$targetW")"                      # depending on the Linux layer paths may/may not have the prefix '/cygwin/'
+
+    substedDrives["$driveW"]="$targetW/"                    # add trailing separator for consistency
+    substedDrives["$driveU"]="$targetU/"
+  done
+  readonly substedDrives
+}
+
+
+#
+# Resolve the real path of the passed argument. Depending on the Linux layer the resulting path may/may not
 # be prefixed with "/cygwin/".
 #
 # Replacement for the native `realpath` command which may not resolve Windows drive substitutions.
@@ -648,25 +671,6 @@ function resolveRealPath() {
     echo "$resolvedPath"
     break
   done
-}
-
-
-declare -A substedDrives=()
-
-#
-# Parse substituted Windows drives and convert paths to Unix-style.
-#
-function parseSubstedDrives() {
-  local lines i drive target
-  readarray -t lines < <(subst)                             # Windows lines will end with a trailing CR
-
-  for ((i=0; i < ${#lines[@]}; i++)); do
-    [[ "${lines[i]%${CR}}" =~ ^(.+):\ =\>\ (.+)$ ]] || fail "unexpected subst output:${NL}$(printf '%s\n' "${lines[@]}")"
-    drive="$(cygpath -u "${BASH_REMATCH[1]}")"
-    target="$(cygpath -u "${BASH_REMATCH[2]}")"             # Unix-style paths may/may not have the prefix '/cygwin/'
-    substedDrives["$drive"]="$target/"                      # add trailing separator
-  done
-  readonly substedDrives
 }
 
 
@@ -768,11 +772,11 @@ function readConfig() {
   # resolve config file location for the source file
   srcFile="${srcFile//\\//}"
   [[ "$srcFile" == */* ]] && dir="${srcFile%/*}" || dir='.'
-  dir="$(cd -- "$dir" && pwd -P)/."                           # physical dir name
+  dir="$(resolveRealPath "$dir")/."
   while true; do
     dir="${dir%/*}"
     [[ -z "$dir" ]] && break
-    [[ -f "$dir/$rcFile" ]] && { config="$dir/$rcFile"; break; }
+    [[ -f "$dir/$rcFile" ]] && config="$dir/$rcFile" && break
   done
   if [[ -z "$config" && -n "${HOME:-}" ]]; then
     [[ -f "$HOME/$rcFile" ]] && config="$HOME/$rcFile"
@@ -781,7 +785,7 @@ function readConfig() {
     [[ -f "$USERPROFILE/$rcFile" ]] && config="$USERPROFILE/$rcFile"
   fi
   [[ "$debug" -eq 1 && -n "$config" ]] && {
-    stderr "reading config file: $config"
+    stderr "config file: $config"
     stderr ""
   }
 
@@ -890,7 +894,7 @@ function normalizeIncludeDirs() {
     if [[ -d "$path" ]]; then
       includeDir="${in[$path]}"                       # convert to logical name (even non-existing)
       [[ -d "$includeDir" ]] && includeDir="$(cd -- "$includeDir" && echo "$PWD")" || includeDir="$(cygpath -u "$includeDir")"
-      
+
       path="$(resolveRealPath "$path")"               # convert to real name
       path="${path////${S}}"                          # replace slashes with a separator that's alphabetically first
       paths+=("$path|$includeDir")
