@@ -37,10 +37,9 @@ double upperBand[];
 double lowerBand[];
 
 string indicatorName = "";
-string shortName     = "";
 string legendLabel   = "";
 int    chartWindow;
-bool   isChartLegend = false;                // chart legend in main window
+bool   isChartLegend = false;                // a chart legend in the main window
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -84,7 +83,7 @@ int onInit() {
 
    // always initialize a chart legend (removed on the first tick if not used)
    legendLabel = CreateChartLegend();
-   chartWindow = GetChartWindow(shortName);
+   chartWindow = GetChartWindow(indicatorName);
 
    return(catch("onInit(4)"));
 }
@@ -121,7 +120,7 @@ int onTick() {
 
       // initialize additional legend in main chart
       if (__isChart && !__isSuperContext) {
-         if (chartWindow == -1) chartWindow = GetChartWindow(shortName);
+         if (chartWindow == -1) chartWindow = GetChartWindow(indicatorName);
          isChartLegend = (chartWindow == 0);
          if (!isChartLegend) RemoveChartLegend();
       }
@@ -166,7 +165,7 @@ int onTick() {
  *
  * @param  string cmd    - command name
  * @param  string params - command parameters
- * @param  int    keys   - combination of pressed modifier keys
+ * @param  int    keys   - flags of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
@@ -244,8 +243,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    string stepSize = ifString(Periods.Step, ":"+ Periods.Step, "");
    indicatorName = "Donchian Channel("+ Periods + stepSize +") Width";
-   shortName     = "Donchian Channel("+ Periods +") Width";
-   IndicatorShortName(shortName);
+   IndicatorShortName(indicatorName);
 
    SetIndexBuffer(MODE_MAIN,       main     ); SetIndexEmptyValue(MODE_MAIN,       0);
    SetIndexBuffer(MODE_UPPER_BAND, upperBand); SetIndexEmptyValue(MODE_UPPER_BAND, 0);

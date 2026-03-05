@@ -1,5 +1,5 @@
 <!-- 
-ZigZag(50,30) + Donchian Channel(30) Width in main window 
+ZigZag/Donchian Channel(50 + 30) + Donchian Channel(30) Width in main window 
 -->
 
 <chart>

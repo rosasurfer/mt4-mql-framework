@@ -1,5 +1,5 @@
 /**
- * Average (True) Range
+ * Average Range/Average True Range
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -7,12 +7,11 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern bool   TrueRange                      = true;                       // whether to reflect the traded or the true range
-
 extern string ___a__________________________ = "=== MA settings ===";
 extern string MA.Method                      = "SMA | LWMA* | EMA | SMMA"; // averaging type
 extern int    MA.Periods                     = 20;                         // averaging periods
 extern int    MA.Periods.Step                = 0;                          // step size for a stepped input parameter
+extern bool   TrueRange                      = true;                       // whether to evaluate the traded or the true range
 
 extern string ___b__________________________ = "=== Display settings ===";
 extern int    Line.Width                     = 2;
@@ -30,8 +29,8 @@ extern color  Line.Color                     = Blue;
 #define STEP_DOWN            -1
 
 // indicator buffer ids
-#define MODE_MA               0              // average
-#define MODE_RANGE            1              // range values
+#define MODE_MA               0              // moving average of the ranges
+#define MODE_RANGE            1              // actual range values
 
 #property indicator_separate_window
 #property indicator_buffers   1              // visible buffers
@@ -55,12 +54,6 @@ int onInit() {
    string indicator = WindowExpertName();
 
    // validate inputs
-   // MA.Periods
-   if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
-   if (MA.Periods < 1)       return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   // MA.Periods.Step
-   if (AutoConfiguration) MA.Periods.Step = GetConfigInt(indicator, "MA.Periods.Step", MA.Periods.Step);
-   if (MA.Periods.Step < 0)  return(catch("onInit(2)  invalid input parameter MA.Periods.Step: "+ MA.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.Method
    string sValues[], sValue = MA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.Method", sValue);
@@ -69,9 +62,15 @@ int onInit() {
       sValue = sValues[size-1];
    }
    maMethod = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)       return(catch("onInit(3)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   if (maMethod > MODE_LWMA) return(catch("onInit(4)  unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)       return(catch("onInit(1)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod > MODE_LWMA) return(catch("onInit(2)  unsupported MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
+   // MA.Periods
+   if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
+   if (MA.Periods < 1)       return(catch("onInit(3)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   // MA.Periods.Step
+   if (AutoConfiguration) MA.Periods.Step = GetConfigInt(indicator, "MA.Periods.Step", MA.Periods.Step);
+   if (MA.Periods.Step < 0)  return(catch("onInit(4)  invalid input parameter MA.Periods.Step: "+ MA.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // TrueRange
    // Line.Width
    if (AutoConfiguration) Line.Width = GetConfigInt(indicator, "Line.Width", Line.Width);
@@ -147,7 +146,7 @@ int onTick() {
       }
    }
    for (bar=startbar; bar >= 0; bar--) {
-      ma[bar] = iMAOnArray(ranges, WHOLE_ARRAY, MA.Periods, 0, maMethod, bar);
+      ma[bar] = iMAOnArray(ranges, WHOLE_ARRAY, MA.Periods, 0, maMethod, bar)/pUnit;
    }
    return(catch("onTick(1)"));
 }
@@ -158,7 +157,7 @@ int onTick() {
  *
  * @param  string cmd    - command name
  * @param  string params - command parameters
- * @param  int    keys   - combination of pressed modifier keys
+ * @param  int    keys   - flags of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
@@ -182,10 +181,9 @@ bool onCommand(string cmd, string params, int keys) {
 bool ParameterStepper(int direction, int keys) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // step up/down input parameter "MA.Periods"
-   int step = MA.Periods.Step;
+   int step = MA.Periods.Step;                        // step up/down input parameter "MA.Periods"
 
-   if (!step || MA.Periods + direction*step < 1) {       // stop if parameter limit reached
+   if (!step || MA.Periods + direction*step < 1) {    // stop if parameter limit reached
       PlaySoundEx("Plonk.wav");
       return(false);
    }
@@ -219,7 +217,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    SetIndexStyle(MODE_RANGE, DRAW_NONE, EMPTY, EMPTY,      CLR_NONE);
    SetIndexStyle(MODE_MA,    drawType,  EMPTY, Line.Width, Line.Color); SetIndexLabel(MODE_MA, name);
-   IndicatorDigits(Digits);
+   IndicatorDigits(pDigits);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -265,10 +263,10 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("TrueRange=",       BoolToStr(TrueRange),      ";", NL,
-                            "MA.Method=",       DoubleQuoteStr(MA.Method), ";", NL,
+   return(StringConcatenate("MA.Method=",       DoubleQuoteStr(MA.Method), ";", NL,
                             "MA.Periods=",      MA.Periods,                ";", NL,
                             "MA.Periods.Step=", MA.Periods.Step,           ";", NL,
+                            "TrueRange=",       BoolToStr(TrueRange),      ";", NL,
                             "Line.Width=",      Line.Width,                ";", NL,
                             "Line.Color=",      ColorToStr(Line.Color),    ";")
    );

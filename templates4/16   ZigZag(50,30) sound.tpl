@@ -1,3 +1,7 @@
+<!-- 
+ZigZag/Donchian Channel(50 + 30) with sound on channel widening 
+-->
+
 <chart>
 symbol=GBPUSD
 period=60

@@ -22,8 +22,8 @@ extern int    Tunnel.Periods                 = 55;
 
 extern string ___b__________________________ = "=== Bar settings ===";
 extern color  Color.UpTrend                  = Blue;
-extern color  Color.DownTrend                = Red;
 extern color  Color.NoTrend                  = Silver;
+extern color  Color.DownTrend                = Red;
 extern int    BarWidth                       = 2;
 extern bool   ShowChartLegend                = false;
 extern int    MaxBarsBack                    = 10000;       // max. values to calculate (-1: all available)
@@ -103,11 +103,11 @@ int onInit() {
    tunnel.definition = Tunnel.Method +"("+ tunnel.periods+")";
    // Color.*: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
-   if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
    if (AutoConfiguration) Color.NoTrend   = GetConfigColor(indicator, "Color.NoTrend",   Color.NoTrend);
+   if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    if (Color.NoTrend   == 0xFF000000) Color.NoTrend   = CLR_NONE;
+   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // BarWidth
    if (BarWidth < 0)        return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
    if (BarWidth > 13)       return(catch("onInit(4)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
@@ -220,7 +220,7 @@ int onTick() {
  *
  * @param  string cmd    - command name
  * @param  string params - command parameters
- * @param  int    keys   - combination of pressed modifier keys
+ * @param  int    keys   - flags of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
@@ -314,8 +314,8 @@ string InputsToStr() {
                             "Tunnel.Periods=",  Tunnel.Periods,                ";", NL,
 
                             "Color.UpTrend=",   ColorToStr(Color.UpTrend),     ";", NL,
-                            "Color.DownTrend=", ColorToStr(Color.DownTrend),   ";", NL,
                             "Color.NoTrend=",   ColorToStr(Color.NoTrend),     ";", NL,
+                            "Color.DownTrend=", ColorToStr(Color.DownTrend),   ";", NL,
                             "BarWidth=",        BarWidth,                      ";", NL,
                             "ShowChartLegend=", BoolToStr(ShowChartLegend),    ";", NL,
                             "MaxBarsBack=",     MaxBarsBack,                   ";")

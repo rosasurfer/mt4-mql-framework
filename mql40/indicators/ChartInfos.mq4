@@ -293,7 +293,7 @@ int onTick() {
  *
  * @param  string cmd    - command name
  * @param  string params - command parameters
- * @param  int    keys   - combination of pressed modifier keys
+ * @param  int    keys   - flags of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
@@ -1056,7 +1056,7 @@ bool CreateLabels() {
    label.instrument     = programName +".Instrument";
    label.price          = programName +".Price";
    label.spread         = programName +".Spread";
-   label.customPosition = programName +".CustomPosition";                           // base value for actual row/column labels
+   label.customPosition = programName +".CustomPosition";                        // base value for actual row/column labels
    label.totalPosition  = programName +".TotalPosition";
    label.unitSize       = programName +".UnitSize";
    label.accountBalance = programName +".AccountBalance";
@@ -1067,11 +1067,11 @@ bool CreateLabels() {
    int corner, xDist, yDist, build=GetTerminalBuild();
 
    // instrument name (the text is set immediately here)
-   if (build <= 509) {                                                              // only builds <= 509, newer builds already display the symbol here
+   if (build <= 509) {                                                           // only builds <= 509, newer builds already display the symbol here
       if (ObjectFind(label.instrument) == -1) if (!ObjectCreateRegister(label.instrument, OBJ_LABEL)) return(false);
       ObjectSet(label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));    // On builds > 478 the label is inset to account for the arrow of the
-      ObjectSet(label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));    // "One-Click-Trading" feature.
+      ObjectSet(label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13)); // On builds > 478 the label is inset to account for the arrow of the
+      ObjectSet(label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3)); // "One-Click-Trading" feature.
       string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
       if      (StrEndsWithI(Symbol(), "_ask")) name = name +" (Ask)";
       else if (StrEndsWithI(Symbol(), "_avg")) name = name +" (Avg)";
@@ -1099,7 +1099,7 @@ bool CreateLabels() {
    corner = position.unitsize.corner;
    xDist  = 9;
    switch (corner) {
-      case CORNER_TOP_RIGHT:    yDist = 58; break;          // yDist of spread + 20
+      case CORNER_TOP_RIGHT:    yDist = 58; break;                // yDist of spread + 20
       case CORNER_BOTTOM_RIGHT: yDist =  9; break;
    }
    position.unitsize.yLine1 = yDist;
@@ -1112,7 +1112,7 @@ bool CreateLabels() {
    // total position
    corner = position.unitsize.corner;
    xDist  = 9;
-   yDist += 20;                                             // 1 line above/below unitsize
+   yDist += 20;                                                   // 1 line above unit size
    position.unitsize.yLine2 = yDist;
    if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL)) return(false);
    ObjectSet    (label.totalPosition, OBJPROP_CORNER,   corner);
@@ -1123,15 +1123,15 @@ bool CreateLabels() {
    // account balance
    if (ObjectFind(label.accountBalance) == -1) if (!ObjectCreateRegister(label.accountBalance, OBJ_LABEL)) return(false);
    ObjectSet    (label.accountBalance, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet    (label.accountBalance, OBJPROP_XDISTANCE, 330);
-   ObjectSet    (label.accountBalance, OBJPROP_YDISTANCE,   9);
+   ObjectSet    (label.accountBalance, OBJPROP_XDISTANCE, 260);
+   ObjectSet    (label.accountBalance, OBJPROP_YDISTANCE,  29);   // 1 line above unit size
    ObjectSetText(label.accountBalance, " ", 1);
 
    // order counter
    if (ObjectFind(label.orderCounter) == -1) if (!ObjectCreateRegister(label.orderCounter, OBJ_LABEL)) return(false);
    ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 500);
-   ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
+   ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 260);
+   ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);     // line of unit size
    ObjectSetText(label.orderCounter, " ", 1);
 
    // trade account
