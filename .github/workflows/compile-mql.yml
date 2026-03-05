@@ -73,9 +73,9 @@ jobs:
         if:   env.SKIP_CI != 'true'
         run: |
           TRACE=1 \
-          bin/mqlc -v=mql40 /inc:mql40 mql40/experts mql40/experts/tools mql40/indicators mql40/indicators/.attic mql40/scripts mql40/libraries \
-                   -v=mql45 /inc:mql45 mql45/experts mql45/indicators mql45/scripts mql45/libraries \
-                            /inc:mql50 mql50/experts mql50/indicators mql50/scripts mql50/libraries \
+          bin/mqlc -v=mql40 /inc:mql40 mql40/{experts,experts/tools,indicators,indicators/.attic,scripts,libraries} \
+                   -v=mql45 /inc:mql45 mql45/{experts,indicators,scripts,libraries} \
+                            /inc:mql50 mql50/{experts,indicators,scripts,libraries} \
                    --warn2error
 
       # ------------------------------------------------------------------------------------------------------------------------------------
