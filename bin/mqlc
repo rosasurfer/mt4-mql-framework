@@ -14,7 +14,6 @@
 #
 #
 # TODO:
-#  - replace all broken usages of `pwd -P` and `realpath`
 #  - colored output
 #  - implement download tracker
 #  - option --rc/--no-rc
@@ -210,7 +209,7 @@ function checkCompilerDir() {
 
 
 #
-# Clean-up changes in a compiler directory, caused by MetaEditor (metalang.exe doesn't cause any changes).
+# Clean-up changes in a compiler directory added by MetaEditor (metalang.exe doesn't add anything).
 #
 # @param $1 - compiler filename
 #
@@ -256,8 +255,8 @@ function compareDirs() {
   dirA="$(cygpath -u "$dirA")"
   dirB="$(cygpath -u "$dirB")"
 
-  realA="$(resolveRealPath "$dirA")"
-  realB="$(resolveRealPath "$dirB")"
+  realA="$(realWindowsPath "$dirA")"
+  realB="$(realWindowsPath "$dirB")"
 
   [[ "$realA" == "$realB" ]]              # returns with the comparison result
 }
@@ -271,20 +270,19 @@ function compareDirs() {
 # @param $3 - include directory
 #
 function compileMql40() {
-  local srcFile="$1" version="$2" include="$3" s_compiler s_srcFile logFile
+  local srcFile="$1" version="$2" include="$3" s_srcFile logFile
   local compiler errorStatus=0 startms endms time='' output=() line i errors=0 epl='' warnings=0 wpl='' retVal
 
   echo "Compiling \"$srcFile\" as $(versionName "$version")"
 
   # compose compiler command
   setCompilerPath 'compiler' "$version" "$include"
-  [[ "$compiler" == /* ]] && compiler="$(cygpath -w "$compiler")"
+  compiler="$(cygpath -m "$compiler")"
   [[ "$srcFile" == /* ]] && srcFile="$(cygpath -w "$srcFile")"
   logFile="${srcFile%.*}.log"
   ((debug)) && {
-    [[ "$compiler" == *\ * ]] && s_compiler="\"$compiler\"" || s_compiler="$compiler"
-    [[ "$srcFile"  == *\ * ]] && s_srcFile="\"$srcFile\""   || s_srcFile="$srcFile"
-    echo "cmd: $s_compiler $s_srcFile"
+    [[ "$srcFile" == *\ * ]] && s_srcFile="\"$srcFile\"" || s_srcFile="$srcFile"
+    echo "cmd: \"$compiler\" $s_srcFile"
   }
 
   # call the compiler: The exit code is the number of detected errors (0 = no errors but possibly warnings).
@@ -388,7 +386,7 @@ function compileMql5() {
 
   # compose the compiler command
   setCompilerPath 'compiler' "$version"
-  [[ "$compiler" == /* ]] && compiler="$(cygpath -w "$compiler")"
+  compiler="$(cygpath -w "$compiler")"
   if [[ -n "$include" ]]; then
     [[ "$include" == /* ]] && include="$(cygpath -w "$include")"
     includeOption="/include:\"$(cygpath -w "$include")\""
@@ -561,7 +559,7 @@ function setCompilerPath() {
   local -n result="$1"
   local version="$2" includeDir="${3:-}" compilerVar filename basename
 
-  [[ -n "$includeDir" ]] && includeDir="$(resolveRealPath "$includeDir")"
+  [[ -n "$includeDir" ]] && includeDir="$(realWindowsPath "$includeDir")"
 
   # check the cache for a matching result
   if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
@@ -619,7 +617,7 @@ function readSubstedDrives() {
   for ((i=0; i < ${#lines[@]}; i++)); do
     [[ "${lines[i]%${CR}}" =~ ^(.+):\ =\>\ (.+)$ ]] || fail "unexpected subst output:${NL}$(printf '%s\n' "${lines[@]}")"
     driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
-    targetW="$(cygpath -m "${BASH_REMATCH[2]}")"             
+    targetW="$(cygpath -m "${BASH_REMATCH[2]}")"
 
     driveU="$(cygpath -u "$driveW")"
     targetU="$(cygpath -u "$targetW")"                      # depending on the Linux layer paths may/may not have the prefix '/cygwin/'
@@ -632,14 +630,13 @@ function readSubstedDrives() {
 
 
 #
-# Resolve the real path of the passed argument. Depending on the Linux layer the resulting path may/may not
+# Resolve and print the real Windows path of the passed argument. Replacement for the `realpath` command which may not return
+# a Windows path and/or may not see through a Windows drive substitution. Depending on the Linux layer the result may/may not
 # be prefixed with "/cygwin/".
-#
-# Replacement for the native `realpath` command which may not resolve Windows drive substitutions.
 #
 # @param $1 - path
 #
-function resolveRealPath() {
+function realWindowsPath() {
   # Other approaches and issues
   # ---------------------------
   # realpath <path>         Depending on path/version/OS: may not resolve Windows subst.
@@ -649,7 +646,7 @@ function resolveRealPath() {
   #
   # Solution
   # --------
-  # Use `realpath` and parse Windows drive substitutions manually.
+  # Use `realpath` and apply Windows drive substitutions manually.
   #
   local path="$1" resolvedPath drive target
   local -A seenPaths=()
@@ -662,7 +659,7 @@ function resolveRealPath() {
 
     for drive in "${!substedDrives[@]}"; do                 # resolve drive substitutions
       if [[ "$resolvedPath" == "$drive"* ]]; then
-        target="${substedDrives[$drive]}"                   # opposite to Windows it ends with a path separator
+        target="${substedDrives[$drive]}"                   # our target path always ends with a separator
         path="${target}${resolvedPath:${#drive}}"
         continue 2
       fi
@@ -772,7 +769,7 @@ function readConfig() {
   # resolve config file location for the source file
   srcFile="${srcFile//\\//}"
   [[ "$srcFile" == */* ]] && dir="${srcFile%/*}" || dir='.'
-  dir="$(resolveRealPath "$dir")/."
+  dir="$(realWindowsPath "$dir")/."
   while true; do
     dir="${dir%/*}"
     [[ -z "$dir" ]] && break
@@ -785,7 +782,7 @@ function readConfig() {
     [[ -f "$USERPROFILE/$rcFile" ]] && config="$USERPROFILE/$rcFile"
   fi
   [[ "$debug" -eq 1 && -n "$config" ]] && {
-    stderr "config file: $config"
+    stderr "Config file: $config"
     stderr ""
   }
 
@@ -808,7 +805,7 @@ function readConfig() {
   MT4_METAEDITOR="${BAK_MT4_METAEDITOR:-${MT4_METAEDITOR:-}}"
   MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
   ((debug)) && {
-    stderr "configured compilers:"
+    stderr "MQL compilers:"
     [[ -n "$MT4_METALANG"   ]] && stderr "MT4_METALANG:   $MT4_METALANG"
     [[ -n "$MT4_METAEDITOR" ]] && stderr "MT4_METAEDITOR: $MT4_METAEDITOR"
     [[ -n "$MT5_METAEDITOR" ]] && stderr "MT5_METAEDITOR: $MT5_METAEDITOR"
@@ -819,10 +816,10 @@ function readConfig() {
   normalizeMQL4Paths 'mql40Sources' '_mql40Sources'
   normalizeMQL4Paths 'mql45Sources' '_mql45Sources'
   ((debug)) && {
-    stderr "configured MQL4.0 paths:"
+    stderr "MQL4.0 paths:"
     ((${#_mql40Sources[@]})) && stderr "$(printf '%s\n' "${_mql40Sources[@]}")"
     stderr ""
-    stderr "configured MQL4.5 paths:"
+    stderr "MQL4.5 paths:"
     ((${#_mql45Sources[@]})) && stderr "$(printf '%s\n' "${_mql45Sources[@]}")"
     stderr ""
   }
@@ -831,7 +828,7 @@ function readConfig() {
   normalizeIncludeDirs 'includeDirs' 'sourcePaths' '_includeDirs'
   ((debug)) && {
     local i
-    stderr "configured include directories:"
+    stderr "Include directories:"
     for i in "${!sourcePaths[@]}"; do
       stderr "${sourcePaths[i]} => ${_includeDirs[i]}"
     done
@@ -858,7 +855,7 @@ function normalizeMQL4Paths() {
   local path paths=() S=$'\x01'
   for path in "${in[@]}"; do
     if [[ -d "$path" ]]; then
-      path="$(resolveRealPath "$path")"
+      path="$(realWindowsPath "$path")"
       paths+=("${path////${S}}")                      # replace slashes with a separator that's alphabetically first
     fi
   done
@@ -895,7 +892,7 @@ function normalizeIncludeDirs() {
       includeDir="${in[$path]}"                       # convert to logical name (even non-existing)
       [[ -d "$includeDir" ]] && includeDir="$(cd -- "$includeDir" && echo "$PWD")" || includeDir="$(cygpath -u "$includeDir")"
 
-      path="$(resolveRealPath "$path")"               # convert to real name
+      path="$(realWindowsPath "$path")"               # convert to real name
       path="${path////${S}}"                          # replace slashes with a separator that's alphabetically first
       paths+=("$path|$includeDir")
     fi
@@ -930,7 +927,7 @@ function resolveMqlVersion() {
   [[ -n "$version" ]] && fail "unsupported input version: \"$version\""
 
   local realName i
-  realName="$(resolveRealPath "$file")"
+  realName="$(realWindowsPath "$file")"
 
   shopt -s nocasematch
   for ((i=${#_mql45Sources[@]}-1; i>=0; i--)); do
@@ -959,7 +956,7 @@ function resolveIncludeDir() {
   [[ -n "$includeDir" ]] && echo "$includeDir" && return
 
   local realName i
-  realName="$(resolveRealPath "$file")"
+  realName="$(realWindowsPath "$file")"
 
   shopt -s nocasematch
   for ((i=${#sourcePaths[@]}-1; i>=0; i--)); do
