@@ -615,15 +615,16 @@ function readSubstedDrives() {
   readarray -t lines < <(subst)                             # each Windows line has a trailing CR attached
 
   for ((i=0; i < ${#lines[@]}; i++)); do
-    [[ "${lines[i]%${CR}}" =~ ^(.+):\ =\>\ (.+)$ ]] || fail "unexpected subst output:${NL}$(printf '%s\n' "${lines[@]}")"
-    driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
-    targetW="$(cygpath -m "${BASH_REMATCH[2]}")"
+    if [[ "${lines[i]%${CR}}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
+      driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
+      targetW="$(cygpath -m "${BASH_REMATCH[2]}")"
 
-    driveU="$(cygpath -u "$driveW")"
-    targetU="$(cygpath -u "$targetW")"                      # depending on the Linux layer paths may/may not have the prefix '/cygwin/'
+      driveU="$(cygpath -u "$driveW")"
+      targetU="$(cygpath -u "$targetW")"                    # depending on the Linux layer paths may/may not have the prefix '/cygwin/'
 
-    substedDrives["$driveW"]="$targetW/"                    # add trailing separator for consistency
-    substedDrives["$driveU"]="$targetU/"
+      substedDrives["$driveW"]="$targetW/"                  # add trailing separator for consistency
+      substedDrives["$driveU"]="$targetU/"
+    fi
   done
   readonly substedDrives
 }
