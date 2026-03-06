@@ -1,6 +1,5 @@
 <!--
-Default + preFF Brackets +
-Donchian Channel(30) Width (hidden)
+FF Brackets + Donchian Channel(30) Width
 -->
 
 <chart>
