@@ -3,7 +3,7 @@
 # A script for compiling MQL4.0, MQL4.5 and MQL5 source files. Supports batch-processing of multiple files and directories.
 # Prints results to STDOUT and follows standard rules for the exit status. The syntax is backward compatible to MetaEditor.
 #
-# Configuration via environment and/or config file.
+# Configuration via environment and/or config file. See `mqlc --help`.
 #
 # - If environment variable DEBUG is set the script displays debug infos and the final command to be executed.
 # - If environment variable ORIG is set the script prints the original compiler output (plus its own messages).
@@ -14,8 +14,12 @@
 #
 #
 # TODO:
+#  - MQL-version/include-dir look-up fails for linked source directories (look-up was restricted to physical paths)
+#  - MQL-version/include-dir look-up must use only the directory (the file may be symlinked)
+#  - readSubstedDrives() must support all 3 possible path styles
+#
+#  - the config must be parsed, not sourced
 #  - colored output
-#  - implement download tracker
 #  - option --rc/--no-rc
 #  - option --clean
 #  - option --syntax
@@ -24,9 +28,8 @@
 #  - resolve config per source dir
 #  - WSL: move tmp dir to Windows file system
 #  - support relative paths in configuration
-#  - the config must be parsed, not sourced
 #
-#  - auto-detect version
+#  - auto-detect MQL version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
@@ -63,7 +66,7 @@ Options:
   -h, --help           This screen.
   /compile:FILE        Source file to compile. Doesn't support wildcards.
   /compile:DIR         Source directory to compile. Recompiles new and modified sources (not in subdirectories).
-  /include:DIR         Include directory for the following sources (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
+  /inc[lude]:DIR       Include directory for the following sources (default: "<data-dir>/MQL4" or "<data-dir>/MQL5").
   /log                 Writes output to "<source-file.log>" (default: no logfile on success, logfile on errors/warnings).
   /log:FILE            Writes output to the specified logfile.
   -v=VERSION           MQL version of the following MQL4 sources: either "mql40" or "mql45". Can appear multiple times.
@@ -1090,6 +1093,7 @@ while (("$#")); do
 
   if [[ -d "$srcArg" ]]; then
     srcDirGiven=1
+    [[ "$srcArg" =~ [/\\]$ ]] || srcArg="$srcArg/"        # enforce symlink dereferencing
     while IFS= read -r file; do
       srcFileNames+=("$file")
       srcFileVersions+=("${version:-}")
