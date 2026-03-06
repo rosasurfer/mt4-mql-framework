@@ -14,9 +14,13 @@
 #
 #
 # TODO:
-#  - MQL-version/include-dir look-up fails for linked source directories (look-up was restricted to physical paths)
-#  - MQL-version/include-dir look-up must use only the directory (the file may be symlinked)
+#  - include-dir look-up must not dereference a symlinked source file (e.g. mql40/experts/Duel.mq4)
+#
+#  - mql40SourcePaths/mql45SourcePaths/includeSource/includeDirectory must contain user + real paths
+#  - MQL-version/include-dir look-up fails for linked source directories (regression: look-up is now restricted to physical paths)
 #  - readSubstedDrives() must support all 3 possible path styles
+#  - resolveMqlVersion/resolveIncludeDir must process a specified source path instead of processing each found file
+#  - restore original case of filenames
 #
 #  - the config must be parsed, not sourced
 #  - colored output
@@ -615,10 +619,10 @@ declare -A substedDrives=()
 #
 function readSubstedDrives() {
   local lines i driveW driveU targetW targetU
-  readarray -t lines < <(subst)                             # each Windows line has a trailing CR attached
+  readarray -t lines < <(subst | tr -d '\r')
 
   for ((i=0; i < ${#lines[@]}; i++)); do
-    if [[ "${lines[i]%${CR}}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
+    if [[ "${lines[i]}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
       driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
       targetW="$(cygpath -m "${BASH_REMATCH[2]}")"
 
@@ -659,11 +663,11 @@ function realWindowsPath() {
     [[ -n "${seenPaths[$path]:-}" ]] && fail "cycle detected in realpath resolution"
     seenPaths["$path"]=1
 
-    resolvedPath="$(command realpath "$path")"              # resolve junctions/symlinks
+    resolvedPath="$(realpath "$path")"                      # resolve junctions/symlinks
 
     for drive in "${!substedDrives[@]}"; do                 # resolve drive substitutions
       if [[ "$resolvedPath" == "$drive"* ]]; then
-        target="${substedDrives[$drive]}"                   # our target path always ends with a separator
+        target="${substedDrives[$drive]}"                   # the target path ends with a path separator
         path="${target}${resolvedPath:${#drive}}"
         continue 2
       fi
@@ -759,7 +763,9 @@ function prepareCompiler40Dir() {
 }
 
 
-declare _mql40Sources=() _mql45Sources=() sourcePaths=() _includeDirs=()
+declare mql40SourcePaths=()                                 # configured MQL4.0 source paths (Unix-style, user name + real name)
+declare mql45SourcePaths=()                                 # configured MQL4.5 source paths (Unix-style, user name + real name)
+declare includeSource=() includeDirectory=()                # configured include directories per source path
 
 #
 # Read the configuration into global vars.
@@ -798,11 +804,11 @@ function readConfig() {
   local mql40Sources=() mql45Sources=()
   local -A includeDirs=()
 
-  # source the config file                                    # TODO: parse the file
-  [[ -n "$config" ]] && . "$config" &> /dev/null
+  # source the config file                                  # TODO: parse the file
+  [[ -n "$config" ]] && source "$config" &> /dev/null
 
   # resolve compiler settings: environment precedes configuration
-  [[ "${MT4_METALANG:-}"   == '<'* ]] && MT4_METALANG=        # skip distributed/example values
+  [[ "${MT4_METALANG:-}"   == '<'* ]] && MT4_METALANG=      # skip distributed/example values
   [[ "${MT4_METAEDITOR:-}" == '<'* ]] && MT4_METAEDITOR=
   [[ "${MT5_METAEDITOR:-}" == '<'* ]] && MT5_METAEDITOR=
   MT4_METALANG="${BAK_MT4_METALANG:-${MT4_METALANG:-}}"
@@ -816,34 +822,34 @@ function readConfig() {
     stderr ""
   }
 
-  # normalize configured MQL4 paths
-  normalizeMQL4Paths 'mql40Sources' '_mql40Sources'
-  normalizeMQL4Paths 'mql45Sources' '_mql45Sources'
+  # normalize configured MQL4 source paths
+  normalizeMQL4Paths 'mql40Sources' 'mql40SourcePaths'
+  normalizeMQL4Paths 'mql45Sources' 'mql45SourcePaths'
   ((debug)) && {
     stderr "MQL4.0 paths:"
-    ((${#_mql40Sources[@]})) && stderr "$(printf '%s\n' "${_mql40Sources[@]}")"
+    ((${#mql40SourcePaths[@]})) && stderr "$(printf '%s\n' "${mql40SourcePaths[@]}")"
     stderr ""
     stderr "MQL4.5 paths:"
-    ((${#_mql45Sources[@]})) && stderr "$(printf '%s\n' "${_mql45Sources[@]}")"
+    ((${#mql45SourcePaths[@]})) && stderr "$(printf '%s\n' "${mql45SourcePaths[@]}")"
     stderr ""
   }
 
   # normalize configured include directories
-  normalizeIncludeDirs 'includeDirs' 'sourcePaths' '_includeDirs'
+  normalizeIncludeDirs 'includeDirs' 'includeSource' 'includeDirectory'
   ((debug)) && {
     local i
     stderr "Include directories:"
-    for i in "${!sourcePaths[@]}"; do
-      stderr "${sourcePaths[i]} => ${_includeDirs[i]}"
+    for i in "${!includeSource[@]}"; do
+      stderr "${includeSource[i]} => ${includeDirectory[i]}"
     done
     stderr ""
   }
-  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR _mql40Sources _mql45Sources sourcePaths _includeDirs
+  readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR mql40SourcePaths mql45SourcePaths includeSource includeDirectory
 }
 
 
 #
-# Normalize, sort and order the passed MQL4 version paths.
+# Normalize, sort and order the passed MQL4 source paths.
 #
 # @param _In_  $1 - name of indexed array to read configured paths from
 # @param _Out_ $2 - name of indexed array to write normalized paths to
@@ -918,58 +924,67 @@ function normalizeIncludeDirs() {
 
 
 #
-# Resolve and print the MQL version of a source file, taking into account an explicitly specified or a configured version.
-# If neither input option nor configuration was provided, the function tries to auto-detect the MQL version.
+# Resolve and print the MQL version id of a source file. If the version cannot be determined from the context
+# the function analyzes the source code of the file (not yet implemented).
 #
-# @param $1 - filename (exists and is either .mq4 or .mq5)
-# @param $2 - specified input version (if any)
+# @param $1            - filename (exists and is either .mq4 or .mq5)
+# @param $2 [optional] - already resolved version id from a previous processing step (default: none)
 #
 function resolveMqlVersion() {
-  local file="$1" version="${2,,}"
-  [[ "${file,,}" == *.mq5 ]]   && echo "mql5"     && return
-  [[ "$version" == mql4[05] ]] && echo "$version" && return
-  [[ -n "$version" ]] && fail "unsupported input version: \"$version\""
+  local userName="$1" version="${2:-}"
+  [[ "${userName,,}" == *.mq5 ]] && echo "mql5"     && return
+  [[ "$version" == mql4[05] ]]   && echo "$version" && return
+  [[ -n "$version" ]] && fail "unsupported MQL version id: \"$version\""
 
-  local realName i
-  realName="$(realWindowsPath "$file")"
+  local dir baseName realName lines i
+  userName="${userName//\\//}"
+  dir="${userName%/*}"; [[ "$dir" == "$userName" ]] && dir='.'
+  baseName="${userName##*/}"
+  readarray -t lines < <(cd -- "$dir"; echo "$PWD"; realWindowsPath "$PWD")
+  userName="${lines[0]}/$baseName"
+  realName="${lines[1]}/$baseName"
 
   shopt -s nocasematch
-  for ((i=${#_mql45Sources[@]}-1; i>=0; i--)); do
-    [[ "$realName" == "${_mql45Sources[i]}/"* ]] && version='mql45' && break
+  [[ -z "$version" ]] && for ((i=${#mql45SourcePaths[@]}-1; i>=0; i--)); do
+    [[ "$userName" == "${mql45SourcePaths[i]}/"* ]] && version='mql45' && break
   done
-  [[ -z "$version" ]] && for ((i=${#_mql40Sources[@]}-1; i>=0; i--)); do
-    [[ "$realName" == "${_mql40Sources[i]}/"* ]] && version='mql40' && break
+  [[ -z "$version" ]] && for ((i=${#mql45SourcePaths[@]}-1; i>=0; i--)); do
+    [[ "$realName" == "${mql45SourcePaths[i]}/"* ]] && version='mql45' && break
+  done
+  [[ -z "$version" ]] && for ((i=${#mql40SourcePaths[@]}-1; i>=0; i--)); do
+    [[ "$userName" == "${mql40SourcePaths[i]}/"* ]] && version='mql40' && break
+  done
+  [[ -z "$version" ]] && for ((i=${#mql40SourcePaths[@]}-1; i>=0; i--)); do
+    [[ "$realName" == "${mql40SourcePaths[i]}/"* ]] && version='mql40' && break
   done
   shopt -u nocasematch
 
-  # TODO: auto-detect MQL4 version
-  echo "$version"
+  echo "$version"         # TODO: analyze source code
 }
 
 
 #
-# Resolve and print the MQL include directory for a source file, taking into account an explicitly specified or configured directory.
-# If neither input option nor configuration was provided, the function tries to auto-detect the include directory.
+# Resolve and print the MQL include directory for a source file. If the include directory cannot be determined from
+# the context the function tries to auto-detect the include directory (not yet implemented).
 #
-# @param $1 - filename (exists and is either .mq4 or .mq5)
-# @param $2 - resolved MQL version id
-# @param $3 - specified include dir (if any)
+# @param $1            - filename (exists and is either .mq4 or .mq5)
+# @param $2            - MQL version id
+# @param $3 [optional] - already resolved include directory from a previous processing step (default: none)
 #
 function resolveIncludeDir() {
-  local file="$1" version="$2" includeDir="$3"
+  local file="$1" version="$2" includeDir="${3:-}"
   [[ -n "$includeDir" ]] && echo "$includeDir" && return
 
   local realName i
   realName="$(realWindowsPath "$file")"
 
   shopt -s nocasematch
-  for ((i=${#sourcePaths[@]}-1; i>=0; i--)); do
-    [[ "$realName" == "${sourcePaths[i]}/"* ]] && includeDir="${_includeDirs[i]}" && break
+  for ((i=${#includeSource[@]}-1; i>=0; i--)); do
+    [[ "$realName" == "${includeSource[i]}/"* ]] && includeDir="${includeDirectory[i]}" && break
   done
   shopt -u nocasematch
 
-  # TODO: auto-detect include directory
-  echo "$includeDir"
+  echo "$includeDir"      # TODO: auto-detect include directory
 }
 
 
