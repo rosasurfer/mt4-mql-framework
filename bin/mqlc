@@ -14,8 +14,6 @@
 #
 #
 # TODO:
-#  - include-dir look-up must not dereference a symlinked source file (e.g. mql40/experts/Duel.mq4)
-#
 #  - mql40SourcePaths/mql45SourcePaths/includeSource/includeDirectory must contain user + real paths
 #  - MQL-version/include-dir look-up fails for linked source directories (regression: look-up is now restricted to physical paths)
 #  - readSubstedDrives() must support all 3 possible path styles
@@ -972,14 +970,22 @@ function resolveMqlVersion() {
 # @param $3 [optional] - already resolved include directory from a previous processing step (default: none)
 #
 function resolveIncludeDir() {
-  local file="$1" version="$2" includeDir="${3:-}"
+  local userName="$1" version="$2" includeDir="${3:-}"
   [[ -n "$includeDir" ]] && echo "$includeDir" && return
 
-  local realName i
-  realName="$(realWindowsPath "$file")"
+  local dir baseName realName lines i
+  userName="${userName//\\//}"
+  dir="${userName%/*}"; [[ "$dir" == "$userName" ]] && dir='.'
+  baseName="${userName##*/}"
+  readarray -t lines < <(cd -- "$dir"; echo "$PWD"; realWindowsPath "$PWD")
+  userName="${lines[0]}/$baseName"
+  realName="${lines[1]}/$baseName"
 
   shopt -s nocasematch
-  for ((i=${#includeSource[@]}-1; i>=0; i--)); do
+  [[ -z "$includeDir" ]] && for ((i=${#includeSource[@]}-1; i>=0; i--)); do
+    [[ "$userName" == "${includeSource[i]}/"* ]] && includeDir="${includeDirectory[i]}" && break
+  done
+  [[ -z "$includeDir" ]] && for ((i=${#includeSource[@]}-1; i>=0; i--)); do
     [[ "$realName" == "${includeSource[i]}/"* ]] && includeDir="${includeDirectory[i]}" && break
   done
   shopt -u nocasematch
