@@ -73,9 +73,9 @@ jobs:
         if:   env.SKIP_CI != 'true'
         run: |
           TRACE=1 \
-          bin/mqlc -v=mql40 /inc:mql40 mql40/{experts,experts/tools,indicators,indicators/.attic,scripts,libraries} \
-                   -v=mql45 /inc:mql45 mql45/{experts,indicators,scripts,libraries} \
-                            /inc:mql50 mql50/{experts,indicators,scripts,libraries} \
+          bin/mqlc -v=mql40 /inc:mql40 mql40/{libraries,indicators,scripts,experts,experts/tools} \
+                   -v=mql45 /inc:mql45 mql45/{libraries,indicators,scripts,experts} \
+                            /inc:mql50 mql50/{libraries,indicators,scripts,experts} \
                    --warn2error
 
       # ------------------------------------------------------------------------------------------------------------------------------------
@@ -102,7 +102,6 @@ jobs:
             config/
             etc/
             mql*/
-            !mql40/indicators/.attic/
             sounds/*.mp3
             sounds/*.wav
             templates*/*.tpl
