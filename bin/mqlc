@@ -5,7 +5,7 @@
 #
 # Configuration via environment and/or config file. See `mqlc --help`.
 #
-# - If environment variable DEBUG is set the script displays debug infos and the final command to be executed.
+# - If environment variable DEBUG is set the script displays various debug infos.
 # - If environment variable ORIG is set the script prints the original compiler output (plus its own messages).
 # - If environment variable TRACE is set the script shows the location of the last error (if any).
 #
@@ -14,9 +14,6 @@
 #
 #
 # TODO:
-#  - includeSource/includeDirectory must contain user + real paths
-#
-#  - MQL-version/include-dir look-up fails for linked source directories (regression: look-up is now restricted to physical paths)
 #  - readSubstedDrives() must support all 3 possible path styles
 #  - resolveMqlVersion/resolveIncludeDir must process a specified source path instead of processing each found file
 #  - restore original case of filenames
@@ -30,7 +27,6 @@
 #  - option /log
 #  - resolve config per source dir
 #  - WSL: move tmp dir to Windows file system
-#  - support relative paths in configuration
 #
 #  - auto-detect MQL version
 #  - auto-detect include directory
@@ -57,7 +53,7 @@ NL=$'\n'
 #
 function help() {
   cat << 'SYNTAX'
-Compiles one or more MQL4.0, MQL4.5 or MQL5 source files and directories.
+Compiles one or more MQL4.0, MQL4.5 or MQL5 source files and/or directories.
 
 Usage: mqlc  [options] [--] SOURCES...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
@@ -104,7 +100,7 @@ SYNTAX
 #
 function syntaxError() {
   local msg='' syntax
-  (("$#")) && msg="$*"$'\n\n'
+  (("$#")) && msg="$*$NL$NL"
 
   IFS= read -r -d '' syntax << 'SYNTAX' || true
 Usage: mqlc  [options] [--] SOURCES...
@@ -132,7 +128,7 @@ function init() {
   readonly originalOutput debug trace test
 
   registerTmpPath ""                                        # initialize management of tmp files
-  readSubstedDrives
+  ((debug)) && systemInfo || :
 }
 
 
@@ -189,7 +185,6 @@ function onExit() {
   # delete paths in LIFO order to prevent orphans behind tmp reparse points
   for ((i=${#lines[@]}-1; i >= 0; i--)); do
     file="${lines[i]}" && [[ -e "$file" ]] || continue
-    ((debug)) && echo "${FUNCNAME[0]}: rm $file $([[ -d "$file" ]] && echo '(dir)' || :)"
     rm -rf -- "$file"
   done
   return "$lastExitStatus"
@@ -536,11 +531,9 @@ function printCompilerInfo() {
   local file output product version
   file="$(cygpath -d "$1")"                           # the DOS name spares us quoting which would get mangled which would break the call
 
-  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" < /dev/null)"
-  output="${output#$'\xEF\xBB\xBF'}"                  # cut-off a BOM header if present
-  output="${output%$'\r'}"                            # cut-off a Windows EOL if present
-
-  IFS=$'\t' read -r product version <<< "$output"     # TODO: replace PowerShell crap
+  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" </dev/null | tr -d '\r')"
+  output="${output#$'\xEF\xBB\xBF'}"                  # cut-off the BOM header
+  IFS=$'\t' read -r product version <<< "$output"
 
   [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
     fail "unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
@@ -605,9 +598,9 @@ function setCompilerPath() {
 # @param $2 - filename/path
 #
 function cygpath() {
-  local name="$2"
+  local name="${2:-}"
   [[ "$name" == -* ]] && name="./$name"
-  command cygpath "$1" "$name"
+  command cygpath "${1:-}" "$name"
 }
 
 
@@ -618,21 +611,33 @@ declare -A substedDrives=()
 #
 function readSubstedDrives() {
   local lines i driveW driveU targetW targetU
-  readarray -t lines < <(subst | tr -d '\r')
 
-  for ((i=0; i < ${#lines[@]}; i++)); do
-    if [[ "${lines[i]}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
-      driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
-      targetW="$(cygpath -m "${BASH_REMATCH[2]}")"
+  if command -v subst.exe &>/dev/null; then
+    readarray -t lines < <(MSYS_NO_PATHCONV=1 subst.exe | tr -d '\r')
 
-      driveU="$(cygpath -u "$driveW")"
-      targetU="$(cygpath -u "$targetW")"                    # depending on the Linux layer paths may/may not have the prefix '/cygwin/'
+    ((debug)) && {
+      ((${#lines[@]})) && stderr 'Subst drives:' || stderr 'Subst drives: none'
+    }
+    for ((i=0; i < ${#lines[@]}; i++)); do
+      if [[ "${lines[i]}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
+        driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
+        targetW="$(cygpath -m "${BASH_REMATCH[2]}")"
 
-      substedDrives["$driveW"]="$targetW/"                  # add trailing separator for consistency
-      substedDrives["$driveU"]="$targetU/"
-    fi
-  done
+        driveU="$(cygpath -u "$driveW")"
+        targetU="$(cygpath -u "$targetW")"                  # depending on the Linux kernel paths may/may not have the prefix '/cygwin/'
+
+        substedDrives["$driveW"]="$targetW/"                # add trailing separator for consistency
+        substedDrives["$driveU"]="$targetU/"
+
+        ((debug)) && stderr "${lines[i]}"
+      fi
+    done
+  else
+    ((debug)) && stderr 'Subst drives: none'
+  fi
   readonly substedDrives
+
+  ((debug)) && stderr '' || :
 }
 
 
@@ -754,7 +759,7 @@ function prepareCompiler40Dir() {
   cp "$compiler" "$tmpDir"
   expertsDirW="$(cygpath -wa "$tmpDir/experts")"
   includeDirW="$(cygpath -wa "$includeDir")"
-  MSYS_NO_PATHCONV=1 cmd /c mklink /D "$expertsDirW" "$includeDirW" < /dev/null > /dev/null || fail "mklink /D \"$expertsDirW\" \"$includeDirW\" failed with status $?"
+  MSYS_NO_PATHCONV=1 cmd /c mklink /D "$expertsDirW" "$includeDirW" </dev/null >/dev/null || fail "mklink /D \"$expertsDirW\" \"$includeDirW\" failed with status $?"
 
   # return tmpDir/compiler
   compiler="$tmpDir/$(basename "$compiler")"
@@ -769,16 +774,16 @@ declare includeSource=() includeDirectory=()                # configured include
 #
 # Read the configuration into global vars.
 #
-# @param $1 - source file (exists)
+# @param $1 - first source file (exists)
 #
 function readConfig() {
-  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local srcFile="$1" dir config='' rcFile='.mqlc'
+  readSubstedDrives
 
   # resolve config file location for the source file
-  srcFile="${srcFile//\\//}"
-  [[ "$srcFile" == */* ]] && dir="${srcFile%/*}" || dir='.'
-  dir="$(realWindowsPath "$dir")/."
+  dir="$(dirname "$srcFile")"
+  dir="$(cd -- "$dir"; echo "$PWD")"
+
   while true; do
     dir="${dir%/*}"
     [[ -z "$dir" ]] && break
@@ -865,10 +870,11 @@ function normalizeMQL4Paths() {
   for path in "${in[@]}"; do
     if [[ -d "$path" ]]; then
       readarray -t lines < <(cd -- "$path"; echo "$PWD"; realWindowsPath "$PWD")
-      userPath="${lines[0]}"                          # always Unix-style
+      userPath="${lines[0]}"                          # Unix-style
       realPath="${lines[1]}"
-      userPath="${userPath////${S}}"                  # replace slashes with a separator that's alphabetically first
+      userPath="${userPath////${S}}"                  # replace slashes with a custom separator that's alphabetically first
       realPath="${realPath////${S}}"
+
       normalizedPaths+=("2 $userPath")                # add prefix to order user paths after real paths
       [[ "$userPath" == "$realPath" ]] || normalizedPaths+=("1 $realPath")
     fi
@@ -878,10 +884,10 @@ function normalizeMQL4Paths() {
   # sort paths
   readarray -t normalizedPaths < <(printf '%s\n' "${normalizedPaths[@]}" | sort)
 
-  # write sorted paths to out                         # no filtering of duplicates and overlaps (performance)
+  # write sorted paths to out                         # no filtering of duplicates and/or overlaps (performance)
   for path in "${normalizedPaths[@]}"; do
-    path="${path#* }"                                 # cut-off leading group id
-    out+=("${path//${S}//}")                          # revert separators back to slashes
+    path="${path#* }"                                 # cut-off leading prefix
+    out+=("${path//${S}//}")                          # revert custom separators back to slashes
   done
 }
 
@@ -901,28 +907,33 @@ function normalizeIncludeDirs() {
   ((!${#in[@]})) && return
 
   # normalize input
-  local path includeDir paths=() S=$'\x01' line
+  local path userPath realPath includeDir normalizedPaths=() S=$'\x01' lines line prefix
   for path in "${!in[@]}"; do
     if [[ -d "$path" ]]; then
-      includeDir="${in[$path]}"                       # convert to logical name (even non-existing)
-      [[ -d "$includeDir" ]] && includeDir="$(cd -- "$includeDir" && echo "$PWD")" || includeDir="$(cygpath -u "$includeDir")"
+      readarray -t lines < <(cd -- "$path"; echo "$PWD"; realWindowsPath "$PWD")
+      userPath="${lines[0]}"                          # Unix-style
+      realPath="${lines[1]}"
+      userPath="${userPath////${S}}"                  # replace slashes with a custom separator that's alphabetically first
+      realPath="${realPath////${S}}"
 
-      path="$(realWindowsPath "$path")"               # convert to real name
-      path="${path////${S}}"                          # replace slashes with a separator that's alphabetically first
-      paths+=("$path|$includeDir")
+      includeDir="${in[$path]}"                       # convert includeDir to absolute name (even non-existing)
+      [[ -d "$includeDir" ]] && includeDir="$(cd -- "$includeDir"; echo "$PWD")" || includeDir="$(cygpath -ua "$includeDir")"
+
+      normalizedPaths+=("2|$userPath|$includeDir")    # add prefix to order user paths after real paths
+      [[ "$userPath" == "$realPath" ]] || normalizedPaths+=("1|$realPath|$includeDir")
     fi
   done
-  ((!${#paths[@]})) && return
+  ((!${#normalizedPaths[@]})) && return
 
-  # sort paths
-  readarray -t paths < <(printf '%s\n' "${paths[@]}" | sort -t '|' -k1,1) # by path=asc
+  # sort paths by group=asc, path=asc
+  readarray -t normalizedPaths < <(printf '%s\n' "${normalizedPaths[@]}" | sort -t '|' -k1,2)
 
-  # write sorted paths to out1 + out2                 # no filtering of duplicates and overlaps (performance)
+  # write sorted paths to out1 + out2                 # no filtering of duplicates and/or overlaps (performance)
   out1=()
   out2=()
-  for line in "${paths[@]}"; do
-    IFS='|' read -r path includeDir <<< "$line"
-    out1+=("${path//${S}//}")                         # revert separators back to slashes
+  for line in "${normalizedPaths[@]}"; do
+    IFS='|' read -r prefix path includeDir <<< "$line"
+    out1+=("${path//${S}//}")                         # revert custom separators back to slashes
     out2+=("$includeDir")
   done
 }
@@ -1029,6 +1040,95 @@ function versionName() {
 }
 
 
+#
+# Print some system infos to the screen.
+#
+function systemInfo() {
+  ((debug)) || return
+  local os name version versionName major minor patch revision build kernel cpath lines
+
+  stderr "System:"
+
+  # operating system
+  if [[ -f /etc/redhat-release ]]; then                     # RHEL-like Linux
+    os="$(cat /etc/redhat-release)"
+
+  elif [[ -f /etc/os-release ]]; then                       # other Linux
+    os="$(source /etc/os-release; echo "${NAME:-unknown} ${VERSION:-${VERSION_ID:-${NAME:+(unknown version)}}}")"
+
+  elif command -v sw_vers &>/dev/null; then                 # Mac
+    name="$(sw_vers -productName)"                          # macOS
+    version="$(sw_vers -productVersion)"                    # 15.3.1
+    build="$(sw_vers -buildVersion)"                        # 24D70
+    IFS='.' read major minor patch <<< "$version"
+    versionName="$(
+      case "$major" in
+        15) echo 'Sequoia';;
+        14) echo 'Sonoma';;
+        13) echo 'Ventura';;
+        12) echo 'Monterey';;
+        11) echo 'Big Sur';;
+        10) case "$minor" in
+              15) echo 'Catalina';;
+              14) echo 'Mojave';;
+              13) echo 'High Sierra';;
+              12) echo 'Sierra';;
+              11) echo 'El Capitan';;
+              10) echo 'Yosemite';;
+               9) echo 'Mavericks';;
+               8) echo 'Mountain Lion';;
+               7) echo 'Lion';;
+               6) echo 'Snow Leopard';;
+            esac;;
+      esac
+    )"
+    [[ -n "$versionName" ]] && versionName=" $versionName"
+    os="${name} ${version}${versionName} ($build)"
+
+  elif [[ "${OS:-}" == 'Windows_NT' ]]; then                # Windows
+    if command -v powershell.exe &>/dev/null; then
+      readarray -t lines < <(MSYS_NO_PATHCONV=1 powershell.exe -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass \
+                            -Command "[System.Environment]::OSVersion.VersionString; (Get-WmiObject Win32_OperatingSystem).Caption" \
+                            </dev/null 2>/dev/null | tr -d '\r')
+      os="${lines[0]}"
+      os="${os#$'\xEF\xBB\xBF'}"                            # cut-off the BOM header
+      name="${lines[1]}"
+      name="${name%"${name##*[![:space:]]}"}"               # contains trailing white space
+      name="${name#Microsoft }"                             # cut-off the duplicate trade mark
+      os="$os ($name)"
+    else
+      os="$(MSYS_NO_PATHCONV=1 cmd /c ver | tr -d '\r')"
+      os="${os#"${os%%[![:space:]]*}"}"                     # trim leading white space
+    fi
+  fi
+  stderr "OS:      ${os:-unknown}"
+
+  # kernel
+  kernel="$(uname -s)"
+  if [[ "$kernel" == CYGWIN* ]]; then
+    kernel="$(uname -srmo)"
+  elif [[ "$kernel" == MINGW* || "$kernel" == MSYS* ]]; then
+    [[ "${MSYSTEM:-}" == MINGW* ]] && kernel='Git-Bash' || kernel='MSYS2'
+    kernel="$kernel $(uname -srmo)"
+  elif grep -qi 'microsoft' /proc/version 2>/dev/null; then
+    grep -qi 'WSL2' /proc/version && kernel='WSL 2' || kernel='WSL 1'
+    kernel="$kernel $(uname -srmo)"
+  else
+    kernel="$(uname -srmo)"                                 # native Linux/macOS
+  fi
+  stderr "Kernel:  $kernel"
+
+  # cygpath
+  cpath="$(type -P cygpath)"
+  [[ -n "$cpath" ]] && cpath="$(command cygpath -V | head -1) ($cpath)"
+  stderr "Cygpath: ${cpath:--}"
+
+  # bash
+  stderr "Bash:    $BASH_VERSION ($BASH)"
+  stderr ''
+}
+
+
 # --- end of functions ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -1039,7 +1139,7 @@ declare srcFileIncludes=() include='' firstInclude=-1
 declare log=0 customLog='' syntaxOnly=0 compactOutput=0 warn2error=0 delimiterPassed=0
 
 
-# initialization
+# runtime initialization
 init
 
 
@@ -1165,7 +1265,7 @@ readonly srcFileNames srcFileVersions srcFileIncludes
 readonly log customLog syntaxOnly compactOutput warn2error
 
 
-# read configuration
+# read configuration starting with the location of the first specified source file
 readConfig "${srcFileNames[0]}"
 
 
