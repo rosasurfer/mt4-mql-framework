@@ -72,7 +72,9 @@ jobs:
       - name: Compile MQL files
         if:   env.SKIP_CI != 'true'
         run: |
-          TRACE=1 \
+          DEBUG=${{ vars.MQLC_DEBUG }} \
+          TRACE=${{ vars.MQLC_TRACE }} \
+          ORIG=${{  vars.MQLC_ORIG  }} \
           bin/mqlc -v=mql40 /inc:mql40 mql40/{libraries,indicators,scripts,experts,experts/tools} \
                    -v=mql45 /inc:mql45 mql45/{libraries,indicators,scripts,experts} \
                             /inc:mql50 mql50/{libraries,indicators,scripts,experts} \
