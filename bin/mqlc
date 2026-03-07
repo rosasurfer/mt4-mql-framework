@@ -14,7 +14,8 @@
 #
 #
 # TODO:
-#  - mql40SourcePaths/mql45SourcePaths/includeSource/includeDirectory must contain user + real paths
+#  - includeSource/includeDirectory must contain user + real paths
+#
 #  - MQL-version/include-dir look-up fails for linked source directories (regression: look-up is now restricted to physical paths)
 #  - readSubstedDrives() must support all 3 possible path styles
 #  - resolveMqlVersion/resolveIncludeDir must process a specified source path instead of processing each found file
@@ -859,21 +860,27 @@ function normalizeMQL4Paths() {
   out=()
   ((!${#in[@]})) && return
 
-  # convert all paths to real paths
-  local path paths=() S=$'\x01'
+  # normalize input
+  local path userPath realPath normalizedPaths=() lines S=$'\x01'
   for path in "${in[@]}"; do
     if [[ -d "$path" ]]; then
-      path="$(realWindowsPath "$path")"
-      paths+=("${path////${S}}")                      # replace slashes with a separator that's alphabetically first
+      readarray -t lines < <(cd -- "$path"; echo "$PWD"; realWindowsPath "$PWD")
+      userPath="${lines[0]}"                          # always Unix-style
+      realPath="${lines[1]}"
+      userPath="${userPath////${S}}"                  # replace slashes with a separator that's alphabetically first
+      realPath="${realPath////${S}}"
+      normalizedPaths+=("2 $userPath")                # add prefix to order user paths after real paths
+      [[ "$userPath" == "$realPath" ]] || normalizedPaths+=("1 $realPath")
     fi
   done
-  ((!${#paths[@]})) && return
+  ((!${#normalizedPaths[@]})) && return
 
   # sort paths
-  readarray -t paths < <(printf '%s\n' "${paths[@]}" | sort)
+  readarray -t normalizedPaths < <(printf '%s\n' "${normalizedPaths[@]}" | sort)
 
   # write sorted paths to out                         # no filtering of duplicates and overlaps (performance)
-  for path in "${paths[@]}"; do
+  for path in "${normalizedPaths[@]}"; do
+    path="${path#* }"                                 # cut-off leading group id
     out+=("${path//${S}//}")                          # revert separators back to slashes
   done
 }
