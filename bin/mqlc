@@ -19,7 +19,7 @@
 #  - resolve config per source dir
 #  - restore original case of filenames
 #
-#  - the config must be parsed, not sourced
+#  - read config in isolated scope
 #  - colored output
 #  - option --rc/--no-rc
 #  - option --clean
@@ -149,7 +149,7 @@ function init() {
   [[ "${TRACE:-0}" != "0" ]] && trace=1
   readonly originalOutput debug trace
 
-  registerTmpPath ""                                        # initialize management of tmp files
+  registerTmpPath ''                                        # initialize management of tmp files
   ((debug)) && systemInfo || :
 }
 
@@ -407,7 +407,7 @@ function compileMql5() {
   # run the compiler
   printCompilerInfo "$compiler"
   if ((!originalOutput)); then
-    ((compactOutput)) || echo ""                              # more compact output for compilation of multiple files
+    ((compactOutput)) || echo ''                              # more compact output for compilation of multiple files
   fi
   checkCompilerDir "$compiler"
   rm -f -- "$logFile"
@@ -739,9 +739,9 @@ function readConfig() {
   if [[ -z "$config" && -n "${USERPROFILE:-}" ]]; then
     [[ -f "$USERPROFILE/$rcFile" ]] && config="$USERPROFILE/$rcFile"
   fi
-  [[ "$debug" -eq 1 && -n "$config" ]] && {
-    stderr "Config file: $config"
-    stderr ""
+  ((debug)) && {
+    stderr "Config file: ${config:--}"
+    stderr ''
   }
 
   # backup existing environment vars
@@ -752,7 +752,7 @@ function readConfig() {
   local mql40Sources=() mql45Sources=()
   local -A includeDirs=()
 
-  # source the config file                                  # TODO: parse the file
+  # source the config file                                  # TODO: read in isolated scope
   [[ -n "$config" ]] && source "$config" &> /dev/null
 
   # resolve compiler settings: environment precedes configuration
@@ -767,7 +767,7 @@ function readConfig() {
     [[ -n "$MT4_METALANG"   ]] && stderr "MT4_METALANG:   $MT4_METALANG"
     [[ -n "$MT4_METAEDITOR" ]] && stderr "MT4_METAEDITOR: $MT4_METAEDITOR"
     [[ -n "$MT5_METAEDITOR" ]] && stderr "MT5_METAEDITOR: $MT5_METAEDITOR"
-    stderr ""
+    stderr ''
   }
 
   # normalize configured MQL4 source paths
@@ -776,10 +776,10 @@ function readConfig() {
   ((debug)) && {
     stderr "MQL4.0 paths:"
     ((${#mql40SourcePaths[@]})) && stderr "$(printf '%s\n' "${mql40SourcePaths[@]}")"
-    stderr ""
+    stderr ''
     stderr "MQL4.5 paths:"
     ((${#mql45SourcePaths[@]})) && stderr "$(printf '%s\n' "${mql45SourcePaths[@]}")"
-    stderr ""
+    stderr ''
   }
 
   # normalize configured include directories
@@ -790,7 +790,7 @@ function readConfig() {
     for i in "${!includeSource[@]}"; do
       stderr "${includeSource[i]} => ${includeDirectory[i]}"
     done
-    stderr ""
+    stderr ''
   }
   readonly MT4_METALANG MT4_METAEDITOR MT5_METAEDITOR mql40SourcePaths mql45SourcePaths includeSource includeDirectory
 }
@@ -1033,9 +1033,7 @@ function setCompilerPath() {
 #
 function systemInfo() {
   ((debug)) || return
-  local os name version versionName major minor patch revision build kernel cpath lines
-
-  stderr "System:"
+  local os name version versionName major minor patch revision build kernel lines cpath path
 
   # operating system
   if [[ -f /etc/redhat-release ]]; then                     # RHEL-like Linux
@@ -1108,11 +1106,18 @@ function systemInfo() {
 
   # cygpath
   cpath="$(type -P cygpath)"
-  [[ -n "$cpath" ]] && cpath="$(command cygpath -V | head -1) ($cpath)"
-  stderr "Cygpath: ${cpath:--}"
+  [[ -n "$cpath" ]] && version="$(command cygpath -V | head -1) ($(command cygpath -wa "$(realpath "$cpath")"))" || version='-'
+  stderr "Cygpath: $version"
 
-  # bash
-  stderr "Bash:    $BASH_VERSION ($BASH)"
+  # Bash
+  path="$(realpath "$BASH")"
+  [[ -n "$cpath" ]] && path="$(command cygpath -wa "$path")"
+  stderr "Bash:    $BASH_VERSION ($path)"
+
+  # mqlc
+  path="$(realpath "${BASH_SOURCE[0]}")"
+  [[ -n "$cpath" ]] && path="$(command cygpath -wa "$path")"
+  stderr "mqlc:    0.0.0 ($path)"
   stderr ''
 }
 
@@ -1270,7 +1275,7 @@ readConfig "${srcFileNames[0]}"
 exitCode=0
 
 for i in "${!srcFileNames[@]}"; do
-  ((i)) && echo ""
+  ((i)) && echo ''
 
   file="${srcFileNames[i]}"
   version="$(resolveMqlVersion "$file" "${srcFileVersions[i]}")"
@@ -1292,7 +1297,7 @@ done
 exit "$exitCode"
 
 
-notes << NOTES
+notes << 'NOTES'
   ==========================================================================================================================================
   MetaEditor
   ==========================================================================================================================================
