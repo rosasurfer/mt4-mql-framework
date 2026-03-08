@@ -14,7 +14,7 @@
 #
 #
 # TODO:
-#  - readSubstedDrives() must support all 3 possible path styles
+#  - optimize readSubstedDrives()
 #  - resolveMqlVersion/resolveIncludeDir must process a specified source path instead of processing each found file
 #  - resolve config per source dir
 #  - restore original case of filenames
@@ -576,6 +576,8 @@ function formatCompiler5Msg() {
 # @param _Out_ $2 - name of indexed array to write normalized source paths to
 # @param _Out_ $3 - name of indexed array to write normalized include directories to
 #
+# @todo optimize runtime: 0.794s
+#
 function normalizeIncludeDirs() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n in="$1"
@@ -720,6 +722,8 @@ declare includeSource=() includeDirectory=()                # configured include
 #
 # @param $1 - first source file (exists)
 #
+# @todo optimize runtime: 2.036s
+#
 function readConfig() {
   local srcFile="$1" dir config='' rcFile='.mqlc'
   readSubstedDrives
@@ -799,10 +803,12 @@ function readConfig() {
 declare -A substedDrives=()
 
 #
-# Read substituted Windows drives and convert paths to Unix-style.
+# Read substituted Windows drives.
+#
+# @todo optimize runtime: 0.686s
 #
 function readSubstedDrives() {
-  local lines i driveW driveU targetW targetU
+  local lines i driveW driveM driveU targetW targetM targetU
 
   if command -v subst.exe &>/dev/null; then
     readarray -t lines < <(MSYS_NO_PATHCONV=1 subst.exe | tr -d '\r')
@@ -812,20 +818,24 @@ function readSubstedDrives() {
     }
     for ((i=0; i < ${#lines[@]}; i++)); do
       if [[ "${lines[i]}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
-        driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
-        targetW="$(cygpath -m "${BASH_REMATCH[2]}")"
+        driveW="${BASH_REMATCH[1]}"
+        targetW="${BASH_REMATCH[2]}"
+
+        driveM="$(cygpath -m "$driveW")"
+        targetM="$(cygpath -m "$targetW")"
 
         driveU="$(cygpath -u "$driveW")"
         targetU="$(cygpath -u "$targetW")"                  # depending on the Linux kernel paths may/may not have the prefix '/cygwin/'
 
-        substedDrives["$driveW"]="$targetW/"                # add trailing separator for consistency
+        substedDrives["$driveW"]="$targetW\\"               # add trailing separator for consistency
+        substedDrives["$driveM"]="$targetM/"
         substedDrives["$driveU"]="$targetU/"
 
         ((debug)) && stderr "${lines[i]}"
       fi
     done
   else
-    ((debug)) && stderr 'Subst drives: none'
+    ((debug)) && stderr 'Subst drives: -'
   fi
   readonly substedDrives
 
