@@ -9,13 +9,14 @@
 # - If environment variable ORIG is set the script prints the original compiler output (plus its own messages).
 # - If environment variable TRACE is set the script shows the location of the last error (if any).
 #
-# @see  "/bin/.mqlc.dist" for a configuration example
+# @see  "/bin/.mqlc.dist" for more documentation
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
 # TODO:
 #  - readSubstedDrives() must support all 3 possible path styles
 #  - resolveMqlVersion/resolveIncludeDir must process a specified source path instead of processing each found file
+#  - resolve config per source dir
 #  - restore original case of filenames
 #
 #  - the config must be parsed, not sourced
@@ -25,7 +26,6 @@
 #  - option --syntax
 #  - option --info
 #  - option /log
-#  - resolve config per source dir
 #  - WSL: move tmp dir to Windows file system
 #
 #  - auto-detect MQL version
@@ -49,10 +49,10 @@ NL=$'\n'
 
 
 #
-# Show the long help screen.
+# Show the long help screen and terminate the script.
 #
-function help() {
-  cat << 'SYNTAX'
+function longHelp() {
+  cat << 'HERE_DOC'
 Compiles one or more MQL4.0, MQL4.5 or MQL5 source files and/or directories.
 
 Usage: mqlc  [options] [--] SOURCES...
@@ -87,32 +87,55 @@ Configuration:
  Unless option --rc/--norc is used the script will look for a file named ".mqlc" in the source directory and each
  parent directory. If no file is found in any of the parent directories, the script will look in the user's home
  directory. Only the first file found will be used. Compiler locations can also be specified using environment vars.
- See "/bin/.mqlc.dist" for an example.
+ See "/bin/.mqlc.dist" for more documentation.
 
-SYNTAX
+HERE_DOC
+  exit 0
 }
 
 
 #
-# Show the short help screen prefixed by an optional error message, and terminate the script.
+# Show the short help screen and terminate the script.
 #
-# @param $@ - optional message
+# @param $@ - optional error message to be displayed before the help screen
 #
-function syntaxError() {
-  local msg='' syntax
+function shortHelp() {
+  local msg='' usage
   (("$#")) && msg="$*$NL$NL"
 
-  IFS= read -r -d '' syntax << 'SYNTAX' || true
+  usage=$(cat << 'HERE_DOC'
 Usage: mqlc  [options] [--] SOURCES...
        mqlc  [options] /compile:(FILE|DIR)... [/include:DIR]... [/log[:FILE]]
        mqlc  --help
-SYNTAX
-  stderr "${msg}${syntax}"
+HERE_DOC
+  )
+  stderr "${msg}${usage}$NL"
   exit 127
 }
 
 
-declare originalOutput=0 debug=0 trace=0 test=0
+#
+# Print a message to STDERR.
+#
+# @param $@ - any number of arguments
+#
+function stderr() {
+  echo "$@" >&2
+}
+
+
+#
+# Print a message to STDERR and terminate the script.
+#
+# @param $@ - any number of arguments
+#
+function fail() {
+  stderr "ERROR: $*"
+  exit 127
+}
+
+
+declare originalOutput=0 debug=0 trace=0
 
 #
 # Initialization.
@@ -124,30 +147,10 @@ function init() {
   [[ "${ORIG:-0}"  != "0" ]] && originalOutput=1
   [[ "${DEBUG:-0}" != "0" ]] && debug=1
   [[ "${TRACE:-0}" != "0" ]] && trace=1
-  [[ "${TEST:-0}"  != "0" ]] && test=1
-  readonly originalOutput debug trace test
+  readonly originalOutput debug trace
 
   registerTmpPath ""                                        # initialize management of tmp files
   ((debug)) && systemInfo || :
-}
-
-
-declare _tmpFiles=''                                        # file holding the names of managed tmp files
-
-#
-# Register a file path for automatic deletion on script termination.
-#
-# @param $1 - filename/path
-#
-function registerTmpPath() {
-  if [[ -z "$_tmpFiles" ]]; then                            # initialization on first call
-    _tmpFiles="$(mktemp --tmpdir "$(basename "$0").XXXXXX")"
-    readonly _tmpFiles
-    registerTmpPath "$_tmpFiles"                            # register the file itself as first entry
-  fi
-
-  # add new tmp file
-  [[ -n "$1" ]] && echo "$1" >> "$_tmpFiles" || :
 }
 
 
@@ -447,6 +450,50 @@ function compileMql5() {
 
 
 #
+# cygpath doesn't support the "--" option separator. If the passed name starts with "-" it breaks.
+# This function works around that issue.
+#
+# @param $1 - cygpath conversion modifier
+# @param $2 - filename/path
+#
+function cygpath() {
+  local name="${2:-}"
+  [[ "$name" == -* ]] && name="./$name"
+  command cygpath "${1:-}" "$name"
+}
+
+
+#
+# Calculate the duration time of two timestamps and return a formatted result.
+#
+# @param $1 - start time in msec
+# @param $2 - end time in msec
+#
+function duration() {
+  local startms="$1" endms="$2"
+  local duration=$((endms-startms))
+
+  if ((duration < 1000)); then
+    echo "$duration msec"
+  else
+    printf '%d.%03d sec' $((duration / 1000)) $((duration % 1000))
+  fi
+}
+
+
+#
+# Return/print the file extension of the passed name.
+#
+# @param $1 - filename
+#
+function fileExtension() {
+  local ext="${1##*.}"
+  [[ "$1" == "$ext" ]] && ext=
+  echo "$ext"
+}
+
+
+#
 # Reformat a single log message produced by the MQL4.0 compiler.
 #
 # @param _InOut_ $1 - reference to the log message
@@ -523,220 +570,95 @@ function formatCompiler5Msg() {
 
 
 #
-# Print product and version infos of the passed compiler file.
+# Normalize, sort and order the passed include directories.
 #
-# @param $1 - filename
+# @param _In_  $1 - name of associative array to read configured directories from
+# @param _Out_ $2 - name of indexed array to write normalized source paths to
+# @param _Out_ $3 - name of indexed array to write normalized include directories to
 #
-function printCompilerInfo() {
-  local file output product version
-  file="$(cygpath -d "$1")"                           # the DOS name spares us quoting which would get mangled which would break the call
-
-  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" </dev/null | tr -d '\r')"
-  output="${output#$'\xEF\xBB\xBF'}"                  # cut-off the BOM header
-  IFS=$'\t' read -r product version <<< "$output"
-
-  [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
-    fail "unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
-  }
-  version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
-
-  echo "$product version $version"
-}
-
-
-declare -A _cachedCompilerPaths=()
-
-#
-# Resolves the full compiler filename for the specified MQL version and include directory.
-#
-# @param _Out_ $1 - variable to write the result to
-# @param _In_  $2 - MQL version id
-# @param _In_  $3 - MQL4.0 only: include directory to be linked into the compiler path
-#
-function setCompilerPath() {
+function normalizeIncludeDirs() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
-  local -n result="$1"
-  local version="$2" includeDir="${3:-}" compilerVar filename basename
+  local -n in="$1"
+  local -n out1="$2"
+  local -n out2="$3"
+  ((!${#in[@]})) && return
 
-  [[ -n "$includeDir" ]] && includeDir="$(realWindowsPath "$includeDir")"
+  # normalize input
+  local path userPath realPath includeDir normalizedPaths=() S=$'\x01' lines line prefix
+  for path in "${!in[@]}"; do
+    if [[ -d "$path" ]]; then
+      readarray -t lines < <(cd -- "$path"; echo "$PWD"; realWindowsPath "$PWD")
+      userPath="${lines[0]}"                          # Unix-style
+      realPath="${lines[1]}"
+      userPath="${userPath////${S}}"                  # replace slashes with a custom separator that's alphabetically first
+      realPath="${realPath////${S}}"
 
-  # check the cache for a matching result
-  if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
-    result="${_cachedCompilerPaths["$version|$includeDir"]}"
-    return
-  fi
+      includeDir="${in[$path]}"                       # convert includeDir to absolute name (even non-existing)
+      [[ -d "$includeDir" ]] && includeDir="$(cd -- "$includeDir"; echo "$PWD")" || includeDir="$(cygpath -ua "$includeDir")"
 
-  [[ "$version" == 'mql40' ]] && compilerVar='MT4_METALANG'
-  [[ "$version" == 'mql45' ]] && compilerVar='MT4_METAEDITOR'
-  [[ "$version" == 'mql5'  ]] && compilerVar='MT5_METAEDITOR'
+      normalizedPaths+=("2|$userPath|$includeDir")    # add prefix to order user paths after real paths
+      [[ "$userPath" == "$realPath" ]] || normalizedPaths+=("1|$realPath|$includeDir")
+    fi
+  done
+  ((!${#normalizedPaths[@]})) && return
 
-  [[ -z "${compilerVar:-}" ]] && fail "unknown MQL version id \"$version\""
-  [[ -z "${!compilerVar-}" ]] && fail "$(versionName "$version") compiler is not configured"
-  filename="${!compilerVar}"
-  [[ -f "$filename" ]] || fail "$(versionName "$version") compiler not found: \"$filename\""
+  # sort paths by group=asc, path=asc
+  readarray -t normalizedPaths < <(printf '%s\n' "${normalizedPaths[@]}" | sort -t '|' -k1,2)
 
-  if [[ "$version" == 'mql5' ]]; then
-    basename="$(basename "$filename")"
-    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "The name of MetaEditor5 must be: \"metaeditor64.exe\" (...so say the criminals at MetaQuotes)"
-  fi
-
-  result="$filename"
-  if [[ -n "$includeDir" ]]; then
-    result="$(prepareCompiler40Dir "$result" "$includeDir")"
-  fi
-
-  # cache the result
-  _cachedCompilerPaths["$version|$includeDir"]="$result"
-}
-
-
-#
-# cygpath doesn't support the "--" option separator. If the passed name starts with "-" it breaks.
-# This function works around that issue.
-#
-# @param $1 - cygpath conversion modifier
-# @param $2 - filename/path
-#
-function cygpath() {
-  local name="${2:-}"
-  [[ "$name" == -* ]] && name="./$name"
-  command cygpath "${1:-}" "$name"
-}
-
-
-declare -A substedDrives=()
-
-#
-# Read substituted Windows drives and convert paths to Unix-style.
-#
-function readSubstedDrives() {
-  local lines i driveW driveU targetW targetU
-
-  if command -v subst.exe &>/dev/null; then
-    readarray -t lines < <(MSYS_NO_PATHCONV=1 subst.exe | tr -d '\r')
-
-    ((debug)) && {
-      ((${#lines[@]})) && stderr 'Subst drives:' || stderr 'Subst drives: none'
-    }
-    for ((i=0; i < ${#lines[@]}; i++)); do
-      if [[ "${lines[i]}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
-        driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
-        targetW="$(cygpath -m "${BASH_REMATCH[2]}")"
-
-        driveU="$(cygpath -u "$driveW")"
-        targetU="$(cygpath -u "$targetW")"                  # depending on the Linux kernel paths may/may not have the prefix '/cygwin/'
-
-        substedDrives["$driveW"]="$targetW/"                # add trailing separator for consistency
-        substedDrives["$driveU"]="$targetU/"
-
-        ((debug)) && stderr "${lines[i]}"
-      fi
-    done
-  else
-    ((debug)) && stderr 'Subst drives: none'
-  fi
-  readonly substedDrives
-
-  ((debug)) && stderr '' || :
-}
-
-
-#
-# Resolve and print the real Windows path of the passed argument. Replacement for the `realpath` command which may not return
-# a Windows path and/or may not see through a Windows drive substitution. Depending on the Linux layer the result may/may not
-# be prefixed with "/cygwin/".
-#
-# @param $1 - path
-#
-function realWindowsPath() {
-  # Other approaches and issues
-  # ---------------------------
-  # realpath <path>         Depending on path/version/OS: may not resolve Windows subst.
-  # readlink -f <path>      Same as `realpath`.
-  # cd <path> && pwd -P     Depending on path/version/OS: may not resolve Windows subst, may resolve links only at the last path segment.
-  # cd <path> && cmd /c cd  Same as `pwd -P`.
-  #
-  # Solution
-  # --------
-  # Use `realpath` and apply Windows drive substitutions manually.
-  #
-  local path="$1" resolvedPath drive target
-  local -A seenPaths=()
-
-  while true; do
-    [[ -n "${seenPaths[$path]:-}" ]] && fail "cycle detected in realpath resolution"
-    seenPaths["$path"]=1
-
-    resolvedPath="$(realpath "$path")"                      # resolve junctions/symlinks
-
-    for drive in "${!substedDrives[@]}"; do                 # resolve drive substitutions
-      if [[ "$resolvedPath" == "$drive"* ]]; then
-        target="${substedDrives[$drive]}"                   # the target path ends with a path separator
-        path="${target}${resolvedPath:${#drive}}"
-        continue 2
-      fi
-    done
-
-    echo "$resolvedPath"
-    break
+  # write sorted paths to out1 + out2                 # no filtering of duplicates and/or overlaps (performance)
+  out1=()
+  out2=()
+  for line in "${normalizedPaths[@]}"; do
+    IFS='|' read -r prefix path includeDir <<< "$line"
+    out1+=("${path//${S}//}")                         # revert custom separators back to slashes
+    out2+=("$includeDir")
   done
 }
 
 
 #
-# Calculate the duration time of two timestamps and return a formatted result.
+# Normalize, sort and order the passed MQL4 source paths.
 #
-# @param $1 - start time in msec
-# @param $2 - end time in msec
+# @param _In_  $1 - name of indexed array to read configured paths from
+# @param _Out_ $2 - name of indexed array to write normalized paths to
 #
-function duration() {
-  local startms="$1" endms="$2"
-  local duration=$((endms-startms))
+function normalizeMQL4Paths() {
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local -n in="$1"
+  local -n out="$2"
+  out=()
+  ((!${#in[@]})) && return
 
-  if ((duration < 1000)); then
-    echo "$duration msec"
-  else
-    printf '%d.%03d sec' $((duration / 1000)) $((duration % 1000))
-  fi
-}
+  # normalize input
+  local path userPath realPath normalizedPaths=() lines S=$'\x01'
+  for path in "${in[@]}"; do
+    if [[ -d "$path" ]]; then
+      readarray -t lines < <(cd -- "$path"; echo "$PWD"; realWindowsPath "$PWD")
+      userPath="${lines[0]}"                          # Unix-style
+      realPath="${lines[1]}"
+      userPath="${userPath////${S}}"                  # replace slashes with a custom separator that's alphabetically first
+      realPath="${realPath////${S}}"
 
+      normalizedPaths+=("2 $userPath")                # add prefix to order user paths after real paths
+      [[ "$userPath" == "$realPath" ]] || normalizedPaths+=("1 $realPath")
+    fi
+  done
+  ((!${#normalizedPaths[@]})) && return
 
-#
-# Print a message to STDERR and exit the script/subshell.
-#
-# @param $@ - any number of arguments
-#
-function fail() {
-  stderr "ERROR: $*"
-  exit 127
-}
+  # sort paths
+  readarray -t normalizedPaths < <(printf '%s\n' "${normalizedPaths[@]}" | sort)
 
-
-#
-# Print a message to STDERR but don't exit the script/subshell.
-#
-# @param $@ - any number of arguments
-#
-function stderr() {
-  echo "$@" >&2
-}
-
-
-#
-# Return the file extension of the passed name.
-#
-# @param $1 - filename
-#
-function fileExtension() {
-  local ext="${1##*.}"
-  [[ "$1" == "$ext" ]] && ext=
-  echo "$ext"
+  # write sorted paths to out                         # no filtering of duplicates and/or overlaps (performance)
+  for path in "${normalizedPaths[@]}"; do
+    path="${path#* }"                                 # cut-off leading prefix
+    out+=("${path//${S}//}")                          # revert custom separators back to slashes
+  done
 }
 
 
 #
 # Prepare a compiler path for MQL4.0 and link the specified include directory into it.
-# Return the prepared full compiler path
+# Return/print the prepared full compiler path.
 #
 # @param $1 - compiler path
 # @param $2 - include directory
@@ -764,6 +686,28 @@ function prepareCompiler40Dir() {
   # return tmpDir/compiler
   compiler="$tmpDir/$(basename "$compiler")"
   echo "$compiler"
+}
+
+
+#
+# Print product and version infos of the passed compiler file.
+#
+# @param $1 - filename
+#
+function printCompilerInfo() {
+  local file output product version
+  file="$(cygpath -d "$1")"                           # the DOS name spares us quoting which would get mangled which would break the call
+
+  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" </dev/null | tr -d '\r')"
+  output="${output#$'\xEF\xBB\xBF'}"                  # cut-off the BOM header
+  IFS=$'\t' read -r product version <<< "$output"
+
+  [[ "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
+    fail "unexpected VersionInfo.FileVersion \"$version\" for \"$1\""
+  }
+  version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}${BASH_REMATCH[3]} build ${BASH_REMATCH[4]}"
+
+  echo "$product version $version"
 }
 
 
@@ -852,90 +796,134 @@ function readConfig() {
 }
 
 
+declare -A substedDrives=()
+
 #
-# Normalize, sort and order the passed MQL4 source paths.
+# Read substituted Windows drives and convert paths to Unix-style.
 #
-# @param _In_  $1 - name of indexed array to read configured paths from
-# @param _Out_ $2 - name of indexed array to write normalized paths to
-#
-function normalizeMQL4Paths() {
-  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
-  local -n in="$1"
-  local -n out="$2"
-  out=()
-  ((!${#in[@]})) && return
+function readSubstedDrives() {
+  local lines i driveW driveU targetW targetU
 
-  # normalize input
-  local path userPath realPath normalizedPaths=() lines S=$'\x01'
-  for path in "${in[@]}"; do
-    if [[ -d "$path" ]]; then
-      readarray -t lines < <(cd -- "$path"; echo "$PWD"; realWindowsPath "$PWD")
-      userPath="${lines[0]}"                          # Unix-style
-      realPath="${lines[1]}"
-      userPath="${userPath////${S}}"                  # replace slashes with a custom separator that's alphabetically first
-      realPath="${realPath////${S}}"
+  if command -v subst.exe &>/dev/null; then
+    readarray -t lines < <(MSYS_NO_PATHCONV=1 subst.exe | tr -d '\r')
 
-      normalizedPaths+=("2 $userPath")                # add prefix to order user paths after real paths
-      [[ "$userPath" == "$realPath" ]] || normalizedPaths+=("1 $realPath")
-    fi
-  done
-  ((!${#normalizedPaths[@]})) && return
+    ((debug)) && {
+      ((${#lines[@]})) && stderr 'Subst drives:' || stderr 'Subst drives: none'
+    }
+    for ((i=0; i < ${#lines[@]}; i++)); do
+      if [[ "${lines[i]}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
+        driveW="$(cygpath -m "${BASH_REMATCH[1]}")"
+        targetW="$(cygpath -m "${BASH_REMATCH[2]}")"
 
-  # sort paths
-  readarray -t normalizedPaths < <(printf '%s\n' "${normalizedPaths[@]}" | sort)
+        driveU="$(cygpath -u "$driveW")"
+        targetU="$(cygpath -u "$targetW")"                  # depending on the Linux kernel paths may/may not have the prefix '/cygwin/'
 
-  # write sorted paths to out                         # no filtering of duplicates and/or overlaps (performance)
-  for path in "${normalizedPaths[@]}"; do
-    path="${path#* }"                                 # cut-off leading prefix
-    out+=("${path//${S}//}")                          # revert custom separators back to slashes
-  done
+        substedDrives["$driveW"]="$targetW/"                # add trailing separator for consistency
+        substedDrives["$driveU"]="$targetU/"
+
+        ((debug)) && stderr "${lines[i]}"
+      fi
+    done
+  else
+    ((debug)) && stderr 'Subst drives: none'
+  fi
+  readonly substedDrives
+
+  ((debug)) && stderr '' || :
 }
 
 
 #
-# Normalize, sort and order the passed include directories.
+# Resolve and print the real Windows path of the passed argument. Replacement for the `realpath` command which may not return
+# a Windows path and/or may not see through a Windows drive substitution. Depending on the Linux layer the result may/may not
+# be prefixed with "/cygwin/".
 #
-# @param _In_  $1 - name of associative array to read configured directories from
-# @param _Out_ $2 - name of indexed array to write normalized source paths to
-# @param _Out_ $3 - name of indexed array to write normalized include directories to
+# @param $1 - path
 #
-function normalizeIncludeDirs() {
-  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
-  local -n in="$1"
-  local -n out1="$2"
-  local -n out2="$3"
-  ((!${#in[@]})) && return
+function realWindowsPath() {
+  # Other approaches and issues
+  # ---------------------------
+  # realpath <path>         Depending on path/version/OS: may not resolve Windows subst.
+  # readlink -f <path>      Same as `realpath`.
+  # cd <path> && pwd -P     Depending on path/version/OS: may not resolve Windows subst, may resolve links only at the last path segment.
+  # cd <path> && cmd /c cd  Same as `pwd -P`.
+  #
+  # Solution
+  # --------
+  # Use `realpath` and apply Windows drive substitutions manually.
+  #
+  local path="$1" resolvedPath drive target
+  local -A seenPaths=()
 
-  # normalize input
-  local path userPath realPath includeDir normalizedPaths=() S=$'\x01' lines line prefix
-  for path in "${!in[@]}"; do
-    if [[ -d "$path" ]]; then
-      readarray -t lines < <(cd -- "$path"; echo "$PWD"; realWindowsPath "$PWD")
-      userPath="${lines[0]}"                          # Unix-style
-      realPath="${lines[1]}"
-      userPath="${userPath////${S}}"                  # replace slashes with a custom separator that's alphabetically first
-      realPath="${realPath////${S}}"
+  while true; do
+    [[ -n "${seenPaths[$path]:-}" ]] && fail "cycle detected in realpath resolution"
+    seenPaths["$path"]=1
 
-      includeDir="${in[$path]}"                       # convert includeDir to absolute name (even non-existing)
-      [[ -d "$includeDir" ]] && includeDir="$(cd -- "$includeDir"; echo "$PWD")" || includeDir="$(cygpath -ua "$includeDir")"
+    resolvedPath="$(realpath "$path")"                      # resolve junctions/symlinks
 
-      normalizedPaths+=("2|$userPath|$includeDir")    # add prefix to order user paths after real paths
-      [[ "$userPath" == "$realPath" ]] || normalizedPaths+=("1|$realPath|$includeDir")
-    fi
+    for drive in "${!substedDrives[@]}"; do                 # resolve drive substitutions
+      if [[ "$resolvedPath" == "$drive"* ]]; then
+        target="${substedDrives[$drive]}"                   # the target path ends with a path separator
+        path="${target}${resolvedPath:${#drive}}"
+        continue 2
+      fi
+    done
+
+    echo "$resolvedPath"
+    break
   done
-  ((!${#normalizedPaths[@]})) && return
+}
 
-  # sort paths by group=asc, path=asc
-  readarray -t normalizedPaths < <(printf '%s\n' "${normalizedPaths[@]}" | sort -t '|' -k1,2)
 
-  # write sorted paths to out1 + out2                 # no filtering of duplicates and/or overlaps (performance)
-  out1=()
-  out2=()
-  for line in "${normalizedPaths[@]}"; do
-    IFS='|' read -r prefix path includeDir <<< "$line"
-    out1+=("${path//${S}//}")                         # revert custom separators back to slashes
-    out2+=("$includeDir")
+declare _tmpFiles=''                                        # file holding the names of managed tmp files
+
+#
+# Register a file/directory to be deleted on script termination.
+#
+# @param $1 - file/directory name
+#
+function registerTmpPath() {
+  if [[ -z "$_tmpFiles" ]]; then                            # initialization on first call
+    _tmpFiles="$(mktemp --tmpdir "$(basename "$0").XXXXXX")"
+    readonly _tmpFiles
+    registerTmpPath "$_tmpFiles"                            # register the file itself as first entry
+  fi
+
+  # add new tmp file
+  [[ -n "$1" ]] && echo "$1" >> "$_tmpFiles" || :
+}
+
+
+#
+# Resolve and print the MQL include directory for a source file. If the include directory cannot be determined from
+# the context the function tries to auto-detect the include directory (not yet implemented).
+#
+# @param $1            - filename (exists and is either .mq4 or .mq5)
+# @param $2            - MQL version id
+# @param $3 [optional] - already resolved include directory from a previous processing step (default: none)
+#
+function resolveIncludeDir() {
+  local userName="$1" version="$2" includeDir="${3:-}"
+  [[ -n "$includeDir" ]] && echo "$includeDir" && return
+
+  local dir baseName realName lines i
+  userName="${userName//\\//}"
+  dir="${userName%/*}"; [[ "$dir" == "$userName" ]] && dir='.'
+  baseName="${userName##*/}"
+  readarray -t lines < <(cd -- "$dir"; echo "$PWD"; realWindowsPath "$PWD")
+  userName="${lines[0]}/$baseName"
+  realName="${lines[1]}/$baseName"
+
+  shopt -s nocasematch
+  [[ -z "$includeDir" ]] && for ((i=${#includeSource[@]}-1; i>=0; i--)); do
+    [[ "$userName" == "${includeSource[i]}/"* ]] && includeDir="${includeDirectory[i]}" && break
   done
+  [[ -z "$includeDir" ]] && for ((i=${#includeSource[@]}-1; i>=0; i--)); do
+    [[ "$realName" == "${includeSource[i]}/"* ]] && includeDir="${includeDirectory[i]}" && break
+  done
+  shopt -u nocasematch
+
+  echo "$includeDir"      # TODO: auto-detect include directory
 }
 
 
@@ -980,39 +968,6 @@ function resolveMqlVersion() {
 
 
 #
-# Resolve and print the MQL include directory for a source file. If the include directory cannot be determined from
-# the context the function tries to auto-detect the include directory (not yet implemented).
-#
-# @param $1            - filename (exists and is either .mq4 or .mq5)
-# @param $2            - MQL version id
-# @param $3 [optional] - already resolved include directory from a previous processing step (default: none)
-#
-function resolveIncludeDir() {
-  local userName="$1" version="$2" includeDir="${3:-}"
-  [[ -n "$includeDir" ]] && echo "$includeDir" && return
-
-  local dir baseName realName lines i
-  userName="${userName//\\//}"
-  dir="${userName%/*}"; [[ "$dir" == "$userName" ]] && dir='.'
-  baseName="${userName##*/}"
-  readarray -t lines < <(cd -- "$dir"; echo "$PWD"; realWindowsPath "$PWD")
-  userName="${lines[0]}/$baseName"
-  realName="${lines[1]}/$baseName"
-
-  shopt -s nocasematch
-  [[ -z "$includeDir" ]] && for ((i=${#includeSource[@]}-1; i>=0; i--)); do
-    [[ "$userName" == "${includeSource[i]}/"* ]] && includeDir="${includeDirectory[i]}" && break
-  done
-  [[ -z "$includeDir" ]] && for ((i=${#includeSource[@]}-1; i>=0; i--)); do
-    [[ "$realName" == "${includeSource[i]}/"* ]] && includeDir="${includeDirectory[i]}" && break
-  done
-  shopt -u nocasematch
-
-  echo "$includeDir"      # TODO: auto-detect include directory
-}
-
-
-#
 # Sanitize a filename/path argument. Strips enclosing double quotes and trims white-space.
 #
 # @param $1 - name
@@ -1027,16 +982,49 @@ function sanitizeName() {
 }
 
 
+declare -A _cachedCompilerPaths=()
+
 #
-# Return the name of an MQL version.
+# Resolves the full compiler filename for the specified MQL version and include directory.
 #
-# @param $1 - MQL version id
+# @param _Out_ $1 - variable to write the result to
+# @param _In_  $2 - MQL version id
+# @param _In_  $3 - MQL4.0 only: include directory to be linked into the compiler path
 #
-function versionName() {
-  [[ "$1" == 'mql40' ]] && echo 'MQL4.0' && return
-  [[ "$1" == 'mql45' ]] && echo 'MQL4.5' && return
-  [[ "$1" == 'mql5'  ]] && echo 'MQL5'   && return
-  fail "unknown MQL version id: \"$1\""
+function setCompilerPath() {
+  ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
+  local -n result="$1"
+  local version="$2" includeDir="${3:-}" compilerVar filename basename
+
+  [[ -n "$includeDir" ]] && includeDir="$(realWindowsPath "$includeDir")"
+
+  # check the cache for a matching result
+  if [[ -n "${_cachedCompilerPaths["$version|$includeDir"]:-}" ]]; then
+    result="${_cachedCompilerPaths["$version|$includeDir"]}"
+    return
+  fi
+
+  [[ "$version" == 'mql40' ]] && compilerVar='MT4_METALANG'
+  [[ "$version" == 'mql45' ]] && compilerVar='MT4_METAEDITOR'
+  [[ "$version" == 'mql5'  ]] && compilerVar='MT5_METAEDITOR'
+
+  [[ -z "${compilerVar:-}" ]] && fail "unknown MQL version id \"$version\""
+  [[ -z "${!compilerVar-}" ]] && fail "$(versionName "$version") compiler is not configured"
+  filename="${!compilerVar}"
+  [[ -f "$filename" ]] || fail "$(versionName "$version") compiler not found: \"$filename\""
+
+  if [[ "$version" == 'mql5' ]]; then
+    basename="$(basename "$filename")"
+    [[ "${basename,,}" != "metaeditor64.exe" ]] && fail "The name of MetaEditor5 must be: \"metaeditor64.exe\" (...so say the criminals at MetaQuotes)"
+  fi
+
+  result="$filename"
+  if [[ -n "$includeDir" ]]; then
+    result="$(prepareCompiler40Dir "$result" "$includeDir")"
+  fi
+
+  # cache the result
+  _cachedCompilerPaths["$version|$includeDir"]="$result"
 }
 
 
@@ -1060,7 +1048,7 @@ function systemInfo() {
     name="$(sw_vers -productName)"                          # macOS
     version="$(sw_vers -productVersion)"                    # 15.3.1
     build="$(sw_vers -buildVersion)"                        # 24D70
-    IFS='.' read major minor patch <<< "$version"
+    IFS='.' read -r major minor patch <<< "$version"
     versionName="$(
       case "$major" in
         15) echo 'Sequoia';;
@@ -1129,10 +1117,22 @@ function systemInfo() {
 }
 
 
+#
+# Return the name of an MQL version.
+#
+# @param $1 - MQL version id
+#
+function versionName() {
+  [[ "$1" == 'mql40' ]] && echo 'MQL4.0' && return
+  [[ "$1" == 'mql45' ]] && echo 'MQL4.5' && return
+  [[ "$1" == 'mql5'  ]] && echo 'MQL5'   && return
+  fail "unknown MQL version id: \"$1\""
+}
+
+
 # --- end of functions ---------------------------------------------------------------------------------------------------------------------
 
 
-# define vars
 declare srcFileNames=() srcArg='' srcDirGiven=0
 declare srcFileVersions=() version='' firstVersion=-1
 declare srcFileIncludes=() include='' firstInclude=-1
@@ -1144,8 +1144,6 @@ init
 
 
 # parse command line arguments
-((!"$#")) && syntaxError 'No source file specified.'
-
 while (("$#")); do
   if ((!delimiterPassed)); then                           # enter case only before an option terminator
     case "$1" in
@@ -1155,8 +1153,7 @@ while (("$#")); do
         continue;;
 
       -h|--help)
-        help
-        exit 0;;
+        longHelp;;
 
       [-/]s|--syntax)                                     # support MetaEditor's option prefix
         syntaxOnly=1
@@ -1169,12 +1166,12 @@ while (("$#")); do
         continue;;
 
       -v|--version)
-        syntaxError "Missing version argument: $1";;
+        shortHelp "Missing version argument: $1";;
 
       -v=*|--version=*)
         version="${1#*=}"
         version="${version,,}"
-        [[ -n "$version" && "$version" != mql4[05] ]] && syntaxError "Invalid version argument in \"$1\" (expecting \"mql40\" or \"mql45\")"
+        [[ -n "$version" && "$version" != mql4[05] ]] && shortHelp "Invalid version argument in \"$1\" (expecting \"mql40\" or \"mql45\")"
         if ((firstVersion < 0)); then
           for i in "${!srcFileVersions[@]}"; do
             srcFileVersions[i]="$version"                 # the first --version affects previous sources if no more sources follow
@@ -1184,13 +1181,13 @@ while (("$#")); do
         shift; continue;;
 
       -*)
-        syntaxError "Unrecognized option \"$1\" (use the -- delimiter if source arguments start with a hyphen)";;
+        shortHelp "Unrecognized option \"$1\" (use the -- delimiter if source arguments start with a hyphen)";;
 
       /inc|/include|/inc[=:]*|/include[=:]*)
         [[ "$1" == /include* ]] && include="${1:9}" || include="${1:5}"
         include="$(sanitizeName "$include")"
-        [[ -z "$include" ]] && syntaxError "Missing argument: $1"
-        [[ -d "$include" ]] || syntaxError "Include directory not found: \"$include\""
+        [[ -z "$include" ]] && shortHelp "Missing argument: $1"
+        [[ -d "$include" ]] || shortHelp "Include directory not found: \"$include\""
         if ((firstInclude < 0)); then
           for i in "${!srcFileIncludes[@]}"; do
             srcFileIncludes[i]="$include"                 # the first /include affects previous sources if no more sources follow
@@ -1200,18 +1197,18 @@ while (("$#")); do
         shift; continue;;
 
       /log|/log[=:]*)
-        [[ "$log" -eq 1 ]] && syntaxError "Multiple /log options"
+        [[ "$log" -eq 1 ]] && shortHelp "Multiple /log options"
         log=1
         if [[ ${#1} -gt 4 ]]; then
           customLog="$(sanitizeName "${1:5}")"
-          [[ -z "$customLog" ]] && syntaxError "Missing argument: $1"
+          [[ -z "$customLog" ]] && shortHelp "Missing argument: $1"
           customLog="$(cygpath -w "$customLog")"
         fi
         shift; continue;;
 
       /compile[=:]*)
         srcArg="$(sanitizeName "${1:9}")"
-        [[ -z "$srcArg" ]] && syntaxError "Missing argument: $1";;
+        [[ -z "$srcArg" ]] && shortHelp "Missing argument: $1";;
         # processing continues after the case block
     esac
   fi
@@ -1229,14 +1226,14 @@ while (("$#")); do
     done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(fileExtension "$srcArg")"
-    [[ "${ext,,}" != mq[45] ]] && syntaxError "Cannot compile file \"$srcArg\""
+    [[ "${ext,,}" != mq[45] ]] && shortHelp "Cannot compile file \"$srcArg\""
     srcFileNames+=("$srcArg")
     srcFileVersions+=("${version:-}")
     srcFileIncludes+=("${include:-}")
   else
     srcArg="$1"
     [[ "$srcArg" =~ ^[[:space:]]*$ ]] && srcArg="\"$srcArg\""
-    syntaxError "File or directory not found: $srcArg"
+    shortHelp "File or directory not found: $srcArg"
   fi
 
   if ((firstVersion > 0)); then
@@ -1257,7 +1254,7 @@ done
 
 size=${#srcFileNames[@]}
 if ((!size)); then
-  ((srcDirGiven == 0)) && syntaxError "No source file specified." || syntaxError "No source files found."
+  ((srcDirGiven)) && shortHelp "No source files found." || shortHelp "No source file specified."
 fi
 ((size > 1)) && compactOutput=1
 
