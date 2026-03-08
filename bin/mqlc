@@ -253,16 +253,22 @@ function cmdHelper() {
 # @param $2 - directory B
 #
 function compareDirs() {
-  local dirA="$1" dirB="$2" realA realB
+  local dirA="${1,,}" dirB="${2,,}" realA realB lines
   [[ -d "$dirA" && -d "$dirB" ]] || return 1
 
-  dirA="$(cygpath -u "$dirA")"
-  dirB="$(cygpath -u "$dirB")"
+  [[ "$dirA" == -* ]] && dirA="./$dirA"       # cygpath can't handle names starting with a hyphen
+  [[ "$dirB" == -* ]] && dirB="./$dirB"
+  [[ "$dirA" == "$dirB" ]] && return 0
 
-  realA="$(realWindowsPath "$dirA")"
-  realB="$(realWindowsPath "$dirB")"
+  readarray -t lines < <(cygpath -ua "$dirA" "$dirB")
+  dirA="${lines[0]}"
+  dirB="${lines[1]}"
+  [[ "$dirA" == "$dirB" ]] && return 0
 
-  [[ "$realA" == "$realB" ]]              # returns with the comparison result
+  readarray -t lines < <(realWindowsPath "$dirA"; realWindowsPath "$dirB")
+  realA="${lines[0]}"
+  realB="${lines[1]}"
+  [[ "$realA" == "$realB" ]]                  # returns with the comparison result
 }
 
 
@@ -446,20 +452,6 @@ function compileMql5() {
   ((retVal = errors + warnings))
   ((retVal > 255)) && retVal=255
   return "$retVal"
-}
-
-
-#
-# cygpath doesn't support the "--" option separator. If the passed name starts with "-" it breaks.
-# This function works around that issue.
-#
-# @param $1 - cygpath conversion modifier
-# @param $2 - filename/path
-#
-function cygpath() {
-  local name="${2:-}"
-  [[ "$name" == -* ]] && name="./$name"
-  command cygpath "${1:-}" "$name"
 }
 
 
@@ -1116,17 +1108,17 @@ function systemInfo() {
 
   # cygpath
   cpath="$(type -P cygpath)"
-  [[ -n "$cpath" ]] && version="$(command cygpath -V | head -1) ($(command cygpath -wa "$(realpath "$cpath")"))" || version='-'
+  [[ -n "$cpath" ]] && version="$(cygpath -V | head -1) ($(cygpath -wa "$(realpath "$cpath")"))" || version='-'
   stderr "Cygpath: $version"
 
   # Bash
   path="$(realpath "$BASH")"
-  [[ -n "$cpath" ]] && path="$(command cygpath -wa "$path")"
+  [[ -n "$cpath" ]] && path="$(cygpath -wa "$path")"
   stderr "Bash:    $BASH_VERSION ($path)"
 
   # mqlc
   path="$(realpath "${BASH_SOURCE[0]}")"
-  [[ -n "$cpath" ]] && path="$(command cygpath -wa "$path")"
+  [[ -n "$cpath" ]] && path="$(cygpath -wa "$path")"
   stderr "mqlc:    0.0.0 ($path)"
   stderr ''
 }
