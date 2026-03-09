@@ -1187,7 +1187,8 @@ while (("$#")); do
           done
           firstVersion="${#srcFileVersions[@]}"           # track position
         fi
-        shift; continue;;
+        shift
+        continue;;
 
       -*)
         shortHelp "Unrecognized option \"$1\" (use the -- delimiter if source arguments start with a hyphen)";;
@@ -1203,7 +1204,8 @@ while (("$#")); do
           done
           firstInclude="${#srcFileIncludes[@]}"           # track position
         fi
-        shift; continue;;
+        shift
+        continue;;
 
       /log|/log[=:]*)
         [[ "$log" -eq 1 ]] && shortHelp "Multiple /log options"
@@ -1213,12 +1215,12 @@ while (("$#")); do
           [[ -z "$customLog" ]] && shortHelp "Missing argument: $1"
           customLog="$(cygpath -w "$customLog")"
         fi
-        shift; continue;;
+        shift
+        continue;;
 
       /compile[=:]*)
         srcArg="$(sanitizeName "${1:9}")"
         [[ -z "$srcArg" ]] && shortHelp "Missing argument: $1";;
-        # processing continues after the case block
     esac
   fi
 
@@ -1227,12 +1229,11 @@ while (("$#")); do
 
   if [[ -d "$srcArg" ]]; then
     srcDirGiven=1
-    [[ "$srcArg" =~ [/\\]$ ]] || srcArg="$srcArg/"        # enforce symlink dereferencing
     while IFS= read -r file; do
       srcFileNames+=("$file")
       srcFileVersions+=("${version:-}")
       srcFileIncludes+=("${include:-}")
-    done < <(find "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
+    done < <(find -L "$srcArg" -maxdepth 1 -type f -iname '*.mq[45]')
   elif [[ -f "$srcArg" ]]; then
     ext="$(fileExtension "$srcArg")"
     [[ "${ext,,}" != mq[45] ]] && shortHelp "Cannot compile file \"$srcArg\""
