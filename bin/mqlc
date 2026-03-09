@@ -18,6 +18,8 @@
 #  - resolveMqlVersion/resolveIncludeDir must process a specified source path instead of processing each found file
 #  - resolve config per source dir
 #  - restore original case of filenames
+#  - realWindowsPath '/cygdrive/f/projects/mt4/mql/bin/experts' => '/cygdrive/c/z/F/projects/mt4/mql/mql40'
+#  - realWindowsPath '/cygdrive/c/z/f/projects/mt4/mql/mql40'   => '/cygdrive/c/z/f/projects/mt4/mql/mql40'
 #
 #  - read config in isolated scope
 #  - colored output
@@ -253,7 +255,7 @@ function cmdHelper() {
 # @param $2 - directory B
 #
 function compareDirs() {
-  local dirA="${1,,}" dirB="${2,,}" realA realB lines
+  local dirA="${1,,}" dirB="${2,,}" lines
   [[ -d "$dirA" && -d "$dirB" ]] || return 1
 
   [[ "$dirA" == -* ]] && dirA="./$dirA"       # cygpath can't handle names starting with a hyphen
@@ -266,9 +268,9 @@ function compareDirs() {
   [[ "$dirA" == "$dirB" ]] && return 0
 
   readarray -t lines < <(realWindowsPath "$dirA"; realWindowsPath "$dirB")
-  realA="${lines[0]}"
-  realB="${lines[1]}"
-  [[ "$realA" == "$realB" ]]                  # returns with the comparison result
+  dirA="${lines[0]}"
+  dirB="${lines[1]}"                          # TODO: fix case inconsistency in realWindowsPath
+  [[ "${dirA,,}" == "${dirB,,}" ]]            # returns with the comparison result
 }
 
 
@@ -425,8 +427,8 @@ function compileMql5() {
   # store logfile in array (convert to UTF-8 + Unix EOL, filter blank lines and infos)
   local output=() line='' M='' errors=0 warnings=0
   readarray -t output < <(
-    ((originalOutput)) && M="rosasurfer"                      # custom marker to toggle result filtering
-    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|${M}: information: (compiling|including|generating code|code generated)" || :
+    ((originalOutput)) && M='rosasurfer'                      # custom marker to toggle result filtering
+    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|$M: information: (compiling|including|generating code|code generated)" || :
   )
 
   [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || fail "unexpected compiler output in last line: \"${output[-1]}\""
@@ -692,7 +694,7 @@ function printCompilerInfo() {
   local file output product version
   file="$(cygpath -d "$1")"                           # the DOS name spares us quoting which would get mangled which would break the call
 
-  output="$(MSYS_NO_PATHCONV=1 powershell -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" </dev/null | tr -d '\r')"
+  output="$(MSYS_NO_PATHCONV=1 powershell.exe -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command "\$v = (Get-Item $file).VersionInfo; \$v.ProductName + [char]9 + \$v.FileVersion" </dev/null | tr -d '\r')"
   output="${output#$'\xEF\xBB\xBF'}"                  # cut-off the BOM header
   IFS=$'\t' read -r product version <<< "$output"
 
@@ -803,13 +805,13 @@ function readSubstedDrives() {
   local lines i driveW driveM driveU targetW targetM targetU
 
   if command -v subst.exe &>/dev/null; then
-    readarray -t lines < <(MSYS_NO_PATHCONV=1 subst.exe | tr -d '\r')
+    readarray -t lines < <(subst.exe)                       # lines contain a trailing \r
 
     ((debug)) && {
-      ((${#lines[@]})) && stderr 'Subst drives:' || stderr 'Subst drives: none'
+      ((${#lines[@]})) && stderr 'Subst:' || stderr 'Subst: no drive substitutions'
     }
     for ((i=0; i < ${#lines[@]}; i++)); do
-      if [[ "${lines[i]}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
+      if [[ "${lines[i]%$CR}" =~ ^(.+):\ =\>\ (.+)$ ]]; then
         driveW="${BASH_REMATCH[1]}"
         targetW="${BASH_REMATCH[2]}"
 
@@ -827,7 +829,7 @@ function readSubstedDrives() {
       fi
     done
   else
-    ((debug)) && stderr 'Subst drives: -'
+    ((debug)) && stderr 'Subst: -'
   fi
   readonly substedDrives
 
