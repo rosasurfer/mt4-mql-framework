@@ -5,7 +5,7 @@
  *
  *
  * TODO:
- *  - add input "Tunnel.Width" = 100% (percent of High/Low range)
+ *  - add input "Channel.Width" = 100% (percent of High/Low range)
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -20,7 +20,7 @@ extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
-extern bool   Signal.onBarCross              = false;                   // onBarClose: on channel cross at opposite side of the last crossing
+extern bool   Signal.onBarCross              = false;                   // on channel crossing of BAR_CLOSE opposite of the last crossing
 extern string Signal.onBarCross.Types        = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
