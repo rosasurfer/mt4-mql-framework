@@ -808,7 +808,7 @@ declare includeSource=() includeDirectory=()                # configured include
 #
 # Read the configuration into global vars.
 #
-# @param $1 - first source file (exists)
+# @param $1 - the first source file to compile (exists)
 #
 # @todo optimize runtime: 2.036s
 #
@@ -817,13 +817,14 @@ function readConfig() {
   readSubstedDrives
 
   # resolve config file location for the source file
-  dir="$(dirname "$srcFile")"
+  srcFile="${srcFile//\\//}"
+  dir="${srcFile%/*}"; [[ "$dir" == "$srcFile" ]] && dir='.'
   dir="$(cd -- "$dir"; echo "$PWD")"
 
   while true; do
-    dir="${dir%/*}"
     [[ -z "$dir" ]] && break
     [[ -f "$dir/$rcFile" ]] && config="$dir/$rcFile" && break
+    dir="${dir%/*}"
   done
   if [[ -z "$config" && -n "${HOME:-}" ]]; then
     [[ -f "$HOME/$rcFile" ]] && config="$HOME/$rcFile"
