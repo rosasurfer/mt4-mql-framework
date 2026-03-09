@@ -283,7 +283,7 @@ function compareDirs() {
 #
 function compileMql40() {
   local srcFile="$1" version="$2" include="$3" s_srcFile logFile
-  local compiler errorStatus=0 startms endms time='' output=() line i errors=0 epl='' warnings=0 wpl='' retVal
+  local compiler errorStatus=0 startms endms time='' output=() line i offset errors=0 epl='' warnings=0 wpl='' retVal
 
   echo "Compiling \"$srcFile\" as $(versionName "$version")"
 
@@ -293,17 +293,17 @@ function compileMql40() {
   [[ "$srcFile" == /* ]] && srcFile="$(cygpath -w "$srcFile")"
   logFile="${srcFile%.*}.log"
   ((debug)) && {
-    [[ "$srcFile" == *\ * ]] && s_srcFile="\"$srcFile\"" || s_srcFile="$srcFile"
+    s_srcFile="$srcFile"; [[ "$srcFile" == *\ * ]] && s_srcFile="\"$srcFile\""
     echo "cmd: \"$compiler\" $s_srcFile"
   }
 
   # call the compiler: The exit code is the number of detected errors (0 = no errors but possibly warnings).
   startms="$(date +%s%3N)"
   readarray -t output < <(
-    { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" < /dev/null || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
+    { MSYS_NO_PATHCONV=1 "$compiler" "$srcFile" </dev/null || errorStatus=$?; echo "$errorStatus"; } | tr -d '\r'
   )
   endms="$(date +%s%3N)"
-  errorStatus="${output[-1]}"                                         # fetch error status from output and remove it
+  errorStatus="${output[-1]}"                                             # fetch error status from output and remove it
   unset 'output[-1]'
 
   # on success
@@ -332,7 +332,7 @@ function compileMql40() {
 
   # on error
   if ((errorStatus)); then
-    if [[ ${#output[@]} -lt 4 ]]; then                                # no error message happens for empty source file only
+    if [[ ${#output[@]} -lt 4 ]]; then                                    # no error message happens for empty source files only
       ((errorStatus != 127)) && fail "unexpected compiler output for status $errorStatus: no error message"
       ((originalOutput)) || output+=("2;356;$srcFile;1:1;'' - event handling function not found")
       ((++errors))
@@ -345,10 +345,10 @@ function compileMql40() {
     fi
 
     if ((!originalOutput)); then
-      [[ "${output[-1]}" =~ ^[[:space:]]*$ ]] && unset 'output[-1]'   # remove an empty last line
-      [[ "${output[-1]}" == See\ logfile*  ]] && unset 'output[-1]'   # remove a logfile hint
-      [[ "${output[-1]}" == Errors--[0-9]* ]] && unset 'output[-1]'   # remove an error counter
-      [[ "${output[-1]}" =~ ^[[:space:]]*$ ]] && unset 'output[-1]'   # remove another empty last line
+      [[ "${output[-1]}" =~ ^[[:space:]]*$ ]] && unset 'output[-1]'       # remove an empty last line
+      [[ "${output[-1]}" == See\ logfile*  ]] && unset 'output[-1]'       # remove a logfile hint
+      [[ "${output[-1]}" == Errors--[0-9]* ]] && unset 'output[-1]'       # remove an error counter
+      [[ "${output[-1]}" =~ ^[[:space:]]*$ ]] && unset 'output[-1]'       # remove another empty last line
 
       # add final results
       ((errors   == 1)) && epl='' || epl='s'
@@ -362,12 +362,16 @@ function compileMql40() {
   if ((originalOutput)); then
     output+=("error status: $errorStatus")
   else
-    output[0]="${output[0]//compiler build/compiler version 4.00 build}"              # update compiler info
-    [[ "${output[1]}" =~ ^Copyright ]] && unset 'output[1]'                           # remove copyright
-    ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]] && unset 'output[2]'  # more compact output for compilation of multiple files
-
+    output[0]="${output[0]//compiler build/compiler version 4.00 build}"  # update compiler info
+    [[ "${output[1]}" =~ ^Copyright ]] && unset 'output[1]'               # remove copyright
+    if ((compactOutput)) && [[ "${output[2]}" =~ ^[[:space:]]*$ ]]; then
+      unset 'output[2]'                                                   # more compact output when compiling multiple files
+      offset=1
+    else
+      offset=2
+    fi
     local keys=("${!output[@]}")
-    for i in "${keys[@]:2}"; do                                                       # format compiler messages
+    for i in "${keys[@]:$offset}"; do                                     # reformat compiler messages
       [[ "${output[i]:-}" == [12]';'* ]] && formatCompiler40Msg "output[$i]" "$srcFile" "$errors" "$warnings"
     done
   fi
@@ -419,7 +423,7 @@ function compileMql5() {
   fi
   checkCompilerDir "$compiler"
   rm -f -- "$logFile"
-  MSYS_NO_PATHCONV=1 cmd /c "$helper" < /dev/null || errorStatus=$?
+  MSYS_NO_PATHCONV=1 cmd /c "$helper" </dev/null || errorStatus=$?
   [[ -f "$logFile" ]] || fail "logfile \"$logFile\" not found (status $errorStatus)."
   rm -f "$helper"
   cleanupCompilerDir "$compiler"
@@ -428,7 +432,7 @@ function compileMql5() {
   local output=() line='' M='' errors=0 warnings=0
   readarray -t output < <(
     ((originalOutput)) && M='rosasurfer'                      # custom marker to toggle result filtering
-    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|$M: information: (compiling|including|generating code|code generated)" || :
+    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^$M[[:space:]]*$|$M: information: (compiling|including|generating code|code generated)" || :
   )
 
   [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || fail "unexpected compiler output in last line: \"${output[-1]}\""
@@ -498,7 +502,7 @@ function fileExtension() {
 function formatCompiler40Msg() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n logmsg="$1"
-  local srcFile="$2" errors="$3" warnings="$4" type code level levelS file line location='' message len
+  local srcFile="$2" errors="$3" warnings="$4" type code level file line location='' message len
 
   [[ "$logmsg" =~ ^([0-9]+)\;([0-9]+)\;(.+)?\;([0-9]+:[0-9]+)?\;(.*)$ ]] || fail "unexpected format of compiler message:${NL}${logmsg}"
   type="${BASH_REMATCH[1]}"
@@ -509,19 +513,18 @@ function formatCompiler40Msg() {
 
   [[ "$type" == [12] ]] || fail "unexpected message type $type in compiler message:${NL}${logmsg}"
   if ((type == 1)); then
-    [[ "$message" == *'is not referenced and will be removed from exp-file' ]] && level='info' || level='warn'
+    [[ "$message" == *'is not referenced and will be removed from exp-file' ]] && level='info: ' || level='warn: '
   else
-    level='error'
+    level='error: '
   fi
   ((errors)) && len=6 || len=5
-  levelS="$level: "
-  levelS="${levelS:0:$len}"
+  level="${level:0:$len}"
 
   if [[ -n "$file" ]]; then
     [[ -n "$line" ]] && line=" ($line)"
     location="${file}${line}: "
   fi
-  logmsg="${levelS} ${location}${message}"
+  logmsg="${level} ${location}${message}"
 }
 
 
@@ -537,7 +540,7 @@ function formatCompiler5Msg() {
   ((BASH_SUBSHELL)) && fail "${FUNCNAME[0]}() can't write to outer scope from subshell"
   local -n logmsg="$1"
   [[ -z "$logmsg" ]] && { unset "$1"; return; }
-  local srcFile="$2" errors="$3" warnings="$4" level levelS file location='' message len
+  local srcFile="$2" errors="$3" warnings="$4" level file location='' message len
 
   [[ "$logmsg" =~ ^(.*):\ (info|warn|error)[^:]*:\ (.+)$ ]] || fail "unexpected format of compiler message:$NL\"$logmsg\""
 
@@ -548,17 +551,16 @@ function formatCompiler5Msg() {
     location=" ${BASH_REMATCH[0]}"
   fi
 
-  level="${BASH_REMATCH[2]}"
+  level="${BASH_REMATCH[2]}: "
   ((errors)) && len=6 || len=5
-  levelS="$level: "
-  levelS="${levelS:0:$len}"
+  level="${level:0:$len}"
 
   message="${BASH_REMATCH[3]}"
 
   if [[ -z "$file" ]]; then
-    logmsg="$levelS $message"
+    logmsg="$level $message"
   else
-    logmsg="$levelS ${file}${location}: $message"
+    logmsg="$level ${file}${location}: $message"
   fi
 }
 
@@ -751,7 +753,7 @@ function readConfig() {
   local -A includeDirs=()
 
   # source the config file                                  # TODO: read in isolated scope
-  [[ -n "$config" ]] && source "$config" &> /dev/null
+  [[ -n "$config" ]] && source "$config" &>/dev/null
 
   # resolve compiler settings: environment precedes configuration
   [[ "${MT4_METALANG:-}"   == '<'* ]] && MT4_METALANG=      # skip distributed/example values
