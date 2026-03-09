@@ -27,8 +27,7 @@
 #  - option --syntax
 #  - option --info
 #  - option /log
-#  - WSL: move tmp dir to Windows file system
-#
+#  - test environment for WSL 1+2
 #  - auto-detect MQL version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
@@ -151,7 +150,7 @@ function init() {
   readonly originalOutput debug trace
 
   registerTmpPath ''                                        # initialize management of tmp files
-  ((debug)) && systemInfo || :
+  ((debug)) && printSystemInfo || :
 }
 
 
@@ -708,6 +707,100 @@ function printCompilerInfo() {
 }
 
 
+#
+# Print some system details to the screen.
+#
+function printSystemInfo() {
+  ((debug)) || return
+  local os name version versionName major minor patch revision build kernel lines cpath path
+
+  # operating system
+  if [[ -f /etc/redhat-release ]]; then                     # RHEL-like Linux
+    os="$(cat /etc/redhat-release)"
+
+  elif [[ -f /etc/os-release ]]; then                       # other Linux
+    os="$(source /etc/os-release; echo "${NAME:-unknown} ${VERSION:-${VERSION_ID:-${NAME:+(unknown version)}}}")"
+
+  elif command -v sw_vers &>/dev/null; then                 # Mac
+    name="$(sw_vers -productName)"                          # macOS
+    version="$(sw_vers -productVersion)"                    # 15.3.1
+    build="$(sw_vers -buildVersion)"                        # 24D70
+    IFS='.' read -r major minor patch <<< "$version"
+    versionName="$(
+      case "$major" in
+        15) echo 'Sequoia';;
+        14) echo 'Sonoma';;
+        13) echo 'Ventura';;
+        12) echo 'Monterey';;
+        11) echo 'Big Sur';;
+        10) case "$minor" in
+              15) echo 'Catalina';;
+              14) echo 'Mojave';;
+              13) echo 'High Sierra';;
+              12) echo 'Sierra';;
+              11) echo 'El Capitan';;
+              10) echo 'Yosemite';;
+               9) echo 'Mavericks';;
+               8) echo 'Mountain Lion';;
+               7) echo 'Lion';;
+               6) echo 'Snow Leopard';;
+            esac;;
+      esac
+    )"
+    [[ -n "$versionName" ]] && versionName=" $versionName"
+    os="${name} ${version}${versionName} ($build)"
+
+  elif [[ "${OS:-}" == 'Windows_NT' ]]; then                # Windows
+    if command -v powershell.exe &>/dev/null; then
+      readarray -t lines < <(MSYS_NO_PATHCONV=1 powershell.exe -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass \
+                            -Command "[System.Environment]::OSVersion.VersionString; (Get-WmiObject Win32_OperatingSystem).Caption" \
+                            </dev/null 2>/dev/null | tr -d '\r')
+      os="${lines[0]}"
+      os="${os#$'\xEF\xBB\xBF'}"                            # cut-off the BOM header
+      name="${lines[1]}"
+      name="${name%"${name##*[![:space:]]}"}"               # contains trailing white space
+      name="${name#Microsoft }"                             # cut-off the duplicate trade mark
+      os="$os ($name)"
+    else
+      os="$(MSYS_NO_PATHCONV=1 cmd /c ver | tr -d '\r')"
+      os="${os#"${os%%[![:space:]]*}"}"                     # trim leading white space
+    fi
+  fi
+  echo "OS:      ${os:-unknown}"
+
+  # kernel
+  kernel="$(uname -s)"
+  if [[ "$kernel" == CYGWIN* ]]; then
+    kernel="$(uname -srmo)"
+  elif [[ "$kernel" == MINGW* || "$kernel" == MSYS* ]]; then
+    [[ "${MSYSTEM:-}" == MINGW* ]] && kernel='Git-Bash' || kernel='MSYS2'
+    kernel="$kernel $(uname -srmo)"
+  elif grep -qi 'microsoft' /proc/version 2>/dev/null; then
+    grep -qi 'WSL2' /proc/version && kernel='WSL 2' || kernel='WSL 1'
+    kernel="$kernel $(uname -srmo)"
+  else
+    kernel="$(uname -srmo)"                                 # native Linux/macOS
+  fi
+  echo "Kernel:  $kernel"
+
+  # cygpath
+  cpath="$(type -P cygpath)"
+  [[ -n "$cpath" ]] && version="$(cygpath -V | head -1) ($(cygpath -wa "$(realpath "$cpath")"))" || version='-'
+  echo "Cygpath: $version"
+
+  # Bash
+  path="$(realpath "$BASH")"
+  [[ -n "$cpath" ]] && path="$(cygpath -wa "$path")"
+  echo "Bash:    $BASH_VERSION ($path)"
+
+  # mqlc
+  path="$(realpath "${BASH_SOURCE[0]}")"
+  [[ -n "$cpath" ]] && path="$(cygpath -wa "$path")"
+  echo "mqlc:    0.0.0 ($path)"
+  echo ''
+}
+
+
 declare mql40SourcePaths=()                                 # configured MQL4.0 source paths (Unix-style, user name + real name)
 declare mql45SourcePaths=()                                 # configured MQL4.5 source paths (Unix-style, user name + real name)
 declare includeSource=() includeDirectory=()                # configured include directories per source path
@@ -1030,100 +1123,6 @@ function setCompilerPath() {
 
   # cache the result
   _cachedCompilerPaths["$version|$includeDir"]="$result"
-}
-
-
-#
-# Print some system infos to the screen.
-#
-function systemInfo() {
-  ((debug)) || return
-  local os name version versionName major minor patch revision build kernel lines cpath path
-
-  # operating system
-  if [[ -f /etc/redhat-release ]]; then                     # RHEL-like Linux
-    os="$(cat /etc/redhat-release)"
-
-  elif [[ -f /etc/os-release ]]; then                       # other Linux
-    os="$(source /etc/os-release; echo "${NAME:-unknown} ${VERSION:-${VERSION_ID:-${NAME:+(unknown version)}}}")"
-
-  elif command -v sw_vers &>/dev/null; then                 # Mac
-    name="$(sw_vers -productName)"                          # macOS
-    version="$(sw_vers -productVersion)"                    # 15.3.1
-    build="$(sw_vers -buildVersion)"                        # 24D70
-    IFS='.' read -r major minor patch <<< "$version"
-    versionName="$(
-      case "$major" in
-        15) echo 'Sequoia';;
-        14) echo 'Sonoma';;
-        13) echo 'Ventura';;
-        12) echo 'Monterey';;
-        11) echo 'Big Sur';;
-        10) case "$minor" in
-              15) echo 'Catalina';;
-              14) echo 'Mojave';;
-              13) echo 'High Sierra';;
-              12) echo 'Sierra';;
-              11) echo 'El Capitan';;
-              10) echo 'Yosemite';;
-               9) echo 'Mavericks';;
-               8) echo 'Mountain Lion';;
-               7) echo 'Lion';;
-               6) echo 'Snow Leopard';;
-            esac;;
-      esac
-    )"
-    [[ -n "$versionName" ]] && versionName=" $versionName"
-    os="${name} ${version}${versionName} ($build)"
-
-  elif [[ "${OS:-}" == 'Windows_NT' ]]; then                # Windows
-    if command -v powershell.exe &>/dev/null; then
-      readarray -t lines < <(MSYS_NO_PATHCONV=1 powershell.exe -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass \
-                            -Command "[System.Environment]::OSVersion.VersionString; (Get-WmiObject Win32_OperatingSystem).Caption" \
-                            </dev/null 2>/dev/null | tr -d '\r')
-      os="${lines[0]}"
-      os="${os#$'\xEF\xBB\xBF'}"                            # cut-off the BOM header
-      name="${lines[1]}"
-      name="${name%"${name##*[![:space:]]}"}"               # contains trailing white space
-      name="${name#Microsoft }"                             # cut-off the duplicate trade mark
-      os="$os ($name)"
-    else
-      os="$(MSYS_NO_PATHCONV=1 cmd /c ver | tr -d '\r')"
-      os="${os#"${os%%[![:space:]]*}"}"                     # trim leading white space
-    fi
-  fi
-  stderr "OS:      ${os:-unknown}"
-
-  # kernel
-  kernel="$(uname -s)"
-  if [[ "$kernel" == CYGWIN* ]]; then
-    kernel="$(uname -srmo)"
-  elif [[ "$kernel" == MINGW* || "$kernel" == MSYS* ]]; then
-    [[ "${MSYSTEM:-}" == MINGW* ]] && kernel='Git-Bash' || kernel='MSYS2'
-    kernel="$kernel $(uname -srmo)"
-  elif grep -qi 'microsoft' /proc/version 2>/dev/null; then
-    grep -qi 'WSL2' /proc/version && kernel='WSL 2' || kernel='WSL 1'
-    kernel="$kernel $(uname -srmo)"
-  else
-    kernel="$(uname -srmo)"                                 # native Linux/macOS
-  fi
-  stderr "Kernel:  $kernel"
-
-  # cygpath
-  cpath="$(type -P cygpath)"
-  [[ -n "$cpath" ]] && version="$(cygpath -V | head -1) ($(cygpath -wa "$(realpath "$cpath")"))" || version='-'
-  stderr "Cygpath: $version"
-
-  # Bash
-  path="$(realpath "$BASH")"
-  [[ -n "$cpath" ]] && path="$(cygpath -wa "$path")"
-  stderr "Bash:    $BASH_VERSION ($path)"
-
-  # mqlc
-  path="$(realpath "${BASH_SOURCE[0]}")"
-  [[ -n "$cpath" ]] && path="$(cygpath -wa "$path")"
-  stderr "mqlc:    0.0.0 ($path)"
-  stderr ''
 }
 
 
