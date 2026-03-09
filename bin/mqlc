@@ -15,9 +15,8 @@
 #
 # TODO:
 #  - optimize readSubstedDrives()
-#  - resolveMqlVersion/resolveIncludeDir must process a specified source path instead of processing each found file
-#  - resolve config per source dir
-#  - restore original case of filenames
+#  - resolveMqlVersion/resolveIncludeDir must process a given directory once instead of processing each found file separately
+#  - use original case of filenames
 #  - realWindowsPath '/cygdrive/f/projects/mt4/mql/bin/experts' => '/cygdrive/c/z/F/projects/mt4/mql/mql40'
 #  - realWindowsPath '/cygdrive/c/z/f/projects/mt4/mql/mql40'   => '/cygdrive/c/z/f/projects/mt4/mql/mql40'
 #
