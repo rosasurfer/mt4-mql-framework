@@ -72,8 +72,8 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/iCustom/MaChannel.mqh>
 #include <rsf/functions/iCustom/MovingAverage.mqh>
-#include <rsf/functions/iCustom/Tunnel.mqh>
 #include <rsf/win32api.mqh>
 
 #define MODE_MAIN             0                 // indicator buffer ids
@@ -226,8 +226,8 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      upperBand = GetTunnel(MODE_UPPER, bar);
-      lowerBand = GetTunnel(MODE_LOWER, bar);
+      upperBand = GetChannel(MODE_UPPER, bar);
+      lowerBand = GetChannel(MODE_LOWER, bar);
       ma = GetMovingAverage(bar);
 
       if (Close[bar] > upperBand && ma > upperBand) {
@@ -343,17 +343,17 @@ bool onTrendChange(int direction) {
 
 
 /**
- * Get a band value of the "Tunnel" indicator.
+ * Get a band value of the "MA Channel" indicator.
  *
  * @param  int mode - band identifier: MODE_UPPER | MODE_LOWER
  * @param  int bar  - bar offset
  *
  * @return double - band value or NULL in case of errors
  */
-double GetTunnel(int mode, int bar) {
+double GetChannel(int mode, int bar) {
    if (tunnel.method == MODE_ALMA) {
-      static int buffers[] = {0, Tunnel.MODE_UPPER_BAND, Tunnel.MODE_LOWER_BAND};
-      return(icTunnel(NULL, tunnel.definition, buffers[mode], bar));
+      static int buffers[] = {0, MaChannel.MODE_UPPER_BAND, MaChannel.MODE_LOWER_BAND};
+      return(icMaChannel(NULL, tunnel.definition, buffers[mode], bar));
    }
    static int prices[] = {0, PRICE_HIGH, PRICE_LOW};
    return(iMA(NULL, NULL, tunnel.periods, 0, tunnel.method, prices[mode], bar));

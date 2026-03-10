@@ -12,7 +12,7 @@
 #define SIG_TYPE_STOPLOSS        2
 #define SIG_TYPE_TAKEPROFIT      3
 #define SIG_TYPE_ZIGZAG          4
-#define SIG_TYPE_TUNNEL          5
+#define SIG_TYPE_CHANNEL         5
 
 #define SIG_OP_LONG              1                 // signal trade flags, can be combined
 #define SIG_OP_SHORT             2

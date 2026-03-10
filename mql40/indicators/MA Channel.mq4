@@ -1,5 +1,5 @@
 /**
- * Tunnel
+ * MA Channel
  *
  * An indicator forming a High/Low channel built from one or more Moving Averages.
  *
@@ -13,14 +13,14 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Tunnel.Definition              = "EMA(144)";              // one or more MAs, e.g "EMA(144), LWMA(55)"
-extern color  Tunnel.Color                   = Magenta;
+extern string Channel.Definition             = "EMA(144)";              // one or more MAs, e.g "EMA(144), LWMA(55)"
+extern color  Channel.Color                  = Magenta;
 extern string Supported.MovingAverages       = "SMA, LWMA, EMA, SMMA";
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
-extern bool   Signal.onBarCross              = false;                   // on channel crossing of BAR_CLOSE opposite of the last crossing
+extern bool   Signal.onBarCross              = false;                   // on channel crossing of BAR_CLOSE opposite to the last crossing
 extern string Signal.onBarCross.Types        = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
@@ -34,12 +34,12 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/Tunnel.mqh>
+#include <rsf/functions/iCustom/MaChannel.mqh>
 #include <rsf/win32api.mqh>
 
-#define MODE_UPPER_BAND       Tunnel.MODE_UPPER_BAND     // 0 indicator buffer ids
-#define MODE_LOWER_BAND       Tunnel.MODE_LOWER_BAND     // 1
-#define MODE_TREND            Tunnel.MODE_TREND          // 2 direction/length of the last tunnel crossing: +1...+n=up, -1...-n=down
+#define MODE_UPPER_BAND       MaChannel.MODE_UPPER_BAND  // 0 indicator buffer ids
+#define MODE_LOWER_BAND       MaChannel.MODE_LOWER_BAND  // 1
+#define MODE_TREND            MaChannel.MODE_TREND       // 2 direction/length of the last channel crossing: +1...+n=up, -1...-n=down
 
 #property indicator_chart_window
 #property indicator_buffers   3                          // visible buffers
@@ -80,31 +80,31 @@ int onInit() {
    // input validation
    string indicator = WindowExpertName();
 
-   // Tunnel.Definition
+   // Channel.Definition
    ArrayResize(ma, 0);
    ArrayResize(maDefinitions, 0);
    int mas = 0;
    maxMaPeriods = 0;
 
-   string sValues[], sValue = Tunnel.Definition;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "Tunnel.Definition", sValue);
+   string sValues[], sValue = Channel.Definition;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Channel.Definition", sValue);
    int size = Explode(sValue, ",", sValues, NULL);
    for (int i=0; i < size; i++) {
       sValue = StrTrim(sValues[i]);
       if (sValue == "") continue;
 
       string sMethod = StrLeftTo(sValue, "(");
-      if (sMethod == sValue)           return(catch("onInit(1)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
+      if (sMethod == sValue)           return(catch("onInit(1)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
       int iMethod = StrToMaMethod(sMethod, F_ERR_INVALID_PARAMETER);
-      if (iMethod == -1)               return(catch("onInit(2)  invalid "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (unsupported MA method)", ERR_INVALID_INPUT_PARAMETER));
-      if (iMethod > MODE_LWMA)         return(catch("onInit(3)  invalid "+ DoubleQuoteStr(sMethod) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (unsupported MA method)", ERR_INVALID_INPUT_PARAMETER));
+      if (iMethod == -1)               return(catch("onInit(2)  invalid "+ DoubleQuoteStr(sMethod) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (unsupported MA method)", ERR_INVALID_INPUT_PARAMETER));
+      if (iMethod > MODE_LWMA)         return(catch("onInit(3)  invalid "+ DoubleQuoteStr(sMethod) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (unsupported MA method)", ERR_INVALID_INPUT_PARAMETER));
 
       string sPeriods = StrRightFrom(sValue, "(");
-      if (!StrEndsWith(sPeriods, ")")) return(catch("onInit(4)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
+      if (!StrEndsWith(sPeriods, ")")) return(catch("onInit(4)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
       sPeriods = StrTrim(StrLeft(sPeriods, -1));
-      if (!StrIsDigits(sPeriods))      return(catch("onInit(5)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
+      if (!StrIsDigits(sPeriods))      return(catch("onInit(5)  invalid "+ DoubleQuoteStr(sValue) +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (expected format: \"MaMethod(int)\")", ERR_INVALID_INPUT_PARAMETER));
       int iPeriods = StrToInteger(sPeriods);
-      if (iPeriods < 1)                return(catch("onInit(6)  invalid MA periods "+ iPeriods +" in input parameter Tunnel.Definition: "+ DoubleQuoteStr(Tunnel.Definition) +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+      if (iPeriods < 1)                return(catch("onInit(6)  invalid MA periods "+ iPeriods +" in input parameter Channel.Definition: "+ DoubleQuoteStr(Channel.Definition) +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
 
       ArrayResize(ma, mas+1);
       ArrayResize(maDefinitions, mas+1);
@@ -114,12 +114,12 @@ int onInit() {
       maxMaPeriods = MathMax(maxMaPeriods, iPeriods);
       mas++;
    }
-   if (!mas)                           return(catch("onInit(7)  missing input parameter Tunnel.Definition", ERR_INVALID_INPUT_PARAMETER));
-   Tunnel.Definition = JoinStrings(maDefinitions, ",");
+   if (!mas)                           return(catch("onInit(7)  missing input parameter Channel.Definition", ERR_INVALID_INPUT_PARAMETER));
+   Channel.Definition = JoinStrings(maDefinitions, ",");
 
-   // Tunnel.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (AutoConfiguration) Tunnel.Color = GetConfigColor(indicator, "Tunnel.Color", Tunnel.Color);
-   if (Tunnel.Color == 0xFF000000) Tunnel.Color = CLR_NONE;
+   // Channel.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (AutoConfiguration) Channel.Color = GetConfigColor(indicator, "Channel.Color", Channel.Color);
+   if (Channel.Color == 0xFF000000) Channel.Color = CLR_NONE;
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
@@ -156,9 +156,6 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(barTrend)) return(logInfo("onTick(1)  sizeof(barTrend) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(upperBand, EMPTY_VALUE);
@@ -176,7 +173,7 @@ int onTick() {
 
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods), prevBarTrend;
-   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    int numberOfMas = ArrayRange(ma, 0);
 
@@ -198,7 +195,7 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      if (ShowChartLegend) UpdateBandLegend(legendLabel, indicatorName, legendInfo, Tunnel.Color, upperBand[0], lowerBand[0]);
+      if (ShowChartLegend) UpdateBandLegend(legendLabel, indicatorName, legendInfo, Channel.Color, upperBand[0], lowerBand[0]);
 
       // monitor signals
       if (Signal.onBarCross) /*&&*/ if (IsBarOpen()) {
@@ -206,12 +203,12 @@ int onTick() {
          else if (barTrend[1] == -1) onCross(D_SHORT);
       }
    }
-   return(catch("onTick(3)"));
+   return(last_error);
 }
 
 
 /**
- * Event handler signaling tunnel crossings.
+ * Event handler signaling channel crossings.
  *
  * @param  int direction - crossing direction: D_LONG | D_SHORT
  *
@@ -287,8 +284,8 @@ bool onCross(int direction) {
  */
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
-   if (ArraySize(maDefinitions) == 1) indicatorName = Tunnel.Definition +" Tunnel";
-   else                               indicatorName = WindowExpertName() +" "+ Tunnel.Definition;
+   if (ArraySize(maDefinitions) == 1) indicatorName = Channel.Definition +" Channel";
+   else                               indicatorName = WindowExpertName() +" "+ Channel.Definition;
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);
@@ -297,8 +294,8 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(MODE_TREND,      barTrend); SetIndexEmptyValue(MODE_TREND, 0);
    IndicatorDigits(Digits);
 
-   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
-   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Tunnel.Color);
+   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.Color);
+   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.Color);
    SetIndexStyle(MODE_TREND,      DRAW_NONE);
 
    SetIndexLabel(MODE_UPPER_BAND, indicatorName +" upper");
@@ -316,8 +313,8 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Tunnel.Definition=",       DoubleQuoteStr(Tunnel.Definition),       ";", NL,
-                            "Tunnel.Color=",            ColorToStr(Tunnel.Color),                ";", NL,
+   return(StringConcatenate("Channel.Definition=",      DoubleQuoteStr(Channel.Definition),      ";", NL,
+                            "Channel.Color=",           ColorToStr(Channel.Color),               ";", NL,
                             "ShowChartLegend=",         BoolToStr(ShowChartLegend),              ";", NL,
                             "MaxBarsBack=",             MaxBarsBack,                             ";", NL,
 
@@ -328,5 +325,5 @@ string InputsToStr() {
    );
 
    // suppress compiler warnings
-   icTunnel(NULL, NULL, NULL, NULL);
+   icMaChannel(NULL, NULL, NULL, NULL);
 }
