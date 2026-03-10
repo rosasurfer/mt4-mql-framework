@@ -10,7 +10,7 @@ int __DeinitFlags[];
 extern string ___a__________________________ = "=== MA settings ===";
 extern string MA.Method                      = "SMA | LWMA* | EMA | SMMA"; // averaging type
 extern int    MA.Periods                     = 20;                         // averaging periods
-extern int    MA.Periods.Step                = 0;                          // step size for a stepped input parameter
+extern int    MA.Periods.Step                = 0;                          // step size for parameter stepper via hotkey
 extern bool   TrueRange                      = true;                       // whether to evaluate the traded or the true range
 
 extern string ___b__________________________ = "=== Display settings ===";
@@ -83,8 +83,6 @@ int onInit() {
    if (__isChart && MA.Periods.Step) {
       GetChartCommand("ParameterStepper", sValues);
    }
-
-   // restore a stored runtime status
    RestoreStatus();
 
    // buffer management and options

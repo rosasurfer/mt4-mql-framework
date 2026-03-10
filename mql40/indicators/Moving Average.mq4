@@ -35,7 +35,7 @@ int __DeinitFlags[];
 
 extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
 extern int    MA.Periods                     = 100;
-extern int    MA.Periods.Step                = 0;                 // step size for a stepped input parameter (hotkey)
+extern int    MA.Periods.Step                = 0;                 // step size for parameter stepper via hotkey
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern string Draw.Type                      = "Line* | Dot";
@@ -192,8 +192,6 @@ int onInit() {
    if (__isChart && MA.Periods.Step) {
       GetChartCommand("ParameterStepper", sValues);
    }
-
-   // restore a stored runtime status
    RestoreStatus();
 
    // calculate ALMA bar weights

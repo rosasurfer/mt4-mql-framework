@@ -73,7 +73,7 @@ int __DeinitFlags[];
 
 extern string   ___a__________________________ = "=== ZigZag settings ===";
 extern int      ZigZag.Periods                 = 40;                           // lookback periods of the Donchian channel
-extern int      ZigZag.Periods.Step            = 0;                            // step size for a stepped input parameter (hotkey)
+extern int      ZigZag.Periods.Step            = 0;                            // step size for parameter stepper via hotkey
 extern string   ZigZag.Type                    = "Lines* | Semaphores";        // ZigZag lines or reversal points (can be shortened)
 extern string   ZigZag.Semaphores.Symbol       = "dot* | narrow-ring | ring | bold-ring";
 extern int      ZigZag.Width                   = 2;
@@ -371,11 +371,9 @@ int onInit() {
    lastSoundSignal = 0;
 
    // reset an active command handler
-   if (__isChart && (ZigZag.Periods.Step)) {
+   if (__isChart && ZigZag.Periods.Step) {
       GetChartCommand("ParameterStepper", sValues);
    }
-
-   // restore a stored runtime status
    RestoreStatus();
 
    // buffer management and display options
@@ -418,7 +416,7 @@ int onDeinit() {
  */
 int onTick() {
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart) /*&&*/ if (ZigZag.Periods.Step != 0) {
+   if (__isChart && ZigZag.Periods.Step) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
    }
 

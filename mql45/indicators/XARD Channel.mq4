@@ -1,14 +1,11 @@
 /**
- * XARD Channel - a channel built from multiple Moving Averages visualized by candle color.
+ * XARD Channel - a channel built from multiple Moving Averages visualized by candle color
  *
  *
- * A Moving Average channel is a channel formed by MA(Periods, PRICE_HIGH) and MA(Periods, PRICE_LOW).
- *
- * Each Moving Average changes color when BarClose crosses the outer (i.e. opposite) side of its channel.
- *
- * Candles are bullish if BarClose is above all MA channels.
- * Candles are bearish if BarClose is below all MA channels.
- * Candles are neutral if BarClose position relative to the channels is mixed.
+ * - A Moving Average channel is a channel formed by MA(Periods, PRICE_HIGH) and MA(Periods, PRICE_LOW).
+ * - Each Moving Average changes color when BarClose crosses the outer (i.e. opposite) side of its channel.
+ * - Candles are bullish if BarClose is above all MA channels, candles are bearish if BarClose is below all MA channels and
+ *   candles are neutral if BarClose position is mixed.
  *
  *
  * This indicator is a combination of:

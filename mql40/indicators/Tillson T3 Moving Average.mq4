@@ -25,15 +25,15 @@ int __DeinitFlags[];
 
 extern string ___a__________________________ = "=== T3 settings ===";
 extern int    T3.Periods                     = 10;                // bar periods for alpha calculation
-extern int    T3.Periods.Step                = 0;                 // step size for a stepped input parameter (hotkey)
+extern int    T3.Periods.Step                = 0;                 // step size for parameter stepper via hotkey
 extern bool   T3.Periods.MatulichScale       = true;
 extern double T3.VolumeFactor                = 0.7;
-extern double T3.VolumeFactor.Step           = 0;                 // step size for a stepped input parameter (hotkeys + VK_LWIN)
+extern double T3.VolumeFactor.Step           = 0;                 // step size for parameter stepper via hotkey + VK_LWIN
 extern string T3.AppliedPrice                = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern string ___b__________________________ = "=== Trend reversal filter ===";
 extern double MA.ReversalFilter.StdDev       = 0.1;               // min. MA change in std-deviations for a trend reversal
-extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (hotkeys + VK_SHIFT)
+extern double MA.ReversalFilter.Step         = 0;                 // step size for parameter stepper via hotkey + VK_SHIFT
 
 extern string ___c__________________________ = "=== Drawing options ===";
 extern string Draw.Type                      = "Line* | Dot";
@@ -210,8 +210,6 @@ int onInit() {
    if (__isChart && (T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step)) {
       GetChartCommand("ParameterStepper", sValues);
    }
-
-   // restore a stored runtime status
    RestoreStatus();
 
    // buffer management and options

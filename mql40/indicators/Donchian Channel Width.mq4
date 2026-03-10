@@ -74,8 +74,6 @@ int onInit() {
       string sNull[];
       GetChartCommand("ParameterStepper", sNull);
    }
-
-   // restore a stored runtime status
    RestoreStatus();
 
    // buffer management and display options
@@ -231,30 +229,16 @@ void UpdateChartLegend() {
 
 
 /**
- * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
- *
- * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
  *
  * @return bool - success status
  */
-bool SetIndicatorOptions(bool redraw = false) {
-   redraw = redraw!=0;
-   IndicatorBuffers(terminal_buffers);
-
-   string stepSize = ifString(Periods.Step, ":"+ Periods.Step, "");
-   indicatorName = "Donchian Channel("+ Periods + stepSize +") Width";
-   IndicatorShortName(indicatorName);
-
-   SetIndexBuffer(MODE_MAIN,       main     ); SetIndexEmptyValue(MODE_MAIN,       0);
-   SetIndexBuffer(MODE_UPPER_BAND, upperBand); SetIndexEmptyValue(MODE_UPPER_BAND, 0);
-   SetIndexBuffer(MODE_LOWER_BAND, lowerBand); SetIndexEmptyValue(MODE_LOWER_BAND, 0);
-   IndicatorDigits(pDigits);
-
-   SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, EMPTY, LineColor);
-   SetIndexLabel(MODE_MAIN, "Donchian("+ Periods +") Width");
-
-   if (redraw) WindowRedraw();
-   return(!catch("SetIndicatorOptions(1)"));
+bool StoreStatus() {
+   if (__isChart && Periods.Step) {
+      string prefix = "rsf."+ WindowExpertName() +".";
+      Chart.StoreInt(prefix +"Periods", Periods);
+   }
+   return(catch("StoreStatus(1)"));
 }
 
 
@@ -278,16 +262,30 @@ bool RestoreStatus() {
 
 
 /**
- * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
  *
  * @return bool - success status
  */
-bool StoreStatus() {
-   if (__isChart && Periods.Step) {
-      string prefix = "rsf."+ WindowExpertName() +".";
-      Chart.StoreInt(prefix +"Periods", Periods);
-   }
-   return(catch("StoreStatus(1)"));
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
+
+   string stepSize = ifString(Periods.Step, ":"+ Periods.Step, "");
+   indicatorName = "Donchian Channel("+ Periods + stepSize +") Width";
+   IndicatorShortName(indicatorName);
+
+   IndicatorBuffers(terminal_buffers);
+   SetIndexBuffer(MODE_MAIN,       main     ); SetIndexEmptyValue(MODE_MAIN,       0);
+   SetIndexBuffer(MODE_UPPER_BAND, upperBand); SetIndexEmptyValue(MODE_UPPER_BAND, 0);
+   SetIndexBuffer(MODE_LOWER_BAND, lowerBand); SetIndexEmptyValue(MODE_LOWER_BAND, 0);
+   IndicatorDigits(pDigits);
+
+   SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, EMPTY, LineColor);
+   SetIndexLabel(MODE_MAIN, "Donchian("+ Periods +") Width");
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 
