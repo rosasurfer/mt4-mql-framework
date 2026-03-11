@@ -153,6 +153,7 @@ flags=339
 window_num=1
 <inputs>
 Periods=50
+Periods.Step=5
 </inputs>
 </expert>
 level_0=20
