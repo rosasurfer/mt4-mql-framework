@@ -185,7 +185,7 @@ Channel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
 Channel.MA.Periods=55
 MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
 MA.Periods=10
-Signal.onTrendChange=1
+Signal.onTrendChange=0
 Signal.onTrendChange.Types=sound* | alert* | mail
 </inputs>
 </expert>

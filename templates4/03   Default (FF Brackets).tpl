@@ -1,5 +1,5 @@
 <!--
-FF Brackets + Donchian Channel(30) Width
+FF Brackets
 -->
 
 <chart>
@@ -127,26 +127,6 @@ AutoConfiguration=0
 </expert>
 period_flags=7
 show_data=0
-</indicator>
-</window>
-
-<window>
-height=1
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=Donchian Channel Width
-flags=339
-window_num=1
-<inputs>
-Periods=30
-</inputs>
-</expert>
-level_0=200
-level_1=500
-level_2=1000
-show_data=1
 </indicator>
 </window>
 </chart>
