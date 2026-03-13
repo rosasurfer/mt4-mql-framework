@@ -1,9 +1,5 @@
-<!--
-On M5:
-======
-ZigZag(10) = 50xM1   trend direction
-EMA(40)    = 200xM1  filter: above only long, below only short
-NLMA(20)             trend confirmation
+<!-- 
+Donchian Channel(50) + Donchian Channel(50) Width
 -->
 
 <chart>
@@ -12,7 +8,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=8
+scale=1
 graph=1
 fore=0
 grid=0
@@ -105,10 +101,12 @@ flags=339
 window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=40
+MA.Periods=144
+MA.Periods.Step=0
 Draw.Type=Line* | Dot
-UpTrend.Color=16760576
-DownTrend.Color=16760576
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
 Background.Color=11119017
 ShowChartLegend=1
 AutoConfiguration=0
@@ -124,38 +122,45 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=10
+ZigZag.Periods=50
 ZigZag.Type=Lines* | Semaphores
-ZigZag.Width=2
-ZigZag.Color=255
+ZigZag.Width=0
 Donchian.ShowChannel=1
 Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=16711680
+Donchian.Channel.LowerColor=255
 Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Width=2
+Donchian.Crossing.Width=1
 Signal.onReversal=1
+Signal.onReversal.Types=sound* | alert* | mail | sms
+Signal.onBreakout=0
+Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_2=2
 style_3=2
-color_6=4294967295
-color_7=4294967295
 show_data=1
 </indicator>
+</window>
 
+<window>
+height=230
+fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=NonLagMA
+name=Donchian Channel Width
 flags=339
-window_num=0
+window_num=1
 <inputs>
-WaveCycle.Periods=20
-Draw.Type=Line* | Dot
+Periods=50
+Periods.Step=5
 </inputs>
 </expert>
+level_0=20
+level_1=200
+level_2=500
+level_3=1000
 show_data=1
 </indicator>
-
 </window>
 </chart>

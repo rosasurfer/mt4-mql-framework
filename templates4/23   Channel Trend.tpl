@@ -1,8 +1,7 @@
 <!--
-On M5:
-======
-ZigZag(10) = 50xM1 	trend direction
-EMA(40)    = 200xM1	filter: above only long, below only short
+EMA(144)
+ALMA(38)
+LWMA(55) Channel + Channel Bars + Signal
 -->
 
 <chart>
@@ -11,7 +10,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=8
+scale=4
 graph=1
 fore=0
 grid=0
@@ -44,7 +43,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=800
+height=5000
 fixed_height=0
 
 <indicator>
@@ -104,12 +103,14 @@ flags=339
 window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=40
+MA.Periods=144
+MA.Periods.Step=0
 Draw.Type=Line* | Dot
-UpTrend.Color=16760576
-DownTrend.Color=16760576
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
 Background.Color=11119017
-ShowChartLegend=1
+ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -119,28 +120,78 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=Trend Bars
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=10
-ZigZag.Type=Lines* | Semaphores
-ZigZag.Width=2
-ZigZag.Color=255
-Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=16711680
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Width=2
-Signal.onReversal=1
+Channel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Channel.Periods=55
+Color.UpTrend=16711680
+Color.DownTrend=255
+Color.NoTrend=11119017
+BarWidth=2
+AutoConfiguration=0
 </inputs>
 </expert>
-style_2=2
-style_3=2
-color_6=4294967295
-color_7=4294967295
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+Channel.Definition=LWMA(55)
+ShowChartLegend=0
+AutoConfiguration=0
+</inputs>
+</expert>
 show_data=1
 </indicator>
 
+<indicator>
+name=Custom Indicator
+<expert>
+name=ALMA
+flags=339
+window_num=0
+<inputs>
+MA.Periods=38
+MA.ReversalFilter.StdDev=0.2
+UpTrend.Color=16711680
+DownTrend.Color=16776960
+Background.Color=16748574
+ShowChartLegend=0
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=137
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel Band
+flags=339
+window_num=1
+<inputs>
+Channel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Channel.MA.Periods=55
+MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
+MA.Periods=10
+Signal.onTrendChange=0
+Signal.onTrendChange.Types=sound* | alert* | mail
+</inputs>
+</expert>
+min=-1.0
+max=1.0
+show_data=1
+</indicator>
 </window>
 </chart>

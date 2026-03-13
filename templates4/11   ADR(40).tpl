@@ -89,6 +89,7 @@ window_num=1
 TrueRange=1
 MA.Method=SMA | LWMA* | EMA | SMMA
 MA.Periods=40
+MA.Periods.Step=5
 </inputs>
 </expert>
 color_0=16711680

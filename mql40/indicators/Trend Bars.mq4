@@ -1,11 +1,13 @@
 /**
  * Trend Bars
  *
- * Colors price bars according to the defined MovingAverages tunnel:
- *  - UpTrend:   the close price is above the tunnel
- *  - DownTrend: the close price is below the tunnel
- *  - NoTrend:   the close price is in the tunnel
+ * Colors price bars according to the defined MA Channel:
+ *  - UpTrend:   the close price is above the channel
+ *  - DownTrend: the close price is below the channel
+ *  - NoTrend:   the close price is in the channel
  *
+ * Bar width can be increased using hotkey CTRL-SHIFT-K.       @see script SuperBars.TimeframeUp
+ * Bar width can be decreased using hotkey CTRL-SHIFT-L.       @see script SuperBars.TimeframeDown
  *
  * TODO:
  *  - MQL4.5 indicator as helper to get chart properties
@@ -16,9 +18,9 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ___a__________________________ = "=== Tunnel settings ===";
-extern string Tunnel.Method                  = "SMA | LWMA* | EMA | SMMA | ALMA";
-extern int    Tunnel.Periods                 = 55;
+extern string ___a__________________________ = "=== MA Channel settings ===";
+extern string Channel.Method                 = "SMA | LWMA* | EMA | SMMA | ALMA";
+extern int    Channel.Periods                = 55;
 
 extern string ___b__________________________ = "=== Bar settings ===";
 extern color  Color.UpTrend                  = Blue;
@@ -36,7 +38,7 @@ extern int    MaxBarsBack                    = 10000;       // max. values to ca
 #include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/HandleCommands.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/Tunnel.mqh>
+#include <rsf/functions/iCustom/MaChannel.mqh>
 
 #define BUFFER_TREND_BODY_A      0        // indicator buffer ids
 #define BUFFER_TREND_BODY_B      1
@@ -69,9 +71,9 @@ double noTrendBodyB[];
 double noTrendWickA[];
 double noTrendWickB[];
 
-int    tunnel.periods;
-int    tunnel.method;
-string tunnel.definition = "";
+int    channel.periods;
+int    channel.method;
+string channel.definition = "";
 
 string indicatorName = "";
 string legendLabel   = "";
@@ -86,21 +88,21 @@ int onInit() {
    // input validation
    string indicator = WindowExpertName();
 
-   // Tunnel.Method
-   string sValues[], sValue = Tunnel.Method;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "Tunnel.Method", sValue);
+   // Channel.Method
+   string sValues[], sValue = Channel.Method;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Channel.Method", sValue);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   tunnel.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (tunnel.method == -1) return(catch("onInit(1)  invalid input parameter Tunnel.Method: "+ DoubleQuoteStr(Tunnel.Method), ERR_INVALID_INPUT_PARAMETER));
-   Tunnel.Method = MaMethodDescription(tunnel.method);
-   // Tunnel.Periods
-   if (AutoConfiguration) Tunnel.Periods = GetConfigInt(indicator, "Tunnel.Periods", Tunnel.Periods);
-   if (Tunnel.Periods < 1)  return(catch("onInit(2)  invalid input parameter Tunnel.Periods: "+ Tunnel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   tunnel.periods = Tunnel.Periods;
-   tunnel.definition = Tunnel.Method +"("+ tunnel.periods+")";
+   channel.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (channel.method == -1) return(catch("onInit(1)  invalid input parameter Channel.Method: "+ DoubleQuoteStr(Channel.Method), ERR_INVALID_INPUT_PARAMETER));
+   Channel.Method = MaMethodDescription(channel.method);
+   // Channel.Periods
+   if (AutoConfiguration) Channel.Periods = GetConfigInt(indicator, "Channel.Periods", Channel.Periods);
+   if (Channel.Periods < 1)  return(catch("onInit(2)  invalid input parameter Channel.Periods: "+ Channel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   channel.periods = Channel.Periods;
+   channel.definition = Channel.Method +"("+ channel.periods+")";
    // Color.*: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
    if (AutoConfiguration) Color.NoTrend   = GetConfigColor(indicator, "Color.NoTrend",   Color.NoTrend);
@@ -109,10 +111,10 @@ int onInit() {
    if (Color.NoTrend   == 0xFF000000) Color.NoTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // BarWidth
-   if (BarWidth < 0)        return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (BarWidth > 13)       return(catch("onInit(4)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (BarWidth < 0)         return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (BarWidth > 13)        return(catch("onInit(4)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
-   if (MaxBarsBack < -1)    return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)     return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // reset the command handler
@@ -163,7 +165,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-tunnel.periods);
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-channel.periods);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
@@ -177,8 +179,8 @@ int onTick() {
       noTrendWickA[bar] = 0;
       noTrendWickB[bar] = 0;
 
-      double upperBand = GetTunnel(MODE_UPPER, bar);
-      double lowerBand = GetTunnel(MODE_LOWER, bar);
+      double upperBand = GetChannel(MODE_UPPER, bar);
+      double lowerBand = GetChannel(MODE_LOWER, bar);
 
       if (Close[bar] > upperBand) {
          if (Open[bar] > Close[bar]) {
@@ -226,11 +228,11 @@ int onTick() {
  */
 bool onCommand(string cmd, string params, int keys) {
    if (cmd == "barwidth") {
-      if (params == "increase") {
+      if (params == "increase") {               // CTRL-SHIFT-K      @see script SuperBars.TimeframeUp
          BarWidth = Min(BarWidth+1, 13);
          return(SetIndicatorOptions(true));
       }
-      if (params == "decrease") {
+      if (params == "decrease") {               // CTRL-SHIFT-L      @see script SuperBars.TimeframeDown
          BarWidth = Max(BarWidth-1, 0);
          return(SetIndicatorOptions(true));
       }
@@ -240,20 +242,20 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Get a band value of the "Tunnel" indicator.
+ * Get a band value of the "MA Channel" indicator.
  *
  * @param  int mode - band identifier: MODE_UPPER | MODE_LOWER
  * @param  int bar  - bar offset
  *
  * @return double - band value or NULL in case of errors
  */
-double GetTunnel(int mode, int bar) {
-   if (tunnel.method == MODE_ALMA) {
-      static int buffers[] = {0, Tunnel.MODE_UPPER_BAND, Tunnel.MODE_LOWER_BAND};
-      return(icTunnel(NULL, tunnel.definition, buffers[mode], bar));
+double GetChannel(int mode, int bar) {
+   if (channel.method == MODE_ALMA) {
+      static int buffers[] = {0, MaChannel.MODE_UPPER_BAND, MaChannel.MODE_LOWER_BAND};
+      return(icMaChannel(NULL, channel.definition, buffers[mode], bar));
    }
    static int priceTypes[] = {0, PRICE_HIGH, PRICE_LOW};
-   return(iMA(NULL, NULL, tunnel.periods, 0, tunnel.method, priceTypes[mode], bar));
+   return(iMA(NULL, NULL, channel.periods, 0, channel.method, priceTypes[mode], bar));
 }
 
 
@@ -310,14 +312,14 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Tunnel.Method=",   DoubleQuoteStr(Tunnel.Method), ";", NL,
-                            "Tunnel.Periods=",  Tunnel.Periods,                ";", NL,
+   return(StringConcatenate("Channel.Method=",  DoubleQuoteStr(Channel.Method), ";", NL,
+                            "Channel.Periods=", Channel.Periods,                ";", NL,
 
-                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),     ";", NL,
-                            "Color.NoTrend=",   ColorToStr(Color.NoTrend),     ";", NL,
-                            "Color.DownTrend=", ColorToStr(Color.DownTrend),   ";", NL,
-                            "BarWidth=",        BarWidth,                      ";", NL,
-                            "ShowChartLegend=", BoolToStr(ShowChartLegend),    ";", NL,
-                            "MaxBarsBack=",     MaxBarsBack,                   ";")
+                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),      ";", NL,
+                            "Color.NoTrend=",   ColorToStr(Color.NoTrend),      ";", NL,
+                            "Color.DownTrend=", ColorToStr(Color.DownTrend),    ";", NL,
+                            "BarWidth=",        BarWidth,                       ";", NL,
+                            "ShowChartLegend=", BoolToStr(ShowChartLegend),     ";", NL,
+                            "MaxBarsBack=",     MaxBarsBack,                    ";")
    );
 }

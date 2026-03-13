@@ -156,12 +156,12 @@ double ComputeFloatingProfit(string symbol, int symbolIndex, int iSymbols[], int
 
          if (types[i] == OP_BUY) {
             if (!remainingLong) continue;
-            if (remainingLong >= lots[i]) {
+            if (GE(remainingLong, lots[i], 2)) {
                // apply all data and nullify ticket
                openPrice     = NormalizeDouble(openPrice + lots[i] * openPrices[i], 8);
                swap         += swaps      [i];
                commission   += commissions[i];
-               remainingLong = NormalizeDouble(remainingLong - lots[i], 3);
+               remainingLong = NormalizeDouble(remainingLong - lots[i], 2);
                tickets[i]    = NULL;
             }
             else {
@@ -171,18 +171,18 @@ double ComputeFloatingProfit(string symbol, int symbolIndex, int iSymbols[], int
                swap         += swaps[i];                swaps      [i]  = 0;
                commission   += factor * commissions[i]; commissions[i] -= factor * commissions[i];
                                                         profits    [i] -= factor * profits    [i];
-                                                        lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
+                                                        lots       [i]  = NormalizeDouble(lots[i] - remainingLong, 2);
                remainingLong = 0;
             }
          }
          else if (types[i] == OP_SELL) {
             if (!remainingShort) continue;
-            if (remainingShort >= lots[i]) {
+            if (GE(remainingShort, lots[i], 2)) {
                // apply all data and nullify ticket
                closePrice     = NormalizeDouble(closePrice + lots[i] * openPrices[i], 8);
                swap          += swaps      [i];
                //commission  += commissions[i];                                        // apply commission for the long leg only
-               remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
+               remainingShort = NormalizeDouble(remainingShort - lots[i], 2);
                tickets[i]     = NULL;
             }
             else {
@@ -192,7 +192,7 @@ double ComputeFloatingProfit(string symbol, int symbolIndex, int iSymbols[], int
                swap          += swaps[i]; swaps      [i]  = 0;
                                           commissions[i] -= factor * commissions[i];   // apply commission for the long leg only
                                           profits    [i] -= factor * profits    [i];
-                                          lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+                                          lots       [i]  = NormalizeDouble(lots[i] - remainingShort, 2);
                remainingShort = 0;
             }
          }

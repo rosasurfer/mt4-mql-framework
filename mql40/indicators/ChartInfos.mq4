@@ -3894,7 +3894,7 @@ bool ApplyFilter(int filter, bool filterCondition, int filterValue, int magicNum
 
 /**
  * Stores all collected data of a single custom config line as a new record in positions.data[].
- * The record n positions.data[] represents a single row displayed in the chart.
+ * The record in positions.data[] represents a single row displayed in the chart.
  *
  * @param  _In_    bool   isVirtual
  *
@@ -3970,7 +3970,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
          if (types[i] == OP_BUY) {
             if (!remainingLong) continue;
-            if (remainingLong >= lots[i]) {
+            if (GE(remainingLong, lots[i], 2)) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
                openPrice    += lots[i] * openPrices[i];
                if (tickets[i] > 0) {                                                   // skip open profits of virtual positions
@@ -3978,7 +3978,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
                }
                swap         += swaps[i];
                commission   += commissions[i];
-               remainingLong = NormalizeDouble(remainingLong - lots[i], 3);
+               remainingLong = NormalizeDouble(remainingLong - lots[i], 2);
                tickets[i]    = NULL;
             }
             else {
@@ -3991,13 +3991,13 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
                swap       += swaps[i];                swaps      [i]  = 0;
                commission += factor * commissions[i]; commissions[i] -= factor * commissions[i];
                                                       profits    [i] -= factor * profits    [i];
-                                                      lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
+                                                      lots       [i]  = NormalizeDouble(lots[i] - remainingLong, 2);
                remainingLong = 0;
             }
          }
          else /*types[i] == OP_SELL*/ {
             if (!remainingShort) continue;
-            if (remainingShort >= lots[i]) {
+            if (GE(remainingShort, lots[i], 2)) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
                closePrice    += lots[i] * openPrices[i];
                if (tickets[i] > 0) {                                                   // skip open profits of virtual positions
@@ -4005,7 +4005,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
                }
                swap          += swaps[i];
                //commission  += commissions[i];                                        // Commission wird nur für Long-Leg übernommen
-               remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
+               remainingShort = NormalizeDouble(remainingShort - lots[i], 2);
                tickets[i]     = NULL;
             }
             else {
@@ -4018,13 +4018,13 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
                swap       += swaps[i]; swaps      [i]  = 0;
                                        commissions[i] -= factor * commissions[i];      // Commission wird nur für Long-Leg übernommen
                                        profits    [i] -= factor * profits    [i];
-                                       lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+                                       lots       [i]  = NormalizeDouble(lots[i] - remainingShort, 2);
                remainingShort = 0;
             }
          }
       }
-      if (remainingLong  != 0) return(!catch("StoreCustomPosition(1)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR));
-      if (remainingShort != 0) return(!catch("StoreCustomPosition(2)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingLong  != 0) return(!catch("StoreCustomPosition(1)  illegal remaining long position +"+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingShort != 0) return(!catch("StoreCustomPosition(2)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR));
 
       // BE-Distance und Profit berechnen
       pipValue = PipValue(hedgedLots, true);                                           // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
@@ -4080,7 +4080,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (!remainingLong) continue;
 
          if (types[i] == OP_BUY) {
-            if (remainingLong >= lots[i]) {
+            if (GE(remainingLong, lots[i], 2)) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
                openPrice      += lots[i] * openPrices[i];
                if (tickets[i] > 0) {                                                   // skip open profits of virtual positions
@@ -4090,7 +4090,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
                commission     += commissions[i];
                floatingProfit += profits[i];
                tickets[i]      = NULL;
-               remainingLong   = NormalizeDouble(remainingLong - lots[i], 3);
+               remainingLong   = NormalizeDouble(remainingLong - lots[i], 2);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
@@ -4102,12 +4102,12 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
                swap           +=          swaps[i];       swaps      [i]  = 0;
                commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
                floatingProfit += factor * profits[i];     profits    [i] -= factor * profits    [i];
-                                                          lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
+                                                          lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 2);
                remainingLong = 0;
             }
          }
       }
-      if (remainingLong != 0) return(!catch("StoreCustomPosition(4)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of long position = "+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingLong != 0) return(!catch("StoreCustomPosition(4)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of long position +"+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
       positions.data[n][I_CONFIG_LINE     ] = configLine;
@@ -4195,7 +4195,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (!remainingShort) continue;
 
          if (types[i] == OP_SELL) {
-            if (remainingShort >= lots[i]) {
+            if (GE(remainingShort, lots[i], 2)) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
                openPrice      += lots[i] * openPrices[i];
                if (tickets[i] > 0) {                                                   // skip open profits of virtual positions
@@ -4205,7 +4205,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
                commission     += commissions[i];
                floatingProfit += profits[i];
                tickets[i]      = NULL;
-               remainingShort  = NormalizeDouble(remainingShort - lots[i], 3);
+               remainingShort  = NormalizeDouble(remainingShort - lots[i], 2);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
@@ -4217,12 +4217,12 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
                swap           +=          swaps[i];       swaps      [i]  = 0;
                commission     += factor * commissions[i]; commissions[i] -= factor * commissions[i];
                floatingProfit += factor * profits[i];     profits    [i] -= factor * profits    [i];
-                                                          lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+                                                          lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 2);
                remainingShort = 0;
             }
          }
       }
-      if (remainingShort != 0) return(!catch("StoreCustomPosition(6)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of short position = "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingShort != 0) return(!catch("StoreCustomPosition(6)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of short position "+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
       positions.data[n][I_CONFIG_LINE     ] = configLine;

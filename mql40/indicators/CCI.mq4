@@ -1,8 +1,9 @@
 /**
- * Commodity Channel Index - a momentum indicator
+ * Commodity Channel Index - a true momentum indicator. Measures sudden price acceleration.
  *
- * Defined as the upscaled ratio of current distance to average distance from a Moving Average (default: SMA).
- * The scaling factor of 66.67 was chosen so that the majority of indicator values falls between +200 and -200.
+ * Defined as the upscaled ratio of the current distance to average distance from a Moving Average (default: SMA).
+ * The upscaling factor of 66.67 was chosen so that the majority of indicator values falls between +200 and -200.
+ * Signal level is +/-100.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -10,17 +11,18 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    CCI.Periods           = 14;
-extern string CCI.AppliedPrice      = "Open | High | Low | Close | Median | Typical* | Weighted";
+extern int    Periods                        = 14;
+extern int    Periods.Step                   = 0;                       // step size for parameter stepper via hotkey
+extern string AppliedPrice                   = "Open | High | Low | Close | Median | Typical* | Weighted";
 
 extern string ___a__________________________ = "=== Display settings ===";
-extern color  Histogram.Color.Long  = LimeGreen;
-extern color  Histogram.Color.Short = Red;
-extern int    Histogram.Width       = 2;
-extern int    MaxBarsBack           = 10000;       // max. values to calculate (-1: all available)
+extern color  Histogram.Color.Long           = LimeGreen;
+extern color  Histogram.Color.Short          = Red;
+extern int    Histogram.Width                = 2;
+extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___b__________________________ = "=== Signaling ===";
-extern bool   Signal.onTrendChange           = false;
+extern bool   Signal.onTrendChange           = false;                   // on crossing of +/-100
 extern string Signal.onTrendChange.Types     = "sound* | alert | mail";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
@@ -31,6 +33,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
 #include <rsf/functions/ConfigureSignals.mqh>
+#include <rsf/functions/HandleCommands.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 
 #define MODE_MAIN            0                     // indicator buffer ids
@@ -58,13 +61,17 @@ double cciLong [];                                 // long trade segments
 double cciShort[];                                 // short trade segments
 double trend   [];                                 // trade segment length
 
-int    cci.appliedPrice;
+int    appliedPrice;
 
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
 
 string indicatorName = "";
+
+// parameter stepper directions
+#define STEP_UP    1
+#define STEP_DOWN -1
 
 
 /**
@@ -76,25 +83,28 @@ int onInit() {
    string indicator = WindowExpertName();
 
    // validate inputs
-   // CCI.Periods
-   if (AutoConfiguration) CCI.Periods = GetConfigInt(indicator, "CCI.Periods", CCI.Periods);
-   if (CCI.Periods < 1)        return(catch("onInit(1)  invalid input parameter CCI.Periods: "+ CCI.Periods +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
-   // CCI.AppliedPrice
-   string sValues[], sValue = CCI.AppliedPrice;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "CCI.AppliedPrice", sValue);
+   // Periods
+   if (AutoConfiguration) Periods = GetConfigInt(indicator, "Periods", Periods);
+   if (Periods < 1)         return(catch("onInit(1)  invalid input parameter Periods: "+ Periods +" (must be > 0)", ERR_INVALID_INPUT_PARAMETER));
+   // Periods.Step
+   if (AutoConfiguration) Periods.Step = GetConfigInt(indicator, "Periods.Step", Periods.Step);
+   if (Periods.Step < 0)    return(catch("onInit(2)  invalid input parameter Periods.Step: "+ Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // AppliedPrice
+   string sValues[], sValue = AppliedPrice;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "AppliedPrice", sValue);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "typical";              // default price type
-   cci.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (cci.appliedPrice == -1) return(catch("onInit(2)  invalid input parameter CCI.AppliedPrice: "+ DoubleQuoteStr(CCI.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   CCI.AppliedPrice = PriceTypeDescription(cci.appliedPrice);
+   appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (appliedPrice == -1)  return(catch("onInit(3)  invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   AppliedPrice = PriceTypeDescription(appliedPrice);
    // Histogram.Width
    if (AutoConfiguration) Histogram.Width = GetConfigInt(indicator, "Histogram.Width", Histogram.Width);
-   if (Histogram.Width < 0)    return(catch("onInit(3)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Width > 5)    return(catch("onInit(4)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Width < 0) return(catch("onInit(4)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Width > 5) return(catch("onInit(5)  invalid input parameter Histogram.Width: "+ Histogram.Width +" (must be from 0-5)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Histogram.Color.Long  = GetConfigColor(indicator, "Histogram.Color.Long",  Histogram.Color.Long);
    if (AutoConfiguration) Histogram.Color.Short = GetConfigColor(indicator, "Histogram.Color.Short", Histogram.Color.Short);
@@ -102,7 +112,7 @@ int onInit() {
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)       return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)    return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // Signal.onTrendChange
@@ -110,7 +120,7 @@ int onInit() {
    ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange);
    if (Signal.onTrendChange) {
       if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
-         return(catch("onInit(6)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(7)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onTrendChange = (signal.sound || signal.alert || signal.mail);
    }
@@ -118,8 +128,25 @@ int onInit() {
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
 
+   // reset an active command handler
+   if (__isChart && Periods.Step) {
+      GetChartCommand("ParameterStepper", sValues);
+   }
+   RestoreStatus();
+
    SetIndicatorOptions();
-   return(catch("onInit(7)"));
+   return(catch("onInit(8)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   StoreStatus();
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -129,8 +156,10 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // process incoming commands
-   if (__isChart) {}
+   // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
+   if (__isChart && Periods.Step) {
+      if (!HandleCommands("ParameterStepper")) return(last_error);
+   }
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -150,7 +179,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-CCI.Periods);
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
@@ -166,7 +195,7 @@ int onTick() {
       // double avgDistance = sum / CCI.Periods;
       // cci[bar] = MathDiv(distance, avgDistance) / 0.015;    // 1/0.015 = 66.6667
 
-      cci[bar] = iCCI(NULL, NULL, CCI.Periods, cci.appliedPrice, bar);
+      cci[bar] = iCCI(NULL, NULL, Periods, appliedPrice, bar);
 
       if (bar < Bars-1) {
          int prevTrend = trend[bar+1];
@@ -206,14 +235,31 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      // monitor signals
       if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {
          int iTrend = trend[1];
          if      (iTrend ==  1) onTrendChange(MODE_LONG);
          else if (iTrend == -1) onTrendChange(MODE_SHORT);
       }
    }
-   return(catch("onTick(2)"));
+   return(last_error);
+}
+
+
+/**
+ * Process an incoming command.
+ *
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - flags of pressed modifier keys
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string cmd, string params, int keys) {
+   if (cmd == "parameter") {
+      if (params == "up")   return(ParameterStepper(STEP_UP, keys));
+      if (params == "down") return(ParameterStepper(STEP_DOWN, keys));
+   }
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(cmd +":"+ params +":"+ keys)));
 }
 
 
@@ -284,6 +330,68 @@ bool onTrendChange(int direction) {
 
 
 /**
+ * Step up/down an input parameter.
+ *
+ * @param  int direction - STEP_UP | STEP_DOWN
+ * @param  int keys      - pressed modifier keys
+ *
+ * @return bool - success status
+ */
+bool ParameterStepper(int direction, int keys) {
+   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   // step up/down input parameter "Periods"
+   int step = Periods.Step;
+
+   if (!step || Periods + direction*step < 1) {       // stop if parameter limit reached
+      PlaySoundEx("Plonk.wav");
+      return(false);
+   }
+   if (direction == STEP_UP) Periods += step;
+   else                      Periods -= step;
+
+   ChangedBars = Bars;
+   ValidBars   = 0;
+
+   PlaySoundEx("Parameter Step.wav");
+   return(true);
+}
+
+
+/**
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
+ *
+ * @return bool - success status
+ */
+bool StoreStatus() {
+   if (__isChart && Periods.Step) {
+      string prefix = "rsf."+ WindowExpertName() +".";
+      Chart.StoreInt(prefix +"Periods", Periods);
+   }
+   return(catch("StoreStatus(1)"));
+}
+
+
+/**
+ * Restore the status of the parameter stepper from the chart.
+ *
+ * @return bool - success status
+ */
+bool RestoreStatus() {
+   if (!__isChart) return(true);
+   string prefix = "rsf."+ WindowExpertName() +".";
+
+   int iValue;
+   if (Chart.RestoreInt(prefix +"Periods", iValue)) {       // restore and remove it
+      if (Periods.Step > 0) {                               // apply if stepper is still active
+         if (iValue > 0) Periods = iValue;                  // silent validation
+      }
+   }
+   return(!catch("RestoreStatus(1)"));
+}
+
+
+/**
  * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
  *
  * @param  bool redraw [optional] - whether to redraw the chart (default: no)
@@ -292,7 +400,9 @@ bool onTrendChange(int direction) {
  */
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
-   indicatorName = "CCI("+ CCI.Periods +")";
+
+   string stepSize = ifString(Periods.Step, ":"+ Periods.Step, "");
+   indicatorName = "CCI("+ Periods + stepSize +")";
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);
@@ -302,14 +412,14 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(MODE_TREND, trend   );
    IndicatorDigits(2);
 
-   int drawBegin = Max(CCI.Periods-1, Bars-MaxBarsBack);
+   int drawBegin = Max(Periods-1, Bars-MaxBarsBack);
    SetIndexDrawBegin(MODE_LONG,  drawBegin);
    SetIndexDrawBegin(MODE_SHORT, drawBegin);
 
-   SetIndexLabel(MODE_MAIN,  indicatorName);    // displays values in indicator and "Data" window
+   SetIndexLabel(MODE_MAIN,  "CCI("+ Periods +")");   // displays values in indicator and "Data" window
    SetIndexLabel(MODE_LONG,  NULL);
    SetIndexLabel(MODE_SHORT, NULL);
-   SetIndexLabel(MODE_TREND, NULL);             // prevents trend value in indicator window
+   SetIndexLabel(MODE_TREND, NULL);                   // prevents trend value in indicator window
 
    SetIndexStyle(MODE_MAIN,  DRAW_NONE);
    SetIndexStyle(MODE_TREND, DRAW_NONE);
@@ -329,8 +439,9 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("CCI.Periods=",                CCI.Periods,                                ";", NL,
-                            "CCI.AppliedPrice=",           DoubleQuoteStr(CCI.AppliedPrice),           ";", NL,
+   return(StringConcatenate("Periods=",                    Periods,                                    ";", NL,
+                            "Periods.Step=",               Periods.Step,                               ";", NL,
+                            "AppliedPrice=",               DoubleQuoteStr(AppliedPrice),               ";", NL,
 
                             "Histogram.Color.Long=",       ColorToStr(Histogram.Color.Long),           ";", NL,
                             "Histogram.Color.Short=",      ColorToStr(Histogram.Color.Short),          ";", NL,

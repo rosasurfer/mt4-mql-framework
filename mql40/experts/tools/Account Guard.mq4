@@ -37,7 +37,7 @@
  *
  *  - XAU: prohibit counter-trend trading on sudden volatility
  *     volatility: Donchian channel width
- *     trend: ALMA(10) crosses LWMA(55) tunnel (L'mas signal)
+ *     trend: ALMA(10) crosses LWMA(55) channel (L'mas signal)
  *
  *  - XAU: prohibit trading between 15:00-17:30
  *  - XAU: prohibit trading from 30 minutes before until 60 minutes after major news

@@ -1,44 +1,11 @@
 /**
  * Signal indicator for the "L'mas system"
  *
- * The indicator changes direction if Close of the bar and MovingAverage cross the opposite side of the tunnel.
+ * The indicator changes direction if BarClose and MovingAverage cross the opposite side of the MA Channel.
  *
  *
  * TODO:
  *  - merge bufferMain[] and bufferTrend[]
- *
- *
- *
- * --------------------------------------------------------------------------------------------------------------------------
- *  - MACD + Tunnel signal
- *     invalid signals at terminal startup
- *
- *  - Inside Bars
- *     prevent double-signaling of parallel events
- *
- *  - ChartInfos
- *     unitsize configuration: manual leverage doesn't work (limits to 10% risk)
- *     unitsize configuration is not read if custom positions are reloaded per hotkey
- *     rewrite and better document unitsize configuration (remove "Default.")
- *     option to display 100% margin level
- *     high spread marker (BTCUSD suddenly has an average spread of 70-100 points)
- *
- *  - ALMA
- *     merge includes icALMA() and functions/ta/ALMA.mqh
- *     replace manual StdDev calculation
- *
- *  - Tunnel
- *     support MA method MODE_ALMA
- *
- *  - MACD
- *     add period stepping
- *
- *  - SuperBars
- *     detect weekend sessions and remove config [SuperBars]->Weekend.Symbols
- *
- *  - iCustom(): limit calculated bars in online charts
- *  - Bybit: adjust slippage to prevent ERR_OFF_QUOTES (dealing desk)
- *  - rewrite stdfunctions::GetCommission()
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -46,8 +13,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Tunnel.MA.Method               = "SMA | LWMA* | EMA | SMMA | ALMA";   // required
-extern int    Tunnel.MA.Periods              = 55;
+extern string Channel.MA.Method              = "SMA | LWMA* | EMA | SMMA | ALMA";   // required
+extern int    Channel.MA.Periods             = 55;
 
 extern string MA.Method                      = "SMA | LWMA | EMA | SMMA | ALMA*";
 extern int    MA.Periods                     = 10;                                  // optional, original EMA(5)
@@ -72,8 +39,8 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
+#include <rsf/functions/iCustom/MaChannel.mqh>
 #include <rsf/functions/iCustom/MovingAverage.mqh>
-#include <rsf/functions/iCustom/Tunnel.mqh>
 #include <rsf/win32api.mqh>
 
 #define MODE_MAIN             0                 // indicator buffer ids
@@ -100,9 +67,9 @@ double bufferTrend[];                           // trend and trend length:    in
 double bufferUpper[];                           // positive histogram values: visible
 double bufferLower[];                           // negative histogram values: visible
 
-int    tunnel.method;
-int    tunnel.periods;
-string tunnel.definition = "";
+int    channel.method;
+int    channel.periods;
+string channel.definition = "";
 
 int    ma.method;
 int    ma.periods;
@@ -131,21 +98,21 @@ int onInit() {
    string indicator = WindowExpertName();
 
    // validate inputs
-   // Tunnel.MA.Method
-   string sValues[], sValue = Tunnel.MA.Method;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "Tunnel.MA.Method", sValue);
+   // Channel.MA.Method
+   string sValues[], sValue = Channel.MA.Method;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Channel.MA.Method", sValue);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   tunnel.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (tunnel.method == -1)                   return(catch("onInit(1)  invalid input parameter Tunnel.MA.Method: "+ DoubleQuoteStr(Tunnel.MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   Tunnel.MA.Method = MaMethodDescription(tunnel.method);
-   // Tunnel.MA.Periods
-   if (AutoConfiguration) Tunnel.MA.Periods = GetConfigInt(indicator, "Tunnel.MA.Periods", Tunnel.MA.Periods);
-   if (Tunnel.MA.Periods < 1)                 return(catch("onInit(2)  invalid input parameter Tunnel.MA.Periods: "+ Tunnel.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   tunnel.periods = Tunnel.MA.Periods;
-   tunnel.definition = Tunnel.MA.Method +"("+ tunnel.periods+")";
+   channel.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (channel.method == -1)                  return(catch("onInit(1)  invalid input parameter Channel.MA.Method: "+ DoubleQuoteStr(Channel.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   Channel.MA.Method = MaMethodDescription(channel.method);
+   // Channel.MA.Periods
+   if (AutoConfiguration) Channel.MA.Periods = GetConfigInt(indicator, "Channel.MA.Periods", Channel.MA.Periods);
+   if (Channel.MA.Periods < 1)                return(catch("onInit(2)  invalid input parameter Channel.MA.Periods: "+ Channel.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   channel.periods = Channel.MA.Periods;
+   channel.definition = Channel.MA.Method +"("+ channel.periods+")";
    // MA.Method
    sValue = MA.Method;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.Method", sValue);
@@ -160,7 +127,7 @@ int onInit() {
    if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
    if (MA.Periods < 1)                        return(catch("onInit(4)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
-   longestPeriod = Max(tunnel.periods, ma.periods);
+   longestPeriod = Max(channel.periods, ma.periods);
    // Histogram.Color.*: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
    if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
@@ -226,8 +193,8 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      upperBand = GetTunnel(MODE_UPPER, bar);
-      lowerBand = GetTunnel(MODE_LOWER, bar);
+      upperBand = GetChannel(MODE_UPPER, bar);
+      lowerBand = GetChannel(MODE_LOWER, bar);
       ma = GetMovingAverage(bar);
 
       if (Close[bar] > upperBand && ma > upperBand) {
@@ -289,7 +256,7 @@ bool onTrendChange(int direction) {
    // skip the signal if it was already processed elsewhere
    string sPeriod   = PeriodDescription();
    string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1  = "Tunnel signal "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string message1  = "MA Channel cross "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    string message2  = Symbol() +","+ sPeriod +": "+ message1;
 
    int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
@@ -343,20 +310,20 @@ bool onTrendChange(int direction) {
 
 
 /**
- * Get a band value of the "Tunnel" indicator.
+ * Get a band value of the "MA Channel" indicator.
  *
  * @param  int mode - band identifier: MODE_UPPER | MODE_LOWER
  * @param  int bar  - bar offset
  *
  * @return double - band value or NULL in case of errors
  */
-double GetTunnel(int mode, int bar) {
-   if (tunnel.method == MODE_ALMA) {
-      static int buffers[] = {0, Tunnel.MODE_UPPER_BAND, Tunnel.MODE_LOWER_BAND};
-      return(icTunnel(NULL, tunnel.definition, buffers[mode], bar));
+double GetChannel(int mode, int bar) {
+   if (channel.method == MODE_ALMA) {
+      static int buffers[] = {0, MaChannel.MODE_UPPER_BAND, MaChannel.MODE_LOWER_BAND};
+      return(icMaChannel(NULL, channel.definition, buffers[mode], bar));
    }
    static int prices[] = {0, PRICE_HIGH, PRICE_LOW};
-   return(iMA(NULL, NULL, tunnel.periods, 0, tunnel.method, prices[mode], bar));
+   return(iMA(NULL, NULL, channel.periods, 0, channel.method, prices[mode], bar));
 }
 
 
@@ -369,17 +336,7 @@ double GetTunnel(int mode, int bar) {
  */
 double GetMovingAverage(int bar) {
    if (ma.method == MODE_ALMA) {
-      static bool initialized = false;
-
-      int starttime = GetTickCount();
-      double value = icMovingAverage(NULL, "ALMA", ma.periods, "close", MovingAverage.MODE_MA, bar);
-
-      if (!initialized) {
-         int endtime = GetTickCount();
-         //debug("GetMovingAverage(0.1)  1st execution: "+ DoubleToStr((endtime-starttime)/1000., 3) +" sec");
-         initialized = true;
-      }
-      return(value);
+      return(icMovingAverage(NULL, "ALMA", ma.periods, "close", MovingAverage.MODE_MA, bar));
    }
    return(iMA(NULL, NULL, ma.periods, 0, ma.method, PRICE_CLOSE, bar));
 }
@@ -457,7 +414,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
    IndicatorBuffers(indicator_buffers);
    SetIndexBuffer(MODE_MAIN,      bufferMain ); SetIndexEmptyValue(MODE_MAIN,      0); SetIndexLabel(MODE_MAIN,      indicatorName);
-   SetIndexBuffer(MODE_TREND,     bufferTrend); SetIndexEmptyValue(MODE_TREND,     0); SetIndexLabel(MODE_TREND,     "Tunnel trend");
+   SetIndexBuffer(MODE_TREND,     bufferTrend); SetIndexEmptyValue(MODE_TREND,     0); SetIndexLabel(MODE_TREND,     "MA Channel");
    SetIndexBuffer(MODE_UPTREND,   bufferUpper); SetIndexEmptyValue(MODE_UPTREND,   0); SetIndexLabel(MODE_UPTREND,   NULL);
    SetIndexBuffer(MODE_DOWNTREND, bufferLower); SetIndexEmptyValue(MODE_DOWNTREND, 0); SetIndexLabel(MODE_DOWNTREND, NULL);
    IndicatorDigits(0);
@@ -479,8 +436,8 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Tunnel.MA.Method=",           DoubleQuoteStr(Tunnel.MA.Method),           ";"+ NL,
-                            "Tunnel.MA.Periods=",          Tunnel.MA.Periods,                          ";"+ NL,
+   return(StringConcatenate("Channel.MA.Method=",          DoubleQuoteStr(Channel.MA.Method),          ";"+ NL,
+                            "Channel.MA.Periods=",         Channel.MA.Periods,                         ";"+ NL,
 
                             "MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";"+ NL,
                             "MA.Periods=",                 MA.Periods,                                 ";"+ NL,

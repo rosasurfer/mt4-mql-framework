@@ -1,26 +1,26 @@
-#define Tunnel.MODE_UPPER_BAND      0                 // indicator buffer ids
-#define Tunnel.MODE_LOWER_BAND      1                 //
-#define Tunnel.MODE_TREND           2                 //
+#define MaChannel.MODE_UPPER_BAND   0                 // indicator buffer ids
+#define MaChannel.MODE_LOWER_BAND   1                 //
+#define MaChannel.MODE_TREND        2                 //
 
 
 /**
- * Load the "Tunnel" indicator and return a value.
+ * Load the "MA Channel" indicator and return a value.
  *
- * @param  int    timeframe        - timeframe to load the indicator (NULL: the current timeframe)
- * @param  string tunnelDefinition - indicator parameter
- * @param  int    iBuffer          - indicator buffer index of the value to return
- * @param  int    iBar             - bar index of the value to return
+ * @param  int    timeframe         - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  string channelDefinition - indicator parameter
+ * @param  int    iBuffer           - indicator buffer index of the value to return
+ * @param  int    iBar              - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar) {
+double icMaChannel(int timeframe, string channelDefinition, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
    }
 
-   double value = iCustom(NULL, timeframe, "Tunnel",
-                          tunnelDefinition,           // string Tunnel.Definition
-                          Blue,                       // color  Tunnel.Color
+   double value = iCustom(NULL, timeframe, "MA Channel",
+                          channelDefinition,          // string Channel.Definition
+                          Blue,                       // color  Channel.Color
                           "",                         // string Supported.MovingAverages
                           false,                      // bool   ShowChartLegend
                           -1,                         // int    MaxBarsBack
@@ -39,8 +39,8 @@ double icTunnel(int timeframe, string tunnelDefinition, int iBuffer, int iBar) {
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE) return(!catch("icTunnel(1)", error));
-      logWarn("icTunnel(2)  "+ PeriodDescription(timeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
+      if (error != ERS_HISTORY_UPDATE) return(!catch("icMaChannel(1)", error));
+      logWarn("icMaChannel(2)  "+ PeriodDescription(timeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];           // TODO: synchronize execution contexts

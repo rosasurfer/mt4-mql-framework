@@ -1,3 +1,10 @@
+<!--
+EMA(144)
+ALMA(38)
+LWMA(55) Channel + Channel Bars + Signal
+CCI(14) + Signal
+-->
+
 <chart>
 symbol=GBPUSD
 period=60
@@ -37,7 +44,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=500
+height=4640
 fixed_height=0
 
 <indicator>
@@ -85,42 +92,8 @@ Timeframe=H1
 NumberOfInsideBars=3
 </inputs>
 </expert>
-period_flags=31
+period_flags=3
 show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Trend Bars
-flags=339
-window_num=0
-<inputs>
-Tunnel.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Tunnel.Periods=55
-Color.UpTrend=16711680
-Color.DownTrend=255
-Color.NoTrend=11119017
-BarWidth=2
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Tunnel
-flags=339
-window_num=0
-<inputs>
-Tunnel.Definition=LWMA(55)
-ShowChartLegend=1
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
 </indicator>
 
 <indicator>
@@ -137,6 +110,41 @@ Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=0
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Trend Bars
+flags=339
+window_num=0
+<inputs>
+Channel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Channel.Periods=55
+Color.UpTrend=16711680
+Color.DownTrend=255
+Color.NoTrend=11119017
+BarWidth=2
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+Channel.Definition=LWMA(55)
 ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
@@ -152,33 +160,10 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=38
-MA.ReversalFilter=0.1
-Draw.Type=Line* | Dot
-Draw.Width=3
+MA.ReversalFilter.StdDev=0.2
 UpTrend.Color=16711680
 DownTrend.Color=16776960
-Background.Color=16711680
-ShowChartLegend=1
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ALMA
-flags=339
-window_num=0
-<inputs>
-MA.Periods=10
-MA.ReversalFilter=0
-Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=4678655
-DownTrend.Color=4678655
-Background.Width=0
+Background.Color=16748574
 ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
@@ -188,61 +173,60 @@ show_data=1
 </window>
 
 <window>
-height=11
+height=140
 fixed_height=0
-
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD
+name=MA Channel Band
 flags=339
-window_num=2
+window_num=1
 <inputs>
-FastMA.Method=SMA | LWMA | EMA* | ALMA
-FastMA.Periods=12
-SlowMA.Method=SMA | LWMA | EMA* | ALMA
-SlowMA.Periods=26
-Histogram.Color.Upper=3329330
-Histogram.Color.Lower=255
-Histogram.Style.Width=2
-MainLine.Width=0
-Signal.onCross=0
-Signal.onCross.Types=sound
-AutoConfiguration=0
-</inputs>
-</expert>
-min=-0.001
-max=0.001
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=11
-fixed_height=0
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Tunnel signal
-flags=339
-window_num=2
-<inputs>
-Tunnel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Tunnel.MA.Periods=55
+Channel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Channel.MA.Periods=55
 MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
 MA.Periods=10
-Histogram.Color.Upper=3329330
-Histogram.Color.Lower=255
-Histogram.Style.Width= 2
-Signal.onTrendChange=1
-AutoConfiguration=0
+Signal.onTrendChange=0
+Signal.onTrendChange.Types=sound* | alert* | mail
 </inputs>
 </expert>
 min=-1.0
 max=1.0
 show_data=1
 </indicator>
+</window>
 
+<window>
+height=500
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=CCI
+flags=339
+window_num=2
+<inputs>
+Periods=14
+AppliedPrice=Open | High | Low | Close | Median | Typical* | Weighted
+Signal.onTrendChange=1
+Signal.onTrendChange.Types=sound* | alert* | mail
+</inputs>
+</expert>
+draw_2=2
+color_2=3329330
+weight_2=2
+draw_3=2
+color_3=255
+weight_3=2
+min=-180
+max=180
+levels_color=12632256
+levels_style=2
+levels_weight=1
+level_0=100
+level_1=0
+level_2=-100
+show_data=1
+</indicator>
 </window>
 </chart>
