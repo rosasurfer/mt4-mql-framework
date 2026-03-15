@@ -219,7 +219,7 @@ bool onCross(int direction) {
    if (!Signal.onBarCross) return(false);
    if (ChangedBars > 2)    return(false);
 
-   // skip the signal if it was already processed elsewhere
+   // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();
    string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
    string message1  = "bar close "+ ifString(direction==D_LONG, "above ", "below ") + indicatorName;

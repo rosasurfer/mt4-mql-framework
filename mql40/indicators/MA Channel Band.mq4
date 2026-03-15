@@ -253,7 +253,7 @@ int onTick() {
 bool onTrendChange(int direction) {
    if (direction!=MODE_UPTREND && direction!=MODE_DOWNTREND) return(!catch("onTrendChange(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   // skip the signal if it was already processed elsewhere
+   // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();
    string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
    string message1  = "MA Channel cross "+ ifString(direction==MODE_UPTREND, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";

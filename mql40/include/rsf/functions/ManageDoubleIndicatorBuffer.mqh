@@ -2,7 +2,7 @@
  * Manage a double array as additional indicator buffer, i.e. automatically resize it and shift the content according to
  * incoming new bar data.
  *
- * In MQL4 the terminal manages a maximum of 8 indicator buffers. Additional buffers can be used but must be managed by the
+ * In MQL4.0 the terminal manages a maximum of 8 indicator buffers. Additional buffers can be used but must be managed by the
  * framework. Such buffers are for internal calculations only, they can't be drawn on the chart or accessed via iCustom().
  *
  * @param  int    id                    - buffer index

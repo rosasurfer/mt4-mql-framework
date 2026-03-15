@@ -5148,7 +5148,7 @@ bool onNewMFE(string configKey, double profit) {
    // convert profit value to cent units to simplify Get/SetProperty
    int iProfit = MathRound(profit * 100);
 
-   // skip the signal if it was already processed elsewhere
+   // skip the signal if it was already handled elsewhere
    // sound: once per system
    if (!__isTesting) {
       string property = GetMfaeSignalKey(configKey, I_PROFIT_MFE);
@@ -5181,7 +5181,7 @@ bool onNewMAE(string configKey, double profit) {
    // convert profit value to cent units to simplify Get/SetProperty
    int iProfit = MathRound(profit * 100);
 
-   // skip the signal if it was already processed elsewhere
+   // skip the signal if it was already handled elsewhere
    // sound: once per system
    if (!__isTesting) {
       string property = GetMfaeSignalKey(configKey, I_PROFIT_MAE);
