@@ -1,12 +1,14 @@
 
-#define ZigZag.MODE_SEMAPHORE_OPEN     0              // semaphore open prices
-#define ZigZag.MODE_SEMAPHORE_CLOSE    1              // semaphore close prices
-#define ZigZag.MODE_UPPER_BAND         2              // upper channel band
-#define ZigZag.MODE_LOWER_BAND         3              // lower channel band
-#define ZigZag.MODE_UPPER_CROSS        4              // upper channel band crossings
-#define ZigZag.MODE_LOWER_CROSS        5              // lower channel band crossings
-#define ZigZag.MODE_REVERSAL           6              // offset of the previous ZigZag reversal to the preceeding semaphore
-#define ZigZag.MODE_TREND              7              // trend (combined buffers MODE_KNOWN_TREND and MODE_UNKNOWN_TREND)
+#define ZigZag.MODE_SEMAPHORE_OPEN     0              // semaphore open prices: positive or 0
+#define ZigZag.MODE_SEMAPHORE_CLOSE    1              // semaphore close prices: positive or 0 (if open != close it forms a vertical line segment)
+#define ZigZag.MODE_UPPER_BAND         2              // upper channel band: positive or 0
+#define ZigZag.MODE_LOWER_BAND         3              // lower channel band: positive or 0
+#define ZigZag.MODE_UPPER_CROSS        4              // upper channel band crossings: positive or 0
+#define ZigZag.MODE_LOWER_CROSS        5              // lower channel band crossings: positive or 0
+#define ZigZag.MODE_REVERSAL_OFFSET    6              // int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
+// intern      MODE_SEMAPHORE_OFFSET  10              // int: offset of the current bar to the leg's end semaphore: non-negative or -1
+// intern      MODE_TREND             11              // int: direction and length of the ZigZag leg: positive/negative or 0
+#define ZigZag.MODE_TREND              7              // int: merged buffers MODE_TREND & MODE_SEMAPHORE_OFFSET: positive/negative or 0
 
 
 /**
