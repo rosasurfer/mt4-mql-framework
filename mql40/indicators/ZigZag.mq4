@@ -60,7 +60,6 @@
  *
  *
  * TODO:
- *  - rename MODE_SEMAPHORE_OFFSET => MODE_UNKNOWN_TREND
  *  - rename mergedTrend[]         => combinedTrend[]
  *  - convert TrackSignalPerformance.Since to string
  *  - remove debug code
@@ -144,11 +143,11 @@ bool     ProjectNextBalance       = false;   // whether to project zero-balance 
 #define MODE_UPPER_CROSS         ZigZag.MODE_UPPER_CROSS       //  4: upper channel band crossings: positive or 0
 #define MODE_LOWER_CROSS         ZigZag.MODE_LOWER_CROSS       //  5: lower channel band crossings: positive or 0
 #define MODE_REVERSAL_OFFSET     ZigZag.MODE_REVERSAL_OFFSET   //  6: int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
-#define MODE_COMBINED_TREND      ZigZag.MODE_COMBINED_TREND    //  7: int: merged buffers MODE_TREND & MODE_SEMAPHORE_OFFSET: positive/negative or 0
+#define MODE_COMBINED_TREND      ZigZag.MODE_COMBINED_TREND    //  7: int: merged buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
 #define MODE_UPPER_CROSS_HIGH    8                             //  8: bar High of an upper channel band crossing: positive or 0
 #define MODE_LOWER_CROSS_LOW     9                             //  9: bar Low of a lower channel band crossing: positive or 0
-#define MODE_SEMAPHORE_OFFSET    10                            // 10: int: offset of the current bar to the leg's end semaphore: non-negative or -1
-#define MODE_TREND               11                            // 11: int: direction and length of a ZigZag leg: positive/negative or 0
+#define MODE_TREND               10                            // 10: int: length of a ZigZag leg: positive/negative or 0
+#define MODE_UNKNOWN_TREND       11                            // 11: int: number of bars after a leg's end semaphore: non-negative or -1
 #define MODE_SIGNAL_PERFORMANCE  12                            // 12: accumulated signal performance in price units: positive/negative or EMPTY_VALUE
 
 #property indicator_chart_window
@@ -170,7 +169,7 @@ int       framework_buffers = 5;                               // buffers manage
 #property indicator_color6    indicator_color4                 // lower channel band crossings
 #property indicator_width6    0                                //
 
-#property indicator_color7    CLR_NONE                         // trend (merged buffers MODE_TREND & MODE_SEMAPHORE_OFFSET)
+#property indicator_color7    CLR_NONE                         // trend (merged buffers MODE_TREND & MODE_UNKNOWN_TREND)
 #property indicator_color8    CLR_NONE                         // offset of the previous ZigZag reversal to its preceeding semaphore
 
 double   upperBand        [];                                  // upper channel band: positive or 0
@@ -182,9 +181,9 @@ double   lowerCrossLow    [];                                  // bar Low of a l
 double   semaphoreOpen    [];                                  // final semaphore, open price: positive or 0
 double   semaphoreClose   [];                                  // final semaphore, close price: positive or 0 (if open != close it creates a vertical line segment)
 double   reversalOffset   [];                                  // int: offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
-int      semaphoreOffset  [];                                  // int: offset of the current to the leg's end semaphore: non-negative or -1
-int      trend            [];                                  // int: direction and length of a ZigZag leg: positive/negative or 0
-double   mergedTrend      [];                                  // int: merged buffers MODE_TREND & MODE_SEMAPHORE_OFFSET: positive/negative or 0
+int      trend            [];                                  // int: length of a ZigZag leg: positive/negative or 0
+int      semaphoreOffset  [];                                  // int: number of bars after a leg's end semaphore: non-negative or -1
+double   mergedTrend      [];                                  // int: merged buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
 double   signalPerformance[];                                  // accumulated signal performance in price units: positive/negative or EMPTY_VALUE
 
 string   indicatorName = "";
@@ -255,8 +254,8 @@ int      lastSoundSignal;                                      // GetTickCount()
 //    double semaphoreOpen  :  0 (default)
 //    double semaphoreClose :  0 (default)
 //    int    reversalOffset : -1 (default)
-//    int    semaphoreOffset: -1 (default)
 //    int    trend          :  0 (default)
+//    int    semaphoreOffset: -1 (default)
 //
 // • Bar between MaxBarsBack and first semaphore
 //    double upperBand      :  positive
@@ -268,8 +267,8 @@ int      lastSoundSignal;                                      // GetTickCount()
 //    double semaphoreOpen  :  0 (default)
 //    double semaphoreClose :  0 (default)
 //    int    reversalOffset : -1 (default)
-//    int    semaphoreOffset: -1 (default) before any cross, otherwise non-negative
 //    int    trend          :  0 (default)
+//    int    semaphoreOffset: -1 (default) before the last cross, otherwise non-negative
 //
 // • Bar of ZigZag leg up
 //    double upperBand      :  positive
@@ -281,8 +280,8 @@ int      lastSoundSignal;                                      // GetTickCount()
 //    double semaphoreOpen  :  0 (default)
 //    double semaphoreClose :  0 (default)
 //    int    reversalOffset : -1 (default) before the reversal, otherwise positive
-//    int    semaphoreOffset: -1 (default) before the reversal, otherwise non-negative
 //    int    trend          :  positive
+//    int    semaphoreOffset: -1 (default) before the last cross, otherwise non-negative
 //
 // • Bar of ZigZag leg down
 //    double upperBand      :  positive
@@ -294,8 +293,8 @@ int      lastSoundSignal;                                      // GetTickCount()
 //    double semaphoreOpen  :  0 (default)
 //    double semaphoreClose :  0 (default)
 //    int    reversalOffset : -1 (default) before the reversal, otherwise positive
-//    int    semaphoreOffset: -1 (default) before the reversal, otherwise non-negative
 //    int    trend          :  negative
+//    int    semaphoreOffset: -1 (default) before the last cross, otherwise non-negative
 //
 // • High semaphore bar
 //    double upperBand      :  positive
@@ -307,8 +306,8 @@ int      lastSoundSignal;                                      // GetTickCount()
 //    double semaphoreOpen  :  positive
 //    double semaphoreClose :  positive (open = close)
 //    int    reversalOffset :  positive (previous reversal offset)
-//    int    semaphoreOffset:  0
 //    int    trend          :  positive (previous trend length)
+//    int    semaphoreOffset:  0
 //
 // • Low semaphore bar
 //    double upperBand      :  positive
@@ -320,8 +319,8 @@ int      lastSoundSignal;                                      // GetTickCount()
 //    double semaphoreOpen  :  positive
 //    double semaphoreClose :  positive (open == close)
 //    int    reversalOffset :  positive (previous reversal offset)
-//    int    semaphoreOffset:  0
 //    int    trend          :  negative (previous trend length)
+//    int    semaphoreOffset:  0
 //
 // • Double crossing bar (high+low semaphore) after processing of the 2nd crossing
 //    double upperBand      :  positive
@@ -333,8 +332,8 @@ int      lastSoundSignal;                                      // GetTickCount()
 //    double semaphoreOpen  :  positive
 //    double semaphoreClose :  positive (open != close)
 //    int    reversalOffset :  0 (the previous reversal occurred on the same bar)
-//    int    semaphoreOffset:  0 (same as reversal offset)
 //    int    trend          :  0 (the whole last trend ocurred on the same bar)
+//    int    semaphoreOffset:  0 (same as reversal offset)
 //
 // • Triple+ crossing bar (more than two semaphores)              ???
 //
@@ -556,10 +555,10 @@ int onTick() {
    }
 
    // manage additional fraemwork buffers
-   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_HIGH,   upperCrossHigh);
-   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_LOW,    lowerCrossLow);
-   ManageIntIndicatorBuffer   (MODE_SEMAPHORE_OFFSET,   semaphoreOffset, -1);
-   ManageIntIndicatorBuffer   (MODE_TREND,              trend);
+   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_HIGH,   upperCrossHigh     );
+   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_LOW,    lowerCrossLow      );
+   ManageIntIndicatorBuffer   (MODE_TREND,              trend              );
+   ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND,      semaphoreOffset, -1);
    ManageDoubleIndicatorBuffer(MODE_SIGNAL_PERFORMANCE, signalPerformance, EMPTY_VALUE);
 
    // reset buffers before performing a full recalculation
@@ -573,8 +572,8 @@ int onTick() {
       ArrayInitialize(semaphoreOpen,     0);             // double: positive or 0
       ArrayInitialize(semaphoreClose,    0);             // double: positive or 0
       ArrayInitialize(reversalOffset,   -1);             // int:    non-negative or -1
-      ArrayInitialize(semaphoreOffset,  -1);             // int:    non-negative or -1
       ArrayInitialize(trend,             0);             // int:    positive/negative or 0
+      ArrayInitialize(semaphoreOffset,  -1);             // int:    non-negative or -1
       ArrayInitialize(mergedTrend,       0);             // int:    positive/negative or 0
       ArrayInitialize(signalPerformance, EMPTY_VALUE);   // double: positive/negative or EMPTY_VALUE
       lastUpperBand = 0;
@@ -598,8 +597,8 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(semaphoreOpen,     Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(semaphoreClose,    Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(reversalOffset,    Bars, ShiftedBars, -1);
-      ShiftIntIndicatorBuffer   (semaphoreOffset,   Bars, ShiftedBars, -1);
       ShiftIntIndicatorBuffer   (trend,             Bars, ShiftedBars,  0);
+      ShiftIntIndicatorBuffer   (semaphoreOffset,   Bars, ShiftedBars, -1);
       ShiftDoubleIndicatorBuffer(mergedTrend,       Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(signalPerformance, Bars, ShiftedBars, EMPTY_VALUE);
    }
@@ -622,8 +621,8 @@ int onTick() {
       semaphoreOpen    [startBar] =  0;
       semaphoreClose   [startBar] =  0;
       reversalOffset   [startBar] = -1;
-      semaphoreOffset  [startBar] = -1;
       trend            [startBar] =  0;
+      semaphoreOffset  [startBar] = -1;
       mergedTrend      [startBar] =  0;
       signalPerformance[startBar] = EMPTY_VALUE;
    }
