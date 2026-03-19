@@ -52,15 +52,13 @@
  *  • Sound.onNewChannelLow:         Sound file for channel widenings to the downside.
  *
  *  • TrackSignalPerformance:        Whether to track the performance of the reversal signal.
- *  • TrackSignalPerformance.Since:  Start time to track signal performance from.
- *  • TrackSignalPerformance.Symbol: Custom symbol to use for performance tracking.
+ *  • TrackSignalPerformance.Since:  Start time to track signal performance from (default: MaxBarsBack).
+ *  • TrackSignalPerformance.Symbol: Custom symbol to use for performance tracking (default: auto-generated).
  *
- *  • AutoConfiguration:             If enabled all input parameters can be overwritten with custom default values.
- *
+ *  • AutoConfiguration:             If enabled all input parameters may use predefined defaults from the configuration.
  *
  *
  * TODO:
- *  - rename mergedTrend[]         => combinedTrend[]
  *  - convert TrackSignalPerformance.Since to string
  *  - remove debug code
  *  - once finished, update logic in usage locations of icZigZag()
@@ -143,7 +141,7 @@ bool     ProjectNextBalance       = false;   // whether to project zero-balance 
 #define MODE_UPPER_CROSS         ZigZag.MODE_UPPER_CROSS       //  4: upper channel band crossings: positive or 0
 #define MODE_LOWER_CROSS         ZigZag.MODE_LOWER_CROSS       //  5: lower channel band crossings: positive or 0
 #define MODE_REVERSAL_OFFSET     ZigZag.MODE_REVERSAL_OFFSET   //  6: int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
-#define MODE_COMBINED_TREND      ZigZag.MODE_COMBINED_TREND    //  7: int: merged buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
+#define MODE_COMBINED_TREND      ZigZag.MODE_COMBINED_TREND    //  7: int: combined buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
 #define MODE_UPPER_CROSS_HIGH    8                             //  8: bar High of an upper channel band crossing: positive or 0
 #define MODE_LOWER_CROSS_LOW     9                             //  9: bar Low of a lower channel band crossing: positive or 0
 #define MODE_TREND               10                            // 10: int: length of a ZigZag leg: positive/negative or 0
@@ -169,7 +167,7 @@ int       framework_buffers = 5;                               // buffers manage
 #property indicator_color6    indicator_color4                 // lower channel band crossings
 #property indicator_width6    0                                //
 
-#property indicator_color7    CLR_NONE                         // trend (merged buffers MODE_TREND & MODE_UNKNOWN_TREND)
+#property indicator_color7    CLR_NONE                         // trend (combined buffers MODE_TREND & MODE_UNKNOWN_TREND)
 #property indicator_color8    CLR_NONE                         // offset of the previous ZigZag reversal to its preceeding semaphore
 
 double   upperBand        [];                                  // upper channel band: positive or 0
@@ -183,7 +181,7 @@ double   semaphoreClose   [];                                  // final semaphor
 double   reversalOffset   [];                                  // int: offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
 int      trend            [];                                  // int: length of a ZigZag leg: positive/negative or 0
 int      unknownTrend     [];                                  // int: number of bars after a leg's end semaphore: non-negative or -1
-double   mergedTrend      [];                                  // int: merged buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
+double   combinedTrend    [];                                  // int: combined buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
 double   signalPerformance[];                                  // accumulated signal performance in price units: positive/negative or EMPTY_VALUE
 
 string   indicatorName = "";
@@ -574,7 +572,7 @@ int onTick() {
       ArrayInitialize(reversalOffset,   -1);             // int:    non-negative or -1
       ArrayInitialize(trend,             0);             // int:    positive/negative or 0
       ArrayInitialize(unknownTrend,     -1);             // int:    non-negative or -1
-      ArrayInitialize(mergedTrend,       0);             // int:    positive/negative or 0
+      ArrayInitialize(combinedTrend,     0);             // int:    positive/negative or 0
       ArrayInitialize(signalPerformance, EMPTY_VALUE);   // double: positive/negative or EMPTY_VALUE
       lastUpperBand = 0;
       lastLowerBand = 0;
@@ -599,7 +597,7 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(reversalOffset,    Bars, ShiftedBars, -1);
       ShiftIntIndicatorBuffer   (trend,             Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (unknownTrend,      Bars, ShiftedBars, -1);
-      ShiftDoubleIndicatorBuffer(mergedTrend,       Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(combinedTrend,     Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(signalPerformance, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
@@ -623,7 +621,7 @@ int onTick() {
       reversalOffset   [startBar] = -1;
       trend            [startBar] =  0;
       unknownTrend     [startBar] = -1;
-      mergedTrend      [startBar] =  0;
+      combinedTrend    [startBar] =  0;
       signalPerformance[startBar] = EMPTY_VALUE;
    }
 
@@ -759,8 +757,8 @@ int onTick() {
          }
       }
 
-      // compose mergedTrend[]
-      mergedTrend[bar] = Sign(trend[bar]) * unknownTrend[bar] * 100000 + trend[bar];
+      // compose combinedTrend[]
+      combinedTrend[bar] = Sign(trend[bar]) * unknownTrend[bar] * 100000 + trend[bar];
    }
 
 
@@ -1241,9 +1239,9 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
    int value = fromValue, sign, cross;
 
    for (int i=fromBar; i >= toBar; i--) {
-      trend       [i] = value;
-      unknownTrend[i] = -1;
-      mergedTrend [i] = trend[i];
+      trend        [i] = value;
+      unknownTrend [i] = -1;
+      combinedTrend[i] = trend[i];
 
       if (resetReversals) reversalOffset[i] = -1;
 
@@ -1495,7 +1493,7 @@ void UpdateChartLegend() {
    static int lastTrend, lastTime, lastAccount;
 
    // update on full recalculation or if indicator name, trend, current bar or the account changed
-   if (!ValidBars || mergedTrend[0]!=lastTrend || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
+   if (!ValidBars || combinedTrend[0]!=lastTrend || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
@@ -1513,7 +1511,7 @@ void UpdateChartLegend() {
       int error = GetLastError();
       if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateChartLegend(1)", error);     // on ObjectDrag or opened "Properties" dialog
 
-      lastTrend   = mergedTrend[0];
+      lastTrend   = combinedTrend[0];
       lastTime    = Time[0];
       lastAccount = AccountNumber();
    }
@@ -1544,7 +1542,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,      0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" reversal up");   if (!crossingDrawType)     SetIndexLabel(MODE_UPPER_CROSS,     NULL);
    SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,      0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" reversal down"); if (!crossingDrawType)     SetIndexLabel(MODE_LOWER_CROSS,     NULL);
    SetIndexBuffer(MODE_REVERSAL_OFFSET, reversalOffset); SetIndexEmptyValue(MODE_REVERSAL_OFFSET, -1); SetIndexLabel(MODE_REVERSAL_OFFSET, shortName +" reversal offset");
-   SetIndexBuffer(MODE_COMBINED_TREND,  mergedTrend   ); SetIndexEmptyValue(MODE_COMBINED_TREND,   0); SetIndexLabel(MODE_COMBINED_TREND,  shortName +" trend");
+   SetIndexBuffer(MODE_COMBINED_TREND,  combinedTrend ); SetIndexEmptyValue(MODE_COMBINED_TREND,   0); SetIndexLabel(MODE_COMBINED_TREND,  shortName +" trend");
    IndicatorDigits(Digits);
 
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
