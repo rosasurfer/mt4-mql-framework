@@ -128,10 +128,10 @@ extern string   Sound.onNewChannelLow          = "Price Decline.wav";
 #include <rsf/win32api.mqh>
 
 // indicator buffer ids
-#define MODE_SEMAPHORE_OPEN      ZigZag.MODE_SEMAPHORE_OPEN    //  0: final semaphores, open price: positive or 0
-#define MODE_SEMAPHORE_CLOSE     ZigZag.MODE_SEMAPHORE_CLOSE   //  1: final semaphores, close price: positive or 0 (if open != close it forms a vertical line segment)
-#define MODE_UPPER_BAND          ZigZag.MODE_UPPER_BAND        //  2: upper channel band: positive or 0
-#define MODE_LOWER_BAND          ZigZag.MODE_LOWER_BAND        //  3: lower channel band: positive or 0
+#define MODE_UPPER_BAND          ZigZag.MODE_UPPER_BAND        //  0: upper channel band: positive or 0
+#define MODE_LOWER_BAND          ZigZag.MODE_LOWER_BAND        //  1: lower channel band: positive or 0
+#define MODE_SEMAPHORE_OPEN      ZigZag.MODE_SEMAPHORE_OPEN    //  2: final semaphores, open price: positive or 0
+#define MODE_SEMAPHORE_CLOSE     ZigZag.MODE_SEMAPHORE_CLOSE   //  3: final semaphores, close price: positive or 0 (if open != close it forms a vertical line segment)
 #define MODE_UPPER_CROSS         ZigZag.MODE_UPPER_CROSS       //  4: upper channel band crossings: positive or 0
 #define MODE_LOWER_CROSS         ZigZag.MODE_LOWER_CROSS       //  5: lower channel band crossings: positive or 0
 #define MODE_REVERSAL_OFFSET     ZigZag.MODE_REVERSAL_OFFSET   //  6: int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
@@ -147,14 +147,14 @@ extern string   Sound.onNewChannelLow          = "Price Decline.wav";
 int       terminal_buffers  = 8;                               // buffers managed by the terminal
 int       framework_buffers = 5;                               // buffers managed by the framework
 
-#property indicator_color1    DodgerBlue                       // the ZigZag line is built from two buffers using the color of the first buffer
-#property indicator_width1    1                                //
-#property indicator_color2    CLR_NONE                         //
+#property indicator_color1    Blue                             // upper channel band
+#property indicator_style1    STYLE_DOT                        //
+#property indicator_color2    Magenta                          // lower channel band
+#property indicator_style2    STYLE_DOT                        //
 
-#property indicator_color3    Blue                             // upper channel band
-#property indicator_style3    STYLE_DOT                        //
-#property indicator_color4    Magenta                          // lower channel band
-#property indicator_style4    STYLE_DOT                        //
+#property indicator_color3    DodgerBlue                       // the ZigZag line is built from two buffers using the color of the first buffer
+#property indicator_width3    1                                //
+#property indicator_color4    CLR_NONE                         //
 
 #property indicator_color5    indicator_color3                 // upper channel band crossings
 #property indicator_width5    0                                //
@@ -1533,12 +1533,12 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorShortName(shortName);
 
    IndicatorBuffers(terminal_buffers);
-   SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,   0); SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
-   SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE,  0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
-   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,       0); SetIndexLabel(MODE_UPPER_BAND,      donchianName +" upper band"); if (!Donchian.ShowChannel) SetIndexLabel(MODE_UPPER_BAND,  NULL);
-   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,       0); SetIndexLabel(MODE_LOWER_BAND,      donchianName +" lower band"); if (!Donchian.ShowChannel) SetIndexLabel(MODE_LOWER_BAND,  NULL);
-   SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,      0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" cross up");      if (!crossingDrawType)     SetIndexLabel(MODE_UPPER_CROSS, NULL);
-   SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,      0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" cross down");    if (!crossingDrawType)     SetIndexLabel(MODE_LOWER_CROSS, NULL);
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,       0); SetIndexLabel(MODE_UPPER_BAND,      donchianName +" upper band"); if (!Donchian.ShowChannel) SetIndexLabel(MODE_UPPER_BAND,      NULL);
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,       0); SetIndexLabel(MODE_LOWER_BAND,      donchianName +" lower band"); if (!Donchian.ShowChannel) SetIndexLabel(MODE_LOWER_BAND,      NULL);
+   SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,   0);                                                                                              SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
+   SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE,  0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, shortName +" high/low");      if (!ZigZag.Width)         SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
+   SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,      0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" reversal up");   if (!crossingDrawType)     SetIndexLabel(MODE_UPPER_CROSS,     NULL);
+   SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,      0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" reversal down"); if (!crossingDrawType)     SetIndexLabel(MODE_LOWER_CROSS,     NULL);
    SetIndexBuffer(MODE_REVERSAL_OFFSET, reversalOffset); SetIndexEmptyValue(MODE_REVERSAL_OFFSET, -1); SetIndexLabel(MODE_REVERSAL_OFFSET, shortName +" reversal offset");
    SetIndexBuffer(MODE_MERGED_TREND,    mergedTrend   ); SetIndexEmptyValue(MODE_MERGED_TREND,     0); SetIndexLabel(MODE_MERGED_TREND,    shortName +" trend");
    IndicatorDigits(Digits);

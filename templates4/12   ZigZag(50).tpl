@@ -137,8 +137,8 @@ Signal.onBreakout=0
 Sound.onChannelWidening=0
 </inputs>
 </expert>
-style_2=2
-style_3=2
+style_0=2
+style_1=2
 show_data=1
 </indicator>
 
@@ -163,8 +163,8 @@ Signal.onBreakout=0
 Sound.onChannelWidening=0
 </inputs>
 </expert>
-style_2=2
-style_3=2
+style_0=2
+style_1=2
 color_6=4294967295
 color_7=4294967295
 show_data=1
