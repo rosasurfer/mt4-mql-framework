@@ -471,7 +471,7 @@ bool GetZigZagData(int bar, int &trend, int &reversalOffset, double &reversalPri
 
    // TODO: 56% of the EA's total runtime is spent in this function
 
-   trend          = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,           bar));   // 88% of the local time
+   trend          = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND,  bar));   // 88% of the local time
    reversalOffset = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL_OFFSET, bar));   // 6% of the local time
 
    if (trend > 0) reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);    // 6% of the local time

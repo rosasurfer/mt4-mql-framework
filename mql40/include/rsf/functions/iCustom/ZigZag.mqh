@@ -6,7 +6,7 @@
 #define ZigZag.MODE_UPPER_CROSS        4              // upper channel band crossings: positive or 0
 #define ZigZag.MODE_LOWER_CROSS        5              // lower channel band crossings: positive or 0
 #define ZigZag.MODE_REVERSAL_OFFSET    6              // int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
-#define ZigZag.MODE_TREND              7              // int: merged internal buffers MODE_TREND & MODE_SEMAPHORE_OFFSET: positive/negative or 0
+#define ZigZag.MODE_COMBINED_TREND     7              // int: merged internal buffers MODE_TREND & MODE_SEMAPHORE_OFFSET: positive/negative or 0
 
 
 /**
