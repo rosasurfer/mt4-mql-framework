@@ -62,13 +62,12 @@
  * TODO:
  *  - rename ZigZag.MODE_TREND     => ZigZag.MODE_COMBINED_TREND
  *  - rename MODE_MERGED_TREND     => MODE_COMBINED_TREND
- *  - rename MODE_SEMAPHORE_OFFSET => MODE_NO_TREND
+ *  - rename MODE_SEMAPHORE_OFFSET => MODE_UNKNOWN_TREND
  *  - rename mergedTrend[]         => combinedTrend[]
  *  - convert TrackSignalPerformance.Since to string
  *  - remove debug code
  *  - once finished, update logic in usage locations of icZigZag()
  *
- *  - rename Donchian.Crossing.Symbol values to "dot | thin-ring | ring | thick-ring"
  *  - calculate/display ZigZag zero balance projections
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
  *  - keep bar status in IsUpperCrossLast()
@@ -84,7 +83,7 @@ extern string   ___a__________________________ = "=== ZigZag settings ===";
 extern int      ZigZag.Periods                 = 40;                           // lookback periods of the Donchian channel
 extern int      ZigZag.Periods.Step            = 0;                            // step size for parameter stepper via hotkey
 extern string   ZigZag.Type                    = "Lines* | Semaphores";        // ZigZag lines or reversal points (can be shortened)
-extern string   ZigZag.Semaphores.Symbol       = "dot* | narrow-ring | ring | bold-ring";
+extern string   ZigZag.Semaphores.Symbol       = "dot* | thin-ring | ring | thick-ring";
 extern int      ZigZag.Width                   = 2;
 extern color    ZigZag.Color                   = Blue;
 
@@ -93,7 +92,7 @@ extern bool     Donchian.ShowChannel           = true;                         /
 extern color    Donchian.Channel.UpperColor    = Blue;
 extern color    Donchian.Channel.LowerColor    = Magenta;
 extern string   Donchian.ShowCrossings         = "off | first* | all";         // which channel crossings to display
-extern string   Donchian.Crossing.Symbol       = "dot | narrow-ring | ring | bold-ring*";
+extern string   Donchian.Crossing.Symbol       = "dot | thin-ring | ring | thick-ring*";
 extern int      Donchian.Crossing.Width        = 1;
 extern color    Donchian.Crossing.Color        = CLR_NONE;
 
@@ -393,10 +392,10 @@ int onInit() {
       sValue = sValues[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
-   if      (sValue == "dot"        ) zigzagSymbol = 108;    // that's Wingding characters
-   else if (sValue == "narrow-ring") zigzagSymbol = 161;    // ...
-   else if (sValue == "ring"       ) zigzagSymbol = 162;    // ...
-   else if (sValue == "bold-ring"  ) zigzagSymbol = 163;    // ...
+   if      (sValue == "dot"       ) zigzagSymbol = 108;     // that's Wingding characters
+   else if (sValue == "thin-ring" ) zigzagSymbol = 161;     // ...
+   else if (sValue == "ring"      ) zigzagSymbol = 162;     // ...
+   else if (sValue == "thick-ring") zigzagSymbol = 163;     // ...
    else                              return(catch("onInit(4)  invalid input parameter ZigZag.Semaphores.Symbol: "+ DoubleQuoteStr(ZigZag.Semaphores.Symbol), ERR_INVALID_INPUT_PARAMETER));
    ZigZag.Semaphores.Symbol = sValue;
    // ZigZag.Width
@@ -425,10 +424,10 @@ int onInit() {
       sValue = sValues[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
-   if      (sValue == "dot"        ) crossingSymbol = 108;  // that's Wingding characters
-   else if (sValue == "narrow-ring") crossingSymbol = 161;  // ...
-   else if (sValue == "ring"       ) crossingSymbol = 162;  // ...
-   else if (sValue == "bold-ring"  ) crossingSymbol = 163;  // ...
+   if      (sValue == "dot"       ) crossingSymbol = 108;   // that's Wingding characters
+   else if (sValue == "thin-ring" ) crossingSymbol = 161;   // ...
+   else if (sValue == "ring"      ) crossingSymbol = 162;   // ...
+   else if (sValue == "thick-ring") crossingSymbol = 163;   // ...
    else                              return(catch("onInit(7)  invalid input parameter Donchian.Crossing.Symbol: "+ DoubleQuoteStr(Donchian.Crossing.Symbol), ERR_INVALID_INPUT_PARAMETER));
    Donchian.Crossing.Symbol = sValue;
    // Donchian.Crossing.Width
