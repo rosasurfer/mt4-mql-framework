@@ -60,7 +60,6 @@
  *
  *
  * TODO:
- *  - rename MODE_MERGED_TREND     => MODE_COMBINED_TREND
  *  - rename MODE_SEMAPHORE_OFFSET => MODE_UNKNOWN_TREND
  *  - rename mergedTrend[]         => combinedTrend[]
  *  - convert TrackSignalPerformance.Since to string
@@ -145,7 +144,7 @@ bool     ProjectNextBalance       = false;   // whether to project zero-balance 
 #define MODE_UPPER_CROSS         ZigZag.MODE_UPPER_CROSS       //  4: upper channel band crossings: positive or 0
 #define MODE_LOWER_CROSS         ZigZag.MODE_LOWER_CROSS       //  5: lower channel band crossings: positive or 0
 #define MODE_REVERSAL_OFFSET     ZigZag.MODE_REVERSAL_OFFSET   //  6: int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
-#define MODE_MERGED_TREND        ZigZag.MODE_COMBINED_TREND    //  7: int: merged buffers MODE_TREND & MODE_SEMAPHORE_OFFSET: positive/negative or 0
+#define MODE_COMBINED_TREND      ZigZag.MODE_COMBINED_TREND    //  7: int: merged buffers MODE_TREND & MODE_SEMAPHORE_OFFSET: positive/negative or 0
 #define MODE_UPPER_CROSS_HIGH    8                             //  8: bar High of an upper channel band crossing: positive or 0
 #define MODE_LOWER_CROSS_LOW     9                             //  9: bar Low of a lower channel band crossing: positive or 0
 #define MODE_SEMAPHORE_OFFSET    10                            // 10: int: offset of the current bar to the leg's end semaphore: non-negative or -1
@@ -1546,7 +1545,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,      0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" reversal up");   if (!crossingDrawType)     SetIndexLabel(MODE_UPPER_CROSS,     NULL);
    SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,      0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" reversal down"); if (!crossingDrawType)     SetIndexLabel(MODE_LOWER_CROSS,     NULL);
    SetIndexBuffer(MODE_REVERSAL_OFFSET, reversalOffset); SetIndexEmptyValue(MODE_REVERSAL_OFFSET, -1); SetIndexLabel(MODE_REVERSAL_OFFSET, shortName +" reversal offset");
-   SetIndexBuffer(MODE_MERGED_TREND,    mergedTrend   ); SetIndexEmptyValue(MODE_MERGED_TREND,     0); SetIndexLabel(MODE_MERGED_TREND,    shortName +" trend");
+   SetIndexBuffer(MODE_COMBINED_TREND,  mergedTrend   ); SetIndexEmptyValue(MODE_COMBINED_TREND,   0); SetIndexLabel(MODE_COMBINED_TREND,  shortName +" trend");
    IndicatorDigits(Digits);
 
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
@@ -1564,7 +1563,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, drawWidth, colorOr(Donchian.Crossing.Color, Donchian.Channel.LowerColor)); SetIndexArrow(MODE_LOWER_CROSS, crossingSymbol);
 
    SetIndexStyle(MODE_REVERSAL_OFFSET, DRAW_NONE);
-   SetIndexStyle(MODE_MERGED_TREND,    DRAW_NONE);
+   SetIndexStyle(MODE_COMBINED_TREND,  DRAW_NONE);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
