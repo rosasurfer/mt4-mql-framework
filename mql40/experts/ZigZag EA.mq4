@@ -6,8 +6,8 @@
  *
  * Requirements
  * ------------
- *  • "mql40/experts/ZigZag EA"                (this EA)
- *  • "mql40/indicators/ZigZag"                (the MetaQuotes indicator can't be used)
+ *  • "mql40/experts/ZigZag EA"                (this file)
+ *  • "mql40/indicators/ZigZag"                (the MetaQuotes version can't be used)
  *  • "mql40/scripts/Config"
  *  • "mql40/scripts/Chart.ToggleOpenOrders"
  *  • "mql40/scripts/Chart.ToggleTradeHistory"

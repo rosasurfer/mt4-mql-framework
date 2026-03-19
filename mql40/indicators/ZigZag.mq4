@@ -15,51 +15,59 @@
  *
  * Input parameters
  * ----------------
- *  • ZigZag.Periods:               Lookback periods of the Donchian channel.
- *  • ZigZag.Periods.Step:          Controls parameter "ZigZag.Periods" via keyboard. If non-zero it defines the step size of
- *                                  the parameter stepper. If 0 (zero) the parameter stepper is disabled.
- *  • ZigZag.Type:                  Whether to display the ZigZag line or ZigZag semaphores.
- *  • ZigZag.Semaphores.Symbol:     Symbol used for ZigZag semaphores.
- *  • ZigZag.Width:                 The ZigZag's line width or semaphore size.
- *  • ZigZag.Color:                 Color of ZigZag line or semaphores.
+ *  • ZigZag.Periods:                Look-back periods of the Donchian channel.
+ *  • ZigZag.Periods.Step:           Controls parameter "ZigZag.Periods" via keyboard. If non-zero it defines the step size
+ *                                   of the parameter stepper. If 0 (zero) the parameter stepper is disabled.
+ *  • ZigZag.Type:                   Whether to display the ZigZag line or ZigZag semaphores.
+ *  • ZigZag.Semaphores.Symbol:      Graphic symbol used for ZigZag semaphores.
+ *  • ZigZag.Width:                  The ZigZag's line width or semaphore size.
+ *  • ZigZag.Color:                  Color of ZigZag line or semaphores.
  *
- *  • Donchian.ShowChannel:         Whether to display the internal Donchian channel.
- *  • Donchian.Channel.UpperColor:  Color of upper Donchian channel band.
- *  • Donchian.Channel.LowerColor:  Color of lower Donchian channel band.
+ *  • Donchian.ShowChannel:          Whether to display the internal Donchian channel.
+ *  • Donchian.Channel.UpperColor:   Color of upper Donchian channel band.
+ *  • Donchian.Channel.LowerColor:   Color of lower Donchian channel band.
  *
- *  • Donchian.ShowCrossings:       Which Donchian channel crossings to display, one of:
- *                                   "off":   No crossings are displayed.
- *                                   "first": Only the first crossing per direction is displayed (the moment when ZigZag creates a new leg).
- *                                   "all":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
- *  • Donchian.Crossing.Symbol:     Symbol used for Donchian channel crossings.
- *  • Donchian.Crossing.Width:      Size of displayed Donchian channel crossings.
- *  • Donchian.Crossing.Color:      Custom color of channel crossings (default: color of channel bands).
+ *  • Donchian.ShowCrossings:        Which Donchian channel crossings to display, one of:
+ *                                    "off":   No crossings are displayed.
+ *                                    "first": Only the first crossing is displayed (the moment a new ZigZag leg appears).
+ *                                    "all":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
+ *  • Donchian.Crossing.Symbol:      Graphic symbol used for Donchian channel crossings.
+ *  • Donchian.Crossing.Width:       Size of displayed Donchian channel crossings.
+ *  • Donchian.Crossing.Color:       Custom color of channel crossings (default: color of channel bands).
  *
- *  • TrackZigZagBalance:           Whether to track and mark ZigZag balances.
- *  • TrackZigZagBalance.Since:     Start date-time to track and mark ZigZag balances.
- *  • ProjectNextBalance:           Whether to project price levels of the next zero-balance.
+ *  • ShowChartLegend:               Whether do display the chart legend.
+ *  • MaxBarsBack:                   Maximum number of bars back to calculate the indicator for (affects performance).
  *
- *  • ShowChartLegend:              Whether do display the chart legend.
- *  • MaxBarsBack:                  Maximum number of bars back to calculate the indicator for (performance).
+ *  • Signal.onReversal:             Whether to signal ZigZag reversals (the moment a new ZigZag leg appears).
+ *  • Signal.onReversal.Types:       Signaling methods, can be a combination of "sound", "alert" and/or "mail".
  *
- *  • Signal.onReversal:            Whether to signal ZigZag reversals (the moment when ZigZag creates a new leg).
- *  • Signal.onReversal.Types:      Reversal signaling methods, can be a combination of "sound", "alert", "mail".
+ *  • Signal.onBreakout:             Whether to signal ZigZag breakouts (a ZigZag leg exceeding the previous ZigZag leg).
+ *  • Signal.onBreakout.Types:       Signaling methods, can be a combination of "sound", "alert" and/or "mail".
  *
- *  • Signal.onBreakout:            Whether to signal ZigZag breakouts (price exceeding the previous swing's ZigZag semaphore).
- *  • Signal.onBreakout.Types:      Breakout signaling methods, can be a combination of "sound", "alert", "mail".
+ *  • Signal.Sound.Up:               Sound file for signals to the upside.
+ *  • Signal.Sound.Down:             Sound file for signals to the downside.
  *
- *  • Signal.Sound.Up:              Sound file for reversal and breakout signals.
- *  • Signal.Sound.Down:            Sound file for reversal and breakout signals.
+ *  • Sound.onChannelWidening:       Whether to play a sound on Donchian channel widening (channel crossings).
+ *  • Sound.onNewChannelHigh:        Sound file for channel widenings to the upside.
+ *  • Sound.onNewChannelLow:         Sound file for channel widenings to the downside.
  *
- *  • Sound.onChannelWidening:      Whether to play a sound on Donchian channel widening (channel crossings).
- *  • Sound.onNewChannelHigh:       Sound file for channel widenings to the upside.
- *  • Sound.onNewChannelLow:        Sound file for channel widenings to the downside.
+ *  • TrackSignalPerformance:        Whether to track the performance of the reversal signal.
+ *  • TrackSignalPerformance.Since:  Start time to track signal performance from.
+ *  • TrackSignalPerformance.Symbol: Custom symbol to use for performance tracking.
  *
- *  • AutoConfiguration:            If enabled all input parameters can be overwritten with custom default values.
+ *  • AutoConfiguration:             If enabled all input parameters can be overwritten with custom default values.
  *
  *
  *
  * TODO:
+ *  - rename ZigZag.MODE_TREND     => ZigZag.MODE_COMBINED_TREND
+ *  - rename MODE_MERGED_TREND     => MODE_COMBINED_TREND
+ *  - rename MODE_SEMAPHORE_OFFSET => MODE_NO_TREND
+ *  - rename mergedTrend[]         => combinedTrend[]
+ *  - convert TrackSignalPerformance.Since to string
+ *  - remove debug code
+ *  - once finished, update logic in usage locations of icZigZag()
+ *
  *  - rename Donchian.Crossing.Symbol values to "dot | thin-ring | ring | thick-ring"
  *  - calculate/display ZigZag zero balance projections
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
@@ -89,16 +97,11 @@ extern string   Donchian.Crossing.Symbol       = "dot | narrow-ring | ring | bol
 extern int      Donchian.Crossing.Width        = 1;
 extern color    Donchian.Crossing.Color        = CLR_NONE;
 
-extern string   ___c__________________________ = "=== ZigZag projections ===";
-extern bool     TrackZigZagBalance             = false;                          // whether to track ZigZag balances
-extern datetime TrackZigZagBalance.Since       = 0;                              // mark ZigZag balances since this time
-extern bool     ProjectNextBalance             = false;                          // whether to project zero-balance levels
-
-extern string   ___d__________________________ = "=== Display settings ===";
+extern string   ___c__________________________ = "=== Display settings ===";
 extern bool     ShowChartLegend                = true;
 extern int      MaxBarsBack                    = 10000;                          // max. values to calculate (-1: all available)
 
-extern string   ___e__________________________ = "=== Signaling ===";
+extern string   ___d__________________________ = "=== Signaling ===";
 extern bool     Signal.onReversal              = false;                          // signal ZigZag reversals (first Donchian channel crossing)
 extern string   Signal.onReversal.Types        = "sound* | alert | mail";
 
@@ -112,7 +115,16 @@ extern bool     Sound.onChannelWidening        = false;                         
 extern string   Sound.onNewChannelHigh         = "Price Advance.wav";
 extern string   Sound.onNewChannelLow          = "Price Decline.wav";
 
+extern string   ___e__________________________ = "=== Signal performance ===";
+extern bool     TrackSignalPerformance         = false;                          // whether to track the signal performance
+extern datetime TrackSignalPerformance.Since   = 0;                              // start time to track signal performance from
+extern string   TrackSignalPerformance.Symbol  = "(default)";                    // custom symbol to use for performance tracking
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool     TrackZigZagBalance       = false;   // whether to track ZigZag balances
+datetime TrackZigZagBalance.Since = 0;       // mark ZigZag balances since this time
+bool     ProjectNextBalance       = false;   // whether to project zero-balance levels
 
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
@@ -343,11 +355,15 @@ string   semTypes[] = {"NULL", "LOW", "HIGH"};
  * @return int - error status
  */
 int onInit() {
-   devStartTime     = D'2026.03.19 01:41';            // TODO: remove once finished
-   devFirstCrossing = D'2026.03.19 01:48';            // double crossings: P=8/2026.03.16 20:47
-
-   devFrom = devStartTime     +  6 * Period() * MINUTES;
+   devStartTime     = D'2026.03.19 01:41';                     // TODO: remove once finished
+   devFirstCrossing = D'2026.03.19 01:48';
+                                                               // double crossings:
+   devFrom = devStartTime     +  6 * Period() * MINUTES;       // P=8, 2026.03.16 20:47
    devTo   = devFirstCrossing + 32 * Period() * MINUTES;
+
+   if (debugging && Symbol()=="BTCUSD" && Period()==PERIOD_M1 && ZigZag.Periods <= 20) {
+      MaxBarsBack = iBarShift(NULL, NULL, devStartTime);
+   }
 
    string indicator = WindowExpertName();
 
@@ -428,28 +444,11 @@ int onInit() {
    if (Donchian.Channel.LowerColor == 0xFF000000) Donchian.Channel.LowerColor = CLR_NONE;
    if (Donchian.Crossing.Color     == 0xFF000000) Donchian.Crossing.Color     = CLR_NONE;
 
-   // TrackZigZagBalance
-   if (AutoConfiguration) TrackZigZagBalance = GetConfigBool(indicator, "TrackZigZagBalance", TrackZigZagBalance);
-   // TrackZigZagBalance.Since
-   datetime dtValue = TrackZigZagBalance.Since;
-   if (AutoConfiguration) {
-      sValue = GetConfigString(indicator, "TrackZigZagBalance.Since", "");
-      if (sValue != "") {
-         int result[];
-         if (!ParseDateTime(sValue, DATE_YYYYMMDD|TIME_OPTIONAL, result)) {
-            return(catch("onInit(9)  invalid config parameter TrackZigZagBalance.Since: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
-         }
-         TrackZigZagBalance.Since = DateTime2(result);
-      }
-   }
-   // ProjectNextBalance
-   if (AutoConfiguration) ProjectNextBalance = GetConfigBool(indicator, "ProjectNextBalance", ProjectNextBalance);
-
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1) return(catch("onInit(10)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1) return(catch("onInit(9)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // Signal.onReversal
@@ -458,7 +457,7 @@ int onInit() {
    ConfigureSignals(signalId, AutoConfiguration, Signal.onReversal);
    if (Signal.onReversal) {
       if (!ConfigureSignalTypes(signalId, Signal.onReversal.Types, AutoConfiguration, signal.onReversal.sound, signal.onReversal.alert, signal.onReversal.mail)) {
-         return(catch("onInit(11)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(10)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onReversal = (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail);
       if (Signal.onReversal) {
@@ -471,7 +470,7 @@ int onInit() {
    ConfigureSignals(signalId, AutoConfiguration, Signal.onBreakout);
    if (Signal.onBreakout) {
       if (!ConfigureSignalTypes(signalId, Signal.onBreakout.Types, AutoConfiguration, signal.onBreakout.sound, signal.onBreakout.alert, signal.onBreakout.mail)) {
-         return(catch("onInit(12)  invalid input parameter Signal.onBreakout.Types: "+ DoubleQuoteStr(Signal.onBreakout.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(11)  invalid input parameter Signal.onBreakout.Types: "+ DoubleQuoteStr(Signal.onBreakout.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onBreakout = (signal.onBreakout.sound || signal.onBreakout.alert || signal.onBreakout.mail);
    }
@@ -486,6 +485,23 @@ int onInit() {
       if (legendInfo == "") legendInfo = "(w)";
       else                  legendInfo = StrLeft(legendInfo, -1) +",w)";
    }
+
+   // TrackSignalPerformance
+   if (AutoConfiguration) TrackSignalPerformance = GetConfigBool(indicator, "TrackSignalPerformance", TrackSignalPerformance);
+   // TrackSignalPerformance.Since
+   datetime dtValue = TrackSignalPerformance.Since;
+   if (AutoConfiguration) {
+      sValue = GetConfigString(indicator, "TrackSignalPerformance.Since", "");
+      if (sValue != "") {
+         int result[];
+         if (!ParseDateTime(sValue, DATE_YYYYMMDD|TIME_OPTIONAL, result)) {
+            return(catch("onInit(12)  invalid config parameter TrackSignalPerformance.Since: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+         }
+         TrackSignalPerformance.Since = DateTime2(result);
+      }
+   }
+   // TrackSignalPerformance.Symbol
+   if (AutoConfiguration) TrackSignalPerformance.Symbol = GetConfigBool(indicator, "TrackSignalPerformance.Symbol", TrackSignalPerformance.Symbol);
 
    // reset global vars used by the various event handlers
    skipSignals     = 0;
@@ -594,12 +610,6 @@ int onTick() {
    // check data pumping on every tick so the reversal handler can skip errornous signals
    if (!__isTesting) IsPossibleDataPumping();
 
-
-   if (debugging && Symbol()=="BTCUSD" && Period()==PERIOD_M1 && 5 <= ZigZag.Periods && ZigZag.Periods <= 15) {
-      MaxBarsBack = iBarShift(NULL, NULL, devStartTime);
-   }
-
-
    // calculate start bar
    int startBar = Min(MaxBarsBack-1, ChangedBars-1, Bars-ZigZag.Periods);
    if (startBar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ ZigZag.Periods, ERR_HISTORY_INSUFFICIENT));
@@ -642,8 +652,8 @@ int onTick() {
          lowerCrossLow[bar] = lowerBand[bar];
       }
 
-      // recalculate ZigZag data
-      // if no channel crossing (before or after the first semaphore)
+      // --- start: recalculate ZigZag data ---
+      // if no channel crossing                                      // before or after the first semaphore
       if (!upperCross[bar] && !lowerCross[bar]) {
          trend          [bar] = trend          [bar+1];              // keep trend (may be 0)
          reversalOffset [bar] = reversalOffset [bar+1];              // keep reversal offset (may be -1)
@@ -670,7 +680,6 @@ int onTick() {
       else                           ProcessLowerCross(bar);
       // --- end: recalculate ZigZag data ---
 
-
       // whether the processed bar is a reversal bar (not whether the current tick triggered a reversal)
       bool isReversalBar = false;
       if (!semaphoreOffset[bar]) {
@@ -690,7 +699,6 @@ int onTick() {
             }
          }
       }
-
 
 
 
@@ -719,7 +727,7 @@ int onTick() {
                signalPerformance[bar] = lowerCross[bar] - Close[bar];      // short
             }
          }
-         //debug("onTick(0.1)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  balance="+ DoubleToStr(signalPerformance[bar]/pUnit, pDigits));
+         if (Ticks==1) debug("onTick(0.4)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  reversalBar  balance="+ DoubleToStr(signalPerformance[bar]/pUnit, pDigits));
       }
       else if (isPosition) {                                               // only update PnL
          range = Close[bar] - Close[bar+1];
@@ -733,6 +741,8 @@ int onTick() {
       else {                                                               // keep previous PnL
          signalPerformance[bar] = signalPerformance[bar+1];
       }
+
+
 
 
       // hide non-configured crossings
@@ -759,8 +769,6 @@ int onTick() {
 
 
 
-   // TODO:
-   //  - once finished: update logic in usage locations of icZigZag()
 
 
 
@@ -1604,38 +1612,38 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",              ZigZag.Periods                           +";"+ NL,
-                            "ZigZag.Periods.Step=",         ZigZag.Periods.Step                      +";"+ NL,
-                            "ZigZag.Type=",                 DoubleQuoteStr(ZigZag.Type)              +";"+ NL,
-                            "ZigZag.Semaphores.Symbol=",    DoubleQuoteStr(ZigZag.Semaphores.Symbol) +";"+ NL,
-                            "ZigZag.Width=",                ZigZag.Width                             +";"+ NL,
-                            "ZigZag.Color=",                ColorToStr(ZigZag.Color)                 +";"+ NL,
+   return(StringConcatenate("ZigZag.Periods=",                ZigZag.Periods                                +";"+ NL,
+                            "ZigZag.Periods.Step=",           ZigZag.Periods.Step                           +";"+ NL,
+                            "ZigZag.Type=",                   DoubleQuoteStr(ZigZag.Type)                   +";"+ NL,
+                            "ZigZag.Semaphores.Symbol=",      DoubleQuoteStr(ZigZag.Semaphores.Symbol)      +";"+ NL,
+                            "ZigZag.Width=",                  ZigZag.Width                                  +";"+ NL,
+                            "ZigZag.Color=",                  ColorToStr(ZigZag.Color)                      +";"+ NL,
 
-                            "Donchian.ShowChannel=",        BoolToStr(Donchian.ShowChannel)          +";"+ NL,
-                            "Donchian.Channel.UpperColor=", ColorToStr(Donchian.Channel.UpperColor)  +";"+ NL,
-                            "Donchian.Channel.LowerColor=", ColorToStr(Donchian.Channel.LowerColor)  +";"+ NL,
-                            "Donchian.ShowCrossings=",      DoubleQuoteStr(Donchian.ShowCrossings)   +";"+ NL,
-                            "Donchian.Crossing.Symbol=",    DoubleQuoteStr(Donchian.Crossing.Symbol) +";"+ NL,
-                            "Donchian.Crossing.Width=",     Donchian.Crossing.Width                  +";"+ NL,
-                            "Donchian.Crossing.Color=",     ColorToStr(Donchian.Crossing.Color)      +";"+ NL,
+                            "Donchian.ShowChannel=",          BoolToStr(Donchian.ShowChannel)               +";"+ NL,
+                            "Donchian.Channel.UpperColor=",   ColorToStr(Donchian.Channel.UpperColor)       +";"+ NL,
+                            "Donchian.Channel.LowerColor=",   ColorToStr(Donchian.Channel.LowerColor)       +";"+ NL,
+                            "Donchian.ShowCrossings=",        DoubleQuoteStr(Donchian.ShowCrossings)        +";"+ NL,
+                            "Donchian.Crossing.Symbol=",      DoubleQuoteStr(Donchian.Crossing.Symbol)      +";"+ NL,
+                            "Donchian.Crossing.Width=",       Donchian.Crossing.Width                       +";"+ NL,
+                            "Donchian.Crossing.Color=",       ColorToStr(Donchian.Crossing.Color)           +";"+ NL,
 
-                            "TrackZigZagBalance=",          BoolToStr(TrackZigZagBalance)            +";"+ NL,
-                            "TrackZigZagBalance.Since=",    TimeToStr(TrackZigZagBalance.Since)      +";"+ NL,
-                            "ProjectNextBalance=",          BoolToStr(ProjectNextBalance)            +";"+ NL,
+                            "ShowChartLegend=",               BoolToStr(ShowChartLegend)                    +";"+ NL,
+                            "MaxBarsBack=",                   MaxBarsBack                                   +";"+ NL,
 
-                            "ShowChartLegend=",             BoolToStr(ShowChartLegend)               +";"+ NL,
-                            "MaxBarsBack=",                 MaxBarsBack                              +";"+ NL,
+                            "Signal.onReversal=",             BoolToStr(Signal.onReversal)                  +";"+ NL,
+                            "Signal.onReversal.Types=",       DoubleQuoteStr(Signal.onReversal.Types)       +";"+ NL,
+                            "Signal.onBreakout=",             BoolToStr(Signal.onBreakout)                  +";"+ NL,
+                            "Signal.onBreakout.Types=",       DoubleQuoteStr(Signal.onBreakout.Types)       +";"+ NL,
+                            "Signal.Sound.Up=",               DoubleQuoteStr(Signal.Sound.Up)               +";"+ NL,
+                            "Signal.Sound.Down=",             DoubleQuoteStr(Signal.Sound.Down)             +";"+ NL,
 
-                            "Signal.onReversal=",           BoolToStr(Signal.onReversal)             +";"+ NL,
-                            "Signal.onReversal.Types=",     DoubleQuoteStr(Signal.onReversal.Types)  +";"+ NL,
-                            "Signal.onBreakout=",           BoolToStr(Signal.onBreakout)             +";"+ NL,
-                            "Signal.onBreakout.Types=",     DoubleQuoteStr(Signal.onBreakout.Types)  +";"+ NL,
-                            "Signal.Sound.Up=",             DoubleQuoteStr(Signal.Sound.Up)          +";"+ NL,
-                            "Signal.Sound.Down=",           DoubleQuoteStr(Signal.Sound.Down)        +";"+ NL,
+                            "Sound.onChannelWidening=",       BoolToStr(Sound.onChannelWidening)            +";"+ NL,
+                            "Sound.onNewChannelHigh=",        DoubleQuoteStr(Sound.onNewChannelHigh)        +";"+ NL,
+                            "Sound.onNewChannelLow=",         DoubleQuoteStr(Sound.onNewChannelLow)         +";"+ NL,
 
-                            "Sound.onChannelWidening=",     BoolToStr(Sound.onChannelWidening)       +";"+ NL,
-                            "Sound.onNewChannelHigh=",      DoubleQuoteStr(Sound.onNewChannelHigh)   +";"+ NL,
-                            "Sound.onNewChannelLow=",       DoubleQuoteStr(Sound.onNewChannelLow)    +";")
+                            "TrackSignalPerformance=",        BoolToStr(TrackSignalPerformance)             +";"+ NL,
+                            "TrackSignalPerformance.Since=",  TimeToStr(TrackSignalPerformance.Since)       +";"+ NL,
+                            "TrackSignalPerformance.Symbol=", DoubleQuoteStr(TrackSignalPerformance.Symbol) +";")
    );
 
    // suppress compiler warnings
