@@ -2819,7 +2819,7 @@ string MarketInfoModeToStr(int mode) {
 int DebugMarketInfo(string caller = "") {
    string symbol = Symbol();
    double value;
-   int error, len=21 + StringLen(symbol);
+   int error, len = 21 + StringLen(symbol);
 
    debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
    debug(caller +"  Account");                                             //  Account
@@ -2838,6 +2838,9 @@ int DebugMarketInfo(string caller = "") {
    debug(caller +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
    debug(caller +"  derived:  Pip         = "+ NumberToStr(Pip, PriceFormat));
    debug(caller +"  derived:  PipDigits   = "+ PipDigits);
+
+   debug(caller +"  derived:  pUnit       = "+ NumberToStr(pUnit, pUnitFormat));
+
    debug(caller +"  derived:  PriceFormat = \""+ PriceFormat +"\"");
    debug(caller +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
    debug(caller +"  built-in: Bars        = "+ Bars);
