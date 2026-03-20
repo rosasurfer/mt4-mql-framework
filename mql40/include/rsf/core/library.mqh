@@ -20,7 +20,7 @@ int __lpSuperContext = NULL;
 
 
 /**
- * Initialization
+ * MQL core init function for libraries.
  *
  * @return int - error status
  */
@@ -69,7 +69,7 @@ int init() {
    prev_error = NO_ERROR;
    last_error = NO_ERROR;
 
-   // don't use MathLog() as in terminals (509 < build && build < 603) it fails to produce NaN/-INF
+   // don't use MathLog() to produce special doubles as in terminals "509 < build < 603" it fails
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 
@@ -91,8 +91,11 @@ int init() {
 
 
 /**
- * Dummy-Startfunktion für Libraries. Für den Compiler build 224 muß ab einer unbestimmten Komplexität der Library eine
- * start()-Funktion existieren, damit die init()-Funktion aufgerufen wird.
+ * MQL core main function for libraries.
+ *
+ * Compiler bug in build 224: Obviously, this is a dummy function, and the runtime environment will never call it. However,
+ * for compiler build 224, a start() function must exist once the library reaches a certain complexity, otherwise the init()
+ * function will not be called.
  *
  * @return int - error status
  */
@@ -102,10 +105,9 @@ int start() {
 
 
 /**
- * Deinitialisierung der Library.
+ * MQL core deinit function for libraries.
  *
  * @return int - error status
- *
  *
  * TODO: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere Expert::deinit()
  *       Funktionen verfrüht und mitten im Code ab (nicht erst nach 2.5 Sekunden).

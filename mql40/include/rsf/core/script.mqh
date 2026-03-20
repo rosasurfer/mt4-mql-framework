@@ -7,7 +7,7 @@ double  _Ask;                                                        // ...
 
 
 /**
- * Globale init()-Funktion für Scripte.
+ * MQL core init function for scripts.
  *
  * @return int - error status
  */
@@ -108,7 +108,7 @@ bool initGlobals() {
    _Bid = NormalizeDouble(Bid, Digits);                     // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                     //
 
-   // don't use MathLog() to produce special double values as in terminals (509 < build && build < 603) it fails
+   // don't use MathLog() to produce special doubles as in terminals "509 < build < 603" it fails
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 
@@ -117,7 +117,7 @@ bool initGlobals() {
 
 
 /**
- * Globale start()-Funktion für Scripte.
+ * MQL core main function for scripts.
  *
  * @return int - error status
  */
@@ -173,7 +173,7 @@ int start() {
 
 
 /**
- * Globale deinit()-Funktion für Scripte.
+ * MQL core deinit function for scripts.
  *
  * @return int - error status
  */
@@ -324,4 +324,3 @@ bool CheckErrors(string caller, int error = NULL) {
 #import "user32.dll"
    int GetParent(int hWnd);
 #import
-

@@ -16,7 +16,7 @@ double  _Ask;                                                        // ...
 
 
 /**
- * Global init() function for indicators.
+ * MQL core init function for indicators.
  *
  * @return int - error status
  */
@@ -208,7 +208,7 @@ bool initGlobals() {
    _Bid      = NormalizeDouble(Bid, Digits);                // normalized versions of Bid/Ask
    _Ask      = NormalizeDouble(Ask, Digits);                //
 
-   // don't use MathLog() to produce special double values as in terminals (509 < build && build < 603) it fails
+   // don't use MathLog() to produce special doubles as in terminals "509 < build < 603" it fails
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 
@@ -219,7 +219,7 @@ bool initGlobals() {
 
 
 /**
- * Core start() function for indicators.
+ * MQL core main function for indicators.
  *
  * Before execution the global var 'last_error' is reset and an existing error is stored in var 'prev_error'. If indicator
  * initialization returned with ERS_TERMINAL_NOT_YET_READY an attempt is made to re-execute initialization. On repeated
@@ -413,7 +413,7 @@ int start() {
 
 
 /**
- * Globale deinit()-Funktion für Indikatoren.
+ * MQL core deinit function for indicators.
  *
  * @return int - error status
  */

@@ -10,7 +10,7 @@ double  _Ask;                                                     // ...
 
 
 /**
- * Core initialization handler of experts.
+ * MQL core init function for experts.
  *
  * @return int - error status
  */
@@ -192,8 +192,8 @@ int init() {
 
 
 /**
- * Global main function. If called after an init() cycle and init() returned with ERS_TERMINAL_NOT_YET_READY, init() is
- * called again until the terminal is "ready".
+ * MQL core main function for experts. If called after an init() cycle and init() returned with ERS_TERMINAL_NOT_YET_READY,
+ * init() is called again until the terminal is "ready".
  *
  * @return int - error status
  */
@@ -290,10 +290,9 @@ int start() {
 
 
 /**
- * Core deinitialization handler of experts.
+ * MQL core deinit function for experts.
  *
  * @return int - error status
- *
  *
  * Terminal bug
  * ------------
@@ -508,7 +507,7 @@ bool initGlobals() {
    _Bid = NormalizeDouble(Bid, Digits);                     // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                     //
 
-   // don't use MathLog() to produce special double values as in terminals (509 < build && build < 603) it fails
+   // don't use MathLog() to produce special doubles as in terminals "509 < build < 603" it fails
    INF = Math_INF();                                        // positive infinity
    NaN = INF-INF;                                           // not-a-number
 
