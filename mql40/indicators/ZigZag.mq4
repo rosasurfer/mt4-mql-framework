@@ -646,7 +646,7 @@ int onTick() {
          lowerCrossLow[bar] = lowerBand[bar];
       }
 
-      // --- start: recalculate ZigZag data ---
+      // recalculate ZigZag data
       // if no channel crossing                                      // before or after the first semaphore
       if (!upperCross[bar] && !lowerCross[bar]) {
          reversalOffset[bar] = reversalOffset[bar+1];                // keep reversal offset (may be -1)
@@ -672,19 +672,18 @@ int onTick() {
       // if a single channel crossing (before or after the first semaphore)
       else if (upperCross[bar] != 0) ProcessUpperCross(bar);
       else                           ProcessLowerCross(bar);
-      // --- end: recalculate ZigZag data ---
 
-      // whether the processed bar is a reversal bar (not whether the current tick triggered a reversal)
-      bool isReversalBar = false;
-      if (!unknownTrend[bar]) {
-         isReversalBar = (Abs(trend[bar]) == reversalOffset[bar]);
+      // whether the current bar is a reversal bar (not whether the current tick triggered a reversal)
+      bool isReversalBar = (Abs(trend[bar]) == reversalOffset[bar]);
+
+      // calculate signal performance
+      if (TrackSignalPerformance && !__isSuperContext && !__isTesting) {
+         RecalculateSignalPerformance(bar, isReversalBar);
       }
-
-
 
       if (debugging && Ticks == 1) {
          if (Time[bar] >= devFrom && Time[bar] <= devTo) {
-            debug("onTick(0.1)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  trend="+ trend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  unknownTrend="+ unknownTrend[bar]);
+            debug("onTick(0.1)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  reversalOffset="+ _int(reversalOffset[bar]) +"  trend="+ trend[bar] +"  unknownTrend="+ unknownTrend[bar]);
             if (isReversalBar) {
             debug("onTick(0.2)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  isReversalBar=1");
             }
@@ -693,51 +692,6 @@ int onTick() {
             }
          }
       }
-
-
-
-      // calculate signal performance (if enabled)
-      bool isPosition = (signalPerformance[bar+1] != EMPTY_VALUE);
-      double range;
-
-      if (isReversalBar) {
-         if (isPosition) {
-            if (upperCross[bar] != 0) {
-               range = upperCross[bar] - Close[bar+1];
-               signalPerformance[bar]  = signalPerformance[bar+1] - range; // close existing position
-               signalPerformance[bar] += Close[bar] - upperCross[bar];     // open new position
-            }
-            else {
-               range = lowerCross[bar] - Close[bar+1];
-               signalPerformance[bar]  = signalPerformance[bar+1] + range; // close existing position
-               signalPerformance[bar] += lowerCross[bar] - Close[bar];     // open new position
-            }
-         }
-         else {                                                            // open a new position
-            if (upperCross[bar] != 0) {
-               signalPerformance[bar] = Close[bar] - upperCross[bar];      // long
-            }
-            else {
-               signalPerformance[bar] = lowerCross[bar] - Close[bar];      // short
-            }
-         }
-         if (Ticks==1) debug("onTick(0.4)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  reversalBar  balance="+ DoubleToStr(signalPerformance[bar]/pUnit, pDigits));
-      }
-      else if (isPosition) {                                               // only update PnL
-         range = Close[bar] - Close[bar+1];
-         if (trend[bar] > 0) {
-            signalPerformance[bar] = signalPerformance[bar+1] + range;
-         }
-         else {
-            signalPerformance[bar] = signalPerformance[bar+1] - range;
-         }
-      }
-      else {                                                               // keep previous PnL
-         signalPerformance[bar] = signalPerformance[bar+1];
-      }
-
-
-
 
       // hide non-configured crossings
       if (!crossingDrawType) {                                    // hide all crossings
@@ -757,20 +711,78 @@ int onTick() {
          }
       }
 
-      // compose combinedTrend[]
+      // set combinedTrend[]
       combinedTrend[bar] = Sign(trend[bar]) * unknownTrend[bar] * 100000 + trend[bar];
    }
-
-
-
-
-
 
    if (__isChart && !__isSuperContext) {
       if (ShowChartLegend) UpdateChartLegend();
 
-      // track ZigZag balance (if enabled)
-      if (Ticks == 1) /*&&*/ if (TrackZigZagBalance && TrackZigZagBalance.Since) {
+      // record signal performance
+      if (TrackSignalPerformance && !__isTesting) {
+         RecordSignalPerformance();
+      }
+
+      // detect ZigZag breakouts (comparing legs against bands also detects breakouts on missed ticks)
+      if (Signal.onBreakout) {
+         if (ChangedBars > 2) {
+            while (true) {
+               int resultType = 0;
+               bar = FindSemaphore(0, resultType); if (bar < 0) break;
+
+               // resolve leg high/low
+               if (resultType == MODE_HIGH) {
+                  lastLegHigh = High[bar];
+                  lastLegLow = 0;
+               }
+               else {
+                  lastLegHigh = 0;
+                  lastLegLow = Low[bar];
+               }
+
+               // resolve the last 3 semaphores
+               bar   = FindSemaphore(bar, resultType, resultType);           if (bar < 0) break;
+               sema1 = ifDouble(resultType==MODE_HIGH, High[bar], Low[bar]);
+               bar   = FindSemaphore(bar, resultType, resultType);           if (bar < 0) break;
+               sema2 = ifDouble(resultType==MODE_HIGH, High[bar], Low[bar]);
+               bar   = FindSemaphore(bar, resultType, resultType);           if (bar < 0) break;
+               sema3 = ifDouble(resultType==MODE_HIGH, High[bar], Low[bar]);
+               break;
+            }
+         }
+         else if (sema3 != 0) {
+            if (trend[0] > 0) {
+               if (lastLegHigh < sema2+HalfPoint && upperBand[0] > sema2+HalfPoint) {
+                  onBreakout(D_LONG);
+               }
+               lastLegHigh = High[unknownTrend[0]];               // leg high for comparison at the nex tick
+            }
+            else if (trend[0] < 0) {
+               if ((!lastLegLow || lastLegLow > sema2-HalfPoint) && lowerBand[0] < sema2-HalfPoint) {
+                  onBreakout(D_SHORT);
+               }
+               lastLegLow = Low[unknownTrend[0]];                 // leg low for comparison at the nex tick
+            }
+         }
+      }
+
+      // detect Donchian channel widenings
+      if (Sound.onChannelWidening) /*&&*/ if (ChangedBars <= 2) {
+         if (ChangedBars == 2) {
+            lastUpperBand = upperBand[1];
+            lastLowerBand = lowerBand[1];
+         }
+         if (lastUpperBand && lastLowerBand) {
+            if      (upperBand[0] > lastUpperBand+HalfPoint) onChannelWidening(D_LONG);
+            else if (lowerBand[0] < lastLowerBand-HalfPoint) onChannelWidening(D_SHORT);
+         }
+         lastUpperBand = upperBand[0];
+         lastLowerBand = lowerBand[0];
+      }
+
+      // --- old ------------------------------------------------------------------------------------------------------------
+      // track ZigZag balance
+      if (TrackZigZagBalance) {
          int currSem, prevBar, prevSem, size;
          int currBar = FindSemaphore(0, currSem); if (currBar < 0) return(last_error);
 
@@ -786,8 +798,7 @@ int onTick() {
             if (!reversalOffset[currBar] && reversalOffset[currBar+1]==-1) {  // reversal and next semaphore on the same bar
                reversalBar = currBar;
             }
-            if (Time[reversalBar] < TrackZigZagBalance.Since) break;
-            if (reversalBar > MaxBarsBack-ZigZag.Periods)     break;
+            if (reversalBar > MaxBarsBack-ZigZag.Periods) break;
 
             size = ArrayRange(events, 0);
             ArrayResize(events, size+2);
@@ -851,65 +862,88 @@ int onTick() {
             }
          }
       }
-
-      // detect ZigZag breakouts (comparing legs against bands also detects breakouts on missed ticks)
-      if (Signal.onBreakout) {
-         if (ChangedBars > 2) {
-            while (true) {
-               int resultType = 0;
-               bar = FindSemaphore(0, resultType); if (bar < 0) break;
-
-               // resolve leg high/low
-               if (resultType == MODE_HIGH) {
-                  lastLegHigh = High[bar];
-                  lastLegLow = 0;
-               }
-               else {
-                  lastLegHigh = 0;
-                  lastLegLow = Low[bar];
-               }
-
-               // resolve the last 3 semaphores
-               bar   = FindSemaphore(bar, resultType, resultType);           if (bar < 0) break;
-               sema1 = ifDouble(resultType==MODE_HIGH, High[bar], Low[bar]);
-               bar   = FindSemaphore(bar, resultType, resultType);           if (bar < 0) break;
-               sema2 = ifDouble(resultType==MODE_HIGH, High[bar], Low[bar]);
-               bar   = FindSemaphore(bar, resultType, resultType);           if (bar < 0) break;
-               sema3 = ifDouble(resultType==MODE_HIGH, High[bar], Low[bar]);
-               break;
-            }
-         }
-         else if (sema3 != 0) {
-            if (trend[0] > 0) {
-               if (lastLegHigh < sema2+HalfPoint && upperBand[0] > sema2+HalfPoint) {
-                  onBreakout(D_LONG);
-               }
-               lastLegHigh = High[unknownTrend[0]];               // leg high for comparison at the nex tick
-            }
-            else if (trend[0] < 0) {
-               if ((!lastLegLow || lastLegLow > sema2-HalfPoint) && lowerBand[0] < sema2-HalfPoint) {
-                  onBreakout(D_SHORT);
-               }
-               lastLegLow = Low[unknownTrend[0]];                 // leg low for comparison at the nex tick
-            }
-         }
-      }
-
-      // detect Donchian channel widenings
-      if (Sound.onChannelWidening) /*&&*/ if (ChangedBars <= 2) {
-         if (ChangedBars == 2) {
-            lastUpperBand = upperBand[1];
-            lastLowerBand = lowerBand[1];
-         }
-         if (lastUpperBand && lastLowerBand) {
-            if      (upperBand[0] > lastUpperBand+HalfPoint) onChannelWidening(D_LONG);
-            else if (lowerBand[0] < lastLowerBand-HalfPoint) onChannelWidening(D_SHORT);
-         }
-         lastUpperBand = upperBand[0];
-         lastLowerBand = lowerBand[0];
-      }
    }
    return(last_error);
+}
+
+
+/**
+ * Recalculate the signal performance for the specified bar.
+ *
+ * @param  int  bar        - bar offset
+ * @param  bool isReversal - whether the bar is a reversal bar
+ *
+ * @return bool - success status
+ */
+bool RecalculateSignalPerformance(int bar, bool isReversal) {
+   isReversal = (isReversal!=0);
+   bool isPosition = (signalPerformance[bar+1] != EMPTY_VALUE);
+   double change;
+
+   // either flip the position
+   if (isReversal) {
+      if (isPosition) {
+         if (trend[bar] > 0) {
+            change = upperCross[bar] - Close[bar+1];
+            signalPerformance[bar]  = signalPerformance[bar+1] - change;   // close existing short position
+            signalPerformance[bar] += Close[bar] - upperCross[bar];        // open new long position
+         }
+         else if (trend[bar] < 0) {
+            change = lowerCross[bar] - Close[bar+1];
+            signalPerformance[bar]  = signalPerformance[bar+1] + change;   // close existing long position
+            signalPerformance[bar] += lowerCross[bar] - Close[bar];        // open new short position
+         }
+         else {
+            debug("RecalculateSignalPerformance(0.1)  cannot yet flip position with trend = 0");
+         }
+      }
+      else {                                                               // open a new position
+         if (trend[bar] > 0) {
+            signalPerformance[bar] = Close[bar] - upperCross[bar];         // long position
+         }
+         else if (trend[bar] < 0) {
+            signalPerformance[bar] = lowerCross[bar] - Close[bar];         // short position
+         }
+         else {
+            debug("RecalculateSignalPerformance(0.2)  cannot yet open position with trend = 0");
+         }
+      }
+      if (debugging && Ticks==1) debug("RecalculateSignalPerformance(0.3)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  reversalBar  balance="+ DoubleToStr(signalPerformance[bar]/pUnit, pDigits));
+   }
+
+   // or update the position
+   else if (isPosition) {
+      change = Close[bar] - Close[bar+1];
+      if (trend[bar] > 0) {
+         signalPerformance[bar] = signalPerformance[bar+1] + change;
+      }
+      else if (trend[bar] < 0) {
+         signalPerformance[bar] = signalPerformance[bar+1] - change;
+      }
+      else {
+         debug("RecalculateSignalPerformance(0.4)  cannot yet update position with trend = 0");
+      }
+   }
+
+   // or keep existing PnL
+   else {
+      signalPerformance[bar] = signalPerformance[bar+1];
+   }
+   return(true);
+}
+
+
+/**
+ * Record the signal performance for all changed bars.
+ *
+ * @return bool - success status
+ */
+bool RecordSignalPerformance() {
+   //if (!recorder.initialized) {
+   //   if (recorder.mode == RECORDER_OFF) return(_true(Recorder_off()));
+   //   if (!Recorder_init())              return(_false(Recorder_off()));
+   //}
+   return(true);
 }
 
 

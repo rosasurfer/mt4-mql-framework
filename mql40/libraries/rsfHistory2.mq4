@@ -10,17 +10,18 @@
  *  - Create a new history and delete all existing data (e.g. for writing a new history):
  *     int hSet = HistorySet2.Create(symbol, description, digits, format);
  *
- *  - How to synchronize rsfHistory{1-3}.mq4:
+ *  - How to synchronize rsfHistory{1,2,3}.mq4:
  *     search:  (HistoryFile|HistorySet)[1-3]\>
  *     replace: \11 or \12 or \13
  *
  *
  * Notes:
  * ------
- *  - MQL4.0 in terminal builds <= 509 imposes a limit of 16 open files per MQL module. In terminal builds > 509 this limit
- *    is extended to 64 open files per MQL module. This means older terminals can manage max. 1 full history set and newer
- *    terminals max. 7 full history sets per MQL module. That's still not sufficient. To overcome the limits there are 3
- *    identical history libraries, extending the limits for newer terminals to max. 21 history sets per MQL program.
+ *  - MT4 terminal builds <= 509 impose a limit of 16 open files per MQL module. In terminal builds > 509 this limit was
+ *    extended to 64 open files per MQL module. This means older terminals can manage max. 1 full history set and newer
+ *    terminals max. 7 full history sets per MQL module. For some uses cases that's still not sufficient. To overcome the
+ *    limit there are 3 fully identical history libraries, extending the limit for terminal builds > 509 to max. 21 history
+ *    sets per MQL program.
  *
  *  - Since terminal builds > 509 MT4 supports two history file formats. The format is identified in history files by the
  *    field HISTORY_HEADER.barFormat. The default bar format in builds <= 509 is "400" and in builds > 509 "401".
@@ -810,7 +811,7 @@ int HistoryFile2.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
  *
  * @return bool - success status
  *
- * NOTE: Time und Volume der gelesenen Bar werden validert, nicht jedoch die Barform.
+ * NOTE: Time und Volume der gelesenen Bar werden validiert, nicht jedoch die Barform.
  */
 bool HistoryFile2.ReadBar(int hFile, int offset, double &bar[]) {
    if (hFile <= 0)                      return(!catch("HistoryFile2.ReadBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -909,7 +910,7 @@ bool HistoryFile2.ReadBar(int hFile, int offset, double &bar[]) {
  *
  * @return bool - success status
  *
- * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
+ * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
  *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile2.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
@@ -1111,7 +1112,7 @@ bool HistoryFile2.UpdateBar(int hFile, int offset, double value) {
  *
  * @return bool - success status
  *
- * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
+ * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
  *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile2.InsertBar(int hFile, int offset, double bar[], int flags = NULL) {
