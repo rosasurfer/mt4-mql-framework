@@ -123,15 +123,18 @@ bool     ProjectNextBalance       = false;   // whether to project zero-balance 
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
+#include <rsf/history.mqh>
+#include <rsf/win32api.mqh>
 #include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
+#include <rsf/functions/iCustom/ZigZag.mqh>
 #include <rsf/functions/ManageDoubleIndicatorBuffer.mqh>
 #include <rsf/functions/ManageIntIndicatorBuffer.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/ParseDateTime.mqh>
-#include <rsf/functions/iCustom/ZigZag.mqh>
-#include <rsf/win32api.mqh>
+
 
 // indicator buffer ids
 #define MODE_UPPER_BAND          ZigZag.MODE_UPPER_BAND        //  0: upper channel band: positive or 0
@@ -215,6 +218,19 @@ double   lastLowerBand;                                        // upper/lower ba
 datetime skipSignals;                                          // skip signals until the specified time to wait for possible data pumping
 datetime lastTick;
 int      lastSoundSignal;                                      // GetTickCount() value of the last audio signal
+
+
+// recorder status
+bool     recorder.initialized;
+string   recorder.hstDirectory = "";
+int      recorder.hstFormat;
+string   recorder.symbol = "";
+string   recorder.symbolDescr = "";
+string   recorder.group = "";
+int      recorder.priceBase;
+int      recorder.hSet;
+datetime recorder.startTime;
+
 
 // signal direction types
 #define D_LONG     TRADE_DIRECTION_LONG                        // 1
@@ -482,6 +498,8 @@ int onInit() {
 
    // TrackSignalPerformance
    if (AutoConfiguration) TrackSignalPerformance = GetConfigBool(indicator, "TrackSignalPerformance", TrackSignalPerformance);
+   if (__isSuperContext) TrackSignalPerformance = false;
+   if (__isTesting)      TrackSignalPerformance = false;
    // TrackSignalPerformance.Since
    datetime dtValue = TrackSignalPerformance.Since;
    if (AutoConfiguration) {
@@ -536,6 +554,13 @@ int onDeinit() {
    if (__tickTimerId > NULL) {
       int id = __tickTimerId; __tickTimerId = NULL;
       if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   }
+
+   // close an open history set
+   if (recorder.hSet != 0) {
+      int tmp = recorder.hSet;
+      recorder.hSet = NULL;
+      if (!HistorySet1.Close(tmp)) return(ERR_RUNTIME_ERROR);
    }
    return(catch("onDeinit(2)"));
 }
@@ -607,6 +632,7 @@ int onTick() {
    // calculate start bar
    int startBar = Min(MaxBarsBack-1, ChangedBars-1, Bars-ZigZag.Periods);
    if (startBar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ ZigZag.Periods, ERR_HISTORY_INSUFFICIENT));
+   if (!ValidBars) recorder.startTime = Time[startBar];
 
    // recalculate changed bars
    if (startBar > 2) {                       // TODO: why 2 and not 1
@@ -674,10 +700,13 @@ int onTick() {
       else                           ProcessLowerCross(bar);
 
       // whether the current bar is a reversal bar (not whether the current tick triggered a reversal)
-      bool isReversalBar = (Abs(trend[bar]) == reversalOffset[bar]);
+      bool isReversalBar = false;
+      if (!unknownTrend[bar]) {
+         isReversalBar = (Abs(trend[bar]) == reversalOffset[bar]);
+      }
 
       // calculate signal performance
-      if (TrackSignalPerformance && !__isSuperContext && !__isTesting) {
+      if (TrackSignalPerformance) {
          RecalculateSignalPerformance(bar, isReversalBar);
       }
 
@@ -719,7 +748,7 @@ int onTick() {
       if (ShowChartLegend) UpdateChartLegend();
 
       // record signal performance
-      if (TrackSignalPerformance && !__isTesting) {
+      if (TrackSignalPerformance) {
          RecordSignalPerformance();
       }
 
@@ -876,7 +905,7 @@ int onTick() {
  * @return bool - success status
  */
 bool RecalculateSignalPerformance(int bar, bool isReversal) {
-   isReversal = (isReversal!=0);
+   isReversal = (isReversal != 0);
    bool isPosition = (signalPerformance[bar+1] != EMPTY_VALUE);
    double change;
 
@@ -894,7 +923,7 @@ bool RecalculateSignalPerformance(int bar, bool isReversal) {
             signalPerformance[bar] += lowerCross[bar] - Close[bar];        // open new short position
          }
          else {
-            debug("RecalculateSignalPerformance(0.1)  cannot yet flip position with trend = 0");
+            logWarn("RecalculateSignalPerformance(0.1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  cannot yet flip position with trend=0");
          }
       }
       else {                                                               // open a new position
@@ -905,10 +934,9 @@ bool RecalculateSignalPerformance(int bar, bool isReversal) {
             signalPerformance[bar] = lowerCross[bar] - Close[bar];         // short position
          }
          else {
-            debug("RecalculateSignalPerformance(0.2)  cannot yet open position with trend = 0");
+            logWarn("RecalculateSignalPerformance(0.2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  cannot yet open position with trend=0");
          }
       }
-      if (debugging && Ticks==1) debug("RecalculateSignalPerformance(0.3)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  reversalBar  balance="+ DoubleToStr(signalPerformance[bar]/pUnit, pDigits));
    }
 
    // or update the position
@@ -921,7 +949,7 @@ bool RecalculateSignalPerformance(int bar, bool isReversal) {
          signalPerformance[bar] = signalPerformance[bar+1] - change;
       }
       else {
-         debug("RecalculateSignalPerformance(0.4)  cannot yet update position with trend = 0");
+         logWarn("RecalculateSignalPerformance(0.4)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  cannot yet update position with trend=0");
       }
    }
 
@@ -934,16 +962,118 @@ bool RecalculateSignalPerformance(int bar, bool isReversal) {
 
 
 /**
- * Record the signal performance for all changed bars.
+ * Record the signal performance for the specified bar.
+ *
+ * @param  int bar - bar offset
  *
  * @return bool - success status
  */
-bool RecordSignalPerformance() {
-   //if (!recorder.initialized) {
-   //   if (recorder.mode == RECORDER_OFF) return(_true(Recorder_off()));
-   //   if (!Recorder_init())              return(_false(Recorder_off()));
-   //}
+bool RecordSignalPerformance(int _bar = 0) {
+   if (!recorder.initialized) {
+      // create symbol and group
+      recorder.symbol       = Symbol() +".zzr";
+      recorder.symbolDescr  = "ZigZag reversal";
+      recorder.group        = "ZigZag reversal";
+      recorder.hstDirectory = Recorder_GetHstDirectory();
+      recorder.hstFormat    = Recorder_GetHstFormat();
+      if (last_error != NULL) return(false);
+
+      if (!IsRawSymbol(recorder.symbol, recorder.hstDirectory)) {
+         int symbolId = CreateRawSymbol(recorder.symbol, recorder.symbolDescr, recorder.group, pDigits, AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
+         if (symbolId < 0) return(false);
+      }
+
+      // open HistorySet
+      if (!recorder.hSet) {
+         recorder.hSet = HistorySet1.Get(recorder.symbol, recorder.hstDirectory);
+         if (recorder.hSet == -1) {
+            recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, pDigits, recorder.hstFormat, recorder.hstDirectory);
+         }
+         if (!recorder.hSet) return(false);
+      }
+      recorder.initialized = true;
+      debug("RecordSignalPerformance(0.1)  Tick="+ Ticks +"  recorder initialized");
+   }
+
+   int startBar = 0, flags = HST_BUFFER_TICKS|HST_FILL_GAPS;
+
+   if (ChangedBars > 2) {                             // rewrite the full history (intentionally skip rewriting bar 1 on BarOpen)
+      if (recorder.hSet != 0) {
+         int tmp = recorder.hSet;
+         recorder.hSet = NULL;
+         if (!HistorySet1.Close(tmp)) return(false);  // TODO: HistorySet.Create() should auto-close an open set but errors
+      }
+      startBar = iBarShiftNext(NULL, NULL, recorder.startTime);
+      debug("RecordSignalPerformance(0.2)  Tick="+ Ticks +"  rewriting all history since "+ TimeToStr(recorder.startTime) +" (bar "+ startBar +")");
+   }
+
+   for (int bar=startBar; bar > 0; bar--) {
+      if (!recorder.hSet) {
+         recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, pDigits, recorder.hstFormat, recorder.hstDirectory);
+         if (!recorder.hSet) return(false);
+      }
+      double value = signalPerformance[bar] + recorder.priceBase;
+
+      if (value <= 0) {
+         switch(recorder.priceBase) {
+            case       0: recorder.priceBase =        1; break;
+            case       1: recorder.priceBase =       10; break;
+            case      10: recorder.priceBase =      100; break;
+            case     100: recorder.priceBase =     1000; break;
+            case    1000: recorder.priceBase =    10000; break;
+            case   10000: recorder.priceBase =   100000; break;
+            case  100000: recorder.priceBase =  1000000; break;
+            case 1000000: recorder.priceBase = 10000000; break;
+         }
+         debug("RecordSignalPerformance(0.3)  Tick="+ Ticks +"  updated price base to "+ DoubleToStr(recorder.priceBase, 2));
+
+         tmp = recorder.hSet;
+         recorder.hSet = NULL;
+         if (!HistorySet1.Close(tmp)) return(false);
+         startBar = iBarShiftNext(NULL, NULL, recorder.startTime);
+         bar = startBar + 1;
+         continue;
+      }
+
+      if (bar == 0) flags = HST_FILL_GAPS;
+      else          flags = HST_FILL_GAPS|HST_BUFFER_TICKS;
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], value, flags)) return(false);
+   }
    return(true);
+}
+
+
+/**
+ * Resolve the history directory for recorded timeseries.
+ *
+ * @return string - directory or an empty string in case of errors
+ */
+string Recorder_GetHstDirectory() {
+   string section = "SignalPerformance";
+   string key = "HistoryDirectory", sValue="";
+
+   if (IsConfigKey(section, key)) {
+      sValue = GetConfigString(section, key, "");
+   }
+   if (!StringLen(sValue)) return(_EMPTY_STR(catch("Recorder_GetHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
+   return(sValue);
+}
+
+
+/**
+ * Resolve the history format for recorded timeseries.
+ *
+ * @return int - history format or NULL (0) in case of errors
+ */
+int Recorder_GetHstFormat() {
+   string section = "SignalPerformance";
+   string key = "HistoryFormat", sValue="";
+
+   if (IsConfigKey(section, key)) {
+      int iValue = GetConfigInt(section, key, 0);
+   }
+   if (iValue!=400 && iValue!=401) return(!catch("Recorder_GetHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+   return(iValue);
 }
 
 
