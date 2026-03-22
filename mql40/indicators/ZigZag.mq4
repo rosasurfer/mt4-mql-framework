@@ -906,57 +906,65 @@ int onTick() {
  */
 bool RecalculateSignalPerformance(int bar, bool isReversal) {
    isReversal = (isReversal != 0);
-   bool isPosition = (signalPerformance[bar+1] != EMPTY_VALUE);
-   double change;
+
+   bool isPosition;
+   if (signalPerformance[bar+1] == EMPTY_VALUE) {
+      isPosition = false;
+      signalPerformance[bar] = 0;
+   }
+   else {
+      isPosition = true;
+      signalPerformance[bar] = signalPerformance[bar+1];
+   }
 
    // either flip the position
    if (isReversal) {
-      if (isPosition) {
-         if (trend[bar] > 0) {
-            change = upperCross[bar] - Close[bar+1];
-            signalPerformance[bar]  = signalPerformance[bar+1] - change;   // close existing short position
-            signalPerformance[bar] += Close[bar] - upperCross[bar];        // open new long position
+      if (trend[bar] > 0) {
+         if (isPosition) {
+            signalPerformance[bar] -= (upperCross[bar] - Close[bar+1]);       // close existing short position
          }
-         else if (trend[bar] < 0) {
-            change = lowerCross[bar] - Close[bar+1];
-            signalPerformance[bar]  = signalPerformance[bar+1] + change;   // close existing long position
-            signalPerformance[bar] += lowerCross[bar] - Close[bar];        // open new short position
-         }
-         else {
-            logWarn("RecalculateSignalPerformance(0.1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  cannot yet flip position with trend=0");
-         }
+         signalPerformance[bar] += (Close[bar] - upperCross[bar]);            // open new long position
       }
-      else {                                                               // open a new position
-         if (trend[bar] > 0) {
-            signalPerformance[bar] = Close[bar] - upperCross[bar];         // long position
+      else if (trend[bar] < 0) {
+         if (isPosition) {
+            signalPerformance[bar] += (lowerCross[bar] - Close[bar+1]);       // close existing long position
          }
-         else if (trend[bar] < 0) {
-            signalPerformance[bar] = lowerCross[bar] - Close[bar];         // short position
+         signalPerformance[bar] += (lowerCross[bar] - Close[bar]);            // open new short position
+      }
+      else /*trend == 0*/{
+         // double crossing with two semaphores (at the moment of bar processing)
+         if (semaphoreOpen[bar] == Low[bar]) {                                // crossing order "Low, High"
+            if (isPosition) {
+               signalPerformance[bar] += (lowerCross[bar] - Close[bar+1]);    // close existing long position
+            }
+            signalPerformance[bar] -= (upperCross[bar] - lowerCross[bar]);    // open new short position and immediately close it
+            signalPerformance[bar] += (Close[bar] - upperCross[bar]);         // open new long position
          }
-         else {
-            logWarn("RecalculateSignalPerformance(0.2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  cannot yet open position with trend=0");
+         else if (semaphoreOpen[bar] == High[bar]) {                          // crossing order "High, Low"
+            if (isPosition) {
+               signalPerformance[bar] -= (upperCross[bar] - Close[bar+1]);    // close existing short position
+            }
+            signalPerformance[bar] -= (upperCross[bar] - lowerCross[bar]);    // open new long position and immediately close it
+            signalPerformance[bar] += (lowerCross[bar] - Close[bar]);         // open new short position
          }
+         else return(!catch("RecalculateSignalPerformance(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
       }
    }
 
    // or update the position
    else if (isPosition) {
-      change = Close[bar] - Close[bar+1];
       if (trend[bar] > 0) {
-         signalPerformance[bar] = signalPerformance[bar+1] + change;
+         signalPerformance[bar] += (Close[bar] - Close[bar+1]);
       }
       else if (trend[bar] < 0) {
-         signalPerformance[bar] = signalPerformance[bar+1] - change;
+         signalPerformance[bar] -= (Close[bar] - Close[bar+1]);
       }
-      else {
-         logWarn("RecalculateSignalPerformance(0.4)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  cannot yet update position with trend=0");
-      }
+      else return(!catch("RecalculateSignalPerformance(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
    }
 
    // or keep existing PnL
-   else {
-      signalPerformance[bar] = signalPerformance[bar+1];
-   }
+   //else {}
+
    return(true);
 }
 
