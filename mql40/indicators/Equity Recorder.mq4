@@ -200,8 +200,8 @@ bool RecordEquity() {
    int dow = TimeDayOfWeekEx(now);
 
    if (dow==SATURDAY || dow==SUNDAY) {
-      if (!isOpenPosition || !prevEquity[0])              return(true);
-      bool isStale = (lastTickTime < GetServerTime()-2*MINUTES);
+      if (!isOpenPosition || !prevEquity[0]) return(true);
+      bool isStale = (lastTickTime < GetServerTime() - 2*MINUTES);
       if (isStale && EQ(currEquity[0], prevEquity[0], 2)) return(true);
    }
 
