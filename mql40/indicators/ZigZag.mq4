@@ -707,7 +707,7 @@ int onTick() {
 
       // calculate signal performance
       if (TrackSignalPerformance) {
-         RecalculateSignalPerformance(bar, isReversalBar);
+         if (!RecalculateSignalPerformance(bar, isReversalBar)) return(last_error);
       }
 
       if (debugging && Ticks == 1) {
@@ -749,7 +749,7 @@ int onTick() {
 
       // record signal performance
       if (TrackSignalPerformance) {
-         RecordSignalPerformance();
+         if (!RecordSignalPerformance()) return(last_error);
       }
 
       // detect ZigZag breakouts (comparing legs against bands also detects breakouts on missed ticks)
@@ -907,18 +907,13 @@ int onTick() {
 bool RecalculateSignalPerformance(int bar, bool isReversal) {
    isReversal = (isReversal != 0);
 
-   bool isPosition;
-   if (signalPerformance[bar+1] == EMPTY_VALUE) {
-      isPosition = false;
-      signalPerformance[bar] = 0;
-   }
-   else {
-      isPosition = true;
-      signalPerformance[bar] = signalPerformance[bar+1];
-   }
+   bool isPosition = (signalPerformance[bar+1] != EMPTY_VALUE);
+   signalPerformance[bar] = signalPerformance[bar+1];
 
    // either flip the position
    if (isReversal) {
+      if (!isPosition) signalPerformance[bar] = 0;
+
       if (trend[bar] > 0) {
          if (isPosition) {
             signalPerformance[bar] -= (upperCross[bar] - Close[bar+1]);       // close existing short position
@@ -959,7 +954,9 @@ bool RecalculateSignalPerformance(int bar, bool isReversal) {
       else if (trend[bar] < 0) {
          signalPerformance[bar] -= (Close[bar] - Close[bar+1]);
       }
-      else return(!catch("RecalculateSignalPerformance(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+      else {
+         return(!catch("RecalculateSignalPerformance(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+      }
    }
 
    // or keep existing PnL
@@ -1015,7 +1012,7 @@ bool RecordSignalPerformance(int _bar = 0) {
       debug("RecordSignalPerformance(0.2)  Tick="+ Ticks +"  rewriting all history since "+ TimeToStr(recorder.startTime) +" (bar "+ startBar +")");
    }
 
-   for (int bar=startBar; bar > 0; bar--) {
+   for (int bar=startBar; bar >= 0; bar--) {
       if (!recorder.hSet) {
          recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, pDigits, recorder.hstFormat, recorder.hstDirectory);
          if (!recorder.hSet) return(false);
