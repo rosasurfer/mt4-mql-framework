@@ -1743,7 +1743,7 @@ void UpdateChartLegend() {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
-      string sSignal   = ifString(Signal.onReversal, "  "+ legendInfo, "");
+      string sSignal   = ifString(Signal.onReversal || Sound.onChannelWidening, "  "+ legendInfo, "");
       string text      = StringConcatenate(indicatorName, sTrend, sUnknown, sReversal, sSignal);
 
       color clr = ZigZag.Color;
