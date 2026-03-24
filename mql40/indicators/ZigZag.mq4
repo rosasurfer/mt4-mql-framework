@@ -63,7 +63,6 @@
  *  - remove debug code
  *  - once finished, update logic in usage locations of icZigZag()
  *
- *  - calculate/display ZigZag zero balance projections
  *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
  *  - keep bar status in IsUpperCrossLast()
  *  - document usage of iCustom()
@@ -214,6 +213,10 @@ bool     signal.onReversal.mail;
 bool     signal.onBreakout.sound;
 bool     signal.onBreakout.alert;
 bool     signal.onBreakout.mail;
+
+int      dbc_reversalOffset;                                   // status vars for the 1st of a double crossing
+int      dbc_trend;
+int      dbc_unknownTrend;
 
 double   sema1, sema2, sema3;                                  // last 3 semaphores for detection of ZigZag breakouts
 double   lastLegHigh, lastLegLow;                              // leg high/low at the previous tick
@@ -371,11 +374,11 @@ string   semTypes[] = {"NULL", "LOW", "HIGH"};
  * @return int - error status
  */
 int onInit() {
-   devStartTime     = D'2026.03.19 01:41';                     // TODO: remove once finished
-   devFirstCrossing = D'2026.03.19 01:48';
+   devStartTime     = D'2025.05.17 19:45';                     // TODO: remove once finished
+   devFirstCrossing = D'2025.05.17 20:07';
                                                                // double crossings:
-   devFrom = devStartTime     +  6 * Period() * MINUTES;       // P=8, 2026.03.16 20:47
-   devTo   = devFirstCrossing + 32 * Period() * MINUTES;
+   devFrom = devStartTime     + 87 * Period() * MINUTES;       // P=8, 2026.03.16 20:47
+   devTo   = devFirstCrossing + 69 * Period() * MINUTES;
 
    if (debugging && Symbol()=="BTCUSD" && Period()==PERIOD_M1 && ZigZag.Periods <= 20) {
       MaxBarsBack = iBarShift(NULL, NULL, devStartTime);
@@ -611,6 +614,11 @@ int onTick() {
       ArrayInitialize(signalPerformanceH, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
       ArrayInitialize(signalPerformanceL, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
       ArrayInitialize(signalPerformanceC, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
+
+      dbc_reversalOffset = -1;
+      dbc_trend          =  0;
+      dbc_unknownTrend   = -1;
+
       lastUpperBand = 0;
       lastLowerBand = 0;
       lastLegHigh   = 0;
@@ -706,12 +714,18 @@ int onTick() {
       // if two channel crossings (upper and lower band crossed by the same bar)
       else if (upperCross[bar] && lowerCross[bar]) {
          if (IsUpperCrossLast(bar)) {
-            if (!trend[bar]) ProcessLowerCross(bar);                 // if bar not yet processed then process both crossings in order,
-            ProcessUpperCross(bar);                                  // otherwise process only the last crossing
+            ProcessLowerCross(bar);                                  // process both crossings in order
+            dbc_reversalOffset = reversalOffset[bar];                //
+            dbc_trend          = trend         [bar];                // store bar values which get overwritten in the next call
+            dbc_unknownTrend   = unknownTrend  [bar];                //
+            ProcessUpperCross(bar);                                  // overwrites above values
          }
          else {
-            if (!trend[bar]) ProcessUpperCross(bar);                 // ...
-            ProcessLowerCross(bar);                                  // ...
+            ProcessUpperCross(bar);                                  // process both crossings in order
+            dbc_reversalOffset = reversalOffset[bar];                //
+            dbc_trend          = trend         [bar];                // prevent bar values from getting lost in the next call
+            dbc_unknownTrend   = unknownTrend  [bar];                //
+            ProcessLowerCross(bar);                                  // overwrites above values
          }
       }
 
@@ -732,7 +746,7 @@ int onTick() {
 
       if (debugging && Ticks == 1) {
          if (Time[bar] >= devFrom && Time[bar] <= devTo) {
-            debug("onTick(0.1)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  reversalOffset="+ _int(reversalOffset[bar]) +"  trend="+ trend[bar] +"  unknownTrend="+ unknownTrend[bar]);
+            debug("onTick(0.1)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat) +"  reversalOffset="+ _int(reversalOffset[bar]) +"  trend="+ trend[bar] +"  unknownTrend="+ unknownTrend[bar]);
             if (isReversalBar) {
             debug("onTick(0.2)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  isReversalBar=1");
             }
@@ -749,9 +763,16 @@ int onTick() {
       }
       else if (crossingDrawType == MODE_FIRST_CROSSING) {         // hide all crossings except the 1st
          if (isReversalBar) {
-            if (reversalOffset[bar+1] >= 0) {                     // keep preceeding reversals on the same bar
-               if (trend[bar] > 0) lowerCross[bar] = 0;
-               else                upperCross[bar] = 0;
+            if (upperCross[bar] && lowerCross[bar]) {             // special handling for double crossings
+               bool dbc_isReversalBar = false;                    // inspect and process the 1st crossing
+               if (!dbc_unknownTrend) {                           // whether the first crossing also represents a reversal bar
+                  dbc_isReversalBar = (Abs(dbc_trend) == dbc_reversalOffset);
+               }
+               if (!dbc_isReversalBar) {
+                  if (semaphoreOpen[bar] < semaphoreClose[bar]) lowerCross[bar] = 0;
+                  else                                          upperCross[bar] = 0;
+               }
+               // keep the 2nd crossing (it always represents a reversal bar)
             }
          }
          else {
@@ -936,12 +957,13 @@ int onTick() {
  */
 bool RecalculateSignalPerformance(int bar, bool isReversal) {
    isReversal = (isReversal != 0);
-   bool isPosition = (signalPerformanceC[bar+1] != EMPTY_VALUE);
 
    signalPerformanceO[bar] = signalPerformanceC[bar+1];
    signalPerformanceH[bar] = signalPerformanceC[bar+1];
    signalPerformanceL[bar] = signalPerformanceC[bar+1];
    signalPerformanceC[bar] = signalPerformanceC[bar+1];
+
+   bool isPosition = (signalPerformanceC[bar] != EMPTY_VALUE);
 
    // reversal bar, flip the position
    if (isReversal) {
@@ -999,6 +1021,10 @@ bool RecalculateSignalPerformance(int bar, bool isReversal) {
             signalPerformanceC[bar] += (lowerCross[bar] - Close[bar]);        // open new short position
          }
          else return(!catch("RecalculateSignalPerformance(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+
+         signalPerformanceO[bar] = signalPerformanceC[bar+1];
+         signalPerformanceH[bar] = MathMax(signalPerformanceO[bar], signalPerformanceC[bar]);
+         signalPerformanceL[bar] = MathMin(signalPerformanceO[bar], signalPerformanceC[bar]);
       }
    }
 
@@ -1029,11 +1055,9 @@ bool RecalculateSignalPerformance(int bar, bool isReversal) {
 /**
  * Record the signal performance for the specified bar.
  *
- * @param  int bar - bar offset
- *
  * @return bool - success status
  */
-bool RecordSignalPerformance(int _bar = 0) {
+bool RecordSignalPerformance() {
    if (!recorder.initialized) {
       // create symbol and group
       recorder.symbol       = Symbol() +".zzr";
@@ -1060,7 +1084,8 @@ bool RecordSignalPerformance(int _bar = 0) {
       debug("RecordSignalPerformance(0.1)  Tick="+ Ticks +"  recorder initialized");
    }
 
-   int startBar = 0, flags = HST_BUFFER_TICKS|HST_FILL_GAPS;
+   int startBar = 0, flags = HST_FILL_GAPS|HST_BUFFER_TICKS;
+   double O, H, L, C;
 
    if (ChangedBars > 2) {                             // rewrite the full history (intentionally skip rewriting bar 1 on BarOpen)
       if (recorder.hSet != 0) {
@@ -1072,16 +1097,20 @@ bool RecordSignalPerformance(int _bar = 0) {
       debug("RecordSignalPerformance(0.2)  Tick="+ Ticks +"  rewriting all history since "+ TimeToStr(recorder.startTime) +" (bar "+ startBar +")");
    }
 
-   double O, H, L, C;
-
    for (int bar=startBar; bar >= 0; bar--) {
       if (!recorder.hSet) {
          recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, pDigits, recorder.hstFormat, recorder.hstDirectory);
          if (!recorder.hSet) return(false);
       }
 
-      C = signalPerformanceC[bar] + recorder.priceBase;
-      if (C <= 0) {
+      O = signalPerformanceO[bar];
+      H = signalPerformanceH[bar];
+      L = signalPerformanceL[bar];
+      C = signalPerformanceC[bar];
+      if (C >= EMPTY_VALUE) continue;
+
+      L += recorder.priceBase;
+      if (L <= 0) {
          switch(recorder.priceBase) {
             case       0: recorder.priceBase =        1; break;
             case       1: recorder.priceBase =       10; break;
@@ -1102,24 +1131,13 @@ bool RecordSignalPerformance(int _bar = 0) {
          continue;
       }
 
-      O = signalPerformanceO[bar];
-      H = signalPerformanceH[bar];
-      L = signalPerformanceL[bar];
-
-      flags = HST_FILL_GAPS|HST_BUFFER_TICKS;
-
-      if (O > HalfPoint) {
-         if (!HistorySet1.AddTick(recorder.hSet, Time[bar], O + recorder.priceBase, flags)) return(false);
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], O + recorder.priceBase, flags)) return(false);
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], H + recorder.priceBase, flags)) return(false);
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], L,                      flags)) return(false);
+      if (bar == 0) {
+         flags &= ~HST_BUFFER_TICKS;      // unset HST_BUFFER_TICKS on bar 0 (zero)
       }
-      if (H > HalfPoint) {
-         if (!HistorySet1.AddTick(recorder.hSet, Time[bar], H + recorder.priceBase, flags)) return(false);
-      }
-      if (L > HalfPoint) {
-         if (!HistorySet1.AddTick(recorder.hSet, Time[bar], L + recorder.priceBase, flags)) return(false);
-      }
-
-      if (bar == 0) flags = HST_FILL_GAPS;
-      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], C, flags)) return(false);
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], C + recorder.priceBase, flags)) return(false);
    }
    return(true);
 }
