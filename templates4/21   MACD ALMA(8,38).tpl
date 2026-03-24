@@ -143,7 +143,7 @@ FastMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
 FastMA.Periods=8
 SlowMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
 SlowMA.Periods=38
-VScale.Unit=price | bps-price* | bps-adr
+VScale.Unit=price* | bps-price | bps-adr
 AutoConfiguration=0
 </inputs>
 </expert>

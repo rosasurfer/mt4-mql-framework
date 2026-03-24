@@ -192,6 +192,10 @@ double   virtualProfit_H[];                                 // ...
 double   virtualProfit_L[];                                 // ...
 double   virtualProfit_C[];                                 // ...
 
+int      dbc_reversalOffset;                                // status vars for the 1st of a double crossing
+int      dbc_trend;
+int      dbc_unknownTrend;
+
 string   indicatorName = "";
 string   shortName     = "";
 string   legendLabel   = "";
@@ -203,7 +207,7 @@ int      zigzagSymbol;
 int      crossingDrawType;
 int      crossingSymbol;
 
-#define MODE_FIRST_CROSSING   1                             // draw types of channel crossing
+#define MODE_FIRST_CROSSING   1                             // draw types of channel crossings
 #define MODE_ALL_CROSSINGS    2
 
 bool     signal.onReversal.sound;
@@ -213,10 +217,6 @@ bool     signal.onReversal.mail;
 bool     signal.onBreakout.sound;
 bool     signal.onBreakout.alert;
 bool     signal.onBreakout.mail;
-
-int      dbc_reversalOffset;                                // status vars for the 1st of a double crossing
-int      dbc_trend;
-int      dbc_unknownTrend;
 
 double   sema1, sema2, sema3;                               // last 3 semaphores for detection of ZigZag breakouts
 double   lastLegHigh, lastLegLow;                           // leg high/low at the previous tick
