@@ -25,7 +25,7 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    }
 
    double value = iCustom(NULL, timeframe, "ZigZag",
-                          "separator",                // string   ___a_________________________
+                          "separator",                // string   ___a_______________________
                           periods,                    // int      ZigZag.Periods
                           0,                          // int      ZigZag.Periods.Step
                           "Line",                     // string   ZigZag.Type
@@ -33,7 +33,7 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           1,                          // int      ZigZag.Width
                           CLR_NONE,                   // color    ZigZag.Color
 
-                          "separator",                // string   ___b_________________________
+                          "separator",                // string   ___b_______________________
                           false,                      // bool     Donchian.ShowChannel
                           CLR_NONE,                   // color    Donchian.Channel.UpperColor
                           CLR_NONE,                   // color    Donchian.Channel.LowerColor
@@ -42,11 +42,11 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           1,                          // int      Donchian.Crossing.Width
                           CLR_NONE,                   // color    Donchian.Crossing.Color
 
-                          "separator",                // string   ___c_________________________
+                          "separator",                // string   ___c_______________________
                           false,                      // bool     ShowChartLegend
                           -1,                         // int      MaxBarsBack
 
-                          "separator",                // string   ___d_________________________
+                          "separator",                // string   ___d_______________________
                           false,                      // bool     Signal.onReversal
                           "",                         // string   Signal.onReversal.Types
 
@@ -60,12 +60,12 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           "",                         // string   Sound.onNewChannelHigh
                           "",                         // string   Sound.onNewChannelLow
 
-                          "separator",                // string   ___e_________________________
-                          false,                      // bool     TrackSignalPerformance
-                          0,                          // datetime TrackSignalPerformance.Since
-                          "",                         // string   TrackSignalPerformance.Symbol
+                          "separator",                // string   ___e_______________________
+                          false,                      // bool     TrackVirtualProfit
+                          0,                          // datetime TrackVirtualProfit.Since
+                          "",                         // string   TrackVirtualProfit.Symbol
 
-                          "separator",                // string   _____________________________
+                          "separator",                // string   ___________________________
                           false,                      // bool     AutoConfiguration
                           lpSuperContext,             // int      __lpSuperContext
 

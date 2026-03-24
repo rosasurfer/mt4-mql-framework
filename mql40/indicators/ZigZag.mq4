@@ -15,45 +15,45 @@
  *
  * Input parameters
  * ----------------
- *  • ZigZag.Periods:                Look-back periods of the Donchian channel.
- *  • ZigZag.Periods.Step:           Controls parameter "ZigZag.Periods" via keyboard. If non-zero it defines the step size
- *                                   of the parameter stepper. If 0 (zero) the parameter stepper is disabled.
- *  • ZigZag.Type:                   Whether to display the ZigZag line or ZigZag semaphores.
- *  • ZigZag.Semaphores.Symbol:      Graphic symbol used for ZigZag semaphores.
- *  • ZigZag.Width:                  The ZigZag's line width or semaphore size.
- *  • ZigZag.Color:                  Color of ZigZag line or semaphores.
+ *  • ZigZag.Periods:              Look-back periods of the Donchian channel.
+ *  • ZigZag.Periods.Step:         Controls parameter "ZigZag.Periods" via keyboard. If non-zero it defines the step size
+ *                                 of the parameter stepper. If 0 (zero) the parameter stepper is disabled.
+ *  • ZigZag.Type:                 Whether to display the ZigZag line or ZigZag semaphores.
+ *  • ZigZag.Semaphores.Symbol:    Graphic symbol used for ZigZag semaphores.
+ *  • ZigZag.Width:                The ZigZag's line width or semaphore size.
+ *  • ZigZag.Color:                Color of ZigZag line or semaphores.
  *
- *  • Donchian.ShowChannel:          Whether to display the internal Donchian channel.
- *  • Donchian.Channel.UpperColor:   Color of upper Donchian channel band.
- *  • Donchian.Channel.LowerColor:   Color of lower Donchian channel band.
+ *  • Donchian.ShowChannel:        Whether to display the internal Donchian channel.
+ *  • Donchian.Channel.UpperColor: Color of upper Donchian channel band.
+ *  • Donchian.Channel.LowerColor: Color of lower Donchian channel band.
  *
- *  • Donchian.ShowCrossings:        Which Donchian channel crossings to display, one of:
- *                                    "off":   No crossings are displayed.
- *                                    "first": Only the first crossing is displayed (the moment a new ZigZag leg appears).
- *                                    "all":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
- *  • Donchian.Crossing.Symbol:      Graphic symbol used for Donchian channel crossings.
- *  • Donchian.Crossing.Width:       Size of displayed Donchian channel crossings.
- *  • Donchian.Crossing.Color:       Custom color of channel crossings (default: color of channel bands).
+ *  • Donchian.ShowCrossings:      Which Donchian channel crossings to display, one of:
+ *                                  "off":   No crossings are displayed.
+ *                                  "first": Only the first crossing is displayed (the moment a new ZigZag leg appears).
+ *                                  "all":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
+ *  • Donchian.Crossing.Symbol:    Graphic symbol used for Donchian channel crossings.
+ *  • Donchian.Crossing.Width:     Size of displayed Donchian channel crossings.
+ *  • Donchian.Crossing.Color:     Custom color of channel crossings (default: color of channel bands).
  *
- *  • ShowChartLegend:               Whether do display the chart legend.
- *  • MaxBarsBack:                   Maximum number of bars back to calculate the indicator for (affects performance).
+ *  • ShowChartLegend:             Whether do display the chart legend.
+ *  • MaxBarsBack:                 Maximum number of bars back to calculate the indicator for (affects performance).
  *
- *  • Signal.onReversal:             Whether to signal ZigZag reversals (the moment a new ZigZag leg appears).
- *  • Signal.onReversal.Types:       Signaling methods, can be a combination of "sound", "alert" and/or "mail".
+ *  • Signal.onReversal:           Whether to signal ZigZag reversals (the moment a new ZigZag leg appears).
+ *  • Signal.onReversal.Types:     Signaling methods, can be a combination of "sound", "alert" and/or "mail".
  *
- *  • Signal.onBreakout:             Whether to signal ZigZag breakouts (a ZigZag leg exceeding the previous ZigZag leg).
- *  • Signal.onBreakout.Types:       Signaling methods, can be a combination of "sound", "alert" and/or "mail".
+ *  • Signal.onBreakout:           Whether to signal ZigZag breakouts (a ZigZag leg exceeding the previous ZigZag leg).
+ *  • Signal.onBreakout.Types:     Signaling methods, can be a combination of "sound", "alert" and/or "mail".
  *
- *  • Signal.Sound.Up:               Sound file for signals to the upside.
- *  • Signal.Sound.Down:             Sound file for signals to the downside.
+ *  • Signal.Sound.Up:             Sound file for signals to the upside.
+ *  • Signal.Sound.Down:           Sound file for signals to the downside.
  *
- *  • Sound.onChannelWidening:       Whether to play a sound on Donchian channel widening (channel crossings).
- *  • Sound.onNewChannelHigh:        Sound file for channel widenings to the upside.
- *  • Sound.onNewChannelLow:         Sound file for channel widenings to the downside.
+ *  • Sound.onChannelWidening:     Whether to play a sound on Donchian channel widening (channel crossings).
+ *  • Sound.onNewChannelHigh:      Sound file for channel widenings to the upside.
+ *  • Sound.onNewChannelLow:       Sound file for channel widenings to the downside.
  *
- *  • TrackSignalPerformance:        Whether to track the performance of the reversal signal.
- *  • TrackSignalPerformance.Since:  Start time to track signal performance from (default: MaxBarsBack).
- *  • TrackSignalPerformance.Symbol: Custom symbol to use for performance tracking (default: auto-generated).
+ *  • TrackVirtualProfit:          Whether to track the virtual PnL of reversal signals.
+ *  • TrackVirtualProfit.Since:    Start time to track virtual PnL from (default: MaxBarsBack).
+ *  • TrackVirtualProfit.Symbol:   Custom symbol to use for virtual PnL tracking (default: auto-generated).
  *
  *  • AutoConfiguration:             If enabled all input parameters may use predefined defaults from the configuration.
  *
@@ -108,10 +108,10 @@ extern bool     Sound.onChannelWidening        = false;                         
 extern string   Sound.onNewChannelHigh         = "Price Advance.wav";
 extern string   Sound.onNewChannelLow          = "Price Decline.wav";
 
-extern string   ___e__________________________ = "=== Signal performance ===";
-extern bool     TrackSignalPerformance         = false;                          // whether to track the signal performance
-extern datetime TrackSignalPerformance.Since   = 0;                              // start time to track signal performance from
-extern string   TrackSignalPerformance.Symbol  = "(default)";                    // custom symbol to use for performance tracking
+extern string   ___e__________________________ = "=== Signal tracking ===";
+extern bool     TrackVirtualProfit             = false;                          // whether to track virtual PnL of signals
+extern datetime TrackVirtualProfit.Since       = 0;                              // start time to track virtual PnL from
+extern string   TrackVirtualProfit.Symbol      = "(default)";                    // custom symbol to use for virtual PnL tracking
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -136,74 +136,74 @@ bool     ProjectNextBalance       = false;   // whether to project zero-balance 
 
 
 // indicator buffer ids
-#define MODE_UPPER_BAND           ZigZag.MODE_UPPER_BAND       //  0: upper channel band: positive or 0
-#define MODE_LOWER_BAND           ZigZag.MODE_LOWER_BAND       //  1: lower channel band: positive or 0
-#define MODE_SEMAPHORE_OPEN       ZigZag.MODE_SEMAPHORE_OPEN   //  2: final semaphores, open price: positive or 0
-#define MODE_SEMAPHORE_CLOSE      ZigZag.MODE_SEMAPHORE_CLOSE  //  3: final semaphores, close price: positive or 0 (if open != close it forms a vertical line segment)
-#define MODE_UPPER_CROSS          ZigZag.MODE_UPPER_CROSS      //  4: upper channel band crossings: positive or 0
-#define MODE_LOWER_CROSS          ZigZag.MODE_LOWER_CROSS      //  5: lower channel band crossings: positive or 0
-#define MODE_REVERSAL_OFFSET      ZigZag.MODE_REVERSAL_OFFSET  //  6: int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
-#define MODE_COMBINED_TREND       ZigZag.MODE_COMBINED_TREND   //  7: int: combined buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
-#define MODE_UPPER_CROSS_HIGH     8                            //  8: bar High of an upper channel band crossing: positive or 0
-#define MODE_LOWER_CROSS_LOW      9                            //  9: bar Low of a lower channel band crossing: positive or 0
-#define MODE_TREND                10                           // 10: int: length of a ZigZag leg: positive/negative or 0
-#define MODE_UNKNOWN_TREND        11                           // 11: int: number of bars after a leg's end semaphore: non-negative or -1
-#define MODE_SIGNAL_PERFORMANCE_O 12                           // 12: signal performance in price units: positive/negative or EMPTY_VALUE
-#define MODE_SIGNAL_PERFORMANCE_H 13                           // 13: ...
-#define MODE_SIGNAL_PERFORMANCE_L 14                           // 14: ...
-#define MODE_SIGNAL_PERFORMANCE_C 15                           // 15: ...
+#define MODE_UPPER_BAND       ZigZag.MODE_UPPER_BAND        //  0: upper channel band: positive or 0
+#define MODE_LOWER_BAND       ZigZag.MODE_LOWER_BAND        //  1: lower channel band: positive or 0
+#define MODE_SEMAPHORE_OPEN   ZigZag.MODE_SEMAPHORE_OPEN    //  2: final semaphores, open price: positive or 0
+#define MODE_SEMAPHORE_CLOSE  ZigZag.MODE_SEMAPHORE_CLOSE   //  3: final semaphores, close price: positive or 0 (if open != close it forms a vertical line segment)
+#define MODE_UPPER_CROSS      ZigZag.MODE_UPPER_CROSS       //  4: upper channel band crossings: positive or 0
+#define MODE_LOWER_CROSS      ZigZag.MODE_LOWER_CROSS       //  5: lower channel band crossings: positive or 0
+#define MODE_REVERSAL_OFFSET  ZigZag.MODE_REVERSAL_OFFSET   //  6: int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
+#define MODE_COMBINED_TREND   ZigZag.MODE_COMBINED_TREND    //  7: int: combined buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
+#define MODE_UPPER_CROSS_HIGH 8                             //  8: bar High of an upper channel band crossing: positive or 0
+#define MODE_LOWER_CROSS_LOW  9                             //  9: bar Low of a lower channel band crossing: positive or 0
+#define MODE_TREND            10                            // 10: int: length of a ZigZag leg: positive/negative or 0
+#define MODE_UNKNOWN_TREND    11                            // 11: int: number of bars after a leg's end semaphore: non-negative or -1
+#define MODE_VIRTUAL_PROFIT_O 12                            // 12: signal performance in price units: positive/negative or EMPTY_VALUE
+#define MODE_VIRTUAL_PROFIT_H 13                            // 13: ...
+#define MODE_VIRTUAL_PROFIT_L 14                            // 14: ...
+#define MODE_VIRTUAL_PROFIT_C 15                            // 15: ...
 
 #property indicator_chart_window
-#property indicator_buffers   8                                // visible buffers
-int       terminal_buffers  = 8;                               // buffers managed by the terminal
-int       framework_buffers = 8;                               // buffers managed by the framework
+#property indicator_buffers   8                             // visible buffers
+int       terminal_buffers  = 8;                            // buffers managed by the terminal
+int       framework_buffers = 8;                            // buffers managed by the framework
 
-#property indicator_color1    Blue                             // upper channel band
-#property indicator_style1    STYLE_DOT                        //
-#property indicator_color2    Magenta                          // lower channel band
-#property indicator_style2    STYLE_DOT                        //
+#property indicator_color1    Blue                          // upper channel band
+#property indicator_style1    STYLE_DOT                     //
+#property indicator_color2    Magenta                       // lower channel band
+#property indicator_style2    STYLE_DOT                     //
 
-#property indicator_color3    DodgerBlue                       // the ZigZag line is built from two buffers using the color of the first buffer
-#property indicator_width3    1                                //
-#property indicator_color4    CLR_NONE                         //
+#property indicator_color3    DodgerBlue                    // the ZigZag line is built from two buffers using the color of the first buffer
+#property indicator_width3    1                             //
+#property indicator_color4    CLR_NONE                      //
 
-#property indicator_color5    indicator_color3                 // upper channel band crossings
-#property indicator_width5    0                                //
-#property indicator_color6    indicator_color4                 // lower channel band crossings
-#property indicator_width6    0                                //
+#property indicator_color5    indicator_color3              // upper channel band crossings
+#property indicator_width5    0                             //
+#property indicator_color6    indicator_color4              // lower channel band crossings
+#property indicator_width6    0                             //
 
-#property indicator_color7    CLR_NONE                         // trend (combined buffers MODE_TREND & MODE_UNKNOWN_TREND)
-#property indicator_color8    CLR_NONE                         // offset of the previous ZigZag reversal to its preceeding semaphore
+#property indicator_color7    CLR_NONE                      // trend (combined buffers MODE_TREND & MODE_UNKNOWN_TREND)
+#property indicator_color8    CLR_NONE                      // offset of the previous ZigZag reversal to its preceeding semaphore
 
-double   upperBand         [];                                 // upper channel band: positive or 0
-double   lowerBand         [];                                 // lower channel band: positive or 0
-double   upperCross        [];                                 // upper channel band crossings: positive or 0
-double   upperCrossHigh    [];                                 // bar High of an upper channel band crossing (potential semaphore): positive or 0
-double   lowerCross        [];                                 // lower channel band crossings: positive or 0
-double   lowerCrossLow     [];                                 // bar Low of a lower channel band crossing (potential semaphore): positive or 0
-double   semaphoreOpen     [];                                 // final semaphore, open price: positive or 0
-double   semaphoreClose    [];                                 // final semaphore, close price: positive or 0 (if open != close it creates a vertical line segment)
-double   reversalOffset    [];                                 // int: offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
-int      trend             [];                                 // int: length of a ZigZag leg: positive/negative or 0
-int      unknownTrend      [];                                 // int: number of bars after a leg's end semaphore: non-negative or -1
-double   combinedTrend     [];                                 // int: combined buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
-double   signalPerformanceO[];                                 // signal performance in price units: positive/negative or EMPTY_VALUE
-double   signalPerformanceH[];                                 // ...
-double   signalPerformanceL[];                                 // ...
-double   signalPerformanceC[];                                 // ...
+double   upperBand      [];                                 // upper channel band: positive or 0
+double   lowerBand      [];                                 // lower channel band: positive or 0
+double   upperCross     [];                                 // upper channel band crossings: positive or 0
+double   upperCrossHigh [];                                 // bar High of an upper channel band crossing (potential semaphore): positive or 0
+double   lowerCross     [];                                 // lower channel band crossings: positive or 0
+double   lowerCrossLow  [];                                 // bar Low of a lower channel band crossing (potential semaphore): positive or 0
+double   semaphoreOpen  [];                                 // final semaphore, open price: positive or 0
+double   semaphoreClose [];                                 // final semaphore, close price: positive or 0 (if open != close it creates a vertical line segment)
+double   reversalOffset [];                                 // int: offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
+int      trend          [];                                 // int: length of a ZigZag leg: positive/negative or 0
+int      unknownTrend   [];                                 // int: number of bars after a leg's end semaphore: non-negative or -1
+double   combinedTrend  [];                                 // int: combined buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
+double   virtualProfit_O[];                                 // virtual signal PnL in price units: positive/negative or EMPTY_VALUE
+double   virtualProfit_H[];                                 // ...
+double   virtualProfit_L[];                                 // ...
+double   virtualProfit_C[];                                 // ...
 
 string   indicatorName = "";
 string   shortName     = "";
 string   legendLabel   = "";
-string   legendInfo    = "";                                   // additional chart legend info
-string   labels[];                                             // chart object labels
+string   legendInfo    = "";                                // additional chart legend info
+string   labels[];                                          // chart object labels
 
 int      zigzagDrawType;
 int      zigzagSymbol;
 int      crossingDrawType;
 int      crossingSymbol;
 
-#define MODE_FIRST_CROSSING   1                                // crossing draw types
+#define MODE_FIRST_CROSSING   1                             // draw types of channel crossing
 #define MODE_ALL_CROSSINGS    2
 
 bool     signal.onReversal.sound;
@@ -214,19 +214,19 @@ bool     signal.onBreakout.sound;
 bool     signal.onBreakout.alert;
 bool     signal.onBreakout.mail;
 
-int      dbc_reversalOffset;                                   // status vars for the 1st of a double crossing
+int      dbc_reversalOffset;                                // status vars for the 1st of a double crossing
 int      dbc_trend;
 int      dbc_unknownTrend;
 
-double   sema1, sema2, sema3;                                  // last 3 semaphores for detection of ZigZag breakouts
-double   lastLegHigh, lastLegLow;                              // leg high/low at the previous tick
+double   sema1, sema2, sema3;                               // last 3 semaphores for detection of ZigZag breakouts
+double   lastLegHigh, lastLegLow;                           // leg high/low at the previous tick
 
-double   lastUpperBand;                                        // detection of channel widenings
-double   lastLowerBand;                                        // upper/lower band values at the previous tick
+double   lastUpperBand;                                     // detection of channel widenings
+double   lastLowerBand;                                     // upper/lower band values at the previous tick
 
-datetime skipSignals;                                          // skip signals until the specified time to wait for possible data pumping
+datetime skipSignals;                                       // skip signals until the specified time to wait for possible data pumping
 datetime lastTick;
-int      lastSoundSignal;                                      // GetTickCount() value of the last audio signal
+int      lastSoundSignal;                                   // GetTickCount() value of the last audio signal
 
 
 // recorder status
@@ -242,8 +242,8 @@ datetime recorder.startTime;
 
 
 // signal direction types
-#define D_LONG     TRADE_DIRECTION_LONG                        // 1
-#define D_SHORT    TRADE_DIRECTION_SHORT                       // 2
+#define D_LONG     TRADE_DIRECTION_LONG                     // 1
+#define D_SHORT    TRADE_DIRECTION_SHORT                    // 2
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -505,24 +505,24 @@ int onInit() {
       else                  legendInfo = StrLeft(legendInfo, -1) +",w)";
    }
 
-   // TrackSignalPerformance
-   if (AutoConfiguration) TrackSignalPerformance = GetConfigBool(indicator, "TrackSignalPerformance", TrackSignalPerformance);
-   if (__isSuperContext) TrackSignalPerformance = false;
-   if (__isTesting)      TrackSignalPerformance = false;
-   // TrackSignalPerformance.Since
-   datetime dtValue = TrackSignalPerformance.Since;
+   // TrackVirtualProfit
+   if (AutoConfiguration) TrackVirtualProfit = GetConfigBool(indicator, "TrackVirtualProfit", TrackVirtualProfit);
+   if (__isSuperContext) TrackVirtualProfit = false;
+   if (__isTesting)      TrackVirtualProfit = false;
+   // TrackVirtualProfit.Since
+   datetime dtValue = TrackVirtualProfit.Since;
    if (AutoConfiguration) {
-      sValue = GetConfigString(indicator, "TrackSignalPerformance.Since", "");
+      sValue = GetConfigString(indicator, "TrackVirtualProfit.Since", "");
       if (sValue != "") {
          int result[];
          if (!ParseDateTime(sValue, DATE_YYYYMMDD|TIME_OPTIONAL, result)) {
-            return(catch("onInit(12)  invalid config parameter TrackSignalPerformance.Since: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+            return(catch("onInit(12)  invalid config parameter TrackVirtualProfit.Since: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
          }
-         TrackSignalPerformance.Since = DateTime2(result);
+         TrackVirtualProfit.Since = DateTime2(result);
       }
    }
-   // TrackSignalPerformance.Symbol
-   if (AutoConfiguration) TrackSignalPerformance.Symbol = GetConfigBool(indicator, "TrackSignalPerformance.Symbol", TrackSignalPerformance.Symbol);
+   // TrackVirtualProfit.Symbol
+   if (AutoConfiguration) TrackVirtualProfit.Symbol = GetConfigBool(indicator, "TrackVirtualProfit.Symbol", TrackVirtualProfit.Symbol);
 
    // reset global vars used by the various event handlers
    skipSignals     = 0;
@@ -586,34 +586,34 @@ int onTick() {
       if (!HandleCommands("ParameterStepper")) return(last_error);
    }
 
-   // manage additional fraemwork buffers
-   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_HIGH,     upperCrossHigh);
-   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_LOW,      lowerCrossLow);
-   ManageIntIndicatorBuffer   (MODE_TREND,                trend);
-   ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND,        unknownTrend, -1);
-   ManageDoubleIndicatorBuffer(MODE_SIGNAL_PERFORMANCE_O, signalPerformanceO, EMPTY_VALUE);
-   ManageDoubleIndicatorBuffer(MODE_SIGNAL_PERFORMANCE_H, signalPerformanceH, EMPTY_VALUE);
-   ManageDoubleIndicatorBuffer(MODE_SIGNAL_PERFORMANCE_L, signalPerformanceL, EMPTY_VALUE);
-   ManageDoubleIndicatorBuffer(MODE_SIGNAL_PERFORMANCE_C, signalPerformanceC, EMPTY_VALUE);
+   // manage additional framework buffers
+   ManageDoubleIndicatorBuffer(MODE_UPPER_CROSS_HIGH, upperCrossHigh);
+   ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_LOW,  lowerCrossLow);
+   ManageIntIndicatorBuffer   (MODE_TREND,            trend);
+   ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND,    unknownTrend, -1);
+   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PROFIT_O, virtualProfit_O, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PROFIT_H, virtualProfit_H, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PROFIT_L, virtualProfit_L, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PROFIT_C, virtualProfit_C, EMPTY_VALUE);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(upperBand,                    0);  // double: positive or 0
-      ArrayInitialize(lowerBand,                    0);  // double: positive or 0
-      ArrayInitialize(upperCross,                   0);  // double: positive or 0
-      ArrayInitialize(upperCrossHigh,               0);  // double: positive or 0
-      ArrayInitialize(lowerCross,                   0);  // double: positive or 0
-      ArrayInitialize(lowerCrossLow,                0);  // double: positive or 0
-      ArrayInitialize(semaphoreOpen,                0);  // double: positive or 0
-      ArrayInitialize(semaphoreClose,               0);  // double: positive or 0
-      ArrayInitialize(reversalOffset,              -1);  // int:    non-negative or -1
-      ArrayInitialize(trend,                        0);  // int:    positive/negative or 0
-      ArrayInitialize(unknownTrend,                -1);  // int:    non-negative or -1
-      ArrayInitialize(combinedTrend,                0);  // int:    positive/negative or 0
-      ArrayInitialize(signalPerformanceO, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
-      ArrayInitialize(signalPerformanceH, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
-      ArrayInitialize(signalPerformanceL, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
-      ArrayInitialize(signalPerformanceC, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
+      ArrayInitialize(upperBand,                 0);  // double: positive or 0
+      ArrayInitialize(lowerBand,                 0);  // double: positive or 0
+      ArrayInitialize(upperCross,                0);  // double: positive or 0
+      ArrayInitialize(upperCrossHigh,            0);  // double: positive or 0
+      ArrayInitialize(lowerCross,                0);  // double: positive or 0
+      ArrayInitialize(lowerCrossLow,             0);  // double: positive or 0
+      ArrayInitialize(semaphoreOpen,             0);  // double: positive or 0
+      ArrayInitialize(semaphoreClose,            0);  // double: positive or 0
+      ArrayInitialize(reversalOffset,           -1);  // int:    non-negative or -1
+      ArrayInitialize(trend,                     0);  // int:    positive/negative or 0
+      ArrayInitialize(unknownTrend,             -1);  // int:    non-negative or -1
+      ArrayInitialize(combinedTrend,             0);  // int:    positive/negative or 0
+      ArrayInitialize(virtualProfit_O, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
+      ArrayInitialize(virtualProfit_H, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
+      ArrayInitialize(virtualProfit_L, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
+      ArrayInitialize(virtualProfit_C, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
 
       dbc_reversalOffset = -1;
       dbc_trend          =  0;
@@ -631,22 +631,22 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(upperBand,          Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerBand,          Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCross,         Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCrossHigh,     Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCross,         Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCrossLow,      Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(semaphoreOpen,      Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(semaphoreClose,     Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(reversalOffset,     Bars, ShiftedBars, -1);
-      ShiftIntIndicatorBuffer   (trend,              Bars, ShiftedBars,  0);
-      ShiftIntIndicatorBuffer   (unknownTrend,       Bars, ShiftedBars, -1);
-      ShiftDoubleIndicatorBuffer(combinedTrend,      Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(signalPerformanceO, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(signalPerformanceH, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(signalPerformanceL, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(signalPerformanceC, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(upperBand,       Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerBand,       Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperCross,      Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperCrossHigh,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerCross,      Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerCrossLow,   Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(semaphoreOpen,   Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(semaphoreClose,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(reversalOffset,  Bars, ShiftedBars, -1);
+      ShiftIntIndicatorBuffer   (trend,           Bars, ShiftedBars,  0);
+      ShiftIntIndicatorBuffer   (unknownTrend,    Bars, ShiftedBars, -1);
+      ShiftDoubleIndicatorBuffer(combinedTrend,   Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(virtualProfit_O, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(virtualProfit_H, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(virtualProfit_L, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(virtualProfit_C, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // check data pumping on every tick so the reversal handler can skip errornous signals
@@ -659,22 +659,22 @@ int onTick() {
 
    // recalculate changed bars
    if (startBar > 2) {                       // TODO: why 2 and not 1
-      upperBand         [startBar] =  0;
-      lowerBand         [startBar] =  0;
-      upperCross        [startBar] =  0;
-      upperCrossHigh    [startBar] =  0;
-      lowerCross        [startBar] =  0;
-      lowerCrossLow     [startBar] =  0;
-      semaphoreOpen     [startBar] =  0;
-      semaphoreClose    [startBar] =  0;
-      reversalOffset    [startBar] = -1;
-      trend             [startBar] =  0;
-      unknownTrend      [startBar] = -1;
-      combinedTrend     [startBar] =  0;
-      signalPerformanceO[startBar] = EMPTY_VALUE;
-      signalPerformanceH[startBar] = EMPTY_VALUE;
-      signalPerformanceL[startBar] = EMPTY_VALUE;
-      signalPerformanceC[startBar] = EMPTY_VALUE;
+      upperBand      [startBar] =  0;
+      lowerBand      [startBar] =  0;
+      upperCross     [startBar] =  0;
+      upperCrossHigh [startBar] =  0;
+      lowerCross     [startBar] =  0;
+      lowerCrossLow  [startBar] =  0;
+      semaphoreOpen  [startBar] =  0;
+      semaphoreClose [startBar] =  0;
+      reversalOffset [startBar] = -1;
+      trend          [startBar] =  0;
+      unknownTrend   [startBar] = -1;
+      combinedTrend  [startBar] =  0;
+      virtualProfit_O[startBar] = EMPTY_VALUE;
+      virtualProfit_H[startBar] = EMPTY_VALUE;
+      virtualProfit_L[startBar] = EMPTY_VALUE;
+      virtualProfit_C[startBar] = EMPTY_VALUE;
    }
 
    datetime startRecalc = GetTickCount();
@@ -739,9 +739,9 @@ int onTick() {
          isReversalBar = (Abs(trend[bar]) == reversalOffset[bar]);
       }
 
-      // calculate signal performance
-      if (TrackSignalPerformance) {
-         if (!RecalculateSignalPerformance(bar, isReversalBar)) return(last_error);
+      // calculate virtual PnL
+      if (TrackVirtualProfit) {
+         if (!RecalculateVirtualProfit(bar, isReversalBar)) return(last_error);
       }
 
       if (debugging && Ticks == 1) {
@@ -792,14 +792,14 @@ int onTick() {
    if (__isChart && !__isSuperContext) {
       if (ShowChartLegend) UpdateChartLegend();
 
-      // record signal performance
-      if (TrackSignalPerformance) {
+      // record virtual PnL
+      if (TrackVirtualProfit) {
          datetime startRecorder = GetTickCount();
 
-         if (!RecordSignalPerformance()) return(last_error);
+         if (!RecordVirtualProfit()) return(last_error);
 
          //if (Ticks == 1) {
-         //   debug("onTick(0.5)  Tick="+ Ticks +" RecordSignalPerformance() => "+ DoubleToStr((GetTickCount()-startRecorder)/1000.0, 3) +" sec");
+         //   debug("onTick(0.5)  Tick="+ Ticks +" RecordVirtualProfit() => "+ DoubleToStr((GetTickCount()-startRecorder)/1000.0, 3) +" sec");
          //}
       }
 
@@ -948,101 +948,101 @@ int onTick() {
 
 
 /**
- * Recalculate the signal performance for the specified bar.
+ * Recalculate the virtual PnL for the specified bar.
  *
  * @param  int  bar        - bar offset
  * @param  bool isReversal - whether the bar is a reversal bar
  *
  * @return bool - success status
  */
-bool RecalculateSignalPerformance(int bar, bool isReversal) {
+bool RecalculateVirtualProfit(int bar, bool isReversal) {
    isReversal = (isReversal != 0);
 
-   signalPerformanceO[bar] = signalPerformanceC[bar+1];
-   signalPerformanceH[bar] = signalPerformanceC[bar+1];
-   signalPerformanceL[bar] = signalPerformanceC[bar+1];
-   signalPerformanceC[bar] = signalPerformanceC[bar+1];
+   virtualProfit_O[bar] = virtualProfit_C[bar+1];
+   virtualProfit_H[bar] = virtualProfit_C[bar+1];
+   virtualProfit_L[bar] = virtualProfit_C[bar+1];
+   virtualProfit_C[bar] = virtualProfit_C[bar+1];
 
-   bool isPosition = (signalPerformanceC[bar] != EMPTY_VALUE);
+   bool isPosition = (virtualProfit_C[bar] != EMPTY_VALUE);
 
    // reversal bar, flip the position
    if (isReversal) {
       if (!isPosition) {
-         signalPerformanceO[bar] = 0;
-         signalPerformanceH[bar] = 0;
-         signalPerformanceL[bar] = 0;
-         signalPerformanceC[bar] = 0;
+         virtualProfit_O[bar] = 0;
+         virtualProfit_H[bar] = 0;
+         virtualProfit_L[bar] = 0;
+         virtualProfit_C[bar] = 0;
       }
 
       if (trend[bar] > 0) {
          if (isPosition) {
-            signalPerformanceC[bar] -= (upperCross[bar] - Close[bar+1]);                           // close short position
-            signalPerformanceO[bar] = signalPerformanceC[bar] - (Open[bar] - upperCross[bar]);
-            signalPerformanceC[bar] += (Close[bar] - upperCross[bar]);                             // open new long position
-            signalPerformanceH[bar] = MathMax(signalPerformanceO[bar], signalPerformanceC[bar]);
-            signalPerformanceL[bar] = MathMin(signalPerformanceO[bar], signalPerformanceC[bar]);   // the intra-bar path is unknown
+            virtualProfit_C[bar] -= (upperCross[bar] - Close[bar+1]);                     // close short position
+            virtualProfit_O[bar] = virtualProfit_C[bar] - (Open[bar] - upperCross[bar]);
+            virtualProfit_C[bar] += (Close[bar] - upperCross[bar]);                       // open new long position
+            virtualProfit_H[bar] = MathMax(virtualProfit_O[bar], virtualProfit_C[bar]);
+            virtualProfit_L[bar] = MathMin(virtualProfit_O[bar], virtualProfit_C[bar]);   // the intra-bar path is unknown
          }
          else {
-            signalPerformanceO[bar] = 0;                                                           // open long position
-            signalPerformanceH[bar] = ( High[bar] - upperCross[bar]);
-            signalPerformanceL[bar] = (  Low[bar] - upperCross[bar]);
-            signalPerformanceC[bar] = (Close[bar] - upperCross[bar]);
+            virtualProfit_O[bar] = 0;                                                     // open long position
+            virtualProfit_H[bar] = ( High[bar] - upperCross[bar]);
+            virtualProfit_L[bar] = (  Low[bar] - upperCross[bar]);
+            virtualProfit_C[bar] = (Close[bar] - upperCross[bar]);
          }
       }
       else if (trend[bar] < 0) {
          if (isPosition) {
-            signalPerformanceC[bar] += (lowerCross[bar] - Close[bar+1]);                           // close long position
-            signalPerformanceO[bar] = signalPerformanceC[bar] + (Open[bar] - lowerCross[bar]);
-            signalPerformanceC[bar] += (lowerCross[bar] - Close[bar]);                             // open new short position
-            signalPerformanceH[bar] = MathMax(signalPerformanceO[bar], signalPerformanceC[bar]);
-            signalPerformanceL[bar] = MathMin(signalPerformanceO[bar], signalPerformanceC[bar]);   // the intra-bar path is unknown
+            virtualProfit_C[bar] += (lowerCross[bar] - Close[bar+1]);                     // close long position
+            virtualProfit_O[bar] = virtualProfit_C[bar] + (Open[bar] - lowerCross[bar]);
+            virtualProfit_C[bar] += (lowerCross[bar] - Close[bar]);                       // open new short position
+            virtualProfit_H[bar] = MathMax(virtualProfit_O[bar], virtualProfit_C[bar]);
+            virtualProfit_L[bar] = MathMin(virtualProfit_O[bar], virtualProfit_C[bar]);   // the intra-bar path is unknown
          }
          else {
-            signalPerformanceO[bar] = 0;                                                           // open short position
-            signalPerformanceH[bar] = (lowerCross[bar] -   Low[bar]);
-            signalPerformanceL[bar] = (lowerCross[bar] -  High[bar]);
-            signalPerformanceC[bar] = (lowerCross[bar] - Close[bar]);
+            virtualProfit_O[bar] = 0;                                                     // open short position
+            virtualProfit_H[bar] = (lowerCross[bar] -   Low[bar]);
+            virtualProfit_L[bar] = (lowerCross[bar] -  High[bar]);
+            virtualProfit_C[bar] = (lowerCross[bar] - Close[bar]);
          }
       }
       else /*trend == 0*/{
          // double crossing with two semaphores (at the moment when the bar is processed)
-         if (semaphoreOpen[bar] == Low[bar]) {                                // crossing order "Low, High"
+         if (semaphoreOpen[bar] == Low[bar]) {                                            // crossing order "Low, High"
             if (isPosition) {
-               signalPerformanceC[bar] += (lowerCross[bar] - Close[bar+1]);   // close existing long position
+               virtualProfit_C[bar] += (lowerCross[bar] - Close[bar+1]);                  // close existing long position
             }
-            signalPerformanceC[bar] -= (upperCross[bar] - lowerCross[bar]);   // open new short position and immediately close it
-            signalPerformanceC[bar] += (Close[bar] - upperCross[bar]);        // open new long position
+            virtualProfit_C[bar] -= (upperCross[bar] - lowerCross[bar]);                  // open new short position and immediately close it
+            virtualProfit_C[bar] += (Close[bar] - upperCross[bar]);                       // open new long position
          }
-         else if (semaphoreOpen[bar] == High[bar]) {                          // crossing order "High, Low"
+         else if (semaphoreOpen[bar] == High[bar]) {                                      // crossing order "High, Low"
             if (isPosition) {
-               signalPerformanceC[bar] -= (upperCross[bar] - Close[bar+1]);   // close existing short position
+               virtualProfit_C[bar] -= (upperCross[bar] - Close[bar+1]);                  // close existing short position
             }
-            signalPerformanceC[bar] -= (upperCross[bar] - lowerCross[bar]);   // open new long position and immediately close it
-            signalPerformanceC[bar] += (lowerCross[bar] - Close[bar]);        // open new short position
+            virtualProfit_C[bar] -= (upperCross[bar] - lowerCross[bar]);                  // open new long position and immediately close it
+            virtualProfit_C[bar] += (lowerCross[bar] - Close[bar]);                       // open new short position
          }
-         else return(!catch("RecalculateSignalPerformance(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+         else return(!catch("RecalculateVirtualProfit(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
 
-         signalPerformanceO[bar] = signalPerformanceC[bar+1];
-         signalPerformanceH[bar] = MathMax(signalPerformanceO[bar], signalPerformanceC[bar]);
-         signalPerformanceL[bar] = MathMin(signalPerformanceO[bar], signalPerformanceC[bar]);
+         virtualProfit_O[bar] = virtualProfit_C[bar+1];
+         virtualProfit_H[bar] = MathMax(virtualProfit_O[bar], virtualProfit_C[bar]);
+         virtualProfit_L[bar] = MathMin(virtualProfit_O[bar], virtualProfit_C[bar]);
       }
    }
 
    // normal bar, update an existing position
    else if (isPosition) {
       if (trend[bar] > 0) {
-         signalPerformanceC[bar] += (Close[bar] - Close[bar+1]);
-         signalPerformanceO[bar] = signalPerformanceC[bar] + (Open[bar] - Close[bar]);
-         signalPerformanceH[bar] = signalPerformanceC[bar] + (High[bar] - Close[bar]);
-         signalPerformanceL[bar] = signalPerformanceC[bar] + ( Low[bar] - Close[bar]);
+         virtualProfit_C[bar] += (Close[bar] - Close[bar+1]);
+         virtualProfit_O[bar] = virtualProfit_C[bar] + (Open[bar] - Close[bar]);
+         virtualProfit_H[bar] = virtualProfit_C[bar] + (High[bar] - Close[bar]);
+         virtualProfit_L[bar] = virtualProfit_C[bar] + ( Low[bar] - Close[bar]);
       }
       else if (trend[bar] < 0) {
-         signalPerformanceC[bar] -= (Close[bar] - Close[bar+1]);
-         signalPerformanceO[bar] = signalPerformanceC[bar] - (Open[bar] - Close[bar]);
-         signalPerformanceH[bar] = signalPerformanceC[bar] - ( Low[bar] - Close[bar]);
-         signalPerformanceL[bar] = signalPerformanceC[bar] - (High[bar] - Close[bar]);
+         virtualProfit_C[bar] -= (Close[bar] - Close[bar+1]);
+         virtualProfit_O[bar] = virtualProfit_C[bar] - (Open[bar] - Close[bar]);
+         virtualProfit_H[bar] = virtualProfit_C[bar] - ( Low[bar] - Close[bar]);
+         virtualProfit_L[bar] = virtualProfit_C[bar] - (High[bar] - Close[bar]);
       }
-      else return(!catch("RecalculateSignalPerformance(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+      else return(!catch("RecalculateVirtualProfit(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
    }
 
    // normal bar without a position (before first ZigZag reversal)
@@ -1053,11 +1053,11 @@ bool RecalculateSignalPerformance(int bar, bool isReversal) {
 
 
 /**
- * Record the signal performance for the specified bar.
+ * Record the timeseries with virtual PnL.
  *
  * @return bool - success status
  */
-bool RecordSignalPerformance() {
+bool RecordVirtualProfit() {
    if (!recorder.initialized) {
       // create symbol and group
       recorder.symbol       = Symbol() +".zzr";
@@ -1081,7 +1081,7 @@ bool RecordSignalPerformance() {
          if (!recorder.hSet) return(false);
       }
       recorder.initialized = true;
-      debug("RecordSignalPerformance(0.1)  Tick="+ Ticks +"  recorder initialized");
+      debug("RecordVirtualProfit(0.1)  Tick="+ Ticks +"  recorder initialized");
    }
 
    int startBar = 0, flags = HST_FILL_GAPS|HST_BUFFER_TICKS;
@@ -1094,7 +1094,7 @@ bool RecordSignalPerformance() {
          if (!HistorySet1.Close(tmp)) return(false);  // TODO: HistorySet.Create() should auto-close an open set but errors
       }
       startBar = iBarShiftNext(NULL, NULL, recorder.startTime);
-      debug("RecordSignalPerformance(0.2)  Tick="+ Ticks +"  rewriting all history since "+ TimeToStr(recorder.startTime) +" (bar "+ startBar +")");
+      debug("RecordVirtualProfit(0.2)  Tick="+ Ticks +"  rewriting all history since "+ TimeToStr(recorder.startTime) +" (bar "+ startBar +")");
    }
 
    for (int bar=startBar; bar >= 0; bar--) {
@@ -1103,10 +1103,10 @@ bool RecordSignalPerformance() {
          if (!recorder.hSet) return(false);
       }
 
-      O = signalPerformanceO[bar];
-      H = signalPerformanceH[bar];
-      L = signalPerformanceL[bar];
-      C = signalPerformanceC[bar];
+      O = virtualProfit_O[bar];
+      H = virtualProfit_H[bar];
+      L = virtualProfit_L[bar];
+      C = virtualProfit_C[bar];
       if (C >= EMPTY_VALUE) continue;
 
       L += recorder.priceBase;
@@ -1121,7 +1121,7 @@ bool RecordSignalPerformance() {
             case  100000: recorder.priceBase =  1000000; break;
             case 1000000: recorder.priceBase = 10000000; break;
          }
-         debug("RecordSignalPerformance(0.3)  Tick="+ Ticks +"  updated price base to "+ DoubleToStr(recorder.priceBase, 2));
+         debug("RecordVirtualProfit(0.3)  Tick="+ Ticks +"  updated price base to "+ DoubleToStr(recorder.priceBase, 2));
 
          tmp = recorder.hSet;
          recorder.hSet = NULL;
@@ -1870,38 +1870,38 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",                ZigZag.Periods                                +";"+ NL,
-                            "ZigZag.Periods.Step=",           ZigZag.Periods.Step                           +";"+ NL,
-                            "ZigZag.Type=",                   DoubleQuoteStr(ZigZag.Type)                   +";"+ NL,
-                            "ZigZag.Semaphores.Symbol=",      DoubleQuoteStr(ZigZag.Semaphores.Symbol)      +";"+ NL,
-                            "ZigZag.Width=",                  ZigZag.Width                                  +";"+ NL,
-                            "ZigZag.Color=",                  ColorToStr(ZigZag.Color)                      +";"+ NL,
+   return(StringConcatenate("ZigZag.Periods=",              ZigZag.Periods                            +";"+ NL,
+                            "ZigZag.Periods.Step=",         ZigZag.Periods.Step                       +";"+ NL,
+                            "ZigZag.Type=",                 DoubleQuoteStr(ZigZag.Type)               +";"+ NL,
+                            "ZigZag.Semaphores.Symbol=",    DoubleQuoteStr(ZigZag.Semaphores.Symbol)  +";"+ NL,
+                            "ZigZag.Width=",                ZigZag.Width                              +";"+ NL,
+                            "ZigZag.Color=",                ColorToStr(ZigZag.Color)                  +";"+ NL,
 
-                            "Donchian.ShowChannel=",          BoolToStr(Donchian.ShowChannel)               +";"+ NL,
-                            "Donchian.Channel.UpperColor=",   ColorToStr(Donchian.Channel.UpperColor)       +";"+ NL,
-                            "Donchian.Channel.LowerColor=",   ColorToStr(Donchian.Channel.LowerColor)       +";"+ NL,
-                            "Donchian.ShowCrossings=",        DoubleQuoteStr(Donchian.ShowCrossings)        +";"+ NL,
-                            "Donchian.Crossing.Symbol=",      DoubleQuoteStr(Donchian.Crossing.Symbol)      +";"+ NL,
-                            "Donchian.Crossing.Width=",       Donchian.Crossing.Width                       +";"+ NL,
-                            "Donchian.Crossing.Color=",       ColorToStr(Donchian.Crossing.Color)           +";"+ NL,
+                            "Donchian.ShowChannel=",        BoolToStr(Donchian.ShowChannel)           +";"+ NL,
+                            "Donchian.Channel.UpperColor=", ColorToStr(Donchian.Channel.UpperColor)   +";"+ NL,
+                            "Donchian.Channel.LowerColor=", ColorToStr(Donchian.Channel.LowerColor)   +";"+ NL,
+                            "Donchian.ShowCrossings=",      DoubleQuoteStr(Donchian.ShowCrossings)    +";"+ NL,
+                            "Donchian.Crossing.Symbol=",    DoubleQuoteStr(Donchian.Crossing.Symbol)  +";"+ NL,
+                            "Donchian.Crossing.Width=",     Donchian.Crossing.Width                   +";"+ NL,
+                            "Donchian.Crossing.Color=",     ColorToStr(Donchian.Crossing.Color)       +";"+ NL,
 
-                            "ShowChartLegend=",               BoolToStr(ShowChartLegend)                    +";"+ NL,
-                            "MaxBarsBack=",                   MaxBarsBack                                   +";"+ NL,
+                            "ShowChartLegend=",             BoolToStr(ShowChartLegend)                +";"+ NL,
+                            "MaxBarsBack=",                 MaxBarsBack                               +";"+ NL,
 
-                            "Signal.onReversal=",             BoolToStr(Signal.onReversal)                  +";"+ NL,
-                            "Signal.onReversal.Types=",       DoubleQuoteStr(Signal.onReversal.Types)       +";"+ NL,
-                            "Signal.onBreakout=",             BoolToStr(Signal.onBreakout)                  +";"+ NL,
-                            "Signal.onBreakout.Types=",       DoubleQuoteStr(Signal.onBreakout.Types)       +";"+ NL,
-                            "Signal.Sound.Up=",               DoubleQuoteStr(Signal.Sound.Up)               +";"+ NL,
-                            "Signal.Sound.Down=",             DoubleQuoteStr(Signal.Sound.Down)             +";"+ NL,
+                            "Signal.onReversal=",           BoolToStr(Signal.onReversal)              +";"+ NL,
+                            "Signal.onReversal.Types=",     DoubleQuoteStr(Signal.onReversal.Types)   +";"+ NL,
+                            "Signal.onBreakout=",           BoolToStr(Signal.onBreakout)              +";"+ NL,
+                            "Signal.onBreakout.Types=",     DoubleQuoteStr(Signal.onBreakout.Types)   +";"+ NL,
+                            "Signal.Sound.Up=",             DoubleQuoteStr(Signal.Sound.Up)           +";"+ NL,
+                            "Signal.Sound.Down=",           DoubleQuoteStr(Signal.Sound.Down)         +";"+ NL,
 
-                            "Sound.onChannelWidening=",       BoolToStr(Sound.onChannelWidening)            +";"+ NL,
-                            "Sound.onNewChannelHigh=",        DoubleQuoteStr(Sound.onNewChannelHigh)        +";"+ NL,
-                            "Sound.onNewChannelLow=",         DoubleQuoteStr(Sound.onNewChannelLow)         +";"+ NL,
+                            "Sound.onChannelWidening=",     BoolToStr(Sound.onChannelWidening)        +";"+ NL,
+                            "Sound.onNewChannelHigh=",      DoubleQuoteStr(Sound.onNewChannelHigh)    +";"+ NL,
+                            "Sound.onNewChannelLow=",       DoubleQuoteStr(Sound.onNewChannelLow)     +";"+ NL,
 
-                            "TrackSignalPerformance=",        BoolToStr(TrackSignalPerformance)             +";"+ NL,
-                            "TrackSignalPerformance.Since=",  TimeToStr(TrackSignalPerformance.Since)       +";"+ NL,
-                            "TrackSignalPerformance.Symbol=", DoubleQuoteStr(TrackSignalPerformance.Symbol) +";")
+                            "TrackVirtualProfit=",          BoolToStr(TrackVirtualProfit)             +";"+ NL,
+                            "TrackVirtualProfit.Since=",    TimeToStr(TrackVirtualProfit.Since)       +";"+ NL,
+                            "TrackVirtualProfit.Symbol=",   DoubleQuoteStr(TrackVirtualProfit.Symbol) +";")
    );
 
    // suppress compiler warnings
