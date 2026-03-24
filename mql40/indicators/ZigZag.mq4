@@ -669,6 +669,8 @@ int onTick() {
       signalPerformanceC[startBar] = EMPTY_VALUE;
    }
 
+   datetime startRecalc = GetTickCount();
+
    for (int bar=startBar; bar >= 0; bar--) {
       // recalculate Donchian channel
       if (bar > 0) {
@@ -762,12 +764,22 @@ int onTick() {
       combinedTrend[bar] = Sign(trend[bar]) * unknownTrend[bar] * 100000 + trend[bar];
    }
 
+   //if (Ticks == 1) {
+   //   debug("onTick(0.4)  Tick="+ Ticks +"  foreach(bars="+ (startBar+1) +") => "+ DoubleToStr((GetTickCount()-startRecalc)/1000.0, 3) +" sec");
+   //}
+
    if (__isChart && !__isSuperContext) {
       if (ShowChartLegend) UpdateChartLegend();
 
       // record signal performance
       if (TrackSignalPerformance) {
+         datetime startRecorder = GetTickCount();
+
          if (!RecordSignalPerformance()) return(last_error);
+
+         //if (Ticks == 1) {
+         //   debug("onTick(0.5)  Tick="+ Ticks +" RecordSignalPerformance() => "+ DoubleToStr((GetTickCount()-startRecorder)/1000.0, 3) +" sec");
+         //}
       }
 
       // detect ZigZag breakouts (comparing legs against bands also detects breakouts on missed ticks)
@@ -933,7 +945,12 @@ bool RecalculateSignalPerformance(int bar, bool isReversal) {
 
    // either flip the position
    if (isReversal) {
-      if (!isPosition) signalPerformanceC[bar] = 0;
+      if (!isPosition) {
+         signalPerformanceO[bar] = 0;
+         signalPerformanceH[bar] = 0;
+         signalPerformanceL[bar] = 0;
+         signalPerformanceC[bar] = 0;
+      }
 
       if (trend[bar] > 0) {
          if (isPosition) {
@@ -1073,8 +1090,8 @@ bool RecordSignalPerformance(int _bar = 0) {
       H = signalPerformanceH[bar];
       L = signalPerformanceL[bar];
 
-      if (bar == 0) flags = HST_FILL_GAPS;
-      else          flags = HST_FILL_GAPS|HST_BUFFER_TICKS;
+      flags = HST_FILL_GAPS|HST_BUFFER_TICKS;
+
       if (O > HalfPoint) {
          if (!HistorySet1.AddTick(recorder.hSet, Time[bar], O + recorder.priceBase, flags)) return(false);
       }
@@ -1084,6 +1101,8 @@ bool RecordSignalPerformance(int _bar = 0) {
       if (L > HalfPoint) {
          if (!HistorySet1.AddTick(recorder.hSet, Time[bar], L + recorder.priceBase, flags)) return(false);
       }
+
+      if (bar == 0) flags = HST_FILL_GAPS;
       if (!HistorySet1.AddTick(recorder.hSet, Time[bar], C, flags)) return(false);
    }
    return(true);
