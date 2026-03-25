@@ -967,7 +967,7 @@ bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHig
    vLow  [bar] = vClose[bar+1];
    vClose[bar] = vClose[bar+1];
 
-   bool isPosition = (vClose[bar] != EMPTY_VALUE);
+   bool isPosition = (vClose[bar] != EMPTY_VALUE), isLegUp;
 
    // reversal bar, flip the position
    if (isReversal) {
@@ -1024,7 +1024,7 @@ bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHig
             vClose[bar] -= (upperCross[bar] - lowerCross[bar]);      // open new long position and immediately close it
             vClose[bar] += (lowerCross[bar] - Close[bar]);           // open new short position
          }
-         else return(!catch("UpdateVirtualProfit(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+         else return(!catch("UpdateVirtualProfit(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar: trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
 
          vHigh[bar] = MathMax(vOpen[bar], vClose[bar]);              // the exact intra-bar path is unknown
          vLow [bar] = MathMin(vOpen[bar], vClose[bar]);
@@ -1033,20 +1033,28 @@ bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHig
 
    // normal bar without crossing, update an existing position
    else if (isPosition) {
-      if (trend[bar] > 0) {
-         vOpen [bar]  = vClose[bar+1];
+      if (!trend[bar]) {
+         if (unknownTrend[bar] <= 0)  return(!catch("UpdateVirtualProfit(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar: trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+         int semBar = bar + unknownTrend[bar];
+         if (!semaphoreClose[semBar]) return(!catch("UpdateVirtualProfit(3)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar without previous semaphore: trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+         isLegUp = (semaphoreClose[semBar] > High[semBar]-HalfPoint);
+      }
+      else {
+         isLegUp = (trend[bar] > 0);
+      }
+
+      vOpen[bar] = vClose[bar+1];
+      if (isLegUp) {
          vClose[bar] += (Close[bar] - Close[bar+1]);
          vHigh [bar]  = vClose[bar] + (High[bar] - Close[bar]);
          vLow  [bar]  = vClose[bar] + ( Low[bar] - Close[bar]);
       }
-      else if (trend[bar] < 0) {
-         vOpen [bar]  = vClose[bar+1];
+      else /*isLegDown*/ {
          vClose[bar] -= (Close[bar] - Close[bar+1]);
          vHigh [bar]  = vClose[bar] - ( Low[bar] - Close[bar]);
          vLow  [bar]  = vClose[bar] - (High[bar] - Close[bar]);
       }
-      else return(!catch("UpdateVirtualProfit(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
-   }
+  }
 
    // normal bar without a position (before first ZigZag reversal)
    //else {}
