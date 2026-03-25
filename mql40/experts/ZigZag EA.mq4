@@ -429,7 +429,7 @@ bool IsZigZagSignal(double &signal[]) {
       signal[SIG_OP   ] = 0;
 
       if (!GetZigZagData(0, trend, reversalOffset, reversalPrice)) return(!logError("IsZigZagSignal(1)->GetZigZagData(0) => FALSE", ERR_RUNTIME_ERROR));
-      int absTrend = MathAbs(trend);
+      int absTrend = Abs(trend);
       bool isReversal = false;
       if      (absTrend == reversalOffset)     isReversal = true;             // regular reversal
       else if (absTrend==1 && !reversalOffset) isReversal = true;             // reversal after double crossing

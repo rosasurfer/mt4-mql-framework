@@ -55,17 +55,12 @@
  *  • TrackVirtualProfit.Since:    Start time to track virtual PnL from (default: MaxBarsBack).
  *  • TrackVirtualProfit.Symbol:   Custom symbol to use for virtual PnL tracking (default: auto-generated).
  *
- *  • AutoConfiguration:             If enabled all input parameters may use predefined defaults from the configuration.
+ *  • AutoConfiguration:           If enabled all input parameters may use predefined defaults from the configuration.
  *
  *
  * TODO:
- *  - convert TrackSignalPerformance.Since to string
+ *  - update logic in usage locations of icZigZag()
  *  - remove debug code
- *  - once finished, update logic in usage locations of icZigZag()
- *
- *  - fix triple-crossing at GBPJPY,M5 2023.12.18 00:00, ZigZag(20)
- *  - keep bar status in IsUpperCrossLast()
- *  - document usage of iCustom()
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
