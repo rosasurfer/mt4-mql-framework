@@ -376,11 +376,11 @@ string   semTypes[] = {"NULL", "LOW", "HIGH"};
 int onInit() {
    devStartTime     = D'2025.05.17 19:45';                     // TODO: remove once finished
    devFirstCrossing = D'2025.05.17 20:07';
-                                                               // double crossings:
-   devFrom = devStartTime     + 87 * Period() * MINUTES;       // P=8, 2026.03.16 20:47
+
+   devFrom = devStartTime     + 87 * Period() * MINUTES;
    devTo   = devFirstCrossing + 69 * Period() * MINUTES;
 
-   if (debugging && Symbol()=="BTCUSD" && Period()==PERIOD_M1 && ZigZag.Periods <= 20) {
+   if (debugging && Symbol()=="BTCUSD" && Period()==PERIOD_M1) {
       MaxBarsBack = iBarShift(NULL, NULL, devStartTime);
    }
 
@@ -739,9 +739,9 @@ int onTick() {
          isReversalBar = (Abs(trend[bar]) == reversalOffset[bar]);
       }
 
-      // calculate virtual PnL
+      // update virtual PnL
       if (TrackVirtualProfit) {
-         if (!RecalculateVirtualProfit(bar, isReversalBar)) return(last_error);
+         if (!UpdateVirtualProfit(bar, isReversalBar, virtualProfit_O, virtualProfit_H, virtualProfit_L, virtualProfit_C)) return(last_error);
       }
 
       if (debugging && Ticks == 1) {
@@ -764,8 +764,8 @@ int onTick() {
       else if (crossingDrawType == MODE_FIRST_CROSSING) {         // hide all crossings except the 1st
          if (isReversalBar) {
             if (upperCross[bar] && lowerCross[bar]) {             // special handling for double crossings
-               bool dbc_isReversalBar = false;                    // inspect and process the 1st crossing
-               if (!dbc_unknownTrend) {                           // whether the first crossing also represents a reversal bar
+               bool dbc_isReversalBar = false;                    // process the 1st crossing
+               if (!dbc_unknownTrend) {                           // whether the first crossing represents a reversal bar
                   dbc_isReversalBar = (Abs(dbc_trend) == dbc_reversalOffset);
                }
                if (!dbc_isReversalBar) {
@@ -948,101 +948,106 @@ int onTick() {
 
 
 /**
- * Recalculate the virtual PnL for the specified bar.
+ * Update the virtual PnL for the specified bar.
  *
- * @param  int  bar        - bar offset
- * @param  bool isReversal - whether the bar is a reversal bar
+ * @param  _In_    int    bar        - bar offset
+ * @param  _In_    bool   isReversal - whether the bar is a reversal bar
+ * @param  _InOut_ double vOpen []   - virtual PnL timeseries (passed by reference to simplify local var names)
+ * @param  _InOut_ double vHigh []   - ...
+ * @param  _InOut_ double vLow  []   - ...
+ * @param  _InOut_ double vClose[]   - ...
  *
  * @return bool - success status
  */
-bool RecalculateVirtualProfit(int bar, bool isReversal) {
+bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHigh[], double &vLow[], double &vClose[]) {
    isReversal = (isReversal != 0);
 
-   virtualProfit_O[bar] = virtualProfit_C[bar+1];
-   virtualProfit_H[bar] = virtualProfit_C[bar+1];
-   virtualProfit_L[bar] = virtualProfit_C[bar+1];
-   virtualProfit_C[bar] = virtualProfit_C[bar+1];
+   vOpen [bar] = vClose[bar+1];
+   vHigh [bar] = vClose[bar+1];
+   vLow  [bar] = vClose[bar+1];
+   vClose[bar] = vClose[bar+1];
 
-   bool isPosition = (virtualProfit_C[bar] != EMPTY_VALUE);
+   bool isPosition = (vClose[bar] != EMPTY_VALUE);
 
    // reversal bar, flip the position
    if (isReversal) {
       if (!isPosition) {
-         virtualProfit_O[bar] = 0;
-         virtualProfit_H[bar] = 0;
-         virtualProfit_L[bar] = 0;
-         virtualProfit_C[bar] = 0;
+         vOpen [bar] = 0;
+         vHigh [bar] = 0;
+         vLow  [bar] = 0;
+         vClose[bar] = 0;
       }
 
       if (trend[bar] > 0) {
          if (isPosition) {
-            virtualProfit_C[bar] -= (upperCross[bar] - Close[bar+1]);                     // close short position
-            virtualProfit_O[bar] = virtualProfit_C[bar] - (Open[bar] - upperCross[bar]);
-            virtualProfit_C[bar] += (Close[bar] - upperCross[bar]);                       // open new long position
-            virtualProfit_H[bar] = MathMax(virtualProfit_O[bar], virtualProfit_C[bar]);
-            virtualProfit_L[bar] = MathMin(virtualProfit_O[bar], virtualProfit_C[bar]);   // the intra-bar path is unknown
+            vClose[bar] -= (upperCross[bar] - Close[bar+1]);            // close short position
+            vOpen [bar]  = vClose[bar] - (Open[bar] - upperCross[bar]);
+            vClose[bar] += (Close[bar] - upperCross[bar]);              // open new long position
+            vHigh [bar]  = MathMax(vOpen[bar], vClose[bar]);
+            vLow  [bar]  = MathMin(vOpen[bar], vClose[bar]);            // the intra-bar path is unknown
          }
          else {
-            virtualProfit_O[bar] = 0;                                                     // open long position
-            virtualProfit_H[bar] = ( High[bar] - upperCross[bar]);
-            virtualProfit_L[bar] = (  Low[bar] - upperCross[bar]);
-            virtualProfit_C[bar] = (Close[bar] - upperCross[bar]);
+            vOpen [bar] = 0;                                            // open long position
+            vHigh [bar] = ( High[bar] - upperCross[bar]);
+            vLow  [bar] = (  Low[bar] - upperCross[bar]);
+            vClose[bar] = (Close[bar] - upperCross[bar]);
          }
       }
       else if (trend[bar] < 0) {
          if (isPosition) {
-            virtualProfit_C[bar] += (lowerCross[bar] - Close[bar+1]);                     // close long position
-            virtualProfit_O[bar] = virtualProfit_C[bar] + (Open[bar] - lowerCross[bar]);
-            virtualProfit_C[bar] += (lowerCross[bar] - Close[bar]);                       // open new short position
-            virtualProfit_H[bar] = MathMax(virtualProfit_O[bar], virtualProfit_C[bar]);
-            virtualProfit_L[bar] = MathMin(virtualProfit_O[bar], virtualProfit_C[bar]);   // the intra-bar path is unknown
+            vClose[bar] += (lowerCross[bar] - Close[bar+1]);            // close long position
+            vOpen [bar]  = vClose[bar] + (Open[bar] - lowerCross[bar]);
+            vClose[bar] += (lowerCross[bar] - Close[bar]);              // open new short position
+            vHigh [bar]  = MathMax(vOpen[bar], vClose[bar]);
+            vLow  [bar]  = MathMin(vOpen[bar], vClose[bar]);            // the intra-bar path is unknown
          }
          else {
-            virtualProfit_O[bar] = 0;                                                     // open short position
-            virtualProfit_H[bar] = (lowerCross[bar] -   Low[bar]);
-            virtualProfit_L[bar] = (lowerCross[bar] -  High[bar]);
-            virtualProfit_C[bar] = (lowerCross[bar] - Close[bar]);
+            vOpen [bar] = 0;                                            // open short position
+            vHigh [bar] = (lowerCross[bar] -   Low[bar]);
+            vLow  [bar] = (lowerCross[bar] -  High[bar]);
+            vClose[bar] = (lowerCross[bar] - Close[bar]);
          }
       }
       else /*trend == 0*/{
+         // TODO: update OHLC
          // double crossing with two semaphores (at the moment when the bar is processed)
-         if (semaphoreOpen[bar] == Low[bar]) {                                            // crossing order "Low, High"
+         if (semaphoreOpen[bar] == Low[bar]) {                          // crossing order "Low, High"
             if (isPosition) {
-               virtualProfit_C[bar] += (lowerCross[bar] - Close[bar+1]);                  // close existing long position
+               vClose[bar] += (lowerCross[bar] - Close[bar+1]);         // close existing long position
             }
-            virtualProfit_C[bar] -= (upperCross[bar] - lowerCross[bar]);                  // open new short position and immediately close it
-            virtualProfit_C[bar] += (Close[bar] - upperCross[bar]);                       // open new long position
+            vClose[bar] -= (upperCross[bar] - lowerCross[bar]);         // open new short position and immediately close it
+            vClose[bar] += (Close[bar] - upperCross[bar]);              // open new long position
          }
-         else if (semaphoreOpen[bar] == High[bar]) {                                      // crossing order "High, Low"
+         else if (semaphoreOpen[bar] == High[bar]) {                    // crossing order "High, Low"
             if (isPosition) {
-               virtualProfit_C[bar] -= (upperCross[bar] - Close[bar+1]);                  // close existing short position
+               vClose[bar] -= (upperCross[bar] - Close[bar+1]);         // close existing short position
             }
-            virtualProfit_C[bar] -= (upperCross[bar] - lowerCross[bar]);                  // open new long position and immediately close it
-            virtualProfit_C[bar] += (lowerCross[bar] - Close[bar]);                       // open new short position
+            vClose[bar] -= (upperCross[bar] - lowerCross[bar]);         // open new long position and immediately close it
+            vClose[bar] += (lowerCross[bar] - Close[bar]);              // open new short position
          }
-         else return(!catch("RecalculateVirtualProfit(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+         else return(!catch("UpdateVirtualProfit(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
 
-         virtualProfit_O[bar] = virtualProfit_C[bar+1];
-         virtualProfit_H[bar] = MathMax(virtualProfit_O[bar], virtualProfit_C[bar]);
-         virtualProfit_L[bar] = MathMin(virtualProfit_O[bar], virtualProfit_C[bar]);
+         vOpen[bar] = vClose[bar+1];
+         vHigh[bar] = MathMax(vOpen[bar], vClose[bar]);
+         vLow [bar] = MathMin(vOpen[bar], vClose[bar]);
       }
    }
 
    // normal bar, update an existing position
    else if (isPosition) {
       if (trend[bar] > 0) {
-         virtualProfit_C[bar] += (Close[bar] - Close[bar+1]);
-         virtualProfit_O[bar] = virtualProfit_C[bar] + (Open[bar] - Close[bar]);
-         virtualProfit_H[bar] = virtualProfit_C[bar] + (High[bar] - Close[bar]);
-         virtualProfit_L[bar] = virtualProfit_C[bar] + ( Low[bar] - Close[bar]);
+         vClose[bar] += (Close[bar] - Close[bar+1]);
+         vOpen [bar]  = vClose[bar] + (Open[bar] - Close[bar]);
+         vHigh [bar]  = vClose[bar] + (High[bar] - Close[bar]);
+         vLow  [bar]  = vClose[bar] + ( Low[bar] - Close[bar]);
       }
       else if (trend[bar] < 0) {
-         virtualProfit_C[bar] -= (Close[bar] - Close[bar+1]);
-         virtualProfit_O[bar] = virtualProfit_C[bar] - (Open[bar] - Close[bar]);
-         virtualProfit_H[bar] = virtualProfit_C[bar] - ( Low[bar] - Close[bar]);
-         virtualProfit_L[bar] = virtualProfit_C[bar] - (High[bar] - Close[bar]);
+         vClose[bar] -= (Close[bar] - Close[bar+1]);
+         vOpen [bar]  = vClose[bar] - (Open[bar] - Close[bar]);
+         vHigh [bar]  = vClose[bar] - ( Low[bar] - Close[bar]);
+         vLow  [bar]  = vClose[bar] - (High[bar] - Close[bar]);
       }
-      else return(!catch("RecalculateVirtualProfit(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+      else return(!catch("UpdateVirtualProfit(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
    }
 
    // normal bar without a position (before first ZigZag reversal)
@@ -1121,7 +1126,7 @@ bool RecordVirtualProfit() {
             case  100000: recorder.priceBase =  1000000; break;
             case 1000000: recorder.priceBase = 10000000; break;
          }
-         debug("RecordVirtualProfit(0.3)  Tick="+ Ticks +"  updated price base to "+ DoubleToStr(recorder.priceBase, 2));
+         debug("RecordVirtualProfit(0.3)  Tick="+ Ticks +"  bar="+ bar +"  updated price base to "+ DoubleToStr(recorder.priceBase, 2));
 
          tmp = recorder.hSet;
          recorder.hSet = NULL;
