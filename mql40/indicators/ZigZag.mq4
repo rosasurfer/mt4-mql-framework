@@ -769,8 +769,8 @@ int onTick() {
                   dbc_isReversalBar = (Abs(dbc_trend) == dbc_reversalOffset);
                }
                if (!dbc_isReversalBar) {
-                  if (semaphoreOpen[bar] < semaphoreClose[bar]) lowerCross[bar] = 0;
-                  else                                          upperCross[bar] = 0;
+                  if (semaphoreOpen[bar] < semaphoreClose[bar]) lowerCross[bar] = 0;   // crossing order "Low, High"
+                  else                                          upperCross[bar] = 0;   // crossing order "High, Low"
                }
                // keep the 2nd crossing (it always represents a reversal bar)
             }
@@ -978,72 +978,70 @@ bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHig
          vClose[bar] = 0;
       }
 
-      if (trend[bar] > 0) {
+      if (trend[bar] > 0) {                                          // upper crossing, switch to long
          if (isPosition) {
-            vClose[bar] -= (upperCross[bar] - Close[bar+1]);            // close short position
-            vOpen [bar]  = vClose[bar] - (Open[bar] - upperCross[bar]);
-            vClose[bar] += (Close[bar] - upperCross[bar]);              // open new long position
+            vOpen [bar]  = vClose[bar+1];
+            vClose[bar] -= (upperCross[bar] - Close[bar+1]);         // close short position
+            vClose[bar] += (Close[bar] - upperCross[bar]);           // open new long position
             vHigh [bar]  = MathMax(vOpen[bar], vClose[bar]);
-            vLow  [bar]  = MathMin(vOpen[bar], vClose[bar]);            // the intra-bar path is unknown
+            vLow  [bar]  = MathMin(vOpen[bar], vClose[bar]);         // the exact intra-bar path is unknown
          }
          else {
-            vOpen [bar] = 0;                                            // open long position
-            vHigh [bar] = ( High[bar] - upperCross[bar]);
+            vHigh [bar] = ( High[bar] - upperCross[bar]);            // open long position
             vLow  [bar] = (  Low[bar] - upperCross[bar]);
             vClose[bar] = (Close[bar] - upperCross[bar]);
          }
       }
-      else if (trend[bar] < 0) {
+      else if (trend[bar] < 0) {                                     // lower crossing, switch to short
          if (isPosition) {
-            vClose[bar] += (lowerCross[bar] - Close[bar+1]);            // close long position
-            vOpen [bar]  = vClose[bar] + (Open[bar] - lowerCross[bar]);
-            vClose[bar] += (lowerCross[bar] - Close[bar]);              // open new short position
+            vOpen [bar]  = vClose[bar+1];
+            vClose[bar] += (lowerCross[bar] - Close[bar+1]);         // close long position
+            vClose[bar] += (lowerCross[bar] - Close[bar]);           // open new short position
             vHigh [bar]  = MathMax(vOpen[bar], vClose[bar]);
-            vLow  [bar]  = MathMin(vOpen[bar], vClose[bar]);            // the intra-bar path is unknown
+            vLow  [bar]  = MathMin(vOpen[bar], vClose[bar]);         // the exact intra-bar path is unknown
          }
          else {
-            vOpen [bar] = 0;                                            // open short position
-            vHigh [bar] = (lowerCross[bar] -   Low[bar]);
+            vHigh [bar] = (lowerCross[bar] -   Low[bar]);            // open short position
             vLow  [bar] = (lowerCross[bar] -  High[bar]);
             vClose[bar] = (lowerCross[bar] - Close[bar]);
          }
       }
       else /*trend == 0*/{
-         // TODO: update OHLC
          // double crossing with two semaphores (at the moment when the bar is processed)
-         if (semaphoreOpen[bar] == Low[bar]) {                          // crossing order "Low, High"
+         if (semaphoreOpen[bar] < semaphoreClose[bar]) {             // crossing order "Low, High"
             if (isPosition) {
-               vClose[bar] += (lowerCross[bar] - Close[bar+1]);         // close existing long position
+               vOpen [bar]  = vClose[bar+1];
+               vClose[bar] += (lowerCross[bar] - Close[bar+1]);      // close existing long position
             }
-            vClose[bar] -= (upperCross[bar] - lowerCross[bar]);         // open new short position and immediately close it
-            vClose[bar] += (Close[bar] - upperCross[bar]);              // open new long position
+            vClose[bar] -= (upperCross[bar] - lowerCross[bar]);      // open new short position and immediately close it
+            vClose[bar] += (Close[bar] - upperCross[bar]);           // open new long position
          }
-         else if (semaphoreOpen[bar] == High[bar]) {                    // crossing order "High, Low"
+         else if (semaphoreOpen[bar] > semaphoreClose[bar]) {        // crossing order "High, Low"
             if (isPosition) {
-               vClose[bar] -= (upperCross[bar] - Close[bar+1]);         // close existing short position
+               vOpen [bar]  = vClose[bar+1];
+               vClose[bar] -= (upperCross[bar] - Close[bar+1]);      // close existing short position
             }
-            vClose[bar] -= (upperCross[bar] - lowerCross[bar]);         // open new long position and immediately close it
-            vClose[bar] += (lowerCross[bar] - Close[bar]);              // open new short position
+            vClose[bar] -= (upperCross[bar] - lowerCross[bar]);      // open new long position and immediately close it
+            vClose[bar] += (lowerCross[bar] - Close[bar]);           // open new short position
          }
          else return(!catch("UpdateVirtualProfit(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar with trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
 
-         vOpen[bar] = vClose[bar+1];
-         vHigh[bar] = MathMax(vOpen[bar], vClose[bar]);
+         vHigh[bar] = MathMax(vOpen[bar], vClose[bar]);              // the exact intra-bar path is unknown
          vLow [bar] = MathMin(vOpen[bar], vClose[bar]);
       }
    }
 
-   // normal bar, update an existing position
+   // normal bar without crossing, update an existing position
    else if (isPosition) {
       if (trend[bar] > 0) {
+         vOpen [bar]  = vClose[bar+1];
          vClose[bar] += (Close[bar] - Close[bar+1]);
-         vOpen [bar]  = vClose[bar] + (Open[bar] - Close[bar]);
          vHigh [bar]  = vClose[bar] + (High[bar] - Close[bar]);
          vLow  [bar]  = vClose[bar] + ( Low[bar] - Close[bar]);
       }
       else if (trend[bar] < 0) {
+         vOpen [bar]  = vClose[bar+1];
          vClose[bar] -= (Close[bar] - Close[bar+1]);
-         vOpen [bar]  = vClose[bar] - (Open[bar] - Close[bar]);
          vHigh [bar]  = vClose[bar] - ( Low[bar] - Close[bar]);
          vLow  [bar]  = vClose[bar] - (High[bar] - Close[bar]);
       }
