@@ -6,7 +6,19 @@
 #define ZigZag.MODE_UPPER_CROSS        4              // upper channel band crossings: positive or 0
 #define ZigZag.MODE_LOWER_CROSS        5              // lower channel band crossings: positive or 0
 #define ZigZag.MODE_REVERSAL_OFFSET    6              // int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
-#define ZigZag.MODE_COMBINED_TREND     7              // int: combined internal buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
+#define ZigZag.MODE_COMBINED_TREND     7              // int: combined internal buffers MODE_TREND and MODE_UNKNOWN_TREND: positive/negative or 0
+
+/**
+ * Notes
+ * -----
+ * Since MQL4.0 limits the number of available indicator buffers to 8, MODE_TREND and MODE_UNKNOWN_TREND are combined into
+ * a single buffer ZigZag.MODE_COMBIND_TREND (7). To retrieve the original values with iCustom(), input "TrendBufferAsDecimal"
+ * must be set to FALSE.
+ *
+ * Each value from buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this integer holds the MODE_TREND
+ * value, and the HIWORD of the integer holds the MODE_UNKNOWN_TREND value. For final results, both values must be converted
+ * to signed short (sign extension).
+ */
 
 
 /**
@@ -64,6 +76,9 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           false,                      // bool     TrackVirtualProfit
                           0,                          // datetime TrackVirtualProfit.Since
                           "",                         // string   TrackVirtualProfit.Symbol
+
+                          "separator",                // string   ___f_______________________
+                           false,                     // bool     TrendBufferAsDecimal
 
                           "separator",                // string   ___________________________
                           false,                      // bool     AutoConfiguration

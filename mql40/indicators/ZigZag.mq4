@@ -55,12 +55,19 @@
  *  • TrackVirtualProfit.Since:    Start time to track virtual PnL from (default: MaxBarsBack).
  *  • TrackVirtualProfit.Symbol:   Custom symbol to use for virtual PnL tracking (default: auto-generated).
  *
+ *  • TrendBufferAsDecimal:        Whether buffer ZigZag.MODE_COMBINED_TREND (7) contains decimal or binary data.
  *  • AutoConfiguration:           If enabled all input parameters may use predefined defaults from the configuration.
  *
  *
- * TODO:
- *  - update logic in usage locations of icZigZag()
- *  - remove debug code
+ * Usage with iCustom()
+ * --------------------
+ * Since MQL4.0 limits the number of available indicator buffers to 8, MODE_TREND and MODE_UNKNOWN_TREND are combined into
+ * a single buffer ZigZag.MODE_COMBIND_TREND (7). To retrieve the original values with iCustom(), input "TrendBufferAsDecimal"
+ * must be set to FALSE.
+ *
+ * Each value from buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this integer holds the MODE_TREND
+ * value, and the HIWORD of the integer holds the MODE_UNKNOWN_TREND value. For final results, both values must be converted
+ * to signed short (sign extension).
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -108,6 +115,9 @@ extern bool     TrackVirtualProfit             = false;                         
 extern datetime TrackVirtualProfit.Since       = 0;                              // start time to track virtual PnL from
 extern string   TrackVirtualProfit.Symbol      = "(default)";                    // custom symbol to use for virtual PnL tracking
 
+extern string   ___f__________________________ = "";
+extern bool     TrendBufferAsDecimal           = true;                           // decimal or binary (see notes in file header)
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool     TrackZigZagBalance       = false;   // whether to track ZigZag balances
@@ -138,7 +148,7 @@ bool     ProjectNextBalance       = false;   // whether to project zero-balance 
 #define MODE_UPPER_CROSS      ZigZag.MODE_UPPER_CROSS       //  4: upper channel band crossings: positive or 0
 #define MODE_LOWER_CROSS      ZigZag.MODE_LOWER_CROSS       //  5: lower channel band crossings: positive or 0
 #define MODE_REVERSAL_OFFSET  ZigZag.MODE_REVERSAL_OFFSET   //  6: int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
-#define MODE_COMBINED_TREND   ZigZag.MODE_COMBINED_TREND    //  7: int: combined buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
+#define MODE_COMBINED_TREND   ZigZag.MODE_COMBINED_TREND    //  7: int: combined buffers MODE_TREND and MODE_UNKNOWN_TREND (see notes in file header)
 #define MODE_UPPER_CROSS_HIGH 8                             //  8: bar High of an upper channel band crossing: positive or 0
 #define MODE_LOWER_CROSS_LOW  9                             //  9: bar Low of a lower channel band crossing: positive or 0
 #define MODE_TREND            10                            // 10: int: length of a ZigZag leg: positive/negative or 0
@@ -181,7 +191,7 @@ double   semaphoreClose [];                                 // final semaphore, 
 double   reversalOffset [];                                 // int: offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
 int      trend          [];                                 // int: length of a ZigZag leg: positive/negative or 0
 int      unknownTrend   [];                                 // int: number of bars after a leg's end semaphore: non-negative or -1
-double   combinedTrend  [];                                 // int: combined buffers MODE_TREND & MODE_UNKNOWN_TREND: positive/negative or 0
+double   combinedTrend  [];                                 // int: combined buffers MODE_TREND and MODE_UNKNOWN_TREND (see notes in file header)
 double   virtualProfit_O[];                                 // virtual signal PnL in price units: positive/negative or EMPTY_VALUE
 double   virtualProfit_H[];                                 // ...
 double   virtualProfit_L[];                                 // ...
@@ -672,8 +682,6 @@ int onTick() {
       virtualProfit_C[startBar] = EMPTY_VALUE;
    }
 
-   datetime startRecalc = GetTickCount();
-
    for (int bar=startBar; bar >= 0; bar--) {
       // recalculate Donchian channel
       if (bar > 0) {
@@ -776,13 +784,10 @@ int onTick() {
          }
       }
 
-      // set combinedTrend[]
-      combinedTrend[bar] = Sign(trend[bar]) * unknownTrend[bar] * 100000 + trend[bar];
+      // set combinedTrend[], decimal for "Data Window", HIWORD + LOWORD for iCustom()
+      if (TrendBufferAsDecimal) combinedTrend[bar] = Sign(trend[bar]) * unknownTrend[bar] * 100000 + trend[bar];
+      else                      combinedTrend[bar] = (unknownTrend[bar] << 16) | trend[bar];
    }
-
-   //if (Ticks == 1) {
-   //   debug("onTick(0.4)  Tick="+ Ticks +"  foreach(bars="+ (startBar+1) +") => "+ DoubleToStr((GetTickCount()-startRecalc)/1000.0, 3) +" sec");
-   //}
 
    if (__isChart && !__isSuperContext) {
       if (ShowChartLegend) UpdateChartLegend();
@@ -1511,7 +1516,9 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
    for (int i=fromBar; i >= toBar; i--) {
       trend        [i] = value;
       unknownTrend [i] = -1;
-      combinedTrend[i] = trend[i];
+
+      if (TrendBufferAsDecimal) combinedTrend[i] = trend[i];                           // hide unknownTrend=-1
+      else                      combinedTrend[i] = (unknownTrend[i] << 16) | trend[i]; // iCustom()
 
       if (resetReversals) reversalOffset[i] = -1;
 
@@ -1907,7 +1914,9 @@ string InputsToStr() {
 
                             "TrackVirtualProfit=",          BoolToStr(TrackVirtualProfit)             +";"+ NL,
                             "TrackVirtualProfit.Since=",    TimeToStr(TrackVirtualProfit.Since)       +";"+ NL,
-                            "TrackVirtualProfit.Symbol=",   DoubleQuoteStr(TrackVirtualProfit.Symbol) +";")
+                            "TrackVirtualProfit.Symbol=",   DoubleQuoteStr(TrackVirtualProfit.Symbol) +";"+ NL,
+
+                            "TrendBufferAsDecimal=",        BoolToStr(TrendBufferAsDecimal)           +";")
    );
 
    // suppress compiler warnings
