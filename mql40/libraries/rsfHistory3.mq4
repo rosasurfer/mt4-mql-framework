@@ -10,17 +10,18 @@
  *  - Create a new history and delete all existing data (e.g. for writing a new history):
  *     int hSet = HistorySet3.Create(symbol, description, digits, format);
  *
- *  - How to synchronize rsfHistory{1-3}.mq4:
+ *  - How to synchronize rsfHistory{1,2,3}.mq4:
  *     search:  (HistoryFile|HistorySet)[1-3]\>
  *     replace: \11 or \12 or \13
  *
  *
  * Notes:
  * ------
- *  - MQL4.0 in terminal builds <= 509 imposes a limit of 16 open files per MQL module. In terminal builds > 509 this limit
- *    is extended to 64 open files per MQL module. This means older terminals can manage max. 1 full history set and newer
- *    terminals max. 7 full history sets per MQL module. That's still not sufficient. To overcome the limits there are 3
- *    identical history libraries, extending the limits for newer terminals to max. 21 history sets per MQL program.
+ *  - MT4 terminal builds <= 509 impose a limit of 16 open files per MQL module. In terminal builds > 509 this limit was
+ *    extended to 64 open files per MQL module. This means older terminals can manage max. 1 full history set and newer
+ *    terminals max. 7 full history sets per MQL module. For some uses cases that's still not sufficient. To overcome the
+ *    limit there are 3 fully identical history libraries, extending the limit for terminal builds > 509 to max. 21 history
+ *    sets per MQL program.
  *
  *  - Since terminal builds > 509 MT4 supports two history file formats. The format is identified in history files by the
  *    field HISTORY_HEADER.barFormat. The default bar format in builds <= 509 is "400" and in builds > 509 "401".
@@ -428,35 +429,35 @@ bool HistorySet3.Close(int hSet) {
 
 
 /**
- * Fügt dem HistorySet eines Symbols einen Tick hinzu. Der Tick wird als letzter Tick (Close) der entsprechenden Bar gespeichert.
+ * Add a single tick to a symbol's HistorySet. The tick is stored as Close price of the last bar.
  *
- * @param  int      hSet  - Set-Handle des Symbols
- * @param  datetime time  - Zeitpunkt des Ticks
- * @param  double   value - Datenwert
- * @param  int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                          • HST_BUFFER_TICKS: buffert aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten
- *                            BarOpen-Event
- *                          • HST_FILL_GAPS:    füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
- *
+ * @param  int      hSet             - handle of the HistorySet
+ * @param  datetime time             - tick time
+ * @param  double   value            - tick value
+ * @param  int      flags [optional] - additional flags that control writing (default: none)
+ *                                     HST_BUFFER_TICKS: Buffer ticks and flush data only at the next BarOpen event for the respective file.
+ *                                     HST_FILL_GAPS:    Fills any gaps with the last price before the gap.
  * @return bool - success status
  */
 bool HistorySet3.AddTick(int hSet, datetime time, double value, int flags = NULL) {
-   // Validierung
+   // validation
    if (hSet <= 0)                     return(!catch("HistorySet3.AddTick(1)  invalid parameter hSet: "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
       if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet3.AddTick(2)  invalid parameter hSet: "+ hSet, ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet3.AddTick(3)  invalid parameter hSet: "+ hSet +" (unknown handle, symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet3.AddTick(4)  invalid parameter hSet: "+ hSet +" (closed handle, symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet3.AddTick(3)  invalid parameter hSet: "+ hSet +" (unknown handle, symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet3.AddTick(4)  invalid parameter hSet: "+ hSet +" (closed handle, symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
       hs.hSet.lastValid = hSet;
    }
-   if (time <= 0)                     return(!catch("HistorySet3.AddTick(5)  invalid parameter time: "+ time +" (symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
+   if (time <= 0)                     return(!catch("HistorySet3.AddTick(5)  invalid parameter time: "+ time +" (symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
+   if (value <= 0)                    return(!catch("HistorySet3.AddTick(6)  invalid parameter value: "+ NumberToStr(value, ".1+") +" (must be positive, symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
+   if (value >= EMPTY_VALUE)          return(!catch("HistorySet3.AddTick(7)  invalid parameter value: "+ NumberToStr(value, ".1+") +" (too large, symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
 
-   // Dateihandles holen und jeweils Tick hinzufügen
-   int hFile, sizeOfPeriods=ArraySize(periods);
+   int hFile, sizeOfPeriods = ArraySize(periods);
 
+   // get file handles and add tick
    for (int i=0; i < sizeOfPeriods; i++) {
       hFile = hs.hFile[hSet][i];
-      if (!hFile) {                                                  // noch ungeöffnete Dateien öffnen
+      if (!hFile) {                             // open files that haven't been opened yet
          hFile = HistoryFile3.Open(hs.symbol[hSet], periods[i], hs.description[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.directory[hSet]);
          if (!hFile) return(false);
          hs.hFile[hSet][i] = hFile;
@@ -810,7 +811,7 @@ int HistoryFile3.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
  *
  * @return bool - success status
  *
- * NOTE: Time und Volume der gelesenen Bar werden validert, nicht jedoch die Barform.
+ * NOTE: Time und Volume der gelesenen Bar werden validiert, nicht jedoch die Barform.
  */
 bool HistoryFile3.ReadBar(int hFile, int offset, double &bar[]) {
    if (hFile <= 0)                      return(!catch("HistoryFile3.ReadBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -909,7 +910,7 @@ bool HistoryFile3.ReadBar(int hFile, int offset, double &bar[]) {
  *
  * @return bool - success status
  *
- * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
+ * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
  *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
@@ -1111,7 +1112,7 @@ bool HistoryFile3.UpdateBar(int hFile, int offset, double value) {
  *
  * @return bool - success status
  *
- * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
+ * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
  *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile3.InsertBar(int hFile, int offset, double bar[], int flags = NULL) {
@@ -1316,16 +1317,14 @@ bool HistoryFile3.MoveBars(int hFile, int fromOffset, int destOffset) {
 
 
 /**
- * Fügt einer Historydatei einen weiteren Tick hinzu. Der Tick muß zur jüngsten Bar der Datei gehören und wird als Close-Preis gespeichert.
+ * Add a single tick to a history file. The tick must belong to the youngest bar in the file and becomes the bar's close price.
  *
- * @param  int      hFile - Handle der Historydatei
- * @param  datetime time  - Zeitpunkt des Ticks
- * @param  double   value - Datenwert
- * @param  int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                          • HST_BUFFER_TICKS: puffert aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten
- *                            BarOpen-Event
- *                          • HST_FILL_GAPS:    füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
- *
+ * @param  int      hFile            - handle of the history file
+ * @param  datetime time             - tick time
+ * @param  double   value            - tick value
+ * @param  int      flags [optional] - additional flags that control writing (default: none)
+ *                                     HST_BUFFER_TICKS: Buffer ticks and flush data only at the next BarOpen event for the file.
+ *                                     HST_FILL_GAPS:    Fills any gaps with the last price before the gap.
  * @return bool - success status
  */
 bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NULL) {
@@ -1338,6 +1337,8 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
    }
    if (time <= 0)                          return(!catch("HistoryFile3.AddTick(5)  invalid parameter time: "+ time +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    if (time < hf.total.to.openTime[hFile]) return(!catch("HistoryFile3.AddTick(6)  cannot add tick to a closed bar: tickTime="+ TimeToStr(time, TIME_FULL) +", last bar.time="+ TimeToStr(hf.total.to.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (value <= 0)                         return(!catch("HistoryFile3.AddTick(7)  invalid parameter value: "+ NumberToStr(value, ".1+") +" (must be positive, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (value >= EMPTY_VALUE)               return(!catch("HistoryFile3.AddTick(8)  invalid parameter value: "+ NumberToStr(value, ".1+") +" (too large, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
 
    double bar[6];
    bool   barExists[1];

@@ -349,7 +349,7 @@ bool Recorder_start() {
    | v419 HST_BUFFER_TICKS=On  |            |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   int size=ArraySize(metric.hSet), flags=NULL;
+   int size = ArraySize(metric.hSet), flags = NULL;
    if (__isTesting) flags = HST_BUFFER_TICKS;
    double value;
    bool success = true;

@@ -27,11 +27,13 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, in
 
    int bar = iBarShift(symbol, period, time, true);
    int error = GetLastError();
-   if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)
+   if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE) {
       return(_EMPTY_VALUE(catch("iBarShiftNext(2)->iBarShift("+ symbol +","+ PeriodDescription(period) +") => "+ bar, error)));
+   }
 
-   if (bar != -1)
+   if (bar != -1) {
       return(bar);
+   }
 
    // exact war TRUE und bar==-1: keine abdeckende Bar gefunden
    // Datenreihe holen

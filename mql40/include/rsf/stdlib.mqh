@@ -79,30 +79,22 @@
 
    double   SumDoubles(double array[]);
 
-
    // buffer functions
    int      InitializeDoubleBuffer(double buffer[], int size);
-
    string   BufferToStr   (int buffer[]);
    string   BufferToHexStr(int buffer[]);
-
    int      BufferGetChar(int buffer[], int pos);
    //int    BufferSetChar(int buffer[], int pos, int chr);
-
 
    // configuration
    int      GetIniSections(string fileName, string &names[]);
 
-
    // date/time
    int      GetTimezoneToGmtOffset(datetime time, string timezone);
    int      GetGmtToTimezoneOffset(datetime time, string timezone);
-
    int      GetTimezoneToFxtOffset(datetime time, string timezone);
    int      GetFxtToTimezoneOffset(datetime time, string timezone);
-
    bool     GetTimezoneTransitions(datetime time, int prev[], int next[]);
-
 
    // colors
    color    RGB(int red, int green, int blue);
@@ -110,28 +102,22 @@
    color    HSLToRGB(double hsl[3]);
    color    ModifyColor(color rgb, double hue, double saturation, double lightness);
 
-
    // files, i/o
    string   CreateTempFile(string path, string prefix="");
    string   GetTempPath();
-
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
-
    bool     EditFile(string filename);
    bool     EditFiles(string filenames[]);
-
 
    // locking
    bool     AquireLock(string mutex);
    bool     ReleaseLock(string mutex);
 
-
    // strings
    bool     DoubleQuoteStrings(string &array[]);
    bool     SortStrings(string &values[]);
    string   StringPad(string input, int length, string pad_string, int pad_type);
-
 
    // trade functions and order handling
    bool     IsTemporaryTradeError(int error);
@@ -159,7 +145,6 @@
    bool     ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor);
    bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);
 
-
    // toString helpers
    string   CharToHexStr(int chr);
    string   DoubleToStrEx(double value, int digits/*=0..16*/);
@@ -167,7 +152,6 @@
    string   IntegerToHexStr(int decimal);
    string   WaitForSingleObjectValueToStr(int value);
    string   WordToHexStr(int word);
-
    string   BoolsToStr             (bool array[], string separator);
    string   CharsToStr              (int array[], string separator);
    string   DoublesToStr         (double array[], string separator);
@@ -183,23 +167,21 @@
    string   TicketsToStr.Position   (int array[]);
    string   TimesToStr         (datetime array[], string separator);
 
+   // history management
+   int      CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string hstDirectory = "");
+   bool     IsRawSymbol(string symbol, string hstDirectory = "");
 
    // other
-   int      CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory = "");
-   bool     IsRawSymbol(string symbol, string directory = "");
    string   GetSymbolName(string symbol);                               // alias of GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
    string   GetLongSymbolName(string symbol);                           // alias of GetLongSymbolNameOrAlt(symbol, symbol)
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetLongSymbolNameStrict(string symbol);
-
    int      IncreasePeriod(int period);
    int      DecreasePeriod(int period);
-
    bool     SortOpenTickets(int &keys[][]);
    int      SortTicketsChronological(int &tickets[]);
-
    string   GetWindowsShortcutTarget(string lnkFile);
    int      WinExecWait(string cmdLine, int cmdShow);
 #import

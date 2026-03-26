@@ -1,11 +1,7 @@
 /**
- * EquityRecorder
+ * Equity Recorder
  *
- * Records the current trade account's equity curves. One original curve and another one with external assets.
- *
- *
- * TODO:
- *  - document both equity curves
+ * Records two equity curves for the current trade account. One with actual equity and another one with added external assets.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -13,8 +9,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string HistoryDirectory = "Synthetic-History";      // name of the directory to store recorded data
-extern int    HistoryFormat    = 401;                      // written history format: 400 | 401
+extern string HistoryDirectory = "Synthetic-History";    // name of the directory to store history data
+extern int    HistoryFormat    = 401;                    // format of written history files: 400 | 401
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,9 +38,6 @@ int      hSet      [2];                                  // HistorySet handles
 string symbolSuffixes    [] = {".EA"                               , ".EX"                                                    };
 string symbolDescriptions[] = {"Equity of account {account-number}", "Equity of account {account-number} plus external assets"};
 
-string historyDirectory = "";                            // directory to store history data
-int    historyFormat;                                    // format of new history files: 400 | 401
-
 string indicatorName = "";
 string legendLabel   = "";
 
@@ -55,40 +48,35 @@ string legendLabel   = "";
  * @return int - error status
  */
 int onInit() {
-   // read auto-configuration
-   string indicator = ProgramName();
-   if (AutoConfiguration) {
-      HistoryDirectory = GetConfigString(indicator, "HistoryDirectory", HistoryDirectory);
-      HistoryFormat    = GetConfigInt   (indicator, "HistoryFormat",    HistoryFormat);
-   }
+   indicatorName = ProgramName();
 
    // validate inputs
    // HistoryDirectory
-   historyDirectory = StrTrim(HistoryDirectory);
-   if (IsAbsolutePath(historyDirectory))                 return(catch("onInit(1)  illegal input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (illegal directory name)", ERR_INVALID_INPUT_PARAMETER));
+   string dir = HistoryDirectory;
+   if (AutoConfiguration) dir = GetConfigString(indicatorName, "HistoryDirectory", dir);
+   dir = StrTrim(dir);
+   if (IsAbsolutePath(dir))                      return(catch("onInit(1)  illegal input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (illegal directory name)", ERR_INVALID_INPUT_PARAMETER));
    int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
-   if (StrContainsChars(historyDirectory, illegalChars)) return(catch("onInit(2)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (invalid directory name)", ERR_INVALID_INPUT_PARAMETER));
-   historyDirectory = StrReplace(historyDirectory, "\\", "/");
-   if (StrStartsWith(historyDirectory, "/"))             return(catch("onInit(3)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
-   if (!InitTradeServerPath(historyDirectory))           return(last_error);
-
+   if (StrContainsChars(dir, illegalChars))      return(catch("onInit(2)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (invalid directory name)", ERR_INVALID_INPUT_PARAMETER));
+   dir = StrReplace(dir, "\\", "/");
+   if (StrStartsWith(dir, "/"))                  return(catch("onInit(3)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
+   if (!InitTradeServerPath(dir))                return(last_error);
+   HistoryDirectory = dir;
    // HistoryFormat
-   if (HistoryFormat!=400 && HistoryFormat!=401)         return(catch("onInit(4)  invalid input parameter HistoryFormat: "+ HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
-   historyFormat = HistoryFormat;
+   if (AutoConfiguration) HistoryFormat = GetConfigInt(indicatorName, "HistoryFormat", HistoryFormat);
+   if (HistoryFormat!=400 && HistoryFormat!=401) return(catch("onInit(4)  invalid input parameter HistoryFormat: "+ HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
 
-   // setup a chart ticker (online only)
+   // indicator labels and display options
+   SetIndicatorOptions();
+   legendLabel = CreateChartLegend();
+
+   // setup a chart ticker
    if (!__tickTimerId && !__isTesting) {
       int hWnd = __ExecutionContext[EC.chart];
-      int millis = 1000;                                 // a virtual tick every second (1000 milliseconds)
+      int millis = 1000;                                    // a virtual tick every second (1000 milliseconds)
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
       if (!__tickTimerId) return(catch("onInit(5)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
-
-   // indicator labels and display options
-   legendLabel = CreateChartLegend();
-   indicatorName = ProgramName();
-   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
-   SetIndexLabel(0, NULL);
    return(catch("onInit(6)"));
 }
 
@@ -148,17 +136,23 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   if (!ValidBars) {
+      SetIndicatorOptions();
+   }
+
    if (!CalculateEquity()) return(last_error);
    if (!RecordEquity())    return(last_error);
 
    if (!__isSuperContext) {
       if (NE(currEquity[0], prevEquity[0], 2)) {
-         ObjectSetText(legendLabel, indicatorName +"   "+ DoubleToStr(currEquity[0], 2), 9, "Arial Fett", Blue);
+         ObjectSetText(legendLabel, StringConcatenate(indicatorName, "   ", DoubleToStr(currEquity[0], 2)), 9, "Arial Fett", Blue);
          int error = GetLastError();
-         if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
+         if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) {      // on ObjectDrag or opened "Properties" dialog
             return(catch("onTick(1)", error));
+         }
       }
    }
+
    prevEquity[0] = currEquity[0];
    prevEquity[1] = currEquity[1];
    return(last_error);
@@ -181,7 +175,8 @@ bool CalculateEquity() {
    double equity = AccountBalance();
    for (int i=0; i < size; i++) {
       equity      += profits[i];
-      lastTickTime = Max(lastTickTime, MarketInfoEx(symbols[i], MODE_TIME, error, "CalculateEquity(1)")); if (error != NULL) return(false);
+      lastTickTime = Max(lastTickTime, MarketInfoEx(symbols[i], MODE_TIME, error, "CalculateEquity(1)"));
+      if (error != NULL) return(false);
    }
 
    // store resulting equity values
@@ -205,8 +200,8 @@ bool RecordEquity() {
    int dow = TimeDayOfWeekEx(now);
 
    if (dow==SATURDAY || dow==SUNDAY) {
-      if (!isOpenPosition || !prevEquity[0])              return(true);
-      bool isStale = (lastTickTime < GetServerTime()-2*MINUTES);
+      if (!isOpenPosition || !prevEquity[0]) return(true);
+      bool isStale = (lastTickTime < GetServerTime() - 2*MINUTES);
       if (isStale && EQ(currEquity[0], prevEquity[0], 2)) return(true);
    }
 
@@ -214,16 +209,36 @@ bool RecordEquity() {
    for (int i=0; i < size; i++) {
       if (!hSet[i]) {
          string symbol = StrLeft(GetAccountNumber(), 8) + symbolSuffixes[i];
-         string description = StrReplace(symbolDescriptions[i], "{account-number}", GetAccountNumber());
+         string descr = StrReplace(symbolDescriptions[i], "{account-number}", GetAccountNumber());
 
-         hSet[i] = HistorySet1.Get(symbol, historyDirectory);
-         if (hSet[i] == -1)
-            hSet[i] = HistorySet1.Create(symbol, description, 2, historyFormat, historyDirectory);
+         hSet[i] = HistorySet1.Get(symbol, HistoryDirectory);
+         if (hSet[i] == -1) {
+            hSet[i] = HistorySet1.Create(symbol, descr, 2, HistoryFormat, HistoryDirectory);
+         }
          if (!hSet[i]) return(false);
       }
       if (!HistorySet1.AddTick(hSet[i], now, currEquity[i], NULL)) return(false);
    }
    return(true);
+}
+
+
+/**
+ * Set indicator options. After recompilation the function must be called from start() for options not to be ignored.
+ *
+ * @param  bool redraw [optional] - whether to redraw the chart (default: no)
+ *
+ * @return bool - success status
+ */
+bool SetIndicatorOptions(bool redraw = false) {
+   redraw = redraw!=0;
+
+   IndicatorBuffers(indicator_buffers);
+   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+   SetIndexLabel(0, NULL);
+
+   if (redraw) WindowRedraw();
+   return(!catch("SetIndicatorOptions(1)"));
 }
 
 

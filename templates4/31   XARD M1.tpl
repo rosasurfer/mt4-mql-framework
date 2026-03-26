@@ -362,11 +362,11 @@ Donchian.Crossing.Width=3
 Donchian.Crossing.Color=16711935
 ShowChartLegend=1
 Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert | mail | sms
+Signal.onReversal.Types=sound* | alert* | mail | sms
 </inputs>
 </expert>
-style_2=2
-style_3=2
+style_0=2
+style_1=2
 show_data=1
 </indicator>
 </window>
