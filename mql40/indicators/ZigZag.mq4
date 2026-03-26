@@ -1203,15 +1203,18 @@ bool IsUpperCrossLast(int bar) {
 
 
 /**
- * Find the next ZigZag semaphore starting at the specified bar looking backwards. On a semaphore bar the semaphore of the
+ * Find the previous ZigZag semaphore starting at the specified bar looking backwards. On a semaphore bar the semaphore of the
  * bar itself is returned. Specify a semaphore type to be skipped to prevent this.
  *
  * @param  _In_  int bar                 - bar to start searching from
- * @param  _Out_ int resultType          - semaphore result type: MODE_HIGH|MODE_LOW
- * @param  _In_  int skipType [optional] - semaphore type on the start bar to be skipped: MODE_HIGH|MODE_LOW (default: no skipping)
+ * @param  _Out_ int resultType          - type of the found semaphore: MODE_HIGH | MODE_LOW
+ * @param  _In_  int skipType [optional] - semaphore on the start bar to be skipped: MODE_HIGH | MODE_LOW (default: none)
  *
  * @return int - chart offset of the found semaphore;
- *               EMPTY (-1) if no semaphore was found or in case of errors (parameter 'resultType' remains unchanged)
+ *               EMPTY (-1) if no semaphore was found or in case of errors
+ *
+ * Note: If called from ProcessUpper/LowerCross() semaphore, trend and reversal data may not yet be set and can't be used
+ *       on the current bar. In this case navigate back to a completed bar.
  */
 int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
    if (bar < 0 || bar >= Bars)                       return(_EMPTY(catch("FindSemaphore(1)  invalid parameter bar: "+ bar +" (out of range)", ERR_INVALID_PARAMETER)));
@@ -1222,29 +1225,27 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
    // if no skipping (no skip type or not a semaphore bar), then return the next semaphore
    if (!skipType || !semaphoreClose[bar]) {
       if (!semaphoreClose[bar]) {                                    // semaphore is located somewhere before
-         bar++;
+         bar++;                                                      // causes ProcessUpper/LowerCross() to work on a completed bar
       }
-      if (!semaphoreClose[bar] && unknownTrend[bar] > 0) {           // navigate to the end semaphore (if any),
-         bar += unknownTrend[bar];                                   // a current bar has never unknownTrend=-1
+      if (!semaphoreClose[bar] && unknownTrend[bar] > 0) {           // navigate to the leg's end semaphore (if any),
+         bar += unknownTrend[bar];
       }
-      if (!semaphoreClose[bar] && trend[bar]) {                      // navigate to the start semaphore (if any)
+      if (!semaphoreClose[bar] && trend[bar]) {                      // navigate to the leg's start semaphore (if any)
          bar += Abs(trend[bar]);
       }
       if (!semaphoreClose[bar]) {
          return(EMPTY);
       }
-      if      (!lowerCrossLow [bar])                                resultType = MODE_HIGH;
-      else if (!upperCrossHigh[bar])                                resultType = MODE_LOW;
-      else if (semaphoreOpen [bar] < semaphoreClose[bar]-HalfPoint) resultType = MODE_HIGH;
-      else if (semaphoreOpen [bar] > semaphoreClose[bar]+HalfPoint) resultType = MODE_LOW;
-      else if (semaphoreClose[bar] > upperCrossHigh[bar]-HalfPoint) resultType = MODE_HIGH;  // from here it holds: open == close
-      else                                                          resultType = MODE_LOW;   //                     ...
+      if (semaphoreClose[bar] > High[bar]-HalfPoint) resultType = MODE_HIGH;
+      else                                           resultType = MODE_LOW;
       return(bar);
    }
 
-   // if skipping: some semaphore type to skip on the start bar (not used by ZigZag calculation)
+   // on a semaphore bar: skip the specified semaphore type (used by ZigZag breakout tracking and TrackZigZagBalance)
+
+   // either the bar holds a single semaphore
    if (semaphoreOpen[bar] == semaphoreClose[bar]) {
-      bool isHigh = (semaphoreClose[bar] == upperCrossHigh[bar]);
+      bool isHigh = (semaphoreClose[bar] > High[bar]-HalfPoint);
 
       if (skipType == MODE_HIGH) {
          if (isHigh) {
@@ -1258,24 +1259,24 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
          }
          resultType = MODE_HIGH;
       }
-   }
-   else {
-      bool high2Low = (semaphoreOpen[bar] > semaphoreClose[bar]+HalfPoint);
-
-      if (skipType == MODE_HIGH) {
-         if (high2Low) {
-            return(FindSemaphore(bar+1, resultType));
-         }
-         resultType = MODE_LOW;
-      }
-      else /*skipType == MODE_LOW*/ {
-         if (!high2Low) {
-            return(FindSemaphore(bar+1, resultType));
-         }
-         resultType = MODE_HIGH;
-      }
+      return(bar);
    }
 
+   // or the bar holds two semaphores
+   bool high2low = (semaphoreOpen[bar] > semaphoreClose[bar]+HalfPoint);
+
+   if (skipType == MODE_HIGH) {
+      if (high2low) {                                 // TODO: this looks rather strange
+         return(FindSemaphore(bar+1, resultType));
+      }
+      resultType = MODE_LOW;
+   }
+   else /*skipType == MODE_LOW*/ {
+      if (!high2low) {                                // TODO: this looks rather strange
+         return(FindSemaphore(bar+1, resultType));
+      }
+      resultType = MODE_HIGH;
+   }
    return(bar);
 }
 
