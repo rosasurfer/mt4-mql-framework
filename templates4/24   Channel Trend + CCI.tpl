@@ -208,7 +208,7 @@ window_num=2
 <inputs>
 Periods=14
 AppliedPrice=Open | High | Low | Close | Median | Typical* | Weighted
-Signal.onTrendChange=1
+Signal.onTrendChange=0
 Signal.onTrendChange.Types=sound* | alert* | mail
 </inputs>
 </expert>
