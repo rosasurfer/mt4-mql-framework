@@ -475,10 +475,10 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
    int combinedTrend = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);   // 85% of the local time here
 
    int trend = combinedTrend & 0xFFFF;                            // extract LOWORD and manually sign-extend,
-   if (trend & 0x8000 != 0) trend |= 0xFFFF0000;                  // i.e. convert int to signed short
+   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                // i.e. convert int to signed short
 
    int unknownTrend = (combinedTrend >> 16) & 0xFFFF;             // extract HIWORD and manually sign-extend,
-   if (unknownTrend & 0x8000 != 0) unknownTrend |= 0xFFFF0000;    // i.e. convert int to signed short
+   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // i.e. convert int to signed short
    if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  unexpected bar="+ bar +" "+ TimeToStr(Time[bar]) +"  trend=0  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
    if (!unknownTrend) {
@@ -515,12 +515,12 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
 int GetZigZagDirection(int bar) {
    int combinedTrend = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);
 
-   int trend = combinedTrend & 0xFFFF;                            // extract LOWORD and manually sign-extend,
-   if (trend & 0x8000 != 0) trend |= 0xFFFF0000;                  // i.e. convert int to signed short
+   int trend = combinedTrend & 0xFFFF;                               // extract LOWORD and manually sign-extend,
+   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                   // i.e. convert int to signed short
 
    if (!trend) {
-      int unknownTrend = (combinedTrend >> 16) & 0xFFFF;          // extract HIWORD and manually sign-extend,
-      if (unknownTrend & 0x8000 != 0) unknownTrend |= 0xFFFF0000; // i.e. convert int to signed short
+      int unknownTrend = (combinedTrend >> 16) & 0xFFFF;             // extract HIWORD and manually sign-extend,
+      if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // i.e. convert int to signed short
       if (unknownTrend < 0) return(!catch("GetZigZagDirection(1)  unexpected bar="+ bar +" "+ TimeToStr(Time[bar]) +"  trend=0  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
       int semBar = bar + unknownTrend;
