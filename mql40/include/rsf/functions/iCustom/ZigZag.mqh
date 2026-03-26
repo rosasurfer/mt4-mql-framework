@@ -74,8 +74,8 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
 
                           "separator",                // string   ___e_______________________
                           false,                      // bool     TrackVirtualProfit
-                          0,                          // datetime TrackVirtualProfit.Since
-                          "",                         // string   TrackVirtualProfit.Symbol
+                        //0,                          // datetime TrackVirtualProfit.Since
+                        //"",                         // string   TrackVirtualProfit.Symbol
 
                           "separator",                // string   ___f_______________________
                            false,                     // bool     TrendBufferAsDecimal

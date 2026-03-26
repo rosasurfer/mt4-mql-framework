@@ -112,8 +112,8 @@ extern string   Sound.onNewChannelLow          = "Price Decline.wav";
 
 extern string   ___e__________________________ = "=== Signal tracking ===";
 extern bool     TrackVirtualProfit             = false;                          // whether to track virtual PnL of signals
-extern datetime TrackVirtualProfit.Since       = 0;                              // start time to track virtual PnL from
-extern string   TrackVirtualProfit.Symbol      = "(default)";                    // custom symbol to use for virtual PnL tracking
+       datetime TrackVirtualProfit.Since       = 0;                              // start time to track virtual PnL from
+       string   TrackVirtualProfit.Symbol      = "(default)";                    // custom symbol to use for virtual PnL tracking
 
 extern string   ___f__________________________ = "";
 extern bool     TrendBufferAsDecimal           = true;                           // decimal or binary (see notes in file header)
@@ -1357,6 +1357,19 @@ bool ProcessUpperCross(int bar) {
          onReversal(D_LONG, upperCross[bar]);
       }
    }
+
+
+   // FATAL  BTCUSD,M1  ZigZag::onTick(2)  bar 0  2026.03.26 15:55  illegal reversal bar: trend=0  unknownTrend=0  reversalOffset=0  upperCross=69'402.10  lowerCross=0.00  semOpen=69'403.71  semClose=69'403.71  [ERR_ILLEGAL_STATE]
+   // FATAL  BTCUSD,M1  ZigZag::onTick(2)  bar 0  2026.03.26 15:57  illegal reversal bar: trend=0  unknownTrend=0  reversalOffset=0  upperCross=69'412.18  lowerCross=0.00  semOpen=69'417.38  semClose=69'417.38  [ERR_ILLEGAL_STATE]
+
+   if (!trend[bar] && !unknownTrend[bar] || !reversalOffset[bar]) {
+      if (semaphoreOpen[bar] == semaphoreClose[bar]) {
+         if (!lowerCross[bar]) {
+            debug("ProcessUpperCross(0.1)  Tick="+ Ticks +"  bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  lastSemBar="+ lastSemBar);
+         }
+         return(!catch("ProcessUpperCross(0.2)  Tick="+ Ticks +"  bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  illegal reversal bar: trend="+ trend[bar] +"  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+      }
+   }
    return(true);
 }
 
@@ -1435,6 +1448,15 @@ bool ProcessLowerCross(int bar) {
 
       if (Signal.onReversal && __isChart && ChangedBars <= 2) {
          onReversal(D_SHORT, lowerCross[bar]);
+      }
+   }
+
+   if (!trend[bar] && !unknownTrend[bar] && !reversalOffset[bar]) {
+      if (semaphoreOpen[bar] == semaphoreClose[bar]) {
+         if (!upperCross[bar]) {
+            debug("ProcessLowerCross(0.1)  Tick="+ Ticks +"  bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  lastSemBar="+ lastSemBar);
+         }
+         return(!catch("ProcessLowerCross(0.2)  Tick="+ Ticks +"  bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  illegal reversal bar: trend="+ trend[bar] +"  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
       }
    }
    return(true);
@@ -1855,8 +1877,8 @@ string InputsToStr() {
                             "Sound.onNewChannelLow=",       DoubleQuoteStr(Sound.onNewChannelLow)     +";"+ NL,
 
                             "TrackVirtualProfit=",          BoolToStr(TrackVirtualProfit)             +";"+ NL,
-                            "TrackVirtualProfit.Since=",    TimeToStr(TrackVirtualProfit.Since)       +";"+ NL,
-                            "TrackVirtualProfit.Symbol=",   DoubleQuoteStr(TrackVirtualProfit.Symbol) +";"+ NL,
+                          //"TrackVirtualProfit.Since=",    TimeToStr(TrackVirtualProfit.Since)       +";"+ NL,
+                          //"TrackVirtualProfit.Symbol=",   DoubleQuoteStr(TrackVirtualProfit.Symbol) +";"+ NL,
 
                             "TrendBufferAsDecimal=",        BoolToStr(TrendBufferAsDecimal)           +";")
    );
