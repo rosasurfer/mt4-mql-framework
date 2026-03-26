@@ -1212,8 +1212,9 @@ bool IsUpperCrossLast(int bar) {
  * @return int - chart offset of the found semaphore;
  *               EMPTY (-1) if no semaphore was found or in case of errors
  *
- * Note: If called from ProcessUpper/LowerCross() semaphore, trend and reversal data may not yet be set and can't be used
- *       on the current bar. In this case navigate back to a completed bar.
+ * Note: If called from ProcessUpper/LowerCross() semaphore, trend and reversal data may not yet be set or hold values of a
+ *       previous tick. Especially semaphoreOpen/Close may not hold the High/Low of the current bar because the current tick
+ *       extended the range.
  */
 int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
    if (bar < 0 || bar >= Bars)                       return(_EMPTY(catch("FindSemaphore(1)  invalid parameter bar: "+ bar +" (out of range)", ERR_INVALID_PARAMETER)));
@@ -1235,16 +1236,21 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
       if (!semaphoreClose[bar]) {
          return(EMPTY);
       }
-      if (semaphoreClose[bar] > High[bar]-HalfPoint) resultType = MODE_HIGH;
-      else                                           resultType = MODE_LOW;
+      if      (!lowerCrossLow [bar])                                resultType = MODE_HIGH;
+      else if (!upperCrossHigh[bar])                                resultType = MODE_LOW;
+      else if (semaphoreOpen [bar] < semaphoreClose[bar]-HalfPoint) resultType = MODE_HIGH;
+      else if (semaphoreOpen [bar] > semaphoreClose[bar]+HalfPoint) resultType = MODE_LOW;
+      // now it holds: semaphoreOpen == semaphoreClose
+      else if (semaphoreClose[bar] > upperCrossHigh[bar]-HalfPoint) resultType = MODE_HIGH;
+      else                                                          resultType = MODE_LOW;
       return(bar);
    }
 
    // on a semaphore bar: skip the specified semaphore type (used by ZigZag breakout tracking and TrackZigZagBalance)
 
    // either the bar holds a single semaphore
-   if (semaphoreOpen[bar] == semaphoreClose[bar]) {
-      bool isHigh = (semaphoreClose[bar] > High[bar]-HalfPoint);
+   if (semaphoreOpen[bar] == semaphoreClose[bar]) {                  // don't test against High[bar]
+      bool isHigh = (semaphoreClose[bar] > upperCrossHigh[bar]-HalfPoint);
 
       if (skipType == MODE_HIGH) {
          if (isHigh) {
@@ -1265,13 +1271,13 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
    bool high2low = (semaphoreOpen[bar] > semaphoreClose[bar]+HalfPoint);
 
    if (skipType == MODE_HIGH) {
-      if (high2low) {                                 // TODO: this looks rather strange
+      if (high2low) {                                                // TODO: this looks rather strange
          return(FindSemaphore(bar+1, resultType));
       }
       resultType = MODE_LOW;
    }
    else /*skipType == MODE_LOW*/ {
-      if (!high2low) {                                // TODO: this looks rather strange
+      if (!high2low) {                                               // TODO: this looks rather strange
          return(FindSemaphore(bar+1, resultType));
       }
       resultType = MODE_HIGH;
@@ -1356,19 +1362,6 @@ bool ProcessUpperCross(int bar) {
          onReversal(D_LONG, upperCross[bar]);
       }
    }
-
-
-   // FATAL  BTCUSD,M1  ZigZag::onTick(2)  bar 0  2026.03.26 15:55  illegal reversal bar: trend=0  unknownTrend=0  reversalOffset=0  upperCross=69'402.10  lowerCross=0.00  semOpen=69'403.71  semClose=69'403.71  [ERR_ILLEGAL_STATE]
-   // FATAL  BTCUSD,M1  ZigZag::onTick(2)  bar 0  2026.03.26 15:57  illegal reversal bar: trend=0  unknownTrend=0  reversalOffset=0  upperCross=69'412.18  lowerCross=0.00  semOpen=69'417.38  semClose=69'417.38  [ERR_ILLEGAL_STATE]
-
-   if (!trend[bar] && !unknownTrend[bar] || !reversalOffset[bar]) {
-      if (semaphoreOpen[bar] == semaphoreClose[bar]) {
-         if (!lowerCross[bar]) {
-            debug("ProcessUpperCross(0.1)  Tick="+ Ticks +"  bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  lastSemBar="+ lastSemBar);
-         }
-         return(!catch("ProcessUpperCross(0.2)  Tick="+ Ticks +"  bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  illegal reversal bar: trend="+ trend[bar] +"  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
-      }
-   }
    return(true);
 }
 
@@ -1449,15 +1442,6 @@ bool ProcessLowerCross(int bar) {
          onReversal(D_SHORT, lowerCross[bar]);
       }
    }
-
-   if (!trend[bar] && !unknownTrend[bar] && !reversalOffset[bar]) {
-      if (semaphoreOpen[bar] == semaphoreClose[bar]) {
-         if (!upperCross[bar]) {
-            debug("ProcessLowerCross(0.1)  Tick="+ Ticks +"  bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  lastSemBar="+ lastSemBar);
-         }
-         return(!catch("ProcessLowerCross(0.2)  Tick="+ Ticks +"  bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  illegal reversal bar: trend="+ trend[bar] +"  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
-      }
-   }
    return(true);
 }
 
@@ -1524,7 +1508,7 @@ bool onReversal(int direction, double level) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) logInfo("onReversal(P="+ ZigZag.Periods +")  "+ message1);
+      if (eventAction) logInfo("onReversal(P="+ ZigZag.Periods +")  Tick="+ Ticks +"  "+ message1);
    }
 
    // sound: once per system
