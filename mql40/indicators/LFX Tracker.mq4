@@ -1,10 +1,10 @@
 /**
- * LFX Monitor
+ * LFX TRacker
  *
  * Calculates various synthetic indexes and optionally records the index history. If linked to an LFX charting terminal the
- * indicator can monitor and process order limits of synthetic positions. For index descriptions see the following link:
+ * indicator can monitor and process order limits of synthetic positions. For index descriptions see the following links:
  *
- * @see  https://github.com/rosasurfer/mt4-php-tools/tree/master/app/lib/synthetic
+ * @see  https://github.com/rosasurfer/mt4-php-tools/tree/master/app/lib/synthetic#
  * @see  https://www.forexfactory.com/thread/post/13783504#post13783504
  *
  *
@@ -41,11 +41,11 @@
  *
  * • Broker.SymbolSuffix:  Symbol suffix for brokers with non-standard symbols.
  *
- * • AutoConfiguration:  For simplicity all manual inputs may also be specified in the MetaTrader framework configuration.
+ * • AutoConfiguration:  For simplicity all manual inputs may also be specified in the framework configuration.
  *    If "AutoConfiguration" is enabled configuration settings found in the configuration files override manual settings in
  *    the indicator's input dialog. Additional auto-config settings not available in the input dialog:
  *
- *    [LFX-Monitor]
+ *    [LFX Tracker]
  *     Status.xDistance          = {int}                 ; horizontal offset from right in pixels
  *     Status.yDistance          = {int}                 ; vertical offset from top in pixels
  *     Status.BgColor            = {color}               ; background color (web color name, integer or RGB triplet)

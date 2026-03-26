@@ -1,5 +1,5 @@
 /**
- * Schickt dem LFX-Monitor-Indikator des aktuellen Charts die Nachricht, den Trade-Account umzuschalten.
+ * Schickt dem LFX Tracker des aktuellen Charts die Nachricht, den Trade-Account umzuschalten.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -14,6 +14,6 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   SendChartCommand("LFX-Monitor.command", "trade-account");   // switch back to the current/own trade account
+   SendChartCommand("LFX Tracker.command", "trade-account");   // switch back to the current/own trade account
    return(catch("onStart(1)"));
 }

@@ -1,3 +1,8 @@
+<!--
+LFX Tracker 
+(requires all necessary symbols to be available in the "MarketWatch" window)
+-->
+
 <chart>
 symbol=GBPAUD
 period=60
@@ -46,7 +51,7 @@ name=main
 <indicator>
 name=Custom Indicator
 <expert>
-name=LFX-Monitor
+name=LFX Tracker
 flags=339
 window_num=0
 <inputs>

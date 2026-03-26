@@ -4626,8 +4626,8 @@ bool QC.HandleTradeCommands() {
 
 
 /**
- * Schickt den Profit der LFX-Positionen ans LFX-Terminal. Prüft absolute und prozentuale Limite, wenn sich der Wert seit dem letzten
- * Aufruf geändert hat, und triggert entsprechende Trade-Command.
+ * Schickt den Profit der LFX-Positionen ans LFX-Terminal. Prüft absolute und prozentuale Limite, wenn sich der Wert seit
+ * dem letzten Aufruf geändert hat, und triggert entsprechende Trade-Command.
  *
  * @return bool - success status
  */
@@ -4648,7 +4648,7 @@ bool AnalyzePos.ProcessLfxProfits() {
          if (!lfxOrders.bCache[i][BC.isPendingPosition])
             continue;
 
-         // Profitbetrag-Limite prüfen (Preis-Limite werden vom LFX-Monitor geprüft)
+         // Profitbetrag-Limite prüfen (Preis-Limite werden vom LFX Tracker geprüft)
          int limitResult = LFX.CheckLimits(lfxOrders, i, NULL, NULL, profit); if (!limitResult) return(false);
          if (limitResult == NO_LIMIT_TRIGGERED)
             continue;
