@@ -298,7 +298,7 @@ datetime recorder.startTime;
 //    int    trend         :  0 (default)
 //    int    unknownTrend  : -1 (default) before the last cross, otherwise non-negative
 //
-// • Bar of ZigZag leg up
+// • Bar of ZigZag leg up (no semaphore)
 //    double upperBand     :  positive
 //    double lowerBand     :  positive
 //    double upperCross    :  0 (default) or positive
@@ -307,9 +307,9 @@ datetime recorder.startTime;
 //    double lowerCrossLow :  0 (default)
 //    double semaphoreOpen :  0 (default)
 //    double semaphoreClose:  0 (default)
-//    int    reversalOffset: -1 (default) before the reversal, otherwise positive
+//    int    reversalOffset:  positive
 //    int    trend         :  positive
-//    int    unknownTrend  : -1 (default) before the last cross, otherwise non-negative
+//    int    unknownTrend  :  0 or positive
 //
 // • Bar of ZigZag leg down
 //    double upperBand     :  positive
@@ -320,9 +320,9 @@ datetime recorder.startTime;
 //    double lowerCrossLow :  0 (default) or positive
 //    double semaphoreOpen :  0 (default)
 //    double semaphoreClose:  0 (default)
-//    int    reversalOffset: -1 (default) before the reversal, otherwise positive
+//    int    reversalOffset:  positive
 //    int    trend         :  negative
-//    int    unknownTrend  : -1 (default) before the last cross, otherwise non-negative
+//    int    unknownTrend  :  0 or positive
 //
 // • High semaphore bar
 //    double upperBand     :  positive
@@ -333,8 +333,8 @@ datetime recorder.startTime;
 //    double lowerCrossLow :  0 (default)
 //    double semaphoreOpen :  positive
 //    double semaphoreClose:  positive (open = close)
-//    int    reversalOffset:  positive (previous reversal offset)
-//    int    trend         :  positive (previous trend length)
+//    int    reversalOffset:  positive
+//    int    trend         :  positive
 //    int    unknownTrend  :  0
 //
 // • Low semaphore bar
@@ -346,11 +346,11 @@ datetime recorder.startTime;
 //    double lowerCrossLow :  positive
 //    double semaphoreOpen :  positive
 //    double semaphoreClose:  positive (open == close)
-//    int    reversalOffset:  positive (previous reversal offset)
-//    int    trend         :  negative (previous trend length)
+//    int    reversalOffset:  positive
+//    int    trend         :  negative
 //    int    unknownTrend  :  0
 //
-// • Double crossing bar (high+low semaphore) after processing of the 2nd crossing
+// • Double crossing bar (high + low semaphore) after processing of the 2nd crossing
 //    double upperBand     :  positive
 //    double lowerBand     :  positive
 //    double upperCross    :  positive
@@ -360,12 +360,11 @@ datetime recorder.startTime;
 //    double semaphoreOpen :  positive
 //    double semaphoreClose:  positive (open != close)
 //    int    reversalOffset:  0 (the previous reversal occurred on the same bar)
-//    int    trend         :  0 (the whole last trend ocurred on the same bar)
+//    int    trend         :  0 (the complete leg ocurred in the same bar)
 //    int    unknownTrend  :  0 (same as reversal offset)
 //
-// • Triple+ crossing bar (more than two semaphores)              ???
-//
-// • Bar 0 (zero), the current bar                                ???
+// • Triple+ crossing bar (more than two semaphores)
+//    Same as double crossing. The last crossing overwrites values from previous crossings.
 //
 
 
