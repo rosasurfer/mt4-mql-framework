@@ -241,7 +241,7 @@ int      recorder.hstFormat;
 string   recorder.symbol = "";
 string   recorder.symbolDescr = "";
 string   recorder.group = "";
-int      recorder.priceBase;
+int      recorder.priceBase = 1;
 int      recorder.hSet;
 datetime recorder.startTime;
 
@@ -772,7 +772,7 @@ int onTick() {
          if (!RecordVirtualProfit()) return(last_error);
 
          //if (Ticks == 1) {
-         //   debug("onTick(0.5)  Tick="+ Ticks +" RecordVirtualProfit() => "+ DoubleToStr((GetTickCount()-startRecorder)/1000.0, 3) +" sec");
+         //   debug("onTick(0.1)  Tick="+ Ticks +" RecordVirtualProfit() => "+ DoubleToStr((GetTickCount()-startRecorder)/1000.0, 3) +" sec");
          //}
       }
 
@@ -1032,6 +1032,12 @@ bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHig
    // normal bar without a position (before first ZigZag reversal)
    //else {}
 
+   // adjust the price base for the timeseries to always be positive
+   double hstValue = vLow[bar] + recorder.priceBase;
+   while (hstValue <= 0) {
+      recorder.priceBase *= 10;
+      hstValue = vLow[bar] + recorder.priceBase;
+   }
    return(true);
 }
 
@@ -1055,71 +1061,39 @@ bool RecordVirtualProfit() {
          int symbolId = CreateRawSymbol(recorder.symbol, recorder.symbolDescr, recorder.group, pDigits, AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
          if (symbolId < 0) return(false);
       }
-
-      // open HistorySet
-      if (!recorder.hSet) {
-         recorder.hSet = HistorySet1.Get(recorder.symbol, recorder.hstDirectory);
-         if (recorder.hSet == -1) {
-            recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, pDigits, recorder.hstFormat, recorder.hstDirectory);
-         }
-         if (!recorder.hSet) return(false);
-      }
       recorder.initialized = true;
-      debug("RecordVirtualProfit(0.1)  Tick="+ Ticks +"  recorder initialized");
    }
 
    int startBar = 0, flags = HST_FILL_GAPS|HST_BUFFER_TICKS;
    double O, H, L, C;
 
    if (ChangedBars > 2) {                             // rewrite the full history (intentionally skip rewriting bar 1 on BarOpen)
-      if (recorder.hSet != 0) {
+      if (recorder.hSet > 0) {
          int tmp = recorder.hSet;
          recorder.hSet = NULL;
          if (!HistorySet1.Close(tmp)) return(false);  // TODO: HistorySet.Create() should auto-close an open set but errors
       }
       startBar = iBarShiftNext(NULL, NULL, recorder.startTime);
-      debug("RecordVirtualProfit(0.2)  Tick="+ Ticks +"  rewriting all history since "+ TimeToStr(recorder.startTime) +" (bar "+ startBar +")");
+      //debug("RecordVirtualProfit(0.1)  Tick="+ Ticks +"  rewriting all history since bar "+ startBar);
+   }
+
+   if (recorder.hSet <= 0) {
+      recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, pDigits, recorder.hstFormat, recorder.hstDirectory);
+      if (!recorder.hSet) return(false);
    }
 
    for (int bar=startBar; bar >= 0; bar--) {
-      if (!recorder.hSet) {
-         recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, pDigits, recorder.hstFormat, recorder.hstDirectory);
-         if (!recorder.hSet) return(false);
-      }
-
       O = virtualProfit_O[bar];
       H = virtualProfit_H[bar];
       L = virtualProfit_L[bar];
       C = virtualProfit_C[bar];
       if (C >= EMPTY_VALUE) continue;
 
-      L += recorder.priceBase;
-      if (L <= 0) {
-         switch(recorder.priceBase) {
-            case       0: recorder.priceBase =        1; break;
-            case       1: recorder.priceBase =       10; break;
-            case      10: recorder.priceBase =      100; break;
-            case     100: recorder.priceBase =     1000; break;
-            case    1000: recorder.priceBase =    10000; break;
-            case   10000: recorder.priceBase =   100000; break;
-            case  100000: recorder.priceBase =  1000000; break;
-            case 1000000: recorder.priceBase = 10000000; break;
-         }
-         debug("RecordVirtualProfit(0.3)  Tick="+ Ticks +"  bar="+ bar +"  updated price base to "+ DoubleToStr(recorder.priceBase, 2));
-
-         tmp = recorder.hSet;
-         recorder.hSet = NULL;
-         if (!HistorySet1.Close(tmp)) return(false);
-         startBar = iBarShiftNext(NULL, NULL, recorder.startTime);
-         bar = startBar + 1;
-         continue;
-      }
-
       if (!HistorySet1.AddTick(recorder.hSet, Time[bar], O + recorder.priceBase, flags)) return(false);
       if (!HistorySet1.AddTick(recorder.hSet, Time[bar], H + recorder.priceBase, flags)) return(false);
-      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], L,                      flags)) return(false);
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], L + recorder.priceBase, flags)) return(false);
       if (bar == 0) {
-         flags &= ~HST_BUFFER_TICKS;      // unset HST_BUFFER_TICKS on bar 0 (zero)
+         flags &= ~HST_BUFFER_TICKS;                  // unset HST_BUFFER_TICKS on bar 0 (zero)
       }
       if (!HistorySet1.AddTick(recorder.hSet, Time[bar], C + recorder.priceBase, flags)) return(false);
    }
