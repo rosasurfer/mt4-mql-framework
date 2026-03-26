@@ -429,35 +429,35 @@ bool HistorySet2.Close(int hSet) {
 
 
 /**
- * Add a single tick to a symbol's HistorySet. The tick is stored as Close price of the last bar.
+ * Fügt dem HistorySet eines Symbols einen Tick hinzu. Der Tick wird als letzter Tick (Close) der entsprechenden Bar gespeichert.
  *
- * @param  int      hSet             - handle of the HistorySet
- * @param  datetime time             - tick time
- * @param  double   value            - tick value
- * @param  int      flags [optional] - additional flags that control writing (default: none)
- *                                     HST_BUFFER_TICKS: Buffer ticks and flush data only at the next BarOpen event for the respective file.
- *                                     HST_FILL_GAPS:    Fills any gaps with the last price before the gap.
+ * @param  int      hSet  - Set-Handle des Symbols
+ * @param  datetime time  - Zeitpunkt des Ticks
+ * @param  double   value - Datenwert
+ * @param  int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                          • HST_BUFFER_TICKS: buffert aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten
+ *                            BarOpen-Event
+ *                          • HST_FILL_GAPS:    füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ *
  * @return bool - success status
  */
 bool HistorySet2.AddTick(int hSet, datetime time, double value, int flags = NULL) {
-   // validation
+   // Validierung
    if (hSet <= 0)                     return(!catch("HistorySet2.AddTick(1)  invalid parameter hSet: "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
       if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet2.AddTick(2)  invalid parameter hSet: "+ hSet, ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet2.AddTick(3)  invalid parameter hSet: "+ hSet +" (unknown handle, symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet2.AddTick(4)  invalid parameter hSet: "+ hSet +" (closed handle, symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet2.AddTick(3)  invalid parameter hSet: "+ hSet +" (unknown handle, symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet2.AddTick(4)  invalid parameter hSet: "+ hSet +" (closed handle, symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
       hs.hSet.lastValid = hSet;
    }
-   if (time <= 0)                     return(!catch("HistorySet2.AddTick(5)  invalid parameter time: "+ time +" (symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
-   if (value <= 0)                    return(!catch("HistorySet2.AddTick(6)  invalid parameter value: "+ NumberToStr(value, ".1+") +" (must be positive, symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
-   if (value >= EMPTY_VALUE)          return(!catch("HistorySet2.AddTick(7)  invalid parameter value: "+ NumberToStr(value, ".1+") +" (too large, symbol="+ hs.symbol[hSet] +")", ERR_INVALID_PARAMETER));
+   if (time <= 0)                     return(!catch("HistorySet2.AddTick(5)  invalid parameter time: "+ time +" (symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
 
-   int hFile, sizeOfPeriods = ArraySize(periods);
+   // Dateihandles holen und jeweils Tick hinzufügen
+   int hFile, sizeOfPeriods=ArraySize(periods);
 
-   // get file handles and add tick
    for (int i=0; i < sizeOfPeriods; i++) {
       hFile = hs.hFile[hSet][i];
-      if (!hFile) {                             // open files that haven't been opened yet
+      if (!hFile) {                                                  // noch ungeöffnete Dateien öffnen
          hFile = HistoryFile2.Open(hs.symbol[hSet], periods[i], hs.description[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.directory[hSet]);
          if (!hFile) return(false);
          hs.hFile[hSet][i] = hFile;
@@ -1317,14 +1317,16 @@ bool HistoryFile2.MoveBars(int hFile, int fromOffset, int destOffset) {
 
 
 /**
- * Add a single tick to a history file. The tick must belong to the youngest bar in the file and becomes the bar's close price.
+ * Fügt einer Historydatei einen weiteren Tick hinzu. Der Tick muß zur jüngsten Bar der Datei gehören und wird als Close-Preis gespeichert.
  *
- * @param  int      hFile            - handle of the history file
- * @param  datetime time             - tick time
- * @param  double   value            - tick value
- * @param  int      flags [optional] - additional flags that control writing (default: none)
- *                                     HST_BUFFER_TICKS: Buffer ticks and flush data only at the next BarOpen event for the file.
- *                                     HST_FILL_GAPS:    Fills any gaps with the last price before the gap.
+ * @param  int      hFile - Handle der Historydatei
+ * @param  datetime time  - Zeitpunkt des Ticks
+ * @param  double   value - Datenwert
+ * @param  int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                          • HST_BUFFER_TICKS: puffert aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten
+ *                            BarOpen-Event
+ *                          • HST_FILL_GAPS:    füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ *
  * @return bool - success status
  */
 bool HistoryFile2.AddTick(int hFile, datetime time, double value, int flags = NULL) {
@@ -1337,8 +1339,6 @@ bool HistoryFile2.AddTick(int hFile, datetime time, double value, int flags = NU
    }
    if (time <= 0)                          return(!catch("HistoryFile2.AddTick(5)  invalid parameter time: "+ time +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    if (time < hf.total.to.openTime[hFile]) return(!catch("HistoryFile2.AddTick(6)  cannot add tick to a closed bar: tickTime="+ TimeToStr(time, TIME_FULL) +", last bar.time="+ TimeToStr(hf.total.to.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (value <= 0)                         return(!catch("HistoryFile2.AddTick(7)  invalid parameter value: "+ NumberToStr(value, ".1+") +" (must be positive, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (value >= EMPTY_VALUE)               return(!catch("HistoryFile2.AddTick(8)  invalid parameter value: "+ NumberToStr(value, ".1+") +" (too large, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
 
    double bar[6];
    bool   barExists[1];
