@@ -368,10 +368,6 @@ datetime recorder.startTime;
 // • Bar 0 (zero), the current bar                                ???
 //
 
-bool     debugging = false;
-datetime devStartTime, devFirstCrossing, devFrom, devTo;
-string   semTypes[] = {"NULL", "LOW", "HIGH"};
-
 
 /**
  * Initialization
@@ -379,16 +375,6 @@ string   semTypes[] = {"NULL", "LOW", "HIGH"};
  * @return int - error status
  */
 int onInit() {
-   devStartTime     = D'2025.05.17 19:45';                     // TODO: remove once finished
-   devFirstCrossing = D'2025.05.17 20:07';
-
-   devFrom = devStartTime     + 87 * Period() * MINUTES;
-   devTo   = devFirstCrossing + 69 * Period() * MINUTES;
-
-   if (debugging && Symbol()=="BTCUSD" && Period()==PERIOD_M1) {
-      MaxBarsBack = iBarShift(NULL, NULL, devStartTime);
-   }
-
    string indicator = WindowExpertName();
 
    // validate inputs
@@ -747,28 +733,16 @@ int onTick() {
          if (!UpdateVirtualProfit(bar, isReversalBar, virtualProfit_O, virtualProfit_H, virtualProfit_L, virtualProfit_C)) return(last_error);
       }
 
-      if (debugging && Ticks == 1) {
-         if (Time[bar] >= devFrom && Time[bar] <= devTo) {
-            debug("onTick(0.1)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat) +"  reversalOffset="+ _int(reversalOffset[bar]) +"  trend="+ trend[bar] +"  unknownTrend="+ unknownTrend[bar]);
-            if (isReversalBar) {
-            debug("onTick(0.2)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  isReversalBar=1");
-            }
-            if (semaphoreClose[bar] != NULL) {
-            debug("onTick(0.3)  Tick="+ Ticks +" bar="+ bar +" "+ TimeToStr(Time[bar]) +"  isSemaphoreBar=1");
-            }
-         }
-      }
-
       // hide non-configured crossings
-      if (!crossingDrawType) {                                    // hide all crossings
+      if (!crossingDrawType) {                                       // hide all crossings
          upperCross[bar] = 0;
          lowerCross[bar] = 0;
       }
-      else if (crossingDrawType == MODE_FIRST_CROSSING) {         // hide all crossings except the 1st
+      else if (crossingDrawType == MODE_FIRST_CROSSING) {            // hide all crossings except the 1st
          if (isReversalBar) {
-            if (upperCross[bar] && lowerCross[bar]) {             // special handling for double crossings
-               bool dbc_isReversalBar = false;                    // process the 1st crossing
-               if (!dbc_unknownTrend) {                           // whether the first crossing represents a reversal bar
+            if (upperCross[bar] && lowerCross[bar]) {                // special handling for double crossings
+               bool dbc_isReversalBar = false;                       // process the 1st crossing
+               if (!dbc_unknownTrend) {                              // whether the first crossing represents a reversal bar
                   dbc_isReversalBar = (Abs(dbc_trend) == dbc_reversalOffset);
                }
                if (!dbc_isReversalBar) {
@@ -860,8 +834,8 @@ int onTick() {
          lastLowerBand = lowerBand[0];
       }
 
-      // --- old ------------------------------------------------------------------------------------------------------------
-      // track ZigZag balance
+      // --- old: track ZigZag balance --------------------------------------------------------------------------------------
+      //
       if (TrackZigZagBalance) {
          int currSem, prevBar, prevSem, size;
          int currBar = FindSemaphore(0, currSem); if (currBar < 0) return(last_error);
@@ -1244,11 +1218,6 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
    if (skipType != NULL) {
       if (skipType!=MODE_HIGH && skipType!=MODE_LOW) return(_EMPTY(catch("FindSemaphore(2)  invalid parameter skipType: "+ skipType, ERR_INVALID_PARAMETER)));
    }
-   static int doDebug = 0;
-   if (debugging && (Ticks==1 && Time[bar] >= devFirstCrossing && Time[bar] <= devFirstCrossing + 2*MINUTES) || doDebug) {
-      debug("FindSemaphore(0.1)  start @ "+ TimeToStr(Time[bar]) +"  skipType="+ semTypes[skipType]);
-      doDebug++;
-   }
 
    // if no skipping (no skip type or not a semaphore bar), then return the next semaphore
    if (!skipType || !semaphoreClose[bar]) {
@@ -1262,7 +1231,6 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
          bar += Abs(trend[bar]);
       }
       if (!semaphoreClose[bar]) {
-         if (doDebug > 0) { debug("FindSemaphore(0.2)  return "+ EMPTY); doDebug--; }
          return(EMPTY);
       }
       if      (!lowerCrossLow [bar])                                resultType = MODE_HIGH;
@@ -1271,10 +1239,8 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
       else if (semaphoreOpen [bar] > semaphoreClose[bar]+HalfPoint) resultType = MODE_LOW;
       else if (semaphoreClose[bar] > upperCrossHigh[bar]-HalfPoint) resultType = MODE_HIGH;  // from here it holds: open == close
       else                                                          resultType = MODE_LOW;   //                     ...
-      if (doDebug > 0) { debug("FindSemaphore(0.3)  return "+ bar +" = "+ TimeToStr(Time[bar])); doDebug--; }
       return(bar);
    }
-
 
    // if skipping: some semaphore type to skip on the start bar (not used by ZigZag calculation)
    if (semaphoreOpen[bar] == semaphoreClose[bar]) {
@@ -1282,17 +1248,13 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
 
       if (skipType == MODE_HIGH) {
          if (isHigh) {
-            int iTmp = FindSemaphore(bar+1, resultType);
-            if (doDebug > 0) { debug("FindSemaphore(0.4)  return "+ iTmp +" = "+ TimeToStr(Time[iTmp])); doDebug--; }
-            return(iTmp);
+            return(FindSemaphore(bar+1, resultType));
          }
          resultType = MODE_LOW;
       }
       else /*skipType == MODE_LOW*/ {
          if (!isHigh) {
-            iTmp = FindSemaphore(bar+1, resultType);
-            if (doDebug > 0) { debug("FindSemaphore(0.5)  return "+ iTmp +" = "+ TimeToStr(Time[iTmp])); doDebug--; }
-            return(iTmp);
+            return(FindSemaphore(bar+1, resultType));
          }
          resultType = MODE_HIGH;
       }
@@ -1302,23 +1264,18 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
 
       if (skipType == MODE_HIGH) {
          if (high2Low) {
-            iTmp = FindSemaphore(bar+1, resultType);
-            if (doDebug > 0) { debug("FindSemaphore(0.6)  return "+ iTmp +" = "+ TimeToStr(Time[iTmp])); doDebug--; }
-            return(iTmp);
+            return(FindSemaphore(bar+1, resultType));
          }
          resultType = MODE_LOW;
       }
       else /*skipType == MODE_LOW*/ {
          if (!high2Low) {
-            iTmp = FindSemaphore(bar+1, resultType);
-            if (doDebug > 0) { debug("FindSemaphore(0.7)  return "+ iTmp +" = "+ TimeToStr(Time[iTmp])); doDebug--; }
-            return(iTmp);
+            return(FindSemaphore(bar+1, resultType));
          }
          resultType = MODE_HIGH;
       }
    }
 
-   if (doDebug > 0) { debug("FindSemaphore(0.8)  return "+ bar +" = "+ TimeToStr(Time[bar])); doDebug--; }
    return(bar);
 }
 
@@ -1332,15 +1289,7 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
  * @return bool - success status
  */
 bool ProcessUpperCross(int bar) {
-   if (debugging && Ticks==1 && Time[bar] >= devFrom && Time[bar] <= devTo) {
-      debug("ProcessUpperCross(0.1)      "+ TimeToStr(Time[bar]));
-   }
    int lastSemType, lastSemBar = FindSemaphore(bar, lastSemType);    // find the last semaphore
-
-   if (debugging && Ticks==1 && Time[bar] >= devFrom && Time[bar] <= devTo) {
-      if (lastSemBar < 0) debug("ProcessUpperCross(0.2)  found no semaphore");
-      else                debug("ProcessUpperCross(0.3)  found semaphore at bar["+ lastSemBar +"] "+ TimeToStr(Time[lastSemBar]) +"  type="+ semTypes[lastSemType] +"  trend="+ trend[lastSemBar]);
-   }
 
    // an upper cross without a previous semaphore (near MaxBarsBack)
    if (lastSemBar < 0) {
@@ -1420,15 +1369,7 @@ bool ProcessUpperCross(int bar) {
  * @return bool - success status
  */
 bool ProcessLowerCross(int bar) {
-   if (debugging && Ticks==1 && Time[bar] >= devFrom && Time[bar] <= devTo) {
-      debug("ProcessLowerCross(0.1)      "+ TimeToStr(Time[bar]));
-   }
    int lastSemType, lastSemBar = FindSemaphore(bar, lastSemType);    // find the last semaphore
-
-   if (debugging && Ticks==1 && Time[bar] >= devFrom && Time[bar] <= devTo) {
-      if (lastSemBar < 0) debug("ProcessLowerCross(0.2)  found no semaphore");
-      else                debug("ProcessLowerCross(0.3)  found semaphore at bar["+ lastSemBar +"] "+ TimeToStr(Time[lastSemBar]) +"  type="+ semTypes[lastSemType] +"  trend="+ trend[lastSemBar]);
-   }
 
    // a lower cross without a previous semaphore (near MaxBarsBack)
    if (lastSemBar < 0) {
@@ -1540,7 +1481,7 @@ bool onReversal(int direction, double level) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping()) {               // skip signals during possible data pumping
-      logWarn("onReversal(P="+ ZigZag.Periods +")  Tick="+ Ticks +"  alleged data pumping (Bars="+ Bars +"  ValidBars="+ ValidBars +"  ChangedBars="+ ChangedBars +")");
+      //logWarn("onReversal(P="+ ZigZag.Periods +")  Tick="+ Ticks +"  alleged data pumping (Bars="+ Bars +"  ValidBars="+ ValidBars +"  ChangedBars="+ ChangedBars +")");
       return(true);
    }
 
@@ -1747,7 +1688,7 @@ bool ParameterStepper(int direction, int keys) {
 bool IsPossibleDataPumping() {
    if (__isTesting) return(false);
 
-   // TODO: What kind of nonsense is this implementation?
+   // TODO: review this seemingly strange implementation
 
    int waitPeriod = 20 * SECONDS;
    datetime now = GetGmtTime();
