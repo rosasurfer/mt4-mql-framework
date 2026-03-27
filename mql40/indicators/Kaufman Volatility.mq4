@@ -1,11 +1,13 @@
 /**
- * Fractal Volatility as the amount price moved in any direction in a given time.
+ * Kaufman Volatility - the amount price moved in any direction in a given time
  *
  *
  * TODO:
  *  - The absolute price difference between two times may be equal but price activity (volatility) during that time can
  *    significantly differ. Imagine range bars. The value calculated by this indicator resembles something similar to the
  *    number of completed range bars per time. The displayed unit is "pip", that's range bars of 1 pip size.
+ *
+ * @source  https://www.mql5.com/en/code/10188
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -64,7 +66,7 @@ int onInit() {
    SetIndexBuffer(0, bufferVola);
 
    // data display configuration, names, labels
-   string name = "Fractal Volatility("+ Vola.Periods +")";
+   string name = "Kaufman Volatility("+ Vola.Periods +")";
    IndicatorShortName(name +"  ");                          // chart subwindow and context menu
    SetIndexLabel(0, name);                                  // chart tooltips and "Data" window
    IndicatorDigits(1);
