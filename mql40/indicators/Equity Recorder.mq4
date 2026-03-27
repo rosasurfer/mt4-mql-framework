@@ -1,7 +1,8 @@
 /**
  * Equity Recorder
  *
- * Records two equity curves for the current trade account. One with actual equity and another one with added external assets.
+ * Records two equity curves for the current trade account.
+ * One with actual equity and another one with added external assets (if configured).
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -9,8 +10,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string HistoryDirectory = "Synthetic-History";    // name of the directory to store history data
-extern int    HistoryFormat    = 401;                    // format of written history files: 400 | 401
+extern string HistoryDirectory = "Synthetic-History";    // name of the directory to store recorded data
+extern int    HistoryFormat    = 401;                    // written history format: 400 | 401
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -140,6 +141,7 @@ int onTick() {
       SetIndicatorOptions();
    }
 
+   if (!AccountNumber())   return(last_error);              // wait until a connection to the trade server is established
    if (!CalculateEquity()) return(last_error);
    if (!RecordEquity())    return(last_error);
 
@@ -147,7 +149,7 @@ int onTick() {
       if (NE(currEquity[0], prevEquity[0], 2)) {
          ObjectSetText(legendLabel, StringConcatenate(indicatorName, "   ", DoubleToStr(currEquity[0], 2)), 9, "Arial Fett", Blue);
          int error = GetLastError();
-         if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) {      // on ObjectDrag or opened "Properties" dialog
+         if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) {   // on ObjectDrag or opened "Properties" dialog
             return(catch("onTick(1)", error));
          }
       }
@@ -217,7 +219,11 @@ bool RecordEquity() {
          }
          if (!hSet[i]) return(false);
       }
-      if (!HistorySet1.AddTick(hSet[i], now, currEquity[i], NULL)) return(false);
+
+      double value = currEquity[i];
+      if (value <= 0) value = 0.01;          // negative or 0.00 history data will cause all kind of terminal issues
+
+      if (!HistorySet1.AddTick(hSet[i], now, value, NULL)) return(false);
    }
    return(true);
 }
@@ -231,7 +237,7 @@ bool RecordEquity() {
  * @return bool - success status
  */
 bool SetIndicatorOptions(bool redraw = false) {
-   redraw = redraw!=0;
+   redraw = (redraw != 0);
 
    IndicatorBuffers(indicator_buffers);
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
