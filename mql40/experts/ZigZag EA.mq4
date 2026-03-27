@@ -6,24 +6,24 @@
  *
  * Requirements
  * ------------
- *  • "mql40/experts/ZigZag EA"                (this file)
- *  • "mql40/indicators/ZigZag"                (the MetaQuotes version can't be used)
- *  • "mql40/scripts/Config"
- *  • "mql40/scripts/Chart.ToggleOpenOrders"
- *  • "mql40/scripts/Chart.ToggleTradeHistory"
- *  • "mql40/scripts/EA.Start"
- *  • "mql40/scripts/EA.EntrySignal"
- *  • "mql40/scripts/EA.Stop"
- *  • "mql40/scripts/EA.TogglePercent"
- *  • "mql40/scripts/EA.ToggleMetrics"
- *  • "mql40/libraries/rsfMT4Expander.dll"
- *  • "mql40/libraries/rsfStdlib"
- *  • "mql40/libraries/rsfHistory[123]"        (three files)
+ * "mql40/experts/ZigZag EA"                (this file)
+ * "mql40/indicators/ZigZag"                (the MetaQuotes version can't be used)
+ * "mql40/scripts/Config"
+ * "mql40/scripts/Chart.ToggleOpenOrders"
+ * "mql40/scripts/Chart.ToggleTradeHistory"
+ * "mql40/scripts/EA.Start"
+ * "mql40/scripts/EA.EntrySignal"
+ * "mql40/scripts/EA.Stop"
+ * "mql40/scripts/EA.TogglePercent"
+ * "mql40/scripts/EA.ToggleMetrics"
+ * "mql40/libraries/rsfStdlib"
+ * "mql40/libraries/rsfHistory[123]"        (3 files)
+ * "mql40/libraries/rsfMT4Expander.dll"
  *
  *
  * Inputs
  * ------
- *  • ZigZag.Periods:  Lookback periods of the Donchian channel.
+ *  • ZigZag.Periods:  Look-back periods of the Donchian channel.
  *
  *
  * Manual control
@@ -34,6 +34,12 @@
  *                    direction of the current ZigZag leg. The command is ignored if the EA already is in status "trading".
  *  • EA.Stop:        When a "stop" command is received the EA closes all open positions and switches to status "stopped".
  *                    The command is ignored if the EA already is in status "stopped".
+ *
+ *
+ * DISCLAIMER:
+ *  This strategy is work in progress and is provided for educational and experimental purposes only.
+ *  Use it entirely at your own risk. It may contain bugs or logic errors that could result in financial loss.
+ *  Do NOT use this strategy with real money until you have performed extensive testing and validation.
  *
  *
  * TODO:
@@ -58,7 +64,7 @@
  *     on CreateRawSymbol() also create/update offline profile
  *     ChartInfos: read/display symbol description as long name
  *
- *  - performance (loglevel LOG_WARN)
+ *  - performance with loglevel LOG_WARN
  *     GBPJPY,M1 2024.01.15-2024.02.02, ZigZag(30), EveryTick:     21.5 sec, 432 trades, 1.737.000 ticks (on slowed down CPU: 30.0 sec)
  *     GBPJPY,M1 2024.01.15-2024.02.02, ZigZag(30), ControlPoints:  3.6 sec, 432 trades,   247.000 ticks
  *
