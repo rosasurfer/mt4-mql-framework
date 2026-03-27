@@ -369,6 +369,7 @@ int onDeinit() {
 int onTick() {
    if (!ValidBars) SetIndicatorOptions();                   // reset indicator options
 
+   if (!AccountNumber())  return(last_error);               // wait until a connection to the trade server is established
    if (!HandleCommands()) return(last_error);               // process incoming commands
 
    ArrayResize(missingSymbols, 0);
