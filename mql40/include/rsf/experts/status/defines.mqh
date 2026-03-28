@@ -7,7 +7,7 @@
 #define STATUS_STOPPED  3                 // instance is switched off (no open orders, no trading)
 
 // volatile status vars
-string status.filename = "";              // filepath relative to the MQL sandbox directory
+string status.filename = "";              // file path relative to the MQL sandbox directory
 bool   status.profitInPercent = true;
 int    status.activeMetric = 1;
 bool   status.showOpenOrders;

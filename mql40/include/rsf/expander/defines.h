@@ -170,7 +170,7 @@
 #define F_PERIODS_ALL                  0x7FFFFFFF        // INT_MAX: covers all standard and custom timeframes
 
 
-// flags controling custom error handling (matching errors don't trigger a fatal runtime error)
+// flags controling custom error handling (matching errors don't trigger standard behavior)
 #define F_ERR_CONCURRENT_MODIFICATION  0x00000001        //           1
 #define F_ERS_EXECUTION_STOPPING       0x00000002        //           2  temporary state
 #define F_ERS_HISTORY_UPDATE           0x00000004        //           4  temporary state
@@ -190,6 +190,7 @@
 #define F_ERR_STOP_DISTANCE_VIOLATED   0x00010000        //       65536
 #define F_ERR_TRADESERVER_GONE         0x00020000        //      131072
 #define F_ERR_NO_HISTORY_DATA          0x00040000        //      262144
+#define F_ERR_ILLEGAL_STATE            0x00080000        //      524288
 #define F_LOG_NOTICE                   0x40000000        //  1073741824  min. loglevel for matching errors (default: LOG_INFO)
 
 

@@ -4,21 +4,29 @@
  * This EA trades ZigZag reversals. That's breakouts from a Donchian Channel, which is the basis of the ZigZag.
  *
  *
- * Requirements
- * ------------
- * "mql40/experts/ZigZag EA"                (this file)
- * "mql40/indicators/ZigZag"                (the MetaQuotes version can't be used)
- * "mql40/scripts/Config"
- * "mql40/scripts/Chart.ToggleOpenOrders"
- * "mql40/scripts/Chart.ToggleTradeHistory"
- * "mql40/scripts/EA.Start"
- * "mql40/scripts/EA.EntrySignal"
- * "mql40/scripts/EA.Stop"
- * "mql40/scripts/EA.TogglePercent"
- * "mql40/scripts/EA.ToggleMetrics"
- * "mql40/libraries/rsfStdlib"
- * "mql40/libraries/rsfHistory[123]"        (3 files)
- * "mql40/libraries/rsfMT4Expander.dll"
+ * DISCLAIMER:
+ *  This strategy is work in progress and is provided for educational and experimental purposes only.
+ *  Use it entirely at your own risk. It may contain bugs or logic errors that could result in financial loss.
+ *  Do NOT use this strategy with real money until you have performed extensive testing and validation.
+ *
+ *
+ * Required MQL files
+ * ------------------
+ *  /mql40/experts/ZigZag EA.ex4                   # this file
+ *  /mql40/indicators/ZigZag.ex4                   # the MetaQuotes version can't be used
+ *  /mql40/scripts/Config.ex4
+ *  /mql40/scripts/Chart.ToggleOpenOrders.ex4
+ *  /mql40/scripts/Chart.ToggleTradeHistory.ex4
+ *  /mql40/scripts/EA.Start.ex4
+ *  /mql40/scripts/EA.EntrySignal.ex4
+ *  /mql40/scripts/EA.Stop.ex4
+ *  /mql40/scripts/EA.TogglePercent.ex4
+ *  /mql40/scripts/EA.ToggleMetrics.ex4
+ *  /mql40/libraries/rsfStdlib.ex4
+ *  /mql40/libraries/rsfHistory1.ex4
+ *  /mql40/libraries/rsfHistory2.ex4
+ *  /mql40/libraries/rsfHistory3.ex4
+ *  /mql40/libraries/rsfMT4Expander.dll
  *
  *
  * Inputs
@@ -36,13 +44,9 @@
  *                    The command is ignored if the EA already is in status "stopped".
  *
  *
- * DISCLAIMER:
- *  This strategy is work in progress and is provided for educational and experimental purposes only.
- *  Use it entirely at your own risk. It may contain bugs or logic errors that could result in financial loss.
- *  Do NOT use this strategy with real money until you have performed extensive testing and validation.
- *
- *
  * TODO:
+ *  - input TradingTimeframe
+ *  - document control scripts
  *  - entry management
  *     scale in multiple positions
  *
@@ -53,8 +57,6 @@
  *     dynamic SL/TP distances (multiples of various range types)
  *     trailing stop
  *
- *  - input TradingTimeframe
- *  - document control scripts
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - block tests with bar model MODE_BAROPEN
  *  - fatal error if a test starts with Instance.ID="T001" and EA.Recorder="off"
@@ -1205,8 +1207,8 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
-   string section="", file=GetStatusFileName();
-   if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" status file not found", ERR_RUNTIME_ERROR));
+   string file = GetStatusFileName(), section = "";
+   if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" error reading the status file", ERR_RUNTIME_ERROR));
    if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file \""+ file +"\" not found", ERR_FILE_NOT_FOUND));
 
    // [General]

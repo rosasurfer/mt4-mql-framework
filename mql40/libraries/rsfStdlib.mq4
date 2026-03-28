@@ -3827,7 +3827,7 @@ int IncreasePeriod(int period = 0) {
  * @param  int    flags      - zusätzliche Suchflags: [FF_DIRSONLY | FF_FILESONLY | FF_SORT] (default: keine)
  *
  *                             FF_DIRSONLY:  return matching directory entries only (default: all entries)
- *                             FF_FILESONLY: return matching file entries onöy      (default: all entries)
+ *                             FF_FILESONLY: return matching file entries only      (default: all entries)
  *                             FF_SORT:      sort returned results                  (default: FAT=unsorted, NTFS=sorted)
  *
  * @return int - Anzahl der gefundenen Einträge oder EMPTY (-1), falls ein Fehler auftrat
