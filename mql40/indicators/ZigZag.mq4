@@ -62,12 +62,9 @@
  * Usage with iCustom()
  * --------------------
  * Since MQL4.0 limits the number of available indicator buffers to 8, MODE_TREND and MODE_UNKNOWN_TREND are combined into
- * a single buffer ZigZag.MODE_COMBIND_TREND (7). To retrieve the original values with iCustom(), input "TrendBufferAsDecimal"
- * must be set to FALSE.
- *
- * Each value from buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this integer holds the MODE_TREND
- * value, and the HIWORD of the integer holds the MODE_UNKNOWN_TREND value. For final results, both values must be converted
- * to signed short (sign extension).
+ * a single buffer ZigZag.MODE_COMBIND_TREND (7). To get original trend values with iCustom(), input "TrendBufferAsDecimal"
+ * must be set to FALSE. Each value from buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this
+ * integer holds MODE_TREND, and the HIWORD of the integer holds MODE_UNKNOWN_TREND (both as 'signed short').
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -757,9 +754,15 @@ int onTick() {
          }
       }
 
-      // set combinedTrend[], decimal for "Data Window", HIWORD + LOWORD for iCustom()
-      if (TrendBufferAsDecimal) combinedTrend[bar] = Sign(trend[bar]) * unknownTrend[bar] * 100000 + trend[bar];
-      else                      combinedTrend[bar] = (unknownTrend[bar] << 16) | trend[bar];
+      // set combinedTrend[]decimal
+      if (TrendBufferAsDecimal) {                                             // "Data Window"
+         combinedTrend[bar] = Sign(trend[bar]) * unknownTrend[bar] * 100000 + trend[bar];
+      }
+      else {                                                                  // iCustom()
+         int short_trend        = trend[bar]        & 0x0000FFFF;             // convert 'signed int' to 'signed short' bits
+         int short_unknownTrend = unknownTrend[bar] & 0x0000FFFF;
+         combinedTrend[bar]     = (short_unknownTrend << 16) | short_trend;   // store as HIWORD + LOWORD
+      }
    }
 
    if (__isChart && !__isSuperContext) {
@@ -1438,8 +1441,12 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
       trend        [i] = value;
       unknownTrend [i] = -1;
 
-      if (TrendBufferAsDecimal) combinedTrend[i] = trend[i];                           // hide unknownTrend=-1
-      else                      combinedTrend[i] = (unknownTrend[i] << 16) | trend[i]; // iCustom()
+      if (TrendBufferAsDecimal) {      // "Data Window": hide unknownTrend=-1
+         combinedTrend[i] = trend[i];
+      }
+      else {                           // iCustom(): convert to 'signed short' and store as HIWORD + LOWORD
+         combinedTrend[i] = ((unknownTrend[i] & 0x0000FFFF) << 16) | (trend[i] & 0x0000FFFF);
+      }
 
       if (resetReversals) reversalOffset[i] = -1;
 
@@ -1468,10 +1475,10 @@ bool onReversal(int direction, double level) {
    // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();
    string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onReversal("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1  = ifString(direction==D_LONG, "up", "down") +" (level: "+ NumberToStr(level, PriceFormat) +")";
-   string message2  = Symbol() +","+ sPeriod +": "+ indicatorName +" reversal "+ message1;
+   string message1  = "reversal "+ ifString(direction==D_LONG, "up", "down") +" (level: "+ NumberToStr(level, PriceFormat) +")";
+   string message2  = Symbol() +","+ sPeriod +": "+ indicatorName +" "+ message1;
 
-   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
    bool eventAction;
 
    // log: once per terminal
@@ -1482,7 +1489,7 @@ bool onReversal(int direction, double level) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) logInfo("onReversal(P="+ ZigZag.Periods +")  Tick="+ Ticks +"  "+ message1);
+      if (eventAction) logInfo("onReversal(2)  P="+ ZigZag.Periods +"  "+ message1);
    }
 
    // sound: once per system
@@ -1518,9 +1525,9 @@ bool onReversal(int direction, double level) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
    }
-   return(!catch("onReversal(3)"));
+   return(!catch("onReversal(4)"));
 }
 
 
