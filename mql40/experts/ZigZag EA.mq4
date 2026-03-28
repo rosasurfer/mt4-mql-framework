@@ -117,8 +117,8 @@ extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Entry conditions ===";
-extern bool   Entry.At.ChannelWidening       = false;                // start trading at the next Donchian channel widening
-extern bool   Entry.At.ZigZagReversal        = true;                 // start trading at the next ZigZag reversal
+extern bool   Entry.onChannelWidening        = false;                // start trading at the next Donchian channel widening
+extern bool   Entry.onZigZagReversal         = true;                 // start trading at the next ZigZag reversal
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -718,7 +718,7 @@ bool IsTradeSignal(double &signal[]) {
    }
 
    // Donchian channel widening (must be tested after ZigZag reversal)
-   if (Entry.At.ChannelWidening) {
+   if (Entry.onChannelWidening) {
       if (IsChannelWidening(signal)) {
          return(true);
       }
@@ -1152,8 +1152,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "Instance.StopAt",            /*string  */ Instance.StopAt);
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "Entry.At.ChannelWidening",   /*bool    */ Entry.At.ChannelWidening);
-   WriteIniString(file, section, "Entry.At.ZigZagReversal",    /*bool    */ Entry.At.ZigZagReversal);
+   WriteIniString(file, section, "Entry.onChannelWidening",    /*bool    */ Entry.onChannelWidening);
+   WriteIniString(file, section, "Entry.onZigZagReversal",     /*bool    */ Entry.onZigZagReversal);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
    // trade stats
@@ -1216,14 +1216,14 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   Instance.ID                = GetIniStringA(file, section, "Instance.ID",          "");          // string   Instance.ID                = T123
-   Instance.StartAt           = GetIniStringA(file, section, "Instance.StartAt",     "");          // string   Instance.StartAt           = @time(datetime|time)
-   Instance.StopAt            = GetIniStringA(file, section, "Instance.StopAt",      "");          // string   Instance.StopAt            = @time(datetime|time) | @profit(numeric[%])
-   ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"          );          // int      ZigZag.Periods             = 40
-   Lots                       = GetIniDouble (file, section, "Lots"                    );          // double   Lots                       = 0.1
-   Entry.At.ChannelWidening   = GetIniBool   (file, section, "Entry.At.ChannelWidening");          // bool     Entry.At.ChannelWidening   = 0
-   Entry.At.ZigZagReversal    = GetIniBool   (file, section, "Entry.At.ZigZagReversal" );          // bool     Entry.At.ZigZagReversal    = 1
-   EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",          "");          // string   EA.Recorder                = 1,2,4
+   Instance.ID                = GetIniStringA(file, section, "Instance.ID",         "");           // string   Instance.ID                = T123
+   Instance.StartAt           = GetIniStringA(file, section, "Instance.StartAt",    "");           // string   Instance.StartAt           = @time(datetime|time)
+   Instance.StopAt            = GetIniStringA(file, section, "Instance.StopAt",     "");           // string   Instance.StopAt            = @time(datetime|time) | @profit(numeric[%])
+   ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"         );           // int      ZigZag.Periods             = 40
+   Lots                       = GetIniDouble (file, section, "Lots"                   );           // double   Lots                       = 0.1
+   Entry.onChannelWidening    = GetIniBool   (file, section, "Entry.onChannelWidening");           // bool     Entry.onChannelWidening    = 0
+   Entry.onZigZagReversal     = GetIniBool   (file, section, "Entry.onZigZagReversal" );           // bool     Entry.onZigZagReversal     = 1
+   EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",         "");           // string   EA.Recorder                = 1,2,4
 
    // [Runtime status]
    section = "Runtime status";
@@ -1381,8 +1381,8 @@ string   prev.Instance.StartAt = "";
 string   prev.Instance.StopAt = "";
 int      prev.ZigZag.Periods;
 double   prev.Lots;
-bool     prev.Entry.At.ChannelWidening;
-bool     prev.Entry.At.ZigZagReversal;
+bool     prev.Entry.onChannelWidening;
+bool     prev.Entry.onZigZagReversal;
 
 
 // backed-up runtime variables affected by changing input parameters
@@ -1414,13 +1414,13 @@ string   prev.stop.profitPunit.descr = "";
  */
 void BackupInputs() {
    // input parameters, used for comparison in ValidateInputs()
-   prev.Instance.ID              = StringConcatenate(Instance.ID, "");        // string inputs are references to internal C literals
-   prev.Instance.StartAt         = StringConcatenate(Instance.StartAt, "");   // and must be copied to break the reference
-   prev.Instance.StopAt          = StringConcatenate(Instance.StopAt, "");
-   prev.ZigZag.Periods           = ZigZag.Periods;
-   prev.Lots                     = Lots;
-   prev.Entry.At.ChannelWidening = Entry.At.ChannelWidening;
-   prev.Entry.At.ZigZagReversal  = Entry.At.ZigZagReversal;
+   prev.Instance.ID             = StringConcatenate(Instance.ID, "");         // string inputs are references to internal C literals
+   prev.Instance.StartAt        = StringConcatenate(Instance.StartAt, "");    // and must be copied to break the reference
+   prev.Instance.StopAt         = StringConcatenate(Instance.StopAt, "");
+   prev.ZigZag.Periods          = ZigZag.Periods;
+   prev.Lots                    = Lots;
+   prev.Entry.onChannelWidening = Entry.onChannelWidening;
+   prev.Entry.onZigZagReversal  = Entry.onZigZagReversal;
 
    // affected runtime variables
    prev.start.time.condition       = start.time.condition;
@@ -1449,13 +1449,13 @@ void BackupInputs() {
  */
 void RestoreInputs() {
    // input parameters
-   Instance.ID              = prev.Instance.ID;
-   Instance.StartAt         = prev.Instance.StartAt;
-   Instance.StopAt          = prev.Instance.StopAt;
-   ZigZag.Periods           = prev.ZigZag.Periods;
-   Lots                     = prev.Lots;
-   Entry.At.ChannelWidening = prev.Entry.At.ChannelWidening;
-   Entry.At.ZigZagReversal  = prev.Entry.At.ZigZagReversal;
+   Instance.ID             = prev.Instance.ID;
+   Instance.StartAt        = prev.Instance.StartAt;
+   Instance.StopAt         = prev.Instance.StopAt;
+   ZigZag.Periods          = prev.ZigZag.Periods;
+   Lots                    = prev.Lots;
+   Entry.onChannelWidening = prev.Entry.onChannelWidening;
+   Entry.onZigZagReversal  = prev.Entry.onZigZagReversal;
 
    // affected runtime variables
    start.time.condition       = prev.start.time.condition;
@@ -1621,23 +1621,23 @@ bool ValidateInputs() {
    if (LT(Lots, 0))                                     return(!onInputError("ValidateInputs(23)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
    if (NE(Lots, NormalizeLots(Lots)))                   return(!onInputError("ValidateInputs(24)  "+ instance.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
-   // Entry.At.ChannelWidening
+   // Entry.onChannelWidening
    if (isInitParameters) {
-      if (Entry.At.ZigZagReversal != prev.Entry.At.ZigZagReversal) {
-         if (instanceWasStarted)                        return(!onInputError("ValidateInputs(25)  "+ instance.name +" cannot change input parameter Entry.At.ZigZagReversal of "+ StatusDescription(instance.status) +" instance"));
+      if (Entry.onChannelWidening != prev.Entry.onChannelWidening) {
+         if (instanceWasStarted)                        return(!onInputError("ValidateInputs(25)  "+ instance.name +" cannot change input parameter Entry.onChannelWidening of "+ StatusDescription(instance.status) +" instance"));
       }
    }
 
-   // Entry.At.ZigZagReversal
+   // Entry.onZigZagReversal
    if (isInitParameters) {
-      if (Entry.At.ZigZagReversal != prev.Entry.At.ZigZagReversal) {
-         if (instanceWasStarted)                        return(!onInputError("ValidateInputs(26)  "+ instance.name +" cannot change input parameter Entry.At.ZigZagReversal of "+ StatusDescription(instance.status) +" instance"));
+      if (Entry.onZigZagReversal != prev.Entry.onZigZagReversal) {
+         if (instanceWasStarted)                        return(!onInputError("ValidateInputs(26)  "+ instance.name +" cannot change input parameter Entry.onZigZagReversal of "+ StatusDescription(instance.status) +" instance"));
       }
    }
-   if (Entry.At.ChannelWidening) {
-      Entry.At.ZigZagReversal = false;
+   if (Entry.onChannelWidening) {
+      Entry.onZigZagReversal = false;
    }
-   else if (!Entry.At.ZigZagReversal)                   return(!onInputError("ValidateInputs(27)  "+ instance.name +" illegal input parameters Entry.At.ZigZagReversal/ChannelWidening (one must be enabled)"));
+   else if (!Entry.onZigZagReversal)                    return(!onInputError("ValidateInputs(27)  "+ instance.name +" illegal input parameters Entry.onZigZagReversal/onChannelWidening (one must be enabled)"));
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
    if (!Recorder_ValidateInputs(IsTestInstance()))      return(false);
@@ -1686,8 +1686,8 @@ void SS.StartStopConditions() {
          sValue = sValue + ifString(sValue=="", "", " || ") + ifString(start.time.condition, "@", "!") + start.time.descr;
       }
       if (instance.status && instance.status!=STATUS_TRADING) {
-         if (Entry.At.ChannelWidening) sValue = sValue + ifString(sValue=="", "", " && ") +"@ch-widening()";
-         else                          sValue = sValue + ifString(sValue=="", "", " && ") +"@zz-reversal()";
+         if (Entry.onChannelWidening) sValue = sValue + ifString(sValue=="", "", " && ") +"@ch-widening()";
+         else                         sValue = sValue + ifString(sValue=="", "", " && ") +"@zz-reversal()";
       }
       if (sValue == "") status.startConditions = "-";
       else              status.startConditions = sValue;
@@ -1804,13 +1804,13 @@ bool CreateStatusBox() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Instance.ID=",              DoubleQuoteStr(Instance.ID),         ";"+ NL +
-                            "Instance.StartAt=",         DoubleQuoteStr(Instance.StartAt),    ";"+ NL +
-                            "Instance.StopAt=",          DoubleQuoteStr(Instance.StopAt),     ";"+ NL +
+   return(StringConcatenate("Instance.ID=",             DoubleQuoteStr(Instance.ID),        ";"+ NL +
+                            "Instance.StartAt=",        DoubleQuoteStr(Instance.StartAt),   ";"+ NL +
+                            "Instance.StopAt=",         DoubleQuoteStr(Instance.StopAt),    ";"+ NL +
 
-                            "ZigZag.Periods=",           ZigZag.Periods,                      ";"+ NL +
-                            "Lots=",                     NumberToStr(Lots, ".1+"),            ";"+ NL +
-                            "Entry.At.ChannelWidening=", BoolToStr(Entry.At.ChannelWidening), ";"+ NL +
-                            "Entry.At.ZigZagReversal=",  BoolToStr(Entry.At.ZigZagReversal),  ";")
+                            "ZigZag.Periods=",          ZigZag.Periods,                     ";"+ NL +
+                            "Lots=",                    NumberToStr(Lots, ".1+"),           ";"+ NL +
+                            "Entry.onChannelWidening=", BoolToStr(Entry.onChannelWidening), ";"+ NL +
+                            "Entry.onZigZagReversal=",  BoolToStr(Entry.onZigZagReversal),  ";")
    );
 }
