@@ -129,6 +129,7 @@ int onTick() {
  */
 bool onCommand(string cmd, string params, int keys) {
    string fullCmd = cmd +":"+ params +":"+ keys;
+   fullCmd = StrLeftTo(fullCmd, "::0");
 
    if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());

@@ -118,7 +118,7 @@ extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Entry conditions ===";
 extern bool   Entry.onChannelWidening        = false;                // start trading at the next Donchian channel widening
-extern bool   Entry.onZigZagReversal         = true;                 // start trading at the next ZigZag reversal
+extern bool   Entry.onZigZagReversal         = true;                 // start trading at the next ZigZag reversal bar
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -286,11 +286,12 @@ int onTick() {
  */
 bool onCommand(string cmd, string params, int keys) {
    string fullCmd = cmd +":"+ params +":"+ keys;
+   fullCmd = StrLeftTo(fullCmd, "::0");
 
    if (cmd == "start") {
       switch (instance.status) {
          case STATUS_STOPPED:
-            logInfo("onCommand(3)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            logInfo("onCommand(1)  "+ instance.name +" command "+ DoubleQuoteStr(fullCmd));
             instance.status = STATUS_WAITING;
             return(SaveStatus());
       }
@@ -301,7 +302,7 @@ bool onCommand(string cmd, string params, int keys) {
          case STATUS_STOPPED:
             double signal[] = {0,0,0};
             signal[SIG_OP] = ifInt(GetZigZagDirection(0) > 0, SIG_OP_LONG, SIG_OP_SHORT);
-            log("onCommand(1)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd), NO_ERROR, LOG_INFO);
+            log("onCommand(2)  "+ instance.name +" command "+ DoubleQuoteStr(fullCmd), NO_ERROR, LOG_INFO);
             return(StartTrading(signal));
       }
    }
@@ -309,7 +310,7 @@ bool onCommand(string cmd, string params, int keys) {
       switch (instance.status) {
          case STATUS_WAITING:
          case STATUS_TRADING:
-            logInfo("onCommand(2)  "+ instance.name +" "+ DoubleQuoteStr(fullCmd));
+            logInfo("onCommand(3)  "+ instance.name +" command "+ DoubleQuoteStr(fullCmd));
             double dNull[] = {0,0,0};
             return(StopTrading(dNull));
       }
@@ -482,12 +483,12 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
 
    int combinedTrend = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);   // 85% of the local time here
 
-   int trend = combinedTrend & 0xFFFF;                            // extract LOWORD and manually sign-extend,
-   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                // i.e. convert int to signed short
+   int trend = combinedTrend & 0xFFFF;                            // extract LOWORD
+   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                // convert 'signed short' to 'signed int'
 
-   int unknownTrend = (combinedTrend >> 16) & 0xFFFF;             // extract HIWORD and manually sign-extend,
-   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // i.e. convert int to signed short
-   if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  unexpected bar="+ bar +" "+ TimeToStr(Time[bar]) +"  trend=0  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
+   int unknownTrend = (combinedTrend >> 16) & 0xFFFF;             // extract HIWORD
+   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // convert 'signed short' to 'signed int'
+   if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  unexpected bar="+ bar +" "+ TimeToStr(Time[bar]) +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
    if (!unknownTrend) {
       int reversalOffset = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL_OFFSET, bar);
@@ -495,7 +496,7 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
       if (Abs(trend) == reversalOffset) {
          int semBar = bar + reversalOffset;                       // last semaphore bar before the reversal
          double semaphoreClose = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_SEMAPHORE_CLOSE, semBar);
-         if (!semaphoreClose) return(!catch("IsZigZagReversalBar(2)  unexpected bar="+ semBar +" "+ TimeToStr(Time[semBar]) +"  trend=0  unknownTrend="+ unknownTrend +"  semaphoreClose=0", ERR_ILLEGAL_STATE));
+         if (!semaphoreClose) return(!catch("IsZigZagReversalBar(2)  unexpected bar="+ semBar +" "+ TimeToStr(Time[semBar]) +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  semaphoreClose="+ semaphoreClose, ERR_ILLEGAL_STATE));
 
          if (semaphoreClose > High[bar]-HalfPoint) {
             reversalType  = MODE_LOWER;
