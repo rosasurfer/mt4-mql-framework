@@ -430,7 +430,7 @@ function compileMql5() {
   local output=() line='' M='' errors=0 warnings=0
   readarray -t output < <(
     ((originalOutput)) && M='rosasurfer'                      # custom marker to toggle result filtering
-    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^$M[[:space:]]*$|$M: information: (compiling|including|generating code|code generated)" || :
+    iconv -c -f UTF-16 -t UTF-8 "$logFile" | tr -d '\r' | grep -v -E "^${M}[[:space:]]*$|$M: information: (compiling|including|generating code|code generated)" || :
   )
 
   [[ "${output[-1]}" =~ ([0-9]+)\ errors,\ ([0-9]+)\ warnings ]] || fail "unexpected compiler output in last line: \"${output[-1]}\""
@@ -541,19 +541,19 @@ function formatCompiler5Msg() {
   local srcFile="$2" errors="$3" warnings="$4" level file location='' message len
 
   [[ "$logmsg" =~ ^(.*):\ (info|warn|error)[^:]*:\ (.+)$ ]] || fail "unexpected format of compiler message:$NL\"$logmsg\""
-
   file="${BASH_REMATCH[1]}"
+  level="${BASH_REMATCH[2]}"
+  message="${BASH_REMATCH[3]}"
+
   file="${file%"${file##*[![:space:]]}"}"                     # trim trailing white space
   if [[ "$file" =~ \([0-9,]+\)$ ]]; then
     file="${file%"${BASH_REMATCH[0]}"}"
     location=" ${BASH_REMATCH[0]}"
   fi
 
-  level="${BASH_REMATCH[2]}: "
   ((errors)) && len=6 || len=5
+  level="$level: "
   level="${level:0:$len}"
-
-  message="${BASH_REMATCH[3]}"
 
   if [[ -z "$file" ]]; then
     logmsg="$level $message"
