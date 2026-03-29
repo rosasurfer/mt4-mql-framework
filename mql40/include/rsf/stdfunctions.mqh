@@ -6262,7 +6262,7 @@ string ShellExecuteErrorDescription(int error) {
 
 
 /**
- * Send a chart command. Modifies the specified object using the specified mutex.
+ * Create a chart object with the given command details and notify the chart/receivers.
  *
  * @param  string cmdObject        - label of the chart object holding the command
  * @param  string cmd              - command to send

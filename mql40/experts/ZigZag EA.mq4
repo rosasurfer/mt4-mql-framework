@@ -47,8 +47,6 @@
  * TODO:
  *  - input TradingTimeframe
  *  - document control scripts
- *  - entry management
- *     scale in multiple positions
  *
  *  - exit management
  *     partial close
@@ -60,19 +58,11 @@
  *  - on recorder restart the first recorded bar opens at instance.startEquity
  *  - block tests with bar model MODE_BAROPEN
  *  - fatal error if a test starts with Instance.ID="T001" and EA.Recorder="off"
- *  - rewrite loglevels to global vars
- *
- *  - realtime metric charts
- *     on CreateRawSymbol() also create/update offline profile
- *     ChartInfos: read/display symbol description as long name
  *
  *  - stop on reverse signal
- *  - track and display total slippage
+ *  - track/display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
- *
- *  - performance tracking
- *     notifications for price feed outages
  *
  *  - trade breaks
  *    - full session (24h) with trade breaks
@@ -87,7 +77,6 @@
  *    - manual behavior configuration:
  *       close-before      (default: no)
  *       synchronize-after (default: yes; if no: wait for the next signal)
- *    - better parsing of struct SYMBOL
  *    - config support for session and trade breaks at specific day times
  */
 #define STRATEGY_ID  107                     // unique strategy id
@@ -207,23 +196,23 @@ extern bool   Entry.onChannelWidening        = false;                // start tr
 #define SIG_UNITS    METRIC_SIG_UNITS
 
 // instance start conditions
-bool     start.time.condition;               // whether a time condition is active
+bool     start.time.condition;                     // whether a time condition is active
 datetime start.time.value;
 bool     start.time.isDaily;
 string   start.time.descr = "";
 
 // instance stop conditions ("OR" combined)
-bool     stop.time.condition;                // whether a time condition is active
+bool     stop.time.condition;                      // whether a time condition is active
 datetime stop.time.value;
 bool     stop.time.isDaily;
 string   stop.time.descr = "";
 
-bool     stop.profitPct.condition;           // whether a takeprofit condition in percent is active
+bool     stop.profitPct.condition;                 // whether a takeprofit condition in percent is active
 double   stop.profitPct.value;
 double   stop.profitPct.absValue = INT_MAX;
 string   stop.profitPct.descr = "";
 
-bool     stop.profitPunit.condition;         // whether a takeprofit condition in punits is active
+bool     stop.profitPunit.condition;               // whether a takeprofit condition in punits is active
 double   stop.profitPunit.value;
 string   stop.profitPunit.descr = "";
 
@@ -242,7 +231,7 @@ int onTick() {
    double signal[3];
 
    if (__isChart) {
-      if (!HandleCommands()) return(last_error);         // process incoming commands
+      if (!HandleCommands()) return(last_error);   // process incoming commands
    }
 
    if (instance.status != STATUS_STOPPED) {
