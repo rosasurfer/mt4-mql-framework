@@ -5,15 +5,15 @@
  *
  *
  * DISCLAIMER:
- *  This strategy is work in progress and is provided for educational and experimental purposes only.
- *  Use it entirely at your own risk. It may contain bugs or logic errors that could result in financial loss.
- *  Do NOT use this strategy with real money until you have performed extensive testing and validation.
+ *  This strategy is work in progress and is provided for educational purposes only. Use it entirely at your own risk.
+ *  It may contain bugs or logic errors that could result in financial loss. Do NOT use this strategy with real money
+ *  until you have performed extensive testing and validation in a demo account.
  *
  *
- * Required MQL files
- * ------------------
- *  /mql40/experts/ZigZag EA.ex4                   # this file
- *  /mql40/indicators/ZigZag.ex4                   # the MetaQuotes version can't be used
+ * Requirements
+ * ------------
+ *  /mql40/experts/ZigZag EA.ex4                      // this file
+ *  /mql40/indicators/ZigZag.ex4                      // the ZigZag indicator provided by MetaQuotes can't be used
  *  /mql40/scripts/Config.ex4
  *  /mql40/scripts/Chart.ToggleOpenOrders.ex4
  *  /mql40/scripts/Chart.ToggleTradeHistory.ex4
@@ -66,13 +66,6 @@
  *     on CreateRawSymbol() also create/update offline profile
  *     ChartInfos: read/display symbol description as long name
  *
- *  - performance with loglevel LOG_WARN
- *     GBPJPY,M1 2024.01.15-2024.02.02, ZigZag(30), EveryTick:     21.5 sec, 432 trades, 1.737.000 ticks (on slowed down CPU: 30.0 sec)
- *     GBPJPY,M1 2024.01.15-2024.02.02, ZigZag(30), ControlPoints:  3.6 sec, 432 trades,   247.000 ticks
- *
- *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), EveryTick:     20.4 sec,  93 trades, 1.732.000 ticks
- *     GBPJPY,M5 2024.01.15-2024.02.02, ZigZag(30), ControlPoints:  3.0 sec,  93 trades    243.000 ticks
- *
  *  - stop on reverse signal
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
@@ -88,10 +81,10 @@
  *    - configuration:
  *       default: auto-config using the SYMBOL configuration
  *       manual override of times and behaviors (per instance => via input parameters)
- *    - default behaviour:
+ *    - default behavior:
  *       no trade commands
  *       synchronize-after if an opposite signal occurred
- *    - manual behaviour configuration:
+ *    - manual behavior configuration:
  *       close-before      (default: no)
  *       synchronize-after (default: yes; if no: wait for the next signal)
  *    - better parsing of struct SYMBOL
@@ -108,17 +101,16 @@ int __virtualTicks = 10000;                  // every 10 seconds to continue ope
 
 extern string Instance.ID                    = "";                   // instance to load from a status file, format "[T]123"
 extern string Instance.StartAt               = "@time(00:02)";       // @time(datetime|time)
-extern string Instance.StopAt                = "@time(23:59)";       // @time(datetime|time) || @profit(numeric[%])
+extern string Instance.StopAt                = "@time(23:58)";       // @time(datetime|time) || @profit(numeric[%])
 
 extern string ___a__________________________ = "=== Signal settings ===";
-extern int    ZigZag.Periods                 = 100;
+extern int    ZigZag.Periods                 = 200;
 
 extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Entry conditions ===";
 extern bool   Entry.onChannelWidening        = false;                // start trading at the next Donchian channel widening
-extern bool   Entry.onZigZagReversal         = true;                 // start trading at the next ZigZag reversal bar
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -255,7 +247,7 @@ int onTick() {
 
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
-         if (IsTradeSignal(signal)) {
+         if (IsEntrySignal(signal)) {
             StartTrading(signal);
          }
       }
@@ -337,17 +329,17 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Whether a Donchian channel widening occurred.
+ * Whether a Donchian channel widening occurred on the current tick.
  *
  * @param  _Out_ double signal[] - array receiving signal details
  *
  * @return bool
  */
-bool IsChannelWidening(double &signal[]) {
+bool IsDonchianChannelWidening(double &signal[]) {
    if (last_error != NULL) return(false);
 
-   static int lastTick, lastSigType, lastSigOp, lastSigBar, lastSigBarOp;
-   static double lastSigPrice, lastUpperBand, lastLowerBand;
+   static int lastTick, lastSigType, lastSigOp;
+   static double lastSigPrice;
 
    if (Ticks == lastTick) {
       signal[SIG_TYPE ] = lastSigType;
@@ -359,29 +351,25 @@ bool IsChannelWidening(double &signal[]) {
       signal[SIG_PRICE] = 0;
       signal[SIG_OP   ] = 0;
 
-      double upperBand, lowerBand, signalPrice;
+      static double lastUpperBand, lastLowerBand;
+
+      double upperBand, lowerBand;
       if (!GetDonchianChannel(0, upperBand, lowerBand)) return(false);
 
-      if (lastUpperBand && lastLowerBand) {
-         int sigOp = 0;
-         if (upperBand > lastUpperBand+HalfPoint) {
-            sigOp = SIG_OP_CLOSE_SHORT|SIG_OP_LONG;
-            signalPrice = upperBand;
-         }
-         else if (lowerBand < lastLowerBand-HalfPoint) {
-            sigOp = SIG_OP_CLOSE_LONG|SIG_OP_SHORT;
-            signalPrice = lowerBand;
-         }
-
-         if (sigOp != 0) {
-            if (Time[0]!=lastSigBar || sigOp!=lastSigBarOp) {
+      if (Ticks == lastTick + 1) {
+         if (lastUpperBand && lastLowerBand) {
+            if (upperBand > lastUpperBand+HalfPoint) {
                signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
-               signal[SIG_PRICE] = signalPrice;
-               signal[SIG_OP   ] = sigOp;
-
-               if (IsLogNotice()) logNotice("IsChannelWidening(1)  "+ instance.name +" "+ ifString(sigOp & SIG_OP_LONG, "long", "short") +" signal at "+ NumberToStr(signalPrice, PriceFormat) +" (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
-               lastSigBar   = Time[0];
-               lastSigBarOp = sigOp;
+               signal[SIG_PRICE] = upperBand;
+               signal[SIG_OP   ] = SIG_OP_CLOSE_SHORT|SIG_OP_LONG;
+            }
+            else if (lowerBand < lastLowerBand-HalfPoint) {
+               signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
+               signal[SIG_PRICE] = lowerBand;
+               signal[SIG_OP   ] = SIG_OP_CLOSE_LONG|SIG_OP_SHORT;
+            }
+            if (signal[SIG_TYPE] != 0) {
+               if (IsLogNotice()) logNotice("IsDonchianChannelWidening(1)  "+ instance.name +" "+ ifString(_int(signal[SIG_OP]) & SIG_OP_LONG, "long", "short") +" widening at "+ NumberToStr(signal[SIG_PRICE], PriceFormat) +" (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
             }
          }
       }
@@ -398,7 +386,7 @@ bool IsChannelWidening(double &signal[]) {
 
 
 /**
- * Get ZigZag buffer values at the specified bar offset. The returned values correspond to the documented indicator buffers.
+ * Get Donchian Channel values at the specified bar offset.
  *
  * @param  _In_  int    bar       - bar offset
  * @param  _Out_ double upperBand - MODE_UPPER_BAND: upper channel band
@@ -407,9 +395,18 @@ bool IsChannelWidening(double &signal[]) {
  * @return bool - success status
  */
 bool GetDonchianChannel(int bar, double &upperBand, double &lowerBand) {
-   upperBand = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_BAND, bar);
-   lowerBand = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_BAND, bar);
-   return(!last_error && upperBand && lowerBand);
+   upperBand = NULL;
+   lowerBand = NULL;
+
+   double upper = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_BAND, bar);
+   double lower = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_BAND, bar);
+   if (!upper || !lower) {
+      return(!catch("GetDonchianChannel(1)  unexpected result: bar="+ bar +" "+ TimeToStr(Time[bar]) +"  upperBand="+ NumberToStr(upper, PriceFormat) +"  lowerBand="+ NumberToStr(lower, PriceFormat), ERR_ILLEGAL_STATE));
+   }
+
+   upperBand = upper;
+   lowerBand = lower;
+   return(!last_error);
 }
 
 
@@ -524,12 +521,12 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
 int GetZigZagDirection(int bar) {
    int combinedTrend = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);
 
-   int trend = combinedTrend & 0xFFFF;                               // extract LOWORD and manually sign-extend,
-   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                   // i.e. convert int to signed short
+   int trend = combinedTrend & 0xFFFF;                               // extract LOWORD
+   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                   // convert 'signed short' to 'signed int'
 
    if (!trend) {
-      int unknownTrend = (combinedTrend >> 16) & 0xFFFF;             // extract HIWORD and manually sign-extend,
-      if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // i.e. convert int to signed short
+      int unknownTrend = (combinedTrend >> 16) & 0xFFFF;             // extract HIWORD
+      if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // convert 'signed short' to 'signed int'
       if (unknownTrend < 0) return(!catch("GetZigZagDirection(1)  unexpected bar="+ bar +" "+ TimeToStr(Time[bar]) +"  trend=0  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
       int semBar = bar + unknownTrend;
@@ -696,13 +693,13 @@ bool IsTradingTime() {
 
 
 /**
- * Whether conditions are fullfilled to start trading.
+ * Whether an entry condition is fullfilled to start trading.
  *
  * @param  _Out_ double signal[] - array receiving the entry signal
  *
  * @return bool
  */
-bool IsTradeSignal(double &signal[]) {
+bool IsEntrySignal(double &signal[]) {
    if (last_error || instance.status!=STATUS_WAITING) return(false);
    signal[SIG_TYPE ] = 0;
    signal[SIG_PRICE] = 0;
@@ -713,14 +710,16 @@ bool IsTradeSignal(double &signal[]) {
       return(false);
    }
 
-   // ZigZag reversal (is also a Donchian channel widening)
-   if (IsZigZagSignal(signal)) {
-      return(true);
+   // Donchian channel widening
+   if (Entry.onChannelWidening) {
+      if (IsDonchianChannelWidening(signal)) {
+         return(true);
+      }
    }
 
-   // Donchian channel widening (must be tested after ZigZag reversal)
-   if (Entry.onChannelWidening) {
-      if (IsChannelWidening(signal)) {
+   // ZigZag reversal (is also a Donchian channel widening)
+   if (!Entry.onChannelWidening) {
+      if (IsZigZagSignal(signal)) {
          return(true);
       }
    }
@@ -1154,7 +1153,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "ZigZag.Periods",             /*int     */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                       /*double  */ NumberToStr(Lots, ".+"));
    WriteIniString(file, section, "Entry.onChannelWidening",    /*bool    */ Entry.onChannelWidening);
-   WriteIniString(file, section, "Entry.onZigZagReversal",     /*bool    */ Entry.onZigZagReversal);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
    // trade stats
@@ -1223,7 +1221,6 @@ bool ReadStatus() {
    ZigZag.Periods             = GetIniInt    (file, section, "ZigZag.Periods"         );           // int      ZigZag.Periods             = 40
    Lots                       = GetIniDouble (file, section, "Lots"                   );           // double   Lots                       = 0.1
    Entry.onChannelWidening    = GetIniBool   (file, section, "Entry.onChannelWidening");           // bool     Entry.onChannelWidening    = 0
-   Entry.onZigZagReversal     = GetIniBool   (file, section, "Entry.onZigZagReversal" );           // bool     Entry.onZigZagReversal     = 1
    EA.Recorder                = GetIniStringA(file, section, "EA.Recorder",         "");           // string   EA.Recorder                = 1,2,4
 
    // [Runtime status]
@@ -1383,7 +1380,6 @@ string   prev.Instance.StopAt = "";
 int      prev.ZigZag.Periods;
 double   prev.Lots;
 bool     prev.Entry.onChannelWidening;
-bool     prev.Entry.onZigZagReversal;
 
 
 // backed-up runtime variables affected by changing input parameters
@@ -1421,7 +1417,6 @@ void BackupInputs() {
    prev.ZigZag.Periods          = ZigZag.Periods;
    prev.Lots                    = Lots;
    prev.Entry.onChannelWidening = Entry.onChannelWidening;
-   prev.Entry.onZigZagReversal  = Entry.onZigZagReversal;
 
    // affected runtime variables
    prev.start.time.condition       = start.time.condition;
@@ -1456,7 +1451,6 @@ void RestoreInputs() {
    ZigZag.Periods          = prev.ZigZag.Periods;
    Lots                    = prev.Lots;
    Entry.onChannelWidening = prev.Entry.onChannelWidening;
-   Entry.onZigZagReversal  = prev.Entry.onZigZagReversal;
 
    // affected runtime variables
    start.time.condition       = prev.start.time.condition;
@@ -1625,26 +1619,15 @@ bool ValidateInputs() {
    // Entry.onChannelWidening
    if (isInitParameters) {
       if (Entry.onChannelWidening != prev.Entry.onChannelWidening) {
-         if (instanceWasStarted)                        return(!onInputError("ValidateInputs(25)  "+ instance.name +" cannot change input parameter Entry.onChannelWidening of "+ StatusDescription(instance.status) +" instance"));
+         if (instance.status == STATUS_TRADING)         return(!onInputError("ValidateInputs(25)  "+ instance.name +" cannot change input parameter Entry.onChannelWidening of "+ StatusDescription(instance.status) +" instance"));
       }
    }
-
-   // Entry.onZigZagReversal
-   if (isInitParameters) {
-      if (Entry.onZigZagReversal != prev.Entry.onZigZagReversal) {
-         if (instanceWasStarted)                        return(!onInputError("ValidateInputs(26)  "+ instance.name +" cannot change input parameter Entry.onZigZagReversal of "+ StatusDescription(instance.status) +" instance"));
-      }
-   }
-   if (Entry.onChannelWidening) {
-      Entry.onZigZagReversal = false;
-   }
-   else if (!Entry.onZigZagReversal)                    return(!onInputError("ValidateInputs(27)  "+ instance.name +" illegal input parameters Entry.onZigZagReversal/onChannelWidening (one must be enabled)"));
 
    // EA.Recorder: on | off* | 1,2,3=1000,...
    if (!Recorder_ValidateInputs(IsTestInstance()))      return(false);
 
    SS.All();
-   return(!catch("ValidateInputs(28)"));
+   return(!catch("ValidateInputs(26)"));
 }
 
 
@@ -1811,7 +1794,6 @@ string InputsToStr() {
 
                             "ZigZag.Periods=",          ZigZag.Periods,                     ";"+ NL +
                             "Lots=",                    NumberToStr(Lots, ".1+"),           ";"+ NL +
-                            "Entry.onChannelWidening=", BoolToStr(Entry.onChannelWidening), ";"+ NL +
-                            "Entry.onZigZagReversal=",  BoolToStr(Entry.onZigZagReversal),  ";")
+                            "Entry.onChannelWidening=", BoolToStr(Entry.onChannelWidening), ";")
    );
 }
