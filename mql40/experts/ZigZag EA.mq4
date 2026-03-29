@@ -188,7 +188,7 @@ extern bool   Entry.onChannelWidening        = false;                // start tr
 #include <rsf/experts/trade/MovePositionToHistory.mqh>
 #include <rsf/experts/trade/onPositionClose.mqh>
 
-#include <rsf/experts/trade/signal/SignalOperationToStr.mqh>
+#include <rsf/experts/trade/signal/SignalOperationDescr.mqh>
 #include <rsf/experts/trade/signal/SignalTypeToStr.mqh>
 
 #include <rsf/experts/trade/stats/CalculateStats.mqh>
@@ -853,7 +853,7 @@ bool StartTrading(double signal[]) {
       SS.ProfitStats();
       SS.StartStopConditions();
    }
-   if (IsLogInfo()) logInfo("StartTrading(3)  "+ instance.name +" started ("+ SignalOperationToStr(sigOp) +")");
+   if (IsLogInfo()) logInfo("StartTrading(3)  "+ instance.name +" started ("+ SignalOperationDescr(sigOp) +")");
 
    if (test.onPositionOpenPause) Tester.Pause("StartTrading(4)");
    return(SaveStatus());
@@ -949,7 +949,7 @@ bool ReversePosition(double signal[]) {
       SS.TotalProfit();
       SS.ProfitStats();
    }
-   if (IsLogInfo()) logInfo("ReversePosition(5)  "+ instance.name +" position reversed ("+ SignalOperationToStr(sigOp) +")");
+   if (IsLogInfo()) logInfo("ReversePosition(5)  "+ instance.name +" position reversed ("+ SignalOperationDescr(sigOp) +")");
 
    if (test.onPositionOpenPause) Tester.Pause("ReversePosition(6)");
    return(SaveStatus());
