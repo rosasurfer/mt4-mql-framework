@@ -2014,7 +2014,7 @@ bool SendTelegramMessage(string channel, string message) {
    if (bytes <= 0) return(!catch("SendTelegramMessage(6)->FileWriteString() => "+ bytes +" written"));
    messageFile = StrReplace(messageFile, "\\", "/");
 
-   // compose command line
+   // compose command line                                  // TODO: parse the response and keep logs on error
    string bash = GetConfigString("System", "Bash");
    if (!IsFile(bash, MODE_SYSTEM)) {                        // use config setting
       bash = "bash.exe";                                    // or system look-up

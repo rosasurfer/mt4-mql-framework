@@ -6463,7 +6463,7 @@ bool SendSMS(string receiver, string message) {
    // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
    // Giving up.
 
-   if (IsLogDebug()) logDebug("SendSMS(10)  SMS sent to "+ receiverBak +": \""+ message +"\"");
+   logInfo("SendSMS(10)  SMS sent to "+ receiverBak +": \""+ message +"\"");
    return(!catch("SendSMS(11)"));
 }
 
