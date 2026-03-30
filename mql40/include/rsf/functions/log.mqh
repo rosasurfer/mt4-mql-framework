@@ -29,6 +29,7 @@
  * | log2File()     | LogfileAppender                                              | configurable     |
  * | log2Mail()     | MailAppender                                                 | configurable     |
  * | log2SMS()      | SMSAppender                                                  | configurable     |
+ * | log2Telegram() | TelegramAppender                                             | configurable     |
  * +----------------+--------------------------------------------------------------+------------------+
  * | SetLogfile()   | set a logfile for the LogfileAppender                        | per MQL program  |
  * +----------------+--------------------------------------------------------------+------------------+
@@ -240,6 +241,7 @@ int log(string message, int error, int level) {
       if (__ExecutionContext[EC.loglevelAlert   ] != LOG_OFF) log2Alert   (message, error, level);    // after fast appenders as it may lock the UI thread in tester
       if (__ExecutionContext[EC.loglevelMail    ] != LOG_OFF) log2Mail    (message, error, level);    // slow appenders last (launches a new process)
       if (__ExecutionContext[EC.loglevelSMS     ] != LOG_OFF) log2SMS     (message, error, level);    // ...
+      if (__ExecutionContext[EC.loglevelTelegram] != LOG_OFF) log2Telegram(message, error, level);    // ...
    }
    else if (level >= LOG_FATAL) {
       if (__ExecutionContext[EC.loglevelTerminal] != LOG_OFF) log2Terminal(message, error, level);    // built-in log appenders always process LOG_FATAL
@@ -550,10 +552,63 @@ int log2SMS(string message, int error, int level) {
       ec_SetLoglevelSMS(__ExecutionContext, LOG_OFF);                               // prevent recursive calls
 
       string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
-                  +"("+ TimeToStr(TimeLocalEx("log2SMS(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+                  +"("+ TimeToStr(TimeLocalEx("log2SMS(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (SendSMS("", text)) {
          ec_SetLoglevelSMS(__ExecutionContext, configLevel);                        // restore the configuration or leave it disabled
+      }
+      isRecursion = false;
+   }
+   return(error);
+}
+
+
+/**
+ * Send a log message to the Telegram appender.
+ *
+ * @param  string message - log message
+ * @param  int    error   - error linked to the message (if any)
+ * @param  int    level   - log level of the message
+ *
+ * @return int - the same error or the configured SMS loglevel if parameter level is LOG_OFF
+ */
+int log2Telegram(string message, int error, int level) {
+   static string channel = "";
+
+   // read the configuration on first usage
+   int configLevel = __ExecutionContext[EC.loglevelTelegram]; if (!configLevel) {
+      int pid = __ExecutionContext[EC.pid];
+      if (__isSuperContext) configLevel = ec_SuperLoglevelTelegram(pid);            // an indicator loaded by iCustom()
+      if (!configLevel) {
+         string section = ifString(__isTesting, "Tester.", "") +"Log", key = "Log2Telegram";
+         string sValue = GetConfigString(section, key, "off");                      // built-in default: off
+         configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Telegram(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
+      }
+      if (channel == "") {
+         section = "Telegram";
+         key = "LogChannel";
+         channel = GetConfigString(section, key);
+         if (channel == "") configLevel = _int(LOG_OFF, catch("log2Telegram(2)  missing log appender configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+      }
+      ec_SetLoglevelTelegram(__ExecutionContext, configLevel);
+   }
+   if (level == LOG_OFF) return(configLevel);
+
+   // apply the configured loglevel filter
+   if (level >= configLevel) {
+      static bool isRecursion = false; if (isRecursion) {
+         Alert("log2Telegram(3)  recursion: ", message, ", error: ", error, ", ", LoglevelToStrA(level));
+         return(error);
+      }
+      isRecursion = true;
+      ec_SetLoglevelTelegram(__ExecutionContext, LOG_OFF);                          // prevent recursive calls
+
+      string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
+                  +"("+ TimeToStr(TimeLocalEx("log2Telegram(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+
+      if (SendTelegramMessage(channel, text)) {
+         ec_SetLoglevelTelegram(__ExecutionContext, configLevel);                   // restore the configuration or leave it disabled
       }
       isRecursion = false;
    }
@@ -655,6 +710,9 @@ bool SetLogfile(string filename) {
 }
 
 
+#import "rsfStdlib.ex4"
+   bool   SendTelegramMessage(string channel, string message);
+
 #import "kernel32.dll"
    void   OutputDebugStringA(string message);
 
@@ -665,16 +723,18 @@ bool SetLogfile(string filename) {
    int    ec_SuperLoglevelFile    (int pid);
    int    ec_SuperLoglevelMail    (int pid);
    int    ec_SuperLoglevelSMS     (int pid);
+   int    ec_SuperLoglevelTelegram(int pid);
    int    ec_SuperLoglevelTerminal(int pid);
    string ec_SuperProgramName     (int pid);
 
-   int    ec_SetLoglevel          (int ec[], int level);
-   int    ec_SetLoglevelAlert     (int ec[], int level);
-   int    ec_SetLoglevelDebug     (int ec[], int level);
-   int    ec_SetLoglevelFile      (int ec[], int level);
-   int    ec_SetLoglevelMail      (int ec[], int level);
-   int    ec_SetLoglevelSMS       (int ec[], int level);
-   int    ec_SetLoglevelTerminal  (int ec[], int level);
+   int    ec_SetLoglevel        (int ec[], int level);
+   int    ec_SetLoglevelAlert   (int ec[], int level);
+   int    ec_SetLoglevelDebug   (int ec[], int level);
+   int    ec_SetLoglevelFile    (int ec[], int level);
+   int    ec_SetLoglevelMail    (int ec[], int level);
+   int    ec_SetLoglevelSMS     (int ec[], int level);
+   int    ec_SetLoglevelTelegram(int ec[], int level);
+   int    ec_SetLoglevelTerminal(int ec[], int level);
 
    bool   AppendLogMessageA(int ec[], datetime time, string message, int error, int level);
    bool   SetLogfileA      (int ec[], string file);
