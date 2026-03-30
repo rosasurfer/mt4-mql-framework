@@ -1985,6 +1985,61 @@ int SearchStringArrayI(string haystack[], string needle) {
 
 
 /**
+ * Send a message to a Telegram channel. Each channel needs a matching configuration with channel id and bot token.
+ *
+ * @param  string channel - channel name used in the configuration
+ * @param  string message - text message (may contain limited and very basic HTML formatting)
+ *
+ * @return bool - success status
+ */
+bool SendTelegramMessage(string channel, string message) {
+   if (!StringLen(channel))   return(!catch("SendTelegramMessage(1)  invalid parameter channel: \"\" (empty)", ERR_INVALID_PARAMETER));
+   if (!StringLen(message))   return(!catch("SendTelegramMessage(2)  invalid parameter message: \"\" (empty)", ERR_INVALID_PARAMETER));
+
+   string section = "Telegram "+ channel, key = "ChannelId";
+   string channelId = GetConfigString(section, key);
+   if (!StringLen(channelId)) return(!catch("SendTelegramMessage(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   key = "Token";
+   string token = GetConfigString(section, key);
+   if (!StringLen(token))     return(!catch("SendTelegramMessage(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+
+   // store message in tmp file
+   message = AnsiToUtf8(StrReplace(message, EOL_WINDOWS, EOL_UNIX));
+   string filesDir = GetMqlSandboxPath();
+   string messageFile = CreateTempFile(filesDir, "tgm");
+   int hFile = FileOpen(StrRightFrom(messageFile, filesDir), FILE_BIN|FILE_WRITE);
+   if (hFile < 0)  return(!catch("SendTelegramMessage(5)->FileOpen()"));
+   int bytes = FileWriteString(hFile, message, StringLen(message));
+   FileClose(hFile);
+   if (bytes <= 0) return(!catch("SendTelegramMessage(6)->FileWriteString() => "+ bytes +" written"));
+   messageFile = StrReplace(messageFile, "\\", "/");
+
+   // compose command line
+   string bash = GetConfigString("System", "Bash");
+   if (!IsFile(bash, MODE_SYSTEM)) {                        // use config setting
+      bash = "bash.exe";                                    // or system look-up
+   }
+   string cmd = "curl -X POST \"https://api.telegram.org/bot"+ token +"/sendMessage\" -L --silent --show-error"
+               +" --data-urlencode parse_mode=HTML"
+               +" --data-urlencode \"chat_id="+ channelId +"\""
+               +" --data-urlencode \"text@"+ messageFile +"\" && rm -f \""+ messageFile +"\"";
+   cmd = cmd +"; read -n 1 -s";
+   cmd = bash +" -lc '"+ cmd +"'";                          // -l (login shell) makes sure the full PATH is set
+
+   // execute command
+   int result = WinExec(cmd, SW_SHOW);                      // SW_SHOW | SW_HIDE
+   if (result < 32) {
+      if (result == ERROR_FILE_NOT_FOUND) catch("SendTelegramMessage(7)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
+      else                                catch("SendTelegramMessage(8)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
+      return(false);
+   }
+
+   logInfo("SendTelegramMessage(9)  message sent to channel \""+ channel +"\"");
+   return(!catch("SendTelegramMessage(10)"));
+}
+
+
+/**
  * Kehrt die Reihenfolge der Elemente eines Boolean-Arrays um.
  *
  * @param  bool array[] - Boolean-Array
@@ -7248,16 +7303,14 @@ string GetTempPath() {
  *
  * @return string - Dateiname oder Leerstring, falls ein Fehler auftrat
  */
-string CreateTempFile(string path, string prefix="") {
-   int len = StringLen(path);
-   if (!len)                               return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
-   if (len > MAX_PATH-14)                  return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" characters)", ERR_INVALID_PARAMETER)));
-   if (path!=".") /*&&*/ if (path!="..")
-      if (!IsDirectory(path, MODE_SYSTEM)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
+string CreateTempFile(string path, string prefix = "") {
+   if (path == "")                      return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: "+ DoubleQuoteStr(path) +" (empty)", ERR_INVALID_PARAMETER)));
+   if (StringLen(path) > MAX_PATH-14)   return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" chars)", ERR_INVALID_PARAMETER)));
+   if (!IsDirectory(path, MODE_SYSTEM)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
 
-   if (StrIsNull(prefix))
+   if (StrIsNull(prefix)) {
       prefix = "";
-
+   }
    int    bufferSize = MAX_PATH;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
