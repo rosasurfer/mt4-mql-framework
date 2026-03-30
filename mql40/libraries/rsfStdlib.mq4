@@ -2004,12 +2004,12 @@ bool SendTelegramMessage(string channel, string message) {
    if (!StringLen(token))     return(!catch("SendTelegramMessage(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
    // store message in tmp file
-   message = AnsiToUtf8(StrReplace(message, EOL_WINDOWS, EOL_UNIX));
    string filesDir = GetMqlSandboxPath();
    string messageFile = CreateTempFile(filesDir, "tgm");
    int hFile = FileOpen(StrRightFrom(messageFile, filesDir), FILE_BIN|FILE_WRITE);
    if (hFile < 0)  return(!catch("SendTelegramMessage(5)->FileOpen()"));
-   int bytes = FileWriteString(hFile, message, StringLen(message));
+   string utf8Message = AnsiToUtf8(StrReplace(message, EOL_WINDOWS, EOL_UNIX));
+   int bytes = FileWriteString(hFile, utf8Message, StringLen(utf8Message));
    FileClose(hFile);
    if (bytes <= 0) return(!catch("SendTelegramMessage(6)->FileWriteString() => "+ bytes +" written"));
    messageFile = StrReplace(messageFile, "\\", "/");
@@ -2023,18 +2023,18 @@ bool SendTelegramMessage(string channel, string message) {
                +" --data-urlencode parse_mode=HTML"
                +" --data-urlencode \"chat_id="+ channelId +"\""
                +" --data-urlencode \"text@"+ messageFile +"\" && rm -f \""+ messageFile +"\"";
-   cmd = cmd +"; read -n 1 -s";
+   //cmd = cmd +"; read -n 1 -s";
    cmd = bash +" -lc '"+ cmd +"'";                          // -l (login shell) makes sure the full PATH is set
 
    // execute command
-   int result = WinExec(cmd, SW_SHOW);                      // SW_SHOW | SW_HIDE
+   int result = WinExec(cmd, SW_HIDE);                      // SW_SHOW | SW_HIDE
    if (result < 32) {
       if (result == ERROR_FILE_NOT_FOUND) catch("SendTelegramMessage(7)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
       else                                catch("SendTelegramMessage(8)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
       return(false);
    }
 
-   logInfo("SendTelegramMessage(9)  message sent to channel \""+ channel +"\"");
+   logInfo("SendTelegramMessage(9)  to channel \""+ channel +"\": "+ message);
    return(!catch("SendTelegramMessage(10)"));
 }
 
