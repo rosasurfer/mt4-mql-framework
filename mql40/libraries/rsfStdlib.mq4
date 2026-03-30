@@ -2020,7 +2020,7 @@ bool SendTelegramMessage(string channel, string message) {
       bash = "bash.exe";                                    // or system look-up
    }
    string cmd = "curl -X POST \"https://api.telegram.org/bot"+ token +"/sendMessage\" -L --silent --show-error"
-               +" --data-urlencode parse_mode=HTML"
+             //+" --data-urlencode parse_mode=HTML"
                +" --data-urlencode \"chat_id="+ channelId +"\""
                +" --data-urlencode \"text@"+ messageFile +"\" && rm -f \""+ messageFile +"\"";
    //cmd = cmd +"; read -n 1 -s";
