@@ -127,6 +127,8 @@
    bool     StrIsNull(string str);
    bool     StrStartsWith(string str, string prefix);
    string   StringToStr(string str);
+   string   AnsiToUtf8(string str);
+   string   Utf8ToAnsi(string str);
 
    // conversion functions
    string   BarModelDescription(int id);

@@ -6390,7 +6390,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
    if (result < 32) return(!catch("SendEmail(11)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   if (IsLogDebug()) logDebug("SendEmail(12)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   logInfo("SendEmail(12)  mail to "+ receiver +" transmitted: \""+ subject +"\"");
    return(!catch("SendEmail(13)"));
 }
 
@@ -6463,7 +6463,7 @@ bool SendSMS(string receiver, string message) {
    // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
    // Giving up.
 
-   if (IsLogDebug()) logDebug("SendSMS(10)  SMS sent to "+ receiverBak +": \""+ message +"\"");
+   logInfo("SendSMS(10)  SMS sent to "+ receiverBak +": \""+ message +"\"");
    return(!catch("SendSMS(11)"));
 }
 
