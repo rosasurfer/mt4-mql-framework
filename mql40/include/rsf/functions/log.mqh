@@ -570,11 +570,9 @@ int log2SMS(string message, int error, int level) {
  * @param  int    error   - error linked to the message (if any)
  * @param  int    level   - log level of the message
  *
- * @return int - the same error or the configured SMS loglevel if parameter level is LOG_OFF
+ * @return int - the same error or the configured Telegram loglevel if parameter level is LOG_OFF
  */
 int log2Telegram(string message, int error, int level) {
-   static string channel = "";
-
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelTelegram]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
@@ -584,12 +582,6 @@ int log2Telegram(string message, int error, int level) {
          string sValue = GetConfigString(section, key, "off");                      // built-in default: off
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
          if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Telegram(1)  invalid loglevel configuration ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
-      }
-      if (channel == "") {
-         section = "Telegram";
-         key = "LogChannel";
-         channel = GetConfigString(section, key);
-         if (channel == "") configLevel = _int(LOG_OFF, catch("log2Telegram(2)  missing log appender configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
       }
       ec_SetLoglevelTelegram(__ExecutionContext, configLevel);
    }
@@ -607,7 +599,7 @@ int log2Telegram(string message, int error, int level) {
       string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
                   +"("+ TimeToStr(TimeLocalEx("log2Telegram(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
-      if (SendTelegramMessage(channel, text)) {
+      if (SendTelegramMessage("log", text)) {
          ec_SetLoglevelTelegram(__ExecutionContext, configLevel);                   // restore the configuration or leave it disabled
       }
       isRecursion = false;

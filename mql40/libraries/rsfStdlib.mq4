@@ -1987,21 +1987,23 @@ int SearchStringArrayI(string haystack[], string needle) {
 /**
  * Send a message to a Telegram channel. Each channel needs a matching configuration with channel id and bot token.
  *
- * @param  string channel - channel name used in the configuration
+ * @param  string channel - channel name or alias as used in the configuration
  * @param  string message - text message (may contain limited and very basic HTML formatting)
  *
  * @return bool - success status
  */
 bool SendTelegramMessage(string channel, string message) {
-   if (!StringLen(channel))   return(!catch("SendTelegramMessage(1)  invalid parameter channel: \"\" (empty)", ERR_INVALID_PARAMETER));
-   if (!StringLen(message))   return(!catch("SendTelegramMessage(2)  invalid parameter message: \"\" (empty)", ERR_INVALID_PARAMETER));
+   if (!StringLen(channel)) return(!catch("SendTelegramMessage(1)  invalid parameter channel: \"\" (empty)", ERR_INVALID_PARAMETER));
+   if (!StringLen(message)) return(!catch("SendTelegramMessage(2)  invalid parameter message: \"\" (empty)", ERR_INVALID_PARAMETER));
 
+   string alias = GetConfigString("Telegram", channel);
+   if (alias != "") channel = alias;
    string section = "Telegram "+ channel, key = "ChannelId";
    string channelId = GetConfigString(section, key);
-   if (!StringLen(channelId)) return(!catch("SendTelegramMessage(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (channelId == "") return(!catch("SendTelegramMessage(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    key = "Token";
    string token = GetConfigString(section, key);
-   if (!StringLen(token))     return(!catch("SendTelegramMessage(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (token == "") return(!catch("SendTelegramMessage(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
    // store message in a tmp file
    string filesDir = GetMqlSandboxPath();

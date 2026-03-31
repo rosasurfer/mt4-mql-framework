@@ -2,10 +2,6 @@
  * Inside Bars
  *
  * Marks inside bars and corresponding projection levels.
- *
- *
- * TODO:
- *  - check bar alignment of all timeframes and use the largest correctly aligned instead of M5
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};

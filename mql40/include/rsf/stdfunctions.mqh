@@ -4654,7 +4654,7 @@ int GetAccountNumber() {
 
 
 /**
- * Return the alias of an account. The alias is used in outbound messages (email, SMS, chat) to obfuscate the actual account
+ * Return the alias of an account. The alias is used in outbound messages (email, messengers) to obfuscate the actual account
  * number. It's configurable in [Account]->Alias of the account configuration file.
  *
  * If no alias is configured the function returns the account number with digits replaced by wildcards, except the last 2.
@@ -6310,7 +6310,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // sender
    string _sender = StrTrim(sender);
-   if (!StringLen(_sender)) {
+   if (_sender == "") {
       string section = "Mail", key = "Sender";
       _sender = GetConfigString(section, key, "mt4@"+ GetHostName() +".localdomain");
       if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(1)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _sender +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -6320,11 +6320,11 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // receiver
    string _receiver = StrTrim(receiver);
-   if (!StringLen(_receiver)) {
+   if (_receiver == "") {
       section = "Mail";
       key = "Receiver";
       _receiver = GetConfigString(section, key);
-      if (!StringLen(_receiver))           return(!catch("SendEmail(3)  missing configuration: ["+ section +"]->"+ key,                           ERR_INVALID_CONFIG_VALUE));
+      if (_receiver == "")                 return(!catch("SendEmail(3)  missing configuration: ["+ section +"]->"+ key,                           ERR_INVALID_CONFIG_VALUE));
       if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(4)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _receiver +"\"", ERR_INVALID_CONFIG_VALUE));
    }
    else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(5)  invalid parameter receiver: \""+ receiver +"\"", ERR_INVALID_PARAMETER));
@@ -6332,7 +6332,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // subject
    string _subject = StrTrim(subject);
-   if (!StringLen(_subject))               return(!catch("SendEmail(6)  invalid parameter subject: \""+ subject +"\"", ERR_INVALID_PARAMETER));
+   if (_subject == "")                     return(!catch("SendEmail(6)  invalid parameter subject: \""+ subject +"\"", ERR_INVALID_PARAMETER));
    _subject = StrReplace(StrReplace(_subject, EOL_WINDOWS, " "), EOL_UNIX, " "); // replace line breaks
    _subject = StrReplace(_subject, "\"", "\\\"");                                // escape double quotes for Bash
    _subject = StrReplace(_subject, "'", "'\"'\"'");                              // escape single quotes for Bash
@@ -6342,7 +6342,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    message = StrTrim(message);
    string filesDir = GetMqlSandboxPath() +"/";
    string msgFile = CreateTempFile(filesDir, "msg");
-   if (StringLen(message) > 0) {
+   if (message != "") {
       int hFile = FileOpen(StrRightFrom(msgFile, filesDir), FILE_BIN|FILE_WRITE);
       if (hFile < 0) return(!catch("SendEmail(7)->FileOpen()"));
       int bytes = FileWriteString(hFile, message, StringLen(message));
@@ -6385,7 +6385,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
  * @return bool - success status
  */
 bool SendSMS(string receiver, string message) {
-   if (!StringLen(receiver)) {
+   if (receiver == "") {
       string sValue = GetConfigString("SMS", "Receiver");
       if (!StrIsPhoneNumber(sValue)) return(!catch("SendSMS(1)  invalid configuration: [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
       receiver = sValue;
@@ -6402,23 +6402,23 @@ bool SendSMS(string receiver, string message) {
    string section  = "SMS";
    string key      = "Provider";
    string provider = GetConfigString(section, key);
-   if (!StringLen(provider)) return(!catch("SendSMS(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (provider == "") return(!catch("SendSMS(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // user
    section = "SMS."+ provider;
    key     = "username";
    string username = GetConfigString(section, key);
-   if (!StringLen(username)) return(!catch("SendSMS(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (username == "") return(!catch("SendSMS(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // password
    key = "password";
    string password = GetConfigString(section, key);
-   if (!StringLen(password)) return(!catch("SendSMS(5)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (password == "") return(!catch("SendSMS(5)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    // API id
    key = "api_id";
    int api_id = GetConfigInt(section, key);
    if (api_id <= 0) {
       string value = GetConfigString(section, key);
-      if (!StringLen(value)) return(!catch("SendSMS(6)  missing configuration ["+ section +"]->"+ key,                      ERR_INVALID_CONFIG_VALUE));
-                             return(!catch("SendSMS(7)  invalid config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
+      if (value == "") return(!catch("SendSMS(6)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+      return(!catch("SendSMS(7)  invalid config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
    }
 
    // compose command line
