@@ -163,6 +163,7 @@ bool     SelectTicket(int ticket, string caller, bool saveCurrent=false, bool on
 bool     SendChartCommand(string cmdObject, string cmd, string mutex="");;
 bool     SendEmail(string sender, string receiver, string subject, string message);;
 bool     SendSMS(string receiver, string message);;
+bool     SendTelegramMessage(string channel, string message);;
 datetime ServerToFxtTime(datetime time);;
 datetime ServerToGmtTime(datetime time);;
 string   ShellExecuteErrorDescription(int error);;
@@ -694,7 +695,6 @@ int      SearchDoubleArray(double &haystack[], double needle);;
 int      SearchIntArray(int &haystack[], int needle);;
 int      SearchStringArray(string &haystack[], string needle);;
 int      SearchStringArrayI(string &haystack[], string needle);;
-bool     SendTelegramMessage(string channel, string message);;
 bool     SetRawSymbolTemplate(int symbol[], int type);;
 bool     SortOpenTickets(int &keys[][]);;
 bool     SortStrings(string &values[]);;

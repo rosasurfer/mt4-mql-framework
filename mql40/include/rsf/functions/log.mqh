@@ -702,9 +702,6 @@ bool SetLogfile(string filename) {
 }
 
 
-#import "rsfStdlib.ex4"
-   bool   SendTelegramMessage(string channel, string message);
-
 #import "kernel32.dll"
    void   OutputDebugStringA(string message);
 

@@ -6444,6 +6444,63 @@ bool SendSMS(string receiver, string message) {
 
 
 /**
+ * Send a message to a Telegram channel. Each channel needs a matching configuration with channel id and bot token.
+ *
+ * @param  string channel - channel name or alias as used in the configuration
+ * @param  string message - text message (may contain limited and very basic HTML formatting)
+ *
+ * @return bool - success status
+ */
+bool SendTelegramMessage(string channel, string message) {
+   if (!StringLen(channel)) return(!catch("SendTelegramMessage(1)  invalid parameter channel: \"\" (empty)", ERR_INVALID_PARAMETER));
+   if (!StringLen(message)) return(!catch("SendTelegramMessage(2)  invalid parameter message: \"\" (empty)", ERR_INVALID_PARAMETER));
+
+   string alias = GetConfigString("Telegram", channel);
+   if (alias != "") channel = alias;
+   string section = "Telegram "+ channel, key = "ChannelId";
+   string channelId = GetConfigString(section, key);
+   if (channelId == "") return(!catch("SendTelegramMessage(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   key = "Token";
+   string token = GetConfigString(section, key);
+   if (token == "") return(!catch("SendTelegramMessage(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+
+   // store message in a tmp file
+   string filesDir = GetMqlSandboxPath();
+   string msgFilename = CreateTempFile(filesDir, "tgm");
+   int hFile = FileOpen(StrRightFrom(msgFilename, filesDir), FILE_BIN|FILE_WRITE);
+   if (hFile < 0) return(!catch("SendTelegramMessage(5)->FileOpen()"));
+   string utf8Message = AnsiToUtf8(StrReplace(message, EOL_WINDOWS, EOL_UNIX));
+   int bytes = FileWriteString(hFile, utf8Message, StringLen(utf8Message));
+   FileClose(hFile);
+   if (bytes <= 0) return(!catch("SendTelegramMessage(6)->FileWriteString() => "+ bytes +" written"));
+   msgFilename = StrReplace(msgFilename, "\\", "/");
+
+   // compose command line
+   string bash = GetConfigString("System", "Bash");
+   if (!IsFile(bash, MODE_SYSTEM)) {                        // prefer config setting, otherwise let the system look-up
+      bash = "bash.exe";
+   }                                                        // TODO: even if bash.exe exists, curl may not
+   string cmd = "curl -X POST \"https://api.telegram.org/bot"+ token +"/sendMessage\" -L --silent --show-error"
+             //+" --data-urlencode parse_mode=HTML"
+               +" --data-urlencode \"chat_id="+ channelId +"\""
+               +" --data-urlencode \"text@"+ msgFilename +"\" && rm -f \""+ msgFilename +"\"";
+   //cmd = cmd +"; read -n 1 -s";
+   cmd = bash +" -lc '"+ cmd +"'";                          // -l (login shell) makes sure the full PATH is set
+
+   // execute command                                       // TODO: parse the response and keep logs on error
+   int result = WinExec(cmd, SW_HIDE);                      // SW_SHOW | SW_HIDE
+   if (result < 32) {
+      if (result == ERROR_FILE_NOT_FOUND) catch("SendTelegramMessage(7)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
+      else                                catch("SendTelegramMessage(8)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
+      return(false);
+   }
+
+   logInfo("SendTelegramMessage(9)  to channel \""+ channel +"\": "+ message);
+   return(!catch("SendTelegramMessage(10)"));
+}
+
+
+/**
  * Round a lot value according to the specified symbol's lot step value (MODE_LOTSTEP).
  *
  * @param  double lots              - lot size
