@@ -48,7 +48,7 @@ extern int    MaxBarsBack                    = 10000;                // max. val
 
 extern string ___b__________________________ = "=== Signaling ===";
 extern bool   Signal.onCross                 = false;
-extern string Signal.onCross.Types           = "sound* | alert | mail";
+extern string Signal.onCross.Types           = "sound* | alert | mail | telegram";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -103,6 +103,7 @@ int    vscaleAdrPeriods;
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
+bool   signal.telegram;
 
 string indicatorName = "";                         // "Data" window and signal notification name
 
@@ -216,10 +217,10 @@ int onInit() {
    string signalId = "Signal.onCross";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onCross)) return(last_error);
    if (Signal.onCross) {
-      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.telegram)) {
          return(catch("onInit(15)  invalid input parameter Signal.onCross.Types: "+ DoubleQuoteStr(Signal.onCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onCross = (signal.sound || signal.alert || signal.mail);
+      Signal.onCross = (signal.sound || signal.alert || signal.mail || signal.telegram);
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -353,8 +354,10 @@ bool onCross(int direction) {
    string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
    string message1  = indicatorName +" crossed "+ ifString(direction==MODE_UPPER_SECTION, "up", "down") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    string message2  = Symbol() +","+ sPeriod +": "+ message1;
+   string localTime = TimeToStr(TimeLocalEx("onCross(2)"), TIME_MINUTES|TIME_SECONDS);
+   string accountAlias = GetAccountAlias();
 
-   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
    bool eventAction;
 
    // log: once per terminal
@@ -365,7 +368,7 @@ bool onCross(int direction) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) logInfo("onCross(2)  "+ message1);
+      if (eventAction) logInfo("onCross(3)  "+ message1);
    }
 
    // sound: once per system
@@ -398,7 +401,18 @@ bool onCross(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ accountAlias +")");
+   }
+
+   // telegram: once per system
+   if (signal.telegram) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|telegram";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ accountAlias +")");
    }
    return(!catch("onCross(4)"));
 }

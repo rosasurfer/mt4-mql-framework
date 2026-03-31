@@ -98,10 +98,10 @@ extern int      MaxBarsBack                    = 10000;                         
 
 extern string   ___d__________________________ = "=== Signaling ===";
 extern bool     Signal.onReversal              = false;                          // signal ZigZag reversals (first Donchian channel crossing)
-extern string   Signal.onReversal.Types        = "sound* | alert | mail | tgm";
+extern string   Signal.onReversal.Types        = "sound* | alert | mail | telegram";
 
 extern bool     Signal.onBreakout              = false;                          // signal ZigZag breakouts
-extern string   Signal.onBreakout.Types        = "sound* | alert | mail | tgm";
+extern string   Signal.onBreakout.Types        = "sound* | alert | mail | telegram";
 
 extern string   Signal.Sound.Up                = "Signal Up.wav";
 extern string   Signal.Sound.Down              = "Signal Down.wav";
