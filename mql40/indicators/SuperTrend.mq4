@@ -20,7 +20,7 @@
  * @link  https://financestrategysystem.com/supertrend-tradestation-and-multicharts/
  * @link  http://www.forexfactory.com/showthread.php?t=214635#                                  [Andrew Forex Trading System]
  * @link  http://www.forexfactory.com/showthread.php?t=268038#                                [Plateman's CCI aka SuperTrend]
- * @see   /mql4/indicators/HalfTrend.mq4
+ * @see   /mql40/indicators/HalfTrend.mq4
  *
  * Note: The defining element for the indicator is the ATR channel, not price or MA. Therefore the original
  *       SMA(PRICE_TYPICAL) is replaced by the more simple SMA(PRICE_CLOSE).

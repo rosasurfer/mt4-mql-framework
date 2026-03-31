@@ -1364,7 +1364,7 @@ bool EQ(double double1, double double2, int digits = 8) {
 
 
 /**
- * Framework alias for the MQL4 function distributed by MetaQuotes.
+ * Framework alias for the MQL4.0 function distributed by MetaQuotes.
  *
  * @param  double a - first value
  * @param  double b - second value
@@ -2454,7 +2454,7 @@ string DoubleQuoteStr(string value) {
 
 
 /**
- * Framework alias for the MQL4 function distributed by MetaQuotes.
+ * Framework alias for the MQL4.0 function distributed by MetaQuotes.
  *
  * Convert a double to a string with up to 16 decimal digits.
  *
@@ -2469,7 +2469,7 @@ string DoubleToStrMorePrecision(double value, int precision) {
 
 
 /**
- * Framework alias for the MQL4 function distributed by MetaQuotes.
+ * Framework alias for the MQL4.0 function distributed by MetaQuotes.
  *
  * Return the hexadecimale representation of an integer.
  *  e.g. IntegerToHexString(13465610) => "00CD780A"
@@ -3176,7 +3176,7 @@ string StrToLower(string value) {
       //else if (chr == 142)               result = StringSetChar(result, i, 158);        // Ž->ž
       //else if (chr == 159)               result = StringSetChar(result, i, 255);        // Ÿ->ÿ
 
-      // MQL4 version
+      // optimized for MQL4.0
       if (chr > 64) {
          if (chr < 91) {
             result = StringSetChar(result, i, chr+32);                  // A-Z->a-z
@@ -3219,7 +3219,7 @@ string StrToUpper(string value) {
       //else if (chr==255)                         result = StringSetChar(result, i,    159);   // ÿ -> Ÿ
       //else if (chr > 223)                        result = StringSetChar(result, i, chr-32);
 
-      // MQL4 version
+      // optimized for MQL4.0
       if      (chr == 255)                result = StringSetChar(result, i,    159);            // ÿ -> Ÿ
       else if (chr  > 223)                result = StringSetChar(result, i, chr-32);
       else if (chr == 158)                result = StringSetChar(result, i, chr-16);
@@ -6294,7 +6294,7 @@ bool SendChartCommand(string cmdObject, string cmd, string mutex = "") {
 
 
 /**
- * Send an e-mail.
+ * Send an email.
  *
  * @param  string sender   - sender address, if empty the configuration is queried
  * @param  string receiver - receiver address, if empty the configuration is queried
@@ -6304,14 +6304,14 @@ bool SendChartCommand(string cmdObject, string cmd, string mutex = "") {
  * @return bool - whether the e-mail was successfully queued, not whether it was sent
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
-   string filesDir = GetMqlSandboxPath() +"/";
+   // Note:
+   //  This function uses the SMTP client `email` from https://github.com/deanproxy/eMail
+   //  The client does not validate the format of passed email addresses.
 
-   // validation
    // sender
    string _sender = StrTrim(sender);
    if (!StringLen(_sender)) {
-      string section = "Mail";
-      string key     = "Sender";
+      string section = "Mail", key = "Sender";
       _sender = GetConfigString(section, key, "mt4@"+ GetHostName() +".localdomain");
       if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(1)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _sender +"\"", ERR_INVALID_CONFIG_VALUE));
    }
@@ -6321,8 +6321,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    // receiver
    string _receiver = StrTrim(receiver);
    if (!StringLen(_receiver)) {
-      section   = "Mail";
-      key       = "Receiver";
+      section = "Mail";
+      key = "Receiver";
       _receiver = GetConfigString(section, key);
       if (!StringLen(_receiver))           return(!catch("SendEmail(3)  missing configuration: ["+ section +"]->"+ key,                           ERR_INVALID_CONFIG_VALUE));
       if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(4)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _receiver +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -6333,64 +6333,45 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    // subject
    string _subject = StrTrim(subject);
    if (!StringLen(_subject))               return(!catch("SendEmail(6)  invalid parameter subject: \""+ subject +"\"", ERR_INVALID_PARAMETER));
-   _subject = StrReplace(StrReplace(StrReplace(_subject, EOL_WINDOWS, " "), EOL_MAC, " "), EOL_UNIX, " ");  // Linebreaks mit Leerzeichen ersetzen
-   _subject = StrReplace(_subject, "\"", "\\\"");                                                           // Double-Quotes in email-Parametern escapen
-   _subject = StrReplace(_subject, "'", "'\"'\"'");                                                         // Single-Quotes im bash-Parameter escapen
+   _subject = StrReplace(StrReplace(_subject, EOL_WINDOWS, " "), EOL_UNIX, " "); // replace line breaks
+   _subject = StrReplace(_subject, "\"", "\\\"");                                // escape double quotes for Bash
+   _subject = StrReplace(_subject, "'", "'\"'\"'");                              // escape single quotes for Bash
    // bash -lc 'email -subject "single-quote:'"'"' double-quote:\" pipe:|" ...'
 
-   // Message (kann leer sein): in temporärer Datei speichern, wenn nicht leer
+   // store message in a tmp file
    message = StrTrim(message);
-   string message.txt = CreateTempFile(filesDir, "msg");
+   string filesDir = GetMqlSandboxPath() +"/";
+   string msgFile = CreateTempFile(filesDir, "msg");
    if (StringLen(message) > 0) {
-      int hFile = FileOpen(StrRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                       // FileOpen() benötigt einen MQL-Pfad
-      if (hFile < 0)  return(!catch("SendEmail(7)->FileOpen()"));
+      int hFile = FileOpen(StrRightFrom(msgFile, filesDir), FILE_BIN|FILE_WRITE);
+      if (hFile < 0) return(!catch("SendEmail(7)->FileOpen()"));
       int bytes = FileWriteString(hFile, message, StringLen(message));
       FileClose(hFile);
       if (bytes <= 0) return(!catch("SendEmail(8)->FileWriteString() => "+ bytes +" written"));
    }
+   msgFile = StrReplace(msgFile, "\\", "/");
 
-   // benötigte Executables ermitteln: Bash und Mailclient
+   // compose command line
    string bash = GetConfigString("System", "Bash");
-   if (!IsFile(bash, MODE_SYSTEM)) return(!catch("SendEmail(9)  bash executable not found: \""+ bash +"\"", ERR_FILE_NOT_FOUND));
-   // TODO: absoluter Pfad => direkt testen
-   // TODO: relativer Pfad => Systemverzeichnisse und $PATH durchsuchen
-
+   if (!IsFile(bash, MODE_SYSTEM)) {                                             // prefer config setting, otherwise let the system look-up
+      bash = "bash.exe";
+   }
    string sendmail = GetConfigString("Mail", "Sendmail");
-   if (!StringLen(sendmail)) {
-      // TODO: - kein Mailclient angegeben: Umgebungsvariable $SENDMAIL auswerten
-      //       - sendmail suchen
-      return(!catch("SendEmail(10)  missing configuration: [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
+   if (sendmail == "") return(!catch("SendEmail(9)  missing mail client configuration: [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
+   string logFile = StrReplace(filesDir +"mail.log", "\\", "/");
+
+   string cmd = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ msgFile +"\" >> \""+ logFile +"\" 2>&1 && rm -f \""+ msgFile +"\"";
+   cmd = bash +" -lc '"+ cmd +"'";                                               // -l (login shell) makes sure the full PATH is set
+
+   // execute command
+   int result = WinExec(cmd, SW_HIDE);                                           // SW_SHOW | SW_HIDE
+   if (result < 32) {
+      if (result == ERROR_FILE_NOT_FOUND) catch("SendEmail(10)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
+      else                                catch("SendEmail(11)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
+      return(false);
    }
 
-   // Notes:
-   // ------
-   //  - Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter
-   //    Client-Aufruf mit Umleitung ist nicht möglich).
-   //  - Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen
-   //    enthalten: cmd /c echo hello \n world | {program} => Fehler
-   //  - Bei Verwendung der Shell als ausführendem Programm steht jedoch der Exit-Code nicht zur Verfügung (muß vorerst in
-   //    Kauf genommen werden).
-   //  - Alternative ist die Verwendung von CreateProcess() und direktes Schreiben/Lesen von STDIN/STDOUT. In diesem Fall muß
-   //    der Versand jedoch in einem eigenen Thread erfolgen, wenn er nicht blockieren soll.
-   //
-   // Cleancode email
-   // ---------------
-   //  - https://github.com/deanproxy/eMail
-   //  - gibt keinen Exit-Code zurück
-   //  - validiert die übergebenen Adressen nicht
-   //
-
-   // Befehlszeile für Shell-Aufruf zusammensetzen
-   message.txt     = StrReplace(message.txt, "\\", "/");
-   string mail.log = StrReplace(filesDir +"mail.log", "\\", "/");
-   string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
-          cmdLine  = bash +" -lc '"+ cmdLine +"'";
-
-   // Shell-Aufruf
-   int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
-   if (result < 32) return(!catch("SendEmail(11)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
-
-   logInfo("SendEmail(12)  mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   logInfo("SendEmail(12)  to "+ receiver +": \""+ subject +"\"");
    return(!catch("SendEmail(13)"));
 }
 
@@ -6440,31 +6421,25 @@ bool SendSMS(string receiver, string message) {
                              return(!catch("SendSMS(7)  invalid config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
    }
 
-   // compose shell command line
+   // compose command line
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlSandboxPath();
    string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(8)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"/sms.log";
-   string cmd          = GetMqlDirectoryA() +"/libraries/wget.exe";
+   string wget         = GetMqlDirectoryA() +"/libraries/wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
-   string cmdLine      = cmd +" "+ arguments;
+   string cmd          = wget +" "+ arguments;
 
-   // execute shell command
-   int result = WinExec(cmdLine, SW_HIDE);
-   if (result < 32) return(!catch("SendSMS(9)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   // execute command
+   int result = WinExec(cmd, SW_HIDE);                // SW_SHOW | SW_HIDE
+   if (result < 32) {
+      if (result == ERROR_FILE_NOT_FOUND) catch("SendSMS(9)  Executable \""+ wget +"\" not found.", ERR_WIN32_ERROR + result);
+      else                                catch("SendSMS(10)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
+      return(false);
+   }
 
-   // TODO: analyse the response
-   // --------------------------
-   // --2011-03-23 08:32:06--  https://api.clickatell.com/http/sendmsg?user={user}&password={pass}&api_id={id}&to={receiver}&text={text}
-   // Resolving api.clickatell.com... failed: Unknown host.
-   // wget: unable to resolve host address `api.clickatell.com'
-   //
-   // --2014-06-15 22:44:21--  (try:20)  https://api.clickatell.com/http/sendmsg?user={user}&password={pass}&api_id={id}&to={receiver}&text={text}
-   // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
-   // Giving up.
-
-   logInfo("SendSMS(10)  SMS sent to "+ receiverBak +": \""+ message +"\"");
-   return(!catch("SendSMS(11)"));
+   logInfo("SendSMS(11)  to "+ receiverBak +": \""+ message +"\"");
+   return(!catch("SendSMS(12)"));
 }
 
 

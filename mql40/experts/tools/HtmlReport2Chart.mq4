@@ -158,7 +158,7 @@ string ReadFile(string filename) {
    }
 
    string content="", chunk="";
-   int chunkSize = 4000;                              // MQL4 bug: FileReadString() stops reading after 4095 chars
+   int chunkSize = 4000;                              // MQL4.0 bug: FileReadString() stops reading after 4095 chars
 
    while (!FileIsEnding(hFile)) {
       chunk = FileReadString(hFile, chunkSize);

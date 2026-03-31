@@ -1,7 +1,7 @@
 /**
  * Constants, macros and global variables.
  *
- * Unlike in MQL4, the redefinition of constants with the same value is not allowed in MQL5.
+ * Unlike in MQL4.0 the redefinition of constants with the same value is not allowed in MQL4.5.
  */
 #include <rsf/shared.mqh>
 #include <rsf/win32defines.mqh>
@@ -19,11 +19,11 @@ int prev_error;                     // last error of the previous start() call
 
 #define HTML_TAB                    "&Tab;"                       // tab                                 \t
 #define HTML_BRVBAR                 "&brvbar;"                    // broken vertical bar                 |
-#define HTML_PIPE                   "&brvbar;"                    // pipe (alias of HTML_BRVBAR)         |        MQL4 bug: string constants cannot reference each other
+#define HTML_PIPE                   "&brvbar;"                    // pipe (alias of HTML_BRVBAR)         |        MQL4.5 bug: string constants cannot reference each other
 #define HTML_LCUB                   "&lcub;"                      // left curly brace                    {
 #define HTML_RCUB                   "&rcub;"                      // right curly brace                   }
 #define HTML_APOS                   "&apos;"                      // apostrophe                          '
-#define HTML_SQUOTE                 "&apos;"                      // single quote (alias of HTML_APOS)   '        MQL4 bug: string constants cannot reference each other
+#define HTML_SQUOTE                 "&apos;"                      // single quote (alias of HTML_APOS)   '        MQL4.5 bug: string constants cannot reference each other
 #define HTML_DQUOTE                 "&quot;"                      // double quote                        "
 #define HTML_COMMA                  "&comma;"                     // comma                               ,
 
@@ -222,7 +222,7 @@ double  INF;                                                      //  1.#INF |  
 
 
 // flags to control order selection; see SelectTicket()
-#define O_SAVE_CURRENT         1                // TRUE (MQL4 doesn't support constant booleans)
+#define O_SAVE_CURRENT         1                // TRUE (MQL4.5 doesn't support constant booleans)
 #define O_RESTORE              1                // TRUE
 
 

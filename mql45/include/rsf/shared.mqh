@@ -1,10 +1,10 @@
 /**
- * MQL constants shared with the MT4Expander.
+ * MQL constants shared with the MT4Expander DLL.
  *
- * When the MT4Expander is compiled definitions are read from directory "mql4/include/shared" and not from here.
- * Nevertheless, these constants exists in both MQL versions and in MT4Expander, and have everywhere the same values.
+ * When the MT4Expander DLL is compiled definitions are read from directory "mql40/include/rsf/shared.mqh" and not from here.
+ * Nevertheless, these constants exists in both MQL versions and in the DLL, and have the same values everywhere.
  *
- * Unlike in MQL4, the redefinition of constants with the same value is not allowed in MQL5.
+ * Unlike in MQL4.0 the redefinition of constants with the same value is not allowed in MQL4.5.
  */
 
 // in C++ already defined
@@ -14,7 +14,7 @@
 #endif
 
 
-// mirror the file structure of "mql4/include/rsf/shared.mqh"
+// mirror the file structure of "mql40/include/rsf/shared.mqh"
 #include <rsf/expander/defines.h>
 #include <rsf/expander/errors.h>
 

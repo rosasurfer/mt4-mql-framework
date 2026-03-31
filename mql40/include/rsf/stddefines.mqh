@@ -1,7 +1,7 @@
 /**
  * Constants and global variables.
  *
- * In MQL4 the redefinition of constants with the same value is allowed. Redefined entries exist for documentation
+ * In MQL4.0 the redefinition of constants with the same value is allowed. Redefined entries exist for documentation
  * purposes only.
  */
 #property stacksize 32768                                         // According to different MetaQuotes infos the default stacksize per MQL module in 2019 is 256KB
@@ -55,11 +55,11 @@ int      __orderStack[];                                          // FIFO stack 
 
 #define HTML_TAB                    "&Tab;"                       // tab                                 \t
 #define HTML_BRVBAR                 "&brvbar;"                    // broken vertical bar                 |
-#define HTML_PIPE                   "&brvbar;"                    // pipe (alias of HTML_BRVBAR)         |        MQL4 bug: string constants cannot reference each other
+#define HTML_PIPE                   "&brvbar;"                    // pipe (alias of HTML_BRVBAR)         |        MQL4.0 bug: string constants cannot reference each other
 #define HTML_LCUB                   "&lcub;"                      // left curly brace                    {
 #define HTML_RCUB                   "&rcub;"                      // right curly brace                   }
 #define HTML_APOS                   "&apos;"                      // apostrophe                          '
-#define HTML_SQUOTE                 "&apos;"                      // single quote (alias of HTML_APOS)   '        MQL4 bug: string constants cannot reference each other
+#define HTML_SQUOTE                 "&apos;"                      // single quote (alias of HTML_APOS)   '        MQL4.0 bug: string constants cannot reference each other
 #define HTML_DQUOTE                 "&quot;"                      // double quote                        "
 #define HTML_COMMA                  "&comma;"                     // comma                               ,
 
@@ -259,7 +259,7 @@ double  INF;                                                      //  1.#INF |  
 
 
 // flags to control order selection; see SelectTicket()
-#define O_SAVE_CURRENT         1                // TRUE (MQL4 doesn't support constant booleans)
+#define O_SAVE_CURRENT         1                // TRUE (MQL4.0 doesn't support constant booleans)
 #define O_RESTORE              1                // TRUE
 
 
@@ -624,7 +624,7 @@ double  INF;                                                      //  1.#INF |  
 #define HSL_LIGHTNESS                        2  // 0%...100% (aka luminosity)
 
 
-// Tester statistics identifiers for MQL5::TesterStatistics(), since build 600
+// Tester statistics identifiers for TesterStatistics(), since build 600
 #define STAT_INITIAL_DEPOSIT             99999  // initial deposit                                 (double)
 #define STAT_PROFIT                      99999  // net profit: STAT_GROSS_PROFIT + STAT_GROSS_LOSS (double)
 #define STAT_GROSS_PROFIT                99999  // sum of all positive trades: => 0                (double)
