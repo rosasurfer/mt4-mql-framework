@@ -1,7 +1,7 @@
 /**
  * Windows constants
  *
- * Unlike in MQL4, the redefinition of constants with the same value is not allowed in MQL5.
+ * Unlike in MQL4.0, the redefinition of constants with the same value is not allowed in MQL4.5.
  */
 
 
@@ -52,7 +52,7 @@
 #define MB_DEFBUTTON4                     0x00000300
 
 #define MB_ICONEXCLAMATION                0x00000030  // icons
-#define MB_ICONWARNING                    0x00000030  // MB_ICONEXCLAMATION      // MQL5 bug: built-in constants cannot reference each other
+#define MB_ICONWARNING                    0x00000030  // MB_ICONEXCLAMATION      // MQL4.0 bug: built-in constants cannot reference each other
 #define MB_ICONINFORMATION                0x00000040
 #define MB_ICONASTERISK                   0x00000040  // MB_ICONINFORMATION
 #define MB_ICONQUESTION                   0x00000020
@@ -112,7 +112,7 @@
 
 
 // File sharing modes
-#define WIN32_FILE_SHARE_READ                      1     // MQL5: these constants w/o prefix exist with a different value
+#define WIN32_FILE_SHARE_READ                      1     // MQL4.0: these constants w/o prefix exist with a different value
 #define WIN32_FILE_SHARE_WRITE                     2
 #define WIN32_FILE_SHARE_DELETE                    4
 
@@ -130,7 +130,7 @@
 #define FILE_ATTRIBUTE_REPARSE_POINT            1024
 #define FILE_ATTRIBUTE_COMPRESSED               2048
 #define FILE_ATTRIBUTE_OFFLINE                  4096
-#define FILE_ATTRIBUTE_NOT_INDEXED              8192     // FILE_ATTRIBUTE_NOT_CONTENT_INDEXED is too long for MQL4
+#define FILE_ATTRIBUTE_NOT_INDEXED              8192     // FILE_ATTRIBUTE_NOT_CONTENT_INDEXED is too long for MQL4.0
 #define FILE_ATTRIBUTE_ENCRYPTED               16384
 #define FILE_ATTRIBUTE_VIRTUAL                 65536
 

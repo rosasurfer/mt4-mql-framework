@@ -1,7 +1,7 @@
 /**
- * MQL constants shared with the MT4Expander.
+ * MQL constants shared with the MT4Expander DLL.
  *
- * In MQL4 the redefinition of built-in constants with the same value is allowed. Not so in MQL5.
+ * In MQL4.0 the redefinition of built-in constants with the same value is allowed. Not so in MQL4.5.
  */
 
 // in C++ already defined

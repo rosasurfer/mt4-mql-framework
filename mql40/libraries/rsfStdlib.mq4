@@ -2014,11 +2014,11 @@ bool SendTelegramMessage(string channel, string message) {
    if (bytes <= 0) return(!catch("SendTelegramMessage(6)->FileWriteString() => "+ bytes +" written"));
    messageFile = StrReplace(messageFile, "\\", "/");
 
-   // compose command line                                  // TODO: parse the response and keep logs on error
+   // compose command line
    string bash = GetConfigString("System", "Bash");
-   if (!IsFile(bash, MODE_SYSTEM)) {                        // use config setting
-      bash = "bash.exe";                                    // or system look-up
-   }
+   if (!IsFile(bash, MODE_SYSTEM)) {                        // use config setting or let the system look-up
+      bash = "bash.exe";
+   }                                                        // TODO: even if bash.exe exists, curl may not
    string cmd = "curl -X POST \"https://api.telegram.org/bot"+ token +"/sendMessage\" -L --silent --show-error"
              //+" --data-urlencode parse_mode=HTML"
                +" --data-urlencode \"chat_id="+ channelId +"\""
@@ -2026,7 +2026,7 @@ bool SendTelegramMessage(string channel, string message) {
    //cmd = cmd +"; read -n 1 -s";
    cmd = bash +" -lc '"+ cmd +"'";                          // -l (login shell) makes sure the full PATH is set
 
-   // execute command
+   // execute command                                       // TODO: parse the response and keep logs on error
    int result = WinExec(cmd, SW_HIDE);                      // SW_SHOW | SW_HIDE
    if (result < 32) {
       if (result == ERROR_FILE_NOT_FOUND) catch("SendTelegramMessage(7)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);

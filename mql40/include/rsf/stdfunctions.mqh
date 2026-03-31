@@ -1364,7 +1364,7 @@ bool EQ(double double1, double double2, int digits = 8) {
 
 
 /**
- * Framework alias for the MQL4 function distributed by MetaQuotes.
+ * Framework alias for the MQL4.0 function distributed by MetaQuotes.
  *
  * @param  double a - first value
  * @param  double b - second value
@@ -2454,7 +2454,7 @@ string DoubleQuoteStr(string value) {
 
 
 /**
- * Framework alias for the MQL4 function distributed by MetaQuotes.
+ * Framework alias for the MQL4.0 function distributed by MetaQuotes.
  *
  * Convert a double to a string with up to 16 decimal digits.
  *
@@ -2469,7 +2469,7 @@ string DoubleToStrMorePrecision(double value, int precision) {
 
 
 /**
- * Framework alias for the MQL4 function distributed by MetaQuotes.
+ * Framework alias for the MQL4.0 function distributed by MetaQuotes.
  *
  * Return the hexadecimale representation of an integer.
  *  e.g. IntegerToHexString(13465610) => "00CD780A"
@@ -3176,7 +3176,7 @@ string StrToLower(string value) {
       //else if (chr == 142)               result = StringSetChar(result, i, 158);        // Ž->ž
       //else if (chr == 159)               result = StringSetChar(result, i, 255);        // Ÿ->ÿ
 
-      // MQL4 version
+      // optimized for MQL4.0
       if (chr > 64) {
          if (chr < 91) {
             result = StringSetChar(result, i, chr+32);                  // A-Z->a-z
@@ -3219,7 +3219,7 @@ string StrToUpper(string value) {
       //else if (chr==255)                         result = StringSetChar(result, i,    159);   // ÿ -> Ÿ
       //else if (chr > 223)                        result = StringSetChar(result, i, chr-32);
 
-      // MQL4 version
+      // optimized for MQL4.0
       if      (chr == 255)                result = StringSetChar(result, i,    159);            // ÿ -> Ÿ
       else if (chr  > 223)                result = StringSetChar(result, i, chr-32);
       else if (chr == 158)                result = StringSetChar(result, i, chr-16);

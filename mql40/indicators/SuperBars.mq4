@@ -544,7 +544,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       // draw ETH background (creates an optical hole in the SuperBar)
       if (ObjectFind(nameRectangleBg) == -1) if (!ObjectCreateRegister(nameRectangleBg, OBJ_RECTANGLE)) return(false);
       ObjectSet(nameRectangleBg, OBJPROP_TIME1,  Time[ethOpenBar]);              // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
-      ObjectSet(nameRectangleBg, OBJPROP_PRICE1, ethHigh);                       // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
+      ObjectSet(nameRectangleBg, OBJPROP_PRICE1, ethHigh);                       // see example at function end. As MQL4.0 can't read the chart background color we use a trick: A color mixed with itself gives
       ObjectSet(nameRectangleBg, OBJPROP_TIME2,  Time[ethCloseBar]);             // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
       ObjectSet(nameRectangleBg, OBJPROP_PRICE2, ethLow);                        // of the chart background in the SuperBar. Then we draw the ETH bar into this "hole". It's color doesn't get mixed with the
       ObjectSet(nameRectangleBg, OBJPROP_COLOR,  barColor);                      // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.

@@ -1,10 +1,10 @@
 /**
- * MQL constants shared with the MT4Expander.
+ * MQL constants shared with the MT4Expander DLL.
  *
- * During compilation of the DLL definitions are read from directory "mql4/include/rsf/expander" and not from here.
- * Nevertheless, these constants exists in both MQL versions and the DLL and have everywhere the same values.
+ * During compilation of the DLL definitions are read from directory "mql40/include/rsf/expander" and not from here.
+ * Nevertheless, these constants exists in both MQL versions and in the DLL, and have the same values everywhere.
  *
- * Unlike in MQL4, the redefinition of constants with the same value is not allowed in MQL5.
+ * Unlike in MQL4.0 the redefinition of constants with the same value is not allowed in MQL4.5.
  */
 
 // special constants
@@ -29,7 +29,7 @@
 #define EOL_UNIX                             "\n"        // Unix line separator:      0x0A (MQL/Win32 file functions in text mode auto-convert EOL_UNIX to EOL_WINDOWS)
 #define EOL_WINDOWS                        "\r\n"        // Windows line separator:   0x0D0A
 
-#define NL                                   "\n"        // MQL4 bug: string constants cannot reference each other
+#define NL                                   "\n"        // MQL4.5 bug: string constants cannot reference each other
 #define CRLF                               "\r\n"
 #define TAB                                  "\t"        // tabulator: 0x09
 
@@ -778,9 +778,3 @@
 #define TC_LFX_ORDER_HEDGE               5
 #define TC_LFX_ORDER_MODIFY              6
 #define TC_LFX_ORDER_DELETE              7
-
-
-
-
-
-

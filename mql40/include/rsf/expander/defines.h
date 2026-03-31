@@ -1,5 +1,5 @@
 /**
- * MQL constants shared with the MT4Expander.
+ * MQL constants shared with the MT4Expander DLL.
  */
 
 // special constants
