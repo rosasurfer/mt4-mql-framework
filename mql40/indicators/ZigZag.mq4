@@ -42,7 +42,7 @@
  *  • Signal.onReversal.Types:     Signaling methods, can be a combination of "sound", "alert" and/or "mail".
  *
  *  • Signal.onBreakout:           Whether to signal ZigZag breakouts (a ZigZag leg exceeding the previous ZigZag leg).
- *  • Signal.onBreakout.Types:     Signaling methods, can be a combination of "sound", "alert" and/or "mail".
+ *  • Signal.onBreakout.Types:     Signaling methods, can be a combination of "sound", "alert", "email" and/or "telegram".
  *
  *  • Signal.Sound.Up:             Sound file for signals to the upside.
  *  • Signal.Sound.Down:           Sound file for signals to the downside.
@@ -76,18 +76,18 @@ int __DeinitFlags[];
 ///////////////////////////////////////////////////// Input parameters //////////////////////////////////////////////////////
 
 extern string   ___a__________________________ = "=== ZigZag settings ===";
-extern int      ZigZag.Periods                 = 40;                           // lookback periods of the Donchian channel
-extern int      ZigZag.Periods.Step            = 0;                            // step size for parameter stepper via hotkey
-extern string   ZigZag.Type                    = "Lines* | Semaphores";        // ZigZag lines or reversal points (can be shortened)
+extern int      ZigZag.Periods                 = 40;                             // lookback periods of the Donchian channel
+extern int      ZigZag.Periods.Step            = 0;                              // step size for parameter stepper via hotkey
+extern string   ZigZag.Type                    = "Lines* | Semaphores";          // ZigZag lines or reversal points (can be shortened)
 extern string   ZigZag.Semaphores.Symbol       = "dot* | thin-ring | ring | thick-ring";
 extern int      ZigZag.Width                   = 2;
 extern color    ZigZag.Color                   = Blue;
 
 extern string   ___b__________________________ = "=== Donchian settings ===";
-extern bool     Donchian.ShowChannel           = true;                         // whether to display the Donchian channel
+extern bool     Donchian.ShowChannel           = true;                           // whether to display the Donchian channel
 extern color    Donchian.Channel.UpperColor    = Blue;
 extern color    Donchian.Channel.LowerColor    = Magenta;
-extern string   Donchian.ShowCrossings         = "off | first* | all";         // which channel crossings to display
+extern string   Donchian.ShowCrossings         = "off | first* | all";           // which channel crossings to display
 extern string   Donchian.Crossing.Symbol       = "dot | thin-ring | ring | thick-ring*";
 extern int      Donchian.Crossing.Width        = 1;
 extern color    Donchian.Crossing.Color        = CLR_NONE;
@@ -98,10 +98,10 @@ extern int      MaxBarsBack                    = 10000;                         
 
 extern string   ___d__________________________ = "=== Signaling ===";
 extern bool     Signal.onReversal              = false;                          // signal ZigZag reversals (first Donchian channel crossing)
-extern string   Signal.onReversal.Types        = "sound* | alert | mail";
+extern string   Signal.onReversal.Types        = "sound* | alert | mail | tgm";
 
 extern bool     Signal.onBreakout              = false;                          // signal ZigZag breakouts
-extern string   Signal.onBreakout.Types        = "sound* | alert | mail";
+extern string   Signal.onBreakout.Types        = "sound* | alert | mail | tgm";
 
 extern string   Signal.Sound.Up                = "Signal Up.wav";
 extern string   Signal.Sound.Down              = "Signal Down.wav";
@@ -218,10 +218,12 @@ int      crossingSymbol;
 bool     signal.onReversal.sound;
 bool     signal.onReversal.alert;
 bool     signal.onReversal.mail;
+bool     signal.onReversal.telegram;
 
 bool     signal.onBreakout.sound;
 bool     signal.onBreakout.alert;
 bool     signal.onBreakout.mail;
+bool     signal.onBreakout.telegram;
 
 double   sema1, sema2, sema3;                               // last 3 semaphores for detection of ZigZag breakouts
 double   lastLegHigh, lastLegLow;                           // leg high/low at the previous tick
@@ -465,12 +467,12 @@ int onInit() {
    legendInfo = "";
    ConfigureSignals(signalId, AutoConfiguration, Signal.onReversal);
    if (Signal.onReversal) {
-      if (!ConfigureSignalTypes(signalId, Signal.onReversal.Types, AutoConfiguration, signal.onReversal.sound, signal.onReversal.alert, signal.onReversal.mail)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onReversal.Types, AutoConfiguration, signal.onReversal.sound, signal.onReversal.alert, signal.onReversal.mail, signal.onReversal.telegram)) {
          return(catch("onInit(10)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onReversal = (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail);
+      Signal.onReversal = (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail || signal.onReversal.telegram);
       if (Signal.onReversal) {
-         legendInfo = "("+ StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", ""), -1) +")";
+         legendInfo = "("+ StrLeft(ifString(signal.onReversal.sound, "sound,", "") + ifString(signal.onReversal.alert, "alert,", "") + ifString(signal.onReversal.mail, "mail,", "") + ifString(signal.onReversal.telegram, "tgm,", ""), -1) +")";
          legendInfo = StrReplace(legendInfo, "sound,alert", "alert");
       }
    }
@@ -478,10 +480,10 @@ int onInit() {
    signalId = "Signal.onBreakout";
    ConfigureSignals(signalId, AutoConfiguration, Signal.onBreakout);
    if (Signal.onBreakout) {
-      if (!ConfigureSignalTypes(signalId, Signal.onBreakout.Types, AutoConfiguration, signal.onBreakout.sound, signal.onBreakout.alert, signal.onBreakout.mail)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onBreakout.Types, AutoConfiguration, signal.onBreakout.sound, signal.onBreakout.alert, signal.onBreakout.mail, signal.onBreakout.telegram)) {
          return(catch("onInit(11)  invalid input parameter Signal.onBreakout.Types: "+ DoubleQuoteStr(Signal.onBreakout.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onBreakout = (signal.onBreakout.sound || signal.onBreakout.alert || signal.onBreakout.mail);
+      Signal.onBreakout = (signal.onBreakout.sound || signal.onBreakout.alert || signal.onBreakout.mail || signal.onBreakout.telegram);
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -1470,8 +1472,10 @@ bool onReversal(int direction, double level) {
    string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onReversal("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
    string message1  = ifString(direction==D_LONG, "up", "down") +" (level: "+ NumberToStr(level, PriceFormat) +")";
    string message2  = Symbol() +","+ sPeriod +": "+ indicatorName +" reversal "+ message1;
+   string localTime = TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS);
+   string accountAlias = GetAccountAlias();
 
-   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
    bool eventAction;
 
    // log: once per terminal
@@ -1482,7 +1486,7 @@ bool onReversal(int direction, double level) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) logInfo("onReversal(P="+ ZigZag.Periods +")  Tick="+ Ticks +"  "+ message1);
+      if (eventAction) logInfo("onReversal(P="+ ZigZag.Periods +")  "+ message1);
    }
 
    // sound: once per system
@@ -1518,7 +1522,18 @@ bool onReversal(int direction, double level) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ accountAlias +")");
+   }
+
+   // Telegram: once per system
+   if (signal.onReversal.telegram) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|telegram";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ accountAlias +")");
    }
    return(!catch("onReversal(3)"));
 }
@@ -1541,8 +1556,10 @@ bool onBreakout(int direction) {
    string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"(P="+ ZigZag.Periods +").onBreakout("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
    string message1  = ifString(direction==D_LONG, "long", "short") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    string message2  = Symbol() +","+ sPeriod +": "+ WindowExpertName() +"("+ ZigZag.Periods +") breakout "+ message1;
+   string localTime = TimeToStr(TimeLocalEx("onBreakout(2)"), TIME_MINUTES|TIME_SECONDS);
+   string accountAlias = GetAccountAlias();
 
-   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
    bool eventAction;
 
    // log: once per terminal
@@ -1589,7 +1606,18 @@ bool onBreakout(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onBreakout(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ accountAlias +")");
+   }
+
+   // Telegram: once per system
+   if (signal.onBreakout.telegram) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|telegram";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ accountAlias +")");
    }
    return(!catch("onBreakout(3)"));
 }
