@@ -229,7 +229,7 @@ bool     ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled)
 bool     ConfigureSignalsByAlert(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled);;
 bool     ConfigureSignalsByTelegram(string signalId, bool autoConfig, bool &enabled);;
-bool     ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled);;
+bool     ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled, bool &telegramEnabled);;
 int      DeleteRegisteredObjects();;
 int      ExplodeStrings(int &buffer[], string &results[]);;
 bool     GetChartCommand(string channel, string &commands[]);;
