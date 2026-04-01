@@ -36,8 +36,8 @@
 #define BAR_size                            48
 #define BAR_doubleSize                       6
 
-#define EXECUTION_CONTEXT_size             756
-#define EXECUTION_CONTEXT_intSize          189
+#define EXECUTION_CONTEXT_size             752
+#define EXECUTION_CONTEXT_intSize          188
 
 #define EC.pid                               0     // offsets must be in sync with MT4Expander::header/struct/rsf/ExecutionContext.h
 #define EC.previousPid                       1
@@ -86,8 +86,7 @@
 #define EC.loglevelAlert                   181
 #define EC.loglevelFile                    182
 #define EC.loglevelMail                    183
-#define EC.loglevelSMS                     184
-#define EC.loglevelTelegram                185
+#define EC.loglevelTelegram                184
 
 #define LFX_ORDER_size                     120
 #define LFX_ORDER_intSize                   30

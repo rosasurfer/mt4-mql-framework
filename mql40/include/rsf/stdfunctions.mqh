@@ -6377,73 +6377,6 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
 
 /**
- * Send a text message to the specified phone number.
- *
- * @param  string receiver - phone number in international format (e.g. +49-123-456789), if empty the configuration is queried
- * @param  string message  - text
- *
- * @return bool - success status
- */
-bool SendSMS(string receiver, string message) {
-   if (receiver == "") {
-      string sValue = GetConfigString("SMS", "Receiver");
-      if (!StrIsPhoneNumber(sValue)) return(!catch("SendSMS(1)  invalid configuration: [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
-      receiver = sValue;
-   }
-   string receiverBak = receiver;
-   receiver = StrReplace(StrReplace(StrTrim(receiver), "-", ""), " ", "", true);
-
-   if      (StrStartsWith(receiver, "+" )) receiver = StrSubstr(receiver, 1);
-   else if (StrStartsWith(receiver, "00")) receiver = StrSubstr(receiver, 2);
-   if (!StrIsDigits(receiver)) return(!catch("SendSMS(2)  invalid parameter receiver: \""+ receiverBak +"\"", ERR_INVALID_PARAMETER));
-
-   // get SMS gateway details
-   // service
-   string section  = "SMS";
-   string key      = "Provider";
-   string provider = GetConfigString(section, key);
-   if (provider == "") return(!catch("SendSMS(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-   // user
-   section = "SMS."+ provider;
-   key     = "username";
-   string username = GetConfigString(section, key);
-   if (username == "") return(!catch("SendSMS(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-   // password
-   key = "password";
-   string password = GetConfigString(section, key);
-   if (password == "") return(!catch("SendSMS(5)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-   // API id
-   key = "api_id";
-   int api_id = GetConfigInt(section, key);
-   if (api_id <= 0) {
-      string value = GetConfigString(section, key);
-      if (value == "") return(!catch("SendSMS(6)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-      return(!catch("SendSMS(7)  invalid config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
-   }
-
-   // compose command line
-   string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ receiver +"&text="+ UrlEncode(message);
-   string filesDir     = GetMqlSandboxPath();
-   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(8)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
-   string logFile      = filesDir +"/sms.log";
-   string wget         = GetMqlDirectoryA() +"/libraries/wget.exe";
-   string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
-   string cmd          = wget +" "+ arguments;
-
-   // execute command
-   int result = WinExec(cmd, SW_HIDE);                // SW_SHOW | SW_HIDE
-   if (result < 32) {
-      if (result == ERROR_FILE_NOT_FOUND) catch("SendSMS(9)  Executable \""+ wget +"\" not found.", ERR_WIN32_ERROR + result);
-      else                                catch("SendSMS(10)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
-      return(false);
-   }
-
-   logInfo("SendSMS(11)  to "+ receiverBak +": \""+ message +"\"");
-   return(!catch("SendSMS(12)"));
-}
-
-
-/**
  * Send a message to a Telegram channel. Each channel needs a matching configuration with channel id and bot token.
  *
  * @param  string channel - channel name or alias as used in the configuration
@@ -6889,7 +6822,6 @@ void __DummyCalls() {
    SelectTicket(NULL, NULL);
    SendChartCommand(NULL, NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
-   SendSMS(NULL, NULL);
    ServerToFxtTime(NULL);
    ServerToGmtTime(NULL);
    SetLastError(NULL, NULL);
