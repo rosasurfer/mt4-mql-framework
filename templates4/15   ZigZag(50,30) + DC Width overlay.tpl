@@ -133,7 +133,7 @@ Donchian.Channel.LowerColor=255
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Width=2
 Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert* | mail | sms
+Signal.onReversal.Types=sound* | alert* | mail | telegram
 Signal.onBreakout=0
 Sound.onChannelWidening=0
 </inputs>
@@ -159,7 +159,7 @@ Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
 Donchian.Crossing.Width=1
 Signal.onReversal=0
-Signal.onReversal.Types=sound* | alert* | mail | sms
+Signal.onReversal.Types=sound* | alert* | mail | telegram
 Signal.onBreakout=0
 Sound.onChannelWidening=0
 </inputs>
@@ -178,10 +178,14 @@ name=Donchian Channel Width
 flags=339
 window_num=1
 <inputs>
-Periods=30
+Periods=50
 </inputs>
 </expert>
-level_0=200
+level_0=10
+level_1=20
+level_2=200
+level_3=500
+level_4=1000
 levels_color=15453831
 show_data=1
 </indicator>

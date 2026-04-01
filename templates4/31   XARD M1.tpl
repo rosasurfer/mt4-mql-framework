@@ -147,7 +147,7 @@ S1MAwidth=3
 S1MAbgclr=1973790
 S1MAupclr=14772545
 STR05===== [05] BOXtxt Settings ====
-showBOXtxt=true
+showBOXtxt=false
 STR06===== [06] Alert Settings ====
 inpAlertsOn=true
 inpAlertsOnCurrent=false
@@ -362,7 +362,7 @@ Donchian.Crossing.Width=3
 Donchian.Crossing.Color=16711935
 ShowChartLegend=1
 Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert* | mail | sms
+Signal.onReversal.Types=sound* | alert* | mail | telegram
 </inputs>
 </expert>
 style_0=2

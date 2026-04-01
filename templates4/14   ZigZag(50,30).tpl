@@ -132,7 +132,7 @@ Donchian.Channel.LowerColor=255
 Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Width=2
 Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert* | mail | sms
+Signal.onReversal.Types=sound* | alert* | mail | telegram
 Signal.onBreakout=0
 Sound.onChannelWidening=0
 </inputs>
@@ -158,7 +158,7 @@ Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
 Donchian.Crossing.Width=1
 Signal.onReversal=0
-Signal.onReversal.Types=sound* | alert* | mail | sms
+Signal.onReversal.Types=sound* | alert* | mail | telegram
 Signal.onBreakout=0
 Sound.onChannelWidening=0
 </inputs>
