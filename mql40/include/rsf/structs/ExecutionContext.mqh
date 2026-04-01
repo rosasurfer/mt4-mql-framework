@@ -19,7 +19,6 @@
    int    ec_SuperLoglevelAlert   (int pid);
    int    ec_SuperLoglevelFile    (int pid);
    int    ec_SuperLoglevelMail    (int pid);
-   int    ec_SuperLoglevelSMS     (int pid);
    int    ec_SuperLoglevelTelegram(int pid);
 
    // available MQL setters
@@ -35,7 +34,6 @@
    int    ec_SetLoglevelAlert      (int ec[], int level);
    int    ec_SetLoglevelFile       (int ec[], int level);
    int    ec_SetLoglevelMail       (int ec[], int level);
-   int    ec_SetLoglevelSMS        (int ec[], int level);
    int    ec_SetLoglevelTelegram   (int ec[], int level);
 
    // helpers

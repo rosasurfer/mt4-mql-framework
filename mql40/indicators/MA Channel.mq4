@@ -21,7 +21,7 @@ extern int    MaxBarsBack                    = 10000;                   // max. 
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onBarCross              = false;                   // on channel crossing of BAR_CLOSE opposite to the last crossing
-extern string Signal.onBarCross.Types        = "sound* | alert | mail";
+extern string Signal.onBarCross.Types        = "sound* | alert | mail | telegram";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
 
@@ -66,6 +66,7 @@ string legendInfo    = "";
 bool   signal.sound;
 bool   signal.alert;
 bool   signal.mail;
+bool   signal.telegram;
 
 #define D_LONG    TRADE_DIRECTION_LONG                   // signal direction types
 #define D_SHORT   TRADE_DIRECTION_SHORT                  //
@@ -132,11 +133,11 @@ int onInit() {
    legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onBarCross)) return(last_error);
    if (Signal.onBarCross) {
-      if (!ConfigureSignalTypes(signalId, Signal.onBarCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail)) {
+      if (!ConfigureSignalTypes(signalId, Signal.onBarCross.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.telegram)) {
          return(catch("onInit(9)  invalid input parameter Signal.onBarCross.Types: "+ DoubleQuoteStr(Signal.onBarCross.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      Signal.onBarCross = (signal.sound || signal.alert || signal.mail);
-      if (Signal.onBarCross) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", ""), -1) +")";
+      Signal.onBarCross = (signal.sound || signal.alert || signal.mail || signal.telegram);
+      if (Signal.onBarCross) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.telegram, "tgm,", ""), -1) +")";
    }
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
@@ -224,8 +225,10 @@ bool onCross(int direction) {
    string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onCross("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
    string message1  = "bar close "+ ifString(direction==D_LONG, "above ", "below ") + indicatorName;
    string message2  = Symbol() +","+ sPeriod +": "+ message1;
+   string localTime = TimeToStr(TimeLocalEx("onCross(2)"), TIME_MINUTES|TIME_SECONDS);
+   string accountAlias = GetAccountAlias();
 
-   int hWndTerminal=GetTerminalMainWindow(), hWndDesktop=GetDesktopWindow();
+   int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
    bool eventAction;
 
    // log: once per terminal
@@ -236,7 +239,7 @@ bool onCross(int direction) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) logInfo("onCross(2)  "+ message1);
+      if (eventAction) logInfo("onCross(3)  "+ message1);
    }
 
    // sound: once per system
@@ -269,7 +272,18 @@ bool onCross(int direction) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendEmail("", "", message2, message2 + NL + "("+ TimeToStr(TimeLocalEx("onCross(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
+      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ accountAlias +")");
+   }
+
+   // telegram: once per system
+   if (signal.telegram) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|telegram";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ accountAlias +")");
    }
    return(!catch("onCross(4)"));
 }

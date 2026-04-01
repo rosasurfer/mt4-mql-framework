@@ -2,10 +2,6 @@
  * Inside Bars
  *
  * Marks inside bars and corresponding projection levels.
- *
- *
- * TODO:
- *  - check bar alignment of all timeframes and use the largest correctly aligned instead of M5
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -18,10 +14,8 @@ extern int    NumberOfInsideBars             = 3;                             //
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onInsideBar             = false;
-extern bool   Signal.onInsideBar.Sound       = true;
-extern string Signal.onInsideBar.SoundFile   = "Inside Bar.wav";
-extern bool   Signal.onInsideBar.Alert       = false;
-extern bool   Signal.onInsideBar.Mail        = false;
+extern string Signal.onInsideBar.Types       = "sound* | alert | mail | telegram";
+extern string Signal.SoundFile               = "Inside Bar.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,6 +41,11 @@ int    timeframeIB;                             // IB timeframe to process
 int    maxInsideBars;
 string labels[];                                // chart object labels
 
+bool   signal.sound;
+bool   signal.alert;
+bool   signal.mail;
+bool   signal.telegram;
+
 
 /**
  * Initialization
@@ -54,9 +53,9 @@ string labels[];                                // chart object labels
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
    string indicator = ProgramName();
 
-   // validate inputs
    // Timeframe
    string sValue = Timeframe;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Timeframe", sValue);
@@ -69,27 +68,27 @@ int onInit() {
    if (iValue < -1)     return(catch("onInit(2)  invalid input parameter NumberOfInsideBars: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
    maxInsideBars = ifInt(iValue==-1, INT_MAX, iValue);
 
-   // signaling
-   string signalId="Signal.onInsideBar", signalInfo="";
+   // signal configuration
+   string signalId = "Signal.onInsideBar", legendInfo = "";
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onInsideBar)) return(last_error);
    if (Signal.onInsideBar) {
-      if (!ConfigureSignalsBySound(signalId, AutoConfiguration, Signal.onInsideBar.Sound)) return(last_error);
-      if (!ConfigureSignalsByAlert(signalId, AutoConfiguration, Signal.onInsideBar.Alert)) return(last_error);
-      if (!ConfigureSignalsByMail (signalId, AutoConfiguration, Signal.onInsideBar.Mail))  return(last_error);
-      if (Signal.onInsideBar.Sound || Signal.onInsideBar.Alert || Signal.onInsideBar.Mail) {
-         signalInfo = "  ("+ StrLeft(ifString(Signal.onInsideBar.Sound, "sound,", "") + ifString(Signal.onInsideBar.Alert, "alert,", "") + ifString(Signal.onInsideBar.Mail, "mail,", ""), -1) +")";
+      if (!ConfigureSignalTypes(signalId, Signal.onInsideBar.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.telegram)) {
+         return(catch("onInit(3)  invalid input parameter Signal.onInsideBar.Types: "+ DoubleQuoteStr(Signal.onInsideBar.Types), ERR_INVALID_INPUT_PARAMETER));
       }
-      else Signal.onInsideBar = false;
+      Signal.onInsideBar = (signal.sound || signal.alert || signal.mail || signal.telegram);
+      if (Signal.onInsideBar) legendInfo = "  ("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.telegram, "tgm,", ""), -1) +")";
    }
+   // Signal.SoundFile
+   if (AutoConfiguration) Signal.SoundFile = GetConfigString(indicator, "Signal.SoundFile", Signal.SoundFile);
 
    // display options
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => system menu font family
    int    fontSize = 8;                                        // 8  => system menu font size
-   string text = ProgramName() +": "+ Timeframe + signalInfo;
+   string text = ProgramName() +": "+ Timeframe + legendInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
-   return(catch("onInit(3)"));
+   return(catch("onInit(4)"));
 }
 
 
@@ -624,7 +623,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
 
 
 /**
- * Signal event handler for new inside bars.
+ * Event handler for new inside bars.
  *
  * @param  int      timeframe - inside bar timeframe
  * @param  datetime closeTime - inside bar close time
@@ -637,21 +636,72 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    if (!Signal.onInsideBar) return(false);
    if (ChangedBars > 2)     return(false);
 
+   // skip the signal if it was already handled elsewhere
+   string sPeriod    = PeriodDescription();
    string sTimeframe = TimeframeDescription(timeframe);
-   string sBarHigh   = NumberToStr(high, PriceFormat);
-   string sBarLow    = NumberToStr(low, PriceFormat);
-   string sBarTime   = TimeToStr(closeTime);
-   string sLocalTime = "("+ GmtTimeFormat(TimeLocalEx("onInsideBar(1)"), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
-   string message    = "new "+ sTimeframe +" inside bar";
+   string eventName  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ WindowExpertName() +".onInsideBar("+ sTimeframe +")."+ TimeToStr(Time[0]), propertyName = "";
+   string message1   = " new "+ sTimeframe +" inside bar";
+   string message2   = Symbol() +": "+ message1;
+   string localTime  = TimeToStr(TimeLocalEx("onInsideBar(1)"), TIME_MINUTES|TIME_SECONDS);
+   string accountAlias = GetAccountAlias();
 
-   if (IsLogInfo()) logInfo("onInsideBar(2)  "+ message +" at "+ sBarTime +"  H="+ sBarHigh +"  L="+ sBarLow);
-   message = Symbol() +": "+ message;
+   int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
+   bool eventAction;
 
-   if (Signal.onInsideBar.Alert) Alert(message);
-   if (Signal.onInsideBar.Sound) PlaySoundEx(Signal.onInsideBar.SoundFile);
-   if (Signal.onInsideBar.Mail)  SendEmail("", "", message, message + NL + sLocalTime);
+   // log: once per terminal
+   if (IsLogInfo()) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|log";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) logInfo("onInsideBar(2)  "+ message1 +" at "+ TimeToStr(closeTime) +"  H="+ NumberToStr(high, PriceFormat) +"  L="+ NumberToStr(low, PriceFormat));
+   }
 
-   if (__isTesting) Tester.Pause();
+   // sound: once per system
+   if (signal.sound) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|sound";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) PlaySoundEx(Signal.SoundFile);
+   }
+
+   // alert: once per terminal
+   if (signal.alert) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|alert";
+         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
+         SetWindowPropertyA(hWndTerminal, propertyName, 1);
+      }
+      if (eventAction) Alert(message2);
+   }
+
+   // mail: once per system
+   if (signal.mail) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|mail";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ accountAlias +")");
+   }
+
+   // telegram: once per system
+   if (signal.telegram) {
+      eventAction = true;
+      if (!__isTesting) {
+         propertyName = eventName +"|telegram";
+         eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
+         SetWindowPropertyA(hWndDesktop, propertyName, 1);
+      }
+      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ accountAlias +")");
+   }
    return(!catch("onInsideBar(3)"));
 }
 
@@ -706,13 +756,11 @@ string CreateStatusLabel() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Timeframe=",                    DoubleQuoteStr(Timeframe),                    ";", NL,
-                            "NumberOfInsideBars=",           NumberOfInsideBars,                           ";", NL,
+   return(StringConcatenate("Timeframe=",                DoubleQuoteStr(Timeframe),                ";", NL,
+                            "NumberOfInsideBars=",       NumberOfInsideBars,                       ";", NL,
 
-                            "Signal.onInsideBar=",           BoolToStr(Signal.onInsideBar),                ";", NL,
-                            "Signal.onInsideBar.Sound=",     BoolToStr(Signal.onInsideBar.Sound),          ";", NL,
-                            "Signal.onInsideBar.SoundFile=", DoubleQuoteStr(Signal.onInsideBar.SoundFile), ";", NL,
-                            "Signal.onInsideBar.Alert=",     BoolToStr(Signal.onInsideBar.Alert),          ";", NL,
-                            "Signal.onInsideBar.Mail=",      BoolToStr(Signal.onInsideBar.Mail),           ";")
+                            "Signal.onInsideBar=",       BoolToStr(Signal.onInsideBar),            ";", NL,
+                            "Signal.onInsideBar.Types=", DoubleQuoteStr(Signal.onInsideBar.Types), ";", NL,
+                            "Signal.SoundFile=",         DoubleQuoteStr(Signal.SoundFile),         ";")
    );
 }

@@ -184,7 +184,6 @@
    int      SortTicketsChronological(int &tickets[]);
    string   GetWindowsShortcutTarget(string lnkFile);
    int      WinExecWait(string cmdLine, int cmdShow);
-   bool     SendTelegramMessage(string channel, string message);
 #import
 
 

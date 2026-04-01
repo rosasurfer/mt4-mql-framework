@@ -127,7 +127,7 @@ Donchian.ShowCrossings=off | first* | all
 Donchian.Crossing.Symbol=dot | narrow-ring | ring* | bold-ring
 Donchian.Crossing.Width=2
 Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert* | mail | sms
+Signal.onReversal.Types=sound* | alert* | mail | telegram
 </inputs>
 </expert>
 style_2=2

@@ -2,7 +2,7 @@
  * Configure signaling.
  *
  * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
+ * @param  _In_    bool   autoConfig - input parameter "AutoConfiguration"
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
  *
  * @return bool - success status
@@ -22,7 +22,8 @@ bool ConfigureSignals(string signalId, bool autoConfig, bool &enabled) {
    ConfigureSignalsBySound(NULL, NULL, bNull);
    ConfigureSignalsByAlert(NULL, NULL, bNull);
    ConfigureSignalsByMail(NULL, NULL, bNull);
-   ConfigureSignalTypes(NULL, NULL, NULL, bNull, bNull, bNull);
+   ConfigureSignalsByTelegram(NULL, NULL, bNull);
+   ConfigureSignalTypes(NULL, NULL, NULL, bNull, bNull, bNull, bNull);
 }
 
 
@@ -30,7 +31,7 @@ bool ConfigureSignals(string signalId, bool autoConfig, bool &enabled) {
  * Configure signaling by sound.
  *
  * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
+ * @param  _In_    bool   autoConfig - input parameter "AutoConfiguration"
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
  *
  * @return bool - success status
@@ -51,7 +52,7 @@ bool ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled) {
  * Configure signaling by an alert dialog.
  *
  * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
+ * @param  _In_    bool   autoConfig - input parameter "AutoConfiguration"
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
  *
  * @return bool - success status
@@ -72,7 +73,7 @@ bool ConfigureSignalsByAlert(string signalId, bool autoConfig, bool &enabled) {
  * Configure signaling by email.
  *
  * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
+ * @param  _In_    bool   autoConfig - input parameter "AutoConfiguration"
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
  *
  * @return bool - success status
@@ -90,24 +91,47 @@ bool ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled) {
 
 
 /**
+ * Configure signaling by Telegram.
+ *
+ * @param  _In_    string signalId   - case-insensitive signal identifier
+ * @param  _In_    bool   autoConfig - input parameter "AutoConfiguration"
+ * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
+ *
+ * @return bool - success status
+ */
+bool ConfigureSignalsByTelegram(string signalId, bool autoConfig, bool &enabled) {
+   autoConfig = autoConfig!=0;
+   enabled = enabled!=0;
+
+   if (autoConfig) {
+      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
+      enabled = GetConfigBool(section, signalId +".Telegram", enabled);
+   }
+   return(true);
+}
+
+
+/**
  * Validate and configure the passed signal types.
  *
- * @param  _In_    string signalId     - case-insensitive signal identifier
- * @param  _In_    string signalTypes  - input parameter Signal.*.Types
- * @param  _In_    bool   autoConfig   - input parameter AutoConfiguration
- * @param  _InOut_ bool   soundEnabled - current (in) and final activation status (out) for signaling by sound
- * @param  _InOut_ bool   alertEnabled - current (in) and final activation status (out) for signaling by alert
- * @param  _InOut_ bool   mailEnabled  - current (in) and final activation status (out) for signaling by mail
+ * @param  _In_    string signalId        - case-insensitive signal identifier
+ * @param  _In_    string signalTypes     - input parameter Signal.*.Types
+ * @param  _In_    bool   autoConfig      - input parameter "AutoConfiguration"
+ * @param  _InOut_ bool   soundEnabled    - current (in) and final activation status (out) for signaling by sound
+ * @param  _InOut_ bool   alertEnabled    - current (in) and final activation status (out) for signaling by alert
+ * @param  _InOut_ bool   mailEnabled     - current (in) and final activation status (out) for signaling by mail
+ * @param  _InOut_ bool   telegramEnabled - current (in) and final activation status (out) for signaling by Telegram
  *
  * @return bool - validation success status
  */
-bool ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled) {
-   autoConfig = autoConfig!=0;                                             // supported syntax variants:
-   soundEnabled = soundEnabled!=0;                                         //  "sound* | alert | mail"
-   alertEnabled = alertEnabled!=0;                                         //  "sound* | alert* | mail"
-   mailEnabled = mailEnabled!=0;                                           //  "sound | alert | mail"
-                                                                           //  "sound, alert, mail"
-   if (autoConfig) {                                                       //  "sound alert mail"
+bool ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, bool &soundEnabled, bool &alertEnabled, bool &mailEnabled, bool &telegramEnabled) {
+   autoConfig = autoConfig!=0;                                             // supported syntax variants
+   soundEnabled = soundEnabled!=0;                                         // -------------------------
+   alertEnabled = alertEnabled!=0;                                         //  "sound* | alert | mail | telegram"
+   mailEnabled = mailEnabled!=0;                                           //  "sound* | alert* | mail | telegram"
+   telegramEnabled = telegramEnabled!=0;                                   //  "sound | alert | mail | telegram"
+                                                                           //  "sound, alert, mail, telegram"
+   if (autoConfig) {                                                       //  "sound alert mail telegram"
       string section = ifString(__isTesting, "Tester.", "") + ProgramName();
       signalTypes = GetConfigString(section, signalId +".Types", signalTypes);
    }
@@ -131,10 +155,13 @@ bool ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, 
          sValue = StrTrim(values2[n]);
          if (sValue == "") continue;
 
-         if      (sValue == "sound") soundEnabled = true;
-         else if (sValue == "alert") alertEnabled = true;
-         else if (sValue == "mail" ) mailEnabled  = true;
-         else                        return(false);
+         if      (sValue == "sound"   ) soundEnabled    = true;
+         else if (sValue == "alert"   ) alertEnabled    = true;
+         else if (sValue == "mail"    ) mailEnabled     = true;
+         else if (sValue == "email"   ) mailEnabled     = true;
+         else if (sValue == "tgm"     ) telegramEnabled = true;
+         else if (sValue == "telegram") telegramEnabled = true;
+         else return(false);
       }
    }
    return(!catch("ConfigureSignalTypes(1)"));

@@ -4654,7 +4654,7 @@ int GetAccountNumber() {
 
 
 /**
- * Return the alias of an account. The alias is used in outbound messages (email, SMS, chat) to obfuscate the actual account
+ * Return the alias of an account. The alias is used in outbound messages (email, messengers) to obfuscate the actual account
  * number. It's configurable in [Account]->Alias of the account configuration file.
  *
  * If no alias is configured the function returns the account number with digits replaced by wildcards, except the last 2.
@@ -6310,7 +6310,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // sender
    string _sender = StrTrim(sender);
-   if (!StringLen(_sender)) {
+   if (_sender == "") {
       string section = "Mail", key = "Sender";
       _sender = GetConfigString(section, key, "mt4@"+ GetHostName() +".localdomain");
       if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(1)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _sender +"\"", ERR_INVALID_CONFIG_VALUE));
@@ -6320,11 +6320,11 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // receiver
    string _receiver = StrTrim(receiver);
-   if (!StringLen(_receiver)) {
+   if (_receiver == "") {
       section = "Mail";
       key = "Receiver";
       _receiver = GetConfigString(section, key);
-      if (!StringLen(_receiver))           return(!catch("SendEmail(3)  missing configuration: ["+ section +"]->"+ key,                           ERR_INVALID_CONFIG_VALUE));
+      if (_receiver == "")                 return(!catch("SendEmail(3)  missing configuration: ["+ section +"]->"+ key,                           ERR_INVALID_CONFIG_VALUE));
       if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(4)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _receiver +"\"", ERR_INVALID_CONFIG_VALUE));
    }
    else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(5)  invalid parameter receiver: \""+ receiver +"\"", ERR_INVALID_PARAMETER));
@@ -6332,7 +6332,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // subject
    string _subject = StrTrim(subject);
-   if (!StringLen(_subject))               return(!catch("SendEmail(6)  invalid parameter subject: \""+ subject +"\"", ERR_INVALID_PARAMETER));
+   if (_subject == "")                     return(!catch("SendEmail(6)  invalid parameter subject: \""+ subject +"\"", ERR_INVALID_PARAMETER));
    _subject = StrReplace(StrReplace(_subject, EOL_WINDOWS, " "), EOL_UNIX, " "); // replace line breaks
    _subject = StrReplace(_subject, "\"", "\\\"");                                // escape double quotes for Bash
    _subject = StrReplace(_subject, "'", "'\"'\"'");                              // escape single quotes for Bash
@@ -6342,7 +6342,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    message = StrTrim(message);
    string filesDir = GetMqlSandboxPath() +"/";
    string msgFile = CreateTempFile(filesDir, "msg");
-   if (StringLen(message) > 0) {
+   if (message != "") {
       int hFile = FileOpen(StrRightFrom(msgFile, filesDir), FILE_BIN|FILE_WRITE);
       if (hFile < 0) return(!catch("SendEmail(7)->FileOpen()"));
       int bytes = FileWriteString(hFile, message, StringLen(message));
@@ -6377,69 +6377,59 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
 
 /**
- * Send a text message to the specified phone number.
+ * Send a message to a Telegram channel. Each channel needs a matching configuration with channel id and bot token.
  *
- * @param  string receiver - phone number in international format (e.g. +49-123-456789), if empty the configuration is queried
- * @param  string message  - text
+ * @param  string channel - channel name or alias as used in the configuration
+ * @param  string message - text message (may contain limited and very basic HTML formatting)
  *
  * @return bool - success status
  */
-bool SendSMS(string receiver, string message) {
-   if (!StringLen(receiver)) {
-      string sValue = GetConfigString("SMS", "Receiver");
-      if (!StrIsPhoneNumber(sValue)) return(!catch("SendSMS(1)  invalid configuration: [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
-      receiver = sValue;
-   }
-   string receiverBak = receiver;
-   receiver = StrReplace(StrReplace(StrTrim(receiver), "-", ""), " ", "", true);
+bool SendTelegramMessage(string channel, string message) {
+   if (!StringLen(channel)) return(!catch("SendTelegramMessage(1)  invalid parameter channel: \"\" (empty)", ERR_INVALID_PARAMETER));
+   if (!StringLen(message)) return(!catch("SendTelegramMessage(2)  invalid parameter message: \"\" (empty)", ERR_INVALID_PARAMETER));
 
-   if      (StrStartsWith(receiver, "+" )) receiver = StrSubstr(receiver, 1);
-   else if (StrStartsWith(receiver, "00")) receiver = StrSubstr(receiver, 2);
-   if (!StrIsDigits(receiver)) return(!catch("SendSMS(2)  invalid parameter receiver: \""+ receiverBak +"\"", ERR_INVALID_PARAMETER));
+   string alias = GetConfigString("Telegram", channel);
+   if (alias != "") channel = alias;
+   string section = "Telegram "+ channel, key = "ChannelId";
+   string channelId = GetConfigString(section, key);
+   if (channelId == "") return(!catch("SendTelegramMessage(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   key = "Token";
+   string token = GetConfigString(section, key);
+   if (token == "") return(!catch("SendTelegramMessage(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
-   // get SMS gateway details
-   // service
-   string section  = "SMS";
-   string key      = "Provider";
-   string provider = GetConfigString(section, key);
-   if (!StringLen(provider)) return(!catch("SendSMS(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-   // user
-   section = "SMS."+ provider;
-   key     = "username";
-   string username = GetConfigString(section, key);
-   if (!StringLen(username)) return(!catch("SendSMS(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-   // password
-   key = "password";
-   string password = GetConfigString(section, key);
-   if (!StringLen(password)) return(!catch("SendSMS(5)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-   // API id
-   key = "api_id";
-   int api_id = GetConfigInt(section, key);
-   if (api_id <= 0) {
-      string value = GetConfigString(section, key);
-      if (!StringLen(value)) return(!catch("SendSMS(6)  missing configuration ["+ section +"]->"+ key,                      ERR_INVALID_CONFIG_VALUE));
-                             return(!catch("SendSMS(7)  invalid config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
-   }
+   // store message in a tmp file
+   string filesDir = GetMqlSandboxPath();
+   string msgFilename = CreateTempFile(filesDir, "tgm");
+   int hFile = FileOpen(StrRightFrom(msgFilename, filesDir), FILE_BIN|FILE_WRITE);
+   if (hFile < 0) return(!catch("SendTelegramMessage(5)->FileOpen()"));
+   string utf8Message = AnsiToUtf8(StrReplace(message, EOL_WINDOWS, EOL_UNIX));
+   int bytes = FileWriteString(hFile, utf8Message, StringLen(utf8Message));
+   FileClose(hFile);
+   if (bytes <= 0) return(!catch("SendTelegramMessage(6)->FileWriteString() => "+ bytes +" written"));
+   msgFilename = StrReplace(msgFilename, "\\", "/");
 
    // compose command line
-   string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ receiver +"&text="+ UrlEncode(message);
-   string filesDir     = GetMqlSandboxPath();
-   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(8)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
-   string logFile      = filesDir +"/sms.log";
-   string wget         = GetMqlDirectoryA() +"/libraries/wget.exe";
-   string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
-   string cmd          = wget +" "+ arguments;
+   string bash = GetConfigString("System", "Bash");
+   if (!IsFile(bash, MODE_SYSTEM)) {                        // prefer config setting, otherwise let the system look-up
+      bash = "bash.exe";
+   }                                                        // TODO: even if bash.exe exists, curl may not
+   string cmd = "curl -X POST \"https://api.telegram.org/bot"+ token +"/sendMessage\" -L --silent --show-error"
+             //+" --data-urlencode parse_mode=HTML"
+               +" --data-urlencode \"chat_id="+ channelId +"\""
+               +" --data-urlencode \"text@"+ msgFilename +"\" && rm -f \""+ msgFilename +"\"";
+   //cmd = cmd +"; read -n 1 -s";
+   cmd = bash +" -lc '"+ cmd +"'";                          // -l (login shell) makes sure the full PATH is set
 
-   // execute command
-   int result = WinExec(cmd, SW_HIDE);                // SW_SHOW | SW_HIDE
+   // execute command                                       // TODO: parse the response and keep logs on error
+   int result = WinExec(cmd, SW_HIDE);                      // SW_SHOW | SW_HIDE
    if (result < 32) {
-      if (result == ERROR_FILE_NOT_FOUND) catch("SendSMS(9)  Executable \""+ wget +"\" not found.", ERR_WIN32_ERROR + result);
-      else                                catch("SendSMS(10)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
+      if (result == ERROR_FILE_NOT_FOUND) catch("SendTelegramMessage(7)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
+      else                                catch("SendTelegramMessage(8)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
       return(false);
    }
 
-   logInfo("SendSMS(11)  to "+ receiverBak +": \""+ message +"\"");
-   return(!catch("SendSMS(12)"));
+   logInfo("SendTelegramMessage(9)  to channel \""+ channel +"\": "+ message);
+   return(!catch("SendTelegramMessage(10)"));
 }
 
 
@@ -6832,7 +6822,6 @@ void __DummyCalls() {
    SelectTicket(NULL, NULL);
    SendChartCommand(NULL, NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
-   SendSMS(NULL, NULL);
    ServerToFxtTime(NULL);
    ServerToGmtTime(NULL);
    SetLastError(NULL, NULL);
