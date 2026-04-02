@@ -6304,9 +6304,8 @@ bool SendChartCommand(string cmdObject, string cmd, string mutex = "") {
  * @return bool - whether the e-mail was successfully queued, not whether it was sent
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
-   // Note:
-   //  This function uses the SMTP client `email` from https://github.com/deanproxy/eMail
-   //  The client does not validate the format of passed email addresses.
+   // This function requires the SMTP client `email` from https://github.com/deanproxy/eMail
+   // The client does not validate the format of passed email addresses.
 
    // sender
    string _sender = StrTrim(sender);
@@ -6338,16 +6337,22 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    _subject = StrReplace(_subject, "'", "'\"'\"'");                              // escape single quotes for Bash
    // bash -lc 'email -subject "single-quote:'"'"' double-quote:\" pipe:|" ...'
 
+   // check whether sending emails is enabled
+   bool enabled = GetConfigBool("Mail", "Enabled");
+   if (!enabled) return(!logDebug("SendEmail(7) is disabled"));
+
+   // check existence of required binaries: bash, email
+
    // store message in a tmp file
    message = StrTrim(message);
    string filesDir = GetMqlSandboxPath() +"/";
    string msgFile = CreateTempFile(filesDir, "msg");
    if (message != "") {
       int hFile = FileOpen(StrRightFrom(msgFile, filesDir), FILE_BIN|FILE_WRITE);
-      if (hFile < 0) return(!catch("SendEmail(7)->FileOpen()"));
+      if (hFile < 0) return(!catch("SendEmail(8)->FileOpen()"));
       int bytes = FileWriteString(hFile, message, StringLen(message));
       FileClose(hFile);
-      if (bytes <= 0) return(!catch("SendEmail(8)->FileWriteString() => "+ bytes +" written"));
+      if (bytes <= 0) return(!catch("SendEmail(9)->FileWriteString() => "+ bytes +" written"));
    }
    msgFile = StrReplace(msgFile, "\\", "/");
 
@@ -6357,7 +6362,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       bash = "bash.exe";
    }
    string sendmail = GetConfigString("Mail", "Sendmail");
-   if (sendmail == "") return(!catch("SendEmail(9)  missing mail client configuration: [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
+   if (sendmail == "") return(!catch("SendEmail(10)  missing mail client configuration: [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
    string logFile = StrReplace(filesDir +"mail.log", "\\", "/");
 
    string cmd = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ msgFile +"\" >> \""+ logFile +"\" 2>&1 && rm -f \""+ msgFile +"\"";
@@ -6366,21 +6371,21 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    // execute command
    int result = WinExec(cmd, SW_HIDE);                                           // SW_SHOW | SW_HIDE
    if (result < 32) {
-      if (result == ERROR_FILE_NOT_FOUND) catch("SendEmail(10)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
-      else                                catch("SendEmail(11)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
+      if (result == ERROR_FILE_NOT_FOUND) catch("SendEmail(11)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
+      else                                catch("SendEmail(12)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
       return(false);
    }
 
-   logInfo("SendEmail(12)  to "+ receiver +": \""+ subject +"\"");
-   return(!catch("SendEmail(13)"));
+   logInfo("SendEmail(13)  to "+ receiver +": \""+ subject +"\"");
+   return(!catch("SendEmail(14)"));
 }
 
 
 /**
  * Send a message to a Telegram channel. Each channel needs a matching configuration with channel id and bot token.
  *
- * @param  string channel - channel name or alias as used in the configuration
- * @param  string message - text message (may contain limited and very basic HTML formatting)
+ * @param  string channel - channel name or alias as defined in the configuration
+ * @param  string message - text message
  *
  * @return bool - success status
  */
@@ -6388,24 +6393,33 @@ bool SendTelegramMessage(string channel, string message) {
    if (!StringLen(channel)) return(!catch("SendTelegramMessage(1)  invalid parameter channel: \"\" (empty)", ERR_INVALID_PARAMETER));
    if (!StringLen(message)) return(!catch("SendTelegramMessage(2)  invalid parameter message: \"\" (empty)", ERR_INVALID_PARAMETER));
 
-   string alias = GetConfigString("Telegram", channel);
+   // check whether Telegram is enabled
+   bool enabled = GetConfigBool("Telegram", "Enabled");
+   if (!enabled) return(!logDebug("SendTelegramMessage(3) is disabled"));
+
+   // resolve an existing alias
+   string alias = GetConfigString("Telegram", "Alias."+ channel);
    if (alias != "") channel = alias;
-   string section = "Telegram "+ channel, key = "ChannelId";
+
+   // get channel configuration
+   string section = "Telegram channel "+ channel, key = "ChannelId";
    string channelId = GetConfigString(section, key);
-   if (channelId == "") return(!catch("SendTelegramMessage(3)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (channelId == "") return(!catch("SendTelegramMessage(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    key = "Token";
    string token = GetConfigString(section, key);
-   if (token == "") return(!catch("SendTelegramMessage(4)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (token == "") return(!catch("SendTelegramMessage(5)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+
+   // check existence of required binaries: bash, curl
 
    // store message in a tmp file
    string filesDir = GetMqlSandboxPath();
    string msgFilename = CreateTempFile(filesDir, "tgm");
    int hFile = FileOpen(StrRightFrom(msgFilename, filesDir), FILE_BIN|FILE_WRITE);
-   if (hFile < 0) return(!catch("SendTelegramMessage(5)->FileOpen()"));
+   if (hFile < 0) return(!catch("SendTelegramMessage(6)->FileOpen()"));
    string utf8Message = AnsiToUtf8(StrReplace(message, EOL_WINDOWS, EOL_UNIX));
    int bytes = FileWriteString(hFile, utf8Message, StringLen(utf8Message));
    FileClose(hFile);
-   if (bytes <= 0) return(!catch("SendTelegramMessage(6)->FileWriteString() => "+ bytes +" written"));
+   if (bytes <= 0) return(!catch("SendTelegramMessage(7)->FileWriteString() => "+ bytes +" written"));
    msgFilename = StrReplace(msgFilename, "\\", "/");
 
    // compose command line
@@ -6423,13 +6437,13 @@ bool SendTelegramMessage(string channel, string message) {
    // execute command                                       // TODO: parse the response and keep logs on error
    int result = WinExec(cmd, SW_HIDE);                      // SW_SHOW | SW_HIDE
    if (result < 32) {
-      if (result == ERROR_FILE_NOT_FOUND) catch("SendTelegramMessage(7)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
-      else                                catch("SendTelegramMessage(8)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
+      if (result == ERROR_FILE_NOT_FOUND) catch("SendTelegramMessage(8)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
+      else                                catch("SendTelegramMessage(9)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
       return(false);
    }
 
-   logInfo("SendTelegramMessage(9)  to channel \""+ channel +"\": "+ message);
-   return(!catch("SendTelegramMessage(10)"));
+   logInfo("SendTelegramMessage(10)  to channel \""+ channel +"\": "+ message);
+   return(!catch("SendTelegramMessage(11)"));
 }
 
 
