@@ -2257,53 +2257,6 @@ bool StrIsEmailAddress(string value) {
 
 
 /**
- * Ob ein String eine gültige Telefonnummer darstellt.
- *
- * @param  string value - zu prüfender String
- *
- * @return bool
- */
-bool StrIsPhoneNumber(string value) {
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StrIsNull(value)) return(false);
-      }
-      catch("StrIsPhoneNumber(1)", error);
-   }
-
-   string s = StrReplace(StrTrim(value), " ", "");
-   int chr, length=StringLen(s);
-
-   // Enthält die Nummer Bindestriche "-", müssen davor und danach Ziffern stehen.
-   int pos = StringFind(s, "-");
-   while (pos != -1) {
-      if (pos   == 0     ) return(false);
-      if (pos+1 == length) return(false);
-
-      chr = StringGetChar(s, pos-1);            // left char
-      if (chr < '0') return(false);
-      if (chr > '9') return(false);
-
-      chr = StringGetChar(s, pos+1);            // right char
-      if (chr < '0') return(false);
-      if (chr > '9') return(false);
-
-      pos = StringFind(s, "-", pos+1);
-   }
-   if (chr != 0) s = StrReplace(s, "-", "");
-
-   // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
-   if (StrStartsWith(s, "+" )) {
-      s = StrSubstr(s, 1);
-      if (StrStartsWith(s, "0")) return(false);
-   }
-
-   return(StrIsDigits(s));
-}
-
-
-/**
  * Fügt ein Element am Beginn eines String-Arrays an.
  *
  * @param  _InOut_ string array[] - String-Array
@@ -6857,7 +6810,6 @@ void __DummyCalls() {
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
    StrIsNumeric(NULL);
-   StrIsPhoneNumber(NULL);
    StrLeft(NULL, NULL);
    StrLeftTo(NULL, NULL);
    StrPadLeft(NULL, NULL);
