@@ -860,6 +860,8 @@ double   RemoveWindowDoubleA(int hWnd, string name);;
 int      RemoveWindowIntegerA(int hWnd, string name);;
 string   RemoveWindowStringA(int hWnd, string name);;
 bool     ReopenAlertDialog(int sound);;
+string   SearchPathA(string file);
+string   SearchPathW(string file);
 bool     SetLogfileA(int ec[], string filename);;
 int      SetupTickTimer(int hWnd, int millis, int flags);;
 bool     SetWindowDoubleA(int hWnd, string name, double value);;

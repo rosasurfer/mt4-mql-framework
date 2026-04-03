@@ -80,6 +80,7 @@
    bool     IsFileOrDirectoryA(string path);
    bool     IsJunctionA(string path);
    bool     IsSymlinkA(string path);
+   string   SearchPathA(string file);
 
    // math
    int      DoubleExp(double value);
