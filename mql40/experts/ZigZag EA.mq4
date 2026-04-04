@@ -795,7 +795,7 @@ bool StartTrading(double signal[]) {
    int      type        = ifInt(sigOp==SIG_OP_LONG, OP_BUY, OP_SELL), oeFlags, oe[];
    double   price       = NULL;
    datetime expires     = NULL;
-   string   comment     = instance.name;
+   string   comment     = "ZigZag."+ StrPadLeft(instance.id, 3, "0");
    int      magicNumber = CalculateMagicNumber(instance.id);
    color    marker      = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
