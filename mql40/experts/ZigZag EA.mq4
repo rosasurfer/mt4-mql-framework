@@ -484,7 +484,7 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
          double semaphoreClose = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_SEMAPHORE_CLOSE, semBar);
          if (!semaphoreClose) return(!catch("IsZigZagReversalBar(2)  unexpected bar="+ semBar +" "+ TimeToStr(Time[semBar]) +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  semaphoreClose="+ semaphoreClose, ERR_ILLEGAL_STATE));
 
-         if (semaphoreClose > High[bar]-HalfPoint) {
+         if (semaphoreClose > High[semBar]-HalfPoint) {
             reversalType  = MODE_LOWER;
             reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, bar);
          }
@@ -492,6 +492,9 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
             reversalType  = MODE_UPPER;
             reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
          }
+
+         //logDebug("IsZigZagReversalBar(0.1)  reversal bar="+ bar +" "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  reversalOffset="+ reversalOffset +"  semBar="+ semBar +" "+ TimeToStr(Time[semBar]) +"  semClose="+ NumberToStr(semaphoreClose, PriceFormat) +"  reversalPrice="+ NumberToStr(reversalPrice, PriceFormat));
+
          return(true);
       }
    }
