@@ -343,7 +343,7 @@ bool IsDonchianChannelWidening(double &signal[]) {
       static double lastUpperBand, lastLowerBand;
 
       double upperBand, lowerBand, upperCrossing, lowerCrossing;
-      if (!GetDonchianChannel(0, upperBand, upperCrossing, lowerBand, lowerCrossing)) return(false);
+      if (!GetDonchianChannel(0, upperBand, lowerBand, upperCrossing, lowerCrossing)) return(false);
 
       if (Ticks == lastTick + 1) {
          if (lastUpperBand && lastLowerBand) {
@@ -358,7 +358,10 @@ bool IsDonchianChannelWidening(double &signal[]) {
                signal[SIG_OP   ] = SIG_OP_CLOSE_LONG|SIG_OP_SHORT;
             }
             if (signal[SIG_TYPE] != 0) {
-               if (IsLogNotice()) logNotice("IsDonchianChannelWidening(1)  "+ instance.name +" "+ ifString(_int(signal[SIG_OP]) & SIG_OP_LONG, "long", "short") +" widening at "+ NumberToStr(signal[SIG_PRICE], PriceFormat) +" (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
+               if (!signal[SIG_PRICE]) {
+                  return(!catch("IsDonchianChannelWidening(1)  "+ instance.name +" unexpected bar=0 "+ TimeToStr(Time[0]) +"  upperBand="+ NumberToStr(upperBand, PriceFormat) +"  upperCrossing="+ NumberToStr(upperCrossing, PriceFormat) +"  lowerBand="+ NumberToStr(lowerBand, PriceFormat) +"  lowerCrossing="+ NumberToStr(lowerCrossing, PriceFormat), ERR_ILLEGAL_STATE));
+               }
+               if (IsLogNotice()) logNotice("IsDonchianChannelWidening(2)  "+ instance.name +" "+ ifString(_int(signal[SIG_OP]) & SIG_OP_LONG, "long", "short") +" widening at "+ NumberToStr(signal[SIG_PRICE], PriceFormat) +" (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
             }
          }
       }
@@ -379,13 +382,13 @@ bool IsDonchianChannelWidening(double &signal[]) {
  *
  * @param  _In_  int    bar           - bar offset
  * @param  _Out_ double upperBand     - upper channel band
- * @param  _Out_ double upperCrossing - crossing level if the upper band widened, 0 otherwise
  * @param  _Out_ double lowerBand     - lower channel band
+ * @param  _Out_ double upperCrossing - crossing level if the upper band widened, 0 otherwise
  * @param  _Out_ double lowerCrossing - crossing level if the lower band widened, 0 otherwise
  *
  * @return bool - success status
  */
-bool GetDonchianChannel(int bar, double &upperBand, double &upperCrossing, double &lowerBand, double &lowerCrossing) {
+bool GetDonchianChannel(int bar, double &upperBand, double &lowerBand, double &upperCrossing, double &lowerCrossing) {
    upperBand = NULL;
    lowerBand = NULL;
    upperCrossing = NULL;
