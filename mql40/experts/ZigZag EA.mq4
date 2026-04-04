@@ -342,19 +342,19 @@ bool IsDonchianChannelWidening(double &signal[]) {
 
       static double lastUpperBand, lastLowerBand;
 
-      double upperBand, lowerBand;
-      if (!GetDonchianChannel(0, upperBand, lowerBand)) return(false);
+      double upperBand, lowerBand, upperCrossing, lowerCrossing;
+      if (!GetDonchianChannel(0, upperBand, upperCrossing, lowerBand, lowerCrossing)) return(false);
 
       if (Ticks == lastTick + 1) {
          if (lastUpperBand && lastLowerBand) {
             if (upperBand > lastUpperBand+HalfPoint) {
                signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
-               signal[SIG_PRICE] = upperBand;
+               signal[SIG_PRICE] = upperCrossing;
                signal[SIG_OP   ] = SIG_OP_CLOSE_SHORT|SIG_OP_LONG;
             }
             else if (lowerBand < lastLowerBand-HalfPoint) {
                signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
-               signal[SIG_PRICE] = lowerBand;
+               signal[SIG_PRICE] = lowerCrossing;
                signal[SIG_OP   ] = SIG_OP_CLOSE_LONG|SIG_OP_SHORT;
             }
             if (signal[SIG_TYPE] != 0) {
@@ -377,24 +377,31 @@ bool IsDonchianChannelWidening(double &signal[]) {
 /**
  * Get Donchian Channel values at the specified bar offset.
  *
- * @param  _In_  int    bar       - bar offset
- * @param  _Out_ double upperBand - MODE_UPPER_BAND: upper channel band
- * @param  _Out_ double lowerBand - MODE_LOWER_BAND: lower channel band
+ * @param  _In_  int    bar           - bar offset
+ * @param  _Out_ double upperBand     - upper channel band
+ * @param  _Out_ double upperCrossing - crossing level if the upper band widened, 0 otherwise
+ * @param  _Out_ double lowerBand     - lower channel band
+ * @param  _Out_ double lowerCrossing - crossing level if the lower band widened, 0 otherwise
  *
  * @return bool - success status
  */
-bool GetDonchianChannel(int bar, double &upperBand, double &lowerBand) {
+bool GetDonchianChannel(int bar, double &upperBand, double &upperCrossing, double &lowerBand, double &lowerCrossing) {
    upperBand = NULL;
    lowerBand = NULL;
+   upperCrossing = NULL;
+   lowerCrossing = NULL;
 
    double upper = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_BAND, bar);
    double lower = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_BAND, bar);
    if (!upper || !lower) {
       return(!catch("GetDonchianChannel(1)  unexpected result: bar="+ bar +" "+ TimeToStr(Time[bar]) +"  upperBand="+ NumberToStr(upper, PriceFormat) +"  lowerBand="+ NumberToStr(lower, PriceFormat), ERR_ILLEGAL_STATE));
    }
-
    upperBand = upper;
    lowerBand = lower;
+
+   upperCrossing = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
+   lowerCrossing = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, bar);
+
    return(!last_error);
 }
 
