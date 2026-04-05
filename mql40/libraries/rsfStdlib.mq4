@@ -1596,28 +1596,30 @@ int ArrayInsertDouble(double &array[], int offset, double value) {
  * @return int - neue Größe des Ausgangsarrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertDoubleArray(double &array[][], int offset, double values[]) {
-   if (ArrayDimension(array) != 2)         return(catch("ArrayInsertDoubleArray(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY));
-   if (ArrayDimension(values) != 1)        return(catch("ArrayInsertDoubleArray(2)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY));
-   int array.dim1 = ArrayRange(array, 0);
-   int array.dim2 = ArrayRange(array, 1);
-   if (ArraySize(values) != array.dim2)    return(catch("ArrayInsertDoubleArray(3)  array size mis-match of parameters array and values: array["+ array.dim1 +"]["+ array.dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAY));
-   if (offset < 0 || offset >= array.dim1) return(catch("ArrayInsertDoubleArray(4)  illegal parameter offset: "+ offset, ERR_INVALID_PARAMETER));
+   if (ArrayDimension(array) != 2)  return(_EMPTY(catch("ArrayInsertDoubleArray(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArrayDimension(values) != 1) return(_EMPTY(catch("ArrayInsertDoubleArray(2)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
+   int dim1 = ArrayRange(array, 0);
+   int dim2 = ArrayRange(array, 1);
+   if (ArraySize(values) != dim2)   return(_EMPTY(catch("ArrayInsertDoubleArray(3)  array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAY)));
+   if (offset < 0 || offset > dim1) return(_EMPTY(catch("ArrayInsertDoubleArray(4)  illegal parameter offset "+ offset +" for array["+ dim1 +"]["+ dim2 +"]", ERR_INVALID_PARAMETER)));
 
    // Ausgangsarray vergrößern
-   int newSize = array.dim1 + 1;
+   int newSize = dim1 + 1;
    ArrayResize(array, newSize);
 
    // Inhalt des Ausgangsarrays von offset nach hinten verschieben
-   int array.dim2.size = array.dim2 * DOUBLE_VALUE;
-   int src   = GetDoublesAddress(array) + offset * array.dim2.size;
-   int dest  =                               src + array.dim2.size;
-   int bytes =               (array.dim1-offset) * array.dim2.size;
-   CopyMemory(dest, src, bytes);
+   int dim2Size = dim2 * DOUBLE_VALUE;
+   int src   = GetDoublesAddress(array) + offset * dim2Size;
+   int dest  =                               src + dim2Size;
+   int bytes =                     (dim1-offset) * dim2Size;
+   if (bytes > 0) {
+      CopyMemory(dest, src, bytes);          // nothing to move if the insert is in fact an append
+   }
 
    // Inhalt des anderen Arrays an den gewünschten Offset schreiben
    dest  = src;
    src   = GetDoublesAddress(values);
-   bytes = array.dim2.size;
+   bytes = dim2Size;
    CopyMemory(dest, src, bytes);
 
    return(newSize);
