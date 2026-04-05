@@ -250,7 +250,7 @@ bool    display.externalBalance = false;
  * @return int - error status
  */
 int onTick() {
-   if (!__isChart) return(last_error);
+   if (!__isChart || __isSuperContext) return(last_error);
 
    mm.done = false;
    positions.analyzed = false;

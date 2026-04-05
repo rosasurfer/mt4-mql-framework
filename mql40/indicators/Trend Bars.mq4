@@ -134,11 +134,11 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // process incoming commands
+   // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
    if (__isChart) {
       if (!HandleCommands("TrendBars")) return(last_error);
    }
-
+   
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(trendBodyA,   0);

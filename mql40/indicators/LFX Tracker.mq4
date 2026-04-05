@@ -368,6 +368,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   if (!__isChart || __isSuperContext) return(last_error);
+
    if (!ValidBars) SetIndicatorOptions();                   // reset indicator options
 
    if (!AccountNumber())  return(last_error);               // wait until a connection to the trade server is established

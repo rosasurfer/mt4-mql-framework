@@ -224,7 +224,7 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
+   // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
    if (__isChart && (MA.Periods.Step || MA.ReversalFilter.Step)) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
    }

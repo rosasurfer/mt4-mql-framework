@@ -640,7 +640,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    string sPeriod    = PeriodDescription();
    string sTimeframe = TimeframeDescription(timeframe);
    string eventName  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ WindowExpertName() +".onInsideBar("+ sTimeframe +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1   = " new "+ sTimeframe +" inside bar";
+   string message1   = sTimeframe +" inside bar";
    string message2   = Symbol() +": "+ message1;
    string localTime  = TimeToStr(TimeLocalEx("onInsideBar(1)"), TIME_MINUTES|TIME_SECONDS);
    string accountAlias = GetAccountAlias();
