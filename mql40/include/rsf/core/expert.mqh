@@ -2,7 +2,6 @@
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;                                    // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double  __rates[][6];                                             // current price series
-int     __tickTimerId;                                            // timer id for virtual ticks
 int     __Test.barModel = -1;                                     // the bar model of a test
 int     recorder.mode;                                            // EA recorder settings
 double  _Bid;                                                     // normalized versions of predefined vars Bid/Ask
@@ -177,10 +176,10 @@ int init() {
    ShowStatus(last_error);
 
    // setup virtual ticks
-   if (__virtualTicks && !__tickTimerId && !__isTesting) {
+   if (__virtualTicks && !__virtualTicksTimerId && !__isTesting) {
       int hWnd = __ExecutionContext[EC.chart];
-      __tickTimerId = SetupTickTimer(hWnd, __virtualTicks, NULL);
-      if (!__tickTimerId) return(catch("init(14)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      __virtualTicksTimerId = SetupTickTimer(hWnd, __virtualTicks, NULL);
+      if (!__virtualTicksTimerId) return(catch("init(14)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
@@ -315,9 +314,9 @@ int deinit() {
    int error = catch("deinit(2)");                 // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
    // remove a virtual ticker
-   if (__tickTimerId != NULL) {
-      int tmp = __tickTimerId;
-      __tickTimerId = NULL;
+   if (__virtualTicksTimerId != NULL) {
+      int tmp = __virtualTicksTimerId;
+      __virtualTicksTimerId = NULL;
       if (!ReleaseTickTimer(tmp)) logError("deinit(3)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
    }
 

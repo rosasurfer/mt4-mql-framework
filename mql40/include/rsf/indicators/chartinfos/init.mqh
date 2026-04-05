@@ -135,14 +135,14 @@ int afterInit() {
       }
 
       // setup a chart ticker
-      if (!__tickTimerId) {
+      if (!__virtualTicksTimerId) {
          int hWnd = __ExecutionContext[EC.chart];
          int millis = 2000;                                          // once every 2 seconds
 
          if (StrStartsWithI(GetAccountServer(), "XTrade-")) {
             // offline ticker to update chart data in synthetic charts
-            __tickTimerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_WINDOW_VISIBLE);
-            if (!__tickTimerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+            __virtualTicksTimerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_WINDOW_VISIBLE);
+            if (!__virtualTicksTimerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
 
             // display ticker status
             string label = ProgramName() +".TickerStatus";
@@ -154,8 +154,8 @@ int afterInit() {
          }
          else {
             // virtual ticks to update chart infos on a slow data feed
-            __tickTimerId = SetupTickTimer(hWnd, millis, TICK_IF_WINDOW_VISIBLE);
-            if (!__tickTimerId) return(catch("afterInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+            __virtualTicksTimerId = SetupTickTimer(hWnd, millis, TICK_IF_WINDOW_VISIBLE);
+            if (!__virtualTicksTimerId) return(catch("afterInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
          }
       }
    }

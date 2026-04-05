@@ -53,7 +53,6 @@
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks = 800;                             // milliseconds (must be short as the EA monitors all symbols)
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -149,6 +148,9 @@ int onInit() {
       if (!absLimit)                                                  return(catch("onInit(6)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
       DrawdownLimit = DoubleToStr(absLimit, 2);
    }
+
+   // configure virtual ticks in milliseconds (must be short as the EA monitors all symbols)
+   __virtualTicks = 800;
    return(catch("onInit(7)"));
 }
 

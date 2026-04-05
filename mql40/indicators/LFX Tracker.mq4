@@ -315,7 +315,7 @@ int onInit() {
    }
 
    // only online
-   if (!__tickTimerId && !__isTesting) {
+   if (!__isTesting && !__virtualTicksTimerId) {
       // restore a configured trade account and initialize order/limit monitoring
       string accountId = GetStoredTradeAccount();
       if (!InitTradeAccount(accountId)) return(last_error);
@@ -325,8 +325,8 @@ int onInit() {
       // setup a chart ticker
       int millis = 500;                                 // a virtual tick every 500 milliseconds
       int hWnd = __ExecutionContext[EC.chart];
-      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!__tickTimerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      __virtualTicksTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!__virtualTicksTimerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onInit(7)"));
 }
@@ -353,9 +353,10 @@ int onDeinit() {
    }
 
    // uninstall the chart ticker
-   if (__tickTimerId > NULL) {
-      int id = __tickTimerId; __tickTimerId = NULL;
-      if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   if (__virtualTicksTimerId > 0) {
+      int tmp = __virtualTicksTimerId;
+      __virtualTicksTimerId = NULL;
+      if (!ReleaseTickTimer(tmp)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
 }

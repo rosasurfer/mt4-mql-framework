@@ -528,13 +528,13 @@ int onInit() {
    SetIndicatorOptions();
    if (ShowChartLegend) legendLabel = CreateChartLegend();
 
-   // Indicator events like reversals occur "on-tick" and not on "bar-open" or "bar-close".
+   // Indicator events "reversal" and "breakout" occur on tick, not on "bar-open" or "bar-close".
    // We need a chart ticker to prevent invalid signals caused by ticks during data pumping.
-   if (!__tickTimerId && !__isTesting) {
+   if (!__isTesting && !__virtualTicksTimerId) {
       int hWnd = __ExecutionContext[EC.chart];
       int millis = 2000;                                         // a virtual tick every 2 seconds
-      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!__tickTimerId) return(catch("onInit(13)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
+      __virtualTicksTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!__virtualTicksTimerId) return(catch("onInit(13)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onInit(14)"));
 }
@@ -549,14 +549,15 @@ int onDeinit() {
    StoreStatus();
 
    // release the chart ticker
-   if (__tickTimerId > NULL) {
-      int id = __tickTimerId; __tickTimerId = NULL;
-      if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   if (__virtualTicksTimerId > 0) {
+      int tmp = __virtualTicksTimerId;
+      __virtualTicksTimerId = NULL;
+      if (!ReleaseTickTimer(tmp)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR));
    }
 
    // close an open history set
    if (recorder.hSet != 0) {
-      int tmp = recorder.hSet;
+      tmp = recorder.hSet;
       recorder.hSet = NULL;
       if (!HistorySet1.Close(tmp)) return(ERR_RUNTIME_ERROR);
    }

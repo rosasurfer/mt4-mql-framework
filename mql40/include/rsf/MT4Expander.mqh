@@ -44,7 +44,7 @@
    // charts and timeframes
    bool     IsCustomTimeframe(int timeframe);
    bool     IsStandardTimeframe(int timeframe);
-   int      SetupTickTimer(int hWnd, int millis, int flags);
+   int      SetupTickTimer(int hWnd, int milliseconds, int flags);
    bool     ReleaseTickTimer(int timerId);
 
    // configuration

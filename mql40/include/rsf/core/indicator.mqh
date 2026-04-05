@@ -9,7 +9,6 @@ extern int    __lpSuperContext;
 
 int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double __rates[][6];                                                 // current price series
-int    __tickTimerId;                                                // timer id for virtual ticks
 bool   __isOfflineChart = -1;                                        // initialized in start(), not before
 double  _Bid;                                                        // normalized versions of predefined vars Bid/Ask
 double  _Ask;                                                        // ...

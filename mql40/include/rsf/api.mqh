@@ -862,7 +862,7 @@ bool     ReopenAlertDialog(int sound);;
 string   SearchPathA(string file);
 string   SearchPathW(string file);
 bool     SetLogfileA(int ec[], string filename);;
-int      SetupTickTimer(int hWnd, int millis, int flags);;
+int      SetupTickTimer(int hWnd, int milliseconds, int flags);;
 bool     SetWindowDoubleA(int hWnd, string name, double value);;
 bool     SetWindowIntegerA(int hWnd, string name, int value);;
 bool     SetWindowStringA(int hWnd, string name, string value);;

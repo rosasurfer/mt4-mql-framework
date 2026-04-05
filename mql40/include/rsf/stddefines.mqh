@@ -46,6 +46,8 @@ int      last_error;                                              // last error 
 int      prev_error;                                              // last error of the previous start() call
 
 int      __orderStack[];                                          // FIFO stack of selected orders (per MQL module)
+int      __virtualTicks;                                          // virtual ticks in milliseconds (default: none)
+int      __virtualTicksTimerId;                                   // timer id for virtual ticks
 
 
 // special constants

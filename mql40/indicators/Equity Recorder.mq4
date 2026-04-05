@@ -72,11 +72,11 @@ int onInit() {
    legendLabel = CreateChartLegend();
 
    // setup a chart ticker
-   if (!__tickTimerId && !__isTesting) {
+   if (!__virtualTicksTimerId && !__isTesting) {
       int hWnd = __ExecutionContext[EC.chart];
       int millis = 1000;                                    // a virtual tick every second (1000 milliseconds)
-      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!__tickTimerId) return(catch("onInit(5)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      __virtualTicksTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!__virtualTicksTimerId) return(catch("onInit(5)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onInit(6)"));
 }
@@ -117,15 +117,17 @@ int onDeinit() {
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
       if (hSet[i] != 0) {
-         int tmp = hSet[i]; hSet[i] = NULL;
+         int tmp = hSet[i];
+         hSet[i] = NULL;
          if (!HistorySet1.Close(tmp)) return(ERR_RUNTIME_ERROR);
       }
    }
 
    // uninstall the chart ticker
-   if (__tickTimerId > NULL) {
-      int id = __tickTimerId; __tickTimerId = NULL;
-      if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   if (__virtualTicksTimerId > 0) {
+      tmp = __virtualTicksTimerId;
+      __virtualTicksTimerId = NULL;
+      if (!ReleaseTickTimer(tmp)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
 }
