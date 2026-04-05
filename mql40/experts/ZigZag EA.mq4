@@ -436,8 +436,8 @@ bool IsZigZagSignal(double &signal[]) {
       static int lastBarTime, lastBarReversalType;
       static bool lastBarIsReversal;
 
-      int reversalType;
-      double reversalPrice;
+      int reversalType = NULL;
+      double reversalPrice = NULL;
       bool isReversal = IsZigZagReversalBar(0, reversalType, reversalPrice);
 
       if (isReversal) {

@@ -1440,8 +1440,8 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
    int value = fromValue, sign, cross;
 
    for (int i=fromBar; i >= toBar; i--) {
-      trend        [i] = value;
-      unknownTrend [i] = -1;
+      trend       [i] = value;
+      unknownTrend[i] = -1;
 
       if (TrendBufferAsDecimal) {      // "Data Window": hide unknownTrend=-1
          combinedTrend[i] = trend[i];
