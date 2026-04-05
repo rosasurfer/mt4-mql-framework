@@ -572,7 +572,7 @@ int onDeinit() {
  */
 int onTick() {
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && ZigZag.Periods.Step) {
+   if (!__isSuperContext && __isChart && ZigZag.Periods.Step) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
    }
 
@@ -920,6 +920,13 @@ int onTick() {
                }
             }
          }
+      }
+   }
+
+   // debug suspect data update after assumed price feed outages
+   if (__isSuperContext) {
+      if (ValidBars && ChangedBars > 1) {
+         logDebug("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  ChangedBars=?  ValidBars=?");
       }
    }
    return(last_error);
