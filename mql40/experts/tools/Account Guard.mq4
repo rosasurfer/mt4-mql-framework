@@ -414,7 +414,7 @@ double ComputeClosedProfit(string symbol, datetime from) {
       if (!hst.tickets[i]) continue;                                 // skip discarded tickets
 
       if (hst.lotSizes[i] < 0.005) {                                 // lotSize = 0: hedging order
-         // TODO: check behaviour if OrderComment() is a custom value
+         // TODO: check behavior if OrderComment() is a custom value
          if (!StrStartsWith(hst.comments[i], "close hedge by #")) {
             return(!catch("ComputeClosedProfit(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
          }

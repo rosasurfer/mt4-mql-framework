@@ -177,7 +177,6 @@ bool     StrIsDigits(string value);;
 bool     StrIsEmailAddress(string value);;
 bool     StrIsInteger(string value);;
 bool     StrIsNumeric(string value);;
-bool     StrIsPhoneNumber(string value);;
 string   StrLeftTo(string value, string substring, int count=1);;
 string   StrPadLeft(string str, int pad_length, string pad_string=" ");;
 string   StrRepeat(string str, int times);;

@@ -4,7 +4,7 @@
  * @return string - object name or an empty string in case of errors
  */
 string CreateChartLegend() {
-   string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.chart];
+   string name = StringConcatenate(CHARTLEGEND_PREFIX, __ExecutionContext[EC.pid], ".", __ExecutionContext[EC.chart]);
 
    if (__isChart && !__isSuperContext) {
       if (ObjectFind(name) == -1) {                      // create a new label or reuse an existing one
@@ -28,7 +28,7 @@ string CreateChartLegend() {
  */
 bool RemoveChartLegend() {
    if (__isChart && !__isSuperContext) {
-      string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.chart];
+      string name = StringConcatenate(CHARTLEGEND_PREFIX, __ExecutionContext[EC.pid], ".", __ExecutionContext[EC.chart]);
       if (ObjectFind(name) != -1) {
          ObjectDelete(name);
          return(RearrangeChartLegends());
@@ -86,6 +86,17 @@ bool RearrangeChartLegends() {
          ObjectSet(name, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet(name, OBJPROP_XDISTANCE, xDist);
          ObjectSet(name, OBJPROP_YDISTANCE, yDist + i*lineHeight);
+      }
+   }
+
+   // notify a loaded EA to reposition its status display
+   string label = "EA.status";
+   if (ObjectFind(label) == 0) {
+      string text = StrTrim(ObjectDescription(label));   // format: {sid}|{status}
+      string status = StrRightFrom(text, "|");
+      if (status!="" && status!="undefined") {
+         // TODO: we need a much better/less repetive transport mechanism
+         //SendChartCommand("EA.command", "update-status-position");
       }
    }
    return(!catch("RearrangeChartLegends(1)"));
