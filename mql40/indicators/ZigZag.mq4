@@ -1345,8 +1345,13 @@ bool ProcessUpperCross(int bar) {
       sema1 = Low[lastSemBar];
       lastLegHigh = 0;                                               // reset last leg high
 
-      if (Signal.onReversal && __isChart && ChangedBars <= 2) {
-         onReversal(D_LONG, upperCross[bar]);
+      if (ChangedBars <= 2) {
+         if (Signal.onReversal && __isChart) {
+            onReversal(D_LONG, upperCross[bar]);
+         }
+         if (__isSuperContext) {
+            logInfo("ProcessUpperCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal up (bar="+ bar +", crossing level: "+ NumberToStr(upperCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         }
       }
    }
    return(true);
@@ -1425,8 +1430,13 @@ bool ProcessLowerCross(int bar) {
       sema1 = High[lastSemBar];
       lastLegLow = 0;                                                // reset last leg low
 
-      if (Signal.onReversal && __isChart && ChangedBars <= 2) {
-         onReversal(D_SHORT, lowerCross[bar]);
+      if (ChangedBars <= 2) {
+         if (Signal.onReversal && __isChart) {
+            onReversal(D_SHORT, lowerCross[bar]);
+         }
+         if (__isSuperContext) {
+            logInfo("ProcessLowerCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal down (bar="+ bar +", crossing level: "+ NumberToStr(lowerCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         }
       }
    }
    return(true);
