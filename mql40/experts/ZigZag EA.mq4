@@ -483,7 +483,7 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
 
    int unknownTrend = (combinedTrend >> 16) & 0xFFFF;             // extract HIWORD
    if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // convert 'signed short' to 'signed int'
-   if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  virtualTick="+ Tick.isVirtual +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
+   if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  "+ instance.name +"  virtualTick="+ Tick.isVirtual +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
    if (!unknownTrend) {
       int reversalOffset = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL_OFFSET, bar));
@@ -492,8 +492,8 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
          int semBar = bar + reversalOffset;                       // last semaphore bar before the reversal
          double semaphoreClose = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_SEMAPHORE_CLOSE, semBar);
          if (!semaphoreClose) {
-            if (!combinedTrend && !reversalOffset) logError("IsZigZagReversalBar(2)  virtualTick="+ Tick.isVirtual +"  ignoring invalid double crossing at bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend["+ bar +"]="+ combinedTrend +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  reversalOffset["+ bar +"]="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat), ERR_ILLEGAL_STATE);
-            else                                      catch("IsZigZagReversalBar(3)  virtualTick="+ Tick.isVirtual +"  unexpected semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  combinedTrend["+ bar +"]="+ combinedTrend +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  reversalOffset["+ bar +"]="+ reversalOffset +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat), ERR_ILLEGAL_STATE);
+            if (!combinedTrend && !reversalOffset) logError("IsZigZagReversalBar(2)  "+ instance.name +"  virtualTick="+ Tick.isVirtual +"  ignoring invalid double crossing at bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  reversalOffset="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat), ERR_ILLEGAL_STATE);
+            else                                      catch("IsZigZagReversalBar(3)  "+ instance.name +"  virtualTick="+ Tick.isVirtual +"  unexpected semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  combinedTrend["+ bar +"]="+ combinedTrend +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  reversalOffset["+ bar +"]="+ reversalOffset +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat), ERR_ILLEGAL_STATE);
             return(false);
          }
          if (semaphoreClose > High[semBar]-HalfPoint) {
@@ -504,6 +504,7 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
             reversalType  = MODE_UPPER;
             reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
          }
+         logDebug("IsZigZagReversalBar(4)  "+ instance.name +"  "+ ifString(reversalType == MODE_UPPER, "long", "short") +" reversal at bar="+ bar +" and price "+ NumberToStr(reversalPrice, PriceFormat) +": "+ TimeToStr(Time[bar]) +"  virtualTick="+ Tick.isVirtual +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  reversalOffset="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat), ERR_ILLEGAL_STATE);
          return(true);
       }
    }
