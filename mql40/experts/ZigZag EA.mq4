@@ -883,7 +883,10 @@ bool ReversePosition(double signal[]) {
    if (open.ticket != NULL) {
       // continue with an already reversed position
       if ((open.type==OP_BUY && sigOp==SIG_OP_LONG) || (open.type==OP_SELL && sigOp==SIG_OP_SHORT)) {
-         return(_true(logWarn("ReversePosition(4)  "+ instance.name +" to "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +": continuing with already open "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +" position #"+ open.ticket)));
+         string msg = "ReversePosition(4)  "+ instance.name +" to "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +": continuing with already open "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +" position #"+ open.ticket;
+         int error = ERR_ILLEGAL_STATE;
+         if (__isTesting) return(!catch(msg, error));
+         else             return(logWarn(msg, error));
       }
 
       // close the existing position
