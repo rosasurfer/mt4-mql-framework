@@ -1350,7 +1350,7 @@ bool ProcessUpperCross(int bar) {
             onReversal(D_LONG, upperCross[bar]);
          }
          if (__isSuperContext) {
-            logInfo("ProcessUpperCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal up (bar="+ bar +", crossing level: "+ NumberToStr(upperCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            logInfo("ProcessUpperCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal up (bar "+ bar +", crossing level: "+ NumberToStr(upperCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          }
       }
    }
@@ -1435,7 +1435,7 @@ bool ProcessLowerCross(int bar) {
             onReversal(D_SHORT, lowerCross[bar]);
          }
          if (__isSuperContext) {
-            logInfo("ProcessLowerCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal down (bar="+ bar +", crossing level: "+ NumberToStr(lowerCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            logInfo("ProcessLowerCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal down (bar "+ bar +", crossing level: "+ NumberToStr(lowerCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          }
       }
    }

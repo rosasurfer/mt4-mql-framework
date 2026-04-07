@@ -432,15 +432,15 @@ bool IsZigZagSignal(double &signal[]) {
       signal[SIG_PRICE] = 0;
       signal[SIG_OP   ] = 0;
 
-      static int lastBarTime, lastBarReversalType;
-      static bool lastBarIsReversal;
+      static int lastTickBarTime, lastTickReversalType;
+      static bool lastTickIsReversal;
 
       int reversalType = NULL;
       double reversalPrice = NULL;
       bool isReversal = IsZigZagReversalBar(0, reversalType, reversalPrice);
 
       if (isReversal) {
-         bool isNewReversal = (Time[0] != lastBarTime || !lastBarIsReversal || reversalType != lastBarReversalType);
+         bool isNewReversal = (Time[0] != lastTickBarTime || isReversal != lastTickIsReversal || reversalType != lastTickReversalType);
          if (isNewReversal) {
             signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
             signal[SIG_PRICE] = reversalPrice;
@@ -449,11 +449,11 @@ bool IsZigZagSignal(double &signal[]) {
             if (IsLogNotice()) logNotice("IsZigZagSignal(1)  "+ instance.name +" "+ ifString(reversalType == MODE_UPPER, "long", "short") +" reversal at "+ NumberToStr(reversalPrice, PriceFormat) +" (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
          }
       }
-      lastBarTime         = Time[0];
-      lastBarIsReversal   = isReversal;
-      lastBarReversalType = reversalType;
+      lastTick             = Ticks;
+      lastTickBarTime      = Time[0];
+      lastTickIsReversal   = isReversal;
+      lastTickReversalType = reversalType;
 
-      lastTick     = Ticks;
       lastSigType  = signal[SIG_TYPE ];
       lastSigPrice = signal[SIG_PRICE];
       lastSigOp    = signal[SIG_OP   ];
@@ -483,7 +483,10 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
 
    int unknownTrend = (combinedTrend >> 16) & 0xFFFF;             // extract HIWORD
    if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // convert 'signed short' to 'signed int'
-   if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  "+ instance.name +"  virtualTick="+ Tick.isVirtual +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
+   if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  "+ instance.name +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
+
+   static int lastTickBarTime, lastTickReversalType;
+   static bool lastTickIsReversal;
 
    if (!unknownTrend) {
       int reversalOffset = MathRound(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL_OFFSET, bar));
@@ -491,23 +494,31 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
       if (Abs(trend) == reversalOffset) {
          int semBar = bar + reversalOffset;                       // last semaphore bar before the reversal
          double semaphoreClose = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_SEMAPHORE_CLOSE, semBar);
-         if (!semaphoreClose) {
-            if (!combinedTrend && !reversalOffset) logError("IsZigZagReversalBar(2)  "+ instance.name +"  virtualTick="+ Tick.isVirtual +"  ignoring invalid double crossing at bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  reversalOffset="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat), ERR_ILLEGAL_STATE);
-            else                                      catch("IsZigZagReversalBar(3)  "+ instance.name +"  virtualTick="+ Tick.isVirtual +"  unexpected semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  combinedTrend["+ bar +"]="+ combinedTrend +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  reversalOffset["+ bar +"]="+ reversalOffset +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat), ERR_ILLEGAL_STATE);
-            return(false);
-         }
-         if (semaphoreClose > High[semBar]-HalfPoint) {
+
+         if (EQ(semaphoreClose, High[semBar])) {
             reversalType  = MODE_LOWER;
             reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, bar);
          }
-         else {
+         else if (EQ(semaphoreClose, Low[semBar])) {
             reversalType  = MODE_UPPER;
             reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
          }
-         logDebug("IsZigZagReversalBar(4)  "+ instance.name +"  "+ ifString(reversalType == MODE_UPPER, "long", "short") +" reversal at bar="+ bar +" and price "+ NumberToStr(reversalPrice, PriceFormat) +": "+ TimeToStr(Time[bar]) +"  virtualTick="+ Tick.isVirtual +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  reversalOffset="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat));
+         else return(!catch("IsZigZagReversalBar(2)  "+ instance.name +"  invalid semaphoreClose: combinedTrend["+ bar +"]="+ combinedTrend +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  reversalOffset["+ bar +"]="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat) +"  High["+ semBar +"]="+ NumberToStr(High[semBar], PriceFormat) +"  Low["+ semBar +"]="+ NumberToStr(Low[semBar], PriceFormat), ERR_ILLEGAL_STATE));
+
+         bool isNewReversal = (Time[0] != lastTickBarTime || !lastTickIsReversal || reversalType != lastTickReversalType);
+         if (isNewReversal) {
+            logInfo("IsZigZagReversalBar(3)  "+ instance.name +"  "+ ifString(reversalType == MODE_UPPER, "long", "short") +" reversal at bar "+ bar +" and price "+ NumberToStr(reversalPrice, PriceFormat) +": "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  reversalOffset="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat));
+         }
+         lastTickBarTime      = Time[0];
+         lastTickIsReversal   = true;
+         lastTickReversalType = reversalType;
          return(true);
       }
    }
+
+   lastTickBarTime      = Time[0];
+   lastTickIsReversal   = false;
+   lastTickReversalType = NULL;
    return(false);
 }
 
@@ -712,17 +723,15 @@ bool IsEntrySignal(double &signal[]) {
       return(false);
    }
 
-   // Donchian channel widening
-   if (Entry.onChannelWidening) {
-      if (IsDonchianChannelWidening(signal)) {
-         return(true);
-      }
-   }
-
-   // ZigZag reversal (is also a Donchian channel widening)
-   if (!Entry.onChannelWidening) {
-      if (IsZigZagSignal(signal)) {
-         return(true);
+   // ZigZag reversal (also a Donchian Channel widening)
+   if (IsZigZagSignal(signal)) {
+      return(true);
+   }                                            // TODO: A ZigZag reversal is also a Donchian Channel widening. Both
+                                                //  IsZigZagSignal() and IsDonchianChannelWidening() keep separate static tick
+   // Donchian channel widening                 //  state. If IsZigZagSignal() is not called on every tick it will wrongly
+   if (Entry.onChannelWidening) {               //  redetect the same widening reported by IsDonchianChannelWidening().
+      if (IsDonchianChannelWidening(signal)) {  //
+         return(true);                          // Solution: No static state at all, events must be signaled by the indicator
       }
    }
    return(false);
