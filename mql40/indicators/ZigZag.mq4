@@ -723,7 +723,7 @@ int onTick() {
 
       // whether the current bar is a reversal bar (not whether the current tick triggered a reversal)
       bool isReversalBar = false;
-      if (!unknownTrend[bar]) {
+      if (unknownTrend[bar] <= 0) {
          isReversalBar = (Abs(trend[bar]) == reversalOffset[bar]);
       }
 
@@ -741,7 +741,7 @@ int onTick() {
          if (isReversalBar) {
             if (upperCross[bar] && lowerCross[bar]) {                // special handling for double crossings
                bool dbc_isReversalBar = false;                       // process the 1st crossing
-               if (!dbc_unknownTrend) {                              // whether the first crossing represents a reversal bar
+               if (dbc_unknownTrend <= 0) {                          // whether the first crossing represents a reversal bar
                   dbc_isReversalBar = (Abs(dbc_trend) == dbc_reversalOffset);
                }
                if (!dbc_isReversalBar) {
