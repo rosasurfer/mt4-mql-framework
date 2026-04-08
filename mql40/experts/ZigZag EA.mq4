@@ -235,7 +235,7 @@ int onTick() {
 
    if (__isTesting) {
       static bool done = false;
-      if (Time[0] == D'2026.04.04 08:11' && !done) {
+      if (Time[0] == D'2026.04.04 08:00' && !done) {
          Tester.Pause();
          done = true;
       }
@@ -1078,12 +1078,18 @@ bool StopTrading(double trigger[]) {
    }
    if (instance.status == STATUS_STOPPED) instance.stopped = Tick.time;
 
-   if (__isChart || IsLogInfo()) {
+   bool isLogInfo = IsLogInfo();
+   bool isSignal  = (sigType==SIG_TYPE_TAKEPROFIT && /*signal.onExitPosition.telegram*/true && !__isTesting);
+
+   if (__isChart || isLogInfo || isSignal) {
       SS.TotalProfit();
       SS.ProfitStats();
       SS.StartStopConditions();
+
+      string message = "StopTrading(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats;
+      if (isLogInfo) logInfo(message);
+      if (isSignal) SendTelegramMessage("signal", message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
    }
-   if (IsLogInfo()) logInfo("StopTrading(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats);
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration

@@ -1,10 +1,7 @@
 /**
  * Signal related constants.
  */
-
-//double signal[3];                                // always a local var
-
-#define SIG_TYPE                 0                 // indexes of signal[]
+#define SIG_TYPE                 0                 // indexes of signal[] (a local var)
 #define SIG_PRICE                1
 #define SIG_OP                   2
 
