@@ -640,7 +640,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    string sPeriod    = PeriodDescription();
    string sTimeframe = TimeframeDescription(timeframe);
    string eventName  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ WindowExpertName() +".onInsideBar("+ sTimeframe +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1   = sTimeframe +" inside bar";
+   string message1   = sTimeframe +" inside bar (market: "+ NumberToStr(Bid, PriceFormat) +")";
    string message2   = Symbol() +": "+ message1;
    string localTime  = TimeToStr(TimeLocalEx("onInsideBar(1)"), TIME_MINUTES|TIME_SECONDS);
    string accountAlias = GetAccountAlias();
@@ -656,7 +656,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) logInfo("onInsideBar(2)  "+ message1 +" at "+ TimeToStr(closeTime) +"  H="+ NumberToStr(high, PriceFormat) +"  L="+ NumberToStr(low, PriceFormat));
+      if (eventAction) logInfo("onInsideBar(2)  "+ message1);
    }
 
    // sound: once per system
