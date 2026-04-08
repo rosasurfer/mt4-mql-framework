@@ -1201,7 +1201,7 @@ bool IsUpperCrossLast(int bar) {
  *
  * Note: If called from ProcessUpper/LowerCross() semaphore, trend and reversal data may not yet be set or hold values of a
  *       previous tick. Especially semaphoreOpen/Close may not hold the High/Low of the current bar because the current tick
- *       extended the range.
+ *       extended the bar range.
  */
 int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
    if (bar < 0 || bar >= Bars)                       return(_EMPTY(catch("FindSemaphore(1)  invalid parameter bar: "+ bar +" (out of range)", ERR_INVALID_PARAMETER)));
@@ -1296,6 +1296,10 @@ bool ProcessUpperCross(int bar) {
       return(!last_error);
    }
 
+   if (__isTesting && __isSuperContext && Time[0] == D'2026.04.04 08:14') {
+      debug("ProcessUpperCross(0.1)  Tick="+ Ticks +"  lastSemType="+ ifString(lastSemType==MODE_HIGH, "HIGH", "LOW") +" at "+ TimeToStr(Time[lastSemBar]));
+   }
+
    // another upper cross of a ZigZag leg up
    if (lastSemType == MODE_HIGH) {
       if (lastSemBar == bar) {                                       // double crossing
@@ -1347,7 +1351,7 @@ bool ProcessUpperCross(int bar) {
 
       if (ChangedBars <= 2) {
          if (Signal.onReversal && __isChart) {
-            onReversal(D_LONG, upperCross[bar]);
+            onReversal(bar, D_LONG, upperCross[bar]);
          }
          if (__isSuperContext) {
             logInfo("ProcessUpperCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal up (bar "+ bar +", crossing level: "+ NumberToStr(upperCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
@@ -1379,6 +1383,10 @@ bool ProcessLowerCross(int bar) {
          unknownTrend  [bar] =  0;                                   // current bar
       }
       return(!last_error);
+   }
+
+   if (__isTesting && __isSuperContext && Time[0] == D'2026.04.04 08:14') {
+      debug("ProcessLowerCross(0.1)  Tick="+ Ticks +"  lastSemType="+ ifString(lastSemType==MODE_HIGH, "HIGH", "LOW") +" at "+ TimeToStr(Time[lastSemBar]));
    }
 
    // another lower cross of a ZigZag leg down
@@ -1432,7 +1440,7 @@ bool ProcessLowerCross(int bar) {
 
       if (ChangedBars <= 2) {
          if (Signal.onReversal && __isChart) {
-            onReversal(D_SHORT, lowerCross[bar]);
+            onReversal(bar, D_SHORT, lowerCross[bar]);
          }
          if (__isSuperContext) {
             logInfo("ProcessLowerCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal down (bar "+ bar +", crossing level: "+ NumberToStr(lowerCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
@@ -1477,14 +1485,15 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
 
 
 /**
- * Event handler signaling new ZigZag reversals.
+ * Event handler for new ZigZag reversals. That's reversals triggered by the current tick.
  *
+ * @param  int    bar       - bar which triggered the reversal: 0 or 1
  * @param  int    direction - reversal direction: D_LONG | D_SHORT
- * @param  double level     - the crossed price level causing the signal
+ * @param  double level     - the price level causing the event (cross of upper/lower channel band)
  *
  * @return bool - success status
  */
-bool onReversal(int direction, double level) {
+bool onReversal(int bar, int direction, double level) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
    if (IsPossibleDataPumping()) {               // skip signals during possible data pumping
@@ -1719,11 +1728,7 @@ bool ParameterStepper(int direction, int keys) {
  * @return bool
  */
 bool IsPossibleDataPumping() {
-   if (__isTesting) return(false);
-
-   // TODO: review this seemingly strange implementation
-
-   int waitPeriod = 20 * SECONDS;
+   int waitPeriod = 20 * SECONDS;      // TODO: review this seemingly strange implementation
    datetime now = GetGmtTime();
    bool isPumping = true;
 
