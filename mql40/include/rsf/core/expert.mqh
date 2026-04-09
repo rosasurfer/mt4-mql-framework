@@ -200,10 +200,24 @@ int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
          if (__isChart) ShowStatus(__STATUS_OFF.reason);
-         static bool testerStopped = false;
-         if (__isTesting && !testerStopped) {                              // stop the tester in case of errors
-            Tester.Stop("start(1)");                                       // covers errors in init(), too
-            testerStopped = true;
+         if (__isTesting) {
+            static bool testerStopped = false;
+            if (!testerStopped) {                                          // stop the tester in case of errors
+               Tester.Stop("start(1)");                                    // covers errors in init(), too
+               testerStopped = true;
+            }
+         }
+         else {
+            static bool emergencyStop = false;
+            if (!emergencyStop) {                                          // invoke emergency stop
+               int emergency_tmp = last_error;
+               last_error = NO_ERROR;
+               __STATUS_OFF = false;
+               EmergencyStop();
+               __STATUS_OFF = true;
+               last_error = emergency_tmp;
+               emergencyStop = true;
+            }
          }
       }
       return(last_error);
@@ -282,8 +296,11 @@ int start() {
 
    // check all errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
+   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError]) {
       return(_last_error(CheckErrors("start(9)", error)));
+   }
+
+   // regular show status if not any errors
    return(ShowStatus(NO_ERROR));
 }
 
@@ -404,12 +421,12 @@ bool IsLibrary() {
 
 
 /**
- * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
+ * Check, update and display the program's error status. On error it activates flag __STATUS_OFF.
  *
  * @param  string caller           - location identifier of the caller
- * @param  int    error [optional] - enforced error (default: none)
+ * @param  int    error [optional] - explicit and enforced error (default: none)
  *
- * @return bool - whether the flag __STATUS_OFF is set
+ * @return bool - whether flag __STATUS_OFF is set
  */
 bool CheckErrors(string caller, int error = NULL) {
    // check DLL errors
@@ -463,10 +480,10 @@ bool CheckErrors(string caller, int error = NULL) {
          __STATUS_OFF.reason = error;
    }
 
-   // update variable last_error
+   // on error: show status
    if (__STATUS_OFF) {
       if (!last_error) last_error = __STATUS_OFF.reason;
-      ShowStatus(last_error);                               // on error show status once again
+      ShowStatus(last_error);
    }
    return(__STATUS_OFF);
 

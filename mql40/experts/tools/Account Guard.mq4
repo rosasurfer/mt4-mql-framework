@@ -497,6 +497,14 @@ bool CloseOpenOrders(string symbol = "") {
 
 
 /**
+ * Callback function invoked by the global error handler.
+ */
+void EmergencyStop() {
+   // does nothing in this EA
+}
+
+
+/**
  * Return a string representation of all input parameters (for logging purposes).
  *
  * @return string

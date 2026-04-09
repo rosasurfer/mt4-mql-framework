@@ -910,12 +910,9 @@ bool ReversePosition(double signal[]) {
    int ticket, oeFlags, oe[];
 
    if (open.ticket != NULL) {
-      // continue with an already reversed position
+      // fail on already reversed position (probably due to invalid ZigZag signals)
       if ((open.type==OP_BUY && sigOp==SIG_OP_LONG) || (open.type==OP_SELL && sigOp==SIG_OP_SHORT)) {
-         string msg = "ReversePosition(4)  "+ instance.name +" to "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +": continuing with already open "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +" position #"+ open.ticket;
-         int error = ERR_ILLEGAL_STATE;
-         if (__isTesting) return(!catch(msg, error));
-         else             return(logWarn(msg, error));
+         return(!catch("ReversePosition(4)  "+ instance.name +" to "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +": found already reversed "+ ifString(sigOp==SIG_OP_LONG, "long", "short") +" position #"+ open.ticket, ERR_ILLEGAL_STATE));
       }
 
       // close the existing position
@@ -1819,6 +1816,27 @@ bool CreateStatusBox() {
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
    return(!catch("CreateStatusBox(1)"));
+}
+
+
+/**
+ * Callback function invoked by the global error handler.
+ */
+void EmergencyStop() {
+   logInfo("EmergencyStop(1)  "+ instance.name +" invoked");
+
+   switch (instance.status) {
+      case STATUS_WAITING:
+      case STATUS_TRADING:
+         int tmp = last_error;
+         last_error = NO_ERROR;
+
+         double dNull[] = {0,0,0};        // manual signal type
+         StopTrading(dNull);
+
+         last_error = tmp;
+         break;
+   }
 }
 
 
