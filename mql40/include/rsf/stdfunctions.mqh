@@ -388,9 +388,16 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
       useWin32 = (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE);
    }
 
-   // the default flag MB_APPLMODAL may block the UI thread from processing messages (happens *sometimes* in test::deinit())
-   if (useWin32) int button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TASKMODAL|MB_TOPMOST|MB_SETFOREGROUND);
-   else              button = MessageBox(message, caption, flags);
+   int button;
+   if (useWin32) {
+      // No owner window + flag MB_TASKMODAL: only this combination prevents a UI thread deadlock while still blocking the
+      // main app. With owner window MessageBox() disables the given owner which in return causes a synchronous SendMessage()
+      // path between UI and tester thread. This path would create a deadlock as the tester waits for MessageBox() to return.
+      button = MessageBoxA(NULL, message, caption, flags|MB_TASKMODAL|MB_TOPMOST|MB_SETFOREGROUND);
+   }
+   else {
+      button = MessageBox(message, caption, flags);
+   }
 
    if (!(flags & MB_DONT_LOG)) logDebug("MessageBoxEx(1)  "+ message +" (response: "+ MessageBoxButtonToStrA(button) +")");
    return(button);
