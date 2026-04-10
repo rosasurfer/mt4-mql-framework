@@ -442,7 +442,7 @@ bool TestTick(int bar, int tick, datetime time, int trend, int unknownTrend, int
    }
 
    if (trend != test_trend[realTick] || unknownTrend != test_unknownTrend[realTick] || reversalOffset != test_reversalOffset[realTick]) {
-      return(!catch("TestTick(5)  "+ tick +" "+ TimeToStr(time, TIME_FULL) +" failed, expected: trend="+ test_trend[realTick] +"  unknownTrend="+ test_unknownTrend[realTick] +"  reversalOffset="+ test_reversalOffset[realTick] +",  found: "+ trend +", "+ unknownTrend +", "+ reversalOffset, ERR_RUNTIME_ERROR));
+      return(!catch("TestTick(5)  "+ tick +" at "+ TimeToStr(time, TIME_FULL) +" failed, expected: trend="+ test_trend[realTick] +"  unknownTrend="+ test_unknownTrend[realTick] +"  reversalOffset="+ test_reversalOffset[realTick] +",  found: "+ trend +", "+ unknownTrend +", "+ reversalOffset, ERR_RUNTIME_ERROR));
    }
    return(true);
 }
@@ -464,12 +464,17 @@ int onInit() {
          ArrayResize(test_unknownTrend,   iSize); ArrayInitialize(test_unknownTrend,   5555);
          ArrayResize(test_reversalOffset, iSize); ArrayInitialize(test_reversalOffset, 5555);
 
-         AddTestTick(D'04.04.2026 00:46:00',  14,  1, 1,  1);
-         AddTestTick(D'04.04.2026 00:47:00',  27,  1, 2,  1);
-         AddTestTick(D'04.04.2026 00:55:18', 119, 11, 0,  1);
-         AddTestTick(D'04.04.2026 01:00:40', 182, -1, 0,  1);
-         AddTestTick(D'04.04.2026 01:19:30', 416, 10, 0, 10);
-         AddTestTick(D'04.04.2026 01:19:35', 417, 10, 0, 10);
+         AddTestTick(D'04.04.2026 00:46:00',    14,  1, 1,  1);
+         AddTestTick(D'04.04.2026 00:47:00',    27,  1, 2,  1);
+         AddTestTick(D'04.04.2026 00:55:18',   119, 11, 0,  1);
+         AddTestTick(D'04.04.2026 01:00:40',   182, -1, 0,  1);
+         AddTestTick(D'04.04.2026 01:19:30',   416, 10, 0, 10);
+         AddTestTick(D'04.04.2026 01:19:35',   417, 10, 0, 10);
+         AddTestTick(D'04.04.2026 01:29:40',   542,  0, 0,  0);
+         AddTestTick(D'04.04.2026 01:30:00',   547,  0, 1,  0);
+         AddTestTick(D'04.04.2026 01:36:30',   631,  7, 0,  0);
+         AddTestTick(D'04.04.2026 08:22:30',  5518,  8, 0,  8);
+         AddTestTick(D'05.04.2026 17:02:10', 28949,  1, 0,  0);
       }
    }
 
@@ -752,7 +757,7 @@ int onTick() {
    for (int bar=startBar; bar >= 0; bar--) {
 
       if (__isTesting && !__isSuperContext && bar == 1) {
-         datetime times[] = { D'2026.04.04 01:15', D'2026.04.04 07:44', D'2026.04.04 08:04', D'2026.04.04 10:04', D'2026.04.04 12:09', D'2026.04.05 01:59', D'2026.04.05 03:19', D'2026.04.05 03:34', D'2026.04.05 09:49', D'2026.04.05 10:02', D'2026.04.05 16:51' };
+         datetime times[] = { D'2026.04.04 08:16', D'2026.04.05 16:56' };
          if (IntInArray(times, Time[0])) {
             Tester.Pause();
          }
@@ -856,8 +861,8 @@ int onTick() {
                   dbc_isReversalBar = (Abs(dbc_trend) == dbc_reversalOffset);
                }
                if (!dbc_isReversalBar) {
-                  if (semaphoreOpen[bar] < semaphoreClose[bar]) lowerCross[bar] = 0;   // crossing order "Low, High"
-                  else                                          upperCross[bar] = 0;   // crossing order "High, Low"
+                  if (semaphoreOpen[bar] < semaphoreClose[bar]) lowerCross[bar] = 0;   // crossing order "Low-High"
+                  else                                          upperCross[bar] = 0;   // crossing order "High-Low"
                }
                // keep the 2nd crossing (it always represents a reversal bar)
             }
@@ -958,7 +963,6 @@ int onTick() {
       }
 
       // --- old: track ZigZag balance --------------------------------------------------------------------------------------
-      //
       if (TrackZigZagBalance) {
          int currSem, prevBar, prevSem, size;
          int currBar = FindSemaphore(0, currSem); if (currBar < 0) return(last_error);
@@ -1441,22 +1445,31 @@ bool ProcessUpperCross(int bar) {
       }
       else {
          // cross can be a regular reversal from "short" to "long" (new leg up)
-         // or a leg up extension tick in the same bar (only bar 0)
+         // or a leg up extension tick in the same bar (only in bar 0)
          semaphoreOpen [bar] = upperCrossHigh[bar];                  // set/update semaphore
          semaphoreClose[bar] = upperCrossHigh[bar];
 
-         if (trend[bar+1] > 0) {                                     // leg up extension:
+         bool reversal;
+         if      (trend[bar+1] > 0) reversal = false;
+         else if (trend[bar+1] < 0) reversal = true;
+         else {                                                      // lastSemType was a double crossing at lastSemBar time
+            if (semaphoreOpen[lastSemBar] != semaphoreClose[lastSemBar]) {
+               reversal = true;                                      // If still a double crossing, then it's "High-Low" and
+            }                                                        // this is a new leg up.
+            else {
+               reversal = false;                                     // If not a double crossing anymore, then it was
+            }                                                        // "Low-High" and this is a leg up extension.
+         }
+         if (reversal) {                                             // new leg up
+            SetTrend(lastSemBar-1, 1, bar, true);                    // update trend/unknownTrend and reset reversals
+            reversalOffset[bar] = lastSemBar - bar;                  // set reversal to current bar
+         }
+         else {                                                      // leg up extension
             SetTrend(lastSemBar-1, 1, bar, false);                   // update trend/unknownTrend and
             reversalOffset[bar] = reversalOffset[bar+1];             // keep existing reversal
-         }
-         else if (trend[bar+1] < 0) {                                // new leg up
-            SetTrend(lastSemBar-1, 1, bar, true);                    // update trend/unknownTrend and reset reversals
-            reversalOffset[bar] = lastSemBar - bar;
-         }
-         else /*trend[bar+1] == 0*/{                                 // in fact lastSemBar if it was double crossing
-            trend         [bar] = 1;
-            unknownTrend  [bar] = 0;
-            reversalOffset[bar] = reversalOffset[bar+1];             // keep existing reversal
+            if (reversalOffset[bar] == -1) {
+               reversalOffset[bar] = lastSemBar - bar;               // if in reversal bar: set to current bar
+            }
          }
       }
 
@@ -1538,22 +1551,31 @@ bool ProcessLowerCross(int bar) {
       }
       else {
          // cross can be a regular reversal from "long" to "short" (new leg down)
-         // or a leg down extension tick in the same bar (only bar 0)
+         // or a leg down extension tick in the same bar (only in bar 0)
          semaphoreOpen [bar] = lowerCrossLow[bar];                   // set/update semaphore
          semaphoreClose[bar] = lowerCrossLow[bar];
 
-         if (trend[bar+1] < 0) {                                     // leg down extension:
+         bool reversal;
+         if      (trend[bar+1] > 0) reversal = true;
+         else if (trend[bar+1] < 0) reversal = false;
+         else {                                                      // lastSemType was a double crossing at lastSemBar time
+            if (semaphoreOpen[lastSemBar] != semaphoreClose[lastSemBar]) {
+               reversal = true;                                      // If still a double crossing, then it's "Low-High" and
+            }                                                        // this is a new leg down.
+            else {
+               reversal = false;                                     // If not a double crossing anymore, then it was
+            }                                                        // "High-Low" and this is a leg down extension.
+         }
+         if (reversal) {                                             // new leg down
+            SetTrend(lastSemBar-1, -1, bar, true);                   // update trend/unknownTrend and reset reversals
+            reversalOffset[bar] = lastSemBar - bar;                  // set reversal to current bar
+         }
+         else {                                                      // leg down extension
             SetTrend(lastSemBar-1, -1, bar, false);                  // update trend/unknownTrend and
             reversalOffset[bar] = reversalOffset[bar+1];             // keep existing reversal
-         }
-         else if (trend[bar+1] > 0) {                                // new leg down
-            SetTrend(lastSemBar-1, -1, bar, true);                   // update trend/unknownTrend and reset reversals
-            reversalOffset[bar] = lastSemBar - bar;
-         }
-         else /*trend[bar+1] == 0*/{                                 // in fact lastSemBar if it was double crossing
-            trend         [bar] = -1;
-            unknownTrend  [bar] = 0;
-            reversalOffset[bar] = reversalOffset[bar+1];             // keep existing reversal
+            if (reversalOffset[bar] == -1) {
+               reversalOffset[bar] = lastSemBar - bar;               // if in reversal bar: set to current bar
+            }
          }
       }
 
