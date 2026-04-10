@@ -202,7 +202,7 @@ int start() {
          if (__isChart) ShowStatus(__STATUS_OFF.reason);
          if (__isTesting) {
             static bool testerStopped = false;
-            if (!testerStopped) {                                          // stop the tester in case of errors
+            if (!testerStopped) {                                          // stop the tester
                Tester.Stop("start(1)");                                    // covers errors in init(), too
                testerStopped = true;
             }
@@ -220,7 +220,7 @@ int start() {
             }
          }
       }
-      return(last_error);
+      return(__STATUS_OFF.reason);
    }
 
    // resolve tick status

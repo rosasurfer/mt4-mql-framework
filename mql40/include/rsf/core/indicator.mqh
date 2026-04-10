@@ -229,10 +229,19 @@ bool initGlobals() {
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed()) {
-         if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
+         if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST) {
             return(__STATUS_OFF.reason);
+         }
          string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
          Comment(NL, NL, NL, NL, msg);                                           // 4 lines margin for symbol display and optional chart legend
+
+         if (__isTesting) {
+            static bool testerStopped = false;
+            if (!testerStopped) {                                                // stop the tester
+               Tester.Stop("start(1)");
+               testerStopped = true;
+            }
+         }
       }
       return(__STATUS_OFF.reason);
    }
