@@ -1823,7 +1823,7 @@ bool CreateStatusBox() {
  * Callback function invoked by the global error handler.
  */
 void EmergencyStop() {
-   logInfo("EmergencyStop(1)  "+ instance.name +" invoked");
+   logWarn("EmergencyStop(1)  "+ instance.name +" invoked");
 
    switch (instance.status) {
       case STATUS_WAITING:
