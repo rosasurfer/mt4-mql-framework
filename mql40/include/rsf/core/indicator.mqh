@@ -534,6 +534,7 @@ bool CheckErrors(string caller, int error = NULL) {
    int dll_warning = __ExecutionContext[EC.dllWarning];
    if (dll_warning != NO_ERROR) {
       logWarn(caller +"  DLL warning", dll_warning);        // signal the warning
+      ec_SetDllWarning(__ExecutionContext, NO_ERROR);
    }
 
    // check DLL errors
@@ -607,6 +608,7 @@ bool CheckErrors(string caller, int error = NULL) {
 
 #import "rsfMT4Expander.dll"
    int    ec_SetDllError           (int ec[], int error);
+   int    ec_SetDllWarning         (int ec[], int error);
    int    ec_SetProgramCoreFunction(int ec[], int function);
    string lpEXECUTION_CONTEXT_toStr(int lpEc);
 

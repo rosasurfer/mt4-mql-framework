@@ -433,6 +433,7 @@ bool CheckErrors(string caller, int error = NULL) {
    int dll_warning = __ExecutionContext[EC.dllWarning];
    if (dll_warning != NO_ERROR) {
       logWarn(caller +"  DLL warning", dll_warning);        // signal the warning
+      ec_SetDllWarning(__ExecutionContext, NO_ERROR);
    }
 
    // check DLL errors
@@ -635,9 +636,10 @@ datetime Test.GetEndDate() {
    bool   HistorySet3.Close  (int hSet);
 
 #import "rsfMT4Expander.dll"
-   int    ec_SetDllError           (int ec[], int error   );
+   int    ec_SetDllError           (int ec[], int error);
+   int    ec_SetDllWarning         (int ec[], int error);
    int    ec_SetProgramCoreFunction(int ec[], int function);
-   int    ec_SetRecorder           (int ec[], int mode    );
+   int    ec_SetRecorder           (int ec[], int mode);
 
    string Recorder_GetInput();                                    // Recorder functions in the Expander are no-ops to make
    string Recorder_GetNextMetricSymbol();                         // inclusion of "core/expert.recorder.mqh" optional.

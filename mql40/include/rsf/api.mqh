@@ -727,6 +727,7 @@ string   ec_ProgramName           (int &ec[]);;
 int      ec_SetAccountNumber      (int &ec[], int number);
 string   ec_SetAccountServer      (int &ec[], string server);;
 int      ec_SetDllError           (int &ec[], int error);;
+int      ec_SetDllWarning         (int &ex[], int error);:
 int      ec_SetLoglevel           (int &ec[], int level);;
 int      ec_SetLoglevelAlert      (int &ec[], int level);;
 int      ec_SetLoglevelDebug      (int &ec[], int level);;
