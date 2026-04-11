@@ -429,11 +429,18 @@ bool IsLibrary() {
  * @return bool - whether flag __STATUS_OFF is set
  */
 bool CheckErrors(string caller, int error = NULL) {
+   // check DLL warnings
+   int dll_warning = __ExecutionContext[EC.dllWarning];
+   if (dll_warning != NO_ERROR) {
+      logWarn(caller +"  DLL warning", dll_warning);        // signal the warning
+   }
+
    // check DLL errors
    int dll_error = __ExecutionContext[EC.dllError];
    if (dll_error != NO_ERROR) {                             // all DLL errors are terminating errors
-      if (dll_error != __STATUS_OFF.reason)                 // prevent recursion errors
+      if (dll_error != __STATUS_OFF.reason) {               // prevent recursion
          logFatal(caller +"  DLL error", dll_error);        // signal the error but don't overwrite MQL last_error
+      }
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = dll_error;
    }
@@ -474,8 +481,9 @@ bool CheckErrors(string caller, int error = NULL) {
          logInfo(caller, error);                            // don't SetLastError()
          break;
       default:
-         if (error != __STATUS_OFF.reason)                  // prevent recursion errors
+         if (error != __STATUS_OFF.reason) {                // prevent recursion
             catch(caller, error);                           // catch() calls SetLastError()
+         }
          __STATUS_OFF        = true;
          __STATUS_OFF.reason = error;
    }
