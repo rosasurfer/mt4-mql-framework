@@ -919,14 +919,17 @@ int onTick() {
       }
 
       // detect Donchian channel widenings
-      if (Sound.onChannelWidening) /*&&*/ if (ChangedBars <= 2) {
-         if (ChangedBars == 2) {
-            lastUpperBand = upperBand[1];
-            lastLowerBand = lowerBand[1];
-         }
+      if (Sound.onChannelWidening && ChangedBars <= 2) {
          if (lastUpperBand && lastLowerBand) {
-            if      (upperBand[0] > lastUpperBand+HalfPoint) onChannelWidening(D_LONG);
-            else if (lowerBand[0] < lastLowerBand-HalfPoint) onChannelWidening(D_SHORT);
+            int widening = 0;
+            if (ChangedBars == 2) {
+               if      (upperBand[1] > lastUpperBand+HalfPoint) widening = +1;
+               else if (lowerBand[0] < lastLowerBand-HalfPoint) widening = -1;
+               lastUpperBand = upperBand[1];
+               lastLowerBand = lowerBand[1];
+            }
+            if      (widening > 0 || upperBand[0] > lastUpperBand+HalfPoint) onChannelWidening(D_LONG);
+            else if (widening < 0 || lowerBand[0] < lastLowerBand-HalfPoint) onChannelWidening(D_SHORT);
          }
          lastUpperBand = upperBand[0];
          lastLowerBand = lowerBand[0];
