@@ -1455,15 +1455,13 @@ bool ProcessUpperCross(int bar) {
       //sema1 = Low[lastSemBar];
       //lastLegHigh = 0;
 
-      // TODO: this depends solely on window properties in onReversal() which breaks logging and fails in tester
-      //if (ChangedBars <= 2) {
-      //   if (Signal.onReversal && __isChart) {
-      //      onReversal(bar, D_LONG, upperCross[bar]);
-      //   }
-      //   if (__isSuperContext) {
-      //      logInfo("ProcessUpperCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal up (bar "+ bar +", crossing level: "+ NumberToStr(upperCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      //   }
-      //}
+      // TODO: depends solely on window properties which doesn't work with logging and fails in tester
+      if (reversalBar && ChangedBars <= 2) {
+         if (Signal.onReversal && __isChart) {
+            onReversal(bar, D_LONG, upperCross[bar]);
+         }
+         //if (__isSuperContext) logInfo("ProcessUpperCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal up (bar "+ bar +", crossing level: "+ NumberToStr(upperCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      }
    }
    return(reversalBar);
 }
@@ -1564,15 +1562,13 @@ bool ProcessLowerCross(int bar) {
       //sema1 = High[lastSemBar];
       //lastLegLow = 0;
 
-      // TODO: this depends solely on window properties in onReversal() which breaks logging and fails in tester
-      //if (ChangedBars <= 2) {
-      //   if (Signal.onReversal && __isChart) {
-      //      onReversal(bar, D_SHORT, lowerCross[bar]);
-      //   }
-      //   if (__isSuperContext) {
-      //      logInfo("ProcessLowerCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal down (bar "+ bar +", crossing level: "+ NumberToStr(lowerCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      //   }
-      //}
+      // TODO: depends solely on window properties which doesn't work with logging and fails in tester
+      if (reversalBar && ChangedBars <= 2) {
+         if (Signal.onReversal && __isChart) {
+            onReversal(bar, D_SHORT, lowerCross[bar]);
+         }
+         //if (__isSuperContext) logInfo("ProcessLowerCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal down (bar "+ bar +", crossing level: "+ NumberToStr(lowerCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      }
    }
    return(reversalBar);
 }
