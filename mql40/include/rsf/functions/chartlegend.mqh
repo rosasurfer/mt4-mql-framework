@@ -74,9 +74,9 @@ bool RearrangeChartLegends() {
    }
 
    // order and re-position labels by pid
-   int xDist      =  5;                               // x-position
-   int yDist      = 20;                               // y-position of the top-most legend
-   int lineHeight = 19;                               // line height of each legend
+   int xDist      =  5;                      // x-position of all legends
+   int yDist      = 20;                      // y-position of the top-most legend
+   int lineHeight = 19;                      // line height of each legend
 
    int size = ArraySize(pids);
    if (size > 0) {
@@ -86,17 +86,6 @@ bool RearrangeChartLegends() {
          ObjectSet(name, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet(name, OBJPROP_XDISTANCE, xDist);
          ObjectSet(name, OBJPROP_YDISTANCE, yDist + i*lineHeight);
-      }
-   }
-
-   // notify a loaded EA to reposition its status display
-   string label = "EA.status";
-   if (ObjectFind(label) == 0) {
-      string text = StrTrim(ObjectDescription(label));   // format: {sid}|{status}
-      string status = StrRightFrom(text, "|");
-      if (status!="" && status!="undefined") {
-         // TODO: we need a much better/less repetive transport mechanism
-         //SendChartCommand("EA.command", "update-status-position");
       }
    }
    return(!catch("RearrangeChartLegends(1)"));
