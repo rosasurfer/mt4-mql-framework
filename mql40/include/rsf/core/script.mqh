@@ -7,7 +7,7 @@ double  _Ask;                                                        // ...
 
 
 /**
- * MQL core init function for scripts.
+ * Core init function for scripts.
  *
  * @return int - error status
  */
@@ -49,14 +49,14 @@ int init() {
    // finish initialization
    if (!initGlobals()) if (CheckErrors("init(2)")) return(last_error);
 
-   // user-spezifische Init-Tasks ausführen
+   // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
-      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // schlägt fehl, wenn kein Tick vorhanden ist
+      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // fails if there is no tick yet
       if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return(last_error);
       if (!tickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE=0)", ERR_SYMBOL_NOT_AVAILABLE)));
 
@@ -67,11 +67,11 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
    // pre/postprocessing hooks
-   error = onInit();                                                 // Preprocessing-Hook
+   error = onInit();
    if (CheckErrors("init(10)", error)) return(last_error);
 
-   if (error != -1) {                                                // Postprocessing-Hook nur ausführen, wenn Preprocessing-Hook
-      error = afterInit();                                           // nicht mit -1 zurückkehrt.
+   if (error != -1) {                                                // conditional postprocessing hook
+      error = afterInit();
       if (CheckErrors("init(11)", error)) return(last_error);
    }
    return(last_error);
@@ -117,23 +117,23 @@ bool initGlobals() {
 
 
 /**
- * MQL core main function for scripts.
+ * Core main function for scripts.
  *
  * @return int - error status
  */
 int start() {
-   if (__STATUS_OFF) {                                                        // init()-Fehler abfangen
+   if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed()) {
          string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-         Comment(NL, NL, NL, msg);                                            // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
-         debug("start(1)  "+ msg);
+         Comment(NL, NL, NL, NL, msg);                                        // 4 lines margin for any chart legends
+         logDebug("start(1)  "+ msg);
       }
       return(__STATUS_OFF.reason);
    }
    __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
-   Ticks++;                                                                   // einfache Zähler, die konkreten Werte haben keine Bedeutung
-   Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im Tester- und Offline-Chart falsch !!!
+   Ticks++;                                                                   // simple counter, the actual value is meaningless
+   Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: invalid MODE_TIME values in tester and offline charts
    Tick.isVirtual = true;                                                     //
    ChangedBars    = -1;                                                       // in scripts not available
    ValidBars      = -1;                                                       // ...
@@ -149,13 +149,13 @@ int start() {
 
    if (!Tick.time) {
       int error = GetLastError();
-      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE)                           // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         if (CheckErrors("start(3)", error)) return(last_error);              // nicht sicher detektiert werden kann
+      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE)                           // ignore ERR_SYMBOL_NOT_AVAILABLE for now, since an offline chart
+         if (CheckErrors("start(3)", error)) return(last_error);              // can't yet be reliably detected on the first tick
    }
 
-   // Abschluß der Chart-Initialisierung überprüfen
-   if (!(__ExecutionContext[EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {  // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
-      if (!Bars) {                                                            // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
+   // check a finished chart initialization
+   if (!(__ExecutionContext[EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {  // Bars can be 0 (zero) if the script starts on an empty chart or
+      if (!Bars) {                                                            // if the chart hasn't yet been fully initialized on terminal start
          return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
       }
    }
@@ -166,23 +166,24 @@ int start() {
 
    // check all errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
+   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError]|__ExecutionContext[EC.dllWarning]) {
       CheckErrors("start(6)", error);
+   }
    return(last_error);
 }
 
 
 /**
- * MQL core deinit function for scripts.
+ * Core deinit function for scripts.
  *
  * @return int - error status
  */
 int deinit() {
    __CoreFunction = CF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION) {
       return(last_error);
-
+   }
    if (SyncMainContext_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
       return(CheckErrors("deinit(1)->SyncMainContext_deinit()") + LeaveContext(__ExecutionContext));
    }
@@ -259,14 +260,15 @@ bool CheckErrors(string caller, int error = NULL) {
    // check DLL warnings
    int dll_warning = __ExecutionContext[EC.dllWarning];
    if (dll_warning != NO_ERROR) {
-      logWarn(caller +"  DLL warning", dll_warning);        // signal the warning
+      logWarn(caller +"  DLL warning", dll_warning);
+      ec_SetDllWarning(__ExecutionContext, NO_ERROR);
    }
 
    // check DLL errors
    int dll_error = __ExecutionContext[EC.dllError];
    if (dll_error != NO_ERROR) {                             // all DLL errors are terminating errors
       if (dll_error != __STATUS_OFF.reason) {               // prevent recursion
-         logFatal(caller +"  DLL error", dll_error);        // signal the error but don't overwrite MQL last_error
+         logFatal(caller +"  DLL error", dll_error);        // no catch(): don't overwrite MQL last_error
       }
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = dll_error;
@@ -323,6 +325,7 @@ bool CheckErrors(string caller, int error = NULL) {
 
 
 #import "rsfMT4Expander.dll"
+   int ec_SetDllWarning         (int ec[], int error);
    int ec_SetProgramCoreFunction(int ec[], int function);
 
    int SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);

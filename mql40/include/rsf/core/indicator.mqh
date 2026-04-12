@@ -15,7 +15,7 @@ double  _Ask;                                                        // ...
 
 
 /**
- * MQL core init function for indicators.
+ * Core init function for indicators.
  *
  * @return int - error status
  */
@@ -81,7 +81,7 @@ int init() {
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // fails if there is no tick yet, e.g.
-      error = GetLastError();                                        // - symbol not yet subscribed (on start or account/template change), it shows up later
+      error = GetLastError();                                        // - symbol not yet subscribed but may appear later (start, account/template change)
       if (IsError(error)) {                                          // - synthetic symbol in offline chart
          if (error == ERR_SYMBOL_NOT_AVAILABLE)    return(_last_error(logInfo("init(4)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
          if (CheckErrors("init(6)", error))        return(last_error);
@@ -108,28 +108,25 @@ int init() {
       }
    }
 
-   /*
-   User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
-
-   Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
-   und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
-   Solution: Funktion ProgramInitReason() und die neu eingeführten Konstanten INITREASON_*.
-
-   // Execute init() event handlers. The reason-specific handlers are executed only if onInit() returns without errors.
+   // Issue:    Built-in UninitializeReason() codes and their meanings vary across terminal versions and are not suitable
+   //           for clearly distinguishing between various initialization scenarios.
+   // Solution: Function ProgramInitReason() and the INITREASON_* constants provided by this framework.
    //
-   +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
-   | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   | I = indicators
-   | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      | E = experts
-   | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         | S = scripts
-   | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
-   | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
-   | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
-   | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
-   | IR_ACCOUNTCHANGE     | account changed                               | no input dialog |   I         |
-   | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
-   | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql-framework/issues/1
-   +----------------------+-----------------------------------------------+-----------------+-------------+
-   */
+   // Execute custom init() reason handlers. Reason-specific handlers are executed only if onInit() returns successful.
+   //
+   // +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
+   // | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   | I = indicators
+   // | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      | E = experts
+   // | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         | S = scripts
+   // | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
+   // | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
+   // | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
+   // | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
+   // | IR_ACCOUNTCHANGE     | account changed                               | no input dialog |   I         |
+   // | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
+   // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql-framework/issues/1#
+   // +----------------------+-----------------------------------------------+-----------------+-------------+
+   //
    error = onInit();                                                             // preprocessing hook
                                                                                  //
    if (!error && !__STATUS_OFF) {                                                //
@@ -152,11 +149,11 @@ int init() {
       error = afterInit();                                                       // postprocessing hook
    }
 
-   // nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   // don't wait for the next tick after changing input parameters and returning to the "Indicators List" window
    if (!error && !__STATUS_OFF) {
       if (initReason == INITREASON_PARAMETERS) {
-         Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
-      }                                            // TODO: Nicht im Tester-Chart. Oder etwa doch?
+         Chart.SendTick();                         // TODO: only if window "Indicators List" exists (not when changing a single indicator)
+      }                                            // TODO: not in the tester (or should we?)
    }
 
    CheckErrors("init(15)");
@@ -170,16 +167,16 @@ int init() {
  * @return bool - success status
  */
 bool initGlobals() {
-   // Terminal bug 1: On opening of a new chart window and on account change the global vars Digits and Point are set to the
-   //                 values stored in the applied template, irrespective of the real symbol properties. This affects only
-   //                 the first init() call, in start() the true values have been applied.
+   // Bug 1: On opening of a new chart window and on account change the global vars 'Digits' and 'Point' are set to the
+   //        values stored in the applied template, irrespective of the real symbol properties. This affects only the first
+   //        init() call of indicators. In start() the true symbol values have been applied.
    //
-   // Terminal bug 2: In terminals build ???-??? above bug is permanent and the built-in vars Digits and Point are unusable.
+   // Bug 2: In terminals build ??? above bug is permanent and the built-in vars 'Digits' and 'Point' are unusable.
    //
-   // Workaround: In init() Digits and Point must be read from "symbols.raw". To work around broker possible configuration
-   //             errors there should be a way to overwrite specific properties via the framework configuration.
+   // Workaround: In init() 'Digits' and 'Point' must be read from "symbols.raw". To work around possible broker configuration
+   //             errors there should be a way to overwrite specific symbol properties via the framework configuration.
    //
-   // TODO: implement workaround in the Expander
+   // TODO: implement workaround in the MT4Expander
    //
    __isChart   = (__ExecutionContext[EC.chart] != 0);
    __isTesting = (__ExecutionContext[EC.testing] || IsTesting());
@@ -218,11 +215,10 @@ bool initGlobals() {
 
 
 /**
- * MQL core main function for indicators.
+ * Core main function for indicators.
  *
- * Before execution the global var 'last_error' is reset and an existing error is stored in var 'prev_error'. If indicator
- * initialization returned with ERS_TERMINAL_NOT_YET_READY an attempt is made to re-execute initialization. On repeated
- * initialization errors execution stops.
+ * If init() returned with ERS_TERMINAL_NOT_YET_READY an attempt is made to re-execute initialization.
+ * On repeated initialization errors execution stops.
  *
  * @return int - error status
  */
@@ -233,7 +229,7 @@ int start() {
             return(__STATUS_OFF.reason);
          }
          string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-         Comment(NL, NL, NL, NL, msg);                                           // 4 lines margin for symbol display and optional chart legend
+         Comment(NL, NL, NL, NL, msg);                                           // 4 lines margin for any chart legends
 
          if (__isTesting) {
             static bool testerStopped = false;
@@ -246,8 +242,8 @@ int start() {
       return(__STATUS_OFF.reason);
    }
 
-   // check chart initialization: start() is never called without history. However on older builds Bars=0
-   // was a spurious issue sometimes observed on terminal start.
+   // start() is never called without history. However on older builds Bars=0 (zero) was observed.
+   // check a finished chart initialization (spurious issue observed on older terminals at terminal start)
    if (!Bars) return(_last_error(logInfo("start(1)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(2)")));
 
    // initialize ValidBars, ChangedBars and ShiftedBars (updated again later)
@@ -256,15 +252,15 @@ int start() {
    ShiftedBars = 0;
 
    // determine tick status
-   Ticks++;                                                                      // an increasing counter without actual meaning
-   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                  // TODO: MODE_TIME is in synthetic charts 0
+   Ticks++;                                                                      // simple counter, the actual value is meaningless
+   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                  // TODO: MODE_TIME in synthetic charts is 0 (zero)
    if (!Tick.time) {
       int error = GetLastError();
       if (error && error!=ERR_SYMBOL_NOT_AVAILABLE) {                            // ignore ERR_SYMBOL_NOT_AVAILABLE as we can't yet safely detect an offline chart on the 1st tick
          if (CheckErrors("start(3)  Tick.time = 0", error)) return(last_error);
       }
    }
-   static double prevVolume;                                                     // not a static integer to prevent precision errors during comparison
+   static double prevVolume;                                                     // not an integer to prevent precision errors during comparison
    if      (!Volume[0] || !prevVolume) Tick.isVirtual = true;
    else if ( Volume[0] == prevVolume)  Tick.isVirtual = true;
    else                                Tick.isVirtual = (ChangedBars > 2);
@@ -272,12 +268,12 @@ int start() {
 
    // handle account changes
    // ----------------------
-   // At terminal start AccountNumber() returns 0 until the trade server connection is fully established.
+   // At terminal start AccountNumber() returns 0 (zero) until the trade server connection is fully established.
    //
    // On account change the account functions immediately report the new account but IsConnected() returns FALSE.
    //
-   // If no history exists for the new account up to two ticks may be executed on old history (with valid bars). Not before
-   // the first tick on new history all bars will be indicated as changed.
+   // If no history exists for the new account up to two ticks may be executed on old history (with valid bars).
+   // Not before the first tick on new history all bars will be indicated as changed.
    //
    static string prevAccountServer = "";
    static int    prevAccountNumber;
@@ -321,13 +317,13 @@ int start() {
       }
    }
 
-   // determine ShiftedBars to speed-up offline chart calculations
-   // ------------------------------------------------------------
+   // resolve ShiftedBars to speed-up offline chart calculations
+   // ----------------------------------------------------------
    // On Chart->Refresh IndicatorCounted() reports all bars as changed. This affects user-updated offline charts as standard indicators will recalculate all bars on
    // every tick. By defining "ShiftedBars" an indicator can use the ShiftIndicatorBuffer() functions to achieve the same calculation performance as in online charts.
    // "ShiftedBars" will be defined only on an offline refresh, that's when IndicatorCounted() repeatedly reports all bars as changed (prevBars && !ValidBars).
    //
-   // The below code works under the following assumptions:
+   // The below code works under following assumptions:
    // - new bars/ticks may only be added to history begin and old bars may only be shifted off from history end
    // - all updates must include either the begin or the end of the history (no separate updates in the middle)
    // - if the full history is replaced then either number of Bars, Time[0] or Time[Bars-1] must change (e.g. by modifying the timestamp of Time[Bars-1] by a random second)
@@ -412,7 +408,7 @@ int start() {
 
    // check all errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError]) {
+   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError]|__ExecutionContext[EC.dllWarning]) {
       CheckErrors("start(7)", error);
    }
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
@@ -421,7 +417,7 @@ int start() {
 
 
 /**
- * MQL core deinit function for indicators.
+ * Core deinit function for indicators.
  *
  * @return int - error status
  */
@@ -440,7 +436,7 @@ int deinit() {
    if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
       return(error|last_error|LeaveContext(__ExecutionContext));
 
-   // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
+   // Execute custom deinit() reason handlers. Execution stops if a handler returns with an error.
    //
    if (!error) error = onDeinit();                                      // preprocessing hook
    if (!error) {                                                        //
@@ -533,7 +529,7 @@ bool CheckErrors(string caller, int error = NULL) {
    // check DLL warnings
    int dll_warning = __ExecutionContext[EC.dllWarning];
    if (dll_warning != NO_ERROR) {
-      logWarn(caller +"  DLL warning", dll_warning);        // signal the warning
+      logWarn(caller +"  DLL warning", dll_warning);
       ec_SetDllWarning(__ExecutionContext, NO_ERROR);
    }
 
@@ -541,7 +537,7 @@ bool CheckErrors(string caller, int error = NULL) {
    int dll_error = __ExecutionContext[EC.dllError];
    if (dll_error != NO_ERROR) {                             // all DLL errors are terminating errors
       if (dll_error != __STATUS_OFF.reason) {               // prevent recursion
-         logFatal(caller +"  DLL error", dll_error);        // signal the error but don't overwrite MQL last_error
+         logFatal(caller +"  DLL error", dll_error);        // no catch(): don't overwrite MQL last_error
       }
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = dll_error;

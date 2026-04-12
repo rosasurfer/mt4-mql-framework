@@ -9,7 +9,7 @@ double  _Ask;                                                     // ...
 
 
 /**
- * MQL core init function for experts.
+ * Core init function for experts.
  *
  * @return int - error status
  */
@@ -62,7 +62,7 @@ int init() {
    if (!__ExecutionContext[EC.accountServer]) GetAccountServer();
    if (!__ExecutionContext[EC.accountNumber]) GetAccountNumber();
 
-   // finish initialization of global vars
+   // finish initialization
    ec_SetMqlError(__ExecutionContext, NO_ERROR);
    ec_SetDllError(__ExecutionContext, NO_ERROR);
    if (!initGlobals()) if (CheckErrors("init(3)")) return(last_error);
@@ -75,7 +75,7 @@ int init() {
    if (initFlags & INIT_PIPVALUE && 1) {
       double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);      // fails if there is no tick yet
       error = GetLastError();
-      if (IsError(error)) {                                       // symbol not yet subscribed (start, account/template change), it may appear later
+      if (IsError(error)) {                                       // symbol not yet subscribed but may appear later (start, account/template change)
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                   // synthetic symbol in offline chart
             return(logInfo("init(5)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(6)", error)) return(last_error);
@@ -138,7 +138,11 @@ int init() {
       }
    }
 
-   // Execute custom init() event handlers. The reason-specific handlers are executed only if onInit() returns without errors.
+   // Issue:    Built-in UninitializeReason() codes and their meanings vary across terminal versions and are not suitable
+   //           for clearly distinguishing between various initialization scenarios.
+   // Solution: Function ProgramInitReason() and the INITREASON_* constants provided by this framework.
+   //
+   // Execute custom init() reason handlers. Reason-specific handlers are executed only if onInit() returns successful.
    //
    // +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
    // | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   | I = indicators
@@ -149,7 +153,7 @@ int init() {
    // | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
    // | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
    // | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
-   // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql-framework/issues/1
+   // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql-framework/issues/1#
    // +----------------------+-----------------------------------------------+-----------------+-------------+
    //
    error = onInit();                                                       // preprocessing hook
@@ -191,7 +195,7 @@ int init() {
 
 
 /**
- * MQL core main function for experts. If called after an init() cycle and init() returned with ERS_TERMINAL_NOT_YET_READY,
+ * Core main function for experts. If called after an init() cycle and init() returned with ERS_TERMINAL_NOT_YET_READY,
  * init() is called again until the terminal is "ready".
  *
  * @return int - error status
@@ -224,7 +228,7 @@ int start() {
    }
 
    // resolve tick status
-   Ticks++;                                                                // simple counter, the value is meaningless
+   Ticks++;                                                                // simple counter, the actual value is meaningless
    Tick.time = MarketInfo(Symbol(), MODE_TIME);
    static int lastVolume;
    if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
@@ -260,17 +264,14 @@ int start() {
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
-   // check a finished chart initialization (spurious issue which was observed on older terminals at terminal start)
-   if (!Bars) return(ShowStatus(SetLastError(logInfo("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
-
    // check tick value if configured
    if (__ExecutionContext[EC.programInitFlags] & INIT_PIPVALUE && 1) {     // on "Market Watch" -> "Context menu" -> "Hide all" all symbols are unsubscribed
       if (!MarketInfo(Symbol(), MODE_TICKVALUE)) {                         // and the used ones re-subscribed (for a moment: tickvalue = 0 and no error)
          error = GetLastError();
          if (error != NO_ERROR) {
-            if (CheckErrors("start(4)", error)) return(last_error);
+            if (CheckErrors("start(3)", error)) return(last_error);
          }
-         return(ShowStatus(SetLastError(logInfo("start(5)  MarketInfo("+ Symbol() +", MODE_TICKVALUE=0)", ERS_TERMINAL_NOT_YET_READY))));
+         return(ShowStatus(SetLastError(logInfo("start(4)  MarketInfo("+ Symbol() +", MODE_TICKVALUE=0)", ERS_TERMINAL_NOT_YET_READY))));
       }
    }
 
@@ -279,34 +280,34 @@ int start() {
    _Bid = NormalizeDouble(Bid, Digits);                                    // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                                    //
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Tick.isVirtual, _Bid, _Ask) != NO_ERROR) {
-      if (CheckErrors("start(6)->SyncMainContext_start()")) return(last_error);
+      if (CheckErrors("start(5)->SyncMainContext_start()")) return(last_error);
    }
 
    // call the userland main function
    error = onTick();
-   if (error && error!=last_error) CheckErrors("start(7)", error);
+   if (error && error!=last_error) CheckErrors("start(6)", error);
 
    // record performance metrics
    if (recorder.mode != NULL) {
       if (!Recorder_start()) {
          recorder.mode = NULL;
-         return(_last_error(CheckErrors("start(8)->Recorder_start()")));
+         return(_last_error(CheckErrors("start(7)->Recorder_start()")));
       }
    }
 
-   // check all errors
+   // handle all possible errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError]) {
-      return(_last_error(CheckErrors("start(9)", error)));
+   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError]|__ExecutionContext[EC.dllWarning]) {
+      return(_last_error(CheckErrors("start(8)", error)));
    }
 
-   // regular show status if not any errors
+   // regular show status if not any error
    return(ShowStatus(NO_ERROR));
 }
 
 
 /**
- * MQL core deinit function for experts.
+ * Core deinit function for experts.
  *
  * @return int - error status
  *
@@ -321,9 +322,9 @@ int start() {
 int deinit() {
    __CoreFunction = CF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION) {
       return(last_error);
-
+   }
    if (SyncMainContext_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
       return(CheckErrors("deinit(1)->SyncMainContext_deinit()") + LeaveContext(__ExecutionContext));
    }
@@ -432,7 +433,7 @@ bool CheckErrors(string caller, int error = NULL) {
    // check DLL warnings
    int dll_warning = __ExecutionContext[EC.dllWarning];
    if (dll_warning != NO_ERROR) {
-      logWarn(caller +"  DLL warning", dll_warning);        // signal the warning
+      logWarn(caller +"  DLL warning", dll_warning);
       ec_SetDllWarning(__ExecutionContext, NO_ERROR);
    }
 
@@ -440,7 +441,7 @@ bool CheckErrors(string caller, int error = NULL) {
    int dll_error = __ExecutionContext[EC.dllError];
    if (dll_error != NO_ERROR) {                             // all DLL errors are terminating errors
       if (dll_error != __STATUS_OFF.reason) {               // prevent recursion
-         logFatal(caller +"  DLL error", dll_error);        // signal the error but don't overwrite MQL last_error
+         logFatal(caller +"  DLL error", dll_error);        // no catch(): don't overwrite MQL last_error
       }
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = dll_error;
