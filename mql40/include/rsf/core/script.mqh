@@ -47,32 +47,32 @@ int init() {
    if (!__ExecutionContext[EC.accountNumber]) GetAccountNumber();
 
    // finish initialization
-   if (!initGlobals()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initGlobals()) if (HandleErrors("init(2)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
-      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
+      if (!StringLen(GetServerTimezone())) return(_last_error(HandleErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // fails if there is no tick yet
-      if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return(last_error);
-      if (!tickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE=0)", ERR_SYMBOL_NOT_AVAILABLE)));
+      if (IsError(catch("init(4)"))) if (HandleErrors("init(5)")) return(last_error);
+      if (!tickSize) return(_last_error(HandleErrors("init(6)  MarketInfo(MODE_TICKSIZE=0)", ERR_SYMBOL_NOT_AVAILABLE)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return(last_error);
-      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE=0)", ERR_SYMBOL_NOT_AVAILABLE)));
+      if (IsError(catch("init(7)"))) if (HandleErrors("init(8)")) return(last_error);
+      if (!tickValue) return(_last_error(HandleErrors("init(9)  MarketInfo(MODE_TICKVALUE=0)", ERR_SYMBOL_NOT_AVAILABLE)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
    // pre/postprocessing hooks
    error = onInit();
-   if (CheckErrors("init(10)", error)) return(last_error);
+   if (HandleErrors("init(10)", error)) return(last_error);
 
    if (error != -1) {                                                // conditional postprocessing hook
       error = afterInit();
-      if (CheckErrors("init(11)", error)) return(last_error);
+      if (HandleErrors("init(11)", error)) return(last_error);
    }
    return(last_error);
 }
@@ -144,30 +144,28 @@ int start() {
    _Bid = NormalizeDouble(Bid, Digits);                                       // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                                       //
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Tick.isVirtual, _Bid, _Ask) != NO_ERROR) {
-      if (CheckErrors("start(2)->SyncMainContext_start()")) return(last_error);
+      if (HandleErrors("start(2)->SyncMainContext_start()")) return(last_error);
    }
 
    if (!Tick.time) {
       int error = GetLastError();
       if (error && error!=ERR_SYMBOL_NOT_AVAILABLE)                           // ignore ERR_SYMBOL_NOT_AVAILABLE for now, since an offline chart
-         if (CheckErrors("start(3)", error)) return(last_error);              // can't yet be reliably detected on the first tick
+         if (HandleErrors("start(3)", error)) return(last_error);             // can't yet be reliably detected on the first tick
    }
 
-   // check a finished chart initialization
-   if (!(__ExecutionContext[EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {  // Bars can be 0 (zero) if the script starts on an empty chart or
-      if (!Bars) {                                                            // if the chart hasn't yet been fully initialized on terminal start
-         return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
-      }
+   // check a finished chart initialization                                   // Bars can be 0 (zero) if the script starts on an empty chart or
+   if (!(__ExecutionContext[EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {  // if the chart hasn't yet been fully initialized on terminal start
+      if (!Bars) return(_last_error(HandleErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
    }
 
    // call the userland main function
    error = onStart();
-   if (error && error!=last_error) CheckErrors("start(5)", error);
+   if (error && error!=last_error) HandleErrors("start(5)", error);
 
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError]|__ExecutionContext[EC.dllWarning]) {
-      CheckErrors("start(6)", error);
+      HandleErrors("start(6)", error);
    }
    return(last_error);
 }
@@ -185,7 +183,7 @@ int deinit() {
       return(last_error);
    }
    if (SyncMainContext_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
-      return(CheckErrors("deinit(1)->SyncMainContext_deinit()") + LeaveContext(__ExecutionContext));
+      return(HandleErrors("deinit(1)->SyncMainContext_deinit()") + LeaveContext(__ExecutionContext));
    }
 
    int error = catch("deinit(2)");                    // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
@@ -194,7 +192,7 @@ int deinit() {
    if (!error) error = afterDeinit();                 // postprocessing hook
    if (!__isTesting) DeleteRegisteredObjects();
 
-   return(CheckErrors("deinit(3)") + LeaveContext(__ExecutionContext));
+   return(HandleErrors("deinit(3)") + LeaveContext(__ExecutionContext));
 }
 
 
@@ -249,14 +247,14 @@ bool IsLibrary() {
 
 
 /**
- * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
+ * Check for and handle any errors. On error activate flag __STATUS_OFF.
  *
  * @param  string caller           - location identifier of the caller
  * @param  int    error [optional] - enforced error (default: none)
  *
- * @return bool - whether the flag __STATUS_OFF is set
+ * @return bool - whether flag __STATUS_OFF is set
  */
-bool CheckErrors(string caller, int error = NULL) {
+bool HandleErrors(string caller, int error = NULL) {
    // check DLL warnings
    int dll_warning = __ExecutionContext[EC.dllWarning];
    if (dll_warning != NO_ERROR) {

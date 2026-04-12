@@ -31,7 +31,7 @@ int SetLastError(int error, int param = NULL) {
       ec_SetMqlError(__ExecutionContext, error);
    }
    last_error = error;
-   if (error && IsExpert()) CheckErrors("SetLastError(1)");       // immediately update __STATUS_OFF in experts
+   if (error && IsExpert()) HandleErrors("SetLastError(1)");      // immediately update __STATUS_OFF in experts
    return(error);
 }
 

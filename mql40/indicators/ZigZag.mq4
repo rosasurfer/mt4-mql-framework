@@ -432,10 +432,7 @@ bool TestTick(int bar, int tick, datetime time, int trend, int unknownTrend, int
          }
       }
    }
-   if (!realTick) {
-      //debug("TestTick(4)  "+ tick +" "+ TimeToStr(time, TIME_FULL) +" not found");
-      return(true);
-   }
+   if (!realTick) return(true);
 
    if (trend != test_trend[realTick] || unknownTrend != test_unknownTrend[realTick] || reversalOffset != test_reversalOffset[realTick]) {
       return(!catch("TestTick(5)  "+ tick +" at "+ TimeToStr(time, TIME_FULL) +" failed, expected: trend="+ test_trend[realTick] +"  unknownTrend="+ test_unknownTrend[realTick] +"  reversalOffset="+ test_reversalOffset[realTick] +",  found: "+ trend +", "+ unknownTrend +", "+ reversalOffset, ERR_RUNTIME_ERROR));
@@ -1175,7 +1172,6 @@ bool RecordVirtualProfit() {
          if (!HistorySet1.Close(tmp)) return(false);  // TODO: HistorySet.Create() should auto-close an open set but errors
       }
       startBar = iBarShiftNext(NULL, NULL, recorder.startTime);
-      //debug("RecordVirtualProfit(0.1)  Tick="+ Ticks +"  rewriting all history since bar "+ startBar);
    }
 
    if (recorder.hSet <= 0) {
@@ -1620,10 +1616,7 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
 bool onReversal(int bar, int direction, double level) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
-   if (IsPossibleDataPumping()) {               // skip signals during possible data pumping
-      //logWarn("onReversal(P="+ ZigZag.Periods +")  Tick="+ Ticks +"  alleged data pumping (Bars="+ Bars +"  ValidBars="+ ValidBars +"  ChangedBars="+ ChangedBars +")");
-      return(true);
-   }
+   if (IsPossibleDataPumping())                 return(true);
 
    // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();

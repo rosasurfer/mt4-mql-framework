@@ -65,12 +65,12 @@ int init() {
    // finish initialization
    ec_SetMqlError(__ExecutionContext, NO_ERROR);
    ec_SetDllError(__ExecutionContext, NO_ERROR);
-   if (!initGlobals()) if (CheckErrors("init(3)")) return(last_error);
+   if (!initGlobals()) if (HandleErrors("init(3)")) return(last_error);
 
    // execute custom init tasks
    initFlags = __ExecutionContext[EC.programInitFlags];
    if (initFlags & INIT_TIMEZONE && 1) {
-      if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
+      if (!StringLen(GetServerTimezone()))  return(_last_error(HandleErrors("init(4)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);      // fails if there is no tick yet
@@ -78,13 +78,13 @@ int init() {
       if (IsError(error)) {                                       // symbol not yet subscribed but may appear later (start, account/template change)
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                   // synthetic symbol in offline chart
             return(logInfo("init(5)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-         if (CheckErrors("init(6)", error)) return(last_error);
+         if (HandleErrors("init(6)", error)) return(last_error);
       }
       if (!tickSize) return(logInfo("init(7)  MarketInfo(MODE_TICKSIZE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
-      if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
+      if (IsError(error)) /*&&*/ if (HandleErrors("init(8)", error)) return(last_error);
       if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}              // not yet implemented
@@ -93,7 +93,7 @@ int init() {
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!__isTesting) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                              // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
-      if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
+      if (IsError(error)) /*&&*/ if (HandleErrors("init(10)")) return(last_error);
    }
 
    // reset the order context after the expert was reloaded (to prevent the bug when the previously active context is not reset)
@@ -101,7 +101,7 @@ int init() {
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
       error = GetLastError();
-      if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
+      if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(HandleErrors("init(11)", error)));
    }
 
    // resolve init reason
@@ -168,14 +168,14 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break; //
          case IR_TERMINAL_FAILURE:                                         //
          default:                                                          //
-            return(_last_error(CheckErrors("init(12)  unsupported initReason: "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(HandleErrors("init(12)  unsupported initReason: "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
-   if (CheckErrors("init(13)", error)) return(last_error);                 //
+   if (HandleErrors("init(13)", error)) return(last_error);                //
                                                                            //
    error = afterInit();                                                    // postprocessing hook
-   if (CheckErrors("init(13)", error)) return(last_error);
+   if (HandleErrors("init(13)", error)) return(last_error);
 
    ShowStatus(last_error);
 
@@ -269,7 +269,7 @@ int start() {
       if (!MarketInfo(Symbol(), MODE_TICKVALUE)) {                         // and the used ones re-subscribed (for a moment: tickvalue = 0 and no error)
          error = GetLastError();
          if (error != NO_ERROR) {
-            if (CheckErrors("start(3)", error)) return(last_error);
+            if (HandleErrors("start(3)", error)) return(last_error);
          }
          return(ShowStatus(SetLastError(logInfo("start(4)  MarketInfo("+ Symbol() +", MODE_TICKVALUE=0)", ERS_TERMINAL_NOT_YET_READY))));
       }
@@ -280,25 +280,25 @@ int start() {
    _Bid = NormalizeDouble(Bid, Digits);                                    // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                                    //
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Tick.isVirtual, _Bid, _Ask) != NO_ERROR) {
-      if (CheckErrors("start(5)->SyncMainContext_start()")) return(last_error);
+      if (HandleErrors("start(5)->SyncMainContext_start()")) return(last_error);
    }
 
    // call the userland main function
    error = onTick();
-   if (error && error!=last_error) CheckErrors("start(6)", error);
+   if (error && error!=last_error) HandleErrors("start(6)", error);
 
    // record performance metrics
    if (recorder.mode != NULL) {
       if (!Recorder_start()) {
          recorder.mode = NULL;
-         return(_last_error(CheckErrors("start(7)->Recorder_start()")));
+         return(_last_error(HandleErrors("start(7)->Recorder_start()")));
       }
    }
 
    // handle all possible errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError]|__ExecutionContext[EC.dllWarning]) {
-      return(_last_error(CheckErrors("start(8)", error)));
+      return(_last_error(HandleErrors("start(8)", error)));
    }
 
    // regular show status if not any error
@@ -326,7 +326,7 @@ int deinit() {
       return(last_error);
    }
    if (SyncMainContext_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
-      return(CheckErrors("deinit(1)->SyncMainContext_deinit()") + LeaveContext(__ExecutionContext));
+      return(HandleErrors("deinit(1)->SyncMainContext_deinit()") + LeaveContext(__ExecutionContext));
    }
 
    int error = catch("deinit(2)");                 // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
@@ -367,7 +367,7 @@ int deinit() {
 
    if (!__isTesting) DeleteRegisteredObjects();
 
-   return(CheckErrors("deinit(5)") + LeaveContext(__ExecutionContext));
+   return(HandleErrors("deinit(5)") + LeaveContext(__ExecutionContext));
 }
 
 
@@ -422,14 +422,14 @@ bool IsLibrary() {
 
 
 /**
- * Check, update and display the program's error status. On error it activates flag __STATUS_OFF.
+ * Check for and handle any errors. On error activate flag __STATUS_OFF and display the error.
  *
  * @param  string caller           - location identifier of the caller
  * @param  int    error [optional] - explicit and enforced error (default: none)
  *
  * @return bool - whether flag __STATUS_OFF is set
  */
-bool CheckErrors(string caller, int error = NULL) {
+bool HandleErrors(string caller, int error = NULL) {
    // check DLL warnings
    int dll_warning = __ExecutionContext[EC.dllWarning];
    if (dll_warning != NO_ERROR) {

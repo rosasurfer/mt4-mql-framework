@@ -12,7 +12,7 @@
  *
  * Requirements
  * ------------
- *  /mql40/experts/ZigZag EA.ex4                      // this file
+ *  /mql40/experts/ZigZag EA.ex4                      // this program
  *  /mql40/indicators/ZigZag.ex4                      // the ZigZag indicator provided by MetaQuotes can't be used
  *  /mql40/scripts/Config.ex4
  *  /mql40/scripts/Chart.ToggleOpenOrders.ex4
