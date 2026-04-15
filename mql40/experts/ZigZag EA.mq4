@@ -189,11 +189,6 @@ extern bool   Entry.onChannelWidening        = false;                // start tr
 #include <rsf/experts/deinit.mqh>
 
 
-// shorter metric aliases
-#define NET_MONEY    METRIC_NET_MONEY
-#define NET_UNITS    METRIC_NET_UNITS
-#define SIG_UNITS    METRIC_SIG_UNITS
-
 // instance start conditions
 bool     start.time.condition;                     // whether a time condition is active
 datetime start.time.value;
@@ -777,7 +772,7 @@ bool IsStopSignal(double &signal[]) {
          if (stop.profitPct.absValue == INT_MAX)
             stop.profitPct.absValue = stop.profitPct.AbsValue();
 
-         if (stats[NET_MONEY][S_TOTAL_PROFIT] >= stop.profitPct.absValue) {
+         if (stats[METRIC_NET_MONEY][S_TOTAL_PROFIT] >= stop.profitPct.absValue) {
             signal[SIG_TYPE] = SIG_TYPE_TAKEPROFIT;
             signal[SIG_OP  ] = SIG_OP_CLOSE_ALL;
             if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ instance.name +" stop condition \"@"+ stop.profitPct.descr +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
@@ -787,7 +782,7 @@ bool IsStopSignal(double &signal[]) {
 
       // stop.profitPunit ---------------------------------------------------------------------------------------------------
       if (stop.profitPunit.condition) {
-         if (stats[NET_UNITS][S_TOTAL_PROFIT] >= stop.profitPunit.value) {
+         if (stats[METRIC_NET_UNITS][S_TOTAL_PROFIT] >= stop.profitPunit.value) {
             signal[SIG_TYPE] = SIG_TYPE_TAKEPROFIT;
             signal[SIG_OP  ] = SIG_OP_CLOSE_ALL;
             if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ instance.name +" stop condition \"@"+ stop.profitPunit.descr +"\" triggered (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
@@ -844,31 +839,34 @@ bool StartTrading(double signal[]) {
    // store the position data
    open.ticket       = ticket;
    open.type         = type;
-   open.lots         = oe.Lots(oe);
+   open.lots         = NormalizeDouble(oe.Lots(oe), 2);
    open.time         = oe.OpenTime(oe);
-   open.price        = oe.OpenPrice(oe);
-   open.priceSig     = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid);
-   open.slippageP    = oe.Slippage(oe);
-   open.swapM        = oe.Swap(oe);
-   open.commissionM  = oe.Commission(oe);
-   open.grossProfitM = oe.Profit(oe);
-   open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitP   = ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
-   open.runupP       = ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask);
+   open.price        = NormalizeDouble(oe.OpenPrice(oe), Digits);
+   open.priceSig     = NormalizeDouble(ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid), 2);
+   open.slippageP    = NormalizeDouble(oe.Slippage(oe), Digits);
+   open.swapM        = NormalizeDouble(oe.Swap(oe), 2);
+   open.commissionM  = NormalizeDouble(oe.Commission(oe), 2);
+   open.grossProfitM = NormalizeDouble(oe.Profit(oe), 2);
+   open.netProfitM   = NormalizeDouble(open.grossProfitM + open.swapM + open.commissionM, 2);
+   open.netProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
+   open.runupP       = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask), Digits);
    open.rundownP     = open.runupP;
-   open.sigProfitP   = ifDouble(type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
+   open.sigProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid), Digits);
    open.sigRunupP    = open.sigProfitP;
    open.sigRundownP  = open.sigRunupP;
 
    // update PnL stats
-   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
-   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
-   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   stats[METRIC_NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[METRIC_NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[METRIC_SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
    for (int i=1; i <= 3; i++) {
       stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
       stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
       stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
       stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+
+      stats[i][S_TOTAL_PROFIT    ] = NormalizeDouble(stats[i][S_TOTAL_PROFIT    ], 2);
+      stats[i][S_MAX_REL_DRAWDOWN] = NormalizeDouble(stats[i][S_MAX_REL_DRAWDOWN], 2);
    }
 
    // update start conditions
@@ -918,16 +916,16 @@ bool ReversePosition(double signal[]) {
       // close the existing position
       if (!OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
-      double closePrice = oe.ClosePrice(oe);
-      open.slippageP   += oe.Slippage(oe);
-      open.swapM        = oe.Swap(oe);
-      open.commissionM  = oe.Commission(oe);
-      open.grossProfitM = oe.Profit(oe);
-      open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+      double closePrice = NormalizeDouble(oe.ClosePrice(oe), Digits);
+      open.slippageP    = NormalizeDouble(open.slippageP + oe.Slippage(oe), Digits);
+      open.swapM        = NormalizeDouble(oe.Swap(oe), 2);
+      open.commissionM  = NormalizeDouble(oe.Commission(oe), 2);
+      open.grossProfitM = NormalizeDouble(oe.Profit(oe), 2);
+      open.netProfitM   = NormalizeDouble(open.grossProfitM + open.swapM + open.commissionM, 2);
+      open.netProfitP   = NormalizeDouble(ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice), Digits);
       open.runupP       = MathMax(open.runupP, open.netProfitP);
-      open.rundownP     = MathMin(open.rundownP, open.netProfitP); open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-      open.sigProfitP   = ifDouble(open.type==OP_BUY, sigPrice-open.priceSig, open.priceSig-sigPrice);
+      open.rundownP     = MathMin(open.rundownP, open.netProfitP); open.netProfitP = NormalizeDouble(open.netProfitP + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
+      open.sigProfitP   = NormalizeDouble(ifDouble(open.type==OP_BUY, sigPrice-open.priceSig, open.priceSig-sigPrice), Digits);
       open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
       open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
 
@@ -948,31 +946,35 @@ bool ReversePosition(double signal[]) {
    // store the new position data
    open.ticket       = ticket;
    open.type         = type;
-   open.lots         = oe.Lots(oe);
+   open.lots         = NormalizeDouble(oe.Lots(oe), 2);
    open.time         = oe.OpenTime(oe);
-   open.price        = oe.OpenPrice(oe);
+   open.price        = NormalizeDouble(oe.OpenPrice(oe), Digits);
    open.priceSig     = sigPrice;
-   open.slippageP    = oe.Slippage(oe);
-   open.swapM        = oe.Swap(oe);
-   open.commissionM  = oe.Commission(oe);
-   open.grossProfitM = oe.Profit(oe);
-   open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitP   = ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots);
-   open.runupP       = ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask);
+   open.slippageP    = NormalizeDouble(oe.Slippage(oe), Digits);
+   open.swapM        = NormalizeDouble(oe.Swap(oe), 2);
+   open.commissionM  = NormalizeDouble(oe.Commission(oe), 2);
+   open.grossProfitM = NormalizeDouble(oe.Profit(oe), 2);
+   open.netProfitM   = NormalizeDouble(open.grossProfitM + open.swapM + open.commissionM, 2);
+   open.netProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
+   open.runupP       = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask), Digits);
    open.rundownP     = open.runupP;
-   open.sigProfitP   = ifDouble(type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid);
+   open.sigProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid), Digits);
    open.sigRunupP    = open.sigProfitP;
    open.sigRundownP  = open.sigProfitP;
 
    // update PL numbers
-   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
-   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
-   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   stats[METRIC_NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[METRIC_NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[METRIC_SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+
    for (int i=1; i <= 3; i++) {
       stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
       stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
       stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
       stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+
+      stats[i][S_TOTAL_PROFIT    ] = NormalizeDouble(stats[i][S_TOTAL_PROFIT    ], 2);
+      stats[i][S_MAX_REL_DRAWDOWN] = NormalizeDouble(stats[i][S_MAX_REL_DRAWDOWN], 2);
    }
 
    if (__isChart) {
@@ -1025,29 +1027,33 @@ bool StopTrading(double trigger[]) {
          int oe[];
          if (!OrderCloseEx(open.ticket, NULL, order.slippage, CLR_CLOSED, NULL, oe)) return(!SetLastError(oe.Error(oe)));
 
-         double closePrice = oe.ClosePrice(oe), closePriceSig = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid);
-         open.slippageP   += oe.Slippage(oe);
-         open.swapM        = oe.Swap(oe);
-         open.commissionM  = oe.Commission(oe);
-         open.grossProfitM = oe.Profit(oe);
-         open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-         open.netProfitP   = ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice);
+         double closePrice = NormalizeDouble(oe.ClosePrice(oe), Digits), closePriceSig = ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid);
+         open.slippageP    = NormalizeDouble(open.slippageP + oe.Slippage(oe), Digits);
+         open.swapM        = NormalizeDouble(oe.Swap(oe), 2);
+         open.commissionM  = NormalizeDouble(oe.Commission(oe), 2);
+         open.grossProfitM = NormalizeDouble(oe.Profit(oe), 2);
+         open.netProfitM   = NormalizeDouble(open.grossProfitM + open.swapM + open.commissionM, 2);
+         open.netProfitP   = NormalizeDouble(ifDouble(open.type==OP_BUY, closePrice-open.price, open.price-closePrice), Digits);
          open.runupP       = MathMax(open.runupP, open.netProfitP);
-         open.rundownP     = MathMin(open.rundownP, open.netProfitP); open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-         open.sigProfitP   = ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig);
+         open.rundownP     = MathMin(open.rundownP, open.netProfitP); open.netProfitP = NormalizeDouble(open.netProfitP + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
+         open.sigProfitP   = NormalizeDouble(ifDouble(open.type==OP_BUY, closePriceSig-open.priceSig, open.priceSig-closePriceSig), Digits);
          open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
          open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
 
          if (!MovePositionToHistory(oe.CloseTime(oe), closePrice, closePriceSig)) return(false);
 
-         stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
-         stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
-         stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+         stats[METRIC_NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+         stats[METRIC_NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+         stats[METRIC_SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+
          for (int i=1; i <= 3; i++) {
             stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
             stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
             stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
             stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+
+            stats[i][S_TOTAL_PROFIT    ] = NormalizeDouble(stats[i][S_TOTAL_PROFIT    ], 2);
+            stats[i][S_MAX_REL_DRAWDOWN] = NormalizeDouble(stats[i][S_MAX_REL_DRAWDOWN], 2);
          }
       }
    }
@@ -1120,13 +1126,13 @@ bool UpdateStatus() {
       exitPriceSig = _Bid;
    }
    open.swapM        = NormalizeDouble(OrderSwap(), 2);
-   open.commissionM  = OrderCommission();
-   open.grossProfitM = OrderProfit();
-   open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitP   = ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice);
+   open.commissionM  = NormalizeDouble(OrderCommission(), 2);
+   open.grossProfitM = NormalizeDouble(OrderProfit(), 2);
+   open.netProfitM   = NormalizeDouble(open.grossProfitM + open.swapM + open.commissionM, 2);
+   open.netProfitP   = NormalizeDouble(ifDouble(open.type==OP_BUY, exitPrice-open.price, open.price-exitPrice), Digits);
    open.runupP       = MathMax(open.runupP, open.netProfitP);
-   open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP += (open.swapM + open.commissionM)/PointValue(open.lots);
-   open.sigProfitP   = ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig);
+   open.rundownP     = MathMin(open.rundownP, open.netProfitP); if (open.swapM || open.commissionM) open.netProfitP = NormalizeDouble(open.netProfitP + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
+   open.sigProfitP   = NormalizeDouble(ifDouble(open.type==OP_BUY, exitPriceSig-open.priceSig, open.priceSig-exitPriceSig), Digits);
    open.sigRunupP    = MathMax(open.sigRunupP, open.sigProfitP);
    open.sigRundownP  = MathMin(open.sigRundownP, open.sigProfitP);
 
@@ -1140,14 +1146,18 @@ bool UpdateStatus() {
    }
 
    // update PnL stats
-   stats[NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
-   stats[NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
-   stats[SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+   stats[METRIC_NET_MONEY][S_OPEN_PROFIT] = open.netProfitM;
+   stats[METRIC_NET_UNITS][S_OPEN_PROFIT] = open.netProfitP;
+   stats[METRIC_SIG_UNITS][S_OPEN_PROFIT] = open.sigProfitP;
+
    for (int i=1; i <= 3; i++) {
       stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
       stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
       stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
       stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+
+      stats[i][S_TOTAL_PROFIT    ] = NormalizeDouble(stats[i][S_TOTAL_PROFIT    ], 2);
+      stats[i][S_MAX_REL_DRAWDOWN] = NormalizeDouble(stats[i][S_MAX_REL_DRAWDOWN], 2);
    }
 
    if (__isChart) {
@@ -1363,33 +1373,40 @@ bool SynchronizeStatus() {
             double   swapM        = NormalizeDouble(OrderSwap(), 2);
             double   commissionM  = OrderCommission();
             double   grossProfitM = OrderProfit();
-            double   grossProfitP = ifDouble(!openType, closePrice-openPrice, openPrice-closePrice);
-            double   netProfitM   = grossProfitM + swapM + commissionM;
-            double   netProfitP   = grossProfitP + MathDiv(swapM + commissionM, PointValue(lots));
+            double   grossProfitP = NormalizeDouble(ifDouble(!openType, closePrice-openPrice, openPrice-closePrice), Digits);
+            double   netProfitM   = NormalizeDouble(grossProfitM + swapM + commissionM, 2);
+            double   netProfitP   = NormalizeDouble(grossProfitP + MathDiv(swapM + commissionM, PointValue(lots)), Digits);
 
             logWarn("SynchronizeStatus(4)  "+ instance.name +" orphaned closed position found: #"+ ticket +", adding to instance...");
             if (IsEmpty(AddHistoryRecord(ticket, 0, 0, openType, lots, 1, openTime, openPrice, openPrice, stopLoss, takeProfit, closeTime, closePrice, closePrice, slippageP, swapM, commissionM, grossProfitM, netProfitM, netProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP, grossProfitP))) return(false);
 
             // update closed PL numbers
-            stats[NET_MONEY][S_CLOSED_PROFIT] += netProfitM;
-            stats[NET_UNITS][S_CLOSED_PROFIT] += netProfitP;
-            stats[SIG_UNITS][S_CLOSED_PROFIT] += grossProfitP;       // for orphaned positions same as grossProfitP
+            stats[METRIC_NET_MONEY][S_CLOSED_PROFIT] += netProfitM;
+            stats[METRIC_NET_UNITS][S_CLOSED_PROFIT] += netProfitP;
+            stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT] += grossProfitP;   // for orphaned positions same as grossProfitP
+
+            stats[METRIC_NET_MONEY][S_CLOSED_PROFIT] = NormalizeDouble(stats[METRIC_NET_MONEY][S_CLOSED_PROFIT], 2);
+            stats[METRIC_NET_UNITS][S_CLOSED_PROFIT] = NormalizeDouble(stats[METRIC_NET_UNITS][S_CLOSED_PROFIT], Digits);
+            stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT] = NormalizeDouble(stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT], Digits);
          }
       }
    }
 
    // recalculate total PL numbers
-   for (int m=1; m <= 3; m++) {
-      stats[m][S_TOTAL_PROFIT    ] = stats[m][S_OPEN_PROFIT] + stats[m][S_CLOSED_PROFIT];
-      stats[m][S_MAX_PROFIT      ] = MathMax(stats[m][S_MAX_PROFIT      ], stats[m][S_TOTAL_PROFIT]);
-      stats[m][S_MAX_ABS_DRAWDOWN] = MathMin(stats[m][S_MAX_ABS_DRAWDOWN], stats[m][S_TOTAL_PROFIT]);
-      stats[m][S_MAX_REL_DRAWDOWN] = MathMin(stats[m][S_MAX_REL_DRAWDOWN], stats[m][S_TOTAL_PROFIT] - stats[m][S_MAX_PROFIT]);
+   for (i=1; i <= 3; i++) {
+      stats[i][S_TOTAL_PROFIT    ] = stats[i][S_OPEN_PROFIT] + stats[i][S_CLOSED_PROFIT];
+      stats[i][S_MAX_PROFIT      ] = MathMax(stats[i][S_MAX_PROFIT      ], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_ABS_DRAWDOWN] = MathMin(stats[i][S_MAX_ABS_DRAWDOWN], stats[i][S_TOTAL_PROFIT]);
+      stats[i][S_MAX_REL_DRAWDOWN] = MathMin(stats[i][S_MAX_REL_DRAWDOWN], stats[i][S_TOTAL_PROFIT] - stats[i][S_MAX_PROFIT]);
+
+      stats[i][S_TOTAL_PROFIT    ] = NormalizeDouble(stats[i][S_TOTAL_PROFIT    ], 2);
+      stats[i][S_MAX_REL_DRAWDOWN] = NormalizeDouble(stats[i][S_MAX_REL_DRAWDOWN], 2);
    }
    SS.All();
 
    if (open.ticket != prevOpenTicket || ArrayRange(history, 0) != prevHistorySize) {
       CalculateStats(true);
-      return(SaveStatus());                                          // immediately save status if orders changed
+      return(SaveStatus());                                             // immediately save status if orders changed
    }
    return(!catch("SynchronizeStatus(5)"));
 }

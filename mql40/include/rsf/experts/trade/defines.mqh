@@ -68,7 +68,7 @@ double history[][25];
 #define H_SIG_RUNUP_P      23          // full points
 #define H_SIG_RUNDOWN_P    24          // full points
 
-// If partialClose[] / history[] fields are modified the following files must be updated:
+// If fields of partialClose[] or history[] are modified the following files must be updated:
 //  ea/functions/status/file/ReadStatus.HistoryRecord.mqh
 //  ea/functions/trade/AddHistoryRecord.mqh + every usage of AddHistoryRecord() elsewhere
 //  ea/functions/trade/HistoryRecordToStr.mqh
