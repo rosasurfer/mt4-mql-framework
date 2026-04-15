@@ -362,84 +362,6 @@ datetime recorder.startTime;
 //    Same as double crossing. The last crossing overwrites values from previous crossings.
 //
 
-bool     test_ticks[];
-datetime test_times[];
-int      test_trend[];
-int      test_unknownTrend[];
-int      test_reversalOffset[];
-
-
-/**
- * @return bool - success status
- */
-bool AddTestTick(datetime time, int tick, int trend, int unknownTrend, int reversalOffset) {
-   int size = ArraySize(test_ticks);
-   if (tick <= 0 || tick >= size) return(!catch("AddTestTick(1)  invalid parameter tick: "+ tick +" (out of range)", ERR_INVALID_PARAMETER));
-
-   test_ticks         [tick] = true;
-   test_times         [tick] = time;
-   test_trend         [tick] = trend;
-   test_unknownTrend  [tick] = unknownTrend;
-   test_reversalOffset[tick] = reversalOffset;
-
-   return(true);
-}
-
-
-/**
- * @return bool - success status
- */
-bool TestTick(int bar, int tick, datetime time, int trend, int unknownTrend, int reversalOffset) {
-   if (bar != 0)                 return(!catch("TestTick(1)  failed, expected: bar=0,  got: "+ bar, ERR_RUNTIME_ERROR));
-   int size = ArraySize(test_ticks);
-   if (!size)                    return(!catch("TestTick(2)  test not initialized", ERR_RUNTIME_ERROR));
-   if (tick < 0 || tick >= size) return(!logDebug("TestTick(3)  test tick "+ tick +" out of range"));
-
-   int realTick, seek, offset;
-
-   // scan up to 5 ticks above the specified tick
-   if (!realTick) {
-      for (offset=0; offset <= 5; offset++) {
-         seek = tick + offset;
-         if (seek >= size) break;
-
-         if (test_ticks[seek]) {
-            if (time == test_times[seek]) {
-               realTick = seek;
-               break;
-            }
-            if (time < test_times[seek]) {
-               break;
-            }
-         }
-      }
-   }
-
-   // scan up to 5 ticks below the specified tick
-   if (!realTick) {
-      for (offset=1; offset <= 5; offset++) {
-         seek = tick - offset;
-         if (seek <= 0) break;
-
-         if (test_ticks[seek]) {
-            if (time == test_times[seek]) {
-               realTick = seek;
-               break;
-            }
-            if (time > test_times[seek]) {
-               break;
-            }
-         }
-      }
-   }
-   if (!realTick) return(true);
-
-   if (trend != test_trend[realTick] || unknownTrend != test_unknownTrend[realTick] || reversalOffset != test_reversalOffset[realTick]) {
-      return(!catch("TestTick(5)  "+ tick +" at "+ TimeToStr(time, TIME_FULL) +" failed, expected: trend="+ test_trend[realTick] +"  unknownTrend="+ test_unknownTrend[realTick] +"  reversalOffset="+ test_reversalOffset[realTick] +",  found: "+ trend +", "+ unknownTrend +", "+ reversalOffset, ERR_RUNTIME_ERROR));
-   }
-   return(true);
-}
-
 
 /**
  * Initialization
@@ -447,31 +369,6 @@ bool TestTick(int bar, int tick, datetime time, int trend, int unknownTrend, int
  * @return int - error status
  */
 int onInit() {
-
-   if (__isTesting && __isChart && !__isSuperContext && Symbol()=="BTCUSD" && Period()== PERIOD_M1) {
-      if (Tester_GetStartDate()==D'2026.04.04 00:00' && Tester.GetBarModel()==MODE_CONTROLPOINTS) {
-         int iSize = 60000;
-         ArrayResize(test_ticks,          iSize); ArrayInitialize(test_ticks,         false);
-         ArrayResize(test_times,          iSize); ArrayInitialize(test_times,             0);
-         ArrayResize(test_trend,          iSize); ArrayInitialize(test_trend,          5555);
-         ArrayResize(test_unknownTrend,   iSize); ArrayInitialize(test_unknownTrend,   5555);
-         ArrayResize(test_reversalOffset, iSize); ArrayInitialize(test_reversalOffset, 5555);
-
-         AddTestTick(D'04.04.2026 00:46:00',    14,  1, 1,  1);
-         AddTestTick(D'04.04.2026 00:47:00',    27,  1, 2,  1);
-         AddTestTick(D'04.04.2026 00:55:18',   119, 11, 0,  1);
-         AddTestTick(D'04.04.2026 01:00:40',   182, -1, 0,  1);
-         AddTestTick(D'04.04.2026 01:19:30',   416, 10, 0, 10);
-         AddTestTick(D'04.04.2026 01:19:35',   417, 10, 0, 10);
-         AddTestTick(D'04.04.2026 01:29:40',   542,  0, 0,  0);
-         AddTestTick(D'04.04.2026 01:30:00',   547,  0, 1,  0);
-         AddTestTick(D'04.04.2026 01:36:30',   631,  7, 0,  0);
-         AddTestTick(D'04.04.2026 08:22:30',  5518,  8, 0,  8);
-         AddTestTick(D'05.04.2026 17:02:10', 28949,  1, 0,  0);
-      }
-   }
-
-   // -----------------------------------------------------------------------------------------------------------------------
    string indicator = WindowExpertName();
 
    // validate inputs
@@ -744,14 +641,6 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
-
-      if (__isTesting && !__isSuperContext && bar == 1) {
-         datetime times[] = { D'2026.04.04 08:16', D'2026.04.05 16:56' };
-         if (IntInArray(times, Time[0])) {
-            Tester.Pause();
-         }
-      }
-
       // reset the bar to update
       upperBand      [bar] =  0;
       lowerBand      [bar] =  0;
@@ -854,13 +743,6 @@ int onTick() {
          int short_trend        = trend[bar]        & 0x0000FFFF;             // convert 'signed int' to 'signed short' bits
          int short_unknownTrend = unknownTrend[bar] & 0x0000FFFF;
          combinedTrend[bar]     = (short_unknownTrend << 16) | short_trend;   // store as HIWORD + LOWORD
-      }
-
-      if (__isTesting && !__isSuperContext && ChangedBars <= 2 && bar < 2) {
-         logDebug("onTick(0.1)  Tick="+ Ticks +"  bar="+ bar +"  cross="+ NumberToStr(upperCross[bar], PriceFormat) +" / "+ NumberToStr(lowerCross[bar], PriceFormat) +"  semaphore="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +" / "+ NumberToStr(semaphoreClose[bar], PriceFormat) +"  trend="+ trend[bar] +"  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]));
-         if (ArraySize(test_ticks) && bar==0) {
-            if (!TestTick(bar, Ticks, Tick.time, trend[bar], unknownTrend[bar], reversalOffset[bar])) return(last_error);
-         }
       }
    }
 
@@ -1379,10 +1261,6 @@ bool ProcessUpperCross(int bar) {
       reversalOffset[bar] = -1;                                      // no reversal
       return(false);
    }
-
-   if (__isTesting && !__isSuperContext && Time[bar] > D'2026.04.04 00:00') {
-      logDebug("ProcessUpperCross(0.1)  Tick="+ Ticks +"  lastSemBar="+ lastSemBar +"  lastSemType="+ ifString(lastSemType==MODE_HIGH, "HIGH", "LOW") +" at "+ TimeToStr(Time[lastSemBar]));
-   }
    bool reversalBar;
 
    // another upper cross of a leg up extension
@@ -1485,10 +1363,6 @@ bool ProcessLowerCross(int bar) {
       unknownTrend  [bar] =  0;                                      // current bar
       reversalOffset[bar] = -1;                                      // no reversal
       return(false);
-   }
-
-   if (__isTesting && !__isSuperContext && Time[bar] > D'2026.04.04 00:00') {
-      logDebug("ProcessLowerCross(0.1)  Tick="+ Ticks +"  lastSemBar="+ lastSemBar +"  lastSemType="+ ifString(lastSemType==MODE_HIGH, "HIGH", "LOW") +" at "+ TimeToStr(Time[lastSemBar]));
    }
    bool reversalBar;
 

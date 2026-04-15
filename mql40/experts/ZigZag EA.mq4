@@ -228,14 +228,6 @@ int onTick() {
       if (!HandleCommands()) return(last_error);      // process incoming commands
    }
 
-   if (__isTesting) {
-      static bool done = false;
-      if (Time[0] == D'2026.04.04 08:00' && !done) {
-         Tester.Pause();
-         done = true;
-      }
-   }
-
    if (instance.status != STATUS_STOPPED) {
       if (instance.status == STATUS_WAITING) {
          if (IsEntrySignal(signal)) {
