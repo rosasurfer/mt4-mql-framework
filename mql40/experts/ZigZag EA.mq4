@@ -107,6 +107,7 @@ extern bool   Entry.onChannelWidening        = false;                // start tr
 #include <rsf/core/expert.recorder.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
+#include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/HandleCommands.mqh>
 #include <rsf/functions/InitializeByteBuffer.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
@@ -134,7 +135,6 @@ extern bool   Entry.onChannelWidening        = false;                // start tr
 #include <rsf/experts/metric/GetMT4SymbolDefinition.mqh>
 #include <rsf/experts/metric/RecordMetrics.mqh>
 
-#include <rsf/experts/status/ResolveTopDistance.mqh>
 #include <rsf/experts/status/ShowOpenOrders.mqh>
 #include <rsf/experts/status/ShowTradeHistory.mqh>
 #include <rsf/experts/status/SS.MetricDescription.mqh>
@@ -1781,14 +1781,21 @@ int ShowStatus(int error = NO_ERROR) {
                                    "Profit:    ", status.totalProfit, "  ", status.profitStats,            NL
    );
 
-   // some lines margin-top for instrument and indicator legends
-   Comment(NL, NL, NL, NL, NL, text);
-   if (__CoreFunction == CF_INIT) WindowRedraw();
+   // resolve the top-margin to apply to the content of the status box
+   string marginTop = "";
+   if (statusbox.yOffset == -1) {
+      statusbox.yOffset = GetChartLegendsHeight();
+   }
+   if      (statusbox.yOffset <= 20) marginTop = StringConcatenate(NL, "");
+   else if (statusbox.yOffset <= 39) marginTop = StringConcatenate(NL, NL);
+   else if (statusbox.yOffset <= 58) marginTop = StringConcatenate(NL, NL, NL, NL);
+   else if (statusbox.yOffset <= 77) marginTop = StringConcatenate(NL, NL, NL, NL, NL, NL);
+   else if (statusbox.yOffset <= 96) marginTop = StringConcatenate(NL, NL, NL, NL, NL, NL, NL);
+   else                              marginTop = StringConcatenate(NL, NL, NL, NL, NL, NL, NL, NL, NL);
+   //debug("ShowStatus(0.2)  yOffset = "+ statusbox.yOffset);
 
-   // 0 legends: 20
-   // 1 legends: 39
-   // 2 legends: 58 => 4*NL
-   // 3 legends: 77 => 5*NL
+   Comment(marginTop, text);
+   if (__CoreFunction == CF_INIT) WindowRedraw();
 
    // store status in the chart to enable sending of chart commands
    string label = "EA.status";
@@ -1805,27 +1812,32 @@ int ShowStatus(int error = NO_ERROR) {
 
 
 /**
- * Create the status display box. Consists of overlapping rectangles made of font "Webdings", char "g".
+ * Creates the status display box. Consists of overlapping rectangles made of font "Webdings", character "g".
  * Called from onInit() only.
  *
- * @return bool - success status
+ * @return int - y-offset of the created status box, or NULL in case of errors. Check `last_error` to distinguish between
+ *               an error and offset 0 (zero). Used by ShowStatus() to calculate display margins.
  */
-bool CreateStatusBox() {
-   if (!__isChart) return(true);
+int CreateStatusBox() {
+   if (!__isChart) return(0);
 
-   int x[]={2, 102}, fontSize=76, sizeofX=ArraySize(x);
-   int y = ResolveTopDistance();
-   color bgColor = LemonChiffon;
+   int x[] = {2, 102};                       // x-offset of the rectangles forming the status box
+   int sizeofX = ArraySize(x);               // number of rectangles
+   int y = GetChartLegendsHeight();          // minimum y-offset of the status box to create
+   int fontSize = 76;                        // rectangle fontsize
+   color bgColor = LemonChiffon;             // rectangle color
+
+   debug("CreateStatusBox(0.1)  top distance y = "+ y);
 
    for (int i=0; i < sizeofX; i++) {
       string label = ProgramName() +".statusbox."+ (i+1);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(0);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
       ObjectSet(label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
-   return(!catch("CreateStatusBox(1)"));
+   return(y);
 }
 
 

@@ -1,3 +1,10 @@
+
+// legend configuration
+int chartlegend.xDist      =  5;                      // x-offset of all legends
+int chartlegend.yDist      = 20;                      // y-offset of the top-most legend
+int chartlegend.lineHeight = 19;                      // line height of a single legend
+
+
 /**
  * Create a text label object in the main chart for an indicator's chart legend.
  *
@@ -16,6 +23,8 @@ string CreateChartLegend() {
    return(name);
 
    // suppress compiler warnings
+   GetChartLegendsHeight();
+   RemoveChartLegend();
    UpdateBandLegend(NULL, NULL, NULL, NULL, NULL, NULL);
    UpdateTrendLegend(NULL, NULL, NULL, NULL, NULL, NULL);
 }
@@ -74,21 +83,56 @@ bool RearrangeChartLegends() {
    }
 
    // order and re-position labels by pid
-   int xDist      =  5;                      // x-position of all legends
-   int yDist      = 20;                      // y-position of the top-most legend
-   int lineHeight = 19;                      // line height of each legend
-
    int size = ArraySize(pids);
    if (size > 0) {
       ArraySort(pids);
       for (i=0; i < size; i++) {
          name = StringConcatenate(CHARTLEGEND_PREFIX, pids[i], ".", __ExecutionContext[EC.chart]);
          ObjectSet(name, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet(name, OBJPROP_XDISTANCE, xDist);
-         ObjectSet(name, OBJPROP_YDISTANCE, yDist + i*lineHeight);
+         ObjectSet(name, OBJPROP_XDISTANCE, chartlegend.xDist);
+         ObjectSet(name, OBJPROP_YDISTANCE, chartlegend.yDist + i * chartlegend.lineHeight);
       }
    }
    return(!catch("RearrangeChartLegends(1)"));
+}
+
+
+/**
+ * Get the height of all existing chart legends as an y-offset from the top of the window.
+ * New content must be placed below this offset.
+ *
+ * @return int - y-offset
+ */
+int GetChartLegendsHeight() {
+   // count existing chart legends
+   int objects = ObjectsTotal();
+   int labels  = ObjectsTotal(OBJ_LABEL);
+   int prefixLength = StringLen(CHARTLEGEND_PREFIX);
+   int legends = 0;
+
+   for (int i=objects-1; i >= 0 && labels; i--) {
+      string name = ObjectName(i);
+
+      if (ObjectType(name) == OBJ_LABEL) {
+         if (StrStartsWith(name, CHARTLEGEND_PREFIX)) {
+            string data = StrRight(name, -prefixLength);
+            int pid     = StrToInteger(data);
+            int hChart  = StrToInteger(StrRightFrom(data, "."));
+
+            if (pid && hChart==__ExecutionContext[EC.chart]) {
+               legends++;
+            }
+         }
+         labels--;
+      }
+   }
+
+   // calculate position of the next line
+   int y = chartlegend.yDist + legends * chartlegend.lineHeight;
+   return(y);
+
+   // suppress compiler warnings
+   CreateChartLegend();
 }
 
 

@@ -1,5 +1,8 @@
-
 // Default init() functions for standard EAs.
+
+
+// y-offset of a created status box (below all chart legends). Used by ShowStatus() to calculate display margins.
+int statusbox.yOffset = -1;
 
 
 /**
@@ -8,7 +11,7 @@
  * @return int - error status
  */
 int onInit() {
-   CreateStatusBox();
+   statusbox.yOffset = CreateStatusBox();
    return(catch("onInit(1)"));
 }
 
