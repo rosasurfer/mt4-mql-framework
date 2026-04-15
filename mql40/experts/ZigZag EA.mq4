@@ -1085,6 +1085,7 @@ bool StopTrading(double trigger[]) {
 
       string message = "StopTrading(3)  "+ instance.name +" "+ ifString(__isTesting && !sigType, "test ", "") +"stopped"+ ifString(!sigType, "", " ("+ SignalTypeToStr(sigType) +")") +", profit: "+ status.totalProfit +" "+ status.profitStats;
       if (isLogInfo) logInfo(message);
+      message = Symbol() +","+ PeriodDescription() +": "+ WindowExpertName() +"::"+ message;
       if (isSignal) SendTelegramMessage("signal", message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")");
    }
    SaveStatus();
