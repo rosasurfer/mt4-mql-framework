@@ -128,7 +128,7 @@ double   MathDiv(double a, double b, double onZero=0);;
 double   MathModFix(double a, double b);;
 int      MessageBoxEx(string caption, string message, int flags=MB_OK);;
 string   ModuleTypesToStr(int fType);;
-string   ModuleName(bool fullName = false);;
+string   MqlModuleName(bool fullName = false);;
 int      Mul(int a, int b, bool boundaryOnOverflow=false);;
 color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits=8);;

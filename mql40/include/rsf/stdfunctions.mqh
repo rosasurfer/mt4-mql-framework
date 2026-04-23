@@ -349,10 +349,10 @@ string Pluralize(int count, string singular="", string plural="s") {
  * Notes: This function must not call MQL library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   debug(message);                                                         // send the message to the debug output
+   debug(message);                                                            // send the message to the debug output
 
    string sPeriod = PeriodDescription();
-   Alert(Symbol(), ",", sPeriod, ": ", ModuleName(true), ":  ", message);  // the message shows up in the terminal log
+   Alert(Symbol(), ",", sPeriod, ": ", MqlModuleName(true), ":  ", message);  // the message shows up in the terminal log
 
    if (IsTesting()) {
       // in tester no Alert() dialog was displayed
@@ -1717,7 +1717,7 @@ string ProgramName() {
  *
  * @return string
  */
-string ModuleName(bool fullName = false) {
+string MqlModuleName(bool fullName = false) {
    fullName = fullName!=0;
    if (!fullName) return(WindowExpertName());
 
@@ -6777,8 +6777,8 @@ void __DummyCalls() {
    MathModFix(NULL, NULL);
    Max(NULL, NULL);
    Min(NULL, NULL);
-   ModuleName();
    ModuleTypesToStr(NULL);
+   MqlModuleName();
    Mul(NULL, NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
