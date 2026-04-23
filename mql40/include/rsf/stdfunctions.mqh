@@ -1692,10 +1692,12 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
 string ProgramName() {
    static string name = "";
 
-   if (!StringLen(name)) {
+   if (name == "") {
       if (IsLibrary()) {
-         if (IsDllsAllowed()) name = ec_ProgramName(__ExecutionContext);
-         if (!StringLen(name)) return("???");
+         if (IsDllsAllowed()) {
+            name = ec_ProgramName(__ExecutionContext);
+         }
+         if (name == "") return("???");
       }
       else {
          name = WindowExpertName();
@@ -1706,9 +1708,12 @@ string ProgramName() {
 
 
 /**
- * Return the current MQL module's name.
+ * Return the current MQL module's name. If parameter `fullName` is TRUE and:
  *
- * @param  bool fullName [optional] - whether to return the full module name (default: simple name)
+ * - if the module is a library:                        "<program-name>::<library-name>" is returned
+ * - If the module is an indicator loaded by iCustom(): "<host-name>::<indicator-name>" is returned
+ *
+ * @param  bool fullName [optional] - whether to return the full name (default: no)
  *
  * @return string
  */
@@ -1718,7 +1723,7 @@ string ModuleName(bool fullName = false) {
 
    static string name = "";
 
-   if (!StringLen(name)) {
+   if (name == "") {
       if (IsLibrary()) {
          string programName = ProgramName();
          string libraryName = WindowExpertName();
@@ -1729,6 +1734,11 @@ string ModuleName(bool fullName = false) {
       }
       else {
          name = WindowExpertName();
+      }
+      if (__isSuperContext) {
+         int pid = __ExecutionContext[EC.pid];
+         string hostName = ec_SuperProgramName(pid);
+         name = hostName +"::"+ name;
       }
    }
    return(name);
