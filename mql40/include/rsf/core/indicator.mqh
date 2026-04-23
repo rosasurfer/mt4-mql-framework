@@ -100,7 +100,7 @@ int init() {
    // before onInit(): log input parameters if loaded by iCustom()
    if (__isSuperContext && IsLogDebug()) {
       string sInputs = InputsToStr();
-      if (StringLen(sInputs) > 0) {
+      if (sInputs != "") {
          sInputs = StringConcatenate(sInputs,                                                        NL,
                                      "AutoConfiguration=", AutoConfiguration,                   ";", NL,
                                      "__lpSuperContext=",  "0x", IntToHexStr(__lpSuperContext), ";");
