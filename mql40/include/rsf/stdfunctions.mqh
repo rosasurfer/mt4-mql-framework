@@ -1689,7 +1689,7 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
  *
  * @return string
  */
-string ProgramName() {
+string MqlProgramName() {
    static string name = "";
 
    if (name == "") {
@@ -1725,7 +1725,7 @@ string MqlModuleName(bool fullName = false) {
 
    if (name == "") {
       if (IsLibrary()) {
-         string programName = ProgramName();
+         string programName = MqlProgramName();
          string libraryName = WindowExpertName();
          if (programName == "???") {
             return(programName +"::"+ libraryName);
@@ -6779,6 +6779,7 @@ void __DummyCalls() {
    Min(NULL, NULL);
    ModuleTypesToStr(NULL);
    MqlModuleName();
+   MqlProgramName();
    Mul(NULL, NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
@@ -6799,7 +6800,6 @@ void __DummyCalls() {
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
    ProgramInitReason();
-   ProgramName();
    QuoteStr(NULL);
    ResetLastError();
    RGBStrToColor(NULL);

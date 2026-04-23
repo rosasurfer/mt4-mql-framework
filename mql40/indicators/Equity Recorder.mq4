@@ -49,7 +49,7 @@ string legendLabel   = "";
  * @return int - error status
  */
 int onInit() {
-   indicatorName = ProgramName();
+   indicatorName = MqlProgramName();
 
    // validate inputs
    // HistoryDirectory

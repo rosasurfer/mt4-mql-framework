@@ -1775,7 +1775,7 @@ void UpdateChartLegend() {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
-   string name   = ProgramName(), donchianName="";
+   string name   = MqlProgramName(), donchianName="";
    indicatorName = name +"("+ ZigZag.Periods + ifString(ZigZag.Periods.Step, ":"+ ZigZag.Periods.Step, "") +")";
    shortName     = name +"("+ ZigZag.Periods +")";
    donchianName  = "Donchian("+ ZigZag.Periods +")";

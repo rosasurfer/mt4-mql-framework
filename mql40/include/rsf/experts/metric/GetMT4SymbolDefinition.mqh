@@ -63,7 +63,7 @@ int GetMT4SymbolDefinition(int id, bool &ready, string &symbol, string &descr, s
          return(ERR_INVALID_INPUT_PARAMETER);
    }
 
-   descr = StrLeft(ProgramName(), 63-StringLen(descrSuffix )) + descrSuffix;
+   descr = StrLeft(MqlProgramName(), 63-StringLen(descrSuffix )) + descrSuffix;
    ready = (instance.id > 0);
 
    return(NO_ERROR);

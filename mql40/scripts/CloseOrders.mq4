@@ -153,7 +153,7 @@ int onInit() {
       if (IsError(error)) return(error);
 
       PlaySoundEx("Windows Notify.wav");                             // we must return as scripts don't update their internal auto-trading status
-      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", ProgramName(), MB_ICONINFORMATION|MB_OK);
+      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", MqlProgramName(), MB_ICONINFORMATION|MB_OK);
       return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
    }
    return(catch("onInit(7)"));
@@ -221,7 +221,7 @@ int onStart() {
       string msg            = "Do you really want to "+ sPendingOrders + sAnd + sOpenPositions +"?";
 
       PlaySoundEx("Windows Notify.wav");
-      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, MqlProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
 
       if (button == IDOK) {
          if (sizeOfOpenPositions > 0) {
@@ -236,7 +236,7 @@ int onStart() {
       msg = "Do you really want to close the hedged part of "+ (sizeOfHedgedLong+sizeOfHedgedShort) +" positions?";
 
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
+      button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, MqlProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
 
       if (button == IDOK) {
          while (sizeOfHedgedLong && sizeOfHedgedShort) {
@@ -264,7 +264,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Plonk.wav");
-      MessageBox("No matching orders found.", ProgramName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No matching orders found.", MqlProgramName(), MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }

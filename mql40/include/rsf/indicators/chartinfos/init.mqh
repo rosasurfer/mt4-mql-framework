@@ -145,7 +145,7 @@ int afterInit() {
             if (!__virtualTicksTimerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
 
             // display ticker status
-            string label = ProgramName() +".TickerStatus";
+            string label = MqlProgramName() +".TickerStatus";
             if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(__ExecutionContext[EC.mqlError]);
             ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
             ObjectSet    (label, OBJPROP_XDISTANCE, 38);

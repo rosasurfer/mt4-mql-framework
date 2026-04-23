@@ -213,7 +213,7 @@ int log(string message, int error, int level) {
 
       if (!configLevel) {
          string section      = ifString(__isTesting, "Tester.", "") +"Log", key="", value="";
-         string programName  = ifString(__isSuperContext, ec_SuperProgramName(pid), ProgramName());
+         string programName  = ifString(__isSuperContext, ec_SuperProgramName(pid), MqlProgramName());
          string defaultValue = ifString(__isTesting, "off", "all");        // built-in defaults: tester/online
 
          // read and apply the loglevel of the current environment

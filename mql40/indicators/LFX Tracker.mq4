@@ -208,7 +208,7 @@ int    statusLineHeight         = 15;
  */
 int onInit() {
    // read auto-configuration
-   string indicator = ProgramName();
+   string indicator = MqlProgramName();
    if (AutoConfiguration) {
       // manual indicator inputs
       AUDLFX.Enabled             = GetConfigBool  (indicator, "AUDLFX.Enabled",             AUDLFX.Enabled);
@@ -470,7 +470,7 @@ bool RefreshLfxOrders() {
  * @return bool - success status
  */
 bool CreateLabels() {
-   string indicatorName = ProgramName();
+   string indicatorName = MqlProgramName();
 
    // trade account
    statusLabelTradeAccount = indicatorName +".TradeAccount";
@@ -998,7 +998,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                 // on ObjectDrag or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                    // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }
@@ -1014,7 +1014,7 @@ bool StoreTradeAccount() {
 
    // account company id
    int    hWnd = __ExecutionContext[EC.chart];
-   string key  = ProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
+   string key  = MqlProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
@@ -1022,7 +1022,7 @@ bool StoreTradeAccount() {
    ObjectSetText(key, tradeAccount.company);
 
    // account number
-   key = ProgramName() +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
+   key = MqlProgramName() +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
    SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
@@ -1041,14 +1041,14 @@ bool StoreTradeAccount() {
 string GetStoredTradeAccount() {
    // account company id
    int hWnd = __ExecutionContext[EC.chart];
-   string key = ProgramName() +".runtime.tradeAccount.company";
+   string key = MqlProgramName() +".runtime.tradeAccount.company";
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {
       if (ObjectFind(key) != -1) company = ObjectDescription(key);
    }
 
    // account number
-   key = ProgramName() +".runtime.tradeAccount.number";
+   key = MqlProgramName() +".runtime.tradeAccount.number";
    int accountNumber = GetWindowIntegerA(hWnd, key);
    if (!accountNumber) {
       if (ObjectFind(key) != -1) accountNumber = StrToInteger(ObjectDescription(key));

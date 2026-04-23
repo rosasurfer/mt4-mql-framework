@@ -126,7 +126,7 @@ int onTick() {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
-   indicatorName = ProgramName() +"("+ Periods +")";
+   indicatorName = MqlProgramName() +"("+ Periods +")";
    shortName     = "Donchian("+ Periods +")";
    IndicatorShortName(shortName);
 

@@ -591,7 +591,7 @@ bool GetOpenOrderDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   string label = "rsf."+ MqlProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -612,7 +612,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   string label = "rsf."+ MqlProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -681,7 +681,7 @@ bool GetTradeHistoryDisplayStatus() {
    bool status = false;
 
    // on error look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ MqlProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -702,7 +702,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ MqlProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -1018,7 +1018,7 @@ bool ToggleAccountBalance(bool externalAssets) {
  * @return bool - status: enabled/disabled
  */
 bool GetAccountBalanceDisplayStatus() {
-   string label = ProgramName() +".ShowAccountBalance";        // TODO: also store status in the chart window
+   string label = MqlProgramName() +".ShowAccountBalance";     // TODO: also store status in the chart window
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -1035,7 +1035,7 @@ bool GetAccountBalanceDisplayStatus() {
 bool SetAccountBalanceDisplayStatus(bool status) {
    status = status!=0;
 
-   string label = ProgramName() +".ShowAccountBalance";        // TODO: also read status from the chart window
+   string label = MqlProgramName() +".ShowAccountBalance";     // TODO: also read status from the chart window
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -1052,7 +1052,7 @@ bool SetAccountBalanceDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // define labels
-   string programName = ProgramName();
+   string programName = MqlProgramName();
    label.instrument     = programName +".Instrument";
    label.price          = programName +".Price";
    label.spread         = programName +".Spread";
@@ -1297,7 +1297,7 @@ bool UpdatePositions() {
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) return(!catch("UpdatePositions(1)", error));
 
    // pending order marker bottom-right
-   string label = ProgramName() +".PendingTickets";
+   string label = MqlProgramName() +".PendingTickets";
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, 12);
@@ -4689,7 +4689,7 @@ bool AnalyzePos.ProcessLfxProfits() {
  */
 bool StoreStatus() {
    if (!__isChart) return(true);
-   string indicatorName = ProgramName();
+   string indicatorName = MqlProgramName();
 
    // int position.unitsize.corner
    string key = indicatorName +".position.unitsize.corner";
@@ -4747,7 +4747,7 @@ bool StoreStatus() {
  */
 bool RestoreStatus() {
    if (!__isChart) return(true);
-   string indicatorName = ProgramName();
+   string indicatorName = MqlProgramName();
 
    // int position.unitsize.corner
    string key = indicatorName +".position.unitsize.corner", mfeKey="", maeKey="";

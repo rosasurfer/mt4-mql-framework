@@ -257,8 +257,8 @@ bool Recorder_init() {
    string symbol="", descr="", group="", suffix="";
 
    suffix                = ", "+ PeriodDescription() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-   recorder.defaultDescr = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;                           // sizeof(SYMBOL.description) = 64 chars (szchar)
-   recorder.defaultGroup = StrTrimRight(StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH));
+   recorder.defaultDescr = StrLeft(MqlProgramName(), 63-StringLen(suffix)) + suffix;                           // sizeof(SYMBOL.description) = 64 chars (szchar)
+   recorder.defaultGroup = StrTrimRight(StrLeft(MqlProgramName(), MAX_SYMBOL_GROUP_LENGTH));
    recorder.hstDirectory = Recorder_GetHstDirectory(); if (!StringLen(recorder.hstDirectory)) return(false);
    recorder.hstFormat    = Recorder_GetHstFormat();    if (!recorder.hstFormat)               return(false);
 
@@ -276,7 +276,7 @@ bool Recorder_init() {
          }
          if (descr == "") {
             suffix = ", "+ PeriodDescription() +", AccountEquity in "+ AccountCurrency() + LocalTimeFormat(GetGmtTime(), ", %d.%m.%Y %H:%M");
-            descr  = StrLeft(ProgramName(), 63-StringLen(suffix)) + suffix;
+            descr  = StrLeft(MqlProgramName(), 63-StringLen(suffix)) + suffix;
          }
          if (group == "") {
             group = recorder.defaultGroup;

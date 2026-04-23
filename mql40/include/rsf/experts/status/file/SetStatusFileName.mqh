@@ -11,7 +11,7 @@ bool SetStatusFileName() {
    if (!instance.created)     return(!catch("SetStatusFileName(3)  "+ instance.name +" cannot create status filename (instance.created not set)", ERR_ILLEGAL_STATE));
 
    string directory = "presets\\"+ ifString(IsTestInstance(), "Tester", GetAccountCompanyId()) +"\\";
-   string baseName  = ProgramName() +", "+ GmtTimeFormat(instance.created, "%Y.%m.%d %H.%M") +", "+ Symbol() +","+ PeriodDescription() +" id="+ StrPadLeft(instance.id, 3, "0") +".set";
+   string baseName  = MqlProgramName() +", "+ GmtTimeFormat(instance.created, "%Y.%m.%d %H.%M") +", "+ Symbol() +","+ PeriodDescription() +" id="+ StrPadLeft(instance.id, 3, "0") +".set";
    status.filename = directory + baseName;
 
    return(!catch("SetStatusFileName(4)"));

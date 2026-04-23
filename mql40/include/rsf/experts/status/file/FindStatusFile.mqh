@@ -20,7 +20,7 @@ string FindStatusFile(int instanceId, bool isTest, int flags = NULL) {
 
    string sandboxDir  = GetMqlSandboxPath() +"\\";
    string companyDir  = "presets\\"+ ifString(isTest, "Tester", GetAccountCompanyId()) +"\\";
-   string filePattern = ProgramName() +",*"+ Symbol() +",*id="+ StrPadLeft(""+ instanceId, 3, "0") +".set";
+   string filePattern = MqlProgramName() +",*"+ Symbol() +",*id="+ StrPadLeft(""+ instanceId, 3, "0") +".set";
    string pattern     = sandboxDir + companyDir + filePattern;
 
    string result[];
