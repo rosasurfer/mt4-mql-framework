@@ -173,7 +173,7 @@ show_data=1
 </window>
 
 <window>
-height=140
+height=120
 fixed_height=0
 <indicator>
 name=Custom Indicator
@@ -197,7 +197,7 @@ show_data=1
 </window>
 
 <window>
-height=500
+height=400
 fixed_height=0
 <indicator>
 name=Custom Indicator

@@ -373,7 +373,7 @@ bool CreateTrendHints() {
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 37);
-   ObjectSet    (label, OBJPROP_YDISTANCE,  1);
+   ObjectSet    (label, OBJPROP_YDISTANCE,  0);
    ObjectSetText(label, " ");
    trendHintCloseLabel = label;
 
@@ -381,7 +381,7 @@ bool CreateTrendHints() {
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 7);
-   ObjectSet    (label, OBJPROP_YDISTANCE, 1);
+   ObjectSet    (label, OBJPROP_YDISTANCE, 0);
    ObjectSetText(label, " ");
    trendHintMaLabel = label;
 
