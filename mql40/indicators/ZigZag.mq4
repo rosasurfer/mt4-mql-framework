@@ -256,7 +256,6 @@ datetime recorder.startTime;
 #define EVENT_REVERSAL_DOWN   4
 
 
-//
 // ZigZag leg up:   formed by two channel crossings in order "low band, high band" which create the preceeding Low semaphore
 // ZigZag leg down: formed by two channel crossings in order "high band, low band" which create the preceeding High semaphore
 //
@@ -360,7 +359,6 @@ datetime recorder.startTime;
 //
 // • Triple+ crossing bar (more than two semaphores)
 //    Same as double crossing. The last crossing overwrites values from previous crossings.
-//
 
 
 /**
@@ -1328,9 +1326,36 @@ bool ProcessUpperCross(int bar) {
       //sema1 = Low[lastSemBar];
       //lastLegHigh = 0;
 
-      // TODO: depends solely on window properties which doesn't work with logging and fails in tester
+      // detect new reversals (only the first occurrence)
+      bool newReversal = false;
+      static datetime lastReversalTime;
+      static double   lastReversalPrice;
+
       if (reversalBar && ChangedBars <= 2) {
-         if (Signal.onReversal && __isChart) {
+         if (Time[bar] != lastReversalTime || NE(upperCross[bar], lastReversalPrice, Digits)) {
+            newReversal       = true;
+            lastReversalTime  = Time[bar];
+            lastReversalPrice = upperCross[bar];
+         }
+      }
+
+      // handle new reversals
+      if (newReversal) {
+         // log reversal
+         if (IsLogInfo()) {
+            string sCrossLevel = NumberToStr(upperCross[bar], PriceFormat);
+            bool logReversal = true;
+            if (!__isSuperContext && !__isTesting) {        // once per terminal
+               int hWndTerminal = GetTerminalMainWindow();
+               string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ ZigZag.Periods +")" +".ProcessUpperCross("+ sCrossLevel +")."+ TimeToStr(Time[bar]);
+               logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
+               SetWindowPropertyA(hWndTerminal, eventName, 1);
+            }
+            if (logReversal) logInfo("onReversal(P="+ ZigZag.Periods +")  reversal up (level: "+ sCrossLevel +")");
+         }
+
+         // signal reversal
+         if (Signal.onReversal) {
             onReversal(bar, D_LONG, upperCross[bar]);
          }
       }
@@ -1429,9 +1454,36 @@ bool ProcessLowerCross(int bar) {
       //sema1 = High[lastSemBar];
       //lastLegLow = 0;
 
-      // TODO: depends solely on window properties which doesn't work with logging and fails in tester
+      // detect new reversals (only the first occurrence)
+      bool newReversal = false;
+      static datetime lastReversalTime;
+      static double   lastReversalPrice;
+
       if (reversalBar && ChangedBars <= 2) {
-         if (Signal.onReversal && __isChart) {
+         if (Time[bar] != lastReversalTime || NE(lowerCross[bar], lastReversalPrice, Digits)) {
+            newReversal       = true;
+            lastReversalTime  = Time[bar];
+            lastReversalPrice = lowerCross[bar];
+         }
+      }
+
+      // handle new reversals
+      if (newReversal) {
+         // log reversal
+         if (IsLogInfo()) {
+            string sCrossLevel = NumberToStr(lowerCross[bar], PriceFormat);
+            bool logReversal = true;
+            if (!__isSuperContext && !__isTesting) {        // once per terminal
+               int hWndTerminal = GetTerminalMainWindow();
+               string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ ZigZag.Periods +")" +".ProcessLowerCross("+ sCrossLevel +")."+ TimeToStr(Time[bar]);
+               logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
+               SetWindowPropertyA(hWndTerminal, eventName, 1);
+            }
+            if (logReversal) logInfo("onReversal(P="+ ZigZag.Periods +")  reversal down (level: "+ sCrossLevel +")");
+         }
+
+         // signal reversal
+         if (Signal.onReversal) {
             onReversal(bar, D_SHORT, lowerCross[bar]);
          }
       }
@@ -1484,9 +1536,7 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
  * @return bool - success status
  */
 bool onReversal(int bar, int direction, double level) {
-   if (!__isChart)                              return(true);
-   if (bar > 0) if (bar!=1 || ChangedBars!=2)   return(!catch("onReversal(1)  invalid parameter bar: "+ bar +" (ChangedBars="+ ChangedBars +")", ERR_INVALID_PARAMETER));
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (IsPossibleDataPumping())                 return(true);
 
    // skip the signal if it was already handled elsewhere
@@ -1494,24 +1544,12 @@ bool onReversal(int bar, int direction, double level) {
    string sName      = WindowExpertName() +"("+ ZigZag.Periods +")";
    string sDirection = ifString(direction==D_LONG, "up", "down");
    string eventName  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ sName +".onReversal("+ sDirection +")."+ TimeToStr(Time[bar]), propertyName = "";
-   string message1   = "reversal "+ sDirection +" (level: "+ NumberToStr(level, PriceFormat) +")";
-   string message2   = Symbol() +","+ sPeriod +": "+ sName +" "+ message1;
-   string localTime  = TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS);
+   string message    = Symbol() +","+ sPeriod +": "+ sName +" reversal "+ sDirection +" (level: "+ NumberToStr(level, PriceFormat) +")";
+   string localTime  = TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS);
    string accountAlias = GetAccountAlias();
 
    int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
    bool eventAction;
-
-   // log: once per terminal
-   if (IsLogInfo()) {
-      eventAction = true;
-      if (!__isTesting) {
-         propertyName = eventName +"|log";
-         eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
-         SetWindowPropertyA(hWndTerminal, propertyName, 1);
-      }
-      if (eventAction) logInfo("onReversal(4)  P="+ ZigZag.Periods +"  "+ message1);
-   }
 
    // sound: once per system
    if (signal.onReversal.sound) {
@@ -1535,7 +1573,7 @@ bool onReversal(int bar, int direction, double level) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) Alert(message2);
+      if (eventAction) Alert(message);
    }
 
    // mail: once per system
@@ -1546,7 +1584,7 @@ bool onReversal(int bar, int direction, double level) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendEmail("", "", message2, message2 + NL +"("+ localTime +", "+ accountAlias +")");
+      if (eventAction) SendEmail("", "", message, message + NL +"("+ localTime +", "+ accountAlias +")");
    }
 
    // Telegram: once per system
@@ -1557,9 +1595,9 @@ bool onReversal(int bar, int direction, double level) {
          eventAction = !GetWindowPropertyA(hWndDesktop, propertyName);
          SetWindowPropertyA(hWndDesktop, propertyName, 1);
       }
-      if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ accountAlias +")");
+      if (eventAction) SendTelegramMessage("signal", message + NL +"("+ localTime +", "+ accountAlias +")");
    }
-   return(!catch("onReversal(5)"));
+   return(!catch("onReversal(3)"));
 }
 
 
