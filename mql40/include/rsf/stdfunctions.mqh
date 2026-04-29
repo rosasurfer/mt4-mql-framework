@@ -804,9 +804,7 @@ double PipValue(double lots=1.0, bool muteErrors=false) {
  * @param  _In_  string symbol            - symbol
  * @param  _In_  double lots              - lot amount
  * @param  _Out_ int    error             - variable receiving the error status
- * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
- *                                           if specified errors are logged with level LOG_NOTICE
- *                                           if not specified errors are not logged (default)
+ * @param  _In_  string caller [optional] - location of the caller, if specified errors are logged (default: no logging)
  *
  * @return double - pip value or NULL (0) in case of errors (check parameter 'error')
  */
@@ -2690,15 +2688,14 @@ int SumInts(int values[]) {
  * @param  _In_  string symbol            - symbol
  * @param  _In_  int    mode              - MarketInfo() data identifier
  * @param  _Out_ int    error             - variable receiving the error status
- * @param  _In_  string caller [optional] - location identifier of the caller, controls error handling: if not empty errors
- *                                          are logged (default: no logging)
+ * @param  _In_  string caller [optional] - location of the caller, if specified errors are logged (default: no logging)
  *
- * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter 'error')
+ * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter `error`)
  */
 double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
    string section = "MarketInfo";
-   string sMode   = MarketInfoModeToStr(mode);
-   string key     = symbol +","+ sMode;
+   string sMode = MarketInfoModeToStr(mode);
+   string key = StringConcatenate(symbol, ",", sMode);
 
    if (key == "VIX_J4,MODE_TICKVALUE") {                 // TODO: hard-code cases to minimize expensive logic
       // check for and return a custom override
@@ -2732,7 +2729,9 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
    }
    if (!error) return(dValue);
 
-   if (caller != "") /*&&*/ if (IsLogInfo()) logInfo(caller +"->MarketInfoEx(4: \""+ symbol +"\", "+ sMode +") => "+ NumberToStr(dValue, ".1+"), error);
+   if (caller != "") {
+      if (IsLogInfo()) logInfo(caller +"->MarketInfoEx(4:"+ symbol +") => "+ sMode +" = "+ NumberToStr(dValue, ".1+"), error);
+   }
    return(NULL);
 }
 
