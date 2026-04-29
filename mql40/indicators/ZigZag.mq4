@@ -1247,7 +1247,7 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
  *
  * @param  int bar - offset
  *
- * @return bool - whether the bar is a reversal bar (not whether the current tick triggered it)
+ * @return bool - whether the bar is a reversal bar (not whether the current tick triggered the reversal)
  */
 bool ProcessUpperCross(int bar) {
    int lastSemType, lastSemBar = FindSemaphore(bar, lastSemType);    // find the last semaphore
@@ -1323,7 +1323,6 @@ bool ProcessUpperCross(int bar) {
          }
       }
 
-      // TODO: fix breakout detection
       //sema3 = sema2;
       //sema2 = sema1;
       //sema1 = Low[lastSemBar];
@@ -1334,7 +1333,6 @@ bool ProcessUpperCross(int bar) {
          if (Signal.onReversal && __isChart) {
             onReversal(bar, D_LONG, upperCross[bar]);
          }
-         //if (__isSuperContext) logInfo("ProcessUpperCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal up (bar "+ bar +", crossing level: "+ NumberToStr(upperCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       }
    }
    return(reversalBar);
@@ -1350,7 +1348,7 @@ bool ProcessUpperCross(int bar) {
  *
  * @param  int bar - offset
  *
- * @return bool - whether the bar is a reversal bar (not whether the current tick triggered it)
+ * @return bool - whether the bar is a reversal bar (not whether the current tick triggered the reversal)
  */
 bool ProcessLowerCross(int bar) {
    int lastSemType, lastSemBar = FindSemaphore(bar, lastSemType);    // find the last semaphore
@@ -1426,7 +1424,6 @@ bool ProcessLowerCross(int bar) {
          }
       }
 
-      // TODO: fix breakout detection
       //sema3 = sema2;
       //sema2 = sema1;
       //sema1 = High[lastSemBar];
@@ -1437,7 +1434,6 @@ bool ProcessLowerCross(int bar) {
          if (Signal.onReversal && __isChart) {
             onReversal(bar, D_SHORT, lowerCross[bar]);
          }
-         //if (__isSuperContext) logInfo("ProcessLowerCross(1)->onReversal()  P="+ ZigZag.Periods +"  reversal down (bar "+ bar +", crossing level: "+ NumberToStr(lowerCross[bar], PriceFormat) +", market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       }
    }
    return(reversalBar);
@@ -1488,16 +1484,19 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
  * @return bool - success status
  */
 bool onReversal(int bar, int direction, double level) {
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!__isChart)                              return(true);
+   if (bar > 0) if (bar!=1 || ChangedBars!=2)   return(!catch("onReversal(1)  invalid parameter bar: "+ bar +" (ChangedBars="+ ChangedBars +")", ERR_INVALID_PARAMETER));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(2)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (IsPossibleDataPumping())                 return(true);
 
    // skip the signal if it was already handled elsewhere
-   string sPeriod   = PeriodDescription();
-   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onReversal("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1  = "reversal "+ ifString(direction==D_LONG, "up", "down") +" (level: "+ NumberToStr(level, PriceFormat) +")";
-   string message2  = Symbol() +","+ sPeriod +": "+ indicatorName +" "+ message1;
-   string localTime = TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS);
+   string sPeriod    = PeriodDescription();
+   string sName      = WindowExpertName() +"("+ ZigZag.Periods +")";
+   string sDirection = ifString(direction==D_LONG, "up", "down");
+   string eventName  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ sName +".onReversal("+ sDirection +")."+ TimeToStr(Time[bar]), propertyName = "";
+   string message1   = "reversal "+ sDirection +" (level: "+ NumberToStr(level, PriceFormat) +")";
+   string message2   = Symbol() +","+ sPeriod +": "+ sName +" "+ message1;
+   string localTime  = TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS);
    string accountAlias = GetAccountAlias();
 
    int hWndTerminal = GetTerminalMainWindow(), hWndDesktop = GetDesktopWindow();
@@ -1511,7 +1510,7 @@ bool onReversal(int bar, int direction, double level) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) logInfo("onReversal(3)  P="+ ZigZag.Periods +" "+ message1);
+      if (eventAction) logInfo("onReversal(4)  P="+ ZigZag.Periods +"  "+ message1);
    }
 
    // sound: once per system
@@ -1560,7 +1559,7 @@ bool onReversal(int bar, int direction, double level) {
       }
       if (eventAction) SendTelegramMessage("signal", message2 + NL +"("+ localTime +", "+ accountAlias +")");
    }
-   return(!catch("onReversal(4)"));
+   return(!catch("onReversal(5)"));
 }
 
 
