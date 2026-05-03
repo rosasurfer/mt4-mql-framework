@@ -2805,12 +2805,12 @@ int DebugMarketInfo(string caller = "") {
 
    debug(caller +"  built-in: Digits      = "+ Digits);
    debug(caller +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
-   debug(caller +"  derived:  Pip         = "+ NumberToStr(Pip, PriceFormat));
-   debug(caller +"  derived:  PipDigits   = "+ PipDigits);
+   debug(caller +"  custom:   Pip         = "+ NumberToStr(Pip, PriceFormat));
+   debug(caller +"  custom:   PipDigits   = "+ PipDigits);
 
-   debug(caller +"  derived:  pUnit       = "+ NumberToStr(pUnit, pUnitFormat));
+   debug(caller +"  custom:   pUnit       = "+ NumberToStr(pUnit, pUnitFormat));
 
-   debug(caller +"  derived:  PriceFormat = \""+ PriceFormat +"\"");
+   debug(caller +"  custom:   PriceFormat = \""+ PriceFormat +"\"");
    debug(caller +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
    debug(caller +"  built-in: Bars        = "+ Bars);
 

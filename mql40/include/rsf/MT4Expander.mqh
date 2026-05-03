@@ -8,6 +8,7 @@
 #import "rsfMT4Expander.dll"
 
    // terminal status and interaction
+   void     CustomizeTerminal();
    string   FindHistoryDirectoryA(string filename, int removeFile);
    string   GetExpanderFileNameA();
    string   GetHistoryRootPathA();

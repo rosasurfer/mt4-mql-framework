@@ -1830,7 +1830,7 @@ int CreateStatusBox() {
    debug("CreateStatusBox(0.1)  top distance y = "+ y);
 
    for (int i=0; i < sizeofX; i++) {
-      string label = MqlProgramName() +".statusbox."+ (i+1);
+      string label = WindowExpertName() +".statusbox."+ (i+1);
       if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(0);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
