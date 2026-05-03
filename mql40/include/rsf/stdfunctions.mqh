@@ -355,7 +355,7 @@ void ForceAlert(string message) {
    Alert(Symbol(), ",", sPeriod, ": ", MqlModuleName(true), ":  ", message);  // the message shows up in the terminal log
 
    if (IsTesting()) {
-      // in tester no Alert() dialog was displayed
+      // in tester Alert() dialog are not displayed
       string sCaption = "Strategy Tester "+ Symbol() +","+ sPeriod;
       string sMessage = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
 

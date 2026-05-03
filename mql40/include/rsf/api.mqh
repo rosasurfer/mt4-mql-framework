@@ -832,6 +832,7 @@ bool     IsWindowAreaVisible(int hWnd);;
 int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
+void     LoadMT4Expander();;
 string   LocalTimeFormatA(datetime time, string format);;
 datetime LocalToGmtTime(datetime time);;
 string   LoglevelToStrA(int level);;

@@ -7,8 +7,10 @@
  */
 #import "rsfMT4Expander.dll"
 
+   // startup
+   void     LoadMT4Expander();
+
    // terminal status and interaction
-   void     CustomizeTerminal();
    string   FindHistoryDirectoryA(string filename, int removeFile);
    string   GetExpanderFileNameA();
    string   GetHistoryRootPathA();
