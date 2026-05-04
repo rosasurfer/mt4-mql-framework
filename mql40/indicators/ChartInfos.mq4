@@ -359,7 +359,7 @@ bool onCommand(string cmd, string params, int keys) {
  * Toggle the display of open orders.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CUSTOM_POSITIONS: show configured positions only (no unconfigured or pending ones)
+ *                                F_SHOW_CUSTOM_POSITIONS: show custom positions only (default: all open orders)
  * @return bool - success status
  */
 bool ToggleOpenOrders(int flags = NULL) {
@@ -372,7 +372,7 @@ bool ToggleOpenOrders(int flags = NULL) {
       if (orders == -1) return(false);
       if (!orders) {
          showOrders = false;                          // Reset status without open orders to continue with the "off" section
-         PlaySoundEx("Plonk.wav");                    // which clears existing (e.g. orphaned) open order markers.
+         PlaySoundEx("Plonk.wav");                    // which clears existing and orphaned open order markers.
       }
    }
 
@@ -412,7 +412,7 @@ bool ToggleOpenOrders(int flags = NULL) {
  *
  * @param  int customTickets[]  - skip resolving of tickets and display the passed tickets instead
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CUSTOM_POSITIONS: display configured custom positions only instead of all open orders
+ *                                F_SHOW_CUSTOM_POSITIONS: show custom positions only (default: all open orders)
  *
  * @return int - number of displayed orders or EMPTY (-1) in case of errors
  */
@@ -626,7 +626,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
  * Toggle the display of closed trades.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CUSTOM_HISTORY: show the configured history only (not the total one)
+ *                                F_SHOW_CUSTOM_HISTORY: show custom historic trades only (default: all historic trades)
  * @return bool - success status
  */
 bool ToggleTradeHistory(int flags = NULL) {
@@ -637,7 +637,7 @@ bool ToggleTradeHistory(int flags = NULL) {
       int iNulls[], trades = ShowTradeHistory(iNulls, flags);
       if (trades == -1) return(false);
       if (!trades) {                                     // Reset status without history to continue with the "off" section
-         showHistory = false;                            // which clears existing (e.g. orphaned) history markers.
+         showHistory = false;                            // which clears existing and orphaned history markers.
          PlaySoundEx("Plonk.wav");
       }
    }
@@ -717,7 +717,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
  *
  * @param  int customTickets[]  - skip history retrieval and display the passed tickets instead
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CUSTOM_HISTORY: display the configured history instead of the available one
+ *                                F_SHOW_CUSTOM_HISTORY: show custom historic trades only (default: all historic trades)
  *
  * @return int - number of displayed trades or EMPTY (-1) in case of errors
  */
@@ -735,7 +735,7 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
    int      customTicketsSize = ArraySize(customTickets);
    static int returnValue = 0;
 
-   // on flag F_SHOW_CUSTOM_HISTORY call AnalyzePositions() which recursively calls ShowTradeHistory() for each custom config line
+   // on flag F_SHOW_CUSTOM_HISTORY: call AnalyzePositions() which recursively calls ShowTradeHistory() for each custom config line
    if (!customTicketsSize || flags & F_SHOW_CUSTOM_HISTORY) {
       returnValue = 0;
       if (!customTicketsSize && flags & F_SHOW_CUSTOM_HISTORY) {
@@ -3413,9 +3413,9 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * @param  _InOut_ double   termResult1 -
  * @param  _InOut_ double   termResult2 -
  *
- * @param  _InOut_ int      filter          - filter of the custom position: TERM_FILTER_EA|TERM_FILTER_SID|TERM_FILTER_MAGIC
+ * @param  _InOut_ int      filter          - filter of the custom position: TERM_FILTER_EA|TERM_FILTER_MAGIC|TERM_FILTER_SID
  * @param  _InOut_ int      filterCondition - operator: 1=include, 0=exclude
- * @param  _InOut_ int      filterValue     - strategy SID or magic number
+ * @param  _InOut_ int      filterValue     - magic number or strategy SID
  *
  * @param  _InOut_ double   fromLongPosition - variables a custom position is extracted from (value decreases)
  * @param  _InOut_ double   fromShortPosition
@@ -3462,7 +3462,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                      bool &isVirtual, int flags = NULL) {
    isVirtual = isVirtual!=0;
 
-   if (termType == TERM_FILTER_EA || termType == TERM_FILTER_SID || termType == TERM_FILTER_MAGIC) {
+   if (termType == TERM_FILTER_EA || termType == TERM_FILTER_MAGIC || termType == TERM_FILTER_SID) {
       filter          = termType;
       filterCondition = termValue1;
       filterValue     = termValue2;
@@ -3734,13 +3734,13 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          for (i=0; i < orders; i++) {
             if (from && hst.closeTimes[i] < from) continue;
             if (to   && hst.closeTimes[i] > to  ) continue;
-            if (flags & F_SHOW_CUSTOM_HISTORY && 1) {
-               ArrayPushInt(showTickets, hst.tickets[i]);                     // collect tickets to pass to ShowTradeHistory()
-            }
-            if (hst.discarded[i])                 continue;                   // skip discarded tickets
             if (filter != NULL) {                                             // skip filtered tickets
                if (!ApplyFilter(filter, filterCondition, filterValue, hst.magicNumbers[i])) continue;
             }
+            if (flags & F_SHOW_CUSTOM_HISTORY && 1) {
+               ArrayPushInt(showTickets, hst.tickets[i]);                     // collect tickets to pass to ShowTradeHistory()
+            }
+            if (hst.discarded[i])                 continue;                   // skip discarded hedging tickets (PnL was copied to hedged ticket)
             lastProfit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
             n++;
          }
