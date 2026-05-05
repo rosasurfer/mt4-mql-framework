@@ -1,8 +1,8 @@
 <!--
 EMA(144)
-ALMA(38)
-LWMA(55) Channel + Channel Bars + Signal
-CCI(14) + Signal
+MA Channel LWMA(55) + Trend Bars
+Donchian Channel(50) 
+CCI(14)
 -->
 
 <chart>
@@ -155,19 +155,28 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=ALMA
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
-MA.Periods=38
-MA.ReversalFilter.StdDev=0.2
-UpTrend.Color=16711680
-DownTrend.Color=16776960
-Background.Color=16748574
-ShowChartLegend=0
-AutoConfiguration=0
+ZigZag.Periods=50
+ZigZag.Type=Lines* | Semaphores
+ZigZag.Width=0
+ZigZag.Color=16711935
+Donchian.ShowChannel=1
+Donchian.Channel.UpperColor=16711680
+Donchian.Channel.LowerColor=255
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossing.Symbol=dot | thin-ring* | ring | thick-ring
+Donchian.Crossing.Width=4
+Signal.onReversal=1
+Signal.onReversal.Types=sound* | alert* | mail | telegram
+Signal.onBreakout=0
+Sound.onChannelWidening=0
 </inputs>
 </expert>
+style_0=2
+style_1=2
 show_data=1
 </indicator>
 </window>
