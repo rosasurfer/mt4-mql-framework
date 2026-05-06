@@ -19,3 +19,6 @@ string status.openLots = "";
 string status.closedTrades = "";
 string status.totalProfit = "";
 string status.profitStats = "";
+
+// comment prefix used by composition of the status display (adapts to existing chart legends)
+string status.commentPrefix = "";

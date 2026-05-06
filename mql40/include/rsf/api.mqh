@@ -250,6 +250,7 @@ bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     UpdateTrend(double values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE);;
 
 // include/rsf/functions/chartlegend.mqh
+int      CountChartLegends();;
 string   CreateChartLegend();;
 bool     RearrangeChartLegends();;
 bool     RemoveChartLegend();;

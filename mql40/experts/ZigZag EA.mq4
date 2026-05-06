@@ -79,7 +79,7 @@
  *       synchronize-after (default: yes; if no: wait for the next signal)
  *    - config support for session and trade breaks at specific day times
  */
-#define STRATEGY_ID  107                     // unique strategy id
+#define STRATEGY_ID  107                                             // unique strategy id
 
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
@@ -98,7 +98,8 @@ extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Entry conditions ===";
-extern bool   Entry.onChannelWidening        = false;                // start trading at the next Donchian channel widening
+extern bool   Entry.onChannelWidening        = false;                // entry when the Donchian channel widens
+extern int    Entry.afterLosingLegs          = 0;                    // entry after number of consecutive losing legs
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1741,6 +1742,51 @@ void SS.StartStopConditions() {
 
 
 /**
+ * Creates the status display box. Consists of overlapping rectangles made of font "Webdings", character "g".
+ * Called from onInit() only.
+ *
+ * @return string - comment prefix to be used by composition of the status display (adapts to existing chart legends)
+ */
+string CreateStatusBox() {
+   if (!__isChart) return(0);
+
+   int x[] = {2, 102};                                      // x-offset of the rectangles forming the status box
+   int sizeofX = ArraySize(x);                              // number of used rectangles
+   int legends = CountChartLegends();                       // number of existing chart legends
+   int fontSize = 76;                                       // rectangle fontsize
+   color bgColor = LemonChiffon;                            // rectangle color
+
+   // comment line tops: 16, 28, 40, 52, 64 ... => x * 12 + 4
+   // legend lines bottoms: 36, 55, 74, 93 ...  => x * 19 + 17
+
+   // calculate the bottom offset of existing chart legends
+   int legendsBottomOffset = 0;
+   if (legends > 0) {
+      legendsBottomOffset = legends * chartlegend.lineHeight + (chartlegend.lineHeight-chartlegend.lineDistance);
+   }
+
+   // add 1px statusbox distance + 1px statusbox padding (2px)
+   int commentsOffset = legendsBottomOffset + 2;
+   int firstLine = MathCeil((commentsOffset - 4)/12.0);
+   firstLine = Max(firstLine, 2);                           // terminal comments start at offset of line 2
+   int statusboxOffset = firstLine * 12 + 4 - 1;            // -1px padding top
+
+   // create status box
+   for (int i=0; i < sizeofX; i++) {
+      string label = StringConcatenate(WindowExpertName(), ".statusbox.", i+1);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(0);
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
+      ObjectSet(label, OBJPROP_YDISTANCE, statusboxOffset);
+      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
+   }
+
+   // return the resulting comment prefix/spacer
+   return(StrRepeat(NL, firstLine-1));
+}
+
+
+/**
  * Display the current runtime status.
  *
  * @param  int error [optional] - error to display (default: none)
@@ -1780,21 +1826,8 @@ int ShowStatus(int error = NO_ERROR) {
                                    "Closed:  ",   status.closedTrades,                                     NL,
                                    "Profit:    ", status.totalProfit, "  ", status.profitStats,            NL
    );
+   Comment(status.commentPrefix, text);
 
-   // resolve the top-margin to apply to the content of the status box
-   string marginTop = "";
-   if (statusbox.yOffset == -1) {
-      statusbox.yOffset = GetChartLegendsHeight();
-   }
-   if      (statusbox.yOffset <= 20) marginTop = StringConcatenate(NL, "");
-   else if (statusbox.yOffset <= 39) marginTop = StringConcatenate(NL, NL);
-   else if (statusbox.yOffset <= 58) marginTop = StringConcatenate(NL, NL, NL, NL);
-   else if (statusbox.yOffset <= 77) marginTop = StringConcatenate(NL, NL, NL, NL, NL, NL);
-   else if (statusbox.yOffset <= 96) marginTop = StringConcatenate(NL, NL, NL, NL, NL, NL, NL);
-   else                              marginTop = StringConcatenate(NL, NL, NL, NL, NL, NL, NL, NL, NL);
-   //debug("ShowStatus(0.2)  yOffset = "+ statusbox.yOffset);
-
-   Comment(marginTop, text);
    if (__CoreFunction == CF_INIT) WindowRedraw();
 
    // store status in the chart to enable sending of chart commands
@@ -1808,36 +1841,6 @@ int ShowStatus(int error = NO_ERROR) {
    error = intOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
    return(error);
-}
-
-
-/**
- * Creates the status display box. Consists of overlapping rectangles made of font "Webdings", character "g".
- * Called from onInit() only.
- *
- * @return int - y-offset of the created status box, or NULL in case of errors. Check `last_error` to distinguish between
- *               an error and offset 0 (zero). Used by ShowStatus() to calculate display margins.
- */
-int CreateStatusBox() {
-   if (!__isChart) return(0);
-
-   int x[] = {2, 102};                       // x-offset of the rectangles forming the status box
-   int sizeofX = ArraySize(x);               // number of rectangles
-   int y = GetChartLegendsHeight();          // minimum y-offset of the status box to create
-   int fontSize = 76;                        // rectangle fontsize
-   color bgColor = LemonChiffon;             // rectangle color
-
-   debug("CreateStatusBox(0.1)  top distance y = "+ y);
-
-   for (int i=0; i < sizeofX; i++) {
-      string label = WindowExpertName() +".statusbox."+ (i+1);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(0);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
-      ObjectSet(label, OBJPROP_YDISTANCE, y);
-      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
-   }
-   return(y);
 }
 
 
