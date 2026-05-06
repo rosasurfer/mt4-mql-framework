@@ -9,15 +9,15 @@
 #define ZigZag.MODE_COMBINED_TREND     7              // int: combined internal buffers MODE_TREND and MODE_UNKNOWN_TREND: positive/negative or 0
 
 /**
- * Notes
- * -----
+ * Note
+ * ----
  * Since MQL4.0 limits the number of available indicator buffers to 8, MODE_TREND and MODE_UNKNOWN_TREND are combined into
- * a single buffer ZigZag.MODE_COMBIND_TREND (7). To retrieve the original values with iCustom(), input "TrendBufferAsDecimal"
- * must be set to FALSE.
+ * a single buffer ZigZag.MODE_COMBIND_TREND (7). To retrieve original values with iCustom(), input "TrendBufferAsBinary"
+ * must be set to TRUE.
  *
- * Each value from buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this integer holds the MODE_TREND
- * value, and the HIWORD of the integer holds the MODE_UNKNOWN_TREND value. For final results, both values must be converted
- * to signed short (sign extension).
+ * The each value in buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this integer holds MODE_TREND
+ * (as `signed short`), and the HIWORD of the integer holds MODE_UNKNOWN_TREND (as `signed short`). Both values must be
+ * converted to a standard MQL `signed int` before being used.
  */
 
 
@@ -73,12 +73,11 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           "",                         // string   Sound.onNewChannelLow
 
                           "separator",                // string   ___e_______________________
-                          false,                      // bool     TrackVirtualProfit
-                        //0,                          // datetime TrackVirtualProfit.Since
-                        //"",                         // string   TrackVirtualProfit.Symbol
+                          false,                      // bool     TrackVirtualPnL
+                          "",                         // string   TrackVirtualPnL.Symbol
 
                           "separator",                // string   ___f_______________________
-                           false,                     // bool     TrendBufferAsDecimal
+                           true,                      // bool     TrendBufferAsBinary
 
                           "separator",                // string   ___________________________
                           false,                      // bool     AutoConfiguration

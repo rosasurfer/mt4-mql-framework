@@ -51,20 +51,20 @@
  *  • Sound.onNewChannelHigh:      Sound file for channel widenings to the upside.
  *  • Sound.onNewChannelLow:       Sound file for channel widenings to the downside.
  *
- *  • TrackVirtualProfit:          Whether to track the virtual PnL of reversal signals.
- *  • TrackVirtualProfit.Since:    Start time to track virtual PnL from (default: MaxBarsBack).
- *  • TrackVirtualProfit.Symbol:   Custom symbol to use for virtual PnL tracking (default: auto-generated).
+ *  • TrackVirtualPnL:             wip: Whether to track virtual PnL of reversals.
+ *  • TrackVirtualPnL.Symbol:      wip: Custom symbol to use for PnL tracking (default: generated).
  *
- *  • TrendBufferAsDecimal:        Whether buffer ZigZag.MODE_COMBINED_TREND (7) contains decimal or binary data.
+ *  • TrendBufferAsBinary:         Whether buffer ZigZag.MODE_COMBINED_TREND has human-readable or binary encoding.
  *  • AutoConfiguration:           If enabled all input parameters may use predefined defaults from the configuration.
  *
  *
  * Usage with iCustom()
  * --------------------
  * Since MQL4.0 limits the number of available indicator buffers to 8, MODE_TREND and MODE_UNKNOWN_TREND are combined into
- * a single buffer ZigZag.MODE_COMBIND_TREND (7). To get original trend values with iCustom(), input "TrendBufferAsDecimal"
- * must be set to FALSE. Each value from buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this
- * integer holds MODE_TREND, and the HIWORD of the integer holds MODE_UNKNOWN_TREND (both as 'signed short').
+ * a single buffer ZigZag.MODE_COMBIND_TREND. To retrieve original trend values with iCustom(), input "TrendBufferAsBinary"
+ * must be set to TRUE. Then each value in buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this
+ * integer holds MODE_TREND (as `signed short`), and the HIWORD of the integer holds MODE_UNKNOWN_TREND (as `signed short`).
+ * Both values must be converted to a standard MQL `signed int` before being used.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -73,7 +73,7 @@ int __DeinitFlags[];
 ///////////////////////////////////////////////////// Input parameters //////////////////////////////////////////////////////
 
 extern string   ___a__________________________ = "=== ZigZag settings ===";
-extern int      ZigZag.Periods                 = 100;                            // lookback periods of the Donchian channel
+extern int      ZigZag.Periods                 = 200;                            // lookback periods of the Donchian channel
 extern int      ZigZag.Periods.Step            = 0;                              // step size for parameter stepper via hotkey
 extern string   ZigZag.Type                    = "Lines* | Semaphores";          // ZigZag lines or reversal points (can be shortened)
 extern string   ZigZag.Semaphores.Symbol       = "dot* | thin-ring | ring | thick-ring";
@@ -107,19 +107,14 @@ extern bool     Sound.onChannelWidening        = false;                         
 extern string   Sound.onNewChannelHigh         = "Price Advance.wav";
 extern string   Sound.onNewChannelLow          = "Price Decline.wav";
 
-extern string   ___e__________________________ = "=== Signal tracking ===";
-extern bool     TrackVirtualProfit             = false;                          // whether to track virtual PnL of signals
-       datetime TrackVirtualProfit.Since       = 0;                              // start time to track virtual PnL from
-       string   TrackVirtualProfit.Symbol      = "(default)";                    // custom symbol to use for virtual PnL tracking
+extern string   ___e__________________________ = "=======================";
+extern bool     TrackVirtualPnL                = false;                          // whether to track virtual PnL of reversals
+extern string   TrackVirtualPnL.Symbol         = "(default)";                    // custom symbol to use for PnL tracking
 
 extern string   ___f__________________________ = "";
-extern bool     TrendBufferAsDecimal           = true;                           // decimal or binary (see notes in file header)
+extern bool     TrendBufferAsBinary            = false;                          // binary or human-readable buffer encoding (see notes in file header)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool     TrackZigZagBalance       = false;   // whether to track ZigZag balances
-datetime TrackZigZagBalance.Since = 0;       // mark ZigZag balances since this time
-bool     ProjectNextBalance       = false;   // whether to project zero-balance levels
 
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
@@ -134,7 +129,6 @@ bool     ProjectNextBalance       = false;   // whether to project zero-balance 
 #include <rsf/functions/ManageDoubleIndicatorBuffer.mqh>
 #include <rsf/functions/ManageIntIndicatorBuffer.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/ParseDateTime.mqh>
 
 
 // indicator buffer ids
@@ -150,10 +144,10 @@ bool     ProjectNextBalance       = false;   // whether to project zero-balance 
 #define MODE_LOWER_CROSS_LOW  9                             //  9: bar low of a lower channel band crossing: positive or 0
 #define MODE_TREND            10                            // 10: int: length of a ZigZag leg: positive/negative or 0
 #define MODE_UNKNOWN_TREND    11                            // 11: int: number of bars after a leg's end semaphore: non-negative or -1
-#define MODE_VIRTUAL_PROFIT_O 12                            // 12: virtual signal PnL in price units: positive/negative or EMPTY_VALUE
-#define MODE_VIRTUAL_PROFIT_H 13                            // 13: ...
-#define MODE_VIRTUAL_PROFIT_L 14                            // 14: ...
-#define MODE_VIRTUAL_PROFIT_C 15                            // 15: ...
+#define MODE_VIRTUAL_PNL_O    12                            // 12: virtual PnL in price units: positive/negative or EMPTY_VALUE
+#define MODE_VIRTUAL_PNL_H    13                            // 13: ...
+#define MODE_VIRTUAL_PNL_L    14                            // 14: ...
+#define MODE_VIRTUAL_PNL_C    15                            // 15: ...
 
 #property indicator_chart_window
 #property indicator_buffers   8                             // visible buffers
@@ -177,22 +171,22 @@ int       framework_buffers = 8;                            // buffers managed b
 #property indicator_color7    CLR_NONE                      // trend (combined buffers MODE_TREND & MODE_UNKNOWN_TREND)
 #property indicator_color8    CLR_NONE                      // offset of the previous ZigZag reversal to its preceeding semaphore
 
-double   upperBand      [];                                 // upper channel band: positive or 0
-double   lowerBand      [];                                 // lower channel band: positive or 0
-double   upperCross     [];                                 // upper channel band crossings: positive or 0
-double   upperCrossHigh [];                                 // bar high of an upper channel band crossing (potential semaphore): positive or 0
-double   lowerCross     [];                                 // lower channel band crossings: positive or 0
-double   lowerCrossLow  [];                                 // bar low of a lower channel band crossing (potential semaphore): positive or 0
-double   semaphoreOpen  [];                                 // final semaphore, open price: positive or 0
-double   semaphoreClose [];                                 // final semaphore, close price: positive or 0 (if open != close it creates a vertical line segment)
-double   reversalOffset [];                                 // int: offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
-int      trend          [];                                 // int: length of a ZigZag leg: positive/negative or 0
-int      unknownTrend   [];                                 // int: number of bars after a leg's end semaphore: non-negative or -1
-double   combinedTrend  [];                                 // int: combined buffers MODE_TREND and MODE_UNKNOWN_TREND (see notes in file header)
-double   virtualProfit_O[];                                 // virtual signal PnL in price units: positive/negative or EMPTY_VALUE
-double   virtualProfit_H[];                                 // ...
-double   virtualProfit_L[];                                 // ...
-double   virtualProfit_C[];                                 // ...
+double   upperBand     [];                                  // upper channel band: positive or 0
+double   lowerBand     [];                                  // lower channel band: positive or 0
+double   upperCross    [];                                  // upper channel band crossings: positive or 0
+double   upperCrossHigh[];                                  // bar high of an upper channel band crossing (potential semaphore): positive or 0
+double   lowerCross    [];                                  // lower channel band crossings: positive or 0
+double   lowerCrossLow [];                                  // bar low of a lower channel band crossing (potential semaphore): positive or 0
+double   semaphoreOpen [];                                  // final semaphore, open price: positive or 0
+double   semaphoreClose[];                                  // final semaphore, close price: positive or 0 (if open != close it creates a vertical line segment)
+double   reversalOffset[];                                  // int: offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
+int      trend         [];                                  // int: length of a ZigZag leg: positive/negative or 0
+int      unknownTrend  [];                                  // int: number of bars after a leg's end semaphore: non-negative or -1
+double   combinedTrend [];                                  // int: combined buffers MODE_TREND and MODE_UNKNOWN_TREND (see notes in file header)
+double   virtualPnL_O  [];                                  // virtual PnL in price units: positive/negative or EMPTY_VALUE
+double   virtualPnL_H  [];                                  // ...
+double   virtualPnL_L  [];                                  // ...
+double   virtualPnL_C  [];                                  // ...
 
 string   indicatorName = "";
 string   shortName     = "";
@@ -479,7 +473,7 @@ int onInit() {
    // Signal.Sound.*
    if (AutoConfiguration) Signal.Sound.Up   = GetConfigString(indicator, "Signal.Sound.Up",   Signal.Sound.Up);
    if (AutoConfiguration) Signal.Sound.Down = GetConfigString(indicator, "Signal.Sound.Down", Signal.Sound.Down);
-   // Sound.onChannelWidening
+   // Sound.*
    if (AutoConfiguration) Sound.onChannelWidening = GetConfigBool(indicator, "Sound.onChannelWidening", Sound.onChannelWidening);
    if (AutoConfiguration) Sound.onNewChannelHigh  = GetConfigString(indicator, "Sound.onNewChannelHigh", Sound.onNewChannelHigh);
    if (AutoConfiguration) Sound.onNewChannelLow   = GetConfigString(indicator, "Sound.onNewChannelLow", Sound.onNewChannelLow);
@@ -488,24 +482,11 @@ int onInit() {
       else                  legendInfo = StrLeft(legendInfo, -1) +",w)";
    }
 
-   // TrackVirtualProfit
-   if (AutoConfiguration) TrackVirtualProfit = GetConfigBool(indicator, "TrackVirtualProfit", TrackVirtualProfit);
-   if (__isSuperContext) TrackVirtualProfit = false;
-   if (__isTesting)      TrackVirtualProfit = false;
-   // TrackVirtualProfit.Since
-   datetime dtValue = TrackVirtualProfit.Since;
-   if (AutoConfiguration) {
-      sValue = GetConfigString(indicator, "TrackVirtualProfit.Since", "");
-      if (sValue != "") {
-         int result[];
-         if (!ParseDateTime(sValue, DATE_YYYYMMDD|TIME_OPTIONAL, result)) {
-            return(catch("onInit(12)  invalid config parameter TrackVirtualProfit.Since: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
-         }
-         TrackVirtualProfit.Since = DateTime2(result);
-      }
-   }
-   // TrackVirtualProfit.Symbol
-   if (AutoConfiguration) TrackVirtualProfit.Symbol = GetConfigBool(indicator, "TrackVirtualProfit.Symbol", TrackVirtualProfit.Symbol);
+   // TrackVirtualPnL
+   if (AutoConfiguration) TrackVirtualPnL = GetConfigBool(indicator, "TrackVirtualPnL", TrackVirtualPnL);
+   if (__isSuperContext || __isTesting) TrackVirtualPnL = false;
+   // TrackVirtualPnL.Symbol
+   if (AutoConfiguration) TrackVirtualPnL.Symbol = GetConfigBool(indicator, "TrackVirtualPnL.Symbol", TrackVirtualPnL.Symbol);
 
    // reset global vars used by the various event handlers
    skipSignals     = 0;
@@ -575,29 +556,29 @@ int onTick() {
    ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_LOW,  lowerCrossLow);
    ManageIntIndicatorBuffer   (MODE_TREND,            trend);
    ManageIntIndicatorBuffer   (MODE_UNKNOWN_TREND,    unknownTrend, -1);
-   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PROFIT_O, virtualProfit_O, EMPTY_VALUE);
-   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PROFIT_H, virtualProfit_H, EMPTY_VALUE);
-   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PROFIT_L, virtualProfit_L, EMPTY_VALUE);
-   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PROFIT_C, virtualProfit_C, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PNL_O,    virtualPnL_O, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PNL_H,    virtualPnL_H, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PNL_L,    virtualPnL_L, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_VIRTUAL_PNL_C,    virtualPnL_C, EMPTY_VALUE);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(upperBand,                 0);  // double: positive or 0
-      ArrayInitialize(lowerBand,                 0);  // double: positive or 0
-      ArrayInitialize(upperCross,                0);  // double: positive or 0
-      ArrayInitialize(upperCrossHigh,            0);  // double: positive or 0
-      ArrayInitialize(lowerCross,                0);  // double: positive or 0
-      ArrayInitialize(lowerCrossLow,             0);  // double: positive or 0
-      ArrayInitialize(semaphoreOpen,             0);  // double: positive or 0
-      ArrayInitialize(semaphoreClose,            0);  // double: positive or 0
-      ArrayInitialize(reversalOffset,           -1);  // int:    non-negative or -1
-      ArrayInitialize(trend,                     0);  // int:    positive/negative or 0
-      ArrayInitialize(unknownTrend,             -1);  // int:    non-negative or -1
-      ArrayInitialize(combinedTrend,             0);  // int:    positive/negative or 0
-      ArrayInitialize(virtualProfit_O, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
-      ArrayInitialize(virtualProfit_H, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
-      ArrayInitialize(virtualProfit_L, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
-      ArrayInitialize(virtualProfit_C, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
+      ArrayInitialize(upperBand,              0);  // double: positive or 0
+      ArrayInitialize(lowerBand,              0);  // double: positive or 0
+      ArrayInitialize(upperCross,             0);  // double: positive or 0
+      ArrayInitialize(upperCrossHigh,         0);  // double: positive or 0
+      ArrayInitialize(lowerCross,             0);  // double: positive or 0
+      ArrayInitialize(lowerCrossLow,          0);  // double: positive or 0
+      ArrayInitialize(semaphoreOpen,          0);  // double: positive or 0
+      ArrayInitialize(semaphoreClose,         0);  // double: positive or 0
+      ArrayInitialize(reversalOffset,        -1);  // int:    non-negative or -1
+      ArrayInitialize(trend,                  0);  // int:    positive/negative or 0
+      ArrayInitialize(unknownTrend,          -1);  // int:    non-negative or -1
+      ArrayInitialize(combinedTrend,          0);  // int:    positive/negative or 0
+      ArrayInitialize(virtualPnL_O, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
+      ArrayInitialize(virtualPnL_H, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
+      ArrayInitialize(virtualPnL_L, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
+      ArrayInitialize(virtualPnL_C, EMPTY_VALUE);  // double: positive/negative or EMPTY_VALUE
 
       lastUpperBand = 0;
       lastLowerBand = 0;
@@ -611,22 +592,22 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(upperBand,       Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerBand,       Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCross,      Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(upperCrossHigh,  Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCross,      Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(lowerCrossLow,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(semaphoreOpen,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(semaphoreClose,  Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(reversalOffset,  Bars, ShiftedBars, -1);
-      ShiftIntIndicatorBuffer   (trend,           Bars, ShiftedBars,  0);
-      ShiftIntIndicatorBuffer   (unknownTrend,    Bars, ShiftedBars, -1);
-      ShiftDoubleIndicatorBuffer(combinedTrend,   Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(virtualProfit_O, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(virtualProfit_H, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(virtualProfit_L, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(virtualProfit_C, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(upperBand,      Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerBand,      Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperCross,     Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(upperCrossHigh, Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerCross,     Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(lowerCrossLow,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(semaphoreOpen,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(semaphoreClose, Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(reversalOffset, Bars, ShiftedBars, -1);
+      ShiftIntIndicatorBuffer   (trend,          Bars, ShiftedBars,  0);
+      ShiftIntIndicatorBuffer   (unknownTrend,   Bars, ShiftedBars, -1);
+      ShiftDoubleIndicatorBuffer(combinedTrend,  Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(virtualPnL_O,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(virtualPnL_H,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(virtualPnL_L,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(virtualPnL_C,   Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // check data pumping on every tick so the reversal handler can skip errornous signals
@@ -640,22 +621,22 @@ int onTick() {
    // recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
       // reset the bar to update
-      upperBand      [bar] =  0;
-      lowerBand      [bar] =  0;
-      upperCross     [bar] =  0;
-      upperCrossHigh [bar] =  0;
-      lowerCross     [bar] =  0;
-      lowerCrossLow  [bar] =  0;
-      semaphoreOpen  [bar] =  0;
-      semaphoreClose [bar] =  0;
-      reversalOffset [bar] = -1;
-      trend          [bar] =  0;
-      unknownTrend   [bar] = -1;
-      combinedTrend  [bar] =  0;
-      virtualProfit_O[bar] = EMPTY_VALUE;
-      virtualProfit_H[bar] = EMPTY_VALUE;
-      virtualProfit_L[bar] = EMPTY_VALUE;
-      virtualProfit_C[bar] = EMPTY_VALUE;
+      upperBand     [bar] =  0;
+      lowerBand     [bar] =  0;
+      upperCross    [bar] =  0;
+      upperCrossHigh[bar] =  0;
+      lowerCross    [bar] =  0;
+      lowerCrossLow [bar] =  0;
+      semaphoreOpen [bar] =  0;
+      semaphoreClose[bar] =  0;
+      reversalOffset[bar] = -1;
+      trend         [bar] =  0;
+      unknownTrend  [bar] = -1;
+      combinedTrend [bar] =  0;
+      virtualPnL_O  [bar] = EMPTY_VALUE;
+      virtualPnL_H  [bar] = EMPTY_VALUE;
+      virtualPnL_L  [bar] = EMPTY_VALUE;
+      virtualPnL_C  [bar] = EMPTY_VALUE;
 
       // recalculate Donchian channel
       if (bar > 0) {
@@ -708,8 +689,8 @@ int onTick() {
       else                           reversalBar = ProcessLowerCross(bar);
 
       // update virtual PnL
-      if (TrackVirtualProfit) {
-         if (!UpdateVirtualProfit(bar, reversalBar, virtualProfit_O, virtualProfit_H, virtualProfit_L, virtualProfit_C)) return(last_error);
+      if (TrackVirtualPnL) {
+         if (!UpdateVirtualPnL(bar, reversalBar, virtualPnL_O, virtualPnL_H, virtualPnL_L, virtualPnL_C)) return(last_error);
       }
 
       // hide non-configured crossings
@@ -733,14 +714,14 @@ int onTick() {
          }
       }
 
-      // set combinedTrend[]decimal
-      if (TrendBufferAsDecimal) {                                             // "Data Window"
-         combinedTrend[bar] = ifInt(trend[bar] >= 0, +1, -1) * unknownTrend[bar] * 100000 + trend[bar];
-      }
-      else {                                                                  // iCustom()
-         int short_trend        = trend[bar]        & 0x0000FFFF;             // convert 'signed int' to 'signed short' bits
-         int short_unknownTrend = unknownTrend[bar] & 0x0000FFFF;
+      // set combinedTrend[]
+      if (TrendBufferAsBinary) {                                              // binary for iCustom()
+         int short_trend        = trend[bar]        & 0x0000FFFF;             // convert `signed int` to `signed short`
+         int short_unknownTrend = unknownTrend[bar] & 0x0000FFFF;             // ...
          combinedTrend[bar]     = (short_unknownTrend << 16) | short_trend;   // store as HIWORD + LOWORD
+      }
+      else {                                                                  // human-readable for "Data Window"
+         combinedTrend[bar] = ifInt(trend[bar] >= 0, +1, -1) * unknownTrend[bar] * 100000 + trend[bar];
       }
    }
 
@@ -748,8 +729,8 @@ int onTick() {
       if (ShowChartLegend) UpdateChartLegend();
 
       // record virtual PnL
-      if (TrackVirtualProfit) {
-         if (!RecordVirtualProfit()) return(last_error);
+      if (TrackVirtualPnL) {
+         if (!RecordVirtualPnL()) return(last_error);
       }
 
       // detect ZigZag breakouts (comparing legs against bands also detects breakouts on missed ticks)
@@ -811,88 +792,6 @@ int onTick() {
          lastUpperBand = upperBand[0];
          lastLowerBand = lowerBand[0];
       }
-
-      // --- old: track ZigZag balance --------------------------------------------------------------------------------------
-      if (TrackZigZagBalance) {
-         int currSem, prevBar, prevSem, size;
-         int currBar = FindSemaphore(0, currSem); if (currBar < 0) return(last_error);
-
-         double events[][3];                                                  // [datetime, type, price]
-         ArraySetAsSeries(events, false);
-         ArrayResize(events, 0);
-
-         while (true) {                                                       // TODO: these returns are wrong
-            prevBar = FindSemaphore(currBar, prevSem, currSem); if (prevBar < 0) return(last_error);
-
-            int iReversalBar = prevBar - reversalOffset[currBar];             // standard case
-
-            if (!reversalOffset[currBar] && reversalOffset[currBar+1]==-1) {  // reversal and next semaphore on the same bar
-               iReversalBar = currBar;
-            }
-            if (iReversalBar > MaxBarsBack-ZigZag.Periods) break;
-
-            size = ArrayRange(events, 0);
-            ArrayResize(events, size+2);
-            events[size][0] = Time[currBar];
-            events[size][1] = ifInt(currSem==MODE_HIGH, EVENT_SEMAPHORE_HIGH, EVENT_SEMAPHORE_LOW);
-            events[size][2] = ifDouble(currSem==MODE_HIGH, High[currBar], Low[currBar]);
-            size++;
-            events[size][0] = Time[iReversalBar];                             // crosses may be invisible and buffers upper/lowerCross[] are empty
-            events[size][1] = ifInt(currSem==MODE_HIGH, EVENT_REVERSAL_UP, EVENT_REVERSAL_DOWN);
-            events[size][2] = ifDouble(currSem==MODE_HIGH, upperBand[iReversalBar+1], lowerBand[iReversalBar+1]);
-
-            currBar = prevBar;
-            currSem = prevSem;
-         }
-
-         ArraySetAsSeries(events, true);
-         size = ArrayRange(events, 0);
-
-         if (size > 0) {
-            double balance=0, prevSemaphore, prevReversal=events[0][2], markerOffset = CalculateMarkerOffset();
-            bool   prevBalanceReset = false;
-            string fontName = "Microsoft Tai Le Bold";
-            int    fontSize = 9;
-            color  fontColor;
-
-            for (int i=0; i < size; i++) {
-               datetime eventTime  = events[i][0];
-               int      eventType  = events[i][1];
-               double   eventPrice = events[i][2];
-
-               if (i % 2 == 0) {
-                  // reversal: add up negative balances
-                  if (eventType == EVENT_REVERSAL_UP) balance += (prevReversal-eventPrice);
-                  else                                balance += (eventPrice-prevReversal);
-
-                  if (i > 0) {
-                     if      (balance > -HalfPoint) fontColor = C'45,181,45';
-                     else if (prevBalanceReset)     fontColor = Blue;
-                     else                           fontColor = Red;
-                     string name = shortName + ifString(eventType==EVENT_REVERSAL_UP, ".up.", ".down.") + TimeToStr(eventTime);
-                     ObjectCreateRegister(name, OBJ_TEXT, 0, eventTime, eventPrice-markerOffset);
-                     ObjectSetText(name, NumberToStr(balance/pUnit, ",'R.0"), fontSize, fontName, fontColor);
-
-                     // reset positive balances
-                     if (balance > -HalfPoint) balance = 0;
-                     prevBalanceReset = false;
-                  }
-                  prevReversal = eventPrice;
-               }
-               else {
-                  // semaphore
-                  if (eventType == EVENT_SEMAPHORE_HIGH) double gain = eventPrice - prevReversal;
-                  else                                          gain = prevReversal - eventPrice;
-
-                  // reset negative balances if recovered by the semaphore
-                  if (balance < 0 && gain > -balance) {
-                     balance = 0;
-                     prevBalanceReset = true;
-                  }
-               }
-            }
-         }
-      }
    }
    return(last_error);
 }
@@ -910,7 +809,7 @@ int onTick() {
  *
  * @return bool - success status
  */
-bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHigh[], double &vLow[], double &vClose[]) {
+bool UpdateVirtualPnL(int bar, bool isReversal, double &vOpen[], double &vHigh[], double &vLow[], double &vClose[]) {
    isReversal = (isReversal != 0);
 
    vOpen [bar] = vClose[bar+1];
@@ -975,7 +874,7 @@ bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHig
             vClose[bar] -= (upperCross[bar] - lowerCross[bar]);      // open new long position and immediately close it
             vClose[bar] += (lowerCross[bar] - Close[bar]);           // open new short position
          }
-         else return(!catch("UpdateVirtualProfit(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar: trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+         else return(!catch("UpdateVirtualPnL(1)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected reversal bar: trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
 
          vHigh[bar] = MathMax(vOpen[bar], vClose[bar]);              // the exact intra-bar path is unknown
          vLow [bar] = MathMin(vOpen[bar], vClose[bar]);
@@ -985,9 +884,9 @@ bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHig
    // normal bar without crossing, update an existing position
    else if (isPosition) {
       if (!trend[bar]) {
-         if (unknownTrend[bar] <= 0)  return(!catch("UpdateVirtualProfit(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar: trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+         if (unknownTrend[bar] <= 0)  return(!catch("UpdateVirtualPnL(2)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar: trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
          int semBar = bar + unknownTrend[bar];
-         if (!semaphoreClose[semBar]) return(!catch("UpdateVirtualProfit(3)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar without previous semaphore: trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
+         if (!semaphoreClose[semBar]) return(!catch("UpdateVirtualPnL(3)  bar="+ bar +" "+ TimeToStr(Time[bar]) +"  unexpected non-reversal bar without previous semaphore: trend=0  unknownTrend="+ unknownTrend[bar] +"  reversalOffset="+ _int(reversalOffset[bar]) +"  upperCross="+ NumberToStr(upperCross[bar], PriceFormat) +"  lowerCross="+ NumberToStr(lowerCross[bar], PriceFormat) +"  semOpen="+ NumberToStr(semaphoreOpen[bar], PriceFormat) +"  semClose="+ NumberToStr(semaphoreClose[bar], PriceFormat), ERR_ILLEGAL_STATE));
          isLegUp = (semaphoreClose[semBar] > High[semBar]-HalfPoint);
       }
       else {
@@ -1021,16 +920,16 @@ bool UpdateVirtualProfit(int bar, bool isReversal, double &vOpen[], double &vHig
 
 
 /**
- * Record the timeseries with virtual PnL.
+ * Record a timeseries with the virtual PnL.
  *
  * @return bool - success status
  */
-bool RecordVirtualProfit() {
+bool RecordVirtualPnL() {
    if (!recorder.initialized) {
       // create symbol and group
-      recorder.symbol       = Symbol() +".zzr";
-      recorder.symbolDescr  = "ZigZag reversal";
-      recorder.group        = "ZigZag reversal";
+      recorder.symbol       = Symbol() +".zb";
+      recorder.symbolDescr  = "ZigZag balance";
+      recorder.group        = "ZigZag balance";
       recorder.hstDirectory = Recorder_GetHstDirectory();
       recorder.hstFormat    = Recorder_GetHstFormat();
       if (last_error != NULL) return(false);
@@ -1060,10 +959,10 @@ bool RecordVirtualProfit() {
    }
 
    for (int bar=startBar; bar >= 0; bar--) {
-      O = virtualProfit_O[bar];
-      H = virtualProfit_H[bar];
-      L = virtualProfit_L[bar];
-      C = virtualProfit_C[bar];
+      O = virtualPnL_O[bar];
+      H = virtualPnL_H[bar];
+      L = virtualPnL_L[bar];
+      C = virtualPnL_C[bar];
       if (C >= EMPTY_VALUE) continue;
 
       if (!HistorySet1.AddTick(recorder.hSet, Time[bar], O + recorder.priceBase, flags)) return(false);
@@ -1109,24 +1008,6 @@ int Recorder_GetHstFormat() {
    }
    if (iValue!=400 && iValue!=401) return(!catch("Recorder_GetHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
    return(iValue);
-}
-
-
-/**
- * Calculate the balance marker offset for the current view port of the chart.
- *
- * @return double
- */
-double CalculateMarkerOffset() {
-   double minPrice = NormalizeDouble(WindowPriceMin(), Digits);
-   double maxPrice = NormalizeDouble(WindowPriceMax(), Digits);
-   if (!minPrice || !maxPrice) return(0);                         // chart not yet ready
-
-   double priceRange = maxPrice - minPrice;
-   if (priceRange < HalfPoint) return(0);                         // chart with ScaleFix=1 after resizing to zero height
-
-   double offset = NormalizeDouble(priceRange * 0.007, Digits);   // 7%
-   return(offset);
 }
 
 
@@ -1511,11 +1392,11 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
       trend       [i] = value;
       unknownTrend[i] = 0;
 
-      if (TrendBufferAsDecimal) {      // "Data Window"
-         combinedTrend[i] = trend[i];
-      }
-      else {                           // iCustom(): convert to 'signed short' and store as HIWORD + LOWORD
+      if (TrendBufferAsBinary) {       // binary for iCustom(): convert to 'signed short' and store as HIWORD + LOWORD
          combinedTrend[i] = trend[i] & 0x0000FFFF;
+      }
+      else {
+         combinedTrend[i] = trend[i];  // human-readable for "Data Window"
       }
 
       if (resetReversals) reversalOffset[i] = -1;
@@ -1890,40 +1771,39 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",              ZigZag.Periods                            +";"+ NL,
-                            "ZigZag.Periods.Step=",         ZigZag.Periods.Step                       +";"+ NL,
-                            "ZigZag.Type=",                 DoubleQuoteStr(ZigZag.Type)               +";"+ NL,
-                            "ZigZag.Semaphores.Symbol=",    DoubleQuoteStr(ZigZag.Semaphores.Symbol)  +";"+ NL,
-                            "ZigZag.Width=",                ZigZag.Width                              +";"+ NL,
-                            "ZigZag.Color=",                ColorToStr(ZigZag.Color)                  +";"+ NL,
+   return(StringConcatenate("ZigZag.Periods=",              ZigZag.Periods                           +";"+ NL,
+                            "ZigZag.Periods.Step=",         ZigZag.Periods.Step                      +";"+ NL,
+                            "ZigZag.Type=",                 DoubleQuoteStr(ZigZag.Type)              +";"+ NL,
+                            "ZigZag.Semaphores.Symbol=",    DoubleQuoteStr(ZigZag.Semaphores.Symbol) +";"+ NL,
+                            "ZigZag.Width=",                ZigZag.Width                             +";"+ NL,
+                            "ZigZag.Color=",                ColorToStr(ZigZag.Color)                 +";"+ NL,
 
-                            "Donchian.ShowChannel=",        BoolToStr(Donchian.ShowChannel)           +";"+ NL,
-                            "Donchian.Channel.UpperColor=", ColorToStr(Donchian.Channel.UpperColor)   +";"+ NL,
-                            "Donchian.Channel.LowerColor=", ColorToStr(Donchian.Channel.LowerColor)   +";"+ NL,
-                            "Donchian.ShowCrossings=",      DoubleQuoteStr(Donchian.ShowCrossings)    +";"+ NL,
-                            "Donchian.Crossing.Symbol=",    DoubleQuoteStr(Donchian.Crossing.Symbol)  +";"+ NL,
-                            "Donchian.Crossing.Width=",     Donchian.Crossing.Width                   +";"+ NL,
-                            "Donchian.Crossing.Color=",     ColorToStr(Donchian.Crossing.Color)       +";"+ NL,
+                            "Donchian.ShowChannel=",        BoolToStr(Donchian.ShowChannel)          +";"+ NL,
+                            "Donchian.Channel.UpperColor=", ColorToStr(Donchian.Channel.UpperColor)  +";"+ NL,
+                            "Donchian.Channel.LowerColor=", ColorToStr(Donchian.Channel.LowerColor)  +";"+ NL,
+                            "Donchian.ShowCrossings=",      DoubleQuoteStr(Donchian.ShowCrossings)   +";"+ NL,
+                            "Donchian.Crossing.Symbol=",    DoubleQuoteStr(Donchian.Crossing.Symbol) +";"+ NL,
+                            "Donchian.Crossing.Width=",     Donchian.Crossing.Width                  +";"+ NL,
+                            "Donchian.Crossing.Color=",     ColorToStr(Donchian.Crossing.Color)      +";"+ NL,
 
-                            "ShowChartLegend=",             BoolToStr(ShowChartLegend)                +";"+ NL,
-                            "MaxBarsBack=",                 MaxBarsBack                               +";"+ NL,
+                            "ShowChartLegend=",             BoolToStr(ShowChartLegend)               +";"+ NL,
+                            "MaxBarsBack=",                 MaxBarsBack                              +";"+ NL,
 
-                            "Signal.onReversal=",           BoolToStr(Signal.onReversal)              +";"+ NL,
-                            "Signal.onReversal.Types=",     DoubleQuoteStr(Signal.onReversal.Types)   +";"+ NL,
-                            "Signal.onBreakout=",           BoolToStr(Signal.onBreakout)              +";"+ NL,
-                            "Signal.onBreakout.Types=",     DoubleQuoteStr(Signal.onBreakout.Types)   +";"+ NL,
-                            "Signal.Sound.Up=",             DoubleQuoteStr(Signal.Sound.Up)           +";"+ NL,
-                            "Signal.Sound.Down=",           DoubleQuoteStr(Signal.Sound.Down)         +";"+ NL,
+                            "Signal.onReversal=",           BoolToStr(Signal.onReversal)             +";"+ NL,
+                            "Signal.onReversal.Types=",     DoubleQuoteStr(Signal.onReversal.Types)  +";"+ NL,
+                            "Signal.onBreakout=",           BoolToStr(Signal.onBreakout)             +";"+ NL,
+                            "Signal.onBreakout.Types=",     DoubleQuoteStr(Signal.onBreakout.Types)  +";"+ NL,
+                            "Signal.Sound.Up=",             DoubleQuoteStr(Signal.Sound.Up)          +";"+ NL,
+                            "Signal.Sound.Down=",           DoubleQuoteStr(Signal.Sound.Down)        +";"+ NL,
 
-                            "Sound.onChannelWidening=",     BoolToStr(Sound.onChannelWidening)        +";"+ NL,
-                            "Sound.onNewChannelHigh=",      DoubleQuoteStr(Sound.onNewChannelHigh)    +";"+ NL,
-                            "Sound.onNewChannelLow=",       DoubleQuoteStr(Sound.onNewChannelLow)     +";"+ NL,
+                            "Sound.onChannelWidening=",     BoolToStr(Sound.onChannelWidening)       +";"+ NL,
+                            "Sound.onNewChannelHigh=",      DoubleQuoteStr(Sound.onNewChannelHigh)   +";"+ NL,
+                            "Sound.onNewChannelLow=",       DoubleQuoteStr(Sound.onNewChannelLow)    +";"+ NL,
 
-                            "TrackVirtualProfit=",          BoolToStr(TrackVirtualProfit)             +";"+ NL,
-                          //"TrackVirtualProfit.Since=",    TimeToStr(TrackVirtualProfit.Since)       +";"+ NL,
-                          //"TrackVirtualProfit.Symbol=",   DoubleQuoteStr(TrackVirtualProfit.Symbol) +";"+ NL,
+                            "TrackVirtualPnL=",             BoolToStr(TrackVirtualPnL)               +";"+ NL,
+                            "TrackVirtualPnL.Symbol=",      DoubleQuoteStr(TrackVirtualPnL.Symbol)   +";"+ NL,
 
-                            "TrendBufferAsDecimal=",        BoolToStr(TrendBufferAsDecimal)           +";")
+                            "TrendBufferAsBinary=",         BoolToStr(TrendBufferAsBinary)           +";")
    );
 
    // suppress compiler warnings
