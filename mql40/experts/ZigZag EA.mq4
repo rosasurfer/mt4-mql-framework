@@ -474,14 +474,14 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
    reversalPrice = NULL;
 
    // TODO: remove all ZigZag logic and use only the indicator                      // 85% of the local time here
-   int combinedTrend = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);
+   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
 
-   int trend = combinedTrend & 0xFFFF;                            // extract LOWORD
+   int trend = data & 0xFFFF;                                     // extract LOWORD
    if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                // convert 'signed short' to 'signed int'
 
-   int unknownTrend = (combinedTrend >> 16) & 0xFFFF;             // extract HIWORD
+   int unknownTrend = (data >> 16) & 0xFFFF;                      // extract HIWORD
    if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // convert 'signed short' to 'signed int'
-   if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  "+ instance.name +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
+   if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  "+ instance.name +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  zzData="+ data +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
    static int lastTickBarTime, lastTickReversalType;
    static bool lastTickIsReversal;
@@ -513,11 +513,11 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
                reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
             }
          }
-         else return(!catch("IsZigZagReversalBar(2)  "+ instance.name +"  invalid semaphoreClose: combinedTrend["+ bar +"]="+ combinedTrend +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  reversalOffset["+ bar +"]="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat) +"  High["+ semBar +"]="+ NumberToStr(High[semBar], PriceFormat) +"  Low["+ semBar +"]="+ NumberToStr(Low[semBar], PriceFormat), ERR_ILLEGAL_STATE));
+         else return(!catch("IsZigZagReversalBar(2)  "+ instance.name +"  invalid semaphoreClose: zzData["+ bar +"]="+ data +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  reversalOffset["+ bar +"]="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat) +"  High["+ semBar +"]="+ NumberToStr(High[semBar], PriceFormat) +"  Low["+ semBar +"]="+ NumberToStr(Low[semBar], PriceFormat), ERR_ILLEGAL_STATE));
 
          bool isNewReversal = (Time[0] != lastTickBarTime || !lastTickIsReversal || reversalType != lastTickReversalType);
          if (isNewReversal) {
-            logInfo("IsZigZagReversalBar(3)  "+ instance.name +"  "+ ifString(reversalType == MODE_UPPER, "long", "short") +" reversal at bar "+ bar +" and price "+ NumberToStr(reversalPrice, PriceFormat) +": "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  reversalOffset="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat));
+            logInfo("IsZigZagReversalBar(3)  "+ instance.name +"  "+ ifString(reversalType == MODE_UPPER, "long", "short") +" reversal at bar "+ bar +" and price "+ NumberToStr(reversalPrice, PriceFormat) +": "+ TimeToStr(Time[bar]) +"  zzData="+ data +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  reversalOffset="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat));
          }
          lastTickBarTime      = Time[0];
          lastTickIsReversal   = true;
@@ -542,14 +542,14 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
  *               or NULL (0) in case of errors
  */
 int GetZigZagDirection(int bar) {
-   int combinedTrend = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);
+   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
 
-   int trend = combinedTrend & 0xFFFF;                               // extract LOWORD
+   int trend = data & 0xFFFF;                                        // extract LOWORD
    if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                   // convert 'signed short' to 'signed int'
 
-   int unknownTrend = (combinedTrend >> 16) & 0xFFFF;                // extract HIWORD
+   int unknownTrend = (data >> 16) & 0xFFFF;                         // extract HIWORD
    if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;     // convert 'signed short' to 'signed int'
-   if (unknownTrend < 0) return(!catch("GetZigZagDirection(1)  "+ instance.name +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend="+ combinedTrend +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
+   if (unknownTrend < 0) return(!catch("GetZigZagDirection(1)  "+ instance.name +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  zzData="+ data +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
    if (!trend) {
       int semBar = bar + unknownTrend;
@@ -557,7 +557,7 @@ int GetZigZagDirection(int bar) {
 
       if (EQ(semaphoreClose, High[semBar])) return( 1);
       if (EQ(semaphoreClose,  Low[semBar])) return(-1);
-      return(!catch("GetZigZagDirection(2)  "+ instance.name +"  invalid semaphoreClose: combinedTrend["+ bar +"]="+ combinedTrend +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat) +"  High["+ semBar +"]="+ NumberToStr(High[semBar], PriceFormat) +"  Low["+ semBar +"]="+ NumberToStr(Low[semBar], PriceFormat), ERR_ILLEGAL_STATE));
+      return(!catch("GetZigZagDirection(2)  "+ instance.name +"  invalid semaphoreClose: zzData["+ bar +"]="+ data +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat) +"  High["+ semBar +"]="+ NumberToStr(High[semBar], PriceFormat) +"  Low["+ semBar +"]="+ NumberToStr(Low[semBar], PriceFormat), ERR_ILLEGAL_STATE));
    }
    return(trend);
 }

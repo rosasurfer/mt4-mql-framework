@@ -5,19 +5,19 @@
 #define ZigZag.MODE_SEMAPHORE_CLOSE    3              // semaphore close prices: positive or 0 (if open != close it forms a vertical line segment)
 #define ZigZag.MODE_UPPER_CROSS        4              // upper channel band crossings: positive or 0
 #define ZigZag.MODE_LOWER_CROSS        5              // lower channel band crossings: positive or 0
-#define ZigZag.MODE_COMBINED_TREND     6              // int: combined internal buffers MODE_TREND and MODE_UNKNOWN_TREND: positive/negative or 0
+#define ZigZag.MODE_ZZ_COMBINED        6              // int: combined internal buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND: positive/negative or 0
 #define ZigZag.MODE_REVERSAL_OFFSET    7              // int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
 
 /**
  * Note
  * ----
- * Since MQL4.0 limits the number of available indicator buffers to 8, MODE_TREND and MODE_UNKNOWN_TREND are combined into
- * a single buffer ZigZag.MODE_COMBIND_TREND (7). To retrieve original values with iCustom(), input "TrendBufferAsBinary"
- * must be set to TRUE.
+ * Since MQL4.0 limits the number of available indicator buffers to 8, buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND
+ * are combined into a single buffer ZigZag.MODE_COMBIND_TREND (7). To retrieve original values with iCustom(), input
+ * "TrendBufferAsBinary" must be set to TRUE.
  *
- * The each value in buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this integer holds MODE_TREND
- * (as `signed short`), and the HIWORD of the integer holds MODE_UNKNOWN_TREND (as `signed short`). Both values must be
- * converted to a standard MQL `signed int` before being used.
+ * Then each value in buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this integer holds
+ * MODE_ZZ_TREND (as `signed short`), and the HIWORD of the integer holds MODE_ZZ_UNKNOWN_TREND (as `signed short`).
+ * Both values must be converted to a standard MQL `signed int` before being used.
  */
 
 
