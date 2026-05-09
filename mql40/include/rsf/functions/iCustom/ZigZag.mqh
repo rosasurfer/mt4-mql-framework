@@ -73,11 +73,11 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           "",                         // string   Sound.onNewChannelLow
 
                           "separator",                // string   ___e_______________________
-                          false,                      // bool     TrackVirtualPnL
-                          "",                         // string   TrackVirtualPnL.Symbol
+                          false,                      // bool     TrackReversalBalance
+                          "",                         // string   TrackReversalBalance.Symbol
 
                           "separator",                // string   ___f_______________________
-                           true,                      // bool     TrendBufferAsBinary
+                           true,                      // bool     CombinedBuffersAsBinary
 
                           "separator",                // string   ___________________________
                           false,                      // bool     AutoConfiguration
