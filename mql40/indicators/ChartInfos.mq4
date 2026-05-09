@@ -2368,7 +2368,7 @@ bool CustomPositions.ReadConfig() {
    if (!minLotSize || !lotStep) return(false);                       // if MarketInfo() data is not yet available
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(4)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
-   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
+   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (file == "") return(false);
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
