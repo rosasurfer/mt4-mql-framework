@@ -338,17 +338,7 @@ bool Recorder_start() {
       if (IsOptimization())              return(_true(Recorder_off()));
       if (!Recorder_init())              return(_false(Recorder_off()));
    }
-   /*
-    Speed test SnowRoller EURUSD,M15  04.10.2012, Long, GridSize=18
-   +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Toshiba Satellite         |     old    | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in library  |
-   +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 no recording         | 17.613 t/s |           |              |             |             |              |              |              |
-   | v225 HST_BUFFER_TICKS=Off |  6.426 t/s |           |              |             |             |              |              |              |
-   | v419 HST_BUFFER_TICKS=Off |  5.871 t/s | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
-   | v419 HST_BUFFER_TICKS=On  |            |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
-   +---------------------------+------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   */
+
    int size = ArraySize(metric.hSet), flags = NULL;
    if (__isTesting) flags = HST_BUFFER_TICKS;
    double value;

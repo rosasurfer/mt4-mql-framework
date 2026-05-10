@@ -1,28 +1,44 @@
 
-#define ZigZag.MODE_UPPER_BAND         0              // upper channel band: positive or 0
-#define ZigZag.MODE_LOWER_BAND         1              // lower channel band: positive or 0
-#define ZigZag.MODE_SEMAPHORE_OPEN     2              // semaphore open prices: positive or 0
-#define ZigZag.MODE_SEMAPHORE_CLOSE    3              // semaphore close prices: positive or 0 (if open != close it forms a vertical line segment)
-#define ZigZag.MODE_UPPER_CROSS        4              // upper channel band crossings: positive or 0
-#define ZigZag.MODE_LOWER_CROSS        5              // lower channel band crossings: positive or 0
-#define ZigZag.MODE_ZZ_COMBINED        6              // int: combined internal buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND: positive/negative or 0
-#define ZigZag.MODE_REVERSAL_OFFSET    7              // int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
+#define ZigZag.MODE_UPPER_BAND      0  // upper channel band: positive or 0
+#define ZigZag.MODE_LOWER_BAND      1  // lower channel band: positive or 0
+#define ZigZag.MODE_SEMAPHORE_OPEN  2  // semaphore open prices: positive or 0
+#define ZigZag.MODE_SEMAPHORE_CLOSE 3  // semaphore close prices: positive or 0 (if open != close it forms a vertical line segment)
+#define ZigZag.MODE_UPPER_CROSS     4  // upper channel band crossings: positive or 0
+#define ZigZag.MODE_LOWER_CROSS     5  // lower channel band crossings: positive or 0
+#define ZigZag.MODE_ZZ_COMBINED     6  // int: combined internal buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND (see notes)
+#define ZigZag.MODE_DC_COMBINED     7  // int: combined internal buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNTER (see notes)
+
+
+// Notes
+// -----
+// MQL4.0 limits the number of available indicator buffers to 8. Therefore internal buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND
+// are combined into buffer ZigZag.MODE_ZZ_COMBINED. Internal buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNTER
+// are combined into buffer ZigZag.MODE_DC_COMBINED. To retrieve original values with iCustom(), input "CombinedBuffersAsBinary"
+// must be set to TRUE.
+//
+// - MODE_ZZ_TREND:
+//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
+//   int trend = data & 0xFFFF;                                      // extract LOWORD
+//   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                 // convert `signed short` to `signed int`
+//
+// - MODE_ZZ_UNKNOWN_TREND:
+//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
+//   int unknownTrend = (data >> 16) & 0xFFFF;                       // extract HIWORD
+//   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;   // convert `signed short` to `signed int`
+//
+// - MODE_DC_TREND:
+//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_DC_COMBINED, bar);
+//
+// - MODE_REVERSAL_OFFSET:
+//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_DC_COMBINED, bar);
+//
+// - MODE_REVERSAL_COUNTER :
+//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_DC_COMBINED, bar);
+//
+
 
 /**
- * Note
- * ----
- * Since MQL4.0 limits the number of available indicator buffers to 8, buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND
- * are combined into a single buffer ZigZag.MODE_COMBIND_TREND (7). To retrieve original values with iCustom(), input
- * "TrendBufferAsBinary" must be set to TRUE.
- *
- * Then each value in buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer. The LOWORD of this integer holds
- * MODE_ZZ_TREND (as `signed short`), and the HIWORD of the integer holds MODE_ZZ_UNKNOWN_TREND (as `signed short`).
- * Both values must be converted to a standard MQL `signed int` before being used.
- */
-
-
-/**
- * Load the custom "ZigZag" indicator and return a value.
+ * Load the "ZigZag" indicator and return a value.
  *
  * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int periods   - indicator parameter

@@ -31,7 +31,7 @@
  *
  * Inputs
  * ------
- *  • ZigZag.Periods:  Look-back periods of the Donchian channel.
+ *  • ZigZag.Periods:  Look-back periods of the Donchian Channel.
  *
  *
  * Manual control
@@ -98,7 +98,7 @@ extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Entry conditions ===";
-extern bool   Entry.onChannelWidening        = false;                // entry when the Donchian channel widens
+extern bool   Entry.onChannelWidening        = false;                // entry when the Donchian Channel widens
 extern int    Entry.afterLosingLegs          = 0;                    // entry after number of consecutive losing legs
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -313,7 +313,7 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Whether a Donchian channel widening occurred on the current tick.
+ * Whether a Donchian Channel widening occurred on the current tick.
  *
  * @param  _Out_ double signal[] - array receiving signal details
  *
@@ -477,10 +477,10 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
    int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
 
    int trend = data & 0xFFFF;                                     // extract LOWORD
-   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                // convert 'signed short' to 'signed int'
+   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                // convert `signed short` to `signed int`
 
    int unknownTrend = (data >> 16) & 0xFFFF;                      // extract HIWORD
-   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // convert 'signed short' to 'signed int'
+   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // convert `signed short` to `signed int`
    if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  "+ instance.name +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  zzData="+ data +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
    static int lastTickBarTime, lastTickReversalType;
@@ -545,10 +545,10 @@ int GetZigZagDirection(int bar) {
    int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
 
    int trend = data & 0xFFFF;                                        // extract LOWORD
-   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                   // convert 'signed short' to 'signed int'
+   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                   // convert `signed short` to `signed int`
 
    int unknownTrend = (data >> 16) & 0xFFFF;                         // extract HIWORD
-   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;     // convert 'signed short' to 'signed int'
+   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;     // convert `signed short` to `signed int`
    if (unknownTrend < 0) return(!catch("GetZigZagDirection(1)  "+ instance.name +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  zzData="+ data +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
    if (!trend) {
@@ -736,7 +736,7 @@ bool IsEntrySignal(double &signal[]) {
       return(true);
    }                                            // TODO: A ZigZag reversal is also a Donchian Channel widening. Both
                                                 //  IsZigZagSignal() and IsDonchianChannelWidening() keep separate static tick
-   // Donchian channel widening                 //  state. If IsZigZagSignal() is not called on every tick it will wrongly
+   // Donchian Channel widening                 //  state. If IsZigZagSignal() is not called on every tick it will wrongly
    if (Entry.onChannelWidening) {               //  redetect the same widening reported by IsDonchianChannelWidening().
       if (IsDonchianChannelWidening(signal)) {  //
          return(true);                          // Solution: No static state at all, events must be signaled by the indicator

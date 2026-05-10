@@ -229,7 +229,7 @@ void UpdateChartLegend() {
 
 
 /**
- * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads and terminal restarts).
  *
  * @return bool - success status
  */
