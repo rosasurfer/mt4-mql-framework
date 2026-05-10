@@ -6,33 +6,33 @@
  * two swings back. Also it cannot be used for automation. This indicator doesn't have such issues. Once the ZigZag direction
  * has changed, the change is permanent.
  *
- * Internally the indicator uses a Donchian channel for calculation. The indicator draws vertical line segments if a single
- * price bar crosses both upper and lower Donchian channel. Additionally, it can display the trail of a ZigZag leg as it
+ * Internally the indicator uses a Donchian Channel for calculation. The indicator draws vertical line segments if a single
+ * price bar crosses both upper and lower Donchian Channel. Additionally, it can display the trail of a ZigZag leg as it
  * develops over time. The display can be switched between full ZigZag lines or only swing extremes (aka ZigZag semaphores).
  *
- * The indicator allows manual stepping of the ZigZag period via hotkey and supports multiple signaling modes.
+ * The indicator supports manual stepping of the ZigZag period via hotkey and provides multiple signaling modes.
  *
  *
  * Input parameters
  * ----------------
- *  • ZigZag.Periods:              Look-back periods of the Donchian channel.
- *  • ZigZag.Periods.Step:         Controls parameter "ZigZag.Periods" via keyboard. If non-zero it defines the step size
- *                                 of the parameter stepper. If 0 (zero) the parameter stepper is disabled.
+ *  • ZigZag.Periods:              Look-back periods of the Donchian Channel.
+ *  • ZigZag.Periods.Step:         Option to control parameter "ZigZag.Periods" via keyboard. If non-zero it defines the step
+ *                                 size of the parameter stepper. If 0 (zero) parameter stepping is disabled.
  *  • ZigZag.Type:                 Whether to display the ZigZag line or ZigZag semaphores.
  *  • ZigZag.Semaphores.Symbol:    Graphic symbol used for ZigZag semaphores.
  *  • ZigZag.Width:                The ZigZag's line width or semaphore size.
  *  • ZigZag.Color:                Color of ZigZag line or semaphores.
  *
- *  • Donchian.ShowChannel:        Whether to display the internal Donchian channel.
- *  • Donchian.Channel.UpperColor: Color of upper Donchian channel band.
- *  • Donchian.Channel.LowerColor: Color of lower Donchian channel band.
+ *  • Donchian.ShowChannel:        Whether to display the internal Donchian Channel.
+ *  • Donchian.Channel.UpperColor: Color of upper Donchian Channel band.
+ *  • Donchian.Channel.LowerColor: Color of lower Donchian Channel band.
  *
- *  • Donchian.ShowCrossings:      Which Donchian channel crossings to display, one of:
+ *  • Donchian.ShowCrossings:      Which Donchian Channel crossings to display, one of:
  *                                  "off":   No crossings are displayed.
  *                                  "first": Only the first crossing is displayed (the moment a new ZigZag leg appears).
  *                                  "all":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
- *  • Donchian.Crossing.Symbol:    Graphic symbol used for Donchian channel crossings.
- *  • Donchian.Crossing.Width:     Size of displayed Donchian channel crossings.
+ *  • Donchian.Crossing.Symbol:    Graphic symbol used for Donchian Channel crossings.
+ *  • Donchian.Crossing.Width:     Size of displayed Donchian Channel crossings.
  *  • Donchian.Crossing.Color:     Custom color of channel crossings (default: color of channel bands).
  *
  *  • ShowChartLegend:             Whether do display the chart legend.
@@ -47,24 +47,20 @@
  *  • Signal.Sound.Up:             Sound file for signals to the upside.
  *  • Signal.Sound.Down:           Sound file for signals to the downside.
  *
- *  • Sound.onChannelWidening:     Whether to play a sound on Donchian channel widening (channel crossings).
+ *  • Sound.onChannelWidening:     Whether to play a sound on Donchian Channel widening (channel crossings).
  *  • Sound.onNewChannelHigh:      Sound file for channel widenings to the upside.
  *  • Sound.onNewChannelLow:       Sound file for channel widenings to the downside.
  *
  *  • TrackReversalBalance:        Whether to track the balance of ZigZag reversals.
  *  • TrackReversalBalance.Symbol: Custom symbol for balance tracking (default: generated).
  *
- *  • CombinedBufferAsBinary:      for iCustom(): Whether combined buffers are encoded human-readable or binary.
- *  • AutoConfiguration:           If enabled all input parameters may use predefined defaults from the configuration.
+ *  • CombinedBuffersAsBinary:     for iCustom(): Whether combined buffers are encoded human-readable or binary.
+ *  • AutoConfiguration:           If enabled all input parameters can use predefined defaults from the configuration.
  *
  *
  * Usage with iCustom()
  * --------------------
- * Since MQL4.0 limits the number of available indicator buffers to 8, buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND are
- * combined into a single buffer ZigZag.MODE_COMBIND_TREND. To retrieve original trend values with iCustom(), input
- * "TrendBufferAsBinary" must be set to TRUE. Then each value in buffer ZigZag.MODE_COMBIND_TREND must be cast to an integer.
- * The LOWORD of this integer holds MODE_ZZ_TREND (as `signed short`), and the HIWORD of the integer holds MODE_ZZ_UNKNOWN_TREND
- * (as `signed short`). Both values must be converted to a standard MQL `signed int` before being used.
+ * @see /mql40/include/rsf/functions/iCustom/ZigZag.mqh
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -73,17 +69,17 @@ int __DeinitFlags[];
 ///////////////////////////////////////////////////// Input parameters //////////////////////////////////////////////////////
 
 extern string   ___a__________________________ = "=== ZigZag settings ===";
-extern int      ZigZag.Periods                 = 200;                            // lookback periods of the Donchian channel
-extern int      ZigZag.Periods.Step            = 0;                              // step size for parameter stepper via hotkey
+extern int      ZigZag.Periods                 = 200;                            // look-back periods of the Donchian Channel
+extern int      ZigZag.Periods.Step            = 0;                              // step size for parameter stepping
 extern string   ZigZag.Type                    = "Lines* | Semaphores";          // ZigZag lines or reversal points (can be shortened)
 extern string   ZigZag.Semaphores.Symbol       = "dot* | thin-ring | ring | thick-ring";
 extern int      ZigZag.Width                   = 2;
 extern color    ZigZag.Color                   = Blue;
 
 extern string   ___b__________________________ = "=== Donchian settings ===";
-extern bool     Donchian.ShowChannel           = true;                           // whether to display the Donchian channel
+extern bool     Donchian.ShowChannel           = true;                           // whether to display the Donchian Channel
 extern color    Donchian.Channel.UpperColor    = Blue;
-extern color    Donchian.Channel.LowerColor    = Magenta;
+extern color    Donchian.Channel.LowerColor    = Red;
 extern string   Donchian.ShowCrossings         = "off | first* | all";           // which channel crossings to display
 extern string   Donchian.Crossing.Symbol       = "dot | thin-ring | ring | thick-ring*";
 extern int      Donchian.Crossing.Width        = 1;
@@ -94,7 +90,7 @@ extern bool     ShowChartLegend                = true;
 extern int      MaxBarsBack                    = 10000;                          // max. values to calculate (-1: all available)
 
 extern string   ___d__________________________ = "=== Signaling ===";
-extern bool     Signal.onReversal              = false;                          // signal ZigZag reversals (first Donchian channel crossing)
+extern bool     Signal.onReversal              = false;                          // signal ZigZag reversals (first Donchian Channel crossing)
 extern string   Signal.onReversal.Types        = "sound* | alert | mail | telegram";
 
 extern bool     Signal.onBreakout              = false;                          // signal ZigZag breakouts
@@ -103,7 +99,7 @@ extern string   Signal.onBreakout.Types        = "sound* | alert | mail | telegr
 extern string   Signal.Sound.Up                = "Signal Up.wav";
 extern string   Signal.Sound.Down              = "Signal Down.wav";
 
-extern bool     Sound.onChannelWidening        = false;                          // signal Donchian channel widenings
+extern bool     Sound.onChannelWidening        = false;                          // signal Donchian Channel widenings
 extern string   Sound.onNewChannelHigh         = "Price Advance.wav";
 extern string   Sound.onNewChannelLow          = "Price Decline.wav";
 
@@ -112,7 +108,7 @@ extern bool     TrackReversalBalance           = false;                         
 extern string   TrackReversalBalance.Symbol    = "(default)";                    // custom symbol for balance tracking
 
 extern string   ___f__________________________ = "";
-extern bool     CombinedBufferAsBinary         = false;                          // binary or human-readable encoding of combined buffers (see notes in file header)
+extern bool     CombinedBuffersAsBinary        = false;                          // binary or human-readable encoding of combined buffers (see notes in file header)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -139,27 +135,28 @@ extern bool     CombinedBufferAsBinary         = false;                         
 #define MODE_UPPER_CROSS        ZigZag.MODE_UPPER_CROSS     //  4: upper channel band crossings: positive or 0
 #define MODE_LOWER_CROSS        ZigZag.MODE_LOWER_CROSS     //  5: lower channel band crossings: positive or 0
 #define MODE_ZZ_COMBINED        ZigZag.MODE_ZZ_COMBINED     //  6: int: combined buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND (see notes in file header)
-#define MODE_REVERSAL_OFFSET    ZigZag.MODE_REVERSAL_OFFSET //  7: int: offset of the trend reversal to the ZigZag leg's start semaphore: non-negative or -1
+#define MODE_DC_COMBINED        ZigZag.MODE_DC_COMBINED     //  7: int: combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNTER (see notes in file header)
 
 #define MODE_UPPER_CROSS_HIGH    8                          //  8: bar high of an upper channel band crossing: positive or 0
 #define MODE_LOWER_CROSS_LOW     9                          //  9: bar low of a lower channel band crossing: positive or 0
 #define MODE_ZZ_TREND           10                          // 10: int: direction and length of a ZigZag leg: positive/negative or 0
 #define MODE_ZZ_UNKNOWN_TREND   11                          // 11: int: number of undetermined trend bars after a leg's end semaphore: non-negative or -1
-#define MODE_DC_TREND           12                          // 12: int: direction and length of a Donchian Channel breakout: positive/negative or 0
-#define MODE_REVERSAL_COUNTER   13                          // 13: int: number of consecutive winning/losing trend reversals: positive/negative or 0
-#define MODE_REVERSAL_BALANCE_O 14                          // 14: reversal balance in pUnits: positive/negative or EMPTY_VALUE
-#define MODE_REVERSAL_BALANCE_H 15                          // 15: ...
-#define MODE_REVERSAL_BALANCE_L 16                          // 16: ...
-#define MODE_REVERSAL_BALANCE_C 17                          // 17: ...
+#define MODE_DC_TREND           12                          // 12: int: direction and length of Donchian Channel reversals: positive/negative or 0
+#define MODE_REVERSAL_OFFSET    13                          // 13: int: offset of the trend reversal to the ZigZag leg's start semaphore: non-negative or -1
+#define MODE_REVERSAL_COUNTER   14                          // 14: int: number of consecutive winning/losing trend reversals: positive/negative or 0
+#define MODE_REVERSAL_BALANCE_O 15                          // 15: reversal balance in pUnits: positive/negative or EMPTY_VALUE
+#define MODE_REVERSAL_BALANCE_H 16                          // 16: ...
+#define MODE_REVERSAL_BALANCE_L 17                          // 17: ...
+#define MODE_REVERSAL_BALANCE_C 18                          // 18: ...
 
 #property indicator_chart_window
 #property indicator_buffers   8                             // visible buffers
 int       terminal_buffers  = 8;                            // buffers managed by the terminal
-int       framework_buffers = 10;                           // buffers managed by the framework
+int       framework_buffers = 11;                           // buffers managed by the framework
 
 #property indicator_color1    Blue                          // upper channel band
 #property indicator_style1    STYLE_DOT                     //
-#property indicator_color2    Magenta                       // lower channel band
+#property indicator_color2    Red                           // lower channel band
 #property indicator_style2    STYLE_DOT                     //
 
 #property indicator_color3    DodgerBlue                    // the ZigZag line is built from two buffers using the color of the first buffer
@@ -182,12 +179,13 @@ double   lowerCross       [];                               // lower channel ban
 double   lowerCrossLow    [];                               // bar low of a lower channel band crossing (potential semaphore): positive or 0
 double   semaphoreOpen    [];                               // final semaphore, open price: positive or 0
 double   semaphoreClose   [];                               // final semaphore, close price: positive or 0 (if open != close it creates a vertical line segment)
-int      zzTrend          [];                               // int: direction and length of a ZigZag leg: positive/negative or 0
-int      zzUnknownTrend   [];                               // int: number of undetermined trend bars after a leg's end semaphore: non-negative or -1
-double   zzCombined       [];                               // int: combined buffers MODE_TREND and MODE_UNKNOWN_TREND (see notes in file header)
-int      dcTrend          [];                               // int: direction and length of Donchian Channel breakouts: positive/negative or 0
-double   reversalOffset   [];                               // int: offset of the trend reversal to the ZigZag leg's start semaphore (): non-negative or -1
-int      reversalCounter  [];                               // int: number of consecutive winning/losing trend reversals: positive/negative or 0
+double   zzCombined       [];                               // combined buffers MODE_TREND and MODE_UNKNOWN_TREND (see notes in file header)
+int      zzTrend          [];                               // direction and length of a ZigZag leg: positive/negative or 0
+int      zzUnknownTrend   [];                               // number of undetermined trend bars after a leg's end semaphore: non-negative or -1
+double   dcCombined       [];                               // combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNTER (see notes in file header)
+int      dcTrend          [];                               // direction and length of Donchian Channel reversals: positive/negative or 0
+int      reversalOffset   [];                               // offset of the trend reversal to the ZigZag leg's start semaphore (): non-negative or -1
+int      reversalCounter  [];                               // number of consecutive winning/losing trend reversals: positive/negative or 0
 double   reversalBalance_O[];                               // reversal balance in pUnits: positive/negative or EMPTY_VALUE
 double   reversalBalance_H[];                               // ...
 double   reversalBalance_L[];                               // ...
@@ -385,10 +383,10 @@ int onInit() {
    // validate inputs
    // ZigZag.Periods
    if (AutoConfiguration) ZigZag.Periods = GetConfigInt(indicator, "ZigZag.Periods", ZigZag.Periods);
-   if (ZigZag.Periods < 2)           return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Periods < 2) return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
    // ZigZag.Periods.Step
    if (AutoConfiguration) ZigZag.Periods.Step = GetConfigInt(indicator, "ZigZag.Periods.Step", ZigZag.Periods.Step);
-   if (ZigZag.Periods.Step < 0)      return(catch("onInit(2)  invalid input parameter ZigZag.Periods.Step: "+ ZigZag.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Periods.Step < 0) return(catch("onInit(2)  invalid input parameter ZigZag.Periods.Step: "+ ZigZag.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // ZigZag.Type
    string sValues[], sValue = ZigZag.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "ZigZag.Type", sValue);
@@ -399,7 +397,7 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("lines",      sValue)) { zigzagDrawType = DRAW_ZIGZAG; ZigZag.Type = "Lines";       }
    else if (StrStartsWith("semaphores", sValue)) { zigzagDrawType = DRAW_ARROW;  ZigZag.Type = "Semaphores";  }
-   else                              return(catch("onInit(3)  invalid input parameter ZigZag.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else return(catch("onInit(3)  invalid input parameter ZigZag.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // ZigZag.Semaphores.Symbol
    if (AutoConfiguration) ZigZag.Semaphores.Symbol = GetConfigString(indicator, "ZigZag.Semaphores.Symbol", ZigZag.Semaphores.Symbol);
    sValue = ZigZag.Semaphores.Symbol;
@@ -412,11 +410,11 @@ int onInit() {
    else if (sValue == "thin-ring" ) zigzagSymbol = 161;     // ...
    else if (sValue == "ring"      ) zigzagSymbol = 162;     // ...
    else if (sValue == "thick-ring") zigzagSymbol = 163;     // ...
-   else                              return(catch("onInit(4)  invalid input parameter ZigZag.Semaphores.Symbol: "+ DoubleQuoteStr(ZigZag.Semaphores.Symbol), ERR_INVALID_INPUT_PARAMETER));
+   else return(catch("onInit(4)  invalid input parameter ZigZag.Semaphores.Symbol: "+ DoubleQuoteStr(ZigZag.Semaphores.Symbol), ERR_INVALID_INPUT_PARAMETER));
    ZigZag.Semaphores.Symbol = sValue;
    // ZigZag.Width
    if (AutoConfiguration) ZigZag.Width = GetConfigInt(indicator, "ZigZag.Width", ZigZag.Width);
-   if (ZigZag.Width < 0)             return(catch("onInit(5)  invalid input parameter ZigZag.Width: "+ ZigZag.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Width < 0) return(catch("onInit(5)  invalid input parameter ZigZag.Width: "+ ZigZag.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Donchian.ShowChannel
    if (AutoConfiguration) Donchian.ShowChannel = GetConfigBool(indicator, "Donchian.ShowChannel", Donchian.ShowChannel);
@@ -431,7 +429,7 @@ int onInit() {
    if      (StrStartsWith("off",   sValue)) { crossingDrawType = NULL;                Donchian.ShowCrossings = "off";   }
    else if (StrStartsWith("first", sValue)) { crossingDrawType = MODE_FIRST_CROSSING; Donchian.ShowCrossings = "first"; }
    else if (StrStartsWith("all",   sValue)) { crossingDrawType = MODE_ALL_CROSSINGS;  Donchian.ShowCrossings = "all";   }
-   else                              return(catch("onInit(6)  invalid input parameter Donchian.ShowCrossings: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else return(catch("onInit(6)  invalid input parameter Donchian.ShowCrossings: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Donchian.Crossing.Symbol
    if (AutoConfiguration) Donchian.Crossing.Symbol = GetConfigString(indicator, "Donchian.Crossing.Symbol", Donchian.Crossing.Symbol);
    sValue = Donchian.Crossing.Symbol;
@@ -444,11 +442,11 @@ int onInit() {
    else if (sValue == "thin-ring" ) crossingSymbol = 161;   // ...
    else if (sValue == "ring"      ) crossingSymbol = 162;   // ...
    else if (sValue == "thick-ring") crossingSymbol = 163;   // ...
-   else                              return(catch("onInit(7)  invalid input parameter Donchian.Crossing.Symbol: "+ DoubleQuoteStr(Donchian.Crossing.Symbol), ERR_INVALID_INPUT_PARAMETER));
+   else return(catch("onInit(7)  invalid input parameter Donchian.Crossing.Symbol: "+ DoubleQuoteStr(Donchian.Crossing.Symbol), ERR_INVALID_INPUT_PARAMETER));
    Donchian.Crossing.Symbol = sValue;
    // Donchian.Crossing.Width
    if (AutoConfiguration) Donchian.Crossing.Width = GetConfigInt(indicator, "Donchian.Crossing.Width", Donchian.Crossing.Width);
-   if (Donchian.Crossing.Width < 0)  return(catch("onInit(8)  invalid input parameter Donchian.Crossing.Width: "+ Donchian.Crossing.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Donchian.Crossing.Width < 0) return(catch("onInit(8)  invalid input parameter Donchian.Crossing.Width: "+ Donchian.Crossing.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) ZigZag.Color                = GetConfigColor(indicator, "ZigZag.Color",                ZigZag.Color);
    if (AutoConfiguration) Donchian.Channel.UpperColor = GetConfigColor(indicator, "Donchian.Channel.UpperColor", Donchian.Channel.UpperColor);
@@ -576,6 +574,7 @@ int onTick() {
    ManageIntIndicatorBuffer   (MODE_ZZ_TREND,           zzTrend);
    ManageIntIndicatorBuffer   (MODE_ZZ_UNKNOWN_TREND,   zzUnknownTrend, -1);
    ManageIntIndicatorBuffer   (MODE_DC_TREND,           dcTrend);
+   ManageIntIndicatorBuffer   (MODE_REVERSAL_OFFSET,    reversalOffset);
    ManageIntIndicatorBuffer   (MODE_REVERSAL_COUNTER,   reversalCounter);
    ManageDoubleIndicatorBuffer(MODE_REVERSAL_BALANCE_O, reversalBalance_O, EMPTY_VALUE);
    ManageDoubleIndicatorBuffer(MODE_REVERSAL_BALANCE_H, reversalBalance_H, EMPTY_VALUE);
@@ -592,9 +591,10 @@ int onTick() {
       ArrayInitialize(lowerCrossLow,               0);   // double: positive or 0
       ArrayInitialize(semaphoreOpen,               0);   // double: positive or 0
       ArrayInitialize(semaphoreClose,              0);   // double: positive or 0
+      ArrayInitialize(zzCombined,                  0);   // int:    positive/negative or 0
       ArrayInitialize(zzTrend,                     0);   // int:    positive/negative or 0
       ArrayInitialize(zzUnknownTrend,             -1);   // int:    non-negative or -1
-      ArrayInitialize(zzCombined,                  0);   // int:    positive/negative or 0
+      ArrayInitialize(dcCombined,                  0);   // int:    positive/negative or 0
       ArrayInitialize(dcTrend,                     0);   // int:    positive/negative or 0
       ArrayInitialize(reversalOffset,             -1);   // int:    non-negative or -1
       ArrayInitialize(reversalCounter,             0);   // int:    positive/negative or 0
@@ -623,11 +623,12 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(lowerCrossLow,     Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(semaphoreOpen,     Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(semaphoreClose,    Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(zzCombined,        Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (zzTrend,           Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (zzUnknownTrend,    Bars, ShiftedBars, -1);
-      ShiftDoubleIndicatorBuffer(zzCombined,        Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(dcCombined,        Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (dcTrend,           Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(reversalOffset,    Bars, ShiftedBars, -1);
+      ShiftIntIndicatorBuffer   (reversalOffset,    Bars, ShiftedBars, -1);
       ShiftIntIndicatorBuffer   (reversalCounter,   Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(reversalBalance_O, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(reversalBalance_H, Bars, ShiftedBars, EMPTY_VALUE);
@@ -654,9 +655,10 @@ int onTick() {
       lowerCrossLow    [bar] =  0;
       semaphoreOpen    [bar] =  0;
       semaphoreClose   [bar] =  0;
+      zzCombined       [bar] =  0;
       zzTrend          [bar] =  0;
       zzUnknownTrend   [bar] = -1;
-      zzCombined       [bar] =  0;
+      dcCombined       [bar] =  0;
       dcTrend          [bar] =  0;
       reversalOffset   [bar] = -1;
       reversalCounter  [bar] =  0;
@@ -665,7 +667,7 @@ int onTick() {
       reversalBalance_L[bar] = EMPTY_VALUE;
       reversalBalance_C[bar] = EMPTY_VALUE;
 
-      // recalculate Donchian channel
+      // recalculate Donchian Channel
       if (bar > 0) {
          upperBand[bar] = High[iHighest(NULL, NULL, MODE_HIGH, ZigZag.Periods, bar)];
          lowerBand[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  ZigZag.Periods, bar)];
@@ -677,16 +679,16 @@ int onTick() {
 
       // recalculate channel crossings
       if (upperBand[bar] > upperBand[bar+1] && upperBand[bar+1]) {
-         upperCross    [bar] = upperBand[bar+1]+Point;
+         upperCross    [bar] = upperBand[bar+1] + Point;
          upperCrossHigh[bar] = upperBand[bar];
       }
       if (lowerBand[bar] < lowerBand[bar+1]) {
-         lowerCross   [bar] = lowerBand[bar+1]-Point;
+         lowerCross   [bar] = lowerBand[bar+1] - Point;
          lowerCrossLow[bar] = lowerBand[bar];
       }
 
       // whether the processed bar is a reversal bar (not whether the current tick triggered the reversal)
-      bool isReversalBar = false, c1_isReversalBar = false;
+      bool isReversalBar = false, c1_isReversalBar = false, isUpperCrossLast = false;
 
       // recalculate ZigZag data
       // if no channel crossing                                      // before or after the first semaphore
@@ -704,9 +706,10 @@ int onTick() {
          reversalCounter[bar] = reversalCounter[bar+1];              // keep reversal counter (may be 0)
       }
 
-      // if a two channel crossing (upper and lower band crossed by the same bar)
+      // if two channel crossings (upper and lower band crossed by the same bar)
       else if (upperCross[bar] && lowerCross[bar]) {
-         if (IsUpperCrossLast(bar)) {
+         isUpperCrossLast = IsUpperCrossLast(bar);
+         if (isUpperCrossLast) {
             c1_isReversalBar = ProcessLowerCross(bar);               // process both crossings in order
             isReversalBar    = ProcessUpperCross(bar);
          }
@@ -716,7 +719,7 @@ int onTick() {
          }
       }
 
-      // if a single channel crossing (before or after the first semaphore)
+      // else a single channel crossing (before or after the first semaphore)
       else if (upperCross[bar] != 0) isReversalBar = ProcessUpperCross(bar);
       else                           isReversalBar = ProcessLowerCross(bar);
 
@@ -726,34 +729,30 @@ int onTick() {
       }
 
       // hide non-configured crossings
-      if (!crossingDrawType) {                                       // hide all crossings
+      if (isReversalBar && crossingDrawType==MODE_FIRST_CROSSING) {  // hide all crossings except the 1st
+         if (upperCross[bar] && lowerCross[bar]) {                   // special handling for the 1st of a double crossing
+            if (!c1_isReversalBar) {                                 // whether the 1st crossing created a reversal bar
+               if (isUpperCrossLast) lowerCross[bar] = 0;
+               else                  upperCross[bar] = 0;
+            }
+            // always keep the 2nd crossing (it's the 1st crossing of the final leg)
+         }
+      }
+      else if (crossingDrawType != MODE_ALL_CROSSINGS) {             // hide all crossings
          upperCross[bar] = 0;
          lowerCross[bar] = 0;
       }
-      else if (crossingDrawType == MODE_FIRST_CROSSING) {            // hide all crossings except the 1st
-         if (isReversalBar) {
-            if (upperCross[bar] && lowerCross[bar]) {                // special handling for double crossings
-               if (!c1_isReversalBar) {                              // whether the first crossing created a reversal bar
-                  if (semaphoreOpen[bar] < semaphoreClose[bar]) lowerCross[bar] = 0;   // crossing order "Low-High"
-                  else                                          upperCross[bar] = 0;   // crossing order "High-Low"
-               }
-               // keep the 2nd crossing (it's the 1st crossing of the final leg)
-            }
-         }
-         else {
-            upperCross[bar] = 0;
-            lowerCross[bar] = 0;
-         }
-      }
 
-      // set zzCombined[]
-      if (CombinedBufferAsBinary) {                                           // binary for iCustom()
+      // set combined buffers
+      if (CombinedBuffersAsBinary) {                                          // iCustom(): binary format
          int short_trend        = zzTrend[bar]        & 0x0000FFFF;           // convert `signed int` to `signed short`
          int short_unknownTrend = zzUnknownTrend[bar] & 0x0000FFFF;           // ...
          zzCombined[bar]        = (short_unknownTrend << 16) | short_trend;   // store as HIWORD + LOWORD
+         dcCombined[bar]        = dcTrend[bar];
       }
-      else {                                                                  // human-readable for "Data Window"
+      else {                                                                  // "Data Window": human-readable format
          zzCombined[bar] = ifInt(zzTrend[bar] >= 0, +1, -1) * zzUnknownTrend[bar] * 100000 + zzTrend[bar];
+         dcCombined[bar] = dcTrend[bar];
       }
    }
 
@@ -808,7 +807,7 @@ int onTick() {
          }
       }
 
-      // detect Donchian channel widenings
+      // detect Donchian Channel widenings
       if (Sound.onChannelWidening && ChangedBars <= 2) {
          if (lastUpperBand && lastLowerBand) {
             int widening = 0;
@@ -1151,7 +1150,7 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
 
 
 /**
- * Update buffers after an upper channel band crossing at the specified bar offset. Resolves the preceeding ZigZag semaphore
+ * Update buffers at the specified bar offset after an upper channel band crossing. Resolves the preceeding ZigZag semaphore
  * and counts the trend forward from there.
  *
  * If bar 0 (zero) crosses the upper band this function will be called for all following ticks of the bar, even for ticks
@@ -1291,7 +1290,7 @@ bool ProcessUpperCross(int bar) {
 
 
 /**
- * Update buffers after a lower channel band crossing at the specified bar offset. Resolves the preceeding ZigZag semaphore
+ * Update buffers at the specified bar offset after a lower channel band crossing. Resolves the preceeding ZigZag semaphore
  * and counts the trend forward from there.
  *
  * If bar 0 (zero) crosses the lower band this function will be called for all following ticks of the bar, even for ticks
@@ -1374,7 +1373,7 @@ bool ProcessLowerCross(int bar) {
          }
          else {                                                         // leg down extension
             SetTrend(lastSemBar-1, -1, bar, false);                     // update trend/unknownTrend and
-            dcTrend        [bar] = dcTrend          [bar+1] - 1;
+            dcTrend        [bar] = dcTrend        [bar+1] - 1;
             reversalOffset [bar] = reversalOffset [bar+1];              // keep existing reversal
             reversalCounter[bar] = reversalCounter[bar+1];              // keep existing counter
             isReversalBar = false;
@@ -1449,14 +1448,16 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
       zzTrend       [i] = value;
       zzUnknownTrend[i] = 0;
 
-      if (CombinedBufferAsBinary) {    // binary for iCustom(): convert to 'signed short' and store as HIWORD + LOWORD
-         zzCombined[i] = zzTrend[i] & 0x0000FFFF;
+      if (resetReversals) reversalOffset[i] = -1;
+
+      if (CombinedBuffersAsBinary) {               // iCustom(): binary format
+         zzCombined[i] = zzTrend[i] & 0x0000FFFF;  // convert to `signed short` and store as HIWORD + LOWORD
+         //dcCombined[i] = dcTrend[i];
       }
       else {
-         zzCombined[i] = zzTrend[i];   // human-readable for "Data Window"
+         zzCombined[i] = zzTrend[i];               // "Data Window": human-readable format
+         //dcCombined[i] = dcTrend[i];
       }
-
-      if (resetReversals) reversalOffset[i] = -1;
 
       if      (value > 0) value++;
       else if (value < 0) value--;
@@ -1624,7 +1625,7 @@ bool onBreakout(int direction) {
 
 
 /**
- * Event handler signaling Donchian channel widenings.
+ * Event handler signaling Donchian Channel widenings.
  *
  * @param  int direction - crossing direction: D_LONG | D_SHORT
  *
@@ -1712,10 +1713,10 @@ bool IsPossibleDataPumping() {
  * Update the chart legend.
  */
 void UpdateChartLegend() {
-   static int lastCombined, lastTime, lastAccount;
+   static int lastZzCombined, lastTime, lastAccount;
 
    // update on full recalculation or if indicator name, trend, current bar or the account changed
-   if (!ValidBars || zzCombined[0]!=lastCombined || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
+   if (!ValidBars || zzCombined[0]!=lastZzCombined || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
       string sTrend    = "   "+ NumberToStr(zzTrend[0], "+.");
       string sUnknown  = ifString(!zzUnknownTrend[0], "", "/"+ zzUnknownTrend[0]);
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(zzTrend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
@@ -1733,9 +1734,9 @@ void UpdateChartLegend() {
       int error = GetLastError();
       if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateChartLegend(1)", error);     // on ObjectDrag or opened "Properties" dialog
 
-      lastCombined = zzCombined[0];
-      lastTime     = Time[0];
-      lastAccount  = AccountNumber();
+      lastZzCombined = zzCombined[0];
+      lastTime       = Time[0];
+      lastAccount    = AccountNumber();
    }
 }
 
@@ -1750,21 +1751,20 @@ void UpdateChartLegend() {
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
-   string name   = MqlProgramName(), donchianName="";
-   indicatorName = name +"("+ ZigZag.Periods + ifString(ZigZag.Periods.Step, ":"+ ZigZag.Periods.Step, "") +")";
-   shortName     = name +"("+ ZigZag.Periods +")";
-   donchianName  = "Donchian("+ ZigZag.Periods +")";
+   indicatorName = WindowExpertName() +"("+ ZigZag.Periods + ifString(ZigZag.Periods.Step, ":"+ ZigZag.Periods.Step, "") +")";
+   shortName     = WindowExpertName() +"("+ ZigZag.Periods +")";
+   string donchianName = "Donchian("+ ZigZag.Periods +")";
    IndicatorShortName(shortName);
 
    IndicatorBuffers(terminal_buffers);
-   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,       0); SetIndexLabel(MODE_UPPER_BAND,      donchianName +" upper band");  if (!Donchian.ShowChannel) SetIndexLabel(MODE_UPPER_BAND,      NULL);
-   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,       0); SetIndexLabel(MODE_LOWER_BAND,      donchianName +" lower band");  if (!Donchian.ShowChannel) SetIndexLabel(MODE_LOWER_BAND,      NULL);
-   SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,   0);                                                                                               SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
-   SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE,  0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, shortName +" high/low");       if (!ZigZag.Width)         SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
-   SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,      0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" extension up");   if (!crossingDrawType)     SetIndexLabel(MODE_UPPER_CROSS,     NULL);
-   SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,      0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" extension down"); if (!crossingDrawType)     SetIndexLabel(MODE_LOWER_CROSS,     NULL);
-   SetIndexBuffer(MODE_ZZ_COMBINED,     zzCombined    ); SetIndexEmptyValue(MODE_ZZ_COMBINED,      0); SetIndexLabel(MODE_ZZ_COMBINED,     shortName +" trend");
-   SetIndexBuffer(MODE_REVERSAL_OFFSET, reversalOffset); SetIndexEmptyValue(MODE_REVERSAL_OFFSET, -1); SetIndexLabel(MODE_REVERSAL_OFFSET, shortName +" reversal offset");
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      donchianName +" upper band");  if (!Donchian.ShowChannel) SetIndexLabel(MODE_UPPER_BAND,      NULL);
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      donchianName +" lower band");  if (!Donchian.ShowChannel) SetIndexLabel(MODE_LOWER_BAND,      NULL);
+   SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,  0);                                                                                               SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
+   SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE, 0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, shortName +" high/low");       if (!ZigZag.Width)         SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
+   SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,     0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" extension up");   if (!crossingDrawType)     SetIndexLabel(MODE_UPPER_CROSS,     NULL);
+   SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,     0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" extension down"); if (!crossingDrawType)     SetIndexLabel(MODE_LOWER_CROSS,     NULL);
+   SetIndexBuffer(MODE_ZZ_COMBINED,     zzCombined    ); SetIndexEmptyValue(MODE_ZZ_COMBINED,     0); SetIndexLabel(MODE_ZZ_COMBINED,     shortName +" trend");
+   SetIndexBuffer(MODE_DC_COMBINED,     dcCombined    ); SetIndexEmptyValue(MODE_DC_COMBINED,     0); SetIndexLabel(MODE_DC_COMBINED,     shortName +" DC trend");
    IndicatorDigits(Digits);
 
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
@@ -1781,8 +1781,8 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, drawWidth, colorOr(Donchian.Crossing.Color, Donchian.Channel.UpperColor)); SetIndexArrow(MODE_UPPER_CROSS, crossingSymbol);
    SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, drawWidth, colorOr(Donchian.Crossing.Color, Donchian.Channel.LowerColor)); SetIndexArrow(MODE_LOWER_CROSS, crossingSymbol);
 
-   SetIndexStyle(MODE_ZZ_COMBINED,     DRAW_NONE);
-   SetIndexStyle(MODE_REVERSAL_OFFSET, DRAW_NONE);
+   SetIndexStyle(MODE_ZZ_COMBINED, DRAW_NONE);
+   SetIndexStyle(MODE_DC_COMBINED, DRAW_NONE);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -1790,7 +1790,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
 
 /**
- * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads and terminal restarts).
  *
  * @return bool - success status
  */
@@ -1860,7 +1860,7 @@ string InputsToStr() {
                             "TrackReversalBalance=",        BoolToStr(TrackReversalBalance)             +";"+ NL,
                             "TrackReversalBalance.Symbol=", DoubleQuoteStr(TrackReversalBalance.Symbol) +";"+ NL,
 
-                            "CombinedBufferAsBinary=",      BoolToStr(CombinedBufferAsBinary)           +";")
+                            "CombinedBuffersAsBinary=",     BoolToStr(CombinedBuffersAsBinary)          +";")
    );
 
    // suppress compiler warnings
