@@ -260,7 +260,7 @@ int onTick() {
       }
 
       // whether the processed bar is a reversal bar (not whether the current tick triggered the reversal)
-      bool isReversalBar = false, c1_isReversalBar = false, isUpperCrossLast = false;
+      bool isReversalBar = false, cr1_isReversalBar = false, isUpperCrossLast = false;
 
       // recalculate trend data
       // if no channel crossing
@@ -273,12 +273,12 @@ int onTick() {
       else if (upperCross[bar] && lowerCross[bar]) {
          isUpperCrossLast = IsUpperCrossLast(bar);
          if (isUpperCrossLast) {
-            c1_isReversalBar = ProcessLowerCross(bar);      // process both crossings in order
-            isReversalBar    = ProcessUpperCross(bar);
+            cr1_isReversalBar = ProcessLowerCross(bar);     // process both crossings in order
+            isReversalBar     = ProcessUpperCross(bar);
          }
          else {
-            c1_isReversalBar = ProcessUpperCross(bar);      // process both crossings in order
-            isReversalBar    = ProcessLowerCross(bar);
+            cr1_isReversalBar = ProcessUpperCross(bar);     // process both crossings in order
+            isReversalBar     = ProcessLowerCross(bar);
          }
       }
 
@@ -292,11 +292,11 @@ int onTick() {
          lowerCross[bar] = 0;
       }
       else if (upperCross[bar] && lowerCross[bar]) {        // special handling for the 1st of a double crossing
-         if (!c1_isReversalBar) {                           // whether the 1st crossing created a reversal
+         if (!cr1_isReversalBar) {                          // whether the 1st crossing created a reversal
             if (isUpperCrossLast) lowerCross[bar] = 0;
             else                  upperCross[bar] = 0;
          }
-         // always keep the 2nd crossing (it's the final reversal)
+         // keep the 2nd crossing (it's the final reversal)
       }
    }
 
@@ -358,7 +358,7 @@ bool ParameterStepper(int direction, int keys) {
  * @return bool
  */
 bool IsPossibleDataPumping() {
-   int waitPeriod = 20 * SECONDS;      // TODO: review this seemingly strange implementation
+   int waitPeriod = 20 * SECONDS;         // TODO: review this seemingly strange implementation
    datetime now = GetGmtTime();
    bool isPumping = true;
 
@@ -379,7 +379,7 @@ bool IsPossibleDataPumping() {
  *
  * @return bool
  */
-bool IsUpperCrossLast(int bar) {
+bool IsUpperCrossLast(int bar) {          // TODO: on bar 0 and 1 we must not guess
    double ho = High [bar] - Open [bar];
    double ol = Open [bar] - Low  [bar];
    double hc = High [bar] - Close[bar];
@@ -403,7 +403,7 @@ bool IsUpperCrossLast(int bar) {
  *
  * @return bool - whether the bar is a reversal bar (not whether the current tick triggered the reversal)
  */
-bool ProcessUpperCross(int bar) {
+bool ProcessUpperCross(int bar) {         // TODO: simplify when finished
    bool isReversalBar = false;
 
    if (!trend[bar]) {                     // 1st channel crossing
@@ -433,7 +433,7 @@ bool ProcessUpperCross(int bar) {
  *
  * @return bool - whether the bar is a reversal bar (not whether the current tick triggered the reversal)
  */
-bool ProcessLowerCross(int bar) {
+bool ProcessLowerCross(int bar) {         // TODO: simplify when finished
    bool isReversalBar = false;
 
    if (!trend[bar]) {                     // 1st channel crossing
@@ -459,31 +459,29 @@ bool ProcessLowerCross(int bar) {
  * Update the chart legend.
  */
 void UpdateChartLegend() {
-   //static int lastZzCombined, lastTime, lastAccount;
-   //
-   //// update on full recalculation or if indicator name, trend, current bar or the account changed
-   //if (!ValidBars || zzCombined[0]!=lastZzCombined || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
-   //   string sTrend    = "   "+ NumberToStr(zzTrend[0], "+.");
-   //   string sUnknown  = ifString(!zzUnknownTrend[0], "", "/"+ zzUnknownTrend[0]);
-   //   string sReversal = "   next reversal @" + NumberToStr(ifDouble(zzTrend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
-   //   string sSignal   = ifString(Signal.onReversal || Sound.onChannelWidening, "  "+ legendInfo, "");
-   //   string text      = StringConcatenate(indicatorName, sTrend, sUnknown, sReversal, sSignal);
-   //
-   //   color clr = ZigZag.Color;
-   //   if      (clr == Aqua        ) clr = DodgerBlue;
-   //   else if (clr == Gold        ) clr = Orange;
-   //   else if (clr == LightSkyBlue) clr = C'94,174,255';
-   //   else if (clr == Lime        ) clr = LimeGreen;
-   //   else if (clr == Yellow      ) clr = Orange;
-   //
-   //   ObjectSetText(legendLabel, text, 9, "Arial Fett", clr);
-   //   int error = GetLastError();
-   //   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateChartLegend(1)", error);     // on ObjectDrag or opened "Properties" dialog
-   //
-   //   lastZzCombined = zzCombined[0];
-   //   lastTime       = Time[0];
-   //   lastAccount    = AccountNumber();
-   //}
+   static int lastTrend, lastTime, lastAccount;
+
+   // update on full recalculation or if indicator name, trend, current bar or the account changed
+   if (!ValidBars || trend[0]!=lastTrend || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
+      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
+      string sSignal   = ""; //ifString(Signal.onReversal || Sound.onChannelWidening, "  "+ legendInfo, "");
+      string text      = StringConcatenate(indicatorName, sReversal, sSignal);
+
+      color clr = ifInt(trend[0] > 0, Channel.UpperColor, Channel.LowerColor);
+      if      (clr == Aqua        ) clr = DodgerBlue;
+      else if (clr == Gold        ) clr = Orange;
+      else if (clr == LightSkyBlue) clr = C'94,174,255';
+      else if (clr == Lime        ) clr = LimeGreen;
+      else if (clr == Yellow      ) clr = Orange;
+
+      ObjectSetText(legendLabel, text, 9, "Arial Fett", clr);
+      int error = GetLastError();
+      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateChartLegend(1)", error);     // on ObjectDrag or opened "Properties" dialog
+
+      lastTrend   = trend[0];
+      lastTime    = Time[0];
+      lastAccount = AccountNumber();
+   }
 }
 
 

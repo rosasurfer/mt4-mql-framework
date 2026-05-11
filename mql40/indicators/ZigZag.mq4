@@ -688,7 +688,7 @@ int onTick() {
       }
 
       // whether the processed bar is a reversal bar (not whether the current tick triggered the reversal)
-      bool isReversalBar = false, c1_isReversalBar = false, isUpperCrossLast = false;
+      bool isReversalBar = false, cr1_isReversalBar = false, isUpperCrossLast = false;
 
       // recalculate ZigZag data
       // if no channel crossing                                      // before or after the first semaphore
@@ -710,12 +710,12 @@ int onTick() {
       else if (upperCross[bar] && lowerCross[bar]) {
          isUpperCrossLast = IsUpperCrossLast(bar);
          if (isUpperCrossLast) {
-            c1_isReversalBar = ProcessLowerCross(bar);               // process both crossings in order
-            isReversalBar    = ProcessUpperCross(bar);
+            cr1_isReversalBar = ProcessLowerCross(bar);              // process both crossings in order
+            isReversalBar     = ProcessUpperCross(bar);
          }
          else {
-            c1_isReversalBar = ProcessUpperCross(bar);               // process both crossings in order
-            isReversalBar    = ProcessLowerCross(bar);
+            cr1_isReversalBar = ProcessUpperCross(bar);              // process both crossings in order
+            isReversalBar     = ProcessLowerCross(bar);
          }
       }
 
@@ -731,11 +731,11 @@ int onTick() {
       // hide non-configured crossings
       if (isReversalBar && crossingDrawType==MODE_FIRST_CROSSING) {  // hide all crossings except the 1st
          if (upperCross[bar] && lowerCross[bar]) {                   // special handling for the 1st of a double crossing
-            if (!c1_isReversalBar) {                                 // whether the 1st crossing created a reversal bar
+            if (!cr1_isReversalBar) {                                // whether the 1st crossing created a reversal bar
                if (isUpperCrossLast) lowerCross[bar] = 0;
                else                  upperCross[bar] = 0;
             }
-            // always keep the 2nd crossing (it's the 1st crossing of the final leg)
+            // keep the 2nd crossing (it's the 1st crossing of the final leg)
          }
       }
       else if (crossingDrawType != MODE_ALL_CROSSINGS) {             // hide all crossings
@@ -1049,7 +1049,7 @@ int Recorder_GetHstFormat() {
  *
  * @return bool
  */
-bool IsUpperCrossLast(int bar) {
+bool IsUpperCrossLast(int bar) {             // TODO: on bar 0 and 1 we must not guess
    double ho = High [bar] - Open [bar];
    double ol = Open [bar] - Low  [bar];
    double hc = High [bar] - Close[bar];
@@ -1695,7 +1695,7 @@ bool ParameterStepper(int direction, int keys) {
  * @return bool
  */
 bool IsPossibleDataPumping() {
-   int waitPeriod = 20 * SECONDS;      // TODO: review this seemingly strange implementation
+   int waitPeriod = 20 * SECONDS;         // TODO: review this seemingly strange implementation
    datetime now = GetGmtTime();
    bool isPumping = true;
 
