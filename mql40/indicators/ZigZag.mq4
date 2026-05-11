@@ -30,7 +30,7 @@
  *  • Donchian.ShowCrossings:      Which Donchian Channel crossings to display, one of:
  *                                  "off":   No crossings are displayed.
  *                                  "first": Only the first crossing is displayed (the moment a new ZigZag leg appears).
- *                                  "all":   All crossings are displayed. Displays the trail of a ZigZag leg as it develops over time.
+ *                                  "all":   All crossings are displayed. Displays the trail of a ZigZag leg as over time.
  *  • Donchian.Crossing.Symbol:    Graphic symbol used for Donchian Channel crossings.
  *  • Donchian.Crossing.Width:     Size of displayed Donchian Channel crossings.
  *  • Donchian.Crossing.Color:     Custom color of channel crossings (default: color of channel bands).
@@ -39,10 +39,10 @@
  *  • MaxBarsBack:                 Maximum number of bars back to calculate the indicator for (affects performance).
  *
  *  • Signal.onReversal:           Whether to signal ZigZag reversals (the moment a new ZigZag leg appears).
- *  • Signal.onReversal.Types:     Signaling methods, can be a combination of "sound", "alert" and/or "mail".
+ *  • Signal.onReversal.Types:     Signaling methods, a combination of "sound", "alert", "email" and/or "telegram".
  *
  *  • Signal.onBreakout:           Whether to signal ZigZag breakouts (a ZigZag leg exceeding the previous ZigZag leg).
- *  • Signal.onBreakout.Types:     Signaling methods, can be a combination of "sound", "alert", "email" and/or "telegram".
+ *  • Signal.onBreakout.Types:     Signaling methods, a combination of "sound", "alert", "email" and/or "telegram".
  *
  *  • Signal.Sound.Up:             Sound file for signals to the upside.
  *  • Signal.Sound.Down:           Sound file for signals to the downside.
@@ -195,7 +195,6 @@ string   indicatorName = "";
 string   shortName     = "";
 string   legendLabel   = "";
 string   legendInfo    = "";                                // additional chart legend info
-string   labels[];                                          // chart object labels
 
 int      zigzagDrawType;
 int      zigzagSymbol;
@@ -602,6 +601,7 @@ int onTick() {
       ArrayInitialize(reversalBalance_H, EMPTY_VALUE);   // double: positive/negative or EMPTY_VALUE
       ArrayInitialize(reversalBalance_L, EMPTY_VALUE);   // double: positive/negative or EMPTY_VALUE
       ArrayInitialize(reversalBalance_C, EMPTY_VALUE);   // double: positive/negative or EMPTY_VALUE
+      SetIndicatorOptions();
 
       lastUpperBand = 0;
       lastLowerBand = 0;
@@ -610,7 +610,6 @@ int onTick() {
       sema1         = 0;
       sema2         = 0;
       sema3         = 0;
-      SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
