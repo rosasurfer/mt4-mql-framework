@@ -135,7 +135,7 @@ extern bool     CombinedBuffersAsBinary        = false;                         
 #define MODE_UPPER_CROSS        ZigZag.MODE_UPPER_CROSS     //  4: upper channel band crossings: positive or 0
 #define MODE_LOWER_CROSS        ZigZag.MODE_LOWER_CROSS     //  5: lower channel band crossings: positive or 0
 #define MODE_ZZ_COMBINED        ZigZag.MODE_ZZ_COMBINED     //  6: int: combined buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND (see notes in file header)
-#define MODE_DC_COMBINED        ZigZag.MODE_DC_COMBINED     //  7: int: combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNTER (see notes in file header)
+#define MODE_DC_COMBINED        ZigZag.MODE_DC_COMBINED     //  7: int: combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNT (see notes in file header)
 
 #define MODE_UPPER_CROSS_HIGH    8                          //  8: bar high of an upper channel band crossing: positive or 0
 #define MODE_LOWER_CROSS_LOW     9                          //  9: bar low of a lower channel band crossing: positive or 0
@@ -143,7 +143,7 @@ extern bool     CombinedBuffersAsBinary        = false;                         
 #define MODE_ZZ_UNKNOWN_TREND   11                          // 11: int: number of undetermined trend bars after a leg's end semaphore: non-negative or -1
 #define MODE_DC_TREND           12                          // 12: int: direction and length of Donchian Channel reversals: positive/negative or 0
 #define MODE_REVERSAL_OFFSET    13                          // 13: int: offset of the trend reversal to the ZigZag leg's start semaphore: non-negative or -1
-#define MODE_REVERSAL_COUNTER   14                          // 14: int: number of consecutive winning/losing trend reversals: positive/negative or 0
+#define MODE_REVERSALS          14                          // 14: int: number of consecutive winning/losing trend reversals: positive/negative or 0
 #define MODE_REVERSAL_BALANCE_O 15                          // 15: reversal balance in pUnits: positive/negative or EMPTY_VALUE
 #define MODE_REVERSAL_BALANCE_H 16                          // 16: ...
 #define MODE_REVERSAL_BALANCE_L 17                          // 17: ...
@@ -182,7 +182,7 @@ double   semaphoreClose   [];                               // final semaphore, 
 double   zzCombined       [];                               // combined buffers MODE_TREND and MODE_UNKNOWN_TREND (see notes in file header)
 int      zzTrend          [];                               // direction and length of a ZigZag leg: positive/negative or 0
 int      zzUnknownTrend   [];                               // number of undetermined trend bars after a leg's end semaphore: non-negative or -1
-double   dcCombined       [];                               // combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNTER (see notes in file header)
+double   dcCombined       [];                               // combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSALS (see notes in file header)
 int      dcTrend          [];                               // direction and length of Donchian Channel reversals: positive/negative or 0
 int      reversalOffset   [];                               // offset of the trend reversal to the ZigZag leg's start semaphore (): non-negative or -1
 int      reversalCounter  [];                               // number of consecutive winning/losing trend reversals: positive/negative or 0
@@ -575,7 +575,7 @@ int onTick() {
    ManageIntIndicatorBuffer   (MODE_ZZ_UNKNOWN_TREND,   zzUnknownTrend, -1);
    ManageIntIndicatorBuffer   (MODE_DC_TREND,           dcTrend);
    ManageIntIndicatorBuffer   (MODE_REVERSAL_OFFSET,    reversalOffset);
-   ManageIntIndicatorBuffer   (MODE_REVERSAL_COUNTER,   reversalCounter);
+   ManageIntIndicatorBuffer   (MODE_REVERSALS,          reversalCounter);
    ManageDoubleIndicatorBuffer(MODE_REVERSAL_BALANCE_O, reversalBalance_O, EMPTY_VALUE);
    ManageDoubleIndicatorBuffer(MODE_REVERSAL_BALANCE_H, reversalBalance_H, EMPTY_VALUE);
    ManageDoubleIndicatorBuffer(MODE_REVERSAL_BALANCE_L, reversalBalance_L, EMPTY_VALUE);
@@ -748,11 +748,11 @@ int onTick() {
          int short_trend        = zzTrend[bar]        & 0x0000FFFF;           // convert `signed int` to `signed short`
          int short_unknownTrend = zzUnknownTrend[bar] & 0x0000FFFF;           // ...
          zzCombined[bar]        = (short_unknownTrend << 16) | short_trend;   // store as HIWORD + LOWORD
-         dcCombined[bar]        = dcTrend[bar];
+         dcCombined[bar]        = reversalCounter[bar];
       }
       else {                                                                  // "Data Window": human-readable format
          zzCombined[bar] = ifInt(zzTrend[bar] >= 0, +1, -1) * zzUnknownTrend[bar] * 100000 + zzTrend[bar];
-         dcCombined[bar] = dcTrend[bar];
+         dcCombined[bar] = reversalCounter[bar];
       }
    }
 
@@ -1049,7 +1049,9 @@ int Recorder_GetHstFormat() {
  *
  * @return bool
  */
-bool IsUpperCrossLast(int bar) {             // TODO: on bar 0 and 1 we must not guess
+bool IsUpperCrossLast(int bar) {
+   if (!bar) logNotice("IsUpperCrossLast(1)  bar=0  we must not guess");      // TODO
+
    double ho = High [bar] - Open [bar];
    double ol = Open [bar] - Low  [bar];
    double hc = High [bar] - Close[bar];
@@ -1452,11 +1454,11 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
 
       if (CombinedBuffersAsBinary) {               // iCustom(): binary format
          zzCombined[i] = zzTrend[i] & 0x0000FFFF;  // convert to `signed short` and store as HIWORD + LOWORD
-         //dcCombined[i] = dcTrend[i];
+         dcCombined[i] = reversalCounter[i];
       }
       else {
          zzCombined[i] = zzTrend[i];               // "Data Window": human-readable format
-         //dcCombined[i] = dcTrend[i];
+         dcCombined[i] = reversalCounter[i];
       }
 
       if      (value > 0) value++;
