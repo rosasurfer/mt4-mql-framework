@@ -34,7 +34,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MaChannel.mqh>
+#include <rsf/functions/iCustom/MAChannel.mqh>
 #include <rsf/win32api.mqh>
 
 #define MODE_UPPER_BAND       MaChannel.MODE_UPPER_BAND  // 0 indicator buffer ids

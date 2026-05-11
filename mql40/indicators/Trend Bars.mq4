@@ -38,7 +38,7 @@ extern int    MaxBarsBack                    = 10000;       // max. values to ca
 #include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/HandleCommands.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MaChannel.mqh>
+#include <rsf/functions/iCustom/MAChannel.mqh>
 
 #define BUFFER_TREND_BODY_A      0        // indicator buffer ids
 #define BUFFER_TREND_BODY_B      1

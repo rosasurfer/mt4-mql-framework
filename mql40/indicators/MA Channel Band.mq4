@@ -39,7 +39,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MaChannel.mqh>
+#include <rsf/functions/iCustom/MAChannel.mqh>
 #include <rsf/functions/iCustom/MovingAverage.mqh>
 #include <rsf/win32api.mqh>
 
