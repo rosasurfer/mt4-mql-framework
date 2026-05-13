@@ -13,7 +13,7 @@
  *  • Channel.UpperColor:          Color of the upper Donchian Channel band.
  *  • Channel.LowerColor:          Color of the lower Donchian Channel band.
  *
- *  • ShowReversals:               Whether to display Donchian Channel reversals.
+ *  • ShowReversals:               Whether to display Donchian Channel reversals (may contain filter conditions).
  *  • Reversal.Symbol:             Graphic symbol used for Donchian Channel reversals.
  *  • Reversal.Width:              Size of displayed Donchian Channel reversals.
  *  • Reversal.Color:              Separate color of Donchian Channel reversals (default: color of channel bands).
@@ -50,7 +50,7 @@ extern int    Periods.Step                   = 0;                          // st
 extern color  Channel.UpperColor             = Blue;
 extern color  Channel.LowerColor             = Red;
 
-extern string ShowReversals                  = "on* | off | N | N+";       // which channel reversals to display
+extern string ShowReversals                  = "on* | off | +N | -N";      // which channel reversals to display
 extern string Reversal.Symbol                = "dot | thin-ring | ring | thick-ring*";
 extern int    Reversal.Width                 = 1;
 extern color  Reversal.Color                 = CLR_NONE;                   // separate reversal color (default: channel color)
@@ -88,7 +88,7 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #define MODE_LOWER_BAND     Donchian.MODE_LOWER_BAND     // 1 lower channel band
 #define MODE_REVERSAL_LONG  Donchian.MODE_REVERSAL_LONG  // 2 long reversals
 #define MODE_REVERSAL_SHORT Donchian.MODE_REVERSAL_SHORT // 3 short reversals
-#define MODE_REVERSAL_DIM   4                            // 4 filtered but still visible reversals
+#define MODE_REVERSAL_DIM   4                            // 4 filtered reversals (dimmed representation)
 #define MODE_TREND          Donchian.MODE_TREND          // 5 int: direction and length of channel reversals
 #define MODE_REVERSAL_COUNT Donchian.MODE_REVERSAL_COUNT // 6 int: number of consecutive winning/losing reversals
 
@@ -101,7 +101,7 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #property indicator_width3 0                 //
 #property indicator_color4 indicator_color2  // short reversals
 #property indicator_width4 0                 //
-#property indicator_color5 CLR_NONE          // DarkGray dimmed reversals
+#property indicator_color5 DarkGray          // filtered reversals (dimmed)
 #property indicator_width5 0                 //
 
 #property indicator_color6 CLR_NONE
@@ -120,10 +120,8 @@ string   shortName     = "";
 string   legendLabel   = "";
 string   legendInfo    = "";                 // additional chart legend info
 
-bool     showReversals;                      // whether to show reversals
-bool     reversals.all;                      // which reversals to show
-int      reversals.from;                     // ...
-int      reversals.to;                       // ...
+bool     reversals.show;                     // whether to show reversals
+int      reversals.countFrom;                // which reversals to show
 int      reversals.symbol;
 
 bool     signal.onReversal.sound;
@@ -165,21 +163,14 @@ int onInit() {
    if (Periods.Step < 0) return(catch("onInit(2)  invalid input parameter Periods.Step: "+ Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // ShowReversals
    if (AutoConfiguration) ShowReversals = GetConfigString(indicator, "ShowReversals", ShowReversals);
-   string sValues[], sValue = ShowReversals;
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
+   if (!ValidateShowReversals(ShowReversals, reversals.show, reversals.countFrom)) {
+      return(catch("onInit(3)  invalid input parameter ShowReversals: "+ DoubleQuoteStr(ShowReversals), ERR_INVALID_INPUT_PARAMETER));
    }
-   sValue = StrToLower(StrTrim(sValue));
-   if      (sValue == "on" ) { showReversals = true; reversals.from = 1; reversals.to = INT_MAX; reversals.all = true; }
-   else if (sValue == "off") { showReversals = false; }
-   else return(catch("onInit(3)  invalid input parameter ShowReversals: "+ DoubleQuoteStr(ShowReversals), ERR_INVALID_INPUT_PARAMETER));
-   ShowReversals = sValue;
    // Reversal.Symbol
    if (AutoConfiguration) Reversal.Symbol = GetConfigString(indicator, "Reversal.Symbol", Reversal.Symbol);
-   sValue = Reversal.Symbol;
+   string sValues[], sValue = Reversal.Symbol;
    if (Explode(sValue, "*", sValues, 2) > 1) {
-      size = Explode(sValues[0], "|", sValues, NULL);
+      int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
@@ -347,7 +338,8 @@ int onTick() {
       }
 
       // whether the processed bar is a reversal bar (not whether the current tick triggered the reversal)
-      bool isReversalBar = false, cr1_isReversalBar = false, isUpperCrossLast = false;
+      bool isReversalBar = false, isDoubleCross = false, cross1_isReversalBar = false, isUpperCrossLast = false;
+      double lastCross = 0;
 
       // recalculate trend/reversal data
       // if no channel crossing
@@ -359,38 +351,67 @@ int onTick() {
 
       // if two channel crossings (upper and lower band crossed by the same bar)
       else if (upperCross[bar] && lowerCross[bar]) {
+         isDoubleCross    = true;
          isUpperCrossLast = IsUpperCrossLast(bar);
          if (isUpperCrossLast) {
-            cr1_isReversalBar = ProcessLowerCross(bar);     // process both crossings in order
-            isReversalBar     = ProcessUpperCross(bar);
+            lastCross            = upperCross[bar];
+            cross1_isReversalBar = ProcessLowerCross(bar);  // process both crossings in order
+            isReversalBar        = ProcessUpperCross(bar);
          }
          else {
-            cr1_isReversalBar = ProcessUpperCross(bar);     // process both crossings in order
-            isReversalBar     = ProcessLowerCross(bar);
+            lastCross            = lowerCross[bar];
+            cross1_isReversalBar = ProcessUpperCross(bar);  // process both crossings in order
+            isReversalBar        = ProcessLowerCross(bar);
          }
       }
 
       // else a single channel crossing
-      else if (!lowerCross[bar]) isReversalBar = ProcessUpperCross(bar);
-      else                       isReversalBar = ProcessLowerCross(bar);
+      else if (!lowerCross[bar]) {
+         lastCross     = upperCross[bar];
+         isReversalBar = ProcessUpperCross(bar);
+      }
+      else {
+         lastCross     = lowerCross[bar];
+         isReversalBar = ProcessLowerCross(bar);
+      }
 
       // hide all non-reversal crossings
       if (!isReversalBar) {
          upperCross[bar] = 0;
          lowerCross[bar] = 0;
       }
-      else if (upperCross[bar] && lowerCross[bar]) {
-         if (!cr1_isReversalBar) {                          // hide the 1st of a double crossing if not a reversal
-            if (isUpperCrossLast) lowerCross[bar] = 0;
-            else                  upperCross[bar] = 0;
+      else if (isDoubleCross && !cross1_isReversalBar) {
+         if (isUpperCrossLast) lowerCross[bar] = 0;         // hide the 1st crossing if not a reversal
+         else                  upperCross[bar] = 0;
+      }
+
+
+      // dim filtered reversals
+      if (isReversalBar && reversals.show && reversals.countFrom) {
+         dimmed[bar] = lastCross;                           // hide all reversals
+
+         bool showThisReversal = false;
+         if (reversals.countFrom > 0 && reversalCount[bar] >= reversals.countFrom) {
+            showThisReversal = true;                        // positive filter
+         }
+         if (reversals.countFrom < 0 && reversalCount[bar] <= reversals.countFrom) {
+            showThisReversal = true;                        // negative filter
+         }
+         if (showThisReversal) {
+            dimmed[bar] = 0;                                // unhide this reversal
+            int count = reversals.countFrom;
+            int prevReversalBar = bar;
+
+            while (true) {                                  // unhide its predecessors
+               iTrend = trend[prevReversalBar+1];
+               if (!count || !iTrend) break;
+               prevReversalBar += Abs(iTrend);
+               dimmed[prevReversalBar] = 0;
+               count -= Sign(reversals.countFrom);
+            }
          }
       }
 
-      // initially dim all reversals
-      if (isReversalBar) {
-         if (!lowerCross[bar]) dimmed[bar] = upperCross[bar];
-         else                  dimmed[bar] = lowerCross[bar];
-      }
       if (last_error != NO_ERROR) return(last_error);
    }
 
@@ -774,10 +795,16 @@ void UpdateChartLegend() {
 
    // update on full recalculation or if indicator name, trend, current bar or the account changed
    if (!ValidBars || trend[0]!=lastTrend || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
-      string sTrend    = "   "+ NumberToStr(trend[0], "+.");
+      string sFilter = "", sTrend = "";
+      if (reversals.show && reversals.countFrom) {
+         sFilter = "   RF: "+ NumberToStr(reversals.countFrom, "+.") +"+";
+      }
+      else {
+         sTrend = "   "+ NumberToStr(trend[0], "+.");
+      }
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
       string sSignal   = ifString(Signal.onReversal || Sound.onChannelWidening, "  "+ legendInfo, "");
-      string text      = StringConcatenate(indicatorName, sTrend, sReversal, sSignal);
+      string text      = StringConcatenate(indicatorName, sTrend, sFilter, sReversal, sSignal);
 
       color clr = ifInt(trend[0] > 0, Channel.UpperColor, Channel.LowerColor);
       if      (clr == Aqua        ) clr = DodgerBlue;
@@ -824,10 +851,10 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.UpperColor);
    SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.LowerColor);
 
-   int drawType = ifInt(showReversals && Reversal.Width, DRAW_ARROW, DRAW_NONE);
+   int drawType = ifInt(reversals.show && Reversal.Width, DRAW_ARROW, DRAW_NONE);
    SetIndexStyle(MODE_REVERSAL_LONG,  drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_REVERSAL_LONG,  reversals.symbol);
    SetIndexStyle(MODE_REVERSAL_SHORT, drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_REVERSAL_SHORT, reversals.symbol);
-   SetIndexStyle(MODE_REVERSAL_DIM,   drawType, EMPTY, Reversal.Width);                                              SetIndexArrow(MODE_REVERSAL_DIM,   reversals.symbol);
+   SetIndexStyle(MODE_REVERSAL_DIM,   drawType, EMPTY, Reversal.Width, indicator_color5);                            SetIndexArrow(MODE_REVERSAL_DIM,   reversals.symbol);
 
    SetIndexStyle(MODE_TREND,          DRAW_NONE);
    SetIndexStyle(MODE_REVERSAL_COUNT, DRAW_NONE);
@@ -867,6 +894,44 @@ bool RestoreStatus() {
       }
    }
    return(!catch("RestoreStatus(1)"));
+}
+
+
+/**
+ * Parse and validate input `ShowReversals`.
+ *
+ * @param  _InOut_ string value         - input value, format: "on | off | +N | -N"
+ * @param  _Out_   bool   showReversals - result: whether to show any reversals
+ * @param  _Out_   int    countFrom     - result: min. reversal count of the reversals to show
+ *
+ * @return bool - validation success status
+ */
+bool ValidateShowReversals(string &value, bool &showReversals, int &countFrom) {
+   showReversals = false;
+   countFrom = 0;
+
+   string sValues[], sValue = value;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrToLower(StrTrim(sValue));
+
+   if (sValue == "on" || sValue == "all" ) {
+      showReversals = true;
+      countFrom = 0;
+   }
+   else if (sValue == "off" || sValue == "0") {
+      showReversals = false;
+   }
+   else if (StrIsInteger(sValue)) {
+      showReversals = true;
+      countFrom = StrToInteger(sValue);
+   }
+   else return(false);
+
+   value = sValue;
+   return(true);
 }
 
 
