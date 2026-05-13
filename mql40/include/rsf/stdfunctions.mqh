@@ -1212,8 +1212,9 @@ int GetChartWindow(string shortName = "") {
  * @return bool
  */
 bool ifBool(bool condition, bool thenValue, bool elseValue) {
-   if (condition != 0)
+   if (condition != 0) {
       return(thenValue != 0);
+   }
    return(elseValue != 0);
 }
 
@@ -1228,8 +1229,9 @@ bool ifBool(bool condition, bool thenValue, bool elseValue) {
  * @return int
  */
 int ifInt(bool condition, int thenValue, int elseValue) {
-   if (condition != 0)
+   if (condition != 0) {
       return(thenValue);
+   }
    return(elseValue);
 }
 
@@ -1244,8 +1246,9 @@ int ifInt(bool condition, int thenValue, int elseValue) {
  * @return double
  */
 double ifDouble(bool condition, double thenValue, double elseValue) {
-   if (condition != 0)
+   if (condition != 0) {
       return(thenValue);
+   }
    return(elseValue);
 }
 
@@ -1260,8 +1263,9 @@ double ifDouble(bool condition, double thenValue, double elseValue) {
  * @return string
  */
 string ifString(bool condition, string thenValue, string elseValue) {
-   if (condition != 0)
+   if (condition != 0) {
       return(thenValue);
+   }
    return(elseValue);
 }
 
@@ -1275,8 +1279,9 @@ string ifString(bool condition, string thenValue, string elseValue) {
  * @return int
  */
 color colorOr(color value, color altValue) {
-   if (value != CLR_NONE)
+   if (value != CLR_NONE) {
       return(value);
+   }
    return(altValue);
 }
 
@@ -1290,8 +1295,9 @@ color colorOr(color value, color altValue) {
  * @return int
  */
 int intOr(int value, int altValue) {
-   if (value != NULL)
+   if (value != NULL) {
       return(value);
+   }
    return(altValue);
 }
 
@@ -1305,8 +1311,9 @@ int intOr(int value, int altValue) {
  * @return double
  */
 double doubleOr(double value, double altValue) {
-   if (value != NULL)
+   if (value != NULL) {
       return(value);
+   }
    return(altValue);
 }
 
@@ -1320,8 +1327,9 @@ double doubleOr(double value, double altValue) {
  * @return string
  */
 string stringOr(string value, string altValue) {
-   if (StringLen(value) > 0)
+   if (StringLen(value) > 0) {
       return(value);
+   }
    return(altValue);
 }
 
@@ -1339,8 +1347,9 @@ bool EQ(double double1, double double2, int digits = 8) {
    if (digits < 0 || digits > 8) return(!catch("EQ(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER));
 
    double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
-   if (diff < 0)
+   if (diff < 0) {
       diff = -diff;
+   }
    return(diff < 0.000000000000001);
 
    /*
@@ -1405,8 +1414,9 @@ bool NE(double double1, double double2, int digits = 8) {
  * @return bool
  */
 bool GT(double double1, double double2, int digits = 8) {
-   if (EQ(double1, double2, digits))
+   if (EQ(double1, double2, digits)) {
       return(false);
+   }
    return(double1 > double2);
 }
 
@@ -1421,8 +1431,9 @@ bool GT(double double1, double double2, int digits = 8) {
  * @return bool
  */
 bool GE(double double1, double double2, int digits = 8) {
-   if (double1 > double2)
+   if (double1 > double2) {
       return(true);
+   }
    return(EQ(double1, double2, digits));
 }
 
@@ -1437,8 +1448,9 @@ bool GE(double double1, double double2, int digits = 8) {
  * @return bool
  */
 bool LT(double double1, double double2, int digits = 8) {
-   if (EQ(double1, double2, digits))
+   if (EQ(double1, double2, digits)) {
       return(false);
+   }
    return(double1 < double2);
 }
 
@@ -1453,8 +1465,9 @@ bool LT(double double1, double double2, int digits = 8) {
  * @return bool
  */
 bool LE(double double1, double double2, int digits = 8) {
-   if (double1 < double2)
+   if (double1 < double2) {
       return(true);
+   }
    return(EQ(double1, double2, digits));
 }
 
@@ -1595,8 +1608,9 @@ string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=
  * @return bool
  */
 bool IsEmptyString(string value) {
-   if (StrIsNull(value))
+   if (StrIsNull(value)) {
       return(false);
+   }
    return(value == "");
 }
 
@@ -1812,7 +1826,7 @@ int Ceil(double value) {
  */
 double RoundEx(double number, int decimals = 0) {
    if (decimals > 0) return(NormalizeDouble(number, decimals));
-   if (!decimals)    return(      MathRound(number));
+   if (!decimals)    return(MathRound(number));
 
    // decimals < 0
    double factor = MathPow(10, decimals);
@@ -1843,13 +1857,14 @@ double RoundEx(double number, int decimals = 0) {
 double RoundFloor(double number, int decimals = 0) {
    if (decimals > 0) {
       double factor = MathPow(10, decimals);
-             number = MathFloor(number * factor) / factor;
-             number = NormalizeDouble(number, decimals);
+      number = MathFloor(number * factor) / factor;
+      number = NormalizeDouble(number, decimals);
       return(number);
    }
 
-   if (decimals == 0)
+   if (!decimals) {
       return(MathFloor(number));
+   }
 
    // decimals < 0
    factor = MathPow(10, decimals);
@@ -1880,13 +1895,14 @@ double RoundFloor(double number, int decimals = 0) {
 double RoundCeil(double number, int decimals = 0) {
    if (decimals > 0) {
       double factor = MathPow(10, decimals);
-             number = MathCeil(number * factor) / factor;
-             number = NormalizeDouble(number, decimals);
+      number = MathCeil(number * factor) / factor;
+      number = NormalizeDouble(number, decimals);
       return(number);
    }
 
-   if (decimals == 0)
+   if (!decimals) {
       return(MathCeil(number));
+   }
 
    // decimals < 0
    factor = MathPow(10, decimals);
@@ -1942,8 +1958,9 @@ int Mul(int a, int b, bool boundaryOnOverflow = false) {
  * @return int
  */
 int Div(int a, int b, int onZero = 0) {
-   if (!b)
+   if (!b) {
       return(onZero);
+   }
    return(a/b);
 }
 
@@ -1958,8 +1975,9 @@ int Div(int a, int b, int onZero = 0) {
  * @return double
  */
 double MathDiv(double a, double b, double onZero = 0) {
-   if (b == 0)
+   if (b == 0) {
       return(onZero);
+   }
    return(a/b);
 }
 
@@ -1992,8 +2010,7 @@ int CountDecimals(double number) {
    int dot = StringFind(str, ".");
 
    for (int i=StringLen(str)-1; i > dot; i--) {
-      if (StringGetChar(str, i) != '0')
-         break;
+      if (StringGetChar(str, i) != '0') break;
    }
    return(i - dot);
 }
@@ -2019,8 +2036,7 @@ string StrLeftTo(string value, string substring, int count = 1) {
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
-         if (pos == -1)
-            return(value);
+         if (pos == -1) return(value);
          count--;
       }
       return(StrLeft(value, pos));
@@ -2031,19 +2047,17 @@ string StrLeftTo(string value, string substring, int count = 1) {
       /*
       while(count < 0) {
          pos = StringFind(value, substring, 0);
-         if (pos == -1)
-            return("");
+         if (pos == -1) return("");
          count++;
       }
       */
       pos = StringFind(value, substring, 0);
-      if (pos == -1)
-         return(value);
+      if (pos == -1) return(value);
 
       if (count == -1) {
          while (pos != -1) {
             start = pos+1;
-            pos   = StringFind(value, substring, start);
+            pos = StringFind(value, substring, start);
          }
          return(StrLeft(value, start-1));
       }
@@ -2100,8 +2114,7 @@ string StrRightFrom(string value, string substring, int count = 1) {
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
-         if (pos == -1)
-            return("");
+         if (pos == -1) return("");
          count--;
       }
       return(StrSubstr(value, pos+StringLen(substring)));
@@ -2112,19 +2125,17 @@ string StrRightFrom(string value, string substring, int count = 1) {
       /*
       while(count < 0) {
          pos = StringFind(value, substring, 0);
-         if (pos == -1)
-            return("");
+         if (pos == -1) return("");
          count++;
       }
       */
       pos = StringFind(value, substring, 0);
-      if (pos == -1)
-         return(value);
+      if (pos == -1) return(value);
 
       if (count == -1) {
          while (pos != -1) {
             start = pos+1;
-            pos   = StringFind(value, substring, start);
+            pos = StringFind(value, substring, start);
          }
          return(StrSubstr(value, start-1 + StringLen(substring)));
       }
@@ -2156,7 +2167,7 @@ bool StrStartsWithI(string value, string prefix) {
       }
       catch("StrStartsWithI(2)", error);
    }
-   if (!StringLen(prefix))      return(!catch("StrStartsWithI(3)  illegal parameter prefix: \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(prefix)) return(!catch("StrStartsWithI(3)  illegal parameter prefix: \"\"", ERR_INVALID_PARAMETER));
 
    return(StringFind(StrToUpper(value), StrToUpper(prefix)) == 0);
 }
@@ -2219,8 +2230,9 @@ bool StrIsInteger(string value) {
 bool StrIsNumeric(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING)
+      if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(value)) return(false);
+      }
       catch("StrIsNumeric(1)", error);
    }
 
@@ -2309,9 +2321,9 @@ int ArrayUnshiftString(string &array[], string value) {
 int StrToLogLevel(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
-   if (StrStartsWith(str, "LOG_"))
+   if (StrStartsWith(str, "LOG_")) {
       str = StrSubstr(str, 4);
-
+   }
    if (str ==        "DEBUG" ) return(LOG_DEBUG );
    if (str == ""+ LOG_DEBUG  ) return(LOG_DEBUG );
    if (str ==        "INFO"  ) return(LOG_INFO  );
@@ -2329,8 +2341,9 @@ int StrToLogLevel(string value, int flags = NULL) {
    if (str ==        "OFF"   ) return(LOG_OFF   );       //
    if (str == ""+ LOG_OFF    ) return(LOG_OFF   );       // not a loglevel
 
-   if (flags & F_ERR_INVALID_PARAMETER && 1)
+   if (flags & F_ERR_INVALID_PARAMETER && 1) {
       return(!SetLastError(ERR_INVALID_PARAMETER));
+   }
    return(!catch("StrToLogLevel(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER));
 }
 
@@ -2381,8 +2394,9 @@ int StrToMaMethod(string value, int flags = NULL) {
       }
    }
 
-   if (!flags & F_ERR_INVALID_PARAMETER)
+   if (!flags & F_ERR_INVALID_PARAMETER) {
       return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER)));
+   }
    return(-1);
 }
 
@@ -2397,7 +2411,7 @@ int StrToMaMethod(string value, int flags = NULL) {
 string QuoteStr(string value) {
    if (StrIsNull(value)) {
       int error = GetLastError();
-      if (error && error!=ERR_NOT_INITIALIZED_STRING) catch("QuoteStr(1)", error);
+      if (error && error != ERR_NOT_INITIALIZED_STRING) catch("QuoteStr(1)", error);
       return("(null)");
    }
    return(StringConcatenate("'", value, "'"));
@@ -2414,7 +2428,7 @@ string QuoteStr(string value) {
 string DoubleQuoteStr(string value) {
    if (StrIsNull(value)) {
       int error = GetLastError();
-      if (error && error!=ERR_NOT_INITIALIZED_STRING) catch("DoubleQuoteStr(1)", error);
+      if (error && error != ERR_NOT_INITIALIZED_STRING) catch("DoubleQuoteStr(1)", error);
       return("(null)");
    }
    return(StringConcatenate("\"", value, "\""));
