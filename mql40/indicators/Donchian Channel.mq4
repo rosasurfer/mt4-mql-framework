@@ -16,7 +16,7 @@
  *  • ShowReversals:               Whether to display Donchian Channel reversals.
  *  • Reversal.Symbol:             Graphic symbol used for Donchian Channel reversals.
  *  • Reversal.Width:              Size of displayed Donchian Channel reversals.
- *  • Reversal.Color:              Custom color of channel reversals (default: color of channel bands).
+ *  • Reversal.Color:              Separate color of Donchian Channel reversals (default: color of channel bands).
  *
  *  • ShowChartLegend:             Whether do display the chart legend.
  *  • MaxBarsBack:                 Maximum number of bars back to calculate the indicator for (affects performance).
@@ -50,10 +50,10 @@ extern int    Periods.Step                   = 0;                          // st
 extern color  Channel.UpperColor             = Blue;
 extern color  Channel.LowerColor             = Red;
 
-extern bool   ShowReversals                  = true;                       // whether to display channel reversals
+extern string ShowReversals                  = "on* | off | N | N+";       // which channel reversals to display
 extern string Reversal.Symbol                = "dot | thin-ring | ring | thick-ring*";
 extern int    Reversal.Width                 = 1;
-extern color  Reversal.Color                 = CLR_NONE;
+extern color  Reversal.Color                 = CLR_NONE;                   // separate reversal color (default: channel color)
 
 extern string ___b__________________________ = "=== Display settings ===";
 extern bool   ShowChartLegend                = true;
@@ -81,57 +81,67 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers 6
+#property indicator_buffers 7
 
 // indicator buffer ids
-#define MODE_UPPER_BAND  Donchian.MODE_UPPER_BAND  // 0 upper channel band
-#define MODE_LOWER_BAND  Donchian.MODE_LOWER_BAND  // 1 lower channel band
-#define MODE_UPPER_CROSS Donchian.MODE_UPPER_CROSS // 2 upper channel band crossings
-#define MODE_LOWER_CROSS Donchian.MODE_LOWER_CROSS // 3 lower channel band crossings
-#define MODE_TREND       Donchian.MODE_TREND       // 4 int: direction and length of channel reversals
-#define MODE_REVERSALS   Donchian.MODE_REVERSALS   // 5 int: number of consecutive winning/losing reversals
+#define MODE_UPPER_BAND     Donchian.MODE_UPPER_BAND     // 0 upper channel band
+#define MODE_LOWER_BAND     Donchian.MODE_LOWER_BAND     // 1 lower channel band
+#define MODE_REVERSAL_LONG  Donchian.MODE_REVERSAL_LONG  // 2 long reversals
+#define MODE_REVERSAL_SHORT Donchian.MODE_REVERSAL_SHORT // 3 short reversals
+#define MODE_REVERSAL_DIM   4                            // 4 filtered but still visible reversals
+#define MODE_TREND          Donchian.MODE_TREND          // 5 int: direction and length of channel reversals
+#define MODE_REVERSAL_COUNT Donchian.MODE_REVERSAL_COUNT // 6 int: number of consecutive winning/losing reversals
 
-#property indicator_color1 Blue                    // upper channel band
-#property indicator_style1 STYLE_DOT               //
-#property indicator_color2 Red                     // lower channel band
-#property indicator_style2 STYLE_DOT               //
+#property indicator_color1 Blue              // upper channel band
+#property indicator_style1 STYLE_DOT         //
+#property indicator_color2 Red               // lower channel band
+#property indicator_style2 STYLE_DOT         //
 
-#property indicator_color3 indicator_color1        // upper channel band crossings
-#property indicator_width3 0                       //
-#property indicator_color4 indicator_color2        // lower channel band crossings
-#property indicator_width4 0                       //
+#property indicator_color3 indicator_color1  // long reversals
+#property indicator_width3 0                 //
+#property indicator_color4 indicator_color2  // short reversals
+#property indicator_width4 0                 //
+#property indicator_color5 CLR_NONE          // DarkGray dimmed reversals
+#property indicator_width5 0                 //
 
-double   upperBand [];
-double   lowerBand [];
-double   upperCross[];
-double   lowerCross[];
-double   trend     [];                             // int: direction and length of channel reversals
-double   reversals [];                             // int: number of consecutive winning/losing reversals
+#property indicator_color6 CLR_NONE
+#property indicator_color7 CLR_NONE
+
+double   upperBand    [];
+double   lowerBand    [];
+double   upperCross   [];
+double   lowerCross   [];
+double   dimmed       [];                    // dimmed reversals
+double   trend        [];                    // int: direction and length of channel reversals
+double   reversalCount[];                    // int: number of consecutive winning/losing reversals
 
 string   indicatorName = "";
 string   shortName     = "";
 string   legendLabel   = "";
-string   legendInfo    = "";                       // additional chart legend info
+string   legendInfo    = "";                 // additional chart legend info
 
-int      reversalDrawType;
-int      reversalSymbol;
+bool     showReversals;                      // whether to show reversals
+bool     reversals.all;                      // which reversals to show
+int      reversals.from;                     // ...
+int      reversals.to;                       // ...
+int      reversals.symbol;
 
 bool     signal.onReversal.sound;
 bool     signal.onReversal.alert;
 bool     signal.onReversal.mail;
 bool     signal.onReversal.telegram;
 
-double   lastUpperBand;                            // detection of channel widenings
-double   lastLowerBand;                            // upper/lower band values at the previous tick
+double   lastUpperBand;                      // detection of channel widenings
+double   lastLowerBand;                      // upper/lower band values at the previous tick
 
-datetime skipSignals;                              // skip signals until the specified time to wait for possible data pumping
+datetime skipSignals;                        // skip signals until the specified time to wait for possible data pumping
 datetime lastTick;
-int      lastSoundSignal;                          // GetTickCount() value of the last audio signal
+int      lastSoundSignal;                    // GetTickCount() value of the last audio signal
 
 
 // signal direction types
-#define D_LONG  TRADE_DIRECTION_LONG  // 1
-#define D_SHORT TRADE_DIRECTION_SHORT // 2
+#define D_LONG  TRADE_DIRECTION_LONG         // 1
+#define D_SHORT TRADE_DIRECTION_SHORT        // 2
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -153,23 +163,35 @@ int onInit() {
    // Periods.Step
    if (AutoConfiguration) Periods.Step = GetConfigInt(indicator, "Periods.Step", Periods.Step);
    if (Periods.Step < 0) return(catch("onInit(2)  invalid input parameter Periods.Step: "+ Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
-   // Reversal.Symbol
-   if (AutoConfiguration) Reversal.Symbol = GetConfigString(indicator, "Reversal.Symbol", Reversal.Symbol);
-   string sValues[], sValue = Reversal.Symbol;
+   // ShowReversals
+   if (AutoConfiguration) ShowReversals = GetConfigString(indicator, "ShowReversals", ShowReversals);
+   string sValues[], sValue = ShowReversals;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
-   if      (sValue == "dot"       ) reversalSymbol = 108;   // that's Wingding characters
-   else if (sValue == "thin-ring" ) reversalSymbol = 161;   // ...
-   else if (sValue == "ring"      ) reversalSymbol = 162;   // ...
-   else if (sValue == "thick-ring") reversalSymbol = 163;   // ...
-   else return(catch("onInit(3)  invalid input parameter Reversal.Symbol: "+ DoubleQuoteStr(Reversal.Symbol), ERR_INVALID_INPUT_PARAMETER));
+   if      (sValue == "on" ) { showReversals = true; reversals.from = 1; reversals.to = INT_MAX; reversals.all = true; }
+   else if (sValue == "off") { showReversals = false; }
+   else return(catch("onInit(3)  invalid input parameter ShowReversals: "+ DoubleQuoteStr(ShowReversals), ERR_INVALID_INPUT_PARAMETER));
+   ShowReversals = sValue;
+   // Reversal.Symbol
+   if (AutoConfiguration) Reversal.Symbol = GetConfigString(indicator, "Reversal.Symbol", Reversal.Symbol);
+   sValue = Reversal.Symbol;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrToLower(StrTrim(sValue));
+   if      (sValue == "dot"       ) reversals.symbol = 108;    // that's Wingding characters
+   else if (sValue == "thin-ring" ) reversals.symbol = 161;    // ...
+   else if (sValue == "ring"      ) reversals.symbol = 162;    // ...
+   else if (sValue == "thick-ring") reversals.symbol = 163;    // ...
+   else return(catch("onInit(4)  invalid input parameter Reversal.Symbol: "+ DoubleQuoteStr(Reversal.Symbol), ERR_INVALID_INPUT_PARAMETER));
    Reversal.Symbol = sValue;
    // Reversal.Width
    if (AutoConfiguration) Reversal.Width = GetConfigInt(indicator, "Reversal.Width", Reversal.Width);
-   if (Reversal.Width < 0) return(catch("onInit(4)  invalid input parameter Reversal.Width: "+ Reversal.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Reversal.Width < 0) return(catch("onInit(5)  invalid input parameter Reversal.Width: "+ Reversal.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Channel.UpperColor = GetConfigColor(indicator, "Channel.UpperColor", Channel.UpperColor);
    if (AutoConfiguration) Channel.LowerColor = GetConfigColor(indicator, "Channel.LowerColor", Channel.LowerColor);
@@ -181,7 +203,7 @@ int onInit() {
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1) return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1) return(catch("onInit(6)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // Signal.onReversal
@@ -190,7 +212,7 @@ int onInit() {
    ConfigureSignals(signalId, AutoConfiguration, Signal.onReversal);
    if (Signal.onReversal) {
       if (!ConfigureSignalTypes(signalId, Signal.onReversal.Types, AutoConfiguration, signal.onReversal.sound, signal.onReversal.alert, signal.onReversal.mail, signal.onReversal.telegram)) {
-         return(catch("onInit(6)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(7)  invalid input parameter Signal.onReversal.Types: "+ DoubleQuoteStr(Signal.onReversal.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onReversal = (signal.onReversal.sound || signal.onReversal.alert || signal.onReversal.mail || signal.onReversal.telegram);
       if (Signal.onReversal) {
@@ -227,9 +249,9 @@ int onInit() {
       int hWnd = __ExecutionContext[EC.chart];
       int millis = 2000;                                         // a virtual tick every 2 seconds
       __virtualTicksTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!__virtualTicksTimerId) return(catch("onInit(7)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
+      if (!__virtualTicksTimerId) return(catch("onInit(8)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
    }
-   return(catch("onInit(8)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -264,12 +286,13 @@ int onTick() {
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(upperBand,  0);
-      ArrayInitialize(lowerBand,  0);
-      ArrayInitialize(upperCross, 0);
-      ArrayInitialize(lowerCross, 0);
-      ArrayInitialize(trend,      0);
-      ArrayInitialize(reversals,  0);
+      ArrayInitialize(upperBand,     0);
+      ArrayInitialize(lowerBand,     0);
+      ArrayInitialize(upperCross,    0);
+      ArrayInitialize(lowerCross,    0);
+      ArrayInitialize(dimmed,        0);
+      ArrayInitialize(trend,         0);
+      ArrayInitialize(reversalCount, 0);
       SetIndicatorOptions();
 
       lastUpperBand = 0;
@@ -278,12 +301,13 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(upperBand,  Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(lowerBand,  Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(upperCross, Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(lowerCross, Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(trend,      Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(reversals,  Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(upperBand,     Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerBand,     Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(upperCross,    Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerCross,    Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(dimmed,        Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(trend,         Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(reversalCount, Bars, ShiftedBars, 0);
    }
 
    // check data pumping on every tick so the breakout handler can skip errornous signals
@@ -296,12 +320,13 @@ int onTick() {
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
       // reset the bar to update
-      upperBand [bar] = 0;
-      lowerBand [bar] = 0;
-      upperCross[bar] = 0;
-      lowerCross[bar] = 0;
-      trend     [bar] = 0;
-      reversals [bar] = 0;
+      upperBand    [bar] = 0;
+      lowerBand    [bar] = 0;
+      upperCross   [bar] = 0;
+      lowerCross   [bar] = 0;
+      dimmed       [bar] = 0;
+      trend        [bar] = 0;
+      reversalCount[bar] = 0;
 
       // recalculate Donchian Channel
       if (bar > 0) {
@@ -328,8 +353,8 @@ int onTick() {
       // if no channel crossing
       if (!upperCross[bar] && !lowerCross[bar]) {
          int iTrend = trend[bar+1];
-         trend    [bar] = iTrend + Sign(iTrend);            // increase trend if it was set
-         reversals[bar] = reversals[bar+1];                 // keep reversal counter (may be 0)
+         trend        [bar] = iTrend + Sign(iTrend);        // increase trend if it was set
+         reversalCount[bar] = reversalCount[bar+1];         // keep reversal counter (may be 0)
       }
 
       // if two channel crossings (upper and lower band crossed by the same bar)
@@ -346,23 +371,30 @@ int onTick() {
       }
 
       // else a single channel crossing
-      else if (upperCross[bar] != 0) isReversalBar = ProcessUpperCross(bar);
-      else                           isReversalBar = ProcessLowerCross(bar);
+      else if (!lowerCross[bar]) isReversalBar = ProcessUpperCross(bar);
+      else                       isReversalBar = ProcessLowerCross(bar);
 
-      // show/hide reversals: hide all crossings or keep the 1st one
-      if (!ShowReversals || !isReversalBar) {
+      // hide all non-reversal crossings
+      if (!isReversalBar) {
          upperCross[bar] = 0;
          lowerCross[bar] = 0;
       }
-      else if (upperCross[bar] && lowerCross[bar]) {        // special handling for the 1st of a double crossing
-         if (!cr1_isReversalBar) {                          // whether the 1st crossing created a reversal
+      else if (upperCross[bar] && lowerCross[bar]) {
+         if (!cr1_isReversalBar) {                          // hide the 1st of a double crossing if not a reversal
             if (isUpperCrossLast) lowerCross[bar] = 0;
             else                  upperCross[bar] = 0;
          }
-         // keep the 2nd crossing (it's the final reversal)
       }
+
+      // initially dim all reversals
+      if (isReversalBar) {
+         if (!lowerCross[bar]) dimmed[bar] = upperCross[bar];
+         else                  dimmed[bar] = lowerCross[bar];
+      }
+      if (last_error != NO_ERROR) return(last_error);
    }
 
+   // chart legend, signaling, reporting
    if (__isChart && !__isSuperContext) {
       if (ShowChartLegend) UpdateChartLegend();
 
@@ -460,7 +492,7 @@ bool IsPossibleDataPumping() {
  * @return bool
  */
 bool IsUpperCrossLast(int bar) {
-   if (!bar) logNotice("IsUpperCrossLast(1)  bar=0  we must not guess");      // TODO
+   if (!bar) logInfo("IsUpperCrossLast(1)  bar=0  we must not guess");      // TODO
 
    double ho = High [bar] - Open [bar];
    double ol = Open [bar] - Low  [bar];
@@ -488,11 +520,11 @@ bool IsUpperCrossLast(int bar) {
 bool ProcessUpperCross(int bar) {
    bool isReversalBar = false;
 
-   if (!trend[bar]) {                                 // 1st crossing
+   if (!trend[bar]) {                                       // 1st crossing
       if (trend[bar+1] > 0) {
          int iTrend = trend[bar+1];
-         trend    [bar] = iTrend + 1;
-         reversals[bar] = reversals[bar+1];           // keep reversal counter
+         trend        [bar] = iTrend + 1;
+         reversalCount[bar] = reversalCount[bar+1];         // keep reversal counter
       }
       else if (trend[bar+1] < 0) {
          trend[bar] = 1;
@@ -503,21 +535,21 @@ bool ProcessUpperCross(int bar) {
          double endPrice   = upperCross[bar] - Point;
          if (!lowerCross[startBar]) return(!catch("ProcessUpperCross(1)  bar="+ bar +"|"+ TimeToStr(Time[bar]) +"  missing trend start price: start bar="+ startBar +"|"+ TimeToStr(Time[startBar]) +"  lowerCross["+ startBar +"]=0", ERR_ILLEGAL_STATE));
 
-         if      (startPrice-HalfPoint > endPrice) reversals[bar] = Max(reversals[bar+1], 0) + 1;  // winner
-         else if (startPrice+HalfPoint < endPrice) reversals[bar] = Min(reversals[bar+1], 0) - 1;  // loser
-         else                                      reversals[bar] = reversals[bar+1];              // scratch
+         if      (startPrice-HalfPoint > endPrice) reversalCount[bar] = Max(reversalCount[bar+1], 0) + 1;   // winner
+         else if (startPrice+HalfPoint < endPrice) reversalCount[bar] = Min(reversalCount[bar+1], 0) - 1;   // loser
+         else                                      reversalCount[bar] = reversalCount[bar+1];               // scratch
          isReversalBar = true;
       }
-      else /*trend[bar+1] == 0*/ {                    // a cross without previous reversal (near MaxBarsBack)
-         trend    [bar] = 1;
-         reversals[bar] = 0;
+      else /*trend[bar+1] == 0*/ {                          // a cross without previous reversal (near MaxBarsBack)
+         trend        [bar] = 1;
+         reversalCount[bar] = 0;
          isReversalBar = true;
       }
    }
-   else {                                             // 2nd (double) crossing
+   else {                                                   // 2nd (double) crossing
       if (trend[bar] > 0) return(!catch("ProcessUpperCross(2)  bar="+ bar +"|"+ TimeToStr(Time[bar]) +"  unexpected 2nd upper cross: trend["+ (bar+1) +"]="+ _int(trend[bar+1]) +"  trend["+ bar +"]="+ _int(trend[bar]), ERR_ILLEGAL_STATE));
-      trend    [bar] = 1;
-      reversals[bar] = Min(reversals[bar], 0) - 1;    // loser
+      trend        [bar] = 1;
+      reversalCount[bar] = Min(reversalCount[bar], 0) - 1;  // loser
       isReversalBar = true;
    }
 
@@ -540,7 +572,7 @@ bool ProcessUpperCross(int bar) {
       if (IsLogInfo()) {
          string sCrossLevel = NumberToStr(upperCross[bar], PriceFormat);
          bool logReversal = true;
-         if (!__isSuperContext && !__isTesting) {     // once per terminal
+         if (!__isSuperContext && !__isTesting) {           // once per terminal
             int hWndTerminal = GetTerminalMainWindow();
             string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessUpperCross("+ sCrossLevel +")."+ TimeToStr(Time[bar]);
             logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
@@ -569,11 +601,11 @@ bool ProcessUpperCross(int bar) {
 bool ProcessLowerCross(int bar) {
    bool isReversalBar = false;
 
-   if (!trend[bar]) {                                 // 1st crossing
+   if (!trend[bar]) {                                       // 1st crossing
       if (trend[bar+1] < 0) {
          int iTrend = trend[bar+1];
-         trend    [bar] = iTrend - 1;
-         reversals[bar] = reversals[bar+1];           // keep reversal counter
+         trend        [bar] = iTrend - 1;
+         reversalCount[bar] = reversalCount[bar+1];         // keep reversal counter
       }
       else if (trend[bar+1] > 0) {
          trend[bar] = -1;
@@ -584,21 +616,21 @@ bool ProcessLowerCross(int bar) {
          double endPrice   = lowerCross[bar] + Point;
          if (!upperCross[startBar]) return(!catch("ProcessLowerCross(1)  bar="+ bar +"|"+ TimeToStr(Time[bar]) +"  missing trend start price: start bar="+ startBar +"|"+ TimeToStr(Time[startBar]) +"  upperCross["+ startBar +"]=0", ERR_ILLEGAL_STATE));
 
-         if      (startPrice+HalfPoint < endPrice) reversals[bar] = Max(reversals[bar+1], 0) + 1;  // winner
-         else if (startPrice-HalfPoint > endPrice) reversals[bar] = Min(reversals[bar+1], 0) - 1;  // loser
-         else                                      reversals[bar] = reversals[bar+1];              // scratch
+         if      (startPrice+HalfPoint < endPrice) reversalCount[bar] = Max(reversalCount[bar+1], 0) + 1;   // winner
+         else if (startPrice-HalfPoint > endPrice) reversalCount[bar] = Min(reversalCount[bar+1], 0) - 1;   // loser
+         else                                      reversalCount[bar] = reversalCount[bar+1];               // scratch
          isReversalBar = true;
       }
-      else /*trend[bar+1] == 0*/ {                    // a cross without previous reversal (near MaxBarsBack)
-         trend    [bar] = -1;
-         reversals[bar] = 0;
+      else /*trend[bar+1] == 0*/ {                          // a cross without previous reversal (near MaxBarsBack)
+         trend        [bar] = -1;
+         reversalCount[bar] = 0;
          isReversalBar = true;
       }
    }
-   else {                                             // 2nd (double) crossing
+   else {                                                   // 2nd (double) crossing
       if (trend[bar] < 0) return(!catch("ProcessLowerCross(2)  bar="+ bar +"|"+ TimeToStr(Time[bar]) +"  unexpected 2nd lower cross: trend["+ (bar+1) +"]="+ _int(trend[bar+1]) +"  trend["+ bar +"]="+ _int(trend[bar]), ERR_ILLEGAL_STATE));
-      trend    [bar] = -1;
-      reversals[bar] = Min(reversals[bar], 0) - 1;    // loser
+      trend        [bar] = -1;
+      reversalCount[bar] = Min(reversalCount[bar], 0) - 1;  // loser
       isReversalBar = true;
    }
 
@@ -621,7 +653,7 @@ bool ProcessLowerCross(int bar) {
       if (IsLogInfo()) {
          string sCrossLevel = NumberToStr(lowerCross[bar], PriceFormat);
          bool logReversal = true;
-         if (!__isSuperContext && !__isTesting) {     // once per terminal
+         if (!__isSuperContext && !__isTesting) {        // once per terminal
             int hWndTerminal = GetTerminalMainWindow();
             string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessLowerCross("+ sCrossLevel +")."+ TimeToStr(Time[bar]);
             logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
@@ -780,23 +812,25 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorShortName(shortName);
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_UPPER_BAND,  upperBand ); SetIndexEmptyValue(MODE_UPPER_BAND,  0); SetIndexLabel(MODE_UPPER_BAND,  shortName +" upper band");
-   SetIndexBuffer(MODE_LOWER_BAND,  lowerBand ); SetIndexEmptyValue(MODE_LOWER_BAND,  0); SetIndexLabel(MODE_LOWER_BAND,  shortName +" lower band");
-   SetIndexBuffer(MODE_UPPER_CROSS, upperCross); SetIndexEmptyValue(MODE_UPPER_CROSS, 0); SetIndexLabel(MODE_UPPER_CROSS, shortName +" extension up");   if (!reversalDrawType) SetIndexLabel(MODE_UPPER_CROSS, NULL);
-   SetIndexBuffer(MODE_LOWER_CROSS, lowerCross); SetIndexEmptyValue(MODE_LOWER_CROSS, 0); SetIndexLabel(MODE_LOWER_CROSS, shortName +" extension down"); if (!reversalDrawType) SetIndexLabel(MODE_LOWER_CROSS, NULL);
-   SetIndexBuffer(MODE_TREND,       trend     ); SetIndexEmptyValue(MODE_TREND,       0); SetIndexLabel(MODE_TREND,       shortName +" trend");
-   SetIndexBuffer(MODE_REVERSALS,   reversals ); SetIndexEmptyValue(MODE_REVERSALS,   0); SetIndexLabel(MODE_REVERSALS,   shortName +" reversals");
+   SetIndexBuffer(MODE_UPPER_BAND,     upperBand    ); SetIndexEmptyValue(MODE_UPPER_BAND,     0); SetIndexLabel(MODE_UPPER_BAND,     shortName +" upper band");
+   SetIndexBuffer(MODE_LOWER_BAND,     lowerBand    ); SetIndexEmptyValue(MODE_LOWER_BAND,     0); SetIndexLabel(MODE_LOWER_BAND,     shortName +" lower band");
+   SetIndexBuffer(MODE_REVERSAL_LONG,  upperCross   ); SetIndexEmptyValue(MODE_REVERSAL_LONG,  0); SetIndexLabel(MODE_REVERSAL_LONG,  shortName +" reversal up");
+   SetIndexBuffer(MODE_REVERSAL_SHORT, lowerCross   ); SetIndexEmptyValue(MODE_REVERSAL_SHORT, 0); SetIndexLabel(MODE_REVERSAL_SHORT, shortName +" reversal down");
+   SetIndexBuffer(MODE_REVERSAL_DIM,   dimmed       ); SetIndexEmptyValue(MODE_REVERSAL_DIM,   0); SetIndexLabel(MODE_REVERSAL_DIM,   NULL);
+   SetIndexBuffer(MODE_TREND,          trend        ); SetIndexEmptyValue(MODE_TREND,          0); SetIndexLabel(MODE_TREND,          shortName +" trend");
+   SetIndexBuffer(MODE_REVERSAL_COUNT, reversalCount); SetIndexEmptyValue(MODE_REVERSAL_COUNT, 0); SetIndexLabel(MODE_REVERSAL_COUNT, shortName +" reversal count");
    IndicatorDigits(Digits);
 
    SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.UpperColor);
    SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.LowerColor);
 
-   int drawType = ifInt(ShowReversals && Reversal.Width, DRAW_ARROW, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_UPPER_CROSS, reversalSymbol);
-   SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_LOWER_CROSS, reversalSymbol);
+   int drawType = ifInt(showReversals && Reversal.Width, DRAW_ARROW, DRAW_NONE);
+   SetIndexStyle(MODE_REVERSAL_LONG,  drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_REVERSAL_LONG,  reversals.symbol);
+   SetIndexStyle(MODE_REVERSAL_SHORT, drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_REVERSAL_SHORT, reversals.symbol);
+   SetIndexStyle(MODE_REVERSAL_DIM,   drawType, EMPTY, Reversal.Width);                                              SetIndexArrow(MODE_REVERSAL_DIM,   reversals.symbol);
 
-   SetIndexStyle(MODE_TREND,     DRAW_NONE);
-   SetIndexStyle(MODE_REVERSALS, DRAW_NONE);
+   SetIndexStyle(MODE_TREND,          DRAW_NONE);
+   SetIndexStyle(MODE_REVERSAL_COUNT, DRAW_NONE);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
@@ -848,7 +882,7 @@ string InputsToStr() {
                             "Channel.UpperColor=",          ColorToStr(Channel.UpperColor)              +";"+ NL,
                             "Channel.LowerColor=",          ColorToStr(Channel.LowerColor)              +";"+ NL,
 
-                            "ShowReversals=",               BoolToStr(ShowReversals)                    +";"+ NL,
+                            "ShowReversals=",               DoubleQuoteStr(ShowReversals)               +";"+ NL,
                             "Reversal.Symbol=",             DoubleQuoteStr(Reversal.Symbol)             +";"+ NL,
                             "Reversal.Width=",              Reversal.Width                              +";"+ NL,
                             "Reversal.Color=",              ColorToStr(Reversal.Color)                  +";"+ NL,
