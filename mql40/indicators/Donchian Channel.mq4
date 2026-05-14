@@ -490,6 +490,8 @@ bool ParameterStepper(int direction, int keys) {
  * @return bool
  */
 bool IsPossibleDataPumping() {
+   if (__isTesting) return(false);
+
    int waitPeriod = 20 * SECONDS;         // TODO: review this seemingly strange implementation
    datetime now = GetGmtTime();
    bool isPumping = true;
