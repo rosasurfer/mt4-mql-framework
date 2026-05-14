@@ -41,9 +41,8 @@
  *
  * • Broker.SymbolSuffix:  Symbol suffix for brokers with non-standard symbols.
  *
- * • AutoConfiguration:  For simplicity all manual inputs may also be specified in the framework configuration.
- *    If "AutoConfiguration" is enabled configuration settings found in the configuration files override manual settings in
- *    the indicator's input dialog. Additional auto-config settings not available in the input dialog:
+ * • AutoConfiguration:  If enabled all input parameters can be pre-defined in the configuration. Additional configuration 
+ *    settings not available via input dialog:
  *
  *    [LFX Tracker]
  *     Status.xDistance          = {int}                 ; horizontal offset from right in pixels

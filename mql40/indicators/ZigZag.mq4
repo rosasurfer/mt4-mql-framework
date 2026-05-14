@@ -55,7 +55,8 @@
  *  • TrackReversalBalance.Symbol: Custom symbol for balance tracking (default: generated).
  *
  *  • CombinedBuffersAsBinary:     for iCustom(): Whether combined buffers are encoded human-readable or binary.
- *  • AutoConfiguration:           If enabled all input parameters can use predefined defaults from the configuration.
+ *
+ *  • AutoConfiguration:           If enabled all input parameters can be pre-defined in the configuration.
  *
  *
  * Usage with iCustom()

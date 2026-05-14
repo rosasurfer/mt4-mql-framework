@@ -9,7 +9,6 @@
  *  • Periods:                     Look-back periods of the Donchian Channel.
  *  • Periods.Step:                Option to control parameter "Period" via keyboard. If non-zero it defines the step size of
  *                                 the parameter stepper. If 0 (zero) parameter stepping is disabled.
- *
  *  • Channel.UpperColor:          Color of the upper Donchian Channel band.
  *  • Channel.LowerColor:          Color of the lower Donchian Channel band.
  *
@@ -30,7 +29,7 @@
  *  • Sound.onNewChannelHigh:      Sound file for channel widenings to the upside.
  *  • Sound.onNewChannelLow:       Sound file for channel widenings to the downside.
  *
- *  • AutoConfiguration:           If enabled all input parameters can use predefined defaults from the configuration.
+ *  • AutoConfiguration:           If enabled all input parameters can be pre-defined in the configuration.
  *
  *
  * Usage with iCustom()
@@ -797,7 +796,7 @@ void UpdateChartLegend() {
    if (!ValidBars || trend[0]!=lastTrend || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
       string sFilter = "", sTrend = "";
       if (reversals.show && reversals.countFrom) {
-         sFilter = "   RF: "+ NumberToStr(reversals.countFrom, "+.") +"+";
+         sFilter = "   Filter: "+ NumberToStr(reversals.countFrom, "+.");
       }
       else {
          sTrend = "   "+ NumberToStr(trend[0], "+.");
