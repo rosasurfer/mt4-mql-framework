@@ -1,7 +1,6 @@
-<!--
-EMA(144)
-ALMA(38)
-LWMA(55) Channel + Channel Bars + Signal
+<!-- 
+EMA(144) 
+Donchian Channel(50) 
 -->
 
 <chart>
@@ -10,7 +9,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=4
+scale=2
 graph=1
 fore=0
 grid=0
@@ -110,7 +109,7 @@ Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
-ShowChartLegend=0
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -120,77 +119,22 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Trend Bars
+name=Donchian Channel
 flags=339
 window_num=0
 <inputs>
-Channel.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Channel.Periods=55
-Color.UpTrend=16711680
-Color.DownTrend=255
-Color.NoTrend=11119017
-BarWidth=2
-AutoConfiguration=0
+Periods=50
+Channel.UpperColor=16711680
+Channel.LowerColor=255
+ShowReversals=on* | off | +N | -N
+Reversal.Width=1
+Signal.onReversal=1
+Signal.onReversal.Types=sound* | alert* | mail | telegram
+Sound.onChannelWidening=0
 </inputs>
 </expert>
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=MA Channel
-flags=339
-window_num=0
-<inputs>
-Channel.Definition=LWMA(55)
-ShowChartLegend=0
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ALMA
-flags=339
-window_num=0
-<inputs>
-MA.Periods=38
-MA.ReversalFilter.StdDev=0.2
-UpTrend.Color=16711680
-DownTrend.Color=16776960
-Background.Color=16748574
-ShowChartLegend=0
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=137
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=MA Channel Band
-flags=339
-window_num=1
-<inputs>
-Channel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Channel.MA.Periods=55
-MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
-MA.Periods=10
-Signal.onTrendChange=0
-Signal.onTrendChange.Types=sound* | alert* | mail
-</inputs>
-</expert>
-min=-1.0
-max=1.0
+style_0=2
+style_1=2
 show_data=1
 </indicator>
 </window>

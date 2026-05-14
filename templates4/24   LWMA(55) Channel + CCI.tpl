@@ -1,7 +1,7 @@
 <!--
 EMA(144)
-MA Channel LWMA(55) + Trend Bars
 Donchian Channel(50) 
+LWMA(55) Channel + Channel Bars
 CCI(14)
 -->
 
