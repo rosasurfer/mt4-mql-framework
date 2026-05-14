@@ -83,13 +83,13 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #property indicator_buffers 7
 
 // indicator buffer ids
-#define MODE_UPPER_BAND     Donchian.MODE_UPPER_BAND     // 0 upper channel band
-#define MODE_LOWER_BAND     Donchian.MODE_LOWER_BAND     // 1 lower channel band
-#define MODE_REVERSAL_LONG  Donchian.MODE_REVERSAL_LONG  // 2 long reversals
-#define MODE_REVERSAL_SHORT Donchian.MODE_REVERSAL_SHORT // 3 short reversals
-#define MODE_REVERSAL_DIM   4                            // 4 filtered reversals (dimmed representation)
-#define MODE_TREND          Donchian.MODE_TREND          // 5 int: direction and length of channel reversals
-#define MODE_REVERSAL_COUNT Donchian.MODE_REVERSAL_COUNT // 6 int: number of consecutive winning/losing reversals
+#define MODE_UPPER_BAND      Donchian.MODE_UPPER_BAND       // 0 upper channel band
+#define MODE_LOWER_BAND      Donchian.MODE_LOWER_BAND       // 1 lower channel band
+#define MODE_REVERSAL_LONG   Donchian.MODE_REVERSAL_LONG    // 2 long reversals
+#define MODE_REVERSAL_SHORT  Donchian.MODE_REVERSAL_SHORT   // 3 short reversals
+#define MODE_REVERSAL_DIMMED 4                              // 4 filtered reversals (dimmed representation)
+#define MODE_TREND           Donchian.MODE_TREND            // 5 int: direction and length of channel reversals
+#define MODE_REVERSAL_COUNT  Donchian.MODE_REVERSAL_COUNT   // 6 int: number of consecutive winning/losing reversals
 
 #property indicator_color1 Blue              // upper channel band
 #property indicator_style1 STYLE_DOT         //
@@ -838,22 +838,22 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorShortName(shortName);
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_UPPER_BAND,     upperBand    ); SetIndexEmptyValue(MODE_UPPER_BAND,     0); SetIndexLabel(MODE_UPPER_BAND,     shortName +" upper band");
-   SetIndexBuffer(MODE_LOWER_BAND,     lowerBand    ); SetIndexEmptyValue(MODE_LOWER_BAND,     0); SetIndexLabel(MODE_LOWER_BAND,     shortName +" lower band");
-   SetIndexBuffer(MODE_REVERSAL_LONG,  upperCross   ); SetIndexEmptyValue(MODE_REVERSAL_LONG,  0); SetIndexLabel(MODE_REVERSAL_LONG,  shortName +" reversal up");
-   SetIndexBuffer(MODE_REVERSAL_SHORT, lowerCross   ); SetIndexEmptyValue(MODE_REVERSAL_SHORT, 0); SetIndexLabel(MODE_REVERSAL_SHORT, shortName +" reversal down");
-   SetIndexBuffer(MODE_REVERSAL_DIM,   dimmed       ); SetIndexEmptyValue(MODE_REVERSAL_DIM,   0); SetIndexLabel(MODE_REVERSAL_DIM,   NULL);
-   SetIndexBuffer(MODE_TREND,          trend        ); SetIndexEmptyValue(MODE_TREND,          0); SetIndexLabel(MODE_TREND,          shortName +" trend");
-   SetIndexBuffer(MODE_REVERSAL_COUNT, reversalCount); SetIndexEmptyValue(MODE_REVERSAL_COUNT, 0); SetIndexLabel(MODE_REVERSAL_COUNT, shortName +" reversal count");
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand    ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      shortName +" upper band");
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand    ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      shortName +" lower band");
+   SetIndexBuffer(MODE_REVERSAL_LONG,   upperCross   ); SetIndexEmptyValue(MODE_REVERSAL_LONG,   0); SetIndexLabel(MODE_REVERSAL_LONG,   shortName +" reversal up");
+   SetIndexBuffer(MODE_REVERSAL_SHORT,  lowerCross   ); SetIndexEmptyValue(MODE_REVERSAL_SHORT,  0); SetIndexLabel(MODE_REVERSAL_SHORT,  shortName +" reversal down");
+   SetIndexBuffer(MODE_REVERSAL_DIMMED, dimmed       ); SetIndexEmptyValue(MODE_REVERSAL_DIMMED, 0); SetIndexLabel(MODE_REVERSAL_DIMMED, NULL);
+   SetIndexBuffer(MODE_TREND,           trend        ); SetIndexEmptyValue(MODE_TREND,           0); SetIndexLabel(MODE_TREND,           shortName +" trend");
+   SetIndexBuffer(MODE_REVERSAL_COUNT,  reversalCount); SetIndexEmptyValue(MODE_REVERSAL_COUNT,  0); SetIndexLabel(MODE_REVERSAL_COUNT,  shortName +" reversal count");
    IndicatorDigits(Digits);
 
    SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.UpperColor);
    SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.LowerColor);
 
    int drawType = ifInt(reversals.show && Reversal.Width, DRAW_ARROW, DRAW_NONE);
-   SetIndexStyle(MODE_REVERSAL_LONG,  drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_REVERSAL_LONG,  reversals.symbol);
-   SetIndexStyle(MODE_REVERSAL_SHORT, drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_REVERSAL_SHORT, reversals.symbol);
-   SetIndexStyle(MODE_REVERSAL_DIM,   drawType, EMPTY, Reversal.Width, indicator_color5);                            SetIndexArrow(MODE_REVERSAL_DIM,   reversals.symbol);
+   SetIndexStyle(MODE_REVERSAL_LONG,   drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_REVERSAL_LONG,   reversals.symbol);
+   SetIndexStyle(MODE_REVERSAL_SHORT,  drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_REVERSAL_SHORT,  reversals.symbol);
+   SetIndexStyle(MODE_REVERSAL_DIMMED, drawType, EMPTY, Reversal.Width, indicator_color5);                            SetIndexArrow(MODE_REVERSAL_DIMMED, reversals.symbol);
 
    SetIndexStyle(MODE_TREND,          DRAW_NONE);
    SetIndexStyle(MODE_REVERSAL_COUNT, DRAW_NONE);
