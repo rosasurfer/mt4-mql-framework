@@ -588,22 +588,30 @@ bool ProcessUpperCross(int bar) {
 
    // handle new reversals
    if (isNewReversal) {
+      // skip signaling if the filter condition doesn't match
+      string sFilter = "";
+      if (reversals.show && reversals.countFrom) {
+         if (reversals.countFrom > 0 && reversalCount[bar] < reversals.countFrom) return(isReversalBar);
+         if (reversals.countFrom < 0 && reversalCount[bar] > reversals.countFrom) return(isReversalBar);
+         sFilter = "count: "+ NumberToStr(reversalCount[bar], "+.") +", ";
+      }
+      string sLevel = NumberToStr(upperCross[bar], PriceFormat);
+
       // log reversal
       if (IsLogInfo()) {
-         string sCrossLevel = NumberToStr(upperCross[bar], PriceFormat);
          bool logReversal = true;
          if (!__isSuperContext && !__isTesting) {           // once per terminal
             int hWndTerminal = GetTerminalMainWindow();
-            string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessUpperCross("+ sCrossLevel +")."+ TimeToStr(Time[bar]);
+            string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessUpperCross("+ sLevel +")."+ TimeToStr(Time[bar]);
             logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
             SetWindowPropertyA(hWndTerminal, eventName, 1);
          }
-         if (logReversal) logInfo("onReversal(P="+ Periods +")  reversal up (level: "+ sCrossLevel +")");
+         if (logReversal) logInfo("onReversal(P="+ Periods +")  reversal up ("+ sFilter +"level: "+ sLevel +")");
       }
 
       // signal reversal
       if (Signal.onReversal) {
-         onReversal(bar, D_LONG, upperCross[bar]);
+         onReversal(bar, D_LONG, sFilter, sLevel);
       }
    }
    return(isReversalBar);
@@ -669,22 +677,30 @@ bool ProcessLowerCross(int bar) {
 
    // handle new reversals
    if (isNewReversal) {
+      // skip signaling if the filter condition doesn't match
+      string sFilter = "";
+      if (reversals.show && reversals.countFrom) {
+         if (reversals.countFrom > 0 && reversalCount[bar] < reversals.countFrom) return(isReversalBar);
+         if (reversals.countFrom < 0 && reversalCount[bar] > reversals.countFrom) return(isReversalBar);
+         sFilter = "count: "+ NumberToStr(reversalCount[bar], "+.") +", ";
+      }
+      string sLevel = NumberToStr(lowerCross[bar], PriceFormat);
+
       // log reversal
       if (IsLogInfo()) {
-         string sCrossLevel = NumberToStr(lowerCross[bar], PriceFormat);
          bool logReversal = true;
          if (!__isSuperContext && !__isTesting) {        // once per terminal
             int hWndTerminal = GetTerminalMainWindow();
-            string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessLowerCross("+ sCrossLevel +")."+ TimeToStr(Time[bar]);
+            string eventName = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ WindowExpertName() +"("+ Periods +")" +".ProcessLowerCross("+ sLevel +")."+ TimeToStr(Time[bar]);
             logReversal = !GetWindowPropertyA(hWndTerminal, eventName);
             SetWindowPropertyA(hWndTerminal, eventName, 1);
          }
-         if (logReversal) logInfo("onReversal(P="+ Periods +")  reversal down (level: "+ sCrossLevel +")");
+         if (logReversal) logInfo("onReversal(P="+ Periods +")  reversal down ("+ sFilter +"level: "+ sLevel +")");
       }
 
       // signal reversal
       if (Signal.onReversal) {
-         onReversal(bar, D_SHORT, lowerCross[bar]);
+         onReversal(bar, D_SHORT, sFilter, sLevel);
       }
    }
    return(isReversalBar);
@@ -696,11 +712,12 @@ bool ProcessLowerCross(int bar) {
  *
  * @param  int    bar       - bar which triggered the reversal: 0 or 1
  * @param  int    direction - reversal direction: D_LONG | D_SHORT
- * @param  double level     - the price level causing the event (cross of upper/lower channel band)
+ * @param  string sFilter   - the filter condition (if enabled)
+ * @param  string sLevel    - the price level of the reversal (cross of upper/lower channel band)
  *
  * @return bool - success status
  */
-bool onReversal(int bar, int direction, double level) {
+bool onReversal(int bar, int direction, string sFilter, string sLevel) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (IsPossibleDataPumping())                 return(true);
 
@@ -709,7 +726,7 @@ bool onReversal(int bar, int direction, double level) {
    string sName      = WindowExpertName() +"("+ Periods +")";
    string sDirection = ifString(direction==D_LONG, "up", "down");
    string eventName  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ sName +".onReversal("+ sDirection +")."+ TimeToStr(Time[bar]), propertyName = "";
-   string message    = Symbol() +","+ sPeriod +": "+ sName +" reversal "+ sDirection +" (level: "+ NumberToStr(level, PriceFormat) +")";
+   string message    = Symbol() +","+ sPeriod +": "+ sName +" reversal "+ sDirection +" ("+ sFilter +"level: "+ sLevel +")";
    string localTime  = TimeToStr(TimeLocalEx("onReversal(2)"), TIME_MINUTES|TIME_SECONDS);
    string accountAlias = GetAccountAlias();
 
