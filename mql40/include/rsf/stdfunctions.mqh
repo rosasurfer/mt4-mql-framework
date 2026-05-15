@@ -899,9 +899,9 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
  * @return string - standard symbol or the current symbol if the standard symbol is not known
  */
 string StdSymbol() {
-   static string lastSymbol="", lastResult="";
-
-    if (lastResult != "") {
+   static string lastSymbol = "", lastResult = "";
+                                       // no direct comparison due to MT4 bug:
+    if (StringLen(lastResult) > 0) {   // in library::deinit() strings are released to early (already a NULL pointer)
       if (Symbol() == lastSymbol) return(lastResult);
    }
    lastSymbol = Symbol();
@@ -1703,8 +1703,8 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
  */
 string MqlProgramName() {
    static string name = "";
-
-   if (name == "") {
+                                       // no direct comparison due to MT4 bug:
+   if (!StringLen(name)) {             // in library::deinit() strings are released to early (already a NULL pointer)
       if (IsLibrary()) {
          if (IsDllsAllowed()) {
             name = ec_ProgramName(__ExecutionContext);
@@ -1730,12 +1730,12 @@ string MqlProgramName() {
  * @return string
  */
 string MqlModuleName(bool fullName = false) {
-   fullName = fullName!=0;
+   fullName = (fullName!=0);
    if (!fullName) return(WindowExpertName());
 
    static string name = "";
-
-   if (name == "") {
+                                       // no direct comparison due to MT4 bug:
+   if (!StringLen(name)) {             // in library::deinit() strings are released to early (already a NULL pointer)
       if (IsLibrary()) {
          string programName = MqlProgramName();
          string libraryName = WindowExpertName();
@@ -3344,7 +3344,9 @@ bool CreateDirectory(string path, int flags) {
  */
 string GetMqlSandboxPath() {
    static string path = "";
-   if (!StringLen(path)) path = GetMqlSandboxPathA(__isTesting);
+   if (!StringLen(path)) {                      // no direct comparison due to MT4 bug:
+      path = GetMqlSandboxPathA(__isTesting);   // in library::deinit() strings are released to early (already a NULL pointer)
+   }
    return(path);
 }
 
@@ -4527,7 +4529,7 @@ string GetAccountServer() {
       sAccountServer = GetStringA(lpAccountServer);      // the cache allows to call GetString() only once
    }
 
-   if (!lpAccountServer) {
+   if (!lpAccountServer || !StringLen(sAccountServer)) { // MT4 bug: in library::deinit() strings are released to early (already a NULL pointer)
       static bool isRecursion = false; if (isRecursion) return("");
       isRecursion = true;                                // prevent recursion in the log messages (the logger tries to read the account config)
 
@@ -4698,10 +4700,12 @@ string GetAccountCompanyId() {
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
    // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten
    // Servernamen zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
-   static string lastServer="", lastId="";
+   static string lastServer = "", lastId = "";
 
    string server = GetAccountServer(); if (!StringLen(server)) return("");
-   if (server == lastServer) return(lastId);
+   if (StringLen(lastServer) > 0) {             // no direct comparison due to MT4 bug:
+      if (server == lastServer) return(lastId); // in library::deinit() strings are released to early (already a NULL pointer)
+   }
 
    string mapping = GetGlobalConfigString("AccountCompanies", server);
    if (StringLen(mapping) > 0) {
