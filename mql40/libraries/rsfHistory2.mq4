@@ -5,10 +5,10 @@
  * Usage examples
  * --------------
  *  - Open an existing history (all timeframes) with existing data (e.g. for appending data):
- *     int hSet = HistorySet3.Get(symbol);
+ *     int hSet = HistorySet2.Get(symbol);
  *
  *  - Create a new history and delete all existing data (e.g. for writing a new history):
- *     int hSet = HistorySet3.Create(symbol, description, digits, format);
+ *     int hSet = HistorySet2.Create(symbol, description, digits, format);
  *
  *
  * Notes:
@@ -287,8 +287,9 @@ int HistorySet2.Get(string symbol, string directory = "") {
    // check open history sets of the same symbol
    int size = ArraySize(hs.hSet), iH, hSet=-1;
    for (int i=0; i < size; i++) {
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hs.directory[i], directory))
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hs.directory[i], directory)) {
          return(hs.hSet[i]);
+      }
    }
 
    // check open history files of the same symbol
@@ -406,7 +407,7 @@ int HistorySet2.Get(string symbol, string directory = "") {
  * @return bool - success status
  */
 bool HistorySet2.Close(int hSet) {
-   // Validierung
+   // validation
    if (hSet <= 0)                     return(!catch("HistorySet2.Close(1)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
       if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet2.Close(2)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
@@ -415,18 +416,21 @@ bool HistorySet2.Close(int hSet) {
    else {
       hs.hSet.lastValid = NULL;
    }
-   if (hs.hSet[hSet] < 0) return(true);                              // Handle wurde bereits geschlossen (kann ignoriert werden)
+   if (hs.hSet[hSet] < 0) return(true);                              // handle was already closed (can be ignored)
 
    int sizeOfPeriods = ArraySize(periods);
+   bool result = true;
 
    for (int i=0; i < sizeOfPeriods; i++) {
-      if (hs.hFile[hSet][i] > 0) {                                   // alle offenen Dateihandles schließen
-         if (!HistoryFile2.Close(hs.hFile[hSet][i])) return(false);
+      if (hs.hFile[hSet][i] > 0) {                                   // close all open HistoryFiles
+         if (!HistoryFile2.Close(hs.hFile[hSet][i])) {
+            result = false;
+         }
          hs.hFile[hSet][i] = -1;
       }
    }
    hs.hSet[hSet] = -1;
-   return(true);
+   return(result);
 }
 
 
@@ -694,10 +698,9 @@ int HistoryFile2.Open(string symbol, int timeframe, string description, int digi
 
 
 /**
- * Schließt die Historydatei mit dem angegebenen Handle. Ungespeicherte Daten im Schreibpuffer werden geschrieben.
- * Die Datei muß vorher mit HistoryFile2.Open() geöffnet worden sein.
+ * Close the HistoryFile with the specified handle. Flushes unsaved data in the write buffer to the disk.
  *
- * @param  int hFile - Dateihandle
+ * @param  int hFile - file handle as returned by HistoryFile2.Open()
  *
  * @return bool - success status
  */
@@ -709,25 +712,23 @@ bool HistoryFile2.Close(int hFile) {
    }
    else hf.hFile.lastValid = NULL;
 
-   if (hf.hFile[hFile] < 0) return(true);                            // Handle wurde bereits geschlossen (kann ignoriert werden)
+   if (hf.hFile[hFile] < 0) return(true);                            // handle already closed (can be ignored)
 
-
-   // (1) alle ungespeicherten Daten speichern
+   // save pending data
    if (hf.bufferedBar.offset[hFile] != -1) if (!HistoryFile2.WriteBufferedBar(hFile)) return(false);
-   hf.bufferedBar.offset  [hFile] = -1;                              // BufferedBar sicherheitshalber zurücksetzen
-   hf.lastStoredBar.offset[hFile] = -1;                              // LastStoredBar sicherheitshalber zurücksetzen
+   hf.bufferedBar.offset  [hFile] = -1;                              // make sure BufferedBar is reset
+   hf.lastStoredBar.offset[hFile] = -1;                              // make sure LastStoredBar is reset
 
-
-   // (2) Datei schließen
-   int error = GetLastError();                                       // vor FileClose() alle Fehler abfangen
+   // close file
+   int error = GetLastError();                                       // handle unhandled errors before closing
    if (IsError(error)) return(!catch("HistoryFile2.Close(4)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 
-   hf.hFile[hFile] = -1;                                             // Handle vorm Schließen zurücksetzen
-   FileClose(hFile);
-
+   hf.hFile[hFile] = -1;                                             // reset handle before closing
+   FileClose(hFile);                                                 // MT4 bug: in library::deinit() file handles are released to early (triggers ERR_INVALID_PARAMETER)
+                                                                     // on error it adds "rsfHistory: handle <hFile> does not exist in FileClose" to the "Experts" log
    error = GetLastError();
    if (!error)                         return(true);
-   if (error == ERR_INVALID_PARAMETER) return(true);                 // Datei wurde bereits geschlossen (kann ignoriert werden)
+   if (error == ERR_INVALID_PARAMETER) return(true);                 // handle already closed (ignore)
    return(!catch("HistoryFile2.Close(5)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 }
 
@@ -1616,18 +1617,40 @@ int ResizeFileArrays(int size) {
 
 
 /**
- * Clean up opened files and issue a warning if an unclosed file was found.
+ * Clean up opened HistorySets and issue a warning if an unclosed set was found.
  *
  * @return bool - success status
  *
  * @access private
  */
-bool CheckOpenFiles() {
+bool CheckOpenHistorySets() {
+   int error, size = ArraySize(hs.hSet);
+
+   for (int i=0; i < size; i++) {
+      if (hs.hSet[i] > 0) {
+         logWarn("CheckOpenHistorySets(1)  Open HistorySet with handle #"+ hs.hSet[i] +" found ("+ hs.symbol[i] +"). Did you forget to close it?");
+         if (!HistorySet2.Close(hs.hSet[i])) {
+            error = last_error;
+         }
+      }
+   }
+   return(!error);
+}
+
+
+/**
+ * Clean up opened HistoryFiles and issue a warning if an unclosed file was found.
+ *
+ * @return bool - success status
+ *
+ * @access private
+ */
+bool CheckOpenHistoryFiles() {
    int error, size = ArraySize(hf.hFile);
 
    for (int i=0; i < size; i++) {
       if (hf.hFile[i] > 0) {
-         logWarn("CheckOpenFiles(1)  open file handle #"+ hf.hFile[i] +" found ("+ hf.symbol[i] +","+ PeriodDescription(hf.period[i]) +")");
+         logWarn("CheckOpenHistoryFiles(1)  Open HistoryFile with handle #"+ hf.hFile[i] +" found ("+ hf.symbol[i] +","+ PeriodDescription(hf.period[i]) +"). Did you forget to close it?");
          if (!HistoryFile2.Close(hf.hFile[i])) {
             error = last_error;
          }
@@ -1652,6 +1675,7 @@ void onLibraryInit() {
  * @return int - error status
  */
 int onDeinit() {
-   CheckOpenFiles();
+   CheckOpenHistorySets();
+   CheckOpenHistoryFiles();
    return(last_error);
 }
