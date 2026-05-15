@@ -1,1 +1,0 @@
-35   Empty (no indicators).tpl

@@ -155,23 +155,18 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=Donchian Channel
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=50
-ZigZag.Type=Lines* | Semaphores
-ZigZag.Width=0
-ZigZag.Color=16711935
-Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=255
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Symbol=dot | thin-ring* | ring | thick-ring
-Donchian.Crossing.Width=3
+Periods=50
+Channel.UpperColor=16711680
+Channel.LowerColor=255
+ShowReversals=on* | off | +N | -N
+Reversal.Symbol=dot | thin-ring* | ring | thick-ring
+Reversal.Width=3
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
-Signal.onBreakout=0
 Sound.onChannelWidening=0
 </inputs>
 </expert>
