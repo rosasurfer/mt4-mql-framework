@@ -1777,7 +1777,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, Donchian.Channel.LowerColor);
 
    drawType  = ifInt(crossingDrawType && Donchian.Crossing.Width, DRAW_ARROW, DRAW_NONE);
-   drawWidth = Donchian.Crossing.Width - 1;                    // minus 1 to use the same scale as ZigZag.Semaphore.Width
+   drawWidth = Donchian.Crossing.Width - 1;         // minus 1 to map valid symbol size "0" to a positive value
    SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, drawWidth, colorOr(Donchian.Crossing.Color, Donchian.Channel.UpperColor)); SetIndexArrow(MODE_UPPER_CROSS, crossingSymbol);
    SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, drawWidth, colorOr(Donchian.Crossing.Color, Donchian.Channel.LowerColor)); SetIndexArrow(MODE_LOWER_CROSS, crossingSymbol);
 

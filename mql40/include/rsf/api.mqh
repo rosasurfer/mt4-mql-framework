@@ -336,6 +336,7 @@ bool     ScriptRunner.SetParameters(string parameters);;
 
 // include/rsf/functions/iCustom/
 double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, double maReversalFilter, int iBuffer, int iBar);;
+double   icDonchianChannel(int timeframe, int periods, int iBuffer, int iBar);;
 double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
 double   icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBuffer, int iBar);;
 double   icMACD(int timeframe, string fastMaMethod, int fastMaPeriods, string fastMaAppliedPrice, string slowMaMethod, int slowMaPeriods, string slowMaAppliedPrice, string unit, int adrPeriods, int iBuffer, int iBar);;

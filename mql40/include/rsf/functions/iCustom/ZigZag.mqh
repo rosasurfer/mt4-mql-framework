@@ -53,51 +53,51 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    }
 
    double value = iCustom(NULL, timeframe, "ZigZag",
-                          "separator",                // string   ___a_______________________
-                          periods,                    // int      ZigZag.Periods
-                          0,                          // int      ZigZag.Periods.Step
-                          "Line",                     // string   ZigZag.Type
-                          "dot",                      // string   ZigZag.Semaphores.Symbol
-                          1,                          // int      ZigZag.Width
-                          CLR_NONE,                   // color    ZigZag.Color
+                          "separator",                // string ___a_______________________
+                          periods,                    // int    ZigZag.Periods
+                          0,                          // int    ZigZag.Periods.Step
+                          "Line",                     // string ZigZag.Type
+                          "dot",                      // string ZigZag.Semaphores.Symbol
+                          1,                          // int    ZigZag.Width
+                          CLR_NONE,                   // color  ZigZag.Color
 
-                          "separator",                // string   ___b_______________________
-                          false,                      // bool     Donchian.ShowChannel
-                          CLR_NONE,                   // color    Donchian.Channel.UpperColor
-                          CLR_NONE,                   // color    Donchian.Channel.LowerColor
-                          "all",                      // string   Donchian.ShowCrossings
-                          "ring",                     // string   Donchian.Crossing.Symbol
-                          1,                          // int      Donchian.Crossing.Width
-                          CLR_NONE,                   // color    Donchian.Crossing.Color
+                          "separator",                // string ___b_______________________
+                          false,                      // bool   Donchian.ShowChannel
+                          CLR_NONE,                   // color  Donchian.Channel.UpperColor
+                          CLR_NONE,                   // color  Donchian.Channel.LowerColor
+                          "all",                      // string Donchian.ShowCrossings
+                          "dot",                      // string Donchian.Crossing.Symbol
+                          1,                          // int    Donchian.Crossing.Width
+                          CLR_NONE,                   // color  Donchian.Crossing.Color
 
-                          "separator",                // string   ___c_______________________
-                          false,                      // bool     ShowChartLegend
-                          -1,                         // int      MaxBarsBack
+                          "separator",                // string ___c_______________________
+                          false,                      // bool   ShowChartLegend
+                          -1,                         // int    MaxBarsBack
 
-                          "separator",                // string   ___d_______________________
-                          false,                      // bool     Signal.onReversal
-                          "",                         // string   Signal.onReversal.Types
+                          "separator",                // string ___d_______________________
+                          false,                      // bool   Signal.onReversal
+                          "",                         // string Signal.onReversal.Types
 
-                          false,                      // bool     Signal.onBreakout
-                          "",                         // string   Signal.onBreakout.Types
+                          false,                      // bool   Signal.onBreakout
+                          "",                         // string Signal.onBreakout.Types
 
-                          "",                         // string   Signal.Sound.Up
-                          "",                         // string   Signal.Sound.Down
+                          "",                         // string Signal.Sound.Up
+                          "",                         // string Signal.Sound.Down
 
-                          false,                      // bool     Sound.onChannelWidening
-                          "",                         // string   Sound.onNewChannelHigh
-                          "",                         // string   Sound.onNewChannelLow
+                          false,                      // bool   Sound.onChannelWidening
+                          "",                         // string Sound.onNewChannelHigh
+                          "",                         // string Sound.onNewChannelLow
 
-                          "separator",                // string   ___e_______________________
-                          false,                      // bool     TrackReversalBalance
-                          "",                         // string   TrackReversalBalance.Symbol
+                          "separator",                // string ___e_______________________
+                          false,                      // bool   TrackReversalBalance
+                          "",                         // string TrackReversalBalance.Symbol
 
-                          "separator",                // string   ___f_______________________
-                           true,                      // bool     CombinedBuffersAsBinary
+                          "separator",                // string ___f_______________________
+                           true,                      // bool   CombinedBuffersAsBinary
 
-                          "separator",                // string   ___________________________
-                          false,                      // bool     AutoConfiguration
-                          lpSuperContext,             // int      __lpSuperContext
+                          "separator",                // string ___________________________
+                          false,                      // bool   AutoConfiguration
+                          lpSuperContext,             // int    __lpSuperContext
 
                           iBuffer, iBar);
 

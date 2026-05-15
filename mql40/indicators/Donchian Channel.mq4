@@ -72,8 +72,8 @@ extern string Sound.onNewChannelHigh         = "Price Advance.wav";
 extern string Sound.onNewChannelLow          = "Price Decline.wav";
 
 extern string ___d__________________________ = "=======================";
-extern bool   TrackReversalBalance           = false;                          // whether to track the balance of channel reversals
-extern string TrackReversalBalance.Symbol    = "(default)";                    // custom symbol for balance tracking
+extern bool   TrackReversalBalance           = false;                      // whether to track the balance of channel reversals
+extern string TrackReversalBalance.Symbol    = "(default)";                // custom symbol for balance tracking
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1107,7 +1107,10 @@ void UpdateChartLegend() {
       string sSignal   = ifString(Signal.onReversal || Sound.onChannelWidening, "  "+ legendInfo, "");
       string text      = StringConcatenate(indicatorName, sTrend, sFilter, sReversal, sSignal);
 
-      color clr = ifInt(trend[0] > 0, Channel.UpperColor, Channel.LowerColor);
+      color clr = Reversal.Color;
+      if (clr == CLR_NONE) {
+         clr = ifInt(trend[0] > 0, Channel.UpperColor, Channel.LowerColor);
+      }
       if      (clr == Aqua        ) clr = DodgerBlue;
       else if (clr == Gold        ) clr = Orange;
       else if (clr == LightSkyBlue) clr = C'94,174,255';
@@ -1153,9 +1156,10 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.LowerColor);
 
    int drawType = ifInt(reversals.show && Reversal.Width, DRAW_ARROW, DRAW_NONE);
-   SetIndexStyle(MODE_REVERSAL_LONG,   drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_REVERSAL_LONG,   reversals.symbol);
-   SetIndexStyle(MODE_REVERSAL_SHORT,  drawType, EMPTY, Reversal.Width, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_REVERSAL_SHORT,  reversals.symbol);
-   SetIndexStyle(MODE_REVERSAL_DIMMED, drawType, EMPTY, Reversal.Width, indicator_color5);                            SetIndexArrow(MODE_REVERSAL_DIMMED, reversals.symbol);
+   int drawWidth = Reversal.Width - 1;                  // minus 1 to map valid symbol size "0" to a positive value
+   SetIndexStyle(MODE_REVERSAL_LONG,   drawType, EMPTY, drawWidth, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_REVERSAL_LONG,   reversals.symbol);
+   SetIndexStyle(MODE_REVERSAL_SHORT,  drawType, EMPTY, drawWidth, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_REVERSAL_SHORT,  reversals.symbol);
+   SetIndexStyle(MODE_REVERSAL_DIMMED, drawType, EMPTY, drawWidth, indicator_color5);                            SetIndexArrow(MODE_REVERSAL_DIMMED, reversals.symbol);
 
    SetIndexStyle(MODE_TREND,          DRAW_NONE);
    SetIndexStyle(MODE_REVERSAL_COUNT, DRAW_NONE);
@@ -1268,4 +1272,7 @@ string InputsToStr() {
                             "TrackReversalBalance=",        BoolToStr(TrackReversalBalance)             +";"+ NL,
                             "TrackReversalBalance.Symbol=", DoubleQuoteStr(TrackReversalBalance.Symbol) +";")
    );
+
+   // suppress compiler warnings
+   icDonchianChannel(NULL, NULL, NULL, NULL);
 }
