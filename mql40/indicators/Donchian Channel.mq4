@@ -1,7 +1,7 @@
 /**
  * Donchian Channel
  *
- * The indicator supports manual stepping of the Donchian Channel period via hotkey.
+ * The indicator supports manual stepping of the Donchian Channel period via hotkey and provides multiple signaling modes.
  *
  *
  * Input parameters
@@ -28,6 +28,9 @@
  *  • Sound.onChannelWidening:     Whether to play a sound on Donchian Channel widening.
  *  • Sound.onNewChannelHigh:      Sound file for channel widenings to the upside.
  *  • Sound.onNewChannelLow:       Sound file for channel widenings to the downside.
+ *
+ *  • TrackReversalBalance:        Whether to track the balance of Donchian Channel reversals.
+ *  • TrackReversalBalance.Symbol: Custom symbol for balance tracking (default: generated).
  *
  *  • AutoConfiguration:           If enabled all input parameters can be pre-defined in the configuration.
  *
@@ -68,28 +71,41 @@ extern bool   Sound.onChannelWidening        = false;                      // si
 extern string Sound.onNewChannelHigh         = "Price Advance.wav";
 extern string Sound.onNewChannelLow          = "Price Decline.wav";
 
+extern string ___d__________________________ = "=======================";
+extern bool   TrackReversalBalance           = false;                          // whether to track the balance of channel reversals
+extern string TrackReversalBalance.Symbol    = "(default)";                    // custom symbol for balance tracking
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
+#include <rsf/history.mqh>
 #include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/HandleCommands.mqh>
+#include <rsf/functions/iBarShiftNext.mqh>
 #include <rsf/functions/iCustom/DonchianChannel.mqh>
+#include <rsf/functions/ManageDoubleIndicatorBuffer.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers 7
+#property indicator_buffers   7                                // buffers managed by the terminal
+int       framework_buffers = 4;                               // buffers managed by the framework
+
 
 // indicator buffer ids
-#define MODE_UPPER_BAND      Donchian.MODE_UPPER_BAND       // 0 upper channel band
-#define MODE_LOWER_BAND      Donchian.MODE_LOWER_BAND       // 1 lower channel band
-#define MODE_REVERSAL_LONG   Donchian.MODE_REVERSAL_LONG    // 2 long reversals
-#define MODE_REVERSAL_SHORT  Donchian.MODE_REVERSAL_SHORT   // 3 short reversals
-#define MODE_REVERSAL_DIMMED 4                              // 4 filtered reversals (dimmed representation)
-#define MODE_TREND           Donchian.MODE_TREND            // 5 int: direction and length of channel reversals
-#define MODE_REVERSAL_COUNT  Donchian.MODE_REVERSAL_COUNT   // 6 int: number of consecutive winning/losing reversals
+#define MODE_UPPER_BAND          Donchian.MODE_UPPER_BAND      // 0 upper channel band
+#define MODE_LOWER_BAND          Donchian.MODE_LOWER_BAND      // 1 lower channel band
+#define MODE_REVERSAL_LONG       Donchian.MODE_REVERSAL_LONG   // 2 long reversals
+#define MODE_REVERSAL_SHORT      Donchian.MODE_REVERSAL_SHORT  // 3 short reversals
+#define MODE_REVERSAL_DIMMED     4                             // 4 filtered reversals (dimmed representation)
+#define MODE_TREND               Donchian.MODE_TREND           // 5 int: direction and length of channel reversals
+#define MODE_REVERSAL_COUNT      Donchian.MODE_REVERSAL_COUNT  // 6 int: number of consecutive winning/losing reversals
+#define MODE_REVERSAL_BALANCE_O  7                             // reversal balance in pUnits: positive/negative or EMPTY_VALUE
+#define MODE_REVERSAL_BALANCE_H  8                             // ...
+#define MODE_REVERSAL_BALANCE_L  9                             // ...
+#define MODE_REVERSAL_BALANCE_C 10                             // ...
 
 #property indicator_color1 Blue              // upper channel band
 #property indicator_style1 STYLE_DOT         //
@@ -100,19 +116,23 @@ extern string Sound.onNewChannelLow          = "Price Decline.wav";
 #property indicator_width3 0                 //
 #property indicator_color4 indicator_color2  // short reversals
 #property indicator_width4 0                 //
-#property indicator_color5 DarkGray          // filtered reversals (dimmed)
+#property indicator_color5 DarkGray          // filtered (dimmed) reversals
 #property indicator_width5 0                 //
 
 #property indicator_color6 CLR_NONE
 #property indicator_color7 CLR_NONE
 
-double   upperBand    [];
-double   lowerBand    [];
-double   upperCross   [];
-double   lowerCross   [];
-double   dimmed       [];                    // dimmed reversals
-double   trend        [];                    // int: direction and length of channel reversals
-double   reversalCount[];                    // int: number of consecutive winning/losing reversals
+double   upperBand        [];
+double   lowerBand        [];
+double   upperCross       [];
+double   lowerCross       [];
+double   dimmed           [];                // filtered (dimmed) reversals
+double   trend            [];                // int: direction and length of channel reversals
+double   reversalCount    [];                // int: number of consecutive winning/losing reversals
+double   reversalBalance_O[];                // reversal balance in pUnits: positive/negative or EMPTY_VALUE
+double   reversalBalance_H[];                // ...
+double   reversalBalance_L[];                // ...
+double   reversalBalance_C[];                // ...
 
 string   indicatorName = "";
 string   shortName     = "";
@@ -134,6 +154,18 @@ double   lastLowerBand;                      // upper/lower band values at the p
 datetime skipSignals;                        // skip signals until the specified time to wait for possible data pumping
 datetime lastTick;
 int      lastSoundSignal;                    // GetTickCount() value of the last audio signal
+
+
+// recorder status
+bool     recorder.initialized;
+string   recorder.hstDirectory = "";
+int      recorder.hstFormat;
+string   recorder.symbol = "";
+string   recorder.symbolDescr = "";
+string   recorder.group = "";
+int      recorder.priceBase = 1;
+int      recorder.hSet;
+datetime recorder.startTime;
 
 
 // signal direction types
@@ -210,8 +242,6 @@ int onInit() {
          legendInfo = StrReplace(legendInfo, "sound,alert", "alert");
       }
    }
-
-   // Signal.Sound.*
    if (AutoConfiguration) Signal.onReversal.SoundUp   = GetConfigString(indicator, "Signal.onReversal.SoundUp",   Signal.onReversal.SoundUp);
    if (AutoConfiguration) Signal.onReversal.SoundDown = GetConfigString(indicator, "Signal.onReversal.SoundDown", Signal.onReversal.SoundDown);
    // Sound.*
@@ -222,6 +252,11 @@ int onInit() {
       if (legendInfo == "") legendInfo = "(w)";
       else                  legendInfo = StrLeft(legendInfo, -1) +",w)";
    }
+   // TrackReversalBalance
+   if (AutoConfiguration) TrackReversalBalance = GetConfigBool(indicator, "TrackReversalBalance", TrackReversalBalance);
+   if (__isSuperContext || __isTesting) TrackReversalBalance = false;
+   // TrackReversalBalance.Symbol
+   if (AutoConfiguration) TrackReversalBalance.Symbol = GetConfigBool(indicator, "TrackReversalBalance.Symbol", TrackReversalBalance.Symbol);
 
    // reset an active command handler
    if (__isChart && Periods.Step) {
@@ -259,6 +294,13 @@ int onDeinit() {
       __virtualTicksTimerId = NULL;
       if (!ReleaseTickTimer(tmp)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR));
    }
+
+   // close an open history set
+   if (recorder.hSet != 0) {
+      tmp = recorder.hSet;
+      recorder.hSet = NULL;
+      if (!HistorySet1.Close(tmp)) return(ERR_RUNTIME_ERROR);
+   }
    return(catch("onDeinit(2)"));
 }
 
@@ -274,15 +316,25 @@ int onTick() {
       if (!HandleCommands("ParameterStepper")) return(last_error);
    }
 
+   // manage additional framework buffers
+   ManageDoubleIndicatorBuffer(MODE_REVERSAL_BALANCE_O, reversalBalance_O, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_REVERSAL_BALANCE_H, reversalBalance_H, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_REVERSAL_BALANCE_L, reversalBalance_L, EMPTY_VALUE);
+   ManageDoubleIndicatorBuffer(MODE_REVERSAL_BALANCE_C, reversalBalance_C, EMPTY_VALUE);
+
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(upperBand,     0);
-      ArrayInitialize(lowerBand,     0);
-      ArrayInitialize(upperCross,    0);
-      ArrayInitialize(lowerCross,    0);
-      ArrayInitialize(dimmed,        0);
-      ArrayInitialize(trend,         0);
-      ArrayInitialize(reversalCount, 0);
+      ArrayInitialize(upperBand,         0);
+      ArrayInitialize(lowerBand,         0);
+      ArrayInitialize(upperCross,        0);
+      ArrayInitialize(lowerCross,        0);
+      ArrayInitialize(dimmed,            0);
+      ArrayInitialize(trend,             0);
+      ArrayInitialize(reversalCount,     0);
+      ArrayInitialize(reversalBalance_O, EMPTY_VALUE);
+      ArrayInitialize(reversalBalance_H, EMPTY_VALUE);
+      ArrayInitialize(reversalBalance_L, EMPTY_VALUE);
+      ArrayInitialize(reversalBalance_C, EMPTY_VALUE);
       SetIndicatorOptions();
 
       lastUpperBand = 0;
@@ -291,32 +343,41 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(upperBand,     Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(lowerBand,     Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(upperCross,    Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(lowerCross,    Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(dimmed,        Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(trend,         Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(reversalCount, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(upperBand,         Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerBand,         Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(upperCross,        Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerCross,        Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(dimmed,            Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(trend,             Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(reversalCount,     Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(reversalBalance_O, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(reversalBalance_H, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(reversalBalance_L, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(reversalBalance_C, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // check data pumping on every tick so the breakout handler can skip errornous signals
    if (!__isTesting) IsPossibleDataPumping();
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods);
-   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ Periods, ERR_HISTORY_INSUFFICIENT));
+   int startBar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods);
+   if (startBar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ Periods, ERR_HISTORY_INSUFFICIENT));
+   if (!ValidBars) recorder.startTime = Time[startBar];
 
    // recalculate changed bars
-   for (int bar=startbar; bar >= 0; bar--) {
+   for (int bar=startBar; bar >= 0; bar--) {
       // reset the bar to update
-      upperBand    [bar] = 0;
-      lowerBand    [bar] = 0;
-      upperCross   [bar] = 0;
-      lowerCross   [bar] = 0;
-      dimmed       [bar] = 0;
-      trend        [bar] = 0;
-      reversalCount[bar] = 0;
+      upperBand        [bar] = 0;
+      lowerBand        [bar] = 0;
+      upperCross       [bar] = 0;
+      lowerCross       [bar] = 0;
+      dimmed           [bar] = 0;
+      trend            [bar] = 0;
+      reversalCount    [bar] = 0;
+      reversalBalance_O[bar] = EMPTY_VALUE;
+      reversalBalance_H[bar] = EMPTY_VALUE;
+      reversalBalance_L[bar] = EMPTY_VALUE;
+      reversalBalance_C[bar] = EMPTY_VALUE;
 
       // recalculate Donchian Channel
       if (bar > 0) {
@@ -337,8 +398,8 @@ int onTick() {
       }
 
       // whether the processed bar is a reversal bar (not whether the current tick triggered the reversal)
-      bool isReversalBar = false, isDoubleCross = false, cross1_isReversalBar = false, isUpperCrossLast = false;
-      double lastCross = 0;
+      bool isReversalBar = false, isDoubleCross = false, cross1_isReversalBar = false, cross1_isUpper = false;
+      double firstCross = 0, lastCross = 0;
 
       // recalculate trend/reversal data
       // if no channel crossing
@@ -350,28 +411,35 @@ int onTick() {
 
       // if two channel crossings (upper and lower band crossed by the same bar)
       else if (upperCross[bar] && lowerCross[bar]) {
-         isDoubleCross    = true;
-         isUpperCrossLast = IsUpperCrossLast(bar);
-         if (isUpperCrossLast) {
-            lastCross            = upperCross[bar];
-            cross1_isReversalBar = ProcessLowerCross(bar);  // process both crossings in order
-            isReversalBar        = ProcessUpperCross(bar);
-         }
-         else {
-            lastCross            = lowerCross[bar];
+         isDoubleCross  = true;
+         cross1_isUpper = !IsUpperCrossLast(bar);
+         if (cross1_isUpper) {
             cross1_isReversalBar = ProcessUpperCross(bar);  // process both crossings in order
             isReversalBar        = ProcessLowerCross(bar);
+            firstCross           = upperCross[bar];
+            lastCross            = lowerCross[bar];
+         }
+         else {
+            cross1_isReversalBar = ProcessLowerCross(bar);  // process both crossings in order
+            isReversalBar        = ProcessUpperCross(bar);
+            firstCross           = lowerCross[bar];
+            lastCross            = upperCross[bar];
          }
       }
 
       // else a single channel crossing
       else if (!lowerCross[bar]) {
-         lastCross     = upperCross[bar];
          isReversalBar = ProcessUpperCross(bar);
+         lastCross     = upperCross[bar];
       }
       else {
-         lastCross     = lowerCross[bar];
          isReversalBar = ProcessLowerCross(bar);
+         lastCross     = lowerCross[bar];
+      }
+
+      // update reversal balance
+      if (TrackReversalBalance) {
+         if (!UpdateReversalBalance(bar, isReversalBar, isDoubleCross, cross1_isUpper, reversalBalance_O, reversalBalance_H, reversalBalance_L, reversalBalance_C)) return(last_error);
       }
 
       // hide all non-reversal crossings
@@ -380,10 +448,9 @@ int onTick() {
          lowerCross[bar] = 0;
       }
       else if (isDoubleCross && !cross1_isReversalBar) {
-         if (isUpperCrossLast) lowerCross[bar] = 0;         // hide the 1st crossing if not a reversal
-         else                  upperCross[bar] = 0;
+         if (cross1_isUpper) upperCross[bar] = 0;           // hide the 1st crossing if not a reversal
+         else                lowerCross[bar] = 0;
       }
-
 
       // dim filtered reversals
       if (isReversalBar && reversals.show && reversals.countFrom) {
@@ -414,9 +481,14 @@ int onTick() {
       if (last_error != NO_ERROR) return(last_error);
    }
 
-   // chart legend, signaling, reporting
+   // chart legend, balance tracking, signaling
    if (__isChart && !__isSuperContext) {
       if (ShowChartLegend) UpdateChartLegend();
+
+      // record reversal balance
+      if (TrackReversalBalance) {
+         if (!RecordReversalBalance()) return(last_error);
+      }
 
       // detect channel widenings
       if (Sound.onChannelWidening && ChangedBars <= 2) {
@@ -454,6 +526,217 @@ bool onCommand(string cmd, string params, int keys) {
       if (params == "down") return(ParameterStepper(STEP_DOWN, keys));
    }
    return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(cmd +":"+ params +":"+ keys)));
+}
+
+
+/**
+ * Update the reversal balance for the specified bar.
+ *
+ * @param  _In_    int    bar            - bar offset
+ * @param  _In_    bool   isReversalBar  - whether the bar is a reversal bar
+ * @param  _In_    bool   isDoubleCross  - whether a reversal is a double crossing
+ * @param  _In_    bool   cross1_isUpper - whether the 1st of a double crossing is the upper cross
+ * @param  _InOut_ double open []        - balance timeseries (passed by reference to simplify local var names)
+ * @param  _InOut_ double high []        - ...
+ * @param  _InOut_ double low  []        - ...
+ * @param  _InOut_ double close[]        - ...
+ *
+ * @return bool - success status
+ */
+bool UpdateReversalBalance(int bar, bool isReversalBar, bool isDoubleCross, bool cross1_isUpper, double &open[], double &high[], double &low[], double &close[]) {
+   isReversalBar  = (isReversalBar != 0);
+   isDoubleCross  = (isDoubleCross != 0);
+   cross1_isUpper = (cross1_isUpper != 0);
+
+   open [bar] = close[bar+1];
+   high [bar] = close[bar+1];
+   low  [bar] = close[bar+1];
+   close[bar] = close[bar+1];
+
+   bool isPosition = (close[bar] != EMPTY_VALUE);
+
+   // reversal bar, flip the position
+   if (isReversalBar) {
+      if (!isPosition) {
+         open [bar] = 0;
+         high [bar] = 0;
+         low  [bar] = 0;
+         close[bar] = 0;
+      }
+
+      if (!isDoubleCross) {
+         // regular crossing
+         if (trend[bar] > 0) {                                                // upper crossing, switch to long
+            if (isPosition) {
+               open [bar]  = close[bar+1];
+               close[bar] -= (upperCross[bar]-Point - Close[bar+1]);          // close short position
+               close[bar] += (Close[bar] - (upperCross[bar]-Point));          // open new long position
+               high [bar]  = MathMax(open[bar], close[bar]);
+               low  [bar]  = MathMin(open[bar], close[bar]);                  // the exact intra-bar path is unknown
+            }
+            else {
+               high [bar] = ( High[bar] - (upperCross[bar]-Point));           // open long position
+               low  [bar] = (  Low[bar] - (upperCross[bar]-Point));
+               close[bar] = (Close[bar] - (upperCross[bar]-Point));
+            }
+         }
+         else /*trend[bar] < 0*/ {                                            // lower crossing, switch to short
+            if (isPosition) {
+               open [bar]  = close[bar+1];
+               close[bar] += (lowerCross[bar]+Point - Close[bar+1]);          // close long position
+               close[bar] += (lowerCross[bar]+Point - Close[bar]);            // open new short position
+               high [bar]  = MathMax(open[bar], close[bar]);
+               low  [bar]  = MathMin(open[bar], close[bar]);                  // the exact intra-bar path is unknown
+            }
+            else {
+               high [bar] = (lowerCross[bar]+Point -   Low[bar]);             // open short position
+               low  [bar] = (lowerCross[bar]+Point -  High[bar]);
+               close[bar] = (lowerCross[bar]+Point - Close[bar]);
+            }
+         }
+      }
+      else {
+         // double crossing
+         if (cross1_isUpper) {
+            if (isPosition) {
+               open [bar]  = close[bar+1];
+               close[bar] -= (upperCross[bar]-Point - Close[bar+1]);          // close existing short position
+            }
+            close[bar] -= (upperCross[bar]-Point - (lowerCross[bar]+Point));  // open new long position and immediately close it
+            close[bar] += (lowerCross[bar]+Point - Close[bar]);               // open new short position
+         }
+         else /*cross1_isLower*/ {
+            if (isPosition) {
+               open [bar]  = close[bar+1];
+               close[bar] += (lowerCross[bar]+Point - Close[bar+1]);          // close existing long position
+            }
+            close[bar] -= (upperCross[bar]-Point - (lowerCross[bar]+Point));  // open new short position and immediately close it
+            close[bar] += (Close[bar] - (upperCross[bar]-Point));             // open new long position
+         }
+
+         high[bar] = MathMax(open[bar], close[bar]);                          // the exact intra-bar path is unknown
+         low [bar] = MathMin(open[bar], close[bar]);
+      }
+   }
+
+   // normal bar without a crossing, update an existing position
+   else if (isPosition) {
+      open[bar] = close[bar+1];
+
+      if (trend[bar] > 0) {
+         close[bar] += (Close[bar] - Close[bar+1]);
+         high [bar]  = close[bar] + (High[bar] - Close[bar]);
+         low  [bar]  = close[bar] + ( Low[bar] - Close[bar]);
+      }
+      else /*trend[bar] < 0*/ {
+         close[bar] -= (Close[bar] - Close[bar+1]);
+         high [bar]  = close[bar] - ( Low[bar] - Close[bar]);
+         low  [bar]  = close[bar] - (High[bar] - Close[bar]);
+      }
+   }
+
+   // normal bar without a position (before first reversal near MaxBarsBack)
+   //else {}
+
+   // adjust the price base for the timeseries to always be positive
+   double hstValue = low[bar] + recorder.priceBase;
+   while (hstValue <= 0) {
+      recorder.priceBase *= 10;
+      hstValue = low[bar] + recorder.priceBase;
+   }
+   return(true);
+}
+
+
+/**
+ * Record a timeseries with the reversal balance.
+ *
+ * @return bool - success status
+ */
+bool RecordReversalBalance() {
+   if (!recorder.initialized) {
+      // create symbol and group
+      recorder.symbol       = Symbol() +".db";
+      recorder.symbolDescr  = "Donchian reversal balance";
+      recorder.group        = "Donch. balance";          // max length: 15
+      recorder.hstDirectory = Recorder_GetHstDirectory();
+      recorder.hstFormat    = Recorder_GetHstFormat();
+      if (last_error != NULL) return(false);
+
+      if (!IsRawSymbol(recorder.symbol, recorder.hstDirectory)) {
+         int symbolId = CreateRawSymbol(recorder.symbol, recorder.symbolDescr, recorder.group, pDigits, AccountCurrency(), AccountCurrency(), recorder.hstDirectory);
+         if (symbolId < 0) return(false);
+      }
+      recorder.initialized = true;
+   }
+
+   int startBar = 0, flags = HST_FILL_GAPS|HST_BUFFER_TICKS;
+   double open, high, low, close;
+
+   if (ChangedBars > 2) {                                // rewrite the full history (intentionally skip rewriting bar 1 on BarOpen)
+      if (recorder.hSet > 0) {
+         int tmp = recorder.hSet;
+         recorder.hSet = NULL;
+         if (!HistorySet1.Close(tmp)) return(false);     // TODO: HistorySet.Create() should auto-close an open set but errors
+      }
+      startBar = iBarShiftNext(NULL, NULL, recorder.startTime);
+   }
+
+   if (recorder.hSet <= 0) {
+      recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, pDigits, recorder.hstFormat, recorder.hstDirectory);
+      if (!recorder.hSet) return(false);
+   }
+
+   for (int bar=startBar; bar >= 0; bar--) {
+      open  = reversalBalance_O[bar];
+      high  = reversalBalance_H[bar];
+      low   = reversalBalance_L[bar];
+      close = reversalBalance_C[bar];
+      if (close >= EMPTY_VALUE) continue;
+
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], open + recorder.priceBase, flags)) return(false);
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], high + recorder.priceBase, flags)) return(false);
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], low  + recorder.priceBase, flags)) return(false);
+      if (bar == 0) {
+         flags &= ~HST_BUFFER_TICKS;                     // disable the tick buffer on bar 0 (for realtime updates)
+      }
+      if (!HistorySet1.AddTick(recorder.hSet, Time[bar], close + recorder.priceBase, flags)) return(false);
+   }
+   return(true);
+}
+
+
+/**
+ * Resolve the history directory for recorded timeseries.
+ *
+ * @return string - directory or an empty string in case of errors
+ */
+string Recorder_GetHstDirectory() {
+   string section = "SignalPerformance";
+   string key = "HistoryDirectory", sValue="";
+
+   if (IsConfigKey(section, key)) {
+      sValue = GetConfigString(section, key, "");
+   }
+   if (!StringLen(sValue)) return(_EMPTY_STR(catch("Recorder_GetHstDirectory(1)  missing config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE)));
+   return(sValue);
+}
+
+
+/**
+ * Resolve the history format for recorded timeseries.
+ *
+ * @return int - history format or NULL (0) in case of errors
+ */
+int Recorder_GetHstFormat() {
+   string section = "SignalPerformance";
+   string key = "HistoryFormat", sValue="";
+
+   if (IsConfigKey(section, key)) {
+      int iValue = GetConfigInt(section, key, 0);
+   }
+   if (iValue!=400 && iValue!=401) return(!catch("Recorder_GetHstFormat(1)  invalid config value ["+ section +"]->"+ key +": "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+   return(iValue);
 }
 
 
@@ -980,6 +1263,9 @@ string InputsToStr() {
 
                             "Sound.onChannelWidening=",     BoolToStr(Sound.onChannelWidening)          +";"+ NL,
                             "Sound.onNewChannelHigh=",      DoubleQuoteStr(Sound.onNewChannelHigh)      +";"+ NL,
-                            "Sound.onNewChannelLow=",       DoubleQuoteStr(Sound.onNewChannelLow)       +";")
+                            "Sound.onNewChannelLow=",       DoubleQuoteStr(Sound.onNewChannelLow)       +";"+ NL,
+
+                            "TrackReversalBalance=",        BoolToStr(TrackReversalBalance)             +";"+ NL,
+                            "TrackReversalBalance.Symbol=", DoubleQuoteStr(TrackReversalBalance.Symbol) +";")
    );
 }
