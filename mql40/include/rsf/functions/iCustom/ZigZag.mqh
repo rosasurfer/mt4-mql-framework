@@ -26,13 +26,7 @@
 //   int unknownTrend = (data >> 16) & 0xFFFF;                       // extract HIWORD
 //   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;   // convert `signed short` to `signed int`
 //
-// - MODE_DC_TREND:
-//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_DC_COMBINED, bar);
-//
 // - MODE_REVERSAL_OFFSET:
-//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_DC_COMBINED, bar);
-//
-// - MODE_REVERSAL_COUNT:
 //   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_DC_COMBINED, bar);
 //
 

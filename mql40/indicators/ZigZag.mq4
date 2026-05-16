@@ -121,7 +121,7 @@ extern bool     CombinedBuffersAsBinary        = false;                         
 
 #property indicator_chart_window
 #property indicator_buffers   8                             // buffers managed by the terminal
-int       framework_buffers = 6;                            // buffers managed by the framework
+int       framework_buffers = 5;                            // buffers managed by the framework
 
 
 // indicator buffer ids
@@ -137,8 +137,7 @@ int       framework_buffers = 6;                            // buffers managed b
 #define MODE_LOWER_CROSS_LOW   9                            // bar low of a lower channel band crossing: positive or 0
 #define MODE_ZZ_TREND         10                            // int: direction and length of a ZigZag leg: positive/negative or 0
 #define MODE_ZZ_UNKNOWN_TREND 11                            // int: number of undetermined trend bars after a leg's end semaphore: non-negative or -1
-#define MODE_DC_TREND         12                            // int: direction and length of Donchian Channel reversals: positive/negative or 0
-#define MODE_REVERSAL_OFFSET  13                            // int: offset of the trend reversal to the ZigZag leg's start semaphore: non-negative or -1
+#define MODE_REVERSAL_OFFSET  12                            // int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
 
 #property indicator_color1    Blue                          // upper channel band
 #property indicator_style1    STYLE_DOT                     //
@@ -169,8 +168,7 @@ double   zzCombined    [];                                  // combined buffers 
 int      zzTrend       [];                                  // direction and length of a ZigZag leg: positive/negative or 0
 int      zzUnknownTrend[];                                  // number of undetermined trend bars after a leg's end semaphore: non-negative or -1
 double   dcCombined    [];                                  // combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNT (see notes in file header)
-int      dcTrend       [];                                  // direction and length of Donchian Channel reversals: positive/negative or 0
-int      reversalOffset[];                                  // offset of the trend reversal to the ZigZag leg's start semaphore (): non-negative or -1
+int      reversalOffset[];                                  // offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
 
 string   indicatorName = "";
 string   shortName     = "";
@@ -241,9 +239,7 @@ int      lastSoundSignal;                                   // GetTickCount() va
 //    double semaphoreClose:  0 (default)
 //    int    zzTrend       :  0 (default)
 //    int    zzUnknownTrend: -1 (default)
-//    int    dcTrend       :  0 (default)
 //    int    reversalOffset: -1 (default)
-//    int    reversalCount :  0 (default)
 //
 // • Bar between MaxBarsBack and first semaphore
 //    double upperBand     :  positive
@@ -256,9 +252,7 @@ int      lastSoundSignal;                                   // GetTickCount() va
 //    double semaphoreClose:  0 (default)
 //    int    zzTrend       :  0 (default)
 //    int    zzUnknownTrend: -1 (default) before the last cross, otherwise non-negative
-//    int    dcTrend       :  0 (default) or positive/negative
 //    int    reversalOffset: -1 (default)
-//    int    reversalCount :  0 (default)
 //
 // • Bar of ZigZag leg up (no semaphore)
 //    double upperBand     :  positive
@@ -271,9 +265,7 @@ int      lastSoundSignal;                                   // GetTickCount() va
 //    double semaphoreClose:  0 (default)
 //    int    zzTrend       :  positive
 //    int    zzUnknownTrend:  0 or positive
-//    int    dcTrend       :  positive or negative
 //    int    reversalOffset:  positive
-//    int    reversalCount :  positive or negative
 //
 // • Bar of ZigZag leg down
 //    double upperBand     :  positive
@@ -286,9 +278,7 @@ int      lastSoundSignal;                                   // GetTickCount() va
 //    double semaphoreClose:  0 (default)
 //    int    zzTrend       :  negative
 //    int    zzUnknownTrend:  0 or positive
-//    int    dcTrend       :  positive or negative
 //    int    reversalOffset:  positive
-//    int    reversalCount :  positive or negative
 //
 // • High semaphore bar
 //    double upperBand     :  positive
@@ -301,9 +291,7 @@ int      lastSoundSignal;                                   // GetTickCount() va
 //    double semaphoreClose:  positive (open = close)
 //    int    zzTrend       :  positive
 //    int    zzUnknownTrend:  0
-//    int    dcTrend       :  positive
 //    int    reversalOffset:  positive
-//    int    reversalCount :  positive or negative
 //
 // • Low semaphore bar
 //    double upperBand     :  positive
@@ -316,9 +304,7 @@ int      lastSoundSignal;                                   // GetTickCount() va
 //    double semaphoreClose:  positive (open == close)
 //    int    zzTrend       :  negative
 //    int    zzUnknownTrend:  0
-//    int    dcTrend       :  negative
 //    int    reversalOffset:  positive
-//    int    reversalCount :  positive or negative
 //
 // • Double crossing bar (high + low semaphore) after processing of the 2nd crossing
 //    double upperBand     :  positive
@@ -331,9 +317,7 @@ int      lastSoundSignal;                                   // GetTickCount() va
 //    double semaphoreClose:  positive (open != close)
 //    int    zzTrend       :  0 (the complete leg ocurred in the same bar)
 //    int    zzUnknownTrend:  0 (same as reversal offset)
-//    int    dcTrend       :  positive or negative
 //    int    reversalOffset:  0 (the previous reversal occurred on the same bar)
-//    int    reversalCount :  positive or negative
 //
 // • Triple+ crossing bar (more than two semaphores)
 //    Same as double crossing. The last crossing overwrites values from previous crossings.
@@ -527,7 +511,6 @@ int onTick() {
    ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_LOW,  lowerCrossLow     );
    ManageIntIndicatorBuffer   (MODE_ZZ_TREND,         zzTrend           );
    ManageIntIndicatorBuffer   (MODE_ZZ_UNKNOWN_TREND, zzUnknownTrend, -1);
-   ManageIntIndicatorBuffer   (MODE_DC_TREND,         dcTrend           );
    ManageIntIndicatorBuffer   (MODE_REVERSAL_OFFSET,  reversalOffset    );
 
    // reset buffers before performing a full recalculation
@@ -544,7 +527,6 @@ int onTick() {
       ArrayInitialize(zzTrend,         0);   // int:    positive/negative or 0
       ArrayInitialize(zzUnknownTrend, -1);   // int:    non-negative or -1
       ArrayInitialize(dcCombined,      0);   // int:    positive/negative or 0
-      ArrayInitialize(dcTrend,         0);   // int:    positive/negative or 0
       ArrayInitialize(reversalOffset, -1);   // int:    non-negative or -1
       SetIndicatorOptions();
 
@@ -571,7 +553,6 @@ int onTick() {
       ShiftIntIndicatorBuffer   (zzTrend,        Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (zzUnknownTrend, Bars, ShiftedBars, -1);
       ShiftDoubleIndicatorBuffer(dcCombined,     Bars, ShiftedBars,  0);
-      ShiftIntIndicatorBuffer   (dcTrend,        Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (reversalOffset, Bars, ShiftedBars, -1);
    }
 
@@ -597,7 +578,6 @@ int onTick() {
       zzTrend       [bar] =  0;
       zzUnknownTrend[bar] = -1;
       dcCombined    [bar] =  0;
-      dcTrend       [bar] =  0;
       reversalOffset[bar] = -1;
 
       // recalculate Donchian Channel
@@ -631,10 +611,6 @@ int onTick() {
          if (zzUnknownTrend[bar] > -1) {
             zzUnknownTrend[bar]++;                                   // increase if it was set
          }
-         dcTrend[bar] = dcTrend[bar+1];
-         if      (dcTrend[bar] > 0) dcTrend[bar]++;
-         else if (dcTrend[bar] < 0) dcTrend[bar]--;                  // increase if it was set
-
          reversalOffset[bar] = reversalOffset[bar+1];                // keep reversal offset (may be -1)
       }
 
@@ -878,7 +854,6 @@ bool ProcessUpperCross(int bar) {
       semaphoreClose[bar] = upperCrossHigh[bar];
       zzTrend       [bar] = 0;                                          // no ZZ trend
       zzUnknownTrend[bar] = 0;                                          // current bar
-      dcTrend       [bar] = Max(dcTrend[bar+1], 0) + 1;                 // increase DC Trend
       reversalOffset[bar] = -1;                                         // no reversal
       return(false);
    }
@@ -899,7 +874,6 @@ bool ProcessUpperCross(int bar) {
          zzTrend       [bar] = zzTrend       [bar+1];                   // keep trend (may be 0)
          zzUnknownTrend[bar] = zzUnknownTrend[bar+1] + 1;               // increase unknown trend
       }
-      dcTrend       [bar] = dcTrend       [bar+1] + 1;                  // increase DC trend
       reversalOffset[bar] = reversalOffset[bar+1];                      // keep reversal offset
       isReversalBar = false;
    }
@@ -910,7 +884,6 @@ bool ProcessUpperCross(int bar) {
          semaphoreClose[bar] = upperCrossHigh[bar];                     // keep semaphoreOpen from first crossing
          zzTrend       [bar] = 0;
          zzUnknownTrend[bar] = 0;
-         dcTrend       [bar] = 1;
          reversalOffset[bar] = 0;
          isReversalBar = true;
       }
@@ -932,17 +905,14 @@ bool ProcessUpperCross(int bar) {
          }
          if (isNewLeg) {                                                // new leg up
             SetTrend(lastSemBar-1, 1, bar, true);                       // update trend/unknownTrend, reset reversals and
-            dcTrend       [bar] = 1;
             reversalOffset[bar] = lastSemBar - bar;                     // set reversal to current bar
             isReversalBar = true;
          }
          else {                                                         // leg up extension
             SetTrend(lastSemBar-1, 1, bar, false);                      // update trend/unknownTrend and
-            dcTrend       [bar] = dcTrend       [bar+1] + 1;
             reversalOffset[bar] = reversalOffset[bar+1];                // keep existing reversal
             isReversalBar = false;
             if (reversalOffset[bar] == -1) {
-               dcTrend       [bar] = 1;
                reversalOffset[bar] = lastSemBar - bar;                  // if in reversal bar: set to current bar
                isReversalBar = true;
             }
@@ -1012,7 +982,6 @@ bool ProcessLowerCross(int bar) {
       semaphoreClose[bar] = lowerCrossLow[bar];
       zzTrend       [bar] = 0;                                          // no ZZ trend
       zzUnknownTrend[bar] = 0;                                          // current bar
-      dcTrend       [bar] = Min(dcTrend[bar+1], 0) - 1;                 // increase DC Trend
       reversalOffset[bar] = -1;                                         // no reversal
       return(false);
    }
@@ -1033,7 +1002,6 @@ bool ProcessLowerCross(int bar) {
          zzTrend       [bar] = zzTrend       [bar+1];                   // keep trend (may be 0)
          zzUnknownTrend[bar] = zzUnknownTrend[bar+1] + 1;               // increase unknown trend
       }
-      dcTrend       [bar] = dcTrend       [bar+1] - 1;                  // increase DC trend
       reversalOffset[bar] = reversalOffset[bar+1];                      // keep reversal offset
       isReversalBar = false;
    }
@@ -1042,10 +1010,9 @@ bool ProcessLowerCross(int bar) {
       if (lastSemBar == bar) {
          // if on the same bar then this crossing is the 2nd of a double crossing
          semaphoreClose[bar] = lowerCrossLow[bar];                      // keep semaphoreOpen from first crossing
-         zzTrend       [bar] =  0;
-         zzUnknownTrend[bar] =  0;
-         dcTrend       [bar] = -1;
-         reversalOffset[bar] =  0;
+         zzTrend       [bar] = 0;
+         zzUnknownTrend[bar] = 0;
+         reversalOffset[bar] = 0;
          isReversalBar = true;
       }
       else /*lastSemBar != bar*/ {
@@ -1066,17 +1033,14 @@ bool ProcessLowerCross(int bar) {
          }
          if (isNewLeg) {                                                // new leg down
             SetTrend(lastSemBar-1, -1, bar, true);                      // update trend/unknownTrend, reset reversals and
-            dcTrend       [bar] = -1;
             reversalOffset[bar] = lastSemBar - bar;                     // set reversal to current bar
             isReversalBar = true;
          }
          else {                                                         // leg down extension
             SetTrend(lastSemBar-1, -1, bar, false);                     // update trend/unknownTrend and
-            dcTrend       [bar] = dcTrend       [bar+1] - 1;
             reversalOffset[bar] = reversalOffset[bar+1];                // keep existing reversal
             isReversalBar = false;
             if (reversalOffset[bar] == -1) {
-               dcTrend       [bar] = -1;
                reversalOffset[bar] = lastSemBar - bar;                  // if in reversal bar: set to current bar
                isReversalBar = true;
             }
