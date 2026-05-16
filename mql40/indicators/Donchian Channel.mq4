@@ -1222,12 +1222,14 @@ bool ValidateShowReversals(string &value, bool &showReversals, int &countFrom) {
    }
    sValue = StrToLower(StrTrim(sValue));
 
-   if (sValue == "on" || sValue == "all" ) {
+   if (sValue == "" || sValue == "on" || sValue == "all" ) {
       showReversals = true;
       countFrom = 0;
+      sValue = "on";
    }
    else if (sValue == "off" || sValue == "0") {
       showReversals = false;
+      sValue = "off";
    }
    else if (StrIsInteger(sValue)) {
       showReversals = true;
