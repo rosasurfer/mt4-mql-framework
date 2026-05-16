@@ -1156,7 +1156,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.LowerColor);
 
    int drawType = ifInt(reversals.show && Reversal.Width, DRAW_ARROW, DRAW_NONE);
-   int drawWidth = Reversal.Width - 1;                  // minus 1 to map valid symbol size "0" to a positive value
+   int drawWidth = Reversal.Width - 1;                  // minus 1 to map valid symbol size "0" to a positive user value
    SetIndexStyle(MODE_REVERSAL_LONG,   drawType, EMPTY, drawWidth, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_REVERSAL_LONG,   reversals.symbol);
    SetIndexStyle(MODE_REVERSAL_SHORT,  drawType, EMPTY, drawWidth, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_REVERSAL_SHORT,  reversals.symbol);
    SetIndexStyle(MODE_REVERSAL_DIMMED, drawType, EMPTY, drawWidth, indicator_color5);                            SetIndexArrow(MODE_REVERSAL_DIMMED, reversals.symbol);

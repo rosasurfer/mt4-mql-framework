@@ -5,23 +5,23 @@
 #define ZigZag.MODE_SEMAPHORE_CLOSE 3  // semaphore close prices: positive or 0 (if open != close it forms a vertical line segment)
 #define ZigZag.MODE_UPPER_CROSS     4  // upper channel band crossings: positive or 0
 #define ZigZag.MODE_LOWER_CROSS     5  // lower channel band crossings: positive or 0
-#define ZigZag.MODE_ZZ_COMBINED     6  // int: combined internal buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND (see notes)
+#define ZigZag.MODE_COMBINED_TREND  6  // int: combined internal buffers MODE_TREND and MODE_UNKNOWN_TREND (see notes)
 #define ZigZag.MODE_REVERSAL_OFFSET 7  // int: offset of the ZigZag reversal to the leg's start semaphore
 
 
 // Notes
 // -----
-// MQL4.0 limits the number of available indicator buffers to 8. Therefore internal buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND
-// are combined into buffer ZigZag.MODE_ZZ_COMBINED. To retrieve original values with iCustom(), input "CombinedBuffersAsBinary"
+// MQL4.0 limits the number of indicator buffers to 8. Therefore internal buffers MODE_TREND and MODE_UNKNOWN_TREND are
+// combined into buffer ZigZag.MODE_COMBINED_TREND. To retrieve original values with iCustom(), input "TrendBufferAsBinary"
 // must be set to TRUE.
 //
-// - MODE_ZZ_TREND:
-//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
+// - MODE_TREND:
+//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);
 //   int trend = data & 0xFFFF;                                      // extract LOWORD
 //   if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                 // convert `signed short` to `signed int`
 //
-// - MODE_ZZ_UNKNOWN_TREND:
-//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
+// - MODE_UNKNOWN_TREND:
+//   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);
 //   int unknownTrend = (data >> 16) & 0xFFFF;                       // extract HIWORD
 //   if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;   // convert `signed short` to `signed int`
 //
@@ -79,7 +79,7 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           "",                         // string Sound.onNewChannelLow
 
                           "separator",                // string ___e_______________________
-                           true,                      // bool   CombinedBuffersAsBinary
+                           true,                      // bool   TrendBufferAsBinary
 
                           "separator",                // string ___________________________
                           false,                      // bool   AutoConfiguration

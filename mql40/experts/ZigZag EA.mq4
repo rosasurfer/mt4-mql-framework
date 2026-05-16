@@ -474,7 +474,7 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
    reversalPrice = NULL;
 
    // TODO: remove all ZigZag logic and use only the indicator                      // 85% of the local time here
-   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
+   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);
 
    int trend = data & 0xFFFF;                                     // extract LOWORD
    if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                // convert `signed short` to `signed int`
@@ -542,7 +542,7 @@ bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {   
  *               or NULL (0) in case of errors
  */
 int GetZigZagDirection(int bar) {
-   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_ZZ_COMBINED, bar);
+   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);
 
    int trend = data & 0xFFFF;                                        // extract LOWORD
    if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                   // convert `signed short` to `signed int`
