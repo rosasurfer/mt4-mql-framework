@@ -645,7 +645,7 @@ int onTick() {
          combinedTrend[bar]     = (short_unknownTrend << 16) | short_trend;   // store as HIWORD + LOWORD
       }
       else {                                                                  // "Data Window": human-readable format
-         combinedTrend[bar] = ifInt(trend[bar] >= 0, +1, -1) * unknownTrend[bar] * 100000 + trend[bar];
+         combinedTrend[bar] = ifInt(trend[bar] >= 0, 1, -1) * unknownTrend[bar] * 100000 + trend[bar];
       }
    }
 
