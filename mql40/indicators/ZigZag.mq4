@@ -121,7 +121,7 @@ extern bool     CombinedBuffersAsBinary        = false;                         
 
 #property indicator_chart_window
 #property indicator_buffers   8                             // buffers managed by the terminal
-int       framework_buffers = 7;                            // buffers managed by the framework
+int       framework_buffers = 6;                            // buffers managed by the framework
 
 
 // indicator buffer ids
@@ -139,7 +139,6 @@ int       framework_buffers = 7;                            // buffers managed b
 #define MODE_ZZ_UNKNOWN_TREND 11                            // int: number of undetermined trend bars after a leg's end semaphore: non-negative or -1
 #define MODE_DC_TREND         12                            // int: direction and length of Donchian Channel reversals: positive/negative or 0
 #define MODE_REVERSAL_OFFSET  13                            // int: offset of the trend reversal to the ZigZag leg's start semaphore: non-negative or -1
-#define MODE_REVERSAL_COUNT   14                            // int: number of consecutive winning/losing trend reversals: positive/negative or 0
 
 #property indicator_color1    Blue                          // upper channel band
 #property indicator_style1    STYLE_DOT                     //
@@ -172,7 +171,6 @@ int      zzUnknownTrend[];                                  // number of undeter
 double   dcCombined    [];                                  // combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNT (see notes in file header)
 int      dcTrend       [];                                  // direction and length of Donchian Channel reversals: positive/negative or 0
 int      reversalOffset[];                                  // offset of the trend reversal to the ZigZag leg's start semaphore (): non-negative or -1
-int      reversalCount [];                                  // number of consecutive winning/losing trend reversals: positive/negative or 0
 
 string   indicatorName = "";
 string   shortName     = "";
@@ -531,7 +529,6 @@ int onTick() {
    ManageIntIndicatorBuffer   (MODE_ZZ_UNKNOWN_TREND, zzUnknownTrend, -1);
    ManageIntIndicatorBuffer   (MODE_DC_TREND,         dcTrend           );
    ManageIntIndicatorBuffer   (MODE_REVERSAL_OFFSET,  reversalOffset    );
-   ManageIntIndicatorBuffer   (MODE_REVERSAL_COUNT,   reversalCount     );
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -549,7 +546,6 @@ int onTick() {
       ArrayInitialize(dcCombined,      0);   // int:    positive/negative or 0
       ArrayInitialize(dcTrend,         0);   // int:    positive/negative or 0
       ArrayInitialize(reversalOffset, -1);   // int:    non-negative or -1
-      ArrayInitialize(reversalCount,   0);   // int:    positive/negative or 0
       SetIndicatorOptions();
 
       lastUpperBand = 0;
@@ -577,7 +573,6 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(dcCombined,     Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (dcTrend,        Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (reversalOffset, Bars, ShiftedBars, -1);
-      ShiftIntIndicatorBuffer   (reversalCount,  Bars, ShiftedBars,  0);
    }
 
    // check data pumping on every tick so the reversal handler can skip errornous signals
@@ -604,7 +599,6 @@ int onTick() {
       dcCombined    [bar] =  0;
       dcTrend       [bar] =  0;
       reversalOffset[bar] = -1;
-      reversalCount [bar] =  0;
 
       // recalculate Donchian Channel
       if (bar > 0) {
@@ -642,7 +636,6 @@ int onTick() {
          else if (dcTrend[bar] < 0) dcTrend[bar]--;                  // increase if it was set
 
          reversalOffset[bar] = reversalOffset[bar+1];                // keep reversal offset (may be -1)
-         reversalCount [bar] = reversalCount [bar+1];                // keep reversal counter (may be 0)
       }
 
       // if two channel crossings (upper and lower band crossed by the same bar)
@@ -681,11 +674,11 @@ int onTick() {
          int short_trend        = zzTrend[bar]        & 0x0000FFFF;           // convert `signed int` to `signed short`
          int short_unknownTrend = zzUnknownTrend[bar] & 0x0000FFFF;           // ...
          zzCombined[bar]        = (short_unknownTrend << 16) | short_trend;   // store as HIWORD + LOWORD
-         dcCombined[bar]        = reversalCount[bar];
+         dcCombined[bar]        = reversalOffset[bar];
       }
       else {                                                                  // "Data Window": human-readable format
          zzCombined[bar] = ifInt(zzTrend[bar] >= 0, +1, -1) * zzUnknownTrend[bar] * 100000 + zzTrend[bar];
-         dcCombined[bar] = reversalCount[bar];
+         dcCombined[bar] = reversalOffset[bar];
       }
    }
 
@@ -887,7 +880,6 @@ bool ProcessUpperCross(int bar) {
       zzUnknownTrend[bar] = 0;                                          // current bar
       dcTrend       [bar] = Max(dcTrend[bar+1], 0) + 1;                 // increase DC Trend
       reversalOffset[bar] = -1;                                         // no reversal
-      reversalCount [bar] =  0;                                         // ...
       return(false);
    }
    bool isReversalBar;
@@ -909,7 +901,6 @@ bool ProcessUpperCross(int bar) {
       }
       dcTrend       [bar] = dcTrend       [bar+1] + 1;                  // increase DC trend
       reversalOffset[bar] = reversalOffset[bar+1];                      // keep reversal offset
-      reversalCount [bar] = reversalCount [bar+1];                      // keep reversal counter
       isReversalBar = false;
    }
 
@@ -921,7 +912,6 @@ bool ProcessUpperCross(int bar) {
          zzUnknownTrend[bar] = 0;
          dcTrend       [bar] = 1;
          reversalOffset[bar] = 0;
-         reversalCount [bar] = Min(reversalCount[bar], 0) - 1;          // add a negative leg
          isReversalBar = true;
       }
       else /*lastSemBar != bar*/ {
@@ -944,19 +934,16 @@ bool ProcessUpperCross(int bar) {
             SetTrend(lastSemBar-1, 1, bar, true);                       // update trend/unknownTrend, reset reversals and
             dcTrend       [bar] = 1;
             reversalOffset[bar] = lastSemBar - bar;                     // set reversal to current bar
-            // resolve counter of finished reversal
             isReversalBar = true;
          }
          else {                                                         // leg up extension
             SetTrend(lastSemBar-1, 1, bar, false);                      // update trend/unknownTrend and
             dcTrend       [bar] = dcTrend       [bar+1] + 1;
             reversalOffset[bar] = reversalOffset[bar+1];                // keep existing reversal
-            reversalCount [bar] = reversalCount [bar+1];                // keep existing counter
             isReversalBar = false;
             if (reversalOffset[bar] == -1) {
                dcTrend       [bar] = 1;
                reversalOffset[bar] = lastSemBar - bar;                  // if in reversal bar: set to current bar
-               // resolve counter of finished reversal
                isReversalBar = true;
             }
          }
@@ -1027,7 +1014,6 @@ bool ProcessLowerCross(int bar) {
       zzUnknownTrend[bar] = 0;                                          // current bar
       dcTrend       [bar] = Min(dcTrend[bar+1], 0) - 1;                 // increase DC Trend
       reversalOffset[bar] = -1;                                         // no reversal
-      reversalCount [bar] =  0;                                         // ...
       return(false);
    }
    bool isReversalBar;
@@ -1049,7 +1035,6 @@ bool ProcessLowerCross(int bar) {
       }
       dcTrend       [bar] = dcTrend       [bar+1] - 1;                  // increase DC trend
       reversalOffset[bar] = reversalOffset[bar+1];                      // keep reversal offset
-      reversalCount [bar] = reversalCount [bar+1];                      // keep reversal counter
       isReversalBar = false;
    }
 
@@ -1061,7 +1046,6 @@ bool ProcessLowerCross(int bar) {
          zzUnknownTrend[bar] =  0;
          dcTrend       [bar] = -1;
          reversalOffset[bar] =  0;
-         reversalCount [bar] = Min(reversalCount[bar], 0) - 1;          // add a negative leg
          isReversalBar = true;
       }
       else /*lastSemBar != bar*/ {
@@ -1084,19 +1068,16 @@ bool ProcessLowerCross(int bar) {
             SetTrend(lastSemBar-1, -1, bar, true);                      // update trend/unknownTrend, reset reversals and
             dcTrend       [bar] = -1;
             reversalOffset[bar] = lastSemBar - bar;                     // set reversal to current bar
-            // resolve counter of finished reversal
             isReversalBar = true;
          }
          else {                                                         // leg down extension
             SetTrend(lastSemBar-1, -1, bar, false);                     // update trend/unknownTrend and
             dcTrend       [bar] = dcTrend       [bar+1] - 1;
             reversalOffset[bar] = reversalOffset[bar+1];                // keep existing reversal
-            reversalCount [bar] = reversalCount [bar+1];                // keep existing counter
             isReversalBar = false;
             if (reversalOffset[bar] == -1) {
                dcTrend       [bar] = -1;
                reversalOffset[bar] = lastSemBar - bar;                  // if in reversal bar: set to current bar
-               // resolve counter of finished reversal
                isReversalBar = true;
             }
          }
@@ -1168,11 +1149,11 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
 
       if (CombinedBuffersAsBinary) {               // iCustom(): binary format
          zzCombined[i] = zzTrend[i] & 0x0000FFFF;  // convert to `signed short` and store as HIWORD + LOWORD
-         dcCombined[i] = reversalCount[i];
+         dcCombined[i] = reversalOffset[i];
       }
       else {
          zzCombined[i] = zzTrend[i];               // "Data Window": human-readable format
-         dcCombined[i] = reversalCount[i];
+         dcCombined[i] = reversalOffset[i];
       }
 
       if      (value > 0) value++;
