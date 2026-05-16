@@ -121,7 +121,7 @@ extern bool     CombinedBuffersAsBinary        = false;                         
 
 #property indicator_chart_window
 #property indicator_buffers   8                             // buffers managed by the terminal
-int       framework_buffers = 5;                            // buffers managed by the framework
+int       framework_buffers = 4;                            // buffers managed by the framework
 
 
 // indicator buffer ids
@@ -132,12 +132,11 @@ int       framework_buffers = 5;                            // buffers managed b
 #define MODE_UPPER_CROSS       ZigZag.MODE_UPPER_CROSS      // 4: upper channel band crossings: positive or 0
 #define MODE_LOWER_CROSS       ZigZag.MODE_LOWER_CROSS      // 5: lower channel band crossings: positive or 0
 #define MODE_ZZ_COMBINED       ZigZag.MODE_ZZ_COMBINED      // 6: int: combined buffers MODE_ZZ_TREND and MODE_ZZ_UNKNOWN_TREND (see notes in file header)
-#define MODE_DC_COMBINED       ZigZag.MODE_DC_COMBINED      // 7: int: combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNT (see notes in file header)
+#define MODE_REVERSAL_OFFSET   ZigZag.MODE_REVERSAL_OFFSET  // 7: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
 #define MODE_UPPER_CROSS_HIGH  8                            // bar high of an upper channel band crossing: positive or 0
 #define MODE_LOWER_CROSS_LOW   9                            // bar low of a lower channel band crossing: positive or 0
 #define MODE_ZZ_TREND         10                            // int: direction and length of a ZigZag leg: positive/negative or 0
 #define MODE_ZZ_UNKNOWN_TREND 11                            // int: number of undetermined trend bars after a leg's end semaphore: non-negative or -1
-#define MODE_REVERSAL_OFFSET  12                            // int: offset of the ZigZag reversal to the leg's start semaphore: non-negative or -1
 
 #property indicator_color1    Blue                          // upper channel band
 #property indicator_style1    STYLE_DOT                     //
@@ -167,8 +166,7 @@ double   semaphoreClose[];                                  // final semaphore, 
 double   zzCombined    [];                                  // combined buffers MODE_TREND and MODE_UNKNOWN_TREND (see notes in file header)
 int      zzTrend       [];                                  // direction and length of a ZigZag leg: positive/negative or 0
 int      zzUnknownTrend[];                                  // number of undetermined trend bars after a leg's end semaphore: non-negative or -1
-double   dcCombined    [];                                  // combined buffers MODE_DC_TREND, MODE_REVERSAL_OFFSET and MODE_REVERSAL_COUNT (see notes in file header)
-int      reversalOffset[];                                  // offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
+double   reversalOffset[];                                  // offset of the ZigZag reversal to the leg's start semaphore (): non-negative or -1
 
 string   indicatorName = "";
 string   shortName     = "";
@@ -511,7 +509,6 @@ int onTick() {
    ManageDoubleIndicatorBuffer(MODE_LOWER_CROSS_LOW,  lowerCrossLow     );
    ManageIntIndicatorBuffer   (MODE_ZZ_TREND,         zzTrend           );
    ManageIntIndicatorBuffer   (MODE_ZZ_UNKNOWN_TREND, zzUnknownTrend, -1);
-   ManageIntIndicatorBuffer   (MODE_REVERSAL_OFFSET,  reversalOffset    );
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -526,7 +523,6 @@ int onTick() {
       ArrayInitialize(zzCombined,      0);   // int:    positive/negative or 0
       ArrayInitialize(zzTrend,         0);   // int:    positive/negative or 0
       ArrayInitialize(zzUnknownTrend, -1);   // int:    non-negative or -1
-      ArrayInitialize(dcCombined,      0);   // int:    positive/negative or 0
       ArrayInitialize(reversalOffset, -1);   // int:    non-negative or -1
       SetIndicatorOptions();
 
@@ -552,8 +548,7 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(zzCombined,     Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (zzTrend,        Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (zzUnknownTrend, Bars, ShiftedBars, -1);
-      ShiftDoubleIndicatorBuffer(dcCombined,     Bars, ShiftedBars,  0);
-      ShiftIntIndicatorBuffer   (reversalOffset, Bars, ShiftedBars, -1);
+      ShiftDoubleIndicatorBuffer(reversalOffset, Bars, ShiftedBars, -1);
    }
 
    // check data pumping on every tick so the reversal handler can skip errornous signals
@@ -577,7 +572,6 @@ int onTick() {
       zzCombined    [bar] =  0;
       zzTrend       [bar] =  0;
       zzUnknownTrend[bar] = -1;
-      dcCombined    [bar] =  0;
       reversalOffset[bar] = -1;
 
       // recalculate Donchian Channel
@@ -650,11 +644,9 @@ int onTick() {
          int short_trend        = zzTrend[bar]        & 0x0000FFFF;           // convert `signed int` to `signed short`
          int short_unknownTrend = zzUnknownTrend[bar] & 0x0000FFFF;           // ...
          zzCombined[bar]        = (short_unknownTrend << 16) | short_trend;   // store as HIWORD + LOWORD
-         dcCombined[bar]        = reversalOffset[bar];
       }
       else {                                                                  // "Data Window": human-readable format
          zzCombined[bar] = ifInt(zzTrend[bar] >= 0, +1, -1) * zzUnknownTrend[bar] * 100000 + zzTrend[bar];
-         dcCombined[bar] = reversalOffset[bar];
       }
    }
 
@@ -1113,11 +1105,9 @@ void SetTrend(int fromBar, int fromValue, int toBar, bool resetReversals) {
 
       if (CombinedBuffersAsBinary) {               // iCustom(): binary format
          zzCombined[i] = zzTrend[i] & 0x0000FFFF;  // convert to `signed short` and store as HIWORD + LOWORD
-         dcCombined[i] = reversalOffset[i];
       }
       else {
          zzCombined[i] = zzTrend[i];               // "Data Window": human-readable format
-         dcCombined[i] = reversalOffset[i];
       }
 
       if      (value > 0) value++;
@@ -1420,14 +1410,14 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorShortName(shortName);
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      donchianName +" upper band");  if (!Donchian.ShowChannel) SetIndexLabel(MODE_UPPER_BAND,      NULL);
-   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      donchianName +" lower band");  if (!Donchian.ShowChannel) SetIndexLabel(MODE_LOWER_BAND,      NULL);
-   SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,  0);                                                                                               SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
-   SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE, 0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, shortName +" high/low");       if (!ZigZag.Width)         SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
-   SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,     0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" extension up");   if (!crossingDrawType)     SetIndexLabel(MODE_UPPER_CROSS,     NULL);
-   SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,     0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" extension down"); if (!crossingDrawType)     SetIndexLabel(MODE_LOWER_CROSS,     NULL);
-   SetIndexBuffer(MODE_ZZ_COMBINED,     zzCombined    ); SetIndexEmptyValue(MODE_ZZ_COMBINED,     0); SetIndexLabel(MODE_ZZ_COMBINED,     shortName +" trend");
-   SetIndexBuffer(MODE_DC_COMBINED,     dcCombined    ); SetIndexEmptyValue(MODE_DC_COMBINED,     0); SetIndexLabel(MODE_DC_COMBINED,     shortName +" DC trend");
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,       0); SetIndexLabel(MODE_UPPER_BAND,      donchianName +" upper band");  if (!Donchian.ShowChannel) SetIndexLabel(MODE_UPPER_BAND,      NULL);
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,       0); SetIndexLabel(MODE_LOWER_BAND,      donchianName +" lower band");  if (!Donchian.ShowChannel) SetIndexLabel(MODE_LOWER_BAND,      NULL);
+   SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,   0);                                                                                               SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
+   SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE,  0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, shortName +" high/low");       if (!ZigZag.Width)         SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
+   SetIndexBuffer(MODE_UPPER_CROSS,     upperCross    ); SetIndexEmptyValue(MODE_UPPER_CROSS,      0); SetIndexLabel(MODE_UPPER_CROSS,     shortName +" extension up");   if (!crossingDrawType)     SetIndexLabel(MODE_UPPER_CROSS,     NULL);
+   SetIndexBuffer(MODE_LOWER_CROSS,     lowerCross    ); SetIndexEmptyValue(MODE_LOWER_CROSS,      0); SetIndexLabel(MODE_LOWER_CROSS,     shortName +" extension down"); if (!crossingDrawType)     SetIndexLabel(MODE_LOWER_CROSS,     NULL);
+   SetIndexBuffer(MODE_ZZ_COMBINED,     zzCombined    ); SetIndexEmptyValue(MODE_ZZ_COMBINED,      0); SetIndexLabel(MODE_ZZ_COMBINED,     shortName +" trend");
+   SetIndexBuffer(MODE_REVERSAL_OFFSET, reversalOffset); SetIndexEmptyValue(MODE_REVERSAL_OFFSET, -1); SetIndexLabel(MODE_REVERSAL_OFFSET, shortName +" reversal");
    IndicatorDigits(Digits);
 
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
@@ -1444,8 +1434,8 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, drawWidth, colorOr(Donchian.Crossing.Color, Donchian.Channel.UpperColor)); SetIndexArrow(MODE_UPPER_CROSS, crossingSymbol);
    SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, drawWidth, colorOr(Donchian.Crossing.Color, Donchian.Channel.LowerColor)); SetIndexArrow(MODE_LOWER_CROSS, crossingSymbol);
 
-   SetIndexStyle(MODE_ZZ_COMBINED, DRAW_NONE);
-   SetIndexStyle(MODE_DC_COMBINED, DRAW_NONE);
+   SetIndexStyle(MODE_ZZ_COMBINED,     DRAW_NONE);
+   SetIndexStyle(MODE_REVERSAL_OFFSET, DRAW_NONE);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
