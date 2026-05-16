@@ -113,6 +113,7 @@ extern int    Entry.afterLosingLegs          = 0;                    // entry af
 #include <rsf/functions/InitializeByteBuffer.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/ParseDateTime.mqh>
+#include <rsf/functions/iCustom/DonchianChannel.mqh>
 #include <rsf/functions/iCustom/ZigZag.mqh>
 #include <rsf/structs/OrderExecution.mqh>
 
@@ -313,7 +314,74 @@ bool onCommand(string cmd, string params, int keys) {
 
 
 /**
- * Whether a Donchian Channel widening occurred on the current tick.
+ * Get Donchian Channel data for the current bar and tick.
+ *
+ * @param  _Out_ double upperBand    - upper channel band
+ * @param  _Out_ double lowerBand    - lower channel band
+ * @param  _Out_ double upperCross   - crossing level if the upper band of the channel widened
+ * @param  _Out_ double lowerCross   - crossing level if the lower band of the channel widened
+ * @param  _Out_ int    trend        - direction and length of the trend
+ * @param  _Out_ bool   reversalTick - whether the current tick triggered a channel reversal (if any)
+ * @param  _Out_ bool   wideningTick - whether the current tick triggered a channel widening (if any)
+ *
+ * @return bool - success status
+ */
+bool GetDonchianChannelData(double &upperBand, double &lowerBand, double &upperCross, double &lowerCross, int &trend, bool &reversalTick, bool &wideningTick) {
+   static int lastTick, lastTrend;
+   static double lastUpperBand, lastLowerBand, lastUpperCross, lastLowerCross;
+   static bool lastReversalTick, lastWideningTick;
+
+   if (Ticks == lastTick) {
+      upperBand    = lastUpperBand;
+      lowerBand    = lastLowerBand;
+      upperCross   = lastUpperCross;
+      lowerCross   = lastLowerCross;
+      trend        = lastTrend;
+      reversalTick = lastReversalTick;
+      wideningTick = lastWideningTick;
+   }
+   else {
+      upperBand    = 0;
+      lowerBand    = 0;
+      upperCross   = 0;
+      lowerCross   = 0;
+      trend        = 0;
+      reversalTick = false;
+      wideningTick = false;
+
+      upperBand = icDonchianChannel(NULL, ZigZag.Periods, Donchian.MODE_UPPER_BAND, 0);
+      lowerBand = icDonchianChannel(NULL, ZigZag.Periods, Donchian.MODE_LOWER_BAND, 0);
+      if (!upperBand || !lowerBand) return(!catch("GetDonchianChannelData(1)  "+ instance.name +"  unexpected result: bar=0|"+ TimeToStr(Time[0]) +"  upperBand="+ NumberToStr(upperBand, PriceFormat) +"  lowerBand="+ NumberToStr(lowerBand, PriceFormat), ERR_ILLEGAL_STATE));
+
+      double upperBand1 = icDonchianChannel(NULL, ZigZag.Periods, Donchian.MODE_UPPER_BAND, 1);
+      double lowerBand1 = icDonchianChannel(NULL, ZigZag.Periods, Donchian.MODE_LOWER_BAND, 1);
+      if (!upperBand1 || !lowerBand1) return(!catch("GetDonchianChannelData(2)  "+ instance.name +"  unexpected result: bar=1|"+ TimeToStr(Time[1]) +"  upperBand="+ NumberToStr(upperBand1, PriceFormat) +"  lowerBand="+ NumberToStr(lowerBand1, PriceFormat), ERR_ILLEGAL_STATE));
+      if (upperBand > upperBand1+HalfPoint) upperCross = upperBand1;
+      if (lowerBand < lowerBand1-HalfPoint) lowerCross = lowerBand1;
+
+      trend = icDonchianChannel(NULL, ZigZag.Periods, Donchian.MODE_TREND, 0);
+      if (!trend) return(!catch("GetDonchianChannelData(3)  "+ instance.name +"  unexpected result: bar=0|"+ TimeToStr(Time[0]) +"  trend="+ trend, ERR_ILLEGAL_STATE));
+
+      if (Ticks == lastTick + 1) {
+         reversalTick = (trend * lastTrend < 0);
+         wideningTick = (upperBand > lastUpperBand+HalfPoint || lowerBand < lastLowerBand-HalfPoint);
+      }
+
+      lastTick         = Ticks;
+      lastUpperBand    = upperBand;
+      lastLowerBand    = lowerBand;
+      lastUpperCross   = upperCross;
+      lastLowerCross   = lowerCross;
+      lastTrend        = trend;
+      lastReversalTick = reversalTick;
+      lastWideningTick = wideningTick;
+   }
+   return(!last_error);
+}
+
+
+/**
+ * Whether a Donchian Channel widening occurred at the current tick.
  *
  * @param  _Out_ double signal[] - array receiving signal details
  *
@@ -335,34 +403,17 @@ bool IsDonchianChannelWidening(double &signal[]) {
       signal[SIG_PRICE] = 0;
       signal[SIG_OP   ] = 0;
 
-      // TODO: remove all ZigZag logic and use only the indicator
-      static double lastUpperBand, lastLowerBand;
+      double upperBand, lowerBand, upperCross, lowerCross;
+      int trend;
+      bool reversalTick, wideningTick;
+      if (!GetDonchianChannelData(upperBand, lowerBand, upperCross, lowerCross, trend, reversalTick, wideningTick)) return(false);
 
-      double upperBand, lowerBand, upperCrossing, lowerCrossing;
-      if (!GetDonchianChannel(0, upperBand, lowerBand, upperCrossing, lowerCrossing)) return(false);
-
-      if (Ticks == lastTick + 1) {
-         if (lastUpperBand && lastLowerBand) {
-            if (upperBand > lastUpperBand+HalfPoint) {
-               signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
-               signal[SIG_PRICE] = upperCrossing;
-               signal[SIG_OP   ] = SIG_OP_CLOSE_SHORT|SIG_OP_LONG;
-            }
-            else if (lowerBand < lastLowerBand-HalfPoint) {
-               signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
-               signal[SIG_PRICE] = lowerCrossing;
-               signal[SIG_OP   ] = SIG_OP_CLOSE_LONG|SIG_OP_SHORT;
-            }
-            if (signal[SIG_TYPE] != 0) {
-               if (!signal[SIG_PRICE]) {
-                  return(!catch("IsDonchianChannelWidening(1)  "+ instance.name +" unexpected bar=0 "+ TimeToStr(Time[0]) +"  upperBand="+ NumberToStr(upperBand, PriceFormat) +"  upperCrossing="+ NumberToStr(upperCrossing, PriceFormat) +"  lowerBand="+ NumberToStr(lowerBand, PriceFormat) +"  lowerCrossing="+ NumberToStr(lowerCrossing, PriceFormat), ERR_ILLEGAL_STATE));
-               }
-               if (IsLogNotice()) logNotice("IsDonchianChannelWidening(2)  "+ instance.name +" "+ ifString(_int(signal[SIG_OP]) & SIG_OP_LONG, "long", "short") +" widening at "+ NumberToStr(signal[SIG_PRICE], PriceFormat) +" (market: "+ NumberToStr(_Bid, PriceFormat) +"/"+ NumberToStr(_Ask, PriceFormat) +")");
-            }
-         }
+      if (wideningTick) {
+         signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
+         signal[SIG_PRICE] = ifDouble(trend > 0, upperCross, lowerCross);
+         signal[SIG_OP   ] = ifInt(trend > 0, SIG_OP_CLOSE_SHORT|SIG_OP_LONG, SIG_OP_CLOSE_LONG|SIG_OP_SHORT);
+         if (IsLogNotice()) logNotice("IsDonchianChannelWidening(1)  "+ instance.name +" "+ ifString(trend > 0, "long", "short") +" widening at "+ NumberToStr(signal[SIG_PRICE], PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       }
-      lastUpperBand = upperBand;
-      lastLowerBand = lowerBand;
 
       lastTick     = Ticks;
       lastSigType  = signal[SIG_TYPE ];
@@ -374,40 +425,7 @@ bool IsDonchianChannelWidening(double &signal[]) {
 
 
 /**
- * Get Donchian Channel values at the specified bar offset.
- *
- * @param  _In_  int    bar           - bar offset
- * @param  _Out_ double upperBand     - upper channel band
- * @param  _Out_ double lowerBand     - lower channel band
- * @param  _Out_ double upperCrossing - crossing level if the upper band widened, 0 otherwise
- * @param  _Out_ double lowerCrossing - crossing level if the lower band widened, 0 otherwise
- *
- * @return bool - success status
- */
-bool GetDonchianChannel(int bar, double &upperBand, double &lowerBand, double &upperCrossing, double &lowerCrossing) {
-   upperBand = NULL;
-   lowerBand = NULL;
-   upperCrossing = NULL;
-   lowerCrossing = NULL;
-
-   double upper = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_BAND, bar);
-   double lower = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_BAND, bar);
-   if (!upper || !lower) {
-      return(!catch("GetDonchianChannel(1)  "+ instance.name +"  unexpected result: bar="+ bar +" "+ TimeToStr(Time[bar]) +"  upperBand="+ NumberToStr(upper, PriceFormat) +"  lowerBand="+ NumberToStr(lower, PriceFormat), ERR_ILLEGAL_STATE));
-   }
-   upperBand = upper;
-   lowerBand = lower;
-
-   upperCrossing = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
-   lowerCrossing = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, bar);
-
-   return(!last_error);
-}
-
-
-/**
- * Whether a new ZigZag reversal occurred. Returns the same result for the same tick.
- * Multiple reversals can occur in a single bar. The function returns a new signal for every new reversal (if any).
+ * Whether a ZigZag reversal occurred at the current tick.
  *
  * @param  _Out_ double signal[] - array receiving signal details
  *
@@ -434,7 +452,7 @@ bool IsZigZagSignal(double &signal[]) {
 
       int reversalType = NULL;
       double reversalPrice = NULL;
-      bool isReversal = IsZigZagReversalBar(0, reversalType, reversalPrice);
+      bool isReversal = IsZigZagReversal(reversalType, reversalPrice);
 
       if (isReversal) {
          bool isNewReversal = (Time[0] != lastTickBarTime || isReversal != lastTickIsReversal || reversalType != lastTickReversalType);
@@ -460,64 +478,63 @@ bool IsZigZagSignal(double &signal[]) {
 
 
 /**
- * Whether the specified bar is a ZigZag reversal bar. Not whether the current tick triggered a reversal.
+ * Whether a ZigZag reversal occurred at the current bar. Not whether the current tick triggered a reversal.
  * Multiple reversals can occur in a single bar. The function returns the data of the last reversal (if any).
  *
- * @param  _In_  int    bar           - bar offset
  * @param  _Out_ int    reversalType  - type of the reversal: MODE_UPPER | MODE_LOWER
  * @param  _Out_ double reversalPrice - reversal price
  *
  * @return bool
  */
-bool IsZigZagReversalBar(int bar, int &reversalType, double &reversalPrice) {       // TODO: 56% of the EA's total runtime is spent in this function
+bool IsZigZagReversal(int &reversalType, double &reversalPrice) {                   // TODO: 56% of the EA's total runtime is spent in this function
    reversalType = NULL;
    reversalPrice = NULL;
 
    // TODO: remove all ZigZag logic and use only the indicator                      // 85% of the local time here
-   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, bar);
+   int data = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_COMBINED_TREND, 0);
 
    int trend = data & 0xFFFF;                                     // extract LOWORD
    if ((trend & 0x8000) != 0) trend |= 0xFFFF0000;                // convert `signed short` to `signed int`
 
    int unknownTrend = (data >> 16) & 0xFFFF;                      // extract HIWORD
    if ((unknownTrend & 0x8000) != 0) unknownTrend |= 0xFFFF0000;  // convert `signed short` to `signed int`
-   if (unknownTrend < 0) return(!catch("IsZigZagReversalBar(1)  "+ instance.name +"  unexpected bar="+ bar +"  "+ TimeToStr(Time[bar]) +"  combinedTrend="+ data +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
+   if (unknownTrend < 0) return(!catch("IsZigZagReversal(1)  "+ instance.name +"  unexpected bar=0|"+ TimeToStr(Time[0]) +"  combinedTrend="+ data +"  trend="+ trend +"  unknownTrend="+ unknownTrend, ERR_ILLEGAL_STATE));
 
    static int lastTickBarTime, lastTickReversalType;
    static bool lastTickIsReversal;
 
-   if (unknownTrend <= 0) {
-      int reversalOffset = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL_OFFSET, bar);
+   if (unknownTrend == 0) {
+      int reversalOffset = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL_OFFSET, 0);
 
       if (Abs(trend) == reversalOffset) {
-         int semBar = bar + reversalOffset;                       // last semaphore bar before the reversal
+         int semBar = reversalOffset;                             // last semaphore bar before the reversal
          double semaphoreClose = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_SEMAPHORE_CLOSE, semBar);
 
          if (semaphoreClose > High[semBar]-HalfPoint) {
-            if (bar == semBar) {
+            if (semBar == 0) {
                reversalType  = MODE_UPPER;
-               reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
+               reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, 0);
             }
             else {
                reversalType  = MODE_LOWER;
-               reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, bar);
+               reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, 0);
             }
          }
          else if (semaphoreClose < Low[semBar]+HalfPoint) {
-            if (bar == semBar) {
+            if (semBar == 0) {
                reversalType  = MODE_LOWER;
-               reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, bar);
+               reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_LOWER_CROSS, 0);
             }
             else {
                reversalType  = MODE_UPPER;
-               reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, bar);
+               reversalPrice = icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_UPPER_CROSS, 0);
             }
          }
-         else return(!catch("IsZigZagReversalBar(2)  "+ instance.name +"  invalid semaphoreClose: combinedTrend["+ bar +"]="+ data +"  trend["+ bar +"]="+ trend +"  unknownTrend["+ bar +"]="+ unknownTrend +"  reversalOffset["+ bar +"]="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat) +"  High["+ semBar +"]="+ NumberToStr(High[semBar], PriceFormat) +"  Low["+ semBar +"]="+ NumberToStr(Low[semBar], PriceFormat), ERR_ILLEGAL_STATE));
+         else return(!catch("IsZigZagReversal(2)  "+ instance.name +"  invalid semaphoreClose: combinedTrend[0]="+ data +"  trend[0]="+ trend +"  unknownTrend[0]="+ unknownTrend +"  reversalOffset[0]="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat) +"  High["+ semBar +"]="+ NumberToStr(High[semBar], PriceFormat) +"  Low["+ semBar +"]="+ NumberToStr(Low[semBar], PriceFormat), ERR_ILLEGAL_STATE));
 
          bool isNewReversal = (Time[0] != lastTickBarTime || !lastTickIsReversal || reversalType != lastTickReversalType);
          if (isNewReversal) {
-            logInfo("IsZigZagReversalBar(3)  "+ instance.name +"  "+ ifString(reversalType == MODE_UPPER, "long", "short") +" reversal at bar "+ bar +" and price "+ NumberToStr(reversalPrice, PriceFormat) +": "+ TimeToStr(Time[bar]) +"  combinedTrend="+ data +"  trend="+ trend +"  unknownTrend="+ unknownTrend +"  reversalOffset="+ reversalOffset +"  semBar="+ semBar +"  "+ TimeToStr(Time[semBar]) +"  semaphoreClose["+ semBar +"]="+ NumberToStr(semaphoreClose, PriceFormat));
+            logInfo("IsZigZagReversal(3)  "+ instance.name +"  "+ ifString(reversalType == MODE_UPPER, "long", "short") +" reversal at price "+ NumberToStr(reversalPrice, PriceFormat) +" (bar 0)");
          }
          lastTickBarTime      = Time[0];
          lastTickIsReversal   = true;
@@ -733,15 +750,15 @@ bool IsEntrySignal(double &signal[]) {
 
    // ZigZag reversal (also a Donchian Channel widening)
    if (IsZigZagSignal(signal)) {
-      return(true);
-   }                                            // TODO: A ZigZag reversal is also a Donchian Channel widening. Both
-                                                //  IsZigZagSignal() and IsDonchianChannelWidening() keep separate static tick
-   // Donchian Channel widening                 //  state. If IsZigZagSignal() is not called on every tick it will wrongly
-   if (Entry.onChannelWidening) {               //  redetect the same widening reported by IsDonchianChannelWidening().
-      if (IsDonchianChannelWidening(signal)) {  //
-         return(true);                          // Solution: No static state at all, events must be signaled by the indicator
-      }
-   }
+      return(true);                             // TODO:
+   }                                            // A ZigZag reversal is also a Donchian Channel widening. Both IsZigZagSignal()
+                                                // and IsDonchianChannelWidening() maintain tick state separately.
+   // Donchian Channel widening                 // If IsZigZagSignal() is not called on every tick it will redetect the start
+   if (Entry.onChannelWidening) {               // widening at the next tick as a reversal and trigger a position flip (error).
+      if (IsDonchianChannelWidening(signal)) {  // For this reason they must always be called together.
+         return(true);                          //
+      }                                         // Solution 1: Both functions must use the same static tick state.
+   }                                            // Solution 2: Remove static state, events must be signaled by the indicator.
    return(false);
 }
 

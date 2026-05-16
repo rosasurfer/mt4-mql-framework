@@ -264,7 +264,7 @@ int      lastSoundSignal;                                   // GetTickCount() va
 //    int    unknownTrend  :  0 or positive
 //    int    reversalOffset:  positive
 //
-// • Bar of ZigZag leg down
+// • Bar of ZigZag leg down (no semaphore)
 //    double upperBand     :  positive
 //    double lowerBand     :  positive
 //    double upperCross    :  0 (default)
