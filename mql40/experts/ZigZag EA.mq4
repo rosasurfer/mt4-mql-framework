@@ -99,7 +99,7 @@ extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Entry conditions ===";
 extern bool   Entry.onChannelWidening        = false;                // entry when the Donchian Channel widens
-extern int    Entry.afterLosingLegs          = 0;                    // entry after number of consecutive losing legs
+//     int    Entry.afterLosingLegs          = 0;                    // entry after number of consecutive losing legs
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -241,7 +241,7 @@ int onTick() {
          if (IsStopSignal(signal)) {
             StopTrading(signal);
          }
-         else if (IsDonchianChannelReversal(signal)) {
+         else if (IsZigZagReversal(signal)) {
             ReversePosition(signal);
          }
       }
@@ -324,7 +324,7 @@ bool onCommand(string cmd, string params, int keys) {
  * @param  _Out_ bool   wideningTick - whether the current tick triggered a channel widening (if any)
  *
  * @return bool - success status
- */                                                                                       // TODO: 56% of the EA's total runtime is spent in this function
+ */                                                                                       // TODO: 56% of the EA's total time is spent here
 bool GetDonchianChannelData(double &upperBand, double &lowerBand, double &upperCross, double &lowerCross, int &trend, bool &reversalTick, bool &wideningTick) {
    static int lastTick, lastTrend;
    static double lastUpperBand, lastLowerBand, lastUpperCross, lastLowerCross;
@@ -411,7 +411,8 @@ bool IsDonchianChannelWidening(double &signal[]) {
          signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
          signal[SIG_PRICE] = ifDouble(trend > 0, upperCross, lowerCross);
          signal[SIG_OP   ] = ifInt(trend > 0, SIG_OP_CLOSE_SHORT|SIG_OP_LONG, SIG_OP_CLOSE_LONG|SIG_OP_SHORT);
-         if (IsLogNotice()) logNotice("IsDonchianChannelWidening(1)  "+ instance.name +" "+ ifString(trend > 0, "long", "short") +" widening at "+ NumberToStr(signal[SIG_PRICE], PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         double triggerPrice = ifDouble(trend > 0, upperCross+Point, lowerCross-Point);
+         if (IsLogNotice()) logNotice("IsDonchianChannelWidening(1)  "+ instance.name +" "+ ifString(trend > 0, "long", "short") +" widening at "+ NumberToStr(triggerPrice, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       }
 
       lastTick     = Ticks;
@@ -424,13 +425,13 @@ bool IsDonchianChannelWidening(double &signal[]) {
 
 
 /**
- * Whether a Donchian Channel reversal occurred at the current tick.
+ * Whether a ZigZag reversal occurred at the current tick.
  *
  * @param  _Out_ double signal[] - array receiving signal details
  *
  * @return bool
  */
-bool IsDonchianChannelReversal(double &signal[]) {
+bool IsZigZagReversal(double &signal[]) {
    if (last_error != NULL) return(false);
 
    static int lastTick, lastSigType, lastSigOp;
@@ -455,7 +456,8 @@ bool IsDonchianChannelReversal(double &signal[]) {
          signal[SIG_TYPE ] = SIG_TYPE_ZIGZAG;
          signal[SIG_PRICE] = ifDouble(trend > 0, upperCross, lowerCross);
          signal[SIG_OP   ] = ifInt(trend > 0, SIG_OP_CLOSE_SHORT|SIG_OP_LONG, SIG_OP_CLOSE_LONG|SIG_OP_SHORT);
-         if (IsLogNotice()) logNotice("IsDonchianChannelReversal(1)  "+ instance.name +" "+ ifString(trend > 0, "long", "short") +" reversal at "+ NumberToStr(signal[SIG_PRICE], PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         double triggerPrice = ifDouble(trend > 0, upperCross+Point, lowerCross-Point);
+         if (IsLogNotice()) logNotice("IsZigZagReversal(1)  "+ instance.name +" "+ ifString(trend > 0, "long", "short") +" reversal at "+ NumberToStr(triggerPrice, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       }
 
       lastTick     = Ticks;
@@ -656,8 +658,8 @@ bool IsEntrySignal(double &signal[]) {
       }
    }
 
-   // Donchian Channel reversal (also a widening)
-   if (IsDonchianChannelReversal(signal)) {
+   // ZigZag reversal (also a Donchian Channel widening)
+   if (IsZigZagReversal(signal)) {
       return(true);
    }
    return(false);

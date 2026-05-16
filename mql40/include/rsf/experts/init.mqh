@@ -8,7 +8,6 @@
  */
 int onInit() {
    status.commentPrefix = CreateStatusBox();
-   debug("onInit(0.1)");
    return(catch("onInit(1)"));
 }
 
