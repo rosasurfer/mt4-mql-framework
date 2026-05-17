@@ -2273,9 +2273,10 @@ int SearchLfxTicket(int ticket) {
  *
  * @return bool - success status
  *
- * Fills config.sData[], config.dData[] und config.terms[] with parsed configuration data of the current chart symbol. On return
- * config.terms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL) marks the end of a
- * configuration line and also an empty configuration. On return config.terms[] is never empty and holds at least one EOL marker.
+ * Fills config.sData[], config.dData[] und config.terms[] with parsed configuration data of the current chart symbol.
+ * On return config.terms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL)
+ * marks the end of a configuration line and also an empty configuration. On return config.terms[] is never empty and
+ * holds at least one EOL marker.
  *
  * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
  * | Syntax                                          | Description                                                              | Content of config.terms[][] (7)                                     |
@@ -2306,7 +2307,7 @@ int SearchLfxTicket(int ticket) {
  * | LM=-5%                                          | calculate price of the specified %PnL and draw a loss marker             | [TERM_LOSS_MARKER,    ...,              -5.0,             ..., ...] |
  * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
  * | MFE                                             | track MFE/MAE                                                            | TERM_MFAE, stored in config.dData[]                                 |
- * | MFE[-MS]                                        | track MFE/MAE + flags: M - mark level, S - signal new high/low           | TERM_MFAE + flags, stored in config.dData[]                         |
+ * | MFE[-MS]                                        | track MFE/MAE + flags: (M)ark level, (S)ignal new high/low               | TERM_MFAE + flags, stored in config.dData[]                         |
  * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
  * | any text after a semicolon ";" aka .ini comment | displayed as position description                                        | stored in config.sData[]                                            |
  * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                           |                                                                     |
@@ -2315,10 +2316,10 @@ int SearchLfxTicket(int ticket) {
  *  Example configuration (6)
  *  -------------------------
  *  [CustomPositions]
- *  GBPAUD.a = #111111, 0.1#222222                    // full ticket #111111, plus 0.1 lot of ticket #222222
- *  GBPAUD.b = 0.2L@1.6500, #222222                   // virtual long position of 0.2 lot at 1.6500, plus remainder of #222222 (2)
- *  GBPAUD.c = L, S, -34.56, LM=-3%                   // all remaining positions incl. remainder of #222222, plus loss of -34.56, loss marker at PL=-3%
- *  GBPAUD.d = 0.3S                                   // virtual short position of 0.3 lot at current price
+ *  GBPAUD.a = #111111, 0.1#222222        // full ticket #111111, plus 0.1 lot of ticket #222222
+ *  GBPAUD.b = 0.2L@1.6500, #222222       // virtual long position of 0.2 lot at 1.6500, plus remainder of #222222 (2)
+ *  GBPAUD.c = L, S, -34.56, LM=-3%       // all remaining positions incl. remainder of #222222, plus loss of -34.56, loss marker at PL=-3%
+ *  GBPAUD.d = 0.3S                       // virtual short position of 0.3 lot at current price
  *
  *
  *  Resulting array config.terms[] for the above example (7)
@@ -2350,7 +2351,7 @@ int SearchLfxTicket(int ticket) {
  *  (3) Zeitangaben im Format: 2014[.01[.15 [W|12:30[:45]]]]
  *  (4) Einer der beiden Zeitpunkte kann leer sein und steht jeweils für "von Beginn" oder "bis Ende".
  *  (5) Ein Historyzeitraum kann tages-, wochen- oder monatsweise gruppiert werden, solange er nicht mit anderen Positionen kombiniert wird.
- *  (6) Die Positionen werden unabhängig von den Schlüsseln in der Reihenfolge ihrer Notierung angezeigt.
+ *  (6) Die Positionen werden unabhängig von den Schlüsseln in der Reihenfolge ihres Auftretens angezeigt.
  *  (7) "..." denotes fields not used by the term
  */
 bool CustomPositions.ReadConfig() {

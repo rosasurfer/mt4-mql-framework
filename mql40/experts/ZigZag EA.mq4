@@ -1,7 +1,8 @@
 /**
  * ZigZag EA
  *
- * This EA trades ZigZag reversals. That's breakouts from a Donchian Channel, which is the basis of the ZigZag.
+ * This EA trades ZigZag reversals. That's breakouts from a Donchian Channel which is the basis of the MT4 standard
+ * implementation of "ZigZag".
  *
  *
  * DISCLAIMER:
@@ -12,11 +13,8 @@
  *
  * Requirements
  * ------------
- *  /mql40/experts/ZigZag EA.ex4                      // this program
- *  /mql40/indicators/ZigZag.ex4                      // the ZigZag indicator provided by MetaQuotes can't be used
- *  /mql40/scripts/Config.ex4
- *  /mql40/scripts/Chart.ToggleOpenOrders.ex4
- *  /mql40/scripts/Chart.ToggleTradeHistory.ex4
+ *  /mql40/experts/ZigZag EA.ex4                // this program
+ *  /mql40/indicators/Donchian Channel.ex4
  *  /mql40/scripts/EA.Start.ex4
  *  /mql40/scripts/EA.EntrySignal.ex4
  *  /mql40/scripts/EA.Stop.ex4
@@ -31,17 +29,17 @@
  *
  * Inputs
  * ------
- *  • ZigZag.Periods:  Look-back periods of the Donchian Channel.
+ *  • ZigZag.Periods:  Look-back periods of the ZigZag/Donchian Channel.
  *
  *
  * Manual control
  * --------------
- *  • EA.Start:       When a "start" command is received a stopped EA switches to status "waiting", waits for new signals
- *                    and trades accordingly. The command is ignored if the EA is not in status "stopped".
- *  • EA.EntrySignal: When an "entry-signal" command is received the EA switches to status "trading" and opens a position in
- *                    direction of the current ZigZag leg. The command is ignored if the EA already is in status "trading".
- *  • EA.Stop:        When a "stop" command is received the EA closes all open positions and switches to status "stopped".
- *                    The command is ignored if the EA already is in status "stopped".
+ *  • EA.Start:       When command "start" is received a stopped EA switches to status "waiting", waits for new signals and
+ *                    starts trading. Ignored if the EA is not in status "stopped".
+ *  • EA.EntrySignal: When command "entry-signal" is received the EA switches to status "trading" and immediately opens a
+ *                    position in direction of the current ZigZag leg. Ignored if the EA already is in status "trading".
+ *  • EA.Stop:        When command "stop" is received the EA closes all open positions and switches to status "stopped".
+ *                    Ignored if the EA already is in status "stopped".
  *
  *
  * TODO:
@@ -65,19 +63,19 @@
  *  - reduce slippage on short reversal: enter market via StopSell
  *
  *  - trade breaks
- *    - full session (24h) with trade breaks
- *    - partial session (e.g. 09:00-16:00) with trade breaks
- *    - trading is disabled but the price feed is active
- *    - configuration:
- *       default: auto-config using the SYMBOL configuration
- *       manual override of times and behaviors (per instance => via input parameters)
- *    - default behavior:
- *       no trade commands
- *       synchronize-after if an opposite signal occurred
- *    - manual behavior configuration:
- *       close-before      (default: no)
- *       synchronize-after (default: yes; if no: wait for the next signal)
- *    - config support for session and trade breaks at specific day times
+ *     full session (24h) with trade breaks
+ *     partial session (e.g. 09:00-16:00) with trade breaks
+ *     trading is disabled but the price feed is active
+ *     configuration:
+ *      default: auto-config using the SYMBOL configuration
+ *      manual override of times and behaviors (per instance => via input parameters)
+ *     default behavior:
+ *      no trade commands
+ *      synchronize-after if an opposite signal occurred
+ *     manual behavior configuration:
+ *      close-before      (default: no)
+ *      synchronize-after (default: yes; if no: wait for the next signal)
+ *     config support for session and trade breaks at specific day times
  */
 #define STRATEGY_ID  107                                             // unique strategy id
 
@@ -88,8 +86,8 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Instance.ID                    = "";                   // instance to load from a status file, format "[T]123"
-extern string Instance.StartAt               = "@time(00:02)";       // @time(datetime|time)
-extern string Instance.StopAt                = "@time(23:58)";       // @time(datetime|time) || @profit(numeric[%])
+extern string Instance.StartAt               = "@time(00:05)";       // @time(datetime|time)
+extern string Instance.StopAt                = "@time(23:55)";       // @time(datetime|time) || @profit(numeric[%])
 
 extern string ___a__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 200;
@@ -99,7 +97,6 @@ extern double Lots                           = 0.1;
 
 extern string ___c__________________________ = "=== Entry conditions ===";
 extern bool   Entry.onChannelWidening        = false;                // entry when the Donchian Channel widens
-//     int    Entry.afterLosingLegs          = 0;                    // entry after number of consecutive losing legs
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
