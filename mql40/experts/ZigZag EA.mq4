@@ -752,14 +752,14 @@ bool StartTrading(double signal[]) {
    open.lots         = NormalizeDouble(oe.Lots(oe), 2);
    open.time         = oe.OpenTime(oe);
    open.price        = NormalizeDouble(oe.OpenPrice(oe), Digits);
-   open.priceSig     = NormalizeDouble(ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, _Bid), 2);
+   open.priceSig     = NormalizeDouble(ifDouble(sigType==SIG_TYPE_ZIGZAG, sigPrice, Bid), Digits);
    open.slippageP    = NormalizeDouble(oe.Slippage(oe), Digits);
    open.swapM        = NormalizeDouble(oe.Swap(oe), 2);
    open.commissionM  = NormalizeDouble(oe.Commission(oe), 2);
    open.grossProfitM = NormalizeDouble(oe.Profit(oe), 2);
    open.netProfitM   = NormalizeDouble(open.grossProfitM + open.swapM + open.commissionM, 2);
-   open.netProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
-   open.runupP       = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask), Digits);
+   open.netProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
+   open.runupP       = NormalizeDouble(ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask), Digits);
    open.rundownP     = open.runupP;
    open.sigProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid), Digits);
    open.sigRunupP    = open.sigProfitP;
@@ -865,10 +865,10 @@ bool ReversePosition(double signal[]) {
    open.commissionM  = NormalizeDouble(oe.Commission(oe), 2);
    open.grossProfitM = NormalizeDouble(oe.Profit(oe), 2);
    open.netProfitM   = NormalizeDouble(open.grossProfitM + open.swapM + open.commissionM, 2);
-   open.netProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask) + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
-   open.runupP       = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.price, open.price-_Ask), Digits);
+   open.netProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
+   open.runupP       = NormalizeDouble(ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask), Digits);
    open.rundownP     = open.runupP;
-   open.sigProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid), Digits);
+   open.sigProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid), Digits);
    open.sigRunupP    = open.sigProfitP;
    open.sigRundownP  = open.sigProfitP;
 
