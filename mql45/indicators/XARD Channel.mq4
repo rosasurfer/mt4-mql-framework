@@ -3,9 +3,10 @@
  *
  *
  * - A Moving Average channel is a channel formed by MA(Periods, PRICE_HIGH) and MA(Periods, PRICE_LOW).
- * - Each Moving Average changes color when BarClose crosses the outer (i.e. opposite) side of its channel.
- * - Candles are bullish if BarClose is above all MA channels, candles are bearish if BarClose is below all MA channels and
- *   candles are neutral if BarClose position is mixed.
+ * - Each Moving Average changes color when BarClose crosses the opposite side of its channel.
+ * - Candles are bullish if all Moving Averages indicate rising prices.
+ * - Candles are bearish if all Moving Averages indicate falling prices.
+ * - Candles are neutral if Moving Averages indicate mixed direction.
  *
  *
  * This indicator is a combination of:

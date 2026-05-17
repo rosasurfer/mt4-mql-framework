@@ -1,8 +1,6 @@
-<!--
-EMA(144)
-ALMA(38)
-LWMA(55) Channel + Channel Bars + Signal
-CCI(14) + Signal
+<!-- 
+Donchian Channel(50)
+Donchian Channel(30) Width in main window 
 -->
 
 <chart>
@@ -11,7 +9,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=4
+scale=2
 graph=1
 fore=0
 grid=0
@@ -44,7 +42,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=4640
+height=5000
 fixed_height=0
 
 <indicator>
@@ -121,111 +119,41 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Trend Bars
+name=Donchian Channel
 flags=339
 window_num=0
 <inputs>
-Channel.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Channel.Periods=55
-Color.UpTrend=16711680
-Color.DownTrend=255
-Color.NoTrend=11119017
-BarWidth=2
-AutoConfiguration=0
+Periods=50
+Channel.UpperColor=16711680
+Channel.LowerColor=255
+ShowReversals=on* | off | +N | -N
+Reversal.Width=2
+Signal.onReversal=1
+Signal.onReversal.Types=sound* | alert* | mail | telegram
+Sound.onChannelWidening=0
 </inputs>
 </expert>
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=MA Channel
-flags=339
-window_num=0
-<inputs>
-Channel.Definition=LWMA(55)
-ShowChartLegend=0
-AutoConfiguration=0
-</inputs>
-</expert>
+style_0=2
+style_1=2
 show_data=1
 </indicator>
 
 <indicator>
 name=Custom Indicator
 <expert>
-name=ALMA
-flags=339
-window_num=0
-<inputs>
-MA.Periods=38
-MA.ReversalFilter.StdDev=0.2
-UpTrend.Color=16711680
-DownTrend.Color=16776960
-Background.Color=16748574
-ShowChartLegend=0
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=140
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=MA Channel Band
+name=Donchian Channel Width
 flags=339
 window_num=1
 <inputs>
-Channel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Channel.MA.Periods=55
-MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
-MA.Periods=10
-Signal.onTrendChange=0
-Signal.onTrendChange.Types=sound* | alert* | mail
+Periods=50
 </inputs>
 </expert>
-min=-1.0
-max=1.0
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=500
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=CCI
-flags=339
-window_num=2
-<inputs>
-Periods=14
-AppliedPrice=Open | High | Low | Close | Median | Typical* | Weighted
-Signal.onTrendChange=0
-Signal.onTrendChange.Types=sound* | alert* | mail
-</inputs>
-</expert>
-draw_2=2
-color_2=3329330
-weight_2=2
-draw_3=2
-color_3=255
-weight_3=2
-min=-180
-max=180
-levels_color=12632256
-levels_style=2
-levels_weight=1
-level_0=100
-level_1=0
-level_2=-100
+level_0=10
+level_1=20
+level_2=200
+level_3=500
+level_4=1000
+levels_color=15453831
 show_data=1
 </indicator>
 </window>

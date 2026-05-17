@@ -39,7 +39,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MaChannel.mqh>
+#include <rsf/functions/iCustom/MAChannel.mqh>
 #include <rsf/functions/iCustom/MovingAverage.mqh>
 #include <rsf/win32api.mqh>
 
@@ -373,7 +373,7 @@ bool CreateTrendHints() {
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 37);
-   ObjectSet    (label, OBJPROP_YDISTANCE,  1);
+   ObjectSet    (label, OBJPROP_YDISTANCE,  0);
    ObjectSetText(label, " ");
    trendHintCloseLabel = label;
 
@@ -381,7 +381,7 @@ bool CreateTrendHints() {
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, window)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, 7);
-   ObjectSet    (label, OBJPROP_YDISTANCE, 1);
+   ObjectSet    (label, OBJPROP_YDISTANCE, 0);
    ObjectSetText(label, " ");
    trendHintMaLabel = label;
 

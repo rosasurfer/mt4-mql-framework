@@ -101,7 +101,7 @@ bool ComputeFloatingProfits(string &symbols[], double &profits[], bool includePe
  * Compute the floating profit of a single symbol. Profit of hedged positions is calculated in the most effective way,
  * ie. hedged positions are closed "one by another".
  *
- * Should be called from ComputeFloatingProfits() only.
+ * Called from ComputeFloatingProfits() only.
  *
  * @param  _In_    string symbol                  - symbol
  * @param  _In_    int    symbolIndex             - symbol index in symbols[]

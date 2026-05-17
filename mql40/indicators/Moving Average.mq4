@@ -225,7 +225,7 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
+   // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
    if (__isChart && MA.Periods.Step) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
    }
@@ -458,7 +458,7 @@ bool SetIndicatorOptions(bool redraw = false) {
 
 
 /**
- * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads and terminal restarts).
  *
  * @return bool - success status
  */

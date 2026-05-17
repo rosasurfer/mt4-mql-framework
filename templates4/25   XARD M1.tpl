@@ -348,21 +348,20 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=Donchian Channel
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=50
-ZigZag.Width=0
-Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=9470064
-Donchian.Channel.LowerColor=9470064
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Width=3
-Donchian.Crossing.Color=16711935
+Periods=50
+Channel.UpperColor=9470064
+Channel.LowerColor=9470064
+ShowReversals=on* | off | +N | -N
+Reversal.Width=3
+Reversal.Color=16711935
 ShowChartLegend=1
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
+Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_0=2

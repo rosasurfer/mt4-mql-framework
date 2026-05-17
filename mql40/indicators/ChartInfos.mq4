@@ -250,7 +250,7 @@ bool    display.externalBalance = false;
  * @return int - error status
  */
 int onTick() {
-   if (!__isChart) return(last_error);
+   if (!__isChart || __isSuperContext) return(last_error);
 
    mm.done = false;
    positions.analyzed = false;
@@ -359,7 +359,7 @@ bool onCommand(string cmd, string params, int keys) {
  * Toggle the display of open orders.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CUSTOM_POSITIONS: show configured positions only (no unconfigured or pending ones)
+ *                                F_SHOW_CUSTOM_POSITIONS: show custom positions only (default: all open orders)
  * @return bool - success status
  */
 bool ToggleOpenOrders(int flags = NULL) {
@@ -372,7 +372,7 @@ bool ToggleOpenOrders(int flags = NULL) {
       if (orders == -1) return(false);
       if (!orders) {
          showOrders = false;                          // Reset status without open orders to continue with the "off" section
-         PlaySoundEx("Plonk.wav");                    // which clears existing (e.g. orphaned) open order markers.
+         PlaySoundEx("Plonk.wav");                    // which clears existing and orphaned open order markers.
       }
    }
 
@@ -412,7 +412,7 @@ bool ToggleOpenOrders(int flags = NULL) {
  *
  * @param  int customTickets[]  - skip resolving of tickets and display the passed tickets instead
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CUSTOM_POSITIONS: display configured custom positions only instead of all open orders
+ *                                F_SHOW_CUSTOM_POSITIONS: show custom positions only (default: all open orders)
  *
  * @return int - number of displayed orders or EMPTY (-1) in case of errors
  */
@@ -591,7 +591,7 @@ bool GetOpenOrderDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   string label = "rsf."+ MqlProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -612,7 +612,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   string label = "rsf."+ MqlProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -626,7 +626,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
  * Toggle the display of closed trades.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CUSTOM_HISTORY: show the configured history only (not the total one)
+ *                                F_SHOW_CUSTOM_HISTORY: show custom historic trades only (default: all historic trades)
  * @return bool - success status
  */
 bool ToggleTradeHistory(int flags = NULL) {
@@ -637,7 +637,7 @@ bool ToggleTradeHistory(int flags = NULL) {
       int iNulls[], trades = ShowTradeHistory(iNulls, flags);
       if (trades == -1) return(false);
       if (!trades) {                                     // Reset status without history to continue with the "off" section
-         showHistory = false;                            // which clears existing (e.g. orphaned) history markers.
+         showHistory = false;                            // which clears existing and orphaned history markers.
          PlaySoundEx("Plonk.wav");
       }
    }
@@ -681,7 +681,7 @@ bool GetTradeHistoryDisplayStatus() {
    bool status = false;
 
    // on error look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ MqlProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -702,7 +702,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ MqlProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -717,7 +717,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
  *
  * @param  int customTickets[]  - skip history retrieval and display the passed tickets instead
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CUSTOM_HISTORY: display the configured history instead of the available one
+ *                                F_SHOW_CUSTOM_HISTORY: show custom historic trades only (default: all historic trades)
  *
  * @return int - number of displayed trades or EMPTY (-1) in case of errors
  */
@@ -735,7 +735,7 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
    int      customTicketsSize = ArraySize(customTickets);
    static int returnValue = 0;
 
-   // on flag F_SHOW_CUSTOM_HISTORY call AnalyzePositions() which recursively calls ShowTradeHistory() for each custom config line
+   // on flag F_SHOW_CUSTOM_HISTORY: call AnalyzePositions() which recursively calls ShowTradeHistory() for each custom config line
    if (!customTicketsSize || flags & F_SHOW_CUSTOM_HISTORY) {
       returnValue = 0;
       if (!customTicketsSize && flags & F_SHOW_CUSTOM_HISTORY) {
@@ -1018,7 +1018,7 @@ bool ToggleAccountBalance(bool externalAssets) {
  * @return bool - status: enabled/disabled
  */
 bool GetAccountBalanceDisplayStatus() {
-   string label = ProgramName() +".ShowAccountBalance";        // TODO: also store status in the chart window
+   string label = MqlProgramName() +".ShowAccountBalance";     // TODO: also store status in the chart window
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -1035,7 +1035,7 @@ bool GetAccountBalanceDisplayStatus() {
 bool SetAccountBalanceDisplayStatus(bool status) {
    status = status!=0;
 
-   string label = ProgramName() +".ShowAccountBalance";        // TODO: also read status from the chart window
+   string label = MqlProgramName() +".ShowAccountBalance";     // TODO: also read status from the chart window
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -1052,7 +1052,7 @@ bool SetAccountBalanceDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // define labels
-   string programName = ProgramName();
+   string programName = MqlProgramName();
    label.instrument     = programName +".Instrument";
    label.price          = programName +".Price";
    label.spread         = programName +".Spread";
@@ -1297,7 +1297,7 @@ bool UpdatePositions() {
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) return(!catch("UpdatePositions(1)", error));
 
    // pending order marker bottom-right
-   string label = ProgramName() +".PendingTickets";
+   string label = MqlProgramName() +".PendingTickets";
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, 12);
@@ -2273,9 +2273,10 @@ int SearchLfxTicket(int ticket) {
  *
  * @return bool - success status
  *
- * Fills config.sData[], config.dData[] und config.terms[] with parsed configuration data of the current chart symbol. On return
- * config.terms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL) marks the end of a
- * configuration line and also an empty configuration. On return config.terms[] is never empty and holds at least one EOL marker.
+ * Fills config.sData[], config.dData[] und config.terms[] with parsed configuration data of the current chart symbol.
+ * On return config.terms[] holds elements {type, value1, value2, value3, value4}. An empty element (all fields NULL)
+ * marks the end of a configuration line and also an empty configuration. On return config.terms[] is never empty and
+ * holds at least one EOL marker.
  *
  * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
  * | Syntax                                          | Description                                                              | Content of config.terms[][] (7)                                     |
@@ -2306,7 +2307,7 @@ int SearchLfxTicket(int ticket) {
  * | LM=-5%                                          | calculate price of the specified %PnL and draw a loss marker             | [TERM_LOSS_MARKER,    ...,              -5.0,             ..., ...] |
  * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
  * | MFE                                             | track MFE/MAE                                                            | TERM_MFAE, stored in config.dData[]                                 |
- * | MFE[-MS]                                        | track MFE/MAE + flags: M - mark level, S - signal new high/low           | TERM_MFAE + flags, stored in config.dData[]                         |
+ * | MFE[-MS]                                        | track MFE/MAE + flags: (M)ark level, (S)ignal new high/low               | TERM_MFAE + flags, stored in config.dData[]                         |
  * +-------------------------------------------------+--------------------------------------------------------------------------+---------------------------------------------------------------------+
  * | any text after a semicolon ";" aka .ini comment | displayed as position description                                        | stored in config.sData[]                                            |
  * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                           |                                                                     |
@@ -2315,10 +2316,10 @@ int SearchLfxTicket(int ticket) {
  *  Example configuration (6)
  *  -------------------------
  *  [CustomPositions]
- *  GBPAUD.a = #111111, 0.1#222222                    // full ticket #111111, plus 0.1 lot of ticket #222222
- *  GBPAUD.b = 0.2L@1.6500, #222222                   // virtual long position of 0.2 lot at 1.6500, plus remainder of #222222 (2)
- *  GBPAUD.c = L, S, -34.56, LM=-3%                   // all remaining positions incl. remainder of #222222, plus loss of -34.56, loss marker at PL=-3%
- *  GBPAUD.d = 0.3S                                   // virtual short position of 0.3 lot at current price
+ *  GBPAUD.a = #111111, 0.1#222222        // full ticket #111111, plus 0.1 lot of ticket #222222
+ *  GBPAUD.b = 0.2L@1.6500, #222222       // virtual long position of 0.2 lot at 1.6500, plus remainder of #222222 (2)
+ *  GBPAUD.c = L, S, -34.56, LM=-3%       // all remaining positions incl. remainder of #222222, plus loss of -34.56, loss marker at PL=-3%
+ *  GBPAUD.d = 0.3S                       // virtual short position of 0.3 lot at current price
  *
  *
  *  Resulting array config.terms[] for the above example (7)
@@ -2350,7 +2351,7 @@ int SearchLfxTicket(int ticket) {
  *  (3) Zeitangaben im Format: 2014[.01[.15 [W|12:30[:45]]]]
  *  (4) Einer der beiden Zeitpunkte kann leer sein und steht jeweils für "von Beginn" oder "bis Ende".
  *  (5) Ein Historyzeitraum kann tages-, wochen- oder monatsweise gruppiert werden, solange er nicht mit anderen Positionen kombiniert wird.
- *  (6) Die Positionen werden unabhängig von den Schlüsseln in der Reihenfolge ihrer Notierung angezeigt.
+ *  (6) Die Positionen werden unabhängig von den Schlüsseln in der Reihenfolge ihres Auftretens angezeigt.
  *  (7) "..." denotes fields not used by the term
  */
 bool CustomPositions.ReadConfig() {
@@ -2368,7 +2369,7 @@ bool CustomPositions.ReadConfig() {
    if (!minLotSize || !lotStep) return(false);                       // if MarketInfo() data is not yet available
    if (mode.extern)             return(!catch("CustomPositions.ReadConfig(4)  feature for mode.extern=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
-   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
+   string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (file == "") return(false);
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
@@ -3413,9 +3414,9 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * @param  _InOut_ double   termResult1 -
  * @param  _InOut_ double   termResult2 -
  *
- * @param  _InOut_ int      filter          - filter of the custom position: TERM_FILTER_EA|TERM_FILTER_SID|TERM_FILTER_MAGIC
+ * @param  _InOut_ int      filter          - filter of the custom position: TERM_FILTER_EA|TERM_FILTER_MAGIC|TERM_FILTER_SID
  * @param  _InOut_ int      filterCondition - operator: 1=include, 0=exclude
- * @param  _InOut_ int      filterValue     - strategy SID or magic number
+ * @param  _InOut_ int      filterValue     - magic number or strategy SID
  *
  * @param  _InOut_ double   fromLongPosition - variables a custom position is extracted from (value decreases)
  * @param  _InOut_ double   fromShortPosition
@@ -3462,7 +3463,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
                      bool &isVirtual, int flags = NULL) {
    isVirtual = isVirtual!=0;
 
-   if (termType == TERM_FILTER_EA || termType == TERM_FILTER_SID || termType == TERM_FILTER_MAGIC) {
+   if (termType == TERM_FILTER_EA || termType == TERM_FILTER_MAGIC || termType == TERM_FILTER_SID) {
       filter          = termType;
       filterCondition = termValue1;
       filterValue     = termValue2;
@@ -3734,13 +3735,13 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          for (i=0; i < orders; i++) {
             if (from && hst.closeTimes[i] < from) continue;
             if (to   && hst.closeTimes[i] > to  ) continue;
-            if (flags & F_SHOW_CUSTOM_HISTORY && 1) {
-               ArrayPushInt(showTickets, hst.tickets[i]);                     // collect tickets to pass to ShowTradeHistory()
-            }
-            if (hst.discarded[i])                 continue;                   // skip discarded tickets
             if (filter != NULL) {                                             // skip filtered tickets
                if (!ApplyFilter(filter, filterCondition, filterValue, hst.magicNumbers[i])) continue;
             }
+            if (flags & F_SHOW_CUSTOM_HISTORY && 1) {
+               ArrayPushInt(showTickets, hst.tickets[i]);                     // collect tickets to pass to ShowTradeHistory()
+            }
+            if (hst.discarded[i])                 continue;                   // skip discarded hedging tickets (PnL was copied to hedged ticket)
             lastProfit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
             n++;
          }
@@ -4689,7 +4690,7 @@ bool AnalyzePos.ProcessLfxProfits() {
  */
 bool StoreStatus() {
    if (!__isChart) return(true);
-   string indicatorName = ProgramName();
+   string indicatorName = MqlProgramName();
 
    // int position.unitsize.corner
    string key = indicatorName +".position.unitsize.corner";
@@ -4747,7 +4748,7 @@ bool StoreStatus() {
  */
 bool RestoreStatus() {
    if (!__isChart) return(true);
-   string indicatorName = ProgramName();
+   string indicatorName = MqlProgramName();
 
    // int position.unitsize.corner
    string key = indicatorName +".position.unitsize.corner", mfeKey="", maeKey="";

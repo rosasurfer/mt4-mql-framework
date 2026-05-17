@@ -88,10 +88,10 @@ string HistoryRecordToStr(int index, bool partial=false, bool compact=true) {
    string sCommissionM   = DoubleToStr(commissionM, 2);
    string sGrossProfitM  = DoubleToStr(grossProfitM, 2);
    string sNetProfitM    = DoubleToStr(netProfitM, 2);
-   string sNetProfitP    = NumberToStr(netProfitP, ".1+");
+   string sNetProfitP    = DoubleToStr(netProfitP, Digits);
    string sRunupP        = DoubleToStr(runupP, Digits);
    string sRundownP      = DoubleToStr(rundownP, Digits);
-   string sSigProfitP    = NumberToStr(sigProfitP, ".1+");
+   string sSigProfitP    = DoubleToStr(sigProfitP, Digits);
    string sSigRunupP     = DoubleToStr(sigRunupP, Digits);
    string sSigRundownP   = DoubleToStr(sigRundownP, Digits);
 

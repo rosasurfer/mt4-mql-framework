@@ -1,5 +1,6 @@
 <!-- 
-ZigZag/Donchian Channel(50 + 30) 
+EMA(144) 
+Donchian Channel(50) 
 -->
 
 <chart>
@@ -118,55 +119,22 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=Donchian Channel
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=50
-ZigZag.Type=Lines* | Semaphores
-ZigZag.Width=0
-ZigZag.Color=16711935
-Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=255
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Width=2
+Periods=50
+Channel.UpperColor=16711680
+Channel.LowerColor=255
+ShowReversals=on* | off | +N | -N
+Reversal.Width=2
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
-Signal.onBreakout=0
 Sound.onChannelWidening=0
 </inputs>
 </expert>
 style_0=2
 style_1=2
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ZigZag
-flags=339
-window_num=0
-<inputs>
-ZigZag.Periods=30
-ZigZag.Width=0
-Donchian.ShowChannel=0
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=16711935
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
-Donchian.Crossing.Width=1
-Signal.onReversal=0
-Signal.onReversal.Types=sound* | alert* | mail | telegram
-Signal.onBreakout=0
-Sound.onChannelWidening=0
-</inputs>
-</expert>
-style_0=2
-style_1=2
-color_6=4294967295
-color_7=4294967295
 show_data=1
 </indicator>
 </window>

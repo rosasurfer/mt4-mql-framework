@@ -1,4 +1,6 @@
-<!-- BFX Fake Volume.tpl -->
+<!--
+BFX Volume
+-->
 
 <chart>
 symbol=GBPUSD
@@ -110,28 +112,6 @@ ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ZigZag
-flags=339
-window_num=0
-<inputs>
-ZigZag.Periods=20
-ZigZag.Width=0
-Donchian.ShowChannel=1
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Symbol=dot | narrow-ring | ring* | bold-ring
-Donchian.Crossing.Width=2
-Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert* | mail | telegram
-</inputs>
-</expert>
-style_2=2
-style_3=2
 show_data=1
 </indicator>
 </window>

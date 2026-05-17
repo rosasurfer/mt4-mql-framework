@@ -8,7 +8,7 @@ double stats[4][77];                            // trade statistics with metric 
 #define S_TOTAL_PROFIT                     2
 #define S_MAX_PROFIT                       3    // 0...+n
 #define S_MAX_ABS_DRAWDOWN                 4    // -n...0
-#define S_MAX_REL_DRAWDOWN                 5    // -n...0
+#define S_MAX_REL_DRAWDOWN                 5    // -n...0 (for calculation of Calmar Ratio)
 #define S_PROFIT_FACTOR                    6
 #define S_SHARPE_RATIO                     7
 #define S_SORTINO_RATIO                    8

@@ -60,12 +60,7 @@ bool IsAccountConfigKey(string section, string key) {
 /**
  * Return a configuration value as a boolean from the merged configuration. Supported boolean value representations are "1"
  * and "0", "true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to
- * ({value} != 0), all other values evaluate to (FALSE).
- *
- * Fuzzy spelling mistakes (small letter L instead of numeric 1 (one), big letter O instead of numeric 0 (zero) etc.) are
- * detected and interpreted accordingly.
- *
- * Trailing configuration comments are ignored.
+ * (value != 0), all other values evaluate to FALSE.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -85,13 +80,8 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
 
 /**
  * Return a global configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
- * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
- * values evaluate to (FALSE).
- *
- * Fuzzy spelling mistakes (small letter L instead of numeric "one", big letter O instead of numeric "zero") are detected and
- * interpreted accordingly.
- *
- * Trailing configuration comments are ignored.
+ * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other
+ * values evaluate to FALSE.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -111,13 +101,8 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
 
 /**
  * Return a terminal configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
- * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
- * values evaluate to (FALSE).
- *
- * Fuzzy spelling mistakes (small letter L instead of numeric "one", big letter O instead of numeric "zero") are detected and
- * interpreted accordingly.
- *
- * Trailing configuration comments are ignored.
+ * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other
+ * values evaluate to FALSE.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -137,13 +122,8 @@ bool GetTerminalConfigBool(string section, string key, bool defaultValue = false
 
 /**
  * Return an account configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
- * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
- * values evaluate to (FALSE).
- *
- * Fuzzy spelling mistakes (small letter L instead of numeric "one", big letter O instead of numeric "zero") are detected and
- * interpreted accordingly.
- *
- * Trailing configuration comments are ignored.
+ * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other
+ * values evaluate to FALSE.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -169,8 +149,6 @@ bool GetAccountConfigBool(string section, string key, bool defaultValue = false)
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
  *
- * Trailing configuration comments are ignored.
- *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
  * @param  color  defaultValue [optional] - value to return if the specified key does not exist (default: CLR_NONE)
@@ -192,8 +170,6 @@ color GetConfigColor(string section, string key, color defaultValue = CLR_NONE) 
  *  - web color names (case-insensitive, with and without the prefix "clr"), e.g. "DodgerBlue"
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
- *
- * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -217,8 +193,6 @@ color GetGlobalConfigColor(string section, string key, color defaultValue = CLR_
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
  *
- * Trailing configuration comments are ignored.
- *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
  * @param  color  defaultValue [optional] - value to return if the specified key does not exist (default: CLR_NONE)
@@ -240,8 +214,6 @@ color GetTerminalConfigColor(string section, string key, color defaultValue = CL
  *  - web color names (case-insensitive, with and without the prefix "clr"), e.g. "DodgerBlue"
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
- *
- * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -409,8 +381,6 @@ double GetAccountConfigDouble(string section, string key, double defaultValue = 
 /**
  * Return a configuration value as a string from the merged configuration.
  *
- * Trailing configuration comments are ignored.
- *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
@@ -427,8 +397,6 @@ string GetConfigString(string section, string key, string defaultValue = "") {
 
 /**
  * Return a global configuration value as a string.
- *
- * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -447,8 +415,6 @@ string GetGlobalConfigString(string section, string key, string defaultValue = "
 /**
  * Return a terminal configuration value as a string.
  *
- * Trailing configuration comments are ignored.
- *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
@@ -465,8 +431,6 @@ string GetTerminalConfigString(string section, string key, string defaultValue =
 
 /**
  * Return an account configuration value as a string.
- *
- * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -560,10 +524,8 @@ string GetAccountConfigStringRaw(string section, string key, string defaultValue
 
 /**
  * Return a configuration value from an .ini file as a boolean. Supported boolean value representations are "1" and "0",
- " true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0),
- * all other values evaluate to (FALSE). If the configured value is empty the default value is returned.
- *
- * Trailing configuration comments are ignored.
+ " true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0),
+ * all other values evaluate to FALSE. If the configured value is empty the default value is returned.
  *
  * @param  string fileName                - name of the .ini file
  * @param  string section                 - case-insensitive configuration section name
@@ -601,8 +563,6 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
 /**
  * Return a configuration value from an .ini file as a color. If the configured value is empty the default value is
  * returned.
- *
- * Trailing configuration comments are ignored.
  *
  * @param  string fileName                - name of the .ini file
  * @param  string section                 - case-insensitive configuration section name

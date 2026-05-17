@@ -44,7 +44,7 @@ int    changedRateBars;
  * @return int - error status
  */
 int onInit() {
-   string indicator=ProgramName(), section=indicator, stdSymbol=StdSymbol();
+   string indicator=MqlProgramName(), section=indicator, stdSymbol=StdSymbol();
 
    // validate inputs
    // TimeWindow: 09:00-10:00

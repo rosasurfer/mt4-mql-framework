@@ -1,4 +1,3 @@
-
 // Default init() functions for standard EAs.
 
 
@@ -8,7 +7,7 @@
  * @return int - error status
  */
 int onInit() {
-   CreateStatusBox();
+   status.commentPrefix = CreateStatusBox();
    return(catch("onInit(1)"));
 }
 

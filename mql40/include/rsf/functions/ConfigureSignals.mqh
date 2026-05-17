@@ -12,7 +12,7 @@ bool ConfigureSignals(string signalId, bool autoConfig, bool &enabled) {
    enabled = enabled!=0;
 
    if (autoConfig) {
-      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
+      string section = ifString(__isTesting, "Tester.", "") + MqlProgramName();
       enabled = GetConfigBool(section, signalId, enabled);
    }
    return(true);
@@ -41,7 +41,7 @@ bool ConfigureSignalsBySound(string signalId, bool autoConfig, bool &enabled) {
    enabled = enabled!=0;
 
    if (autoConfig) {
-      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
+      string section = ifString(__isTesting, "Tester.", "") + MqlProgramName();
       enabled = GetConfigBool(section, signalId +".Sound", enabled);
    }
    return(true);
@@ -62,7 +62,7 @@ bool ConfigureSignalsByAlert(string signalId, bool autoConfig, bool &enabled) {
    enabled = enabled!=0;
 
    if (autoConfig) {
-      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
+      string section = ifString(__isTesting, "Tester.", "") + MqlProgramName();
       enabled = GetConfigBool(section, signalId +".Alert", enabled);
    }
    return(true);
@@ -83,7 +83,7 @@ bool ConfigureSignalsByMail(string signalId, bool autoConfig, bool &enabled) {
    enabled = enabled!=0;
 
    if (autoConfig) {
-      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
+      string section = ifString(__isTesting, "Tester.", "") + MqlProgramName();
       enabled = GetConfigBool(section, signalId +".Mail", enabled);
    }
    return(true);
@@ -104,7 +104,7 @@ bool ConfigureSignalsByTelegram(string signalId, bool autoConfig, bool &enabled)
    enabled = enabled!=0;
 
    if (autoConfig) {
-      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
+      string section = ifString(__isTesting, "Tester.", "") + MqlProgramName();
       enabled = GetConfigBool(section, signalId +".Telegram", enabled);
    }
    return(true);
@@ -132,7 +132,7 @@ bool ConfigureSignalTypes(string signalId, string signalTypes, bool autoConfig, 
    telegramEnabled = telegramEnabled!=0;                                   //  "sound | alert | mail | telegram"
                                                                            //  "sound, alert, mail, telegram"
    if (autoConfig) {                                                       //  "sound alert mail telegram"
-      string section = ifString(__isTesting, "Tester.", "") + ProgramName();
+      string section = ifString(__isTesting, "Tester.", "") + MqlProgramName();
       signalTypes = GetConfigString(section, signalId +".Types", signalTypes);
    }
 

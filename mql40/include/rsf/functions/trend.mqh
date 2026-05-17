@@ -60,7 +60,7 @@ bool UpdateTrend(double values[], int offset, double &trend[], double &uptrend[]
       int prevTrend = trend[offset+1];
       if      (curValue > prevValue) trend[offset] = Max(prevTrend, 0) + 1;
       else if (curValue < prevValue) trend[offset] = Min(prevTrend, 0) - 1;
-      else   /*curValue== prevValue*/trend[offset] = prevTrend + Sign(prevTrend);
+      else  /*curValue == prevValue*/trend[offset] = prevTrend + Sign(prevTrend);
    }
 
    // trend coloring

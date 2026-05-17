@@ -1,7 +1,7 @@
 /**
  * Commodity Channel Index - a true momentum indicator. Measures sudden price acceleration.
  *
- * Defined as the upscaled ratio of the current distance to average distance from a Moving Average (default: SMA).
+ * Defined as the upscaled ratio of current distance to average distance from a Moving Average (default: SMA).
  * The upscaling factor of 66.67 was chosen so that the majority of indicator values falls between +200 and -200.
  * Signal level is +/-100.
  */
@@ -57,18 +57,16 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #property indicator_minimum  -180
 
 double cci     [];                                 // all CCI values
-double cciLong [];                                 // long trade segments
-double cciShort[];                                 // short trade segments
-double trend   [];                                 // trade segment length
+double cciLong [];                                 // long colored CCI values
+double cciShort[];                                 // short colored CCI values
+double trend   [];                                 // last color segment length
 
-int    appliedPrice;
+int appliedPrice;
 
-bool   signal.sound;
-bool   signal.alert;
-bool   signal.mail;
-bool   signal.telegram;
-
-string indicatorName = "";
+bool signal.sound;
+bool signal.alert;
+bool signal.mail;
+bool signal.telegram;
 
 // parameter stepper directions
 #define STEP_UP    1
@@ -157,7 +155,7 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
+   // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
    if (__isChart && Periods.Step) {
       if (!HandleCommands("ParameterStepper")) return(last_error);
    }
@@ -276,8 +274,9 @@ bool onTrendChange(int direction) {
 
    // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();
-   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1  = indicatorName +" signal "+ ifString(direction==MODE_LONG, "long", "short") +" (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
+   string indicator = "CCI("+ Periods +")";
+   string eventName = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicator +".onTrendChange("+ direction +")."+ TimeToStr(Time[0]), propertyName = "";
+   string message1  = indicator +" "+ ifString(direction==MODE_LONG, "long", "short") +" signal (bid: "+ NumberToStr(_Bid, PriceFormat) +")";
    string message2  = Symbol() +","+ PeriodDescription() +": "+ message1;
    string localTime = TimeToStr(TimeLocalEx("onTrendChange(2)"), TIME_MINUTES|TIME_SECONDS);
    string accountAlias = GetAccountAlias();
@@ -373,7 +372,7 @@ bool ParameterStepper(int direction, int keys) {
 
 
 /**
- * Store the status of the parameter stepper in the chart (for init cyles, template reloads or terminal restarts).
+ * Store the status of the parameter stepper in the chart (for init cyles, template reloads and terminal restarts).
  *
  * @return bool - success status
  */
@@ -416,8 +415,9 @@ bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
 
    string stepSize = ifString(Periods.Step, ":"+ Periods.Step, "");
-   indicatorName = "CCI("+ Periods + stepSize +")";
-   IndicatorShortName(indicatorName);
+   string sSignal  = ifString(Signal.onTrendChange, " signal", "");
+   string name     = "CCI("+ Periods + stepSize +")"+ sSignal;
+   IndicatorShortName(name);                          // subwindow chart legend
 
    IndicatorBuffers(indicator_buffers);
    SetIndexBuffer(MODE_MAIN,  cci     );
@@ -430,10 +430,10 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexDrawBegin(MODE_LONG,  drawBegin);
    SetIndexDrawBegin(MODE_SHORT, drawBegin);
 
-   SetIndexLabel(MODE_MAIN,  "CCI("+ Periods +")");   // displays values in indicator and "Data" window
+   SetIndexLabel(MODE_MAIN,  "CCI("+ Periods +")");   // "Data" window labels
    SetIndexLabel(MODE_LONG,  NULL);
    SetIndexLabel(MODE_SHORT, NULL);
-   SetIndexLabel(MODE_TREND, NULL);                   // prevents trend value in indicator window
+   SetIndexLabel(MODE_TREND, NULL);
 
    SetIndexStyle(MODE_MAIN,  DRAW_NONE);
    SetIndexStyle(MODE_TREND, DRAW_NONE);

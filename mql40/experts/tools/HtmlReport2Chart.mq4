@@ -3,19 +3,16 @@
  *
  *
  * TODO:
+ *  - cache the parsed data over init cycles and convert to indicator
  *  - ParseAccountStatement
  *     process open orders
- *
  *  - ParseTestReport
  *     apply optional timezone config for report server
  *     on-load initialize status with "show"
- *
- *  - cache the parsed data over init cycles (performance only)
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
-int __virtualTicks = 0;
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -129,6 +126,7 @@ int onTick() {
  */
 bool onCommand(string cmd, string params, int keys) {
    string fullCmd = cmd +":"+ params +":"+ keys;
+   fullCmd = StrLeftTo(fullCmd, "::0");
 
    if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());
@@ -577,6 +575,14 @@ bool ValidateInputs() {
    HtmlFilename = filename;
 
    return(!catch("ValidateInputs(3)"));
+}
+
+
+/**
+ * Callback function invoked by the global error handler.
+ */
+void EmergencyStop() {
+   // does nothing in this EA
 }
 
 

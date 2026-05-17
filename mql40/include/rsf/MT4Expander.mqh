@@ -7,6 +7,9 @@
  */
 #import "rsfMT4Expander.dll"
 
+   // startup
+   void     LoadMT4Expander();
+
    // terminal status and interaction
    string   FindHistoryDirectoryA(string filename, int removeFile);
    string   GetExpanderFileNameA();
@@ -44,7 +47,7 @@
    // charts and timeframes
    bool     IsCustomTimeframe(int timeframe);
    bool     IsStandardTimeframe(int timeframe);
-   int      SetupTickTimer(int hWnd, int millis, int flags);
+   int      SetupTickTimer(int hWnd, int milliseconds, int flags);
    bool     ReleaseTickTimer(int timerId);
 
    // configuration
@@ -80,6 +83,7 @@
    bool     IsFileOrDirectoryA(string path);
    bool     IsJunctionA(string path);
    bool     IsSymlinkA(string path);
+   string   SearchPathA(string file);
 
    // math
    int      DoubleExp(double value);

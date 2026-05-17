@@ -352,8 +352,8 @@ bool SetIndicatorOptions(bool redraw = false) {
       SetIndexLabel(MODE_LOWER_BAND, NULL);
    }
    else {
-      SetIndexLabel(MODE_UPPER_BAND, ProgramName() +" upper band");
-      SetIndexLabel(MODE_LOWER_BAND, ProgramName() +" lower band");
+      SetIndexLabel(MODE_UPPER_BAND, MqlProgramName() +" upper band");
+      SetIndexLabel(MODE_LOWER_BAND, MqlProgramName() +" lower band");
    }
 
    if (redraw) WindowRedraw();

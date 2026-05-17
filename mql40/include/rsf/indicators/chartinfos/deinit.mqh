@@ -5,9 +5,10 @@
  */
 int onDeinit() {
    // uninstall the chart ticker
-   if (__tickTimerId > NULL) {
-      int id = __tickTimerId; __tickTimerId = NULL;
-      if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   if (__virtualTicksTimerId > 0) {
+      int tmp = __virtualTicksTimerId;
+      __virtualTicksTimerId = NULL;
+      if (!ReleaseTickTimer(tmp)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR));
    }
 
    // unregister the order event listener

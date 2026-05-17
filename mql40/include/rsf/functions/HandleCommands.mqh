@@ -77,7 +77,7 @@ bool GetChartCommand(string channel, string &commands[]) {
    if (!__isChart) return(false);
 
    static string stdChannel = ""; if (stdChannel == "") {
-      stdChannel = ProgramName();
+      stdChannel = MqlProgramName();
    }
    if (channel == "") {
       if (IsExpert()) channel = "EA";
