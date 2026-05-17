@@ -1,5 +1,5 @@
 /**
- * Returns the absolute value of an integer. Integer-Version von MathAbs().
+ * Returns the absolute value of an integer. Integer version of MathAbs().
  *
  * @param  int  value
  *

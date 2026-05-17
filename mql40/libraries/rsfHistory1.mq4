@@ -5,14 +5,10 @@
  * Usage examples
  * --------------
  *  - Open an existing history (all timeframes) with existing data (e.g. for appending data):
- *     int hSet = HistorySet1.Get(symbol);
+ *     int hSet = HistorySet3.Get(symbol);
  *
  *  - Create a new history and delete all existing data (e.g. for writing a new history):
- *     int hSet = HistorySet1.Create(symbol, description, digits, format);
- *
- *  - How to synchronize rsfHistory{1,2,3}.mq4:
- *     search:  (HistoryFile|HistorySet)[1-3]\>
- *     replace: \11 or \12 or \13
+ *     int hSet = HistorySet3.Create(symbol, description, digits, format);
  *
  *
  * Notes:
@@ -33,6 +29,12 @@
  *    custom offline history files. Custom files are read but not modified in any way.
  *
  *  @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
+ *
+ *
+ * How to synchronize rsfHistory{1,2,3}.mq4
+ * ----------------------------------------
+ *  search:  (HistoryFile|HistorySet)[1-3]\>
+ *  replace: \11 or \12 or \13
  */
 #property library
 
@@ -244,7 +246,7 @@ int HistorySet1.Create(string symbol, string descr, int digits, int format, stri
 
    // create a new HistorySet
    size = Max(ArraySize(hs.hSet), 1) + 1;                               // min. sizeof(hs.hSet)=2 as index[0] can't hold a handle
-   __ResizeSetArrays(size);
+   ResizeSetArrays(size);
    int iH   = size-1;
    int hSet = iH;                                                       // the HistorySet handle matches the array index of hs.*
 
@@ -285,8 +287,9 @@ int HistorySet1.Get(string symbol, string directory = "") {
    // check open history sets of the same symbol
    int size = ArraySize(hs.hSet), iH, hSet=-1;
    for (int i=0; i < size; i++) {
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hs.directory[i], directory))
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hs.directory[i], directory)) {
          return(hs.hSet[i]);
+      }
    }
 
    // check open history files of the same symbol
@@ -294,7 +297,7 @@ int HistorySet1.Get(string symbol, string directory = "") {
    for (i=0; i < size; i++) {
       if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hf.directory[i], directory)) {
          size = Max(ArraySize(hs.hSet), 1) + 1;                      // open handle found: create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
-         __ResizeSetArrays(size);
+         ResizeSetArrays(size);
          iH   = size-1;
          hSet = iH;                                                  // the HistorySet handle matches the array index of hs.*
          hs.hSet       [iH] = hSet;
@@ -334,7 +337,7 @@ int HistorySet1.Get(string symbol, string directory = "") {
             FileClose(hFile);
 
             size = Max(ArraySize(hs.hSet), 1) + 1;                   // create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
-            __ResizeSetArrays(size);
+            ResizeSetArrays(size);
             iH   = size-1;
             hSet = iH;                                               // the HistorySet handle matches the array index of hs.*
             hs.hSet       [iH] = hSet;
@@ -370,7 +373,7 @@ int HistorySet1.Get(string symbol, string directory = "") {
             FileClose(hFile);
 
             size = Max(ArraySize(hs.hSet), 1) + 1;                   // create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
-            __ResizeSetArrays(size);
+            ResizeSetArrays(size);
             iH   = size-1;
             hSet = iH;                                               // the HistorySet handle matches the array index of hs.*
             hs.hSet       [iH] = hSet;
@@ -404,7 +407,7 @@ int HistorySet1.Get(string symbol, string directory = "") {
  * @return bool - success status
  */
 bool HistorySet1.Close(int hSet) {
-   // Validierung
+   // validation
    if (hSet <= 0)                     return(!catch("HistorySet1.Close(1)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
       if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet1.Close(2)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
@@ -413,18 +416,21 @@ bool HistorySet1.Close(int hSet) {
    else {
       hs.hSet.lastValid = NULL;
    }
-   if (hs.hSet[hSet] < 0) return(true);                              // Handle wurde bereits geschlossen (kann ignoriert werden)
+   if (hs.hSet[hSet] < 0) return(true);                              // handle was already closed (can be ignored)
 
    int sizeOfPeriods = ArraySize(periods);
+   bool result = true;
 
    for (int i=0; i < sizeOfPeriods; i++) {
-      if (hs.hFile[hSet][i] > 0) {                                   // alle offenen Dateihandles schließen
-         if (!HistoryFile1.Close(hs.hFile[hSet][i])) return(false);
+      if (hs.hFile[hSet][i] > 0) {                                   // close all open HistoryFiles
+         if (!HistoryFile1.Close(hs.hFile[hSet][i])) {
+            result = false;
+         }
          hs.hFile[hSet][i] = -1;
       }
    }
    hs.hSet[hSet] = -1;
-   return(true);
+   return(result);
 }
 
 
@@ -465,6 +471,20 @@ bool HistorySet1.AddTick(int hSet, datetime time, double value, int flags = NULL
       if (!HistoryFile1.AddTick(hFile, time, value, flags)) return(false);
    }
    return(true);
+
+   // Speed test SnowRoller EURUSD,M15  04.10.2012, Long, GridSize=18
+   // called from rsf/core/expert.recorder.mqh::Recorder_start()
+   // Results in ticks/second, larger is better
+   // +---------------------------+---------------------------------------------------------------------------------------------------------------+------------+
+   // |     Toshiba Satellite     |                                           History API in main module                                          | in library |
+   // |                           +------------+-----------+-------------------+------------------+----------------+-----------------+------------+------------+
+   // |                           |     old    | optimized | FindBar optimized | Arrays optimized | Read optimized | Write optimized |  Validation optimized   |
+   // +---------------------------+------------+-----------+-------------------+------------------+----------------+-----------------+------------+------------+
+   // | v419 no recording         | 17.613 t/s |           |                   |                  |                |                 |            |            |
+   // | v225 HST_BUFFER_TICKS=Off |  6.426 t/s |           |                   |                  |                |                 |            |            |
+   // | v419 HST_BUFFER_TICKS=Off |  5.871 t/s | 6.877 t/s |     7.381 t/s     |    7.870 t/s     |   9.097 t/s    |    9.966 t/s    | 11.332 t/s |            |
+   // | v419 HST_BUFFER_TICKS=On  |            |           |                   |                  |                |                 | 15.486 t/s | 14.286 t/s |
+   // +---------------------------+------------+-----------+-------------------+------------------+----------------+-----------------+------------+------------+
 }
 
 
@@ -480,8 +500,8 @@ bool HistorySet1.AddTick(int hSet, datetime time, double value, int flags = NULL
  *                                        401: compatible with MetaTrader builds > 509 only
  * @param  int    mode                 - access mode, a combination of
  *                                        FILE_READ:  A non-existing file causes an error.
- *                                        FILE_WRITE: A non-existing is created. Without FILE_READ an existing file is reset
- *                                                    to a size of 0 (zero).
+ *                                        FILE_WRITE: A non-existing file is created. Without FILE_READ an existing file is
+ *                                                    reset to a size of 0 (zero).
  * @param  string directory [optional] - directory of history file location
  *                                        if empty:            the current trade server directory (default)
  *                                        if a relative path:  relative to the MQL sandbox/files directory
@@ -506,7 +526,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
    int hFile;
    string filename="", basename=symbol + timeframe +".hst";
 
-   if (directory == "") {                                                        // current trade server, use MQL::FileOpenHistory()
+   if (directory == "") {                                                        // current trade server, uses MQL::FileOpenHistory()
       if (!read_only) /*&&*/ if (!InitTradeServerPath(GetAccountServerPath())) return(NULL);
       filename = basename;
 
@@ -528,7 +548,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
       }
    }
 
-   else if (!IsAbsolutePath(directory)) {                                        // relative sandbox path, use MQL::FileOpen()
+   else if (!IsAbsolutePath(directory)) {                                        // relative sandbox path, uses MQL::FileOpen()
       // on write access make sure the directory exists
       if (!read_only) /*&&*/ if (!InitTradeServerPath(directory)) return(NULL);
       filename = directory +"/"+ basename;
@@ -551,7 +571,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
       }
    }
 
-   else {                                                                        // absolute path, use Expander
+   else {                                                                        // absolute path, uses MT4Expander
       return(!catch("HistoryFile1.Open(12)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
@@ -607,8 +627,9 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
    }
 
    // store all metadata locally
-   if (hFile >= ArraySize(hf.hFile))                                             // either reuse existing index or increase arrays
-      __ResizeFileArrays(hFile+1);
+   if (hFile >= ArraySize(hf.hFile)) {                                           // either reuse existing index or increase arrays
+      ResizeFileArrays(hFile+1);
+   }
 
    hf.hFile                      [hFile]        = hFile;
    hf.name                       [hFile]        = basename;
@@ -677,10 +698,9 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
 
 
 /**
- * Schließt die Historydatei mit dem angegebenen Handle. Ungespeicherte Daten im Schreibpuffer werden geschrieben.
- * Die Datei muß vorher mit HistoryFile1.Open() geöffnet worden sein.
+ * Close the HistoryFile with the specified handle. Flushes unsaved data in the write buffer to the disk.
  *
- * @param  int hFile - Dateihandle
+ * @param  int hFile - file handle as returned by HistoryFile1.Open()
  *
  * @return bool - success status
  */
@@ -692,25 +712,23 @@ bool HistoryFile1.Close(int hFile) {
    }
    else hf.hFile.lastValid = NULL;
 
-   if (hf.hFile[hFile] < 0) return(true);                            // Handle wurde bereits geschlossen (kann ignoriert werden)
+   if (hf.hFile[hFile] < 0) return(true);                            // handle already closed (can be ignored)
 
-
-   // (1) alle ungespeicherten Daten speichern
+   // save pending data
    if (hf.bufferedBar.offset[hFile] != -1) if (!HistoryFile1.WriteBufferedBar(hFile)) return(false);
-   hf.bufferedBar.offset  [hFile] = -1;                              // BufferedBar sicherheitshalber zurücksetzen
-   hf.lastStoredBar.offset[hFile] = -1;                              // LastStoredBar sicherheitshalber zurücksetzen
+   hf.bufferedBar.offset  [hFile] = -1;                              // make sure BufferedBar is reset
+   hf.lastStoredBar.offset[hFile] = -1;                              // make sure LastStoredBar is reset
 
-
-   // (2) Datei schließen
-   int error = GetLastError();                                       // vor FileClose() alle Fehler abfangen
+   // close file
+   int error = GetLastError();                                       // handle unhandled errors before closing
    if (IsError(error)) return(!catch("HistoryFile1.Close(4)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 
-   hf.hFile[hFile] = -1;                                             // Handle vorm Schließen zurücksetzen
-   FileClose(hFile);
-
+   hf.hFile[hFile] = -1;                                             // reset handle before closing
+   FileClose(hFile);                                                 // MT4 bug: in library::deinit() file handles are released to early (triggers ERR_INVALID_PARAMETER)
+                                                                     // on error it adds "rsfHistory: handle <hFile> does not exist in FileClose" to the "Experts" log
    error = GetLastError();
    if (!error)                         return(true);
-   if (error == ERR_INVALID_PARAMETER) return(true);                 // Datei wurde bereits geschlossen (kann ignoriert werden)
+   if (error == ERR_INVALID_PARAMETER) return(true);                 // handle already closed (ignore)
    return(!catch("HistoryFile1.Close(5)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 }
 
@@ -899,19 +917,19 @@ bool HistoryFile1.ReadBar(int hFile, int offset, double &bar[]) {
 
 
 /**
- * Schreibt eine Bar am angegebenen Offset einer Historydatei. Eine dort vorhandene Bar wird überschrieben. Ist die Bar noch nicht vorhanden,
- * muß ihr Offset an die vorhandenen Bars genau anschließen. Sie darf kein physisches Gap verursachen.
+ * Schreibt eine Bar am angegebenen Offset einer Historydatei. Eine dort vorhandene Bar wird überschrieben. Ist die Bar noch
+ * nicht vorhanden, muß ihr Offset an die vorhandenen Bars anschließen. Sie darf kein Gap verursachen.
  *
  * @param  int    hFile  - Handle der Historydatei
  * @param  int    offset - Offset der zu schreibenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
  * @param  double bar[]  - Bardaten (T-OHLCV):
  * @param  int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                         • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ *                         HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - success status
  *
- * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
- *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
+ * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht
+ *       überprüft, ob die Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile1.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile1.WriteBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -972,10 +990,10 @@ bool HistoryFile1.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
       FileWriteDouble (hFile, H       );
       FileWriteDouble (hFile, L       );
       FileWriteDouble (hFile, C       );
-      FileWriteInteger(hFile, V       );     // uint64: ticks
+      FileWriteInteger(hFile, V       );     // uint64: tickVolume
       FileWriteInteger(hFile, 0       );
       FileWriteInteger(hFile, 0       );     // int:    spread
-      FileWriteInteger(hFile, 0       );     // uint64: real_volume
+      FileWriteInteger(hFile, 0       );     // uint64: realVolume
       FileWriteInteger(hFile, 0       );
    }                                         // doesn't update last-modified timestamp even if the file size changes
    FileFlush(hFile);                         // @see  https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-flushviewoffile
@@ -989,8 +1007,8 @@ bool HistoryFile1.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
          nextCloseTime = closeTime + hf.periodSecs[hFile];
       }
       else if (hf.period[hFile] == PERIOD_MN1) {
-         closeTime     = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+1); // 00:00, 1. des nächsten Monats
-         nextCloseTime = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+2); // 00:00, 1. des übernächsten Monats
+         closeTime     = DateTime1(TimeYearEx(openTime), TimeMonth(openTime) + 1);  // 00:00, 1. des nächsten Monats
+         nextCloseTime = DateTime1(TimeYearEx(openTime), TimeMonth(openTime) + 2);  // 00:00, 1. des übernächsten Monats
       }
       hf.lastStoredBar.offset       [hFile] = offset;
       hf.lastStoredBar.openTime     [hFile] = openTime;
@@ -1026,7 +1044,6 @@ bool HistoryFile1.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
    }
    if (hf.stored.bars[hFile] > hf.total.bars[hFile]) {
       hf.total.bars            [hFile] = hf.stored.bars            [hFile];
-
       hf.total.to.offset       [hFile] = hf.stored.to.offset       [hFile];
       hf.total.to.openTime     [hFile] = hf.stored.to.openTime     [hFile];
       hf.total.to.closeTime    [hFile] = hf.stored.to.closeTime    [hFile];
@@ -1044,15 +1061,14 @@ bool HistoryFile1.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
    }
 
    int error = GetLastError();
-   if (!error)
-      return(true);
+   if (!error) return(true);
    return(!catch("HistoryFile1.WriteBar(15)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 }
 
 
 /**
- * Aktualisiert den Schlußkurs der Bar am angegebenen Offset einer Historydatei. Die Bar muß existieren, entweder in der Datei (gespeichert)
- * oder im Barbuffer (ungespeichert).
+ * Aktualisiert den Schlußkurs der Bar am angegebenen Offset einer Historydatei. Die Bar muß existieren, entweder in der
+ * Datei (gespeichert) oder im Barbuffer (ungespeichert).
  *
  * @param  int    hFile  - Handle der Historydatei
  * @param  int    offset - Offset der zu aktualisierenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
@@ -1073,8 +1089,8 @@ bool HistoryFile1.UpdateBar(int hFile, int offset, double value) {
 
    // vorzugsweise bekannte Bars aktualisieren
    if (offset == hf.bufferedBar.offset[hFile]) {                                 // BufferedBar
-      //.bufferedBar.data[hFile][BAR_T] = ...                                    // unverändert
-      //.bufferedBar.data[hFile][BAR_O] = ...                                    // unverändert
+    //hf.bufferedBar.data[hFile][BAR_T] = ...                                    // unchanged
+    //hf.bufferedBar.data[hFile][BAR_O] = ...                                    // unchanged
       hf.bufferedBar.data[hFile][BAR_H] = MathMax(hf.bufferedBar.data[hFile][BAR_H], value);
       hf.bufferedBar.data[hFile][BAR_L] = MathMin(hf.bufferedBar.data[hFile][BAR_L], value);
       hf.bufferedBar.data[hFile][BAR_C] = value;
@@ -1089,31 +1105,32 @@ bool HistoryFile1.UpdateBar(int hFile, int offset, double value) {
    }
 
    // LastStoredBar aktualisieren und speichern
-   //.lastStoredBar.data[hFile][BAR_T] = ...                                     // unverändert
-   //.lastStoredBar.data[hFile][BAR_O] = ...                                     // unverändert
+ //hf.lastStoredBar.data[hFile][BAR_T] = ...                                     // unchanged
+ //hf.lastStoredBar.data[hFile][BAR_O] = ...                                     // unchanged
    hf.lastStoredBar.data[hFile][BAR_H] = MathMax(hf.lastStoredBar.data[hFile][BAR_H], value);
    hf.lastStoredBar.data[hFile][BAR_L] = MathMin(hf.lastStoredBar.data[hFile][BAR_L], value);
    hf.lastStoredBar.data[hFile][BAR_C] = value;
    hf.lastStoredBar.data[hFile][BAR_V]++;
+
    return(HistoryFile1.WriteLastStoredBar(hFile));
 }
 
 
 /**
- * Fügt eine Bar am angegebenen Offset einer Historydatei ein. Eine dort vorhandene Bar wird nicht überschrieben, stattdessen werden die
- * vorhandene und alle folgenden Bars um eine Position nach vorn verschoben. Ist die einzufügende Bar die jüngste Bar, muß ihr Offset an die
- * vorhandenen Bars genau anschließen. Sie darf kein physisches Gap verursachen.
+ * Fügt eine Bar am angegebenen Offset einer Historydatei ein. Eine dort vorhandene Bar wird nicht überschrieben, stattdessen
+ * werden die vorhandene und alle folgenden Bars um eine Position nach vorn verschoben. Ist die einzufügende Bar die jüngste
+ * Bar, muß ihr Offset an die vorhandenen Bars genau anschließen. Sie darf kein Gap verursachen.
  *
  * @param  int    hFile  - Handle der Historydatei
  * @param  int    offset - Offset der einzufügenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
  * @param  double bar[6] - Bardaten (T-OHLCV)
  * @param  int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                         • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ *                         HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - success status
  *
- * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
- *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
+ * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht
+ *       überprüft, ob die Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile1.InsertBar(int hFile, int offset, double bar[], int flags = NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile1.InsertBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -1141,7 +1158,7 @@ bool HistoryFile1.InsertBar(int hFile, int offset, double bar[], int flags = NUL
  *
  * @param  int hFile - Handle der Historydatei
  * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                     • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ *                     HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - success status
  *
@@ -1182,10 +1199,10 @@ bool HistoryFile1.WriteLastStoredBar(int hFile, int flags = NULL) {
       FileWriteDouble (hFile, NormalizeDouble(hf.lastStoredBar.data[hFile][BAR_H], digits));
       FileWriteDouble (hFile, NormalizeDouble(hf.lastStoredBar.data[hFile][BAR_L], digits));
       FileWriteDouble (hFile, NormalizeDouble(hf.lastStoredBar.data[hFile][BAR_C], digits));
-      FileWriteInteger(hFile, V);                                                            // uint64: ticks
+      FileWriteInteger(hFile, V);                                                            // uint64: tickVolume
       FileWriteInteger(hFile, 0);
       FileWriteInteger(hFile, 0);                                                            // int:    spread
-      FileWriteInteger(hFile, 0);                                                            // uint64: volume
+      FileWriteInteger(hFile, 0);                                                            // uint64: realVolume
       FileWriteInteger(hFile, 0);
    }                                         // doesn't update last-modified timestamp even if the file size changes
    FileFlush(hFile);                         // @see  https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-flushviewoffile
@@ -1197,19 +1214,18 @@ bool HistoryFile1.WriteLastStoredBar(int hFile, int flags = NULL) {
       hf.bufferedBar.modified[hFile] = false;               // Bar wurde gerade gespeichert
 
    int error = GetLastError();
-   if (!error)
-      return(true);
+   if (!error) return(true);
    return(!catch("HistoryFile1.WriteLastStoredBar(8)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 }
 
 
 /**
- * Schreibt den Inhalt der BufferedBar in die Historydatei. Sie ist immer die jüngste Bar und kann in der History bereits existieren, muß es
- * aber nicht.
+ * Schreibt den Inhalt der BufferedBar in die Historydatei. Sie ist immer die jüngste Bar und kann in der History bereits
+ * existieren, muß es aber nicht.
  *
  * @param  int hFile - Handle der Historydatei
  * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                     • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ *                     HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - success status
  *
@@ -1258,10 +1274,10 @@ bool HistoryFile1.WriteBufferedBar(int hFile, int flags = NULL) {
          FileWriteDouble (hFile, hf.bufferedBar.data[hFile][BAR_H]);
          FileWriteDouble (hFile, hf.bufferedBar.data[hFile][BAR_L]);
          FileWriteDouble (hFile, hf.bufferedBar.data[hFile][BAR_C]);
-         FileWriteInteger(hFile, V);                                    // uint64: ticks
+         FileWriteInteger(hFile, V);                                    // uint64: tickVolume
          FileWriteInteger(hFile, 0);
          FileWriteInteger(hFile, 0);                                    // int:    spread
-         FileWriteInteger(hFile, 0);                                    // uint64: volume
+         FileWriteInteger(hFile, 0);                                    // uint64: realVolume
          FileWriteInteger(hFile, 0);
       }
       hf.bufferedBar.modified[hFile] = false;
@@ -1296,8 +1312,7 @@ bool HistoryFile1.WriteBufferedBar(int hFile, int flags = NULL) {
    }
 
    int error = GetLastError();
-   if (!error)
-      return(true);
+   if (!error) return(true);
    return(!catch("HistoryFile1.WriteBufferedBar(10)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]), error));
 }
 
@@ -1322,9 +1337,9 @@ bool HistoryFile1.MoveBars(int hFile, int fromOffset, int destOffset) {
  * @param  int      hFile            - handle of the history file
  * @param  datetime time             - tick time
  * @param  double   value            - tick value
- * @param  int      flags [optional] - additional flags that control writing (default: none)
- *                                     HST_BUFFER_TICKS: Buffer ticks and flush data only at the next BarOpen event for the file.
- *                                     HST_FILL_GAPS:    Fills any gaps with the last price before the gap.
+ * @param  int      flags [optional] - additional flags to control writing (default: none)
+ *                                     HST_BUFFER_TICKS: Buffer ticks and flush data only at a BarOpen event of the file.
+ *                                     HST_FILL_GAPS:    Fill any gaps with the last price before the gap.
  * @return bool - success status
  */
 bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NULL) {
@@ -1382,7 +1397,7 @@ bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NU
       hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zurücksetzen
    }
 
-   // HST_BUFFER_TICKS = TRUE:  Tick buffern
+   // HST_BUFFER_TICKS = TRUE: Tick buffern
    if (HST_BUFFER_TICKS & flags && 1) {
       // ist BufferedBar leer, Tickbar laden oder neue Bar beginnen und zur BufferedBar machen
       if (hf.bufferedBar.offset[hFile] < 0) {                                          // BufferedBar ist leer
@@ -1413,8 +1428,8 @@ bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NU
                nextCloseTime = closeTime     + hf.periodSecs[hFile];
             }
             else if (hf.period[hFile] == PERIOD_MN1) {
-               closeTime     = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+1);   // 00:00, 1. des nächsten Monats
-               nextCloseTime = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+2);   // 00:00, 1. des übernächsten Monats
+               closeTime     = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime) + 1); // 00:00, 1. des nächsten Monats
+               nextCloseTime = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime) + 2); // 00:00, 1. des übernächsten Monats
             }
             hf.bufferedBar.offset       [hFile]        = tick.offset;
             hf.bufferedBar.openTime     [hFile]        = tick.openTime;
@@ -1446,23 +1461,21 @@ bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NU
       }
 
       // BufferedBar aktualisieren
-      //.bufferedBar.data    [hFile][BAR_T] = ...                                      // unverändert
-      //.bufferedBar.data    [hFile][BAR_O] = ...                                      // unverändert
+    //hf.bufferedBar.data    [hFile][BAR_T] = ...                                      // unchanged
+    //hf.bufferedBar.data    [hFile][BAR_O] = ...                                      // unchanged
       hf.bufferedBar.data    [hFile][BAR_H] = MathMax(hf.bufferedBar.data[hFile][BAR_H], tick.value);
       hf.bufferedBar.data    [hFile][BAR_L] = MathMin(hf.bufferedBar.data[hFile][BAR_L], tick.value);
       hf.bufferedBar.data    [hFile][BAR_C] = tick.value;
       hf.bufferedBar.data    [hFile][BAR_V]++;
       hf.bufferedBar.modified[hFile]        = true;
-
       return(true);
-   }// end if HST_BUFFER_TICKS = TRUE
+   }
 
-
-   // HST_BUFFER_TICKS = FALSE:  Tick schreiben
+   // HST_BUFFER_TICKS = FALSE: Tick schreiben
    // ist BufferedBar definiert (HST_BUFFER_TICKS war beim letzten Tick ON und ist jetzt OFF), BufferedBar mit Tick aktualisieren, schreiben und zurücksetzen
    if (hf.bufferedBar.offset[hFile] >= 0) {                                            // BufferedBar ist definiert, der Tick muß dazu gehören
-      //.bufferedBar.data[hFile][BAR_T] = ...                                          // unverändert
-      //.bufferedBar.data[hFile][BAR_O] = ...                                          // unverändert
+    //hf.bufferedBar.data[hFile][BAR_T] = ...                                          // unchanged
+    //hf.bufferedBar.data[hFile][BAR_O] = ...                                          // unchanged
       hf.bufferedBar.data[hFile][BAR_H] = MathMax(hf.bufferedBar.data[hFile][BAR_H], tick.value);
       hf.bufferedBar.data[hFile][BAR_L] = MathMin(hf.bufferedBar.data[hFile][BAR_L], tick.value);
       hf.bufferedBar.data[hFile][BAR_C] = tick.value;
@@ -1474,9 +1487,9 @@ bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NU
 
    // BufferedBar ist leer: Tickbar mit Tick aktualisieren oder neue Bar mit Tick zu History hinzufügen
    if (tick.offset == -1) {
-      if      (hf.period[hFile] <= PERIOD_D1 ) tick.openTime = tick.time - tick.time%hf.periodSecs[hFile];
-      else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time%DAYS - (TimeDayOfWeekEx(tick.time)+6)%7*DAYS;          // 00:00, Montag
-      else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayEx(tick.time)-1)*DAYS;                  // 00:00, 1. des Monats
+      if      (hf.period[hFile] <= PERIOD_D1 ) tick.openTime = tick.time - tick.time % hf.periodSecs[hFile];
+      else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time % DAYS - (TimeDayOfWeekEx(tick.time)+6) % 7 * DAYS;  // 00:00, Montag
+      else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time % DAYS - (TimeDayEx(tick.time)-1) * DAYS;            // 00:00, 1. des Monats
       tick.offset = HistoryFile1.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
    }
    if (tick.offset < hf.total.bars[hFile]) {
@@ -1504,7 +1517,7 @@ bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NU
  *
  * @access private
  */
-int __ResizeSetArrays(int size) {
+int ResizeSetArrays(int size) {
    int oldSize = ArraySize(hs.hSet);
 
    if (size != oldSize) {
@@ -1519,7 +1532,7 @@ int __ResizeSetArrays(int size) {
    }
 
    for (int i=oldSize; i < size; i++) {
-      hs.symbol     [i] = "";                   // init new strings to prevent NULL pointer errors
+      hs.symbol     [i] = "";                   // initialize strings to prevent NULL pointer errors
       hs.symbolU    [i] = "";
       hs.description[i] = "";
       hs.directory  [i] = "";
@@ -1537,7 +1550,7 @@ int __ResizeSetArrays(int size) {
  *
  * @access private
  */
-int __ResizeFileArrays(int size) {
+int ResizeFileArrays(int size) {
    int oldSize = ArraySize(hf.hFile);
 
    if (size != oldSize) {
@@ -1604,20 +1617,43 @@ int __ResizeFileArrays(int size) {
 
 
 /**
- * Clean up opened files and issue a warning if an unclosed file was found.
+ * Clean up opened HistorySets and issue a warning if an unclosed set was found.
  *
  * @return bool - success status
  *
  * @access private
  */
-bool __CheckFileHandles() {
-   int error, size=ArraySize(hf.hFile);
+bool CheckOpenHistorySets() {
+   int error, size = ArraySize(hs.hSet);
+
+   for (int i=0; i < size; i++) {
+      if (hs.hSet[i] > 0) {
+         logWarn("CheckOpenHistorySets(1)  Open HistorySet with handle #"+ hs.hSet[i] +" found ("+ hs.symbol[i] +"). Did you forget to close it?");
+         if (!HistorySet1.Close(hs.hSet[i])) {
+            error = last_error;
+         }
+      }
+   }
+   return(!error);
+}
+
+
+/**
+ * Clean up opened HistoryFiles and issue a warning if an unclosed file was found.
+ *
+ * @return bool - success status
+ *
+ * @access private
+ */
+bool CheckOpenHistoryFiles() {
+   int error, size = ArraySize(hf.hFile);
 
    for (int i=0; i < size; i++) {
       if (hf.hFile[i] > 0) {
-         logWarn("__CheckFileHandles(1)  open file handle #"+ hf.hFile[i] +" found ("+ hf.symbol[i] +","+ PeriodDescription(hf.period[i]) +")");
-         if (!HistoryFile1.Close(hf.hFile[i]))
+         logWarn("CheckOpenHistoryFiles(1)  Open HistoryFile with handle #"+ hf.hFile[i] +" found ("+ hf.symbol[i] +","+ PeriodDescription(hf.period[i]) +"). Did you forget to close it?");
+         if (!HistoryFile1.Close(hf.hFile[i])) {
             error = last_error;
+         }
       }
    }
    return(!error);
@@ -1628,17 +1664,18 @@ bool __CheckFileHandles() {
  * Custom handler called in tester from core/library::init() to reset global variables before the next test.
  */
 void onLibraryInit() {
-   __ResizeSetArrays(0);
-   __ResizeFileArrays(0);
+   ResizeSetArrays(0);
+   ResizeFileArrays(0);
 }
 
 
 /**
- * Deinitialisierung
+ * Deinitialization
  *
  * @return int - error status
  */
 int onDeinit() {
-   __CheckFileHandles();
+   CheckOpenHistorySets();
+   CheckOpenHistoryFiles();
    return(last_error);
 }

@@ -1,7 +1,7 @@
 /**
  * Chart grid
  *
- * Dynamically maintains horizontal price and vertical date separators in the chart.
+ * Dynamically maintains horizontal and vertical chart separators.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};

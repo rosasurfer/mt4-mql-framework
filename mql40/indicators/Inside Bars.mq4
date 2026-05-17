@@ -54,7 +54,7 @@ bool   signal.telegram;
  */
 int onInit() {
    // validate inputs
-   string indicator = ProgramName();
+   string indicator = MqlProgramName();
 
    // Timeframe
    string sValue = Timeframe;
@@ -83,10 +83,10 @@ int onInit() {
 
    // display options
    string label = CreateStatusLabel();
-   string fontName = "";                                       // "" => system menu font family
-   int    fontSize = 8;                                        // 8  => system menu font size
-   string text = ProgramName() +": "+ Timeframe + legendInfo;
-   ObjectSetText(label, text, fontSize, fontName, Black);      // status display
+   string fontName = "";                                          // "" => system menu font family
+   int    fontSize = 8;                                           // 8  => system menu font size
+   string text = MqlProgramName() +": "+ Timeframe + legendInfo;
+   ObjectSetText(label, text, fontSize, fontName, Black);         // status display
 
    return(catch("onInit(4)"));
 }
@@ -640,7 +640,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    string sPeriod    = PeriodDescription();
    string sTimeframe = TimeframeDescription(timeframe);
    string eventName  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ WindowExpertName() +".onInsideBar("+ sTimeframe +")."+ TimeToStr(Time[0]), propertyName = "";
-   string message1   = " new "+ sTimeframe +" inside bar";
+   string message1   = sTimeframe +" inside bar (market: "+ NumberToStr(Bid, PriceFormat) +")";
    string message2   = Symbol() +": "+ message1;
    string localTime  = TimeToStr(TimeLocalEx("onInsideBar(1)"), TIME_MINUTES|TIME_SECONDS);
    string accountAlias = GetAccountAlias();
@@ -656,7 +656,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
          eventAction = !GetWindowPropertyA(hWndTerminal, propertyName);
          SetWindowPropertyA(hWndTerminal, propertyName, 1);
       }
-      if (eventAction) logInfo("onInsideBar(2)  "+ message1 +" at "+ TimeToStr(closeTime) +"  H="+ NumberToStr(high, PriceFormat) +"  L="+ NumberToStr(low, PriceFormat));
+      if (eventAction) logInfo("onInsideBar(2)  "+ message1);
    }
 
    // sound: once per system
@@ -736,7 +736,7 @@ bool DeleteInsideBars(int timeframe) {
  * @return string - created label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
+   string label = "rsf."+ MqlProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return("");
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);

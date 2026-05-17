@@ -156,7 +156,7 @@ int onInit() {
 
    // names, labels and display options
    legendLabel = CreateChartLegend();
-   indicatorName = ProgramName() +"("+ ATR.Periods +")";
+   indicatorName = MqlProgramName() +"("+ ATR.Periods +")";
    IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");
@@ -386,12 +386,12 @@ bool SetIndicatorOptions(bool redraw = false) {
       SetIndexLabel(MODE_LOWER_BAND, NULL);
    }
    else {
-      SetIndexLabel(MODE_UPPER_BAND, ProgramName() +" upper band");
-      SetIndexLabel(MODE_LOWER_BAND, ProgramName() +" lower band");
+      SetIndexLabel(MODE_UPPER_BAND, MqlProgramName() +" upper band");
+      SetIndexLabel(MODE_LOWER_BAND, MqlProgramName() +" lower band");
    }
 
    if (Color.MovingAverage == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
-   else                                 SetIndexLabel(MODE_MA, ProgramName() +" SMA("+ SMA.Periods +")");
+   else                                 SetIndexLabel(MODE_MA, MqlProgramName() +" SMA("+ SMA.Periods +")");
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));

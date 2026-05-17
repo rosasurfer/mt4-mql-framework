@@ -1,13 +1,26 @@
+
+// legend configuration
+int chartlegend.xDist        =  5;              // x-offset of all legends
+int chartlegend.line1Top     = 20;              // y-offset of 1st legend top
+int chartlegend.line1Bottom  = 36;              // y-offset of 1st legend bottom
+int chartlegend.lineHeight   = 19;              // height of a legend line (margin: 0 0 2)
+int chartlegend.lineDistance = 2;               //
+
+int comments.line1Top    = 16;                  // y-offset of 1st comment line top
+int comments.line1Bottom = 27;                  // y-offset of 1st comment line bottom
+int comments.lineHeight  = 12;                  // height of a comment line (margin: 0)
+
+
 /**
  * Create a text label object in the main chart for an indicator's chart legend.
  *
  * @return string - object name or an empty string in case of errors
  */
 string CreateChartLegend() {
-   string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.chart];
+   string name = StringConcatenate(CHARTLEGEND_PREFIX, __ExecutionContext[EC.pid], ".", __ExecutionContext[EC.chart]);
 
    if (__isChart && !__isSuperContext) {
-      if (ObjectFind(name) == -1) {                      // create a new label or reuse an existing one
+      if (ObjectFind(name) == -1) {             // create a new label or reuse an existing one
          if (!ObjectCreateRegister(name, OBJ_LABEL)) return("");
          ObjectSetText(name, " ");
       }
@@ -16,6 +29,8 @@ string CreateChartLegend() {
    return(name);
 
    // suppress compiler warnings
+   CountChartLegends();
+   RemoveChartLegend();
    UpdateBandLegend(NULL, NULL, NULL, NULL, NULL, NULL);
    UpdateTrendLegend(NULL, NULL, NULL, NULL, NULL, NULL);
 }
@@ -28,7 +43,7 @@ string CreateChartLegend() {
  */
 bool RemoveChartLegend() {
    if (__isChart && !__isSuperContext) {
-      string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.chart];
+      string name = StringConcatenate(CHARTLEGEND_PREFIX, __ExecutionContext[EC.pid], ".", __ExecutionContext[EC.chart]);
       if (ObjectFind(name) != -1) {
          ObjectDelete(name);
          return(RearrangeChartLegends());
@@ -73,22 +88,56 @@ bool RearrangeChartLegends() {
       }
    }
 
-   // order and re-position labels by pid
-   int xDist      =  5;                               // x-position
-   int yDist      = 20;                               // y-position of the top-most legend
-   int lineHeight = 19;                               // line height of each legend
+   int xOffset    = chartlegend.xDist;
+   int yTopOffset = chartlegend.line1Top;
+   int lineHeight = chartlegend.lineHeight;
 
+   // order and re-position labels by pid
    int size = ArraySize(pids);
    if (size > 0) {
       ArraySort(pids);
       for (i=0; i < size; i++) {
          name = StringConcatenate(CHARTLEGEND_PREFIX, pids[i], ".", __ExecutionContext[EC.chart]);
          ObjectSet(name, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet(name, OBJPROP_XDISTANCE, xDist);
-         ObjectSet(name, OBJPROP_YDISTANCE, yDist + i*lineHeight);
+         ObjectSet(name, OBJPROP_XDISTANCE, xOffset);
+         ObjectSet(name, OBJPROP_YDISTANCE, yTopOffset + i * lineHeight);
       }
    }
    return(!catch("RearrangeChartLegends(1)"));
+}
+
+
+/**
+ * Count existing chart legends.
+ *
+ * @return int - number of chart legends
+ */
+int CountChartLegends() {
+   int objects = ObjectsTotal();
+   int labels  = ObjectsTotal(OBJ_LABEL);
+   int prefixLength = StringLen(CHARTLEGEND_PREFIX);
+   int count = 0;
+
+   for (int i=objects-1; i >= 0 && labels; i--) {
+      string name = ObjectName(i);
+
+      if (ObjectType(name) == OBJ_LABEL) {
+         if (StrStartsWith(name, CHARTLEGEND_PREFIX)) {
+            string data = StrRight(name, -prefixLength);
+            int pid     = StrToInteger(data);
+            int hChart  = StrToInteger(StrRightFrom(data, "."));
+
+            if (pid && hChart==__ExecutionContext[EC.chart]) {
+               count++;
+            }
+         }
+         labels--;
+      }
+   }
+   return(count);
+
+   // suppress compiler warnings
+   CreateChartLegend();
 }
 
 

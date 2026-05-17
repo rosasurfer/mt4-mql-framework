@@ -29,10 +29,10 @@ bool SaveStatus.OpenPosition(string file, bool fileExists) {
    WriteIniString(file, section, "open.commissionM",  /*double  */ DoubleToStr(open.commissionM, 2));
    WriteIniString(file, section, "open.grossProfitM", /*double  */ DoubleToStr(open.grossProfitM, 2));
    WriteIniString(file, section, "open.netProfitM",   /*double  */ DoubleToStr(open.netProfitM, 2));
-   WriteIniString(file, section, "open.netProfitP",   /*double  */ NumberToStr(open.netProfitP, "."+ Digits +"+"));
+   WriteIniString(file, section, "open.netProfitP",   /*double  */ DoubleToStr(open.netProfitP, Digits));
    WriteIniString(file, section, "open.runupP",       /*double  */ DoubleToStr(open.runupP, Digits));
    WriteIniString(file, section, "open.rundownP",     /*double  */ DoubleToStr(open.rundownP, Digits));
-   WriteIniString(file, section, "open.sigProfitP",   /*double  */ NumberToStr(open.sigProfitP, "."+ Digits +"+"));
+   WriteIniString(file, section, "open.sigProfitP",   /*double  */ DoubleToStr(open.sigProfitP, Digits));
    WriteIniString(file, section, "open.sigRunupP",    /*double  */ DoubleToStr(open.sigRunupP, Digits));
    WriteIniString(file, section, "open.sigRundownP",  /*double  */ DoubleToStr(open.sigRundownP, Digits) + separator);
 

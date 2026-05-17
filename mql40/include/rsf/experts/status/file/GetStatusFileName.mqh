@@ -4,7 +4,7 @@
  * @param  bool relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
  *                                    (default: absolute path)
  *
- * @return string - filename or an empty string in case of errors
+ * @return string - file name or an empty string in case of errors
  */
 string GetStatusFileName(bool relative = false) {
    relative = relative!=0;
@@ -14,7 +14,8 @@ string GetStatusFileName(bool relative = false) {
       if (status.filename == "") return("");
    }
 
-   if (relative)
+   if (relative) {
       return(status.filename);
+   }
    return(GetMqlSandboxPath() +"\\"+ status.filename);
 }

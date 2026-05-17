@@ -4,7 +4,7 @@
  * @return bool - success status
  */
 bool StoreVolatileStatus() {
-   string name = ProgramName();
+   string name = MqlProgramName();
 
    // input string Instance.ID
    string value = ifString(instance.isTest, "T", "") + StrPadLeft(instance.id, 3, "0");

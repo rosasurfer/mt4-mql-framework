@@ -5,7 +5,7 @@
  */
 bool ReadTestConfiguration() {
    if (__isTesting) {
-      string section = "Tester."+ ProgramName();
+      string section = "Tester."+ MqlProgramName();
       test.disableTickValueWarning = GetConfigBool(section, "DisableTickValueWarning", test.disableTickValueWarning);
       test.reduceStatusWrites      = GetConfigBool(section, "ReduceStatusWrites",      test.reduceStatusWrites);
 

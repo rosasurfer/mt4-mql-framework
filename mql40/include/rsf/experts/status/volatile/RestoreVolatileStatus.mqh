@@ -4,7 +4,7 @@
  * @return bool - whether an instance id was successfully restored
  */
 bool RestoreVolatileStatus() {
-   string name = ProgramName();
+   string name = MqlProgramName();
 
    // input string Instance.ID
    while (true) {

@@ -85,6 +85,10 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
    stats[METRIC_NET_UNITS][S_CLOSED_PROFIT] += open.netProfitP;
    stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT] += open.sigProfitP;
 
+   stats[METRIC_NET_MONEY][S_CLOSED_PROFIT] = NormalizeDouble(stats[METRIC_NET_MONEY][S_CLOSED_PROFIT], 2);
+   stats[METRIC_NET_UNITS][S_CLOSED_PROFIT] = NormalizeDouble(stats[METRIC_NET_UNITS][S_CLOSED_PROFIT], Digits);
+   stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT] = NormalizeDouble(stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT], Digits);
+
    if (!open.toTicket) {
       if (open.fromTicket > 0) {
          // iterate over partial closes and aggregate a single trade for history[]
@@ -137,11 +141,13 @@ bool MovePositionToHistory(datetime closeTime, double closePrice, double closePr
          if (NE(a.part, 1, 2))  return(!catch("MovePositionToHistory(4)  "+ instance.name +" not all partial closes from ticket #"+ open.ticket +" found (found "+ NumberToStr(a.part, ".1+") +" of 1.0)", ERR_ILLEGAL_STATE));
          a.lots         = NormalizeDouble(a.lots, 2);          // normalize calculated fields
          a.part         = 1;
-         a.slippageP    = NormalizeDouble(a.slippageP, Digits);
-         a.swapM        = NormalizeDouble(a.swapM,        2);
-         a.commissionM  = NormalizeDouble(a.commissionM,  2);
-         a.grossProfitM = NormalizeDouble(a.grossProfitM, 2);
-         a.netProfitM   = NormalizeDouble(a.netProfitM,   2);
+         a.slippageP    = NormalizeDouble(a.slippageP,  Digits);
+         a.swapM        = NormalizeDouble(a.swapM,           2);
+         a.commissionM  = NormalizeDouble(a.commissionM,     2);
+         a.grossProfitM = NormalizeDouble(a.grossProfitM,    2);
+         a.netProfitM   = NormalizeDouble(a.netProfitM,      2);
+         a.netProfitP   = NormalizeDouble(a.netProfitP, Digits);
+         a.sigProfitP   = NormalizeDouble(a.sigProfitP, Digits);
 
          // we can't use AddHistoryRecord() as it invalidates the cache used by CalculateStats(), thus negatively impacting tester speed
          i = ArrayRange(history, 0);

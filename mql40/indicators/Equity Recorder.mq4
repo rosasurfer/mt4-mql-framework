@@ -2,7 +2,8 @@
  * Equity Recorder
  *
  * Records two equity curves for the current trade account.
- * One with actual equity and another one with added external assets (if configured).
+ *  - One with the actual equity value.
+ *  - One with equity value + external assets.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -24,7 +25,7 @@ extern int    HistoryFormat    = 401;                    // written history form
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers   1                          // there's a minimum of 1 buffer
+#property indicator_buffers   1                          // there must be a minimum of 1 buffer (even if not used)
 #property indicator_color1    CLR_NONE
 
 #define I_EQUITY_ACCOUNT      0                          // equity values
@@ -49,7 +50,7 @@ string legendLabel   = "";
  * @return int - error status
  */
 int onInit() {
-   indicatorName = ProgramName();
+   indicatorName = MqlProgramName();
 
    // validate inputs
    // HistoryDirectory
@@ -72,11 +73,11 @@ int onInit() {
    legendLabel = CreateChartLegend();
 
    // setup a chart ticker
-   if (!__tickTimerId && !__isTesting) {
+   if (!__virtualTicksTimerId && !__isTesting) {
       int hWnd = __ExecutionContext[EC.chart];
       int millis = 1000;                                    // a virtual tick every second (1000 milliseconds)
-      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!__tickTimerId) return(catch("onInit(5)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      __virtualTicksTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!__virtualTicksTimerId) return(catch("onInit(5)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onInit(6)"));
 }
@@ -117,15 +118,17 @@ int onDeinit() {
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
       if (hSet[i] != 0) {
-         int tmp = hSet[i]; hSet[i] = NULL;
+         int tmp = hSet[i];
+         hSet[i] = NULL;
          if (!HistorySet1.Close(tmp)) return(ERR_RUNTIME_ERROR);
       }
    }
 
    // uninstall the chart ticker
-   if (__tickTimerId > NULL) {
-      int id = __tickTimerId; __tickTimerId = NULL;
-      if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   if (__virtualTicksTimerId > 0) {
+      tmp = __virtualTicksTimerId;
+      __virtualTicksTimerId = NULL;
+      if (!ReleaseTickTimer(tmp)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
 }

@@ -31,7 +31,7 @@ int SetLastError(int error, int param = NULL) {
       ec_SetMqlError(__ExecutionContext, error);
    }
    last_error = error;
-   if (error && IsExpert()) CheckErrors("SetLastError(1)");       // immediately update __STATUS_OFF in experts
+   if (error && IsExpert()) HandleErrors("SetLastError(1)");      // immediately update __STATUS_OFF in experts
    return(error);
 }
 
@@ -349,13 +349,13 @@ string Pluralize(int count, string singular="", string plural="s") {
  * Notes: This function must not call MQL library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   debug(message);                                                         // send the message to the debug output
+   debug(message);                                                            // send the message to the debug output
 
    string sPeriod = PeriodDescription();
-   Alert(Symbol(), ",", sPeriod, ": ", ModuleName(true), ":  ", message);  // the message shows up in the terminal log
+   Alert(Symbol(), ",", sPeriod, ": ", MqlModuleName(true), ":  ", message);  // the message shows up in the terminal log
 
    if (IsTesting()) {
-      // in tester no Alert() dialog was displayed
+      // in tester Alert() dialog are not displayed
       string sCaption = "Strategy Tester "+ Symbol() +","+ sPeriod;
       string sMessage = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
 
@@ -388,9 +388,16 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
       useWin32 = (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE);
    }
 
-   // the default flag MB_APPLMODAL may block the UI thread from processing messages (happens *sometimes* in test::deinit())
-   if (useWin32) int button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TASKMODAL|MB_TOPMOST|MB_SETFOREGROUND);
-   else              button = MessageBox(message, caption, flags);
+   int button;
+   if (useWin32) {
+      // No owner window + flag MB_TASKMODAL: only this combination prevents a UI thread deadlock while still blocking the
+      // main app. With owner window MessageBox() disables the given owner which in return causes a synchronous SendMessage()
+      // path between UI and tester thread. This path would create a deadlock as the tester waits for MessageBox() to return.
+      button = MessageBoxA(NULL, message, caption, flags|MB_TASKMODAL|MB_TOPMOST|MB_SETFOREGROUND);
+   }
+   else {
+      button = MessageBox(message, caption, flags);
+   }
 
    if (!(flags & MB_DONT_LOG)) logDebug("MessageBoxEx(1)  "+ message +" (response: "+ MessageBoxButtonToStrA(button) +")");
    return(button);
@@ -797,9 +804,7 @@ double PipValue(double lots=1.0, bool muteErrors=false) {
  * @param  _In_  string symbol            - symbol
  * @param  _In_  double lots              - lot amount
  * @param  _Out_ int    error             - variable receiving the error status
- * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
- *                                           if specified errors are logged with level LOG_NOTICE
- *                                           if not specified errors are not logged (default)
+ * @param  _In_  string caller [optional] - location of the caller, if specified errors are logged (default: no logging)
  *
  * @return double - pip value or NULL (0) in case of errors (check parameter 'error')
  */
@@ -894,9 +899,9 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
  * @return string - standard symbol or the current symbol if the standard symbol is not known
  */
 string StdSymbol() {
-   static string lastSymbol="", lastResult="";
-
-    if (lastResult != "") {
+   static string lastSymbol = "", lastResult = "";
+                                       // no direct comparison due to MT4 bug:
+    if (StringLen(lastResult) > 0) {   // in library::deinit() strings are released to early (already a NULL pointer)
       if (Symbol() == lastSymbol) return(lastResult);
    }
    lastSymbol = Symbol();
@@ -1207,8 +1212,9 @@ int GetChartWindow(string shortName = "") {
  * @return bool
  */
 bool ifBool(bool condition, bool thenValue, bool elseValue) {
-   if (condition != 0)
+   if (condition != 0) {
       return(thenValue != 0);
+   }
    return(elseValue != 0);
 }
 
@@ -1223,8 +1229,9 @@ bool ifBool(bool condition, bool thenValue, bool elseValue) {
  * @return int
  */
 int ifInt(bool condition, int thenValue, int elseValue) {
-   if (condition != 0)
+   if (condition != 0) {
       return(thenValue);
+   }
    return(elseValue);
 }
 
@@ -1239,8 +1246,9 @@ int ifInt(bool condition, int thenValue, int elseValue) {
  * @return double
  */
 double ifDouble(bool condition, double thenValue, double elseValue) {
-   if (condition != 0)
+   if (condition != 0) {
       return(thenValue);
+   }
    return(elseValue);
 }
 
@@ -1255,8 +1263,9 @@ double ifDouble(bool condition, double thenValue, double elseValue) {
  * @return string
  */
 string ifString(bool condition, string thenValue, string elseValue) {
-   if (condition != 0)
+   if (condition != 0) {
       return(thenValue);
+   }
    return(elseValue);
 }
 
@@ -1270,8 +1279,9 @@ string ifString(bool condition, string thenValue, string elseValue) {
  * @return int
  */
 color colorOr(color value, color altValue) {
-   if (value != CLR_NONE)
+   if (value != CLR_NONE) {
       return(value);
+   }
    return(altValue);
 }
 
@@ -1285,8 +1295,9 @@ color colorOr(color value, color altValue) {
  * @return int
  */
 int intOr(int value, int altValue) {
-   if (value != NULL)
+   if (value != NULL) {
       return(value);
+   }
    return(altValue);
 }
 
@@ -1300,8 +1311,9 @@ int intOr(int value, int altValue) {
  * @return double
  */
 double doubleOr(double value, double altValue) {
-   if (value != NULL)
+   if (value != NULL) {
       return(value);
+   }
    return(altValue);
 }
 
@@ -1315,8 +1327,9 @@ double doubleOr(double value, double altValue) {
  * @return string
  */
 string stringOr(string value, string altValue) {
-   if (StringLen(value) > 0)
+   if (StringLen(value) > 0) {
       return(value);
+   }
    return(altValue);
 }
 
@@ -1334,8 +1347,9 @@ bool EQ(double double1, double double2, int digits = 8) {
    if (digits < 0 || digits > 8) return(!catch("EQ(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER));
 
    double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
-   if (diff < 0)
+   if (diff < 0) {
       diff = -diff;
+   }
    return(diff < 0.000000000000001);
 
    /*
@@ -1400,8 +1414,9 @@ bool NE(double double1, double double2, int digits = 8) {
  * @return bool
  */
 bool GT(double double1, double double2, int digits = 8) {
-   if (EQ(double1, double2, digits))
+   if (EQ(double1, double2, digits)) {
       return(false);
+   }
    return(double1 > double2);
 }
 
@@ -1416,8 +1431,9 @@ bool GT(double double1, double double2, int digits = 8) {
  * @return bool
  */
 bool GE(double double1, double double2, int digits = 8) {
-   if (double1 > double2)
+   if (double1 > double2) {
       return(true);
+   }
    return(EQ(double1, double2, digits));
 }
 
@@ -1432,8 +1448,9 @@ bool GE(double double1, double double2, int digits = 8) {
  * @return bool
  */
 bool LT(double double1, double double2, int digits = 8) {
-   if (EQ(double1, double2, digits))
+   if (EQ(double1, double2, digits)) {
       return(false);
+   }
    return(double1 < double2);
 }
 
@@ -1448,8 +1465,9 @@ bool LT(double double1, double double2, int digits = 8) {
  * @return bool
  */
 bool LE(double double1, double double2, int digits = 8) {
-   if (double1 < double2)
+   if (double1 < double2) {
       return(true);
+   }
    return(EQ(double1, double2, digits));
 }
 
@@ -1590,8 +1608,9 @@ string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=
  * @return bool
  */
 bool IsEmptyString(string value) {
-   if (StrIsNull(value))
+   if (StrIsNull(value)) {
       return(false);
+   }
    return(value == "");
 }
 
@@ -1682,13 +1701,15 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
  *
  * @return string
  */
-string ProgramName() {
+string MqlProgramName() {
    static string name = "";
-
-   if (!StringLen(name)) {
+                                       // no direct comparison due to MT4 bug:
+   if (!StringLen(name)) {             // in library::deinit() strings are released to early (already a NULL pointer)
       if (IsLibrary()) {
-         if (IsDllsAllowed()) name = ec_ProgramName(__ExecutionContext);
-         if (!StringLen(name)) return("???");
+         if (IsDllsAllowed()) {
+            name = ec_ProgramName(__ExecutionContext);
+         }
+         if (name == "") return("???");
       }
       else {
          name = WindowExpertName();
@@ -1699,21 +1720,24 @@ string ProgramName() {
 
 
 /**
- * Return the current MQL module's name.
+ * Return the current MQL module's name. If parameter `fullName` is TRUE and:
  *
- * @param  bool fullName [optional] - whether to return the full module name (default: simple name)
+ * - if the module is a library:                        "<program-name>::<library-name>" is returned
+ * - If the module is an indicator loaded by iCustom(): "<host-name>::<indicator-name>" is returned
+ *
+ * @param  bool fullName [optional] - whether to return the full name (default: no)
  *
  * @return string
  */
-string ModuleName(bool fullName = false) {
-   fullName = fullName!=0;
+string MqlModuleName(bool fullName = false) {
+   fullName = (fullName!=0);
    if (!fullName) return(WindowExpertName());
 
    static string name = "";
-
-   if (!StringLen(name)) {
+                                       // no direct comparison due to MT4 bug:
+   if (!StringLen(name)) {             // in library::deinit() strings are released to early (already a NULL pointer)
       if (IsLibrary()) {
-         string programName = ProgramName();
+         string programName = MqlProgramName();
          string libraryName = WindowExpertName();
          if (programName == "???") {
             return(programName +"::"+ libraryName);
@@ -1722,6 +1746,11 @@ string ModuleName(bool fullName = false) {
       }
       else {
          name = WindowExpertName();
+      }
+      if (__isSuperContext) {
+         int pid = __ExecutionContext[EC.pid];
+         string hostName = ec_SuperProgramName(pid);
+         name = hostName +"::"+ name;
       }
    }
    return(name);
@@ -1797,7 +1826,7 @@ int Ceil(double value) {
  */
 double RoundEx(double number, int decimals = 0) {
    if (decimals > 0) return(NormalizeDouble(number, decimals));
-   if (!decimals)    return(      MathRound(number));
+   if (!decimals)    return(MathRound(number));
 
    // decimals < 0
    double factor = MathPow(10, decimals);
@@ -1828,13 +1857,14 @@ double RoundEx(double number, int decimals = 0) {
 double RoundFloor(double number, int decimals = 0) {
    if (decimals > 0) {
       double factor = MathPow(10, decimals);
-             number = MathFloor(number * factor) / factor;
-             number = NormalizeDouble(number, decimals);
+      number = MathFloor(number * factor) / factor;
+      number = NormalizeDouble(number, decimals);
       return(number);
    }
 
-   if (decimals == 0)
+   if (!decimals) {
       return(MathFloor(number));
+   }
 
    // decimals < 0
    factor = MathPow(10, decimals);
@@ -1865,13 +1895,14 @@ double RoundFloor(double number, int decimals = 0) {
 double RoundCeil(double number, int decimals = 0) {
    if (decimals > 0) {
       double factor = MathPow(10, decimals);
-             number = MathCeil(number * factor) / factor;
-             number = NormalizeDouble(number, decimals);
+      number = MathCeil(number * factor) / factor;
+      number = NormalizeDouble(number, decimals);
       return(number);
    }
 
-   if (decimals == 0)
+   if (!decimals) {
       return(MathCeil(number));
+   }
 
    // decimals < 0
    factor = MathPow(10, decimals);
@@ -1927,8 +1958,9 @@ int Mul(int a, int b, bool boundaryOnOverflow = false) {
  * @return int
  */
 int Div(int a, int b, int onZero = 0) {
-   if (!b)
+   if (!b) {
       return(onZero);
+   }
    return(a/b);
 }
 
@@ -1943,8 +1975,9 @@ int Div(int a, int b, int onZero = 0) {
  * @return double
  */
 double MathDiv(double a, double b, double onZero = 0) {
-   if (b == 0)
+   if (b == 0) {
       return(onZero);
+   }
    return(a/b);
 }
 
@@ -1977,8 +2010,7 @@ int CountDecimals(double number) {
    int dot = StringFind(str, ".");
 
    for (int i=StringLen(str)-1; i > dot; i--) {
-      if (StringGetChar(str, i) != '0')
-         break;
+      if (StringGetChar(str, i) != '0') break;
    }
    return(i - dot);
 }
@@ -2004,8 +2036,7 @@ string StrLeftTo(string value, string substring, int count = 1) {
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
-         if (pos == -1)
-            return(value);
+         if (pos == -1) return(value);
          count--;
       }
       return(StrLeft(value, pos));
@@ -2016,19 +2047,17 @@ string StrLeftTo(string value, string substring, int count = 1) {
       /*
       while(count < 0) {
          pos = StringFind(value, substring, 0);
-         if (pos == -1)
-            return("");
+         if (pos == -1) return("");
          count++;
       }
       */
       pos = StringFind(value, substring, 0);
-      if (pos == -1)
-         return(value);
+      if (pos == -1) return(value);
 
       if (count == -1) {
          while (pos != -1) {
             start = pos+1;
-            pos   = StringFind(value, substring, start);
+            pos = StringFind(value, substring, start);
          }
          return(StrLeft(value, start-1));
       }
@@ -2085,8 +2114,7 @@ string StrRightFrom(string value, string substring, int count = 1) {
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
-         if (pos == -1)
-            return("");
+         if (pos == -1) return("");
          count--;
       }
       return(StrSubstr(value, pos+StringLen(substring)));
@@ -2097,19 +2125,17 @@ string StrRightFrom(string value, string substring, int count = 1) {
       /*
       while(count < 0) {
          pos = StringFind(value, substring, 0);
-         if (pos == -1)
-            return("");
+         if (pos == -1) return("");
          count++;
       }
       */
       pos = StringFind(value, substring, 0);
-      if (pos == -1)
-         return(value);
+      if (pos == -1) return(value);
 
       if (count == -1) {
          while (pos != -1) {
             start = pos+1;
-            pos   = StringFind(value, substring, start);
+            pos = StringFind(value, substring, start);
          }
          return(StrSubstr(value, start-1 + StringLen(substring)));
       }
@@ -2141,7 +2167,7 @@ bool StrStartsWithI(string value, string prefix) {
       }
       catch("StrStartsWithI(2)", error);
    }
-   if (!StringLen(prefix))      return(!catch("StrStartsWithI(3)  illegal parameter prefix: \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(prefix)) return(!catch("StrStartsWithI(3)  illegal parameter prefix: \"\"", ERR_INVALID_PARAMETER));
 
    return(StringFind(StrToUpper(value), StrToUpper(prefix)) == 0);
 }
@@ -2204,8 +2230,9 @@ bool StrIsInteger(string value) {
 bool StrIsNumeric(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING)
+      if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(value)) return(false);
+      }
       catch("StrIsNumeric(1)", error);
    }
 
@@ -2257,53 +2284,6 @@ bool StrIsEmailAddress(string value) {
 
 
 /**
- * Ob ein String eine gültige Telefonnummer darstellt.
- *
- * @param  string value - zu prüfender String
- *
- * @return bool
- */
-bool StrIsPhoneNumber(string value) {
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StrIsNull(value)) return(false);
-      }
-      catch("StrIsPhoneNumber(1)", error);
-   }
-
-   string s = StrReplace(StrTrim(value), " ", "");
-   int chr, length=StringLen(s);
-
-   // Enthält die Nummer Bindestriche "-", müssen davor und danach Ziffern stehen.
-   int pos = StringFind(s, "-");
-   while (pos != -1) {
-      if (pos   == 0     ) return(false);
-      if (pos+1 == length) return(false);
-
-      chr = StringGetChar(s, pos-1);            // left char
-      if (chr < '0') return(false);
-      if (chr > '9') return(false);
-
-      chr = StringGetChar(s, pos+1);            // right char
-      if (chr < '0') return(false);
-      if (chr > '9') return(false);
-
-      pos = StringFind(s, "-", pos+1);
-   }
-   if (chr != 0) s = StrReplace(s, "-", "");
-
-   // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
-   if (StrStartsWith(s, "+" )) {
-      s = StrSubstr(s, 1);
-      if (StrStartsWith(s, "0")) return(false);
-   }
-
-   return(StrIsDigits(s));
-}
-
-
-/**
  * Fügt ein Element am Beginn eines String-Arrays an.
  *
  * @param  _InOut_ string array[] - String-Array
@@ -2341,9 +2321,9 @@ int ArrayUnshiftString(string &array[], string value) {
 int StrToLogLevel(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
-   if (StrStartsWith(str, "LOG_"))
+   if (StrStartsWith(str, "LOG_")) {
       str = StrSubstr(str, 4);
-
+   }
    if (str ==        "DEBUG" ) return(LOG_DEBUG );
    if (str == ""+ LOG_DEBUG  ) return(LOG_DEBUG );
    if (str ==        "INFO"  ) return(LOG_INFO  );
@@ -2361,8 +2341,9 @@ int StrToLogLevel(string value, int flags = NULL) {
    if (str ==        "OFF"   ) return(LOG_OFF   );       //
    if (str == ""+ LOG_OFF    ) return(LOG_OFF   );       // not a loglevel
 
-   if (flags & F_ERR_INVALID_PARAMETER && 1)
+   if (flags & F_ERR_INVALID_PARAMETER && 1) {
       return(!SetLastError(ERR_INVALID_PARAMETER));
+   }
    return(!catch("StrToLogLevel(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER));
 }
 
@@ -2413,8 +2394,9 @@ int StrToMaMethod(string value, int flags = NULL) {
       }
    }
 
-   if (!flags & F_ERR_INVALID_PARAMETER)
+   if (!flags & F_ERR_INVALID_PARAMETER) {
       return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER)));
+   }
    return(-1);
 }
 
@@ -2429,7 +2411,7 @@ int StrToMaMethod(string value, int flags = NULL) {
 string QuoteStr(string value) {
    if (StrIsNull(value)) {
       int error = GetLastError();
-      if (error && error!=ERR_NOT_INITIALIZED_STRING) catch("QuoteStr(1)", error);
+      if (error && error != ERR_NOT_INITIALIZED_STRING) catch("QuoteStr(1)", error);
       return("(null)");
    }
    return(StringConcatenate("'", value, "'"));
@@ -2446,7 +2428,7 @@ string QuoteStr(string value) {
 string DoubleQuoteStr(string value) {
    if (StrIsNull(value)) {
       int error = GetLastError();
-      if (error && error!=ERR_NOT_INITIALIZED_STRING) catch("DoubleQuoteStr(1)", error);
+      if (error && error != ERR_NOT_INITIALIZED_STRING) catch("DoubleQuoteStr(1)", error);
       return("(null)");
    }
    return(StringConcatenate("\"", value, "\""));
@@ -2720,15 +2702,14 @@ int SumInts(int values[]) {
  * @param  _In_  string symbol            - symbol
  * @param  _In_  int    mode              - MarketInfo() data identifier
  * @param  _Out_ int    error             - variable receiving the error status
- * @param  _In_  string caller [optional] - location identifier of the caller, controls error handling: if not empty errors
- *                                          are logged (default: no logging)
+ * @param  _In_  string caller [optional] - location of the caller, if specified errors are logged (default: no logging)
  *
- * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter 'error')
+ * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter `error`)
  */
 double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
    string section = "MarketInfo";
-   string sMode   = MarketInfoModeToStr(mode);
-   string key     = symbol +","+ sMode;
+   string sMode = MarketInfoModeToStr(mode);
+   string key = StringConcatenate(symbol, ",", sMode);
 
    if (key == "VIX_J4,MODE_TICKVALUE") {                 // TODO: hard-code cases to minimize expensive logic
       // check for and return a custom override
@@ -2762,7 +2743,9 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
    }
    if (!error) return(dValue);
 
-   if (caller != "") /*&&*/ if (IsLogInfo()) logInfo(caller +"->MarketInfoEx(4: \""+ symbol +"\", "+ sMode +") => "+ NumberToStr(dValue, ".1+"), error);
+   if (caller != "") {
+      if (IsLogInfo()) logInfo(caller +"->MarketInfoEx(4:"+ symbol +") => "+ sMode +" = "+ NumberToStr(dValue, ".1+"), error);
+   }
    return(NULL);
 }
 
@@ -2836,12 +2819,12 @@ int DebugMarketInfo(string caller = "") {
 
    debug(caller +"  built-in: Digits      = "+ Digits);
    debug(caller +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
-   debug(caller +"  derived:  Pip         = "+ NumberToStr(Pip, PriceFormat));
-   debug(caller +"  derived:  PipDigits   = "+ PipDigits);
+   debug(caller +"  custom:   Pip         = "+ NumberToStr(Pip, PriceFormat));
+   debug(caller +"  custom:   PipDigits   = "+ PipDigits);
 
-   debug(caller +"  derived:  pUnit       = "+ NumberToStr(pUnit, pUnitFormat));
+   debug(caller +"  custom:   pUnit       = "+ NumberToStr(pUnit, pUnitFormat));
 
-   debug(caller +"  derived:  PriceFormat = \""+ PriceFormat +"\"");
+   debug(caller +"  custom:   PriceFormat = \""+ PriceFormat +"\"");
    debug(caller +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
    debug(caller +"  built-in: Bars        = "+ Bars);
 
@@ -3361,7 +3344,9 @@ bool CreateDirectory(string path, int flags) {
  */
 string GetMqlSandboxPath() {
    static string path = "";
-   if (!StringLen(path)) path = GetMqlSandboxPathA(__isTesting);
+   if (!StringLen(path)) {                      // no direct comparison due to MT4 bug:
+      path = GetMqlSandboxPathA(__isTesting);   // in library::deinit() strings are released to early (already a NULL pointer)
+   }
    return(path);
 }
 
@@ -4544,7 +4529,7 @@ string GetAccountServer() {
       sAccountServer = GetStringA(lpAccountServer);      // the cache allows to call GetString() only once
    }
 
-   if (!lpAccountServer) {
+   if (!lpAccountServer || !StringLen(sAccountServer)) { // MT4 bug: in library::deinit() strings are released to early (already a NULL pointer)
       static bool isRecursion = false; if (isRecursion) return("");
       isRecursion = true;                                // prevent recursion in the log messages (the logger tries to read the account config)
 
@@ -4715,10 +4700,12 @@ string GetAccountCompanyId() {
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
    // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten
    // Servernamen zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
-   static string lastServer="", lastId="";
+   static string lastServer = "", lastId = "";
 
    string server = GetAccountServer(); if (!StringLen(server)) return("");
-   if (server == lastServer) return(lastId);
+   if (StringLen(lastServer) > 0) {             // no direct comparison due to MT4 bug:
+      if (server == lastServer) return(lastId); // in library::deinit() strings are released to early (already a NULL pointer)
+   }
 
    string mapping = GetGlobalConfigString("AccountCompanies", server);
    if (StringLen(mapping) > 0) {
@@ -6262,7 +6249,7 @@ string ShellExecuteErrorDescription(int error) {
 
 
 /**
- * Send a chart command. Modifies the specified object using the specified mutex.
+ * Create a chart object with the given command details and notify the chart/receivers.
  *
  * @param  string cmdObject        - label of the chart object holding the command
  * @param  string cmd              - command to send
@@ -6304,44 +6291,48 @@ bool SendChartCommand(string cmdObject, string cmd, string mutex = "") {
  * @return bool - whether the e-mail was successfully queued, not whether it was sent
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
-   // This function requires the SMTP client `email` from https://github.com/deanproxy/eMail
+   // This function uses the SMTP client `email` from https://github.com/deanproxy/eMail
    // The client does not validate the format of passed email addresses.
 
    // sender
-   string _sender = StrTrim(sender);
-   if (_sender == "") {
-      string section = "Mail", key = "Sender";
-      _sender = GetConfigString(section, key, "mt4@"+ GetHostName() +".localdomain");
-      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(1)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _sender +"\"", ERR_INVALID_CONFIG_VALUE));
+   if (sender == "") {
+      string sValue = GetConfigString("Mail", "Sender", "mt4@"+ GetHostName() +".localdomain");
+      if (!StrIsEmailAddress(sValue))   return(!catch("SendEmail(1)  invalid configuration: [Mail]->Sender = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
+      sender = sValue;
    }
-   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(2)  invalid parameter sender: \""+ sender +"\"", ERR_INVALID_PARAMETER));
-   sender = _sender;
+   else if (!StrIsEmailAddress(sender)) return(!catch("SendEmail(2)  invalid parameter sender: \""+ sender +"\"", ERR_INVALID_PARAMETER));
 
    // receiver
-   string _receiver = StrTrim(receiver);
-   if (_receiver == "") {
-      section = "Mail";
-      key = "Receiver";
-      _receiver = GetConfigString(section, key);
-      if (_receiver == "")                 return(!catch("SendEmail(3)  missing configuration: ["+ section +"]->"+ key,                           ERR_INVALID_CONFIG_VALUE));
-      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(4)  invalid configuration: ["+ section +"]->"+ key +" = \""+ _receiver +"\"", ERR_INVALID_CONFIG_VALUE));
+   if (receiver == "") {
+      sValue = GetConfigString("Mail", "Receiver");
+      if (!StrIsEmailAddress(sValue))     return(!catch("SendEmail(3)  invalid configuration: [Mail]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_VALUE));
+      receiver = sValue;
    }
-   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(5)  invalid parameter receiver: \""+ receiver +"\"", ERR_INVALID_PARAMETER));
-   receiver = _receiver;
+   else if (!StrIsEmailAddress(receiver)) return(!catch("SendEmail(4)  invalid parameter receiver: \""+ receiver +"\"", ERR_INVALID_PARAMETER));
 
    // subject
-   string _subject = StrTrim(subject);
-   if (_subject == "")                     return(!catch("SendEmail(6)  invalid parameter subject: \""+ subject +"\"", ERR_INVALID_PARAMETER));
-   _subject = StrReplace(StrReplace(_subject, EOL_WINDOWS, " "), EOL_UNIX, " "); // replace line breaks
-   _subject = StrReplace(_subject, "\"", "\\\"");                                // escape double quotes for Bash
-   _subject = StrReplace(_subject, "'", "'\"'\"'");                              // escape single quotes for Bash
+   if (subject == "")                     return(!catch("SendEmail(5)  invalid parameter subject: \""+ subject +"\"", ERR_INVALID_PARAMETER));
+   subject = StrReplace(StrReplace(subject, EOL_WINDOWS, " "), EOL_UNIX, " ");
+   subject = StrReplace(subject, "\"", "\\\"");       // Bash: escape double quotes
+   subject = StrReplace(subject, "'", "'\"'\"'");     // Bash: escape single quotes
    // bash -lc 'email -subject "single-quote:'"'"' double-quote:\" pipe:|" ...'
 
-   // check whether sending emails is enabled
+   // check whether emails are enabled
    bool enabled = GetConfigBool("Mail", "Enabled");
-   if (!enabled) return(!logDebug("SendEmail(7) is disabled"));
+   if (!enabled) return(!logInfo("SendEmail(6) is disabled"));
 
-   // check existence of required binaries: bash, email
+   // check required binaries
+   sValue = GetConfigString("System", "Bash");
+   string bash = SearchPathA(stringOr(sValue, "bash.exe"));
+   if (bash == "") return(!catch("SendEmail(7)  Executable \""+ stringOr(sValue, "bash.exe") +"\" not found. Make sure it's in your PATH or configured in [System]->Bash.", ERR_FILE_NOT_FOUND));
+   bash = StrReplace(bash, "\\", "/");
+   bash = "\""+ bash +"\"";                           // WinExec(): double-quote names with potential spaces
+
+   sValue = GetConfigString("Mail", "Sendmail");
+   string sendmail = SearchPathA(stringOr(sValue, "email.exe"));
+   if (sendmail == "") return(!catch("SendEmail(8)  Executable \""+ stringOr(sValue, "email.exe") +"\" not found. Make sure it's in your PATH or configured in [Mail]->Sendmail.", ERR_FILE_NOT_FOUND));
+   sendmail = StrReplace(sendmail, "\\", "/");
+   sendmail = "\""+ sendmail +"\"";                   // Bash: double-quote names with potential spaces
 
    // store message in a tmp file
    message = StrTrim(message);
@@ -6349,29 +6340,22 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    string msgFile = CreateTempFile(filesDir, "msg");
    if (message != "") {
       int hFile = FileOpen(StrRightFrom(msgFile, filesDir), FILE_BIN|FILE_WRITE);
-      if (hFile < 0) return(!catch("SendEmail(8)->FileOpen()"));
-      int bytes = FileWriteString(hFile, message, StringLen(message));
+      if (hFile < 0) return(!catch("SendEmail(9)->FileOpen()", intOr(GetLastError(), ERR_FILE_CANNOT_OPEN)));
+      int bytes = FileWriteString(hFile, message, StringLen(message)), error = GetLastError();
       FileClose(hFile);
-      if (bytes <= 0) return(!catch("SendEmail(9)->FileWriteString() => "+ bytes +" written"));
+      if (bytes <= 0) return(!catch("SendEmail(10)->FileWriteString() => "+ bytes +" written", intOr(error, ERR_FILE_WRITE_ERROR)));
    }
    msgFile = StrReplace(msgFile, "\\", "/");
 
    // compose command line
-   string bash = GetConfigString("System", "Bash");
-   if (!IsFile(bash, MODE_SYSTEM)) {                                             // prefer config setting, otherwise let the system look-up
-      bash = "bash.exe";
-   }
-   string sendmail = GetConfigString("Mail", "Sendmail");
-   if (sendmail == "") return(!catch("SendEmail(10)  missing mail client configuration: [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
    string logFile = StrReplace(filesDir +"mail.log", "\\", "/");
-
-   string cmd = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ msgFile +"\" >> \""+ logFile +"\" 2>&1 && rm -f \""+ msgFile +"\"";
-   cmd = bash +" -lc '"+ cmd +"'";                                               // -l (login shell) makes sure the full PATH is set
+   string cmd = sendmail +" -subject \""+ subject +"\" -from-addr "+ sender +" "+ receiver +" < \""+ msgFile +"\" >> \""+ logFile +"\" 2>&1 && rm -f \""+ msgFile +"\"";
+   cmd = bash +" -lc '"+ cmd +"'";                    // -l (login shell) makes sure the full PATH is set
 
    // execute command
-   int result = WinExec(cmd, SW_HIDE);                                           // SW_SHOW | SW_HIDE
+   int result = WinExec(cmd, SW_HIDE);                // SW_SHOW | SW_HIDE
    if (result < 32) {
-      if (result == ERROR_FILE_NOT_FOUND) catch("SendEmail(11)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
+      if (result == ERROR_FILE_NOT_FOUND) catch("SendEmail(11)  Executable \""+ bash +"\" not found. Make sure it's in your PATH or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
       else                                catch("SendEmail(12)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
       return(false);
    }
@@ -6390,12 +6374,12 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
  * @return bool - success status
  */
 bool SendTelegramMessage(string channel, string message) {
-   if (!StringLen(channel)) return(!catch("SendTelegramMessage(1)  invalid parameter channel: \"\" (empty)", ERR_INVALID_PARAMETER));
-   if (!StringLen(message)) return(!catch("SendTelegramMessage(2)  invalid parameter message: \"\" (empty)", ERR_INVALID_PARAMETER));
+   if (channel == "") return(!catch("SendTelegramMessage(1)  invalid parameter channel: \"\" (empty)", ERR_INVALID_PARAMETER));
+   if (message == "") return(!catch("SendTelegramMessage(2)  invalid parameter message: \"\" (empty)", ERR_INVALID_PARAMETER));
 
    // check whether Telegram is enabled
    bool enabled = GetConfigBool("Telegram", "Enabled");
-   if (!enabled) return(!logDebug("SendTelegramMessage(3) is disabled"));
+   if (!enabled) return(!logInfo("SendTelegramMessage(3) is disabled"));
 
    // resolve an existing alias
    string alias = GetConfigString("Telegram", "Alias."+ channel);
@@ -6409,41 +6393,48 @@ bool SendTelegramMessage(string channel, string message) {
    string token = GetConfigString(section, key);
    if (token == "") return(!catch("SendTelegramMessage(5)  missing configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
-   // check existence of required binaries: bash, curl
+   // check required binaries
+   string sValue = GetConfigString("System", "Bash");
+   string bash = SearchPathA(stringOr(sValue, "bash.exe"));
+   if (bash == "") return(!catch("SendTelegramMessage(6)  Executable \""+ stringOr(sValue, "bash.exe") +"\" not found. Make sure it's in your PATH or configured in [System]->Bash.", ERR_FILE_NOT_FOUND));
+   bash = StrReplace(bash, "\\", "/");
+   bash = "\""+ bash +"\"";                        // WinExec(): double-quote names with potential spaces
+
+   sValue = GetConfigString("System", "Curl");
+   string curl = SearchPathA(stringOr(sValue, "curl.exe"));
+   if (curl == "") return(!catch("SendTelegramMessage(7)  Executable \""+ stringOr(sValue, "curl.exe") +"\" not found. Make sure it's in your PATH or configured in [System]->Curl.", ERR_FILE_NOT_FOUND));
+   curl = StrReplace(curl, "\\", "/");
+   curl = "\""+ curl +"\"";                        // Bash: double-quote names with potential spaces
 
    // store message in a tmp file
    string filesDir = GetMqlSandboxPath();
    string msgFilename = CreateTempFile(filesDir, "tgm");
    int hFile = FileOpen(StrRightFrom(msgFilename, filesDir), FILE_BIN|FILE_WRITE);
-   if (hFile < 0) return(!catch("SendTelegramMessage(6)->FileOpen()"));
+   if (hFile < 0) return(!catch("SendTelegramMessage(8)->FileOpen()", intOr(GetLastError(), ERR_FILE_CANNOT_OPEN)));
    string utf8Message = AnsiToUtf8(StrReplace(message, EOL_WINDOWS, EOL_UNIX));
-   int bytes = FileWriteString(hFile, utf8Message, StringLen(utf8Message));
+   int bytes = FileWriteString(hFile, utf8Message, StringLen(utf8Message)), error = GetLastError();
    FileClose(hFile);
-   if (bytes <= 0) return(!catch("SendTelegramMessage(7)->FileWriteString() => "+ bytes +" written"));
+   if (bytes <= 0) return(!catch("SendTelegramMessage(9)->FileWriteString() => "+ bytes +" written", intOr(error, ERR_FILE_WRITE_ERROR)));
    msgFilename = StrReplace(msgFilename, "\\", "/");
 
    // compose command line
-   string bash = GetConfigString("System", "Bash");
-   if (!IsFile(bash, MODE_SYSTEM)) {                        // prefer config setting, otherwise let the system look-up
-      bash = "bash.exe";
-   }                                                        // TODO: even if bash.exe exists, curl may not
-   string cmd = "curl -X POST \"https://api.telegram.org/bot"+ token +"/sendMessage\" -L --silent --show-error"
+   string cmd = curl +" -X POST \"https://api.telegram.org/bot"+ token +"/sendMessage\" -L --silent --show-error"
              //+" --data-urlencode parse_mode=HTML"
                +" --data-urlencode \"chat_id="+ channelId +"\""
                +" --data-urlencode \"text@"+ msgFilename +"\" && rm -f \""+ msgFilename +"\"";
-   //cmd = cmd +"; read -n 1 -s";
-   cmd = bash +" -lc '"+ cmd +"'";                          // -l (login shell) makes sure the full PATH is set
+   //cmd = cmd +"; read -n 1 -s";                  // -l (login shell) makes sure the full PATH is set
+   cmd = bash +" -lc '"+ cmd +"'";
 
-   // execute command                                       // TODO: parse the response and keep logs on error
-   int result = WinExec(cmd, SW_HIDE);                      // SW_SHOW | SW_HIDE
+   // execute command                              // TODO: parse the response and keep logs on error
+   int result = WinExec(cmd, SW_HIDE);             // SW_SHOW | SW_HIDE
    if (result < 32) {
-      if (result == ERROR_FILE_NOT_FOUND) catch("SendTelegramMessage(8)  Executable \""+ bash +"\" not found. Make sure it's in your path or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
-      else                                catch("SendTelegramMessage(9)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
+      if (result == ERROR_FILE_NOT_FOUND) catch("SendTelegramMessage(10)  Executable \""+ bash +"\" not found. Make sure it's in your PATH or configured in [System]->Bash.", ERR_WIN32_ERROR + result);
+      else                                catch("SendTelegramMessage(11)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result);
       return(false);
    }
 
-   logInfo("SendTelegramMessage(10)  to channel \""+ channel +"\": "+ message);
-   return(!catch("SendTelegramMessage(11)"));
+   logInfo("SendTelegramMessage(12)  to channel \""+ channel +"\": "+ message);
+   return(!catch("SendTelegramMessage(13)"));
 }
 
 
@@ -6803,8 +6794,9 @@ void __DummyCalls() {
    MathModFix(NULL, NULL);
    Max(NULL, NULL);
    Min(NULL, NULL);
-   ModuleName();
    ModuleTypesToStr(NULL);
+   MqlModuleName();
+   MqlProgramName();
    Mul(NULL, NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
@@ -6825,7 +6817,6 @@ void __DummyCalls() {
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
    ProgramInitReason();
-   ProgramName();
    QuoteStr(NULL);
    ResetLastError();
    RGBStrToColor(NULL);
@@ -6853,7 +6844,6 @@ void __DummyCalls() {
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
    StrIsNumeric(NULL);
-   StrIsPhoneNumber(NULL);
    StrLeft(NULL, NULL);
    StrLeftTo(NULL, NULL);
    StrPadLeft(NULL, NULL);

@@ -71,7 +71,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
    string sError = "";
    if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
-   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(), "  ", ModuleName(true), "::", StrReplace(StrReplace(message, EOL_WINDOWS, " "), EOL_UNIX, " "), sError));
+   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(), "  ", MqlModuleName(true), "::", StrReplace(StrReplace(message, EOL_WINDOWS, " "), EOL_UNIX, " "), sError));
 
    isRecursion = false;
    return(error);
@@ -213,7 +213,7 @@ int log(string message, int error, int level) {
 
       if (!configLevel) {
          string section      = ifString(__isTesting, "Tester.", "") +"Log", key="", value="";
-         string programName  = ifString(__isSuperContext, ec_SuperProgramName(pid), ProgramName());
+         string programName  = ifString(__isSuperContext, ec_SuperProgramName(pid), MqlProgramName());
          string defaultValue = ifString(__isTesting, "off", "all");        // built-in defaults: tester/online
 
          // read and apply the loglevel of the current environment
@@ -367,12 +367,12 @@ int log2Alert(string message, int error, int level) {
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription();
          int pos = StringFind(message, ") ");                                       // insert a line-wrap after the first closing function brace
          if (pos != -1) message = StrLeft(message, pos+1) + NL + StrTrim(StrSubstr(message, pos+2));
-         message = TimeToStr(TimeLocalEx("log2Alert(3)"), TIME_FULL) + NL + LoglevelDescription(level) +" in "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+         message = TimeToStr(TimeLocalEx("log2Alert(3)"), TIME_FULL) + NL + LoglevelDescription(level) +" in "+ MqlModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
          PlaySoundEx("alert.wav");
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
       }
       else {
-         Alert(LoglevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(), "  ", ModuleName(true), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
+         Alert(LoglevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(), "  ", MqlModuleName(true), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
       }
 
       ec_SetLoglevelAlert(__ExecutionContext, configLevel);                         // restore the configuration
@@ -503,7 +503,7 @@ int log2Mail(string message, int error, int level) {
       isRecursion = true;
       ec_SetLoglevelMail(__ExecutionContext, LOG_OFF);                              // prevent recursive calls
 
-      message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+      message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ MqlModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string subject = StrReplace(StrReplace(message, EOL_WINDOWS, " "), EOL_UNIX, " ");
       string body    = message + NL +"("+ TimeToStr(TimeLocalEx("log2Mail(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
@@ -549,7 +549,7 @@ int log2Telegram(string message, int error, int level) {
       isRecursion = true;
       ec_SetLoglevelTelegram(__ExecutionContext, LOG_OFF);                          // prevent recursive calls
 
-      string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
+      string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ MqlModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
                   +"("+ TimeToStr(TimeLocalEx("log2Telegram(4)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (SendTelegramMessage("log", text)) {

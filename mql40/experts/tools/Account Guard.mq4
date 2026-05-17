@@ -25,9 +25,10 @@
  *      ...
  *      18:39:49.825  Script CloseOrders BTCUSD,M5: loaded successfully
  *      18:39:57.130  rsfStdlib: order #561127602 was closed by order #561128139
- *      18:39:57.130  remainder of order #561127602 was opened : #561128149 buy 0.01 BTCUSD at 70323.78 sl: 0.00 tp: 0.00  => triggers remote error
- *     remote
- *   -> 18:39:57.252  WARN   Account Guard::onTick(8)  BTCUSD: drawdown limit of -23.8% reached, liquidating positions...
+ *      18:39:57.130  remainder of order #561127602 was opened : #561128149 buy 0.01 BTCUSD at 70323.78 sl: 0.00 tp: 0.00  => triggers AG error
+ *
+ *     -> AG
+ *      18:39:57.252  WARN   Account Guard::onTick(8)  BTCUSD: drawdown limit of -23.8% reached, liquidating positions...
  *      18:39:57.268         Account Guard::rsfStdlib::OrdersCloseSameSymbol(16)  closing 2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
  *      18:39:57.268         Account Guard::rsfStdlib::OrdersHedge(13)  2 BTCUSD positions {#561127605:-0.01, #561128149:+0.01} are already flat
  *      18:39:57.268         Account Guard::rsfStdlib::OrdersCloseHedged(15)  closing 2 hedged BTCUSD positions {#561127605:-0.01, #561128149:+0.01}
@@ -35,25 +36,16 @@
  *
  *  - ERR_NOT_ENOUGH_MONEY when closing a basket
  *
- *  - XAU: prohibit counter-trend trading on sudden volatility
- *     volatility: Donchian channel width
- *     trend: ALMA(10) crosses LWMA(55) channel (L'mas signal)
- *
- *  - XAU: prohibit trading between 15:00-17:30
- *  - XAU: prohibit trading from 30 minutes before until 60 minutes after major news
- *
  *  - display runtime status on screen
  *  - custom logfile per instance
  *  - log trade details to logfile (manual logging is too time consuming)
  *  - ComputeClosedProfit() freezes the terminal if the full history is visible => move to Expander
- *  - define major news per week and a time window around it where trading is prohibited
- *  - visual chart feedback when active (red dot when inactive, green dot when active)
+ *  - visual chart feedback when active (red "AG" when inactive, green "AG" when active)
  *  - enable trading if trading is disabled
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
-int __virtualTicks = 800;                             // milliseconds (must be short as the EA monitors all symbols)
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -149,6 +141,9 @@ int onInit() {
       if (!absLimit)                                                  return(catch("onInit(6)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
       DrawdownLimit = DoubleToStr(absLimit, 2);
    }
+
+   // configure virtual ticks in milliseconds (must be short as the EA monitors all symbols)
+   __virtualTicks = 800;
    return(catch("onInit(7)"));
 }
 
@@ -414,7 +409,7 @@ double ComputeClosedProfit(string symbol, datetime from) {
       if (!hst.tickets[i]) continue;                                 // skip discarded tickets
 
       if (hst.lotSizes[i] < 0.005) {                                 // lotSize = 0: hedging order
-         // TODO: check behaviour if OrderComment() is a custom value
+         // TODO: check behavior if OrderComment() is a custom value
          if (!StrStartsWith(hst.comments[i], "close hedge by #")) {
             return(!catch("ComputeClosedProfit(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
          }
@@ -491,6 +486,14 @@ bool CloseOpenOrders(string symbol = "") {
       if (!OrderDeleteEx(pendings[i], CLR_NONE, oeFlags, oe)) return(false);
    }
    return(!catch("CloseOpenOrders(1)"));
+}
+
+
+/**
+ * Callback function invoked by the global error handler.
+ */
+void EmergencyStop() {
+   // does nothing in this EA
 }
 
 

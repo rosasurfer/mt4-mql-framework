@@ -1,3 +1,5 @@
+<!-- Empty.tpl -->
+
 <chart>
 symbol=GBPAUD
 period=60

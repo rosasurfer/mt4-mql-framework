@@ -1,6 +1,8 @@
-<!-- 
-ZigZag/Donchian Channel(50,30)
-Donchian Channel(30) Width in main window 
+<!--
+EMA(144)
+Donchian Channel(50) 
+LWMA(55) Channel + Channel Bars
+CCI(14)
 -->
 
 <chart>
@@ -9,7 +11,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=2
+scale=4
 graph=1
 fore=0
 grid=0
@@ -42,7 +44,7 @@ askline_color=11823615
 stops_color=17919
 
 <window>
-height=5000
+height=4640
 fixed_height=0
 
 <indicator>
@@ -119,22 +121,52 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=Trend Bars
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=50
-ZigZag.Type=Lines* | Semaphores
-ZigZag.Width=0
-ZigZag.Color=16711935
-Donchian.ShowChannel=1
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=255
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Width=2
+Channel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Channel.Periods=55
+Color.UpTrend=16711680
+Color.DownTrend=255
+Color.NoTrend=11119017
+BarWidth=2
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+Channel.Definition=LWMA(55)
+ShowChartLegend=0
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Donchian Channel
+flags=339
+window_num=0
+<inputs>
+Periods=50
+Channel.UpperColor=16711680
+Channel.LowerColor=255
+ShowReversals=on* | off | +N | -N
+Reversal.Symbol=dot | thin-ring* | ring | thick-ring
+Reversal.Width=3
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
-Signal.onBreakout=0
 Sound.onChannelWidening=0
 </inputs>
 </expert>
@@ -142,51 +174,62 @@ style_0=2
 style_1=2
 show_data=1
 </indicator>
+</window>
 
+<window>
+height=120
+fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
-flags=339
-window_num=0
-<inputs>
-ZigZag.Periods=30
-ZigZag.Width=0
-Donchian.ShowChannel=0
-Donchian.Channel.UpperColor=16711680
-Donchian.Channel.LowerColor=16711935
-Donchian.ShowCrossings=off | first* | all
-Donchian.Crossing.Symbol=dot* | narrow-ring | ring | bold-ring
-Donchian.Crossing.Width=1
-Signal.onReversal=0
-Signal.onReversal.Types=sound* | alert* | mail | telegram
-Signal.onBreakout=0
-Sound.onChannelWidening=0
-</inputs>
-</expert>
-style_0=2
-style_1=2
-color_6=4294967295
-color_7=4294967295
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Donchian Channel Width
+name=MA Channel Band
 flags=339
 window_num=1
 <inputs>
-Periods=50
+Channel.MA.Method=SMA | LWMA* | EMA | SMMA | ALMA
+Channel.MA.Periods=55
+MA.Method=SMA | LWMA | EMA | SMMA | ALMA*
+MA.Periods=10
+Signal.onTrendChange=0
+Signal.onTrendChange.Types=sound* | alert* | mail
 </inputs>
 </expert>
-level_0=10
-level_1=20
-level_2=200
-level_3=500
-level_4=1000
-levels_color=15453831
+min=-1.0
+max=1.0
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=400
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=CCI
+flags=339
+window_num=2
+<inputs>
+Periods=14
+AppliedPrice=Open | High | Low | Close | Median | Typical* | Weighted
+Signal.onTrendChange=1
+Signal.onTrendChange.Types=sound* | alert* | mail
+</inputs>
+</expert>
+draw_2=2
+color_2=3329330
+weight_2=2
+draw_3=2
+color_3=255
+weight_3=2
+min=-180
+max=180
+levels_color=12632256
+levels_style=2
+levels_weight=1
+level_0=100
+level_1=0
+level_2=-100
 show_data=1
 </indicator>
 </window>

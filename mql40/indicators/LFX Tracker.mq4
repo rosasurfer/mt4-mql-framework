@@ -41,9 +41,8 @@
  *
  * • Broker.SymbolSuffix:  Symbol suffix for brokers with non-standard symbols.
  *
- * • AutoConfiguration:  For simplicity all manual inputs may also be specified in the framework configuration.
- *    If "AutoConfiguration" is enabled configuration settings found in the configuration files override manual settings in
- *    the indicator's input dialog. Additional auto-config settings not available in the input dialog:
+ * • AutoConfiguration:  If enabled all input parameters can be pre-defined in the configuration. Additional configuration 
+ *    settings not available via input dialog:
  *
  *    [LFX Tracker]
  *     Status.xDistance          = {int}                 ; horizontal offset from right in pixels
@@ -208,7 +207,7 @@ int    statusLineHeight         = 15;
  */
 int onInit() {
    // read auto-configuration
-   string indicator = ProgramName();
+   string indicator = MqlProgramName();
    if (AutoConfiguration) {
       // manual indicator inputs
       AUDLFX.Enabled             = GetConfigBool  (indicator, "AUDLFX.Enabled",             AUDLFX.Enabled);
@@ -315,7 +314,7 @@ int onInit() {
    }
 
    // only online
-   if (!__tickTimerId && !__isTesting) {
+   if (!__isTesting && !__virtualTicksTimerId) {
       // restore a configured trade account and initialize order/limit monitoring
       string accountId = GetStoredTradeAccount();
       if (!InitTradeAccount(accountId)) return(last_error);
@@ -325,8 +324,8 @@ int onInit() {
       // setup a chart ticker
       int millis = 500;                                 // a virtual tick every 500 milliseconds
       int hWnd = __ExecutionContext[EC.chart];
-      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!__tickTimerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      __virtualTicksTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!__virtualTicksTimerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onInit(7)"));
 }
@@ -353,9 +352,10 @@ int onDeinit() {
    }
 
    // uninstall the chart ticker
-   if (__tickTimerId > NULL) {
-      int id = __tickTimerId; __tickTimerId = NULL;
-      if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   if (__virtualTicksTimerId > 0) {
+      int tmp = __virtualTicksTimerId;
+      __virtualTicksTimerId = NULL;
+      if (!ReleaseTickTimer(tmp)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
 }
@@ -367,6 +367,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   if (!__isChart || __isSuperContext) return(last_error);
+
    if (!ValidBars) SetIndicatorOptions();                   // reset indicator options
 
    if (!AccountNumber())  return(last_error);               // wait until a connection to the trade server is established
@@ -467,7 +469,7 @@ bool RefreshLfxOrders() {
  * @return bool - success status
  */
 bool CreateLabels() {
-   string indicatorName = ProgramName();
+   string indicatorName = MqlProgramName();
 
    // trade account
    statusLabelTradeAccount = indicatorName +".TradeAccount";
@@ -995,7 +997,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                 // on ObjectDrag or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                    // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }
@@ -1011,7 +1013,7 @@ bool StoreTradeAccount() {
 
    // account company id
    int    hWnd = __ExecutionContext[EC.chart];
-   string key  = ProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
+   string key  = MqlProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
@@ -1019,7 +1021,7 @@ bool StoreTradeAccount() {
    ObjectSetText(key, tradeAccount.company);
 
    // account number
-   key = ProgramName() +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
+   key = MqlProgramName() +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
    SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
@@ -1038,14 +1040,14 @@ bool StoreTradeAccount() {
 string GetStoredTradeAccount() {
    // account company id
    int hWnd = __ExecutionContext[EC.chart];
-   string key = ProgramName() +".runtime.tradeAccount.company";
+   string key = MqlProgramName() +".runtime.tradeAccount.company";
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {
       if (ObjectFind(key) != -1) company = ObjectDescription(key);
    }
 
    // account number
-   key = ProgramName() +".runtime.tradeAccount.number";
+   key = MqlProgramName() +".runtime.tradeAccount.number";
    int accountNumber = GetWindowIntegerA(hWnd, key);
    if (!accountNumber) {
       if (ObjectFind(key) != -1) accountNumber = StrToInteger(ObjectDescription(key));

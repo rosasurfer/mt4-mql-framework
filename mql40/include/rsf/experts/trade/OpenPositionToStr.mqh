@@ -28,10 +28,10 @@ string OpenPositionToStr(bool compact = false) {
       sValues[13] = ifString(!open.commissionM,  "0", DoubleToStr(open.commissionM, 2));
       sValues[14] = ifString(!open.grossProfitM, "0", DoubleToStr(open.grossProfitM, 2));
       sValues[15] = ifString(!open.netProfitM,   "0", DoubleToStr(open.netProfitM, 2));
-      sValues[16] = ifString(!open.netProfitP,   "0", NumberToStr(open.netProfitP, ".1+"));
+      sValues[16] = ifString(!open.netProfitP,   "0", DoubleToStr(open.netProfitP, Digits));
       sValues[17] = ifString(!open.runupP,       "0", DoubleToStr(open.runupP, Digits));
       sValues[18] = ifString(!open.rundownP,     "0", DoubleToStr(open.rundownP, Digits));
-      sValues[19] = ifString(!open.sigProfitP,   "0", NumberToStr(open.sigProfitP, ".1+"));
+      sValues[19] = ifString(!open.sigProfitP,   "0", DoubleToStr(open.sigProfitP, Digits));
       sValues[20] = ifString(!open.sigRunupP,    "0", DoubleToStr(open.sigRunupP, Digits));
       sValues[21] = ifString(!open.sigRundownP,  "0", DoubleToStr(open.sigRundownP, Digits));
    }
@@ -52,10 +52,10 @@ string OpenPositionToStr(bool compact = false) {
       sValues[13] = "commissionM="  + ifString(!open.commissionM,  "0", DoubleToStr(open.commissionM,  2));
       sValues[14] = "grossProfitM=" + ifString(!open.grossProfitM, "0", DoubleToStr(open.grossProfitM, 2));
       sValues[15] = "netProfitM="   + ifString(!open.netProfitM,   "0", DoubleToStr(open.netProfitM,   2));
-      sValues[16] = "netProfitP="   + ifString(!open.netProfitP,   "0", NumberToStr(open.netProfitP /pUnit, pUnitFormat));
+      sValues[16] = "netProfitP="   + ifString(!open.netProfitP,   "0", DoubleToStr(open.netProfitP /pUnit, pUnitFormat));
       sValues[17] = "runupP="       + ifString(!open.runupP,       "0", DoubleToStr(open.runupP     /pUnit, pUnitFormat));
       sValues[18] = "rundownP="     + ifString(!open.rundownP,     "0", DoubleToStr(open.rundownP   /pUnit, pUnitFormat));
-      sValues[19] = "sigProfitP="   + ifString(!open.sigProfitP,   "0", NumberToStr(open.sigProfitP /pUnit, pUnitFormat));
+      sValues[19] = "sigProfitP="   + ifString(!open.sigProfitP,   "0", DoubleToStr(open.sigProfitP /pUnit, pUnitFormat));
       sValues[20] = "sigRunupP="    + ifString(!open.sigRunupP,    "0", DoubleToStr(open.sigRunupP  /pUnit, pUnitFormat));
       sValues[21] = "sigRundownP="  + ifString(!open.sigRundownP,  "0", DoubleToStr(open.sigRundownP/pUnit, pUnitFormat));
    }

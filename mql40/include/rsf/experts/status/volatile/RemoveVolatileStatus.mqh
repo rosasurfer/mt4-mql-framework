@@ -4,7 +4,7 @@
  * @return bool - success status
  */
 bool RemoveVolatileStatus() {
-   string name = ProgramName();
+   string name = MqlProgramName();
 
    // input string Instance.ID
    if (__isChart) {

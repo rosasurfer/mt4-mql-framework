@@ -5,7 +5,6 @@
  *
  *
  * TODO:
- *  - instances on different symbols can have the same id, so the ticket symbol must be checked against, too
  *  - use IsMyOrder() for checking tickets (magicNumber may be dynamic)
  */
 int CreateInstanceId() {
@@ -31,8 +30,7 @@ int CreateInstanceId() {
    }
    else {
       // online: generate a random id
-      while (!magicNumber) {
-         instanceId = 0;
+      while (!instanceId) {
          while (instanceId < INSTANCE_ID_MIN || instanceId > INSTANCE_ID_MAX) {
             instanceId = MathRand();                                                         // pseudo-random id between ID_MIN and ID_MAX
          }
@@ -43,20 +41,27 @@ int CreateInstanceId() {
          for (int i=0; i < openOrders; i++) {
             if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                          // FALSE: an open order was closed/deleted in another thread
             if (OrderMagicNumber() == magicNumber) {
-               magicNumber = NULL;
+               instanceId = NULL;
                break;
             }
          }
-         if (!magicNumber) continue;
+         if (!instanceId) continue;
 
          // test for uniqueness against closed orders
          int closedOrders = OrdersHistoryTotal();
          for (i=0; i < closedOrders; i++) {
             if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;                         // FALSE: the visible history range was modified in another thread
             if (OrderMagicNumber() == magicNumber) {
-               magicNumber = NULL;
+               instanceId = NULL;
                break;
             }
+         }
+         if (!instanceId) continue;
+
+         // test for uniqueness against existing status files
+         string filename = FindStatusFile(instanceId, false, F_ERR_ILLEGAL_STATE);
+         if (filename != "") {
+            instanceId = NULL;
          }
       }
    }

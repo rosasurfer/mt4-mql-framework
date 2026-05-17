@@ -38,7 +38,7 @@ extern int    MaxBarsBack                    = 10000;       // max. values to ca
 #include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/HandleCommands.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MaChannel.mqh>
+#include <rsf/functions/iCustom/MAChannel.mqh>
 
 #define BUFFER_TREND_BODY_A      0        // indicator buffer ids
 #define BUFFER_TREND_BODY_B      1
@@ -134,11 +134,11 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // process incoming commands
+   // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
    if (__isChart) {
       if (!HandleCommands("TrendBars")) return(last_error);
    }
-
+   
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(trendBodyA,   0);
@@ -268,7 +268,7 @@ double GetChannel(int mode, int bar) {
  */
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
-   indicatorName = ProgramName();
+   indicatorName = MqlProgramName();
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);

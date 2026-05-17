@@ -20,7 +20,7 @@ int __lpSuperContext = NULL;
 
 
 /**
- * MQL core init function for libraries.
+ * Core init function for libraries.
  *
  * @return int - error status
  */
@@ -91,9 +91,9 @@ int init() {
 
 
 /**
- * MQL core main function for libraries.
+ * Core main function for libraries.
  *
- * Compiler bug in build 224: Obviously, this is a dummy function, and the runtime environment will never call it. However,
+ * Compiler bug in build 224: Obviously, this is a dummy function and the runtime environment will never call it. However,
  * for compiler build 224, a start() function must exist once the library reaches a certain complexity, otherwise the init()
  * function will not be called.
  *
@@ -105,14 +105,15 @@ int start() {
 
 
 /**
- * MQL core deinit function for libraries.
+ * Core deinit function for libraries.
  *
  * @return int - error status
  *
- * TODO: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere Expert::deinit()
- *       Funktionen verfrüht und mitten im Code ab (nicht erst nach 2.5 Sekunden).
- *       - Prüfen, ob in diesem Fall Library::deinit() noch zuverlässig ausgeführt wird.
- *       - Beachten, daß die Library in diesem Fall bei Start des nächsten Tests einen Init-Cycle durchführt.
+ * TODO: At the end of a test (test period ended) with VisualMode=Off, the terminal prematurely terminates "more complex"
+ *       Expert::deinit() functions in the middle of the code (rather than waiting 2.5 seconds).
+ *
+ *  - Check whether Library::deinit() is still executed in this case.
+ *  - Note that in this case, the library performs an init cycle on start of the next test.
  */
 int deinit() {
    int error = SyncLibContext_deinit(__ExecutionContext, UninitializeReason());
@@ -125,9 +126,9 @@ int deinit() {
 
 
 /**
- * Gibt die ID des aktuellen Deinit()-Szenarios zurück. Kann nur in deinit() aufgerufen werden.
+ * Return the id of the current deinit reason. Must be called only in deinit().
  *
- * @return int - ID oder NULL, falls ein Fehler auftrat
+ * @return int - reason id or NULL in case of errors
  */
 int DeinitReason() {
    return(!catch("DeinitReason(1)", ERR_NOT_IMPLEMENTED));
@@ -175,15 +176,14 @@ bool IsLibrary() {
 
 
 /**
- * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
+ * Empty library stub.
  *
- * @param  string caller   - location identifier of the caller
- * @param  int    setError - error to enforce
+ * @param  string caller
+ * @param  int    error [optional]
  *
- * @return bool - whether the flag __STATUS_OFF is set
+ * @return bool
  */
-bool CheckErrors(string caller, int setError = NULL) {
-   // empty library stub
+bool HandleErrors(string caller, int error = NULL) {
    return(false);
 }
 
