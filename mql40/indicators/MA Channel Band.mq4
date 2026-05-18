@@ -62,10 +62,10 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #property indicator_maximum   1
 #property indicator_minimum  -1
 
-double bufferMain [];                           // all histogram values:      invisible, displayed in "Data" window
-double bufferTrend[];                           // trend and trend length:    invisible, displayed in "Data" window
-double bufferUpper[];                           // positive histogram values: visible
-double bufferLower[];                           // negative histogram values: visible
+double bufferMain [];                           // all histogram values
+double bufferUpper[];                           // positive histogram values
+double bufferLower[];                           // negative histogram values
+double bufferTrend[];                           // trend direction and length
 
 int    channel.method;
 int    channel.periods;
@@ -169,9 +169,9 @@ int onTick() {
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMain,  0);
-      ArrayInitialize(bufferTrend, 0);
       ArrayInitialize(bufferUpper, 0);
       ArrayInitialize(bufferLower, 0);
+      ArrayInitialize(bufferTrend, 0);
       SetIndicatorOptions();
       if (!trendHintsCreated) {
          if (!CreateTrendHints()) return(last_error);       // calls WindowFind(self) which can't be used in CF_INIT
@@ -181,9 +181,9 @@ int onTick() {
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(bufferMain,  Bars, ShiftedBars, 0);
-      ShiftDoubleIndicatorBuffer(bufferTrend, Bars, ShiftedBars, 0);
       ShiftDoubleIndicatorBuffer(bufferUpper, Bars, ShiftedBars, 0);
       ShiftDoubleIndicatorBuffer(bufferLower, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(bufferTrend, Bars, ShiftedBars, 0);
    }
 
    // calculate start bar
@@ -196,7 +196,7 @@ int onTick() {
    for (int bar=startbar; bar >= 0; bar--) {
       upperBand = GetChannel(MODE_UPPER, bar);
       lowerBand = GetChannel(MODE_LOWER, bar);
-      ma = GetMovingAverage(bar);
+      ma        = GetMovingAverage(bar);
 
       if (Close[bar] > upperBand && ma > upperBand) {
          bufferMain [bar] = 1;
@@ -219,22 +219,22 @@ int onTick() {
       // update trend hints
       if (__isChart) {
          int status = 0;
-         if      (Close[0] > upperBand) status = +1;
+         if      (Close[0] > upperBand) status =  1;
          else if (Close[0] < lowerBand) status = -1;
          UpdateTrendHint(HINT_CLOSE, status);
 
          status = 0;
-         if      (ma > upperBand) status = +1;
+         if      (ma > upperBand) status =  1;
          else if (ma < lowerBand) status = -1;
          UpdateTrendHint(HINT_MA, status);
       }
 
       // monitor signals
       if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {
-         int trend     = Round(bufferMain[1]);
-         int prevTrend = Round(bufferMain[2]);
+         int trend     = bufferMain[1];
+         int prevTrend = bufferMain[2];
 
-         if (Sign(trend) != Sign(prevTrend)) {
+         if (trend * prevTrend < 0) {                          // check for different signs
             if      (trend > 0) onTrendChange(MODE_UPTREND);
             else if (trend < 0) onTrendChange(MODE_DOWNTREND);
          }
@@ -427,17 +427,17 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_MAIN,      bufferMain ); SetIndexEmptyValue(MODE_MAIN,      0); SetIndexLabel(MODE_MAIN,      indicatorName);
-   SetIndexBuffer(MODE_TREND,     bufferTrend); SetIndexEmptyValue(MODE_TREND,     0); SetIndexLabel(MODE_TREND,     "MA Channel");
+   SetIndexBuffer(MODE_MAIN,      bufferMain ); SetIndexEmptyValue(MODE_MAIN,      0); SetIndexLabel(MODE_MAIN,      NULL);
    SetIndexBuffer(MODE_UPTREND,   bufferUpper); SetIndexEmptyValue(MODE_UPTREND,   0); SetIndexLabel(MODE_UPTREND,   NULL);
    SetIndexBuffer(MODE_DOWNTREND, bufferLower); SetIndexEmptyValue(MODE_DOWNTREND, 0); SetIndexLabel(MODE_DOWNTREND, NULL);
+   SetIndexBuffer(MODE_TREND,     bufferTrend); SetIndexEmptyValue(MODE_TREND,     0); SetIndexLabel(MODE_TREND,     NULL);
    IndicatorDigits(0);
 
    int drawType = ifInt(Histogram.Width, DRAW_HISTOGRAM, DRAW_NONE);
    SetIndexStyle(MODE_MAIN,      DRAW_NONE);
-   SetIndexStyle(MODE_TREND,     DRAW_NONE);
    SetIndexStyle(MODE_UPTREND,   drawType, EMPTY, Histogram.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_DOWNTREND, drawType, EMPTY, Histogram.Width, Histogram.Color.Lower);
+   SetIndexStyle(MODE_TREND,     DRAW_NONE);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));
