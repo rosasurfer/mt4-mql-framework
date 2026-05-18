@@ -1098,12 +1098,12 @@ void UpdateChartLegend() {
    if (!ValidBars || trend[0]!=lastTrend || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
       string sFilter = "", sTrend = "";
       if (reversals.show && reversals.countFrom) {
-         sFilter = "   Filter: "+ NumberToStr(reversals.countFrom, "+.");
+         sFilter = "   filter("+ NumberToStr(reversals.countFrom, "+.") +")";
       }
       else {
          sTrend = "   "+ NumberToStr(trend[0], "+.");
       }
-      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
+      string sReversal = "   next rev. @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
       string sSignal   = ifString(Signal.onReversal || Sound.onChannelWidening, "  "+ legendInfo, "");
       string text      = StringConcatenate(indicatorName, sTrend, sFilter, sReversal, sSignal);
 
