@@ -5,7 +5,7 @@
  *       werden (2 x CHF.3).
  */
 #include <rsf/stddefines.mqh>
-int   __InitFlags[];
+int   __InitFlags[] = {INIT_AUTO_TRADING};
 int __DeinitFlags[];
 
 #property show_inputs

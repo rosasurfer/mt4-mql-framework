@@ -2,7 +2,7 @@
  * Hedge the directional open position of the current symbol.
  */
 #include <rsf/stddefines.mqh>
-int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
+int   __InitFlags[] = {INIT_NO_BARS_REQUIRED, INIT_AUTO_TRADING};
 int __DeinitFlags[];
 
 //#property show_inputs
@@ -15,25 +15,6 @@ int __DeinitFlags[];
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
 #include <rsf/structs/OrderExecution.mqh>
-
-
-/**
- * Initialization
- *
- * @return int - error status
- */
-int onInit() {
-   // enable auto-trading if disabled
-   if (!IsExpertEnabled()) {
-      int error = Toolbar.Experts(true);
-      if (IsError(error)) return(error);
-
-      PlaySoundEx("Windows Notify.wav");        // we must return as scripts don't update their internal auto-trading status
-      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
-      return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
-   }
-   return(catch("onInit(1)"));
-}
 
 
 /**

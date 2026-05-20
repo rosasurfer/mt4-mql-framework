@@ -14,7 +14,7 @@
  *  - Bybit: use config for IsDemoFix()
  */
 #include <rsf/stddefines.mqh>
-int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
+int   __InitFlags[] = {INIT_NO_BARS_REQUIRED, INIT_AUTO_TRADING};
 int __DeinitFlags[];
 
 #property show_inputs
@@ -142,16 +142,6 @@ int onInit() {
       for (i=0; i < size; i++) {
          if (IsPendingOrderType(closeTypes[i])) return(catch("onInit(6)  invalid input combination: can't close HedgedPart of OrderType \""+ OperationTypeDescription(closeTypes[i]) +"\"", ERR_INVALID_INPUT_PARAMETER));
       }
-   }
-
-   // enable auto-trading if disabled
-   if (!IsExpertEnabled()) {
-      int error = Toolbar.Experts(true);
-      if (IsError(error)) return(error);
-
-      PlaySoundEx("Windows Notify.wav");        // we must return as scripts don't update their internal auto-trading status
-      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
-      return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
    }
    return(catch("onInit(7)"));
 }

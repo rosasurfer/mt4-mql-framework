@@ -10,7 +10,7 @@
  *       Positionen werden dadurch Commission und Spread mehrfach berechnet.
  */
 #include <rsf/stddefines.mqh>
-int   __InitFlags[];
+int   __InitFlags[] = {INIT_AUTO_TRADING};
 int __DeinitFlags[];
 
 #property show_inputs

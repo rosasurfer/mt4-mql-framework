@@ -23,7 +23,7 @@
  *  LfxOrderDeleteCommand    extends LfxTradeCommand { int ticket; ... }
  */
 #include <rsf/stddefines.mqh>
-int   __InitFlags[];
+int   __InitFlags[] = {INIT_AUTO_TRADING};
 int __DeinitFlags[];
 #include <rsf/core/script.mqh>
 #include <rsf/stdfunctions.mqh>
