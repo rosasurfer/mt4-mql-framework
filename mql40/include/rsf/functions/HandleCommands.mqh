@@ -1,9 +1,9 @@
 /**
- * Retrieve received commands and pass them to the command handler. Command format: "cmd[:params[:modifiers]]"
+ * Retrieve received commands and pass them to the command handler. Command format: "cmd[:params[:flags]]"
  *
- *  cmd:       command identifier (required)
- *  params:    one or more command parameters separated by comma (optional)
- *  modifiers: one or more virtual key modifiers separated by comma (optional)
+ *  cmd:    command identifier (required)
+ *  params: one or more command parameters separated by comma (optional)
+ *  flags:  an integer describing flags of pressed modifier keys (optional)
  *
  * @param  string channel [optional] - channel to check for commands (default: the program's standard command channel)
  *
@@ -19,38 +19,18 @@ bool HandleCommands(string channel = "") {
       int size = ArraySize(commands);
 
       for (int i=0; i < size && !last_error; i++) {
-         string cmd="", params="", modifiers="", sValue="", sValues[];
+         string cmd="", params="", sFlags="", sValues[];
 
-         int parts = Explode(commands[i], ":", sValues, NULL), iValue=0, keys=0;
+         int parts = Explode(commands[i], ":", sValues, NULL), iFlags=0;
          if (parts > 0) cmd    = StrTrim(sValues[0]);
          if (parts > 1) params = StrTrim(sValues[1]);
          if (parts > 2) {
-            modifiers = StrTrim(sValues[2]);
-            if (StrIsDigits(modifiers)) {
-               iValue = StrToInteger(modifiers);
-               if (iValue & F_VK_ESCAPE  && 1) keys |= F_VK_ESCAPE;
-               if (iValue & F_VK_TAB     && 1) keys |= F_VK_TAB;
-               if (iValue & F_VK_CAPITAL && 1) keys |= F_VK_CAPITAL;    // CAPSLOCK key
-               if (iValue & F_VK_SHIFT   && 1) keys |= F_VK_SHIFT;
-               if (iValue & F_VK_CONTROL && 1) keys |= F_VK_CONTROL;
-               if (iValue & F_VK_MENU    && 1) keys |= F_VK_MENU;       // ALT key
-               if (iValue & F_VK_LWIN    && 1) keys |= F_VK_LWIN;
-               if (iValue & F_VK_RWIN    && 1) keys |= F_VK_RWIN;
+            sFlags = StrTrim(sValues[2]);
+            if (StrIsDigits(sFlags)) {
+               iFlags = StrToInteger(sFlags);
             }
-            else {
-               parts = Explode(modifiers, ",", sValues, NULL);
-               for (int n=0; n < parts; n++) {
-                  sValue = StrTrim(sValues[n]);
-                  if      (sValue == "VK_ESCAPE")  keys |= F_VK_ESCAPE;
-                  else if (sValue == "VK_TAB")     keys |= F_VK_TAB;
-                  else if (sValue == "VK_CAPITAL") keys |= F_VK_CAPITAL;
-                  else if (sValue == "VK_SHIFT")   keys |= F_VK_SHIFT;
-                  else if (sValue == "VK_CONTROL") keys |= F_VK_CONTROL;
-                  else if (sValue == "VK_MENU")    keys |= F_VK_MENU;
-                  else if (sValue == "VK_LWIN")    keys |= F_VK_LWIN;
-                  else if (sValue == "VK_RWIN")    keys |= F_VK_RWIN;
-                  else if (sValue != "") logNotice("HandleCommands(1)  skipping unsupported key modifier: "+ sValue);
-               }
+            else if (sFlags != "") {
+               logNotice("HandleCommands(1)  skipping invalid command flags: \""+ sFlags +"\"");
             }
          }
 
@@ -58,7 +38,7 @@ bool HandleCommands(string channel = "") {
             logNotice("HandleCommands(2)  skipping empty command: \""+ commands[i] +"\"");
             continue;
          }
-         onCommand(cmd, params, keys);
+         onCommand(cmd, params, iFlags);
       }
    }
    return(!last_error);
@@ -76,9 +56,9 @@ bool HandleCommands(string channel = "") {
 bool GetChartCommand(string channel, string &commands[]) {
    if (!__isChart) return(false);
 
-   static string stdChannel = ""; if (stdChannel == "") {
-      stdChannel = MqlProgramName();
-   }
+   static string stdChannel = "";
+   if (stdChannel == "") stdChannel = MqlProgramName();
+
    if (channel == "") {
       if (IsExpert()) channel = "EA";
       else            channel = stdChannel;
@@ -86,8 +66,8 @@ bool GetChartCommand(string channel, string &commands[]) {
    string label = channel +".command";
    string mutex = "mutex."+ label;
 
-   if (ObjectFind(label) != -1) {                              // check non-synchronized (read-only access) to prevent locking on every tick
-      if (AquireLock(mutex)) {                                 // aquire the lock and process command synchronized (read-write access)
+   if (ObjectFind(label) != -1) {            // check non-synchronized (read-only access) to prevent locking on every tick
+      if (AquireLock(mutex)) {               // aquire the lock and process command synchronized (read-write access)
          ArrayPushString(commands, ObjectDescription(label));
          ObjectDelete(label);
          return(ReleaseLock(mutex));
