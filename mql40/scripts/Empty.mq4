@@ -9,7 +9,7 @@ int __DeinitFlags[];
 
 
 /**
- * Main-Funktion
+ * Main function
  *
  * @return int - error status
  */

@@ -69,7 +69,7 @@ int onDeinit() {
 
 
 /**
- * Main-Funktion
+ * Main function
  *
  * @return int - error status
  */

@@ -11,27 +11,7 @@ int __DeinitFlags[];
 
 
 /**
- * Initialisierung
- *
- * @return int - error status
- */
-int onInit() {
-   return(last_error);
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - error status
- */
-int onDeinit() {
-   return(last_error);
-}
-
-
-/**
- * Main-Funktion
+ * Main function
  *
  * @return int - error status
  */

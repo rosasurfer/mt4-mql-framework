@@ -9,12 +9,10 @@ int __DeinitFlags[];
 
 
 /**
- * Main-Funktion
+ * Main function
  *
  * @return int - error status
  */
 int onStart() {
    return(Chart.SendTick(true));
 }
-
-
