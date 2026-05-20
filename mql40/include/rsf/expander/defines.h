@@ -384,11 +384,12 @@
 
 
 // init() flags
-#define INIT_TIMEZONE                           1        // initialize/check the timezone configuration
-#define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
+#define INIT_TIMEZONE                           1        // ensure a valid timezone configuration
+#define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and tick value)
 #define INIT_BARS_ON_HIST_UPDATE                4        //
-#define INIT_NO_BARS_REQUIRED                   8        // executable without price history (scripts only)
+#define INIT_NO_BARS_REQUIRED                   8        // program operates without price history (scripts only)
 #define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
+#define INIT_AUTO_TRADING                      32        // ensure that auto-trading is enabled
 
 
 // MT4 internal messages
