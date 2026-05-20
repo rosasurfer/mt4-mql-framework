@@ -3,14 +3,11 @@
  *
  *
  * TODO:
- *  - FATAL CloseOrders::rsfStdlib::OrderCloseByEx(10)  opposite ticket #487167489 is not an open position (anymore)  [ERR_INVALID_TRADE_PARAMETERS]
-
- *  - XAUUSD,M5         HedgePosition::rsfStdlib::OrdersHedge(17)  hedging 16 XAUUSD positions {#488535371:+0.01, #488535604:-0.01, #488535606:-0.01, #488535608:-0.01, #488535609:-0.01, #488535614:-0.01, #488535616:-0.01, #488535617:-0.01, #488535619:-0.01, #488535625:-0.01, #488535629:-0.01, #488535631:-0.01, #488535635:-0.01, #488535637:-0.01, #488535640:-0.01, #488535758:-0.01}
- *    XAUUSD,M5  FATAL  HedgePosition::rsfStdlib::OrderSendEx(28)  error while trying to Buy 0.14 XAUUSD at 2'330.04 (market: 2'329.96/2'330.04) after 0.000 s  [ERR_NOT_ENOUGH_MONEY]
+ *  - FATAL  CloseOrders::rsfStdlib::OrderCloseByEx(10)  opposite ticket #487167489 is not an open position (anymore)  [ERR_INVALID_TRADE_PARAMETERS]
  *
- *  - XAUUSD,M5         CloseOrders::rsfStdlib::OrdersCloseSameSymbol(16)  closing 16 XAUUSD positions {#488535371:+0.01, #488535604:-0.01, #488535606:-0.01, #488535608:-0.01, #488535609:-0.01, #488535614:-0.01, #488535616:-0.01, #488535617:-0.01, #488535619:-0.01, #488535625:-0.01, #488535629:-0.01, #488535631:-0.01, #488535635:-0.01, #488535637:-0.01, #488535640:-0.01, #488535758:-0.01}
- *    XAUUSD,M5         CloseOrders::rsfStdlib::OrdersHedge(17)  hedging 16 XAUUSD positions {#488535371:+0.01, #488535604:-0.01, #488535606:-0.01, #488535608:-0.01, #488535609:-0.01, #488535614:-0.01, #488535616:-0.01, #488535617:-0.01, #488535619:-0.01, #488535625:-0.01, #488535629:-0.01, #488535631:-0.01, #488535635:-0.01, #488535637:-0.01, #488535640:-0.01, #488535758:-0.01}
- *    XAUUSD,M5  FATAL  CloseOrders::rsfStdlib::OrderSendEx(28)  error while trying to Buy 0.14 XAUUSD at 2'329.99 (market: 2'329.93/2'329.99) after 0.000 s  [ERR_NOT_ENOUGH_MONEY]
+ *  - INFO   CloseOrders::rsfStdlib::OrdersCloseSameSymbol(16)  closing 16 XAUUSD positions...
+ *    INFO   CloseOrders::rsfStdlib::OrdersHedge(17)  hedging 16 XAUUSD positions...
+ *    FATAL  CloseOrders::rsfStdlib::OrderSendEx(28)  error while trying to Buy 0.14 XAUUSD at 2'329.99 after 0.000 s  [ERR_NOT_ENOUGH_MONEY]
  *
  *  - support ticket numbers from chart objects (order arrows)
  *  - support deletion of TP/SL limits
@@ -27,7 +24,7 @@ int __DeinitFlags[];
 extern string Close.Symbols      = "(current)";    // symbols separated by comma (default: current symbol, *: all symbols)
 extern string Close.Tickets      = "";             // tickets separated by comma (with or w/o leading "#")                    // or a full logmessage produced by CustomPositions.LogOrders(); or the text of an order arrow
 extern string Close.OrderTypes   = "";             // order types separated by comma (Buy, Sell, Long, Short, P[ending], Buy[-]Limit, Sell[-]Limit, Stop[-]Buy, Stop[-]Sell)
-extern string Close.MagicNumbers = "0";            // magic numbers separated by comma (0: manual trades)
+extern string Close.MagicNumbers = "0";            // magic numbers separated by comma (0: manual trades only)
 extern string Close.Comments     = "";             // prefix of order comments separated by comma
 extern bool   Close.HedgedPart   = false;          // close hedged part of matching tickets only
 
@@ -101,19 +98,19 @@ int onInit() {
    }
    // Close.Tickets
    sValue = Close.Tickets;
-   if (StrContains(sValue, "{") && StrEndsWith(sValue, "}")) {    // extract the ticket substring from an AnalyzePositions(F_LOG_TICKETS) message: "log-message {#ticket1, ..., #ticketN}"
+   if (StrContains(sValue, "{") && StrEndsWith(sValue, "}")) { // extract the ticket substring from an AnalyzePositions(F_LOG_TICKETS) message: "log-message {#ticket1, ..., #ticketN}"
       sValue = StrRightFrom(StrLeft(sValue, -1), "{", -1);
    }
    size = Explode(sValue, ",", sValues, NULL);
    for (i=0; i < size; i++) {
       sValue = StrTrim(sValues[i]);
       if (sValue == "(NULL)") {
-         ArrayPushInt(closeTickets, 0);                           // add non-existing ticket #0 to mark existing input
+         ArrayPushInt(closeTickets, 0);                        // add non-existing ticket #0 to mark existing input
       }
       else if (sValue != "") {
          if (StrStartsWith(sValue, "#")) {
-            sValue = StrSubstr(sValue, 1);                        // cut the hash char
-            sValue = StrLeftTo(sValue, ":");                      // cut an optional lotsize after ":"
+            sValue = StrSubstr(sValue, 1);                     // cut the hash char
+            sValue = StrLeftTo(sValue, ":");                   // cut an optional lotsize after ":"
             sValue = StrTrim(sValue);
          }
          if (!StrIsDigits(sValue)) return(catch("onInit(2)  invalid value in input parameter Close.Tickets: "+ DoubleQuoteStr(sValues[i]), ERR_INVALID_INPUT_PARAMETER));
@@ -152,8 +149,8 @@ int onInit() {
       int error = Toolbar.Experts(true);
       if (IsError(error)) return(error);
 
-      PlaySoundEx("Windows Notify.wav");                             // we must return as scripts don't update their internal auto-trading status
-      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", MqlProgramName(), MB_ICONINFORMATION|MB_OK);
+      PlaySoundEx("Windows Notify.wav");        // we must return as scripts don't update their internal auto-trading status
+      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
       return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
    }
    return(catch("onInit(7)"));
@@ -221,7 +218,7 @@ int onStart() {
       string msg            = "Do you really want to "+ sPendingOrders + sAnd + sOpenPositions +"?";
 
       PlaySoundEx("Windows Notify.wav");
-      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, MqlProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
 
       if (button == IDOK) {
          if (sizeOfOpenPositions > 0) {
@@ -236,7 +233,7 @@ int onStart() {
       msg = "Do you really want to close the hedged part of "+ (sizeOfHedgedLong+sizeOfHedgedShort) +" positions?";
 
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, MqlProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
+      button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
 
       if (button == IDOK) {
          while (sizeOfHedgedLong && sizeOfHedgedShort) {
@@ -264,7 +261,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Plonk.wav");
-      MessageBox("No matching orders found.", MqlProgramName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No matching orders found.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }

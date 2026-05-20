@@ -54,7 +54,7 @@ bool   signal.telegram;
  */
 int onInit() {
    // validate inputs
-   string indicator = MqlProgramName();
+   string indicator = WindowExpertName();
 
    // Timeframe
    string sValue = Timeframe;
@@ -85,7 +85,7 @@ int onInit() {
    string label = CreateStatusLabel();
    string fontName = "";                                          // "" => system menu font family
    int    fontSize = 8;                                           // 8  => system menu font size
-   string text = MqlProgramName() +": "+ Timeframe + legendInfo;
+   string text = WindowExpertName() +": "+ Timeframe + legendInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);         // status display
 
    return(catch("onInit(4)"));
@@ -736,7 +736,7 @@ bool DeleteInsideBars(int timeframe) {
  * @return string - created label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   string label = "rsf."+ MqlProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
+   string label = "rsf."+ WindowExpertName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return("");
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);

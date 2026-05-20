@@ -28,8 +28,8 @@ int onInit() {
       int error = Toolbar.Experts(true);
       if (IsError(error)) return(error);
 
-      PlaySoundEx("Windows Notify.wav");                          // we must return as scripts don't update their internal auto-trading status
-      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", MqlProgramName(), MB_ICONINFORMATION|MB_OK);
+      PlaySoundEx("Windows Notify.wav");        // we must return as scripts don't update their internal auto-trading status
+      MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
       return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
    }
    return(catch("onInit(1)"));
@@ -55,14 +55,14 @@ int onStart() {
    // notify
    if (!positions) {
       PlaySoundEx("Plonk.wav");
-      MessageBox("No open positions found.", MqlProgramName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No open positions found.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(1)"));
    }
 
    // get confirmation
    PlaySoundEx("Windows Notify.wav");
    string msg = "Do you really want to hedge "+ positions +" open position"+ Pluralize(positions) +"?";
-   int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, MqlProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
+   int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK) return(catch("onStart(2)"));
 
    // hedge positions
@@ -72,7 +72,7 @@ int onStart() {
       int error = oes.Error(oes, 0);
       if (!error) {
          PlaySoundEx("Plonk.wav");
-         MessageBox("The total position is already flat.", MqlProgramName(), MB_ICONEXCLAMATION|MB_OK);
+         MessageBox("The total position is already flat.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
       }
       else {
          return(SetLastError(error));

@@ -50,7 +50,7 @@ string legendLabel   = "";
  * @return int - error status
  */
 int onInit() {
-   indicatorName = MqlProgramName();
+   indicatorName = WindowExpertName();
 
    // validate inputs
    // HistoryDirectory

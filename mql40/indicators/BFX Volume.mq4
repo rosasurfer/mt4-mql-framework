@@ -226,7 +226,7 @@ int onTick() {
  */
 bool onLevelCross(int direction) {
    if (direction!=MODE_LONG && direction!=MODE_SHORT) return(!catch("onLevelCross(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   string indicatorName = MqlProgramName();
+   string indicatorName = WindowExpertName();
 
    // skip the signal if it was already handled elsewhere
    string sPeriod   = PeriodDescription();
@@ -402,7 +402,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexStyle(MODE_LONG,   drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Long );
    SetIndexStyle(MODE_SHORT,  drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Short);
 
-   string name = MqlProgramName();
+   string name = WindowExpertName();
    IndicatorShortName(name + ifString(Signal.onCross, "   signal=on", "") +"  ");
    SetIndexLabel(MODE_MAIN,   name);
    SetIndexLabel(MODE_SIGNAL, NULL);

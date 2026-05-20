@@ -123,7 +123,7 @@ int onTick() {
  * @return bool - success status
  */
 bool CreateChartObjects() {
-   string indicatorName = MqlProgramName();
+   string indicatorName = WindowExpertName();
    color  bgColor    = C'212,208,200';
    string bgFontName = "Webdings";
    int    bgFontSize = 200;

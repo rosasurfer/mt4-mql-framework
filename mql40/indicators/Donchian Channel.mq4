@@ -1096,16 +1096,13 @@ void UpdateChartLegend() {
 
    // update on full recalculation or if indicator name, trend, current bar or the account changed
    if (!ValidBars || trend[0]!=lastTrend || Time[0]!=lastTime || AccountNumber()!=lastAccount) {
-      string sFilter = "", sTrend = "";
+      string sFilter = "";
       if (reversals.show && reversals.countFrom) {
-         sFilter = "   filter("+ NumberToStr(reversals.countFrom, "+.") +")";
+         sFilter = "  filter("+ NumberToStr(reversals.countFrom, "+.") +")";
       }
-      else {
-         sTrend = "   "+ NumberToStr(trend[0], "+.");
-      }
-      string sReversal = "   next rev. @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
+      string sReversal = "  next rev. @"+ NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+Point, lowerBand[0]-Point), PriceFormat);
       string sSignal   = ifString(Signal.onReversal || Sound.onChannelWidening, "  "+ legendInfo, "");
-      string text      = StringConcatenate(indicatorName, sTrend, sFilter, sReversal, sSignal);
+      string text      = StringConcatenate(indicatorName, sFilter, sReversal, sSignal);
 
       color clr = Reversal.Color;
       if (clr == CLR_NONE) {
