@@ -45,7 +45,7 @@ int onStart() {
    int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK) return(catch("onStart(2)"));
 
-   // re-read open positions (orders may have changed during waiting for confirmation)
+   // re-read open positions (orders may have changed during wait for confirmation)
    if (!GetOpenPositions(tickets, skipManaged)) return(last_error);
 
    // hedge open positions
@@ -72,13 +72,13 @@ int onStart() {
  */
 bool GetOpenPositions(int &tickets[], bool skipManaged = true) {
    skipManaged = (skipManaged != 0);
-   static int lastOpenOrders=-1, lastCloseOrders=-1, lastSkipManaged=0, lastTickets[];
+   static int lastOpenOrders=-1, lastClosedOrders=-1, lastSkipManaged=0, lastTickets[];
 
    int openOrders = OrdersTotal();
    int closedOrders = OrdersHistoryTotal();
 
    // return cached results if status unchanged
-   if (openOrders==lastOpenOrders && closedOrders==lastCloseOrders && skipManaged==lastSkipManaged) {
+   if (openOrders==lastOpenOrders && closedOrders==lastClosedOrders && skipManaged==lastSkipManaged) {
       ArrayResize(tickets, 0);
       if (ArraySize(lastTickets) > 0) {
          ArrayCopy(tickets, lastTickets);
@@ -103,13 +103,11 @@ bool GetOpenPositions(int &tickets[], bool skipManaged = true) {
    ArrayResize(tickets, n);
 
    // cache results
-   lastOpenOrders  = openOrders;
-   lastCloseOrders = closedOrders;
-   lastSkipManaged = skipManaged;
-
+   lastOpenOrders   = openOrders;
+   lastClosedOrders = closedOrders;
+   lastSkipManaged  = skipManaged;
    ArrayResize(lastTickets, 0);
-   if (ArraySize(tickets) > 0) {
-      ArrayCopy(lastTickets, tickets);
-   }
+   if (ArraySize(tickets) > 0) ArrayCopy(lastTickets, tickets);
+
    return(!catch("GetOpenPositions(2)"));
 }
