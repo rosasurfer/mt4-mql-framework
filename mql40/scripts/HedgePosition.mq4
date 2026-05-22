@@ -26,9 +26,9 @@ int __DeinitFlags[];
 int onStart() {
    bool skipManaged = !IsVirtualKeyDown(VK_CONTROL);
 
-   // read open positions
+   // get tickets of open positions
    int tickets[];
-   if (!GetOpenPositions(tickets, skipManaged)) return(last_error);
+   if (!CollectTickets(tickets, skipManaged)) return(last_error);
 
    // notify user
    int positions = ArraySize(tickets);
@@ -45,10 +45,10 @@ int onStart() {
    int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK) return(catch("onStart(2)"));
 
-   // re-read open positions (orders may have changed during wait for confirmation)
-   if (!GetOpenPositions(tickets, skipManaged)) return(last_error);
+   // refresh selected tickets (orders may have changed during wait for confirmation)
+   if (!CollectTickets(tickets, skipManaged)) return(last_error);
 
-   // hedge open positions
+   // hedge positions
    int oes[][ORDER_EXECUTION_intSize], slippage = 10;          // acceptable slippage in Points
 
    if (!OrdersHedge(tickets, slippage, F_OE_HEDGE_NO_CLOSE, oes)) {
@@ -63,37 +63,24 @@ int onStart() {
 
 
 /**
- * Get a list of open positions of the current symbol.
+ * Collect the tickets of all open positions to hedge.
  *
  * @param  _Out_ int  tickets[]
  * @param  _In_  bool skipManaged [optional] - whether to skip tickets managed by an EA (default: yes)
  *
  * @return bool - success status
  */
-bool GetOpenPositions(int &tickets[], bool skipManaged = true) {
+bool CollectTickets(int &tickets[], bool skipManaged = true) {
    skipManaged = (skipManaged != 0);
-   static int lastOpenOrders=-1, lastClosedOrders=-1, lastSkipManaged=0, lastTickets[];
 
-   int openOrders = OrdersTotal();
-   int closedOrders = OrdersHistoryTotal();
+   // Don't cache the results. Order counters don't change if pending entry orders are executed.
+   int orders = OrdersTotal();
 
-   // return cached results if status unchanged
-   if (openOrders==lastOpenOrders && closedOrders==lastClosedOrders && skipManaged==lastSkipManaged) {
-      ArrayResize(tickets, 0);
-      if (ArraySize(lastTickets) > 0) {
-         ArrayCopy(tickets, lastTickets);
-      }
-      return(!catch("GetOpenPositions(1)"));
-   }
-
-   // or re-read open positions if status changed
-   if (lastOpenOrders != -1) logInfo("GetOpenPositions(2)  open orders changed, re-reading...");
-
-   ArrayResize(tickets, openOrders);
-   ArrayInitialize(tickets, NULL);
+   ArrayResize(tickets, orders);
+   ArrayInitialize(tickets, 0);
 
    int n = 0;
-   for (int i=0; i < openOrders; i++) {
+   for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;  // an open order was closed/deleted elsewhere
       if (OrderType() > OP_SELL)             continue;
       if (OrderSymbol() != Symbol())         continue;
@@ -104,12 +91,5 @@ bool GetOpenPositions(int &tickets[], bool skipManaged = true) {
    }
    ArrayResize(tickets, n);
 
-   // cache results
-   lastOpenOrders   = openOrders;
-   lastClosedOrders = closedOrders;
-   lastSkipManaged  = skipManaged;
-   ArrayResize(lastTickets, 0);
-   if (ArraySize(tickets) > 0) ArrayCopy(lastTickets, tickets);
-
-   return(!catch("GetOpenPositions(3)"));
+   return(!catch("CollectTickets(1)"));
 }
