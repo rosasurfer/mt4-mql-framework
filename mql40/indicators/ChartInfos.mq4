@@ -4827,8 +4827,8 @@ bool RestoreStatus() {
 
 
 /**
- * Monitor execution of pending order limits and opening/closing of positions. Orders with a magic number (managed by an EA)
- * are not monitored as this is the responsibility of the EA.
+ * Monitor execution of order limits and opening/closing of positions. Orders with a magic number (managed by an EA) are not
+ * monitored as this is the responsibility of the EA.
  *
  * @param  _Out_ double openedPositions[][] - executed entry limits: {ticket, entryLimit}
  * @param  _Out_ int    closedPositions[][] - executed exit limits:  {ticket, closeType}
@@ -4840,20 +4840,20 @@ bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], in
    /*
    monitoring of entry limits (pendings must be known before)
    ----------------------------------------------------------
-   - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
-   - alle unbekannten Pending-Orders registrieren:                               über alle Tickets(MODE_TRADES) iterieren
+   - check known pending orders for status change:                               iterate over known orders
+   - register all new pending orders:                                            iterate over OrderSelect(MODE_TRADES)
 
    monitoring of exit limits (positions must be known before)
    ----------------------------------------------------------
-   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
-   - alle unbekannten Positionen mit und ohne Exit-Limit registrieren:           über alle Tickets(MODE_TRADES) iterieren
-     (limitlose Positionen können durch Stopout geschlossen werden/worden sein)
+   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         iterate over known orders
+   - alle unbekannten Positionen mit und ohne Exit-Limit registrieren:           iterate over OrderSelect(MODE_TRADES)
+     (limitlose Positionen können durch Stopout geschlossen werden)
 
    both together
    -------------
-   - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
-   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
-   - alle unbekannten Pending-Orders und Positionen registrieren:                über alle Tickets(MODE_TRADES) iterieren
+   - check known pending orders for status change:                               iterate over known orders
+   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         iterate over known orders
+   - alle unbekannten Pending-Orders und Positionen registrieren:                iterate over OrderSelect(MODE_TRADES)
    */
 
    // (1) über alle bekannten Orders iterieren (rückwärts, um beim Entfernen von Elementen die Schleife einfacher managen zu können)
