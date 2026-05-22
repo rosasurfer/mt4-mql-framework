@@ -1,7 +1,7 @@
 /**
  * CloseOrders
  *
- * Close all orders matching the specified input criteria.
+ * Close all open orders matching the specified input criteria.
  *
  *
  * TODO:
@@ -156,9 +156,9 @@ int onInit() {
 int onStart() {
    int orders = OrdersTotal(), pendingOrders[], openPositions[];
 
-   // select orders to close
+   // select the tickets to close
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: an open order was closed/deleted in another thread
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // an open order was closed/deleted elsewhere
       if (OrderType() > OP_SELLSTOP)                   continue;
 
       bool close = true;

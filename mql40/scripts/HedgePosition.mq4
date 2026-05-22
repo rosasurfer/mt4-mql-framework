@@ -1,7 +1,8 @@
 /**
  * HedgePosition
  *
- * Hedge open positions of the current symbol.
+ * Hedge open positions of the current symbol. By default tickets managed by an EA are skipped. If the Ctrl key (VK_CONTROL)
+ * is pressed at script launch time tickets managed by an EA are hedged, too.
  *
  *
  * TODO:
@@ -23,9 +24,11 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
+   bool skipManaged = !IsVirtualKeyDown(VK_CONTROL);
+
    // read open positions
    int tickets[];
-   if (!GetOpenPositions(tickets)) return(last_error);
+   if (!GetOpenPositions(tickets, skipManaged)) return(last_error);
 
    // notify user
    int positions = ArraySize(tickets);
@@ -37,12 +40,13 @@ int onStart() {
 
    // get user confirmation
    PlaySoundEx("Windows Notify.wav");
-   string msg = "Do you really want to hedge "+ positions +" open position"+ Pluralize(positions) +"?";
+   string sManaged = ifString(skipManaged, "", " (including EAs)");
+   string msg = "Do you really want to hedge "+ positions +" open position"+ Pluralize(positions) + sManaged +"?";
    int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK) return(catch("onStart(2)"));
 
-   // re-read open positions (orders may have changed during waiting for the dialog)
-   if (!GetOpenPositions(tickets)) return(last_error);
+   // re-read open positions (orders may have changed during waiting for confirmation)
+   if (!GetOpenPositions(tickets, skipManaged)) return(last_error);
 
    // hedge open positions
    int oes[][ORDER_EXECUTION_intSize], slippage = 10;          // acceptable slippage in Points
@@ -61,46 +65,47 @@ int onStart() {
 /**
  * Get a list of open positions of the current symbol.
  *
- * @param  _Out_ int tickets[]
- * @param  _In_  int selection flags (default: none)
+ * @param  _Out_ int  tickets[]
+ * @param  _In_  bool skipManaged [optional] - whether to skip tickets managed by an EA (default: yes)
  *
  * @return bool - success status
  */
-bool GetOpenPositions(int &tickets[], int flags = NULL) {
-   static int lastOpenOrders=-1, lastCloseOrders=-1, lastFlags=0, lastTickets[];
+bool GetOpenPositions(int &tickets[], bool skipManaged = true) {
+   skipManaged = (skipManaged != 0);
+   static int lastOpenOrders=-1, lastCloseOrders=-1, lastSkipManaged=0, lastTickets[];
 
    int openOrders = OrdersTotal();
    int closedOrders = OrdersHistoryTotal();
 
    // return cached results if status unchanged
-   if (openOrders==lastOpenOrders && closedOrders==lastCloseOrders && flags==lastFlags) {
+   if (openOrders==lastOpenOrders && closedOrders==lastCloseOrders && skipManaged==lastSkipManaged) {
       ArrayResize(tickets, 0);
       if (ArraySize(lastTickets) > 0) {
          ArrayCopy(tickets, lastTickets);
       }
-      debug("GetOpenPositions(0.1)  returning cached positions");
       return(!catch("GetOpenPositions(1)"));
    }
 
    // or re-read open positions if status changed
-   debug("GetOpenPositions(0.2)  re-reading open positions");
    ArrayResize(tickets, openOrders);
    ArrayInitialize(tickets, NULL);
 
    int n = 0;
    for (int i=0; i < openOrders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;  // an open order was closed/deleted elsewhere
-      if (OrderType() > OP_SELL)     continue;
-      if (OrderSymbol() != Symbol()) continue;
+      if (OrderType() > OP_SELL)             continue;
+      if (OrderSymbol() != Symbol())         continue;
+      if (OrderMagicNumber() && skipManaged) continue;
+
       tickets[n] = OrderTicket();
       n++;
    }
    ArrayResize(tickets, n);
 
    // cache results
-   lastOpenOrders = openOrders;
+   lastOpenOrders  = openOrders;
    lastCloseOrders = closedOrders;
-   lastFlags = flags;
+   lastSkipManaged = skipManaged;
 
    ArrayResize(lastTickets, 0);
    if (ArraySize(tickets) > 0) {
