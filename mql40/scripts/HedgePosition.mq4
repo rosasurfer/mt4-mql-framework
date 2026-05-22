@@ -87,6 +87,8 @@ bool GetOpenPositions(int &tickets[], bool skipManaged = true) {
    }
 
    // or re-read open positions if status changed
+   if (lastOpenOrders != -1) logInfo("GetOpenPositions(2)  open orders changed, re-reading...");
+
    ArrayResize(tickets, openOrders);
    ArrayInitialize(tickets, NULL);
 
@@ -109,5 +111,5 @@ bool GetOpenPositions(int &tickets[], bool skipManaged = true) {
    ArrayResize(lastTickets, 0);
    if (ArraySize(tickets) > 0) ArrayCopy(lastTickets, tickets);
 
-   return(!catch("GetOpenPositions(2)"));
+   return(!catch("GetOpenPositions(3)"));
 }

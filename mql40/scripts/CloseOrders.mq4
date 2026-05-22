@@ -282,6 +282,8 @@ bool CollectTickets(int &pendingOrders[], int &openPositions[], int &hedgedLong[
    }
 
    // or re-read open tickets if status changed
+   if (lastOpenOrders != -1) logInfo("CollectTickets(2)  open orders changed, re-reading...");
+
    int sizeOfComments = ArraySize(closeComments);
 
    for (int i=0; i < openOrders; i++) {
@@ -329,5 +331,5 @@ bool CollectTickets(int &pendingOrders[], int &openPositions[], int &hedgedLong[
    ArrayResize(lastHedgedLong,    0); if (ArraySize(hedgedLong   ) > 0) ArrayCopy(lastHedgedLong,    hedgedLong   );
    ArrayResize(lastHedgedShort,   0); if (ArraySize(hedgedShort  ) > 0) ArrayCopy(lastHedgedShort,   hedgedShort  );
 
-   return(!catch("CollectTickets(2)"));
+   return(!catch("CollectTickets(3)"));
 }
