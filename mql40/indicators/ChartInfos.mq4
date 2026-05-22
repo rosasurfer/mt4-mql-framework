@@ -591,7 +591,7 @@ bool GetOpenOrderDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ MqlProgramName() +".ShowOpenOrders";
+   string label = "rsf."+ WindowExpertName() +".ShowOpenOrders";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -612,7 +612,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ MqlProgramName() +".ShowOpenOrders";
+   string label = "rsf."+ WindowExpertName() +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -681,7 +681,7 @@ bool GetTradeHistoryDisplayStatus() {
    bool status = false;
 
    // on error look-up a status stored in the chart
-   string label = "rsf."+ MqlProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ WindowExpertName() +".ShowTradeHistory";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -702,7 +702,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ MqlProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ WindowExpertName() +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -1018,7 +1018,7 @@ bool ToggleAccountBalance(bool externalAssets) {
  * @return bool - status: enabled/disabled
  */
 bool GetAccountBalanceDisplayStatus() {
-   string label = MqlProgramName() +".ShowAccountBalance";     // TODO: also store status in the chart window
+   string label = WindowExpertName() +".ShowAccountBalance";   // TODO: also store status in the chart window
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -1035,7 +1035,7 @@ bool GetAccountBalanceDisplayStatus() {
 bool SetAccountBalanceDisplayStatus(bool status) {
    status = status!=0;
 
-   string label = MqlProgramName() +".ShowAccountBalance";     // TODO: also read status from the chart window
+   string label = WindowExpertName() +".ShowAccountBalance";   // TODO: also read status from the chart window
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -1052,7 +1052,7 @@ bool SetAccountBalanceDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // define labels
-   string programName = MqlProgramName();
+   string programName = WindowExpertName();
    label.instrument     = programName +".Instrument";
    label.price          = programName +".Price";
    label.spread         = programName +".Spread";
@@ -1297,7 +1297,7 @@ bool UpdatePositions() {
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) return(!catch("UpdatePositions(1)", error));
 
    // pending order marker bottom-right
-   string label = MqlProgramName() +".PendingTickets";
+   string label = WindowExpertName() +".PendingTickets";
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, 12);
@@ -4690,7 +4690,7 @@ bool AnalyzePos.ProcessLfxProfits() {
  */
 bool StoreStatus() {
    if (!__isChart) return(true);
-   string indicatorName = MqlProgramName();
+   string indicatorName = WindowExpertName();
 
    // int position.unitsize.corner
    string key = indicatorName +".position.unitsize.corner";
@@ -4748,7 +4748,7 @@ bool StoreStatus() {
  */
 bool RestoreStatus() {
    if (!__isChart) return(true);
-   string indicatorName = MqlProgramName();
+   string indicatorName = WindowExpertName();
 
    // int position.unitsize.corner
    string key = indicatorName +".position.unitsize.corner", mfeKey="", maeKey="";
@@ -4827,8 +4827,8 @@ bool RestoreStatus() {
 
 
 /**
- * Monitor execution of pending order limits and opening/closing of positions. Orders with a magic number (managed by an EA)
- * are not monitored as this is the responsibility of the EA.
+ * Monitor execution of order limits and opening/closing of positions. Orders with a magic number (managed by an EA) are not
+ * monitored as this is the responsibility of the EA.
  *
  * @param  _Out_ double openedPositions[][] - executed entry limits: {ticket, entryLimit}
  * @param  _Out_ int    closedPositions[][] - executed exit limits:  {ticket, closeType}
@@ -4840,20 +4840,20 @@ bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], in
    /*
    monitoring of entry limits (pendings must be known before)
    ----------------------------------------------------------
-   - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
-   - alle unbekannten Pending-Orders registrieren:                               über alle Tickets(MODE_TRADES) iterieren
+   - check known pending orders for status change:                               iterate over known orders
+   - register all new pending orders:                                            iterate over OrderSelect(MODE_TRADES)
 
    monitoring of exit limits (positions must be known before)
    ----------------------------------------------------------
-   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
-   - alle unbekannten Positionen mit und ohne Exit-Limit registrieren:           über alle Tickets(MODE_TRADES) iterieren
-     (limitlose Positionen können durch Stopout geschlossen werden/worden sein)
+   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         iterate over known orders
+   - alle unbekannten Positionen mit und ohne Exit-Limit registrieren:           iterate over OrderSelect(MODE_TRADES)
+     (limitlose Positionen können durch Stopout geschlossen werden)
 
    both together
    -------------
-   - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
-   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
-   - alle unbekannten Pending-Orders und Positionen registrieren:                über alle Tickets(MODE_TRADES) iterieren
+   - check known pending orders for status change:                               iterate over known orders
+   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         iterate over known orders
+   - alle unbekannten Pending-Orders und Positionen registrieren:                iterate over OrderSelect(MODE_TRADES)
    */
 
    // (1) über alle bekannten Orders iterieren (rückwärts, um beim Entfernen von Elementen die Schleife einfacher managen zu können)

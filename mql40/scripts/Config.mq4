@@ -1,11 +1,14 @@
 /**
- * Load all configuration files of the current context into the editor. Non-existing files are created. These files are:
+ * Config
  *
- *  - the global user configuration (settings for all MT4 terminals)
- *  - the current terminal configuration (settings for the MT4 terminal executing this script)
- *  - the current account configuration (settings for the active MT4 trade account)
+ * Load all current config files into the text editor. Non-existing files are created.
  *
- * If the "Shift" key (VK_SHIFT) is pressed during execution only the account configuration is loaded.
+ * Config files:
+ *  - the global user configuration (settings applied to all installed MT4 terminals)
+ *  - the configuration for the current terminal (settings applied to the MT4 terminal executing this script)
+ *  - the configuration for the current account (settings applied to an active MT4 trade account)
+ *
+ * If the "Shift" key (VK_SHIFT) is pressed at launch time, only the account configuration is loaded.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -13,7 +16,6 @@ int __DeinitFlags[];
 #include <rsf/core/script.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/win32api.mqh>
 
 
 /**
@@ -26,18 +28,18 @@ int onStart() {
    bool isVkShift = IsVirtualKeyDown(VK_SHIFT);
 
    if (!isVkShift) {
-      // get the global user configuration filename
+      // get the global user config filename
       ArrayPushString(files, GetGlobalConfigPathA());
 
-      // get the current terminal configuration filename
+      // get the terminal config filename
       ArrayPushString(files, GetTerminalConfigPathA());
    }
 
-   // get the current account configuration filename
+   // get the account config filename
    currentAccountConfig = GetAccountConfigPath();
    ArrayPushString(files, currentAccountConfig);
 
-   // get the external trade account configuration filename (if configured)
+   // get the external trade account config filename (if enabled)
    string label = "TradeAccount";
    if (!isVkShift && ObjectFind(label)==0) {
       string account = StrTrim(ObjectDescription(label));            // format "{company-id}:{account-number}"
@@ -78,19 +80,19 @@ int onStart() {
          if (pos > 0) {
             string dir = StrLeft(files[i], pos);
             int error = CreateDirectoryA(dir, MODE_SYSTEM|MODE_MKPARENT);
-            if (IsError(error)) return(catch("onStart(5)  cannot create directory \""+ dir +"\"", ERR_WIN32_ERROR+error));
+            if (IsError(error)) return(catch("onStart(5)  cannot create directory \""+ dir +"\"", ERR_WIN32_ERROR + error));
          }
          // create the file
-         int hFile = CreateFileA(files[i],                                 // file name
-                                 GENERIC_READ,                             // desired access: read
-                                 WIN32_FILE_SHARE_READ,                    // share mode
-                                 NULL,                                     // default security
-                                 CREATE_NEW,                               // create file only if it doesn't exist
-                                 FILE_ATTRIBUTE_NORMAL,                    // flags and attributes: normal file
-                                 NULL);                                    // no template file handle
+         int hFile = CreateFileA(files[i],                  // file name
+                                 GENERIC_READ,              // desired access mode: read
+                                 WIN32_FILE_SHARE_READ,     // share mode
+                                 NULL,                      // default security
+                                 CREATE_NEW,                // create file only if it doesn't exist
+                                 FILE_ATTRIBUTE_NORMAL,     // flags and attributes: normal file
+                                 NULL);                     // no template file handle
          if (hFile == INVALID_HANDLE_VALUE) {
             error = GetLastWin32Error();
-            if (error != ERROR_FILE_EXISTS) return(catch("onStart(6)->CreateFileA(\""+ files[i] +"\")", ERR_WIN32_ERROR+error));
+            if (error != ERROR_FILE_EXISTS) return(catch("onStart(6)->CreateFileA(\""+ files[i] +"\")", ERR_WIN32_ERROR + error));
          }
          else {
             CloseHandle(hFile);

@@ -14,7 +14,7 @@ double  _Ask;                                                        // ...
 int init() {
    __isSuperContext = false;
    if (__STATUS_OFF) return(__STATUS_OFF.reason);
-   if (__CoreFunction != CF_START) __CoreFunction = CF_INIT;         // init() called by the terminal, all variables are reset
+   if (__CoreFunction != CF_START) __CoreFunction = CF_INIT;   // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this script.");
@@ -33,12 +33,12 @@ int init() {
 
    // initialize the execution context
    int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
-   if (!error) error = GetLastError();                               // detect a DLL exception
+   if (!error) error = GetLastError();                         // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(1)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
       last_error          = error;
-      __STATUS_OFF        = true;                                    // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
-      __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __STATUS_OFF        = true;                              // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
+      __STATUS_OFF.reason = last_error;                        // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
 
@@ -56,7 +56,7 @@ int init() {
       if (!StringLen(GetServerTimezone())) return(_last_error(HandleErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
-      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // fails if there is no tick yet
+      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);   // fails if there is no tick yet
       if (IsError(catch("init(4)"))) if (HandleErrors("init(5)")) return(last_error);
       if (!tickSize) return(_last_error(HandleErrors("init(6)  MarketInfo(MODE_TICKSIZE=0)", ERR_SYMBOL_NOT_AVAILABLE)));
 
@@ -64,15 +64,26 @@ int init() {
       if (IsError(catch("init(7)"))) if (HandleErrors("init(8)")) return(last_error);
       if (!tickValue) return(_last_error(HandleErrors("init(9)  MarketInfo(MODE_TICKVALUE=0)", ERR_SYMBOL_NOT_AVAILABLE)));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}           // not yet implemented
+
+   if (initFlags & INIT_AUTO_TRADING && 1) {                   // enable auto-trading if disabled
+      if (!IsExpertEnabled()) {
+         error = Toolbar.Experts(true);
+         if (HandleErrors("init(10)", error)) return(last_error);
+
+         PlaySoundEx("Windows Notify.wav");                    // we must return as scripts don't update their internal auto-trading status
+         MessageBox("Please call the script again!"+ NL +"(\"auto-trading\" was not enabled)", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
+         return(SetLastError(ERR_TERMINAL_AUTOTRADE_DISABLED));
+      }
+   }
 
    // pre/postprocessing hooks
    error = onInit();
-   if (HandleErrors("init(10)", error)) return(last_error);
+   if (HandleErrors("init(11)", error)) return(last_error);
 
-   if (error != -1) {                                                // conditional postprocessing hook
+   if (error != -1) {                                          // conditional postprocessing hook
       error = afterInit();
-      if (HandleErrors("init(11)", error)) return(last_error);
+      if (HandleErrors("init(12)", error)) return(last_error);
    }
    return(last_error);
 }

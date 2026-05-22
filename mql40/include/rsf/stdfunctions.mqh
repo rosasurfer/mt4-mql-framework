@@ -2793,7 +2793,7 @@ string MarketInfoModeToStr(int mode) {
 
 
 /**
- * Dump major global vars and available MarketInfo() data to the system debugger.
+ * Dump important global vars and available MarketInfo() data to the debug output.
  *
  * @param  string caller - location identifier of the caller
  *

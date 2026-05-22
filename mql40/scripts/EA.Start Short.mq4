@@ -1,7 +1,7 @@
 /**
  * EA.Start Short
  *
- * Send a "start:short" command to an EA in the current chart.
+ * Sends command "start:short" to an EA in the current chart.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -22,7 +22,7 @@ int onStart() {
 
    // check chart for an active EA
    if (ObjectFind(label) == 0) {
-      string text = StrTrim(ObjectDescription(label));                  // format: {sid}|{status}
+      string text = StrTrim(ObjectDescription(label));      // format: {sid}|{status}
       sid      = StrLeftTo(text, "|");
       status   = StrRightFrom(text, "|");
       isActive = (status!="" && status!="undefined");
@@ -31,14 +31,14 @@ int onStart() {
    if (isActive) {
       if (__isTesting) Tester.Pause();
 
-      PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-      int button = MessageBoxEx(MqlProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want the EA to go short?", MB_ICONQUESTION|MB_OKCANCEL);
+      PlaySoundEx("Windows Notify.wav");                    // confirm sending the command
+      int button = MessageBoxEx(WindowExpertName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want the EA to go short?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
       SendChartCommand("EA.command", "start:short");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(MqlProgramName(), "No EA found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(WindowExpertName(), "No EA found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }

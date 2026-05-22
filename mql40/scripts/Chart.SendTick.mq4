@@ -1,5 +1,7 @@
 /**
- * Schickt einen künstlichen Tick an den aktuellen Chart.
+ * Chart.SendTick
+ *
+ * Sends a virtual tick to the current chart.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -9,12 +11,11 @@ int __DeinitFlags[];
 
 
 /**
- * Main-Funktion
+ * Main function
  *
  * @return int - error status
  */
 int onStart() {
-   return(Chart.SendTick(true));
+   Chart.SendTick(true);
+   return(last_error);
 }
-
-

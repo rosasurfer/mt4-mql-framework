@@ -10,10 +10,10 @@
  *       Positionen werden dadurch Commission und Spread mehrfach berechnet.
  */
 #include <rsf/stddefines.mqh>
-int   __InitFlags[];
+int   __InitFlags[] = {INIT_AUTO_TRADING};
 int __DeinitFlags[];
-
 #property show_inputs
+
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string LFX.Labels = "";                           // Label_1 [, Label_n [, ...]]: Prüfung per OrderComment().StrStartsWithI(value)
@@ -35,7 +35,7 @@ string inputLabels[];
 
 
 /**
- * Initialisierung
+ * Initialization
  *
  * @return int - error status
  */
@@ -58,7 +58,7 @@ int onInit() {
 
 
 /**
- * Deinitialisierung
+ * Deinitialization
  *
  * @return int - error status
  */
@@ -69,7 +69,7 @@ int onDeinit() {
 
 
 /**
- * Main-Funktion
+ * Main function
  *
  * @return int - error status
  */
@@ -105,14 +105,14 @@ int onStart() {
    int magicsSize = ArraySize(magics);
    if (!magicsSize) {
       PlaySoundEx("Windows Notify.wav");
-      MessageBox("No matching LFX positions found.", MqlProgramName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No matching LFX positions found.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(1)"));
    }
 
 
    // (2) Sicherheitsabfrage
    PlaySoundEx("Windows Notify.wav");
-   int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close the specified "+ ifString(magicsSize==1, "", magicsSize +" ") +"LFX position"+ Pluralize(magicsSize) +"?", MqlProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
+   int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close the specified "+ ifString(magicsSize==1, "", magicsSize +" ") +"LFX position"+ Pluralize(magicsSize) +"?", WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(2)"));
 

@@ -268,7 +268,7 @@ double GetChannel(int mode, int bar) {
  */
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
-   indicatorName = MqlProgramName();
+   indicatorName = WindowExpertName();
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);

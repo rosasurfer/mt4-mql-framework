@@ -84,7 +84,7 @@ string   errorSound = "";                             // sound played when timef
  * @return int - error status
  */
 int onInit() {
-   string indicator = MqlProgramName();
+   string indicator = WindowExpertName();
 
    // validate inputs
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -666,7 +666,7 @@ bool UpdateDescription() {
 string CreateStatusLabel() {
    if (__isSuperContext) return("");
 
-   string name = "rsf."+ MqlProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
+   string name = "rsf."+ WindowExpertName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_LABEL)) return("");
    ObjectSet    (name, OBJPROP_CORNER,    legendCorner);
@@ -689,7 +689,7 @@ string CreateStatusLabel() {
 bool StoreStatus() {
    if (!__isChart || !superTimeframe) return(true);
 
-   string label = "rsf."+ MqlProgramName() +".superTimeframe";
+   string label = "rsf."+ WindowExpertName() +".superTimeframe";
 
    // store timeframe in the window
    int hWnd = __ExecutionContext[EC.chart];
@@ -712,7 +712,7 @@ bool StoreStatus() {
 bool RestoreStatus() {
    if (!__isChart) return(true);
 
-   string label = "rsf."+ MqlProgramName() +".superTimeframe";
+   string label = "rsf."+ WindowExpertName() +".superTimeframe";
 
    // restore timeframe from the window (preferred due to performance)
    int hWnd = __ExecutionContext[EC.chart];

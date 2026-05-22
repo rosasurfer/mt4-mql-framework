@@ -6,8 +6,8 @@
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
-
 #property show_inputs
+
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Type  = "Sell Limit* | Stop Sell";
@@ -32,7 +32,7 @@ int limitType;                                                       // OP_SELLL
 
 
 /**
- * Initialisierung
+ * Initialization
  *
  * @return int - error status
  */
@@ -85,7 +85,7 @@ int onInit() {
 
 
 /**
- * Deinitialisierung
+ * Deinitialization
  *
  * @return int - error status
  */
@@ -96,7 +96,7 @@ int onDeinit() {
 
 
 /**
- * Main-Funktion
+ * Main function
  *
  * @return int - error status
  */
@@ -113,7 +113,7 @@ int onStart() {
       button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
                         +"The limit of "+ NumberToStr(LimitPrice, PriceFormat) +" will be triggered immediately (current price "+ NumberToStr(Close[0], PriceFormat) +").\n\n"
                         +"Do you really want to sell "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?",
-                        MqlProgramName(),
+                        WindowExpertName(),
                         MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(3)"));
@@ -126,7 +126,7 @@ int onStart() {
                         +                                   "Limit: "+      NumberToStr(LimitPrice,      PriceFormat)
                         + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, PriceFormat))
                         + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   PriceFormat)),
-                        MqlProgramName(),
+                        WindowExpertName(),
                         MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(4)"));
