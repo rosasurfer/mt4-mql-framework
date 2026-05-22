@@ -1,7 +1,7 @@
 /**
  * Chart.ToggleAccountBalance
  *
- * Sends a command to the ChartInfos indicator in the current chart to toggle displaying of the account balance.
+ * Sends a command to the ChartInfos indicator in the current chart to toggle the display of the account balance.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};

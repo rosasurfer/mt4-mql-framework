@@ -1,5 +1,7 @@
 /**
- * Loggt die Anzahl der offenen Tickets.
+ * CountOpenOrders
+ *
+ * Prints a chart comment with the number of currently open tickets.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};

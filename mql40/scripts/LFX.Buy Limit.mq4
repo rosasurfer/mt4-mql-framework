@@ -1,13 +1,13 @@
 /**
  * Erzeugt eine neue LFX-BuyLimit- oder StopBuy-Order. Muß auf dem jeweiligen LFX-Chart ausgeführt werden.
  *
- *  TODO: Fehler in Counter, wenn zwei Orders gleichzeitig erzeugt werden (2 x CHF.3)
+ * TODO: Fehler in Counter, wenn zwei Orders gleichzeitig erzeugt werden (2 x CHF.3)
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
-
 #property show_inputs
+
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Type  = "Buy Limit* | Stop Buy";

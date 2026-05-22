@@ -1,5 +1,7 @@
 /**
- * Close all orders matching the specified input.
+ * CloseOrders
+ *
+ * Close all orders matching the specified input criteria.
  *
  *
  * TODO:
@@ -16,7 +18,6 @@
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED, INIT_AUTO_TRADING};
 int __DeinitFlags[];
-
 #property show_inputs
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////

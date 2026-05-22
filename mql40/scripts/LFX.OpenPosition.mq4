@@ -7,8 +7,8 @@
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_AUTO_TRADING};
 int __DeinitFlags[];
-
 #property show_inputs
+
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string LFX.Currency = "";                                     // AUD | CAD | CHF | EUR | GBP | JPY | NZD | USD

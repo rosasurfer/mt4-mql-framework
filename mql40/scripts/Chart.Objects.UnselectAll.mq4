@@ -1,12 +1,13 @@
 /**
- * Ruft den Hauptmenü-Befehl Charts->Objects->Delete All auf.
+ * Chart.Objects.UnselectAll
+ *
+ * Executes the main menu command Charts->Objects->Unselect-All.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
 int __DeinitFlags[];
 #include <rsf/core/script.mqh>
 #include <rsf/stdfunctions.mqh>
-#include <rsf/stdlib.mqh>
 
 
 /**
@@ -15,5 +16,6 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   return(Chart.Objects.UnselectAll());
+   Chart.Objects.UnselectAll();
+   return(last_error);
 }

@@ -6,8 +6,8 @@
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
-
 #property show_inputs
+
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Type  = "Sell Limit* | Stop Sell";

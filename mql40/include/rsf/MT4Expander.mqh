@@ -190,7 +190,7 @@
    bool     IsWindowAreaVisible(int hWnd);
    int      PlaySoundA(string soundfile);
 
-   // Virtual no-ops. Overridden by custom MQL implementations of the same name.
+   // virtual no-ops, overridden by custom MQL implementations of the same name
    int      onInit();
    int      onInitUser();
    int      onInitParameters();

@@ -1,5 +1,7 @@
 /**
- * Schickt dem LFX Tracker des aktuellen Charts die Nachricht, den Trade-Account umzuschalten.
+ * LFX Tracker TA=Off
+ *
+ * Sends a command to the "LFX Tracker" indicator in the current chart to switch the used trading account.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};

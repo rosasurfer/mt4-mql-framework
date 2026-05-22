@@ -12,8 +12,8 @@
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_AUTO_TRADING};
 int __DeinitFlags[];
-
 #property show_inputs
+
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string LFX.Labels = "";                           // Label_1 [, Label_n [, ...]]: Prüfung per OrderComment().StrStartsWithI(value)

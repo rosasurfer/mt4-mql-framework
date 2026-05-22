@@ -1,7 +1,7 @@
 /**
  * EA.Start
  *
- * Send a "start" command to a running EA.
+ * Sends command "start" to an EA in the current chart.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -22,7 +22,7 @@ int onStart() {
 
    // check chart for an active EA
    if (ObjectFind(label) == 0) {
-      string text = StrTrim(ObjectDescription(label));                  // format: {sid}|{status}
+      string text = StrTrim(ObjectDescription(label));      // format: {sid}|{status}
       sid      = StrLeftTo(text, "|");
       status   = StrRightFrom(text, "|");
       isActive = (status!="" && status!="undefined");
@@ -31,7 +31,7 @@ int onStart() {
    if (isActive) {
       if (__isTesting) Tester.Pause();
 
-      PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
+      PlaySoundEx("Windows Notify.wav");                    // confirm sending the command
       int button = MessageBoxEx(WindowExpertName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the EA?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
       SendChartCommand("EA.command", "start");
