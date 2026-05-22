@@ -38,7 +38,7 @@ int __DeinitFlags[];
 
 
 /**
- * Initialisierung
+ * Initialization
  *
  * @return int - error status
  */
@@ -49,7 +49,7 @@ int onInit() {
 
 
 /**
- * Deinitialisierung
+ * Deinitialization
  *
  * @return int - error status
  */
