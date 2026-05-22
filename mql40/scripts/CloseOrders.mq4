@@ -34,14 +34,12 @@ extern bool   Close.HedgedPart   = false;       // close hedged part of matching
 #include <rsf/stdlib.mqh>
 #include <rsf/structs/OrderExecution.mqh>
 
+bool   closeAllSymbols;
 string closeSymbols [];                         // symbols to close
 int    closeTypes   [];
 int    closeTickets [];
 int    closeMagics  [];
 string closeComments[];
-
-bool   closeAllSymbols;
-bool   refreshAfterConfirmation;                // whether to refresh selected tickets after the confirmation dialog
 
 
 /**
@@ -51,10 +49,8 @@ bool   refreshAfterConfirmation;                // whether to refresh selected t
  */
 int onInit() {
    // validate inputs
-   closeAllSymbols = false;
-   refreshAfterConfirmation = true;             // defaults
-
    // Close.Symbols
+   closeAllSymbols = false;
    string sValues[], sValue = Close.Symbols;
    int size = Explode(sValue, ",", sValues, NULL);
    for (int i=0; i < size; i++) {
@@ -95,9 +91,6 @@ int onInit() {
       int iValue = StrToInteger(sValue);
       if (iValue <= 0)          return(catch("onInit(2)  invalid input parameter Close.Tickets: "+ DoubleQuoteStr(sValues[i]), ERR_INVALID_INPUT_PARAMETER));
       ArrayPushInt(closeTickets, iValue);
-   }
-   if (ArraySize(closeTickets) > 0) {
-      refreshAfterConfirmation = false;                        // not needed with explicitly specified tickets
    }
 
    // Close.OrderTypes
@@ -186,14 +179,12 @@ int onStart() {
       int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
 
       if (button == IDOK) {
-         if (refreshAfterConfirmation) {
-            // re-read open tickets (orders may have changed during wait for confirmation)
-            if (!CollectTickets(pendingOrders, openPositions, hedgedLong, hedgedShort)) return(last_error);
-            sizePendingOrders = ArraySize(pendingOrders);
-            sizeOpenPositions = ArraySize(openPositions);
-            sizeHedgedLong    = ArraySize(hedgedLong);
-            sizeHedgedShort   = ArraySize(hedgedShort);
-         }
+         // refresh selected tickets (orders may have changed during wait for confirmation)
+         if (!CollectTickets(pendingOrders, openPositions, hedgedLong, hedgedShort)) return(last_error);
+         sizePendingOrders = ArraySize(pendingOrders);
+         sizeOpenPositions = ArraySize(openPositions);
+         sizeHedgedLong    = ArraySize(hedgedLong);
+         sizeHedgedShort   = ArraySize(hedgedShort);
 
          if (sizeOpenPositions > 0) {
             if (!OrdersClose(openPositions, 1, CLR_NONE, oeFlags, oes)) return(SetLastError(oes.Error(oes)));
@@ -210,14 +201,12 @@ int onStart() {
       button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
 
       if (button == IDOK) {
-         if (refreshAfterConfirmation) {
-            // re-read open tickets (orders may have changed during wait for confirmation)
-            if (!CollectTickets(pendingOrders, openPositions, hedgedLong, hedgedShort)) return(last_error);
-            sizePendingOrders = ArraySize(pendingOrders);
-            sizeOpenPositions = ArraySize(openPositions);
-            sizeHedgedLong    = ArraySize(hedgedLong);
-            sizeHedgedShort   = ArraySize(hedgedShort);
-         }
+         // refresh selected tickets (orders may have changed during wait for confirmation)
+         if (!CollectTickets(pendingOrders, openPositions, hedgedLong, hedgedShort)) return(last_error);
+         sizePendingOrders = ArraySize(pendingOrders);
+         sizeOpenPositions = ArraySize(openPositions);
+         sizeHedgedLong    = ArraySize(hedgedLong);
+         sizeHedgedShort   = ArraySize(hedgedShort);
 
          while (sizeHedgedLong && sizeHedgedShort) {
             int longTicket  = ArrayShiftInt(hedgedLong);
@@ -261,32 +250,16 @@ int onStart() {
  * @return bool - success status
  */
 bool CollectTickets(int &pendingOrders[], int &openPositions[], int &hedgedLong[], int &hedgedShort[]) {
-   static int lastOpenOrders=-1, lastClosedOrders=-1;
-   static int lastPendingOrders[], lastOpenPositions[], lastHedgedLong[], lastHedgedShort[];
-
-   int openOrders = OrdersTotal();
-   int closedOrders = OrdersHistoryTotal();
-
+   // Don't cache the results. Order counters don't change if pending entry orders are executed.
    ArrayResize(pendingOrders, 0);
    ArrayResize(openPositions, 0);
    ArrayResize(hedgedLong,    0);
    ArrayResize(hedgedShort,   0);
 
-   // return cached results if status unchanged
-   if (openOrders==lastOpenOrders && closedOrders==lastClosedOrders) {
-      if (ArraySize(lastPendingOrders) > 0) ArrayCopy(pendingOrders, lastPendingOrders);
-      if (ArraySize(lastOpenPositions) > 0) ArrayCopy(openPositions, lastOpenPositions);
-      if (ArraySize(lastHedgedLong   ) > 0) ArrayCopy(hedgedLong,    lastHedgedLong   );
-      if (ArraySize(lastHedgedShort  ) > 0) ArrayCopy(hedgedShort,   lastHedgedShort  );
-      return(!catch("CollectTickets(1)"));
-   }
-
-   // or re-read open tickets if status changed
-   if (lastOpenOrders != -1) logInfo("CollectTickets(2)  open orders changed, re-reading...");
-
+   int orders = OrdersTotal();
    int sizeOfComments = ArraySize(closeComments);
 
-   for (int i=0; i < openOrders; i++) {
+   for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;     // an open order was closed/deleted elsewhere
       if (OrderType() > OP_SELLSTOP) continue;
 
@@ -320,16 +293,9 @@ bool CollectTickets(int &pendingOrders[], int &openPositions[], int &hedgedLong[
          }
       }
    }
+
    SortTicketsChronological(hedgedLong);
    SortTicketsChronological(hedgedShort);
 
-   // cache results
-   lastOpenOrders   = openOrders;
-   lastClosedOrders = closedOrders;
-   ArrayResize(lastPendingOrders, 0); if (ArraySize(pendingOrders) > 0) ArrayCopy(lastPendingOrders, pendingOrders);
-   ArrayResize(lastOpenPositions, 0); if (ArraySize(openPositions) > 0) ArrayCopy(lastOpenPositions, openPositions);
-   ArrayResize(lastHedgedLong,    0); if (ArraySize(hedgedLong   ) > 0) ArrayCopy(lastHedgedLong,    hedgedLong   );
-   ArrayResize(lastHedgedShort,   0); if (ArraySize(hedgedShort  ) > 0) ArrayCopy(lastHedgedShort,   hedgedShort  );
-
-   return(!catch("CollectTickets(3)"));
+   return(!catch("CollectTickets(1)"));
 }
