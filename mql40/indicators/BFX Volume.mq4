@@ -103,7 +103,7 @@ int onInit() {
    if (StringLen(sValue) != 11) return(catch("onInit(3)  invalid input parameter LicenseKey: "+ DoubleQuoteStr(LicenseKey) +" (must be "+ (MAX_SYMBOL_LENGTH-1) +" chars)", ERR_INVALID_INPUT_PARAMETER));
    LicenseKey = sValue;
 
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
 

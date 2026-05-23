@@ -88,7 +88,7 @@ int onInit() {
    string indicator = WindowExpertName();
 
    // validate inputs
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (UpBars.Color        == 0xFF000000) UpBars.Color        = CLR_NONE;
    if (DownBars.Color      == 0xFF000000) DownBars.Color      = CLR_NONE;
    if (UnchangedBars.Color == 0xFF000000) UnchangedBars.Color = CLR_NONE;

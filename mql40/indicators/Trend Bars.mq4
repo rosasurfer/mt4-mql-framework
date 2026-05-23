@@ -103,7 +103,7 @@ int onInit() {
    if (Channel.Periods < 1)  return(catch("onInit(2)  invalid input parameter Channel.Periods: "+ Channel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
    channel.periods = Channel.Periods;
    channel.definition = Channel.Method +"("+ channel.periods+")";
-   // Color.*: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Color.*: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
    if (AutoConfiguration) Color.NoTrend   = GetConfigColor(indicator, "Color.NoTrend",   Color.NoTrend);
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);

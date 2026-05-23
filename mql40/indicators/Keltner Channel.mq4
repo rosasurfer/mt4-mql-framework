@@ -123,7 +123,7 @@ int onInit() {
    atrPeriods    = ATR.Periods;
    atrMultiplier = ATR.Multiplier;
 
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MA.Color    == 0xFF000000) MA.Color    = CLR_NONE;
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 

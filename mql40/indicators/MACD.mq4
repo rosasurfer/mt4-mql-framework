@@ -177,7 +177,7 @@ int onInit() {
       }
    }
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Histogram.Color.Upper = GetConfigColor(indicator, "Histogram.Color.Upper", Histogram.Color.Upper);
    if (AutoConfiguration) Histogram.Color.Lower = GetConfigColor(indicator, "Histogram.Color.Lower", Histogram.Color.Lower);
    if (AutoConfiguration) MainLine.Color        = GetConfigColor(indicator, "MainLine.Color",        MainLine.Color);

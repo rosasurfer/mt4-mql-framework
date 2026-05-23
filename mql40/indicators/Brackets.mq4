@@ -71,7 +71,7 @@ int onInit() {
    maxBrackets = ifInt(iValue==-1, INT_MAX, iValue);
 
    // BracketsColor
-   if (BracketsColor == 0xFF000000) BracketsColor = CLR_NONE;             // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (BracketsColor == 0xFF000000) BracketsColor = CLR_NONE;             // after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) {
       BracketsColor = GetConfigColor(indicator, "BracketsColor", BracketsColor);
    }

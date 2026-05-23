@@ -214,7 +214,7 @@ int onInit() {
    // Reversal.Width
    if (AutoConfiguration) Reversal.Width = GetConfigInt(indicator, "Reversal.Width", Reversal.Width);
    if (Reversal.Width < 0) return(catch("onInit(5)  invalid input parameter Reversal.Width: "+ Reversal.Width, ERR_INVALID_INPUT_PARAMETER));
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Channel.UpperColor = GetConfigColor(indicator, "Channel.UpperColor", Channel.UpperColor);
    if (AutoConfiguration) Channel.LowerColor = GetConfigColor(indicator, "Channel.LowerColor", Channel.LowerColor);
    if (AutoConfiguration) Reversal.Color     = GetConfigColor(indicator, "Reversal.Color",     Reversal.Color);
