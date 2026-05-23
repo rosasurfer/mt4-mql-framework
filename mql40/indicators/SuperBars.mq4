@@ -21,6 +21,7 @@
  * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
  *
  * TODO:
+ *  - replace input "Weekend.Symbols" by actual symbol properties
  *  - implement more super timeframes and rewrite configuration of max. bars
  *  - SuperBar close markers in variable period charts (e.g. range bars) are incorrect
  *  - workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
