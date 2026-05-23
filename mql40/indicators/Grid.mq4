@@ -435,10 +435,12 @@ bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
  * @return datetime - time of the next separator or NaT in case of errors
  */
 datetime ComputeNextSeparatorTime(datetime time) {
+   int yyyy, mm, dow;
+
    if (dailySeparators) {
       time += 1*DAY;
       if (!weekendSessions) {                      // skip weekends
-         int dow = TimeDayOfWeek(time);
+         dow = TimeDayOfWeek(time);
          if      (dow == SATURDAY) time += 2*DAYS;
          else if (dow == SUNDAY)   time += 1*DAY;
       }
@@ -447,8 +449,8 @@ datetime ComputeNextSeparatorTime(datetime time) {
       time += 1*WEEK;
    }
    else if (monthlySeparators) {
-      int yyyy = TimeYear(time);
-      int mm = TimeMonth(time);
+      yyyy = TimeYear(time);
+      mm = TimeMonth(time);
       if (mm == 12) { yyyy++; mm = 0; }
       time = ComputeFirstTradingDay(yyyy, mm + 1);
    }
