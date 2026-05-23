@@ -289,102 +289,55 @@ bool DeletePriceSeparators() {
  */
 bool UpdateVerticalGrid() {
    // compute the time range to cover: from oldest visible to first future separator
-   datetime fromSepTime = GetNextSessionStartTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND, TZ_FXT);
-   datetime toSepTime   = GetNextSessionStartTime(ServerToFxtTime(Time[0]), TZ_FXT), firstWeekday;
-   if (fromSepTime==NaT || toSepTime==NaT) return(false);
-
-   int yyyy, mm;
-
-   if (dailySeparators) {
-      // nothing to do
-   }
-   else if (weeklySeparators) {
-      fromSepTime += (8 - TimeDayOfWeekEx(fromSepTime)) % 7 * DAYS;  // first Monday in the chart
-      toSepTime   += (8 - TimeDayOfWeekEx(toSepTime  )) % 7 * DAYS;  // next Monday in the future
-   }
-   else if (monthlySeparators) {
-      yyyy = TimeYearEx(fromSepTime);
-      mm   = TimeMonth(fromSepTime);
-      firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
-      if (firstWeekDay < fromSepTime) {
-         if (mm == 12) { yyyy++; mm = 0; }
-         firstWeekDay = ComputeFirstWeekDay(yyyy, mm+1);
-      }
-      fromSepTime = firstWeekDay;                           // first "first weekday of a month" in the chart
-
-      yyyy = TimeYearEx(toSepTime);
-      mm   = TimeMonth(toSepTime);
-      firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
-      if (firstWeekDay < toSepTime) {
-         if (mm == 12) { yyyy++; mm = 0; }
-         firstWeekDay = ComputeFirstWeekDay(yyyy, mm+1);
-      }
-      toSepTime = firstWeekDay;                             // next "first weekday of a month" in the future
-   }
-   else if (yearlySeparators) {
-      yyyy = TimeYearEx(fromSepTime);
-      firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
-      if (firstWeekDay < fromSepTime) {
-         firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
-      }
-      fromSepTime = firstWeekDay;                           // first "first weekday of a year" in the chart
-
-      yyyy = TimeYearEx(toSepTime);
-      firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
-      if (firstWeekDay < toSepTime) {
-         firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
-      }
-      toSepTime = firstWeekDay;                             // next "first weekday of a year" in the future
-   }
-   else return(!catch("UpdateVerticalGrid(1)  illegal vertical grid state (no enabled grid interval)", ERR_ILLEGAL_STATE));
+   datetime fromSepTime, toSepTime;
+   if (!ComputeVerticalSeparatorRange(fromSepTime, toSepTime)) return(false);
 
    datetime sepTime, sepChartTime, lastSepChartTime;
-   int dow, bar;
    string label = "", lastSepLabel = "";
+   int dow;
 
-   // create all separators
+   // create all time separators
    for (datetime time=fromSepTime; time <= toSepTime; time = ComputeNextSeparatorTime(time, dow)) {
       sepTime = FxtToServerTime(time);
-      dow     = TimeDayOfWeekEx(time);
 
       // resolve bar and chart time of the separator
-      if (Time[0] < sepTime) {                              // no such bar yet: current session or in ERS_HISTORY_UPDATE
-         sepChartTime = sepTime;                            // use original time
-         if (dow == MONDAY) {
-            sepChartTime -= 2*DAYS;                         // on future separator: "collaps" weekends
-         }                                                  // TODO: bug with monthlySeparators/yearlySeparators
-      }
+      if (Time[0] < sepTime) {                           // no such bar yet: current session or in ERS_HISTORY_UPDATE
+         sepChartTime = sepTime;                         // use original time
+      }                                                  // TODO: collaps the weekend with dailySeparators
       else {
-         bar = iBarShiftNext(NULL, NULL, sepTime);          // use time of first existing bar
+         int bar = iBarShiftNext(NULL, NULL, sepTime);   // use time of first existing bar
          if (bar == EMPTY_VALUE) return(false);
          sepChartTime = Time[bar];
       }
-      if (sepChartTime == lastSepChartTime) {               // bar gap or in ERS_HISTORY_UPDATE
-         ObjectDelete(lastSepLabel);                        // keep the most recent separator only
+      if (sepChartTime == lastSepChartTime) {            // bar gap or in ERS_HISTORY_UPDATE
+         ObjectDelete(lastSepLabel);                     // keep the most recent separator only
       }
 
       // create new separator
-      label = GmtTimeFormat(time, "%a %d.%m.%Y");           // e.g. "Fri 23.12.2011"
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_VLINE, 0, sepChartTime, 0)) return(false);
+      label = GmtTimeFormat(time, "%a %d.%m.%Y");        // e.g. "Fri 23.12.2011"
+      if (ObjectFind(label) == -1) ObjectCreateRegister(label, OBJ_VLINE, 0, sepChartTime, 0);
+
+      dow = TimeDayOfWeekEx(time);
       int   sepStyle = STYLE_DOT;
       color sepColor = Color.RegularGrid;
       if (dailySeparators) {
          if (dow == MONDAY) {
-            sepStyle = STYLE_DASHDOTDOT;                    // a slightly different style for the start of week
+            sepStyle = STYLE_DASHDOTDOT;                 // a slightly different style for the start of week
             sepColor = Color.SuperGrid;
          }
       }
       else if (weeklySeparators) {
-         sepStyle = STYLE_DASHDOTDOT;                       // same different style for every week
+         sepStyle = STYLE_DASHDOTDOT;                    // same different style for every week
          sepColor = Color.SuperGrid;
       }
+      ObjectSet(label, OBJPROP_TIME1, sepChartTime);
       ObjectSet(label, OBJPROP_STYLE, sepStyle);
       ObjectSet(label, OBJPROP_COLOR, sepColor);
       ObjectSet(label, OBJPROP_BACK,  true);
       lastSepLabel     = label;
-      lastSepChartTime = sepChartTime;                      // store last separator location for gap detection
+      lastSepChartTime = sepChartTime;                   // store last separator location for gap detection
    }
-   return(!catch("UpdateVerticalGrid(2)"));
+   return(!catch("UpdateVerticalGrid(1)"));
 }
 
 
@@ -407,6 +360,68 @@ datetime ComputeFirstWeekDay(int year, int month) {
    if (dow == SUNDAY  ) return(firstDayOfMonth + 1 * DAY );
 
    return(firstDayOfMonth);
+}
+
+
+/**
+ * Compute the times of the first and the last vertical separator to display.
+ *
+ * @param  _Out_ datetime fromTime - first (oldest) separator time in FXT
+ * @param  _Out_ datetime toTime   - last (youngest) separator time in FXT
+ *
+ * @return bool - success status
+ */
+bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
+   datetime from = GetNextSessionStartTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND, TZ_FXT);
+   datetime to = GetNextSessionStartTime(ServerToFxtTime(Time[0]), TZ_FXT);
+   if (from==NaT || to==NaT) return(false);
+
+   if (dailySeparators) {
+      // nothing to do
+   }
+   else if (weeklySeparators) {
+      from += (8 - TimeDayOfWeekEx(from)) % 7 * DAYS;    // first Monday in the chart
+      to   += (8 - TimeDayOfWeekEx(to  )) % 7 * DAYS;    // next Monday in the future
+   }
+   else if (monthlySeparators) {
+      int yyyy = TimeYearEx(from);
+      int mm   = TimeMonth(from);
+      datetime firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
+      if (firstWeekDay < from) {
+         if (mm == 12) { yyyy++; mm = 0; }
+         firstWeekDay = ComputeFirstWeekDay(yyyy, mm+1);
+      }
+      from = firstWeekDay;                               // first "first weekday of a month" in the chart
+
+      yyyy = TimeYearEx(to);
+      mm   = TimeMonth(to);
+      firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
+      if (firstWeekDay < to) {
+         if (mm == 12) { yyyy++; mm = 0; }
+         firstWeekDay = ComputeFirstWeekDay(yyyy, mm+1);
+      }
+      to = firstWeekDay;                                 // next "first weekday of a month" in the future
+   }
+   else if (yearlySeparators) {
+      yyyy = TimeYearEx(from);
+      firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
+      if (firstWeekDay < from) {
+         firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
+      }
+      from = firstWeekDay;                               // first "first weekday of a year" in the chart
+
+      yyyy = TimeYearEx(to);
+      firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
+      if (firstWeekDay < to) {
+         firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
+      }
+      to = firstWeekDay;                                 // next "first weekday of a year" in the future
+   }
+   else return(!catch("ComputeVerticalSeparatorRange(1)  illegal grid configuration (no interval enabled)", ERR_ILLEGAL_STATE));
+
+   fromTime = from;
+   toTime = to;
+   return(true);
 }
 
 
