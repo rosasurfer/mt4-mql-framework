@@ -160,7 +160,7 @@ int onInit() {
       if (outputMaPeriods == 1) outputMaMethod = EMPTY;
    }
 
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.BarUp   == 0xFF000000) Color.BarUp   = CLR_NONE;
    if (Color.BarDown == 0xFF000000) Color.BarDown = CLR_NONE;
 

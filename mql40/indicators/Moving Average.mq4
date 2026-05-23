@@ -160,7 +160,7 @@ int onInit() {
    // Background.Width
    if (AutoConfiguration) Background.Width = GetConfigInt(indicator, "Background.Width", Background.Width);
    if (Background.Width < 0) return(catch("onInit(7)  invalid input parameter Background.Width: "+ Background.Width +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Background.Color = GetConfigColor(indicator, "Background.Color", Background.Color);
    if (AutoConfiguration) UpTrend.Color    = GetConfigColor(indicator, "UpTrend.Color",    UpTrend.Color);
    if (AutoConfiguration) DownTrend.Color  = GetConfigColor(indicator, "DownTrend.Color",  DownTrend.Color);

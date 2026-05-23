@@ -61,7 +61,7 @@ int onInit() {
    // Periods.Step
    if (AutoConfiguration) Periods.Step = GetConfigInt(indicator, "Periods.Step", Periods.Step);
    if (Periods.Step < 0) return(catch("onInit(2)  invalid input parameter Periods.Step: "+ Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) LineColor = GetConfigColor(indicator, "LineColor", LineColor);
    if (LineColor == 0xFF000000) LineColor = CLR_NONE;
    // MaxBarsBack

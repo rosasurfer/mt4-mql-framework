@@ -118,7 +118,7 @@ int onInit() {
    if (!mas)                           return(catch("onInit(7)  missing input parameter Channel.Definition", ERR_INVALID_INPUT_PARAMETER));
    Channel.Definition = JoinStrings(maDefinitions, ",");
 
-   // Channel.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Channel.Color: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Channel.Color = GetConfigColor(indicator, "Channel.Color", Channel.Color);
    if (Channel.Color == 0xFF000000) Channel.Color = CLR_NONE;
    // ShowChartLegend

@@ -75,7 +75,7 @@ int onInit() {
    // Line.Width
    if (AutoConfiguration) Line.Width = GetConfigInt(indicator, "Line.Width", Line.Width);
    if (Line.Width < 0)       return(catch("onInit(5)  invalid input parameter Line.Width: "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Line.Color = GetConfigColor(indicator, "Line.Color", Line.Color);
    if (Line.Color == 0xFF000000) Line.Color = CLR_NONE;
 
