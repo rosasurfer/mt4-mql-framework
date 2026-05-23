@@ -2,6 +2,10 @@
  * Chart grid
  *
  * Maintains horizontal and vertical chart separators.
+ *
+ *
+ * TODO:
+ *  - replace input "WeekendSessions.Symbols" by actual symbol properties
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -12,6 +16,7 @@ int __DeinitFlags[];
 extern int    PriceGrid.MinDistance.Pixel = 40;          // adjust to your screen and DPI scaling
 extern color  Color.RegularGrid           = Gainsboro;   //
 extern color  Color.SuperGrid             = LightGray;   // slightly darker
+extern string WeekendSessions.Symbols     = "";          // comma-separated list of symbols with weekend sessions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -37,6 +42,8 @@ double lastChartMaxPrice;
 double lastGridSize;
 string hSeparatorLabels[];       // labels of price separators
 
+bool weekendSessions;            // whether the symbol has weekend sessions
+
 
 /**
  * Initialization
@@ -50,11 +57,21 @@ int onInit() {
    // PriceGrid.MinDistance.Pixel
    if (AutoConfiguration) PriceGrid.MinDistance.Pixel = GetConfigInt(indicator, "PriceGrid.MinDistance.Pixel", PriceGrid.MinDistance.Pixel);
    if (PriceGrid.MinDistance.Pixel < 1) return(catch("onInit(1)  invalid input parameter PriceGrid.MinDistance.Pixel: "+ PriceGrid.MinDistance.Pixel, ERR_INVALID_INPUT_PARAMETER));
+
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.RegularGrid = GetConfigColor(indicator, "Color.RegularGrid", Color.RegularGrid);
    if (AutoConfiguration) Color.SuperGrid   = GetConfigColor(indicator, "Color.SuperGrid",   Color.SuperGrid);
    if (Color.RegularGrid == 0xFF000000) Color.RegularGrid = CLR_NONE;
    if (Color.SuperGrid   == 0xFF000000) Color.SuperGrid   = CLR_NONE;
+
+   // WeekendSessions.Symbols
+   if (AutoConfiguration) WeekendSessions.Symbols = GetConfigString(indicator, "WeekendSessions.Symbols", WeekendSessions.Symbols);
+   string sValues[], sValue=StrToLower(WeekendSessions.Symbols), symbol=StrToLower(Symbol()), stdSymbol=StrToLower(StdSymbol());
+   int size = Explode(sValue, ",", sValues, NULL);
+   for (int i=0; i < size; i++) {
+      sValues[i] = StrTrim(sValues[i]);
+   }
+   weekendSessions = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
 
    // initialize the time interval for the vertical grid
    dailySeparators = false;
@@ -468,9 +485,10 @@ datetime ComputeNextSeparatorTime(datetime time, int dow = -1) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("PriceGrid.MinDistance.Pixel=", PriceGrid.MinDistance.Pixel,   ";", NL,
-                            "Color.RegularGrid=",           ColorToStr(Color.RegularGrid), ";", NL,
-                            "Color.SuperGrid=",             ColorToStr(Color.SuperGrid),   ";")
+   return(StringConcatenate("PriceGrid.MinDistance.Pixel=", PriceGrid.MinDistance.Pixel,             ";", NL,
+                            "Color.RegularGrid=",           ColorToStr(Color.RegularGrid),           ";", NL,
+                            "Color.SuperGrid=",             ColorToStr(Color.SuperGrid),             ";", NL,
+                            "WeekendSessions.Symbols=",     DoubleQuoteStr(WeekendSessions.Symbols), ";")
    );
 }
 
