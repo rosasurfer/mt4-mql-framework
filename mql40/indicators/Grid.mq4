@@ -1,7 +1,7 @@
 /**
  * Chart grid
  *
- * Dynamically maintains horizontal and vertical chart separators.
+ * Maintains horizontal and vertical chart separators.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -9,11 +9,9 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    PriceGrid.MinDistance.Pixel    = 40;             // adjust to your screen and DPI scaling
-                                                               //
-extern string ___a__________________________ = "";             //
-extern color  Color.RegularGrid              = Gainsboro;      //
-extern color  Color.SuperGrid                = LightGray;      // slightly darker
+extern int    PriceGrid.MinDistance.Pixel = 40;          // adjust to your screen and DPI scaling
+extern color  Color.RegularGrid           = Gainsboro;   //
+extern color  Color.SuperGrid             = LightGray;   // slightly darker
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26,12 +24,18 @@ extern color  Color.SuperGrid                = LightGray;      // slightly darke
 
 #property indicator_chart_window
 
+// vertical grid properties (time)
+bool dailySeparators;
+bool weeklySeparators;
+bool monthlySeparators;
+bool yearlySeparators;
+
+// horizontal grid properties (price)
 int    lastChartHeight;
 double lastChartMinPrice;
 double lastChartMaxPrice;
 double lastGridSize;
-
-string hSeparatorLabels[];             // horizontal price separators
+string hSeparatorLabels[];       // labels of price separators
 
 
 /**
@@ -40,18 +44,28 @@ string hSeparatorLabels[];             // horizontal price separators
  * @return int - error status
  */
 int onInit() {
-   // validate inputs
    string indicator = WindowExpertName();
 
+   // validate inputs
    // PriceGrid.MinDistance.Pixel
    if (AutoConfiguration) PriceGrid.MinDistance.Pixel = GetConfigInt(indicator, "PriceGrid.MinDistance.Pixel", PriceGrid.MinDistance.Pixel);
    if (PriceGrid.MinDistance.Pixel < 1) return(catch("onInit(1)  invalid input parameter PriceGrid.MinDistance.Pixel: "+ PriceGrid.MinDistance.Pixel, ERR_INVALID_INPUT_PARAMETER));
-
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.RegularGrid = GetConfigColor(indicator, "Color.RegularGrid", Color.RegularGrid);
    if (AutoConfiguration) Color.SuperGrid   = GetConfigColor(indicator, "Color.SuperGrid",   Color.SuperGrid);
    if (Color.RegularGrid == 0xFF000000) Color.RegularGrid = CLR_NONE;
    if (Color.SuperGrid   == 0xFF000000) Color.SuperGrid   = CLR_NONE;
+
+   // initialize the time interval for the vertical grid
+   dailySeparators = false;
+   weeklySeparators = false;
+   monthlySeparators = false;
+   yearlySeparators = false;
+
+   if      (Period() <  PERIOD_H4) dailySeparators = true;
+   else if (Period() == PERIOD_H4) weeklySeparators = true;
+   else if (Period() == PERIOD_D1) monthlySeparators = true;
+   else                            yearlySeparators = true;
 
    return(catch("onInit(2)"));
 }
@@ -63,7 +77,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RemovePriceSeparators();
+   DeletePriceSeparators();
    return(catch("onDeinit(1)"));
 }
 
@@ -76,7 +90,9 @@ int onDeinit() {
 int onTick() {
    if (__isChart) {
       UpdateHorizontalGrid();
-      if (ChangedBars > 2) UpdateVerticalGrid();
+      if (ChangedBars > 2) {
+         UpdateVerticalGrid();
+      }
    }
    return(last_error);
 }
@@ -97,12 +113,12 @@ bool UpdateHorizontalGrid() {
    if (chartHeight==lastChartHeight && minPrice==lastChartMinPrice && maxPrice==lastChartMaxPrice) return(true);
 
    // recalculate grid size
-   double gridSize = ComputeGridSize(chartHeight, minPrice, maxPrice);
+   double gridSize = ComputeHorizontalGridSize(chartHeight, minPrice, maxPrice);
    if (!gridSize) return(false);
 
    // update the grid
    if (gridSize != lastGridSize) {                       // this includes first use: !lastGridSize
-      if (!RemovePriceSeparators()) return(false);
+      if (!DeletePriceSeparators()) return(false);
 
       double priceRange = maxPrice - minPrice;
       double fromPrice  = minPrice - 4*priceRange;       // cover 4 times of the view port on both sides (for fast chart moves)
@@ -160,7 +176,7 @@ bool GetHorizontalChartDimensions(int &chartHeight, double &chartMinPrice, doubl
  *
  * @return double - distance between price separators or NULL in case of errors
  */
-double ComputeGridSize(int chartHeight, double chartMinPrice, double chartMaxPrice) {
+double ComputeHorizontalGridSize(int chartHeight, double chartMinPrice, double chartMaxPrice) {
    double separators     = 1.*chartHeight / PriceGrid.MinDistance.Pixel;
    double priceRange     = chartMaxPrice - chartMinPrice;
    double separatorRange = priceRange / separators;
@@ -171,8 +187,8 @@ double ComputeGridSize(int chartHeight, double chartMinPrice, double chartMaxPri
       gridSize *= 2;
    }
    gridSize = NormalizeDouble(gridSize, Digits);
-   if (IsLogDebug()) logDebug("ComputeGridSize(0.1)  Tick="+ Ticks +"  height="+ chartHeight +"  range="+ DoubleToStr(priceRange/pUnit, pDigits) +" => grid = "+ DoubleToStr(gridSize/pUnit, pDigits));
 
+   if (IsLogDebug()) logDebug("ComputeHorizontalGridSize(0.1)  Tick="+ Ticks +"  height="+ chartHeight +"  range="+ DoubleToStr(priceRange/pUnit, pDigits) +" => grid = "+ DoubleToStr(gridSize/pUnit, pDigits));
    return(gridSize);
 
    // a separator every multiple of 1 * 10^n
@@ -188,8 +204,8 @@ double ComputeGridSize(int chartHeight, double chartMinPrice, double chartMaxPri
    // a separator every 10000 units    1 * 10 ^ +4
 
 
-   // a separator every multiple of 2 * 10^n          // not used anymore
-   // --------------------------------------
+   // a separator every multiple of 2 * 10^n (not used anymore)
+   // ---------------------------------------------------------
    // a separator every 0.0002 units   2 * 10 ^ -4    2 pip
    // a separator every 0.002 units    2 * 10 ^ -3
    // a separator every 0.02 units     2 * 10 ^ -2
@@ -216,26 +232,7 @@ double ComputeGridSize(int chartHeight, double chartMinPrice, double chartMaxPri
 
 
 /**
- * Remove all existing price separators (horizontal grid).
- *
- * @return bool - success status
- */
-bool RemovePriceSeparators() {
-   int size = ArraySize(hSeparatorLabels);
-
-   for (int i=0; i < size; i++) {
-      if (ObjectFind(hSeparatorLabels[i]) != -1) {
-         ObjectDelete(hSeparatorLabels[i]);
-      }
-   }
-   ArrayResize(hSeparatorLabels, 0);
-
-   return(!catch("RemovePriceSeparators(1)"));
-}
-
-
-/**
- * Create price separators for the specified horizontal grid paramters.
+ * Create price separators for the specified parameters.
  *
  * @param  double fromPrice - start price to create separators from
  * @param  double toPrice   - end price to create separators to
@@ -249,8 +246,8 @@ bool CreatePriceSeparators(double fromPrice, double toPrice, double gridSize) {
    int separators = (toPrice-gridLevel)/gridSize + 1;
    ArrayResize(hSeparatorLabels, separators);
 
-   for (int i=0; i < separators; i++) {                     // no ObjectCreateRegister(), price separators change constantly
-      string label = NumberToStr(gridLevel, ",'R.+");       // and are handled more efficiently by the indicator itself
+   for (int i=0; i < separators; i++) {                     // no ObjectCreateRegister(): price separators change dynamically
+      string label = NumberToStr(gridLevel, ",'R.+");       // and are handled better by the indicator itself
       if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_HLINE, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_STYLE,  STYLE_DOT);
       ObjectSet(label, OBJPROP_COLOR,  Color.RegularGrid);
@@ -266,160 +263,188 @@ bool CreatePriceSeparators(double fromPrice, double toPrice, double gridSize) {
 
 
 /**
- * Update the vertical grid (date/time separators).
+ * Delete all price separators.
+ *
+ * @return bool - success status
+ */
+bool DeletePriceSeparators() {
+   int size = ArraySize(hSeparatorLabels);
+
+   for (int i=0; i < size; i++) {
+      if (ObjectFind(hSeparatorLabels[i]) != -1) {
+         ObjectDelete(hSeparatorLabels[i]);
+      }
+   }
+   ArrayResize(hSeparatorLabels, 0);
+   return(!catch("DeletePriceSeparators(1)"));
+}
+
+
+/**
+ * Update the vertical grid (time separators). Draws separators from the first visible (oldest) separator location
+ * in the chart to the first separator location in the future. The future separator aids as a guide for the end of
+ * the most recent grid period.
  *
  * @return bool - success status
  */
 bool UpdateVerticalGrid() {
-   datetime firstWeekDay, separatorTime, chartTime, lastChartTime;
-   int      dow, dd, mm, yyyy, bar, sepColor, sepStyle;
-   string   label="", lastLabel="";
+   // compute the time range to cover: from oldest visible to first future separator
+   datetime fromSepTime = GetNextSessionStartTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND, TZ_FXT);
+   datetime toSepTime   = GetNextSessionStartTime(ServerToFxtTime(Time[0]), TZ_FXT), firstWeekday;
+   if (fromSepTime==NaT || toSepTime==NaT) return(false);
 
-   // Zeitpunkte des ältesten und jüngsten Separators berechen
-   datetime fromFXT = GetNextSessionStartTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND, TZ_FXT);
-   datetime toFXT   = GetNextSessionStartTime(ServerToFxtTime(Time[0]),                 TZ_FXT);
+   int yyyy, mm;
 
-   // Tagesseparatoren
-   if (Period() < PERIOD_H4) {
-      //fromFXT = ...                                                         // fromFXT bleibt unverändert
-      //toFXT   = ...                                                         // toFXT bleibt unverändert
+   if (dailySeparators) {
+      // nothing to do
    }
-
-   // Wochenseparatoren
-   else if (Period() == PERIOD_H4) {
-      fromFXT += (8-TimeDayOfWeekEx(fromFXT))%7 * DAYS;                       // fromFXT ist der erste Montag
-      toFXT   += (8-TimeDayOfWeekEx(toFXT))%7 * DAYS;                         // toFXT ist der nächste Montag
+   else if (weeklySeparators) {
+      fromSepTime += (8 - TimeDayOfWeekEx(fromSepTime)) % 7 * DAYS;  // first Monday in the chart
+      toSepTime   += (8 - TimeDayOfWeekEx(toSepTime  )) % 7 * DAYS;  // next Monday in the future
    }
-
-   // Monatsseparatoren
-   else if (Period() == PERIOD_D1) {
-      yyyy = TimeYearEx(fromFXT);                                             // fromFXT ist der erste Wochentag des ersten vollen Monats
-      mm   = TimeMonth(fromFXT);
-      firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
-
-      if (firstWeekDay < fromFXT) {
+   else if (monthlySeparators) {
+      yyyy = TimeYearEx(fromSepTime);
+      mm   = TimeMonth(fromSepTime);
+      firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
+      if (firstWeekDay < fromSepTime) {
          if (mm == 12) { yyyy++; mm = 0; }
-         firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm+1);
+         firstWeekDay = ComputeFirstWeekDay(yyyy, mm+1);
       }
-      fromFXT = firstWeekDay;
-      // ------------------------------------------------------
-      yyyy = TimeYearEx(toFXT);                                               // toFXT ist der erste Wochentag des nächsten Monats
-      mm   = TimeMonth(toFXT);
-      firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
+      fromSepTime = firstWeekDay;                           // first "first weekday of a month" in the chart
 
-      if (firstWeekDay < toFXT) {
+      yyyy = TimeYearEx(toSepTime);
+      mm   = TimeMonth(toSepTime);
+      firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
+      if (firstWeekDay < toSepTime) {
          if (mm == 12) { yyyy++; mm = 0; }
-         firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm+1);
+         firstWeekDay = ComputeFirstWeekDay(yyyy, mm+1);
       }
-      toFXT = firstWeekDay;
+      toSepTime = firstWeekDay;                             // next "first weekday of a month" in the future
    }
+   else if (yearlySeparators) {
+      yyyy = TimeYearEx(fromSepTime);
+      firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
+      if (firstWeekDay < fromSepTime) {
+         firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
+      }
+      fromSepTime = firstWeekDay;                           // first "first weekday of a year" in the chart
 
-   // Jahresseparatoren
-   else if (Period() > PERIOD_D1) {
-      yyyy = TimeYearEx(fromFXT);                                             // fromFXT ist der erste Wochentag des ersten vollen Jahres
-      firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
-      if (firstWeekDay < fromFXT)
-         firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
-      fromFXT = firstWeekDay;
-      // ------------------------------------------------------
-      yyyy = TimeYearEx(toFXT);                                               // toFXT ist der erste Wochentag des nächsten Jahres
-      firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
-      if (firstWeekDay < toFXT)
-         firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
-      toFXT = firstWeekDay;
+      yyyy = TimeYearEx(toSepTime);
+      firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
+      if (firstWeekDay < toSepTime) {
+         firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
+      }
+      toSepTime = firstWeekDay;                             // next "first weekday of a year" in the future
    }
+   else return(!catch("UpdateVerticalGrid(1)  illegal vertical grid state (no enabled grid interval)", ERR_ILLEGAL_STATE));
 
-   // Separatoren zeichnen
-   for (datetime time=fromFXT; time <= toFXT; time+=1*DAY) {
-      separatorTime = FxtToServerTime(time);
-      dow           = TimeDayOfWeekEx(time);
+   datetime sepTime, sepChartTime, lastSepChartTime;
+   int dow, bar;
+   string label = "", lastSepLabel = "";
 
-      // Bar und Chart-Time des Separators ermitteln
-      if (Time[0] < separatorTime) {                                          // keine entsprechende Bar: aktuelle Session oder noch laufendes ERS_HISTORY_UPDATE
-         bar = -1;
-         chartTime = separatorTime;                                           // ursprüngliche Zeit verwenden
-         if (dow == MONDAY)
-            chartTime -= 2*DAYS;                                              // bei zukünftigen Separatoren Wochenenden von Hand "kollabieren" TODO: Bug bei Periode > H4
-      }
-      else {                                                                  // Separator liegt innerhalb der Bar-Range, Zeit der ersten existierenden Bar verwenden
-         bar = iBarShiftNext(NULL, NULL, separatorTime);
-         if (bar == EMPTY_VALUE) return(false);
-         chartTime = Time[bar];
-      }
+   // create all separators
+   for (datetime time=fromSepTime; time <= toSepTime; time = ComputeNextSeparatorTime(time, dow)) {
+      sepTime = FxtToServerTime(time);
+      dow     = TimeDayOfWeekEx(time);
 
-      // Label des Separators zusammenstellen (ie. "Fri 23.12.2011")
-      label = TimeToStr(time);
-      label = StringConcatenate(GmtTimeFormat(time, "%a"), " ", StringSubstr(label, 8, 2), ".", StringSubstr(label, 5, 2), ".", StringSubstr(label, 0, 4));
-
-      if (lastChartTime == chartTime) ObjectDelete(lastLabel);                // Bars der vorherigen Periode fehlen (noch laufendes ERS_HISTORY_UPDATE oder Kurslücke)
-                                                                              // Separator für die fehlende Periode wieder löschen
-      // Separator zeichnen
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_VLINE, 0, chartTime, 0)) return(false);
-      sepStyle = STYLE_DOT;
-      sepColor = Color.RegularGrid;
-      if (Period() < PERIOD_H4) {
+      // resolve bar and chart time of the separator
+      if (Time[0] < sepTime) {                              // no such bar yet: current session or in ERS_HISTORY_UPDATE
+         sepChartTime = sepTime;                            // use original time
          if (dow == MONDAY) {
-            sepStyle = STYLE_DASHDOTDOT;
+            sepChartTime -= 2*DAYS;                         // on future separator: "collaps" weekends
+         }                                                  // TODO: bug with monthlySeparators/yearlySeparators
+      }
+      else {
+         bar = iBarShiftNext(NULL, NULL, sepTime);          // use time of first existing bar
+         if (bar == EMPTY_VALUE) return(false);
+         sepChartTime = Time[bar];
+      }
+      if (sepChartTime == lastSepChartTime) {               // bar gap or in ERS_HISTORY_UPDATE
+         ObjectDelete(lastSepLabel);                        // keep the most recent separator only
+      }
+
+      // create new separator
+      label = GmtTimeFormat(time, "%a %d.%m.%Y");           // e.g. "Fri 23.12.2011"
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_VLINE, 0, sepChartTime, 0)) return(false);
+      int   sepStyle = STYLE_DOT;
+      color sepColor = Color.RegularGrid;
+      if (dailySeparators) {
+         if (dow == MONDAY) {
+            sepStyle = STYLE_DASHDOTDOT;                    // a slightly different style for the start of week
             sepColor = Color.SuperGrid;
          }
       }
-      else if (Period() == PERIOD_H4) {
-         sepStyle = STYLE_DASHDOTDOT;
+      else if (weeklySeparators) {
+         sepStyle = STYLE_DASHDOTDOT;                       // same different style for every week
          sepColor = Color.SuperGrid;
       }
       ObjectSet(label, OBJPROP_STYLE, sepStyle);
       ObjectSet(label, OBJPROP_COLOR, sepColor);
       ObjectSet(label, OBJPROP_BACK,  true);
-      lastChartTime = chartTime;
-      lastLabel     = label;                                                  // Daten des letzten Separators für Lückenerkennung merken
-
-      // je nach Periode einen Tag *vor* den nächsten Separator springen
-      // Tagesseparatoren
-      if (Period() < PERIOD_H4) {
-         if (dow == FRIDAY)                                                   // Wochenenden überspringen
-            time += 2*DAYS;
-      }
-      // Wochenseparatoren
-      else if (Period() == PERIOD_H4) {
-         time += 6*DAYS;                                                      // TimeDayOfWeek(time) == MONDAY
-      }
-      // Monatsseparatoren
-      else if (Period() == PERIOD_D1) {                                       // erster Wochentag des Monats
-         yyyy = TimeYearEx(time);
-         mm   = TimeMonth(time);
-         if (mm == 12) { yyyy++; mm = 0; }
-         time = GetFirstWeekdayOfMonth(yyyy, mm+1) - 1*DAY;
-      }
-      // Jahresseparatoren
-      else if (Period() > PERIOD_D1) {                                        // erster Wochentag des Jahres
-         yyyy = TimeYearEx(time);
-         time = GetFirstWeekdayOfMonth(yyyy+1, 1) - 1*DAY;
-      }
+      lastSepLabel     = label;
+      lastSepChartTime = sepChartTime;                      // store last separator location for gap detection
    }
    return(!catch("UpdateVerticalGrid(2)"));
 }
 
 
 /**
- * Ermittelt den ersten Wochentag eines Monats.
+ * Computes the first weekday of a month.
  *
- * @param  int year  - Jahr (1970 bis 2037)
- * @param  int month - Monat
+ * @param  int year  - supported values: 1970-2037
+ * @param  int month - supported values: 1-12
  *
- * @return datetime - erster Wochentag des Monats oder EMPTY (-1), falls ein Fehler auftrat
+ * @return datetime - 00:00 (Midnight) of the first weekday of a month or EMPTY (-1) in case of errors
  */
-datetime GetFirstWeekdayOfMonth(int year, int month) {
-   if (year  < 1970 || 2037 < year ) return(_EMPTY(catch("GetFirstWeekdayOfMonth(1)  illegal parameter year: "+ year +" (not between 1970 and 2037)", ERR_INVALID_PARAMETER)));
-   if (month <    1 ||   12 < month) return(_EMPTY(catch("GetFirstWeekdayOfMonth(2)  invalid parameter month: "+ month, ERR_INVALID_PARAMETER)));
+datetime ComputeFirstWeekDay(int year, int month) {
+   if (year < 1970 || year > 2037) return(_EMPTY(catch("ComputeFirstWeekDay(1)  illegal parameter year: "+ year +" (out of range)", ERR_INVALID_PARAMETER)));
+   if (month < 1 || month > 12)    return(_EMPTY(catch("ComputeFirstWeekDay(2)  invalid parameter month: "+ month +" (out of range)", ERR_INVALID_PARAMETER)));
 
    datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", StrRight("0"+month, 2), ".01 00:00:00"));
 
    int dow = TimeDayOfWeekEx(firstDayOfMonth);
-   if (dow == SATURDAY) return(firstDayOfMonth + 2*DAYS);
-   if (dow == SUNDAY  ) return(firstDayOfMonth + 1*DAY );
+   if (dow == SATURDAY) return(firstDayOfMonth + 2 * DAYS);
+   if (dow == SUNDAY  ) return(firstDayOfMonth + 1 * DAY );
 
    return(firstDayOfMonth);
 }
+
+
+/**
+ * Computes the time of the next vertical grid separator.
+ *
+ * @param  int time           - time of the current separator
+ * @param  int dow [optional] - day-of-week of the separator, for performance (default: self-computed)
+ *
+ * @return datetime - vertical separator time or NaT in case of errors
+ */
+datetime ComputeNextSeparatorTime(datetime time, int dow = -1) {
+   if (dow == -1) {
+      dow = TimeDayOfWeekEx(time);
+   }
+
+   if (dailySeparators) {
+      if (dow == FRIDAY) time += 3*DAYS;     // skip weekends
+      else               time += 1*DAY;
+   }
+   else if (weeklySeparators) {
+      time += 1*WEEK;
+   }
+   else if (monthlySeparators) {
+      int yyyy = TimeYearEx(time);
+      int mm = TimeMonth(time);
+      if (mm == 12) { yyyy++; mm = 0; }
+      time = ComputeFirstWeekDay(yyyy, mm + 1);
+   }
+   else if (yearlySeparators) {
+      yyyy = TimeYearEx(time);
+      time = ComputeFirstWeekDay(yyyy + 1, 1);
+   }
+   else return(_NaT(catch("ComputeNextSeparatorTime(1)  illegal vertical grid state (no enabled grid interval)", ERR_ILLEGAL_STATE)));
+
+   return(time);
+}
+
 
 
 /**
