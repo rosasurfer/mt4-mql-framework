@@ -395,7 +395,7 @@ int onInit() {
    // Donchian.Crossing.Width
    if (AutoConfiguration) Donchian.Crossing.Width = GetConfigInt(indicator, "Donchian.Crossing.Width", Donchian.Crossing.Width);
    if (Donchian.Crossing.Width < 0) return(catch("onInit(8)  invalid input parameter Donchian.Crossing.Width: "+ Donchian.Crossing.Width, ERR_INVALID_INPUT_PARAMETER));
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) ZigZag.Color                = GetConfigColor(indicator, "ZigZag.Color",                ZigZag.Color);
    if (AutoConfiguration) Donchian.Channel.UpperColor = GetConfigColor(indicator, "Donchian.Channel.UpperColor", Donchian.Channel.UpperColor);
    if (AutoConfiguration) Donchian.Channel.LowerColor = GetConfigColor(indicator, "Donchian.Channel.LowerColor", Donchian.Channel.LowerColor);

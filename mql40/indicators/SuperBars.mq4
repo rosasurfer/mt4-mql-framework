@@ -21,6 +21,7 @@
  * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
  *
  * TODO:
+ *  - replace input "WeekendSessions.Symbols" by actual symbol properties
  *  - implement more super timeframes and rewrite configuration of max. bars
  *  - SuperBar close markers in variable period charts (e.g. range bars) are incorrect
  *  - workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
@@ -32,14 +33,14 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color  UpBars.Color        = PaleGreen;        // bullish bars
-extern color  DownBars.Color      = Pink;             // bearish bars
-extern color  UnchangedBars.Color = Lavender;         // unchanged bars
-extern bool   FillBars            = true;             //
-extern color  CloseMarker.Color   = Gray;             // bar close marker
-extern color  ETH.Color           = LemonChiffon;     // ETH sessions
-extern string ETH.Symbols         = "";               // comma-separated list of symbols with RTH/ETH sessions
-extern string Weekend.Symbols     = "";               // comma-separated list of symbols with weekend data
+extern color  UpBars.Color            = PaleGreen;       // bullish bars
+extern color  DownBars.Color          = Pink;            // bearish bars
+extern color  UnchangedBars.Color     = Lavender;        // unchanged bars
+extern bool   FillBars                = true;            //
+extern color  CloseMarker.Color       = Gray;            // bar close marker
+extern color  ETH.Color               = LemonChiffon;    // ETH sessions
+extern string ETH.Symbols             = "";              // comma-separated list of symbols with RTH/ETH sessions
+extern string WeekendSessions.Symbols = "";              // comma-separated list of symbols with weekend sessions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -63,7 +64,7 @@ extern string Weekend.Symbols     = "";               // comma-separated list of
 int      superTimeframe;                              // the currently active super bar period
 double   maxChangeUnchanged = 0.05;                   // max. price change in % for a SuperBar to be drawn as unchanged
 bool     ethEnabled;                                  // whether CME sessions are enabled
-bool     weekendEnabled;                              // whether weekend data is enabled
+bool     weekendSessions;                             // whether the symbol has weekend sessions
 datetime serverTime;                                  // most recent server time
 int      maxBarsH1;                                   // max. number of H1 superbars to draw (performance)
 
@@ -87,7 +88,7 @@ int onInit() {
    string indicator = WindowExpertName();
 
    // validate inputs
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (UpBars.Color        == 0xFF000000) UpBars.Color        = CLR_NONE;
    if (DownBars.Color      == 0xFF000000) DownBars.Color      = CLR_NONE;
    if (UnchangedBars.Color == 0xFF000000) UnchangedBars.Color = CLR_NONE;
@@ -101,25 +102,21 @@ int onInit() {
       ETH.Color           = GetConfigColor(indicator, "ETH.Color",           ETH.Color);
    }
    // ETH.Symbols
-   string sValue = StrTrim(ETH.Symbols), symbol=Symbol(), stdSymbol=StdSymbol(), sValues[];
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "ETH.Symbols", sValue);
-   if (StringLen(sValue) > 0) {
-      int size = Explode(StrToLower(sValue), ",", sValues, NULL);
-      for (int i=0; i < size; i++) {
-         sValues[i] = StrTrim(sValues[i]);
-      }
-      ethEnabled = (StringInArrayI(sValues, symbol) || StringInArrayI(sValues, stdSymbol));
+   if (AutoConfiguration) ETH.Symbols = GetConfigString(indicator, "ETH.Symbols", ETH.Symbols);
+   string sValues[], sValue=StrToLower(ETH.Symbols), symbol=StrToLower(Symbol()), stdSymbol=StrToLower(StdSymbol());
+   int size = Explode(sValue, ",", sValues, NULL);
+   for (int i=0; i < size; i++) {
+      sValues[i] = StrTrim(sValues[i]);
    }
-   // Weekend.Symbols
-   sValue = StrTrim(Weekend.Symbols);
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "Weekend.Symbols", sValue);
-   if (StringLen(sValue) > 0) {
-      size = Explode(StrToLower(sValue), ",", sValues, NULL);
-      for (i=0; i < size; i++) {
-         sValues[i] = StrTrim(sValues[i]);
-      }
-      weekendEnabled = (StringInArrayI(sValues, symbol) || StringInArrayI(sValues, stdSymbol));
+   ethEnabled = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
+   // WeekendSessions.Symbols
+   if (AutoConfiguration) WeekendSessions.Symbols = GetConfigString(indicator, "WeekendSessions.Symbols", WeekendSessions.Symbols);
+   sValue = StrToLower(WeekendSessions.Symbols);
+   size = Explode(sValue, ",", sValues, NULL);
+   for (i=0; i < size; i++) {
+      sValues[i] = StrTrim(sValues[i]);
    }
+   weekendSessions = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
 
    // read external configuration
    double dValue; int iValue;
@@ -392,7 +389,7 @@ bool UpdateSuperBars() {
    // loop over all superbars from young to old
    for (int i=0; i < maxBars; i++) {
       // get start/end times of every previous timeframe period, starting with the current unfinshed one
-      if (!iPreviousPeriod(_superTimeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
+      if (!iPreviousPeriod(_superTimeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendSessions)) return(false);
 
       // In periods >= PERIOD_D1 rate times are set to full days only which yields incorrect bar times in non-FXT timezones. The incorrect timestamp shifts the start of
       // such a period wrongly to the previous/next period. Must be fixed if start of the period falls on a trading day (no need for fixing on a weekend/non-trading day).
@@ -738,12 +735,12 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("UpBars.Color=",        ColorToStr(UpBars.Color),        ";", NL,
-                            "DownBars.Color=",      ColorToStr(DownBars.Color),      ";", NL,
-                            "UnchangedBars.Color=", ColorToStr(UnchangedBars.Color), ";", NL,
-                            "CloseMarker.Color=",   ColorToStr(CloseMarker.Color),   ";", NL,
-                            "ETH.Color=",           ColorToStr(ETH.Color),           ";", NL,
-                            "ETH.Symbols=",         DoubleQuoteStr(ETH.Symbols),     ";", NL,
-                            "Weekend.Symbols=",     DoubleQuoteStr(Weekend.Symbols), ";")
+   return(StringConcatenate("UpBars.Color=",            ColorToStr(UpBars.Color),                ";", NL,
+                            "DownBars.Color=",          ColorToStr(DownBars.Color),              ";", NL,
+                            "UnchangedBars.Color=",     ColorToStr(UnchangedBars.Color),         ";", NL,
+                            "CloseMarker.Color=",       ColorToStr(CloseMarker.Color),           ";", NL,
+                            "ETH.Color=",               ColorToStr(ETH.Color),                   ";", NL,
+                            "ETH.Symbols=",             DoubleQuoteStr(ETH.Symbols),             ";", NL,
+                            "WeekendSessions.Symbols=", DoubleQuoteStr(WeekendSessions.Symbols), ";")
    );
 }

@@ -106,7 +106,7 @@ int onInit() {
    // MaxBarsBack
    if (MaxBarsBack < -1)     return(catch("onInit(7)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MA.Color    == 0xFF000000) MA.Color    = CLR_NONE;
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 

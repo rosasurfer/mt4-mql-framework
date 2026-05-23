@@ -2560,7 +2560,7 @@ datetime DateTime2(int parsed[], int flags = DATE_OF_TODAY) {
 
 
 /**
- * Return the day of the month of the specified time: 1...31
+ * Return the day of the month of the specified time: 1..31
  *
  * Fixes the broken built-in function TimeDay() which returns 0 instead for "Thursday, 01.01.1970 00:00:00".
  *
@@ -2575,7 +2575,7 @@ int TimeDayEx(datetime time) {
 
 
 /**
- * Return the zero-based weekday of the specified time: 0=Sunday...6=Saturday
+ * Return the zero-based weekday of the specified time: 0=Sunday..6=Saturday
  *
  * Fixes the broken built-in function TimeDayOfWeek() which returns 0 (Sunday) for "Thursday, 01.01.1970 00:00:00".
  *
@@ -4192,195 +4192,213 @@ string LocalTimeFormat(datetime timestamp, string format) {
 
 
 /**
- * Return the start time of the 24h trade session for the specified time.
+ * Return the start time of the 24h trade session covering the specified time.
  *
- * @param  datetime time - time
- * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ * @param  datetime time                       - time
+ * @param  int      timezone                   - timezone id of the passed time, one of: TZ_LOCAL|TZ_SERVER|TZ_FXT|TZ_UTC
+ * @param  bool     weekendSessions [optional] - whether to support weekend sessions (default: no)
  *
- * @return datetime - session start time or EMPTY (-1) if there's no session covering the specified time (e.g. at weekends);
- *                    NaT in case of errors
+ * @return datetime - start time in the same timezone or EMPTY (-1) if no session covers the given time (e.g. on weekends),
+ *                    or NaT in case of errors
  */
-datetime GetSessionStartTime(datetime time, int tz) {
+datetime GetSessionStartTime(datetime time, int timezone, bool weekendSessions = false) {
+   weekendSessions = (weekendSessions != 0);
    if (time <= 0) return(_NaT(catch("GetSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
 
-   switch (tz) {
+   switch (timezone) {
       case TZ_FXT:
-         time -= time%DAYS;
-         int dow = TimeDayOfWeekEx(time);             // check for weekends
-         return(ifInt(dow==SATURDAY || dow==SUNDAY, EMPTY, time));
+         time -= time % DAYS;                         // normalize to Midnight
+         if (!weekendSessions) {
+            int dow = TimeDayOfWeek(time);
+            if (dow == SATURDAY) return(EMPTY);
+            if (dow == SUNDAY)   return(EMPTY);
+         }
+         return(time);
 
       case TZ_GMT:
-         time = GmtToFxtTime(time);                if (time == NaT) return(NaT);
-         time = GetSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         time = GmtToFxtTime(time);                                 if (time == NaT) return(NaT);
+         time = GetSessionStartTime(time, TZ_FXT, weekendSessions); if (time == NaT) return(NaT);
          if (time == EMPTY) return(EMPTY);
          return(FxtToGmtTime(time));
 
       case TZ_SERVER:
-         time = ServerToFxtTime(time);             if (time == NaT) return(NaT);
-         time = GetSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         time = ServerToFxtTime(time);                              if (time == NaT) return(NaT);
+         time = GetSessionStartTime(time, TZ_FXT, weekendSessions); if (time == NaT) return(NaT);
          if (time == EMPTY) return(EMPTY);
          return(FxtToServerTime(time));
 
       case TZ_LOCAL:
-         return(_NaT(catch("GetSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+         return(_NaT(catch("GetSessionStartTime(2)  unsupported parameter timezone: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
    }
-
-   return(_NaT(catch("GetSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+   return(_NaT(catch("GetSessionStartTime(3)  invalid parameter timezone: "+ timezone, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Return the end time of the 24h trade session for the specified time.
+ * Return the end time of the 24h trade session covering the specified time.
  *
- * @param  datetime time - time
- * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ * @param  datetime time                       - time
+ * @param  int      timezone                   - timezone id of the passed time, one of: TZ_LOCAL|TZ_SERVER|TZ_FXT|TZ_UTC
+ * @param  bool     weekendSessions [optional] - whether to support weekend sessions (default: no)
  *
- * @return datetime - session end time or EMPTY (-1) if there's no session covering the specified time (e.g. at weekends);
- *                    NaT in case of errors
+ * @return datetime - end time in the same timezone or EMPTY (-1) if no session covers the given time (e.g. on weekends),
+ *                    or NaT in case of errors
  */
-datetime GetSessionEndTime(datetime time, int tz) {
+datetime GetSessionEndTime(datetime time, int timezone, bool weekendSessions = false) {
+   weekendSessions = (weekendSessions != 0);
    if (time <= 0) return(_NaT(catch("GetSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
 
-   switch (tz) {
+   switch (timezone) {
       case TZ_FXT:
       case TZ_GMT:
       case TZ_SERVER:
-         time = GetSessionStartTime(time, tz);
+         time = GetSessionStartTime(time, timezone, weekendSessions);
          if (time == NaT)   return(NaT);
          if (time == EMPTY) return(EMPTY);
          return(time + 1*DAY);
 
       case TZ_LOCAL:
-         return(_NaT(catch("GetSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+         return(_NaT(catch("GetSessionEndTime(2)  unsupported parameter timezone: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
    }
-
-   return(_NaT(catch("GetSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+   return(_NaT(catch("GetSessionEndTime(3)  invalid parameter timezone: "+ timezone, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Return the start time of the 24h trade session fully preceding the specified time.
+ * Return the start time of the most recent 24h period which ends before the specified time.
  *
- * @param  datetime time - time
- * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ * @param  datetime time                       - time
+ * @param  int      timezone                   - timezone id of the passed time, one of: TZ_LOCAL|TZ_SERVER|TZ_FXT|TZ_UTC
+ * @param  bool     weekendSessions [optional] - whether to support weekend sessions (default: no)
  *
- * @return datetime - session start time or NaT in case of errors
+ * @return datetime - start time in the same timezone, or NaT in case of errors
  */
-datetime GetPrevSessionStartTime(datetime time, int tz) {
+datetime GetPrevSessionStartTime(datetime time, int timezone, bool weekendSessions = false) {
+   weekendSessions = (weekendSessions != 0);
    if (time <= 0) return(_NaT(catch("GetPrevSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
 
-   switch (tz) {
+   switch (timezone) {
       case TZ_FXT:
-         time -= time%DAYS;
-         int dow = TimeDayOfWeekEx(time);             // check for weekends
-         if      (dow == SATURDAY) time -= 1*DAY;
-         else if (dow == SUNDAY)   time -= 2*DAYS;
+         time -= time % DAYS;                         // normalize to Midnight
+         time -= 1*DAY;                               // shift to the previous 24h
+         if (!weekendSessions) {
+            int dow = TimeDayOfWeek(time);
+            if      (dow == SATURDAY) time -= 1*DAY;
+            else if (dow == SUNDAY)   time -= 2*DAYS;
+         }
          return(time);
 
       case TZ_GMT:
-         time = GmtToFxtTime(time);                    if (time == NaT) return(NaT);
-         time = GetPrevSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         time = GmtToFxtTime(time);                                     if (time == NaT) return(NaT);
+         time = GetPrevSessionStartTime(time, TZ_FXT, weekendSessions); if (time == NaT) return(NaT);
          return(FxtToGmtTime(time));
 
       case TZ_SERVER:
-         time = ServerToFxtTime(time);                 if (time == NaT) return(NaT);
-         time = GetPrevSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         time = ServerToFxtTime(time);                                  if (time == NaT) return(NaT);
+         time = GetPrevSessionStartTime(time, TZ_FXT, weekendSessions); if (time == NaT) return(NaT);
          return(FxtToServerTime(time));
 
       case TZ_LOCAL:
-         return(_NaT(catch("GetPrevSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+         return(_NaT(catch("GetPrevSessionStartTime(2)  unsupported parameter timezone: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
    }
-
-   return(_NaT(catch("GetPrevSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+   return(_NaT(catch("GetPrevSessionStartTime(3)  invalid parameter timezone: "+ timezone, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Return the end time of the 24h trade session fully preceding the specified time.
+ * Return the end of the most recent 24h period which ends before the specified time.
  *
- * @param  datetime time - time
- * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ * @param  datetime time                       - time
+ * @param  int      timezone                   - timezone id of the passed time, one of: TZ_LOCAL|TZ_SERVER|TZ_FXT|TZ_UTC
+ * @param  bool     weekendSessions [optional] - whether to support weekend sessions (default: no)
  *
- * @return datetime - session end time or NaT in case of errors
+ * @return datetime - end time in the same timezone, or NaT in case of errors
  */
-datetime GetPrevSessionEndTime(datetime time, int tz) {
+datetime GetPrevSessionEndTime(datetime time, int timezone, bool weekendSessions = false) {
+   weekendSessions = (weekendSessions != 0);
    if (time <= 0) return(_NaT(catch("GetPrevSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
 
-   switch (tz) {
+   switch (timezone) {
       case TZ_FXT:
       case TZ_GMT:
       case TZ_SERVER:
-         time = GetPrevSessionStartTime(time, tz); if (time == NaT) return(NaT);
+         time = GetPrevSessionStartTime(time, timezone, weekendSessions);
+         if (time == NaT) return(NaT);
          return(time + 1*DAY);
 
       case TZ_LOCAL:
-         return(_NaT(catch("GetPrevSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+         return(_NaT(catch("GetPrevSessionEndTime(2)  unsupported parameter timezone: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
    }
-
-   return(_NaT(catch("GetPrevSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+   return(_NaT(catch("GetPrevSessionEndTime(3)  invalid parameter timezone: "+ timezone, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Return the start time of the 24h trade session following the specified time.
+ * Return the start time of the next 24h period which begins after the specified time.
  *
- * @param  datetime time - time
- * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ * @param  datetime time                       - time
+ * @param  int      timezone                   - timezone id of the passed time, one of: TZ_LOCAL|TZ_SERVER|TZ_FXT|TZ_UTC
+ * @param  bool     weekendSessions [optional] - whether to support weekend sessions (default: no)
  *
- * @return datetime - session start time or NaT in case of errors
+ * @return datetime - start time in the same timezone, or NaT in case of errors
  */
-datetime GetNextSessionStartTime(datetime time, int tz) {
+datetime GetNextSessionStartTime(datetime time, int timezone, bool weekendSessions = false) {
+   weekendSessions = (weekendSessions != 0);
    if (time <= 0) return(_NaT(catch("GetNextSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
 
-   switch (tz) {
+   switch (timezone) {
       case TZ_FXT:
-         time -= time%DAYS;
-         int dow = TimeDayOfWeekEx(time);             // check for weekends
-         if      (dow == SATURDAY) time += 2*DAYS;
-         else if (dow == SUNDAY)   time += 1*DAY;
+         time -= time % DAYS;                         // normalize to Midnight
+         time += 1*DAY;                               // shift to the next 24h
+         if (!weekendSessions) {
+            int dow = TimeDayOfWeek(time);
+            if      (dow == SATURDAY) time += 2*DAYS;
+            else if (dow == SUNDAY)   time += 1*DAY;
+         }
          return(time);
 
       case TZ_GMT:
-         time = GmtToFxtTime(time);                    if (time == NaT) return(NaT);
-         time = GetNextSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         time = GmtToFxtTime(time);                                     if (time == NaT) return(NaT);
+         time = GetNextSessionStartTime(time, TZ_FXT, weekendSessions); if (time == NaT) return(NaT);
          return(FxtToGmtTime(time));
 
       case TZ_SERVER:
-         time = ServerToFxtTime(time);                 if (time == NaT) return(NaT);
-         time = GetNextSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         time = ServerToFxtTime(time);                                  if (time == NaT) return(NaT);
+         time = GetNextSessionStartTime(time, TZ_FXT, weekendSessions); if (time == NaT) return(NaT);
          return(FxtToServerTime(time));
 
       case TZ_LOCAL:
-         return(_NaT(catch("GetNextSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+         return(_NaT(catch("GetNextSessionStartTime(2)  unsupported parameter timezone: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
    }
-
-   return(_NaT(catch("GetNextSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+   return(_NaT(catch("GetNextSessionStartTime(3)  invalid parameter timezone: "+ timezone, ERR_INVALID_PARAMETER)));
 }
 
 
 /**
- * Return the end time of the 24h trade session following the specified time.
+ * Return the end time of the next 24h period which begins after the specified time.
  *
- * @param  datetime time - time
- * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ * @param  datetime time                       - time
+ * @param  int      timezone                   - timezone id of the passed time, one of: TZ_LOCAL|TZ_SERVER|TZ_FXT|TZ_UTC
+ * @param  bool     weekendSessions [optional] - whether to support weekend sessions (default: no)
  *
- * @return datetime - session end time or NaT in case of errors
+ * @return datetime - end time in the same timezone, or NaT in case of errors
  */
-datetime GetNextSessionEndTime(datetime time, int tz) {
+datetime GetNextSessionEndTime(datetime time, int timezone, bool weekendSessions = false) {
+   weekendSessions = (weekendSessions != 0);
    if (time <= 0) return(_NaT(catch("GetNextSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
 
-   switch (tz) {
+   switch (timezone) {
       case TZ_FXT:
       case TZ_GMT:
       case TZ_SERVER:
-         time = GetNextSessionStartTime(time, tz); if (time == NaT) return(NaT);
+         time = GetNextSessionStartTime(time, timezone, weekendSessions);
+         if (time == NaT) return(NaT);
          return(time + 1*DAY);
 
       case TZ_LOCAL:
-         return(_NaT(catch("GetNextSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+         return(_NaT(catch("GetNextSessionEndTime(2)  unsupported parameter timezone: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
    }
-
-   return(_NaT(catch("GetNextSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+   return(_NaT(catch("GetNextSessionEndTime(3)  invalid parameter timezone: "+ timezone, ERR_INVALID_PARAMETER)));
 }
 
 

@@ -160,7 +160,7 @@ int onInit() {
    atrSmoothingPeriods = ifInt(atrSmoothingMethod==EMPTY || !ATR.Smoothing.Periods, 1, ATR.Smoothing.Periods);
    if (atrSmoothingPeriods == 1) atrSmoothingMethod = MODE_SMA;
 
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Support.Color     == 0xFF000000) Support.Color     = CLR_NONE;
    if (Resistance.Color  == 0xFF000000) Resistance.Color  = CLR_NONE;
    if (MA.Color          == 0xFF000000) MA.Color          = CLR_NONE;

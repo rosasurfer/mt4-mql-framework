@@ -109,7 +109,7 @@ int onInit() {
    if (ATR.Periods < 1) return(catch("onInit(1)  invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
    // SMA.Periods
    if (SMA.Periods < 2) return(catch("onInit(2)  invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend       == 0xFF000000) Color.UpTrend       = CLR_NONE;
    if (Color.DownTrend     == 0xFF000000) Color.DownTrend     = CLR_NONE;
    if (Color.Channel       == 0xFF000000) Color.Channel       = CLR_NONE;
