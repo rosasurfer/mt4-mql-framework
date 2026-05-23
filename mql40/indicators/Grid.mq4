@@ -373,8 +373,10 @@ bool UpdateVerticalGrid() {
 bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
    // the first separator may appear on the oldest bar
    datetime first = GetNextSessionStartTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND, TZ_FXT, weekendSessions);
-   datetime last  = GetNextSessionStartTime(ServerToFxtTime(Time[0]), TZ_FXT, weekendSessions);
+   datetime last  = GetNextSessionStartTime(ServerToFxtTime(Time[0]), TZ_FXT, weekendSessions), firstTradingDay;
    if (first==NaT || last==NaT) return(false);
+
+   int yyyy, mm;
 
    if (dailySeparators) {
       // nothing to do
@@ -384,9 +386,9 @@ bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
       last  += (8 - TimeDayOfWeek(last))  % 7 * DAYS;    // next Monday in the future
    }
    else if (monthlySeparators) {
-      int yyyy = TimeYear(first);
-      int mm   = TimeMonth(first);
-      datetime firstTradingDay = ComputeFirstTradingDay(yyyy, mm);
+      yyyy = TimeYear(first);
+      mm   = TimeMonth(first);
+      firstTradingDay = ComputeFirstTradingDay(yyyy, mm);
       if (firstTradingDay < first) {
          if (mm == 12) { yyyy++; mm = 0; }
          firstTradingDay = ComputeFirstTradingDay(yyyy, mm+1);
