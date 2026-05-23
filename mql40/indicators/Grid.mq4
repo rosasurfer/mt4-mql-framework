@@ -34,15 +34,14 @@ bool dailySeparators;
 bool weeklySeparators;
 bool monthlySeparators;
 bool yearlySeparators;
+bool weekendSessions;            // whether the symbol has weekend sessions
 
 // horizontal grid properties (price)
 int    lastChartHeight;
 double lastChartMinPrice;
 double lastChartMaxPrice;
 double lastGridSize;
-string hSeparatorLabels[];       // labels of price separators
-
-bool weekendSessions;            // whether the symbol has weekend sessions
+string priceSepLabels[];         // labels of price separators
 
 
 /**
@@ -261,7 +260,7 @@ bool CreatePriceSeparators(double fromPrice, double toPrice, double gridSize) {
    double gridLevel = NormalizeDouble(fromPrice - MathMod(fromPrice, gridSize), Digits);
 
    int separators = (toPrice-gridLevel)/gridSize + 1;
-   ArrayResize(hSeparatorLabels, separators);
+   ArrayResize(priceSepLabels, separators);
 
    for (int i=0; i < separators; i++) {                     // no ObjectCreateRegister(): price separators change dynamically
       string label = NumberToStr(gridLevel, ",'R.+");       // and are handled better by the indicator itself
@@ -270,8 +269,7 @@ bool CreatePriceSeparators(double fromPrice, double toPrice, double gridSize) {
       ObjectSet(label, OBJPROP_COLOR,  Color.RegularGrid);
       ObjectSet(label, OBJPROP_PRICE1, gridLevel);
       ObjectSet(label, OBJPROP_BACK,   true);
-
-      hSeparatorLabels[i] = label;
+      priceSepLabels[i] = label;
 
       gridLevel = NormalizeDouble(gridLevel + gridSize, Digits);
    }
@@ -285,14 +283,12 @@ bool CreatePriceSeparators(double fromPrice, double toPrice, double gridSize) {
  * @return bool - success status
  */
 bool DeletePriceSeparators() {
-   int size = ArraySize(hSeparatorLabels);
-
-   for (int i=0; i < size; i++) {
-      if (ObjectFind(hSeparatorLabels[i]) != -1) {
-         ObjectDelete(hSeparatorLabels[i]);
+   for (int i=ArraySize(priceSepLabels)-1; i >= 0; i--) {
+      if (ObjectFind(priceSepLabels[i]) != -1) {
+         ObjectDelete(priceSepLabels[i]);
       }
    }
-   ArrayResize(hSeparatorLabels, 0);
+   ArrayResize(priceSepLabels, 0);
    return(!catch("DeletePriceSeparators(1)"));
 }
 
@@ -306,15 +302,14 @@ bool DeletePriceSeparators() {
  */
 bool UpdateVerticalGrid() {
    // compute the time range to cover: from oldest visible to first future separator
-   datetime fromSepTime, toSepTime;
+   datetime fromSepTime, toSepTime;                      // FXT times
    if (!ComputeVerticalSeparatorRange(fromSepTime, toSepTime)) return(false);
 
    datetime sepTime, sepChartTime, lastSepChartTime;
    string label = "", lastSepLabel = "";
-   int dow;
 
    // create all time separators
-   for (datetime time=fromSepTime; time <= toSepTime; time = ComputeNextSeparatorTime(time, dow)) {
+   for (datetime time = fromSepTime; time <= toSepTime; time = ComputeNextSeparatorTime(time)) {
       sepTime = FxtToServerTime(time);
 
       // resolve bar and chart time of the separator
@@ -334,17 +329,16 @@ bool UpdateVerticalGrid() {
       label = GmtTimeFormat(time, "%a %d.%m.%Y");        // e.g. "Fri 23.12.2011"
       if (ObjectFind(label) == -1) ObjectCreateRegister(label, OBJ_VLINE, 0, sepChartTime, 0);
 
-      dow = TimeDayOfWeekEx(time);
       int   sepStyle = STYLE_DOT;
       color sepColor = Color.RegularGrid;
       if (dailySeparators) {
-         if (dow == MONDAY) {
-            sepStyle = STYLE_DASHDOTDOT;                 // a slightly different style for the start of week
+         if (TimeDayOfWeek(time) == MONDAY) {
+            sepStyle = STYLE_DASHDOTDOT;                 // a slightly different style for the end of the week
             sepColor = Color.SuperGrid;
          }
       }
       else if (weeklySeparators) {
-         sepStyle = STYLE_DASHDOTDOT;                    // same different style for every week
+         sepStyle = STYLE_DASHDOTDOT;                    // same different style for weekly separators
          sepColor = Color.SuperGrid;
       }
       ObjectSet(label, OBJPROP_TIME1, sepChartTime);
@@ -355,28 +349,6 @@ bool UpdateVerticalGrid() {
       lastSepChartTime = sepChartTime;                   // store last separator location for gap detection
    }
    return(!catch("UpdateVerticalGrid(1)"));
-}
-
-
-/**
- * Computes the first weekday of a month.
- *
- * @param  int year  - supported values: 1970-2037
- * @param  int month - supported values: 1-12
- *
- * @return datetime - 00:00 (Midnight) of the first weekday of a month or EMPTY (-1) in case of errors
- */
-datetime ComputeFirstWeekDay(int year, int month) {
-   if (year < 1970 || year > 2037) return(_EMPTY(catch("ComputeFirstWeekDay(1)  illegal parameter year: "+ year +" (out of range)", ERR_INVALID_PARAMETER)));
-   if (month < 1 || month > 12)    return(_EMPTY(catch("ComputeFirstWeekDay(2)  invalid parameter month: "+ month +" (out of range)", ERR_INVALID_PARAMETER)));
-
-   datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", StrRight("0"+month, 2), ".01 00:00:00"));
-
-   int dow = TimeDayOfWeekEx(firstDayOfMonth);
-   if (dow == SATURDAY) return(firstDayOfMonth + 2 * DAYS);
-   if (dow == SUNDAY  ) return(firstDayOfMonth + 1 * DAY );
-
-   return(firstDayOfMonth);
 }
 
 
@@ -397,11 +369,11 @@ bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
       // nothing to do
    }
    else if (weeklySeparators) {
-      from += (8 - TimeDayOfWeekEx(from)) % 7 * DAYS;    // first Monday in the chart
-      to   += (8 - TimeDayOfWeekEx(to  )) % 7 * DAYS;    // next Monday in the future
+      from += (8 - TimeDayOfWeek(from)) % 7 * DAYS;      // first Monday in the chart
+      to   += (8 - TimeDayOfWeek(to  )) % 7 * DAYS;      // next Monday in the future
    }
    else if (monthlySeparators) {
-      int yyyy = TimeYearEx(from);
+      int yyyy = TimeYear(from);
       int mm   = TimeMonth(from);
       datetime firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
       if (firstWeekDay < from) {
@@ -410,7 +382,7 @@ bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
       }
       from = firstWeekDay;                               // first "first weekday of a month" in the chart
 
-      yyyy = TimeYearEx(to);
+      yyyy = TimeYear(to);
       mm   = TimeMonth(to);
       firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
       if (firstWeekDay < to) {
@@ -420,21 +392,21 @@ bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
       to = firstWeekDay;                                 // next "first weekday of a month" in the future
    }
    else if (yearlySeparators) {
-      yyyy = TimeYearEx(from);
+      yyyy = TimeYear(from);
       firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
       if (firstWeekDay < from) {
          firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
       }
       from = firstWeekDay;                               // first "first weekday of a year" in the chart
 
-      yyyy = TimeYearEx(to);
+      yyyy = TimeYear(to);
       firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
       if (firstWeekDay < to) {
          firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
       }
       to = firstWeekDay;                                 // next "first weekday of a year" in the future
    }
-   else return(!catch("ComputeVerticalSeparatorRange(1)  illegal grid configuration (no interval enabled)", ERR_ILLEGAL_STATE));
+   else return(!catch("ComputeVerticalSeparatorRange(1)  illegal grid configuration (unknown interval)", ERR_ILLEGAL_STATE));
 
    fromTime = from;
    toTime = to;
@@ -445,17 +417,13 @@ bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
 /**
  * Computes the time of the next vertical grid separator.
  *
- * @param  int time           - time of the current separator
- * @param  int dow [optional] - day-of-week of the separator, for performance (default: self-computed)
+ * @param  int time - time of the current separator
  *
- * @return datetime - vertical separator time or NaT in case of errors
+ * @return datetime - time of the next separator or NaT in case of errors
  */
-datetime ComputeNextSeparatorTime(datetime time, int dow = -1) {
-   if (dow == -1) {
-      dow = TimeDayOfWeekEx(time);
-   }
-
+datetime ComputeNextSeparatorTime(datetime time) {
    if (dailySeparators) {
+      int dow = TimeDayOfWeek(time);
       if (dow == FRIDAY) time += 3*DAYS;     // skip weekends
       else               time += 1*DAY;
    }
@@ -463,20 +431,42 @@ datetime ComputeNextSeparatorTime(datetime time, int dow = -1) {
       time += 1*WEEK;
    }
    else if (monthlySeparators) {
-      int yyyy = TimeYearEx(time);
+      int yyyy = TimeYear(time);
       int mm = TimeMonth(time);
       if (mm == 12) { yyyy++; mm = 0; }
       time = ComputeFirstWeekDay(yyyy, mm + 1);
    }
    else if (yearlySeparators) {
-      yyyy = TimeYearEx(time);
+      yyyy = TimeYear(time);
       time = ComputeFirstWeekDay(yyyy + 1, 1);
    }
-   else return(_NaT(catch("ComputeNextSeparatorTime(1)  illegal vertical grid state (no enabled grid interval)", ERR_ILLEGAL_STATE)));
+   else return(_NaT(catch("ComputeNextSeparatorTime(1)  illegal grid configuration (unknown interval)", ERR_ILLEGAL_STATE)));
 
    return(time);
 }
 
+
+
+/**
+ * Computes the first weekday of a month.
+ *
+ * @param  int year  - supported values: 1970-2037
+ * @param  int month - supported values: 1-12
+ *
+ * @return datetime - 00:00 (Midnight) of the first weekday of a month or EMPTY (-1) in case of errors
+ */
+datetime ComputeFirstWeekDay(int year, int month) {
+   if (year < 1970 || year > 2037) return(_EMPTY(catch("ComputeFirstWeekDay(1)  illegal parameter year: "+ year +" (out of range)", ERR_INVALID_PARAMETER)));
+   if (month < 1 || month > 12)    return(_EMPTY(catch("ComputeFirstWeekDay(2)  invalid parameter month: "+ month +" (out of range)", ERR_INVALID_PARAMETER)));
+
+   datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", StrRight("0"+month, 2), ".01 00:00:00"));
+
+   int dow = TimeDayOfWeek(firstDayOfMonth);
+   if (dow == SATURDAY) return(firstDayOfMonth + 2 * DAYS);
+   if (dow == SUNDAY  ) return(firstDayOfMonth + 1 * DAY );
+
+   return(firstDayOfMonth);
+}
 
 
 /**
