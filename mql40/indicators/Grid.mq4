@@ -315,7 +315,17 @@ bool UpdateVerticalGrid() {
       // resolve bar and chart time of the separator
       if (Time[0] < sepTime) {                           // no such bar yet: current session or in ERS_HISTORY_UPDATE
          sepChartTime = sepTime;                         // use original time
-      }                                                  // TODO: collaps the weekend with dailySeparators
+         if (!weekendSessions) {                         // the terminal will display future weekend times even w/o sessions
+            if (dailySeparators && TimeDayOfWeek(time)==MONDAY) {
+               sepChartTime -= 2*DAYS;                   // move-back the separator to the next 24h boundary
+            }
+            else if (weeklySeparators) {
+               sepChartTime -= 2*DAYS;                   // move-back the separator to the next 24h boundary
+            }
+            //else if (monthlySeparators)                // needless: move-back separator by number of remaining weekend days
+            //else if (yearlySeparators)                 // needless: move-back separator by number of remaining non-trading days
+         }
+      }
       else {
          int bar = iBarShiftNext(NULL, NULL, sepTime);   // use time of first existing bar
          if (bar == EMPTY_VALUE) return(false);
@@ -361,55 +371,56 @@ bool UpdateVerticalGrid() {
  * @return bool - success status
  */
 bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
-   datetime from = GetNextSessionStartTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND, TZ_FXT);
-   datetime to = GetNextSessionStartTime(ServerToFxtTime(Time[0]), TZ_FXT);
-   if (from==NaT || to==NaT) return(false);
+   // the first separator may appear on the oldest bar
+   datetime first = GetNextSessionStartTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND, TZ_FXT, weekendSessions);
+   datetime last  = GetNextSessionStartTime(ServerToFxtTime(Time[0]), TZ_FXT, weekendSessions);
+   if (first==NaT || last==NaT) return(false);
 
    if (dailySeparators) {
       // nothing to do
    }
    else if (weeklySeparators) {
-      from += (8 - TimeDayOfWeek(from)) % 7 * DAYS;      // first Monday in the chart
-      to   += (8 - TimeDayOfWeek(to  )) % 7 * DAYS;      // next Monday in the future
+      first += (8 - TimeDayOfWeek(first)) % 7 * DAYS;    // first Monday in the chart
+      last  += (8 - TimeDayOfWeek(last))  % 7 * DAYS;    // next Monday in the future
    }
    else if (monthlySeparators) {
-      int yyyy = TimeYear(from);
-      int mm   = TimeMonth(from);
-      datetime firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
-      if (firstWeekDay < from) {
+      int yyyy = TimeYear(first);
+      int mm   = TimeMonth(first);
+      datetime firstTradingDay = ComputeFirstTradingDay(yyyy, mm);
+      if (firstTradingDay < first) {
          if (mm == 12) { yyyy++; mm = 0; }
-         firstWeekDay = ComputeFirstWeekDay(yyyy, mm+1);
+         firstTradingDay = ComputeFirstTradingDay(yyyy, mm+1);
       }
-      from = firstWeekDay;                               // first "first weekday of a month" in the chart
+      first = firstTradingDay;                           // first "1st trading day of the month" in the chart
 
-      yyyy = TimeYear(to);
-      mm   = TimeMonth(to);
-      firstWeekDay = ComputeFirstWeekDay(yyyy, mm);
-      if (firstWeekDay < to) {
+      yyyy = TimeYear(last);
+      mm   = TimeMonth(last);
+      firstTradingDay = ComputeFirstTradingDay(yyyy, mm);
+      if (firstTradingDay < last) {
          if (mm == 12) { yyyy++; mm = 0; }
-         firstWeekDay = ComputeFirstWeekDay(yyyy, mm+1);
+         firstTradingDay = ComputeFirstTradingDay(yyyy, mm+1);
       }
-      to = firstWeekDay;                                 // next "first weekday of a month" in the future
+      last = firstTradingDay;                            // next "1st trading day of the month" in the future
    }
    else if (yearlySeparators) {
-      yyyy = TimeYear(from);
-      firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
-      if (firstWeekDay < from) {
-         firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
+      yyyy = TimeYear(first);
+      firstTradingDay = ComputeFirstTradingDay(yyyy, 1);
+      if (firstTradingDay < first) {
+         firstTradingDay = ComputeFirstTradingDay(yyyy+1, 1);
       }
-      from = firstWeekDay;                               // first "first weekday of a year" in the chart
+      first= firstTradingDay;                            // first "1st trading day of the year" in the chart
 
-      yyyy = TimeYear(to);
-      firstWeekDay = ComputeFirstWeekDay(yyyy, 1);
-      if (firstWeekDay < to) {
-         firstWeekDay = ComputeFirstWeekDay(yyyy+1, 1);
+      yyyy = TimeYear(last);
+      firstTradingDay = ComputeFirstTradingDay(yyyy, 1);
+      if (firstTradingDay < last) {
+         firstTradingDay = ComputeFirstTradingDay(yyyy+1, 1);
       }
-      to = firstWeekDay;                                 // next "first weekday of a year" in the future
+      last = firstTradingDay;                            // next "1st trading day of the year" in the future
    }
    else return(!catch("ComputeVerticalSeparatorRange(1)  illegal grid configuration (unknown interval)", ERR_ILLEGAL_STATE));
 
-   fromTime = from;
-   toTime = to;
+   fromTime = first;
+   toTime   = last;
    return(true);
 }
 
@@ -423,9 +434,12 @@ bool ComputeVerticalSeparatorRange(datetime &fromTime, datetime &toTime) {
  */
 datetime ComputeNextSeparatorTime(datetime time) {
    if (dailySeparators) {
-      int dow = TimeDayOfWeek(time);
-      if (dow == FRIDAY) time += 3*DAYS;     // skip weekends
-      else               time += 1*DAY;
+      time += 1*DAY;
+      if (!weekendSessions) {                      // skip weekends
+         int dow = TimeDayOfWeek(time);
+         if      (dow == SATURDAY) time += 2*DAYS;
+         else if (dow == SUNDAY)   time += 1*DAY;
+      }
    }
    else if (weeklySeparators) {
       time += 1*WEEK;
@@ -434,11 +448,11 @@ datetime ComputeNextSeparatorTime(datetime time) {
       int yyyy = TimeYear(time);
       int mm = TimeMonth(time);
       if (mm == 12) { yyyy++; mm = 0; }
-      time = ComputeFirstWeekDay(yyyy, mm + 1);
+      time = ComputeFirstTradingDay(yyyy, mm + 1);
    }
    else if (yearlySeparators) {
       yyyy = TimeYear(time);
-      time = ComputeFirstWeekDay(yyyy + 1, 1);
+      time = ComputeFirstTradingDay(yyyy + 1, 1);
    }
    else return(_NaT(catch("ComputeNextSeparatorTime(1)  illegal grid configuration (unknown interval)", ERR_ILLEGAL_STATE)));
 
@@ -446,26 +460,26 @@ datetime ComputeNextSeparatorTime(datetime time) {
 }
 
 
-
 /**
- * Computes the first weekday of a month.
+ * Computes the first trading day of a month.
  *
  * @param  int year  - supported values: 1970-2037
  * @param  int month - supported values: 1-12
  *
  * @return datetime - 00:00 (Midnight) of the first weekday of a month or EMPTY (-1) in case of errors
  */
-datetime ComputeFirstWeekDay(int year, int month) {
-   if (year < 1970 || year > 2037) return(_EMPTY(catch("ComputeFirstWeekDay(1)  illegal parameter year: "+ year +" (out of range)", ERR_INVALID_PARAMETER)));
-   if (month < 1 || month > 12)    return(_EMPTY(catch("ComputeFirstWeekDay(2)  invalid parameter month: "+ month +" (out of range)", ERR_INVALID_PARAMETER)));
+datetime ComputeFirstTradingDay(int year, int month) {
+   if (year < 1970 || year > 2037) return(_EMPTY(catch("ComputeFirstTradingDay(1)  illegal parameter year: "+ year +" (out of range)", ERR_INVALID_PARAMETER)));
+   if (month < 1 || month > 12)    return(_EMPTY(catch("ComputeFirstTradingDay(2)  invalid parameter month: "+ month +" (out of range)", ERR_INVALID_PARAMETER)));
 
-   datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", StrRight("0"+month, 2), ".01 00:00:00"));
+   datetime firstTradingDay = StrToTime(StringConcatenate(year, ".", StrRight("0"+month, 2), ".01 00:00:00"));
 
-   int dow = TimeDayOfWeek(firstDayOfMonth);
-   if (dow == SATURDAY) return(firstDayOfMonth + 2 * DAYS);
-   if (dow == SUNDAY  ) return(firstDayOfMonth + 1 * DAY );
-
-   return(firstDayOfMonth);
+   if (!weekendSessions) {                      // skip weekends
+      int dow = TimeDayOfWeek(firstTradingDay);
+      if      (dow == SATURDAY) firstTradingDay += 2*DAYS;
+      else if (dow == SUNDAY  ) firstTradingDay += 1*DAY;
+   }
+   return(firstTradingDay);
 }
 
 
