@@ -1,8 +1,8 @@
 /**
  * HedgePosition
  *
- * Hedge open positions of the current symbol. By default tickets managed by an EA are skipped. If the Ctrl key (VK_CONTROL)
- * is pressed at script launch time tickets managed by an EA are hedged, too.
+ * Hedges open positions of the current symbol. By default positions managed by an EA are skipped. If the Ctrl key (VK_CONTROL)
+ * is pressed at script launch time positions managed by an EA are hedged, too.
  *
  *
  * TODO:
