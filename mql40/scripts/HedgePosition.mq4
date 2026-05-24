@@ -1,8 +1,8 @@
 /**
  * HedgePosition
  *
- * Hedge open positions of the current symbol. By default tickets managed by an EA are skipped. If the Ctrl key (VK_CONTROL)
- * is pressed at script launch time tickets managed by an EA are hedged, too.
+ * Hedges open positions of the current symbol. By default positions managed by an EA are skipped. If the Ctrl key (VK_CONTROL)
+ * is pressed at script launch time positions managed by an EA are hedged, too.
  *
  *
  * TODO:
@@ -73,23 +73,53 @@ int onStart() {
 bool CollectTickets(int &tickets[], bool skipManaged = true) {
    skipManaged = (skipManaged != 0);
 
-   // Don't cache the results. Order counters don't change if pending entry orders are executed.
-   int orders = OrdersTotal();
+   // Processing a large number of orders (potentially a few hundred tickets) is not insignificant.
+   // To improve execution speed and reduce slippage, the results are cached.
+   static int lastAllPendingOrders=-1, lastOpenOrders=-1, lastClosedOrders=-1, lastSkipManaged=0, lastTickets[];
 
-   ArrayResize(tickets, orders);
-   ArrayInitialize(tickets, 0);
+   int allPendingOrders = 0;
+   int openOrders = OrdersTotal();
+   int closedOrders = OrdersHistoryTotal();
+
+   if (lastAllPendingOrders==-1 || (openOrders==lastOpenOrders && closedOrders==lastClosedOrders)) {
+      // get number of all pending orders on the server
+      for (int i=0; i < openOrders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;  // an open order was closed/deleted elsewhere
+         allPendingOrders += IsPendingOrderType(OrderType());
+      }
+   }
+
+   // return cached results if status is unchanged
+   if (allPendingOrders==lastAllPendingOrders && openOrders==lastOpenOrders && closedOrders==lastClosedOrders) {
+      ArrayResize(tickets, 0);
+      if (ArraySize(lastTickets) > 0) ArrayCopy(tickets, lastTickets);
+      return(!catch("CollectTickets(1)"));
+   }
+
+   // or refresh open tickets if status changed
+   if (lastAllPendingOrders != -1) logInfo("CollectTickets(2)  open orders changed, refreshing...");
+
+   ArrayResize(tickets, openOrders);
+   ArrayInitialize(tickets, NULL);
 
    int n = 0;
-   for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;  // an open order was closed/deleted elsewhere
+   for (i=0; i < openOrders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;     // an open order was closed/deleted elsewhere
       if (OrderType() > OP_SELL)             continue;
       if (OrderSymbol() != Symbol())         continue;
       if (OrderMagicNumber() && skipManaged) continue;
-
       tickets[n] = OrderTicket();
       n++;
    }
    ArrayResize(tickets, n);
 
-   return(!catch("CollectTickets(1)"));
+   // cache results
+   lastAllPendingOrders = allPendingOrders;
+   lastOpenOrders       = openOrders;
+   lastClosedOrders     = closedOrders;
+   lastSkipManaged      = skipManaged;
+   ArrayResize(lastTickets, 0);
+   if (ArraySize(tickets) > 0) ArrayCopy(lastTickets, tickets);
+
+   return(!catch("CollectTickets(3)"));
 }

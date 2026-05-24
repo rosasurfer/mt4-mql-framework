@@ -314,6 +314,8 @@ bool UpdateVerticalGrid() {
 
       // resolve bar and chart time of the separator
       if (Time[0] < sepTime) {                           // no such bar yet: current session or in ERS_HISTORY_UPDATE
+         if (IsCustomTimeframe(Period())) break;
+
          sepChartTime = sepTime;                         // use original time
          if (!weekendSessions) {                         // the terminal will display future weekend times even w/o sessions
             if (dailySeparators && TimeDayOfWeek(time)==MONDAY) {
