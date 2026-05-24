@@ -6,7 +6,7 @@
  * ------------------------
  *  abstract TradeCommand                            { string trigger; }
  *
- *  OrderOpenCommand         extends TradeCommand    { int type:OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP; ... }
+ *  OrderOpenCommand         extends TradeCommand    { int type:OP_BUY|OP_SELL|OP_BUY_LIMIT|OP_SELL_LIMIT|OP_BUY_STOP|OP_SELL_STOP; ... }
  *  OrderCloseCommand        extends TradeCommand    { int ticket; ... }
  *  OrderCloseByCommand      extends TradeCommand    { int ticket1; int ticket2; ... }
  *  OrderModifyCommand       extends TradeCommand    { int ticket; ... }
@@ -14,7 +14,7 @@
  *
  *  abstract LfxTradeCommand extends TradeCommand    {}
  *
- *  LfxOrderCreateCommand    extends LfxTradeCommand { int type:OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP; ... }
+ *  LfxOrderCreateCommand    extends LfxTradeCommand { int type:OP_BUY|OP_SELL|OP_BUY_LIMIT|OP_SELL_LIMIT|OP_BUY_STOP|OP_SELL_STOP; ... }
  *  LfxOrderOpenCommand      extends LfxTradeCommand { int ticket; ... }
  *  LfxOrderCloseCommand     extends LfxTradeCommand { int ticket; ... }
  *  LfxOrderCloseByCommand   extends LfxTradeCommand { int ticket1; int ticket2; ... }

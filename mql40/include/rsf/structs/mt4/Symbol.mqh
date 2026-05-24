@@ -1,5 +1,5 @@
 /**
- * MT4 struct SYMBOL (Dateiformat "symbols.raw")
+ * MT4 struct SYMBOL (Dateiformat "<data-directory>/history/<trade-server>/symbols.raw")
  *
  * Die Symbole einer Datei sind alphabetisch nach Namen sortiert.
  *

@@ -115,22 +115,22 @@ int onInit() {
       if (sValue == "") continue;
 
       if (StrStartsWith("pending", sValue)) {
-         ArrayPushInt(closeTypes, OP_BUYLIMIT);
-         ArrayPushInt(closeTypes, OP_SELLLIMIT);
-         ArrayPushInt(closeTypes, OP_BUYSTOP);
-         ArrayPushInt(closeTypes, OP_SELLSTOP);
+         ArrayPushInt(closeTypes, OP_BUY_LIMIT);
+         ArrayPushInt(closeTypes, OP_SELL_LIMIT);
+         ArrayPushInt(closeTypes, OP_BUY_STOP);
+         ArrayPushInt(closeTypes, OP_SELL_STOP);
       }
       else if (sValue == "l"    )                 ArrayPushInt(closeTypes, OP_BUY);
       else if (sValue == "long" )                 ArrayPushInt(closeTypes, OP_BUY);
       else if (sValue == "s"    )                 ArrayPushInt(closeTypes, OP_SELL);
       else if (sValue == "short")                 ArrayPushInt(closeTypes, OP_SELL);
-      else if (sValue == "bl" || sValue == "b-l") ArrayPushInt(closeTypes, OP_BUYLIMIT);
-      else if (sValue == "bs" || sValue == "b-s") ArrayPushInt(closeTypes, OP_BUYSTOP);
-      else if (sValue == "sl" || sValue == "s-l") ArrayPushInt(closeTypes, OP_SELLLIMIT);
-      else if (sValue == "ss" || sValue == "s-s") ArrayPushInt(closeTypes, OP_SELLSTOP);
+      else if (sValue == "bl" || sValue == "b-l") ArrayPushInt(closeTypes, OP_BUY_LIMIT);
+      else if (sValue == "bs" || sValue == "b-s") ArrayPushInt(closeTypes, OP_BUY_STOP);
+      else if (sValue == "sl" || sValue == "s-l") ArrayPushInt(closeTypes, OP_SELL_LIMIT);
+      else if (sValue == "ss" || sValue == "s-s") ArrayPushInt(closeTypes, OP_SELL_STOP);
       else {
          int type = StrToOperationType(sValue);
-         if (type < OP_BUY || type > OP_SELLSTOP) return(catch("onInit(3)  invalid input parameter Close.OrderTypes: "+ DoubleQuoteStr(Close.OrderTypes), ERR_INVALID_INPUT_PARAMETER));
+         if (type < OP_BUY || type > OP_SELL_STOP) return(catch("onInit(3)  invalid input parameter Close.OrderTypes: "+ DoubleQuoteStr(Close.OrderTypes), ERR_INVALID_INPUT_PARAMETER));
          ArrayPushInt(closeTypes, type);
       }
    }
@@ -302,7 +302,7 @@ bool CollectTickets(int &pendingOrders[], int &openPositions[], int &hedgedLong[
 
    for (i=0; i < openOrders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;     // an open order was closed/deleted elsewhere
-      if (OrderType() > OP_SELLSTOP) continue;
+      if (OrderType() > OP_SELL_STOP) continue;
 
       bool close = true;
       if (close) close = (closeAllSymbols          || StringInArrayI(closeSymbols, OrderSymbol()));

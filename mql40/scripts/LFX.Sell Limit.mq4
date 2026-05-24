@@ -28,7 +28,7 @@ extern double StopLossPrice;
 #include <rsf/structs/LFXOrder.mqh>
 
 
-int limitType;                                                       // OP_SELLLIMIT | OP_SELLSTOP
+int limitType;                                                       // OP_SELL_LIMIT | OP_SELL_STOP
 
 
 /**
@@ -48,8 +48,8 @@ int onInit() {
    if (StrContains(Type, "*")) sValue = StrRightFrom(StrLeftTo(Type, "*"), "|", -1);
    else                           sValue = Type;
    sValue = StrReplace(StrToLower(sValue), " ", "");
-   if      (sValue=="selllimit" || sValue=="limitsell") limitType = OP_SELLLIMIT;
-   else if (sValue=="sellstop"  || sValue=="stopsell" ) limitType = OP_SELLSTOP;
+   if      (sValue=="selllimit" || sValue=="limitsell") limitType = OP_SELL_LIMIT;
+   else if (sValue=="sellstop"  || sValue=="stopsell" ) limitType = OP_SELL_STOP;
    else                                  return(HandleScriptError("onInit(2)", "Invalid parameter Type: \""+ Type +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // Units
@@ -105,7 +105,7 @@ int onStart() {
    bool executeNow;
 
    // (1) Sicherheitsabfrage
-   if ((limitType==OP_SELLLIMIT && LimitPrice <= Close[0]) || (limitType==OP_SELLSTOP && LimitPrice >= Close[0])) {
+   if ((limitType==OP_SELL_LIMIT && LimitPrice <= Close[0]) || (limitType==OP_SELL_STOP && LimitPrice >= Close[0])) {
       if (TakeProfitPrice && TakeProfitPrice >= Close[0]) return(HandleScriptError("onStart(1)", "Illegal parameter TakeProfitPrice: "+ NumberToStr(TakeProfitPrice, PriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Close[0], PriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
       if (StopLossPrice   && StopLossPrice   <= Close[0]) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice: "+ NumberToStr(StopLossPrice, PriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Close[0], PriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
 
