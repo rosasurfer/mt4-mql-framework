@@ -264,16 +264,43 @@ int onStart() {
  * @return bool - success status
  */
 bool CollectTickets(int &pendingOrders[], int &openPositions[], int &hedgedLong[], int &hedgedShort[]) {
-   // Don't cache the results. Order counters don't change if pending entry orders are executed.
+   // Processing a large number of orders (potentially a few hundred tickets) is not insignificant.
+   // To improve execution speed and reduce slippage, the results are cached.
+   static int lastAllPendingOrders=-1, lastOpenOrders=-1, lastClosedOrders=-1;
+   static int lastPendingOrders[], lastOpenPositions[], lastHedgedLong[], lastHedgedShort[];
+
    ArrayResize(pendingOrders, 0);
    ArrayResize(openPositions, 0);
    ArrayResize(hedgedLong,    0);
    ArrayResize(hedgedShort,   0);
 
-   int orders = OrdersTotal();
+   int allPendingOrders = 0;
+   int openOrders = OrdersTotal();
+   int closedOrders = OrdersHistoryTotal();
+
+   if (lastAllPendingOrders==-1 || (openOrders==lastOpenOrders && closedOrders==lastClosedOrders)) {
+      // get number of all pending orders on the server
+      for (int i=0; i < openOrders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;  // an open order was closed/deleted elsewhere
+         allPendingOrders += IsPendingOrderType(OrderType());
+      }
+   }
+
+   // return cached results if status is unchanged
+   if (allPendingOrders==lastAllPendingOrders && openOrders==lastOpenOrders && closedOrders==lastClosedOrders) {
+      if (ArraySize(lastPendingOrders) > 0) ArrayCopy(pendingOrders, lastPendingOrders);
+      if (ArraySize(lastOpenPositions) > 0) ArrayCopy(openPositions, lastOpenPositions);
+      if (ArraySize(lastHedgedLong   ) > 0) ArrayCopy(hedgedLong,    lastHedgedLong   );
+      if (ArraySize(lastHedgedShort  ) > 0) ArrayCopy(hedgedShort,   lastHedgedShort  );
+      return(!catch("CollectTickets(1)"));
+   }
+
+   // or refresh open tickets if status changed
+   if (lastAllPendingOrders != -1) logInfo("CollectTickets(2)  open orders changed, refreshing...");
+
    int sizeOfComments = ArraySize(closeComments);
 
-   for (int i=0; i < orders; i++) {
+   for (i=0; i < openOrders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;     // an open order was closed/deleted elsewhere
       if (OrderType() > OP_SELLSTOP) continue;
 
@@ -307,9 +334,17 @@ bool CollectTickets(int &pendingOrders[], int &openPositions[], int &hedgedLong[
          }
       }
    }
-
    SortTicketsChronological(hedgedLong);
    SortTicketsChronological(hedgedShort);
 
-   return(!catch("CollectTickets(1)"));
+   // cache results
+   lastAllPendingOrders = allPendingOrders;
+   lastOpenOrders       = openOrders;
+   lastClosedOrders     = closedOrders;
+   ArrayResize(lastPendingOrders, 0); if (ArraySize(pendingOrders) > 0) ArrayCopy(lastPendingOrders, pendingOrders);
+   ArrayResize(lastOpenPositions, 0); if (ArraySize(openPositions) > 0) ArrayCopy(lastOpenPositions, openPositions);
+   ArrayResize(lastHedgedLong,    0); if (ArraySize(hedgedLong   ) > 0) ArrayCopy(lastHedgedLong,    hedgedLong   );
+   ArrayResize(lastHedgedShort,   0); if (ArraySize(hedgedShort  ) > 0) ArrayCopy(lastHedgedShort,   hedgedShort  );
+
+   return(!catch("CollectTickets(3)"));
 }
