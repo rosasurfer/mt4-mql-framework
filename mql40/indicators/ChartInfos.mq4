@@ -1178,12 +1178,12 @@ bool UpdateSpread() {
       else            sSpread = DoubleToStr(spread/pUnit, Digits & 1);
 
       if (Symbol() == "BTCUSD") {
-         if      (spread >= 40.00) spreadColor = Red;
-         else if (spread >= 30.00) spreadColor = DarkOrange;
+         if      (spread > 40.00-HalfPoint) spreadColor = Red;
+         else if (spread > 30.00-HalfPoint) spreadColor = DarkOrange;
       }
       else if (Symbol() == "XAUUSD") {
-         if      (spread >= 0.40) spreadColor = Red;
-         else if (spread >= 0.20) spreadColor = DarkOrange;
+         if      (spread > 0.40-HalfPoint) spreadColor = Red;
+         else if (spread > 0.20-HalfPoint) spreadColor = DarkOrange;
       }
    }
 
