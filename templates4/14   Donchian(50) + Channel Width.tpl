@@ -1,5 +1,6 @@
 <!-- 
-Donchian Channel(50) + Donchian Channel(50) Width
+Donchian Channel(50)
+Donchian Channel(50) Width
 -->
 
 <chart>
@@ -151,10 +152,11 @@ window_num=1
 Periods=50
 </inputs>
 </expert>
-level_0=20
-level_1=200
-level_2=500
-level_3=1000
+level_0=10
+level_1=20
+level_2=200
+level_3=500
+level_4=1000
 show_data=1
 </indicator>
 </window>
