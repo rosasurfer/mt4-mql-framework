@@ -468,8 +468,8 @@ bool CloseOpenOrders(string symbol = "") {
    ArrayResize(positions, 0);
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;           // FALSE: an open order was closed/deleted in another thread
-      if (OrderType() > OP_SELLSTOP)                   continue;
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;           // an open order was closed/deleted elsewhere
+      if (OrderType() > OP_SELL_STOP)                  continue;
       if (symbol != "") {
          if (!StrCompareI(OrderSymbol(), symbol))      continue;
       }

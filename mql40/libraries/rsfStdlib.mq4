@@ -4952,11 +4952,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          // map terminal generated errors
          case ERR_INVALID_STOP:
             bool marketViolated = false;
-            if (!oe.StopDistance(oe))      marketViolated = true;
-            else if (type == OP_BUYSTOP)   marketViolated = LE(oe.OpenPrice(oe), oe.Ask(oe));
-            else if (type == OP_BUYLIMIT)  marketViolated = GE(oe.OpenPrice(oe), oe.Ask(oe));
-            else if (type == OP_SELLSTOP)  marketViolated = GE(oe.OpenPrice(oe), oe.Bid(oe));
-            else if (type == OP_SELLLIMIT) marketViolated = LE(oe.OpenPrice(oe), oe.Bid(oe));
+            if (!oe.StopDistance(oe))       marketViolated = true;
+            else if (type == OP_BUY_STOP)   marketViolated = LE(oe.OpenPrice(oe), oe.Ask(oe));
+            else if (type == OP_BUY_LIMIT)  marketViolated = GE(oe.OpenPrice(oe), oe.Ask(oe));
+            else if (type == OP_SELL_STOP)  marketViolated = GE(oe.OpenPrice(oe), oe.Bid(oe));
+            else if (type == OP_SELL_LIMIT) marketViolated = LE(oe.OpenPrice(oe), oe.Bid(oe));
             if (!marketViolated) {
                if (IsLogDebug()) logDebug("OrderSendEx(26)  translating returned ERR_INVALID_STOP => ERR_STOP_DISTANCE_VIOLATED");
                error = oe.setError(oe, ERR_STOP_DISTANCE_VIOLATED);

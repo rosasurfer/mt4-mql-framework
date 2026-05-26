@@ -1173,13 +1173,17 @@ bool UpdateSpread() {
    color spreadColor = SlateGray;
                                                             // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
    if (_Bid > 0) {                                          // skip if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
-      double spread = NormalizeDouble(_Ask - _Bid, Digits);
+      double spread = NormalizeDouble(Ask - Bid, Digits);
       if (pUnit == 1) sSpread = DoubleToStr(spread, 2);
-      else            sSpread = DoubleToStr(spread/pUnit, (Digits & 1));
+      else            sSpread = DoubleToStr(spread/pUnit, Digits & 1);
 
       if (Symbol() == "BTCUSD") {
-         if      (spread >= 40) spreadColor = Red;
-         else if (spread >= 30) spreadColor = DarkOrange;
+         if      (spread > 40.00-HalfPoint) spreadColor = Red;
+         else if (spread > 30.00-HalfPoint) spreadColor = DarkOrange;
+      }
+      else if (Symbol() == "XAUUSD") {
+         if      (spread > 0.40-HalfPoint) spreadColor = Red;
+         else if (spread > 0.20-HalfPoint) spreadColor = DarkOrange;
       }
    }
 

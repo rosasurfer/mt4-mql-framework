@@ -5375,10 +5375,10 @@ bool IsOrderType(int value) {
    switch (value) {
       case OP_BUY:
       case OP_SELL:
-      case OP_BUYLIMIT:
-      case OP_SELLLIMIT:
-      case OP_BUYSTOP:
-      case OP_SELLSTOP: return(true);
+      case OP_BUY_LIMIT:
+      case OP_SELL_LIMIT:
+      case OP_BUY_STOP:
+      case OP_SELL_STOP: return(true);
    }
    return(false);
 }
@@ -5393,10 +5393,10 @@ bool IsOrderType(int value) {
  */
 bool IsPendingOrderType(int value) {
    switch (value) {
-      case OP_BUYLIMIT:
-      case OP_SELLLIMIT:
-      case OP_BUYSTOP:
-      case OP_SELLSTOP: return(true);
+      case OP_BUY_LIMIT:
+      case OP_SELL_LIMIT:
+      case OP_BUY_STOP:
+      case OP_SELL_STOP: return(true);
    }
    return(false);
 }
@@ -5412,8 +5412,8 @@ bool IsPendingOrderType(int value) {
 bool IsLongOrderType(int value) {
    switch (value) {
       case OP_BUY:
-      case OP_BUYLIMIT:
-      case OP_BUYSTOP: return(true);
+      case OP_BUY_LIMIT:
+      case OP_BUY_STOP: return(true);
    }
    return(false);
 }
@@ -5429,8 +5429,8 @@ bool IsLongOrderType(int value) {
 bool IsShortOrderType(int value) {
    switch (value) {
       case OP_SELL:
-      case OP_SELLLIMIT:
-      case OP_SELLSTOP: return(true);
+      case OP_SELL_LIMIT:
+      case OP_SELL_STOP: return(true);
    }
    return(false);
 }
@@ -5444,7 +5444,7 @@ bool IsShortOrderType(int value) {
  * @return bool
  */
 bool IsStopOrderType(int value) {
-   return(value==OP_BUYSTOP || value==OP_SELLSTOP);
+   return(value==OP_BUY_STOP || value==OP_SELL_STOP);
 }
 
 
@@ -5456,7 +5456,7 @@ bool IsStopOrderType(int value) {
  * @return bool
  */
 bool IsLimitOrderType(int value) {
-   return(value==OP_BUYLIMIT || value==OP_SELLLIMIT);
+   return(value==OP_BUY_LIMIT || value==OP_SELL_LIMIT);
 }
 
 
@@ -5535,54 +5535,58 @@ int StrToOperationType(string value) {
    if (StringLen(str) == 1) {
       switch (StrToInteger(str)) {
          case OP_BUY:
-            if (str == "0") return(OP_BUY);
+            if (str == "0")  return(OP_BUY);
             break;                                    // OP_BUY = 0: Sonderfall
-         case OP_SELL:      return(OP_SELL);
-         case OP_BUYLIMIT:  return(OP_BUYLIMIT);
-         case OP_SELLLIMIT: return(OP_SELLLIMIT);
-         case OP_BUYSTOP:   return(OP_BUYSTOP);
-         case OP_SELLSTOP:  return(OP_SELLSTOP);
-         case OP_BALANCE:   return(OP_BALANCE);
-         case OP_CREDIT:    return(OP_CREDIT);
+         case OP_SELL:       return(OP_SELL);
+         case OP_BUY_LIMIT:  return(OP_BUY_LIMIT);
+         case OP_SELL_LIMIT: return(OP_SELL_LIMIT);
+         case OP_BUY_STOP:   return(OP_BUY_STOP);
+         case OP_SELL_STOP:  return(OP_SELL_STOP);
+         case OP_BALANCE:    return(OP_BALANCE);
+         case OP_CREDIT:     return(OP_CREDIT);
       }
    }
    else {
       if (StrStartsWith(str, "op_")) {
          str = StrSubstr(str, 3);
       }
-      if (str == "buy"       ) return(OP_BUY      );
-      if (str == "sell"      ) return(OP_SELL     );
+      if (str == "buy"       ) return(OP_BUY);
+      if (str == "sell"      ) return(OP_SELL);
 
-      if (str == "buylimit"  ) return(OP_BUYLIMIT );
-      if (str == "buy-limit" ) return(OP_BUYLIMIT );
-      if (str == "buy limit" ) return(OP_BUYLIMIT );
-      if (str == "limitbuy"  ) return(OP_BUYLIMIT );
-      if (str == "limit-buy" ) return(OP_BUYLIMIT );
-      if (str == "limit buy" ) return(OP_BUYLIMIT );
+      if (str == "buylimit"  ) return(OP_BUY_LIMIT);
+      if (str == "buy-limit" ) return(OP_BUY_LIMIT);
+      if (str == "buy_limit" ) return(OP_BUY_LIMIT);
+      if (str == "buy limit" ) return(OP_BUY_LIMIT);
+      if (str == "limitbuy"  ) return(OP_BUY_LIMIT);
+      if (str == "limit-buy" ) return(OP_BUY_LIMIT);
+      if (str == "limit buy" ) return(OP_BUY_LIMIT);
 
-      if (str == "selllimit" ) return(OP_SELLLIMIT);
-      if (str == "sell-limit") return(OP_SELLLIMIT);
-      if (str == "sell limit") return(OP_SELLLIMIT);
-      if (str == "limitsell" ) return(OP_SELLLIMIT);
-      if (str == "limit-sell") return(OP_SELLLIMIT);
-      if (str == "limit sell") return(OP_SELLLIMIT);
+      if (str == "selllimit" ) return(OP_SELL_LIMIT);
+      if (str == "sell-limit") return(OP_SELL_LIMIT);
+      if (str == "sell_limit") return(OP_SELL_LIMIT);
+      if (str == "sell limit") return(OP_SELL_LIMIT);
+      if (str == "limitsell" ) return(OP_SELL_LIMIT);
+      if (str == "limit-sell") return(OP_SELL_LIMIT);
+      if (str == "limit sell") return(OP_SELL_LIMIT);
 
-      if (str == "buystop"   ) return(OP_BUYSTOP  );
-      if (str == "buy-stop"  ) return(OP_BUYSTOP  );
-      if (str == "buy stop"  ) return(OP_BUYSTOP  );
-      if (str == "stopbuy"   ) return(OP_BUYSTOP  );
-      if (str == "stop-buy"  ) return(OP_BUYSTOP  );
-      if (str == "stop buy"  ) return(OP_BUYSTOP  );
+      if (str == "buystop"   ) return(OP_BUY_STOP);
+      if (str == "buy-stop"  ) return(OP_BUY_STOP);
+      if (str == "buy_stop"  ) return(OP_BUY_STOP);
+      if (str == "buy stop"  ) return(OP_BUY_STOP);
+      if (str == "stopbuy"   ) return(OP_BUY_STOP);
+      if (str == "stop-buy"  ) return(OP_BUY_STOP);
+      if (str == "stop buy"  ) return(OP_BUY_STOP);
 
-      if (str == "sellstop"  ) return(OP_SELLSTOP );
-      if (str == "sell-stop" ) return(OP_SELLSTOP );
-      if (str == "sell stop" ) return(OP_SELLSTOP );
-      if (str == "stopsell"  ) return(OP_SELLSTOP );
-      if (str == "stop-sell" ) return(OP_SELLSTOP );
-      if (str == "stop sell" ) return(OP_SELLSTOP );
+      if (str == "sellstop"  ) return(OP_SELL_STOP);
+      if (str == "sell-stop" ) return(OP_SELL_STOP);
+      if (str == "sell_stop" ) return(OP_SELL_STOP);
+      if (str == "sell stop" ) return(OP_SELL_STOP);
+      if (str == "stopsell"  ) return(OP_SELL_STOP);
+      if (str == "stop-sell" ) return(OP_SELL_STOP);
+      if (str == "stop sell" ) return(OP_SELL_STOP);
 
-      if (str == "balance"   ) return(OP_BALANCE  );
-      if (str == "credit"    ) return(OP_CREDIT   );
+      if (str == "balance"   ) return(OP_BALANCE);
+      if (str == "credit"    ) return(OP_CREDIT);
    }
 
    if (IsLogDebug()) logDebug("StrToOperationType(1)  invalid parameter value: \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);

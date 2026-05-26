@@ -265,10 +265,10 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
    // (1) fehlerhafte Orders und bereits getriggerte Limits (auf Ausführungsbestätigung wartende Order) abfangen
    int type = los.Type(orders, i);
    switch (type) {
-      case OP_BUYLIMIT :
-      case OP_BUYSTOP  :
-      case OP_SELLLIMIT:
-      case OP_SELLSTOP :
+      case OP_BUY_LIMIT :
+      case OP_BUY_STOP  :
+      case OP_SELL_LIMIT:
+      case OP_SELL_STOP :
          if (los.IsOpenError    (orders, i))        return(NO_LIMIT_TRIGGERED);
          if (los.OpenTriggerTime(orders, i) != 0)   return(OPEN_LIMIT_TRIGGERED);
          break;
@@ -291,16 +291,16 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
    // (2) Open-Limits prüfen
    int digits = los.Digits(orders, i);
    switch (type) {
-      case OP_BUYLIMIT:
-      case OP_SELLSTOP:
+      case OP_BUY_LIMIT:
+      case OP_SELL_STOP:
          if (ask!=NULL) /*&&*/ if (LE(ask, los.OpenPrice(orders, i), digits)) {
             los.setClosePrice(orders, i, ask);
             return(OPEN_LIMIT_TRIGGERED);
          }
          return(NO_LIMIT_TRIGGERED);
 
-      case OP_SELLLIMIT:
-      case OP_BUYSTOP  :
+      case OP_SELL_LIMIT:
+      case OP_BUY_STOP  :
          if (bid!=NULL) /*&&*/ if (GE(bid, los.OpenPrice(orders, i), digits)) {
             los.setClosePrice(orders, i, bid);
             return(OPEN_LIMIT_TRIGGERED);
@@ -753,7 +753,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
  * @param  int    fSelection  - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
  *                              OF_OPEN            - gibt alle offenen Tickets zurück:                   Pending-Orders und offene Positionen, analog zu OrderSelect(MODE_TRADES)
  *                              OF_CLOSED          - gibt alle geschlossenen Tickets zurück:             Trade-History, analog zu OrderSelect(MODE_HISTORY)
- *                              OF_PENDINGORDER    - gibt alle Orders mit aktivem OpenLimit zurück:      OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP
+ *                              OF_PENDINGORDER    - gibt alle Orders mit aktivem OpenLimit zurück:      OP_BUY_LIMIT, OP_BUY_STOP, OP_SELL_LIMIT, OP_SELL_STOP
  *                              OF_OPENPOSITION    - gibt alle offenen Positionen zurück
  *                              OF_PENDINGPOSITION - gibt alle Positionen mit aktivem CloseLimit zurück: StopLoss, TakeProfit
  * @param  LFX_ORDER orders[] - LFX_ORDER-Array zur Aufnahme der gelesenen Daten

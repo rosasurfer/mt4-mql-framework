@@ -1,5 +1,5 @@
 /**
- * MT4 struct SYMBOL_GROUP (Dateiformat "symgroups.raw")
+ * MT4 struct SYMBOL_GROUP (Dateiformat "<data-directory>/history/<trade-server>/symgroups.raw")
  *
  * Die Größe der Datei ist fix und enthält Platz für exakt 32 Gruppen. Einzelne Gruppen können undefiniert sein.
  *
