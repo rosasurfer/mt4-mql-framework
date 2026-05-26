@@ -101,7 +101,7 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-TimeWindow=15:00-15:30
+TimeWindow=16:00-16:30
 NumberOfBrackets=3
 BracketsColor=9639167   ; DeepPink
 AutoConfiguration=0
@@ -118,8 +118,8 @@ name=Brackets
 flags=339
 window_num=0
 <inputs>
-TimeWindow=16:00-16:30
-NumberOfBrackets=3
+TimeWindow=16:30-17:00
+NumberOfBrackets=6
 BracketsColor=16711680  ; Blue
 AutoConfiguration=0
 </inputs>
