@@ -9,6 +9,7 @@
  *  • Periods:                     Look-back periods of the Donchian Channel.
  *  • Periods.Step:                Option to control parameter "Period" via keyboard. If non-zero it defines the step size of
  *                                 the parameter stepper. If 0 (zero) parameter stepping is disabled.
+ *  • ShowChannel:                 Whether to display the Donchian Channel.
  *  • Channel.UpperColor:          Color of the upper Donchian Channel band.
  *  • Channel.LowerColor:          Color of the lower Donchian Channel band.
  *
@@ -49,6 +50,7 @@ extern string ___a__________________________ = "=== Donchian settings ===";
 extern int    Periods                        = 200;                        // look-back period
 extern int    Periods.Step                   = 0;                          // step size for parameter stepping
 
+extern bool   ShowChannel                    = true;                       // whether to display the channel
 extern color  Channel.UpperColor             = Blue;
 extern color  Channel.LowerColor             = Red;
 
@@ -192,6 +194,8 @@ int onInit() {
    // Periods.Step
    if (AutoConfiguration) Periods.Step = GetConfigInt(indicator, "Periods.Step", Periods.Step);
    if (Periods.Step < 0) return(catch("onInit(2)  invalid input parameter Periods.Step: "+ Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // ShowChannel
+   if (AutoConfiguration) ShowChannel = GetConfigBool(indicator, "ShowChannel", ShowChannel);
    // ShowReversals
    if (AutoConfiguration) ShowReversals = GetConfigString(indicator, "ShowReversals", ShowReversals);
    if (!ValidateShowReversals(ShowReversals, reversals.show, reversals.countFrom)) {
@@ -1140,8 +1144,8 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorShortName(shortName);
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_UPPER_BAND,      upperBand    ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      shortName +" upper band");
-   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand    ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      shortName +" lower band");
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand    ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      shortName +" upper band"); if (!ShowChannel) SetIndexLabel(MODE_UPPER_BAND, NULL);
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand    ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      shortName +" lower band"); if (!ShowChannel) SetIndexLabel(MODE_LOWER_BAND, NULL);
    SetIndexBuffer(MODE_REVERSAL_LONG,   upperCross   ); SetIndexEmptyValue(MODE_REVERSAL_LONG,   0); SetIndexLabel(MODE_REVERSAL_LONG,   shortName +" reversal up");
    SetIndexBuffer(MODE_REVERSAL_SHORT,  lowerCross   ); SetIndexEmptyValue(MODE_REVERSAL_SHORT,  0); SetIndexLabel(MODE_REVERSAL_SHORT,  shortName +" reversal down");
    SetIndexBuffer(MODE_REVERSAL_DIMMED, dimmed       ); SetIndexEmptyValue(MODE_REVERSAL_DIMMED, 0); SetIndexLabel(MODE_REVERSAL_DIMMED, NULL);
@@ -1149,10 +1153,11 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(MODE_REVERSAL_COUNT,  reversalCount); SetIndexEmptyValue(MODE_REVERSAL_COUNT,  0); SetIndexLabel(MODE_REVERSAL_COUNT,  shortName +" reversal count");
    IndicatorDigits(Digits);
 
-   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.UpperColor);
-   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.LowerColor);
+   int drawType = ifInt(ShowChannel, DRAW_LINE, DRAW_NONE);
+   SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, Channel.UpperColor);
+   SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, Channel.LowerColor);
 
-   int drawType = ifInt(reversals.show && Reversal.Width, DRAW_ARROW, DRAW_NONE);
+   drawType = ifInt(reversals.show && Reversal.Width, DRAW_ARROW, DRAW_NONE);
    int drawWidth = Reversal.Width - 1;                  // minus 1 to map valid symbol size "0" to a positive user value
    SetIndexStyle(MODE_REVERSAL_LONG,   drawType, EMPTY, drawWidth, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_REVERSAL_LONG,   reversals.symbol);
    SetIndexStyle(MODE_REVERSAL_SHORT,  drawType, EMPTY, drawWidth, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_REVERSAL_SHORT,  reversals.symbol);
@@ -1248,6 +1253,7 @@ string InputsToStr() {
    return(StringConcatenate("Periods=",                     Periods                                     +";"+ NL,
                             "Periods.Step=",                Periods.Step                                +";"+ NL,
 
+                            "ShowChannel=",                 BoolToStr(ShowChannel)                      +";"+ NL,
                             "Channel.UpperColor=",          ColorToStr(Channel.UpperColor)              +";"+ NL,
                             "Channel.LowerColor=",          ColorToStr(Channel.LowerColor)              +";"+ NL,
 

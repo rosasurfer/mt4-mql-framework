@@ -27,6 +27,7 @@ double icDonchianChannel(int timeframe, int periods, int iBuffer, int iBar) {
                           periods,                    // int    Periods
                           0,                          // int    Periods.Step
 
+                          false,                      // bool   ShowChannel
                           CLR_NONE,                   // color  Channel.UpperColor
                           CLR_NONE,                   // color  Channel.LowerColor
 
