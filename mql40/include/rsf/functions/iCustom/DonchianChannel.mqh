@@ -1,10 +1,11 @@
 
 #define Donchian.MODE_UPPER_BAND     0    // upper channel band
 #define Donchian.MODE_LOWER_BAND     1    // lower channel band
-#define Donchian.MODE_REVERSAL_LONG  2    // all long reversals
-#define Donchian.MODE_REVERSAL_SHORT 3    // all short reversals
-#define Donchian.MODE_TREND          5    // int: direction and length of the reversals
-#define Donchian.MODE_REVERSAL_COUNT 6    // int: number of consecutive winning/losing reversals
+#define Donchian.MODE_MID_LINE       2    // mid channel line
+#define Donchian.MODE_REVERSAL_LONG  3    // all long reversals
+#define Donchian.MODE_REVERSAL_SHORT 4    // all short reversals
+#define Donchian.MODE_TREND          6    // int: direction and length of the reversals
+#define Donchian.MODE_REVERSAL_COUNT 7    // int: number of consecutive winning/losing reversals
 
 
 /**
@@ -27,8 +28,10 @@ double icDonchianChannel(int timeframe, int periods, int iBuffer, int iBar) {
                           periods,                    // int    Periods
                           0,                          // int    Periods.Step
 
+                          false,                      // bool   ShowChannel
                           CLR_NONE,                   // color  Channel.UpperColor
                           CLR_NONE,                   // color  Channel.LowerColor
+                          CLR_NONE,                   // color  Channel.MidColor
 
                           "on",                       // string ShowReversals
                           "dot",                      // string Reversal.Symbol
