@@ -9,8 +9,10 @@
  *  • Periods:                     Look-back periods of the Donchian Channel.
  *  • Periods.Step:                Option to control parameter "Period" via keyboard. If non-zero it defines the step size of
  *                                 the parameter stepper. If 0 (zero) parameter stepping is disabled.
+ *  • ShowChannel:                 Whether to display the Donchian Channel.
  *  • Channel.UpperColor:          Color of the upper Donchian Channel band.
  *  • Channel.LowerColor:          Color of the lower Donchian Channel band.
+ *  • Channel.MidColor:            Color of the mid channel line.
  *
  *  • ShowReversals:               Whether to display Donchian Channel reversals (may contain filter conditions).
  *  • Reversal.Symbol:             Graphic symbol used for Donchian Channel reversals.
@@ -49,8 +51,10 @@ extern string ___a__________________________ = "=== Donchian settings ===";
 extern int    Periods                        = 200;                        // look-back period
 extern int    Periods.Step                   = 0;                          // step size for parameter stepping
 
+extern bool   ShowChannel                    = true;                       // whether to display the channel
 extern color  Channel.UpperColor             = Blue;
 extern color  Channel.LowerColor             = Red;
+extern color  Channel.MidColor               = CLR_NONE;
 
 extern string ShowReversals                  = "on* | off | +N | -N";      // which channel reversals to display
 extern string Reversal.Symbol                = "dot | thin-ring | ring | thick-ring*";
@@ -90,40 +94,45 @@ extern string TrackReversalBalance.Symbol    = "(default)";                // cu
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers   7                                // buffers managed by the terminal
+#property indicator_buffers   8                                // buffers managed by the terminal
 int       framework_buffers = 4;                               // buffers managed by the framework
 
 
 // indicator buffer ids
 #define MODE_UPPER_BAND          Donchian.MODE_UPPER_BAND      // 0 upper channel band
 #define MODE_LOWER_BAND          Donchian.MODE_LOWER_BAND      // 1 lower channel band
-#define MODE_REVERSAL_LONG       Donchian.MODE_REVERSAL_LONG   // 2 long reversals
-#define MODE_REVERSAL_SHORT      Donchian.MODE_REVERSAL_SHORT  // 3 short reversals
-#define MODE_REVERSAL_DIMMED     4                             // 4 filtered reversals (dimmed representation)
-#define MODE_TREND               Donchian.MODE_TREND           // 5 int: direction and length of channel reversals
-#define MODE_REVERSAL_COUNT      Donchian.MODE_REVERSAL_COUNT  // 6 int: number of consecutive winning/losing reversals
-#define MODE_REVERSAL_BALANCE_O  7                             // reversal balance in pUnits: positive/negative or EMPTY_VALUE
-#define MODE_REVERSAL_BALANCE_H  8                             // ...
-#define MODE_REVERSAL_BALANCE_L  9                             // ...
-#define MODE_REVERSAL_BALANCE_C 10                             // ...
+#define MODE_MID_LINE            Donchian.MODE_MID_LINE        // 2 mid channel line
+#define MODE_REVERSAL_LONG       Donchian.MODE_REVERSAL_LONG   // 3 long reversals
+#define MODE_REVERSAL_SHORT      Donchian.MODE_REVERSAL_SHORT  // 4 short reversals
+#define MODE_REVERSAL_DIMMED     5                             // 5 filtered reversals (dimmed representation)
+#define MODE_TREND               Donchian.MODE_TREND           // 6 int: direction and length of channel reversals
+#define MODE_REVERSAL_COUNT      Donchian.MODE_REVERSAL_COUNT  // 7 int: number of consecutive winning/losing reversals
+#define MODE_REVERSAL_BALANCE_O  8                             // reversal balance in pUnits: positive/negative or EMPTY_VALUE
+#define MODE_REVERSAL_BALANCE_H  9                             // ...
+#define MODE_REVERSAL_BALANCE_L 10                             // ...
+#define MODE_REVERSAL_BALANCE_C 11                             // ...
 
 #property indicator_color1 Blue              // upper channel band
 #property indicator_style1 STYLE_DOT         //
 #property indicator_color2 Red               // lower channel band
 #property indicator_style2 STYLE_DOT         //
 
-#property indicator_color3 indicator_color1  // long reversals
-#property indicator_width3 0                 //
-#property indicator_color4 indicator_color2  // short reversals
-#property indicator_width4 0                 //
-#property indicator_color5 DarkGray          // filtered (dimmed) reversals
-#property indicator_width5 0                 //
+#property indicator_color3 CLR_NONE          // mid channel line
+#property indicator_style3 STYLE_DOT         //
 
-#property indicator_color6 CLR_NONE
+#property indicator_color4 indicator_color1  // long reversals
+#property indicator_width4 0                 //
+#property indicator_color5 indicator_color2  // short reversals
+#property indicator_width5 0                 //
+#property indicator_color6 DarkGray          // filtered (dimmed) reversals
+#property indicator_width6 0                 //
+
 #property indicator_color7 CLR_NONE
+#property indicator_color8 CLR_NONE
 
 double   upperBand        [];
 double   lowerBand        [];
+double   midLine          [];
 double   upperCross       [];
 double   lowerCross       [];
 double   dimmed           [];                // filtered (dimmed) reversals
@@ -192,6 +201,8 @@ int onInit() {
    // Periods.Step
    if (AutoConfiguration) Periods.Step = GetConfigInt(indicator, "Periods.Step", Periods.Step);
    if (Periods.Step < 0) return(catch("onInit(2)  invalid input parameter Periods.Step: "+ Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // ShowChannel
+   if (AutoConfiguration) ShowChannel = GetConfigBool(indicator, "ShowChannel", ShowChannel);
    // ShowReversals
    if (AutoConfiguration) ShowReversals = GetConfigString(indicator, "ShowReversals", ShowReversals);
    if (!ValidateShowReversals(ShowReversals, reversals.show, reversals.countFrom)) {
@@ -217,9 +228,11 @@ int onInit() {
    // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Channel.UpperColor = GetConfigColor(indicator, "Channel.UpperColor", Channel.UpperColor);
    if (AutoConfiguration) Channel.LowerColor = GetConfigColor(indicator, "Channel.LowerColor", Channel.LowerColor);
+   if (AutoConfiguration) Channel.MidColor   = GetConfigColor(indicator, "Channel.MidColor",   Channel.MidColor);
    if (AutoConfiguration) Reversal.Color     = GetConfigColor(indicator, "Reversal.Color",     Reversal.Color);
    if (Channel.UpperColor == 0xFF000000) Channel.UpperColor = CLR_NONE;
    if (Channel.LowerColor == 0xFF000000) Channel.LowerColor = CLR_NONE;
+   if (Channel.MidColor   == 0xFF000000) Channel.MidColor   = CLR_NONE;
    if (Reversal.Color     == 0xFF000000) Reversal.Color     = CLR_NONE;
    // ShowChartLegend
    if (AutoConfiguration) ShowChartLegend = GetConfigBool(indicator, "ShowChartLegend", ShowChartLegend);
@@ -326,6 +339,7 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(upperBand,         0);
       ArrayInitialize(lowerBand,         0);
+      ArrayInitialize(midLine,           0);
       ArrayInitialize(upperCross,        0);
       ArrayInitialize(lowerCross,        0);
       ArrayInitialize(dimmed,            0);
@@ -345,6 +359,7 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(upperBand,         Bars, ShiftedBars, 0);
       ShiftDoubleIndicatorBuffer(lowerBand,         Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(midLine,           Bars, ShiftedBars, 0);
       ShiftDoubleIndicatorBuffer(upperCross,        Bars, ShiftedBars, 0);
       ShiftDoubleIndicatorBuffer(lowerCross,        Bars, ShiftedBars, 0);
       ShiftDoubleIndicatorBuffer(dimmed,            Bars, ShiftedBars, 0);
@@ -369,6 +384,7 @@ int onTick() {
       // reset the bar to update
       upperBand        [bar] = 0;
       lowerBand        [bar] = 0;
+      midLine          [bar] = 0;
       upperCross       [bar] = 0;
       lowerCross       [bar] = 0;
       dimmed           [bar] = 0;
@@ -388,6 +404,7 @@ int onTick() {
          upperBand[0] = MathMax(upperBand[1], High[0]);
          lowerBand[0] = MathMin(lowerBand[1],  Low[0]);
       }
+      midLine[bar] = (upperBand[bar] + lowerBand[bar]) / 2;
 
       // recalculate channel crossings
       if (upperBand[bar] > upperBand[bar+1] && upperBand[bar+1]) {
@@ -1140,8 +1157,9 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorShortName(shortName);
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_UPPER_BAND,      upperBand    ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      shortName +" upper band");
-   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand    ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      shortName +" lower band");
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand    ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      shortName +" upper band"); if (!ShowChannel)                 SetIndexLabel(MODE_UPPER_BAND, NULL);
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand    ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      shortName +" lower band"); if (!ShowChannel)                 SetIndexLabel(MODE_LOWER_BAND, NULL);
+   SetIndexBuffer(MODE_MID_LINE,        midLine      ); SetIndexEmptyValue(MODE_MID_LINE,        0); SetIndexLabel(MODE_MID_LINE,        shortName +" mid line");   if (Channel.MidColor == CLR_NONE) SetIndexLabel(MODE_MID_LINE,   NULL);
    SetIndexBuffer(MODE_REVERSAL_LONG,   upperCross   ); SetIndexEmptyValue(MODE_REVERSAL_LONG,   0); SetIndexLabel(MODE_REVERSAL_LONG,   shortName +" reversal up");
    SetIndexBuffer(MODE_REVERSAL_SHORT,  lowerCross   ); SetIndexEmptyValue(MODE_REVERSAL_SHORT,  0); SetIndexLabel(MODE_REVERSAL_SHORT,  shortName +" reversal down");
    SetIndexBuffer(MODE_REVERSAL_DIMMED, dimmed       ); SetIndexEmptyValue(MODE_REVERSAL_DIMMED, 0); SetIndexLabel(MODE_REVERSAL_DIMMED, NULL);
@@ -1149,14 +1167,16 @@ bool SetIndicatorOptions(bool redraw = false) {
    SetIndexBuffer(MODE_REVERSAL_COUNT,  reversalCount); SetIndexEmptyValue(MODE_REVERSAL_COUNT,  0); SetIndexLabel(MODE_REVERSAL_COUNT,  shortName +" reversal count");
    IndicatorDigits(Digits);
 
-   SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.UpperColor);
-   SetIndexStyle(MODE_LOWER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.LowerColor);
+   int drawType = ifInt(ShowChannel, DRAW_LINE, DRAW_NONE);
+   SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, Channel.UpperColor);
+   SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, Channel.LowerColor);
+   SetIndexStyle(MODE_MID_LINE,  DRAW_LINE, EMPTY, EMPTY, Channel.MidColor);
 
-   int drawType = ifInt(reversals.show && Reversal.Width, DRAW_ARROW, DRAW_NONE);
+   drawType = ifInt(reversals.show && Reversal.Width, DRAW_ARROW, DRAW_NONE);
    int drawWidth = Reversal.Width - 1;                  // minus 1 to map valid symbol size "0" to a positive user value
    SetIndexStyle(MODE_REVERSAL_LONG,   drawType, EMPTY, drawWidth, colorOr(Reversal.Color, Channel.UpperColor)); SetIndexArrow(MODE_REVERSAL_LONG,   reversals.symbol);
    SetIndexStyle(MODE_REVERSAL_SHORT,  drawType, EMPTY, drawWidth, colorOr(Reversal.Color, Channel.LowerColor)); SetIndexArrow(MODE_REVERSAL_SHORT,  reversals.symbol);
-   SetIndexStyle(MODE_REVERSAL_DIMMED, drawType, EMPTY, drawWidth, indicator_color5);                            SetIndexArrow(MODE_REVERSAL_DIMMED, reversals.symbol);
+   SetIndexStyle(MODE_REVERSAL_DIMMED, drawType, EMPTY, drawWidth, indicator_color6);                            SetIndexArrow(MODE_REVERSAL_DIMMED, reversals.symbol);
 
    SetIndexStyle(MODE_TREND,          DRAW_NONE);
    SetIndexStyle(MODE_REVERSAL_COUNT, DRAW_NONE);
@@ -1248,8 +1268,10 @@ string InputsToStr() {
    return(StringConcatenate("Periods=",                     Periods                                     +";"+ NL,
                             "Periods.Step=",                Periods.Step                                +";"+ NL,
 
+                            "ShowChannel=",                 BoolToStr(ShowChannel)                      +";"+ NL,
                             "Channel.UpperColor=",          ColorToStr(Channel.UpperColor)              +";"+ NL,
                             "Channel.LowerColor=",          ColorToStr(Channel.LowerColor)              +";"+ NL,
+                            "Channel.MidColor=",            ColorToStr(Channel.MidColor)                +";"+ NL,
 
                             "ShowReversals=",               DoubleQuoteStr(ShowReversals)               +";"+ NL,
                             "Reversal.Symbol=",             DoubleQuoteStr(Reversal.Symbol)             +";"+ NL,

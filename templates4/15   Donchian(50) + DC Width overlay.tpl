@@ -124,6 +124,7 @@ flags=339
 window_num=0
 <inputs>
 Periods=50
+ShowChannel=1
 Channel.UpperColor=16711680
 Channel.LowerColor=255
 ShowReversals=on* | off | +N | -N
@@ -135,6 +136,7 @@ Sound.onChannelWidening=0
 </expert>
 style_0=2
 style_1=2
+style_2=2
 show_data=1
 </indicator>
 
