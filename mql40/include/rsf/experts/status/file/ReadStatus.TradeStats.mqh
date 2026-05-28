@@ -17,8 +17,8 @@ bool ReadStatus.TradeStats(string file) {
    stats[METRIC_NET_MONEY][S_MAX_ABS_DRAWDOWN] = GetIniDouble(file, section, "MaxAbsDrawdown");             // double maxAbsDrawdown = -11.23
    stats[METRIC_NET_MONEY][S_MAX_REL_DRAWDOWN] = GetIniDouble(file, section, "MaxRelDrawdown");             // double maxRelDrawdown = -11.23
 
-   // [Stats: net in punits]
-   section = "Stats: net in "+ spUnit;
+   // [Stats: net in pUnits]
+   section = "Stats: net in pUnits";
    stats[METRIC_NET_UNITS][S_OPEN_PROFIT     ] = GetIniDouble(file, section, "OpenProfit"    ) * pUnit;     // double openProfit     = 1234.5
    stats[METRIC_NET_UNITS][S_CLOSED_PROFIT   ] = GetIniDouble(file, section, "ClosedProfit"  ) * pUnit;     // double closedProfit   = -2345.6
    stats[METRIC_NET_UNITS][S_TOTAL_PROFIT    ] = GetIniDouble(file, section, "TotalProfit"   ) * pUnit;     // double totalProfit    = 12345.6
@@ -26,8 +26,8 @@ bool ReadStatus.TradeStats(string file) {
    stats[METRIC_NET_UNITS][S_MAX_ABS_DRAWDOWN] = GetIniDouble(file, section, "MaxAbsDrawdown") * pUnit;     // double maxAbsDrawdown = -2345.6
    stats[METRIC_NET_UNITS][S_MAX_REL_DRAWDOWN] = GetIniDouble(file, section, "MaxRelDrawdown") * pUnit;     // double maxRelDrawdown = -2345.6
 
-   // [Stats: signal in punits]
-   section = "Stats: signal in "+ spUnit;
+   // [Stats: signal in pUnits]
+   section = "Stats: signal in pUnits";
    stats[METRIC_SIG_UNITS][S_OPEN_PROFIT     ] = GetIniDouble(file, section, "OpenProfit"    ) * pUnit;     // double openProfit     = 1234.5
    stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT   ] = GetIniDouble(file, section, "ClosedProfit"  ) * pUnit;     // double closedProfit   = -2345.6
    stats[METRIC_SIG_UNITS][S_TOTAL_PROFIT    ] = GetIniDouble(file, section, "TotalProfit"   ) * pUnit;     // double totalProfit    = 12345.6

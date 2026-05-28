@@ -761,7 +761,7 @@ bool StartTrading(double signal[]) {
    open.netProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask) + (open.swapM + open.commissionM)/PointValue(open.lots), Digits);
    open.runupP       = NormalizeDouble(ifDouble(type==OP_BUY, Bid-open.price, open.price-Ask), Digits);
    open.rundownP     = open.runupP;
-   open.sigProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, _Bid-open.priceSig, open.priceSig-_Bid), Digits);
+   open.sigProfitP   = NormalizeDouble(ifDouble(type==OP_BUY, Bid-open.priceSig, open.priceSig-Bid), Digits);
    open.sigRunupP    = open.sigProfitP;
    open.sigRundownP  = open.sigRunupP;
 
@@ -1113,9 +1113,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "Entry.onChannelWidening",    /*bool    */ Entry.onChannelWidening);
    WriteIniString(file, section, "EA.Recorder",                /*string  */ EA.Recorder + separator);
 
-   // trade stats
-   if (!SaveStatus.TradeStats(file, fileExists)) return(false);
-
    // [Runtime status]
    section = "Runtime status";
    WriteIniString(file, section, "instance.id",                /*int     */ instance.id);
@@ -1150,6 +1147,9 @@ bool SaveStatus() {
    // open/closed trades
    if (!SaveStatus.OpenPosition(file, fileExists)) return(false);
    if (!SaveStatus.TradeHistory(file, fileExists)) return(false);
+
+   // trade stats
+   if (!SaveStatus.TradeStats(file, fileExists)) return(false);
 
    return(!catch("SaveStatus(2)"));
 }

@@ -14,7 +14,7 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
 
    // [Stats: net in money]
    string section = "Stats: net in money";
-   WriteIniString(file, section, "OpenProfit",                   /*double  */ StrPadRight(DoubleToStr(stats[METRIC_NET_MONEY][S_OPEN_PROFIT], 2), 25) +"; after all costs in "+ AccountCurrency());
+   WriteIniString(file, section, "OpenProfit",                   /*double  */ StrPadRight(DoubleToStr(stats[METRIC_NET_MONEY][S_OPEN_PROFIT], 2), 25) +"; after all costs in account currency");
    WriteIniString(file, section, "ClosedProfit",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_CLOSED_PROFIT   ], 2));
    WriteIniString(file, section, "TotalProfit",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_TOTAL_PROFIT    ], 2));
    WriteIniString(file, section, "MaxProfit",                    /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_MAX_PROFIT      ], 2));
@@ -25,8 +25,8 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
    WriteIniString(file, section, "SortinoRatio",                 /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_SORTINO_RATIO   ], 2));
    WriteIniString(file, section, "CalmarRatio",                  /*double  */ DoubleToStr(stats[METRIC_NET_MONEY][S_CALMAR_RATIO    ], 2) + separator);
 
-   // [Stats: net in punits]
-   section = "Stats: net in "+ spUnit;
+   // [Stats: net in pUnits]
+   section = "Stats: net in pUnits";
    WriteIniString(file, section, "OpenProfit",                   /*double  */ StrPadRight(DoubleToStr(stats[METRIC_NET_UNITS][S_OPEN_PROFIT]/pUnit, pDigits), 25) +"; after all costs in "+ spUnit);
    WriteIniString(file, section, "ClosedProfit",                 /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_CLOSED_PROFIT   ]/pUnit, pDigits));
    WriteIniString(file, section, "TotalProfit",                  /*double  */ DoubleToStr(stats[METRIC_NET_UNITS][S_TOTAL_PROFIT    ]/pUnit, pDigits));
@@ -75,9 +75,9 @@ bool SaveStatus.TradeStats(string file, bool fileExists) {
       WriteIniString(file, section, "scratch.short",             /*int     */ StrPadRight(Round(stats[METRIC_NET_UNITS][S_SCRATCH_SHORT]), 21) + StrPadLeft("("+ DoubleToStr(100 * stats[METRIC_NET_UNITS][S_SCRATCH_SHORT_PCT], 1) +"%)", 8) + separator);
    }
 
-   // [Stats: signal in punits]
-   section = "Stats: signal in "+ spUnit;
-   WriteIniString(file, section, "OpenProfit",                   /*double  */ StrPadRight(DoubleToStr(stats[METRIC_SIG_UNITS][S_OPEN_PROFIT]/pUnit, pDigits), 25) +"; before spread/any costs in "+ spUnit);
+   // [Stats: signal in pUnits]
+   section = "Stats: signal in pUnits";
+   WriteIniString(file, section, "OpenProfit",                   /*double  */ StrPadRight(DoubleToStr(stats[METRIC_SIG_UNITS][S_OPEN_PROFIT]/pUnit, pDigits), 25) +"; before spread/costs in "+ spUnit);
    WriteIniString(file, section, "ClosedProfit",                 /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_CLOSED_PROFIT   ]/pUnit, pDigits));
    WriteIniString(file, section, "TotalProfit",                  /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_TOTAL_PROFIT    ]/pUnit, pDigits));
    WriteIniString(file, section, "MaxProfit",                    /*double  */ DoubleToStr(stats[METRIC_SIG_UNITS][S_MAX_PROFIT      ]/pUnit, pDigits));
