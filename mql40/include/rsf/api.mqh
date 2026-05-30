@@ -761,6 +761,8 @@ string   EXECUTION_CONTEXT_toStr(int &ec[]);;
 string   FindHistoryDirectoryA(string filename, int removeFile);;
 int      FindTesterWindow();;
 int      GetBoolsAddress(bool &values[]);;
+int      GetCliOptions();;
+int      GetDebugOptions();;
 int      GetDoublesAddress(double &values[]);;
 string   GetExpanderFileNameA();;
 string   GetExpanderFileNameW();;
