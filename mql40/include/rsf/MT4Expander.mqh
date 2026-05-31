@@ -12,6 +12,8 @@
 
    // terminal status and interaction
    string   FindHistoryDirectoryA(string filename, int removeFile);
+   int      GetCliOptions();
+   int      GetDebugOptions();
    string   GetExpanderFileNameA();
    string   GetHistoryRootPathA();
    string   GetMqlDirectoryA();

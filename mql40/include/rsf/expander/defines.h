@@ -106,12 +106,13 @@
 #define UNINITREASON_CLOSE          REASON_CLOSE
 
 
-// CLI debug options (flags)
-#define DEBUG_EXECUTION_CONTEXT                 1           // whether cmd line option /rsf:debug-ec is set
-#define DEBUG_ACCOUNT_SERVER                    2           // whether cmd line option /rsf:debug-accountserver is set
-#define DEBUG_ACCOUNT_NUMBER                    4           // whether cmd line option /rsf:debug-accountnumber is set
-#define DEBUG_OBJECT_CREATE                     8           // whether cmd line option /rsf:debug-objectcreate is set
-#define DEBUG_INDICATOR_LIST                   16           // whether cmd line option /rsf:debug-indicatorlist is set
+// flags for command line options of "terminal.exe"
+#define OPTION_PORTABLE_MODE                    1        // option "/portable"
+#define OPTION_DEBUG_ACCOUNT_NUMBER             2        // option "/rsf:debug-accountnumber"
+#define OPTION_DEBUG_ACCOUNT_SERVER             4        // option "/rsf:debug-accountserver"
+#define OPTION_DEBUG_EXECUTION_CONTEXT          8        // option "/rsf:debug-ec"
+#define OPTION_DEBUG_INDICATOR_LIST            16        // option "/rsf:debug-indicatorlist"
+#define OPTION_DEBUG_OBJECT_CREATE             32        // option "/rsf:debug-objectcreate"
 
 
 // window property names
