@@ -1,4 +1,5 @@
 <!-- 
+EMA(144) 
 Donchian Channel(50) 
 Donchian Channel(10) Sound.onChannelWidening=1
 -->
@@ -109,7 +110,7 @@ Draw.Width=3
 UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
-ShowChartLegend=1
+ShowChartLegend=0
 AutoConfiguration=0
 </inputs>
 </expert>
