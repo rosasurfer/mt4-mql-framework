@@ -564,6 +564,7 @@ double  INF;                                                      //  1.#INF |  
 #define CHAR_VALUE                     1        // char:   1 byte
 #define SHORT_VALUE                    2        // WORD:   2 byte
 #define LONG_VALUE                     4        // DWORD:  4 byte
+#define INT_VALUE             LONG_VALUE        // alias
 #define FLOAT_VALUE                    4        // float:  4 byte
 #define DOUBLE_VALUE                   8        // double: 8 byte
 

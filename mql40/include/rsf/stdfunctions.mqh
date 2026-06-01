@@ -1,5 +1,5 @@
 /**
- * Standard framework functions
+ * Common framework functions
  */
 #include <rsf/functions/shared/Abs.mqh>
 #include <rsf/functions/shared/LoglevelDescription.mqh>
