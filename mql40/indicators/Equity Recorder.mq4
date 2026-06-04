@@ -25,7 +25,7 @@ extern int    HistoryFormat    = 401;                    // written history form
 #include <rsf/functions/ObjectCreateRegister.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers   1                          // there must be a minimum of 1 buffer (even if not used)
+#property indicator_buffers   1                          // there is a minimum of 1 buffer (even if not used)
 #property indicator_color1    CLR_NONE
 
 #define I_EQUITY_ACCOUNT      0                          // equity values
