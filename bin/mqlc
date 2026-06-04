@@ -358,7 +358,7 @@ function compileMql40() {
   fi
 
   if ((originalOutput)); then
-    output+=("error status: $errorStatus")
+    output+=("exit code: $errorStatus")
   else
     output[0]="${output[0]//compiler build/compiler version 4.00 build}"  # update compiler info
     [[ "${output[1]}" =~ ^Copyright ]] && unset 'output[1]'               # remove copyright
@@ -439,7 +439,7 @@ function compileMql5() {
   ((!errors && !warnings)) && rm -f "$logFile"
 
   if ((originalOutput)); then
-    output+=("error status: $errorStatus")
+    output+=("exit code: $errorStatus")
   else
     local keys=("${!output[@]}") size="${#output[@]}"
     for i in "${keys[@]:0:$((size-1))}"; do                   # format compiler messages

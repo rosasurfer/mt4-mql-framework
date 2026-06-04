@@ -32,12 +32,12 @@ int init() {
    }
 
    // initialize the execution context
-   int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
+   int error = MqlProgram_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
    if (!error) error = GetLastError();                         // detect a DLL exception
    if (IsError(error)) {
-      ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(1)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
+      ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(1)->MqlProgram_init()  ["+ ErrorToStr(error) +"]");
       last_error          = error;
-      __STATUS_OFF        = true;                              // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
+      __STATUS_OFF        = true;                              // If MqlProgram_init() failed the content of the EXECUTION_CONTEXT
       __STATUS_OFF.reason = last_error;                        // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
@@ -90,7 +90,7 @@ int init() {
 
 
 /**
- * Initialize/update global variables. Called immediately after SyncMainContext_init().
+ * Initialize/update global variables. Called immediately after MqlProgram_init().
  *
  * @return bool - success status
  */
@@ -154,8 +154,8 @@ int start() {
    ArrayCopyRates(__rates);
    _Bid = NormalizeDouble(Bid, Digits);                                       // normalized versions of Bid/Ask
    _Ask = NormalizeDouble(Ask, Digits);                                       //
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Tick.isVirtual, _Bid, _Ask) != NO_ERROR) {
-      if (HandleErrors("start(2)->SyncMainContext_start()")) return(last_error);
+   if (MqlProgram_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Tick.isVirtual, _Bid, _Ask) != NO_ERROR) {
+      if (HandleErrors("start(2)->MqlProgram_start()")) return(last_error);
    }
 
    if (!Tick.time) {
@@ -193,8 +193,8 @@ int deinit() {
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION) {
       return(last_error);
    }
-   if (SyncMainContext_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
-      return(HandleErrors("deinit(1)->SyncMainContext_deinit()") + LeaveContext(__ExecutionContext));
+   if (MqlProgram_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
+      return(HandleErrors("deinit(1)->MqlProgram_deinit()") + LeaveMqlModule(__ExecutionContext));
    }
 
    int error = catch("deinit(2)");                    // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
@@ -203,7 +203,7 @@ int deinit() {
    if (!error) error = afterDeinit();                 // postprocessing hook
    if (!__isTesting) DeleteRegisteredObjects();
 
-   return(HandleErrors("deinit(3)") + LeaveContext(__ExecutionContext));
+   return(HandleErrors("deinit(3)") + LeaveMqlModule(__ExecutionContext));
 }
 
 
@@ -337,9 +337,9 @@ bool HandleErrors(string caller, int error = NULL) {
    int ec_SetDllWarning         (int ec[], int error);
    int ec_SetProgramCoreFunction(int ec[], int function);
 
-   int SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
-   int SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, int isVirtual, double bid, double ask);
-   int SyncMainContext_deinit(int ec[], int uninitReason);
+   int MqlProgram_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
+   int MqlProgram_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, int isVirtual, double bid, double ask);
+   int MqlProgram_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"
    int GetParent(int hWnd);
