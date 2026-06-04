@@ -839,7 +839,7 @@ bool     IsTerminalConfigKeyA(string section, string key);;
 bool     IsUIThread(int threadId);;
 bool     IsVirtualKeyDown(int key);;
 bool     IsWindowAreaVisible(int hWnd);;
-int      LeaveContext(int &ec[]);;
+int      LeaveMqlModule(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
 void     LoadMT4Expander();;
@@ -858,6 +858,14 @@ string   MessageBoxButtonToStrA(int id);;
 string   MessageBoxButtonToStrW(int id);;
 string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
+
+int      MqlProgram_init(int &ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);;
+int      MqlProgram_start(int &ec[], double &rates[][], int bars, int changedBars, int ticks, datetime tickTime, int isVirtual, double bid, double ask);;
+int      MqlProgram_deinit(int &ec[], int uninitReason);;
+
+int      MqlLibrary_init(int &ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);;
+int      MqlLibrary_deinit(int &ec[], int uninitReason);;
+
 int      MT4InternalMsg();;
 string   NumberFormat(double value, string format);;
 string   OrderTypeDescription(int type);;
@@ -895,14 +903,6 @@ bool     StrEndsWithI(string str, string suffix);;
 string   StringToStr(string str);;
 bool     StrIsNull(string str);;
 bool     StrStartsWith(string str, string prefix);;
-
-int      SyncMainContext_init(int &ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);;
-int      SyncMainContext_start(int &ec[], double &rates[][], int bars, int changedBars, int ticks, datetime tickTime, int isVirtual, double bid, double ask);;
-int      SyncMainContext_deinit(int &ec[], int uninitReason);;
-
-int      SyncLibContext_init(int &ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);;
-int      SyncLibContext_deinit(int &ec[], int uninitReason);;
-
 int      Tester_GetBarModel();;
 datetime Tester_GetEndDate();;
 datetime Tester_GetStartDate();;

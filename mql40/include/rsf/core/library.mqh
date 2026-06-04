@@ -25,7 +25,7 @@ int __lpSuperContext = NULL;
  * @return int - error status
  */
 int init() {
-   int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), WindowExpertName(), Symbol(), Period(), Digits, Point, IsTesting(), IsOptimization());
+   int error = MqlLibrary_init(__ExecutionContext, UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), WindowExpertName(), Symbol(), Period(), Digits, Point, IsTesting(), IsOptimization());
    if (IsError(error)) return(error);
 
    // initialize global vars
@@ -116,12 +116,12 @@ int start() {
  *  - Note that in this case, the library performs an init cycle on start of the next test.
  */
 int deinit() {
-   int error = SyncLibContext_deinit(__ExecutionContext, UninitializeReason());
+   int error = MqlLibrary_deinit(__ExecutionContext, UninitializeReason());
    if (!error) {
       onDeinit();
       catch("deinit(1)");
    }
-   return(error|last_error|LeaveContext(__ExecutionContext));
+   return(error|last_error|LeaveMqlModule(__ExecutionContext));
 }
 
 
@@ -189,6 +189,6 @@ bool HandleErrors(string caller, int error = NULL) {
 
 
 #import "rsfMT4Expander.dll"
-   int SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
-   int SyncLibContext_deinit(int ec[], int uninitReason);
+   int MqlLibrary_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
+   int MqlLibrary_deinit(int ec[], int uninitReason);
 #import

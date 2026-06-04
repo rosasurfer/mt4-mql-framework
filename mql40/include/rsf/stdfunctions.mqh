@@ -6946,7 +6946,7 @@ void __DummyCalls() {
    string   ec_SetAccountServer(int ec[], string server);
    int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[]);
-   int      LeaveContext(int ec[]);
+   int      LeaveMqlModule(int ec[]);
 
 #import "kernel32.dll"
    bool     CloseHandle(int hObject);

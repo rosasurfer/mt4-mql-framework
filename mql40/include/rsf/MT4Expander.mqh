@@ -31,12 +31,12 @@
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
    int      MT4InternalMsg();
    bool     ReopenAlertDialog(int sound);                                                 // see notes at the top of the file
-   //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
-   //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime tickTime, int isVirtual, double bid, double ask);
-   //int    SyncMainContext_deinit(int ec[], int uninitReason);
-   //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
-   //int    SyncLibContext_deinit (int ec[], int uninitReason);
-   //int    LeaveContext(int ec[]);
+   //int    MqlProgram_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
+   //int    MqlProgram_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime tickTime, int isVirtual, double bid, double ask);
+   //int    MqlProgram_deinit(int ec[], int uninitReason);
+   //int    MqlLibrary_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
+   //int    MqlLibrary_deinit(int ec[], int uninitReason);
+   //int    LeaveMqlModule(int ec[]);
    int      WM_MT4();
 
    // strategy tester
