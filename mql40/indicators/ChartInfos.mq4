@@ -32,7 +32,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern bool Track.Orders = true;                                  // whether to track and signal position open/close events
+extern bool ShowPrice    = true;             // whether to display the current price
+extern bool Track.Orders = true;             // whether to track position open/close events
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1151,6 +1152,8 @@ bool CreateLabels() {
  * @return bool - success status
  */
 bool UpdatePrice() {
+   if (!ShowPrice) return(true);
+
    double price = _Bid;                                     // fall-back to Close[0]: Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel, Offline-Chart)
    if (!price) price = NormalizeDouble(Close[0], Digits);   // History-Daten können unnormalisiert sein, wenn sie nicht von MetaTrader erstellt wurden
 
@@ -5322,7 +5325,9 @@ string ConfigTermTypeToStr(int type) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Track.Orders=", BoolToStr(Track.Orders), ";"));
+   return(StringConcatenate("ShowPrice=",    BoolToStr(ShowPrice),    ";", NL,
+                            "Track.Orders=", BoolToStr(Track.Orders), ";")
+   );
 
    // dummy call to prevent compiler warnings
    ConfigTermTypeToStr(NULL);
