@@ -82,7 +82,7 @@ extern string   Donchian.Crossing.Symbol       = "dot | thin-ring | ring | thick
 extern int      Donchian.Crossing.Width        = 1;
 extern color    Donchian.Crossing.Color        = CLR_NONE;
 
-extern string   ___c__________________________ = "=== Display settings ===";
+extern string   ___c__________________________ = "=== Display options ===";
 extern bool     ShowChartLegend                = true;
 extern int      MaxBarsBack                    = 10000;                          // max. values to calculate (-1: all available)
 

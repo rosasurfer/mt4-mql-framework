@@ -6,8 +6,8 @@
  *  - DownTrend: the close price is below the channel
  *  - NoTrend:   the close price is in the channel
  *
- * Bar width can be increased using hotkey CTRL-SHIFT-K.       @see script SuperBars.TimeframeUp
- * Bar width can be decreased using hotkey CTRL-SHIFT-L.       @see script SuperBars.TimeframeDown
+ * Bar width can be increased using hotkey CTRL-SHIFT-K (calls script SuperBars.TimeframeUp)
+ * Bar width can be decreased using hotkey CTRL-SHIFT-L (calls script SuperBars.TimeframeDown)
  *
  * TODO:
  *  - MQL4.5 indicator as helper to get chart properties
@@ -27,7 +27,8 @@ extern color  Color.UpTrend                  = Blue;
 extern color  Color.NoTrend                  = Silver;
 extern color  Color.DownTrend                = Red;
 extern int    BarWidth                       = 2;
-extern bool   ShowChartLegend                = false;
+
+extern string ___c__________________________ = "=== Display options ===";
 extern int    MaxBarsBack                    = 10000;       // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,9 +36,7 @@ extern int    MaxBarsBack                    = 10000;       // max. values to ca
 #include <rsf/core/indicator.mqh>
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
-#include <rsf/functions/chartlegend.mqh>
 #include <rsf/functions/HandleCommands.mqh>
-#include <rsf/functions/ObjectCreateRegister.mqh>
 #include <rsf/functions/iCustom/MAChannel.mqh>
 
 #define BUFFER_TREND_BODY_A      0        // indicator buffer ids
@@ -50,7 +49,7 @@ extern int    MaxBarsBack                    = 10000;       // max. values to ca
 #define BUFFER_NOTREND_WICK_B    7
 
 #property indicator_chart_window
-#property indicator_buffers 8             // visible buffers
+#property indicator_buffers 8
 
 #property indicator_color1  CLR_NONE
 #property indicator_color2  CLR_NONE
@@ -75,9 +74,6 @@ int    channel.periods;
 int    channel.method;
 string channel.definition = "";
 
-string indicatorName = "";
-string legendLabel   = "";
-
 
 /**
  * Initialization
@@ -85,12 +81,12 @@ string legendLabel   = "";
  * @return int - error status
  */
 int onInit() {
-   // input validation
    string indicator = WindowExpertName();
 
+   // validate inputs
    // Channel.Method
+   if (AutoConfiguration) Channel.Method = GetConfigString(indicator, "Channel.Method", Channel.Method);
    string sValues[], sValue = Channel.Method;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "Channel.Method", sValue);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
@@ -111,17 +107,16 @@ int onInit() {
    if (Color.NoTrend   == 0xFF000000) Color.NoTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // BarWidth
+   if (AutoConfiguration) BarWidth = GetConfigInt(indicator, "BarWidth", BarWidth);
    if (BarWidth < 0)         return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
    if (BarWidth > 13)        return(catch("onInit(4)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
+   if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)     return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // reset the command handler
    if (__isChart) GetChartCommand("TrendBars", sValues);
-
-   // display options
-   if (ShowChartLegend) legendLabel = CreateChartLegend();
 
    SetIndicatorOptions();
    return(catch("onInit(6)"));
@@ -138,7 +133,7 @@ int onTick() {
    if (__isChart) {
       if (!HandleCommands("TrendBars")) return(last_error);
    }
-   
+
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(trendBodyA,   0);
@@ -268,8 +263,7 @@ double GetChannel(int mode, int bar) {
  */
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
-   indicatorName = WindowExpertName();
-   IndicatorShortName(indicatorName);
+   IndicatorShortName(WindowExpertName());
 
    IndicatorBuffers(indicator_buffers);
    SetIndexBuffer(BUFFER_TREND_BODY_A,   trendBodyA);   SetIndexEmptyValue(BUFFER_TREND_BODY_A,   0);
@@ -319,7 +313,7 @@ string InputsToStr() {
                             "Color.NoTrend=",   ColorToStr(Color.NoTrend),      ";", NL,
                             "Color.DownTrend=", ColorToStr(Color.DownTrend),    ";", NL,
                             "BarWidth=",        BarWidth,                       ";", NL,
-                            "ShowChartLegend=", BoolToStr(ShowChartLegend),     ";", NL,
+
                             "MaxBarsBack=",     MaxBarsBack,                    ";")
    );
 }

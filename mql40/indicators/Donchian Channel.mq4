@@ -61,7 +61,7 @@ extern string Reversal.Symbol                = "dot | thin-ring | ring | thick-r
 extern int    Reversal.Width                 = 1;
 extern color  Reversal.Color                 = CLR_NONE;                   // separate reversal color (default: channel color)
 
-extern string ___b__________________________ = "=== Display settings ===";
+extern string ___b__________________________ = "=== Display options ===";
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                      // max. values to calculate (-1: all available)
 
