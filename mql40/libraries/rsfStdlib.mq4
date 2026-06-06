@@ -346,10 +346,10 @@ bool AquireLock(string mutex) {
       if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock on mutex "+ DoubleQuoteStr(mutex), error));
       if (IsStopped())    return(!logWarn("AquireLock(4)  couldn't yet get lock on mutex "+ DoubleQuoteStr(mutex) +" but was ordered to stop, taking it..."));
 
-      // warn every second, cancel after 10 seconds
+      // warn every second, cancel after 5 seconds
       duration = GetTickCount() - startTime;
-      if (duration >= seconds*1000) {
-         if (seconds >= 10)
+      if (duration >= seconds * 1000) {
+         if (seconds >= 5)
             return(!catch("AquireLock(5)  failed to get lock on mutex "+ DoubleQuoteStr(mutex) +" after "+ (duration/1000) +" sec, giving up", ERR_RUNTIME_ERROR));
          logNotice("AquireLock(6)  couldn't get lock on mutex "+ DoubleQuoteStr(mutex) +" after "+ duration/1000 +" sec, retrying...");
          seconds++;

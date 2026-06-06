@@ -6129,7 +6129,7 @@ string PriceTypeDescription(int type) {
  *
  * @param  string value            - M1, M5, M15, M30 etc.
  * @param  int    flags [optional] - execution control flags (default: none)
- *                                   F_CUSTOM_TIMEFRAME:      enable support of custom timeframes
+ *                                   F_CUSTOM_TIMEFRAME:      support custom timeframes
  *                                   F_ERR_INVALID_PARAMETER: silently handle ERR_INVALID_PARAMETER
  *
  * @return int - timeframe constant or EMPTY (-1) if the value is not recognized
@@ -6137,8 +6137,9 @@ string PriceTypeDescription(int type) {
 int StrToPeriod(string value, int flags = NULL) {
    string str = StrToUpper(StrTrim(value));
 
-   if (StrStartsWith(str, "PERIOD_"))
+   if (StrStartsWith(str, "PERIOD_")) {
       str = StrSubstr(str, 7);
+   }
 
    if (str ==           "M1" ) return(PERIOD_M1);
    if (str == ""+ PERIOD_M1  ) return(PERIOD_M1);
@@ -6188,8 +6189,9 @@ int StrToPeriod(string value, int flags = NULL) {
       if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1);
    }
 
-   if (flags & F_ERR_INVALID_PARAMETER && 1)
+   if (flags & F_ERR_INVALID_PARAMETER && 1) {
       return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   }
    return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value: \""+ value +"\"", ERR_INVALID_PARAMETER)));
 }
 

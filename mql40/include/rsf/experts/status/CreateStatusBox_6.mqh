@@ -5,7 +5,7 @@
  * @return string - comment prefix to be used by composition of the status display (adapts to existing chart legends)
  */
 string CreateStatusBox() {
-   if (!__isChart) return(0);
+   if (!__isChart) return("");
 
    int x[] = {2, 66, 136};                                  // x-offset of the rectangles forming the status box
    int sizeofX = ArraySize(x);                              // number of used rectangles
@@ -31,7 +31,7 @@ string CreateStatusBox() {
    // create status box
    for (int i=0; i < sizeofX; i++) {
       string label = StringConcatenate(WindowExpertName(), ".statusbox.", i+1);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return(0);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL)) return("");
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
       ObjectSet(label, OBJPROP_YDISTANCE, statusboxOffset);

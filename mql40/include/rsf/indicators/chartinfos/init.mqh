@@ -25,7 +25,9 @@ int onInit() {
 
    // configuration
    if (AutoConfiguration) {
-      Track.Orders = GetConfigBool(WindowExpertName(), "Track.Orders", Track.Orders);
+      string indicator = WindowExpertName();
+      ShowPrice    = GetConfigBool(indicator, "ShowPrice", ShowPrice);
+      Track.Orders = GetConfigBool(indicator, "Track.Orders", Track.Orders);
    }
 
    // init labels, status and used trade account

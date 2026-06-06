@@ -113,6 +113,7 @@
 #define OPTION_DEBUG_EXECUTION_CONTEXT          8        // option "/rsf:debug-ec"
 #define OPTION_DEBUG_INDICATOR_LIST            16        // option "/rsf:debug-indicatorlist"
 #define OPTION_DEBUG_OBJECT_CREATE             32        // option "/rsf:debug-objectcreate"
+#define OPTION_DEBUG_WM_COMMAND                64        // option "/rsf:debug-wmcommand"
 
 
 // window property names
@@ -120,7 +121,7 @@
 #define PROP_INT_ACCOUNT_NUMBER                 "rsf:int:accountNumber"
 
 
-// timeframe identifiers (cannot be combined)
+// timeframe identifiers (can't be combined)
 #define PERIOD_M1                               1        // 1 minute
 #define PERIOD_M2                               2        // 2 minutes  (custom timeframe)
 #define PERIOD_M3                               3        // 3 minutes  (custom timeframe)
