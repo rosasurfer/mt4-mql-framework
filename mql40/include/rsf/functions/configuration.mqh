@@ -4,7 +4,7 @@
 
 
 /**
- * Return the full filename of an account configuration file.
+ * Return the full name of an account configuration file.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
@@ -14,7 +14,7 @@
 string GetAccountConfigPath(string company="", int account=NULL) {
    if (!StringLen(company) || company=="0") {
       company = GetAccountCompanyId();
-      if (!StringLen(company)) return(EMPTY_STR);
+      if (company == "") return(EMPTY_STR);
    }
    if (account <= 0) {
       if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
@@ -28,8 +28,8 @@ string GetAccountConfigPath(string company="", int account=NULL) {
 /**
  * Whether the specified key exists in the merged configuration.
  *
- * @param  string section - case-insensitive configuration section name
- * @param  string key     - case-insensitive configuration key
+ * @param  string section - case-insensitive config section name
+ * @param  string key     - case-insensitive config key
  *
  * @return bool
  */
@@ -42,31 +42,30 @@ bool IsConfigKey(string section, string key) {
 
 
 /**
- * Whether the specified account configuration key exists.
+ * Whether the specified account config key exists.
  *
- * @param  string section - case-insensitive configuration section name
- * @param  string key     - case-insensitive configuration key
+ * @param  string section - case-insensitive config section name
+ * @param  string key     - case-insensitive config key
  *
  * @return bool
  */
 bool IsAccountConfigKey(string section, string key) {
    string accountConfig = GetAccountConfigPath();
-   if (!StringLen(accountConfig)) return(false);
-
+   if (accountConfig == "" ) return(false);
    return(IsIniKeyA(accountConfig, section, key));
 }
 
 
 /**
- * Return a configuration value as a boolean from the merged configuration. Supported boolean value representations are "1"
- * and "0", "true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to
- * (value != 0), all other values evaluate to FALSE.
+ * Return a config value as a boolean from all merged configurations. Supported boolean representations are "1" and "0",
+ * "true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0),
+ * all other values evaluate to FALSE. Trailing configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @return bool - configuration value or the default value in case of errors
+ * @return bool - config value or the default value in case of errors
  */
 bool GetConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
@@ -79,81 +78,79 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
 
 
 /**
- * Return a global configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
- * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other
- * values evaluate to FALSE.
+ * Return a global config value as a boolean. Supported boolean representations are "1" and "0", "true" and "false",
+ * "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other values
+ * evaluate to FALSE. Trailing configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @return bool - configuration value or the default value in case of errors
+ * @return bool - config value or the default value in case of errors
  */
 bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
    string globalConfig = GetGlobalConfigPathA();
-   if (!StringLen(globalConfig))
-      return(defaultValue);
+   if (globalConfig == "") return(defaultValue);
    return(GetIniBool(globalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a terminal configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
- * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other
- * values evaluate to FALSE.
+ * Return a terminal config value as a boolean. Supported boolean representations are "1" and "0", "true" and "false",
+ * "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other values
+ * evaluate to FALSE. Trailing configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @return bool - configuration value or the default value in case of errors
+ * @return bool - config value or the default value in case of errors
  */
 bool GetTerminalConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
    string terminalConfig = GetTerminalConfigPathA();
-   if (!StringLen(terminalConfig))
-      return(defaultValue);
+   if (terminalConfig == "") return(defaultValue);
    return(GetIniBool(terminalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return an account configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
- * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other
- * values evaluate to FALSE.
+ * Return an account config value as a boolean. Supported boolean representations are "1" and "0", "true" and "false",
+ * "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other values
+ * evaluate to FALSE. Trailing configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @return bool - configuration value or the default value in case of errors
+ * @return bool - config value or the default value in case of errors
  */
 bool GetAccountConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
    string accountConfig = GetAccountConfigPath();
-   if (!StringLen(accountConfig))
-      return(defaultValue);
+   if (accountConfig == "") return(defaultValue);
    return(GetIniBool(accountConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a configuration value as a color from the merged configuration.
+ * Return a config value as a color from all merged configurations.
  *
  * Supported color representations are:
  *  - web color names (case-insensitive, with and without the prefix "clr"), e.g. "DodgerBlue"
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
+ *  - trailing configuration comments are ignored
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  color  defaultValue [optional] - value to return if the specified key does not exist (default: CLR_NONE)
  *
- * @return color - configuration value or the default value in case of errors
+ * @return color - config value or the default value in case of errors
  */
 color GetConfigColor(string section, string key, color defaultValue = CLR_NONE) {
    color value = GetGlobalConfigColor  (section, key, defaultValue);
@@ -164,81 +161,80 @@ color GetConfigColor(string section, string key, color defaultValue = CLR_NONE) 
 
 
 /**
- * Return a global configuration value as a color.
+ * Return a global config value as a color.
  *
  * Supported color representations are:
  *  - web color names (case-insensitive, with and without the prefix "clr"), e.g. "DodgerBlue"
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
+ *  - trailing configuration comments are ignored
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  color  defaultValue [optional] - value to return if the specified key does not exist (default: CLR_NONE)
  *
- * @return color - configuration value or the default value in case of errors
+ * @return color - config value or the default value in case of errors
  */
 color GetGlobalConfigColor(string section, string key, color defaultValue = CLR_NONE) {
    string globalConfig = GetGlobalConfigPathA();
-   if (!StringLen(globalConfig))
-      return(defaultValue);
+   if (globalConfig == "") return(defaultValue);
    return(GetIniColor(globalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a terminal configuration value as a color.
+ * Return a terminal config value as a color.
  *
  * Supported color representations are:
  *  - web color names (case-insensitive, with and without the prefix "clr"), e.g. "DodgerBlue"
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
+ *  - trailing configuration comments are ignored
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  color  defaultValue [optional] - value to return if the specified key does not exist (default: CLR_NONE)
  *
- * @return color - configuration value or the default value in case of errors
+ * @return color - config value or the default value in case of errors
  */
 color GetTerminalConfigColor(string section, string key, color defaultValue = CLR_NONE) {
    string terminalConfig = GetTerminalConfigPathA();
-   if (!StringLen(terminalConfig))
-      return(defaultValue);
+   if (terminalConfig == "") return(defaultValue);
    return(GetIniColor(terminalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return an account configuration value as a color.
+ * Return an account config value as a color.
  *
  * Supported color representations are:
  *  - web color names (case-insensitive, with and without the prefix "clr"), e.g. "DodgerBlue"
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
+ *  - trailing configuration comments are ignored
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  color  defaultValue [optional] - value to return if the specified key does not exist (default: CLR_NONE)
  *
- * @return color - configuration value or the default value in case of errors
+ * @return color - config value or the default value in case of errors
  */
 color GetAccountConfigColor(string section, string key, color defaultValue = CLR_NONE) {
    string accountConfig = GetAccountConfigPath();
-   if (!StringLen(accountConfig))
-      return(defaultValue);
+   if (accountConfig == "") return(defaultValue);
    return(GetIniColor(accountConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a configuration value as an integer from the merged configuration. An empty value evaluates to 0 (zero).
- *
+ * Return a config value as an integer from all merged configurations. An empty value evaluates to 0 (zero).
  * Trailing non-digits and configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return int - configuration value or the default value in case of errors
+ * @return int - config value or the default value in case of errors
  */
 int GetConfigInt(string section, string key, int defaultValue = 0) {
    int value = GetGlobalConfigInt  (section, key, defaultValue);
@@ -249,69 +245,65 @@ int GetConfigInt(string section, string key, int defaultValue = 0) {
 
 
 /**
- * Return a global configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and line
- * comments are ignored.
+ * Return a global config value as an integer. An empty value evaluates to 0 (zero).
+ * Trailing non-digits and configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return int - configuration value or the default value in case of errors
+ * @return int - config value or the default value in case of errors
  */
 int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
    string globalConfig = GetGlobalConfigPathA();
-   if (!StringLen(globalConfig))
-      return(defaultValue);
+   if (globalConfig == "") return(defaultValue);
    return(GetIniInt(globalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a terminal configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and line
- * comments are ignored.
+ * Return a terminal config value as an integer. An empty value evaluates to 0 (zero).
+ * Trailing non-digits and configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return int - configuration value or the default value in case of errors
+ * @return int - config value or the default value in case of errors
  */
 int GetTerminalConfigInt(string section, string key, int defaultValue = 0) {
    string terminalConfig = GetTerminalConfigPathA();
-   if (!StringLen(terminalConfig))
-      return(defaultValue);
+   if (terminalConfig == "") return(defaultValue);
    return(GetIniInt(terminalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return an account configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and line
- * comments are ignored.
+ * Return an account config value as an integer. An empty value evaluates to 0 (zero).
+ * Trailing non-digits and configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return int - configuration value or the default value in case of errors
+ * @return int - config value or the default value in case of errors
  */
 int GetAccountConfigInt(string section, string key, int defaultValue = 0) {
    string accountConfig = GetAccountConfigPath();
-   if (!StringLen(accountConfig))
-      return(defaultValue);
+   if (accountConfig == "") return(defaultValue);
    return(GetIniInt(accountConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a configuration value as a double from the merged configuration. An empty value evaluates to 0 (zero).
- *
+ * Return a config value as a double from all merged configurations. An empty value evaluates to 0 (zero).
  * Trailing non-numeric characters and configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return double - configuration value or the default value in case of errors
+ * @return double - config value or the default value in case of errors
  */
 double GetConfigDouble(string section, string key, double defaultValue = 0) {
    double value = GetGlobalConfigDouble  (section, key, defaultValue);
@@ -322,70 +314,64 @@ double GetConfigDouble(string section, string key, double defaultValue = 0) {
 
 
 /**
- * Return a global configuration value as a double. An empty value evaluates to 0 (zero).
- *
+ * Return a global config value as a double. An empty value evaluates to 0 (zero).
  * Trailing non-numeric characters and configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return double - configuration value or the default value in case of errors
+ * @return double - config value or the default value in case of errors
  */
 double GetGlobalConfigDouble(string section, string key, double defaultValue = 0) {
    string globalConfig = GetGlobalConfigPathA();
-   if (!StringLen(globalConfig))
-      return(defaultValue);
+   if (globalConfig == "") return(defaultValue);
    return(GetIniDouble(globalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a terminal configuration value as a double. An empty value evaluates to 0 (zero).
- *
+ * Return a terminal config value as a double. An empty value evaluates to 0 (zero).
  * Trailing non-numeric characters and configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return double - configuration value or the default value in case of errors
+ * @return double - config value or the default value in case of errors
  */
 double GetTerminalConfigDouble(string section, string key, double defaultValue = 0) {
    string terminalConfig = GetTerminalConfigPathA();
-   if (!StringLen(terminalConfig))
-      return(defaultValue);
+   if (terminalConfig == "") return(defaultValue);
    return(GetIniDouble(terminalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return an account configuration value as a double. An empty value evaluates to 0 (zero).
- *
+ * Return an account config value as a double. An empty value evaluates to 0 (zero).
  * Trailing non-numeric characters and configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return double - configuration value or the default value in case of errors
+ * @return double - config value or the default value in case of errors
  */
 double GetAccountConfigDouble(string section, string key, double defaultValue = 0) {
    string accountConfig = GetAccountConfigPath();
-   if (!StringLen(accountConfig))
-      return(defaultValue);
+   if (accountConfig == "") return(defaultValue);
    return(GetIniDouble(accountConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a configuration value as a string from the merged configuration.
+ * Return a config value as a string from all merged configurations. Trailing configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value without trailing white space or the default value in case of errors
+ * @return string - config value without trailing white space or the default value in case of errors
  */
 string GetConfigString(string section, string key, string defaultValue = "") {
    string value = GetGlobalConfigString  (section, key, defaultValue);
@@ -396,24 +382,23 @@ string GetConfigString(string section, string key, string defaultValue = "") {
 
 
 /**
- * Return a global configuration value as a string.
+ * Return a global config value as a string. Trailing configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value without trailing white space or the default value in case of errors
+ * @return string - config value without trailing white space or the default value in case of errors
  */
 string GetGlobalConfigString(string section, string key, string defaultValue = "") {
    string globalConfig = GetGlobalConfigPathA();
-   if (!StringLen(globalConfig))
-      return(defaultValue);
+   if (globalConfig == "") return(defaultValue);
    return(GetIniStringA(globalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a terminal configuration value as a string.
+ * Return a terminal config value as a string. Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -423,39 +408,35 @@ string GetGlobalConfigString(string section, string key, string defaultValue = "
  */
 string GetTerminalConfigString(string section, string key, string defaultValue = "") {
    string terminalConfig = GetTerminalConfigPathA();
-   if (!StringLen(terminalConfig))
-      return(defaultValue);
+   if (terminalConfig == "") return(defaultValue);
    return(GetIniStringA(terminalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return an account configuration value as a string.
+ * Return an account config value as a string. Trailing configuration comments are ignored.
  *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value without trailing white space or the default value in case of errors
+ * @return string - config value without trailing white space or the default value in case of errors
  */
 string GetAccountConfigString(string section, string key, string defaultValue = "") {
    string accountConfig = GetAccountConfigPath();
-   if (!StringLen(accountConfig))
-      return(defaultValue);
+   if (accountConfig == "") return(defaultValue);
    return(GetIniStringA(accountConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a configuration value as a string from the merged configuration.
+ * Return a config value as a raw string from all merged configurations. Trailing configuration comments are not ignored.
  *
- * Trailing configuration comments are not removed.
- *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value without trailing white space or the default value in case of errors
+ * @return string - config value without trailing white space or the default value in case of errors
  */
 string GetConfigStringRaw(string section, string key, string defaultValue = "") {
    string value = GetGlobalConfigStringRaw  (section, key, defaultValue);
@@ -466,73 +447,65 @@ string GetConfigStringRaw(string section, string key, string defaultValue = "") 
 
 
 /**
- * Return a global configuration value as a string.
+ * Return a global config value as a raw string. Trailing configuration comments are not ignored.
  *
- * Trailing configuration comments are not removed.
- *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value without trailing white space or the default value in case of errors
+ * @return string - config value without trailing white space or the default value in case of errors
  */
 string GetGlobalConfigStringRaw(string section, string key, string defaultValue = "") {
    string globalConfig = GetGlobalConfigPathA();
-   if (!StringLen(globalConfig))
-      return(defaultValue);
+   if (globalConfig == "") return(defaultValue);
    return(GetIniStringRawA(globalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a terminal configuration value as a string.
+ * Return a terminal config value as a raw string. Trailing configuration comments are not ignored.
  *
- * Trailing configuration comments are not removed.
- *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value without trailing white space or the default value in case of errors
+ * @return string - config value without trailing white space or the default value in case of errors
  */
 string GetTerminalConfigStringRaw(string section, string key, string defaultValue = "") {
    string terminalConfig = GetTerminalConfigPathA();
-   if (!StringLen(terminalConfig))
-      return(defaultValue);
+   if (terminalConfig == "") return(defaultValue);
    return(GetIniStringRawA(terminalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return an account configuration value as a string.
+ * Return an account config value as a raw string. Trailing configuration comments are not ignored.
  *
- * Trailing configuration comments are not removed.
- *
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value without trailing white space or the default value in case of errors
+ * @return string - config value without trailing white space or the default value in case of errors
  */
 string GetAccountConfigStringRaw(string section, string key, string defaultValue = "") {
    string accountConfig = GetAccountConfigPath();
-   if (!StringLen(accountConfig))
-      return(defaultValue);
+   if (accountConfig == "") return(defaultValue);
    return(GetIniStringRawA(accountConfig, section, key, defaultValue));
 }
 
 
 /**
- * Return a configuration value from an .ini file as a boolean. Supported boolean value representations are "1" and "0",
- " true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0),
- * all other values evaluate to FALSE. If the configured value is empty the default value is returned.
+ * Return a config value from an .ini file as a boolean. Supported boolean representations are "1" and "0", true" and "false",
+ * "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other values
+ * evaluate to FALSE. If the configured value is empty the default value is returned.
+ * Trailing configuration comments are ignored.
  *
  * @param  string fileName                - name of the .ini file
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @return bool - configuration value
+ * @return bool - config value
  */
 bool GetIniBool(string fileName, string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
@@ -561,19 +534,18 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
 
 
 /**
- * Return a configuration value from an .ini file as a color. If the configured value is empty the default value is
- * returned.
+ * Return a config value from an .ini file as a color. If the configured value is empty the default value is
+ * returned. Trailing configuration comments are ignored.
  *
  * @param  string fileName                - name of the .ini file
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  color  defaultValue [optional] - value to return if the specified key does not exist (default: CLR_NONE)
  *
- * @return color - configuration value
+ * @return color - config value
  */
 color GetIniColor(string fileName, string section, string key, color defaultValue = CLR_NONE) {
    string value = GetIniStringA(fileName, section, key, "");
-
    if (value == "") return(defaultValue);
 
    color clr = NameToColor(value);
@@ -587,17 +559,15 @@ color GetIniColor(string fileName, string section, string key, color defaultValu
 
 
 /**
- * Return a configuration value from an .ini file as an integer. If the configured value is empty the default value is
- * returned.
- *
- * Trailing non-digits and configuration comments are ignored.
+ * Return a config value from an .ini file as an integer. If the configured value is empty the default value is
+ * returned. Trailing non-digits and configuration comments are ignored.
  *
  * @param  string fileName                - name of the .ini file
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return int - configuration value
+ * @return int - config value
  */
 int GetIniInt(string fileName, string section, string key, int defaultValue = 0) {
    return(GetPrivateProfileIntA(section, key, defaultValue, fileName));
@@ -605,32 +575,29 @@ int GetIniInt(string fileName, string section, string key, int defaultValue = 0)
 
 
 /**
- * Return a configuration value from an .ini file as a double. If the configured value is empty the default value is
- * returned.
- *
- * Trailing non-numerical characters and configuration comments are ignored.
+ * Return a config value from an .ini file as a double. If the configured value is empty the default value is
+ * returned. Trailing non-numerical characters and configuration comments are ignored.
  *
  * @param  string fileName                - name of the .ini file
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
+ * @param  string section                 - case-insensitive config section name
+ * @param  string key                     - case-insensitive config key
  * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return double - configuration value
+ * @return double - config value
  */
 double GetIniDouble(string fileName, string section, string key, double defaultValue = 0) {
    string value = GetIniStringA(fileName, section, key, "");
-   if (value == "")
-      return(defaultValue);
+   if (value == "") return(defaultValue);
    return(StrToDouble(value));
 }
 
 
 /**
- * Write a configuration value to an .ini file. If the file does not exist an attempt is made to create it.
+ * Write a config value to an .ini file. If the file does not exist an attempt is made to create it.
  *
  * @param  string fileName - name of the file (with any extension)
- * @param  string section  - case-insensitive configuration section name
- * @param  string key      - case-insensitive configuration key
+ * @param  string section  - case-insensitive config section name
+ * @param  string key      - case-insensitive config key
  * @param  string value    - configuration value
  *
  * @return bool - success status
