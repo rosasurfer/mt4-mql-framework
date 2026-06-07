@@ -2,8 +2,8 @@
  * MT4Expander import declarations
  *
  * Note: MQL4.0 supports a maximum of 512 array declarations per MQL module. In MQL4.5 and later, this restriction has been
- *       removed. To prevent this limit from being reached, all imports with array parameters have been disabled in this file.
- *       Import needed functions with array parameters manually to use them.
+ *       removed. To prevent this limit in MQL4.0 from being reached, all imports with array parameters have been disabled.
+ *       Import functions with array parameters manually to use them.
  */
 #import "rsfMT4Expander.dll"
 
@@ -30,7 +30,7 @@
    bool     IsUIThread(int threadId);
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
    int      MT4InternalMsg();
-   bool     ReopenAlertDialog(int sound);                                                 // see notes at the top of the file
+   bool     ReopenAlertDialog(int sound);                                                 // see notes for array limitations at the top of the file
    //int    MqlProgram_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
    //int    MqlProgram_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime tickTime, int isVirtual, double bid, double ask);
    //int    MqlProgram_deinit(int ec[], int uninitReason);
@@ -59,8 +59,8 @@
    bool     DeleteIniKeyA(string fileName, string section, string key);
    bool     DeleteIniSectionA(string fileName, string section);
    bool     EmptyIniSectionA(string fileName, string section);
-   //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);   // see notes at the top of the file
-   //int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);               // see notes at the top of the file
+   //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);   // see notes for array limitations at the top of the file
+   //int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);               // see notes for array limitations at the top of the file
    string   GetIniStringA(string fileName, string section, string key, string defaultValue);
    string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);
    bool     IsGlobalConfigKeyA(string section, string key);
@@ -104,7 +104,7 @@
    string   GetStringA(int address);                  // after the call. Accessing such an address may cause a terminal crash.
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
-   // array functions (see notes at the top of the file)
+   // array functions (see notes for array limitations at the top of the file)
    //bool   InitializeBOOLArray  (bool   &values[], int size, int    initValue, int from, int count);
    //bool   InitializeBoolArray  (bool   &values[], int size, bool   initValue, int from, int count);
    //bool   InitializeCharArray  (char   &values[], int size, char   initValue, int from, int count);
@@ -124,9 +124,9 @@
    //bool   ShiftDoubleIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);
 
    // string functions
-   //string MD5Hash(int buffer[], int size);                // see notes at the top of the file
+   //string MD5Hash(int buffer[], int size);                // see notes for array limitations at the top of the file
    string   MD5HashA(string str);
-   //bool   SortMqlStringsA(string values[], int size);     // see notes at the top of the file
+   //bool   SortMqlStringsA(string values[], int size);     // see notes for array limitations at the top of the file
    bool     StrCompare(string s1, string s2);
    bool     StrEndsWith(string str, string suffix);
    bool     StrEndsWithI(string str, string suffix);
