@@ -27,7 +27,8 @@ int onInit() {
    if (AutoConfiguration) {
       string indicator = WindowExpertName();
       ShowPrice    = GetConfigBool(indicator, "ShowPrice", ShowPrice);
-      Track.Orders = GetConfigBool(indicator, "Track.Orders", Track.Orders);
+      ShowUnitSize = GetConfigBool(indicator, "ShowUnitSize", ShowUnitSize);
+      TrackOrders  = GetConfigBool(indicator, "TrackOrders", TrackOrders);
    }
 
    // init labels, status and used trade account
@@ -129,7 +130,7 @@ int afterInit() {
    }
    else {
       // register an order event listener
-      if (mode.intern && Track.Orders) {
+      if (mode.intern && TrackOrders) {
          orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
          string property = orderTracker.key + StrToLower(Symbol());
          int counter = Max(GetWindowPropertyA(hWndDesktop, property), 0) + 1;

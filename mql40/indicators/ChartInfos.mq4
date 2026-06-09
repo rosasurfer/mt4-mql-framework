@@ -33,7 +33,8 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern bool ShowPrice    = true;             // whether to display the current price
-extern bool Track.Orders = true;             // whether to track position open/close events
+extern bool ShowUnitSize = true;             // whether to display the current unit size
+extern bool TrackOrders  = true;             // whether to track position open/close events
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -272,7 +273,7 @@ int onTick() {
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // stopout level marker
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // counter for the account's open order limit
 
-      if (Track.Orders) {                                                           // monitor order execution
+      if (TrackOrders) {                                                            // monitor order execution
          double openedPositions[][2]; ArrayResize(openedPositions, 0);              // {ticket, entryLimit}
          int    closedPositions[][2]; ArrayResize(closedPositions, 0);              // {ticket, closedType}
          int    failedOrders   [];    ArrayResize(failedOrders,    0);              // {ticket}
@@ -1233,7 +1234,7 @@ bool UpdateUnitSize() {
 
       if (mm.usesLeverage) text = StringConcatenate(text, "     L", DoubleToStr(mm.leveragePerUnit, 1));
       else                 text = StringConcatenate(text, "     R", NumberToStr(NormalizeDouble(mm.cfgRiskPercent, 1), ".+"), "%");
-      text = StringConcatenate(text, "     ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
+      if (ShowUnitSize)    text = StringConcatenate(text, "     ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
    }
 
    bool noPosition = !isPosition && !isVirtualPosition;
@@ -5326,7 +5327,8 @@ string ConfigTermTypeToStr(int type) {
  */
 string InputsToStr() {
    return(StringConcatenate("ShowPrice=",    BoolToStr(ShowPrice),    ";", NL,
-                            "Track.Orders=", BoolToStr(Track.Orders), ";")
+                            "ShowUnitSize=", BoolToStr(ShowUnitSize), ";", NL,
+                            "TrackOrders=",  BoolToStr(TrackOrders),  ";")
    );
 
    // dummy call to prevent compiler warnings
