@@ -56,17 +56,20 @@
    string   GetGlobalConfigPathA();
    string   GetTerminalConfigPathA();
 
+   bool     IsIniKeyA(string fileName, string section, string key);
+   bool     IsGlobalConfigKeyA(string section, string key);
+   bool     IsTerminalConfigKeyA(string section, string key);
+
+   //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);   // see notes for array limitations at the top of the file
+   //int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);               // see notes for array limitations at the top of the file
+   bool     IsIniSectionA(string fileName, string section);
+
    bool     DeleteIniKeyA(string fileName, string section, string key);
    bool     DeleteIniSectionA(string fileName, string section);
    bool     EmptyIniSectionA(string fileName, string section);
-   //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);   // see notes for array limitations at the top of the file
-   //int    GetIniSectionsA(string fileName, int buffer[], int bufferSize);               // see notes for array limitations at the top of the file
+
    string   GetIniStringA(string fileName, string section, string key, string defaultValue);
    string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);
-   bool     IsGlobalConfigKeyA(string section, string key);
-   bool     IsIniKeyA(string fileName, string section, string key);
-   bool     IsIniSectionA(string fileName, string section);
-   bool     IsTerminalConfigKeyA(string section, string key);
 
    // date/time
    datetime GetGmtTime32();

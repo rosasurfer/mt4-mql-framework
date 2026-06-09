@@ -1,9 +1,9 @@
 /**
- * Convert a memory buffer containing null terminated strings into an MQL string array. Conversion stops when the end of the
- * buffer is reached or a string terminator is followed by a second null character, whichever comes first. The resulting MQL
+ * Convert a memory buffer containing NUL terminated strings into an MQL string array. Conversion stops when the end of the
+ * buffer is reached or a string terminator is followed by a second NUL character, whichever comes first. The resulting MQL
  * string array will always contain at least one (possibly empty) string element.
  *
- * @param  int    buffer[]  - memory buffer containing null terminated strings
+ * @param  int    buffer[]  - memory buffer containing NUL terminated strings
  * @param  string results[] - resulting MQL string array
  *
  * @return int - number of converted string elements (at least one) or NULL in case of errors

@@ -11,7 +11,7 @@
  *
  * @return string - filename or an empty string in case of errors
  */
-string GetAccountConfigPath(string company="", int account=NULL) {
+string GetAccountConfigPath(string company = "", int account = NULL) {
    if (!StringLen(company) || company=="0") {
       company = GetAccountCompanyId();
       if (company == "") return(EMPTY_STR);
