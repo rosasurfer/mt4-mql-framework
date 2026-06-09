@@ -12,7 +12,7 @@ int onDeinit() {
    }
 
    // unregister the order event listener
-   if (Track.Orders) {
+   if (TrackOrders) {
       string name = orderTracker.key + StrToLower(Symbol());
       int counter = Max(GetWindowPropertyA(hWndDesktop, name), 1) - 1;
       SetWindowPropertyA(hWndDesktop, name, counter);
