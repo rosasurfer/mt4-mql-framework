@@ -2,7 +2,6 @@
 EMA(144)
 Donchian Channel(50) 
 LWMA(55) Channel + Channel Bars
-CCI(14)
 -->
 
 <chart>
@@ -198,40 +197,6 @@ Signal.onTrendChange.Types=sound* | alert* | mail
 </expert>
 min=-1.0
 max=1.0
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=400
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=CCI
-flags=339
-window_num=2
-<inputs>
-Periods=14
-AppliedPrice=Open | High | Low | Close | Median | Typical* | Weighted
-Signal.onTrendChange=1
-Signal.onTrendChange.Types=sound* | alert* | mail
-</inputs>
-</expert>
-draw_2=2
-color_2=3329330
-weight_2=2
-draw_3=2
-color_3=255
-weight_3=2
-min=-180
-max=180
-levels_color=12632256
-levels_style=2
-levels_weight=1
-level_0=100
-level_1=0
-level_2=-100
 show_data=1
 </indicator>
 </window>
