@@ -423,7 +423,7 @@ void UpdateTrendHint(int id, int status) {
  * @return bool - success status
  */
 bool SetIndicatorOptions(bool redraw = false) {
-   indicatorName = WindowExpertName();
+   indicatorName = "MA Channel";
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);

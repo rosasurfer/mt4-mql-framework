@@ -298,8 +298,7 @@ bool onCross(int direction) {
  */
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
-   if (ArraySize(maDefinitions) == 1) indicatorName = Channel.Definition +" Channel";
-   else                               indicatorName = WindowExpertName() +" "+ Channel.Definition;
+   indicatorName = ifString(ArraySize(maDefinitions)==1, Channel.Definition +" Channel", WindowExpertName() +" "+ Channel.Definition);
    IndicatorShortName(indicatorName);
 
    IndicatorBuffers(indicator_buffers);
