@@ -59,7 +59,6 @@
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
    int  GetAsyncKeyState(int vKey);
-   int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
    int  GetDC(int hWnd);
    int  GetDesktopWindow();
    int  GetDlgCtrlID(int hWndCtl);

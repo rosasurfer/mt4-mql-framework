@@ -405,32 +405,6 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
 
 
 /**
- * Gibt den Klassennamen des angegebenen Fensters zurück.
- *
- * @param  int hWnd - Handle des Fensters
- *
- * @return string - Klassenname oder Leerstring, falls ein Fehler auftrat
- */
-string GetClassName(int hWnd) {
-   int    bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-
-   int chars = GetClassNameA(hWnd, buffer[0], bufferSize);
-
-   while (chars >= bufferSize-1) {                                   // GetClassNameA() gibt beim Abschneiden zu langer Klassennamen {bufferSize-1} zurück.
-      bufferSize <<= 1;
-      InitializeStringBuffer(buffer, bufferSize);
-      chars = GetClassNameA(hWnd, buffer[0], bufferSize);
-   }
-
-   if (!chars)
-      return(_EMPTY_STR(catch("GetClassName()->user32::GetClassNameA()", ERR_WIN32_ERROR)));
-
-   return(buffer[0]);
-}
-
-
-/**
  * Whether the current program is executed in the tester or on a test chart with VisualMode=On.
  *
  * Replacement for IsVisualMode() in
@@ -3057,7 +3031,7 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
 
    static int sublevel;
    if (!sublevel) {
-      wndClass = GetClassName(hWnd);
+      wndClass = GetClassNameA(hWnd);
       wndTitle = GetInternalWindowTextA(hWnd);
       ctrlId   = GetDlgCtrlID(hWnd);
       debug("EnumChildWindows()  "+ IntToHexStr(hWnd) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
@@ -3068,7 +3042,7 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
    int i, hWndNext=GetWindow(hWnd, GW_CHILD);
    while (hWndNext != 0) {
       i++;
-      wndClass = GetClassName(hWndNext);
+      wndClass = GetClassNameA(hWndNext);
       wndTitle = GetInternalWindowTextA(hWndNext);
       ctrlId   = GetDlgCtrlID(hWndNext);
       debug("EnumChildWindows()  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
@@ -6962,7 +6936,6 @@ void __DummyCalls() {
 
 #import "user32.dll"
    int      GetAncestor(int hWnd, int cmd);
-   int      GetClassNameA(int hWnd, string buffer, int bufferSize);
    int      GetDesktopWindow();
    int      GetDlgCtrlID(int hWndCtl);
    int      GetDlgItem(int hDlg, int itemId);

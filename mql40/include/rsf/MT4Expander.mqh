@@ -186,7 +186,8 @@
    bool     SetWindowStringA   (int hWnd, string name, string value);
    string   RemoveWindowStringA(int hWnd, string name);
 
-   // other
+   // Win32 helpers
+   string   GetClassNameA(int hWnd);
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
    int      GetPressedVirtualKeys(int flags);
