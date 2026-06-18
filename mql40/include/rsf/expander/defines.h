@@ -110,10 +110,11 @@
 #define OPTION_PORTABLE_MODE                    1        // option "/portable"
 #define OPTION_DEBUG_ACCOUNT_NUMBER             2        // option "/rsf:debug-accountnumber"
 #define OPTION_DEBUG_ACCOUNT_SERVER             4        // option "/rsf:debug-accountserver"
-#define OPTION_DEBUG_EXECUTION_CONTEXT          8        // option "/rsf:debug-ec"
-#define OPTION_DEBUG_INDICATOR_LIST            16        // option "/rsf:debug-indicatorlist"
-#define OPTION_DEBUG_OBJECT_CREATE             32        // option "/rsf:debug-objectcreate"
-#define OPTION_DEBUG_WM_COMMAND                64        // option "/rsf:debug-wmcommand"
+#define OPTION_DEBUG_CREATE_OBJECT              8        // option "/rsf:debug-createobject"
+#define OPTION_DEBUG_CREATE_WINDOW             16        // option "/rsf:debug-createwindow"
+#define OPTION_DEBUG_EXECUTION_CONTEXT         32        // option "/rsf:debug-ec"
+#define OPTION_DEBUG_INDICATOR_LIST            64        // option "/rsf:debug-indicatorlist"
+#define OPTION_DEBUG_WM_COMMAND               128        // option "/rsf:debug-wmcommand"
 
 
 // window property names
