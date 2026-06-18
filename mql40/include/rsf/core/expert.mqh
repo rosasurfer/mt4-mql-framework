@@ -325,6 +325,9 @@ int deinit() {
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION) {
       return(last_error);
    }
+   if (__STATUS_OFF && !__ExecutionContext[EC.pid]) {
+      return(last_error);
+   }
    if (MqlProgram_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
       return(HandleErrors("deinit(1)->MqlProgram_deinit()") + LeaveMqlModule(__ExecutionContext));
    }

@@ -4511,7 +4511,7 @@ string InitReasonDescription(int reason) {
  */
 string GetAccountServer() {
    // AccountServer() can't be used directly for two reasons:
-   //  - Without server connection it returns an empty value.
+   //  - Without a server connection it returns an empty value.
    //  - On account change it reports the new account already during the last tick on old data in the old history directory.
 
    static int lpAccountServer = 0;
@@ -4552,7 +4552,11 @@ string GetAccountServer() {
       }
 
       // update EXECUTION_CONTEXT and main window properties
-      sAccountServer = ec_SetAccountServer(__ExecutionContext, serverName);
+      sAccountServer = serverName;
+      int pid = __ExecutionContext[EC.pid];              // on fatal errors prevent more DLL errors
+      if (!__STATUS_OFF || pid) ec_SetAccountServer(__ExecutionContext, serverName);
+      else                      __ExecutionContext[EC.accountServer] = NULL;
+
       lpAccountServer = __ExecutionContext[EC.accountServer];
       if (!GetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER)) {
          SetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER, lpAccountServer);
@@ -4621,7 +4625,9 @@ int GetAccountNumber() {
       }
 
       // update EXECUTION_CONTEXT and window properties
-      ec_SetAccountNumber(__ExecutionContext, accountNumber);
+      __ExecutionContext[EC.accountNumber] = accountNumber;
+      int pid = __ExecutionContext[EC.pid];              // on fatal errors prevent more DLL errors
+      if (!__STATUS_OFF || pid) ec_SetAccountNumber(__ExecutionContext, accountNumber);
       SetWindowPropertyA(hMainWnd, PROP_INT_ACCOUNT_NUMBER, accountNumber);
 
       isRecursion = false;
@@ -4694,8 +4700,8 @@ string GetAccountCompanyId() {
    // Servernamen zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    static string lastServer = "", lastId = "";
 
-   string server = GetAccountServer(); if (!StringLen(server)) return("");
-   if (StringLen(lastServer) > 0) {             // no direct comparison due to MT4 bug:
+   string server = GetAccountServer(); if (server == "") return("");
+   if (StringLen(lastServer) > 0) {             // no direct comparison due to MT4 static string bug:
       if (server == lastServer) return(lastId); // in library::deinit() strings are released to early (already a NULL pointer)
    }
 

@@ -135,9 +135,10 @@ bool initGlobals() {
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed()) {
-         string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-         Comment(NL, NL, NL, NL, msg);                                        // 4 lines margin for any chart legends
-         logDebug("start(1)  "+ msg);
+         logNotice("start(1)  switched off"+ ifString(__STATUS_OFF.reason, "", " (unknown reason)"), __STATUS_OFF.reason);
+
+         string msg = WindowExpertName() +":  switched off  ("+ ifString(__STATUS_OFF.reason, ErrorToStr(__STATUS_OFF.reason), "unknown reason") +")";
+         Comment(NL, NL, NL, NL, msg);                                        // 4 lines margin for possible chart legends
       }
       return(__STATUS_OFF.reason);
    }
@@ -191,6 +192,9 @@ int deinit() {
    __CoreFunction = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION) {
+      return(last_error);
+   }
+   if (__STATUS_OFF && !__ExecutionContext[EC.pid]) {
       return(last_error);
    }
    if (MqlProgram_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
