@@ -3013,56 +3013,6 @@ bool IsDemoFix() {
 
 
 /**
- * Enumerate all child windows of a window and send output to the system debugger.
- *
- * @param  int  hWnd                 - Handle of the window. If this parameter is NULL all top-level windows are enumerated.
- * @param  bool recursive [optional] - Whether to enumerate child windows recursively (default: no).
- *
- * @return bool - success status
- */
-bool EnumChildWindows(int hWnd, bool recursive = false) {
-   recursive = recursive!=0;
-   if      (!hWnd)           hWnd = GetDesktopWindow();
-   else if (hWnd < 0)        return(!catch("EnumChildWindows(1)  invalid parameter hWnd: "+ hWnd , ERR_INVALID_PARAMETER));
-   else if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd: "+ IntToHexStr(hWnd), ERR_INVALID_PARAMETER));
-
-   string padding="", wndTitle="", wndClass="";
-   int ctrlId;
-
-   static int sublevel;
-   if (!sublevel) {
-      wndClass = GetClassNameA(hWnd);
-      wndTitle = GetInternalWindowTextA(hWnd);
-      ctrlId   = GetDlgCtrlID(hWnd);
-      debug("EnumChildWindows()  "+ IntToHexStr(hWnd) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
-   }
-   sublevel++;
-   padding = StrRepeat(" ", (sublevel-1)<<1);
-
-   int i, hWndNext=GetWindow(hWnd, GW_CHILD);
-   while (hWndNext != 0) {
-      i++;
-      wndClass = GetClassNameA(hWndNext);
-      wndTitle = GetInternalWindowTextA(hWndNext);
-      ctrlId   = GetDlgCtrlID(hWndNext);
-      debug("EnumChildWindows()  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
-
-      if (recursive) {
-         if (!EnumChildWindows(hWndNext, true)) {
-            sublevel--;
-            return(false);
-         }
-      }
-      hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
-   }
-   if (!sublevel && !i) debug("EnumChildWindows()  "+ padding +"-> (no child windows)");
-
-   sublevel--;
-   return(!catch("EnumChildWindows(3)"));
-}
-
-
-/**
  * Konvertiert einen String in einen Boolean.
  *
  * Ist der Parameter strict = TRUE, werden die Strings "1" und "0", "on" und "off", "true" und "false", "yes" and "no" ohne
@@ -6696,7 +6646,6 @@ void __DummyCalls() {
    DoubleQuoteStr(NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();
-   EnumChildWindows(NULL);
    EQ(NULL, NULL);
    ErrorDescription(NULL);
    FileAccessModeToStr(NULL);

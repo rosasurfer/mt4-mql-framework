@@ -187,6 +187,7 @@
    string   RemoveWindowStringA(int hWnd, string name);
 
    // Win32 helpers
+   int      EnumChildWindowsToDebug(int hWnd, int recursive);
    string   GetClassNameA(int hWnd);
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
