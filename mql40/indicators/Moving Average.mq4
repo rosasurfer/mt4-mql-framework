@@ -44,10 +44,12 @@ extern color  UpTrend.Color                  = DeepSkyBlue;
 extern color  DownTrend.Color                = Gold;
 extern color  Background.Color               = DarkGray;          // background for Draw.Type = "Line"
 extern int    Background.Width               = 2;
+
+extern string ___a__________________________ = "=== Display options ===";
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
 
-extern string ___a__________________________ = "=== Signaling ===";
+extern string ___b__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
 extern string Signal.onTrendChange.Types     = "sound* | alert | mail | telegram";
 extern string Signal.Sound.Up                = "Signal Up.wav";

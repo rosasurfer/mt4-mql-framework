@@ -16,10 +16,12 @@ int __DeinitFlags[];
 extern string Channel.Definition             = "EMA(144)";              // one or more MAs, e.g "EMA(144), LWMA(55)"
 extern color  Channel.Color                  = Magenta;
 extern string Supported.MovingAverages       = "SMA, LWMA, EMA, SMMA";
+
+extern string ___a__________________________ = "=== Display options ===";
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
-extern string ___a__________________________ = "=== Signaling ===";
+extern string ___b__________________________ = "=== Signaling ===";
 extern bool   Signal.onBarCross              = false;                   // on channel crossing of BAR_CLOSE opposite to the last crossing
 extern string Signal.onBarCross.Types        = "sound* | alert | mail | telegram";
 extern string Signal.Sound.Up                = "Signal Up.wav";
