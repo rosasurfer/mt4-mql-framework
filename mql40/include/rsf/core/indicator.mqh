@@ -25,17 +25,17 @@ int init() {
    if (__CoreFunction != CF_START) __CoreFunction = CF_INIT;         // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
-      ForceAlert("Please enable DLL function calls for this indicator.");
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable DLL function calls for this indicator.");
       return(last_error);
    }
    if (!IsLibrariesAllowed()) {
-      ForceAlert("Please enable MQL library calls for this indicator.");
       last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable MQL library calls for this indicator.");
       return(last_error);
    }
 
@@ -46,10 +46,9 @@ int init() {
    int error = MqlProgram_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
    if (!error) error = GetLastError();                               // detect a DLL error
    if (IsError(error)) {
-      ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(1)->MqlProgram_init()  ["+ ErrorToStr(error) +"]");
-      last_error          = error;
       __STATUS_OFF        = true;                                    // If MqlProgram_init() failed the content of the EXECUTION_CONTEXT
-      __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __STATUS_OFF.reason = error;                                   // is undefined. We must not trigger loading of MQL libraries and return asap.
+      last_error          = catch("init(1)->MqlProgram_init()", error);
       return(last_error);
    }
    int initReason = ProgramInitReason();

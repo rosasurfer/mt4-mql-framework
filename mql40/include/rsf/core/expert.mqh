@@ -22,17 +22,17 @@ int init() {
       return(__STATUS_OFF.reason);
    }
    if (!IsDllsAllowed()) {
-      ForceAlert("Please enable DLL function calls for this expert.");
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable DLL function calls for this expert.");
       return(last_error);
    }
    if (!IsLibrariesAllowed()) {
-      ForceAlert("Please enable MQL library calls for this expert.");
       last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable MQL library calls for this expert.");
       return(last_error);
    }
 
@@ -51,10 +51,9 @@ int init() {
    int error = MqlProgram_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), recorder, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
    if (!error) error = GetLastError();                            // detect a DLL exception
    if (IsError(error)) {
-      ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->MqlProgram_init()  ["+ ErrorToStr(error) +"]");
-      last_error          = error;
       __STATUS_OFF        = true;                                 // If MqlProgram_init() failed the content of the EXECUTION_CONTEXT
-      __STATUS_OFF.reason = last_error;                           // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __STATUS_OFF.reason = error;                                // is undefined. We must not trigger loading of MQL libraries and return asap.
+      last_error          = catch("init(2)->MqlProgram_init()", error);
       return(last_error);
    }
 

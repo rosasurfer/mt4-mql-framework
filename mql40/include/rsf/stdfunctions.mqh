@@ -321,7 +321,14 @@ string StrReplace(string subject, string search, string replace, bool recursive 
  * @return int - error status
  */
 int PlaySoundEx(string soundfile) {
-   return(PlaySoundA(soundfile));
+   if (IsDllsAllowed()) {
+      return(PlaySoundA(soundfile));
+   }
+   if (!IsTesting()) {
+      PlaySound(soundfile);
+      return(NO_ERROR);
+   }
+   return(ERR_FUNC_NOT_ALLOWED_IN_TESTER);
 }
 
 
@@ -335,32 +342,31 @@ int PlaySoundEx(string soundfile) {
  * @return string
  */
 string Pluralize(int count, string singular="", string plural="s") {
-    if (Abs(count) == 1)
-        return(singular);
-    return(plural);
+   if (Abs(count) == 1) {
+      return(singular);
+   }
+   return(plural);
 }
 
 
 /**
- * Display an alert even if not supported by the terminal in the current context (e.g. in tester).
+ * Display an alert even if not supported by the terminal in the current context (e.g. in tester). Used to notify the user
+ * if IsLibrariesAllowed() or IsDllsAllowed() return FALSE. If in tester and DLLs are disabled there is no way to notify the
+ * user, neither with built-in nor with external methods. That's because in tester MetaTrader disables all relevant functions.
+ * In this case the only hint is a log message in the terminal log, which in tester again is not at the typical place.
  *
  * @param  string message
- *
- * Notes: This function must not call MQL library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   debug(message);                                                            // send the message to the debug output
+   debug(message);            // send the message to the debug output (needs DLLs)
+   Alert(message);            // add the message to the terminal log
 
-   string sPeriod = PeriodDescription();
-   Alert(Symbol(), ",", sPeriod, ": ", MqlModuleName(true), ":  ", message);  // the message shows up in the terminal log
+   if (IsTesting()) {                                                   // Alert() wasn't displayed
+      string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription();
+      message = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
 
-   if (IsTesting()) {
-      // in tester Alert() dialog are not displayed
-      string sCaption = "Strategy Tester "+ Symbol() +","+ sPeriod;
-      string sMessage = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
-
-      PlaySoundEx("alert.wav");
-      MessageBoxEx(sCaption, sMessage, MB_ICONERROR|MB_OK|MB_DONT_LOG);
+      PlaySoundEx("alert.wav");                                         // needs DLLs
+      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);   // needs DLLs
    }
 }
 
@@ -381,14 +387,16 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    if (!StrContains(caption, prefix)) caption = prefix +" - "+ caption;
 
    bool useWin32 = false;
-   if (IsTesting() || IsIndicator()) {
-      useWin32 = true;
+   if (IsDllsAllowed()) {
+      if (IsTesting() || IsIndicator()) {
+         useWin32 = true;
+      }
+      else {
+         useWin32 = (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE);
+      }
    }
-   else {
-      useWin32 = (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE);
-   }
-
    int button;
+
    if (useWin32) {
       // No owner window + flag MB_TASKMODAL: only this combination prevents a UI thread deadlock while still blocking the
       // main app. With owner window MessageBox() disables the given owner which in return causes a synchronous SendMessage()

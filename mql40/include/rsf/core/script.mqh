@@ -17,17 +17,17 @@ int init() {
    if (__CoreFunction != CF_START) __CoreFunction = CF_INIT;   // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
-      ForceAlert("Please enable DLL function calls for this script.");
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable DLL function calls for this script.");
       return(last_error);
    }
    if (!IsLibrariesAllowed()) {
-      ForceAlert("Please enable MQL library calls for this script.");
       last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable MQL library calls for this script.");
       return(last_error);
    }
 
@@ -35,10 +35,9 @@ int init() {
    int error = MqlProgram_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
    if (!error) error = GetLastError();                         // detect a DLL exception
    if (IsError(error)) {
-      ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(1)->MqlProgram_init()  ["+ ErrorToStr(error) +"]");
-      last_error          = error;
       __STATUS_OFF        = true;                              // If MqlProgram_init() failed the content of the EXECUTION_CONTEXT
-      __STATUS_OFF.reason = last_error;                        // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __STATUS_OFF.reason = error;                             // is undefined. We must not trigger loading of MQL libraries and return asap.
+      last_error          = catch("init(1)->MqlProgram_init()", error);
       return(last_error);
    }
 
@@ -134,13 +133,10 @@ bool initGlobals() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (IsDllsAllowed() && IsLibrariesAllowed()) {
-         logNotice("start(1)  switched off"+ ifString(__STATUS_OFF.reason, "", " (unknown reason)"), __STATUS_OFF.reason);
-
-         string msg = WindowExpertName() +":  switched off  ("+ ifString(__STATUS_OFF.reason, ErrorToStr(__STATUS_OFF.reason), "unknown reason") +")";
-         Comment(NL, NL, NL, NL, msg);                                        // 4 lines margin for possible chart legends
-      }
-      return(__STATUS_OFF.reason);
+      string msg = WindowExpertName() +":  switched off", sError = "";
+      if (IsDllsAllowed()) sError = "  ("+ ifString(__STATUS_OFF.reason, ErrorToStr(__STATUS_OFF.reason), "unknown reason") +")";
+      Comment(NL, NL, NL, NL, msg, sError);                                   // 4 lines margin for possible chart legends
+      return(logNotice("start(1)  switched off", __STATUS_OFF.reason));
    }
    __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
@@ -212,7 +208,7 @@ int deinit() {
 
 
 /**
- * Gibt die ID des aktuellen Deinit()-Szenarios zurück. Kann nur in deinit() aufgerufen werden.
+ * Gibt die ID des aktuellen Deinit()-Szenarios zurï¿½ck. Kann nur in deinit() aufgerufen werden.
  *
  * @return int - ID oder NULL, falls ein Fehler auftrat
  */
