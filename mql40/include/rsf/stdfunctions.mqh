@@ -1999,22 +1999,22 @@ int CountDecimals(double number) {
 
 
 /**
- * Gibt den linken Teil eines Strings bis zum Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
- * Teilstring nicht.
+ * Return the left part of a string up to the specified occurrence of a limiting substring.
+ * The result does not include the limiting substring.
  *
- * @param  string value            - Ausgangsstring
- * @param  string substring        - der das Ergebnis begrenzende Teilstring
- * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                                   Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String
- *                                   zurückgegeben.
- *                                   Wenn 0, wird ein Leerstring zurückgegeben.
- *                                   Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
+ * @param  string value            - initial string
+ * @param  string substring        - limiting substring (if empty the entire string is returned)
+ * @param  int    count [optional] - Number of occurrences of the limiting substring (default: 1).
+ *                                    positive: counted from the start of the string
+ *                                    negative: counted from the end of the string
+ *                                    0:        an empty string is returned
+ *                                   If the absolute number exceeds the number of occurrences, the entire string is returned.
  * @return string
  */
 string StrLeftTo(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
-   // positive Anzahl: von vorn zählen
+   // positive: count from start
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
@@ -2024,7 +2024,7 @@ string StrLeftTo(string value, string substring, int count = 1) {
       return(StrLeft(value, pos));
    }
 
-   // negative Anzahl: von hinten zählen
+   // negative: count from end
    if (count < 0) {
       /*
       while(count < 0) {
@@ -2049,7 +2049,7 @@ string StrLeftTo(string value, string substring, int count = 1) {
       //return(StrLeft(value, pos));
    }
 
-   // Anzahl == 0
+   // count == 0
    return("");
 }
 

@@ -454,13 +454,15 @@
 
 
 // MT4 control ids (windows, controls, ui elements)
-#define IDC_TOOLBAR                         59419        // Toolbar
+#define IDC_TOOLBAR                         59419        // toolbar
 #define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 community button (terminal builds <= 509)
 #define IDC_TOOLBAR_SEARCHBOX               38213        // search box                 (terminal builds > 509)
 #define IDC_STATUSBAR                       59393        // status bar
-#define IDC_MDI_CLIENT                      59648        // main MDI container (holding all charts)
-#define IDC_DOCKED_CONTAINER                59422        // window containing all dockable child windows docked to the main application window
-#define IDC_FLOATING_CONTAINER              59423        // window containing a single dockable but floating child window (possibly more than one, not a toplevel window)
+#define IDC_DOCKED_CONTAINER                59422        // window containing all dockable child windows docked to the main terminal window
+#define IDC_FLOATING_CONTAINER              59423        // window containing a single dockable but floating child window (possibly more than one, not a top-level window)
+#define IDC_MDICLIENT                       59648        // MDI container window (holding all chart windows)
+#define IDC_MDICLIENT_CHART1                65280        // first chart window
+#define IDC_MDICLIENT_CHART_FRAME   IDC_MDICLIENT        // a chart window's painting area (AfxFrameOrView), return value of MQL::WindowHandle()
 
 #define IDC_CUSTOM_INDICATOR_OK                 1        // load dialog "Custom Indicator"
 #define IDC_CUSTOM_INDICATOR_CANCEL             2        // ...
