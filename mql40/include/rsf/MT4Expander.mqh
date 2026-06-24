@@ -25,9 +25,9 @@
    string   GetTerminalDataPathA();
    string   GetTerminalFileNameA();
    string   GetTerminalRoamingDataPathA();
-   int      GetUIThreadId();
+   int      GetUiThreadId();
    bool     IsPortableMode();
-   bool     IsUIThread(int threadId);
+   bool     IsUiThread(int threadId);
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
    int      MT4InternalMsg();
    bool     ReopenAlertDialog(int sound);                                                 // see notes for array limitations at the top of the file
