@@ -456,6 +456,11 @@
 
 
 // MT4 control ids (windows, controls, ui elements)
+#define IDC_ALERT_BUTTON                        1        // "Alert" dialog
+#define IDC_ALERT_ICON                       1236        //
+#define IDC_ALERT_EDITTEXT                   1325        //
+#define IDC_ALERT_LISTVIEW                   4018        //
+
 #define IDC_TOOLBAR                         59419        // toolbar
 #define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 community button (terminal builds <= 509)
 #define IDC_TOOLBAR_SEARCHBOX               38213        // search box                 (terminal builds > 509)
