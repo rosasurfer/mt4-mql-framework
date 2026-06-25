@@ -3,29 +3,29 @@
  *
  *
  * Available averaging methods:
- *  • SMA  - Simple Moving Average:          equal bar weighting
- *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
- *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
- *  • SMMA - Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes 2)
- *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
+ *  â€¢ SMA  = Simple Moving Average:          equal bar weighting
+ *  â€¢ LWMA = Linear Weighted Moving Average: bar weighting using a linear function
+ *  â€¢ EMA  = Exponential Moving Average:     bar weighting using an exponential function
+ *  â€¢ SMMA = Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes)
+ *  â€¢ ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  *
  * Indicator buffers for iCustom():
- *  • MovingAverage.MODE_MA:    MA values
- *  • MovingAverage.MODE_TREND: trend direction and length
+ *  â€¢ MovingAverage.MODE_MA:    MA values
+ *  â€¢ MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
  *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  *
  *
  * Notes:
- *  (1) EMA calculation:
- *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+ *  - EMA calculation:
+ *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
  *
- *  (2) SMMA calculation: The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
- *      @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
+ *  - SMMA calculation: The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
+ *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
  *
- *  (3) ALMA calculation:
- *      @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ *  - ALMA calculation:
+ *    @see http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -48,6 +48,7 @@ extern int    Background.Width               = 2;
 extern string ___a__________________________ = "=== Display options ===";
 extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;             // max. values to calculate (-1: all available)
+extern int    SaveCPU                        = 0;                 // update current bar every X seconds only
 
 extern string ___b__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -175,6 +176,10 @@ int onInit() {
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
    if (MaxBarsBack < -1)     return(catch("onInit(8)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
+   // SaveCPU
+   if (AutoConfiguration) SaveCPU = GetConfigInt(indicator, "SaveCPU", SaveCPU);
+   if (SaveCPU <  0)         return(catch("onInit(9)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
+   if (SaveCPU > 59)         return(catch("onInit(10)  illegal input parameter SaveCPU: "+ SaveCPU +" (must be from 0-59)", ERR_INVALID_INPUT_PARAMETER));
 
    // signal configuration
    string signalId = "Signal.onTrendChange";
@@ -182,7 +187,7 @@ int onInit() {
    if (!ConfigureSignals(signalId, AutoConfiguration, Signal.onTrendChange)) return(last_error);
    if (Signal.onTrendChange) {
       if (!ConfigureSignalTypes(signalId, Signal.onTrendChange.Types, AutoConfiguration, signal.sound, signal.alert, signal.mail, signal.telegram)) {
-         return(catch("onInit(9)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
+         return(catch("onInit(11)  invalid input parameter Signal.onTrendChange.Types: "+ DoubleQuoteStr(Signal.onTrendChange.Types), ERR_INVALID_INPUT_PARAMETER));
       }
       Signal.onTrendChange = (signal.sound || signal.alert || signal.mail || signal.telegram);
       if (Signal.onTrendChange) legendInfo = "("+ StrLeft(ifString(signal.sound, "sound,", "") + ifString(signal.alert, "alert,", "") + ifString(signal.mail, "mail,", "") + ifString(signal.telegram, "tgm,", ""), -1) +")";
@@ -206,7 +211,7 @@ int onInit() {
    if (ShowChartLegend) legendLabel = CreateChartLegend();
    SetIndicatorOptions();
 
-   return(catch("onInit(10)"));
+   return(catch("onInit(12)"));
 }
 
 
@@ -251,6 +256,17 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
    }
 
+   // save CPU cycles if enabled (current bar updates only)
+   if (ChangedBars == 1) {
+      if (!__isSuperContext && SaveCPU) {
+         static datetime lastUpdate = NULL;
+         if (lastUpdate + SaveCPU > Tick.time) {
+            return(last_error);
+         }
+         lastUpdate = Tick.time;
+      }
+   }
+
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-MA.Periods);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
@@ -274,7 +290,7 @@ int onTick() {
 
       // signal trend changes
       if (Signal.onTrendChange) /*&&*/ if (IsBarOpen()) {
-         int iTrend = Round(trend[1]);
+         int iTrend = trend[1];
          if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
@@ -502,23 +518,25 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";", NL,
-                            "MA.Periods=",                 MA.Periods,                                 ";", NL,
+   return(StringConcatenate("MA.Method=",                  DoubleQuoteStr(MA.Method),                  ";"+ NL,
+                            "MA.Periods=",                 MA.Periods,                                 ";"+ NL,
                             "MA.Periods.Step=",            MA.Periods.Step,                            ";"+ NL,
-                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";", NL,
+                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),            ";"+ NL,
 
-                            "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";", NL,
-                            "Draw.Width=",                 Draw.Width,                                 ";", NL,
-                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";", NL,
-                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";", NL,
-                            "Background.Color=",           ColorToStr(Background.Color),               ";", NL,
-                            "Background.Width=",           Background.Width,                           ";", NL,
-                            "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";", NL,
-                            "MaxBarsBack=",                MaxBarsBack,                                ";", NL,
+                            "Draw.Type=",                  DoubleQuoteStr(Draw.Type),                  ";"+ NL,
+                            "Draw.Width=",                 Draw.Width,                                 ";"+ NL,
+                            "UpTrend.Color=",              ColorToStr(UpTrend.Color),                  ";"+ NL,
+                            "DownTrend.Color=",            ColorToStr(DownTrend.Color),                ";"+ NL,
+                            "Background.Color=",           ColorToStr(Background.Color),               ";"+ NL,
+                            "Background.Width=",           Background.Width,                           ";"+ NL,
 
-                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";", NL,
-                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";", NL,
-                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";", NL,
+                            "ShowChartLegend=",            BoolToStr(ShowChartLegend),                 ";"+ NL,
+                            "MaxBarsBack=",                MaxBarsBack,                                ";"+ NL,
+                            "SaveCPU=",                    SaveCPU,                                    ";"+ NL,
+
+                            "Signal.onTrendChange=",       BoolToStr(Signal.onTrendChange),            ";"+ NL,
+                            "Signal.onTrendChange.Types=", DoubleQuoteStr(Signal.onTrendChange.Types), ";"+ NL,
+                            "Signal.Sound.Up=",            DoubleQuoteStr(Signal.Sound.Up),            ";"+ NL,
                             "Signal.Sound.Down=",          DoubleQuoteStr(Signal.Sound.Down),          ";")
    );
 }

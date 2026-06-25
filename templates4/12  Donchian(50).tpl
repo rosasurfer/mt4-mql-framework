@@ -110,6 +110,7 @@ UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
 ShowChartLegend=0
+SaveCPU=5
 AutoConfiguration=0
 </inputs>
 </expert>

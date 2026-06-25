@@ -31,6 +31,7 @@ double icMovingAverage(int timeframe, string maMethod, int maPeriods, string maA
                           "",                               // string __________________________
                           false,                            // bool   ShowChartLegend
                           -1,                               // int    MaxBarsBack
+                          0,                                // int    SaveCPU
 
                           "",                               // string __________________________
                           false,                            // bool   Signal.onTrendChange

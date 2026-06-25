@@ -180,7 +180,7 @@ void UpdateBandLegend(string legendName, string indicatorName, string status, co
  * @param  double value            - indicator value to display
  * @param  int    trend [optional] - trend direction of the value to display (default: none)
  */
-void UpdateTrendLegend(string legendName, string indicatorName, string info, color uptrendColor, color downtrendColor, double value, int trend=0) {
+void UpdateTrendLegend(string legendName, string indicatorName, string info, color uptrendColor, color downtrendColor, double value, int trend = 0) {
    static string lastName = "";
    static double lastValue;
    static int    lastTrend;

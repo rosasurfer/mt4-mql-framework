@@ -2,7 +2,6 @@
 Donchian Channel(50)
 Donchian Channel(50) Width
 -->
-
 <chart>
 symbol=GBPUSD
 period=60
@@ -110,6 +109,7 @@ UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
 ShowChartLegend=1
+SaveCPU=5
 AutoConfiguration=0
 </inputs>
 </expert>
