@@ -29,7 +29,6 @@
    bool     IsPortableMode();
    bool     IsUiThread(int threadId);
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
-   int      MT4InternalMsg();
    bool     ReopenAlertDialog(int sound);                                                 // see notes for array limitations at the top of the file
    //int    MqlProgram_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
    //int    MqlProgram_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime tickTime, int isVirtual, double bid, double ask);
@@ -38,6 +37,7 @@
    //int    MqlLibrary_deinit(int ec[], int uninitReason);
    //int    LeaveMqlModule(int ec[]);
    int      WM_MT4();
+   int      WM_MT4X();
 
    // strategy tester
    int      FindTesterWindow();

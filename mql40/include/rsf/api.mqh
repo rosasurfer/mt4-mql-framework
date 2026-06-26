@@ -860,14 +860,12 @@ string   MessageBoxButtonToStrW(int id);;
 string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
 
-int      MqlProgram_init(int &ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);;
-int      MqlProgram_start(int &ec[], double &rates[][], int bars, int changedBars, int ticks, datetime tickTime, int isVirtual, double bid, double ask);;
+int      MqlProgram_init  (int &ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);;
+int      MqlProgram_start (int &ec[], double &rates[][], int bars, int changedBars, int ticks, datetime tickTime, int isVirtual, double bid, double ask);;
 int      MqlProgram_deinit(int &ec[], int uninitReason);;
-
-int      MqlLibrary_init(int &ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);;
+int      MqlLibrary_init  (int &ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);;
 int      MqlLibrary_deinit(int &ec[], int uninitReason);;
 
-int      MT4InternalMsg();;
 string   NumberFormat(double value, string format);;
 string   OrderTypeDescription(int type);;
 string   PeriodToStr(int period);;
@@ -914,6 +912,7 @@ string   TradeDirectionToStr(int direction);;
 string   UninitReasonToStr(int reason);;
 string   Utf8ToAnsi(string str);;
 int      WM_MT4();;
+int      WM_MT4X();;
 
 // libraries/rsfMT4Expander.dll: program-specific APIs
 int      Grid_GetChartHeight(int hChart, int lastHeight);;
