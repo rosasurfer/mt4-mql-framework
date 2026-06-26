@@ -172,7 +172,6 @@
    int      GetWindowPropertyA   (int hWnd, string name);
    bool     SetWindowPropertyA   (int hWnd, string name, int value);
    int      RemoveWindowPropertyA(int hWnd, string name);
-   bool     EnumWindowPropertiesA(int hWnd, string prefix);
 
    int      GetWindowIntegerA   (int hWnd, string name);
    bool     SetWindowIntegerA   (int hWnd, string name, int value);
@@ -188,6 +187,7 @@
 
    // Win32 helpers
    int      EnumChildWindowsToDebug(int hWnd, int recursive);
+   int      EnumWindowPropertiesA(int hWnd, string prefix);
    string   GetClassNameA(int hWnd);
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();

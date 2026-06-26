@@ -754,6 +754,8 @@ int      ec_SuperLoglevelTerminal (int pid);;
 string   ec_SuperProgramName      (int pid);;
 bool     EmptyIniSectionA(string fileName, string section);;
 int      EnumChildWindowsToDebug(int hWnd, int recursive);;
+int      EnumWindowPropertiesA(int hWnd, string prefix);;
+int      EnumWindowPropertiesW(int hWnd, string prefix);;
 string   ErrorToStrA(int error);;
 string   ErrorToStrW(int error);;
 string   EXECUTION_CONTEXT_toStr(int &ec[]);;
