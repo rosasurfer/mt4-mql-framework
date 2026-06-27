@@ -523,6 +523,10 @@
 #define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS        // Tester - Journal (same as Terminal - Experts)
 
 
+// MT4Expander command ids
+#define ID_CALLBACK                      1               // executes a job/task in the UI thread
+
+
 // LFX trade commands
 #define TC_LFX_ORDER_CREATE              1
 #define TC_LFX_ORDER_OPEN                2

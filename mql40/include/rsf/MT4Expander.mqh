@@ -37,7 +37,7 @@
    //int    MqlLibrary_deinit(int ec[], int uninitReason);
    //int    LeaveMqlModule(int ec[]);
    int      WM_MT4();
-   int      WM_MT4X();
+   int      WM_MT4EXPANDER();
 
    // strategy tester
    int      FindTesterWindow();

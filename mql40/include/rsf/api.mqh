@@ -914,7 +914,7 @@ string   TradeDirectionToStr(int direction);;
 string   UninitReasonToStr(int reason);;
 string   Utf8ToAnsi(string str);;
 int      WM_MT4();;
-int      WM_MT4X();;
+int      WM_MT4EXPANDER();;
 
 // libraries/rsfMT4Expander.dll: program-specific APIs
 int      Grid_GetChartHeight(int hChart, int lastHeight);;
