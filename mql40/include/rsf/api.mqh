@@ -765,7 +765,7 @@ int      GetBoolsAddress(bool &values[]);;
 string   GetClassNameA(int hWnd);;
 string   GetClassNameW(int hWnd);;
 int      GetCliOptions();;
-int      GetDebugOptions();;
+int      GetDebugFeatures();;
 int      GetDoublesAddress(double &values[]);;
 string   GetExpanderFileNameA();;
 string   GetExpanderFileNameW();;

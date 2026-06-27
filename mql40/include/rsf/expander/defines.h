@@ -108,20 +108,20 @@
 
 // flags for command line options of "terminal.exe"
 #define OPTION_PORTABLE_MODE                    1        // option "/portable"
-#define OPTION_DEBUG_ACCOUNT_NUMBER             2        // option "/rsf:debug-accountnumber"
-#define OPTION_DEBUG_ACCOUNT_SERVER             4        // option "/rsf:debug-accountserver"
-#define OPTION_DEBUG_CREATE_OBJECT              8        // option "/rsf:debug-createobject"
-#define OPTION_DEBUG_CREATE_WINDOW             16        // option "/rsf:debug-createwindow"
-#define OPTION_DEBUG_EXECUTION_CONTEXT         32        // option "/rsf:debug-ec"
-#define OPTION_DEBUG_INDICATOR_LIST            64        // option "/rsf:debug-indicatorlist"
-#define OPTION_DEBUG_WM_COMMAND               128        // option "/rsf:debug-wmcommand"
-#define OPTION_DEBUG_SUBCLASS                 256        // option "/rsf:debug-subclass"
-#define OPTION_DEBUG_CHART_TEMPLATES          512        // option "/rsf:debug-charttemplates"
+#define DEBUG_FEATURE_ACCOUNT_NUMBER            2        // option "/rsf:debug-accountnumber"
+#define DEBUG_FEATURE_ACCOUNT_SERVER            4        // option "/rsf:debug-accountserver"
+#define DEBUG_FEATURE_CHART_TEMPLATES           8        // option "/rsf:debug-charttemplates"
+#define DEBUG_FEATURE_CREATE_OBJECT            16        // option "/rsf:debug-createobject"
+#define DEBUG_FEATURE_CREATE_WINDOW            32        // option "/rsf:debug-createwindow"
+#define DEBUG_FEATURE_EXECUTION_CONTEXT        64        // option "/rsf:debug-ec"
+#define DEBUG_FEATURE_INDICATOR_LIST          128        // option "/rsf:debug-indicatorlist"
+#define DEBUG_FEATURE_SUBCLASS                256        // option "/rsf:debug-subclass"
+#define DEBUG_FEATURE_WM_COMMAND              512        // option "/rsf:debug-wmcommand"
 
 
 // window property names
-#define PROP_STRING_ACCOUNT_SERVER              "rsf:string:accountServer"
-#define PROP_INT_ACCOUNT_NUMBER                 "rsf:int:accountNumber"
+#define PROP_STRING_ACCOUNT_SERVER              "rsf.string.accountServer"
+#define PROP_INT_ACCOUNT_NUMBER                 "rsf.int.accountNumber"
 
 
 // timeframe identifiers (can't be combined)
@@ -519,6 +519,16 @@
 #define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS        // Tester - Journal (same as Terminal - Experts)
 
 
+// LFX trade commands
+#define TC_LFX_ORDER_CREATE              1
+#define TC_LFX_ORDER_OPEN                2
+#define TC_LFX_ORDER_CLOSE               3
+#define TC_LFX_ORDER_CLOSEBY             4
+#define TC_LFX_ORDER_HEDGE               5
+#define TC_LFX_ORDER_MODIFY              6
+#define TC_LFX_ORDER_DELETE              7
+
+
 // colors
 #define AliceBlue                        0xFFF8F0
 #define AntiqueWhite                     0xD7EBFA
@@ -787,13 +797,3 @@
 #define clrYellow                        Yellow
 #define clrYellowGreen                   YellowGreen
 #define clrNONE                          CLR_NONE
-
-
-// LFX trade commands
-#define TC_LFX_ORDER_CREATE              1
-#define TC_LFX_ORDER_OPEN                2
-#define TC_LFX_ORDER_CLOSE               3
-#define TC_LFX_ORDER_CLOSEBY             4
-#define TC_LFX_ORDER_HEDGE               5
-#define TC_LFX_ORDER_MODIFY              6
-#define TC_LFX_ORDER_DELETE              7

@@ -13,7 +13,7 @@
    // terminal status and interaction
    string   FindHistoryDirectoryA(string filename, int removeFile);
    int      GetCliOptions();
-   int      GetDebugOptions();
+   int      GetDebugFeatures();
    string   GetExpanderFileNameA();
    string   GetHistoryRootPathA();
    string   GetMqlDirectoryA();
