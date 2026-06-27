@@ -14,6 +14,7 @@
 #define MAX_SYMBOL_GROUP_LENGTH                15
 #define MAX_SYMBOL_LENGTH                      11
 #define CHARTS_MAX                            100
+#define CHART_TEMPLATES_MAX                   100
 
 
 // string constants in the MT4Expander are defined as ANSI
@@ -427,7 +428,7 @@
 #define TICK_PAUSE_ON_WEEKEND                  16        // send ticks only at regular session times (not implemented)
 
 
-// MT4 command ids (main/context menus, toolbars, hotkeys)
+// MT4 command ids (hotkeys, menus, toolbars, internal commands)
 #define ID_CHART_INDICATORS_LIST            35419        // Chart:   Indicators List dialog            Ctrl+I
 #define ID_CHART_EXPERT_PROPERTIES          33048        //          Expert properties dialog              F7
 #define ID_CHART_OBJECTS_UNSELECTALL        35462        //          Objects->Unselect All
@@ -441,6 +442,8 @@
 #define ID_CHART_TEMPLATES_DEFAULT          34825        //          Templates->Default (base id, dynamic if more than 25 user templates)
 #define ID_CHART_TEMPLATES_OFFLINE          34826        //          Templates->Offline (base id, dynamic if more than 25 user templates)
 #define ID_CHART_TEMPLATES_TESTER           34827        //          Templates->Tester  (base id, dynamic if more than 25 user templates)
+#define ID_CHART_TEMPLATES_REMOVE_USER1     34900        //          Templates->Remove->{first-user-template}
+#define ID_CHART_TEMPLATES_REFRESH          33320        //          refresh main menu templates from disk (context menus are updated per invocation)
 
 #define ID_WINDOW_NEWWINDOW                 57648        // Window:  New Window
 #define ID_WINDOW_TILEWINDOWS               38259        //          Tile Windows                       Alt+R
