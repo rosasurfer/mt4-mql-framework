@@ -719,10 +719,10 @@ double PipValue(double lots=1.0, bool muteErrors=false) {
       }
       else {
          isConstant = false;                                                              // TickValue is dynamic
-         isInaccurate = __isTesting;                                                      // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
+         isInaccurate = __isTesting;                                                      // MarketInfo() gibt im Tester statt des tatsï¿½chlichen den Online-Wert zurï¿½ck (nur annï¿½hernd genau).
       }
-      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());                        // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
-      flagsResolved = true;                                                               // muß im Tester (ggf. nach Warnung) der Online-Wert verwendet werden.
+      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());                        // Der tatsï¿½chliche Wert kann u.U. berechnet werden. Ist das nicht mï¿½glich,
+      flagsResolved = true;                                                               // muï¿½ im Tester (ggf. nach Warnung) der Online-Wert verwendet werden.
 
       if (isInaccurate && !isCalculatable && !test.disableTickValueWarning) {
          string message = "Historic MarketInfo(MODE_TICKVALUE) not available."                                   + NL
@@ -1455,7 +1455,7 @@ bool LE(double double1, double double2, int digits = 8) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als boolean TRUE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * Pseudo-Funktion, die nichts weiter tut, als boolean TRUE zurï¿½ckzugeben. Kann zur Verbesserung der ï¿½bersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
@@ -1468,7 +1468,7 @@ bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, i
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als boolean FALSE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * Pseudo-Funktion, die nichts weiter tut, als boolean FALSE zurï¿½ckzugeben. Kann zur Verbesserung der ï¿½bersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
@@ -1481,7 +1481,7 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, 
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurï¿½ckzugeben. Kann zur Verbesserung der ï¿½bersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
@@ -1494,8 +1494,8 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, in
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den Fehlerstatus NO_ERROR zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
+ * Pseudo-Funktion, die nichts weiter tut, als den Fehlerstatus NO_ERROR zurï¿½ckzugeben. Kann zur Verbesserung der
+ * ï¿½bersichtlichkeit und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1507,8 +1507,8 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den letzten Fehlercode zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den letzten Fehlercode zurï¿½ckzugeben. Kann zur Verbesserung der
+ * ï¿½bersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1520,8 +1520,8 @@ int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NU
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY (0xFFFFFFFF = -1) zurückzugeben.
- * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY (0xFFFFFFFF = -1) zurï¿½ckzugeben.
+ * Kann zur Verbesserung der ï¿½bersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1545,8 +1545,8 @@ bool IsEmpty(double value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY_VALUE (0x7FFFFFFF = 2147483647 = INT_MAX) zurückzugeben.
- * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY_VALUE (0x7FFFFFFF = 2147483647 = INT_MAX) zurï¿½ckzugeben.
+ * Kann zur Verbesserung der ï¿½bersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1570,8 +1570,8 @@ bool IsEmptyValue(double value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als einen Leerstring ("") zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als einen Leerstring ("") zurï¿½ckzugeben. Kann zur Verbesserung der
+ * ï¿½bersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1599,7 +1599,7 @@ bool IsEmptyString(string value) {
 
 /**
  * Pseudo-Funktion, die die Konstante NaT (Not-A-Time: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52')
- * zurückgibt. Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * zurï¿½ckgibt. Kann zur Verbesserung der ï¿½bersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1623,8 +1623,8 @@ bool IsNaT(datetime value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurï¿½ckzugeben. Kann zur Verbesserung der
+ * ï¿½bersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  bool param1 - Boolean
  * @param  ...         - beliebige weitere Parameter (werden ignoriert)
@@ -1637,8 +1637,8 @@ bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL, int p
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurï¿½ckzugeben. Kann zur Verbesserung der
+ * ï¿½bersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  int param1 - Integer
  * @param  ...        - beliebige weitere Parameter (werden ignoriert)
@@ -1651,8 +1651,8 @@ int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL, int para
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurï¿½ckzugeben. Kann zur Verbesserung der
+ * ï¿½bersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  double param1 - Double
  * @param  ...           - beliebige weitere Parameter (werden ignoriert)
@@ -1665,8 +1665,8 @@ double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL,
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurï¿½ckzugeben. Kann zur Verbesserung der
+ * ï¿½bersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  string param1 - String
  * @param  ...           - beliebige weitere Parameter (werden ignoriert)
@@ -1981,11 +1981,11 @@ double MathModFix(double a, double b) {
 
 
 /**
- * Gibt die Anzahl der Dezimal- bzw. Nachkommastellen eines Zahlenwertes zurück.
+ * Gibt die Anzahl der Dezimal- bzw. Nachkommastellen eines Zahlenwertes zurï¿½ck.
  *
  * @param  double number
  *
- * @return int - Anzahl der Nachkommastellen, höchstens jedoch 8
+ * @return int - Anzahl der Nachkommastellen, hï¿½chstens jedoch 8
  */
 int CountDecimals(double number) {
    string str = number;
@@ -2057,10 +2057,10 @@ string StrLeftTo(string value, string substring, int count = 1) {
 /**
  * Return a right-side substring of a string.
  *
- * Ist N positiv, gibt StrRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
+ * Ist N positiv, gibt StrRight() die N am meisten rechts stehenden Zeichen des Strings zurï¿½ck.
  *    z.B.  StrRight("ABCDEFG",  2)  =>  "FG"
  *
- * Ist N negativ, gibt StrRight() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
+ * Ist N negativ, gibt StrRight() alle auï¿½er den N am meisten links stehenden Zeichen des Strings zurï¿½ck.
  *    z.B.  StrRight("ABCDEFG", -2)  =>  "CDEFG"
  *
  * @param  string value
@@ -2076,23 +2076,23 @@ string StrRight(string value, int n) {
 
 
 /**
- * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
+ * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurï¿½ck. Das Ergebnis enthï¿½lt den begrenzenden
  * Teilstring nicht.
  *
  * @param  string value            - Ausgangsstring
  * @param  string substring        - der das Ergebnis begrenzende Teilstring
  * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                                   Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
- *                                   zurückgegeben.
- *                                   Wenn negativ, wird mit dem Zählen anstatt von links von rechts begonnen.
- *                                   Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings,
- *                                   wird der gesamte String zurückgegeben.
+ *                                   Wenn 0 oder grï¿½ï¿½er als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
+ *                                   zurï¿½ckgegeben.
+ *                                   Wenn negativ, wird mit dem Zï¿½hlen anstatt von links von rechts begonnen.
+ *                                   Wenn negativ und absolut grï¿½ï¿½er als die Anzahl der im String existierenden Teilstrings,
+ *                                   wird der gesamte String zurï¿½ckgegeben.
  * @return string
  */
 string StrRightFrom(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
-   // positive Anzahl: von vorn zählen
+   // positive Anzahl: von vorn zï¿½hlen
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
@@ -2102,7 +2102,7 @@ string StrRightFrom(string value, string substring, int count = 1) {
       return(StrSubstr(value, pos+StringLen(substring)));
    }
 
-   // negative Anzahl: von hinten zählen
+   // negative Anzahl: von hinten zï¿½hlen
    if (count < 0) {
       /*
       while(count < 0) {
@@ -2133,9 +2133,9 @@ string StrRightFrom(string value, string substring, int count = 1) {
 
 
 /**
- * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
+ * Ob ein String mit dem angegebenen Teilstring beginnt. Groï¿½-/Kleinschreibung wird nicht beachtet.
  *
- * @param  string value  - zu prüfender String
+ * @param  string value  - zu prï¿½fender String
  * @param  string prefix - Substring
  *
  * @return bool
@@ -2184,9 +2184,9 @@ bool StrIsDigits(string value) {
 
 
 /**
- * Prüft, ob ein String einen gültigen Integer darstellt.
+ * Prï¿½ft, ob ein String einen gï¿½ltigen Integer darstellt.
  *
- * @param  string value - zu prüfender String
+ * @param  string value - zu prï¿½fender String
  *
  * @return bool
  */
@@ -2243,9 +2243,9 @@ bool StrIsNumeric(string value) {
 
 
 /**
- * Ob ein String eine gültige E-Mailadresse darstellt.
+ * Ob ein String eine gï¿½ltige E-Mailadresse darstellt.
  *
- * @param  string value - zu prüfender String
+ * @param  string value - zu prï¿½fender String
  *
  * @return bool
  */
@@ -2266,20 +2266,20 @@ bool StrIsEmailAddress(string value) {
 
 
 /**
- * Fügt ein Element am Beginn eines String-Arrays an.
+ * Fï¿½gt ein Element am Beginn eines String-Arrays an.
  *
  * @param  _InOut_ string array[] - String-Array
- * @param  _In_    string value   - hinzuzufügendes Element
+ * @param  _In_    string value   - hinzuzufï¿½gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue Grï¿½ï¿½e des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  *
  *
- * NOTE: Muß global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf,
- *       dessen Verhalten mit einem String-Parameter fehlerhaft (offiziell: nicht unterstützt) ist. Unter ungeklärten
- *       Umständen wird das übergebene Array zerschossen, es enthält dann Zeiger auf andere im Programm existierende Strings.
- *       Dieser Fehler trat in Indikatoren auf, wenn ArrayUnshiftString() in einer MQL-Library definiert war und über Modul-
- *       grenzen aufgerufen wurde, nicht jedoch bei globaler Definition. Außerdem trat der Fehler nicht sofort, sondern erst
- *       nach Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
+ * NOTE: Muï¿½ global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf,
+ *       dessen Verhalten mit einem String-Parameter fehlerhaft (offiziell: nicht unterstï¿½tzt) ist. Unter ungeklï¿½rten
+ *       Umstï¿½nden wird das ï¿½bergebene Array zerschossen, es enthï¿½lt dann Zeiger auf andere im Programm existierende Strings.
+ *       Dieser Fehler trat in Indikatoren auf, wenn ArrayUnshiftString() in einer MQL-Library definiert war und ï¿½ber Modul-
+ *       grenzen aufgerufen wurde, nicht jedoch bei globaler Definition. Auï¿½erdem trat der Fehler nicht sofort, sondern erst
+ *       nach Aufruf anderer Array-Funktionen auf, die mit vï¿½llig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string &array[], string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -2465,7 +2465,7 @@ bool IsLeapYear(int year) {
 /**
  * Create a datetime value from the specified parameters.
  *
- * Parameter, die außerhalb der üblichen Wertegrenzen liegen, werden in die resultierende Periode übertragen. Der
+ * Parameter, die auï¿½erhalb der ï¿½blichen Wertegrenzen liegen, werden in die resultierende Periode ï¿½bertragen. Der
  * resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis D'2038.01.19 03:14:07' (INT_MAX) liegen.
  *
  * Beispiel: DateTime1(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
@@ -2479,8 +2479,8 @@ bool IsLeapYear(int year) {
  *
  * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
  *
- * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
- *       D'2037.12.31 23:59:59'. Diese Funktion unterstützt eine größere datetime-Range.
+ * Note: Die internen MQL-Funktionen unterstï¿½tzen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
+ *       D'2037.12.31 23:59:59'. Diese Funktion unterstï¿½tzt eine grï¿½ï¿½ere datetime-Range.
  */
 datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
    year += (Ceil(month/12.) - 1);
@@ -2642,7 +2642,7 @@ int CountWeekdays(datetime from, datetime to) {
 
 
 /**
- * Kopiert einen Speicherbereich. Als MoveMemory() implementiert, die betroffenen Speicherblöcke können sich also überlappen.
+ * Kopiert einen Speicherbereich. Als MoveMemory() implementiert, die betroffenen Speicherblï¿½cke kï¿½nnen sich also ï¿½berlappen.
  *
  * @param  int destination - Zieladresse
  * @param  int source      - Quelladdrese
@@ -3024,13 +3024,13 @@ bool IsDemoFix() {
  * Konvertiert einen String in einen Boolean.
  *
  * Ist der Parameter strict = TRUE, werden die Strings "1" und "0", "on" und "off", "true" und "false", "yes" and "no" ohne
- * Beachtung von Groß-/Kleinschreibung konvertiert und alle anderen Werte lösen einen Fehler aus.
+ * Beachtung von Groï¿½-/Kleinschreibung konvertiert und alle anderen Werte lï¿½sen einen Fehler aus.
  *
  * Ist der Parameter strict = FALSE (default), werden unscharfe Rechtschreibfehler automatisch korrigiert (z.B. Ziffer 0 statt
- * großem Buchstaben O und umgekehrt), numerische Werte ungleich "1" und "0" entsprechend interpretiert und alle Werte, die
- * nicht als TRUE interpretiert werden können, als FALSE interpretiert.
+ * groï¿½em Buchstaben O und umgekehrt), numerische Werte ungleich "1" und "0" entsprechend interpretiert und alle Werte, die
+ * nicht als TRUE interpretiert werden kï¿½nnen, als FALSE interpretiert.
  *
- * Leading/trailing White-Space wird in allen Fällen ignoriert.
+ * Leading/trailing White-Space wird in allen Fï¿½llen ignoriert.
  *
  * @param  string value             - der zu konvertierende String
  * @param  bool   strict [optional] - default: inaktiv
@@ -3084,12 +3084,12 @@ string StrToLower(string value) {
       chr = StringGetChar(value, i);
       // logical version
       //if      ( 65 <= chr && chr <=  90) result = StringSetChar(result, i, chr+32);     // A-Z->a-z
-      //else if (192 <= chr && chr <= 214) result = StringSetChar(result, i, chr+32);     // À-Ö->à-ö
-      //else if (216 <= chr && chr <= 222) result = StringSetChar(result, i, chr+32);     // Ø-Þ->ø-þ
-      //else if (chr == 138)               result = StringSetChar(result, i, 154);        // Š->š
-      //else if (chr == 140)               result = StringSetChar(result, i, 156);        // Œ->œ
-      //else if (chr == 142)               result = StringSetChar(result, i, 158);        // Ž->ž
-      //else if (chr == 159)               result = StringSetChar(result, i, 255);        // Ÿ->ÿ
+      //else if (192 <= chr && chr <= 214) result = StringSetChar(result, i, chr+32);     // ï¿½-ï¿½->ï¿½-ï¿½
+      //else if (216 <= chr && chr <= 222) result = StringSetChar(result, i, chr+32);     // ï¿½-ï¿½->ï¿½-ï¿½
+      //else if (chr == 138)               result = StringSetChar(result, i, 154);        // ï¿½->ï¿½
+      //else if (chr == 140)               result = StringSetChar(result, i, 156);        // ï¿½->ï¿½
+      //else if (chr == 142)               result = StringSetChar(result, i, 158);        // ï¿½->ï¿½
+      //else if (chr == 159)               result = StringSetChar(result, i, 255);        // ï¿½->ï¿½
 
       // optimized for MQL4.0
       if (chr > 64) {
@@ -3099,13 +3099,13 @@ string StrToLower(string value) {
          else if (chr > 191) {
             if (chr < 223) {
                if (chr != 215)
-                  result = StringSetChar(result, i, chr+32);            // À-Ö->à-ö, Ø-Þ->ø-þ
+                  result = StringSetChar(result, i, chr+32);            // ï¿½-ï¿½->ï¿½-ï¿½, ï¿½-ï¿½->ï¿½-ï¿½
             }
          }
-         else if (chr == 138) result = StringSetChar(result, i, 154);   // Š->š
-         else if (chr == 140) result = StringSetChar(result, i, 156);   // Œ->œ
-         else if (chr == 142) result = StringSetChar(result, i, 158);   // Ž->ž
-         else if (chr == 159) result = StringSetChar(result, i, 255);   // Ÿ->ÿ
+         else if (chr == 138) result = StringSetChar(result, i, 154);   // ï¿½->ï¿½
+         else if (chr == 140) result = StringSetChar(result, i, 156);   // ï¿½->ï¿½
+         else if (chr == 142) result = StringSetChar(result, i, 158);   // ï¿½->ï¿½
+         else if (chr == 159) result = StringSetChar(result, i, 255);   // ï¿½->ï¿½
       }
    }
    return(result);
@@ -3131,11 +3131,11 @@ string StrToUpper(string value) {
       // logical version
       //if      (96 < chr && chr < 123)            result = StringSetChar(result, i, chr-32);
       //else if (chr==154 || chr==156 || chr==158) result = StringSetChar(result, i, chr-16);
-      //else if (chr==255)                         result = StringSetChar(result, i,    159);   // ÿ -> Ÿ
+      //else if (chr==255)                         result = StringSetChar(result, i,    159);   // ï¿½ -> ï¿½
       //else if (chr > 223)                        result = StringSetChar(result, i, chr-32);
 
       // optimized for MQL4.0
-      if      (chr == 255)                result = StringSetChar(result, i,    159);            // ÿ -> Ÿ
+      if      (chr == 255)                result = StringSetChar(result, i,    159);            // ï¿½ -> ï¿½
       else if (chr  > 223)                result = StringSetChar(result, i, chr-32);
       else if (chr == 158)                result = StringSetChar(result, i, chr-16);
       else if (chr == 156)                result = StringSetChar(result, i, chr-16);
@@ -3284,7 +3284,7 @@ string GetMqlSandboxPath() {
 
 
 /**
- * Gibt die hexadezimale Repräsentation eines Strings zurück.
+ * Gibt die hexadezimale Reprï¿½sentation eines Strings zurï¿½ck.
  *
  * @param  string value - Ausgangswert
  *
@@ -3306,7 +3306,7 @@ string StrToHexStr(string value) {
 
 
 /**
- * Konvertiert das erste Zeichen eines Strings in Großschreibweise.
+ * Konvertiert das erste Zeichen eines Strings in Groï¿½schreibweise.
  *
  * @param  string value
  *
@@ -3320,12 +3320,12 @@ string StrCapitalize(string value) {
 
 
 /**
- * Schickt dem aktuellen Chart eine Nachricht zum Öffnen des EA-Input-Dialogs.
+ * Schickt dem aktuellen Chart eine Nachricht zum ï¿½ffnen des EA-Input-Dialogs.
  *
  * @return int - error status
  *
  *
- * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
+ * NOTE: Es wird nicht ï¿½berprï¿½ft, ob zur Zeit des Aufrufs ein EA lï¿½uft.
  */
 int Chart.Expert.Properties() {
    if (__isTesting) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
@@ -3361,7 +3361,7 @@ int Chart.SendTick(bool sound = false) {
 
 
 /**
- * Ruft den Hauptmenü-Befehl Charts->Objects->Unselect All auf.
+ * Ruft den Hauptmenï¿½-Befehl Charts->Objects->Unselect All auf.
  *
  * @return int - error status
  */
@@ -3373,7 +3373,7 @@ int Chart.Objects.UnselectAll() {
 
 
 /**
- * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
+ * Ruft den Kontextmenï¿½-Befehl Chart->Refresh auf.
  *
  * @return int - error status
  */
@@ -3489,7 +3489,7 @@ bool Chart.StoreString(string key, string value) {
 
    // mark empty strings with a magic value as the terminal deserializes "" to "Text"
    len = StringLen(value);
-   if (!len) value = "…(empty)…";
+   if (!len) value = "ï¿½(empty)ï¿½";
 
    int i = 0;
    string index = "";
@@ -3654,7 +3654,7 @@ bool Chart.RestoreString(string key, string &var, bool remove = true) {
 
    if (sValue == "") return(false);             // string not found
 
-   if (sValue == "…(empty)…") var = "";         // convert magic value back to empty string as the terminal deserializes "" to "Text"
+   if (sValue == "ï¿½(empty)ï¿½") var = "";         // convert magic value back to empty string as the terminal deserializes "" to "Text"
    else                       var = sValue;
 
    return(!catch("Chart.RestoreString(3)"));
@@ -3758,9 +3758,9 @@ bool Tester.IsStopped() {
 
 
 /**
- * Erzeugt einen neuen String der gewünschten Länge.
+ * Erzeugt einen neuen String der gewï¿½nschten Lï¿½nge.
  *
- * @param  int length - Länge
+ * @param  int length - Lï¿½nge
  *
  * @return string
  */
@@ -3786,9 +3786,9 @@ string CreateString(int length) {
 
 /**
  * Aktiviert bzw. deaktiviert den Aufruf der start()-Funktion von Expert Advisern bei Eintreffen von Ticks.
- * Wird üblicherweise aus der init()-Funktion aufgerufen.
+ * Wird ï¿½blicherweise aus der init()-Funktion aufgerufen.
  *
- * @param  bool enable - gewünschter Status: On/Off
+ * @param  bool enable - gewï¿½nschter Status: On/Off
  *
  * @return int - error status
  */
@@ -3797,7 +3797,7 @@ int Toolbar.Experts(bool enable) {
 
    if (__isTesting) return(debug("Toolbar.Experts(1)  skipping in tester", NO_ERROR));
 
-   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
+   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig ï¿½berschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
 
    int hWnd = GetTerminalMainWindow();
@@ -3814,7 +3814,7 @@ int Toolbar.Experts(bool enable) {
 
 
 /**
- * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
+ * Ruft den Kontextmenï¿½-Befehl MarketWatch->Symbols auf.
  *
  * @return int - error status
  */
@@ -4403,7 +4403,7 @@ string ModuleTypesToStr(int fType) {
 
 
 /**
- * Gibt die Beschreibung eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
+ * Gibt die Beschreibung eines UninitializeReason-Codes zurï¿½ck (siehe UninitializeReason()).
  *
  * @param  int reason - Code
  *
@@ -4438,7 +4438,7 @@ int ProgramInitReason() {
 
 
 /**
- * Gibt die Beschreibung eines InitReason-Codes zurück.
+ * Gibt die Beschreibung eines InitReason-Codes zurï¿½ck.
  *
  * @param  int reason - Code
  *
@@ -4652,10 +4652,10 @@ string GetAccountAlias(string company="", int account=NULL) {
  *  alpariuk-live2 = AlpariLive              ; A mapped full server name precedes a mapping for a default id.
  */
 string GetAccountCompanyId() {
-   // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
+   // Da bei Accountwechsel der Rï¿½ckgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
-   // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten
-   // Servernamen zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
+   // dessen muï¿½ immer der Umweg ï¿½ber GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geï¿½nderten
+   // Servernamen zurï¿½ck, wenn tatsï¿½chlich ein Tick des neuen Servers verarbeitet wird.
    static string lastServer = "", lastId = "";
 
    string server = GetAccountServer(); if (server == "") return("");
@@ -4705,7 +4705,7 @@ double GetExternalAssets(string company="", int account=NULL) {
 
 
 /**
- * Vergleicht zwei Strings ohne Berücksichtigung von Groß-/Kleinschreibung.
+ * Vergleicht zwei Strings ohne Berï¿½cksichtigung von Groï¿½-/Kleinschreibung.
  *
  * @param  string string1
  * @param  string string2
@@ -4765,7 +4765,7 @@ bool StrContainsChars(string value, int chars[]) {
 
 
 /**
- * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
+ * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurï¿½ck.
  *
  * @param  string value  - zu durchsuchender String
  * @param  string search - zu suchender Substring
@@ -4788,7 +4788,7 @@ int StrFindR(string value, string search) {
 
 
 /**
- * Konvertiert eine Farbe in ihre HTML-Repräsentation.
+ * Konvertiert eine Farbe in ihre HTML-Reprï¿½sentation.
  *
  * @param  color value
  *
@@ -4801,18 +4801,18 @@ string ColorToHtmlStr(color value) {
    int green = value & 0x00FF00;
    int blue  = value & 0xFF0000;
 
-   int iValue = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu können
+   int iValue = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu kï¿½nnen
 
    return(StringConcatenate("#", StrRight(IntToHexStr(iValue), 6)));
 }
 
 
 /**
- * Konvertiert eine Farbe in ihre MQL-String-Repräsentation, z.B. "Red" oder "0,255,255".
+ * Konvertiert eine Farbe in ihre MQL-String-Reprï¿½sentation, z.B. "Red" oder "0,255,255".
  *
  * @param  color value
  *
- * @return string - MQL-Farbcode oder RGB-String, falls der übergebene Wert kein bekannter MQL-Farbcode ist.
+ * @return string - MQL-Farbcode oder RGB-String, falls der ï¿½bergebene Wert kein bekannter MQL-Farbcode ist.
  */
 string ColorToStr(color value) {
    if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
@@ -5175,9 +5175,9 @@ string StrRepeat(string str, int times) {
 
 
 /**
- * Gibt die eindeutige ID einer Währung zurück.
+ * Gibt die eindeutige ID einer Wï¿½hrung zurï¿½ck.
  *
- * @param  string currency - 3-stelliger Währungsbezeichner
+ * @param  string currency - 3-stelliger Wï¿½hrungsbezeichner
  *
  * @return int - Currency-ID oder 0, falls ein Fehler auftrat
  */
@@ -5218,11 +5218,11 @@ int GetCurrencyId(string currency) {
 
 
 /**
- * Gibt den 3-stelligen Bezeichner einer Währungs-ID zurück.
+ * Gibt den 3-stelligen Bezeichner einer Wï¿½hrungs-ID zurï¿½ck.
  *
- * @param  int id - Währungs-ID
+ * @param  int id - Wï¿½hrungs-ID
  *
- * @return string - Währungsbezeichner
+ * @return string - Wï¿½hrungsbezeichner
  */
 string GetCurrency(int id) {
    switch (id) {
@@ -5260,7 +5260,7 @@ string GetCurrency(int id) {
 
 
 /**
- * Ob ein String einen gültigen Währungsbezeichner darstellt.
+ * Ob ein String einen gï¿½ltigen Wï¿½hrungsbezeichner darstellt.
  *
  * @param  string value - Wert
  *
@@ -5461,11 +5461,11 @@ string ObjectTypeToStr(int type, int flags = NULL) {
 
 
 /**
- * Gibt den Integer-Wert eines OperationType-Bezeichners zurück.
+ * Gibt den Integer-Wert eines OperationType-Bezeichners zurï¿½ck.
  *
  * @param  string value
  *
- * @return int - OperationType-Code oder OP_UNDEFINED (-1), wenn der Bezeichner ungültig ist
+ * @return int - OperationType-Code oder OP_UNDEFINED (-1), wenn der Bezeichner ungï¿½ltig ist
  */
 int StrToOperationType(string value) {
    string str = StrToLower(StrTrim(value));
@@ -5649,7 +5649,7 @@ string NumberToStr(double value, string mask) {
    int sepPos = StringFind(mask, ",");
    bool separators = (sepPos > -1);
    if (separators) /*&&*/ if (sepPos+1 < maskLen) {
-      sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske löschen
+      sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske lï¿½schen
       mask = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
    }
 
@@ -5718,7 +5718,7 @@ string NumberToStr(double value, string mask) {
       if (-1 < pos && pos < dotPos) leadSign = "+";
    }
 
-   // übrige Modifier
+   // ï¿½brige Modifier
    bool round = (StringFind(mask, "R") > -1);
    // --- Ende Maske parsen ---------------------------
 
@@ -5732,7 +5732,7 @@ string NumberToStr(double value, string mask) {
    if (value < 0)
       outStr = StringSubstr(outStr, 1);
 
-   // auf angegebene Länge kürzen
+   // auf angegebene Lï¿½nge kï¿½rzen
    int dLeft = StringFind(outStr, ".");
    if (nLeft == -1) nLeft = dLeft;
    else             nLeft = Min(nLeft, dLeft);
@@ -5891,7 +5891,7 @@ string TimeframeFlagToStr(int flag) {
 
 
 /**
- * Gibt die lesbare Version ein oder mehrerer History-Flags zurück.
+ * Gibt die lesbare Version ein oder mehrerer History-Flags zurï¿½ck.
  *
  * @param  int flags - Kombination verschiedener History-Flags
  *
@@ -6143,7 +6143,7 @@ int StrToTimeframe(string timeframe, int flags = NULL) {
 
 
 /**
- * Gibt die lesbare Version eines FileAccess-Modes zurück.
+ * Gibt die lesbare Version eines FileAccess-Modes zurï¿½ck.
  *
  * @param  int mode - Kombination verschiedener FileAccess-Modes
  *
@@ -6183,7 +6183,7 @@ string SwapCalculationModeToStr(int mode) {
 
 
 /**
- * Gibt die lesbare Beschreibung eines ShellExecute()/ShellExecuteEx()-Fehlercodes zurück.
+ * Gibt die lesbare Beschreibung eines ShellExecute()/ShellExecuteEx()-Fehlercodes zurï¿½ck.
  *
  * @param  int error - ShellExecute-Fehlercode
  *
@@ -6898,11 +6898,9 @@ void __DummyCalls() {
    bool     WritePrivateProfileStringA(string section, string key, string value, string fileName);
 
 #import "user32.dll"
-   int      GetAncestor(int hWnd, int cmd);
    int      GetDesktopWindow();
    int      GetDlgCtrlID(int hWndCtl);
    int      GetDlgItem(int hDlg, int itemId);
-   int      GetParent(int hWnd);
    int      GetTopWindow(int hWnd);
    int      GetWindow(int hWnd, int cmd);
    bool     IsWindow(int hWnd);

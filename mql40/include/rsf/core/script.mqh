@@ -33,7 +33,7 @@ int init() {
 
    // initialize the execution context
    int error = MqlProgram_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
-   if (!error) error = GetLastError();                         // detect a DLL exception
+   if (!error) error = GetLastError();                         // detect DLL exceptions
    if (IsError(error)) {
       __STATUS_OFF        = true;                              // If MqlProgram_init() failed the content of the EXECUTION_CONTEXT
       __STATUS_OFF.reason = error;                             // is undefined. We must not trigger loading of MQL libraries and return asap.
@@ -340,7 +340,4 @@ bool HandleErrors(string caller, int error = NULL) {
    int MqlProgram_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
    int MqlProgram_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, int isVirtual, double bid, double ask);
    int MqlProgram_deinit(int ec[], int uninitReason);
-
-#import "user32.dll"
-   int GetParent(int hWnd);
 #import

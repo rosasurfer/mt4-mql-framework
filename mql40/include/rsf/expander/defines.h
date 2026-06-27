@@ -13,6 +13,7 @@
 #define MAX_ORDER_COMMENT_LENGTH               27
 #define MAX_SYMBOL_GROUP_LENGTH                15
 #define MAX_SYMBOL_LENGTH                      11
+#define CHARTS_MAX                            100
 
 
 // string constants in the MT4Expander are defined as ANSI
