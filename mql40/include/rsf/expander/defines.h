@@ -465,8 +465,8 @@
 #define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 community button (terminal builds <= 509)
 #define IDC_TOOLBAR_SEARCHBOX               38213        // search box                 (terminal builds > 509)
 #define IDC_STATUSBAR                       59393        // status bar
-#define IDC_DOCKED_CONTAINER                59422        // window containing all dockable child windows docked to the main terminal window
-#define IDC_FLOATING_CONTAINER              59423        // window containing a single dockable but floating child window (possibly more than one, not a top-level window)
+#define IDC_DOCK_CONTAINER                  59422        // a single window containing all application windows currently docked to the main window
+#define IDC_FLOAT_CONTAINER                 59423        // one or more windows each containing a single dockable but currently floating application window
 #define IDC_MDICLIENT                       59648        // MDI container window (holding all chart windows)
 #define IDC_MDICLIENT_CHART1                65280        // first chart window
 #define IDC_MDICLIENT_CHART_FRAME   IDC_MDICLIENT        // a chart window's painting area (AfxFrameOrView), return value of MQL::WindowHandle()
