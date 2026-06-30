@@ -460,24 +460,18 @@
 
 
 // MT4 control ids (windows, controls, ui elements)
-#define IDC_ALERT_BUTTON                        1        // "Alert" dialog
-#define IDC_ALERT_ICON                       1236        //
-#define IDC_ALERT_EDITTEXT                   1325        //
-#define IDC_ALERT_LISTVIEW                   4018        //
-
 #define IDC_TOOLBAR                         59419        // toolbar
-#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 community button (terminal builds <= 509)
-#define IDC_TOOLBAR_SEARCHBOX               38213        // search box                 (terminal builds > 509)
+#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 community button (builds <= 509)
+#define IDC_TOOLBAR_SEARCHBOX               38213        // search box (builds > 509)
+
 #define IDC_STATUSBAR                       59393        // status bar
-#define IDC_DOCK_CONTAINER                  59422        // a single window containing all application windows currently docked to the main window
-#define IDC_FLOAT_CONTAINER                 59423        // one or more windows each containing a single dockable but currently floating application window
+
+#define IDC_DOCK_CONTAINER                  59422        // A single window containing all application windows currently docked to the main window.
+#define IDC_FLOAT_CONTAINER                 59423        // One or more windows each containing a single dockable but currently floating application window.
+
 #define IDC_MDICLIENT                       59648        // MDI container window (holding all chart windows)
 #define IDC_MDICLIENT_CHART1                65280        // first chart window
 #define IDC_MDICLIENT_CHART_FRAME   IDC_MDICLIENT        // a chart window's painting area (AfxFrameOrView), return value of MQL::WindowHandle()
-
-#define IDC_CUSTOM_INDICATOR_OK                 1        // load dialog "Custom Indicator"
-#define IDC_CUSTOM_INDICATOR_CANCEL             2        // ...
-#define IDC_CUSTOM_INDICATOR_RESET          12321        // ...
 
 #define IDC_MARKETWATCH                        80        // Market Watch
 #define IDC_MARKETWATCH_SYMBOLS             35441        // Market Watch - Symbols
@@ -489,6 +483,7 @@
 
 #define IDC_TERMINAL                           81        // Terminal
 #define IDC_TERMINAL_TRADE                  33217        // Terminal - Trade
+#define IDC_TERMINAL_EXPOSURE               38311        // Terminal - Exposure
 #define IDC_TERMINAL_ACCOUNTHISTORY         33208        // Terminal - Account History
 #define IDC_TERMINAL_NEWS                   33211        // Terminal - News
 #define IDC_TERMINAL_ALERTS                 33206        // Terminal - Alerts
@@ -496,6 +491,7 @@
 #define IDC_TERMINAL_COMPANY                 4078        // Terminal - Company
 #define IDC_TERMINAL_MARKET                  4081        // Terminal - Market
 #define IDC_TERMINAL_SIGNALS                 1405        // Terminal - Signals
+#define IDC_TERMINAL_ARTICLES               33216        // Terminal - Articles
 #define IDC_TERMINAL_CODEBASE               33212        // Terminal - Code Base
 #define IDC_TERMINAL_EXPERTS                35434        // Terminal - Experts
 #define IDC_TERMINAL_JOURNAL                33209        // Terminal - Journal
@@ -522,9 +518,18 @@
 #define IDC_TESTER_REPORT                   33213        // Tester - Report
 #define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS        // Tester - Journal (same as Terminal - Experts)
 
+#define IDC_ALERT_BUTTON                        1        // "Alert" dialog
+#define IDC_ALERT_ICON                       1236        //
+#define IDC_ALERT_EDITTEXT                   1325        //
+#define IDC_ALERT_LISTVIEW                   4018        //
+
+#define IDC_CUSTOM_INDICATOR_OK                 1        // load "Custom Indicator" dialog
+#define IDC_CUSTOM_INDICATOR_CANCEL             2        // ...
+#define IDC_CUSTOM_INDICATOR_RESET          12321        // ...
+
 
 // MT4Expander command ids
-#define ID_CALLBACK                      1               // executes a job/task in the UI thread
+#define ID_UI_CALLBACK                   1               // execute a task in the UI thread
 
 
 // LFX trade commands
