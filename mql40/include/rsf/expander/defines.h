@@ -459,7 +459,7 @@
 #define ID_TESTER_TICK       ID_CHART_STEPFORWARD        // Tester:  Next Tick                            F12
 
 
-// MT4 control ids (windows, controls, ui elements)
+// MT4 control ids (windows, controls, UI elements)
 #define IDC_TOOLBAR                         59419        // toolbar
 #define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 community button (builds <= 509)
 #define IDC_TOOLBAR_SEARCHBOX               38213        // search box (builds > 509)
@@ -526,10 +526,6 @@
 #define IDC_CUSTOM_INDICATOR_OK                 1        // load "Custom Indicator" dialog
 #define IDC_CUSTOM_INDICATOR_CANCEL             2        // ...
 #define IDC_CUSTOM_INDICATOR_RESET          12321        // ...
-
-
-// MT4Expander command ids
-#define ID_UI_CALLBACK                   1               // execute a task in the UI thread
 
 
 // LFX trade commands
