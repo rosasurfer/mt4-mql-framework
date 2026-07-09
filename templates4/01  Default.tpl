@@ -1,4 +1,4 @@
-<!-- Default.tpl -->
+<!-- Default -->
 
 <chart>
 symbol=GBPUSD
