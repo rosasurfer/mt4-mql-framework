@@ -1822,7 +1822,7 @@ bool UpdateStopoutLevel() {
                      break;
                   }
                }
-               if (!lfxProfits) {                                                // Profits in lfxOrders.dCache[] beim ersten Zugriff in lastProfit speichern und zur�cksetzen
+               if (!lfxProfits) {                                                // Profits in lfxOrders.dCache[] beim ersten Zugriff in lastProfit speichern und zurücksetzen
                   for (int j=0; j < lfxOrders.openPositions; j++) {
                      lfxOrders.dCache[j][DC.lastProfit] = lfxOrders.dCache[j][DC.profit];
                      lfxOrders.dCache[j][DC.profit    ] = 0;
@@ -1853,7 +1853,7 @@ bool UpdateStopoutLevel() {
       // offene Positionen sortieren und einlesen
       if (openPositions > 1) /*&&*/ if (!SortOpenTickets(sortKeys)) return(false);
 
-      ArrayResize(tickets,      openPositions);                                  // interne Positionsdetails werden bei jedem Tick zur�ckgesetzt
+      ArrayResize(tickets,      openPositions);                                  // interne Positionsdetails werden bei jedem Tick zurückgesetzt
       ArrayResize(magicNumbers, openPositions);
       ArrayResize(types,        openPositions);
       ArrayResize(lots,         openPositions);
@@ -2849,7 +2849,7 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, datetime &
    if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseOpenTerm(4)  invalid open positions configuration in "+ DoubleQuoteStr(origTerm) +" (start time after end time)", ERR_INVALID_CONFIG_VALUE));
 
 
-   // (2) Datumswerte definieren und zur�ckgeben
+   // (2) Datumswerte definieren und zurückgeben
    if (isSingleTimespan) {
       if      (isFullYear1  ) comment =             GmtTimeFormat(dtFrom, "%Y");
       else if (isFullMonth1 ) comment =             GmtTimeFormat(dtFrom, "%Y %B");

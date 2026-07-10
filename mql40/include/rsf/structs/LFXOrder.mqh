@@ -2,29 +2,29 @@
  * Framework struct LFX_ORDER
  *
  * struct LFX_ORDER {
- *    int    ticket;                //   4         lo[ 0]      // LFX-Ticket, enthält Strategy- und Currency-ID
+ *    int    ticket;                //   4         lo[ 0]      // LFX-Ticket, enthï¿½lt Strategy- und Currency-ID
  *    int    type;                  //   4         lo[ 1]      // Ordertype (Operationtype)
  *    int    units;                 //   4         lo[ 2]      // Order-Units in Zehnteln einer Unit
  *    int    lots;                  //   4         lo[ 3]      // Ordervolumen in Hundertsteln eines Lots USD
- *    int    openEquity;            //   4         lo[ 4]      // Equity zum Open-Zeitpunkt in Hundertsteln der Account-Währung (inkl. unrealisierter Verluste, exkl. unrealisierter Gewinne)
+ *    int    openEquity;            //   4         lo[ 4]      // Equity zum Open-Zeitpunkt in Hundertsteln der Account-Wï¿½hrung (inkl. unrealisierter Verluste, exkl. unrealisierter Gewinne)
  *    int    openTriggerTime        //   4         lo[ 5]      // Zeitpunkt des Erreichens eines Open-Limits in FXT
- *    int    openTime;              //   4         lo[ 6]      // OpenTime in FXT (negativ: Zeitpunkt eines Fehlers beim Öffnen der Order)
+ *    int    openTime;              //   4         lo[ 6]      // OpenTime in FXT (negativ: Zeitpunkt eines Fehlers beim ï¿½ffnen der Order)
  *    int    openPrice;             //   4         lo[ 7]      // OpenPrice in Points
  *    int    takeProfitPrice;       //   4         lo[ 8]      // TakeProfit-Preis in Points
- *    int    takeProfitValue;       //   4         lo[ 9]      // TakeProfit-Value in Hundertsteln der Account-Währung
+ *    int    takeProfitValue;       //   4         lo[ 9]      // TakeProfit-Value in Hundertsteln der Account-Wï¿½hrung
  *    int    takeProfitPercent;     //   4         lo[10]      // TakeProfit-Value in Hundertstel-Prozent von OpenEquity
- *    BOOL   takeProfitTriggered    //   4         lo[11]      // ob ein TakeProfit-Limit ausgelöst wurde
+ *    BOOL   takeProfitTriggered    //   4         lo[11]      // ob ein TakeProfit-Limit ausgelï¿½st wurde
  *    int    stopLossPrice;         //   4         lo[12]      // StopLoss-Preis in Points
- *    int    stopLossValue;         //   4         lo[13]      // StopLoss-Value in Hundertsteln der Account-Währung
+ *    int    stopLossValue;         //   4         lo[13]      // StopLoss-Value in Hundertsteln der Account-Wï¿½hrung
  *    int    stopLossPercent;       //   4         lo[14]      // StopLoss-Value in Hundertstel-Prozent von OpenEquity
- *    BOOL   stopLossTriggered      //   4         lo[15]      // ob ein StopLoss-Limit ausgelöst wurde
+ *    BOOL   stopLossTriggered      //   4         lo[15]      // ob ein StopLoss-Limit ausgelï¿½st wurde
  *    int    closeTriggerTime       //   4         lo[16]      // Zeitpunkt des Erreichens eines Close-Limits in FXT
- *    int    closeTime;             //   4         lo[17]      // CloseTime in FXT (negativ: Zeitpunkt eines Fehlers beim Schließen der Order)
+ *    int    closeTime;             //   4         lo[17]      // CloseTime in FXT (negativ: Zeitpunkt eines Fehlers beim Schlieï¿½en der Order)
  *    int    closePrice;            //   4         lo[18]      // ClosePrice in Points
- *    int    profit;                //   4         lo[19]      // Profit in Hundertsteln der Account-Währung (realisiert oder unrealisiert)
+ *    int    profit;                //   4         lo[19]      // Profit in Hundertsteln der Account-Wï¿½hrung (realisiert oder unrealisiert)
  *    szchar comment[32];           //  32         lo[20]      // Kommentar, <NUL>-terminiert
- *    int    modificationTime;      //   4         lo[28]      // Zeitpunkt der letzten Änderung in FXT
- *    int    version;               //   4         lo[29]      // Version (fortlaufender Zähler)
+ *    int    modificationTime;      //   4         lo[28]      // Zeitpunkt der letzten ï¿½nderung in FXT
+ *    int    version;               //   4         lo[29]      // Version (fortlaufender Zï¿½hler)
  * } lo;                            // 120 byte = int[30]
  *
  *
@@ -175,7 +175,7 @@ datetime lo.setCloseTime           (/*LFX_ORDER*/int &lo[],          datetime cl
 double   lo.setClosePrice          (/*LFX_ORDER*/int &lo[],          double   closePrice         ) { int v=MathRound(closePrice * MathPow(10, lo.Digits(lo)));                                    lo[LFX_ORDER.closePrice         ] = v;    return(closePrice              ); LFX_ORDER.toStr(lo); }
 double   lo.setProfit              (/*LFX_ORDER*/int &lo[],          double   profit             ) { int v=MathRound(profit * 100);                                                               lo[LFX_ORDER.profit             ] = v;    return(profit                  ); LFX_ORDER.toStr(lo); }
 string   lo.setComment             (/*LFX_ORDER*/int &lo[],          string   comment            ) {
-   if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
+   if (!StringLen(comment)) comment = "";                            // sicherstellen, daï¿½ der String initialisiert ist
    if (StringLen(comment) > 31) return(_EMPTY_STR(catch("lo.setComment()  too long parameter comment: \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
@@ -207,7 +207,7 @@ datetime los.setCloseTime          (/*LFX_ORDER*/int &lo[][], int i, datetime cl
 double   los.setClosePrice         (/*LFX_ORDER*/int &lo[][], int i, double   closePrice         ) { int v=MathRound(closePrice * MathPow(10, los.Digits(lo, i)));                                lo[i][LFX_ORDER.closePrice         ] = v; return(closePrice              ); LFX_ORDER.toStr(lo); }
 double   los.setProfit             (/*LFX_ORDER*/int &lo[][], int i, double   profit             ) { int v=MathRound(profit * 100);                                                               lo[i][LFX_ORDER.profit             ] = v; return(profit                  ); LFX_ORDER.toStr(lo); }
 string   los.setComment            (/*LFX_ORDER*/int &lo[][], int i, string   comment            ) {
-   if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
+   if (!StringLen(comment)) comment = "";                            // sicherstellen, daï¿½ der String initialisiert ist
    if ( StringLen(comment) > 31) return(_EMPTY_STR(catch("los.setComment()  too long parameter comment: \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
@@ -220,10 +220,10 @@ int      los.setVersion            (/*LFX_ORDER*/int &lo[][], int i, int      ve
 
 
 /**
- * Gibt die lesbare Repräsentation einer oder mehrerer struct LFX_ORDER zurück.
+ * Gibt die lesbare Reprï¿½sentation einer oder mehrerer struct LFX_ORDER zurÃ¼ck.
  *
  * @param  int  lo[]        - struct LFX_ORDER
- * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  bool outputDebug - ob die Ausgabe zusï¿½tzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string - lesbarer String oder Leerstring, falls ein fehler auftrat
  */

@@ -93,7 +93,7 @@ int onStart() {
 
 
 /**
- * Gibt das n�chste in der Parameter-Queue des Scripts eingetroffene TradeCommand zur�ck.
+ * Gibt das n�chste in der Parameter-Queue des Scripts eingetroffene TradeCommand zurück.
  *
  * @param  _Out_ int    command - TradeCommand
  * @param  _Out_ int    ticket1 - erstes beteiligtes Ticket des TradeCommands  (falls zutreffend)
@@ -104,7 +104,7 @@ int onStart() {
  *                FALSE, wenn kein TradeCommand eingetroffen ist und die Parameter-Queue des Scripts leer ist oder ein Fehler auftrat
  */
 bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) {
-   // (1) Parameter zur�cksetzen
+   // (1) Parameter zurücksetzen
    int    _command;    command = NULL;
    int    _ticket;                     bool isTicket;
    int    _ticket1;    ticket1 = NULL; bool isTicket1;
@@ -120,7 +120,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
 
       //debug("GetTradeCommand(1)  got "+ ArraySize(commands) +" parameter"+ Pluralize(ArraySize(commands)));
 
-      if (!ArraySize(commands)) return(false);                           // bei leerer Queue mit FALSE zur�ckkehren
+      if (!ArraySize(commands)) return(false);                           // bei leerer Queue mit FALSE zurückkehren
    }
 
 
@@ -252,7 +252,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    double units       = lo.Units(lo);
 
    // (2) zu handelnde Pairs bestimmen
-   string symbols    [7]; ArrayResize(symbols    , 0); ArrayResize(symbols    , 7);    // setzt die Größe und den Inhalt der Arrays zur�ck
+   string symbols    [7]; ArrayResize(symbols    , 0); ArrayResize(symbols    , 7);    // setzt die Größe und den Inhalt der Arrays zurück
    double exactLots  [7]; ArrayResize(exactLots  , 0); ArrayResize(exactLots  , 7);
    double roundedLots[7]; ArrayResize(roundedLots, 0); ArrayResize(roundedLots, 7);
    int    directions [7]; ArrayResize(directions , 0); ArrayResize(directions , 7);

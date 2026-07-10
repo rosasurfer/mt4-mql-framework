@@ -47,7 +47,7 @@ bool RunScript(string name, string parameters="") {
 
 
    // (3) Script starten, falls es noch nicht l�uft                  // Der Zeiger auf den Scriptnamen muß auch nach Verlassen der Funktion g�ltig sein, was ein String-Array
-   if (!isScriptRunning) {                                           // f�r die Variable bedingt. Dieses Array darf bei Verlassen der Funktion nicht zur�ckgesetzt werden.
+   if (!isScriptRunning) {                                           // f�r die Variable bedingt. Dieses Array darf bei Verlassen der Funktion nicht zurückgesetzt werden.
       scriptName[0] = StringConcatenate("", name);                   // Der Zeiger wird beim Aufruf eines anderen Scripts oder beim n�chsten deinit() ung�ltig.
       int hWnd = __ExecutionContext[EC.chart];
       if (!PostMessageA(hWnd, WM_MT4(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0]))) return(!catch("RunScript(8)->user32::PostMessageA()", ERR_WIN32_ERROR));
@@ -59,7 +59,7 @@ bool RunScript(string name, string parameters="") {
 
 
 /**
- * Gibt den Namen des Parameter-Channels f�r Scripte dieses Charts zur�ck.
+ * Gibt den Namen des Parameter-Channels f�r Scripte dieses Charts zurück.
  *
  * @return string - Name oder Leerstring, falls ein Fehler auftrat
  */
@@ -97,7 +97,7 @@ bool ScriptRunner.SetParameters(string parameters) {
 
 
 /**
- * Gibt die per QuickChannel übertragenen Parameterstrings des aktuellen Scripts zur�ck. Je Scriptaufruf wird ein Parameter-
+ * Gibt die per QuickChannel übertragenen Parameterstrings des aktuellen Scripts zurück. Je Scriptaufruf wird ein Parameter-
  * string übertragen. Das Format der Strings ist nicht Sache dieser Funktion.
  *
  * @param  _Out_ string parameters[] - Array zur Aufnahme der übertragenen Parameterstrings
@@ -213,7 +213,7 @@ bool ScriptRunner.StartParamReceiver() {
 bool ScriptRunner.StopParamReceiver() {
    if (scriptrunner.hQC.receiver != NULL) {
       int hTmp = scriptrunner.hQC.receiver;
-                 scriptrunner.hQC.receiver = NULL;                   // Handle immer zur�cksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
+                 scriptrunner.hQC.receiver = NULL;                   // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
       if (!QC_ReleaseReceiver(hTmp)) return(!catch("ScriptRunner.StopParamReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ ScriptRunner.GetChannelName() +"\")  error stopping receiver", ERR_WIN32_ERROR));
    }
    return(true);

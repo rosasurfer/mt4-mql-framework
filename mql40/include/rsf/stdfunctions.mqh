@@ -3281,7 +3281,7 @@ string GetMqlSandboxPath() {
 
 
 /**
- * Gibt die hexadezimale Repr�sentation eines Strings zur�ck.
+ * Gibt die hexadezimale Repr�sentation eines Strings zurück.
  *
  * @param  string value - Ausgangswert
  *
@@ -4400,7 +4400,7 @@ string ModuleTypesToStr(int fType) {
 
 
 /**
- * Gibt die Beschreibung eines UninitializeReason-Codes zur�ck (siehe UninitializeReason()).
+ * Gibt die Beschreibung eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
  *
  * @param  int reason - Code
  *
@@ -4435,7 +4435,7 @@ int ProgramInitReason() {
 
 
 /**
- * Gibt die Beschreibung eines InitReason-Codes zur�ck.
+ * Gibt die Beschreibung eines InitReason-Codes zurück.
  *
  * @param  int reason - Code
  *
@@ -4652,7 +4652,7 @@ string GetAccountCompanyId() {
    // Da bei Accountwechsel der R�ckgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
    // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen ge�nderten
-   // Servernamen zur�ck, wenn tats�chlich ein Tick des neuen Servers verarbeitet wird.
+   // Servernamen zurück, wenn tats�chlich ein Tick des neuen Servers verarbeitet wird.
    static string lastServer = "", lastId = "";
 
    string server = GetAccountServer(); if (server == "") return("");
@@ -4762,7 +4762,7 @@ bool StrContainsChars(string value, int chars[]) {
 
 
 /**
- * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zur�ck.
+ * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
  *
  * @param  string value  - zu durchsuchender String
  * @param  string search - zu suchender Substring
@@ -5172,7 +5172,7 @@ string StrRepeat(string str, int times) {
 
 
 /**
- * Gibt die eindeutige ID einer W�hrung zur�ck.
+ * Gibt die eindeutige ID einer W�hrung zurück.
  *
  * @param  string currency - 3-stelliger W�hrungsbezeichner
  *
@@ -5215,7 +5215,7 @@ int GetCurrencyId(string currency) {
 
 
 /**
- * Gibt den 3-stelligen Bezeichner einer W�hrungs-ID zur�ck.
+ * Gibt den 3-stelligen Bezeichner einer W�hrungs-ID zurück.
  *
  * @param  int id - W�hrungs-ID
  *
@@ -5458,7 +5458,7 @@ string ObjectTypeToStr(int type, int flags = NULL) {
 
 
 /**
- * Gibt den Integer-Wert eines OperationType-Bezeichners zur�ck.
+ * Gibt den Integer-Wert eines OperationType-Bezeichners zurück.
  *
  * @param  string value
  *
@@ -5888,7 +5888,7 @@ string TimeframeFlagToStr(int flag) {
 
 
 /**
- * Gibt die lesbare Version ein oder mehrerer History-Flags zur�ck.
+ * Gibt die lesbare Version ein oder mehrerer History-Flags zurück.
  *
  * @param  int flags - Kombination verschiedener History-Flags
  *
@@ -6139,7 +6139,7 @@ int StrToTimeframe(string timeframe, int flags = NULL) {
 
 
 /**
- * Gibt die lesbare Version eines FileAccess-Modes zur�ck.
+ * Gibt die lesbare Version eines FileAccess-Modes zurück.
  *
  * @param  int mode - Kombination verschiedener FileAccess-Modes
  *
@@ -6179,7 +6179,7 @@ string SwapCalculationModeToStr(int mode) {
 
 
 /**
- * Gibt die lesbare Beschreibung eines ShellExecute()/ShellExecuteEx()-Fehlercodes zur�ck.
+ * Gibt die lesbare Beschreibung eines ShellExecute()/ShellExecuteEx()-Fehlercodes zurück.
  *
  * @param  int error - ShellExecute-Fehlercode
  *

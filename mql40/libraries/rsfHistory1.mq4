@@ -736,12 +736,12 @@ bool HistoryFile1.Close(int hFile) {
 
 /**
  * Findet den Offset der Bar, die den angegebenen Zeitpunkt abdeckt oder abdecken w�rde, und signalisiert, ob diese Bar bereits existiert.
- * Die Bar existiert z.B. nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine L�cke aufweist (am zur�ckgegebenen Offset befindet sich
+ * Die Bar existiert z.B. nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine L�cke aufweist (am zurückgegebenen Offset befindet sich
  * eine andere Bar) oder wenn der Zeitpunkt au�erhalb des von den vorhandenen Daten abgedeckten Bereichs liegt.
  *
  * @param  _In_  int      hFile          - Handle der Historydatei
  * @param  _In_  datetime time           - Zeitpunkt
- * @param  _Out_ bool     lpBarExists[1] - Variable, die nach R�ckkehr anzeigt, ob die Bar am zur�ckgegebenen Offset existiert
+ * @param  _Out_ bool     lpBarExists[1] - Variable, die nach R�ckkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert
  *                                         (als Array implementiert, um Zeiger�bergabe an eine Library zu erm�glichen)
  *                                         � TRUE:  Bar existiert          @see  HistoryFile1.UpdateBar() und HistoryFile1.WriteBar()
  *                                         � FALSE: Bar existiert nicht    @see  HistoryFile1.InsertBar()
@@ -844,7 +844,7 @@ bool HistoryFile1.ReadBar(int hFile, int offset, double &bar[]) {
    if (offset >= hf.total.bars[hFile])  return(!catch("HistoryFile1.ReadBar(6)  invalid parameter offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    if (ArraySize(bar) != 6) ArrayResize(bar, 6);
 
-   // vorzugsweise bereits bekannte Bars zur�ckgeben                 // ACHTUNG: hf.lastStoredBar wird nur aktualisiert, wenn die Bar tats�chlich neu gelesen wurde.
+   // vorzugsweise bereits bekannte Bars zurückgeben                 // ACHTUNG: hf.lastStoredBar wird nur aktualisiert, wenn die Bar tats�chlich neu gelesen wurde.
    if (offset == hf.lastStoredBar.offset[hFile]) {
       bar[BAR_T] = hf.lastStoredBar.data[hFile][BAR_T];
       bar[BAR_O] = hf.lastStoredBar.data[hFile][BAR_O];
@@ -964,7 +964,7 @@ bool HistoryFile1.WriteBar(int hFile, int offset, double bar[], int flags = NULL
    // L�st die Bar f�r eine BufferedBar ein BarClose-Event aus, zuerst die BufferedBar schreiben
    if (hf.bufferedBar.offset[hFile] >= 0) /*&&*/ if (offset > hf.bufferedBar.offset[hFile]) {
       if (!HistoryFile1.WriteBufferedBar(hFile, flags)) return(false);
-      hf.bufferedBar.offset[hFile] = -1;                                                              // BufferedBar zur�cksetzen
+      hf.bufferedBar.offset[hFile] = -1;                                                              // BufferedBar zurücksetzen
    }
 
    // FilePointer positionieren, Bar normalisieren (Funktionsparameter nicht modifizieren) und schreiben
@@ -1399,7 +1399,7 @@ bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NU
    // eine geschlossene BufferedBar schreiben
    if (bufferedBarClose) {
       if (!HistoryFile1.WriteBufferedBar(hFile, flags)) return(false);
-      hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zur�cksetzen
+      hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zurücksetzen
    }
 
    // HST_BUFFER_TICKS = on: Tick buffern
@@ -1477,7 +1477,7 @@ bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NU
    }
 
    // HST_BUFFER_TICKS = off: Tick schreiben
-   // ist BufferedBar definiert (HST_BUFFER_TICKS war beim letzten Tick on und ist jetzt off), BufferedBar mit Tick aktualisieren, schreiben und zur�cksetzen
+   // ist BufferedBar definiert (HST_BUFFER_TICKS war beim letzten Tick on und ist jetzt off), BufferedBar mit Tick aktualisieren, schreiben und zurücksetzen
    if (hf.bufferedBar.offset[hFile] >= 0) {                                            // BufferedBar ist definiert, der Tick muß dazu geh�ren
       //...fferedBar.data[hFile][BAR_T] = ...                                          // unchanged
       //...fferedBar.data[hFile][BAR_O] = ...                                          // unchanged
@@ -1486,7 +1486,7 @@ bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NU
       hf.bufferedBar.data[hFile][BAR_C] = tick.value;
       hf.bufferedBar.data[hFile][BAR_V]++;
       if (!HistoryFile1.WriteBufferedBar(hFile, flags)) return(false);
-      hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zur�cksetzen
+      hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zurücksetzen
       return(true);
    }
 

@@ -1,8 +1,8 @@
 /**
- * Umschaltzeiten von Normal- zu Sommerzeit und zurück von 1970 bis 2037.
+ * Umschaltzeiten von Normal- zu Sommerzeit und zurÃ¼ck von 1970 bis 2037.
  *
  *
- * Um die Ermittlung eines Timezone-Offsets für einen Zeitpunkt zu beschleunigen, sind für Jahre, in denen kein Wechsel
+ * Um die Ermittlung eines Timezone-Offsets fï¿½r einen Zeitpunkt zu beschleunigen, sind fï¿½r Jahre, in denen kein Wechsel
  * stattfindet, Platzhalter angegeben, wodurch die Arrayindizes aller Jahre in allen Zeitzonen identisch sind:
  *
  *    int index = TimeYear(datetime) - 1970;
@@ -17,8 +17,8 @@
  *
  * Szenarien:                           Wechsel zu Sommerzeit (TR_TO_DST)       Wechsel zu Normalzeit (TR_TO_STD)
  * ----------                           ----------------------------------      ----------------------------------
- *  kein Wechsel, ständig Normalzeit:   -1                      DST_OFFSET      -1                      STD_OFFSET      // durchgehend Normalzeit
- *  kein Wechsel, ständig DST:          -1                      DST_OFFSET      INT_MAX                 STD_OFFSET      // durchgehend Sommerzeit
+ *  kein Wechsel, stï¿½ndig Normalzeit:   -1                      DST_OFFSET      -1                      STD_OFFSET      // durchgehend Normalzeit
+ *  kein Wechsel, stï¿½ndig DST:          -1                      DST_OFFSET      INT_MAX                 STD_OFFSET      // durchgehend Sommerzeit
  *  1 Wechsel zu Sommerzeit:            1975.04.11 00:00:00     DST_OFFSET      INT_MAX                 STD_OFFSET      // Jahr beginnt mit Normalzeit und endet mit Sommerzeit
  *  1 Wechsel zu Normalzeit:            -1                      DST_OFFSET      1975.11.01 00:00:00     STD_OFFSET      // Jahr beginnt mit Sommerzeit und endet mit Normalzeit
  *  2 Wechsel:                          1975.04.01 00:00:00     DST_OFFSET      1975.11.01 00:00:00     STD_OFFSET      // Normalzeit -> Sommerzeit -> Normalzeit
@@ -131,7 +131,7 @@ int transitions.Europe_Kiev[68][6] = {
            -1,                             -1,                     PLUS_3h,             -1,                             -1,                     PLUS_3h,
            -1,                             -1,                     PLUS_3h,             -1,                             -1,                     PLUS_3h,
            -1,                             -1,                     PLUS_3h,             -1,                             -1,                     PLUS_3h,
-   /*Tue*/ D'1981.03.31 21:00:00', /*Wed*/ D'1981.04.01 01:00:00', PLUS_4h,     /*Wed*/ D'1981.09.30 20:00:00', /*Wed*/ D'1981.09.30 23:00:00', PLUS_3h,    // Einführung Sommerzeit
+   /*Tue*/ D'1981.03.31 21:00:00', /*Wed*/ D'1981.04.01 01:00:00', PLUS_4h,     /*Wed*/ D'1981.09.30 20:00:00', /*Wed*/ D'1981.09.30 23:00:00', PLUS_3h,    // Einfï¿½hrung Sommerzeit
    /*Wed*/ D'1982.03.31 21:00:00', /*Thu*/ D'1982.04.01 01:00:00', PLUS_4h,     /*Thu*/ D'1982.09.30 20:00:00', /*Thu*/ D'1982.09.30 23:00:00', PLUS_3h,
    /*Thu*/ D'1983.03.31 21:00:00', /*Fri*/ D'1983.04.01 01:00:00', PLUS_4h,     /*Fri*/ D'1983.09.30 20:00:00', /*Fri*/ D'1983.09.30 23:00:00', PLUS_3h,
    /*Sat*/ D'1984.03.31 21:00:00', /*Sun*/ D'1984.04.01 01:00:00', PLUS_4h,     /*Sat*/ D'1984.09.29 23:00:00', /*Sun*/ D'1984.09.30 02:00:00', PLUS_3h,
@@ -140,7 +140,7 @@ int transitions.Europe_Kiev[68][6] = {
    /*Sat*/ D'1987.03.28 23:00:00', /*Sun*/ D'1987.03.29 03:00:00', PLUS_4h,     /*Sat*/ D'1987.09.26 23:00:00', /*Sun*/ D'1987.09.27 02:00:00', PLUS_3h,
    /*Sat*/ D'1988.03.26 23:00:00', /*Sun*/ D'1988.03.27 03:00:00', PLUS_4h,     /*Sat*/ D'1988.09.24 23:00:00', /*Sun*/ D'1988.09.25 02:00:00', PLUS_3h,
    /*Sat*/ D'1989.03.25 23:00:00', /*Sun*/ D'1989.03.26 03:00:00', PLUS_4h,     /*Sat*/ D'1989.09.23 23:00:00', /*Sun*/ D'1989.09.24 02:00:00', PLUS_3h,
-           -1,                             -1,                     PLUS_3h,     /*Sat*/ D'1990.06.30 23:00:00', /*Sun*/ D'1990.07.01 01:00:00', PLUS_2h,    // Offsetänderung der Zeitzone
+           -1,                             -1,                     PLUS_3h,     /*Sat*/ D'1990.06.30 23:00:00', /*Sun*/ D'1990.07.01 01:00:00', PLUS_2h,    // Offsetï¿½nderung der Zeitzone
            -1,                             -1,                     PLUS_2h,             -1,                             -1,                     PLUS_2h,    // durchgehend Normalzeit
    /*Sat*/ D'1992.03.28 22:00:00', /*Sun*/ D'1992.03.29 01:00:00', PLUS_3h,     /*Sat*/ D'1992.09.26 21:00:00', /*Sat*/ D'1992.09.26 23:00:00', PLUS_2h,
    /*Sat*/ D'1993.03.27 22:00:00', /*Sun*/ D'1993.03.28 01:00:00', PLUS_3h,     /*Sat*/ D'1993.09.25 21:00:00', /*Sat*/ D'1993.09.25 23:00:00', PLUS_2h,
@@ -205,7 +205,7 @@ int transitions.Europe_Minsk[68][6] = {
            -1,                             -1,                     PLUS_3h,             -1,                             -1,                     PLUS_3h,
            -1,                             -1,                     PLUS_3h,             -1,                             -1,                     PLUS_3h,
            -1,                             -1,                     PLUS_3h,             -1,                             -1,                     PLUS_3h,
-   /*Tue*/ D'1981.03.31 21:00:00', /*Wed*/ D'1981.04.01 01:00:00', PLUS_4h,     /*Wed*/ D'1981.09.30 20:00:00', /*Wed*/ D'1981.09.30 23:00:00', PLUS_3h,    // Einführung Sommerzeit
+   /*Tue*/ D'1981.03.31 21:00:00', /*Wed*/ D'1981.04.01 01:00:00', PLUS_4h,     /*Wed*/ D'1981.09.30 20:00:00', /*Wed*/ D'1981.09.30 23:00:00', PLUS_3h,    // Einfï¿½hrung Sommerzeit
    /*Wed*/ D'1982.03.31 21:00:00', /*Thu*/ D'1982.04.01 01:00:00', PLUS_4h,     /*Thu*/ D'1982.09.30 20:00:00', /*Thu*/ D'1982.09.30 23:00:00', PLUS_3h,
    /*Thu*/ D'1983.03.31 21:00:00', /*Fri*/ D'1983.04.01 01:00:00', PLUS_4h,     /*Fri*/ D'1983.09.30 20:00:00', /*Fri*/ D'1983.09.30 23:00:00', PLUS_3h,
    /*Sat*/ D'1984.03.31 21:00:00', /*Sun*/ D'1984.04.01 01:00:00', PLUS_4h,     /*Sat*/ D'1984.09.29 23:00:00', /*Sun*/ D'1984.09.30 02:00:00', PLUS_3h,
@@ -215,7 +215,7 @@ int transitions.Europe_Minsk[68][6] = {
    /*Sat*/ D'1988.03.26 23:00:00', /*Sun*/ D'1988.03.27 03:00:00', PLUS_4h,     /*Sat*/ D'1988.09.24 23:00:00', /*Sun*/ D'1988.09.25 02:00:00', PLUS_3h,
    /*Sat*/ D'1989.03.25 23:00:00', /*Sun*/ D'1989.03.26 03:00:00', PLUS_4h,     /*Sat*/ D'1989.09.23 23:00:00', /*Sun*/ D'1989.09.24 02:00:00', PLUS_3h,
            -1,                             -1,                     PLUS_3h,             -1,                             -1,                     PLUS_3h,    // durchgehend Normalzeit
-   /*Sat*/ D'1991.03.30 23:00:00', /*Sun*/ D'1991.03.31 02:00:00', PLUS_3h,     /*Sun*/ D'1991.09.29 00:00:00', /*Sun*/ D'1991.09.29 02:00:00', PLUS_2h,    // Offsetänderung der Zeitzone
+   /*Sat*/ D'1991.03.30 23:00:00', /*Sun*/ D'1991.03.31 02:00:00', PLUS_3h,     /*Sun*/ D'1991.09.29 00:00:00', /*Sun*/ D'1991.09.29 02:00:00', PLUS_2h,    // Offsetï¿½nderung der Zeitzone
    /*Sat*/ D'1992.03.28 22:00:00', /*Sun*/ D'1992.03.29 01:00:00', PLUS_3h,     /*Sat*/ D'1992.09.26 22:00:00', /*Sun*/ D'1992.09.27 00:00:00', PLUS_2h,
    /*Sun*/ D'1993.03.28 00:00:00', /*Sun*/ D'1993.03.28 03:00:00', PLUS_3h,     /*Sun*/ D'1993.09.26 00:00:00', /*Sun*/ D'1993.09.26 02:00:00', PLUS_2h,
    /*Sun*/ D'1994.03.27 00:00:00', /*Sun*/ D'1994.03.27 03:00:00', PLUS_3h,     /*Sun*/ D'1994.09.25 00:00:00', /*Sun*/ D'1994.09.25 02:00:00', PLUS_2h,
@@ -278,7 +278,7 @@ int transitions.Europe_Berlin[68][6] = {
            -1,                             -1,                     PLUS_1h,             -1,                             -1,                     PLUS_1h,
            -1,                             -1,                     PLUS_1h,             -1,                             -1,                     PLUS_1h,
            -1,                             -1,                     PLUS_1h,             -1,                             -1,                     PLUS_1h,
-   /*Sun*/ D'1980.04.06 01:00:00', /*Sun*/ D'1980.04.06 03:00:00', PLUS_2h,     /*Sun*/ D'1980.09.28 01:00:00', /*Sun*/ D'1980.09.28 02:00:00', PLUS_1h,    // Einführung Sommerzeit
+   /*Sun*/ D'1980.04.06 01:00:00', /*Sun*/ D'1980.04.06 03:00:00', PLUS_2h,     /*Sun*/ D'1980.09.28 01:00:00', /*Sun*/ D'1980.09.28 02:00:00', PLUS_1h,    // Einfï¿½hrung Sommerzeit
    /*Sun*/ D'1981.03.29 01:00:00', /*Sun*/ D'1981.03.29 03:00:00', PLUS_2h,     /*Sun*/ D'1981.09.27 01:00:00', /*Sun*/ D'1981.09.27 02:00:00', PLUS_1h,
    /*Sun*/ D'1982.03.28 01:00:00', /*Sun*/ D'1982.03.28 03:00:00', PLUS_2h,     /*Sun*/ D'1982.09.26 01:00:00', /*Sun*/ D'1982.09.26 02:00:00', PLUS_1h,
    /*Sun*/ D'1983.03.27 01:00:00', /*Sun*/ D'1983.03.27 03:00:00', PLUS_2h,     /*Sun*/ D'1983.09.25 01:00:00', /*Sun*/ D'1983.09.25 02:00:00', PLUS_1h,

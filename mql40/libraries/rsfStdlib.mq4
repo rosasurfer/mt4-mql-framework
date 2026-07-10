@@ -685,7 +685,7 @@ int SortTicketsChronological(int &tickets[]) {
    if (sortFrom != -1)
       ArraySort(data, i+1-sortFrom, sortFrom);
 
-   // Tickets zur�ck ins Ausgangsarray schreiben
+   // Tickets zurück ins Ausgangsarray schreiben
    for (i=0; i < sizeOfTickets; i++) {
       tickets[i] = data[i][1];
    }
@@ -1007,7 +1007,7 @@ int ArrayPushStrings(string &array[][], string values[]) {
 
 
 /**
- * Entfernt ein Element vom Ende eines Boolean-Arrays und gibt es zur�ck.
+ * Entfernt ein Element vom Ende eines Boolean-Arrays und gibt es zurück.
  *
  * @param  bool array[] - Boolean-Array
  *
@@ -1027,7 +1027,7 @@ bool ArrayPopBool(bool array[]) {
 
 
 /**
- * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zur�ck.
+ * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurück.
  *
  * @param  int array[] - Integer-Array
  *
@@ -1048,7 +1048,7 @@ int ArrayPopInt(int array[]) {
 
 
 /**
- * Entfernt ein Element vom Ende eines Double-Array und gibt es zur�ck.
+ * Entfernt ein Element vom Ende eines Double-Array und gibt es zurück.
  *
  * @param  int double[] - Double-Array
  *
@@ -1069,7 +1069,7 @@ double ArrayPopDouble(double array[]) {
 
 
 /**
- * Entfernt ein Element vom Ende eines String-Arrays und gibt es zur�ck.
+ * Entfernt ein Element vom Ende eines String-Arrays und gibt es zurück.
  *
  * @param  string array[] - String-Array
  *
@@ -1147,7 +1147,7 @@ int ArrayUnshiftDouble(double array[], double value) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines Boolean-Arrays und gibt es zur�ck.
+ * Entfernt ein Element vom Beginn eines Boolean-Arrays und gibt es zurück.
  *
  * @param  bool array[] - Boolean-Array
  *
@@ -1170,7 +1170,7 @@ bool ArrayShiftBool(bool array[]) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines Integer-Arrays und gibt es zur�ck.
+ * Entfernt ein Element vom Beginn eines Integer-Arrays und gibt es zurück.
  *
  * @param  int array[] - Integer-Array
  *
@@ -1193,7 +1193,7 @@ int ArrayShiftInt(int array[]) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines Double-Arrays und gibt es zur�ck.
+ * Entfernt ein Element vom Beginn eines Double-Arrays und gibt es zurück.
  *
  * @param  double array[] - Double-Array
  *
@@ -1216,7 +1216,7 @@ double ArrayShiftDouble(double array[]) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines String-Arrays und gibt es zur�ck.
+ * Entfernt ein Element vom Beginn eines String-Arrays und gibt es zurück.
  *
  * @param  string array[] - String-Array
  *
@@ -1883,7 +1883,7 @@ bool StringInArrayI(string haystack[], string needle) {
 
 
 /**
- * Durchsucht ein Boolean-Array nach einem Wert und gibt dessen Index zur�ck.
+ * Durchsucht ein Boolean-Array nach einem Wert und gibt dessen Index zurück.
  *
  * @param  bool haystack[] - zu durchsuchendes Array
  * @param  bool needle     - zu suchender Wert
@@ -1905,7 +1905,7 @@ int SearchBoolArray(bool haystack[], bool needle) {
 
 
 /**
- * Durchsucht ein Integer-Array nach einem Wert und gibt dessen Index zur�ck.
+ * Durchsucht ein Integer-Array nach einem Wert und gibt dessen Index zurück.
  *
  * @param  int haystack[] - zu durchsuchendes Array
  * @param  int needle     - zu suchender Wert
@@ -1925,7 +1925,7 @@ int SearchIntArray(int haystack[], int needle) {
 
 
 /**
- * Durchsucht ein Double-Array nach einem Wert und gibt dessen Index zur�ck.
+ * Durchsucht ein Double-Array nach einem Wert und gibt dessen Index zurück.
  *
  * @param  double haystack[] - zu durchsuchendes Array
  * @param  double needle     - zu suchender Wert
@@ -1945,7 +1945,7 @@ int SearchDoubleArray(double haystack[], double needle) {
 
 
 /**
- * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zur�ck. Gro�-/Kleinschreibung wird beachtet.
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück. Gro�-/Kleinschreibung wird beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -1965,7 +1965,7 @@ int SearchStringArray(string haystack[], string needle) {
 
 
 /**
- * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zur�ck. Gro�-/Kleinschreibung wird nicht beachtet.
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück. Gro�-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -2301,7 +2301,7 @@ string TicketsToStr(int tickets[], string separator = ", ") {
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als hexadezimalen String zur�ck.
+ * Gibt den Inhalt eines Byte-Buffers als hexadezimalen String zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
  *
@@ -2362,7 +2362,7 @@ string _BufferToHexStr(int buffer[][]) {
 
 
 /**
- * Gibt ein einzelnes Zeichen (ein Byte) von der angegebenen Position eines Buffers zur�ck.
+ * Gibt ein einzelnes Zeichen (ein Byte) von der angegebenen Position eines Buffers zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int pos      - Zeichen-Position
@@ -2759,7 +2759,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
 
 
 /**
- * Gibt die lesbare Version eines R�ckgabewertes von WaitForSingleObject() zur�ck.
+ * Gibt die lesbare Version eines R�ckgabewertes von WaitForSingleObject() zurück.
  *
  * @param  int value - R�ckgabewert
  *
@@ -2777,7 +2777,7 @@ string WaitForSingleObjectValueToStr(int value) {
 
 
 /**
- * Gibt den Kurznamen eines Symbols zur�ck.
+ * Gibt den Kurznamen eines Symbols zurück.
  * (z.B. GetSymbolName("EURUSD") => "EUR/USD")
  *
  * @param  string symbol - broker-spezifisches Symbol
@@ -2795,7 +2795,7 @@ string GetSymbolName(string symbol) {
 
 
 /**
- * Gibt den Kurznamen eines Symbols zur�ck oder den angegebenen Alternativwert, wenn das Symbol unbekannt ist.
+ * Gibt den Kurznamen eines Symbols zurück oder den angegebenen Alternativwert, wenn das Symbol unbekannt ist.
  * (z.B. GetSymbolNameOrAlt("EURUSD") => "EUR/USD")
  *
  * @param  string symbol   - Symbol
@@ -2817,7 +2817,7 @@ string GetSymbolNameOrAlt(string symbol, string altValue="") {
 
 
 /**
- * Gibt den Kurznamen eines Symbols zur�ck.
+ * Gibt den Kurznamen eines Symbols zurück.
  * (z.B. GetSymbolNameStrict("EURUSD") => "EUR/USD")
  *
  * @param  string symbol - Symbol
@@ -2999,7 +2999,7 @@ string GetSymbolNameStrict(string symbol) {
 
 
 /**
- * Gibt den Langnamen eines Symbols zur�ck.
+ * Gibt den Langnamen eines Symbols zurück.
  * (z.B. GetLongSymbolName("EURUSD") => "EUR/USD")
  *
  * @param  string symbol - broker-spezifisches Symbol
@@ -3017,7 +3017,7 @@ string GetLongSymbolName(string symbol) {
 
 
 /**
- * Gibt den Langnamen eines Symbols zur�ck oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
+ * Gibt den Langnamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
  * (z.B. GetLongSymbolNameOrAlt("USDLFX") => "USD (LFX)")
  *
  * @param  string symbol   - Symbol
@@ -3039,7 +3039,7 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
 
 
 /**
- * Gibt den Langnamen eines Symbols zur�ck.
+ * Gibt den Langnamen eines Symbols zurück.
  * (z.B. GetLongSymbolNameStrict("USDLFX") => "USD (LFX)")
  *
  * @param  string symbol - Symbol
@@ -3339,7 +3339,7 @@ string WordToHexStr(int word) {
 
 
 /**
- * Gibt die hexadezimale Repr�sentation einer Ganzzahl zur�ck.
+ * Gibt die hexadezimale Repr�sentation einer Ganzzahl zurück.
  *
  * @param  int integer - Ganzzahl
  *
@@ -3364,7 +3364,7 @@ string IntegerToHexStr(int integer) {
 
 
 /**
- * Gibt die bin�re Repr�sentation einer Ganzzahl zur�ck.
+ * Gibt die bin�re Repr�sentation einer Ganzzahl zurück.
  *
  * @param  int integer - Ganzzahl
  *
@@ -3387,7 +3387,7 @@ string IntegerToBinaryStr(int integer) {
 
 
 /**
- * Gibt die n�chstkleinere Periode der angegebenen Periode zur�ck.
+ * Gibt die n�chstkleinere Periode der angegebenen Periode zurück.
  *
  * @param  int period - Timeframe-Periode (default: 0 - die aktuelle Periode)
  *
@@ -3487,7 +3487,7 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
 
 
 /**
- * Gibt den Rechnernamen des laufenden Systems zur�ck.
+ * Gibt den Rechnernamen des laufenden Systems zurück.
  *
  * @return string - Name oder Leerstring, falls ein Fehler auftrat
  */
@@ -3673,7 +3673,7 @@ string GetServerTimezone() {
 
 
 /**
- * Gibt die n�chstgr��ere Periode der angegebenen Periode zur�ck.
+ * Gibt die n�chstgr��ere Periode der angegebenen Periode zurück.
  *
  * @param  int period - Timeframe-Periode (default: 0 - die aktuelle Periode)
  *
@@ -3967,7 +3967,7 @@ string DoubleToStrEx(double value, int digits) {
 
    /*
    double decimals[17] = { 1.0,                                         // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
-                          10.0,                                         // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zur�ck.
+                          10.0,                                         // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
                          100.0,
                         1000.0,
                        10000.0,

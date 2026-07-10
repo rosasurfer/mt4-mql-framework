@@ -56,7 +56,7 @@ int      bars.setVolume(/*BAR*/double &bar[][], int i, int      volume) { bar[i]
 
 
 /**
- * Gibt die lesbare Repräsentation ein oder mehrerer struct BAR zurück.
+ * Gibt die lesbare Reprï¿½sentation ein oder mehrerer struct BAR zurÃ¼ck.
  *
  * @param  double bar[] - struct BAR
  *
