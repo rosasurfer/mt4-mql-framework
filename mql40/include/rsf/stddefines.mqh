@@ -576,10 +576,9 @@ double  INF;                                                      //  1.#INF |  
 
 
 // flags for writing history files
-#define HST_BUFFER_TICKS               1
-#define HST_SKIP_DUPLICATE_TICKS       2        // skip consecutive identical ticks
-#define HST_FILL_GAPS                  4
-#define HST_TIME_IS_OPENTIME           8
+#define HST_BUFFER_TICKS               1        // buffer ticks and flush data on every BarOpen event (use in tester only)
+#define HST_FILL_GAPS                  2
+#define HST_TIME_IS_OPENTIME           4
 
 
 // arrow codes, see ObjectSet(label, OBJPROP_ARROWCODE, value)

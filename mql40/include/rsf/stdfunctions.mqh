@@ -5900,11 +5900,10 @@ string TimeframeFlagToStr(int flag) {
 string HistoryFlagsToStr(int flags) {
    string result = "";
 
-   if (!flags)                                result = StringConcatenate(result, "|NULL"                    );
-   if (flags & HST_BUFFER_TICKS         && 1) result = StringConcatenate(result, "|HST_BUFFER_TICKS"        );
-   if (flags & HST_SKIP_DUPLICATE_TICKS && 1) result = StringConcatenate(result, "|HST_SKIP_DUPLICATE_TICKS");
-   if (flags & HST_FILL_GAPS            && 1) result = StringConcatenate(result, "|HST_FILL_GAPS"           );
-   if (flags & HST_TIME_IS_OPENTIME     && 1) result = StringConcatenate(result, "|HST_TIME_IS_OPENTIME"    );
+   if (!flags)                            result = StringConcatenate(result, "|NULL");
+   if (flags & HST_BUFFER_TICKS     && 1) result = StringConcatenate(result, "|HST_BUFFER_TICKS");
+   if (flags & HST_FILL_GAPS        && 1) result = StringConcatenate(result, "|HST_FILL_GAPS");
+   if (flags & HST_TIME_IS_OPENTIME && 1) result = StringConcatenate(result, "|HST_TIME_IS_OPENTIME");
 
    if (StringLen(result) > 0)
       result = StrSubstr(result, 1);
