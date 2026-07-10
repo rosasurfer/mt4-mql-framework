@@ -1,15 +1,15 @@
 /**
  * Framework struct EXECUTION_CONTEXT
  *
- * Ausfï¿½hrungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
+ * Ausführungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
  *
  * @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/rsf/ExecutionContext.h
  *
- * Im Indikator gibt es wï¿½hrend eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wieder-
- * eintritt in Indicator::init() keinen gï¿½ltigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, spï¿½ter
- * wird ein neuer alloziiert. Wï¿½hrend dieser Zeitspanne wird der init()-Cycle von bereits geladenen Libraries durchgefï¿½hrt,
- * also die Funktionen Library::deinit() und Library::init() aufgerufen. In Indikatoren geladene Libraries dï¿½rfen daher
- * wï¿½hrend ihres init()-Cycles nicht auf den alten, bereits ungï¿½ltigen Hauptmodulkontext zugreifen (weder lesend noch
+ * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wieder-
+ * eintritt in Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später
+ * wird ein neuer alloziiert. Während dieser Zeitspanne wird der init()-Cycle von bereits geladenen Libraries durchgeführt,
+ * also die Funktionen Library::deinit() und Library::init() aufgerufen. In Indikatoren geladene Libraries dürfen daher
+ * während ihres init()-Cycles nicht auf den alten, bereits ungültigen Hauptmodulkontext zugreifen (weder lesend noch
  * schreibend).
  *
  * TODO:
@@ -75,11 +75,11 @@ int init() {
 
    // EA-Tasks
    if (IsExpert()) {
-      OrderSelect(0, SELECT_BY_TICKET);                     // Orderkontext der Library wegen Bug ausdrï¿½cklich zurÃ¼cksetzen (siehe MQL.doc)
+      OrderSelect(0, SELECT_BY_TICKET);                     // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       error = GetLastError();
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
-      if (__isTesting) {                                    // Im Tester globale Variablen der Library zurÃ¼cksetzen.
+      if (__isTesting) {                                    // Im Tester globale Variablen der Library zurücksetzen.
          ArrayResize(__orderStack, 0);                      // in stdfunctions global definierte Variable
          onLibraryInit();
       }

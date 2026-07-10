@@ -29,10 +29,10 @@
 
 
 /**
- * Gibt die lesbare Reprï¿½sentation ein oder mehrerer struct HISTORY_HEADER zurÃ¼ck.
+ * Gibt die lesbare Repräsentation ein oder mehrerer struct HISTORY_HEADER zurück.
  *
  * @param  int  hh[]        - struct HISTORY_HEADER
- * @param  bool outputDebug - ob die Ausgabe zusï¿½tzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string
  */

@@ -1,5 +1,5 @@
 /**
- * Erzeugt eine neue LFX-BuyLimit- oder StopBuy-Order. MuÃŸ auf dem jeweiligen LFX-Chart ausgefï¿½hrt werden.
+ * Erzeugt eine neue LFX-BuyLimit- oder StopBuy-Order. Muß auf dem jeweiligen LFX-Chart ausgeführt werden.
  *
  * TODO: Fehler in Counter, wenn zwei Orders gleichzeitig erzeugt werden (2 x CHF.3)
  */
@@ -11,7 +11,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Type  = "Buy Limit* | Stop Buy";
-extern double Units = 0.2;                                           // Positionsgrï¿½ï¿½e (Vielfaches von 0.1 im Bereich von 0.1 bis 3.0)
+extern double Units = 0.2;                                           // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 3.0)
 extern double LimitPrice;
 extern double TakeProfitPrice;
 extern double StopLossPrice;
@@ -136,7 +136,7 @@ int onStart() {
    datetime now = TimeFXT(); if (!now) return(_last_error(logInfo("onStart(5)->TimeFXT() => 0", ERR_RUNTIME_ERROR)));
 
    /*LFX_ORDER*/int order[]; InitializeByteBuffer(order, LFX_ORDER_size);
-      lo.setTicket           (order, LFX.CreateMagicNumber(lfxOrders, lfxCurrency));   // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden kï¿½nnen
+      lo.setTicket           (order, LFX.CreateMagicNumber(lfxOrders, lfxCurrency));   // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
       lo.setType             (order, limitType          );
       lo.setUnits            (order, Units              );
       lo.setOpenTime         (order, now                );
@@ -154,12 +154,12 @@ int onStart() {
 
 
    if (executeNow) {
-      // (3) Order sofort ausfï¿½hren...
+      // (3) Order sofort ausführen...
       int size = ArrayPushInts(lfxOrders, order);                                      // LFX.SendTradeCommand() erwartet ein LFX_ORDER-Array
       if (!LFX.SendTradeCommand(lfxOrders, size-1, OPEN_LIMIT_TRIGGERED)) return(last_error);
    }
    else {
-      // (4) ...oder Benachrichtigung an den Chart schicken und Order bestï¿½tigen
+      // (4) ...oder Benachrichtigung an den Chart schicken und Order bestätigen
       if (!QC.SendOrderNotification(lo.CurrencyId(order), "LFX:"+ lo.Ticket(order) +":pending=1")) return(last_error);
       PlaySoundEx("OrderOk.wav");
    }

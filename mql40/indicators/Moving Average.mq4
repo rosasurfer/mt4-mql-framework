@@ -3,16 +3,16 @@
  *
  *
  * Available averaging methods:
- *  â€¢ SMA  = Simple Moving Average:          equal bar weighting
- *  â€¢ LWMA = Linear Weighted Moving Average: bar weighting using a linear function
- *  â€¢ EMA  = Exponential Moving Average:     bar weighting using an exponential function
- *  â€¢ SMMA = Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes)
- *  â€¢ ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
+ *  • SMA  = Simple Moving Average:          equal bar weighting
+ *  • LWMA = Linear Weighted Moving Average: bar weighting using a linear function
+ *  • EMA  = Exponential Moving Average:     bar weighting using an exponential function
+ *  • SMMA = Smoothed Moving Average:        bar weighting using an exponential function (an EMA, see notes)
+ *  • ALMA = Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  *
  * Indicator buffers for iCustom():
- *  â€¢ MovingAverage.MODE_MA:    MA values
- *  â€¢ MovingAverage.MODE_TREND: trend direction and length
+ *  • MovingAverage.MODE_MA:    MA values
+ *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values denote a downtrend (-1...-n)
  *    - trend length:           the absolute value of the direction is the trend length in bars since the last reversal
  *

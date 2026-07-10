@@ -1,6 +1,10 @@
 
 # set content encodings
-* encoding=UTF-8
+*     encoding=UTF-8
+*.mqh encoding=CP1252 text
+*.mq4 encoding=CP1252 text
+*.mq5 encoding=CP1252 text
+*.tpl encoding=CP1252 text
 
 
 # checkout with Windows line-endings (not yet supported by EGit)

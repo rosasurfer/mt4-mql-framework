@@ -719,10 +719,10 @@ double PipValue(double lots=1.0, bool muteErrors=false) {
       }
       else {
          isConstant = false;                                                              // TickValue is dynamic
-         isInaccurate = __isTesting;                                                      // MarketInfo() gibt im Tester statt des tatsÃ¤chlichen den Online-Wert zurÃ¼ck (nur annÃ¤hernd genau).
+         isInaccurate = __isTesting;                                                      // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
-      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());                        // Der tatsÃ¤chliche Wert kann u.U. berechnet werden. Ist das nicht mÃ¶glich,
-      flagsResolved = true;                                                               // muÃŸ im Tester (ggf. nach Warnung) der Online-Wert verwendet werden.
+      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());                        // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
+      flagsResolved = true;                                                               // muß im Tester (ggf. nach Warnung) der Online-Wert verwendet werden.
 
       if (isInaccurate && !isCalculatable && !test.disableTickValueWarning) {
          string message = "Historic MarketInfo(MODE_TICKVALUE) not available."                                   + NL
@@ -2263,20 +2263,20 @@ bool StrIsEmailAddress(string value) {
 
 
 /**
- * FÃ¼gt ein Element am Beginn eines String-Arrays an.
+ * Fügt ein Element am Beginn eines String-Arrays an.
  *
  * @param  _InOut_ string array[] - String-Array
- * @param  _In_    string value   - hinzuzufÃ¼gendes Element
+ * @param  _In_    string value   - hinzuzufügendes Element
  *
- * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  *
  *
- * NOTE: MuÃŸ global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf,
- *       dessen Verhalten mit einem String-Parameter fehlerhaft (offiziell: nicht unterstÃ¼tzt) ist. Unter ungeklÃ¤rten
- *       UmstÃ¤nden wird das Ã¼bergebene Array zerschossen, es enthï¿½lt dann Zeiger auf andere im Programm existierende Strings.
- *       Dieser Fehler trat in Indikatoren auf, wenn ArrayUnshiftString() in einer MQL-Library definiert war und Ã¼ber Modul-
- *       grenzen aufgerufen wurde, nicht jedoch bei globaler Definition. Auï¿½erdem trat der Fehler nicht sofort, sondern erst
- *       nach Aufruf anderer Array-Funktionen auf, die mit vï¿½llig unbeteiligten Arrays/String arbeiteten.
+ * NOTE: Muß global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf,
+ *       dessen Verhalten mit einem String-Parameter fehlerhaft (offiziell: nicht unterstützt) ist. Unter ungeklärten
+ *       Umständen wird das übergebene Array zerschossen, es enthält dann Zeiger auf andere im Programm existierende Strings.
+ *       Dieser Fehler trat in Indikatoren auf, wenn ArrayUnshiftString() in einer MQL-Library definiert war und über Modul-
+ *       grenzen aufgerufen wurde, nicht jedoch bei globaler Definition. Außerdem trat der Fehler nicht sofort, sondern erst
+ *       nach Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string &array[], string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -2462,7 +2462,7 @@ bool IsLeapYear(int year) {
 /**
  * Create a datetime value from the specified parameters.
  *
- * Parameter, die auï¿½erhalb der ï¿½blichen Wertegrenzen liegen, werden in die resultierende Periode Ã¼bertragen. Der
+ * Parameter, die außerhalb der üblichen Wertegrenzen liegen, werden in die resultierende Periode übertragen. Der
  * resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis D'2038.01.19 03:14:07' (INT_MAX) liegen.
  *
  * Beispiel: DateTime1(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
@@ -2476,8 +2476,8 @@ bool IsLeapYear(int year) {
  *
  * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
  *
- * Note: Die internen MQL-Funktionen unterstÃ¼tzen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
- *       D'2037.12.31 23:59:59'. Diese Funktion unterstÃ¼tzt eine grï¿½ï¿½ere datetime-Range.
+ * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
+ *       D'2037.12.31 23:59:59'. Diese Funktion unterstützt eine größere datetime-Range.
  */
 datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
    year += (Ceil(month/12.) - 1);
@@ -2639,7 +2639,7 @@ int CountWeekdays(datetime from, datetime to) {
 
 
 /**
- * Kopiert einen Speicherbereich. Als MoveMemory() implementiert, die betroffenen Speicherblï¿½cke kï¿½nnen sich also Ã¼berlappen.
+ * Kopiert einen Speicherbereich. Als MoveMemory() implementiert, die betroffenen Speicherblöcke können sich also überlappen.
  *
  * @param  int destination - Zieladresse
  * @param  int source      - Quelladdrese
@@ -3021,13 +3021,13 @@ bool IsDemoFix() {
  * Konvertiert einen String in einen Boolean.
  *
  * Ist der Parameter strict = TRUE, werden die Strings "1" und "0", "on" und "off", "true" und "false", "yes" and "no" ohne
- * Beachtung von Groï¿½-/Kleinschreibung konvertiert und alle anderen Werte lï¿½sen einen Fehler aus.
+ * Beachtung von Groß-/Kleinschreibung konvertiert und alle anderen Werte lösen einen Fehler aus.
  *
  * Ist der Parameter strict = FALSE (default), werden unscharfe Rechtschreibfehler automatisch korrigiert (z.B. Ziffer 0 statt
- * groï¿½em Buchstaben O und umgekehrt), numerische Werte ungleich "1" und "0" entsprechend interpretiert und alle Werte, die
- * nicht als TRUE interpretiert werden kï¿½nnen, als FALSE interpretiert.
+ * großem Buchstaben O und umgekehrt), numerische Werte ungleich "1" und "0" entsprechend interpretiert und alle Werte, die
+ * nicht als TRUE interpretiert werden können, als FALSE interpretiert.
  *
- * Leading/trailing White-Space wird in allen Fï¿½llen ignoriert.
+ * Leading/trailing White-Space wird in allen Fällen ignoriert.
  *
  * @param  string value             - der zu konvertierende String
  * @param  bool   strict [optional] - default: inaktiv
@@ -3081,28 +3081,27 @@ string StrToLower(string value) {
       chr = StringGetChar(value, i);
       // logical version
       //if      ( 65 <= chr && chr <=  90) result = StringSetChar(result, i, chr+32);     // A-Z->a-z
-      //else if (192 <= chr && chr <= 214) result = StringSetChar(result, i, chr+32);     // ï¿½-ï¿½->ï¿½-ï¿½
-      //else if (216 <= chr && chr <= 222) result = StringSetChar(result, i, chr+32);     // ï¿½-ï¿½->ï¿½-ï¿½
-      //else if (chr == 138)               result = StringSetChar(result, i, 154);        // ï¿½->ï¿½
-      //else if (chr == 140)               result = StringSetChar(result, i, 156);        // ï¿½->ï¿½
-      //else if (chr == 142)               result = StringSetChar(result, i, 158);        // ï¿½->ï¿½
-      //else if (chr == 159)               result = StringSetChar(result, i, 255);        // ï¿½->ï¿½
+      //else if (192 <= chr && chr <= 214) result = StringSetChar(result, i, chr+32);     // À-Ö->à-ö
+      //else if (216 <= chr && chr <= 222) result = StringSetChar(result, i, chr+32);     // Ø-Þ->ø-þ
+      //else if (chr == 138)               result = StringSetChar(result, i, 154);        // Š->š
+      //else if (chr == 140)               result = StringSetChar(result, i, 156);        // Œ->œ
+      //else if (chr == 142)               result = StringSetChar(result, i, 158);        // Ž->ž
+      //else if (chr == 159)               result = StringSetChar(result, i, 255);        // Ÿ->ÿ
 
       // optimized for MQL4.0
       if (chr > 64) {
          if (chr < 91) {
-            result = StringSetChar(result, i, chr+32);                  // A-Z->a-z
-         }
-         else if (chr > 191) {
-            if (chr < 223) {
-               if (chr != 215)
-                  result = StringSetChar(result, i, chr+32);            // ï¿½-ï¿½->ï¿½-ï¿½, ï¿½-ï¿½->ï¿½-ï¿½
-            }
-         }
-         else if (chr == 138) result = StringSetChar(result, i, 154);   // ï¿½->ï¿½
-         else if (chr == 140) result = StringSetChar(result, i, 156);   // ï¿½->ï¿½
-         else if (chr == 142) result = StringSetChar(result, i, 158);   // ï¿½->ï¿½
-         else if (chr == 159) result = StringSetChar(result, i, 255);   // ï¿½->ï¿½
+            result = StringSetChar(result, i, chr+32);                                    // A-Z->a-z
+         }                                                                                
+         else if (chr > 191) {                                                            
+            if (chr < 223) /*&&*/ if (chr != 215) {                                       
+               result = StringSetChar(result, i, chr+32);                                 // À-Ö->à-ö, Ø-Þ->ø-þ
+            }                                                                             
+         }                                                                                
+         else if (chr == 138) result = StringSetChar(result, i, 154);                     // Š->š
+         else if (chr == 140) result = StringSetChar(result, i, 156);                     // Œ->œ
+         else if (chr == 142) result = StringSetChar(result, i, 158);                     // Ž->ž
+         else if (chr == 159) result = StringSetChar(result, i, 255);                     // Ÿ->ÿ
       }
    }
    return(result);
@@ -3116,8 +3115,7 @@ string StrToLower(string value) {
  *
  * @return string
  *
- * TODO:
- *  - move to DLL (for longer strings way to slow)
+ * TODO: move to DLL (for longer strings this is way too slow)
  */
 string StrToUpper(string value) {
    string result = value;
@@ -3126,18 +3124,20 @@ string StrToUpper(string value) {
    for (int i=0; i < len; i++) {
       chr = StringGetChar(value, i);
       // logical version
-      //if      (96 < chr && chr < 123)            result = StringSetChar(result, i, chr-32);
-      //else if (chr==154 || chr==156 || chr==158) result = StringSetChar(result, i, chr-16);
-      //else if (chr==255)                         result = StringSetChar(result, i,    159);   // ï¿½ -> ï¿½
-      //else if (chr > 223)                        result = StringSetChar(result, i, chr-32);
+      //if      (96 < chr && chr < 123)                  result = StringSetChar(result, i, chr-32);
+      //else if (chr == 154 || chr == 156 || chr == 158) result = StringSetChar(result, i, chr-16);
+      //else if (chr == 255)                             result = StringSetChar(result, i,    159);    // ÿ -> Ÿ
+      //else if (chr > 223)                              result = StringSetChar(result, i, chr-32);
 
       // optimized for MQL4.0
-      if      (chr == 255)                result = StringSetChar(result, i,    159);            // ï¿½ -> ï¿½
-      else if (chr  > 223)                result = StringSetChar(result, i, chr-32);
-      else if (chr == 158)                result = StringSetChar(result, i, chr-16);
-      else if (chr == 156)                result = StringSetChar(result, i, chr-16);
-      else if (chr == 154)                result = StringSetChar(result, i, chr-16);
-      else if (chr  >  96) if (chr < 123) result = StringSetChar(result, i, chr-32);
+      if      (chr == 255) result = StringSetChar(result, i,    159);                                  // ÿ -> Ÿ
+      else if (chr  > 223) result = StringSetChar(result, i, chr-32);
+      else if (chr == 158) result = StringSetChar(result, i, chr-16);
+      else if (chr == 156) result = StringSetChar(result, i, chr-16);
+      else if (chr == 154) result = StringSetChar(result, i, chr-16);
+      else if (chr > 96) /*&&*/ if (chr < 123) {
+         result = StringSetChar(result, i, chr-32);
+      }
    }
    return(result);
 }
@@ -3281,7 +3281,7 @@ string GetMqlSandboxPath() {
 
 
 /**
- * Gibt die hexadezimale Reprï¿½sentation eines Strings zurÃ¼ck.
+ * Gibt die hexadezimale Repräsentation eines Strings zurück.
  *
  * @param  string value - Ausgangswert
  *
@@ -3303,7 +3303,7 @@ string StrToHexStr(string value) {
 
 
 /**
- * Konvertiert das erste Zeichen eines Strings in Groï¿½schreibweise.
+ * Konvertiert das erste Zeichen eines Strings in Großschreibweise.
  *
  * @param  string value
  *
@@ -3317,12 +3317,12 @@ string StrCapitalize(string value) {
 
 
 /**
- * Schickt dem aktuellen Chart eine Nachricht zum ï¿½ffnen des EA-Input-Dialogs.
+ * Schickt dem aktuellen Chart eine Nachricht zum Öffnen des EA-Input-Dialogs.
  *
  * @return int - error status
  *
  *
- * NOTE: Es wird nicht Ã¼berprï¿½ft, ob zur Zeit des Aufrufs ein EA lï¿½uft.
+ * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
  */
 int Chart.Expert.Properties() {
    if (__isTesting) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
@@ -3358,7 +3358,7 @@ int Chart.SendTick(bool sound = false) {
 
 
 /**
- * Ruft den Hauptmenï¿½-Befehl Charts->Objects->Unselect All auf.
+ * Ruft den Hauptmenü-Befehl Charts->Objects->Unselect All auf.
  *
  * @return int - error status
  */
@@ -3370,7 +3370,7 @@ int Chart.Objects.UnselectAll() {
 
 
 /**
- * Ruft den Kontextmenï¿½-Befehl Chart->Refresh auf.
+ * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
  *
  * @return int - error status
  */
@@ -3486,7 +3486,7 @@ bool Chart.StoreString(string key, string value) {
 
    // mark empty strings with a magic value as the terminal deserializes "" to "Text"
    len = StringLen(value);
-   if (!len) value = "ï¿½(empty)ï¿½";
+   if (!len) value = "…(empty)…";
 
    int i = 0;
    string index = "";
@@ -3651,7 +3651,7 @@ bool Chart.RestoreString(string key, string &var, bool remove = true) {
 
    if (sValue == "") return(false);             // string not found
 
-   if (sValue == "ï¿½(empty)ï¿½") var = "";         // convert magic value back to empty string as the terminal deserializes "" to "Text"
+   if (sValue == "…(empty)…") var = "";         // convert magic value back to empty string as the terminal deserializes "" to "Text"
    else                       var = sValue;
 
    return(!catch("Chart.RestoreString(3)"));
@@ -3755,9 +3755,9 @@ bool Tester.IsStopped() {
 
 
 /**
- * Erzeugt einen neuen String der gewï¿½nschten Lï¿½nge.
+ * Erzeugt einen neuen String der gewünschten Länge.
  *
- * @param  int length - Lï¿½nge
+ * @param  int length - Länge
  *
  * @return string
  */
@@ -3783,9 +3783,9 @@ string CreateString(int length) {
 
 /**
  * Aktiviert bzw. deaktiviert den Aufruf der start()-Funktion von Expert Advisern bei Eintreffen von Ticks.
- * Wird ï¿½blicherweise aus der init()-Funktion aufgerufen.
+ * Wird üblicherweise aus der init()-Funktion aufgerufen.
  *
- * @param  bool enable - gewï¿½nschter Status: On/Off
+ * @param  bool enable - gewünschter Status: On/Off
  *
  * @return int - error status
  */
@@ -3794,7 +3794,7 @@ int Toolbar.Experts(bool enable) {
 
    if (__isTesting) return(debug("Toolbar.Experts(1)  skipping in tester", NO_ERROR));
 
-   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig Ã¼berschreiben
+   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
 
    int hWnd = GetTerminalMainWindow();
@@ -3811,7 +3811,7 @@ int Toolbar.Experts(bool enable) {
 
 
 /**
- * Ruft den Kontextmenï¿½-Befehl MarketWatch->Symbols auf.
+ * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
  *
  * @return int - error status
  */
@@ -4400,7 +4400,7 @@ string ModuleTypesToStr(int fType) {
 
 
 /**
- * Gibt die Beschreibung eines UninitializeReason-Codes zurÃ¼ck (siehe UninitializeReason()).
+ * Gibt die Beschreibung eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
  *
  * @param  int reason - Code
  *
@@ -4435,7 +4435,7 @@ int ProgramInitReason() {
 
 
 /**
- * Gibt die Beschreibung eines InitReason-Codes zurÃ¼ck.
+ * Gibt die Beschreibung eines InitReason-Codes zurück.
  *
  * @param  int reason - Code
  *
@@ -4649,10 +4649,10 @@ string GetAccountAlias(string company="", int account=NULL) {
  *  alpariuk-live2 = AlpariLive              ; A mapped full server name precedes a mapping for a default id.
  */
 string GetAccountCompanyId() {
-   // Da bei Accountwechsel der Rï¿½ckgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
+   // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
-   // dessen muÃŸ immer der Umweg Ã¼ber GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geï¿½nderten
-   // Servernamen zurÃ¼ck, wenn tatsï¿½chlich ein Tick des neuen Servers verarbeitet wird.
+   // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten
+   // Servernamen zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    static string lastServer = "", lastId = "";
 
    string server = GetAccountServer(); if (server == "") return("");
@@ -4702,7 +4702,7 @@ double GetExternalAssets(string company="", int account=NULL) {
 
 
 /**
- * Vergleicht zwei Strings ohne Berï¿½cksichtigung von Groï¿½-/Kleinschreibung.
+ * Vergleicht zwei Strings ohne Berücksichtigung von Groß-/Kleinschreibung.
  *
  * @param  string string1
  * @param  string string2
@@ -4762,7 +4762,7 @@ bool StrContainsChars(string value, int chars[]) {
 
 
 /**
- * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurÃ¼ck.
+ * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
  *
  * @param  string value  - zu durchsuchender String
  * @param  string search - zu suchender Substring
@@ -4785,7 +4785,7 @@ int StrFindR(string value, string search) {
 
 
 /**
- * Konvertiert eine Farbe in ihre HTML-Reprï¿½sentation.
+ * Konvertiert eine Farbe in ihre HTML-Repräsentation.
  *
  * @param  color value
  *
@@ -4798,18 +4798,18 @@ string ColorToHtmlStr(color value) {
    int green = value & 0x00FF00;
    int blue  = value & 0xFF0000;
 
-   int iValue = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu kï¿½nnen
+   int iValue = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu können
 
    return(StringConcatenate("#", StrRight(IntToHexStr(iValue), 6)));
 }
 
 
 /**
- * Konvertiert eine Farbe in ihre MQL-String-Reprï¿½sentation, z.B. "Red" oder "0,255,255".
+ * Konvertiert eine Farbe in ihre MQL-String-Repräsentation, z.B. "Red" oder "0,255,255".
  *
  * @param  color value
  *
- * @return string - MQL-Farbcode oder RGB-String, falls der Ã¼bergebene Wert kein bekannter MQL-Farbcode ist.
+ * @return string - MQL-Farbcode oder RGB-String, falls der übergebene Wert kein bekannter MQL-Farbcode ist.
  */
 string ColorToStr(color value) {
    if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
@@ -5172,9 +5172,9 @@ string StrRepeat(string str, int times) {
 
 
 /**
- * Gibt die eindeutige ID einer Wï¿½hrung zurÃ¼ck.
+ * Gibt die eindeutige ID einer Währung zurück.
  *
- * @param  string currency - 3-stelliger Wï¿½hrungsbezeichner
+ * @param  string currency - 3-stelliger Währungsbezeichner
  *
  * @return int - Currency-ID oder 0, falls ein Fehler auftrat
  */
@@ -5215,11 +5215,11 @@ int GetCurrencyId(string currency) {
 
 
 /**
- * Gibt den 3-stelligen Bezeichner einer Wï¿½hrungs-ID zurÃ¼ck.
+ * Gibt den 3-stelligen Bezeichner einer Währungs-ID zurück.
  *
- * @param  int id - Wï¿½hrungs-ID
+ * @param  int id - Währungs-ID
  *
- * @return string - Wï¿½hrungsbezeichner
+ * @return string - Währungsbezeichner
  */
 string GetCurrency(int id) {
    switch (id) {
@@ -5257,7 +5257,7 @@ string GetCurrency(int id) {
 
 
 /**
- * Ob ein String einen gï¿½ltigen Wï¿½hrungsbezeichner darstellt.
+ * Ob ein String einen gültigen Währungsbezeichner darstellt.
  *
  * @param  string value - Wert
  *
@@ -5458,11 +5458,11 @@ string ObjectTypeToStr(int type, int flags = NULL) {
 
 
 /**
- * Gibt den Integer-Wert eines OperationType-Bezeichners zurÃ¼ck.
+ * Gibt den Integer-Wert eines OperationType-Bezeichners zurück.
  *
  * @param  string value
  *
- * @return int - OperationType-Code oder OP_UNDEFINED (-1), wenn der Bezeichner ungï¿½ltig ist
+ * @return int - OperationType-Code oder OP_UNDEFINED (-1), wenn der Bezeichner ungültig ist
  */
 int StrToOperationType(string value) {
    string str = StrToLower(StrTrim(value));
@@ -5646,7 +5646,7 @@ string NumberToStr(double value, string mask) {
    int sepPos = StringFind(mask, ",");
    bool separators = (sepPos > -1);
    if (separators) /*&&*/ if (sepPos+1 < maskLen) {
-      sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske lï¿½schen
+      sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske löschen
       mask = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
    }
 
@@ -5715,7 +5715,7 @@ string NumberToStr(double value, string mask) {
       if (-1 < pos && pos < dotPos) leadSign = "+";
    }
 
-   // ï¿½brige Modifier
+   // übrige Modifier
    bool round = (StringFind(mask, "R") > -1);
    // --- Ende Maske parsen ---------------------------
 
@@ -5729,7 +5729,7 @@ string NumberToStr(double value, string mask) {
    if (value < 0)
       outStr = StringSubstr(outStr, 1);
 
-   // auf angegebene Lï¿½nge kï¿½rzen
+   // auf angegebene Länge kürzen
    int dLeft = StringFind(outStr, ".");
    if (nLeft == -1) nLeft = dLeft;
    else             nLeft = Min(nLeft, dLeft);
@@ -5888,7 +5888,7 @@ string TimeframeFlagToStr(int flag) {
 
 
 /**
- * Gibt die lesbare Version ein oder mehrerer History-Flags zurÃ¼ck.
+ * Gibt die lesbare Version ein oder mehrerer History-Flags zurück.
  *
  * @param  int flags - Kombination verschiedener History-Flags
  *
@@ -6139,7 +6139,7 @@ int StrToTimeframe(string timeframe, int flags = NULL) {
 
 
 /**
- * Gibt die lesbare Version eines FileAccess-Modes zurÃ¼ck.
+ * Gibt die lesbare Version eines FileAccess-Modes zurück.
  *
  * @param  int mode - Kombination verschiedener FileAccess-Modes
  *
@@ -6179,7 +6179,7 @@ string SwapCalculationModeToStr(int mode) {
 
 
 /**
- * Gibt die lesbare Beschreibung eines ShellExecute()/ShellExecuteEx()-Fehlercodes zurÃ¼ck.
+ * Gibt die lesbare Beschreibung eines ShellExecute()/ShellExecuteEx()-Fehlercodes zurück.
  *
  * @param  int error - ShellExecute-Fehlercode
  *

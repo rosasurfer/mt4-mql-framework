@@ -3,7 +3,7 @@
  *
  * For normal distribution of natural data:
  *
- *  @see  https://upload.wikimedia.org/wikipedia/commons/3/3a/Standard_deviation_diagram_micro.svg#         [68–95–99.7 Rule]
+ *  @see  https://upload.wikimedia.org/wikipedia/commons/3/3a/Standard_deviation_diagram_micro.svg#         [68-95-99.7 Rule]
  *
  *
  * Indicator buffers for iCustom():

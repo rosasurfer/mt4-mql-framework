@@ -50,13 +50,13 @@
 #define FILE_ATTRIBUTE_REPARSE_POINT      1024
 #define FILE_ATTRIBUTE_COMPRESSED         2048
 #define FILE_ATTRIBUTE_OFFLINE            4096
-#define FILE_ATTRIBUTE_NOT_INDEXED        8192     // FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ist zu lang fï¿½r MQL (nicht fï¿½r C++)
+#define FILE_ATTRIBUTE_NOT_INDEXED        8192     // FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ist zu lang für MQL (nicht für C++)
 #define FILE_ATTRIBUTE_ENCRYPTED         16384
 #define FILE_ATTRIBUTE_VIRTUAL           65536
 
 
 /**
- * Gibt die lesbare Version eines FileAttributes zurÃ¼ck.
+ * Gibt die lesbare Version eines FileAttributes zurück.
  *
  * @param  int wfd[] - WIN32_FIND_DATA
  *

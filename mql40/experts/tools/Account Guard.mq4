@@ -10,10 +10,10 @@
  *
  * Input parameters:
  * -----------------
- *  â€¢ PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*": all symbols permitted).
- *  â€¢ PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
- *  â€¢ DrawdownLimit:      An absolute money amount or a percent value describing the drawdown limit of open positions.
- *  â€¢ IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
+ *  • PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*": all symbols permitted).
+ *  • PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
+ *  • DrawdownLimit:      An absolute money amount or a percent value describing the drawdown limit of open positions.
+ *  • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
  *                        prevents DDL triggering by spread widening.
  *
  *

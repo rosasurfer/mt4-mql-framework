@@ -56,7 +56,7 @@ int si.hStdError    (/*STARTUPINFO*/int si[]) { return(si[16]); }
 
 
 /**
- * Gibt die lesbare Version ein oder mehrerer STARTUPINFO-Flags zurÃ¼ck.
+ * Gibt die lesbare Version ein oder mehrerer STARTUPINFO-Flags zurück.
  *
  * @param  int si[] - STARTUPINFO
  *

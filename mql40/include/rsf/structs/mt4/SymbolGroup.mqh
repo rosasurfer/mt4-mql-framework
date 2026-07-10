@@ -1,7 +1,7 @@
 /**
  * MT4 struct SYMBOL_GROUP (Dateiformat "<data-directory>/history/<trade-server>/symgroups.raw")
  *
- * Die GrÃ¶ÃŸe der Datei ist fix und enthï¿½lt Platz fï¿½r exakt 32 Gruppen. Einzelne Gruppen kï¿½nnen undefiniert sein.
+ * Die Größe der Datei ist fix und enthält Platz für exakt 32 Gruppen. Einzelne Gruppen können undefiniert sein.
  *
  * @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/SymbolGroup.h
  */

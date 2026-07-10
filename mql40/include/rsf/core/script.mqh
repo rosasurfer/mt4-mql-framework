@@ -208,7 +208,7 @@ int deinit() {
 
 
 /**
- * Gibt die ID des aktuellen Deinit()-Szenarios zurÃ¼ck. Kann nur in deinit() aufgerufen werden.
+ * Gibt die ID des aktuellen Deinit()-Szenarios zurück. Kann nur in deinit() aufgerufen werden.
  *
  * @return int - ID oder NULL, falls ein Fehler auftrat
  */

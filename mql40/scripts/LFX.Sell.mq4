@@ -1,6 +1,6 @@
 /**
- * Schickt dem TradeTerminal die Nachricht, eine "Sell Market"-Order fï¿½r das aktuelle Symbol auszufï¿½hren. MuÃŸ auf dem
- * jeweiligen LFX-Chart ausgefï¿½hrt werden.
+ * Schickt dem TradeTerminal die Nachricht, eine "Sell Market"-Order für das aktuelle Symbol auszuführen. Muß auf dem
+ * jeweiligen LFX-Chart ausgeführt werden.
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];

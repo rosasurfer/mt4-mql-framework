@@ -53,31 +53,31 @@ int      periods[] = { PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, 
 
 
 // Daten kompletter History-Sets --------------------------------------------------------------------------------------------------------------------------
-int      hs.hSet       [];                            // Set-Handle: grï¿½ï¿½er 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungï¿½ltiges Handle
-int      hs.hSet.lastValid;                           // das letzte gï¿½ltige, offene Handle (um ein Ã¼bergebenes Handle nicht stï¿½ndig neu validieren zu mï¿½ssen)
+int      hs.hSet       [];                            // Set-Handle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
+int      hs.hSet.lastValid;                           // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hs.symbol     [];                            // Symbol
 string   hs.symbolU    [];                            // Symbol (Upper-Case)
 string   hs.description[];                            // Beschreibung
 int      hs.digits     [];                            // Symbol-Digits
 string   hs.directory  [];                            // Speicherverzeichnis des Sets
 int      hs.hFile      [][9];                         // HistoryFile-Handles des Sets je Standard-Timeframe
-int      hs.format     [];                            // Datenformat fï¿½r neu zu erstellende HistoryFiles
+int      hs.format     [];                            // Datenformat für neu zu erstellende HistoryFiles
 
 
 // Daten einzelner History-Files --------------------------------------------------------------------------------------------------------------------------
-int      hf.hFile      [];                            // Dateihandle: grï¿½ï¿½er 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungï¿½ltiges Handle
-int      hf.hFile.lastValid;                          // das letzte gï¿½ltige, offene Handle (um ein Ã¼bergebenes Handle nicht stï¿½ndig neu validieren zu mï¿½ssen)
+int      hf.hFile      [];                            // Dateihandle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
+int      hf.hFile.lastValid;                          // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hf.name       [];                            // Dateiname, ggf. mit Unterverzeichnis "XTrade-Synthetic\"
 bool     hf.readAccess [];                            // ob das Handle Lese-Zugriff erlaubt
 bool     hf.writeAccess[];                            // ob das Handle Schreib-Zugriff erlaubt
 
 int      hf.header     [][HISTORY_HEADER_intSize];    // History-Header der Datei
 int      hf.format     [];                            // Datenformat: 400 | 401
-int      hf.barSize    [];                            // GrÃ¶ÃŸe einer Bar entsprechend dem Datenformat
+int      hf.barSize    [];                            // Größe einer Bar entsprechend dem Datenformat
 string   hf.symbol     [];                            // Symbol
 string   hf.symbolU    [];                            // Symbol (Upper-Case)
 int      hf.period     [];                            // Periode
-int      hf.periodSecs [];                            // Dauer einer Periode in Sekunden (nicht gï¿½ltig fï¿½r Perioden > 1 Woche)
+int      hf.periodSecs [];                            // Dauer einer Periode in Sekunden (nicht gültig für Perioden > 1 Woche)
 int      hf.digits     [];                            // Digits
 string   hf.directory  [];                            // Speicherverzeichnis der Datei
 
@@ -106,27 +106,27 @@ datetime hf.total.to.nextCloseTime  [];               // CloseTime dre der letzt
 // Cache der Bar, die in der Historydatei zuletzt gelesen oder geschrieben wurde (eine beliebige in der Datei existierende Bar).
 //
 // (1) Beim Aktualisieren dieser Bar mit neuen Ticks braucht die Bar nicht jedesmal neu eingelesen werden: siehe HistoryFile3.UpdateBar().
-// (2) Bei funktionsï¿½bergreifenden Ablï¿½ufen muÃŸ diese Bar nicht Ã¼berall als Parameter durchgeschleift werden (durch unterschiedliche Arraydimensionen schwierig).
+// (2) Bei funktionsübergreifenden Abläufen muß diese Bar nicht überall als Parameter durchgeschleift werden (durch unterschiedliche Arraydimensionen schwierig).
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-int      hf.lastStoredBar.offset       [];            // Offset relativ zum Header: Offset 0 ist die ï¿½lteste Bar, initialisiert mit -1
+int      hf.lastStoredBar.offset       [];            // Offset relativ zum Header: Offset 0 ist die älteste Bar, initialisiert mit -1
 datetime hf.lastStoredBar.openTime     [];            // z.B. 12:00:00      |                  time < openTime:      time liegt irgendwo in einer vorherigen Bar
 datetime hf.lastStoredBar.closeTime    [];            //      13:00:00      |      openTime <= time < closeTime:     time liegt genau in der Bar
-datetime hf.lastStoredBar.nextCloseTime[];            //      14:00:00      |     closeTime <= time < nextCloseTime: time liegt genau in der nï¿½chsten Bar
-double   hf.lastStoredBar.data         [][6];         // Bardaten (T-OHLCV) | nextCloseTime <= time:                 time liegt irgendwo vor der nï¿½chsten Bar
+datetime hf.lastStoredBar.nextCloseTime[];            //      14:00:00      |     closeTime <= time < nextCloseTime: time liegt genau in der nächsten Bar
+double   hf.lastStoredBar.data         [][6];         // Bardaten (T-OHLCV) | nextCloseTime <= time:                 time liegt irgendwo vor der nächsten Bar
 
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Schreibpuffer fï¿½r eintreffende Ticks einer bereits gespeicherten oder noch nicht gespeicherten Bar. Die Variable hf.bufferedBar.modified signalisiert, ob die
+// Schreibpuffer für eintreffende Ticks einer bereits gespeicherten oder noch nicht gespeicherten Bar. Die Variable hf.bufferedBar.modified signalisiert, ob die
 // Bardaten in hf.bufferedBar von den in der Datei gespeicherten Daten abweichen.
 //
-// (1) Diese Bar stimmt mit hf.lastStoredBar nur dann Ã¼berein, wenn hf.lastStoredBar die jï¿½ngste Bar der Datei ist und mit HST_BUFFER_TICKS=on weitere Ticks fï¿½r diese
-//     jï¿½ngste Bar gepuffert werden. Stimmen beide Bars Ã¼berein, werden sie bei ï¿½nderungen an einer der Bars jeweils synchronisiert.
+// (1) Diese Bar stimmt mit hf.lastStoredBar nur dann überein, wenn hf.lastStoredBar die jüngste Bar der Datei ist und mit HST_BUFFER_TICKS=on weitere Ticks für diese
+//     jüngste Bar gepuffert werden. Stimmen beide Bars überein, werden sie bei Änderungen an einer der Bars jeweils synchronisiert.
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-int      hf.bufferedBar.offset       [];              // Offset relativ zum Header: Offset 0 ist die ï¿½lteste Bar, initialisiert mit -1
+int      hf.bufferedBar.offset       [];              // Offset relativ zum Header: Offset 0 ist die älteste Bar, initialisiert mit -1
 datetime hf.bufferedBar.openTime     [];              // z.B. 12:00:00      |                  time < openTime:      time liegt irgendwo in einer vorherigen Bar
 datetime hf.bufferedBar.closeTime    [];              //      13:00:00      |      openTime <= time < closeTime:     time liegt genau in der Bar
-datetime hf.bufferedBar.nextCloseTime[];              //      14:00:00      |     closeTime <= time < nextCloseTime: time liegt genau in der nï¿½chsten Bar
-double   hf.bufferedBar.data         [][6];           // Bardaten (T-OHLCV) | nextCloseTime <= time:                 time liegt irgendwo vor der nï¿½chsten Bar
+datetime hf.bufferedBar.nextCloseTime[];              //      14:00:00      |     closeTime <= time < nextCloseTime: time liegt genau in der nächsten Bar
+double   hf.bufferedBar.data         [][6];           // Bardaten (T-OHLCV) | nextCloseTime <= time:                 time liegt irgendwo vor der nächsten Bar
 bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem letzten Schreiben modifiziert wurden
 
 
@@ -400,7 +400,7 @@ int HistorySet3.Get(string symbol, string directory = "") {
 
 
 /**
- * Schlieï¿½t das HistorySet mit dem angegebenen Handle.
+ * Schließt das HistorySet mit dem angegebenen Handle.
  *
  * @param  int hSet - Set-Handle
  *
@@ -735,22 +735,22 @@ bool HistoryFile3.Close(int hFile) {
 
 
 /**
- * Findet den Offset der Bar, die den angegebenen Zeitpunkt abdeckt oder abdecken wï¿½rde, und signalisiert, ob diese Bar bereits existiert.
- * Die Bar existiert z.B. nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lï¿½cke aufweist (am zurÃ¼ckgegebenen Offset befindet sich
- * eine andere Bar) oder wenn der Zeitpunkt auï¿½erhalb des von den vorhandenen Daten abgedeckten Bereichs liegt.
+ * Findet den Offset der Bar, die den angegebenen Zeitpunkt abdeckt oder abdecken würde, und signalisiert, ob diese Bar bereits existiert.
+ * Die Bar existiert z.B. nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke aufweist (am zurückgegebenen Offset befindet sich
+ * eine andere Bar) oder wenn der Zeitpunkt außerhalb des von den vorhandenen Daten abgedeckten Bereichs liegt.
  *
  * @param  _In_  int      hFile          - Handle der Historydatei
  * @param  _In_  datetime time           - Zeitpunkt
- * @param  _Out_ bool     lpBarExists[1] - Variable, die nach Rï¿½ckkehr anzeigt, ob die Bar am zurÃ¼ckgegebenen Offset existiert
- *                                         (als Array implementiert, um Zeigerï¿½bergabe an eine Library zu ermï¿½glichen)
- *                                         ï¿½ TRUE:  Bar existiert          @see  HistoryFile3.UpdateBar() und HistoryFile3.WriteBar()
- *                                         ï¿½ FALSE: Bar existiert nicht    @see  HistoryFile3.InsertBar()
+ * @param  _Out_ bool     lpBarExists[1] - Variable, die nach Rückkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert
+ *                                         (als Array implementiert, um Zeigerübergabe an eine Library zu ermöglichen)
+ *                                         ? TRUE:  Bar existiert          @see  HistoryFile3.UpdateBar() und HistoryFile3.WriteBar()
+ *                                         ? FALSE: Bar existiert nicht    @see  HistoryFile3.InsertBar()
  *
- * @return int - Bar-Offset relativ zum Dateiheader (Offset 0 ist die ï¿½lteste Bar) oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - Bar-Offset relativ zum Dateiheader (Offset 0 ist die älteste Bar) oder EMPTY (-1), falls ein Fehler auftrat
  */
 int HistoryFile3.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
-   // NOTE: Der Parameter lpBarExists ist fï¿½r den externen Gebrauch implementiert (Aufruf der Funktion von auï¿½erhalb der Library). Beim internen Gebrauch
-   //       lï¿½ï¿½t sich Ã¼ber die Metadaten der Historydatei einfacher herausfinden, ob eine Bar an einem Offset existiert oder nicht.
+   // NOTE: Der Parameter lpBarExists ist für den externen Gebrauch implementiert (Aufruf der Funktion von außerhalb der Library). Beim internen Gebrauch
+   //       läßt sich über die Metadaten der Historydatei einfacher herausfinden, ob eine Bar an einem Offset existiert oder nicht.
    //       @see  int hf.total.bars[]
    if (hFile <= 0)                      return(_EMPTY(catch("HistoryFile3.FindBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.lastValid) {
@@ -772,7 +772,7 @@ int HistoryFile3.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
    datetime openTime = time;
    int offset;
 
-   // alle bekannten Daten abprï¿½fen
+   // alle bekannten Daten abprüfen
    if (hf.stored.bars[hFile] > 0) {
       // hf.stored.from
       if (openTime < hf.stored.from.openTime     [hFile]) { lpBarExists[0] = false;                      return(0); }   // Zeitpunkt liegt zeitlich vor der ersten Bar
@@ -786,7 +786,7 @@ int HistoryFile3.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
       else                                                   { lpBarExists[0] = false;                                          return(hf.total.bars      [hFile]); }   // Zeitpunkt liegt in der ersten neuen Bar
 
       // hf.lastStoredBar
-      if (hf.lastStoredBar.offset[hFile] > 0) {                         // LastStoredBar ist definiert und entspricht nicht hf.stored.from (schon geprï¿½ft)
+      if (hf.lastStoredBar.offset[hFile] > 0) {                         // LastStoredBar ist definiert und entspricht nicht hf.stored.from (schon geprüft)
          if (hf.lastStoredBar.offset[hFile] != hf.stored.to.offset[hFile]) {
             if      (openTime < hf.lastStoredBar.openTime     [hFile]) {}
             else if (openTime < hf.lastStoredBar.closeTime    [hFile]) { lpBarExists[0] = true;                                  return(hf.lastStoredBar.offset[hFile]); }  // Zeitpunkt liegt in LastStoredBar
@@ -800,23 +800,23 @@ int HistoryFile3.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
 
    if (hf.bufferedBar.offset[hFile] >= 0) {                             // BufferedBar ist definiert
       // hf.total.from
-      if (hf.total.from.offset[hFile] != hf.stored.from.offset[hFile]) {// bei Gleichheit identisch zu hf.stored.from (schon geprï¿½ft)
+      if (hf.total.from.offset[hFile] != hf.stored.from.offset[hFile]) {// bei Gleichheit identisch zu hf.stored.from (schon geprüft)
          if (openTime < hf.total.from.openTime     [hFile]) { lpBarExists[0] = false;                      return(0); }                         // Zeitpunkt liegt zeitlich vor der ersten Bar
          if (openTime < hf.total.from.closeTime    [hFile]) { lpBarExists[0] = true;                       return(0); }                         // Zeitpunkt liegt in der ersten Bar
          if (openTime < hf.total.from.nextCloseTime[hFile]) { lpBarExists[0] = (hf.total.bars[hFile] > 1); return(1); }                         // Zeitpunkt liegt in der zweiten Bar
       }
 
       // hf.total.to
-      if (hf.total.to.offset[hFile] != hf.stored.to.offset[hFile]) {    // bei Gleichheit identisch zu hf.stored.to (schon geprï¿½ft)
+      if (hf.total.to.offset[hFile] != hf.stored.to.offset[hFile]) {    // bei Gleichheit identisch zu hf.stored.to (schon geprüft)
          if      (openTime < hf.total.to.openTime [hFile]) {}
          else if (openTime < hf.total.to.closeTime[hFile]) { lpBarExists[0] = true;                      return(hf.total.to.offset[hFile]); }   // Zeitpunkt liegt in der letzten absoluten Bar
          else                                              { lpBarExists[0] = false;                     return(hf.total.bars     [hFile]); }   // Zeitpunkt liegt in der ersten neuen Bar
       }
 
-      // hf.bufferedBar                                                 // eine definierte BufferedBar ist immer identisch zu hf.total.to (schon geprï¿½ft)
+      // hf.bufferedBar                                                 // eine definierte BufferedBar ist immer identisch zu hf.total.to (schon geprüft)
    }
 
-   // binÃ¤re Suche in der Datei                                         // TODO: implementieren
+   // binäre Suche in der Datei                                         // TODO: implementieren
    return(_EMPTY(catch("HistoryFile3.FindBar(6)  bars="+ hf.total.bars[hFile] +", from='"+ TimeToStr(hf.total.from.openTime[hFile], TIME_FULL) +"', to='"+ TimeToStr(hf.total.to.openTime[hFile], TIME_FULL) +"')  time look-up in a timeseries not yet implemented ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_NOT_IMPLEMENTED)));
 }
 
@@ -825,7 +825,7 @@ int HistoryFile3.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
  * Liest die Bar am angegebenen Offset einer Historydatei.
  *
  * @param  _In_  int    hFile  - Handle der Historydatei
- * @param  _In_  int    offset - Offset der zu lesenden Bar relativ zum Dateiheader (Offset 0 ist die ï¿½lteste Bar)
+ * @param  _In_  int    offset - Offset der zu lesenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
  * @param  _Out_ double bar[6] - Array zur Aufnahme der Bar-Daten (TOHLCV)
  *
  * @return bool - success status
@@ -844,7 +844,7 @@ bool HistoryFile3.ReadBar(int hFile, int offset, double &bar[]) {
    if (offset >= hf.total.bars[hFile])  return(!catch("HistoryFile3.ReadBar(6)  invalid parameter offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    if (ArraySize(bar) != 6) ArrayResize(bar, 6);
 
-   // vorzugsweise bereits bekannte Bars zurÃ¼ckgeben                 // ACHTUNG: hf.lastStoredBar wird nur aktualisiert, wenn die Bar tatsï¿½chlich neu gelesen wurde.
+   // vorzugsweise bereits bekannte Bars zurückgeben                 // ACHTUNG: hf.lastStoredBar wird nur aktualisiert, wenn die Bar tatsächlich neu gelesen wurde.
    if (offset == hf.lastStoredBar.offset[hFile]) {
       bar[BAR_T] = hf.lastStoredBar.data[hFile][BAR_T];
       bar[BAR_O] = hf.lastStoredBar.data[hFile][BAR_O];
@@ -895,8 +895,8 @@ bool HistoryFile3.ReadBar(int hFile, int offset, double &bar[]) {
       nextCloseTime = closeTime + hf.periodSecs[hFile];
    }
    else if (hf.period[hFile] == PERIOD_MN1) {
-      closeTime     = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+1);    // 00:00, 1. des nï¿½chsten Monats
-      nextCloseTime = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+2);    // 00:00, 1. des Ã¼bernï¿½chsten Monats
+      closeTime     = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+1);    // 00:00, 1. des nächsten Monats
+      nextCloseTime = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+2);    // 00:00, 1. des übernächsten Monats
    }
 
    hf.lastStoredBar.offset       [hFile]        = offset;
@@ -918,19 +918,19 @@ bool HistoryFile3.ReadBar(int hFile, int offset, double &bar[]) {
 
 
 /**
- * Schreibt eine Bar am angegebenen Offset einer Historydatei. Eine dort vorhandene Bar wird Ã¼berschrieben. Ist die Bar noch
- * nicht vorhanden, muÃŸ ihr Offset an die vorhandenen Bars anschlieï¿½en. Sie darf kein Gap verursachen.
+ * Schreibt eine Bar am angegebenen Offset einer Historydatei. Eine dort vorhandene Bar wird überschrieben. Ist die Bar noch
+ * nicht vorhanden, muß ihr Offset an die vorhandenen Bars anschließen. Sie darf kein Gap verursachen.
  *
  * @param  int    hFile  - Handle der Historydatei
- * @param  int    offset - Offset der zu schreibenden Bar relativ zum Dateiheader (Offset 0 ist die ï¿½lteste Bar)
+ * @param  int    offset - Offset der zu schreibenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
  * @param  double bar[]  - Bardaten (T-OHLCV):
- * @param  int    flags  - zusï¿½tzliche, das Schreiben steuernde Flags (default: keine)
- *                         HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schluï¿½kurs der letzten Bar vor dem Gap gefï¿½llt
+ * @param  int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                         HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - success status
  *
  * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht
- *       Ã¼berprï¿½ft, ob die Bar-Time eine normalisierte OpenTime fï¿½r den Timeframe der Historydatei ist.
+ *       überprüft, ob die Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags = NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile3.WriteBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -948,23 +948,23 @@ bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags = NULL
    datetime openTime = Round(bar[BAR_T]); if (!openTime) return(!catch("HistoryFile3.WriteBar(8)  invalid bar["+ offset +"].time: "+ openTime +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    int      V        = Round(bar[BAR_V]); if (!V)        return(!catch("HistoryFile3.WriteBar(9)  invalid bar["+ offset +"].volume: "+ V +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
 
-   // Sicherstellen, daï¿½ bekannte Bars nicht mit einer anderen Bar Ã¼berschrieben werden               // TODO: if-Tests reduzieren
+   // Sicherstellen, daß bekannte Bars nicht mit einer anderen Bar überschrieben werden               // TODO: if-Tests reduzieren
    if (offset==hf.stored.from.offset  [hFile]) /*&&*/ if (openTime!=hf.stored.from.openTime  [hFile]) return(!catch("HistoryFile3.WriteBar(10)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.stored.from.time="                                        + TimeToStr(hf.stored.from.openTime  [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
    if (offset==hf.stored.to.offset    [hFile]) /*&&*/ if (openTime!=hf.stored.to.openTime    [hFile]) return(!catch("HistoryFile3.WriteBar(11)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.stored.to.time="                                          + TimeToStr(hf.stored.to.openTime    [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
    if (offset==hf.total.to.offset     [hFile]) /*&&*/ if (openTime!=hf.total.to.openTime     [hFile]) return(!catch("HistoryFile3.WriteBar(12)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.total.to.time="                                           + TimeToStr(hf.total.to.openTime     [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
    if (offset==hf.lastStoredBar.offset[hFile]) /*&&*/ if (openTime!=hf.lastStoredBar.openTime[hFile]) return(!catch("HistoryFile3.WriteBar(13)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.lastStoredBar["+ hf.lastStoredBar.offset[hFile] +"].time="+ TimeToStr(hf.lastStoredBar.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
-   // hf.bufferedBar.offset: entspricht hf.total.to.offset (schon geprï¿½ft)
+   // hf.bufferedBar.offset: entspricht hf.total.to.offset (schon geprüft)
 
-   // TODO: Sicherstellen, daï¿½ nach bekannten Bars keine ï¿½lteren Bars geschrieben werden              // TODO: if-Tests reduzieren
+   // TODO: Sicherstellen, daß nach bekannten Bars keine älteren Bars geschrieben werden              // TODO: if-Tests reduzieren
    if (offset==hf.stored.from.offset  [hFile]+1) {}
    if (offset==hf.stored.to.offset    [hFile]+1) {}
    if (offset==hf.total.to.offset     [hFile]+1) {}
    if (offset==hf.lastStoredBar.offset[hFile]+1) {}
 
-   // Lï¿½st die Bar fï¿½r eine BufferedBar ein BarClose-Event aus, zuerst die BufferedBar schreiben
+   // Löst die Bar für eine BufferedBar ein BarClose-Event aus, zuerst die BufferedBar schreiben
    if (hf.bufferedBar.offset[hFile] >= 0) /*&&*/ if (offset > hf.bufferedBar.offset[hFile]) {
       if (!HistoryFile3.WriteBufferedBar(hFile, flags)) return(false);
-      hf.bufferedBar.offset[hFile] = -1;                                                              // BufferedBar zurÃ¼cksetzen
+      hf.bufferedBar.offset[hFile] = -1;                                                              // BufferedBar zurücksetzen
    }
 
    // FilePointer positionieren, Bar normalisieren (Funktionsparameter nicht modifizieren) und schreiben
@@ -1008,8 +1008,8 @@ bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags = NULL
          nextCloseTime = closeTime + hf.periodSecs[hFile];
       }
       else if (hf.period[hFile] == PERIOD_MN1) {
-         closeTime     = DateTime1(TimeYearEx(openTime), TimeMonth(openTime) + 1);  // 00:00, 1. des nï¿½chsten Monats
-         nextCloseTime = DateTime1(TimeYearEx(openTime), TimeMonth(openTime) + 2);  // 00:00, 1. des Ã¼bernï¿½chsten Monats
+         closeTime     = DateTime1(TimeYearEx(openTime), TimeMonth(openTime) + 1);  // 00:00, 1. des nächsten Monats
+         nextCloseTime = DateTime1(TimeYearEx(openTime), TimeMonth(openTime) + 2);  // 00:00, 1. des übernächsten Monats
       }
       hf.lastStoredBar.offset       [hFile] = offset;
       hf.lastStoredBar.openTime     [hFile] = openTime;
@@ -1024,10 +1024,10 @@ bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags = NULL
    hf.lastStoredBar.data[hFile][BAR_V] = V;
 
    // Metadaten aktualisieren: - Die Bar kann (a) erste Bar einer leeren History sein, (b) mittendrin liegen oder (c) neue Bar am Ende sein.
-   //                          - Die Bar kann auf einer ungespeicherten BufferedBar liegen, jedoch nicht jï¿½nger als diese sein: siehe (3).
-   //                          - Die Bar kann zwischen der letzten gespeicherten Bar und einer ungespeicherten BufferedBar liegen. Dazu muÃŸ sie
-   //                            mit HistoryFile3.InsertBar() eingefï¿½gt worden sein, das die entsprechende Lï¿½cke zwischen beiden Bars einrichtet.
-   //                            Ohne diese Lï¿½cke wurde oben bereits abgebrochen.
+   //                          - Die Bar kann auf einer ungespeicherten BufferedBar liegen, jedoch nicht jünger als diese sein: siehe (3).
+   //                          - Die Bar kann zwischen der letzten gespeicherten Bar und einer ungespeicherten BufferedBar liegen. Dazu muß sie
+   //                            mit HistoryFile3.InsertBar() eingefügt worden sein, das die entsprechende Lücke zwischen beiden Bars einrichtet.
+   //                            Ohne diese Lücke wurde oben bereits abgebrochen.
    //
    // Bar ist neue Bar: (a) erste Bar leerer History oder (c) neue Bar am Ende der gespeicherten Bars
    if (offset >= hf.stored.bars[hFile]) {
@@ -1038,10 +1038,10 @@ bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags = NULL
                          hf.stored.from.closeTime    [hFile] = closeTime;        hf.total.from.closeTime    [hFile] = hf.stored.from.closeTime    [hFile];
                          hf.stored.from.nextCloseTime[hFile] = nextCloseTime;    hf.total.from.nextCloseTime[hFile] = hf.stored.from.nextCloseTime[hFile]; }
                                                                                  //                ^                ^               ^
-                         hf.stored.to.offset         [hFile] = offset;           // Wird die Bar wie in (6.3) eingefï¿½gt, wurde der Offset der BufferedBar um eins
-                         hf.stored.to.openTime       [hFile] = openTime;         // vergrï¿½ï¿½ert. Ist die History noch leer und die BufferedBar war die erste Bar, steht
-                         hf.stored.to.closeTime      [hFile] = closeTime;        // hf.total.from bis zu dieser Zuweisung *ï¿½ber mir* auf 0 (Zeiten unbekannt, da die
-                         hf.stored.to.nextCloseTime  [hFile] = nextCloseTime;    // neue Startbar gerade eingefï¿½gt wird).
+                         hf.stored.to.offset         [hFile] = offset;           // Wird die Bar wie in (6.3) eingefügt, wurde der Offset der BufferedBar um eins
+                         hf.stored.to.openTime       [hFile] = openTime;         // vergrößert. Ist die History noch leer und die BufferedBar war die erste Bar, steht
+                         hf.stored.to.closeTime      [hFile] = closeTime;        // hf.total.from bis zu dieser Zuweisung *über mir* auf 0 (Zeiten unbekannt, da die
+                         hf.stored.to.nextCloseTime  [hFile] = nextCloseTime;    // neue Startbar gerade eingefügt wird).
    }
    if (hf.stored.bars[hFile] > hf.total.bars[hFile]) {
       hf.total.bars            [hFile] = hf.stored.bars            [hFile];
@@ -1051,7 +1051,7 @@ bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags = NULL
       hf.total.to.nextCloseTime[hFile] = hf.stored.to.nextCloseTime[hFile];
    }
 
-   // Ist die geschriebene Bar gleichzeitig die BufferedBar, wird deren verï¿½nderlicher Status aktualisiert.
+   // Ist die geschriebene Bar gleichzeitig die BufferedBar, wird deren veränderlicher Status aktualisiert.
    if (offset == hf.bufferedBar.offset[hFile]) {
       hf.bufferedBar.data    [hFile][BAR_O] = hf.lastStoredBar.data[hFile][BAR_O];
       hf.bufferedBar.data    [hFile][BAR_H] = hf.lastStoredBar.data[hFile][BAR_H];
@@ -1068,12 +1068,12 @@ bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags = NULL
 
 
 /**
- * Aktualisiert den Schluï¿½kurs der Bar am angegebenen Offset einer Historydatei. Die Bar muÃŸ existieren, entweder in der
+ * Aktualisiert den Schlußkurs der Bar am angegebenen Offset einer Historydatei. Die Bar muß existieren, entweder in der
  * Datei (gespeichert) oder im Barbuffer (ungespeichert).
  *
  * @param  int    hFile  - Handle der Historydatei
- * @param  int    offset - Offset der zu aktualisierenden Bar relativ zum Dateiheader (Offset 0 ist die ï¿½lteste Bar)
- * @param  double value  - neuer Schluï¿½kurs (z.B. ein weiterer Tick der jï¿½ngsten Bar)
+ * @param  int    offset - Offset der zu aktualisierenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
+ * @param  double value  - neuer Schlußkurs (z.B. ein weiterer Tick der jüngsten Bar)
  *
  * @return bool - success status
  */
@@ -1118,20 +1118,20 @@ bool HistoryFile3.UpdateBar(int hFile, int offset, double value) {
 
 
 /**
- * Fï¿½gt eine Bar am angegebenen Offset einer Historydatei ein. Eine dort vorhandene Bar wird nicht Ã¼berschrieben, stattdessen
- * werden die vorhandene und alle folgenden Bars um eine Position nach vorn verschoben. Ist die einzufÃ¼gende Bar die jï¿½ngste
- * Bar, muÃŸ ihr Offset an die vorhandenen Bars genau anschlieï¿½en. Sie darf kein Gap verursachen.
+ * Fügt eine Bar am angegebenen Offset einer Historydatei ein. Eine dort vorhandene Bar wird nicht überschrieben, stattdessen
+ * werden die vorhandene und alle folgenden Bars um eine Position nach vorn verschoben. Ist die einzufügende Bar die jüngste
+ * Bar, muß ihr Offset an die vorhandenen Bars genau anschließen. Sie darf kein Gap verursachen.
  *
  * @param  int    hFile  - Handle der Historydatei
- * @param  int    offset - Offset der einzufÃ¼genden Bar relativ zum Dateiheader (Offset 0 ist die ï¿½lteste Bar)
+ * @param  int    offset - Offset der einzufügenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
  * @param  double bar[6] - Bardaten (T-OHLCV)
- * @param  int    flags  - zusï¿½tzliche, das Schreiben steuernde Flags (default: keine)
- *                         HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schluï¿½kurs der letzten Bar vor dem Gap gefï¿½llt
+ * @param  int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                         HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - success status
  *
- * NOTE: Time und Volume der einzufÃ¼genden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht
- *       Ã¼berprï¿½ft, ob die Bar-Time eine normalisierte OpenTime fï¿½r den Timeframe der Historydatei ist.
+ * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht
+ *       überprüft, ob die Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile3.InsertBar(int hFile, int offset, double bar[], int flags = NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile3.InsertBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -1145,13 +1145,13 @@ bool HistoryFile3.InsertBar(int hFile, int offset, double bar[], int flags = NUL
    if (offset > hf.total.bars[hFile])   return(!catch("HistoryFile3.InsertBar(6)  invalid parameter offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    if (ArraySize(bar) != 6)             return(!catch("HistoryFile3.InsertBar(7)  invalid size of parameter data[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAY));
 
-   // ggf. Lï¿½cke fï¿½r einzufÃ¼gende Bar schaffen
+   // ggf. Lücke für einzufügende Bar schaffen
    if (offset < hf.total.bars[hFile]) {
       if (!HistoryFile3.MoveBars(hFile, offset, offset+1)) return(false);
    }
 
-   // Bar schreiben, HistoryFile3.WriteBar() fï¿½hrt u.a. folgende Tasks aus: - validiert die Bar
-   return(HistoryFile3.WriteBar(hFile, offset, bar, flags));             // - speichert eine durch die einzufÃ¼gende Bar geschlossene BufferedBar
+   // Bar schreiben, HistoryFile3.WriteBar() führt u.a. folgende Tasks aus: - validiert die Bar
+   return(HistoryFile3.WriteBar(hFile, offset, bar, flags));             // - speichert eine durch die einzufügende Bar geschlossene BufferedBar
 }                                                                        // - aktualisiert die Metadaten der Historydatei
 
 
@@ -1159,8 +1159,8 @@ bool HistoryFile3.InsertBar(int hFile, int offset, double bar[], int flags = NUL
  * Schreibt die LastStoredBar in die Historydatei. Die Bar existiert in der Historydatei bereits.
  *
  * @param  int hFile - Handle der Historydatei
- * @param  int flags - zusï¿½tzliche, das Schreiben steuernde Flags (default: keine)
- *                     HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schluï¿½kurs der letzten Bar vor dem Gap gefï¿½llt
+ * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                     HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - success status
  *
@@ -1210,9 +1210,9 @@ bool HistoryFile3.WriteLastStoredBar(int hFile, int flags = NULL) {
    }                                         // doesn't update last-modified timestamp even if the file size changes
    FileFlush(hFile);                         // @see  https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-flushviewoffile
 
-   // Die Bar existierte bereits in der History, die Metadaten ï¿½ndern sich nicht.
+   // Die Bar existierte bereits in der History, die Metadaten ändern sich nicht.
 
-   // Ist die LastStoredBar gleichzeitig die BufferedBar, wird deren verï¿½nderlicher Status auch aktualisiert.
+   // Ist die LastStoredBar gleichzeitig die BufferedBar, wird deren veränderlicher Status auch aktualisiert.
    if (offset == hf.bufferedBar.offset[hFile]) {
       hf.bufferedBar.modified[hFile] = false;               // Bar wurde gerade gespeichert
    }
@@ -1224,12 +1224,12 @@ bool HistoryFile3.WriteLastStoredBar(int hFile, int flags = NULL) {
 
 
 /**
- * Schreibt den Inhalt der BufferedBar in die Historydatei. Sie ist immer die jï¿½ngste Bar und kann in der History bereits
- * existieren, muÃŸ es aber nicht.
+ * Schreibt den Inhalt der BufferedBar in die Historydatei. Sie ist immer die jüngste Bar und kann in der History bereits
+ * existieren, muß es aber nicht.
  *
  * @param  int hFile - Handle der Historydatei
- * @param  int flags - zusï¿½tzliche, das Schreiben steuernde Flags (default: keine)
- *                     HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schluï¿½kurs der letzten Bar vor dem Gap gefï¿½llt
+ * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                     HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - success status
  *
@@ -1247,7 +1247,7 @@ bool HistoryFile3.WriteBufferedBar(int hFile, int flags = NULL) {
    if (offset < 0)                       return(_true(logWarn("HistoryFile3.WriteBufferedBar(5)  undefined bufferedBar: hf.bufferedBar.offset="+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")")));
    if (offset != hf.total.bars[hFile]-1) return(!catch("HistoryFile3.WriteBufferedBar(6)  invalid hf.bufferedBar.offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
 
-   // Die Bar wird nur dann geschrieben, wenn sie sich seit dem letzten Schreiben geï¿½ndert hat.
+   // Die Bar wird nur dann geschrieben, wenn sie sich seit dem letzten Schreiben geändert hat.
    if (hf.bufferedBar.modified[hFile]) {
       // Bar validieren
       datetime openTime = hf.bufferedBar.openTime[hFile];         if (!openTime) return(!catch("HistoryFile3.WriteBufferedBar(7)  invalid hf.lastStoredBar["+ offset +"].time: "+ openTime +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
@@ -1286,7 +1286,7 @@ bool HistoryFile3.WriteBufferedBar(int hFile, int flags = NULL) {
       }
       hf.bufferedBar.modified[hFile] = false;
 
-      // Das Schreiben macht die BufferedBar zusï¿½tzlich zur LastStoredBar.
+      // Das Schreiben macht die BufferedBar zusätzlich zur LastStoredBar.
       hf.lastStoredBar.offset       [hFile]        = hf.bufferedBar.offset       [hFile];
       hf.lastStoredBar.openTime     [hFile]        = hf.bufferedBar.openTime     [hFile];
       hf.lastStoredBar.closeTime    [hFile]        = hf.bufferedBar.closeTime    [hFile];
@@ -1298,10 +1298,10 @@ bool HistoryFile3.WriteBufferedBar(int hFile, int flags = NULL) {
       hf.lastStoredBar.data         [hFile][BAR_C] = hf.bufferedBar.data         [hFile][BAR_C];
       hf.lastStoredBar.data         [hFile][BAR_V] = hf.bufferedBar.data         [hFile][BAR_V];
 
-      // Metadaten aktualisieren: - Die Bar kann (a) erste Bar einer leeren History sein, (b) existierende jï¿½ngste Bar oder (c) neue jï¿½ngste Bar sein.
-      //                          - Die Bar ist immer die jï¿½ngste (letzte) Bar.
-      //                          - Die Metadaten von hf.total.* ï¿½ndern sich nicht.
-      //                          - Nach dem Speichern stimmen hf.stored.* und hf.total.* Ã¼berein.
+      // Metadaten aktualisieren: - Die Bar kann (a) erste Bar einer leeren History sein, (b) existierende jüngste Bar oder (c) neue jüngste Bar sein.
+      //                          - Die Bar ist immer die jüngste (letzte) Bar.
+      //                          - Die Metadaten von hf.total.* ändern sich nicht.
+      //                          - Nach dem Speichern stimmen hf.stored.* und hf.total.* überein.
       hf.stored.bars              [hFile] = hf.total.bars              [hFile];
 
       hf.stored.from.offset       [hFile] = hf.total.from.offset       [hFile];
@@ -1326,7 +1326,7 @@ bool HistoryFile3.WriteBufferedBar(int hFile, int flags = NULL) {
  *
  * @param  int hFile      - Handle der Historydatei
  * @param  int fromOffset - Start-Offset
- * @param  int destOffset - Ziel-Offset: Ist dieser Wert kleiner als der Start-Offset, wird die Historydatei entsprechend gekï¿½rzt.
+ * @param  int destOffset - Ziel-Offset: Ist dieser Wert kleiner als der Start-Offset, wird die Historydatei entsprechend gekürzt.
  *
  * @return bool - success status                                            TODO: Implementieren
  */
@@ -1365,12 +1365,12 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
 
    // Offset und OpenTime der Tick-Bar bestimmen
    datetime tick.time=time, tick.openTime;
-   int      tick.offset      = -1;                                                     // Offset der Bar, zu der der Tick gehï¿½rt
+   int      tick.offset      = -1;                                                     // Offset der Bar, zu der der Tick gehört
    double   tick.value       = NormalizeDouble(value, hf.digits[hFile]);
-   bool     bufferedBarClose = false;                                                  // ob der Tick fï¿½r die BufferedBar ein BarClose-Event auslï¿½st
+   bool     bufferedBarClose = false;                                                  // ob der Tick für die BufferedBar ein BarClose-Event auslöst
 
-   // Vorzugsweise (hï¿½ufigster Fall) BufferedBar benutzen (bevor diese ggf. durch ein BarClose-Event geschlossen wird).
-   if (hf.bufferedBar.offset[hFile] >= 0) {                                            // BufferedBar ist definiert (und ist immer jï¿½ngste Bar)
+   // Vorzugsweise (häufigster Fall) BufferedBar benutzen (bevor diese ggf. durch ein BarClose-Event geschlossen wird).
+   if (hf.bufferedBar.offset[hFile] >= 0) {                                            // BufferedBar ist definiert (und ist immer jüngste Bar)
       if (tick.time < hf.bufferedBar.closeTime[hFile]) {
          tick.offset   = hf.bufferedBar.offset  [hFile];                               // Tick liegt in BufferedBar
          tick.openTime = hf.bufferedBar.openTime[hFile];
@@ -1380,10 +1380,10 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
             tick.offset   = hf.bufferedBar.offset   [hFile] + 1;                       // Tick liegt in der BufferedBar folgenden Bar
             tick.openTime = hf.bufferedBar.closeTime[hFile];
          }
-         bufferedBarClose = true;                                                      // und lï¿½st fï¿½r die BufferedBar ein BarClose-Event aus
+         bufferedBarClose = true;                                                      // und löst für die BufferedBar ein BarClose-Event aus
       }
    }
-   // Danach LastStoredBar benutzen (bevor diese ggf. von HistoryFile3._WriteBufferedBar() Ã¼berschrieben wird).
+   // Danach LastStoredBar benutzen (bevor diese ggf. von HistoryFile3._WriteBufferedBar() überschrieben wird).
    if (tick.offset==-1) /*&&*/ if (hf.lastStoredBar.offset[hFile] >= 0) {              // LastStoredBar ist definiert
       if (time >= hf.lastStoredBar.openTime[hFile]) {
          if (tick.time < hf.lastStoredBar.closeTime[hFile]) {
@@ -1399,7 +1399,7 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
    // eine geschlossene BufferedBar schreiben
    if (bufferedBarClose) {
       if (!HistoryFile3.WriteBufferedBar(hFile, flags)) return(false);
-      hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zurÃ¼cksetzen
+      hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zurücksetzen
    }
 
    // HST_BUFFER_TICKS = on: Tick buffern
@@ -1433,8 +1433,8 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
                nextCloseTime = closeTime     + hf.periodSecs[hFile];
             }
             else if (hf.period[hFile] == PERIOD_MN1) {
-               closeTime     = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime) + 1); // 00:00, 1. des nï¿½chsten Monats
-               nextCloseTime = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime) + 2); // 00:00, 1. des Ã¼bernï¿½chsten Monats
+               closeTime     = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime) + 1); // 00:00, 1. des nächsten Monats
+               nextCloseTime = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime) + 2); // 00:00, 1. des übernächsten Monats
             }
             hf.bufferedBar.offset       [hFile]        = tick.offset;
             hf.bufferedBar.openTime     [hFile]        = tick.openTime;
@@ -1445,12 +1445,12 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
             hf.bufferedBar.data         [hFile][BAR_H] = tick.value;
             hf.bufferedBar.data         [hFile][BAR_L] = tick.value;
             hf.bufferedBar.data         [hFile][BAR_C] = tick.value;
-            hf.bufferedBar.data         [hFile][BAR_V] = 0;                                        // das Volume wird erst im nï¿½chsten Schritt auf 1 gesetzt
+            hf.bufferedBar.data         [hFile][BAR_V] = 0;                                        // das Volume wird erst im nächsten Schritt auf 1 gesetzt
             hf.bufferedBar.modified     [hFile]        = true;
 
             // Metadaten aktualisieren: - Die Bar kann (a) erste Bar einer leeren History oder (b) neue Bar am Ende sein.
-            //                          - Die Bar ist immer die jï¿½ngste (letzte) Bar.
-            //                          - Die Bar existiert in der Historydatei nicht, die Metadaten von hf.stored.* ï¿½ndern sich daher nicht.
+            //                          - Die Bar ist immer die jüngste (letzte) Bar.
+            //                          - Die Bar existiert in der Historydatei nicht, die Metadaten von hf.stored.* ändern sich daher nicht.
                                     hf.total.bars              [hFile] = tick.offset + 1;
 
             if (tick.offset == 0) { hf.total.from.offset       [hFile] = tick.offset;
@@ -1477,8 +1477,8 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
    }
 
    // HST_BUFFER_TICKS = off: Tick schreiben
-   // ist BufferedBar definiert (HST_BUFFER_TICKS war beim letzten Tick on und ist jetzt off), BufferedBar mit Tick aktualisieren, schreiben und zurÃ¼cksetzen
-   if (hf.bufferedBar.offset[hFile] >= 0) {                                            // BufferedBar ist definiert, der Tick muÃŸ dazu gehï¿½ren
+   // ist BufferedBar definiert (HST_BUFFER_TICKS war beim letzten Tick on und ist jetzt off), BufferedBar mit Tick aktualisieren, schreiben und zurücksetzen
+   if (hf.bufferedBar.offset[hFile] >= 0) {                                            // BufferedBar ist definiert, der Tick muß dazu gehören
       //...fferedBar.data[hFile][BAR_T] = ...                                          // unchanged
       //...fferedBar.data[hFile][BAR_O] = ...                                          // unchanged
       hf.bufferedBar.data[hFile][BAR_H] = MathMax(hf.bufferedBar.data[hFile][BAR_H], tick.value);
@@ -1486,11 +1486,11 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
       hf.bufferedBar.data[hFile][BAR_C] = tick.value;
       hf.bufferedBar.data[hFile][BAR_V]++;
       if (!HistoryFile3.WriteBufferedBar(hFile, flags)) return(false);
-      hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zurÃ¼cksetzen
+      hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zurücksetzen
       return(true);
    }
 
-   // BufferedBar ist leer: Tickbar mit Tick aktualisieren oder neue Bar mit Tick zu History hinzufÃ¼gen
+   // BufferedBar ist leer: Tickbar mit Tick aktualisieren oder neue Bar mit Tick zu History hinzufügen
    if (tick.offset == -1) {
       if      (hf.period[hFile] <= PERIOD_D1 ) tick.openTime = tick.time - tick.time % hf.periodSecs[hFile];
       else if (hf.period[hFile] == PERIOD_W1 ) tick.openTime = tick.time - tick.time % DAYS - (TimeDayOfWeekEx(tick.time)+6) % 7 * DAYS;  // 00:00, Montag
@@ -1501,7 +1501,7 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
       if (!HistoryFile3.UpdateBar(hFile, tick.offset, tick.value)) return(false);      // existierende Bar aktualisieren
    }
    else {
-      bar[BAR_T] = tick.openTime;                                                      // oder neue Bar einfï¿½gen
+      bar[BAR_T] = tick.openTime;                                                      // oder neue Bar einfügen
       bar[BAR_O] = tick.value;
       bar[BAR_H] = tick.value;
       bar[BAR_L] = tick.value;

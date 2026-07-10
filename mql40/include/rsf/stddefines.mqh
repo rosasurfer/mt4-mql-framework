@@ -403,10 +403,10 @@ double  INF;                                                      //  1.#INF |  
 #define MODE_MARGINREQUIRED              32     // free margin requirement to open a position of 1 lot
 #define MODE_FREEZELEVEL                 33     // min. required price distance to be able to modify an order in point (bucket shops only)
                                                 //
-                                                // (1) MARGIN_INIT (in Units) mï¿½ï¿½te, wenn es gesetzt ist, die eigentliche Marginrate sein. MARGIN_REQUIRED (in Account-Currency)
-                                                //     kï¿½nnte hï¿½her und MARGIN_MAINTENANCE niedriger sein (MARGIN_INIT wird z.B. von IC Markets gesetzt).
+                                                // (1) MARGIN_INIT (in Units) müßte, wenn es gesetzt ist, die eigentliche Marginrate sein. MARGIN_REQUIRED (in Account-Currency)
+                                                //     könnte höher und MARGIN_MAINTENANCE niedriger sein (MARGIN_INIT wird z.B. von IC Markets gesetzt).
                                                 //
-                                                // (2) Ein Account-Stopoutlevel < 100% ist gleichbedeutend mit einem einheitlichen MARGIN_MAINTENANCE < MARGIN_INIT Ã¼ber alle
+                                                // (2) Ein Account-Stopoutlevel < 100% ist gleichbedeutend mit einem einheitlichen MARGIN_MAINTENANCE < MARGIN_INIT über alle
                                                 //     Instrumente. Eine vom Stopoutlevel des Accounts abweichende MARGIN_MAINTENANCE einzelner Instrumente ist vermutlich nur
                                                 //     bei einem Stopoutlevel von 100% sinnvoll. Beides zusammen ist ziemlich verwirrend.
 
@@ -488,7 +488,7 @@ double  INF;                                                      //  1.#INF |  
 #define CID_GBP                        5
 #define CID_JPY                        6
 #define CID_NZD                        7
-#define CID_USD                        8        // zuerst die IDs der LFX-Indizes, dadurch "passen" diese in 3 Bits (fï¿½r LFX-Tickets)
+#define CID_USD                        8        // zuerst die IDs der LFX-Indizes, dadurch "passen" diese in 3 Bits (für LFX-Tickets)
 
 #define CID_CNY                        9
 #define CID_CZK                       10
@@ -597,7 +597,7 @@ double  INF;                                                      //  1.#INF |  
 #define STR_PAD_BOTH                         3
 
 
-// Array IDs fï¿½r von ArrayCopyRates() definierte Arrays
+// Array IDs für von ArrayCopyRates() definierte Arrays
 #define BAR.time                             0
 #define BAR.open                             1
 #define BAR.low                              2
@@ -616,7 +616,7 @@ double  INF;                                                      //  1.#INF |  
 
 
 // Value indexes of the HSL color space (hue, saturation, luminosity). This model is used by the Windows color picker.
-#define HSL_HUE                              0  // 0ï¿½...360ï¿½
+#define HSL_HUE                              0  // 0°...360°
 #define HSL_SATURATION                       1  // 0%...100%
 #define HSL_LIGHTNESS                        2  // 0%...100% (aka luminosity)
 
@@ -626,8 +626,8 @@ double  INF;                                                      //  1.#INF |  
 #define STAT_PROFIT                      99999  // net profit: STAT_GROSS_PROFIT + STAT_GROSS_LOSS (double)
 #define STAT_GROSS_PROFIT                99999  // sum of all positive trades: => 0                (double)
 #define STAT_GROSS_LOSS                  99999  // sum of all negative trades: <= 0                (double)
-#define STAT_MAX_PROFITTRADE             99999  // Maximum profit ï¿½ the largest value of all profitable trades. The value is greater than or equal to zero                          double
-#define STAT_MAX_LOSSTRADE               99999  // Maximum loss ï¿½ the lowest value of all losing trades. The value is less than or equal to zero                                    double
+#define STAT_MAX_PROFITTRADE             99999  // Maximum profit - the largest value of all profitable trades. The value is greater than or equal to zero                          double
+#define STAT_MAX_LOSSTRADE               99999  // Maximum loss - the lowest value of all losing trades. The value is less than or equal to zero                                    double
 #define STAT_CONPROFITMAX                99999  // Maximum profit in a series of profitable trades. The value is greater than or equal to zero                                      double
 #define STAT_CONPROFITMAX_TRADES         99999  // The number of trades that have formed STAT_CONPROFITMAX (maximum profit in a series of profitable trades)                    int
 #define STAT_MAX_CONWINS                 99999  // The total profit of the longest series of profitable trades                                                                       double
