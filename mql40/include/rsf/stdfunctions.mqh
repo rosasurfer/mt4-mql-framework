@@ -2043,44 +2043,53 @@ string StrLeftTo(string value, string substring, int count = 1) {
 
 
 /**
- * Return a right-side substring of a string.
- *
- * Ist N positiv, gibt StrRight() die N am meisten rechts stehenden Zeichen des Strings zur�ck.
- *    z.B.  StrRight("ABCDEFG",  2)  =>  "FG"
- *
- * Ist N negativ, gibt StrRight() alle au�er den N am meisten links stehenden Zeichen des Strings zur�ck.
- *    z.B.  StrRight("ABCDEFG", -2)  =>  "CDEFG"
+ * Return the right part of a string.
  *
  * @param  string value
- * @param  int    n
- *
+ * @param  int    length - positive: number of returned right characters
+ *                         negative: all except the specified number of left characters
  * @return string
+ *
+ * @example
+ * <pre>
+ *  StrRight("abcde",  1) => "e"
+ *  StrRight("abcde", -2) => "cde"
+ * </pre>
  */
-string StrRight(string value, int n) {
-   if (n > 0) return(StringSubstr(value, StringLen(value)-n));
-   if (n < 0) return(StringSubstr(value, -n                ));
+string StrRight(string value, int length) {
+   if (length > 0) return(StringSubstr(value, StringLen(value)-length));
+   if (length < 0) return(StringSubstr(value, -length));
    return("");
 }
 
 
 /**
- * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zur�ck. Das Ergebnis enth�lt den begrenzenden
- * Teilstring nicht.
+ * Return the right part of a string starting at the specified occurrence of a limiting substring.
+ * The result doesn't include the limiting substring.
  *
- * @param  string value            - Ausgangsstring
- * @param  string substring        - der das Ergebnis begrenzende Teilstring
- * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                                   Wenn 0 oder gr��er als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
- *                                   zur�ckgegeben.
- *                                   Wenn negativ, wird mit dem Z�hlen anstatt von links von rechts begonnen.
- *                                   Wenn negativ und absolut gr��er als die Anzahl der im String existierenden Teilstrings,
- *                                   wird der gesamte String zur�ckgegeben.
+ * @param  string value            - initial string
+ * @param  string substring        - limiting substring
+ * @param  int    count [optional] - number of limiting substrings (default: 1 = the first occurrence)
+ *                                    positive: occurrences counted from the start of the string
+ *                                    negative: occurrences counted from the end of the string
+ *
+ *  If count is 0 (zero) or greater than the number of existing substrings, an empty string is returned.
+ *  If count is negative and absolute greater than the number of existing substrings, the initial string is returned.
+ *
  * @return string
+ *
+ * @example
+ * <pre>
+ *  StrRightFrom("abc_abc", "c")     => "_abc"
+ *  StrRightFrom("abcabc",  "x")     => ""          // limiter not found
+ *  StrRightFrom("abc_abc", "a", 2)  => "bc"
+ *  StrRightFrom("abc_abc", "b", -2) => "c_abc"
+ * </pre>
  */
 string StrRightFrom(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
-   // positive Anzahl: von vorn z�hlen
+   // positive: count from start
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
@@ -2090,7 +2099,7 @@ string StrRightFrom(string value, string substring, int count = 1) {
       return(StrSubstr(value, pos+StringLen(substring)));
    }
 
-   // negative Anzahl: von hinten z�hlen
+   // negative: count from end
    if (count < 0) {
       /*
       while(count < 0) {
@@ -2115,16 +2124,16 @@ string StrRightFrom(string value, string substring, int count = 1) {
       //return(StrSubstr(value, pos + StringLen(substring)));
    }
 
-   // Anzahl == 0
+   // count = 0
    return("");
 }
 
 
 /**
- * Ob ein String mit dem angegebenen Teilstring beginnt. Gro�-/Kleinschreibung wird nicht beachtet.
+ * Whether a string starts with a case-insensitive substring.
  *
- * @param  string value  - zu pr�fender String
- * @param  string prefix - Substring
+ * @param  string value  - string
+ * @param  string prefix - substring
  *
  * @return bool
  */
@@ -2172,9 +2181,9 @@ bool StrIsDigits(string value) {
 
 
 /**
- * Pr�ft, ob ein String einen g�ltigen Integer darstellt.
+ * Whether a string represents a valid integer number (characters "0123456789+-").
  *
- * @param  string value - zu pr�fender String
+ * @param  string value
  *
  * @return bool
  */
@@ -2231,9 +2240,9 @@ bool StrIsNumeric(string value) {
 
 
 /**
- * Ob ein String eine g�ltige E-Mailadresse darstellt.
+ * Wheter a string represents a valid email address. Only the syntax is checked.
  *
- * @param  string value - zu pr�fender String
+ * @param  string value
  *
  * @return bool
  */
@@ -2248,24 +2257,24 @@ bool StrIsEmailAddress(string value) {
 
    string s = StrTrim(value);
 
-   // Validierung noch nicht implementiert
+   // TODO: implement
    return(StringLen(s) > 0);
 }
 
 
 /**
- * F�gt ein Element am Beginn eines String-Arrays an.
+ * Fügt ein Element am Beginn eines String-Arrays an.
  *
  * @param  _InOut_ string array[] - String-Array
- * @param  _In_    string value   - hinzuzuf�gendes Element
+ * @param  _In_    string value   - hinzuzufügendes Element
  *
- * @return int - neue Gr��e des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  *
  *
- * NOTE: Mu� global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf,
- *       dessen Verhalten mit einem String-Parameter fehlerhaft (offiziell: nicht unterst�tzt) ist. Unter ungekl�rten
- *       Umst�nden wird das �bergebene Array zerschossen, es enth�lt dann Zeiger auf andere im Programm existierende Strings.
- *       Dieser Fehler trat in Indikatoren auf, wenn ArrayUnshiftString() in einer MQL-Library definiert war und �ber Modul-
+ * NOTE: Muß global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf,
+ *       dessen Verhalten mit einem String-Parameter fehlerhaft (offiziell: nicht unterstützt) ist. Unter ungeklärten
+ *       Umständen wird das übergebene Array zerschossen, es enth�lt dann Zeiger auf andere im Programm existierende Strings.
+ *       Dieser Fehler trat in Indikatoren auf, wenn ArrayUnshiftString() in einer MQL-Library definiert war und über Modul-
  *       grenzen aufgerufen wurde, nicht jedoch bei globaler Definition. Au�erdem trat der Fehler nicht sofort, sondern erst
  *       nach Aufruf anderer Array-Funktionen auf, die mit v�llig unbeteiligten Arrays/String arbeiteten.
  */
@@ -2453,7 +2462,7 @@ bool IsLeapYear(int year) {
 /**
  * Create a datetime value from the specified parameters.
  *
- * Parameter, die au�erhalb der �blichen Wertegrenzen liegen, werden in die resultierende Periode �bertragen. Der
+ * Parameter, die au�erhalb der �blichen Wertegrenzen liegen, werden in die resultierende Periode übertragen. Der
  * resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis D'2038.01.19 03:14:07' (INT_MAX) liegen.
  *
  * Beispiel: DateTime1(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
@@ -2467,8 +2476,8 @@ bool IsLeapYear(int year) {
  *
  * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
  *
- * Note: Die internen MQL-Funktionen unterst�tzen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
- *       D'2037.12.31 23:59:59'. Diese Funktion unterst�tzt eine gr��ere datetime-Range.
+ * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
+ *       D'2037.12.31 23:59:59'. Diese Funktion unterstützt eine gr��ere datetime-Range.
  */
 datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
    year += (Ceil(month/12.) - 1);
@@ -2630,7 +2639,7 @@ int CountWeekdays(datetime from, datetime to) {
 
 
 /**
- * Kopiert einen Speicherbereich. Als MoveMemory() implementiert, die betroffenen Speicherbl�cke k�nnen sich also �berlappen.
+ * Kopiert einen Speicherbereich. Als MoveMemory() implementiert, die betroffenen Speicherbl�cke k�nnen sich also überlappen.
  *
  * @param  int destination - Zieladresse
  * @param  int source      - Quelladdrese
@@ -3313,7 +3322,7 @@ string StrCapitalize(string value) {
  * @return int - error status
  *
  *
- * NOTE: Es wird nicht �berpr�ft, ob zur Zeit des Aufrufs ein EA l�uft.
+ * NOTE: Es wird nicht überpr�ft, ob zur Zeit des Aufrufs ein EA l�uft.
  */
 int Chart.Expert.Properties() {
    if (__isTesting) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
@@ -3785,7 +3794,7 @@ int Toolbar.Experts(bool enable) {
 
    if (__isTesting) return(debug("Toolbar.Experts(1)  skipping in tester", NO_ERROR));
 
-   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig �berschreiben
+   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
 
    int hWnd = GetTerminalMainWindow();
@@ -4642,7 +4651,7 @@ string GetAccountAlias(string company="", int account=NULL) {
 string GetAccountCompanyId() {
    // Da bei Accountwechsel der R�ckgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
-   // dessen mu� immer der Umweg �ber GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen ge�nderten
+   // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen ge�nderten
    // Servernamen zur�ck, wenn tats�chlich ein Tick des neuen Servers verarbeitet wird.
    static string lastServer = "", lastId = "";
 
@@ -4800,7 +4809,7 @@ string ColorToHtmlStr(color value) {
  *
  * @param  color value
  *
- * @return string - MQL-Farbcode oder RGB-String, falls der �bergebene Wert kein bekannter MQL-Farbcode ist.
+ * @return string - MQL-Farbcode oder RGB-String, falls der übergebene Wert kein bekannter MQL-Farbcode ist.
  */
 string ColorToStr(color value) {
    if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung

@@ -185,7 +185,7 @@ string   StrLeftTo(string value, string substring, int count = 1);;
 string   StrPadLeft(string str, int pad_length, string pad_strin g =" ");;
 string   StrRepeat(string str, int times);;
 string   StrReplace(string subject, string search, string replace, bool recursive = false);;
-string   StrRight(string value, int n);;
+string   StrRight(string value, int length);;
 string   StrRightFrom(string value, string substring, int count=1);;
 bool     StrStartsWithI(string value, string prefix);;
 bool     StrToBool(string value, bool strict=false);;

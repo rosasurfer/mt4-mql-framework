@@ -144,11 +144,11 @@ bool EditFiles(string &filenames[]) {
 
 
 /**
- * Ermittelt Zeitpunkt und Offset des vorherigen und nächsten DST-Wechsels der angebenen Serverzeit.
+ * Ermittelt Zeitpunkt und Offset des vorherigen und nï¿½chsten DST-Wechsels der angebenen Serverzeit.
  *
  * @param  _In_  datetime serverTime       - Serverzeit
  * @param  _Out_ datetime prevTransition[] - Array zur Aufnahme der letzten vorherigen Transitionsdaten
- * @param  _Out_ datetime nextTransition[] - Array zur Aufnahme der nächsten Transitionsdaten
+ * @param  _Out_ datetime nextTransition[] - Array zur Aufnahme der nï¿½chsten Transitionsdaten
  *
  * @return bool - success status
  *
@@ -176,8 +176,8 @@ bool GetTimezoneTransitions(datetime serverTime, int &prevTransition[], int &nex
     *
     * Szenarien:                           Wechsel zu DST (TR_TO_DST)              Wechsel zu Normalzeit (TR_TO_STD)
     * ----------                           ----------------------------------      ----------------------------------
-    *  kein Wechsel, ständig Normalzeit:   -1                      DST_OFFSET      -1                      STD_OFFSET      // durchgehend Normalzeit
-    *  kein Wechsel, ständig DST:          -1                      DST_OFFSET      INT_MAX                 STD_OFFSET      // durchgehend DST
+    *  kein Wechsel, stï¿½ndig Normalzeit:   -1                      DST_OFFSET      -1                      STD_OFFSET      // durchgehend Normalzeit
+    *  kein Wechsel, stï¿½ndig DST:          -1                      DST_OFFSET      INT_MAX                 STD_OFFSET      // durchgehend DST
     *  1 Wechsel zu DST:                   1975.04.11 00:00:00     DST_OFFSET      INT_MAX                 STD_OFFSET      // Jahr beginnt mit Normalzeit und endet mit DST
     *  1 Wechsel zu Normalzeit:            -1                      DST_OFFSET      1975.11.01 00:00:00     STD_OFFSET      // Jahr beginnt mit DST und endet mit Normalzeit
     *  2 Wechsel:                          1975.04.01 00:00:00     DST_OFFSET      1975.11.01 00:00:00     STD_OFFSET      // Normalzeit -> DST -> Normalzeit
@@ -239,11 +239,11 @@ bool GetTimezoneTransitions(datetime serverTime, int &prevTransition[], int &nex
 
       else return(!catch("GetTimezoneTransitions(3)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
 
-      i--;                                                           // letzter Wechsel war früher
+      i--;                                                           // letzter Wechsel war frï¿½her
    }
 
 
-   // nächster Wechsel
+   // nï¿½chster Wechsel
    if (ArraySize(nextTransition) < 3)
       ArrayResize(nextTransition, 3);
    ArrayInitialize(nextTransition, 0);
@@ -297,7 +297,7 @@ bool GetTimezoneTransitions(datetime serverTime, int &prevTransition[], int &nex
 
       else return(!catch("GetTimezoneTransitions(4)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
 
-      i++;                                                        // nächster Wechsel ist später
+      i++;                                                        // nï¿½chster Wechsel ist spï¿½ter
    }
    return(true);
 }
@@ -583,9 +583,9 @@ int GetIniSections(string fileName, string &names[]) {
 
 
 /**
- * Initialisiert einen Buffer zur Aufnahme der gewünschten Anzahl von Doubles.
+ * Initialisiert einen Buffer zur Aufnahme der gewï¿½nschten Anzahl von Doubles.
  *
- * @param  double buffer[] - das für den Buffer zu verwendende Double-Array
+ * @param  double buffer[] - das fï¿½r den Buffer zu verwendende Double-Array
  * @param  int    size     - Anzahl der im Buffer zu speichernden Doubles
  *
  * @return int - error status
@@ -605,10 +605,10 @@ int InitializeDoubleBuffer(double buffer[], int size) {
 
 
 /**
- * Initialisiert einen Buffer zur Aufnahme eines Strings der gewünschten Länge.
+ * Initialisiert einen Buffer zur Aufnahme eines Strings der gewï¿½nschten Lï¿½nge.
  *
- * @param  string buffer[] - das für den Buffer zu verwendende String-Array
- * @param  int    length   - Länge des Buffers in Zeichen
+ * @param  string buffer[] - das fï¿½r den Buffer zu verwendende String-Array
+ * @param  int    length   - Lï¿½nge des Buffers in Zeichen
  *
  * @return int - error status
  */
@@ -641,7 +641,7 @@ bool SortStrings(string &values[]) {
 
 
 /**
- * Sortiert die übergebenen Tickets in chronologischer Reihenfolge (nach OpenTime und Ticket#).
+ * Sortiert die Ã¼bergebenen Tickets in chronologischer Reihenfolge (nach OpenTime und Ticket#).
  *
  * @param  _InOut_ int tickets[] - zu sortierende Tickets
  *
@@ -685,7 +685,7 @@ int SortTicketsChronological(int &tickets[]) {
    if (sortFrom != -1)
       ArraySort(data, i+1-sortFrom, sortFrom);
 
-   // Tickets zurück ins Ausgangsarray schreiben
+   // Tickets zurï¿½ck ins Ausgangsarray schreiben
    for (i=0; i < sizeOfTickets; i++) {
       tickets[i] = data[i][1];
    }
@@ -695,7 +695,7 @@ int SortTicketsChronological(int &tickets[]) {
 
 
 /**
- * Sortiert die übergebenen Ticketdaten nach {OpenTime, Ticket}.
+ * Sortiert die Ã¼bergebenen Ticketdaten nach {OpenTime, Ticket}.
  *
  * @param  _Inout_ int tickets[] - Array mit Ticketdaten
  *
@@ -711,7 +711,7 @@ bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
    // Zeilen nach OpenTime sortieren
    ArraySort(tickets);
 
-   // Zeilen mit gleicher OpenTime zusätzlich nach Ticket sortieren
+   // Zeilen mit gleicher OpenTime zusï¿½tzlich nach Ticket sortieren
    int openTime, lastOpenTime, ticket, sameOpenTimes[][2];
    ArrayResize(sameOpenTimes, 1);
 
@@ -736,7 +736,7 @@ bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
       lastOpenTime = openTime;
    }
    if (n > 0) {
-      // im letzten Schleifendurchlauf in sameOpenTimes[] angesammelte Zeilen müssen auch sortiert werden
+      // im letzten Schleifendurchlauf in sameOpenTimes[] angesammelte Zeilen mï¿½ssen auch sortiert werden
       if (!__SOT.SameOpenTimes(tickets, sameOpenTimes))
          return(false);
       n = 0;
@@ -751,7 +751,7 @@ bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
  * Internal helper for SortOpenTickets().
  *
  * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach Ticket. Die OpenTime-Felder dieser Zeilen sind gleich
- * und müssen nicht umsortiert werden.
+ * und mï¿½ssen nicht umsortiert werden.
  *
  * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
  * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
@@ -762,14 +762,14 @@ bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
  */
 bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
    int rows.copy[][2]; ArrayResize(rows.copy, 0);
-   ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
+   ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das Ã¼bergebene Array nicht zu modifizieren
 
    // Zeilen nach Ticket sortieren
    ArraySort(rows.copy);
 
    int ticket, rows=ArrayRange(rowsToSort, 0);
 
-   // Originaldaten mit den sortierten Werten überschreiben
+   // Originaldaten mit den sortierten Werten Ã¼berschreiben
    for (int i, n=0; n < rows; n++) {
       i                = rowsToSort[n][1];
       ticketData[i][1] = rows.copy [n][0];
@@ -781,8 +781,8 @@ bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSo
 
 
 /**
- * Ob ein Tradeserver-Fehler temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch, die
- * Order auszuführen, erfolgreich sein.
+ * Ob ein Tradeserver-Fehler temporï¿½r (also vorï¿½bergehend) ist oder nicht. Bei einem vorï¿½bergehenden Fehler *kann* der erneute Versuch, die
+ * Order auszufï¿½hren, erfolgreich sein.
  *
  * @return int - error status
  *
@@ -832,12 +832,12 @@ bool IsTemporaryTradeError(int error) {
 
 
 /**
- * Weist einer Position eines zweidimensionalen Integer-Arrays ein anderes Array zu (entspricht array[i] = array[] für ein
+ * Weist einer Position eines zweidimensionalen Integer-Arrays ein anderes Array zu (entspricht array[i] = array[] fï¿½r ein
  * Array von Arrays).
  *
  * @param  int array[][] - zu modifizierendes zwei-dimensionales Arrays
  * @param  int offset    - zu modifizierende Position
- * @param  int values[]  - zuzuweisendes Array (Größe muß der zweiten Dimension des zu modifizierenden Arrays entsprechen)
+ * @param  int values[]  - zuzuweisendes Array (GrÃ¶ÃŸe muÃŸ der zweiten Dimension des zu modifizierenden Arrays entsprechen)
  *
  * @return int - error status
  */
@@ -857,12 +857,12 @@ int ArraySetInts(int array[][], int offset, int values[]) {
 
 
 /**
- * Fügt ein Element am Ende eines Boolean-Arrays an.
+ * Fï¿½gt ein Element am Ende eines Boolean-Arrays an.
  *
  * @param  _InOut_ bool array[] - Boolean-Array
- * @param  _In_    bool value   - hinzuzufügendes Element
+ * @param  _In_    bool value   - hinzuzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayPushBool(bool &array[], bool value) {
    value = value!=0;
@@ -878,12 +878,12 @@ int ArrayPushBool(bool &array[], bool value) {
 
 
 /**
- * Fügt ein Element am Ende eines Integer-Arrays an.
+ * Fï¿½gt ein Element am Ende eines Integer-Arrays an.
  *
  * @param  _InOut_ int array[] - Integer-Array
- * @param  _In_    int value   - hinzuzufügendes Element
+ * @param  _In_    int value   - hinzuzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayPushInt(int &array[], int value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayPushInt()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -920,12 +920,12 @@ int ArrayPushInts(int array[][], int values[]) {
 
 
 /**
- * Fügt ein Element am Ende eines Double-Arrays an.
+ * Fï¿½gt ein Element am Ende eines Double-Arrays an.
  *
  * @param  _InOut_ double array[] - Double-Array
- * @param  _In_    double value   - hinzuzufügendes Element
+ * @param  _In_    double value   - hinzuzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayPushDouble(double &array[], double value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayPushDouble()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -962,12 +962,12 @@ int ArrayPushDoubles(double &array[][], double values[]) {
 
 
 /**
- * Fügt ein Element am Ende eines String-Arrays an.
+ * Fï¿½gt ein Element am Ende eines String-Arrays an.
  *
  * @param  string array[] - String-Array
- * @param  string value   - hinzuzufügendes Element
+ * @param  string value   - hinzuzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayPushString(string &array[], string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayPushString()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1007,7 +1007,7 @@ int ArrayPushStrings(string &array[][], string values[]) {
 
 
 /**
- * Entfernt ein Element vom Ende eines Boolean-Arrays und gibt es zurück.
+ * Entfernt ein Element vom Ende eines Boolean-Arrays und gibt es zurï¿½ck.
  *
  * @param  bool array[] - Boolean-Array
  *
@@ -1027,7 +1027,7 @@ bool ArrayPopBool(bool array[]) {
 
 
 /**
- * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurück.
+ * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurï¿½ck.
  *
  * @param  int array[] - Integer-Array
  *
@@ -1048,7 +1048,7 @@ int ArrayPopInt(int array[]) {
 
 
 /**
- * Entfernt ein Element vom Ende eines Double-Array und gibt es zurück.
+ * Entfernt ein Element vom Ende eines Double-Array und gibt es zurï¿½ck.
  *
  * @param  int double[] - Double-Array
  *
@@ -1069,7 +1069,7 @@ double ArrayPopDouble(double array[]) {
 
 
 /**
- * Entfernt ein Element vom Ende eines String-Arrays und gibt es zurück.
+ * Entfernt ein Element vom Ende eines String-Arrays und gibt es zurï¿½ck.
  *
  * @param  string array[] - String-Array
  *
@@ -1091,12 +1091,12 @@ string ArrayPopString(string array[]) {
 
 
 /**
- * Fügt ein Element am Beginn eines Boolean-Arrays an.
+ * Fï¿½gt ein Element am Beginn eines Boolean-Arrays an.
  *
  * @param  bool array[] - Boolean-Array
- * @param  bool value   - hinzuzufügendes Element
+ * @param  bool value   - hinzuzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayUnshiftBool(bool array[], bool value) {
    value = value!=0;
@@ -1111,12 +1111,12 @@ int ArrayUnshiftBool(bool array[], bool value) {
 
 
 /**
- * Fügt ein Element am Beginn eines Integer-Arrays an.
+ * Fï¿½gt ein Element am Beginn eines Integer-Arrays an.
  *
  * @param  int array[] - Integer-Array
- * @param  int value   - hinzuzufügendes Element
+ * @param  int value   - hinzuzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayUnshiftInt(int array[], int value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftInt()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1129,12 +1129,12 @@ int ArrayUnshiftInt(int array[], int value) {
 
 
 /**
- * Fügt ein Element am Beginn eines Double-Arrays an.
+ * Fï¿½gt ein Element am Beginn eines Double-Arrays an.
  *
  * @param  double array[] - Double-Array
- * @param  double value   - hinzuzufügendes Element
+ * @param  double value   - hinzuzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayUnshiftDouble(double array[], double value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftDouble()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1147,7 +1147,7 @@ int ArrayUnshiftDouble(double array[], double value) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines Boolean-Arrays und gibt es zurück.
+ * Entfernt ein Element vom Beginn eines Boolean-Arrays und gibt es zurï¿½ck.
  *
  * @param  bool array[] - Boolean-Array
  *
@@ -1170,7 +1170,7 @@ bool ArrayShiftBool(bool array[]) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines Integer-Arrays und gibt es zurück.
+ * Entfernt ein Element vom Beginn eines Integer-Arrays und gibt es zurï¿½ck.
  *
  * @param  int array[] - Integer-Array
  *
@@ -1193,7 +1193,7 @@ int ArrayShiftInt(int array[]) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines Double-Arrays und gibt es zurück.
+ * Entfernt ein Element vom Beginn eines Double-Arrays und gibt es zurï¿½ck.
  *
  * @param  double array[] - Double-Array
  *
@@ -1216,7 +1216,7 @@ double ArrayShiftDouble(double array[]) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines String-Arrays und gibt es zurück.
+ * Entfernt ein Element vom Beginn eines String-Arrays und gibt es zurï¿½ck.
  *
  * @param  string array[] - String-Array
  *
@@ -1258,7 +1258,7 @@ int ArrayDropBool(bool array[], bool value) {
       if (array[i] == value) {
          if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
             ArrayCopy(array, array, i, i+1);
-         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         size = ArrayResize(array, size-1);        // Array um ein Element kï¿½rzen
          count++;
       }
    }
@@ -1284,7 +1284,7 @@ int ArrayDropInt(int array[], int value) {
       if (array[i] == value) {
          if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
             ArrayCopy(array, array, i, i+1);
-         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         size = ArrayResize(array, size-1);        // Array um ein Element kï¿½rzen
          count++;
       }
    }
@@ -1310,7 +1310,7 @@ int ArrayDropDouble(double array[], double value) {
       if (EQ(array[i], value)) {
          if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
             ArrayCopy(array, array, i, i+1);
-         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         size = ArrayResize(array, size-1);        // Array um ein Element kï¿½rzen
          count++;
       }
    }
@@ -1337,7 +1337,7 @@ int ArrayDropString(string array[], string value) {
          if (!StringLen(array[i])) /*&&*/ if (StrIsNull(array[i])) {
             if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
                ArrayCopy(array, array, i, i+1);
-            size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+            size = ArrayResize(array, size-1);        // Array um ein Element kï¿½rzen
             count++;
          }
       }
@@ -1349,7 +1349,7 @@ int ArrayDropString(string array[], string value) {
       if (array[i] == value) {
          if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
             ArrayCopy(array, array, i, i+1);
-         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         size = ArrayResize(array, size-1);        // Array um ein Element kï¿½rzen
          count++;
       }
    }
@@ -1377,7 +1377,7 @@ int ArraySpliceBools(bool array[], int offset, int length) {
    if (length == 0) return(0);
 
    if (offset+length < size) {
-      ArrayCopy(array, array, offset, offset+length);                // ArrayCopy(), wenn die zu entfernenden Elemente das Ende nicht einschließen
+      ArrayCopy(array, array, offset, offset+length);                // ArrayCopy(), wenn die zu entfernenden Elemente das Ende nicht einschlieï¿½en
    }
    else {
       length = size - offset;
@@ -1480,7 +1480,7 @@ int ArraySpliceStrings(string array[], int offset, int length) {
    if (length == 0) return(0);
 
    if (offset+length < size) {
-      ArrayCopy(array, array, offset, offset+length);                // ArrayCopy(), wenn die zu entfernenden Elemente das Ende nicht einschließen
+      ArrayCopy(array, array, offset, offset+length);                // ArrayCopy(), wenn die zu entfernenden Elemente das Ende nicht einschlieï¿½en
    }
    else {
       length = size - offset;
@@ -1492,13 +1492,13 @@ int ArraySpliceStrings(string array[], int offset, int length) {
 
 
 /**
- * Fügt ein Element an der angegebenen Position eines Bool-Arrays ein.
+ * Fï¿½gt ein Element an der angegebenen Position eines Bool-Arrays ein.
  *
  * @param  _InOut_ bool array[] - Bool-Array
- * @param  _In_    int  offset  - Position, an dem das Element eingefügt werden soll
- * @param  _In_    bool value   - einzufügendes Element
+ * @param  _In_    int  offset  - Position, an dem das Element eingefï¿½gt werden soll
+ * @param  _In_    bool value   - einzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertBool(bool &array[], int offset, bool value) {
    value = value!=0;
@@ -1508,30 +1508,30 @@ int ArrayInsertBool(bool &array[], int offset, bool value) {
    int size = ArraySize(array);
    if (size < offset)             return(_EMPTY(catch("ArrayInsertBool(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_PARAMETER)));
 
-   // Einfügen am Anfang des Arrays
+   // Einfï¿½gen am Anfang des Arrays
    if (offset == 0)
       return(ArrayUnshiftBool(array, value));
 
-   // Einfügen am Ende des Arrays
+   // Einfï¿½gen am Ende des Arrays
    if (offset == size)
       return(ArrayPushBool(array, value));
 
-   // Einfügen innerhalb des Arrays (ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten)
+   // Einfï¿½gen innerhalb des Arrays (ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusï¿½tzlichen Kopie arbeiten)
    ArrayCopy(array, array, offset+1, offset, size-offset);                       // Elemente nach Offset nach hinten schieben
-   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+   array[offset] = value;                                                        // Lï¿½cke mit einzufÃ¼gendem Wert fï¿½llen
 
    return(size + 1);
 }
 
 
 /**
- * Fügt ein Element an der angegebenen Position eines Integer-Arrays ein.
+ * Fï¿½gt ein Element an der angegebenen Position eines Integer-Arrays ein.
  *
  * @param  _InOut_ int array[] - Integer-Array
- * @param  _In_    int offset  - Position, an dem das Element eingefügt werden soll
- * @param  _In_    int value   - einzufügendes Element
+ * @param  _In_    int offset  - Position, an dem das Element eingefï¿½gt werden soll
+ * @param  _In_    int value   - einzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertInt(int &array[], int offset, int value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertInt(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1539,30 +1539,30 @@ int ArrayInsertInt(int &array[], int offset, int value) {
    int size = ArraySize(array);
    if (size < offset)             return(_EMPTY(catch("ArrayInsertInt(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_PARAMETER)));
 
-   // Einfügen am Anfang des Arrays
+   // Einfï¿½gen am Anfang des Arrays
    if (offset == 0)
       return(ArrayUnshiftInt(array, value));
 
-   // Einfügen am Ende des Arrays
+   // Einfï¿½gen am Ende des Arrays
    if (offset == size)
       return(ArrayPushInt(array, value));
 
-   // Einfügen innerhalb des Arrays (ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten)
+   // Einfï¿½gen innerhalb des Arrays (ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusï¿½tzlichen Kopie arbeiten)
    ArrayCopy(array, array, offset+1, offset, size-offset);                       // Elemente nach Offset nach hinten schieben
-   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+   array[offset] = value;                                                        // Lï¿½cke mit einzufÃ¼gendem Wert fï¿½llen
 
    return(size + 1);
 }
 
 
 /**
- * Fügt ein Element an der angegebenen Position eines Double-Arrays ein.
+ * Fï¿½gt ein Element an der angegebenen Position eines Double-Arrays ein.
  *
  * @param  _InOut_ double array[] - Double-Array
- * @param  _In_    int    offset  - Position, an dem das Element eingefügt werden soll
- * @param  _In_    double value   - einzufügendes Element
+ * @param  _In_    int    offset  - Position, an dem das Element eingefï¿½gt werden soll
+ * @param  _In_    double value   - einzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertDouble(double &array[], int offset, double value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertDouble(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1570,30 +1570,30 @@ int ArrayInsertDouble(double &array[], int offset, double value) {
    int size = ArraySize(array);
    if (size < offset)             return(_EMPTY(catch("ArrayInsertDouble(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_PARAMETER)));
 
-   // Einfügen am Anfang des Arrays
+   // Einfï¿½gen am Anfang des Arrays
    if (offset == 0)
       return(ArrayUnshiftDouble(array, value));
 
-   // Einfügen am Ende des Arrays
+   // Einfï¿½gen am Ende des Arrays
    if (offset == size)
       return(ArrayPushDouble(array, value));
 
-   // Einfügen innerhalb des Arrays (ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten)
+   // Einfï¿½gen innerhalb des Arrays (ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusï¿½tzlichen Kopie arbeiten)
    ArrayCopy(array, array, offset+1, offset, size-offset);                       // Elemente nach Offset nach hinten schieben
-   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+   array[offset] = value;                                                        // Lï¿½cke mit einzufÃ¼gendem Wert fï¿½llen
 
    return(size + 1);
 }
 
 
 /**
- * Fügt an einem Offset eines zwei-dimensionalen Double-Arrays ein anderes Double-Array ein.
+ * Fï¿½gt an einem Offset eines zwei-dimensionalen Double-Arrays ein anderes Double-Array ein.
  *
- * @param  _InOut_ double array[][] - zu vergrößerndes zwei-dimensionales Ausgangs-Array
- * @param  _In_    int    offset    - Position im Ausgangs-Array, an dem das andere Array eingefügt werden soll
- * @param  _In_    double values[]  - einzufügendes Array (muß in seiner ersten Dimension der zweiten Dimension des Ausgangsarrays entsprechen)
+ * @param  _InOut_ double array[][] - zu vergrï¿½ï¿½erndes zwei-dimensionales Ausgangs-Array
+ * @param  _In_    int    offset    - Position im Ausgangs-Array, an dem das andere Array eingefï¿½gt werden soll
+ * @param  _In_    double values[]  - einzufÃ¼gendes Array (muÃŸ in seiner ersten Dimension der zweiten Dimension des Ausgangsarrays entsprechen)
  *
- * @return int - neue Größe des Ausgangsarrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Ausgangsarrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertDoubleArray(double &array[][], int offset, double values[]) {
    if (ArrayDimension(array) != 2)  return(_EMPTY(catch("ArrayInsertDoubleArray(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1603,7 +1603,7 @@ int ArrayInsertDoubleArray(double &array[][], int offset, double values[]) {
    if (ArraySize(values) != dim2)   return(_EMPTY(catch("ArrayInsertDoubleArray(3)  array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAY)));
    if (offset < 0 || offset > dim1) return(_EMPTY(catch("ArrayInsertDoubleArray(4)  illegal parameter offset "+ offset +" for array["+ dim1 +"]["+ dim2 +"]", ERR_INVALID_PARAMETER)));
 
-   // Ausgangsarray vergrößern
+   // Ausgangsarray vergrï¿½ï¿½ern
    int newSize = dim1 + 1;
    ArrayResize(array, newSize);
 
@@ -1616,7 +1616,7 @@ int ArrayInsertDoubleArray(double &array[][], int offset, double values[]) {
       CopyMemory(dest, src, bytes);          // nothing to move if the insert is in fact an append
    }
 
-   // Inhalt des anderen Arrays an den gewünschten Offset schreiben
+   // Inhalt des anderen Arrays an den gewï¿½nschten Offset schreiben
    dest  = src;
    src   = GetDoublesAddress(values);
    bytes = dim2Size;
@@ -1627,13 +1627,13 @@ int ArrayInsertDoubleArray(double &array[][], int offset, double values[]) {
 
 
 /**
- * Fügt in ein Bool-Array die Elemente eines anderen Bool-Arrays ein.
+ * Fï¿½gt in ein Bool-Array die Elemente eines anderen Bool-Arrays ein.
  *
  * @param  bool array[]  - Ausgangs-Array
- * @param  int  offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
- * @param  bool values[] - einzufügende Elemente
+ * @param  int  offset   - Position im Ausgangs-Array, an dem die Elemente eingefï¿½gt werden sollen
+ * @param  bool values[] - einzufÃ¼gende Elemente
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertBools(bool array[], int offset, bool values[]) {
    if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertBools(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1643,34 +1643,34 @@ int ArrayInsertBools(bool array[], int offset, bool values[]) {
    if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertBools(4)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
    int sizeOfValues = ArraySize(values);
 
-   // Einfügen am Anfang des Arrays
+   // Einfï¿½gen am Anfang des Arrays
    if (offset == 0)
       return(MergeBoolArrays(values, array, array));
 
-   // Einfügen am Ende des Arrays
+   // Einfï¿½gen am Ende des Arrays
    if (offset == sizeOfArray)
       return(MergeBoolArrays(array, values, array));
 
-   // Einfügen innerhalb des Arrays
+   // Einfï¿½gen innerhalb des Arrays
    int newSize = sizeOfArray + sizeOfValues;
    ArrayResize(array, newSize);
 
-   // ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten
+   // ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusï¿½tzlichen Kopie arbeiten
    ArrayCopy(array, array, offset+sizeOfValues, offset, sizeOfArray-offset);     // Elemente nach Offset nach hinten schieben
-   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+   ArrayCopy(array, values, offset);                                             // Lï¿½cke mit einzufÃ¼genden Werten Ã¼berschreiben
 
    return(newSize);
 }
 
 
 /**
- * Fügt in ein Integer-Array die Elemente eines anderen Integer-Arrays ein.
+ * Fï¿½gt in ein Integer-Array die Elemente eines anderen Integer-Arrays ein.
  *
  * @param  int array[]  - Ausgangs-Array
- * @param  int offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
- * @param  int values[] - einzufügende Elemente
+ * @param  int offset   - Position im Ausgangs-Array, an dem die Elemente eingefï¿½gt werden sollen
+ * @param  int values[] - einzufÃ¼gende Elemente
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertInts(int array[], int offset, int values[]) {
    if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertInts(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1680,34 +1680,34 @@ int ArrayInsertInts(int array[], int offset, int values[]) {
    if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertInts(4)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
    int sizeOfValues = ArraySize(values);
 
-   // Einfügen am Anfang des Arrays
+   // Einfï¿½gen am Anfang des Arrays
    if (offset == 0)
       return(MergeIntArrays(values, array, array));
 
-   // Einfügen am Ende des Arrays
+   // Einfï¿½gen am Ende des Arrays
    if (offset == sizeOfArray)
       return(MergeIntArrays(array, values, array));
 
-   // Einfügen innerhalb des Arrays
+   // Einfï¿½gen innerhalb des Arrays
    int newSize = sizeOfArray + sizeOfValues;
    ArrayResize(array, newSize);
 
-   // ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten
+   // ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusï¿½tzlichen Kopie arbeiten
    ArrayCopy(array, array, offset+sizeOfValues, offset, sizeOfArray-offset);     // Elemente nach Offset nach hinten schieben
-   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+   ArrayCopy(array, values, offset);                                             // Lï¿½cke mit einzufÃ¼genden Werten Ã¼berschreiben
 
    return(newSize);
 }
 
 
 /**
- * Fügt in ein Double-Array die Elemente eines anderen Double-Arrays ein.
+ * Fï¿½gt in ein Double-Array die Elemente eines anderen Double-Arrays ein.
  *
  * @param  double array[]  - Ausgangs-Array
- * @param  int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
- * @param  double values[] - einzufügende Elemente
+ * @param  int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefï¿½gt werden sollen
+ * @param  double values[] - einzufÃ¼gende Elemente
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertDoubles(double array[], int offset, double values[]) {
    if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertDoubles(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1717,34 +1717,34 @@ int ArrayInsertDoubles(double array[], int offset, double values[]) {
    if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertDoubles(4)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
    int sizeOfValues = ArraySize(values);
 
-   // Einfügen am Anfang des Arrays
+   // Einfï¿½gen am Anfang des Arrays
    if (offset == 0)
       return(MergeDoubleArrays(values, array, array));
 
-   // Einfügen am Ende des Arrays
+   // Einfï¿½gen am Ende des Arrays
    if (offset == sizeOfArray)
       return(MergeDoubleArrays(array, values, array));
 
-   // Einfügen innerhalb des Arrays
+   // Einfï¿½gen innerhalb des Arrays
    int newSize = sizeOfArray + sizeOfValues;
    ArrayResize(array, newSize);
 
-   // ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten
+   // ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusï¿½tzlichen Kopie arbeiten
    ArrayCopy(array, array, offset+sizeOfValues, offset, sizeOfArray-offset);     // Elemente nach Offset nach hinten schieben
-   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+   ArrayCopy(array, values, offset);                                             // Lï¿½cke mit einzufÃ¼genden Werten Ã¼berschreiben
 
    return(newSize);
 }
 
 
 /**
- * Fügt ein Element an der angegebenen Position eines String-Arrays ein.
+ * Fï¿½gt ein Element an der angegebenen Position eines String-Arrays ein.
  *
  * @param  _InOut_ string array[] - String-Array
- * @param  _In_    int    offset  - Position, an dem das Element eingefügt werden soll
- * @param  _In_    string value   - einzufügendes Element
+ * @param  _In_    int    offset  - Position, an dem das Element eingefï¿½gt werden soll
+ * @param  _In_    string value   - einzufÃ¼gendes Element
  *
- * @return int - neue Größe des Arrays oder -1 (nEMPTY), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder -1 (nEMPTY), falls ein Fehler auftrat
  */
 int ArrayInsertString(string &array[], int offset, string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1752,32 +1752,32 @@ int ArrayInsertString(string &array[], int offset, string value) {
    int size = ArraySize(array);
    if (size < offset)             return(_EMPTY(catch("ArrayInsertString(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_PARAMETER)));
 
-   // Einfügen am Anfang des Arrays
+   // Einfï¿½gen am Anfang des Arrays
    if (offset == 0)
       return(ArrayUnshiftString(array, value));
 
-   // Einfügen am Ende des Arrays
+   // Einfï¿½gen am Ende des Arrays
    if (offset == size)
       return(ArrayPushString(array, value));
 
-   // Einfügen innerhalb des Arrays: ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, daher zusätzliche Kopie nötig
+   // Einfï¿½gen innerhalb des Arrays: ArrayCopy() "zerstï¿½rt" bei String-Arrays den sich Ã¼berlappenden Bereich, daher zusï¿½tzliche Kopie nï¿½tig
    string tmp[]; ArrayResize(tmp, 0);
-   ArrayCopy(tmp, array, 0, offset, size-offset);                                // Kopie der Elemente hinterm Einfügepunkt machen
-   ArrayCopy(array, tmp, offset+1);                                              // Elemente hinterm Einfügepunkt nach hinten schieben (Quelle: die Kopie)
+   ArrayCopy(tmp, array, 0, offset, size-offset);                                // Kopie der Elemente hinterm Einfï¿½gepunkt machen
+   ArrayCopy(array, tmp, offset+1);                                              // Elemente hinterm Einfï¿½gepunkt nach hinten schieben (Quelle: die Kopie)
    ArrayResize(tmp, 0);
-   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+   array[offset] = value;                                                        // Lï¿½cke mit einzufÃ¼gendem Wert fï¿½llen
    return(size + 1);
 }
 
 
 /**
- * Fügt in ein String-Array die Elemente eines anderen String-Arrays ein.
+ * Fï¿½gt in ein String-Array die Elemente eines anderen String-Arrays ein.
  *
  * @param  _InOut_ string array[]  - Ausgangs-Array
- * @param  _In_    int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
- * @param  _In_    string values[] - einzufügende Elemente
+ * @param  _In_    int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefï¿½gt werden sollen
+ * @param  _In_    string values[] - einzufÃ¼gende Elemente
  *
- * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - neue GrÃ¶ÃŸe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertStrings(string &array[], int offset, string values[]) {
    if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertStrings(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1787,23 +1787,23 @@ int ArrayInsertStrings(string &array[], int offset, string values[]) {
    if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertStrings(4)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
    int sizeOfValues = ArraySize(values);
 
-   // Einfügen am Anfang des Arrays
+   // Einfï¿½gen am Anfang des Arrays
    if (offset == 0)
       return(MergeStringArrays(values, array, array));
 
-   // Einfügen am Ende des Arrays
+   // Einfï¿½gen am Ende des Arrays
    if (offset == sizeOfArray)
       return(MergeStringArrays(array, values, array));
 
-   // Einfügen innerhalb des Arrays
+   // Einfï¿½gen innerhalb des Arrays
    int newSize = sizeOfArray + sizeOfValues;
    ArrayResize(array, newSize);
 
-   // ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, wir müssen mit einer zusätzlichen Kopie arbeiten
+   // ArrayCopy() "zerstï¿½rt" bei String-Arrays den sich Ã¼berlappenden Bereich, wir mï¿½ssen mit einer zusï¿½tzlichen Kopie arbeiten
    string tmp[]; ArrayResize(tmp, 0);
-   ArrayCopy(tmp, array, 0, offset, sizeOfArray-offset);                         // Kopie der Elemente hinter dem Einfügepunkt erstellen
-   ArrayCopy(array, tmp, offset+sizeOfValues);                                   // Elemente hinter dem Einfügepunkt nach hinten schieben
-   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+   ArrayCopy(tmp, array, 0, offset, sizeOfArray-offset);                         // Kopie der Elemente hinter dem Einfï¿½gepunkt erstellen
+   ArrayCopy(array, tmp, offset+sizeOfValues);                                   // Elemente hinter dem Einfï¿½gepunkt nach hinten schieben
+   ArrayCopy(array, values, offset);                                             // Lï¿½cke mit einzufÃ¼genden Werten Ã¼berschreiben
 
    ArrayResize(tmp, 0);
    return(newSize);
@@ -1811,7 +1811,7 @@ int ArrayInsertStrings(string &array[], int offset, string values[]) {
 
 
 /**
- * Prüft, ob ein Boolean in einem Array enthalten ist.
+ * Prï¿½ft, ob ein Boolean in einem Array enthalten ist.
  *
  * @param  bool haystack[] - zu durchsuchendes Array
  * @param  bool needle     - zu suchender Wert
@@ -1827,7 +1827,7 @@ bool BoolInArray(bool haystack[], bool needle) {
 
 
 /**
- * Prüft, ob ein Integer in einem Array enthalten ist.
+ * Prï¿½ft, ob ein Integer in einem Array enthalten ist.
  *
  * @param  int haystack[] - zu durchsuchendes Array
  * @param  int needle     - zu suchender Wert
@@ -1841,7 +1841,7 @@ bool IntInArray(int haystack[], int needle) {
 
 
 /**
- * Prüft, ob ein Double in einem Array enthalten ist.
+ * Prï¿½ft, ob ein Double in einem Array enthalten ist.
  *
  * @param  double haystack[] - zu durchsuchendes Array
  * @param  double needle     - zu suchender Wert
@@ -1855,7 +1855,7 @@ bool DoubleInArray(double haystack[], double needle) {
 
 
 /**
- * Prüft, ob ein String in einem Array enthalten ist. Groß-/Kleinschreibung wird beachtet.
+ * Prï¿½ft, ob ein String in einem Array enthalten ist. Groï¿½-/Kleinschreibung wird beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -1869,7 +1869,7 @@ bool StringInArray(string haystack[], string needle) {
 
 
 /**
- * Prüft, ob ein String in einem Array enthalten ist. Groß-/Kleinschreibung wird nicht beachtet.
+ * Prï¿½ft, ob ein String in einem Array enthalten ist. Groï¿½-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -1883,7 +1883,7 @@ bool StringInArrayI(string haystack[], string needle) {
 
 
 /**
- * Durchsucht ein Boolean-Array nach einem Wert und gibt dessen Index zurück.
+ * Durchsucht ein Boolean-Array nach einem Wert und gibt dessen Index zurï¿½ck.
  *
  * @param  bool haystack[] - zu durchsuchendes Array
  * @param  bool needle     - zu suchender Wert
@@ -1905,7 +1905,7 @@ int SearchBoolArray(bool haystack[], bool needle) {
 
 
 /**
- * Durchsucht ein Integer-Array nach einem Wert und gibt dessen Index zurück.
+ * Durchsucht ein Integer-Array nach einem Wert und gibt dessen Index zurï¿½ck.
  *
  * @param  int haystack[] - zu durchsuchendes Array
  * @param  int needle     - zu suchender Wert
@@ -1925,7 +1925,7 @@ int SearchIntArray(int haystack[], int needle) {
 
 
 /**
- * Durchsucht ein Double-Array nach einem Wert und gibt dessen Index zurück.
+ * Durchsucht ein Double-Array nach einem Wert und gibt dessen Index zurï¿½ck.
  *
  * @param  double haystack[] - zu durchsuchendes Array
  * @param  double needle     - zu suchender Wert
@@ -1945,7 +1945,7 @@ int SearchDoubleArray(double haystack[], double needle) {
 
 
 /**
- * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück. Groß-/Kleinschreibung wird beachtet.
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurï¿½ck. Groï¿½-/Kleinschreibung wird beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -1965,7 +1965,7 @@ int SearchStringArray(string haystack[], string needle) {
 
 
 /**
- * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück. Groß-/Kleinschreibung wird nicht beachtet.
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurï¿½ck. Groï¿½-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -2117,14 +2117,14 @@ bool IsReverseIndexedStringArray(string array[]) {
  * @param  bool array2[] - Boolean-Array
  * @param  bool merged[] - resultierendes Array
  *
- * @return int - Größe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - GrÃ¶ÃŸe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int MergeBoolArrays(bool array1[], bool array2[], bool merged[]) {
    if (ArrayDimension(array1) > 1) return(_EMPTY(catch("MergeBoolArrays(1)  too many dimensions of parameter array1: "+ ArrayDimension(array1), ERR_INCOMPATIBLE_ARRAY)));
    if (ArrayDimension(array2) > 1) return(_EMPTY(catch("MergeBoolArrays(2)  too many dimensions of parameter array2: "+ ArrayDimension(array2), ERR_INCOMPATIBLE_ARRAY)));
    if (ArrayDimension(merged) > 1) return(_EMPTY(catch("MergeBoolArrays(3)  too many dimensions of parameter merged: "+ ArrayDimension(merged), ERR_INCOMPATIBLE_ARRAY)));
 
-   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir Ã¼ber den Umweg einer Kopie.
    bool tmp[]; ArrayResize(tmp, 0);
 
    int size1 = ArraySize(array1);
@@ -2152,14 +2152,14 @@ int MergeBoolArrays(bool array1[], bool array2[], bool merged[]) {
  * @param  int array2[] - Integer-Array
  * @param  int merged[] - resultierendes Array
  *
- * @return int - Größe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - GrÃ¶ÃŸe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int MergeIntArrays(int array1[], int array2[], int merged[]) {
    if (ArrayDimension(array1) > 1) return(_EMPTY(catch("MergeIntArrays(1)  too many dimensions of parameter array1: "+ ArrayDimension(array1), ERR_INCOMPATIBLE_ARRAY)));
    if (ArrayDimension(array2) > 1) return(_EMPTY(catch("MergeIntArrays(2)  too many dimensions of parameter array2: "+ ArrayDimension(array2), ERR_INCOMPATIBLE_ARRAY)));
    if (ArrayDimension(merged) > 1) return(_EMPTY(catch("MergeIntArrays(3)  too many dimensions of parameter merged: "+ ArrayDimension(merged), ERR_INCOMPATIBLE_ARRAY)));
 
-   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir Ã¼ber den Umweg einer Kopie.
    int tmp[]; ArrayResize(tmp, 0);
 
    int size1 = ArraySize(array1);
@@ -2187,14 +2187,14 @@ int MergeIntArrays(int array1[], int array2[], int merged[]) {
  * @param  double array2[] - Double-Array
  * @param  double merged[] - resultierendes Array
  *
- * @return int - Größe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - GrÃ¶ÃŸe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int MergeDoubleArrays(double array1[], double array2[], double merged[]) {
    if (ArrayDimension(array1) > 1) return(_EMPTY(catch("MergeDoubleArrays(1)  too many dimensions of parameter array1: "+ ArrayDimension(array1), ERR_INCOMPATIBLE_ARRAY)));
    if (ArrayDimension(array2) > 1) return(_EMPTY(catch("MergeDoubleArrays(2)  too many dimensions of parameter array2: "+ ArrayDimension(array2), ERR_INCOMPATIBLE_ARRAY)));
    if (ArrayDimension(merged) > 1) return(_EMPTY(catch("MergeDoubleArrays(3)  too many dimensions of parameter merged: "+ ArrayDimension(merged), ERR_INCOMPATIBLE_ARRAY)));
 
-   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir Ã¼ber den Umweg einer Kopie.
    double tmp[]; ArrayResize(tmp, 0);
 
    int size1 = ArraySize(array1);
@@ -2222,14 +2222,14 @@ int MergeDoubleArrays(double array1[], double array2[], double merged[]) {
  * @param  string array2[] - String-Array
  * @param  string merged[] - resultierendes Array
  *
- * @return int - Größe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - GrÃ¶ÃŸe des resultierenden Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int MergeStringArrays(string array1[], string array2[], string merged[]) {
    if (ArrayDimension(array1) > 1) return(_EMPTY(catch("MergeStringArrays(1)  too many dimensions of parameter array1: "+ ArrayDimension(array1), ERR_INCOMPATIBLE_ARRAY)));
    if (ArrayDimension(array2) > 1) return(_EMPTY(catch("MergeStringArrays(2)  too many dimensions of parameter array2: "+ ArrayDimension(array2), ERR_INCOMPATIBLE_ARRAY)));
    if (ArrayDimension(merged) > 1) return(_EMPTY(catch("MergeStringArrays(3)  too many dimensions of parameter merged: "+ ArrayDimension(merged), ERR_INCOMPATIBLE_ARRAY)));
 
-   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir Ã¼ber den Umweg einer Kopie.
    string tmp[]; ArrayResize(tmp, 0);
 
    int size1 = ArraySize(array1);
@@ -2301,8 +2301,8 @@ string TicketsToStr(int tickets[], string separator = ", ") {
 
 
 /**
- * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…),
- * Control-Characters (< 0x20h) fett (•) dargestellt.
+ * Gibt die lesbare Version eines Zeichenbuffers zurï¿½ck. <NUL>-Characters (0x00h) werden gestrichelt (ï¿½),
+ * Control-Characters (< 0x20h) fett (ï¿½) dargestellt.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
  *
@@ -2316,15 +2316,15 @@ string BufferToStr(int buffer[]) {
    string result = "";
    int size = ArraySize(buffer);                                        // ein Integer = 4 Byte = 4 Zeichen
 
-   // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
+   // Integers werden binï¿½r als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
    for (int i=0; i < size; i++) {
       int integer = buffer[i];                                          // Integers nacheinander verarbeiten
                                                                                                                      // +---+------------+------+
       for (int b=0; b < 4; b++) {                                                                                    // | b |    byte    | char |
          int chr = integer & 0xFF;                                      // ein einzelnes Byte des Integers lesen     // +---+------------+------+
          if (chr < 0x20) {                                              // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
-            if (chr == 0x00) chr = PLACEHOLDER_NUL_CHAR;                // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
-            else             chr = PLACEHOLDER_CTRL_CHAR;               // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
+            if (chr == 0x00) chr = PLACEHOLDER_NUL_CHAR;                // NUL-Byte          (ï¿½)                     // | 1 | 0x0000FF00 |   2  |
+            else             chr = PLACEHOLDER_CTRL_CHAR;               // Control-Character (ï¿½)                     // | 2 | 0x00FF0000 |   3  |
          }                                                                                                           // | 3 | 0xFF000000 |   4  |
          result = StringConcatenate(result, CharToStr(chr));                                                         // +---+------------+------+
          integer >>= 8;
@@ -2347,7 +2347,7 @@ string _BufferToStr(int buffer[][]) {
    string result = "";
    int dim1=ArrayRange(buffer, 0), dim2=ArrayRange(buffer, 1);          // ein Integer = 4 Byte = 4 Zeichen
 
-   // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
+   // Integers werden binï¿½r als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
    for (int i=0; i < dim1; i++) {
       for (int n=0; n < dim2; n++) {
          int integer = buffer[i][n];                                    // Integers nacheinander verarbeiten
@@ -2355,8 +2355,8 @@ string _BufferToStr(int buffer[][]) {
          for (int b=0; b < 4; b++) {                                                                                 // | b |    byte    | char |
             int chr = integer & 0xFF;                                   // ein einzelnes Byte des Integers lesen     // +---+------------+------+
             if (chr < 0x20) {                                           // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
-               if (chr == 0x00) chr = PLACEHOLDER_NUL_CHAR;             // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
-               else             chr = PLACEHOLDER_CTRL_CHAR;            // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
+               if (chr == 0x00) chr = PLACEHOLDER_NUL_CHAR;             // NUL-Byte          (ï¿½)                     // | 1 | 0x0000FF00 |   2  |
+               else             chr = PLACEHOLDER_CTRL_CHAR;            // Control-Character (ï¿½)                     // | 2 | 0x00FF0000 |   3  |
             }                                                                                                        // | 3 | 0xFF000000 |   4  |
             result = StringConcatenate(result, CharToStr(chr));                                                      // +---+------------+------+
             integer >>= 8;
@@ -2368,7 +2368,7 @@ string _BufferToStr(int buffer[][]) {
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als hexadezimalen String zurück.
+ * Gibt den Inhalt eines Byte-Buffers als hexadezimalen String zurï¿½ck.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
  *
@@ -2382,7 +2382,7 @@ string BufferToHexStr(int buffer[]) {
    string hex="", byte1="", byte2="", byte3="", byte4="", result="";
    int size = ArraySize(buffer);
 
-   // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
+   // Integers werden binï¿½r als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
    for (int i=0; i < size; i++) {
       hex    = IntToHexStr(buffer[i]);
       byte1  = StringSubstr(hex, 6, 2);
@@ -2411,7 +2411,7 @@ string _BufferToHexStr(int buffer[][]) {
 
    string hex="", byte1="", byte2="", byte3="", byte4="", result="";
 
-   // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
+   // Integers werden binï¿½r als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
    for (int i=0; i < dim1; i++) {
       for (int n=0; n < dim2; n++) {
          hex    = IntToHexStr(buffer[i][n]);
@@ -2429,9 +2429,9 @@ string _BufferToHexStr(int buffer[][]) {
 
 
 /**
- * Gibt ein einzelnes Zeichen (ein Byte) von der angegebenen Position eines Buffers zurück.
+ * Gibt ein einzelnes Zeichen (ein Byte) von der angegebenen Position eines Buffers zurï¿½ck.
  *
- * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
+ * @param  int buffer[] - Byte-Buffer (kann in MQL nur Ã¼ber ein Integer-Array abgebildet werden)
  * @param  int pos      - Zeichen-Position
  *
  * @return int - Zeichen-Code oder EMPTY (-1), falls ein Fehler auftrat
@@ -2675,7 +2675,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
 
 
 /**
- * Führt eine Anwendung aus und wartet, bis sie beendet ist.
+ * Fï¿½hrt eine Anwendung aus und wartet, bis sie beendet ist.
  *
  * @param  string cmdLine - Befehlszeile
  * @param  int    cmdShow - ShowWindow()-Konstante
@@ -2826,9 +2826,9 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
 
 
 /**
- * Gibt die lesbare Version eines Rückgabewertes von WaitForSingleObject() zurück.
+ * Gibt die lesbare Version eines Rï¿½ckgabewertes von WaitForSingleObject() zurï¿½ck.
  *
- * @param  int value - Rückgabewert
+ * @param  int value - Rï¿½ckgabewert
  *
  * @return string
  */
@@ -2844,15 +2844,15 @@ string WaitForSingleObjectValueToStr(int value) {
 
 
 /**
- * Gibt den Kurznamen eines Symbols zurück.
+ * Gibt den Kurznamen eines Symbols zurï¿½ck.
  * (z.B. GetSymbolName("EURUSD") => "EUR/USD")
  *
  * @param  string symbol - broker-spezifisches Symbol
  *
- * @return string - Kurzname oder der übergebene Ausgangswert, wenn das Symbol unbekannt ist
+ * @return string - Kurzname oder der Ã¼bergebene Ausgangswert, wenn das Symbol unbekannt ist
  *
  *
- * NOTE: Alias für GetSymbolNameOrAlt(symbol, symbol)
+ * NOTE: Alias fï¿½r GetSymbolNameOrAlt(symbol, symbol)
  */
 string GetSymbolName(string symbol) {
    if (!StringLen(symbol))
@@ -2862,11 +2862,11 @@ string GetSymbolName(string symbol) {
 
 
 /**
- * Gibt den Kurznamen eines Symbols zurück oder den angegebenen Alternativwert, wenn das Symbol unbekannt ist.
+ * Gibt den Kurznamen eines Symbols zurï¿½ck oder den angegebenen Alternativwert, wenn das Symbol unbekannt ist.
  * (z.B. GetSymbolNameOrAlt("EURUSD") => "EUR/USD")
  *
  * @param  string symbol   - Symbol
- * @param  string altValue - alternativer Rückgabewert
+ * @param  string altValue - alternativer Rï¿½ckgabewert
  *
  * @return string - Ergebnis
  *
@@ -2884,7 +2884,7 @@ string GetSymbolNameOrAlt(string symbol, string altValue="") {
 
 
 /**
- * Gibt den Kurznamen eines Symbols zurück.
+ * Gibt den Kurznamen eines Symbols zurï¿½ck.
  * (z.B. GetSymbolNameStrict("EURUSD") => "EUR/USD")
  *
  * @param  string symbol - Symbol
@@ -3066,15 +3066,15 @@ string GetSymbolNameStrict(string symbol) {
 
 
 /**
- * Gibt den Langnamen eines Symbols zurück.
+ * Gibt den Langnamen eines Symbols zurï¿½ck.
  * (z.B. GetLongSymbolName("EURUSD") => "EUR/USD")
  *
  * @param  string symbol - broker-spezifisches Symbol
  *
- * @return string - Langname oder der übergebene Ausgangswert, wenn kein Langname gefunden wurde
+ * @return string - Langname oder der Ã¼bergebene Ausgangswert, wenn kein Langname gefunden wurde
  *
  *
- * NOTE: Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+ * NOTE: Alias fï¿½r GetLongSymbolNameOrAlt(symbol, symbol)
  */
 string GetLongSymbolName(string symbol) {
    if (!StringLen(symbol))
@@ -3084,11 +3084,11 @@ string GetLongSymbolName(string symbol) {
 
 
 /**
- * Gibt den Langnamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
+ * Gibt den Langnamen eines Symbols zurï¿½ck oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
  * (z.B. GetLongSymbolNameOrAlt("USDLFX") => "USD (LFX)")
  *
  * @param  string symbol   - Symbol
- * @param  string altValue - alternativer Rückgabewert
+ * @param  string altValue - alternativer Rï¿½ckgabewert
  *
  * @return string - Ergebnis
  */
@@ -3106,7 +3106,7 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
 
 
 /**
- * Gibt den Langnamen eines Symbols zurück.
+ * Gibt den Langnamen eines Symbols zurï¿½ck.
  * (z.B. GetLongSymbolNameStrict("USDLFX") => "USD (LFX)")
  *
  * @param  string symbol - Symbol
@@ -3406,11 +3406,11 @@ string WordToHexStr(int word) {
 
 
 /**
- * Gibt die hexadezimale Repräsentation einer Ganzzahl zurück.
+ * Gibt die hexadezimale Reprï¿½sentation einer Ganzzahl zurï¿½ck.
  *
  * @param  int integer - Ganzzahl
  *
- * @return string - hexadezimaler Wert entsprechender Länge
+ * @return string - hexadezimaler Wert entsprechender Lï¿½nge
  *
  * Beispiel: IntegerToHexStr(2058) => "80A"
  */
@@ -3431,11 +3431,11 @@ string IntegerToHexStr(int integer) {
 
 
 /**
- * Gibt die binäre Repräsentation einer Ganzzahl zurück.
+ * Gibt die binï¿½re Reprï¿½sentation einer Ganzzahl zurï¿½ck.
  *
  * @param  int integer - Ganzzahl
  *
- * @return string - binärer Wert
+ * @return string - binï¿½rer Wert
  *
  * Beispiel: IntegerToBinaryStr(109) => "1101101"
  */
@@ -3454,11 +3454,11 @@ string IntegerToBinaryStr(int integer) {
 
 
 /**
- * Gibt die nächstkleinere Periode der angegebenen Periode zurück.
+ * Gibt die nï¿½chstkleinere Periode der angegebenen Periode zurï¿½ck.
  *
  * @param  int period - Timeframe-Periode (default: 0 - die aktuelle Periode)
  *
- * @return int - nächstkleinere Periode oder der ursprüngliche Wert, wenn keine kleinere Periode existiert
+ * @return int - nï¿½chstkleinere Periode oder der ursprï¿½ngliche Wert, wenn keine kleinere Periode existiert
  */
 int DecreasePeriod(int period = 0) {
    if (!period)
@@ -3487,13 +3487,13 @@ int DecreasePeriod(int period = 0) {
  *
  * @param  _In_  string input            - zu zerlegender String
  * @param  _In_  string separator        - Trennstring
- * @param  _Out_ string results[]        - Zielarray für die Teilstrings
+ * @param  _Out_ string results[]        - Zielarray fï¿½r die Teilstrings
  * @param  _In_  int    limit [optional] - maximale Anzahl von Teilstrings (default: kein Limit)
  *
  * @return int - Anzahl der Teilstrings oder EMPTY (-1), wennn ein Fehler auftrat
  */
 int Explode(string input, string separator, string &results[], int limit = NULL) {
-   // Der Parameter input *könnte* eine Referenz auf ein Element des Ergebnisarrays results[] sein, daher erstellen wir
+   // Der Parameter input *kï¿½nnte* eine Referenz auf ein Element des Ergebnisarrays results[] sein, daher erstellen wir
    // vor Modifikation von results[] eine Kopie von input und verarbeiten diese.
    string _input = StringConcatenate(input, "");
 
@@ -3540,9 +3540,9 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
          i = pos + lenSeparator;
       }
 
-      if (i == lenInput) {                   // bei abschließendem Separator Substrings mit Leerstring beenden
+      if (i == lenInput) {                   // bei abschlieï¿½endem Separator Substrings mit Leerstring beenden
          ArrayResize(results, size+1);
-         results[size] = "";                 // TODO: !!! Wechselwirkung zwischen Limit und Separator am Ende überprüfen
+         results[size] = "";                 // TODO: !!! Wechselwirkung zwischen Limit und Separator am Ende Ã¼berprï¿½fen
       }
    }
 
@@ -3554,7 +3554,7 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
 
 
 /**
- * Gibt den Rechnernamen des laufenden Systems zurück.
+ * Gibt den Rechnernamen des laufenden Systems zurï¿½ck.
  *
  * @return string - Name oder Leerstring, falls ein Fehler auftrat
  */
@@ -3740,11 +3740,11 @@ string GetServerTimezone() {
 
 
 /**
- * Gibt die nächstgrößere Periode der angegebenen Periode zurück.
+ * Gibt die nï¿½chstgrï¿½ï¿½ere Periode der angegebenen Periode zurï¿½ck.
  *
  * @param  int period - Timeframe-Periode (default: 0 - die aktuelle Periode)
  *
- * @return int - Nächstgrößere Periode oder der ursprüngliche Wert, wenn keine größere Periode existiert.
+ * @return int - Nï¿½chstgrï¿½ï¿½ere Periode oder der ursprï¿½ngliche Wert, wenn keine grï¿½ï¿½ere Periode existiert.
  */
 int IncreasePeriod(int period = 0) {
    if (!period)
@@ -3767,17 +3767,17 @@ int IncreasePeriod(int period = 0) {
 
 
 /**
- * Findet alle zum angegebenen Muster passenden Dateinamen. Die Pseudo-Verzeichnisse "." und ".." werden nicht berücksichtigt.
+ * Findet alle zum angegebenen Muster passenden Dateinamen. Die Pseudo-Verzeichnisse "." und ".." werden nicht berï¿½cksichtigt.
  *
  * @param  string pattern    - Namensmuster mit Wildcards nach Windows-Konventionen
  * @param  string &results[] - Array zur Aufnahme der Suchergebnisse
- * @param  int    flags      - zusätzliche Suchflags: [FF_DIRSONLY | FF_FILESONLY | FF_SORT] (default: keine)
+ * @param  int    flags      - zusï¿½tzliche Suchflags: [FF_DIRSONLY | FF_FILESONLY | FF_SORT] (default: keine)
  *
  *                             FF_DIRSONLY:  return matching directory entries only (default: all entries)
  *                             FF_FILESONLY: return matching file entries only      (default: all entries)
  *                             FF_SORT:      sort returned results                  (default: FAT=unsorted, NTFS=sorted)
  *
- * @return int - Anzahl der gefundenen Einträge oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - Anzahl der gefundenen Eintrï¿½ge oder EMPTY (-1), falls ein Fehler auftrat
  */
 int FindFileNames(string pattern, string &results[], int flags = NULL) {
    if (!StringLen(pattern)) return(_EMPTY(catch("FindFileNames(1)  illegal parameter pattern: \""+ pattern +"\"", ERR_INVALID_PARAMETER)));
@@ -3820,12 +3820,12 @@ int FindFileNames(string pattern, string &results[], int flags = NULL) {
  * Konvertiert drei R-G-B-Farbwerte in eine Farbe.
  *
  * @param  int red   - Rotanteil  (0-255)
- * @param  int green - Grünanteil (0-255)
+ * @param  int green - Grï¿½nanteil (0-255)
  * @param  int blue  - Blauanteil (0-255)
  *
  * @return color - Farbe oder EMPTY (-1), falls ein Fehler auftrat
  *
- * Beispiel: RGB(255, 255, 255) => 0x00FFFFFF (weiß)
+ * Beispiel: RGB(255, 255, 255) => 0x00FFFFFF (weiï¿½)
  */
 color RGB(int red, int green, int blue) {
    if (0 <= red && red <= 255) {
@@ -3952,7 +3952,7 @@ color HSLToRGB(double hsl[3]) {
  * Adjust an RGB color using the HSL color model (same as the Windows color picker).
  *
  * @param  color  rgb        - color to adjust
- * @param  double hue        - shift from -360° to +360°                  (NULL for no change)
+ * @param  double hue        - shift from -360ï¿½ to +360ï¿½                  (NULL for no change)
  * @param  double saturation - adjustment from -100% to positive infinite (NULL for no change)
  * @param  double lightness  - adjustment from -100% to positive infinite (NULL for no change)
  *
@@ -4033,8 +4033,8 @@ string DoubleToStrEx(double value, int digits) {
    if (sValue=="-1.#INF0000" || sValue=="-inf"     ) return(sValue);    // -INF: negative infinity
 
    /*
-   double decimals[17] = { 1.0,                                         // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
-                          10.0,                                         // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
+   double decimals[17] = { 1.0,                                         // Der Compiler interpretiert Ã¼ber mehrere Zeilen verteilte Array-Initializer
+                          10.0,                                         // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurï¿½ck.
                          100.0,
                         1000.0,
                        10000.0,
@@ -4625,8 +4625,8 @@ string TicketsToStr.Position(int tickets[]) {
 
    string result = "";
    if (!isPosition)         result = "0 lot";
-   else if (!totalPosition) result = "±"+ NumberToStr(longPosition,  ".+")                                                                          +" lot (hedged)";
-   else                     result =      NumberToStr(totalPosition, ".+") + ifString(!hedgedPosition, "", " ±"+ NumberToStr(hedgedPosition, ".+")) +" lot";
+   else if (!totalPosition) result = "ï¿½"+ NumberToStr(longPosition,  ".+")                                                                          +" lot (hedged)";
+   else                     result =      NumberToStr(totalPosition, ".+") + ifString(!hedgedPosition, "", " ï¿½"+ NumberToStr(hedgedPosition, ".+")) +" lot";
 
    return(result);
 }
@@ -4737,10 +4737,10 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
 
 
 /**
- * Logmessage für temporäre Trade-Fehler.
+ * Logmessage fï¿½r temporï¿½re Trade-Fehler.
  *
  * @param  int oe[]   - execution details (struct ORDER_EXECUTION)
- * @param  int errors - Anzahl der bisher aufgetretenen temporären Fehler
+ * @param  int errors - Anzahl der bisher aufgetretenen temporï¿½ren Fehler
  *
  * @return string
  */
@@ -4975,9 +4975,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
 
 
 /**
- * Logmessage für OrderSendEx().
+ * Logmessage fï¿½r OrderSendEx().
  *
- * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
+ * @param  int oe[] - Ausfï¿½hrungsdetails (ORDER_EXECUTION)
  *
  * @return string
  */
@@ -5028,10 +5028,10 @@ string OrderSendEx.SuccessMsg(int oe[]) {
 
 
 /**
- * Logmessage für OrderSendEx().
+ * Logmessage fï¿½r OrderSendEx().
  *
- * @param  int oe[]   - Ausführungsdetails (ORDER_EXECUTION)
- * @param  int errors - Anzahl der bisher aufgetretenen temporären Fehler
+ * @param  int oe[]   - Ausfï¿½hrungsdetails (ORDER_EXECUTION)
+ * @param  int errors - Anzahl der bisher aufgetretenen temporï¿½ren Fehler
  *
  * @return string
  */
@@ -5066,9 +5066,9 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
 
 
 /**
- * Logmessage für OrderSendEx().
+ * Logmessage fï¿½r OrderSendEx().
  *
- * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
+ * @param  int oe[] - Ausfï¿½hrungsdetails (ORDER_EXECUTION)
  *
  * @return string
  */
@@ -6775,8 +6775,8 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
 
 
 /**
- * Korrigiert die vom Terminal beim Ausführen von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket muß während der Ausführung selektierbar sein.
+ * Korrigiert die vom Terminal beim Ausfï¿½hren von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket muÃŸ wï¿½hrend der Ausfï¿½hrung selektierbar sein.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
@@ -6784,7 +6784,7 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
  *
  * @return bool - success status
  *
- * @see  ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see  ChartMarker.OrderSent_B(), wenn das Ticket wï¿½hrend der Ausfï¿½hrung nicht selektierbar ist
  */
 bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
    if (!__isChart) return(true);
@@ -6798,8 +6798,8 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
 
 
 /**
- * Korrigiert die vom Terminal beim Ausführen von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ * Korrigiert die vom Terminal beim Ausfï¿½hren von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket braucht wï¿½hrend der Ausfï¿½hrung nicht selektierbar zu sein.
  *
  * @param  int      ticket      - Ticket
  * @param  int      digits      - Nachkommastellen des Ordersymbols
@@ -6815,17 +6815,17 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
  *
  * @return bool - success status
  *
- * @see  ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see  ChartMarker.OrderSent_A(), wenn das Ticket wï¿½hrend der Ausfï¿½hrung selektierbar ist
  */
 bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
    if (!__isChart) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
+   // OrderOpen-Marker: setzen, korrigieren oder lï¿½schen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label1) != -1) {
-      if (markerColor == CLR_NONE) ObjectDelete(label1);                               // löschen
+      if (markerColor == CLR_NONE) ObjectDelete(label1);                               // lï¿½schen
       else                         ObjectSet(label1, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
@@ -6836,13 +6836,13 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
       }
    }
 
-   // StopLoss-Marker: immer löschen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
+   // StopLoss-Marker: immer lï¿½schen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
    if (NE(stopLoss, 0)) {
       string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(stopLoss, digits));
       if (ObjectFind(label2) != -1) ObjectDelete(label2);
    }
 
-   // TakeProfit-Marker: immer löschen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
+   // TakeProfit-Marker: immer lï¿½schen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
    if (NE(takeProfit, 0)) {
       string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(takeProfit, digits));
       if (ObjectFind(label3) != -1) ObjectDelete(label3);
@@ -6854,19 +6854,19 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
 
 /**
  * Korrigiert die vom Terminal beim Modifizieren einer Order gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket muß während der Ausführung selektierbar sein.
+ * Das Ticket muÃŸ wï¿½hrend der Ausfï¿½hrung selektierbar sein.
  *
  * @param  int      ticket        - Ticket
  * @param  int      digits        - Nachkommastellen des Ordersymbols
  * @param  color    markerColor   - Farbe des Chartmarkers
  * @param  datetime modifyTime    - OrderModifyTime
- * @param  double   oldOpenPrice  - ursprünglicher OrderOpenPrice
- * @param  double   oldStopLoss   - ursprünglicher StopLoss
- * @param  double   oldTakeProfit - ursprünglicher TakeProfit
+ * @param  double   oldOpenPrice  - ursprï¿½nglicher OrderOpenPrice
+ * @param  double   oldStopLoss   - ursprï¿½nglicher StopLoss
+ * @param  double   oldTakeProfit - ursprï¿½nglicher TakeProfit
  *
  * @return bool - success status
  *
- * @see  ChartMarker.OrderModified_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see  ChartMarker.OrderModified_B(), wenn das Ticket wï¿½hrend der Ausfï¿½hrung nicht selektierbar ist
  */
 bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit) {
    if (!__isChart) return(true);
@@ -6881,7 +6881,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
 
 /**
  * Korrigiert die vom Terminal beim Modifizieren einer Order gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ * Das Ticket braucht wï¿½hrend der Ausfï¿½hrung nicht selektierbar zu sein.
  *
  * @param  int      ticket        - Ticket
  * @param  int      digits        - Nachkommastellen des Ordersymbols
@@ -6891,17 +6891,17 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
  * @param  string   symbol        - OrderSymbol
  * @param  datetime openTime      - OrderOpenTime
  * @param  datetime modifyTime    - OrderModifyTime
- * @param  double   oldOpenPrice  - ursprünglicher OrderOpenPrice
+ * @param  double   oldOpenPrice  - ursprï¿½nglicher OrderOpenPrice
  * @param  double   openPrice     - aktueller OrderOpenPrice
- * @param  double   oldStopLoss   - ursprünglicher StopLoss
+ * @param  double   oldStopLoss   - ursprï¿½nglicher StopLoss
  * @param  double   stopLoss      - aktueller StopLoss
- * @param  double   oldTakeProfit - ursprünglicher TakeProfit
+ * @param  double   oldTakeProfit - ursprï¿½nglicher TakeProfit
  * @param  double   takeProfit    - aktueller TakeProfit
  * @param  string   comment       - OrderComment
  *
  * @return bool - success status
  *
- * @see  ChartMarker.OrderModified_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see  ChartMarker.OrderModified_A(), wenn das Ticket wï¿½hrend der Ausfï¿½hrung selektierbar ist
  */
 bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment) {
    if (!__isChart) return(true);
@@ -6912,22 +6912,22 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
+   // OrderOpen-Marker: setzen, korrigieren oder lï¿½schen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ");
    if (openModified) {
       string label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits));
       if (ObjectFind(label) != -1)
-         ObjectDelete(label);                                                          // alten Open-Marker löschen
+         ObjectDelete(label);                                                          // alten Open-Marker lï¿½schen
       label = StringConcatenate("#", ticket, " ", types[type], " modified ", TimeToStr(modifyTime-60*SECONDS));
       if (ObjectFind(label) != -1)                                                     // #1 buy stop modified 2012.03.12 03:06
-         ObjectDelete(label);                                                          // Modify-Marker löschen, wenn er auf der vorherigen Minute liegt
+         ObjectDelete(label);                                                          // Modify-Marker lï¿½schen, wenn er auf der vorherigen Minute liegt
       label = StringConcatenate("#", ticket, " ", types[type], " modified ", TimeToStr(modifyTime));
       if (ObjectFind(label) != -1)
-         ObjectDelete(label);                                                          // Modify-Marker löschen, wenn er auf der aktuellen Minute liegt
+         ObjectDelete(label);                                                          // Modify-Marker lï¿½schen, wenn er auf der aktuellen Minute liegt
    }
    label = StringConcatenate(label1, DoubleToStr(openPrice, digits));
    if (ObjectFind(label) != -1) {
-      if (markerColor == CLR_NONE) ObjectDelete(label);                                // neuen Open-Marker löschen
+      if (markerColor == CLR_NONE) ObjectDelete(label);                                // neuen Open-Marker lï¿½schen
       else {
          if (openModified)
             ObjectSet(label, OBJPROP_TIME1, modifyTime);
@@ -6942,34 +6942,34 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
       }
    }
 
-   // StopLoss-Marker: immer löschen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
+   // StopLoss-Marker: immer lï¿½schen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
    if (NE(oldStopLoss, 0)) {
       label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits), " stop loss at ", DoubleToStr(oldStopLoss, digits));
       if (ObjectFind(label) != -1)
-         ObjectDelete(label);                                                          // alten löschen
+         ObjectDelete(label);                                                          // alten lï¿½schen
    }
    if (slModified) {                                                                   // #1 sl modified 2012.03.12 03:06
       label = StringConcatenate("#", ticket, " sl modified ", TimeToStr(modifyTime-60*SECONDS));
       if (ObjectFind(label) != -1)
-         ObjectDelete(label);                                                          // neuen löschen, wenn er auf der vorherigen Minute liegt
+         ObjectDelete(label);                                                          // neuen lï¿½schen, wenn er auf der vorherigen Minute liegt
       label = StringConcatenate("#", ticket, " sl modified ", TimeToStr(modifyTime));
       if (ObjectFind(label) != -1)
-         ObjectDelete(label);                                                          // neuen löschen, wenn er auf der aktuellen Minute liegt
+         ObjectDelete(label);                                                          // neuen lï¿½schen, wenn er auf der aktuellen Minute liegt
    }
 
-   // TakeProfit-Marker: immer löschen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
+   // TakeProfit-Marker: immer lï¿½schen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
    if (NE(oldTakeProfit, 0)) {
       label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits), " take profit at ", DoubleToStr(oldTakeProfit, digits));
       if (ObjectFind(label) != -1)
-         ObjectDelete(label);                                                          // alten löschen
+         ObjectDelete(label);                                                          // alten lï¿½schen
    }
    if (tpModified) {                                                                   // #1 tp modified 2012.03.12 03:06
       label = StringConcatenate("#", ticket, " tp modified ", TimeToStr(modifyTime-60*SECONDS));
       if (ObjectFind(label) != -1)
-         ObjectDelete(label);                                                          // neuen löschen, wenn er auf der vorherigen Minute liegt
+         ObjectDelete(label);                                                          // neuen lï¿½schen, wenn er auf der vorherigen Minute liegt
       label = StringConcatenate("#", ticket, " tp modified ", TimeToStr(modifyTime));
       if (ObjectFind(label) != -1)
-         ObjectDelete(label);                                                          // neuen löschen, wenn er auf der aktuellen Minute liegt
+         ObjectDelete(label);                                                          // neuen lï¿½schen, wenn er auf der aktuellen Minute liegt
    }
 
    return(!catch("ChartMarker.OrderModified_B()"));
@@ -6977,8 +6977,8 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
 
 
 /**
- * Korrigiert die vom Terminal beim Ausführen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket muß während der Ausführung selektierbar sein.
+ * Korrigiert die vom Terminal beim Ausfï¿½hren einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket muÃŸ wï¿½hrend der Ausfï¿½hrung selektierbar sein.
  *
  * @param  int    ticket       - Ticket
  * @param  int    pendingType  - OrderType der Pending-Order
@@ -6988,7 +6988,7 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
  *
  * @return bool - success status
  *
- * @see  ChartMarker.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see  ChartMarker.OrderFilled_B(), wenn das Ticket wï¿½hrend der Ausfï¿½hrung nicht selektierbar ist
  */
 bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor) {
    if (!__isChart) return(true);
@@ -7002,8 +7002,8 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
 
 
 /**
- * Korrigiert die vom Terminal beim Ausführen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ * Korrigiert die vom Terminal beim Ausfï¿½hren einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket braucht wï¿½hrend der Ausfï¿½hrung nicht selektierbar zu sein.
  *
  * @param  int      ticket       - Ticket
  * @param  int      pendingType  - Pending-OrderType
@@ -7018,29 +7018,29 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
  *
  * @return bool - success status
  *
- * @see  ChartMarker.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see  ChartMarker.OrderFilled_A(), wenn das Ticket wï¿½hrend der Ausfï¿½hrung selektierbar ist
  */
 bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment) {
    if (!__isChart) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   // OrderOpen-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904"
+   // OrderOpen-Marker: immer lï¿½schen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[pendingType], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(pendingPrice, digits));
    if (ObjectFind(label1) != -1) ObjectDelete(label1);
 
-   // Trendlinie: immer löschen                                                        // "#1 1.52904 -> 1.52904"
+   // Trendlinie: immer lï¿½schen                                                        // "#1 1.52904 -> 1.52904"
    string label2 = StringConcatenate("#", ticket, " ", DoubleToStr(pendingPrice, digits), " -> ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label2) != -1) ObjectDelete(label2);
 
-   // OrderFill-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
+   // OrderFill-Marker: immer lï¿½schen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
    string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], ifString(__isTesting, " by tester", ""), " at ", DoubleToStr(openPrice, digits));
-   if (ObjectFind(label3) != -1) ObjectDelete(label3);                                 // löschen
+   if (ObjectFind(label3) != -1) ObjectDelete(label3);                                 // lï¿½schen
 
-   // neuen OrderFill-Marker: setzen, korrigieren oder löschen                         // "#1 buy 0.10 GBPUSD at 1.52904"
+   // neuen OrderFill-Marker: setzen, korrigieren oder lï¿½schen                         // "#1 buy 0.10 GBPUSD at 1.52904"
    string label4 = StringConcatenate("#", ticket, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label4) != -1) {
-      if (markerColor == CLR_NONE) ObjectDelete(label4);                               // löschen
+      if (markerColor == CLR_NONE) ObjectDelete(label4);                               // lï¿½schen
       else                         ObjectSet(label4, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
@@ -7056,8 +7056,8 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
 
 
 /**
- * Korrigiert die vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket muß während der Ausführung selektierbar sein.
+ * Korrigiert die vom Terminal beim Schlieï¿½en einer Position gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket muÃŸ wï¿½hrend der Ausfï¿½hrung selektierbar sein.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
@@ -7077,8 +7077,8 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
 
 
 /**
- * Korrigiert die vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ * Korrigiert die vom Terminal beim Schlieï¿½en einer Position gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket braucht wï¿½hrend der Ausfï¿½hrung nicht selektierbar zu sein.
  *
  * @param  int      ticket      - Ticket
  * @param  int      digits      - Nachkommastellen des Ordersymbols
@@ -7098,16 +7098,16 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   // OrderOpen-Marker: ggf. löschen                                                   // "#1 buy 0.10 GBPUSD at 1.52904"
+   // OrderOpen-Marker: ggf. lï¿½schen                                                   // "#1 buy 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (markerColor == CLR_NONE) {
-      if (ObjectFind(label1) != -1) ObjectDelete(label1);                              // löschen
+      if (ObjectFind(label1) != -1) ObjectDelete(label1);                              // lï¿½schen
    }
 
-   // Trendlinie: setzen oder löschen                                                  // "#1 1.53024 -> 1.52904"
+   // Trendlinie: setzen oder lï¿½schen                                                  // "#1 1.53024 -> 1.52904"
    string label2 = StringConcatenate("#", ticket, " ", DoubleToStr(openPrice, digits), " -> ", DoubleToStr(closePrice, digits));
    if (ObjectFind(label2) != -1) {
-      if (markerColor == CLR_NONE) ObjectDelete(label2);                               // löschen
+      if (markerColor == CLR_NONE) ObjectDelete(label2);                               // lï¿½schen
    }
    else if (markerColor != CLR_NONE) {                                                 // setzen
       if (ObjectCreate(label2, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
@@ -7118,10 +7118,10 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
       }
    }
 
-   // Close-Marker: setzen, korrigieren oder löschen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
+   // Close-Marker: setzen, korrigieren oder lï¿½schen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
    string label3 = StringConcatenate(label1, " close", ifString(__isTesting, " by tester", ""), " at ", DoubleToStr(closePrice, digits));
    if (ObjectFind(label3) != -1) {
-      if (markerColor == CLR_NONE) ObjectDelete(label3);                               // löschen
+      if (markerColor == CLR_NONE) ObjectDelete(label3);                               // lï¿½schen
       else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
@@ -7136,8 +7136,8 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
 
 
 /**
- * Korrigiert die vom Terminal beim Löschen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket muß während der Ausführung selektierbar sein.
+ * Korrigiert die vom Terminal beim Lï¿½schen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket muÃŸ wï¿½hrend der Ausfï¿½hrung selektierbar sein.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
@@ -7145,7 +7145,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
  *
  * @return bool - success status
  *
- * @see  ChartMarker.OrderDeleted_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see  ChartMarker.OrderDeleted_B(), wenn das Ticket wï¿½hrend der Ausfï¿½hrung nicht selektierbar ist
  */
 bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
    if (!__isChart) return(true);
@@ -7159,8 +7159,8 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
 
 
 /**
- * Korrigiert die vom Terminal beim Löschen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
- * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ * Korrigiert die vom Terminal beim Lï¿½schen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket braucht wï¿½hrend der Ausfï¿½hrung nicht selektierbar zu sein.
  *
  * @param  int      ticket      - Ticket
  * @param  int      digits      - Nachkommastellen des Ordersymbols
@@ -7175,23 +7175,23 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
  *
  * @return bool - success status
  *
- * @see  ChartMarker.OrderDeleted_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see  ChartMarker.OrderDeleted_A(), wenn das Ticket wï¿½hrend der Ausfï¿½hrung selektierbar ist
  */
 bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
    if (!__isChart) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   // OrderOpen-Marker: ggf. löschen                                                   // "#1 buy stop 0.10 GBPUSD at 1.52904"
+   // OrderOpen-Marker: ggf. lï¿½schen                                                   // "#1 buy stop 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (markerColor == CLR_NONE) {
       if (ObjectFind(label1) != -1) ObjectDelete(label1);
    }
 
-   // Trendlinie: setzen oder löschen                                                  // "#1 delete"
+   // Trendlinie: setzen oder lï¿½schen                                                  // "#1 delete"
    string label2 = StringConcatenate("#", ticket, " delete");
    if (ObjectFind(label2) != -1) {
-      if (markerColor == CLR_NONE) ObjectDelete(label2);                               // löschen
+      if (markerColor == CLR_NONE) ObjectDelete(label2);                               // lï¿½schen
    }
    else if (markerColor != CLR_NONE) {                                                 // setzen
       if (ObjectCreate(label2, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
@@ -7202,10 +7202,10 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
       }
    }
 
-   // OrderClose-Marker: setzen, korrigieren oder löschen                              // "#1 buy stop 0.10 GBPUSD at 1.52904 deleted"
+   // OrderClose-Marker: setzen, korrigieren oder lï¿½schen                              // "#1 buy stop 0.10 GBPUSD at 1.52904 deleted"
    string label3 = StringConcatenate(label1, " deleted");
    if (ObjectFind(label3) != -1) {
-      if (markerColor == CLR_NONE) ObjectDelete(label3);                               // löschen
+      if (markerColor == CLR_NONE) ObjectDelete(label3);                               // lï¿½schen
       else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
@@ -7220,9 +7220,9 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
 
 
 /**
- * MQL-Wrapper für die Win32-Funktion GetTempPath().
+ * MQL-Wrapper fï¿½r die Win32-Funktion GetTempPath().
  *
- * @return string - Dateipfad für temporäre Dateien oder Leerstring, falls ein Fehler auftrat
+ * @return string - Dateipfad fï¿½r temporï¿½re Dateien oder Leerstring, falls ein Fehler auftrat
  */
 string GetTempPath() {
    int    bufferSize = MAX_PATH;
@@ -7402,9 +7402,9 @@ int CreateRawSymbol(string symbol, string descr, string group, int digits, strin
 
 
 /**
- * Fügt einer Liste von Symbolgruppen eine weitere hinzu. Die Gruppe wird an der ersten verfügbaren Position der Liste gespeichert.
+ * Fï¿½gt einer Liste von Symbolgruppen eine weitere hinzu. Die Gruppe wird an der ersten verfï¿½gbaren Position der Liste gespeichert.
  *
- * @param  SYMBOL_GROUP sgs[] - Liste von Symbolgruppen, der die neue Gruppe hinzugefügt werden soll
+ * @param  SYMBOL_GROUP sgs[] - Liste von Symbolgruppen, der die neue Gruppe hinzugefï¿½gt werden soll
  * @param  string name        - Gruppenname
  * @param  string descr       - Gruppenbeschreibung
  * @param  color  bgColor     - Hintergrundfarbe der Symbolgruppe im "Market Watch"-Window
@@ -7418,7 +7418,7 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string descr, color b
    if (StringLen(name) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("AddSymbolGroup(3)  invalid parameter name: "+ DoubleQuoteStr(name) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
    if (bgColor!=CLR_NONE && bgColor & 0xFF000000) return(_EMPTY(catch("AddSymbolGroup(4)  invalid parameter bgColor: 0x"+ IntToHexStr(bgColor) +" (not a color)", ERR_INVALID_PARAMETER)));
 
-   // überprüfen, ob die angegebene Gruppe bereits existiert und dabei den ersten freien Index ermitteln
+   // Ã¼berprï¿½fen, ob die angegebene Gruppe bereits existiert und dabei den ersten freien Index ermitteln
    int groupsSize = byteSize/SYMBOL_GROUP_size;
    int iFree = -1;
    for (int i=0; i < groupsSize; i++) {
@@ -7428,7 +7428,7 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string descr, color b
          iFree = i;
    }
 
-   // ohne freien Index das Array entsprechend vergrößern
+   // ohne freien Index das Array entsprechend vergrï¿½ï¿½ern
    if (iFree == -1) {
       ArrayResize(sgs, (groupsSize+1)*SYMBOL_GROUP_intSize);
       iFree = groupsSize;

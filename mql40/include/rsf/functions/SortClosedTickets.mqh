@@ -94,15 +94,15 @@ bool SortClosedTickets(int &tickets[][3]) {
  */
 bool SortClosedTickets.SameClose(int &tickets[][/*{CloseTime, OpenTime, Ticket}*/], int rowsToSort[][/*{OpenTime, Ticket, i}*/]) {
    int rowsCopy[][3]; ArrayResize(rowsCopy, 0);
-   ArrayCopy(rowsCopy, rowsToSort);                                  // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
+   ArrayCopy(rowsCopy, rowsToSort);                                  // auf Kopie von rowsToSort[] arbeiten, um das Ã¼bergebene Array nicht zu modifizieren
 
    // Zeilen nach OpenTime sortieren
    ArraySort(rowsCopy);
 
-   // Original-Daten mit den sortierten Werten überschreiben
+   // Original-Daten mit den sortierten Werten Ã¼berschreiben
    int openTime, ticket, rows=ArrayRange(rowsToSort, 0);
 
-   for (int i, n=0; n < rows; n++) {                                 // Originaldaten mit den sortierten Werten überschreiben
+   for (int i, n=0; n < rows; n++) {                                 // Originaldaten mit den sortierten Werten Ã¼berschreiben
       i             = rowsToSort[n][2];
       tickets[i][1] = rowsCopy  [n][0];
       tickets[i][2] = rowsCopy  [n][1];
@@ -123,14 +123,14 @@ bool SortClosedTickets.SameClose(int &tickets[][/*{CloseTime, OpenTime, Ticket}*
  */
 bool SortClosedTickets.SameOpen(int &tickets[][/*{OpenTime, CloseTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
    int rowsCopy[][2]; ArrayResize(rowsCopy, 0);
-   ArrayCopy(rowsCopy, rowsToSort);                                  // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
+   ArrayCopy(rowsCopy, rowsToSort);                                  // auf Kopie von rowsToSort[] arbeiten, um das Ã¼bergebene Array nicht zu modifizieren
 
    // Zeilen nach Ticket sortieren
    ArraySort(rowsCopy);
 
    int ticket, rows=ArrayRange(rowsToSort, 0);
 
-   for (int i, n=0; n < rows; n++) {                                 // Originaldaten mit den sortierten Werten überschreiben
+   for (int i, n=0; n < rows; n++) {                                 // Originaldaten mit den sortierten Werten Ã¼berschreiben
       i             = rowsToSort[n][1];
       tickets[i][2] = rowsCopy  [n][0];
    }

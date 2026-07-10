@@ -1,5 +1,5 @@
 /**
- * Script, daß zwischen den Terminals verschickte LfxTradeCommands ausführt. Ein manueller Aufruf ist nicht möglich.
+ * Script, daï¿½ zwischen den Terminals verschickte LfxTradeCommands ausfï¿½hrt. Ein manueller Aufruf ist nicht mï¿½glich.
  *
  *
  * TradeCommand-Hierarchie:
@@ -71,7 +71,7 @@ int onStart() {
    int    ticket2;
    string trigger = "";
 
-   // Solange in der Message-Queue TradeCommands liegen, diese nacheinander ausführen.
+   // Solange in der Message-Queue TradeCommands liegen, diese nacheinander ausfï¿½hren.
    while (GetTradeCommand(command, ticket1, ticket2, trigger)) {
       switch (command) {
          case TC_LFX_ORDER_OPEN   : OpenLfxOrder (ticket1, trigger); break;
@@ -93,7 +93,7 @@ int onStart() {
 
 
 /**
- * Gibt das nächste in der Parameter-Queue des Scripts eingetroffene TradeCommand zurück.
+ * Gibt das nï¿½chste in der Parameter-Queue des Scripts eingetroffene TradeCommand zurï¿½ck.
  *
  * @param  _Out_ int    command - TradeCommand
  * @param  _Out_ int    ticket1 - erstes beteiligtes Ticket des TradeCommands  (falls zutreffend)
@@ -104,7 +104,7 @@ int onStart() {
  *                FALSE, wenn kein TradeCommand eingetroffen ist und die Parameter-Queue des Scripts leer ist oder ein Fehler auftrat
  */
 bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) {
-   // (1) Parameter zurücksetzen
+   // (1) Parameter zurï¿½cksetzen
    int    _command;    command = NULL;
    int    _ticket;                     bool isTicket;
    int    _ticket1;    ticket1 = NULL; bool isTicket1;
@@ -120,11 +120,11 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
 
       //debug("GetTradeCommand(1)  got "+ ArraySize(commands) +" parameter"+ Pluralize(ArraySize(commands)));
 
-      if (!ArraySize(commands)) return(false);                           // bei leerer Queue mit FALSE zurückkehren
+      if (!ArraySize(commands)) return(false);                           // bei leerer Queue mit FALSE zurï¿½ckkehren
    }
 
 
-   // (3) Das nächste Command parsen und syntaktisch validieren, Format: LfxOrderCreateCommand {type:[order_type],            trigger:"message"}
+   // (3) Das nï¿½chste Command parsen und syntaktisch validieren, Format: LfxOrderCreateCommand {type:[order_type],            trigger:"message"}
    //                                                                    LfxOrderOpenCommand   {ticket:12345,                 trigger:"message"}
    //                                                                    LfxOrderCloseCommand  {ticket:12345,                 trigger:"message"}
    //                                                                    LfxOrderCloseByCommand{ticket1:12345, ticket2:67890, trigger:"message"}
@@ -181,7 +181,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
    }
 
 
-   // (4) Command logisch validieren und erst dann die übergebenen Variablen setzen
+   // (4) Command logisch validieren und erst dann die Ã¼bergebenen Variablen setzen
    switch (_command) {
       case TC_LFX_ORDER_OPEN  :
       case TC_LFX_ORDER_CLOSE :
@@ -202,7 +202,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
 
 
 /**
- * Öffnet eine Pending-LFX-Order.
+ * ï¿½ffnet eine Pending-LFX-Order.
  *
  * @param  _In_ int    ticket  - LFX-Ticket der Order
  * @param  _In_ string trigger - Trigger-Message der Order (default: keine)
@@ -210,11 +210,11 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
  * @return bool - success status
  */
 bool OpenLfxOrder(int ticket, string trigger="") {
-   // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
+   // Um die Implementierung Ã¼bersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
    // in eine eigene Funktion ausgelagert:
    //
-   //  - Order ausführen
-   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION berücksichtigen
+   //  - Order ausfï¿½hren
+   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION berï¿½cksichtigen
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
 
    int order[LFX_ORDER_intSize];
@@ -235,10 +235,10 @@ bool OpenLfxOrder(int ticket, string trigger="") {
 
 
 /**
- * Öffnet die Order.
+ * ï¿½ffnet die Order.
  *
  * @param  _In_  LFX_ORDER lo[]         - LFX-Order
- * @param  _Out_ int       subPositions - Variable zur Aufnahme der Anzahl der geöffneten Subpositionen
+ * @param  _Out_ int       subPositions - Variable zur Aufnahme der Anzahl der geï¿½ffneten Subpositionen
  *
  * @return bool - success status
  */
@@ -252,7 +252,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    double units       = lo.Units(lo);
 
    // (2) zu handelnde Pairs bestimmen
-   string symbols    [7]; ArrayResize(symbols    , 0); ArrayResize(symbols    , 7);    // setzt die Größe und den Inhalt der Arrays zurück
+   string symbols    [7]; ArrayResize(symbols    , 0); ArrayResize(symbols    , 7);    // setzt die GrÃ¶ÃŸe und den Inhalt der Arrays zurï¿½ck
    double exactLots  [7]; ArrayResize(exactLots  , 0); ArrayResize(exactLots  , 7);
    double roundedLots[7]; ArrayResize(roundedLots, 0); ArrayResize(roundedLots, 7);
    int    directions [7]; ArrayResize(directions , 0); ArrayResize(directions , 7);
@@ -299,7 +299,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       double lotStep   = MarketInfo(symbols[i], MODE_LOTSTEP  );
       if (IsError(catch("OpenLfxOrder.Execute(5)  \""+ symbols[i] +"\""))) return(false);
 
-      // (4.2) auf ungültige MarketInfo()-Daten prüfen
+      // (4.2) auf ungï¿½ltige MarketInfo()-Daten prï¿½fen
       errorMsg = "";
       if      (LT(bid, 0.5)          || GT(bid, 300)      ) errorMsg = "Bid(\""      + symbols[i] +"\") = "+ NumberToStr(bid      , ".+");
       else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = "TickSize(\"" + symbols[i] +"\") = "+ NumberToStr(tickSize , ".+");
@@ -308,24 +308,24 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       else if (LT(maxLot, 50)                             ) errorMsg = "MaxLot(\""   + symbols[i] +"\") = "+ NumberToStr(maxLot   , ".+");
       else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = "LotStep(\""  + symbols[i] +"\") = "+ NumberToStr(lotStep  , ".+");
 
-      // (4.3) ungültige MarketInfo()-Daten behandeln
+      // (4.3) ungï¿½ltige MarketInfo()-Daten behandeln
       if (StringLen(errorMsg) > 0) {
          if (retry < 3) {                                                              // 3 stille Versuche, korrekte Werte zu lesen
-            Sleep(200);                                                                // bei Mißerfolg jeweils xxx Millisekunden warten
+            Sleep(200);                                                                // bei Miï¿½erfolg jeweils xxx Millisekunden warten
             i = -1;
             retry++;
             continue;
-         }                                                                             // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
+         }                                                                             // TODO: auf ERR_CONCURRENT_MODIFICATION prï¿½fen
          return(!catch("OpenLfxOrder.Execute(6)  invalid MarketInfo() data: "+ errorMsg, ERR_INVALID_MARKET_DATA));
       }
 
       // (4.4) Lotsize berechnen
       double lotValue = bid/tickSize * tickValue;                                      // Value eines Lots in Account-Currency
       double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue ist die ungehebelte Lotsize (Hebel 1:1) und wird mit leverage gehebelt
-      exactLots  [i]  = units * unitSize;                                              // exactLots zunächst auf Vielfaches von MODE_LOTSTEP runden
+      exactLots  [i]  = units * unitSize;                                              // exactLots zunï¿½chst auf Vielfaches von MODE_LOTSTEP runden
       roundedLots[i]  = NormalizeDouble(MathRound(exactLots[i]/lotStep) * lotStep, CountDecimals(lotStep));
 
-      // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorithmus in ChartInfos-Indikator)
+      // Schrittweite mit zunehmender Lotsize Ã¼ber MODE_LOTSTEP hinaus erhï¿½hen (entspricht Algorithmus in ChartInfos-Indikator)
       if      (roundedLots[i] <=    0.3 ) {                                                                                                       }   // Abstufung max. 6.7% je Schritt
       else if (roundedLots[i] <=    0.75) { if (lotStep <   0.02) roundedLots[i] = NormalizeDouble(MathRound(roundedLots[i]/  0.02) *   0.02, 2); }   // 0.3-0.75: Vielfaches von   0.02
       else if (roundedLots[i] <=    1.2 ) { if (lotStep <   0.05) roundedLots[i] = NormalizeDouble(MathRound(roundedLots[i]/  0.05) *   0.05, 2); }   // 0.75-1.2: Vielfaches von   0.05
@@ -343,20 +343,20 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       // (4.5) Lotsize validieren
       if (GT(roundedLots[i], maxLot)) return(!catch("OpenLfxOrder.Execute(7)  #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
-      // (4.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.8) hinterlegen
+      // (4.6) bei zu geringer Equity Leverage erhï¿½hen und Details fï¿½r Warnung in (3.8) hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, ", ", symbols[i], " ", NumberToStr(roundedLots[i], ".+"), " instead of ", exactLots[i], " lot");
       }
       logDebug("OpenLfxOrder.Execute(8)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
 
-      // (4.7) tatsächlich zu handelnde Units berechnen (nach Auf-/Abrunden)
+      // (4.7) tatsï¿½chlich zu handelnde Units berechnen (nach Auf-/Abrunden)
       realUnits += (roundedLots[i] / exactLots[i] / symbolsSize);
    }
    realUnits = NormalizeDouble(realUnits * units, 1);
    logDebug("OpenLfxOrder.Execute(9)  units: parameter="+ DoubleToStr(units, 1) +"  resulting="+ DoubleToStr(realUnits, 1));
 
-   // (4.8) bei Leverageüberschreitung Info loggen, jedoch nicht abbrechen
+   // (4.8) bei Leverageï¿½berschreitung Info loggen, jedoch nicht abbrechen
    if (StringLen(overLeverageMsg) > 0)
       logDebug("OpenLfxOrder.Execute(10)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StrSubstr(overLeverageMsg, 2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
 
@@ -368,7 +368,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    }
 
 
-   // (6) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
+   // (6) Teilorders ausfï¿½hren und dabei Gesamt-OpenPrice berechnen
    string comment = lo.Comment(lo);
       if ( StrStartsWith(comment, lfxCurrency)) comment = StrRightFrom(comment, lfxCurrency);
       if ( StrStartsWith(comment, "."        )) comment = StrSubstr(comment, 1);
@@ -426,7 +426,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
  * Speichert die Order.
  *
  * @param  _In_ LFX_ORDER lo[]        - LFX-Order
- * @param  _In_ bool      isOpenError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
+ * @param  _In_ bool      isOpenError - ob bei der Orderausfï¿½hrung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
  *
  * @return bool - success status
  */
@@ -447,8 +447,8 @@ bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
 
       // ERR_CONCURRENT_MODIFICATION behandeln
       // -------------------------------------
-      //  - Kann nur dann behandelt werden, wenn diese Änderung das Setzen von LFX_ORDER.OpenError war.
-      //  - Bedeutet, daß ein Trade-Delay auftrat, der woanders bereits als Timeout (also als OpenError) interpretiert wurde.
+      //  - Kann nur dann behandelt werden, wenn diese ï¿½nderung das Setzen von LFX_ORDER.OpenError war.
+      //  - Bedeutet, daï¿½ ein Trade-Delay auftrat, der woanders bereits als Timeout (also als OpenError) interpretiert wurde.
 
       // (2.1) Order neu einlesen und gespeicherten OpenError-Status auswerten
       /*LFX_ORDER*/int stored[];
@@ -456,7 +456,7 @@ bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
       if (result != 1) { if (!result) return(last_error); return(!catch("OpenLfxOrder.Save(2)->LFX.GetOrder()  #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
       if (!lo.IsOpenError(stored))                        return(!catch("OpenLfxOrder.Save(3)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
-      // (2.2) gespeicherten OpenError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
+      // (2.2) gespeicherten OpenError immer Ã¼berschreiben (auch bei fehlgeschlagener Ausfï¿½hrung), um ein evt. "Mehr" an Ausfï¿½hrungsdetails nicht zu verlieren
       if (!isOpenError) logDebug("OpenLfxOrder.Save(4)  over-writing stored LFX_ORDER.OpenError");
 
       lo.setVersion(lo, lo.Version(stored));
@@ -470,7 +470,7 @@ bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
 
 
 /**
- * Schickt eine Benachrichtigung über Erfolg/Mißerfolg der Orderausführung an die interessierten Listener.
+ * Schickt eine Benachrichtigung Ã¼ber Erfolg/Miï¿½erfolg der Orderausfï¿½hrung an die interessierten Listener.
  *
  * @param  _In_ LFX_ORDER lo[] - LFX-Order
  *
@@ -482,19 +482,19 @@ bool OpenLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
 
 
 /**
- * Schließt eine offene LFX-Position.
+ * Schlieï¿½t eine offene LFX-Position.
  *
  * @param  _In_ int    ticket  - LFX-Ticket der Position
- * @param  _In_ string trigger - Trigger-Message des Schließens (default: keine)
+ * @param  _In_ string trigger - Trigger-Message des Schlieï¿½ens (default: keine)
  *
  * @return bool - success status
  */
 bool CloseLfxOrder(int ticket, string trigger) {
-   // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
+   // Um die Implementierung Ã¼bersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
    // in eine eigene Funktion ausgelagert:
    //
-   //  - Position schließen
-   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION berücksichtigen
+   //  - Position schlieï¿½en
+   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION berï¿½cksichtigen
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
 
    // Order holen
@@ -517,7 +517,7 @@ bool CloseLfxOrder(int ticket, string trigger) {
 
 
 /**
- * Schließt die Position.
+ * Schlieï¿½t die Position.
  *
  * @param  _In_ LFX_ORDER lo[] - LFX-Order
  *
@@ -527,7 +527,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    if (!lo.IsOpenPosition(lo)) return(!catch("CloseLfxOrder.Execute(1)  #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPendingOrder(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
 
 
-   // (1) zu schließende Einzelpositionen selektieren
+   // (1) zu schlieï¿½ende Einzelpositionen selektieren
    int tickets[]; ArrayResize(tickets, 0);
    int orders = OrdersTotal();
 
@@ -543,7 +543,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    if (!ticketsSize) return(!catch("CloseLfxOrder.Execute(2)  #"+ lo.Ticket(lo) +" no matching open subpositions found ", ERR_RUNTIME_ERROR));
 
 
-   // (2) Einzelpositionen schließen
+   // (2) Einzelpositionen schlieï¿½en
    int   slippage    = 1;
    color markerColor = CLR_NONE;
    int   oeFlags     = NULL;
@@ -592,7 +592,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
  * Speichert die Order.
  *
  * @param  _In_ LFX_ORDER lo[]         - LFX-Order
- * @param  _In_ bool      isCloseError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
+ * @param  _In_ bool      isCloseError - ob bei der Orderausfï¿½hrung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
  *
  * @return bool - success status
  */
@@ -612,8 +612,8 @@ bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
 
       // ERR_CONCURRENT_MODIFICATION behandeln
       // -------------------------------------
-      //  - Kann nur dann behandelt werden, wenn diese Änderung das Setzen von LFX_ORDER.CloseError war.
-      //  - Bedeutet, daß ein Trade-Delay auftrat, der woanders bereits als Timeout (also als CloseError) interpretiert wurde.
+      //  - Kann nur dann behandelt werden, wenn diese ï¿½nderung das Setzen von LFX_ORDER.CloseError war.
+      //  - Bedeutet, daï¿½ ein Trade-Delay auftrat, der woanders bereits als Timeout (also als CloseError) interpretiert wurde.
 
       // (2.1) Order neu einlesen und gespeicherten CloseError-Status auswerten
       /*LFX_ORDER*/int stored[];
@@ -622,7 +622,7 @@ bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
       if (!lo.IsCloseError(stored))                       return(!catch("CloseLfxOrder.Save(3)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
 
-      // (2.2) gespeicherten CloseError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
+      // (2.2) gespeicherten CloseError immer Ã¼berschreiben (auch bei fehlgeschlagener Ausfï¿½hrung), um ein evt. "Mehr" an Ausfï¿½hrungsdetails nicht zu verlieren
       if (!isCloseError) logDebug("CloseLfxOrder.Save(4)  over-writing stored LFX_ORDER.CloseError");
 
       lo.setVersion(lo, lo.Version(stored));
@@ -636,7 +636,7 @@ bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
 
 
 /**
- * Schickt eine Benachrichtigung über Erfolg/Mißerfolg der Orderausführung ans LFX-Terminal.
+ * Schickt eine Benachrichtigung Ã¼ber Erfolg/Miï¿½erfolg der Orderausfï¿½hrung ans LFX-Terminal.
  *
  * @param  _In_ LFX_ORDER lo[] - LFX-Order
  *

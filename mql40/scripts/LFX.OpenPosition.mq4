@@ -1,7 +1,7 @@
 /**
- * Öffnet eine LFX-Position.
+ * ï¿½ffnet eine LFX-Position.
  *
- * TODO: Fehler im Position-Marker, wenn gleichzeitig zwei Orders erzeugt und die finalen Bestätigungsdialoge gehalten
+ * TODO: Fehler im Position-Marker, wenn gleichzeitig zwei Orders erzeugt und die finalen Bestï¿½tigungsdialoge gehalten
  *       werden (2 x CHF.3).
  */
 #include <rsf/stddefines.mqh>
@@ -13,7 +13,7 @@ int __DeinitFlags[];
 
 extern string LFX.Currency = "";                                     // AUD | CAD | CHF | EUR | GBP | JPY | NZD | USD
 extern string Direction    = "long | short";                         // B[uy] | S[ell] | L[ong] | S[hort]
-extern double Units        = 0.2;                                    // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 3.0)
+extern double Units        = 0.2;                                    // Positionsgrï¿½ï¿½e (Vielfaches von 0.1 im Bereich von 0.1 bis 3.0)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -127,10 +127,10 @@ int onStart() {
       double minLot    = MarketInfo(symbols[i], MODE_MINLOT   );
       double maxLot    = MarketInfo(symbols[i], MODE_MAXLOT   );
       double lotStep   = MarketInfo(symbols[i], MODE_LOTSTEP  );
-      if (IsError(catch("onStart(1)  \""+ symbols[i] +"\"")))                          // TODO: auf ERR_SYMBOL_NOT_AVAILABLE prüfen
+      if (IsError(catch("onStart(1)  \""+ symbols[i] +"\"")))                          // TODO: auf ERR_SYMBOL_NOT_AVAILABLE prï¿½fen
          return(last_error);
 
-      // (2.2) Werte auf ungültige MarketInfo()-Daten prüfen
+      // (2.2) Werte auf ungï¿½ltige MarketInfo()-Daten prï¿½fen
       errorMsg = "";
       if      (LT(bid, 0.5)          || GT(bid, 300)      ) errorMsg = "Bid(\""      + symbols[i] +"\") = "+ NumberToStr(bid      , ".+");
       else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = "TickSize(\"" + symbols[i] +"\") = "+ NumberToStr(tickSize , ".+");
@@ -139,15 +139,15 @@ int onStart() {
       else if (LT(maxLot, 50)                             ) errorMsg = "MaxLot(\""   + symbols[i] +"\") = "+ NumberToStr(maxLot   , ".+");
       else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = "LotStep(\""  + symbols[i] +"\") = "+ NumberToStr(lotStep  , ".+");
 
-      // (2.3) ungültige MarketInfo()-Daten behandeln
+      // (2.3) ungï¿½ltige MarketInfo()-Daten behandeln
       if (StringLen(errorMsg) > 0) {
          if (retry < 3) {                                                              // 3 stille Versuche, korrekte Werte zu lesen
-            Sleep(200);                                                                // bei Mißerfolg jeweils xxx Millisekunden warten
+            Sleep(200);                                                                // bei Miï¿½erfolg jeweils xxx Millisekunden warten
             i = -1;
             retry++;
             continue;
          }
-         PlaySoundEx("Windows Notify.wav");                                            // bei weiterem Mißerfolg Bestätigung für Fortsetzung einholen
+         PlaySoundEx("Windows Notify.wav");                                            // bei weiterem Miï¿½erfolg Bestï¿½tigung fï¿½r Fortsetzung einholen
          button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, WindowExpertName(), MB_ICONINFORMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             i = -1;
@@ -159,10 +159,10 @@ int onStart() {
       // (2.4) Lotsize berechnen
       double lotValue = bid/tickSize * tickValue;                                      // Value eines Lots in Account-Currency
       double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue ist die ungehebelte Lotsize (Hebel 1:1) und wird mit leverage gehebelt
-      exactLots  [i]  = Units * unitSize;                                              // exactLots zunächst auf Vielfaches von MODE_LOTSTEP runden
+      exactLots  [i]  = Units * unitSize;                                              // exactLots zunï¿½chst auf Vielfaches von MODE_LOTSTEP runden
       roundedLots[i]  = NormalizeDouble(MathRound(exactLots[i]/lotStep) * lotStep, CountDecimals(lotStep));
 
-      // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorithmus in ChartInfos-Indikator)
+      // Schrittweite mit zunehmender Lotsize Ã¼ber MODE_LOTSTEP hinaus erhï¿½hen (entspricht Algorithmus in ChartInfos-Indikator)
       if      (roundedLots[i] <=    0.3 ) {                                                                                                       }   // Abstufung maximal 6.7% je Schritt
       else if (roundedLots[i] <=    0.75) { if (lotStep <   0.02) roundedLots[i] = NormalizeDouble(MathRound(roundedLots[i]/  0.02) *   0.02, 2); }   // 0.3-0.75: Vielfaches von   0.02
       else if (roundedLots[i] <=    1.2 ) { if (lotStep <   0.05) roundedLots[i] = NormalizeDouble(MathRound(roundedLots[i]/  0.05) *   0.05, 2); }   // 0.75-1.2: Vielfaches von   0.05
@@ -180,7 +180,7 @@ int onStart() {
       // (2.5) Lotsize validieren
       if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)  too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
-      // (2.6) bei zu geringer Equity MinLotSize verwenden und Details für spätere Warnung hinterlegen
+      // (2.6) bei zu geringer Equity MinLotSize verwenden und Details fï¿½r spï¿½tere Warnung hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, NL, GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", exactLots[i], " lot");
@@ -193,7 +193,7 @@ int onStart() {
    realUnits = NormalizeDouble(realUnits * Units, 1);
    logDebug("onStart(5)  units: input="+ DoubleToStr(Units, 1) +"  result="+ DoubleToStr(realUnits, 1));
 
-   // (2.8) bei Leverageüberschreitung ausdrückliche Bestätigung einholen
+   // (2.8) bei Leverageï¿½berschreitung ausdrï¿½ckliche Bestï¿½tigung einholen
    if (StringLen(overLeverageMsg) > 0) {
       PlaySoundEx("Windows Notify.wav");
       button = MessageBox("Not enough money! The following positions will over-leverage:"+ NL
@@ -232,13 +232,13 @@ int onStart() {
    string comment     = lfxCurrency +"."+ marker;
 
 
-   // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist               TODO: System-weites Lock setzen
+   // (5) LFX-Order sperren, bis alle Teilpositionen geï¿½ffnet sind und die Order gespeichert ist               TODO: System-weites Lock setzen
    string mutex = "mutex.LFX.#"+ magicNumber;
    if (!AquireLock(mutex))
       return(ERR_RUNTIME_ERROR);
 
 
-   // (6) Teilorders ausführen und Gesamt-OpenPrice berechnen
+   // (6) Teilorders ausfï¿½hren und Gesamt-OpenPrice berechnen
    double openPrice = 1.0;
 
    for (i=0; i < symbolsSize; i++) {
@@ -249,7 +249,7 @@ int onStart() {
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
       int oe[], oeFlags    = NULL;
-                                                                                       // vor Trade-Request auf evt. aufgetretene Fehler prüfen
+                                                                                       // vor Trade-Request auf evt. aufgetretene Fehler prï¿½fen
       if (IsError(catch("onStart8)"))) return(_last_error(ReleaseLock(mutex)));
 
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
@@ -268,7 +268,7 @@ int onStart() {
    datetime now.fxt = TimeFXT(); if (!now.fxt) return(_last_error(logInfo("onStart(9)->TimeFXT() => 0", ERR_RUNTIME_ERROR), ReleaseLock(mutex)));
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER_size);
-      lo.setTicket           (lo, magicNumber);                                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setTicket           (lo, magicNumber);                                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden kï¿½nnen
       lo.setType             (lo, direction  );
       lo.setUnits            (lo, realUnits  );
       lo.setOpenTime         (lo, now.fxt    );

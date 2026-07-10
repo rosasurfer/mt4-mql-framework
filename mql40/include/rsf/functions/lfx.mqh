@@ -28,7 +28,7 @@ int    lfxCurrencyId;
 int    lfxOrders[][LFX_ORDER_intSize];                         // Array von LFX_ORDERs
 
 // Trade-Terminal -> LFX-Terminal: PL-Messages
-string  qc.TradeToLfxChannels[9];                              // ein Channel je LFX-Währung bzw. LFX-Chart
+string  qc.TradeToLfxChannels[9];                              // ein Channel je LFX-Wï¿½hrung bzw. LFX-Chart
 int    hQC.TradeToLfxSenders [9];                              // jeweils ein Sender
 string  qc.TradeToLfxChannel = "";                             // Channel des aktuellen LFX-Charts (einer)
 int    hQC.TradeToLfxReceiver;                                 // Receiver des aktuellen LFX-Charts (einer)
@@ -148,7 +148,7 @@ bool LFX.IsMyOrder() {
 
 
 /**
- * Gibt die Currency-ID der MagicNumber einer LFX-Order zurück.
+ * Gibt die Currency-ID der MagicNumber einer LFX-Order zurï¿½ck.
  *
  * @param  int magicNumber
  *
@@ -160,7 +160,7 @@ int LFX.CurrencyId(int magicNumber) {
 
 
 /**
- * Gibt die Instanz-ID der MagicNumber einer LFX-Order zurück.
+ * Gibt die Instanz-ID der MagicNumber einer LFX-Order zurï¿½ck.
  *
  * @param  int magicNumber
  *
@@ -174,7 +174,7 @@ int LFX.InstanceId(int magicNumber) {
 /**
  * Erzeugt eine neue Instanz-ID.
  *
- * @param  LFX_ORDER orders[] - Array von LFX_ORDERs. Die generierte Instanz-ID wird unter Berücksichtigung dieser Orders eindeutig sein.
+ * @param  LFX_ORDER orders[] - Array von LFX_ORDERs. Die generierte Instanz-ID wird unter Berï¿½cksichtigung dieser Orders eindeutig sein.
  *
  * @return int - Instanz-ID im Bereich 1-1023 (10 bit)
  */
@@ -192,7 +192,7 @@ int LFX.CreateInstanceId(/*LFX_ORDER*/int orders[][]) {
       while (id > 1023) {
          id >>= 1;
       }
-      if (IntInArray(ids, id))                                       // sicherstellen, daß die ID nicht gerade benutzt wird
+      if (IntInArray(ids, id))                                       // sicherstellen, daï¿½ die ID nicht gerade benutzt wird
          id = 0;
    }
    return(id);
@@ -200,10 +200,10 @@ int LFX.CreateInstanceId(/*LFX_ORDER*/int orders[][]) {
 
 
 /**
- * Generiert eine neue LFX-Ticket-ID (Wert für OrderMagicNumber().
+ * Generiert eine neue LFX-Ticket-ID (Wert fï¿½r OrderMagicNumber().
  *
- * @param  LFX_ORDER orders[] - Array von LFX_ORDERs. Das generierte Ticket wird unter Berücksichtigung dieser Orders eindeutig sein.
- * @param  string    currency - LFX-Währung, für die eine Ticket-ID erzeugt werden soll.
+ * @param  LFX_ORDER orders[] - Array von LFX_ORDERs. Das generierte Ticket wird unter Berï¿½cksichtigung dieser Orders eindeutig sein.
+ * @param  string    currency - LFX-Wï¿½hrung, fï¿½r die eine Ticket-ID erzeugt werden soll.
  *
  * @return int - LFX-Ticket-ID oder NULL, falls ein Fehler auftrat
  */
@@ -216,10 +216,10 @@ int LFX.CreateMagicNumber(/*LFX_ORDER*/int orders[][], string currency) {
 
 
 /**
- * Gibt den größten existierenden Marker der offenen Orders des angegebenen Symbols zurück.
+ * Gibt den grï¿½ï¿½ten existierenden Marker der offenen Orders des angegebenen Symbols zurï¿½ck.
  *
  * @param  LFX_ORDER orders[]   - Array von LFX_ORDERs
- * @param  int       currencyId - Währungs-ID
+ * @param  int       currencyId - Wï¿½hrungs-ID
  *
  * @return int - positive Ganzzahl oder 0, falls keine markierte Order existiert
  */
@@ -245,10 +245,10 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
  * Ob die angegebene LFX-Order eines ihrer konfigurierten Limite erreicht hat.
  *
  * @param  _In_     LFX_ORDER orders[] - Array von LFX-ORDERs
- * @param  _In_     int       i        - Index der zu prüfenden Order innerhalb des übergebenen LFX_ORDER-Arrays
- * @param  _In_opt_ double    bid      - zur Prüfung zu benutzender Bid-Preis bei Price-Limits  (NULL:        keine Limitprüfung gegen den Bid-Preis)
- * @param  _In_opt_ double    ask      - zur Prüfung zu benutzender Ask-Preis bei Price-Limits  (NULL:        keine Limitprüfung gegen den Ask-Preis)
- * @param  _In_opt_ double    profit   - zur Prüfung zu benutzender PL-Betrag bei Profit-Limits (EMPTY_VALUE: keine Limitprüfung von Profitbeträgen )
+ * @param  _In_     int       i        - Index der zu prï¿½fenden Order innerhalb des Ã¼bergebenen LFX_ORDER-Arrays
+ * @param  _In_opt_ double    bid      - zur Prï¿½fung zu benutzender Bid-Preis bei Price-Limits  (NULL:        keine Limitprï¿½fung gegen den Bid-Preis)
+ * @param  _In_opt_ double    ask      - zur Prï¿½fung zu benutzender Ask-Preis bei Price-Limits  (NULL:        keine Limitprï¿½fung gegen den Ask-Preis)
+ * @param  _In_opt_ double    profit   - zur Prï¿½fung zu benutzender PL-Betrag bei Profit-Limits (EMPTY_VALUE: keine Limitprï¿½fung von Profitbetrï¿½gen )
  *
  * @return int - Triggerstatus, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
  *                              OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
@@ -256,13 +256,13 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
  *                              TAKEPROFIT_LIMIT_TRIGGERED: wenn ein TakeProfit-Limit erreicht wurde
  *                              0 (zero):                   wenn ein Fehler auftrat
  *
- * Nachdem ein Limit getriggert wurde, wird bis zum Eintreffen der Ausführungsbestätigung derselbe Triggerstatus zurückgegeben.
+ * Nachdem ein Limit getriggert wurde, wird bis zum Eintreffen der Ausfï¿½hrungsbestï¿½tigung derselbe Triggerstatus zurï¿½ckgegeben.
  */
 int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, double profit) {
    if (los.IsClosed(orders, i)) return(NO_LIMIT_TRIGGERED);
 
 
-   // (1) fehlerhafte Orders und bereits getriggerte Limits (auf Ausführungsbestätigung wartende Order) abfangen
+   // (1) fehlerhafte Orders und bereits getriggerte Limits (auf Ausfï¿½hrungsbestï¿½tigung wartende Order) abfangen
    int type = los.Type(orders, i);
    switch (type) {
       case OP_BUY_LIMIT :
@@ -288,7 +288,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
    }
 
 
-   // (2) Open-Limits prüfen
+   // (2) Open-Limits prï¿½fen
    int digits = los.Digits(orders, i);
    switch (type) {
       case OP_BUY_LIMIT:
@@ -309,7 +309,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
    }
 
 
-   // (3) Close-Limits prüfen
+   // (3) Close-Limits prï¿½fen
    if (los.IsStopLoss(orders, i)) {
       switch (type) {
          case OP_BUY:
@@ -379,10 +379,10 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
 
 
 /**
- * Verarbeitet das getriggerte Limit einer LFX-Order. Schickt dem TradeTerminal ein TradeCommand zur Orderausführung und prüft diese.
+ * Verarbeitet das getriggerte Limit einer LFX-Order. Schickt dem TradeTerminal ein TradeCommand zur Orderausfï¿½hrung und prï¿½ft diese.
  *
  * @param  LFX_ORDER orders[]  - Array von LFX_ORDERs
- * @param  int       i         - Index der getriggerten Order innerhalb des übergebenen LFX_ORDER-Arrays
+ * @param  int       i         - Index der getriggerten Order innerhalb des Ã¼bergebenen LFX_ORDER-Arrays
  * @param  int       limitType - Typ des getriggerten Limits
  *
  * @return bool - success status
@@ -408,21 +408,21 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    }
 
    /*
-   Überblick:
+   Ã¼berblick:
    ----------
    if (!triggerTime) {
-      // (1) Das Limit wurde gerade getriggert (während des aktuellen Ticks), die Orderausführung noch nicht eingeleitet.
+      // (1) Das Limit wurde gerade getriggert (wï¿½hrend des aktuellen Ticks), die Orderausfï¿½hrung noch nicht eingeleitet.
    }
    else if (now < triggerTime + 30*SECONDS) {
-      // (2) Die Orderausführung wurde eingeleitet und wir warten auf die Ausführungsbestätigung.
+      // (2) Die Orderausfï¿½hrung wurde eingeleitet und wir warten auf die Ausfï¿½hrungsbestï¿½tigung.
    }
    else {
-      // (3) Die Orderausführung wurde eingeleitet und die Ausführungsbestätigung ist überfällig.
+      // (3) Die Orderausfï¿½hrung wurde eingeleitet und die Ausfï¿½hrungsbestï¿½tigung ist Ã¼berfï¿½llig.
    }
    */
 
-   // Für Fälle (1) und (3) die Bestandteile eines Betrags-Limits einer Close-Logmessage definieren
-   if (now >= triggerTime + 30*SECONDS) {                                              // schließt !triggerTime mit ein
+   // Fï¿½r Fï¿½lle (1) und (3) die Bestandteile eines Betrags-Limits einer Close-Logmessage definieren
+   if (now >= triggerTime + 30*SECONDS) {                                              // schlieï¿½t !triggerTime mit ein
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i)) {
             if (los.IsStopLossValue  (orders, i)) { limitValue   = DoubleToStr(los.StopLossValue  (orders, i), 2);      currentValue   = DoubleToStr(los.Profit(orders, i), 2); }
@@ -441,7 +441,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
 
 
    if (!triggerTime) {
-      // (1.1) Die Orderausführung wurde noch nicht eingeleitet. Logmessage zusammenstellen und loggen
+      // (1.1) Die Orderausfï¿½hrung wurde noch nicht eingeleitet. Logmessage zusammenstellen und loggen
       if (limitType == OPEN_LIMIT_TRIGGERED) { trigger = StrToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i))     { trigger = "SL amount of "+ limitValue + separator + limitPercent +" triggered";                                                                   logMsg = trigger +" (current="+ currentValue + separator + currentPercent +")";           }
@@ -454,7 +454,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       logMsg = symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg;
       logDebug("LFX.SendTradeCommand(3)  "+ logMsg);
 
-      // (1.2) Auslösen speichern und TradeCommand verschicken
+      // (1.2) Auslï¿½sen speichern und TradeCommand verschicken
       if (limitType == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (orders, i, now );
       else {                                        los.setCloseTriggerTime   (orders, i, now );
          if (limitType == STOPLOSS_LIMIT_TRIGGERED) los.setStopLossTriggered  (orders, i, true);
@@ -469,15 +469,15 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       if (!QC.SendTradeCommand(tradeCmd)) {
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
          else                                   los.setCloseTime(orders, i, -now);     // in der Order speichern. Ansonsten wartet die Funktion auf eine
-         LFX.SaveOrder(orders, i);                                                     // Ausführungsbestätigung, die nicht kommen kann.
+         LFX.SaveOrder(orders, i);                                                     // Ausfï¿½hrungsbestï¿½tigung, die nicht kommen kann.
          return(false);
       }
    }
    else if (now < triggerTime + 30*SECONDS) {
-      // (2) Die Orderausführung wurde eingeleitet und wir warten auf die Ausführungsbestätigung.
+      // (2) Die Orderausfï¿½hrung wurde eingeleitet und wir warten auf die Ausfï¿½hrungsbestï¿½tigung.
    }
    else {
-      // (3) Die Orderausführung wurde eingeleitet und die Ausführungsbestätigung ist überfällig.
+      // (3) Die Orderausfï¿½hrung wurde eingeleitet und die Ausfï¿½hrungsbestï¿½tigung ist Ã¼berfï¿½llig.
       // Logmessage zusammenstellen
       if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ StrToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
@@ -493,19 +493,19 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       int result = LFX.GetOrder(los.Ticket(orders, i), order); if (result != 1) return(!catch("LFX.SendTradeCommand(4)->LFX.GetOrder(ticket="+ los.Ticket(orders, i) +") => "+ result, ERR_RUNTIME_ERROR));
 
       if (lo.Version(order) != los.Version(orders, i)) {                               // Gespeicherte Version ist modifiziert (kann nur neuer sein)
-         // Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
-         // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
-         logDebug("LFX.SendTradeCommand(5)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");    // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
+         // Die Order wurde ausgefï¿½hrt oder ein Fehler trat auf. In beiden Fï¿½llen erfolgte jedoch keine Benachrichtigung.
+         // Diese Prï¿½fung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
+         logDebug("LFX.SendTradeCommand(5)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");    // TODO: !!! Keine Warnung, solange mï¿½glicherweise gar kein Receiver existiert.
          if (limitType == OPEN_LIMIT_TRIGGERED) logDebug("LFX.SendTradeCommand(6)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
          else                                   logDebug("LFX.SendTradeCommand(7)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
-         ArraySetInts(orders, i, order);                                               // lokale Order mit neu eingelesener Order überschreiben
+         ArraySetInts(orders, i, order);                                               // lokale Order mit neu eingelesener Order Ã¼berschreiben
       }
       else {
-         // Order ist unverändert, Fehler melden und speichern.
+         // Order ist unverï¿½ndert, Fehler melden und speichern.
          logWarn("LFX.SendTradeCommand(8)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");
-         if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Sollte die Order nach dieser Zeit doch noch erfolgreich ausgeführt werden, wird dieser
-         else                                   los.setCloseTime(orders, i, -now);     // Fehler mit dem letztendlichen Erfolg überschrieben. Dies tritt z.B. auf, wenn der
-         if (!LFX.SaveOrder(orders, i)) return(false);                                 // Trade-Server vor der letztendlichen Ausführung mehrere Minuten hängt (z.B. Demo-Server).
+         if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Sollte die Order nach dieser Zeit doch noch erfolgreich ausgefï¿½hrt werden, wird dieser
+         else                                   los.setCloseTime(orders, i, -now);     // Fehler mit dem letztendlichen Erfolg Ã¼berschrieben. Dies tritt z.B. auf, wenn der
+         if (!LFX.SaveOrder(orders, i)) return(false);                                 // Trade-Server vor der letztendlichen Ausfï¿½hrung mehrere Minuten hï¿½ngt (z.B. Demo-Server).
       }
    }
    return(true);
@@ -513,9 +513,9 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
 
 
 /**
- * Gibt eine LFX-Order des TradeAccounts zurück.
+ * Gibt eine LFX-Order des TradeAccounts zurï¿½ck.
  *
- * @param  int ticket - Ticket der zurückzugebenden Order
+ * @param  int ticket - Ticket der zurï¿½ckzugebenden Order
  * @param  int lo[]   - struct LFX_ORDER zur Aufnahme der gelesenen Daten
  *
  * @return int - Erfolgsstatus: +1, wenn die Order erfolgreich gelesen wurde
@@ -707,10 +707,10 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    if (_version <= 0)                                 return(!catch("LFX.GetOrder(41)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
 
-   // (3) Orderdaten in übergebenes Array schreiben (erst nach vollständiger erfolgreicher Validierung)
+   // (3) Orderdaten in Ã¼bergebenes Array schreiben (erst nach vollstï¿½ndiger erfolgreicher Validierung)
    InitializeByteBuffer(lo, LFX_ORDER_size);
 
-   lo.setTicket             (lo,  ticket             );              // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+   lo.setTicket             (lo,  ticket             );              // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden kï¿½nnen
    lo.setType               (lo, _orderType          );
    lo.setUnits              (lo, _orderUnits         );
    lo.setLots               (lo,  NULL               );
@@ -747,22 +747,22 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
 /**
- * Gibt mehrere LFX-Orders des TradeAccounts zurück.
+ * Gibt mehrere LFX-Orders des TradeAccounts zurï¿½ck.
  *
- * @param  string currency    - LFX-Währung der Orders (default: alle Währungen)
- * @param  int    fSelection  - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
- *                              OF_OPEN            - gibt alle offenen Tickets zurück:                   Pending-Orders und offene Positionen, analog zu OrderSelect(MODE_TRADES)
- *                              OF_CLOSED          - gibt alle geschlossenen Tickets zurück:             Trade-History, analog zu OrderSelect(MODE_HISTORY)
- *                              OF_PENDINGORDER    - gibt alle Orders mit aktivem OpenLimit zurück:      OP_BUY_LIMIT, OP_BUY_STOP, OP_SELL_LIMIT, OP_SELL_STOP
- *                              OF_OPENPOSITION    - gibt alle offenen Positionen zurück
- *                              OF_PENDINGPOSITION - gibt alle Positionen mit aktivem CloseLimit zurück: StopLoss, TakeProfit
+ * @param  string currency    - LFX-Wï¿½hrung der Orders (default: alle Wï¿½hrungen)
+ * @param  int    fSelection  - Kombination von Selection-Flags (default: alle Orders werden zurï¿½ckgegeben)
+ *                              OF_OPEN            - gibt alle offenen Tickets zurï¿½ck:                   Pending-Orders und offene Positionen, analog zu OrderSelect(MODE_TRADES)
+ *                              OF_CLOSED          - gibt alle geschlossenen Tickets zurï¿½ck:             Trade-History, analog zu OrderSelect(MODE_HISTORY)
+ *                              OF_PENDINGORDER    - gibt alle Orders mit aktivem OpenLimit zurï¿½ck:      OP_BUY_LIMIT, OP_BUY_STOP, OP_SELL_LIMIT, OP_SELL_STOP
+ *                              OF_OPENPOSITION    - gibt alle offenen Positionen zurï¿½ck
+ *                              OF_PENDINGPOSITION - gibt alle Positionen mit aktivem CloseLimit zurï¿½ck: StopLoss, TakeProfit
  * @param  LFX_ORDER orders[] - LFX_ORDER-Array zur Aufnahme der gelesenen Daten
  *
- * @return int - Anzahl der zurückgegebenen Orders oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - Anzahl der zurï¿½ckgegebenen Orders oder EMPTY (-1), falls ein Fehler auftrat
  */
 int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) {
    // (1) Parametervaliderung
-   int currencyId = 0;                                                     // 0: alle Währungen
+   int currencyId = 0;                                                     // 0: alle Wï¿½hrungen
    if (currency == "0")                                                    // (string) NULL
       currency = "";
 
@@ -770,9 +770,9 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
       currencyId = GetCurrencyId(currency); if (!currencyId) return(-1);
    }
 
-   if (!fSelection)                                                        // ohne Angabe wird alles zurückgeben
+   if (!fSelection)                                                        // ohne Angabe wird alles zurï¿½ckgeben
       fSelection  = OF_OPEN | OF_CLOSED;
-   if ((fSelection & OF_PENDINGORDER) && (fSelection & OF_OPENPOSITION))   // sind OF_PENDINGORDER und OF_OPENPOSITION gesetzt, werden alle OF_OPEN zurückgegeben
+   if ((fSelection & OF_PENDINGORDER) && (fSelection & OF_OPENPOSITION))   // sind OF_PENDINGORDER und OF_OPENPOSITION gesetzt, werden alle OF_OPEN zurï¿½ckgegeben
       fSelection |= OF_OPEN;
 
    ArrayResize(orders, 0);
@@ -784,7 +784,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
    string keys[];
    int keysSize = GetIniKeys(file, "LFX-Orders", keys);
 
-   // (3) Orders nacheinander einlesen und gegen Currency und Selektionflags prüfen
+   // (3) Orders nacheinander einlesen und gegen Currency und Selektionflags prï¿½fen
    /*LFX_ORDER*/int order[];
 
    for (int i=0; i < keysSize; i++) {
@@ -828,7 +828,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
          break;
       }
       if (match)
-         ArrayPushInts(orders, order);                                     // bei Match Order an übergebenes LFX_ORDER-Array anfügen
+         ArrayPushInts(orders, order);                                     // bei Match Order an Ã¼bergebenes LFX_ORDER-Array anfï¿½gen
    }
    ArrayResize(keys,  0);
    ArrayResize(order, 0);
@@ -845,12 +845,12 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
  * @param  LFX_ORDER orders[] - eine einzelne LFX_ORDER oder ein Array von LFX_ORDERs
  * @param  int       index    - Arrayindex der zu speichernden Order, wenn orders[] ein LFX_ORDER[]-Array ist.
  *                              Der Parameter wird ignoriert, wenn orders[] eine einzelne LFX_ORDER ist.
- * @param  int       fCatch   - Flag mit leise zu setzenden Fehler, sodaß sie vom Aufrufer behandelt werden können
+ * @param  int       fCatch   - Flag mit leise zu setzenden Fehler, sodaï¿½ sie vom Aufrufer behandelt werden kï¿½nnen
  *
  * @return bool - success status
  */
 bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
-   // (1) übergebene Order in eine einzelne Order umkopieren (Parameter orders[] kann unterschiedliche Dimensionen haben)
+   // (1) Ã¼bergebene Order in eine einzelne Order umkopieren (Parameter orders[] kann unterschiedliche Dimensionen haben)
    int dims = ArrayDimension(orders); if (dims > 2)   return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(1)  invalid dimensions of parameter orders: "+ dims, ERR_INCOMPATIBLE_ARRAY, fCatch));
 
    /*LFX_ORDER*/int order[]; ArrayResize(order, LFX_ORDER_intSize);
@@ -923,7 +923,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
       return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(9)->WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
 
 
-   // (5) Version der übergebenen Order aktualisieren
+   // (5) Version der Ã¼bergebenen Order aktualisieren
    if (dims == 1) {  lo.setModificationTime(orders,        modificationTime);  lo.setVersion(orders,        version); }
    else           { los.setModificationTime(orders, index, modificationTime); los.setVersion(orders, index, version); }
    return(true);
@@ -931,7 +931,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
 
 
 /**
- * Speichert die übergebenen LFX-Orders in der .ini-Datei des TradeAccounts.
+ * Speichert die Ã¼bergebenen LFX-Orders in der .ini-Datei des TradeAccounts.
  *
  * @param  LFX_ORDER orders[] - Array von LFX_ORDERs
  *
@@ -948,8 +948,8 @@ bool LFX.SaveOrders(/*LFX_ORDER*/int orders[][]) {
 
 
 /**
- * "Exception"-Handler für in LFX.SaveOrder() aufgetretene Fehler. Die angegebenen abzufangenden Fehler werden nur "leise" gesetzt,
- * wodurch eine individuelle Behandlung durch den Aufrufer möglich wird.
+ * "Exception"-Handler fï¿½r in LFX.SaveOrder() aufgetretene Fehler. Die angegebenen abzufangenden Fehler werden nur "leise" gesetzt,
+ * wodurch eine individuelle Behandlung durch den Aufrufer mï¿½glich wird.
  *
  * @param  string message - Fehlermeldung
  * @param  int    error   - der aufgetretene Fehler
@@ -972,13 +972,13 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
       }
    }
 
-   // (2) für alle restlichen Fehler harten Laufzeitfehler auslösen
+   // (2) fï¿½r alle restlichen Fehler harten Laufzeitfehler auslï¿½sen
    return(catch(message, error));
 }
 
 
 /**
- * Sendet dem aktuellen TradeAccount per QuickChannel ein TradeCommand. Zum Empfang läuft im ChartInfos-Indikator eines jeden TradeAccounts
+ * Sendet dem aktuellen TradeAccount per QuickChannel ein TradeCommand. Zum Empfang lï¿½uft im ChartInfos-Indikator eines jeden TradeAccounts
  * ein entsprechender TradeCommand-Listener.
  *
  * @param  string cmd - Command
@@ -1012,7 +1012,7 @@ bool QC.SendTradeCommand(string cmd) {
 
 
 /**
- * Startet einen QuickChannel-Sender für TradeCommands.
+ * Startet einen QuickChannel-Sender fï¿½r TradeCommands.
  *
  * @return bool - success status
  */
@@ -1034,7 +1034,7 @@ bool QC.StartTradeCmdSender() {
             int result = QC_ChannelHasReceiverA(keys[i]);
             if (result == QC_CHECK_RECEIVER_OK)                   // Receiver ist da, Channel ist ok
                break;
-            if (result == QC_CHECK_CHANNEL_NONE) {                // orphaned Channeleintrag aus .ini-Datei löschen
+            if (result == QC_CHECK_CHANNEL_NONE) {                // orphaned Channeleintrag aus .ini-Datei lï¿½schen
                if (!DeleteIniKeyA(file, section, keys[i]))        // kann auftreten, wenn das TradeTerminal oder der dortige Indikator crashte (z.B. bei Recompile)
                   return(false);
                continue;
@@ -1061,7 +1061,7 @@ bool QC.StartTradeCmdSender() {
 
 
 /**
- * Stoppt einen QuickChannel-Sender für TradeCommands.
+ * Stoppt einen QuickChannel-Sender fï¿½r TradeCommands.
  *
  * @return bool - success status
  */
@@ -1081,7 +1081,7 @@ bool QC.StopTradeCmdSender() {
 
 
 /**
- * Startet einen QuickChannel-Receiver für TradeCommands.
+ * Startet einen QuickChannel-Receiver fï¿½r TradeCommands.
  *
  * @return bool - success status
  */
@@ -1112,7 +1112,7 @@ bool QC.StartTradeCmdReceiver() {
 
 
 /**
- * Stoppt einen QuickChannel-Receiver für TradeCommands.
+ * Stoppt einen QuickChannel-Receiver fï¿½r TradeCommands.
  *
  * @return bool - success status
  */
@@ -1126,7 +1126,7 @@ bool QC.StopTradeCmdReceiver() {
 
       // Receiver stoppen
       int hTmp = hQC.TradeCmdReceiver;
-                 hQC.TradeCmdReceiver = NULL;                        // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
+                 hQC.TradeCmdReceiver = NULL;                        // Handle immer zurï¿½cksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
 
       if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopTradeCmdReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ qc.TradeCmdChannel +"\")  error stopping receiver", ERR_WIN32_ERROR));
 
@@ -1139,7 +1139,7 @@ bool QC.StopTradeCmdReceiver() {
 /**
  * Sendet dem LFX-Terminal eine Orderbenachrichtigung.
  *
- * @param  int    cid - Currency-ID des für die Nachricht zu benutzenden Channels
+ * @param  int    cid - Currency-ID des fï¿½r die Nachricht zu benutzenden Channels
  * @param  string msg - Nachricht
  *
  * @return bool - success status
@@ -1158,7 +1158,7 @@ bool QC.SendOrderNotification(int cid, string msg) {
 
 
 /**
- * Startet einen QuickChannel-Sender für "TradeToLfxTerminal"-Messages. Das LFX-Terminal kann sich über diesen Channel auch selbst
+ * Startet einen QuickChannel-Sender fï¿½r "TradeToLfxTerminal"-Messages. Das LFX-Terminal kann sich Ã¼ber diesen Channel auch selbst
  * Messages schicken.
  *
  * @param  int cid - Currency-ID des zu startenden Channels
@@ -1182,7 +1182,7 @@ bool QC.StartLfxSender(int cid) {
 
 
 /**
- * Stoppt alle QuickChannel-Sender für "TradeToLfxTerminal"-Messages.
+ * Stoppt alle QuickChannel-Sender fï¿½r "TradeToLfxTerminal"-Messages.
  *
  * @return bool - success status
  */
@@ -1190,7 +1190,7 @@ bool QC.StopLfxSenders() {
    for (int i=ArraySize(hQC.TradeToLfxSenders)-1; i >= 0; i--) {
       if (hQC.TradeToLfxSenders[i] != NULL) {
          int hTmp = hQC.TradeToLfxSenders[i];
-                    hQC.TradeToLfxSenders[i] = NULL;                 // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
+                    hQC.TradeToLfxSenders[i] = NULL;                 // Handle immer zurï¿½cksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
 
          if (!QC_ReleaseSender(hTmp)) return(!catch("QC.StopLfxSenders()->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ qc.TradeToLfxChannels[i] +"\")  error stopping sender", ERR_WIN32_ERROR));
       }
@@ -1200,7 +1200,7 @@ bool QC.StopLfxSenders() {
 
 
 /**
- * Startet einen QuickChannel-Receiver für "TradeToLfxTerminal"-Messages.
+ * Startet einen QuickChannel-Receiver fï¿½r "TradeToLfxTerminal"-Messages.
  *
  * @return bool - success status
  */
@@ -1221,14 +1221,14 @@ bool QC.StartLfxReceiver() {
 
 
 /**
- * Stoppt den QuickChannel-Receiver für "TradeToLfxTerminal"-Messages.
+ * Stoppt den QuickChannel-Receiver fï¿½r "TradeToLfxTerminal"-Messages.
  *
  * @return bool - success status
  */
 bool QC.StopLfxReceiver() {
    if (hQC.TradeToLfxReceiver != NULL) {
       int hTmp = hQC.TradeToLfxReceiver;
-                 hQC.TradeToLfxReceiver = NULL;                      // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
+                 hQC.TradeToLfxReceiver = NULL;                      // Handle immer zurï¿½cksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
       if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopLfxReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ qc.TradeToLfxChannel +"\")  error stopping receiver", ERR_WIN32_ERROR));
       //debug("QC.StopLfxReceiver(2)  receiver on \""+ qc.TradeToLfxChannel +"\" stopped");
    }
@@ -1252,7 +1252,7 @@ bool QC.StopChannels() {
 
 
 /**
- * Handler für im Script auftretende Fehler. Zur Zeit wird der Fehler nur angezeigt.
+ * Handler fï¿½r im Script auftretende Fehler. Zur Zeit wird der Fehler nur angezeigt.
  *
  * @param  string caller  - location identifier of the caller
  * @param  string message - Fehlermeldung
