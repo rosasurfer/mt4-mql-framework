@@ -46,7 +46,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode()) {       // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
    }
-   int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags), recorder=NULL;
+   int initFlags = SumInts(__InitFlags), deinitFlags = SumInts(__DeinitFlags), recorder = NULL;
 
    int error = MqlProgram_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), recorder, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
    if (!error) error = GetLastError();                            // detect a DLL exception

@@ -10,10 +10,10 @@
  *
  * Input parameters:
  * -----------------
- *  • PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*": all symbols permitted).
- *  • PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
- *  • DrawdownLimit:      An absolute money amount or a percent value describing the drawdown limit of open positions.
- *  • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
+ *  ï¿½ PermittedSymbols:   Comma-separated list of symbols permitted to trade ("*": all symbols permitted).
+ *  ï¿½ PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
+ *  ï¿½ DrawdownLimit:      An absolute money amount or a percent value describing the drawdown limit of open positions.
+ *  ï¿½ IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
  *                        prevents DDL triggering by spread widening.
  *
  *
@@ -477,7 +477,7 @@ bool CloseOpenOrders(string symbol = "") {
       else                       ArrayPushInt(positions, OrderTicket());
    }
 
-   int oe[], oes[][ORDER_EXECUTION_intSize], oeFlags=NULL;
+   int oe[], oes[][ORDER_EXECUTION_intSize], oeFlags = NULL;
 
    if (ArraySize(positions) > 0) {
       if (!OrdersClose(positions, 1, CLR_NONE, oeFlags, oes)) return(false);
