@@ -719,10 +719,10 @@ double PipValue(double lots=1.0, bool muteErrors=false) {
       }
       else {
          isConstant = false;                                                              // TickValue is dynamic
-         isInaccurate = __isTesting;                                                      // MarketInfo() gibt im Tester statt des tats�chlichen den Online-Wert zur�ck (nur ann�hernd genau).
+         isInaccurate = __isTesting;                                                      // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
-      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());                        // Der tats�chliche Wert kann u.U. berechnet werden. Ist das nicht m�glich,
-      flagsResolved = true;                                                               // mu� im Tester (ggf. nach Warnung) der Online-Wert verwendet werden.
+      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());                        // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
+      flagsResolved = true;                                                               // muß im Tester (ggf. nach Warnung) der Online-Wert verwendet werden.
 
       if (isInaccurate && !isCalculatable && !test.disableTickValueWarning) {
          string message = "Historic MarketInfo(MODE_TICKVALUE) not available."                                   + NL
@@ -1455,10 +1455,9 @@ bool LE(double double1, double double2, int digits = 8) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als boolean TRUE zur�ckzugeben. Kann zur Verbesserung der �bersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Helper function returning always TRUE. All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return bool - TRUE
  */
@@ -1468,10 +1467,9 @@ bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, i
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als boolean FALSE zur�ckzugeben. Kann zur Verbesserung der �bersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Helper function returning always FALSE. All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return bool - FALSE
  */
@@ -1481,10 +1479,9 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, 
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zur�ckzugeben. Kann zur Verbesserung der �bersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Helper function returning always NULL (zero). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - NULL
  */
@@ -1494,10 +1491,9 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, in
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den Fehlerstatus NO_ERROR zur�ckzugeben. Kann zur Verbesserung der
- * �bersichtlichkeit und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
+ * Helper function returning always the error code NO_ERROR (0). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - NO_ERROR
  */
@@ -1507,10 +1503,9 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den letzten Fehlercode zur�ckzugeben. Kann zur Verbesserung der
- * �bersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the last error code (if any). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - last_error
  */
@@ -1520,10 +1515,9 @@ int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NU
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY (0xFFFFFFFF = -1) zur�ckzugeben.
- * Kann zur Verbesserung der �bersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning always the value EMPTY (0xFFFFFFFF = -1). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - EMPTY (-1)
  */
@@ -1533,7 +1527,7 @@ int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, i
 
 
 /**
- * Ob der angegebene Wert die Konstante EMPTY darstellt (-1).
+ * Whether the passed value matches the constant EMPTY (0xFFFFFFFF = -1).
  *
  * @param  double value
  *
@@ -1545,10 +1539,9 @@ bool IsEmpty(double value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY_VALUE (0x7FFFFFFF = 2147483647 = INT_MAX) zur�ckzugeben.
- * Kann zur Verbesserung der �bersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning always the value EMPTY_VALUE (0x7FFFFFFF = 2147483647 = INT_MAX). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - EMPTY_VALUE
  */
@@ -1558,7 +1551,7 @@ int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=N
 
 
 /**
- * Ob der angegebene Wert die Konstante EMPTY_VALUE darstellt (0x7FFFFFFF = 2147483647 = INT_MAX).
+ * Whether the passed value matches the constant EMPTY_VALUE (0x7FFFFFFF = 2147483647 = INT_MAX).
  *
  * @param  double value
  *
@@ -1570,10 +1563,9 @@ bool IsEmptyValue(double value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als einen Leerstring ("") zur�ckzugeben. Kann zur Verbesserung der
- * �bersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning always an empty string (""). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return string - Leerstring
  */
@@ -1583,7 +1575,7 @@ string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=
 
 
 /**
- * Ob der angegebene Wert einen Leerstring darstellt (keinen NULL-Pointer).
+ * Whether tha passed string is empty, and not a NULL pointer.
  *
  * @param  string value
  *
@@ -1598,10 +1590,10 @@ bool IsEmptyString(string value) {
 
 
 /**
- * Pseudo-Funktion, die die Konstante NaT (Not-A-Time: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52')
- * zur�ckgibt. Kann zur Verbesserung der �bersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning always the constant NaT (Not-A-Time: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52').
+ * All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return datetime - NaT (Not-A-Time)
  */
@@ -1611,7 +1603,7 @@ datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL
 
 
 /**
- * Ob der angegebene Wert die Konstante NaT (Not-A-Time) darstellt.
+ * Whether the passed value matches the constant NaT (Not-A-Time).
  *
  * @param  datetime value
  *
@@ -1623,13 +1615,12 @@ bool IsNaT(datetime value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zur�ckzugeben. Kann zur Verbesserung der
- * �bersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the first parameter. All other parameters are ignored.
  *
- * @param  bool param1 - Boolean
- * @param  ...         - beliebige weitere Parameter (werden ignoriert)
+ * @param  bool param1 - boolean
+ * @param  ...         - ignored
  *
- * @return bool - der erste Parameter
+ * @return bool
  */
 bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1 != 0);
@@ -1637,13 +1628,12 @@ bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL, int p
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zur�ckzugeben. Kann zur Verbesserung der
- * �bersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the first parameter. All other parameters are ignored.
  *
- * @param  int param1 - Integer
- * @param  ...        - beliebige weitere Parameter (werden ignoriert)
+ * @param  int param1 - integer
+ * @param  ...        - ignored
  *
- * @return int - der erste Parameter
+ * @return int
  */
 int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
@@ -1651,13 +1641,12 @@ int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL, int para
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zur�ckzugeben. Kann zur Verbesserung der
- * �bersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the first parameter. All other parameters are ignored.
  *
- * @param  double param1 - Double
- * @param  ...           - beliebige weitere Parameter (werden ignoriert)
+ * @param  double param1 - double
+ * @param  ...           - ignored
  *
- * @return double - der erste Parameter
+ * @return double
  */
 double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
@@ -1665,13 +1654,12 @@ double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL,
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zur�ckzugeben. Kann zur Verbesserung der
- * �bersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the first parameter. All other parameters are ignored.
  *
- * @param  string param1 - String
- * @param  ...           - beliebige weitere Parameter (werden ignoriert)
+ * @param  string param1 - string
+ * @param  ...           - ignored
  *
- * @return string - der erste Parameter
+ * @return string
  */
 string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
@@ -1981,11 +1969,11 @@ double MathModFix(double a, double b) {
 
 
 /**
- * Gibt die Anzahl der Dezimal- bzw. Nachkommastellen eines Zahlenwertes zur�ck.
+ * Return the number of decimal digits of a double.
  *
  * @param  double number
  *
- * @return int - Anzahl der Nachkommastellen, h�chstens jedoch 8
+ * @return int - number of digits (max 8)
  */
 int CountDecimals(double number) {
    string str = number;
