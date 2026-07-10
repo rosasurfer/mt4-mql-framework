@@ -2370,6 +2370,7 @@ bool CustomPositions.ReadConfig() {
    // parse configuration
    string   keys[], values[], iniValue="", sValue="", comment="", confComment="", openComment="", hstComment="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   termType, termValue1, termValue2, termResult1, termResult2, dValue, lotSize, minLotSize=MarketInfo(symbol, MODE_MINLOT), lotStep=MarketInfo(symbol, MODE_LOTSTEP);
+   int      filterType, filterValue1, filterValue2;
    int      valuesSize, termsSize, pos, len, ticket, nextPositionStartOffset;
    datetime from, to;
    bool     isEmptyPosition, isVirtualPosition, isGroupedPosition, isFilteredPosition, hasEquityValue, hasProfitMarker, hasLossMarker, isBemEnabled, isMfaeEnabled, isMfaeSignal, markMfe, isTotal, isPercent;
@@ -2405,17 +2406,20 @@ bool CustomPositions.ReadConfig() {
             }
 
             // now parse the configuration terms
-            isEmptyPosition    = true;                               // whether the position entry holds trade data (not only flags=MFA/MAE/BE)
+            isEmptyPosition    = true;                               // whether the position entry specifies open/closed trades (not only flags)
             isVirtualPosition  = false;                              // whether the position entry is virtual
             isGroupedPosition  = false;                              // whether the position entry is grouped
-            isFilteredPosition = false;                              // whether the position entry contains a filter condition
             hasEquityValue     = false;                              // whether the position entry contains a custom equity value
             hasProfitMarker    = false;                              // whether the position entry contains a TP marker
             hasLossMarker      = false;                              // whether the position entry contains a SL marker
             isBemEnabled       = false;                              // whether to display the BE marker for the position
             isMfaeEnabled      = false;                              // whether to enable the MFE/MAE tracker for the position
-            isMfaeSignal       = false;                              // whether the MFE/MAE tracker signals new highs/lows
-            markMfe            = false;                              // whether to visualize the MFE level
+            isMfaeSignal       = false;                              // whether the MFE/MAE tracker signals new highs/lows of the position
+            markMfe            = false;                              // whether to visualize the MFE level of the position
+            isFilteredPosition = false;                              // whether the position entry contains a filter condition
+            filterType         = NULL;                               // filter details forwarded to CustomPositions.ParseHstTerm()
+            filterValue1       = NULL;                               //
+            filterValue2       = NULL;                               //
             valuesSize         = Explode(StrToUpper(iniValue), ",", values, NULL);
 
             for (int n=0; n < valuesSize; n++) {
@@ -2474,7 +2478,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "H")) {             // H[T] = History[Total]
-                  if (!CustomPositions.ParseHstTerm(values[n], confComment, hstComment, isEmptyPosition, isGroupedPosition, isTotal, from, to, confTerms, confsData, confdData)) return(false);
+                  if (!CustomPositions.ParseHstTerm(values[n], confComment, hstComment, isEmptyPosition, isGroupedPosition, isTotal, from, to, filterType, filterValue1, filterValue2, confTerms, confsData, confdData)) return(false);
                   if (isGroupedPosition) {
                      isEmptyPosition = false;
                      continue;                                       // gruppiert: die Konfiguration wurde bereits in CustomPositions.ParseHstTerm() gespeichert
@@ -2518,6 +2522,9 @@ bool CustomPositions.ReadConfig() {
                   termResult2 = NULL;
                   if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isFilteredPosition = true;
+                  filterType   = termType;
+                  filterValue1 = termValue1;
+                  filterValue2 = termValue2;
                }
 
                else if (StrStartsWith(values[n], "EAS")) {           // EA sid: EAS=123
@@ -2539,6 +2546,9 @@ bool CustomPositions.ReadConfig() {
                   termResult2 = NULL;
                   if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isFilteredPosition = true;
+                  filterType   = termType;
+                  filterValue1 = termValue1;
+                  filterValue2 = termValue2;
                }
 
                else if (StrStartsWith(values[n], "EA")) {            // EA positions: EA=[01]
@@ -2553,6 +2563,9 @@ bool CustomPositions.ReadConfig() {
                   termResult2 = NULL;
                   if (isFilteredPosition)                            return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple EA filter conditions \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   isFilteredPosition = true;
+                  filterType   = termType;
+                  filterValue1 = termValue1;
+                  filterValue2 = termValue2;
                }
 
                else if (StrStartsWith(values[n], "PM")) {            // profit marker: PM=3.0[%]
@@ -2689,8 +2702,10 @@ bool CustomPositions.ReadConfig() {
                }
                else                                                  return(!catch("CustomPositions.ReadConfig(56)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
 
-               // Eine gruppierte Trade-History kann nicht mit anderen Termen kombiniert werden
-               if (isGroupedPosition && termType!=TERM_EQUITY)       return(!catch("CustomPositions.ReadConfig(57)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (cannot combine grouped trade history with other entries) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+               // a grouping history term must be the last term of the config line
+               if (isGroupedPosition) {
+                  return(!catch("CustomPositions.ReadConfig(57)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (a grouped history can't be followed by other config entries) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+               }
 
                // Die Konfiguration virtueller Positionen muß mit einem virtuellen Term beginnen, damit die realen Lots nicht um die virtuellen Lots reduziert werden.
                if ((termType==TERM_OPEN_LONG || termType==TERM_OPEN_SHORT) && termValue1!=EMPTY) {
@@ -2700,11 +2715,23 @@ bool CustomPositions.ReadConfig() {
                   }
                   isVirtualPosition = true;
                }
-               isEmptyPosition = false;
+
+               switch (termType) {
+                  case TERM_EQUITY:
+                  case TERM_PNL_ADJUSTMENT:
+                  case TERM_FILTER_EA:
+                  case TERM_FILTER_SID:
+                  case TERM_FILTER_MAGIC:
+                  case TERM_PROFIT_MARKER:
+                  case TERM_LOSS_MARKER:
+                     break;
+                  default:
+                     isEmptyPosition = false;
+               }
 
                // Konfigurations-Term speichern
                if (termType==TERM_FILTER_EA || termType==TERM_FILTER_SID || termType==TERM_FILTER_MAGIC) {
-                  // a filter condition must be stored first, so all following real positions can be filtered
+                  // a filter condition must be stored first, so all following positions can be filtered
                   double dFilter[5];
                   dFilter[0] = termType;
                   dFilter[1] = termValue1;
@@ -2725,25 +2752,29 @@ bool CustomPositions.ReadConfig() {
                }
             }
 
-            if (!isEmptyPosition) {                                  // Zeile mit Leer-Term abschließen (markiert Zeilenende)
-               termsSize = ArrayRange(confTerms, 0);
-               ArrayResize(confTerms, termsSize+1);                  // initializes with NULL
-
-               int lines = ArrayRange(confsData, 0);
-               ArrayResize(confsData, lines+1);
-               if (!StringLen(confComment)) comment = openComment + ifString(StringLen(openComment) && StringLen(hstComment ), ", ", "") + hstComment;
-               else                         comment = confComment;   // configured comments override generated ones
-               confsData[lines][I_CONFIG_KEY    ] = keys[i];
-               confsData[lines][I_CONFIG_COMMENT] = comment;
-
-               ArrayResize(confdData, lines+1);
-               if (isBemEnabled)  confdData[lines][I_BEM_ENABLED ] = 1;
-               if (isMfaeEnabled) confdData[lines][I_MFAE_ENABLED] = 1;
-               if (isMfaeSignal)  confdData[lines][I_MFAE_SIGNAL ] = 1;
-               if (markMfe)       confdData[lines][I_MARK_MFE    ] = 1;
-
-               nextPositionStartOffset = termsSize + 1;              // Start-Offset der nächsten Custom-Position merken (falls eine weitere Position folgt)
+            // config lines not defining any open/closed trades are skipped (nothing to monitor/display)
+            if (isEmptyPosition) {
+               continue;                                             // continue with next custom position line
             }
+
+            // Zeile mit Leer-Term abschließen (markiert Zeilenende)
+            termsSize = ArrayRange(confTerms, 0);
+            ArrayResize(confTerms, termsSize+1);                     // initializes with NULL
+
+            int lines = ArrayRange(confsData, 0);
+            ArrayResize(confsData, lines+1);
+            if (!StringLen(confComment)) comment = openComment + ifString(StringLen(openComment) && StringLen(hstComment ), ", ", "") + hstComment;
+            else                         comment = confComment;      // configured comments override generated ones
+            confsData[lines][I_CONFIG_KEY    ] = keys[i];
+            confsData[lines][I_CONFIG_COMMENT] = comment;
+
+            ArrayResize(confdData, lines+1);
+            if (isBemEnabled)  confdData[lines][I_BEM_ENABLED ] = 1;
+            if (isMfaeEnabled) confdData[lines][I_MFAE_ENABLED] = 1;
+            if (isMfaeSignal)  confdData[lines][I_MFAE_SIGNAL ] = 1;
+            if (markMfe)       confdData[lines][I_MARK_MFE    ] = 1;
+
+            nextPositionStartOffset = termsSize + 1;                 // Start-Offset der nächsten Custom-Position merken (falls eine weitere Position folgt)
          }
       }
    }
@@ -2963,6 +2994,9 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, datetime &
  * @param  _Out_   bool     isTotalHistory    - ob die History alle verfügbaren Trades (TRUE) oder nur die des aktuellen Symbols (FALSE) einschließt
  * @param  _Out_   datetime from              - Beginnzeitpunkt der zu berücksichtigenden History
  * @param  _Out_   datetime to                - Endzeitpunkt der zu berücksichtigenden History
+ * @param  _In_    int      filterType        - EA filter type
+ * @param  _In_    int      filterValue1      - EA filter condition 1
+ * @param  _In_    int      filterValue2      - EA filter condition 2
  * @param  _InOut_ double   confTerms[][]     - config terms[] for grouped histories (directly modified here)
  * @param  _InOut_ string   confsData[][]     - config line string data for grouped histories (directly modified here)
  * @param  _InOut_ double   confdData[][]     - config line double data for grouped histories (directly modified here)
@@ -2970,17 +3004,19 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, datetime &
  * @return bool - success status
  *
  *
- * Format:
- * -------
- *  H{DateTime}             [Monthly|Weekly|Daily]    • Trade-History eines Symbols eines Standard-Zeitraums
- *  HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]    • Trade-History aller Symbole von und bis zu einem Zeitpunkt
+ * Supported history formats:
+ * --------------------------
+ *  H{DateTime}             [Monthly|Weekly|Daily] - trade history of a symbol for a standard date period
+ *  HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] - trade history of all symbols from/to a specific datetime
  *
- *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]        oder
- *  {DateTime} = (This|Last)(Day|Week|Month|Year)     oder
- *  {DateTime} = Today                                • Synonym für ThisDay
- *  {DateTime} = Yesterday                            • Synonym für LastDay
+ *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]       or
+ *  {DateTime} = (This|Last)(Day|Week|Month|Year)    or
+ *  {DateTime} = Today                             - alias of ThisDay
+ *  {DateTime} = Yesterday                         - alias of LastDay
  */
-bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &hstComments, bool &isEmptyPosition, bool &isGroupedPosition, bool &isTotalHistory, datetime &from, datetime &to, double &confTerms[][], string &confsData[][], double &confdData[][]) {
+bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &hstComments, bool &isEmptyPosition, bool &isGroupedPosition, bool &isTotalHistory,
+                                  datetime &from, datetime &to, int filterType, int filterValue1, int filterValue2,
+                                  double &confTerms[][], string &confsData[][], double &confdData[][]) {
    isEmptyPosition   = isEmptyPosition  !=0;
    isGroupedPosition = isGroupedPosition!=0;
    isTotalHistory    = isTotalHistory   !=0;
@@ -3056,16 +3092,16 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       //
       // TODO:  Performance verbessern
       //
-      // Gruppen anlegen und komplette Zeilen direkt hier einfügen (bei der letzten Gruppe jedoch ohne Zeilenende)
+      // Gruppen anlegen und komplette Zeilen direkt hier einfügen
       datetime groupFrom, groupTo, nextGroupFrom, now=Tick.time;
       if      (groupByMonth) groupFrom = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom));
-      else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAYS - (TimeDayOfWeekEx(dtFrom)+6)%7 * DAYS;
-      else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAYS;
+      else if (groupByWeek ) groupFrom = dtFrom - dtFrom % DAYS - (TimeDayOfWeekEx(dtFrom)+6) % 7 * DAYS;
+      else if (groupByDay  ) groupFrom = dtFrom - dtFrom % DAYS;
 
-      if (!dtTo) {                                                                                       // {DateTime} - NULL
-         if      (groupByMonth) dtTo = DateTime1(TimeYearEx(now), TimeMonth(now)+1)       - 1*SECOND;    // aktuelles Monatsende
-         else if (groupByWeek ) dtTo = now - now%DAYS + (7-TimeDayOfWeekEx(now))%7 * DAYS - 1*SECOND;    // aktuelles Wochenende
-         else if (groupByDay  ) dtTo = now - now%DAYS + 1*DAY                             - 1*SECOND;    // aktuelles Tagesende
+      if (!dtTo) {                                                                                          // {DateTime} - NULL
+         if      (groupByMonth) dtTo = DateTime1(TimeYearEx(now), TimeMonth(now)+1)           - 1*SECOND;   // aktuelles Monatsende
+         else if (groupByWeek ) dtTo = now - now % DAYS + (7-TimeDayOfWeekEx(now)) % 7 * DAYS - 1*SECOND;   // aktuelles Wochenende
+         else if (groupByDay  ) dtTo = now - now % DAYS + 1*DAY                               - 1*SECOND;   // aktuelles Tagesende
       }
 
       for (bool firstGroup=true; groupFrom < dtTo; groupFrom=nextGroupFrom) {
@@ -3082,19 +3118,34 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
          else if (groupByDay  ) comment =             GmtTimeFormat(groupFrom, "%d.%m.%Y");
          if (isTotalHistory)    comment = comment +" (total)";
 
-         // Gruppe der Konfiguration hinzufügen
+         // add group to the parsed configuration
          int termsSize = ArrayRange(confTerms, 0);
+
+         // if a filter condition is active it must be stored first, so following history can be filtered
+         if (filterType != NULL) {
+            ArrayResize(confTerms, termsSize+1);
+            confTerms[termsSize][I_TERM_TYPE   ] = filterType;
+            confTerms[termsSize][I_TERM_VALUE1 ] = filterValue1;
+            confTerms[termsSize][I_TERM_VALUE2 ] = filterValue2;
+            confTerms[termsSize][I_TERM_RESULT1] = NULL;
+            confTerms[termsSize][I_TERM_RESULT2] = NULL;
+            termsSize++;
+         }
+
+         // now add the history group
          ArrayResize(confTerms, termsSize+1);
          confTerms[termsSize][I_TERM_TYPE   ] = ifInt(!isTotalHistory, TERM_HISTORY, TERM_HISTORY_TOTAL);
          confTerms[termsSize][I_TERM_VALUE1 ] = groupFrom;
          confTerms[termsSize][I_TERM_VALUE2 ] = groupTo;
          confTerms[termsSize][I_TERM_RESULT1] = EMPTY_VALUE;
          confTerms[termsSize][I_TERM_RESULT2] = EMPTY_VALUE;
+         termsSize++;
          isEmptyPosition = false;
 
          // Zeile mit Zeilenende abschließen (außer bei der letzten Gruppe)
          if (nextGroupFrom <= dtTo) {
-            ArrayResize(confTerms, termsSize+2);                     // ArrayResize() initialisiert mit NULL
+            ArrayResize(confTerms, termsSize+1);
+            termsSize++;
             int lines = ArrayRange(confdData, 0);
             ArrayResize(confdData, lines+1);
             ArrayResize(confsData, lines+1);
