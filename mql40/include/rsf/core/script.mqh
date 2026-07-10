@@ -136,7 +136,8 @@ int start() {
       string msg = WindowExpertName() +":  switched off", sError = "";
       if (IsDllsAllowed()) sError = "  ("+ ifString(__STATUS_OFF.reason, ErrorToStr(__STATUS_OFF.reason), "unknown reason") +")";
       Comment(NL, NL, NL, NL, msg, sError);                                   // 4 lines margin for possible chart legends
-      return(logNotice("start(1)  switched off", __STATUS_OFF.reason));
+      Alert("NOTICE:   ", Symbol(), ",", PeriodDescription(), "  ", WindowExpertName(), "::start(1)  switched off", sError);
+      return(__STATUS_OFF.reason);
    }
    __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
