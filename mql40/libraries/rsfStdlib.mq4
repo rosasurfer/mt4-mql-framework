@@ -2301,67 +2301,6 @@ string TicketsToStr(int tickets[], string separator = ", ") {
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als hexadezimalen String zurück.
- *
- * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
- *
- * @return string
- */
-string BufferToHexStr(int buffer[]) {
-   int dimensions = ArrayDimension(buffer);
-   if (dimensions != 1)
-      return(_BufferToHexStr(buffer));
-
-   string hex="", byte1="", byte2="", byte3="", byte4="", result="";
-   int size = ArraySize(buffer);
-
-   // Integers werden bin�r als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
-   for (int i=0; i < size; i++) {
-      hex    = IntToHexStr(buffer[i]);
-      byte1  = StringSubstr(hex, 6, 2);
-      byte2  = StringSubstr(hex, 4, 2);
-      byte3  = StringSubstr(hex, 2, 2);
-      byte4  = StringSubstr(hex, 0, 2);
-      result = StringConcatenate(result, " ", byte1, byte2, byte3, byte4);
-   }
-   if (size > 0)
-      result = StringSubstr(result, 1);
-   return(result);
-}
-
-
-/**
- * Internal helper function working around the compiler's dimension check. Used only by BufferToHexStr().
- */
-string _BufferToHexStr(int buffer[][]) {
-   int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_EMPTY_STR(catch("_BufferToHexStr(1)  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
-
-   if (dimensions == 1)
-      return(BufferToHexStr(buffer));
-
-   int dim1=ArrayRange(buffer, 0), dim2=ArrayRange(buffer, 1);
-
-   string hex="", byte1="", byte2="", byte3="", byte4="", result="";
-
-   // Integers werden bin�r als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
-   for (int i=0; i < dim1; i++) {
-      for (int n=0; n < dim2; n++) {
-         hex    = IntToHexStr(buffer[i][n]);
-         byte1  = StringSubstr(hex, 6, 2);
-         byte2  = StringSubstr(hex, 4, 2);
-         byte3  = StringSubstr(hex, 2, 2);
-         byte4  = StringSubstr(hex, 0, 2);
-         result = StringConcatenate(result, " ", byte1, byte2, byte3, byte4);
-      }
-   }
-   if (dim1 > 0) /*&&*/ if (dim2 > 0)
-      result = StringSubstr(result, 1);
-   return(result);
-}
-
-
-/**
  * Gibt ein einzelnes Zeichen (ein Byte) von der angegebenen Position eines Buffers zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
@@ -3364,11 +3303,11 @@ string IntegerToHexStr(int integer) {
 
 
 /**
- * Gibt die bin�re Repr�sentation einer Ganzzahl zurück.
+ * Gibt die binäre Repr�sentation einer Ganzzahl zurück.
  *
  * @param  int integer - Ganzzahl
  *
- * @return string - bin�rer Wert
+ * @return string - binärer Wert
  *
  * Beispiel: IntegerToBinaryStr(109) => "1101101"
  */

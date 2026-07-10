@@ -816,7 +816,7 @@ int HistoryFile1.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
       // hf.bufferedBar                                                 // eine definierte BufferedBar ist immer identisch zu hf.total.to (schon gepr�ft)
    }
 
-   // bin�re Suche in der Datei                                         // TODO: implementieren
+   // binäre Suche in der Datei                                         // TODO: implementieren
    return(_EMPTY(catch("HistoryFile1.FindBar(6)  bars="+ hf.total.bars[hFile] +", from='"+ TimeToStr(hf.total.from.openTime[hFile], TIME_FULL) +"', to='"+ TimeToStr(hf.total.to.openTime[hFile], TIME_FULL) +"')  time look-up in a timeseries not yet implemented ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_NOT_IMPLEMENTED)));
 }
 

@@ -607,7 +607,6 @@ int      ArrayUnshiftInt(int &array[], int value);;
 bool     BoolInArray(bool &haystack[], bool needle);;
 string   BoolsToStr(bool &array[], string separator);;
 int      BufferGetChar(int &buffer[], int pos);;
-string   BufferToHexStr(int &buffer[]);;
 string   CharsToStr(int &array[], string separator);;
 string   CharToHexStr(int chr);;
 bool     ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor);;

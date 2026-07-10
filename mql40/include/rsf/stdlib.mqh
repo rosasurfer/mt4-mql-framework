@@ -81,7 +81,6 @@
 
    // buffer functions
    int      InitializeDoubleBuffer(double buffer[], int size);
-   string   BufferToHexStr(int buffer[]);
    int      BufferGetChar(int buffer[], int pos);
    //int    BufferSetChar(int buffer[], int pos, int chr);
 
