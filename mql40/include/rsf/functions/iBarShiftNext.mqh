@@ -13,7 +13,7 @@
  * Note: Ein gemeldeter Status ERS_HISTORY_UPDATE ist kein Fehler und wird nicht weitergemeldet.
  */
 int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, int mute=NULL) {
-   if (symbol == "0") symbol = Symbol();                                                  // (string) NULL
+   if (symbol == "0") symbol = Symbol();          // (string) NULL
    if (time < 0) return(_EMPTY_VALUE(catch("iBarShiftNext(1)  invalid parameter time: "+ time, ERR_INVALID_PARAMETER)));
 
    // int iBarShift(string symbol, int period, datetime time, bool exact);

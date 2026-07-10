@@ -116,6 +116,10 @@ int start() {
  *  - Note that in this case, the library performs an init cycle on start of the next test.
  */
 int deinit() {
+   if (!__ExecutionContext[EC.pid]) {
+      return(last_error);
+   }
+
    int error = MqlLibrary_deinit(__ExecutionContext, UninitializeReason());
    if (!error) {
       onDeinit();

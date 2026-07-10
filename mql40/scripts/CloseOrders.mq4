@@ -181,7 +181,7 @@ int onStart() {
    int sizeHedgedShort   = ArraySize(hedgedShort);
 
    // close orders
-   int oe[], oes[][ORDER_EXECUTION_intSize], oeFlags=NULL;
+   int oe[], oes[][ORDER_EXECUTION_intSize], oeFlags = NULL;
 
    if (sizePendingOrders || sizeOpenPositions) {
       string sPendingOrders = ifString(sizePendingOrders, "delete "+ sizePendingOrders +" pending order"+ Pluralize(sizePendingOrders), "");

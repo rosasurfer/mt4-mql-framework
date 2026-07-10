@@ -22,6 +22,8 @@ double icMaChannel(int timeframe, string channelDefinition, int iBuffer, int iBa
                           channelDefinition,          // string Channel.Definition
                           Blue,                       // color  Channel.Color
                           "",                         // string Supported.MovingAverages
+
+                          "",                         // string _______________________
                           false,                      // bool   ShowChartLegend
                           -1,                         // int    MaxBarsBack
 

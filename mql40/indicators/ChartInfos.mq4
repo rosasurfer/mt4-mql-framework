@@ -4586,26 +4586,30 @@ bool QC.HandleTradeCommands() {
    if (!__isChart) return(true);
 
    // (1) ggf. Receiver starten
-   if (!hQC.TradeCmdReceiver) /*&&*/ if (!QC.StartTradeCmdReceiver())
+   if (!hQC.TradeCmdReceiver) /*&&*/ if (!QC.StartTradeCmdReceiver()) {
       return(false);
+   }
 
    // (2) Channel auf neue Messages prüfen
    int checkResult = QC_CheckChannelA(qc.TradeCmdChannel);
-   if (checkResult == QC_CHECK_CHANNEL_EMPTY)
-      return(true);
+   if (checkResult == QC_CHECK_CHANNEL_EMPTY) return(true);
    if (checkResult < QC_CHECK_CHANNEL_EMPTY) {
-      if (checkResult == QC_CHECK_CHANNEL_ERROR)  return(!catch("QC.HandleTradeCommands(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR",                ERR_WIN32_ERROR));
-      if (checkResult == QC_CHECK_CHANNEL_NONE )  return(!catch("QC.HandleTradeCommands(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  channel doesn't exist",                   ERR_WIN32_ERROR));
-                                                  return(!catch("QC.HandleTradeCommands(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  unexpected return value = "+ checkResult, ERR_WIN32_ERROR));
+      switch (checkResult) {
+         case QC_CHECK_CHANNEL_ERROR: return(!catch("QC.HandleTradeCommands(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR", ERR_WIN32_ERROR));
+         case QC_CHECK_CHANNEL_NONE:  return(!catch("QC.HandleTradeCommands(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  channel doesn't exist", ERR_WIN32_ERROR));
+         default:                     return(!catch("QC.HandleTradeCommands(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  unexpected return value = "+ checkResult, ERR_WIN32_ERROR));
+      }
    }
 
    // (3) neue Messages abholen
    string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
    int getResult = QC_GetMessages3A(hQC.TradeCmdReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
    if (getResult != QC_GET_MSG3_SUCCESS) {
-      if (getResult == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR));
-      if (getResult == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeCommands(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR));
-                                                  return(!catch("QC.HandleTradeCommands(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ getResult, ERR_WIN32_ERROR));
+      switch (getResult) {
+         case QC_GET_MSG3_CHANNEL_EMPTY: return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR));
+         case QC_GET_MSG3_INSUF_BUFFER:  return(!catch("QC.HandleTradeCommands(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR));
+         default:                        return(!catch("QC.HandleTradeCommands(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ getResult, ERR_WIN32_ERROR));
+      }
    }
 
    // (4) Messages verarbeiten
@@ -4629,7 +4633,7 @@ bool QC.HandleTradeCommands() {
       else {
          return(!catch("QC.HandleTradeCommands(8)  unsupported trade command = "+ DoubleQuoteStr(cmdType), ERR_RUNTIME_ERROR));
       }
-  }
+   }
    return(true);
 }
 

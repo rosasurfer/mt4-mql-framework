@@ -1,5 +1,6 @@
-<!--
-FF Brackets
+<!-- 
+EMA(144) 
+Donchian Channel(50) 
 -->
 
 <chart>
@@ -8,7 +9,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=1
+scale=2
 graph=1
 fore=0
 grid=0
@@ -37,7 +38,7 @@ bearcandle_color=210
 chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
-askline_color=11823615
+askline_color=13158600
 stops_color=17919
 
 <window>
@@ -74,8 +75,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -98,35 +97,48 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=Moving Average
 flags=339
 window_num=0
 <inputs>
-TimeWindow=08:00-09:00
-NumberOfBrackets=3
-BracketsColor=9639167   ; DeepPink
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=144
+MA.Periods.Step=0
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=0
+SaveCPU=5
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+show_data=1
 </indicator>
 
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=Donchian Channel
 flags=339
 window_num=0
 <inputs>
-TimeWindow=09:00-10:00
-NumberOfBrackets=3
-BracketsColor=16711680  ; Blue
-AutoConfiguration=0
+Periods=50
+ShowChannel=1
+Channel.UpperColor=16711680
+Channel.LowerColor=255
+ShowReversals=on* | off | +N | -N
+Reversal.Width=2
+Signal.onReversal=1
+Signal.onReversal.Types=sound* | alert* | mail | telegram
+Sound.onChannelWidening=0
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+style_0=2
+style_1=2
+style_2=2
+show_data=1
 </indicator>
 </window>
 </chart>

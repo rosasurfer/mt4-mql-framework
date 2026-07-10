@@ -321,7 +321,14 @@ string StrReplace(string subject, string search, string replace, bool recursive 
  * @return int - error status
  */
 int PlaySoundEx(string soundfile) {
-   return(PlaySoundA(soundfile));
+   if (IsDllsAllowed()) {
+      return(PlaySoundA(soundfile));
+   }
+   if (!IsTesting()) {
+      PlaySound(soundfile);
+      return(NO_ERROR);
+   }
+   return(ERR_FUNC_NOT_ALLOWED_IN_TESTER);
 }
 
 
@@ -335,32 +342,31 @@ int PlaySoundEx(string soundfile) {
  * @return string
  */
 string Pluralize(int count, string singular="", string plural="s") {
-    if (Abs(count) == 1)
-        return(singular);
-    return(plural);
+   if (Abs(count) == 1) {
+      return(singular);
+   }
+   return(plural);
 }
 
 
 /**
- * Display an alert even if not supported by the terminal in the current context (e.g. in tester).
+ * Display an alert even if not supported by the terminal in the current context (e.g. in tester). Used to notify the user
+ * if IsLibrariesAllowed() or IsDllsAllowed() return FALSE. If in tester and DLLs are disabled there is no way to notify the
+ * user, neither with built-in nor with external methods. That's because in tester MetaTrader disables all relevant functions.
+ * In this case the only hint is a log message in the terminal log, which in tester again is not at the typical place.
  *
  * @param  string message
- *
- * Notes: This function must not call MQL library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   debug(message);                                                            // send the message to the debug output
+   debug(message);            // send the message to the debug output (needs DLLs)
+   Alert(message);            // add the message to the terminal log
 
-   string sPeriod = PeriodDescription();
-   Alert(Symbol(), ",", sPeriod, ": ", MqlModuleName(true), ":  ", message);  // the message shows up in the terminal log
+   if (IsTesting()) {                                                   // Alert() wasn't displayed
+      string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription();
+      message = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
 
-   if (IsTesting()) {
-      // in tester Alert() dialog are not displayed
-      string sCaption = "Strategy Tester "+ Symbol() +","+ sPeriod;
-      string sMessage = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
-
-      PlaySoundEx("alert.wav");
-      MessageBoxEx(sCaption, sMessage, MB_ICONERROR|MB_OK|MB_DONT_LOG);
+      PlaySoundEx("alert.wav");                                         // needs DLLs
+      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);   // needs DLLs
    }
 }
 
@@ -381,14 +387,16 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    if (!StrContains(caption, prefix)) caption = prefix +" - "+ caption;
 
    bool useWin32 = false;
-   if (IsTesting() || IsIndicator()) {
-      useWin32 = true;
+   if (IsDllsAllowed()) {
+      if (IsTesting() || IsIndicator()) {
+         useWin32 = true;
+      }
+      else {
+         useWin32 = (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE);
+      }
    }
-   else {
-      useWin32 = (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE);
-   }
-
    int button;
+
    if (useWin32) {
       // No owner window + flag MB_TASKMODAL: only this combination prevents a UI thread deadlock while still blocking the
       // main app. With owner window MessageBox() disables the given owner which in return causes a synchronous SendMessage()
@@ -401,32 +409,6 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
 
    if (!(flags & MB_DONT_LOG)) logDebug("MessageBoxEx(1)  "+ message +" (response: "+ MessageBoxButtonToStrA(button) +")");
    return(button);
-}
-
-
-/**
- * Gibt den Klassennamen des angegebenen Fensters zurück.
- *
- * @param  int hWnd - Handle des Fensters
- *
- * @return string - Klassenname oder Leerstring, falls ein Fehler auftrat
- */
-string GetClassName(int hWnd) {
-   int    bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-
-   int chars = GetClassNameA(hWnd, buffer[0], bufferSize);
-
-   while (chars >= bufferSize-1) {                                   // GetClassNameA() gibt beim Abschneiden zu langer Klassennamen {bufferSize-1} zurück.
-      bufferSize <<= 1;
-      InitializeStringBuffer(buffer, bufferSize);
-      chars = GetClassNameA(hWnd, buffer[0], bufferSize);
-   }
-
-   if (!chars)
-      return(_EMPTY_STR(catch("GetClassName()->user32::GetClassNameA()", ERR_WIN32_ERROR)));
-
-   return(buffer[0]);
 }
 
 
@@ -1473,10 +1455,9 @@ bool LE(double double1, double double2, int digits = 8) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als boolean TRUE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Helper function returning always TRUE. All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return bool - TRUE
  */
@@ -1486,10 +1467,9 @@ bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, i
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als boolean FALSE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Helper function returning always FALSE. All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return bool - FALSE
  */
@@ -1499,10 +1479,9 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, 
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Helper function returning always NULL (zero). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - NULL
  */
@@ -1512,10 +1491,9 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, in
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den Fehlerstatus NO_ERROR zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
+ * Helper function returning always the error code NO_ERROR (0). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - NO_ERROR
  */
@@ -1525,10 +1503,9 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den letzten Fehlercode zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the last error code (if any). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - last_error
  */
@@ -1538,10 +1515,9 @@ int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NU
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY (0xFFFFFFFF = -1) zurückzugeben.
- * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning always the value EMPTY (0xFFFFFFFF = -1). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - EMPTY (-1)
  */
@@ -1551,7 +1527,7 @@ int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, i
 
 
 /**
- * Ob der angegebene Wert die Konstante EMPTY darstellt (-1).
+ * Whether the passed value matches the constant EMPTY (0xFFFFFFFF = -1).
  *
  * @param  double value
  *
@@ -1563,10 +1539,9 @@ bool IsEmpty(double value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY_VALUE (0x7FFFFFFF = 2147483647 = INT_MAX) zurückzugeben.
- * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning always the value EMPTY_VALUE (0x7FFFFFFF = 2147483647 = INT_MAX). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return int - EMPTY_VALUE
  */
@@ -1576,7 +1551,7 @@ int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=N
 
 
 /**
- * Ob der angegebene Wert die Konstante EMPTY_VALUE darstellt (0x7FFFFFFF = 2147483647 = INT_MAX).
+ * Whether the passed value matches the constant EMPTY_VALUE (0x7FFFFFFF = 2147483647 = INT_MAX).
  *
  * @param  double value
  *
@@ -1588,10 +1563,9 @@ bool IsEmptyValue(double value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als einen Leerstring ("") zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning always an empty string (""). All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return string - Leerstring
  */
@@ -1601,7 +1575,7 @@ string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=
 
 
 /**
- * Ob der angegebene Wert einen Leerstring darstellt (keinen NULL-Pointer).
+ * Whether tha passed string is empty, and not a NULL pointer.
  *
  * @param  string value
  *
@@ -1616,10 +1590,10 @@ bool IsEmptyString(string value) {
 
 
 /**
- * Pseudo-Funktion, die die Konstante NaT (Not-A-Time: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52')
- * zurückgibt. Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning always the constant NaT (Not-A-Time: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52').
+ * All parameters are ignored
  *
- * @param  beliebige Parameter (werden ignoriert)
+ * @param  (ignored)
  *
  * @return datetime - NaT (Not-A-Time)
  */
@@ -1629,7 +1603,7 @@ datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL
 
 
 /**
- * Ob der angegebene Wert die Konstante NaT (Not-A-Time) darstellt.
+ * Whether the passed value matches the constant NaT (Not-A-Time).
  *
  * @param  datetime value
  *
@@ -1641,13 +1615,12 @@ bool IsNaT(datetime value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the first parameter. All other parameters are ignored.
  *
- * @param  bool param1 - Boolean
- * @param  ...         - beliebige weitere Parameter (werden ignoriert)
+ * @param  bool param1 - boolean
+ * @param  ...         - ignored
  *
- * @return bool - der erste Parameter
+ * @return bool
  */
 bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1 != 0);
@@ -1655,13 +1628,12 @@ bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL, int p
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the first parameter. All other parameters are ignored.
  *
- * @param  int param1 - Integer
- * @param  ...        - beliebige weitere Parameter (werden ignoriert)
+ * @param  int param1 - integer
+ * @param  ...        - ignored
  *
- * @return int - der erste Parameter
+ * @return int
  */
 int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
@@ -1669,13 +1641,12 @@ int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL, int para
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the first parameter. All other parameters are ignored.
  *
- * @param  double param1 - Double
- * @param  ...           - beliebige weitere Parameter (werden ignoriert)
+ * @param  double param1 - double
+ * @param  ...           - ignored
  *
- * @return double - der erste Parameter
+ * @return double
  */
 double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
@@ -1683,13 +1654,12 @@ double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL,
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
- * Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Helper function returning the first parameter. All other parameters are ignored.
  *
- * @param  string param1 - String
- * @param  ...           - beliebige weitere Parameter (werden ignoriert)
+ * @param  string param1 - string
+ * @param  ...           - ignored
  *
- * @return string - der erste Parameter
+ * @return string
  */
 string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
@@ -1999,11 +1969,11 @@ double MathModFix(double a, double b) {
 
 
 /**
- * Gibt die Anzahl der Dezimal- bzw. Nachkommastellen eines Zahlenwertes zurück.
+ * Return the number of decimal digits of a double.
  *
  * @param  double number
  *
- * @return int - Anzahl der Nachkommastellen, höchstens jedoch 8
+ * @return int - number of digits (max 8)
  */
 int CountDecimals(double number) {
    string str = number;
@@ -2017,22 +1987,22 @@ int CountDecimals(double number) {
 
 
 /**
- * Gibt den linken Teil eines Strings bis zum Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
- * Teilstring nicht.
+ * Return the left part of a string up to the specified occurrence of a limiting substring.
+ * The result does not include the limiting substring.
  *
- * @param  string value            - Ausgangsstring
- * @param  string substring        - der das Ergebnis begrenzende Teilstring
- * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                                   Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String
- *                                   zurückgegeben.
- *                                   Wenn 0, wird ein Leerstring zurückgegeben.
- *                                   Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
+ * @param  string value            - initial string
+ * @param  string substring        - limiting substring (if empty the entire string is returned)
+ * @param  int    count [optional] - Number of occurrences of the limiting substring (default: 1).
+ *                                    positive: counted from the start of the string
+ *                                    negative: counted from the end of the string
+ *                                    0:        an empty string is returned
+ *                                   If the absolute number exceeds the number of occurrences, the entire string is returned.
  * @return string
  */
 string StrLeftTo(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
-   // positive Anzahl: von vorn zählen
+   // positive: count from start
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
@@ -2042,7 +2012,7 @@ string StrLeftTo(string value, string substring, int count = 1) {
       return(StrLeft(value, pos));
    }
 
-   // negative Anzahl: von hinten zählen
+   // negative: count from end
    if (count < 0) {
       /*
       while(count < 0) {
@@ -2067,50 +2037,59 @@ string StrLeftTo(string value, string substring, int count = 1) {
       //return(StrLeft(value, pos));
    }
 
-   // Anzahl == 0
+   // count == 0
    return("");
 }
 
 
 /**
- * Return a right-side substring of a string.
- *
- * Ist N positiv, gibt StrRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
- *    z.B.  StrRight("ABCDEFG",  2)  =>  "FG"
- *
- * Ist N negativ, gibt StrRight() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
- *    z.B.  StrRight("ABCDEFG", -2)  =>  "CDEFG"
+ * Return the right part of a string.
  *
  * @param  string value
- * @param  int    n
- *
+ * @param  int    length - positive: number of returned right characters
+ *                         negative: all except the specified number of left characters
  * @return string
+ *
+ * @example
+ * <pre>
+ *  StrRight("abcde",  1) => "e"
+ *  StrRight("abcde", -2) => "cde"
+ * </pre>
  */
-string StrRight(string value, int n) {
-   if (n > 0) return(StringSubstr(value, StringLen(value)-n));
-   if (n < 0) return(StringSubstr(value, -n                ));
+string StrRight(string value, int length) {
+   if (length > 0) return(StringSubstr(value, StringLen(value)-length));
+   if (length < 0) return(StringSubstr(value, -length));
    return("");
 }
 
 
 /**
- * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
- * Teilstring nicht.
+ * Return the right part of a string starting at the specified occurrence of a limiting substring.
+ * The result doesn't include the limiting substring.
  *
- * @param  string value            - Ausgangsstring
- * @param  string substring        - der das Ergebnis begrenzende Teilstring
- * @param  int    count [optional] - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                                   Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
- *                                   zurückgegeben.
- *                                   Wenn negativ, wird mit dem Zählen anstatt von links von rechts begonnen.
- *                                   Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings,
- *                                   wird der gesamte String zurückgegeben.
+ * @param  string value            - initial string
+ * @param  string substring        - limiting substring
+ * @param  int    count [optional] - number of limiting substrings (default: 1 = the first occurrence)
+ *                                    positive: occurrences counted from the start of the string
+ *                                    negative: occurrences counted from the end of the string
+ *
+ *  If count is 0 (zero) or greater than the number of existing substrings, an empty string is returned.
+ *  If count is negative and absolute greater than the number of existing substrings, the initial string is returned.
+ *
  * @return string
+ *
+ * @example
+ * <pre>
+ *  StrRightFrom("abc_abc", "c")     => "_abc"
+ *  StrRightFrom("abcabc",  "x")     => ""          // limiter not found
+ *  StrRightFrom("abc_abc", "a", 2)  => "bc"
+ *  StrRightFrom("abc_abc", "b", -2) => "c_abc"
+ * </pre>
  */
 string StrRightFrom(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
-   // positive Anzahl: von vorn zählen
+   // positive: count from start
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
@@ -2120,7 +2099,7 @@ string StrRightFrom(string value, string substring, int count = 1) {
       return(StrSubstr(value, pos+StringLen(substring)));
    }
 
-   // negative Anzahl: von hinten zählen
+   // negative: count from end
    if (count < 0) {
       /*
       while(count < 0) {
@@ -2145,16 +2124,16 @@ string StrRightFrom(string value, string substring, int count = 1) {
       //return(StrSubstr(value, pos + StringLen(substring)));
    }
 
-   // Anzahl == 0
+   // count = 0
    return("");
 }
 
 
 /**
- * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
+ * Whether a string starts with a case-insensitive substring.
  *
- * @param  string value  - zu prüfender String
- * @param  string prefix - Substring
+ * @param  string value  - string
+ * @param  string prefix - substring
  *
  * @return bool
  */
@@ -2202,9 +2181,9 @@ bool StrIsDigits(string value) {
 
 
 /**
- * Prüft, ob ein String einen gültigen Integer darstellt.
+ * Whether a string represents a valid integer number (characters "0123456789+-").
  *
- * @param  string value - zu prüfender String
+ * @param  string value
  *
  * @return bool
  */
@@ -2261,9 +2240,9 @@ bool StrIsNumeric(string value) {
 
 
 /**
- * Ob ein String eine gültige E-Mailadresse darstellt.
+ * Wheter a string represents a valid email address. Only the syntax is checked.
  *
- * @param  string value - zu prüfender String
+ * @param  string value
  *
  * @return bool
  */
@@ -2278,7 +2257,7 @@ bool StrIsEmailAddress(string value) {
 
    string s = StrTrim(value);
 
-   // Validierung noch nicht implementiert
+   // TODO: implement
    return(StringLen(s) > 0);
 }
 
@@ -3039,56 +3018,6 @@ bool IsDemoFix() {
 
 
 /**
- * Enumerate all child windows of a window and send output to the system debugger.
- *
- * @param  int  hWnd                 - Handle of the window. If this parameter is NULL all top-level windows are enumerated.
- * @param  bool recursive [optional] - Whether to enumerate child windows recursively (default: no).
- *
- * @return bool - success status
- */
-bool EnumChildWindows(int hWnd, bool recursive = false) {
-   recursive = recursive!=0;
-   if      (!hWnd)           hWnd = GetDesktopWindow();
-   else if (hWnd < 0)        return(!catch("EnumChildWindows(1)  invalid parameter hWnd: "+ hWnd , ERR_INVALID_PARAMETER));
-   else if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd: "+ IntToHexStr(hWnd), ERR_INVALID_PARAMETER));
-
-   string padding="", wndTitle="", wndClass="";
-   int ctrlId;
-
-   static int sublevel;
-   if (!sublevel) {
-      wndClass = GetClassName(hWnd);
-      wndTitle = GetInternalWindowTextA(hWnd);
-      ctrlId   = GetDlgCtrlID(hWnd);
-      debug("EnumChildWindows()  "+ IntToHexStr(hWnd) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
-   }
-   sublevel++;
-   padding = StrRepeat(" ", (sublevel-1)<<1);
-
-   int i, hWndNext=GetWindow(hWnd, GW_CHILD);
-   while (hWndNext != 0) {
-      i++;
-      wndClass = GetClassName(hWndNext);
-      wndTitle = GetInternalWindowTextA(hWndNext);
-      ctrlId   = GetDlgCtrlID(hWndNext);
-      debug("EnumChildWindows()  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
-
-      if (recursive) {
-         if (!EnumChildWindows(hWndNext, true)) {
-            sublevel--;
-            return(false);
-         }
-      }
-      hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
-   }
-   if (!sublevel && !i) debug("EnumChildWindows()  "+ padding +"-> (no child windows)");
-
-   sublevel--;
-   return(!catch("EnumChildWindows(3)"));
-}
-
-
-/**
  * Konvertiert einen String in einen Boolean.
  *
  * Ist der Parameter strict = TRUE, werden die Strings "1" und "0", "on" und "off", "true" und "false", "yes" and "no" ohne
@@ -3162,18 +3091,17 @@ string StrToLower(string value) {
       // optimized for MQL4.0
       if (chr > 64) {
          if (chr < 91) {
-            result = StringSetChar(result, i, chr+32);                  // A-Z->a-z
-         }
-         else if (chr > 191) {
-            if (chr < 223) {
-               if (chr != 215)
-                  result = StringSetChar(result, i, chr+32);            // À-Ö->à-ö, Ø-Þ->ø-þ
-            }
-         }
-         else if (chr == 138) result = StringSetChar(result, i, 154);   // Š->š
-         else if (chr == 140) result = StringSetChar(result, i, 156);   // Œ->œ
-         else if (chr == 142) result = StringSetChar(result, i, 158);   // Ž->ž
-         else if (chr == 159) result = StringSetChar(result, i, 255);   // Ÿ->ÿ
+            result = StringSetChar(result, i, chr+32);                                    // A-Z->a-z
+         }                                                                                
+         else if (chr > 191) {                                                            
+            if (chr < 223) /*&&*/ if (chr != 215) {                                       
+               result = StringSetChar(result, i, chr+32);                                 // À-Ö->à-ö, Ø-Þ->ø-þ
+            }                                                                             
+         }                                                                                
+         else if (chr == 138) result = StringSetChar(result, i, 154);                     // Š->š
+         else if (chr == 140) result = StringSetChar(result, i, 156);                     // Œ->œ
+         else if (chr == 142) result = StringSetChar(result, i, 158);                     // Ž->ž
+         else if (chr == 159) result = StringSetChar(result, i, 255);                     // Ÿ->ÿ
       }
    }
    return(result);
@@ -3187,8 +3115,7 @@ string StrToLower(string value) {
  *
  * @return string
  *
- * TODO:
- *  - move to DLL (for longer strings way to slow)
+ * TODO: move to DLL (for longer strings this is way too slow)
  */
 string StrToUpper(string value) {
    string result = value;
@@ -3197,18 +3124,20 @@ string StrToUpper(string value) {
    for (int i=0; i < len; i++) {
       chr = StringGetChar(value, i);
       // logical version
-      //if      (96 < chr && chr < 123)            result = StringSetChar(result, i, chr-32);
-      //else if (chr==154 || chr==156 || chr==158) result = StringSetChar(result, i, chr-16);
-      //else if (chr==255)                         result = StringSetChar(result, i,    159);   // ÿ -> Ÿ
-      //else if (chr > 223)                        result = StringSetChar(result, i, chr-32);
+      //if      (96 < chr && chr < 123)                  result = StringSetChar(result, i, chr-32);
+      //else if (chr == 154 || chr == 156 || chr == 158) result = StringSetChar(result, i, chr-16);
+      //else if (chr == 255)                             result = StringSetChar(result, i,    159);    // ÿ -> Ÿ
+      //else if (chr > 223)                              result = StringSetChar(result, i, chr-32);
 
       // optimized for MQL4.0
-      if      (chr == 255)                result = StringSetChar(result, i,    159);            // ÿ -> Ÿ
-      else if (chr  > 223)                result = StringSetChar(result, i, chr-32);
-      else if (chr == 158)                result = StringSetChar(result, i, chr-16);
-      else if (chr == 156)                result = StringSetChar(result, i, chr-16);
-      else if (chr == 154)                result = StringSetChar(result, i, chr-16);
-      else if (chr  >  96) if (chr < 123) result = StringSetChar(result, i, chr-32);
+      if      (chr == 255) result = StringSetChar(result, i,    159);                                  // ÿ -> Ÿ
+      else if (chr  > 223) result = StringSetChar(result, i, chr-32);
+      else if (chr == 158) result = StringSetChar(result, i, chr-16);
+      else if (chr == 156) result = StringSetChar(result, i, chr-16);
+      else if (chr == 154) result = StringSetChar(result, i, chr-16);
+      else if (chr > 96) /*&&*/ if (chr < 123) {
+         result = StringSetChar(result, i, chr-32);
+      }
    }
    return(result);
 }
@@ -4537,7 +4466,7 @@ string InitReasonDescription(int reason) {
  */
 string GetAccountServer() {
    // AccountServer() can't be used directly for two reasons:
-   //  - Without server connection it returns an empty value.
+   //  - Without a server connection it returns an empty value.
    //  - On account change it reports the new account already during the last tick on old data in the old history directory.
 
    static int lpAccountServer = 0;
@@ -4578,7 +4507,11 @@ string GetAccountServer() {
       }
 
       // update EXECUTION_CONTEXT and main window properties
-      sAccountServer = ec_SetAccountServer(__ExecutionContext, serverName);
+      sAccountServer = serverName;
+      int pid = __ExecutionContext[EC.pid];              // on fatal errors prevent more DLL errors
+      if (!__STATUS_OFF || pid) ec_SetAccountServer(__ExecutionContext, serverName);
+      else                      __ExecutionContext[EC.accountServer] = NULL;
+
       lpAccountServer = __ExecutionContext[EC.accountServer];
       if (!GetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER)) {
          SetWindowPropertyA(hMainWnd, PROP_STRING_ACCOUNT_SERVER, lpAccountServer);
@@ -4647,7 +4580,9 @@ int GetAccountNumber() {
       }
 
       // update EXECUTION_CONTEXT and window properties
-      ec_SetAccountNumber(__ExecutionContext, accountNumber);
+      __ExecutionContext[EC.accountNumber] = accountNumber;
+      int pid = __ExecutionContext[EC.pid];              // on fatal errors prevent more DLL errors
+      if (!__STATUS_OFF || pid) ec_SetAccountNumber(__ExecutionContext, accountNumber);
       SetWindowPropertyA(hMainWnd, PROP_INT_ACCOUNT_NUMBER, accountNumber);
 
       isRecursion = false;
@@ -4720,8 +4655,8 @@ string GetAccountCompanyId() {
    // Servernamen zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    static string lastServer = "", lastId = "";
 
-   string server = GetAccountServer(); if (!StringLen(server)) return("");
-   if (StringLen(lastServer) > 0) {             // no direct comparison due to MT4 bug:
+   string server = GetAccountServer(); if (server == "") return("");
+   if (StringLen(lastServer) > 0) {             // no direct comparison due to MT4 static string bug:
       if (server == lastServer) return(lastId); // in library::deinit() strings are released to early (already a NULL pointer)
    }
 
@@ -5962,14 +5897,13 @@ string TimeframeFlagToStr(int flag) {
 string HistoryFlagsToStr(int flags) {
    string result = "";
 
-   if (!flags)                                result = StringConcatenate(result, "|NULL"                    );
-   if (flags & HST_BUFFER_TICKS         && 1) result = StringConcatenate(result, "|HST_BUFFER_TICKS"        );
-   if (flags & HST_SKIP_DUPLICATE_TICKS && 1) result = StringConcatenate(result, "|HST_SKIP_DUPLICATE_TICKS");
-   if (flags & HST_FILL_GAPS            && 1) result = StringConcatenate(result, "|HST_FILL_GAPS"           );
-   if (flags & HST_TIME_IS_OPENTIME     && 1) result = StringConcatenate(result, "|HST_TIME_IS_OPENTIME"    );
+   if (!flags)                        result = StringConcatenate(result, "|NULL");
+   if (flags & HST_BUFFER_TICKS && 1) result = StringConcatenate(result, "|HST_BUFFER_TICKS");
+   if (flags & HST_FILL_GAPS    && 1) result = StringConcatenate(result, "|HST_FILL_GAPS");
 
-   if (StringLen(result) > 0)
+   if (StringLen(result) > 0) {
       result = StrSubstr(result, 1);
+   }
    return(result);
 }
 
@@ -6716,7 +6650,6 @@ void __DummyCalls() {
    DoubleQuoteStr(NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();
-   EnumChildWindows(NULL);
    EQ(NULL, NULL);
    ErrorDescription(NULL);
    FileAccessModeToStr(NULL);
@@ -6961,12 +6894,9 @@ void __DummyCalls() {
    bool     WritePrivateProfileStringA(string section, string key, string value, string fileName);
 
 #import "user32.dll"
-   int      GetAncestor(int hWnd, int cmd);
-   int      GetClassNameA(int hWnd, string buffer, int bufferSize);
    int      GetDesktopWindow();
    int      GetDlgCtrlID(int hWndCtl);
    int      GetDlgItem(int hDlg, int itemId);
-   int      GetParent(int hWnd);
    int      GetTopWindow(int hWnd);
    int      GetWindow(int hWnd, int cmd);
    bool     IsWindow(int hWnd);

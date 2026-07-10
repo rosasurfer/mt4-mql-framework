@@ -1,6 +1,7 @@
 <!-- 
 EMA(144) 
 Donchian Channel(50) 
+Donchian Channel(10) Sound.onChannelWidening=1
 -->
 
 <chart>
@@ -38,7 +39,7 @@ bearcandle_color=210
 chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
-askline_color=11823615
+askline_color=13158600
 stops_color=17919
 
 <window>
@@ -110,6 +111,7 @@ UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
 ShowChartLegend=0
+SaveCPU=5
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -132,6 +134,29 @@ Reversal.Width=2
 Signal.onReversal=1
 Signal.onReversal.Types=sound* | alert* | mail | telegram
 Sound.onChannelWidening=0
+</inputs>
+</expert>
+style_0=2
+style_1=2
+style_2=2
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Donchian Channel
+flags=339
+window_num=0
+<inputs>
+Periods=10
+ShowChannel=0
+Channel.UpperColor=-1
+Channel.LowerColor=-1
+ShowReversals=on | off* | +N | -N
+ShowChartLegend=1
+Signal.onReversal=0
+Sound.onChannelWidening=1
 </inputs>
 </expert>
 style_0=2

@@ -1,6 +1,6 @@
 <!--
 EMA(144)
-ALMA(38)
+Donchian Channel(50) 
 LWMA(55) Channel + Channel Bars
 -->
 
@@ -39,11 +39,11 @@ bearcandle_color=210
 chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
-askline_color=11823615
+askline_color=13158600
 stops_color=17919
 
 <window>
-height=5000
+height=4640
 fixed_height=0
 
 <indicator>
@@ -111,6 +111,7 @@ UpTrend.Color=65535
 DownTrend.Color=65535
 Background.Color=11119017
 ShowChartLegend=0
+SaveCPU=5
 AutoConfiguration=0
 </inputs>
 </expert>
@@ -154,25 +155,31 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=ALMA
+name=Donchian Channel
 flags=339
 window_num=0
 <inputs>
-MA.Periods=38
-MA.ReversalFilter.StdDev=0.2
-UpTrend.Color=16711680
-DownTrend.Color=16776960
-Background.Color=16748574
-ShowChartLegend=0
-AutoConfiguration=0
+Periods=50
+ShowChannel=1
+Channel.UpperColor=16711680
+Channel.LowerColor=255
+ShowReversals=on* | off | +N | -N
+Reversal.Symbol=dot | thin-ring* | ring | thick-ring
+Reversal.Width=3
+Signal.onReversal=1
+Signal.onReversal.Types=sound* | alert* | mail | telegram
+Sound.onChannelWidening=0
 </inputs>
 </expert>
+style_0=2
+style_1=2
+style_2=2
 show_data=1
 </indicator>
 </window>
 
 <window>
-height=137
+height=120
 fixed_height=0
 <indicator>
 name=Custom Indicator

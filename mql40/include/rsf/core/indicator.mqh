@@ -25,17 +25,17 @@ int init() {
    if (__CoreFunction != CF_START) __CoreFunction = CF_INIT;         // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
-      ForceAlert("Please enable DLL function calls for this indicator.");
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable DLL function calls for this indicator.");
       return(last_error);
    }
    if (!IsLibrariesAllowed()) {
-      ForceAlert("Please enable MQL library calls for this indicator.");
       last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable MQL library calls for this indicator.");
       return(last_error);
    }
 
@@ -46,10 +46,9 @@ int init() {
    int error = MqlProgram_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
    if (!error) error = GetLastError();                               // detect a DLL error
    if (IsError(error)) {
-      ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(1)->MqlProgram_init()  ["+ ErrorToStr(error) +"]");
-      last_error          = error;
       __STATUS_OFF        = true;                                    // If MqlProgram_init() failed the content of the EXECUTION_CONTEXT
-      __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __STATUS_OFF.reason = error;                                   // is undefined. We must not trigger loading of MQL libraries and return asap.
+      last_error          = catch("init(1)->MqlProgram_init()", error);
       return(last_error);
    }
    int initReason = ProgramInitReason();
@@ -228,7 +227,7 @@ int start() {
          if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST) {
             return(__STATUS_OFF.reason);
          }
-         string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
+         string msg = WindowExpertName() +":  switched off  ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
          Comment(NL, NL, NL, NL, msg);                                           // 4 lines margin for any chart legends
 
          if (__isTesting) {
@@ -424,17 +423,21 @@ int start() {
 int deinit() {
    __CoreFunction = CF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION) {
       return(last_error);
-
+   }
+   if (__STATUS_OFF && !__ExecutionContext[EC.pid]) {
+      return(last_error);
+   }
    if (MqlProgram_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
       return(HandleErrors("deinit(1)->MqlProgram_deinit()") + LeaveMqlModule(__ExecutionContext));
    }
 
    int error = catch("deinit(2)");                                      // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
-   if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
+   if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST) {
       return(error|last_error|LeaveMqlModule(__ExecutionContext));
+   }
 
    // Execute custom deinit() reason handlers. Execution stops if a handler returns with an error.
    //
@@ -454,7 +457,7 @@ int deinit() {
                                                                         //
          default:                                                       //
             HandleErrors("deinit(3)  unexpected UninitializeReason: "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            return(last_error|LeaveMqlModule(__ExecutionContext));        //
+            return(last_error|LeaveMqlModule(__ExecutionContext));      //
       }                                                                 //
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
@@ -462,7 +465,6 @@ int deinit() {
       RemoveChartLegend();
       DeleteRegisteredObjects();
    }
-
    return(HandleErrors("deinit(4)") + LeaveMqlModule(__ExecutionContext));
 }
 

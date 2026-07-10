@@ -71,10 +71,6 @@ double  NaN;                                                      // -1.#IND | -
 double  INF;                                                      //  1.#INF |  inf:      positive infinity
 //     -INF                                                       // -1.#INF | -inf:      negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
 
-// magic characters to represent non-printable chars in binry strings, @see BufferToStr()
-#define PLACEHOLDER_NUL_CHAR        '…'                           // 0x85 (133) - replacement for NUL chars in strings
-#define PLACEHOLDER_CTRL_CHAR       '•'                           // 0x95 (149) - replacement for Control chars in strings
-
 
 // mathematical constants (internally 15 correct digits)
 #define M_E                         2.71828182845904523536        // base of natural logarythm
@@ -576,10 +572,8 @@ double  INF;                                                      //  1.#INF |  
 
 
 // flags for writing history files
-#define HST_BUFFER_TICKS               1
-#define HST_SKIP_DUPLICATE_TICKS       2        // skip consecutive identical ticks
-#define HST_FILL_GAPS                  4
-#define HST_TIME_IS_OPENTIME           8
+#define HST_BUFFER_TICKS               1        // buffer ticks and flush data on each BarOpen event (use in tester only)
+#define HST_FILL_GAPS                  2        // fill gaps with the last price before the gap
 
 
 // arrow codes, see ObjectSet(label, OBJPROP_ARROWCODE, value)
@@ -632,8 +626,8 @@ double  INF;                                                      //  1.#INF |  
 #define STAT_PROFIT                      99999  // net profit: STAT_GROSS_PROFIT + STAT_GROSS_LOSS (double)
 #define STAT_GROSS_PROFIT                99999  // sum of all positive trades: => 0                (double)
 #define STAT_GROSS_LOSS                  99999  // sum of all negative trades: <= 0                (double)
-#define STAT_MAX_PROFITTRADE             99999  // Maximum profit — the largest value of all profitable trades. The value is greater than or equal to zero                          double
-#define STAT_MAX_LOSSTRADE               99999  // Maximum loss — the lowest value of all losing trades. The value is less than or equal to zero                                    double
+#define STAT_MAX_PROFITTRADE             99999  // Maximum profit - the largest value of all profitable trades. The value is greater than or equal to zero                          double
+#define STAT_MAX_LOSSTRADE               99999  // Maximum loss - the lowest value of all losing trades. The value is less than or equal to zero                                    double
 #define STAT_CONPROFITMAX                99999  // Maximum profit in a series of profitable trades. The value is greater than or equal to zero                                      double
 #define STAT_CONPROFITMAX_TRADES         99999  // The number of trades that have formed STAT_CONPROFITMAX (maximum profit in a series of profitable trades)                    int
 #define STAT_MAX_CONWINS                 99999  // The total profit of the longest series of profitable trades                                                                       double

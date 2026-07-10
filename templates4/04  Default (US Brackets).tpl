@@ -1,6 +1,5 @@
-<!-- 
-Donchian Channel(50)
-Donchian Channel(50) Width
+<!--
+US Brackets
 -->
 
 <chart>
@@ -38,12 +37,11 @@ bearcandle_color=210
 chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
-askline_color=11823615
+askline_color=13158600
 stops_color=17919
 
 <window>
-height=800
-fixed_height=0
+height=5000
 
 <indicator>
 name=main
@@ -75,6 +73,8 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
+<inputs>
+</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -97,69 +97,35 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Moving Average
+name=Brackets
 flags=339
 window_num=0
 <inputs>
-MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=144
-MA.Periods.Step=0
-Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=65535
-DownTrend.Color=65535
-Background.Color=11119017
-ShowChartLegend=1
+TimeWindow=16:00-16:30
+NumberOfBrackets=3
+BracketsColor=9639167   ; DeepPink
 AutoConfiguration=0
 </inputs>
 </expert>
-show_data=1
+period_flags=7
+show_data=0
 </indicator>
 
 <indicator>
 name=Custom Indicator
 <expert>
-name=Donchian Channel
+name=Brackets
 flags=339
 window_num=0
 <inputs>
-Periods=50
-ShowChannel=1
-Channel.UpperColor=16711680
-Channel.LowerColor=255
-ShowReversals=on* | off | +N | -N
-Reversal.Width=1
-Signal.onReversal=1
-Signal.onReversal.Types=sound* | alert* | mail | telegram
-Sound.onChannelWidening=0
+TimeWindow=16:30-17:00
+NumberOfBrackets=6
+BracketsColor=16711680  ; Blue
+AutoConfiguration=0
 </inputs>
 </expert>
-style_0=2
-style_1=2
-style_2=2
-show_data=1
-</indicator>
-</window>
-
-<window>
-height=230
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=Donchian Channel Width
-flags=339
-window_num=1
-<inputs>
-Periods=50
-</inputs>
-</expert>
-level_0=10
-level_1=20
-level_2=200
-level_3=500
-level_4=1000
-show_data=1
+period_flags=7
+show_data=0
 </indicator>
 </window>
 </chart>

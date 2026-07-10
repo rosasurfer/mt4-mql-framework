@@ -1,14 +1,10 @@
-<!--
-BFX Volume
--->
-
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=4
+scale=2
 graph=1
 fore=0
 grid=0
@@ -17,9 +13,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
+scroll=1
 shift=1
-shift_size=50
+shift_size=10
 
 fixed_pos=620
 window_left=0
@@ -37,11 +33,12 @@ bearcandle_color=210
 chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
-askline_color=11823615
+askline_color=13158600
 stops_color=17919
 
 <window>
-height=300
+height=405
+fixed_height=0
 
 <indicator>
 name=main
@@ -73,8 +70,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -103,6 +98,7 @@ window_num=0
 <inputs>
 MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
 MA.Periods=144
+MA.Periods.Step=0
 Draw.Type=Line* | Dot
 Draw.Width=3
 UpTrend.Color=65535
@@ -114,25 +110,45 @@ AutoConfiguration=0
 </expert>
 show_data=1
 </indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ALMA
+flags=339
+window_num=0
+<inputs>
+MA.Periods=38
+UpTrend.Color=16711680
+DownTrend.Color=16776960
+Background.Color=16748574
+AutoConfiguration=0
+</inputs>
+</expert>
+show_data=1
+</indicator>
 </window>
 
 <window>
-height=50
+height=37
 fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=BFX Volume
+name=MACD
 flags=339
 window_num=1
 <inputs>
+FastMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
+FastMA.Periods=8
+SlowMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
+SlowMA.Periods=38
+VScale.Unit=price* | bps-price | bps-adr
+AutoConfiguration=0
 </inputs>
 </expert>
-min=-40
-max=40
-levels_color=12632256
-levels_style=0
 show_data=1
 </indicator>
+
 </window>
 </chart>

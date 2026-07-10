@@ -333,7 +333,7 @@ bool FindBfxIndicator() {
  * @return double - indicator value or NULL in case of errors (short values are returned as negative values)
  */
 double GetBfxValue(int buffer, int bar) {
-   string separator      = "•••••••••••••••••••••••••••••••••••"; // title1         init() error if an empty string
+   string separator      = "-----------------------------------"; // title1         init() error if an empty string
    string bfxLicense     = LicenseKey;                            // UserID
    int    serverId       = 0;                                     // ServerURL
    int    loginTries     = 1;                                     // Retries        minimum = 1 (in fact tries, not retries)

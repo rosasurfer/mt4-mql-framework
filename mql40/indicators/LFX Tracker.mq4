@@ -29,8 +29,7 @@
  *
  * • XAUI.Enabled:  Whether calculation of the Gold index is enabled.
  *
- * • Recording.Enabled:  Whether recording of active indexes is enabled. If FALSE indexes active indexes are only calculated
- *    and displayed.
+ * • Recording.Enabled:  Whether recording of calculated indexes is enabled.
  *
  * • Recording.HistoryDirectory:  Name of the history directory to store recorded data. Must be a located in the "MQL4/files"
  *    directory. If the directory doesn't exist it is created. The name may contain subdirectories and supports both forward
@@ -41,7 +40,7 @@
  *
  * • Broker.SymbolSuffix:  Symbol suffix for brokers with non-standard symbols.
  *
- * • AutoConfiguration:  If enabled all input parameters can be pre-defined in the configuration. Additional configuration 
+ * • AutoConfiguration:  If enabled all input parameters can be pre-defined in the configuration. Additional configuration
  *    settings not available via input dialog:
  *
  *    [LFX Tracker]
@@ -934,7 +933,7 @@ int ShowStatus(int error = NO_ERROR) {
       Comment(NL, NL, NL, NL, WindowExpertName(), "  => missing broker symbols: ", StrLeft(msg, -2));
    }
    else if (lastMissingSymbols > 0) {
-      Comment("");                                 // reset last comment but keep comments of other programs
+      Comment("");                                                // reset last comment but keep comments of other programs
    }
    lastMissingSymbols = size;
 
@@ -948,6 +947,8 @@ int ShowStatus(int error = NO_ERROR) {
  * @return bool - success status
  */
 bool RecordIndexes() {
+   if (__isTesting) return(true);
+
    datetime now = GetFxtTime();
    int size = ArraySize(syntheticSymbols);
 
@@ -956,9 +957,9 @@ bool RecordIndexes() {
          double value     = NormalizeDouble(currMid[i], symbolDigits[i]);
          double lastValue = prevMid[i];
 
-         if (Tick.isVirtual) {                                    // Virtual ticks (there are plenty) are recorded only if the
-            if (EQ(value, lastValue, symbolDigits[i])) continue;  // resulting price changed. Real ticks are always recorded.
-         }
+         if (Tick.isVirtual) {
+            if (EQ(value, lastValue, symbolDigits[i])) continue;  // virtual ticks are recorded only if the value changed
+         }                                                        // real ticks are always recorded
 
          if (!hSet[i]) {
             if      (i <  7) hSet[i] = HistorySet1.Get(syntheticSymbols[i], recordingDirectory);
@@ -997,7 +998,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                    // on ObjectDrag or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }

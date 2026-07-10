@@ -79,7 +79,7 @@
 #define EC.dllWarning                      172
 #define EC.dllError                        174
 #define EC.mqlError                        176
-#define EC.debugOptions                    177
+#define EC.debugFeatures                   177
 #define EC.loglevel                        178
 #define EC.loglevelDebug                   179
 #define EC.loglevelTerminal                180

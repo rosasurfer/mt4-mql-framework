@@ -714,9 +714,10 @@ bool RecordReversalBalance() {
       if (!HistorySet1.AddTick(recorder.hSet, Time[bar], open + recorder.priceBase, flags)) return(false);
       if (!HistorySet1.AddTick(recorder.hSet, Time[bar], high + recorder.priceBase, flags)) return(false);
       if (!HistorySet1.AddTick(recorder.hSet, Time[bar], low  + recorder.priceBase, flags)) return(false);
-      if (bar == 0) {
+      if (!__isTesting && bar == 0) {
          flags &= ~HST_BUFFER_TICKS;                     // disable the tick buffer on bar 0 (for realtime updates)
       }
+
       if (!HistorySet1.AddTick(recorder.hSet, Time[bar], close + recorder.priceBase, flags)) return(false);
    }
    return(true);

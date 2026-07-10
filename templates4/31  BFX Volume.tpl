@@ -1,5 +1,5 @@
 <!--
-US Brackets
+BFX Volume
 -->
 
 <chart>
@@ -8,7 +8,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=1
+scale=4
 graph=1
 fore=0
 grid=0
@@ -17,9 +17,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=1
+scroll=0
 shift=1
-shift_size=10
+shift_size=50
 
 fixed_pos=620
 window_left=0
@@ -37,11 +37,11 @@ bearcandle_color=210
 chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
-askline_color=11823615
+askline_color=13158600
 stops_color=17919
 
 <window>
-height=5000
+height=300
 
 <indicator>
 name=main
@@ -97,35 +97,42 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=Moving Average
 flags=339
 window_num=0
 <inputs>
-TimeWindow=16:00-16:30
-NumberOfBrackets=3
-BracketsColor=9639167   ; DeepPink
+MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
+MA.Periods=144
+Draw.Type=Line* | Dot
+Draw.Width=3
+UpTrend.Color=65535
+DownTrend.Color=65535
+Background.Color=11119017
+ShowChartLegend=1
 AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+show_data=1
 </indicator>
+</window>
 
+<window>
+height=50
+fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Brackets
+name=BFX Volume
 flags=339
-window_num=0
+window_num=1
 <inputs>
-TimeWindow=16:30-17:00
-NumberOfBrackets=6
-BracketsColor=16711680  ; Blue
-AutoConfiguration=0
 </inputs>
 </expert>
-period_flags=7
-show_data=0
+min=-40
+max=40
+levels_color=12632256
+levels_style=0
+show_data=1
 </indicator>
 </window>
 </chart>

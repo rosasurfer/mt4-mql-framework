@@ -353,7 +353,7 @@ function compileMql40() {
       ((warnings == 1)) && wpl='' || wpl='s'
       time="$(duration "$startms" "$endms")"
       output+=("Result: $errors error$epl, $warnings warning$wpl, $time elapsed")
-      output+=("Error")
+      output+=('Error')
     fi
   fi
 
@@ -376,7 +376,7 @@ function compileMql40() {
 
   # print everything to STDOUT
   printf '%s\n' "${output[@]}"
-
+  
   ((warn2error)) || warnings=0
   ((!errors && !warnings)) && rm -f "$logFile"
   ((retVal = errors + warnings))

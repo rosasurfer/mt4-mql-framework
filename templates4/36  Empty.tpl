@@ -1,4 +1,4 @@
-<!-- Empty.tpl -->
+<!-- Empty -->
 
 <chart>
 symbol=GBPAUD
@@ -15,9 +15,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=1
+scroll=0
 shift=1
-shift_size=10
+shift_size=50
 
 fixed_pos=620
 window_left=0
@@ -35,7 +35,7 @@ bearcandle_color=210
 chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
-askline_color=11823615
+askline_color=13158600
 stops_color=17919
 
 <window>

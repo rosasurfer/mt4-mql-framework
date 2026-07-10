@@ -1,3 +1,5 @@
+<!-- ADR(40) -->
+
 <chart>
 symbol=GBPUSD
 period=60
@@ -13,9 +15,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=1
+scroll=0
 shift=1
-shift_size=10
+shift_size=50
 
 fixed_pos=620
 window_left=0
@@ -33,14 +35,24 @@ bearcandle_color=210
 chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
-askline_color=11823615
+askline_color=13158600
 stops_color=17919
 
 <window>
-height=300
+height=250
 
 <indicator>
 name=main
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Grid
+flags=347
+window_num=0
+</expert>
+show_data=0
 </indicator>
 
 <indicator>
@@ -51,6 +63,38 @@ flags=347
 window_num=0
 </expert>
 show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=SuperBars
+flags=339
+window_num=0
+</expert>
+show_data=0
+</indicator>
+</window>
+
+<window>
+height=100
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=Average Range
+flags=339
+window_num=1
+<inputs>
+TrueRange=1
+MA.Method=SMA | LWMA* | EMA | SMMA
+MA.Periods=40
+MA.Periods.Step=5
+</inputs>
+</expert>
+color_0=16711680
+weight_0=2
+show_data=1
 </indicator>
 
 </window>

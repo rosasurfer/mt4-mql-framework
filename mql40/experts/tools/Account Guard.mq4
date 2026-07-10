@@ -477,7 +477,7 @@ bool CloseOpenOrders(string symbol = "") {
       else                       ArrayPushInt(positions, OrderTicket());
    }
 
-   int oe[], oes[][ORDER_EXECUTION_intSize], oeFlags=NULL;
+   int oe[], oes[][ORDER_EXECUTION_intSize], oeFlags = NULL;
 
    if (ArraySize(positions) > 0) {
       if (!OrdersClose(positions, 1, CLR_NONE, oeFlags, oes)) return(false);

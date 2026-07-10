@@ -24,7 +24,7 @@ int    __objectsCounter = 0;     // sizeof(__objects)
  *  - 13.739 calls on terminal start with 6 open charts
  *  - SuperBars in offline charts: 271 calls on every tick
  */
-bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NULL, double price1=NULL, datetime time2=NULL, double price2=NULL, datetime time3=NULL, double price3=NULL) {
+bool ObjectCreateRegister(string name, int type, int window = 0, datetime time1 = NULL, double price1 = NULL, datetime time2 = NULL, double price2 = NULL, datetime time3 = NULL, double price3 = NULL) {
    if (StringLen(name) > 63) return(!catch("ObjectCreateRegister(1)  invalid parameter name: \""+ name +"\" (max 63 chars)", ERR_INVALID_PARAMETER));
 
    // OBJ_VLINE         - Vertical line. Uses time of first coordinate pair.
@@ -69,7 +69,7 @@ bool ObjectCreateRegister(string name, int type, int window=0, datetime time1=NU
    __objects[__objectsCounter] = name;
    __objectsCounter++;
 
-   //if (__ExecutionContext[EC.debugOptions] & OPTION_DEBUG_OBJECT_CREATE && 1) debug("ObjectCreateRegister(0.1)  Tick="+ __ExecutionContext[EC.ticks] +"  objects="+ __objectsCounter +"  \""+ name +"\"");
+   //if (__ExecutionContext[EC.debugFeatures] & DEBUG_FEATURE_CREATE_OBJECT && 1) debug("ObjectCreateRegister(0.1)  Tick="+ __ExecutionContext[EC.ticks] +"  objects="+ __objectsCounter +"  \""+ name +"\"");
    return(true);
 }
 

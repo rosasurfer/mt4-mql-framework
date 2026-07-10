@@ -17,28 +17,27 @@ int init() {
    if (__CoreFunction != CF_START) __CoreFunction = CF_INIT;   // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
-      ForceAlert("Please enable DLL function calls for this script.");
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable DLL function calls for this script.");
       return(last_error);
    }
    if (!IsLibrariesAllowed()) {
-      ForceAlert("Please enable MQL library calls for this script.");
       last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
+      ForceAlert("Please enable MQL library calls for this script.");
       return(last_error);
    }
 
    // initialize the execution context
    int error = MqlProgram_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, IsTesting(), IsVisualMode(), IsOptimization(), NULL, __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped(), AccountServer(), AccountNumber());
-   if (!error) error = GetLastError();                         // detect a DLL exception
+   if (!error) error = GetLastError();                         // detect DLL exceptions
    if (IsError(error)) {
-      ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(1)->MqlProgram_init()  ["+ ErrorToStr(error) +"]");
-      last_error          = error;
       __STATUS_OFF        = true;                              // If MqlProgram_init() failed the content of the EXECUTION_CONTEXT
-      __STATUS_OFF.reason = last_error;                        // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __STATUS_OFF.reason = error;                             // is undefined. We must not trigger loading of MQL libraries and return asap.
+      last_error          = catch("init(1)->MqlProgram_init()", error);
       return(last_error);
    }
 
@@ -134,11 +133,10 @@ bool initGlobals() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (IsDllsAllowed() && IsLibrariesAllowed()) {
-         string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-         Comment(NL, NL, NL, NL, msg);                                        // 4 lines margin for any chart legends
-         logDebug("start(1)  "+ msg);
-      }
+      string msg = WindowExpertName() +":  switched off", sError = "";
+      if (IsDllsAllowed()) sError = "  ("+ ifString(__STATUS_OFF.reason, ErrorToStr(__STATUS_OFF.reason), "unknown reason") +")";
+      Comment(NL, NL, NL, NL, msg, sError);                                   // 4 lines margin for possible chart legends
+      Alert("NOTICE:   ", Symbol(), ",", PeriodDescription(), "  ", WindowExpertName(), "::start(1)  switched off", sError);
       return(__STATUS_OFF.reason);
    }
    __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
@@ -191,6 +189,9 @@ int deinit() {
    __CoreFunction = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION) {
+      return(last_error);
+   }
+   if (__STATUS_OFF && !__ExecutionContext[EC.pid]) {
       return(last_error);
    }
    if (MqlProgram_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
@@ -340,7 +341,4 @@ bool HandleErrors(string caller, int error = NULL) {
    int MqlProgram_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
    int MqlProgram_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, int isVirtual, double bid, double ask);
    int MqlProgram_deinit(int ec[], int uninitReason);
-
-#import "user32.dll"
-   int GetParent(int hWnd);
 #import

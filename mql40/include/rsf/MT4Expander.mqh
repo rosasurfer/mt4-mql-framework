@@ -13,7 +13,7 @@
    // terminal status and interaction
    string   FindHistoryDirectoryA(string filename, int removeFile);
    int      GetCliOptions();
-   int      GetDebugOptions();
+   int      GetDebugFeatures();
    string   GetExpanderFileNameA();
    string   GetHistoryRootPathA();
    string   GetMqlDirectoryA();
@@ -25,11 +25,10 @@
    string   GetTerminalDataPathA();
    string   GetTerminalFileNameA();
    string   GetTerminalRoamingDataPathA();
-   int      GetUIThreadId();
+   int      GetUiThreadId();
    bool     IsPortableMode();
-   bool     IsUIThread(int threadId);
+   bool     IsUiThread(int threadId);
    bool     LoadMqlProgramA(int hChart, int programType, string programName);
-   int      MT4InternalMsg();
    bool     ReopenAlertDialog(int sound);                                                 // see notes for array limitations at the top of the file
    //int    MqlProgram_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isTesting, int isVisualMode, int isOptimization, int recorder, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY, string accountServer, int accountNumber);
    //int    MqlProgram_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime tickTime, int isVirtual, double bid, double ask);
@@ -38,6 +37,7 @@
    //int    MqlLibrary_deinit(int ec[], int uninitReason);
    //int    LeaveMqlModule(int ec[]);
    int      WM_MT4();
+   int      WM_MT4EXPANDER();
 
    // strategy tester
    int      FindTesterWindow();
@@ -172,7 +172,6 @@
    int      GetWindowPropertyA   (int hWnd, string name);
    bool     SetWindowPropertyA   (int hWnd, string name, int value);
    int      RemoveWindowPropertyA(int hWnd, string name);
-   bool     EnumWindowPropertiesA(int hWnd, string prefix);
 
    int      GetWindowIntegerA   (int hWnd, string name);
    bool     SetWindowIntegerA   (int hWnd, string name, int value);
@@ -186,7 +185,10 @@
    bool     SetWindowStringA   (int hWnd, string name, string value);
    string   RemoveWindowStringA(int hWnd, string name);
 
-   // other
+   // Win32 helpers
+   int      EnumChildWindowsToDebug(int hWnd, int recursive);
+   int      EnumWindowPropertiesA(int hWnd, string prefix);
+   string   GetClassNameA(int hWnd);
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
    int      GetPressedVirtualKeys(int flags);

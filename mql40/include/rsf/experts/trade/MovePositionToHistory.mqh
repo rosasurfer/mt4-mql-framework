@@ -11,7 +11,7 @@
 bool MovePositionToHistory(datetime closeTime, double closePrice, double closePriceSig) {
    if (last_error != NULL)                return(false);
    if (instance.status != STATUS_TRADING) return(!catch("MovePositionToHistory(1)  "+ instance.name +" cannot process position of "+ StatusDescription(instance.status) +" instance", ERR_ILLEGAL_STATE));
-   if (!open.ticket)                      return(!catch("MovePositionToHistory(2)  "+ instance.name +" position not found (open.ticket=NULL)", ERR_ILLEGAL_STATE));
+   if (!open.ticket)                      return(!catch("MovePositionToHistory(2)  "+ instance.name +" position not found (open.ticket = NULL)", ERR_ILLEGAL_STATE));
 
    bool isPartialClose = (open.fromTicket || open.toTicket);
 

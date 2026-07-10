@@ -1,10 +1,14 @@
+<!--
+FF Brackets
+-->
+
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=2
+scale=1
 graph=1
 fore=0
 grid=0
@@ -33,11 +37,11 @@ bearcandle_color=210
 chartline_color=11119017
 volumes_color=30720
 grid_color=14474460
-askline_color=11823615
+askline_color=13158600
 stops_color=17919
 
 <window>
-height=405
+height=5000
 fixed_height=0
 
 <indicator>
@@ -70,6 +74,8 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
+<inputs>
+</inputs>
 </expert>
 show_data=0
 </indicator>
@@ -92,63 +98,35 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Moving Average
+name=Brackets
 flags=339
 window_num=0
 <inputs>
-MA.Method=SMA | LWMA | EMA* | SMMA | ALMA
-MA.Periods=144
-MA.Periods.Step=0
-Draw.Type=Line* | Dot
-Draw.Width=3
-UpTrend.Color=65535
-DownTrend.Color=65535
-Background.Color=11119017
-ShowChartLegend=1
+TimeWindow=08:00-09:00
+NumberOfBrackets=3
+BracketsColor=9639167   ; DeepPink
 AutoConfiguration=0
 </inputs>
 </expert>
-show_data=1
+period_flags=7
+show_data=0
 </indicator>
 
 <indicator>
 name=Custom Indicator
 <expert>
-name=ALMA
+name=Brackets
 flags=339
 window_num=0
 <inputs>
-MA.Periods=38
-UpTrend.Color=16711680
-DownTrend.Color=16776960
-Background.Color=16748574
+TimeWindow=09:00-10:00
+NumberOfBrackets=3
+BracketsColor=16711680  ; Blue
 AutoConfiguration=0
 </inputs>
 </expert>
-show_data=1
+period_flags=7
+show_data=0
 </indicator>
-</window>
-
-<window>
-height=37
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=MACD
-flags=339
-window_num=1
-<inputs>
-FastMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
-FastMA.Periods=8
-SlowMA.Method=SMA | LWMA | EMA | SMMA| ALMA*
-SlowMA.Periods=38
-VScale.Unit=price* | bps-price | bps-adr
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
 </window>
 </chart>

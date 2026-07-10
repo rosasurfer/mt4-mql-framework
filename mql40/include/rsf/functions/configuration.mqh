@@ -1,6 +1,6 @@
-/**
- * Functions for reading/writing the framework configuration.
- */
+//
+// Functions to work with the framework configuration
+//
 
 
 /**
@@ -12,15 +12,13 @@
  * @return string - filename or an empty string in case of errors
  */
 string GetAccountConfigPath(string company = "", int account = NULL) {
-   if (!StringLen(company) || company=="0") {
+   if (company=="" || company=="0") {
       company = GetAccountCompanyId();
-      if (company == "") return(EMPTY_STR);
+      if (company == "") return("");
    }
-   if (account <= 0) {
-      if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
-      account = GetAccountNumber();
-      if (!account) return(EMPTY_STR);
-   }
+   if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+   if (!account) account = GetAccountNumber();
+   if (!account) return("");
    return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", company, "\\", account, "-config.ini"));
 }
 

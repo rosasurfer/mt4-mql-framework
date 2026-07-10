@@ -248,7 +248,7 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
  * @param  _In_     int       i        - Index der zu prüfenden Order innerhalb des übergebenen LFX_ORDER-Arrays
  * @param  _In_opt_ double    bid      - zur Prüfung zu benutzender Bid-Preis bei Price-Limits  (NULL:        keine Limitprüfung gegen den Bid-Preis)
  * @param  _In_opt_ double    ask      - zur Prüfung zu benutzender Ask-Preis bei Price-Limits  (NULL:        keine Limitprüfung gegen den Ask-Preis)
- * @param  _In_opt_ double    profit   - zur Prüfung zu benutzender PL-Betrag bei Profit-Limits (EMPTY_VALUE: keine Limitprüfung von Profitbeträgen )
+ * @param  _In_opt_ double    profit   - zur Prüfung zu benutzender PL-Betrag bei Profit-Limits (EMPTY_VALUE: keine Limitprüfung von Profitbeträgen)
  *
  * @return int - Triggerstatus, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
  *                              OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
