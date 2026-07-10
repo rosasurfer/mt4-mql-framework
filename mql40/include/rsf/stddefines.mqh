@@ -71,10 +71,6 @@ double  NaN;                                                      // -1.#IND | -
 double  INF;                                                      //  1.#INF |  inf:      positive infinity
 //     -INF                                                       // -1.#INF | -inf:      negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
 
-// magic characters to represent non-printable chars in binry strings, @see BufferToStr()
-#define PLACEHOLDER_NUL_CHAR        '�'                           // 0x85 (133) - replacement for NUL chars in strings
-#define PLACEHOLDER_CTRL_CHAR       '�'                           // 0x95 (149) - replacement for Control chars in strings
-
 
 // mathematical constants (internally 15 correct digits)
 #define M_E                         2.71828182845904523536        // base of natural logarythm
