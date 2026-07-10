@@ -576,9 +576,8 @@ double  INF;                                                      //  1.#INF |  
 
 
 // flags for writing history files
-#define HST_BUFFER_TICKS               1        // buffer ticks and flush data on every BarOpen event (use in tester only)
-#define HST_FILL_GAPS                  2
-#define HST_TIME_IS_OPENTIME           4
+#define HST_BUFFER_TICKS               1        // buffer ticks and flush data on each BarOpen event (use in tester only)
+#define HST_FILL_GAPS                  2        // fill gaps with the last price before the gap
 
 
 // arrow codes, see ObjectSet(label, OBJPROP_ARROWCODE, value)

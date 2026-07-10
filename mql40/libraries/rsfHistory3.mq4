@@ -119,7 +119,7 @@ double   hf.lastStoredBar.data         [][6];         // Bardaten (T-OHLCV) | ne
 // Schreibpuffer für eintreffende Ticks einer bereits gespeicherten oder noch nicht gespeicherten Bar. Die Variable hf.bufferedBar.modified signalisiert, ob die
 // Bardaten in hf.bufferedBar von den in der Datei gespeicherten Daten abweichen.
 //
-// (1) Diese Bar stimmt mit hf.lastStoredBar nur dann überein, wenn hf.lastStoredBar die jüngste Bar der Datei ist und mit HST_BUFFER_TICKS=On weitere Ticks für diese
+// (1) Diese Bar stimmt mit hf.lastStoredBar nur dann überein, wenn hf.lastStoredBar die jüngste Bar der Datei ist und mit HST_BUFFER_TICKS=on weitere Ticks für diese
 //     jüngste Bar gepuffert werden. Stimmen beide Bars überein, werden sie bei Änderungen an einer der Bars jeweils synchronisiert.
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int      hf.bufferedBar.offset       [];              // Offset relativ zum Header: Offset 0 ist die älteste Bar, initialisiert mit -1
@@ -436,13 +436,14 @@ bool HistorySet3.Close(int hSet) {
 
 /**
  * Add a single tick to a symbol's HistorySet. The tick is stored as Close price of the last bar.
+ * TODO: Bar data is written to disk at most once per second.
  *
  * @param  int      hSet             - handle of the HistorySet
  * @param  datetime time             - tick time
  * @param  double   value            - tick value
  * @param  int      flags [optional] - additional flags that control writing (default: none)
- *                                     HST_BUFFER_TICKS: Buffer ticks and flush data only at the next BarOpen event for the respective file.
- *                                     HST_FILL_GAPS:    Fills any gaps with the last price before the gap.
+ *                                     HST_BUFFER_TICKS: buffer ticks and flush data on BarOpen of each timeframe (use in tester only)
+ *                                     HST_FILL_GAPS:    fills gaps with the last price before the gap
  * @return bool - success status
  */
 bool HistorySet3.AddTick(int hSet, datetime time, double value, int flags = NULL) {
@@ -481,9 +482,9 @@ bool HistorySet3.AddTick(int hSet, datetime time, double value, int flags = NULL
    // |                           |     old    | optimized | FindBar optimized | Arrays optimized | Read optimized | Write optimized |  Validation optimized   |
    // +---------------------------+------------+-----------+-------------------+------------------+----------------+-----------------+------------+------------+
    // | v419 no recording         | 17.613 t/s |           |                   |                  |                |                 |            |            |
-   // | v225 HST_BUFFER_TICKS=Off |  6.426 t/s |           |                   |                  |                |                 |            |            |
-   // | v419 HST_BUFFER_TICKS=Off |  5.871 t/s | 6.877 t/s |     7.381 t/s     |    7.870 t/s     |   9.097 t/s    |    9.966 t/s    | 11.332 t/s |            |
-   // | v419 HST_BUFFER_TICKS=On  |            |           |                   |                  |                |                 | 15.486 t/s | 14.286 t/s |
+   // | v225 HST_BUFFER_TICKS=off |  6.426 t/s |           |                   |                  |                |                 |            |            |
+   // | v419 HST_BUFFER_TICKS=off |  5.871 t/s | 6.877 t/s |     7.381 t/s     |    7.870 t/s     |   9.097 t/s    |    9.966 t/s    | 11.332 t/s |            |
+   // | v419 HST_BUFFER_TICKS=on  |            |           |                   |                  |                |                 | 15.486 t/s | 14.286 t/s |
    // +---------------------------+------------+-----------+-------------------+------------------+----------------+-----------------+------------+------------+
 }
 
@@ -759,8 +760,8 @@ int HistoryFile3.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
       hf.hFile.lastValid = hFile;
    }
    if (time <= 0)                       return(_EMPTY(catch("HistoryFile3.FindBar(5)  invalid parameter time: "+ time +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER)));
-   if (ArraySize(lpBarExists) == 0)
-      ArrayResize(lpBarExists, 1);
+
+   if (!ArraySize(lpBarExists)) ArrayResize(lpBarExists, 1);
 
    // History leer?
    if (!hf.total.bars[hFile]) {
@@ -769,7 +770,7 @@ int HistoryFile3.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
    }
 
    datetime openTime = time;
-   int      offset;
+   int offset;
 
    // alle bekannten Daten abprüfen
    if (hf.stored.bars[hFile] > 0) {
@@ -931,7 +932,7 @@ bool HistoryFile3.ReadBar(int hFile, int offset, double &bar[]) {
  * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validiert, alles andere nicht. Insbesondere wird nicht
  *       überprüft, ob die Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
-bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
+bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags = NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile3.WriteBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
       if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile3.WriteBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -1089,8 +1090,8 @@ bool HistoryFile3.UpdateBar(int hFile, int offset, double value) {
 
    // vorzugsweise bekannte Bars aktualisieren
    if (offset == hf.bufferedBar.offset[hFile]) {                                 // BufferedBar
-    //hf.bufferedBar.data[hFile][BAR_T] = ...                                    // unchanged
-    //hf.bufferedBar.data[hFile][BAR_O] = ...                                    // unchanged
+      //...fferedBar.data[hFile][BAR_T] = ...                                    // unchanged
+      //...fferedBar.data[hFile][BAR_O] = ...                                    // unchanged
       hf.bufferedBar.data[hFile][BAR_H] = MathMax(hf.bufferedBar.data[hFile][BAR_H], value);
       hf.bufferedBar.data[hFile][BAR_L] = MathMin(hf.bufferedBar.data[hFile][BAR_L], value);
       hf.bufferedBar.data[hFile][BAR_C] = value;
@@ -1105,8 +1106,8 @@ bool HistoryFile3.UpdateBar(int hFile, int offset, double value) {
    }
 
    // LastStoredBar aktualisieren und speichern
- //hf.lastStoredBar.data[hFile][BAR_T] = ...                                     // unchanged
- //hf.lastStoredBar.data[hFile][BAR_O] = ...                                     // unchanged
+   //...stStoredBar.data[hFile][BAR_T] = ...                                     // unchanged
+   //...stStoredBar.data[hFile][BAR_O] = ...                                     // unchanged
    hf.lastStoredBar.data[hFile][BAR_H] = MathMax(hf.lastStoredBar.data[hFile][BAR_H], value);
    hf.lastStoredBar.data[hFile][BAR_L] = MathMin(hf.lastStoredBar.data[hFile][BAR_L], value);
    hf.lastStoredBar.data[hFile][BAR_C] = value;
@@ -1145,8 +1146,9 @@ bool HistoryFile3.InsertBar(int hFile, int offset, double bar[], int flags = NUL
    if (ArraySize(bar) != 6)             return(!catch("HistoryFile3.InsertBar(7)  invalid size of parameter data[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAY));
 
    // ggf. Lücke für einzufügende Bar schaffen
-   if (offset < hf.total.bars[hFile])
+   if (offset < hf.total.bars[hFile]) {
       if (!HistoryFile3.MoveBars(hFile, offset, offset+1)) return(false);
+   }
 
    // Bar schreiben, HistoryFile3.WriteBar() führt u.a. folgende Tasks aus: - validiert die Bar
    return(HistoryFile3.WriteBar(hFile, offset, bar, flags));             // - speichert eine durch die einzufügende Bar geschlossene BufferedBar
@@ -1184,6 +1186,7 @@ bool HistoryFile3.WriteLastStoredBar(int hFile, int flags = NULL) {
    int position = HISTORY_HEADER_size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
    if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile3.WriteLastStoredBar(7)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])));
 
+
    if (hf.format[hFile] == 400) {
       FileWriteInteger(hFile, openTime);
       FileWriteDouble (hFile, NormalizeDouble(hf.lastStoredBar.data[hFile][BAR_O], digits));
@@ -1210,8 +1213,9 @@ bool HistoryFile3.WriteLastStoredBar(int hFile, int flags = NULL) {
    // Die Bar existierte bereits in der History, die Metadaten ändern sich nicht.
 
    // Ist die LastStoredBar gleichzeitig die BufferedBar, wird deren veränderlicher Status auch aktualisiert.
-   if (offset == hf.bufferedBar.offset[hFile])
+   if (offset == hf.bufferedBar.offset[hFile]) {
       hf.bufferedBar.modified[hFile] = false;               // Bar wurde gerade gespeichert
+   }
 
    int error = GetLastError();
    if (!error) return(true);
@@ -1247,7 +1251,7 @@ bool HistoryFile3.WriteBufferedBar(int hFile, int flags = NULL) {
    if (hf.bufferedBar.modified[hFile]) {
       // Bar validieren
       datetime openTime = hf.bufferedBar.openTime[hFile];         if (!openTime) return(!catch("HistoryFile3.WriteBufferedBar(7)  invalid hf.lastStoredBar["+ offset +"].time: "+ openTime +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
-      int      V  = Round(hf.bufferedBar.data    [hFile][BAR_V]); if (!V)        return(!catch("HistoryFile3.WriteBufferedBar(8)  invalid hf.lastStoredBar["+ offset +"].volume: "+ V +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
+      int      V =  Round(hf.bufferedBar.data    [hFile][BAR_V]); if (!V)        return(!catch("HistoryFile3.WriteBufferedBar(8)  invalid hf.lastStoredBar["+ offset +"].volume: "+ V +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
 
       // FilePointer positionieren, Daten normalisieren und schreiben
       int position = HISTORY_HEADER_size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
@@ -1333,13 +1337,14 @@ bool HistoryFile3.MoveBars(int hFile, int fromOffset, int destOffset) {
 
 /**
  * Add a single tick to a history file. The tick must belong to the youngest bar in the file and becomes the bar's close price.
+ * TODO: Bar data is written to disk at most once per second.
  *
  * @param  int      hFile            - handle of the history file
  * @param  datetime time             - tick time
  * @param  double   value            - tick value
  * @param  int      flags [optional] - additional flags to control writing (default: none)
- *                                     HST_BUFFER_TICKS: Buffer ticks and flush data only at a BarOpen event of the file.
- *                                     HST_FILL_GAPS:    Fill any gaps with the last price before the gap.
+ *                                     HST_BUFFER_TICKS: buffer ticks and flush data on each BarOpen event of the file (use in tester only)
+ *                                     HST_FILL_GAPS:    fill gaps with the last price before the gap
  * @return bool - success status
  */
 bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NULL) {
@@ -1356,7 +1361,7 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
    if (value >= EMPTY_VALUE)               return(!catch("HistoryFile3.AddTick(8)  invalid parameter value: "+ NumberToStr(value, ".1+") +" (too large, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
 
    double bar[6];
-   bool   barExists[1];
+   bool barExists[1];
 
    // Offset und OpenTime der Tick-Bar bestimmen
    datetime tick.time=time, tick.openTime;
@@ -1397,7 +1402,7 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
       hf.bufferedBar.offset[hFile] = -1;                                               // BufferedBar zurücksetzen
    }
 
-   // HST_BUFFER_TICKS = TRUE: Tick buffern
+   // HST_BUFFER_TICKS = on: Tick buffern
    if (HST_BUFFER_TICKS & flags && 1) {
       // ist BufferedBar leer, Tickbar laden oder neue Bar beginnen und zur BufferedBar machen
       if (hf.bufferedBar.offset[hFile] < 0) {                                          // BufferedBar ist leer
@@ -1461,8 +1466,8 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
       }
 
       // BufferedBar aktualisieren
-    //hf.bufferedBar.data    [hFile][BAR_T] = ...                                      // unchanged
-    //hf.bufferedBar.data    [hFile][BAR_O] = ...                                      // unchanged
+      //...fferedBar.data    [hFile][BAR_T] = ...                                      // unchanged
+      //...fferedBar.data    [hFile][BAR_O] = ...                                      // unchanged
       hf.bufferedBar.data    [hFile][BAR_H] = MathMax(hf.bufferedBar.data[hFile][BAR_H], tick.value);
       hf.bufferedBar.data    [hFile][BAR_L] = MathMin(hf.bufferedBar.data[hFile][BAR_L], tick.value);
       hf.bufferedBar.data    [hFile][BAR_C] = tick.value;
@@ -1471,11 +1476,11 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
       return(true);
    }
 
-   // HST_BUFFER_TICKS = FALSE: Tick schreiben
-   // ist BufferedBar definiert (HST_BUFFER_TICKS war beim letzten Tick ON und ist jetzt OFF), BufferedBar mit Tick aktualisieren, schreiben und zurücksetzen
+   // HST_BUFFER_TICKS = off: Tick schreiben
+   // ist BufferedBar definiert (HST_BUFFER_TICKS war beim letzten Tick on und ist jetzt off), BufferedBar mit Tick aktualisieren, schreiben und zurücksetzen
    if (hf.bufferedBar.offset[hFile] >= 0) {                                            // BufferedBar ist definiert, der Tick muß dazu gehören
-    //hf.bufferedBar.data[hFile][BAR_T] = ...                                          // unchanged
-    //hf.bufferedBar.data[hFile][BAR_O] = ...                                          // unchanged
+      //...fferedBar.data[hFile][BAR_T] = ...                                          // unchanged
+      //...fferedBar.data[hFile][BAR_O] = ...                                          // unchanged
       hf.bufferedBar.data[hFile][BAR_H] = MathMax(hf.bufferedBar.data[hFile][BAR_H], tick.value);
       hf.bufferedBar.data[hFile][BAR_L] = MathMin(hf.bufferedBar.data[hFile][BAR_L], tick.value);
       hf.bufferedBar.data[hFile][BAR_C] = tick.value;
@@ -1502,7 +1507,7 @@ bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NU
       bar[BAR_L] = tick.value;
       bar[BAR_C] = tick.value;
       bar[BAR_V] = 1;
-      if (!HistoryFile3.InsertBar(hFile, tick.offset, bar, flags|HST_TIME_IS_OPENTIME)) return(false);
+      if (!HistoryFile3.InsertBar(hFile, tick.offset, bar, flags)) return(false);
    }
    return(true);
 }
