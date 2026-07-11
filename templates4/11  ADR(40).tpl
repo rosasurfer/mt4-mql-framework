@@ -82,7 +82,7 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Average Range
+name=Average Bar Range
 flags=339
 window_num=1
 <inputs>
