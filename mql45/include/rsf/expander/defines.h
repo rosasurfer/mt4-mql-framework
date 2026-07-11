@@ -1,10 +1,10 @@
 /**
- * MQL constants shared with the MT4Expander DLL.
+ * MQL constants shared with the MT4Expander
  *
  * During compilation of the DLL definitions are read from directory "mql40/include/rsf/expander" and not from here.
  * Nevertheless, these constants exists in both MQL versions and in the DLL, and have the same values everywhere.
  *
- * Unlike in MQL4.0 the redefinition of constants with the same value is not allowed in MQL4.5.
+ * Unlike in MQL4.0, the redefinition of a constant with the same value triggers a warning in MQL4.5 (same as in C++).
  */
 
 // special constants
@@ -22,16 +22,17 @@
 #define MAX_ORDER_COMMENT_LENGTH               27
 #define MAX_SYMBOL_GROUP_LENGTH                15
 #define MAX_SYMBOL_LENGTH                      11
+#define CHARTS_MAX                            100
+#define CHART_TEMPLATES_MAX                   100
 
-// string constants in the MT4Expander are defined as ANSI only
-#define EOL_MAC                              "\r"        // old MacOS line separator: 0x0D
-#define EOL_NETSCAPE                     "\r\r\n"        // Netscape line separator:  0x0D0D0A
-#define EOL_UNIX                             "\n"        // Unix line separator:      0x0A (MQL/Win32 file functions in text mode auto-convert EOL_UNIX to EOL_WINDOWS)
-#define EOL_WINDOWS                        "\r\n"        // Windows line separator:   0x0D0A
 
-#define NL                                   "\n"        // MQL4.5 bug: string constants cannot reference each other
+// string constants in MT4Expander are ANSI strings
+#define EOL_UNIX                             "\n"        // 0x0A (MQL+Win32 file functions in text mode silently auto-convert EOL_UNIX to EOL_WINDOWS)
+#define EOL_WINDOWS                        "\r\n"        // 0x0D0A
+
+#define NL                                   "\n"        // missing MQL4.5 feature: string constants cannot reference each other
 #define CRLF                               "\r\n"
-#define TAB                                  "\t"        // tabulator: 0x09
+#define TAB                                  "\t"        // 0x09
 
 
 // log levels
@@ -88,7 +89,7 @@
 #define REASON_CLOSE                            9        // | -                                    | terminal closed                  |
                                                          // +--------------------------------------+----------------------------------+
 
-// framework InitializeReason codes                      // +-- init reason --------------------------------+-- ui -----------+-- applies --+
+// InitializeReason codes                                // +-- init reason --------------------------------+-- ui -----------+-- applies --+
 #define INITREASON_USER                         1        // | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
 #define INITREASON_TEMPLATE                     2        // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
 #define INITREASON_PROGRAM                      3        // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
@@ -96,24 +97,25 @@
 #define INITREASON_PARAMETERS                   5        // | input parameters changed                      |    input dialog |   I, E      |
 #define INITREASON_TIMEFRAMECHANGE              6        // | chart period changed                          | no input dialog |   I, E      |
 #define INITREASON_SYMBOLCHANGE                 7        // | chart symbol changed                          | no input dialog |   I, E      |
-#define INITREASON_RECOMPILE                    8        // | reloaded after recompilation                  | no input dialog |   I, E      |
-#define INITREASON_TERMINAL_FAILURE             9        // | terminal failure                              |    input dialog |      E      |   @see  https://github.com/rosasurfer/mt4-mql/issues/1
+#define INITREASON_ACCOUNTCHANGE                8        // | account changed                               | no input dialog |   I         |
+#define INITREASON_RECOMPILE                    9        // | reloaded after recompilation                  | no input dialog |   I, E      |
+#define INITREASON_TERMINAL_FAILURE            10        // | terminal failure                              |    input dialog |      E      |   @see  https://github.com/rosasurfer/mt4-mql-framework/issues/1
                                                          // +-----------------------------------------------+-----------------+-------------+
 
-// UninitializeReason codes (matching the MetaQuotes REASON_* codes)
-#define UNINITREASON_UNDEFINED                  0
-#define UNINITREASON_REMOVE                     1
-#define UNINITREASON_RECOMPILE                  2
-#define UNINITREASON_CHARTCHANGE                3
-#define UNINITREASON_CHARTCLOSE                 4
-#define UNINITREASON_PARAMETERS                 5
-#define UNINITREASON_ACCOUNT                    6
-#define UNINITREASON_TEMPLATE                   7
-#define UNINITREASON_INITFAILED                 8
-#define UNINITREASON_CLOSE                      9
+// UninitializeReason codes (same as built-in)
+#define UNINITREASON_UNDEFINED      REASON_UNDEFINED
+#define UNINITREASON_REMOVE         REASON_REMOVE
+#define UNINITREASON_RECOMPILE      REASON_RECOMPILE
+#define UNINITREASON_CHARTCHANGE    REASON_CHARTCHANGE
+#define UNINITREASON_CHARTCLOSE     REASON_CHARTCLOSE
+#define UNINITREASON_PARAMETERS     REASON_PARAMETERS
+#define UNINITREASON_ACCOUNT        REASON_ACCOUNT
+#define UNINITREASON_TEMPLATE       REASON_TEMPLATE
+#define UNINITREASON_INITFAILED     REASON_INITFAILED
+#define UNINITREASON_CLOSE          REASON_CLOSE
 
 
-// timeframe identifiers (cannot be combined)
+// timeframe identifiers (can't be combined)
 #define PERIOD_M1                               1        // 1 minute
 #define PERIOD_M2                               2        // 2 minutes  (custom timeframe)
 #define PERIOD_M3                               3        // 3 minutes  (custom timeframe)
@@ -164,7 +166,7 @@
 #define F_PERIODS_ALL                  0x7FFFFFFF        // INT_MAX: covers all standard and custom timeframes
 
 
-// flags controling custom error handling (matching errors don't trigger a fatal runtime error)
+// flags controling custom error handling (matching errors don't trigger standard behavior)
 #define F_ERR_CONCURRENT_MODIFICATION  0x00000001        //           1
 #define F_ERS_EXECUTION_STOPPING       0x00000002        //           2  temporary state
 #define F_ERS_HISTORY_UPDATE           0x00000004        //           4  temporary state
@@ -184,12 +186,14 @@
 #define F_ERR_STOP_DISTANCE_VIOLATED   0x00010000        //       65536
 #define F_ERR_TRADESERVER_GONE         0x00020000        //      131072
 #define F_ERR_NO_HISTORY_DATA          0x00040000        //      262144
+#define F_ERR_ILLEGAL_STATE            0x00080000        //      524288
 #define F_LOG_NOTICE                   0x40000000        //  1073741824  min. loglevel for matching errors (default: LOG_INFO)
 
 
 // flags controlling order execution
-#define F_OE_DONT_HEDGE                0x00040000        //  262144  don't hedge multiple positions on close
-#define F_OE_DONT_CHECK_STATUS         0x00080000        //  524288  don't check order status before proceeding
+#define F_OE_DONT_HEDGE                0x00080000        //  262144  don't hedge multiple positions on close
+#define F_OE_HEDGE_NO_CLOSE            0x00100000        //  524288  don't close a position when hedging (open an offsetting position instead)
+#define F_OE_DONT_CHECK_STATUS         0x00200000        //  524288  don't check order status before proceeding
 
 
 // other control flags
@@ -206,6 +210,7 @@
 #define F_VK_MENU                              32        // ALT key
 #define F_VK_LWIN                              64        // left Windows key
 #define F_VK_RWIN                             128        // right Windows key
+#define F_VK_ALL                              255        // F_VK_ESCAPE|F_VK_TAB|F_VK_CAPITAL|F_VK_SHIFT|F_VK_CONTROL|F_VK_MENU|F_VK_LWIN|F_VK_RWIN
 
 
 // order and operation types
@@ -366,20 +371,21 @@
 #define DEC                              DECEMBER
 
 
-// timezone identifiers
-#define TZ_SERVER                               1        // the current trade server's timezone
-#define TZ_LOCAL                                2        // the timezone of the local system
+// timezone modes
+#define TZ_SERVER                               1        // timezone of the current trade server
+#define TZ_LOCAL                                2        // timezone of the local system
 #define TZ_FXT                                  3        // FXT (Forex Standard Time, aka America/New_York+0700)
 #define TZ_GMT                                  4        // GMT (Greenwich Mean Time, aka UTC)
 #define TZ_UTC                             TZ_GMT        // alias
 
 
 // init() flags
-#define INIT_TIMEZONE                           1        // initialize/check the timezone configuration
-#define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
+#define INIT_TIMEZONE                           1        // ensure a valid timezone configuration
+#define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and tick value)
 #define INIT_BARS_ON_HIST_UPDATE                4        //
-#define INIT_NO_BARS_REQUIRED                   8        // executable without price history (scripts only)
+#define INIT_NO_BARS_REQUIRED                   8        // scripts only: can operate without price history
 #define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
+#define INIT_AUTO_TRADING                      32        // ensure auto-trading is enabled
 
 
 // MT4 internal messages
@@ -411,19 +417,22 @@
 #define TICK_PAUSE_ON_WEEKEND                  16        // send ticks only at regular session times (not implemented)
 
 
-/**
- * MT4 command ids (menu, toolbar and hotkey ids). ID naming and numbering conventions for resources, commands, strings,
- * controls and child windows as defined by MFC 2.0:
- *
- *  @link  https://msdn.microsoft.com/en-us/library/t2zechd4.aspx
- */
-#define ID_EXPERTS_ONOFF                    33020        // Toolbar: Experts on/off                    Ctrl+E
-
-#define ID_CHART_REFRESH                    33324        // Chart:   Refresh
+// MT4 command ids (hotkeys, menus, toolbars, internal commands)
+#define ID_CHART_INDICATORS_LIST            35419        // Chart:   Indicators List dialog            Ctrl+I
+#define ID_CHART_EXPERT_PROPERTIES          33048        //          Expert properties dialog              F7
+#define ID_CHART_OBJECTS_UNSELECTALL        35462        //          Objects->Unselect All
+#define ID_CHART_REFRESH                    33324        //          Refresh
+#define ID_CHART_SAVE_AS_PICTURE            33054        //          Save as Picture dialog
 #define ID_CHART_STEPFORWARD                33197        //          One bar forward                      F12
 #define ID_CHART_STEPBACKWARD               33198        //          One bar backward               Shift+F12
-#define ID_CHART_EXPERT_PROPERTIES          33048        //          Expert properties dialog              F7
-#define ID_CHART_OBJECTS_UNSELECTALL        35462        //          Objects: Unselect All
+#define ID_CHART_TEMPLATES_SAVE             33220        //          Templates->Save Template
+#define ID_CHART_TEMPLATES_LOAD             35511        //          Templates->Load Template
+#define ID_CHART_TEMPLATES_USER1            34800        //          Templates->{first-user-template}
+#define ID_CHART_TEMPLATES_DEFAULT          34825        //          Templates->Default (base id, dynamic if more than 25 user templates)
+#define ID_CHART_TEMPLATES_OFFLINE          34826        //          Templates->Offline (base id, dynamic if more than 25 user templates)
+#define ID_CHART_TEMPLATES_TESTER           34827        //          Templates->Tester  (base id, dynamic if more than 25 user templates)
+#define ID_CHART_TEMPLATES_REMOVE_USER1     34900        //          Templates->Remove->{first-user-template}
+#define ID_CHART_TEMPLATES_REFRESH          33320        //          refresh main menu templates from disk (context menus are updated per invocation)
 
 #define ID_WINDOW_NEWWINDOW                 57648        // Window:  New Window
 #define ID_WINDOW_TILEWINDOWS               38259        //          Tile Windows                       Alt+R
@@ -432,23 +441,26 @@
 #define ID_WINDOW_TILEVERTICALLY            57652        //          Tile Vertically
 #define ID_WINDOW_ARRANGEICONS              57649        //          Arrange Icons
 
-#define ID_MARKETWATCH_SYMBOLS              33171        // Market Watch: Symbols
+#define ID_EXPERTS_ONOFF                    33020        // Toolbar: Experts on/off                    Ctrl+E
+
+#define ID_MARKETWATCH_SYMBOLS              33171        // Market Watch: Symbols dialog
 
 #define ID_TESTER_TICK       ID_CHART_STEPFORWARD        // Tester:  Next Tick                            F12
 
 
-// MT4 control ids (controls, windows)
-#define IDC_TOOLBAR                         59419        // Toolbar
-#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 button (terminal builds <= 509)
-#define IDC_TOOLBAR_SEARCHBOX               38213        // search box       (terminal builds >  509)
-#define IDC_STATUSBAR                       59393        // status bar
-#define IDC_MDI_CLIENT                      59648        // MDI container (holding all charts)
-#define IDC_DOCKED_CONTAINER                59422        // window containing all dockable child windows docked to the main application window
-#define IDC_FLOATING_CONTAINER              59423        // window containing a single dockable but floating child window (possibly more than one, not a toplevel window)
+// MT4 control ids (windows, controls, UI elements)
+#define IDC_TOOLBAR                         59419        // toolbar
+#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5 community button (builds <= 509)
+#define IDC_TOOLBAR_SEARCHBOX               38213        // search box (builds > 509)
 
-#define IDC_CUSTOM_INDICATOR_OK                 1        // load dialog "Custom Indicator"
-#define IDC_CUSTOM_INDICATOR_CANCEL             2        // ...
-#define IDC_CUSTOM_INDICATOR_RESET          12321        // ...
+#define IDC_STATUSBAR                       59393        // status bar
+
+#define IDC_DOCK_CONTAINER                  59422        // A single window containing all application windows currently docked to the main window.
+#define IDC_FLOAT_CONTAINER                 59423        // One or more windows each containing a single dockable but currently floating application window.
+
+#define IDC_MDICLIENT                       59648        // MDI container window (holding all chart windows)
+#define IDC_MDICLIENT_CHART1                65280        // first chart window
+#define IDC_MDICLIENT_CHART_FRAME   IDC_MDICLIENT        // a chart window's painting area (AfxFrameOrView), return value of MQL::WindowHandle()
 
 #define IDC_MARKETWATCH                        80        // Market Watch
 #define IDC_MARKETWATCH_SYMBOLS             35441        // Market Watch - Symbols
@@ -460,6 +472,7 @@
 
 #define IDC_TERMINAL                           81        // Terminal
 #define IDC_TERMINAL_TRADE                  33217        // Terminal - Trade
+#define IDC_TERMINAL_EXPOSURE               38311        // Terminal - Exposure
 #define IDC_TERMINAL_ACCOUNTHISTORY         33208        // Terminal - Account History
 #define IDC_TERMINAL_NEWS                   33211        // Terminal - News
 #define IDC_TERMINAL_ALERTS                 33206        // Terminal - Alerts
@@ -467,6 +480,7 @@
 #define IDC_TERMINAL_COMPANY                 4078        // Terminal - Company
 #define IDC_TERMINAL_MARKET                  4081        // Terminal - Market
 #define IDC_TERMINAL_SIGNALS                 1405        // Terminal - Signals
+#define IDC_TERMINAL_ARTICLES               33216        // Terminal - Articles
 #define IDC_TERMINAL_CODEBASE               33212        // Terminal - Code Base
 #define IDC_TERMINAL_EXPERTS                35434        // Terminal - Experts
 #define IDC_TERMINAL_JOURNAL                33209        // Terminal - Journal
@@ -492,6 +506,25 @@
 #define IDC_TESTER_GRAPH                    33207        // Tester - Graph
 #define IDC_TESTER_REPORT                   33213        // Tester - Report
 #define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS        // Tester - Journal (same as Terminal - Experts)
+
+#define IDC_ALERT_BUTTON                        1        // "Alert" dialog
+#define IDC_ALERT_ICON                       1236        //
+#define IDC_ALERT_EDITTEXT                   1325        //
+#define IDC_ALERT_LISTVIEW                   4018        //
+
+#define IDC_CUSTOM_INDICATOR_OK                 1        // load "Custom Indicator" dialog
+#define IDC_CUSTOM_INDICATOR_CANCEL             2        // ...
+#define IDC_CUSTOM_INDICATOR_RESET          12321        // ...
+
+
+// LFX trade commands
+#define TC_LFX_ORDER_CREATE              1
+#define TC_LFX_ORDER_OPEN                2
+#define TC_LFX_ORDER_CLOSE               3
+#define TC_LFX_ORDER_CLOSEBY             4
+#define TC_LFX_ORDER_HEDGE               5
+#define TC_LFX_ORDER_MODIFY              6
+#define TC_LFX_ORDER_DELETE              7
 
 
 // colors
@@ -768,13 +801,3 @@
 #define clrYellowGreen                   YellowGreen
 #define clrNONE                          CLR_NONE
 #endif
-
-
-// LFX trade commands
-#define TC_LFX_ORDER_CREATE              1
-#define TC_LFX_ORDER_OPEN                2
-#define TC_LFX_ORDER_CLOSE               3
-#define TC_LFX_ORDER_CLOSEBY             4
-#define TC_LFX_ORDER_HEDGE               5
-#define TC_LFX_ORDER_MODIFY              6
-#define TC_LFX_ORDER_DELETE              7
