@@ -1,5 +1,5 @@
 /**
- * Average Bar Range with an option to toggle the "True Range"
+ * Average True Range with option to toggle between traded and "True" range
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -11,7 +11,7 @@ extern string ___a__________________________ = "=== MA settings ===";
 extern string MA.Method                      = "SMA | LWMA* | EMA | SMMA"; // averaging type
 extern int    MA.Periods                     = 20;                         // averaging periods
 extern int    MA.Periods.Step                = 0;                          // step size for parameter stepper via hotkey
-extern bool   TrueRange                      = true;                       // whether to evaluate the traded or the true range
+extern bool   TrueRange                      = true;                       // whether to use the traded or the true range
 
 extern string ___b__________________________ = "=== Display settings ===";
 extern int    Line.Width                     = 2;
