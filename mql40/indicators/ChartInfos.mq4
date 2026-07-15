@@ -725,15 +725,15 @@ bool SetTradeHistoryDisplayStatus(bool status) {
  */
 int ShowTradeHistory(int customTickets[], int flags = NULL) {
    // get drawing configuration
-   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(EMPTY);
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (file == "") return(EMPTY);
    string section = "Chart";
    string key     = "TradeHistory.ConnectTrades";
    bool success, drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // check trade account first
 
-   int      i, n, orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
+   int      i, n, orders, ticket, type, markerColors[] = {CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[] = {Blue, Red};
    datetime openTime, closeTime;
    double   lots, units, openPrice, closePrice, openEquity, profit;
-   string   sOpenPrice="", sClosePrice="", text="", openLabel="", lineLabel="", closeLabel="", sTypes[]={"buy", "sell"};
+   string   sOpenPrice="", sClosePrice="", textOpen="", textClose="", openLabel="", lineLabel="", closeLabel="", sTypes[]={"buy", "sell"};
    int      customTicketsSize = ArraySize(customTickets);
    static int returnValue = 0;
 
@@ -750,14 +750,14 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
    if (mode.intern || customTicketsSize) {
       orders = intOr(customTicketsSize, OrdersHistoryTotal());
 
-      // Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
-      int sortKeys[][3];                                                // {CloseTime, OpenTime, Ticket}
+      // sort closed positions by {CloseTime, OpenTime, Ticket}
+      int sortKeys[][3];
       ArrayResize(sortKeys, orders);
 
       for (i=0, n=0; i < orders; i++) {
          if (customTicketsSize > 0) success = SelectTicket(customTickets[i], "ShowTradeHistory(1)");
          else                       success = OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
-         if (!success)                  break;                          // FALSE: the visible history range was modified in another thread
+         if (!success)                  break;                       // FALSE: the history range was modified elsewhere
          if (OrderSymbol() != Symbol()) continue;
          if (OrderType() > OP_SELL)     continue;
          if (!OrderCloseTime())         continue;
@@ -771,7 +771,7 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
       ArrayResize(sortKeys, orders);
       SortClosedTickets(sortKeys);
 
-      // Tickets sortiert einlesen
+      // read sorted tickets
       int      tickets    []; ArrayResize(tickets,     orders);
       int      types      []; ArrayResize(types,       orders);
       double   lotSizes   []; ArrayResize(lotSizes,    orders);
@@ -801,15 +801,15 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
          magics     [i] = OrderMagicNumber();
       }
 
-      // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
+      // adjust hedges: link all data to the first ticket, discard the hedging - 2nd - ticket
       for (i=0; i < orders; i++) {
-         if (tickets[i] && EQ(lotSizes[i], 0)) {                     // lotSize = 0: Hedge-Position
+         if (tickets[i] && EQ(lotSizes[i], 0)) {                     // lotSize = 0: hedge position
 
-            // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
+            // TODO: check behavior of OrderComment() with custom position comments
             if (!StrStartsWithI(comments[i], "close hedge by #"))
                return(_EMPTY(catch("ShowTradeHistory(3)  #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));
 
-            // Gegenstück suchen
+            // look-up the counterpart ticket
             ticket = StrToInteger(StringSubstr(comments[i], 16));
             for (n=0; n < orders; n++) {
                if (tickets[n] == ticket) break;
@@ -820,36 +820,39 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
             int first  = Min(i, n);
             int second = Max(i, n);
 
-            // Orderdaten korrigieren
+            // adjust order data
             if (i == first) {
-               lotSizes   [first] = lotSizes   [second];             // alle Transaktionsdaten in der ersten Order speichern
+               lotSizes   [first] = lotSizes   [second];             // store all data in the first ticket
                commissions[first] = commissions[second];
                swaps      [first] = swaps      [second];
                profits    [first] = profits    [second];
             }
             closeTimes [first] = openTimes [second];
             closePrices[first] = openPrices[second];
-            tickets   [second] = NULL;                               // hedgendes Ticket als verworfen markieren
+            tickets[second]    = NULL;                               // mark 2nd ticket as discarded
          }
       }
 
-      // Orders anzeigen
+      // display trades
       for (i=0; i < orders; i++) {
-         if (!tickets[i]) continue;                                  // verworfene Hedges überspringen
+         if (!tickets[i]) continue;                                  // skip discarded tickets
          sOpenPrice  = NumberToStr(openPrices [i], PriceFormat);
          sClosePrice = NumberToStr(closePrices[i], PriceFormat);
-         text        = OrderMarkerText(types[i], magics[i], comments[i]);
+         textClose   = OrderMarkerText(types[i], magics[i], comments[i]);
+         textOpen    = textClose;
+         if      (StrEndsWith(textOpen, "[tp]")) textOpen = StrLeft(textOpen, -4);
+         else if (StrEndsWith(textOpen, "[sl]")) textOpen = StrLeft(textOpen, -4);
 
-         // Open-Marker anzeigen
+         // open marker
          openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
          if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (openLabel, OBJPROP_COLOR,     markerColors[types[i]]);
          ObjectSet    (openLabel, OBJPROP_TIME1,     openTimes[i]);
          ObjectSet    (openLabel, OBJPROP_PRICE1,    openPrices[i]);
-         ObjectSetText(openLabel, text);
+         ObjectSetText(openLabel, textOpen);
 
-         // Trendlinie anzeigen
+         // trend line
          if (drawConnectors) {
             lineLabel = StringConcatenate("#", tickets[i], " ", sOpenPrice, " -> ", sClosePrice);
             if (ObjectFind(lineLabel) == -1) ObjectCreate(lineLabel, OBJ_TREND, 0, 0, 0, 0, 0);
@@ -863,26 +866,24 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
             ObjectSet(lineLabel, OBJPROP_PRICE2, closePrices[i]);
          }
 
-         // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
+         // close marker                                             // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
          closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
          if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
          ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
          ObjectSet    (closeLabel, OBJPROP_TIME1,     closeTimes[i]);
          ObjectSet    (closeLabel, OBJPROP_PRICE1,    closePrices[i]);
-         ObjectSetText(closeLabel, text);
+         ObjectSetText(closeLabel, textClose);
          returnValue++;
       }
       return(returnValue);
    }
-
 
    // mode.extern
    orders = ArrayRange(lfxOrders, 0);
 
    for (i=0; i < orders; i++) {
       if (!los.IsClosedPosition(lfxOrders, i)) continue;
-
       ticket      =                     los.Ticket    (lfxOrders, i);
       type        =                     los.Type      (lfxOrders, i);
       units       =                     los.Units     (lfxOrders, i);
@@ -892,22 +893,21 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
       closeTime   = FxtToServerTime(Abs(los.CloseTime (lfxOrders, i)));
       closePrice  =                     los.ClosePrice(lfxOrders, i);
       profit      =                     los.Profit    (lfxOrders, i);
-
       sOpenPrice  = NumberToStr(openPrice,  PriceFormat);
       sClosePrice = NumberToStr(closePrice, PriceFormat);
 
-      // Open-Marker anzeigen
+      // open marker
       openLabel = StringConcatenate("#", ticket, " ", sTypes[type], " ", DoubleToStr(units, 1), " at ", sOpenPrice);
       if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
       ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
       ObjectSet(openLabel, OBJPROP_COLOR,     markerColors[type]);
       ObjectSet(openLabel, OBJPROP_TIME1,     openTime);
       ObjectSet(openLabel, OBJPROP_PRICE1,    openPrice);
-         if (positions.showAbsProfits || !openEquity) text = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2);
-         else                                         text = ifString(profit > 0, "+", "") + DoubleToStr(profit/openEquity * 100, 2) +"%";
-      ObjectSetText(openLabel, text);
+         if (positions.showAbsProfits || !openEquity) textOpen = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2);
+         else                                         textOpen = ifString(profit > 0, "+", "") + DoubleToStr(profit/openEquity * 100, 2) +"%";
+      ObjectSetText(openLabel, textOpen);
 
-      // Trendlinie anzeigen
+      // trend line
       if (drawConnectors) {
          lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
          if (ObjectFind(lineLabel) == -1) ObjectCreate(lineLabel, OBJ_TREND, 0, 0, 0, 0, 0);
@@ -921,14 +921,14 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
          ObjectSet(lineLabel, OBJPROP_PRICE2, closePrice);
       }
 
-      // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
+      // close marker                                                // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
       if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
       ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
       ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
       ObjectSet    (closeLabel, OBJPROP_TIME1,     closeTime);
       ObjectSet    (closeLabel, OBJPROP_PRICE1,    closePrice);
-      ObjectSetText(closeLabel, text);
+      ObjectSetText(closeLabel, textOpen);
       returnValue++;
    }
    return(returnValue);
@@ -949,8 +949,7 @@ string OrderMarkerText(int type, int magic, string comment) {
    int sid = magic >> 22;                                   // strategy id: 10 bit starting at bit 22
 
    switch (sid) {
-      // Duel
-      case 105:
+      case 105:                                             // Duel (features encoded grid levels)
          if (StrStartsWith(comment, "Duel")) {
             text = comment;
          }
@@ -966,11 +965,16 @@ string OrderMarkerText(int type, int magic, string comment) {
          if      (comment == "partial close")                 text = "";
          else if (StrStartsWith(comment, "from #"))           text = "";
          else if (StrStartsWith(comment, "close hedge by #")) text = "";
-         else if (StrEndsWith  (comment, "[tp]"))             text = StrLeft(comment, -4);
-         else if (StrEndsWith  (comment, "[sl]"))             text = StrLeft(comment, -4);
+         else if (StrEndsWith  (comment, "[tp]"))             text = comment;
+         else if (StrEndsWith  (comment, "[sl]"))             text = comment;
          else                                                 text = comment;
-   }
 
+         if (magic != 0) {
+            if (sid <= 100 || sid > 200) {
+               text = "EA: "+ stringOr(text, magic);
+            }
+         }
+   }
    return(text);
 }
 
