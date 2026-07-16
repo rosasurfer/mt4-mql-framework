@@ -32,9 +32,10 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern bool ShowPrice    = true;             // whether to display the current price
-extern bool ShowUnitSize = true;             // whether to display the current unit size
-extern bool TrackOrders  = true;             // whether to track position open/close events
+extern bool ShowPrice             = true;          // whether to display the current price
+extern bool ShowUnitSize          = true;          // whether to display the current unit size
+extern bool TrackOrders           = true;          // whether to track position open/close events
+extern bool CustomPositions.Sound = true;          // whether monitoring of custom positions may use sound signals
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -5224,7 +5225,7 @@ bool onNewMFE(string configKey, double profit) {
 
       if (iProfit > iStored) {
          SetWindowPropertyA(hWndDesktop, property, iProfit);
-         PlaySoundEx("Beacon.wav");
+         if (CustomPositions.Sound) PlaySoundEx("Beacon.wav");
       }
    }
    return(!catch("onNewMFE(1)"));
@@ -5257,7 +5258,7 @@ bool onNewMAE(string configKey, double profit) {
 
       if (iProfit < iStored) {
          SetWindowPropertyA(hWndDesktop, property, iProfit);
-         PlaySoundEx("Windows Ping.wav");
+         if (CustomPositions.Sound) PlaySoundEx("Windows Ping.wav");
       }
    }
    return(!catch("onNewMAE(1)"));
