@@ -5214,6 +5214,8 @@ bool onOrderFail(int tickets[]) {
  * @return bool - success status
  */
 bool onNewMFE(string configKey, double profit) {
+   if (!CustomPositions.Sound) return(true);
+
    // convert profit value to cent units to simplify Get/SetProperty
    int iProfit = MathRound(profit * 100);
 
@@ -5225,7 +5227,7 @@ bool onNewMFE(string configKey, double profit) {
 
       if (iProfit > iStored) {
          SetWindowPropertyA(hWndDesktop, property, iProfit);
-         if (CustomPositions.Sound) PlaySoundEx("Beacon.wav");
+         PlaySoundEx("Beacon.wav");
       }
    }
    return(!catch("onNewMFE(1)"));
@@ -5247,6 +5249,8 @@ bool onNewMFE(string configKey, double profit) {
  * @return bool - success status
  */
 bool onNewMAE(string configKey, double profit) {
+   if (!CustomPositions.Sound) return(true);
+
    // convert profit value to cent units to simplify Get/SetProperty
    int iProfit = MathRound(profit * 100);
 
@@ -5258,7 +5262,7 @@ bool onNewMAE(string configKey, double profit) {
 
       if (iProfit < iStored) {
          SetWindowPropertyA(hWndDesktop, property, iProfit);
-         if (CustomPositions.Sound) PlaySoundEx("Windows Ping.wav");
+         PlaySoundEx("Windows Ping.wav");
       }
    }
    return(!catch("onNewMAE(1)"));
