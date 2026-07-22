@@ -45,7 +45,7 @@ extern int    MaxBarsBack                    = 10000;         // max. values to 
 
 #define MODE_CURRENT_RANGE     0          // indicator buffer ids
 #define MODE_AVERAGE_RANGE     1
-#define MODE_RATIO             2
+#define MODE_RELATIVE_RANGE    2
 
 double currentRange[];                    // indicator buffers
 double averageRange[];
@@ -237,19 +237,18 @@ bool RestoreStatus() {
  * @return bool - success status
  */
 bool SetIndicatorOptions(bool redraw = false) {
-   redraw = redraw!=0;
    string stepSize = ifString(ATR.Periods.Step, ":"+ ATR.Periods.Step, "");
    string name = "BarRange / ATR("+ ATR.Periods + stepSize +") / Ratio";
    IndicatorShortName(name);
 
    IndicatorBuffers(indicator_buffers);
-   SetIndexBuffer(MODE_CURRENT_RANGE, currentRange ); SetIndexEmptyValue(MODE_CURRENT_RANGE, 0);
-   SetIndexBuffer(MODE_AVERAGE_RANGE, averageRange ); SetIndexEmptyValue(MODE_AVERAGE_RANGE, 0);
-   SetIndexBuffer(MODE_RATIO,         relativeRange); SetIndexEmptyValue(MODE_RATIO,         0);
+   SetIndexBuffer(MODE_CURRENT_RANGE,  currentRange ); SetIndexEmptyValue(MODE_CURRENT_RANGE,  0); SetIndexLabel(MODE_CURRENT_RANGE,  "Bar range");
+   SetIndexBuffer(MODE_AVERAGE_RANGE,  averageRange ); SetIndexEmptyValue(MODE_AVERAGE_RANGE,  0); SetIndexLabel(MODE_AVERAGE_RANGE,  "ATR("+ ATR.Periods +")");
+   SetIndexBuffer(MODE_RELATIVE_RANGE, relativeRange); SetIndexEmptyValue(MODE_RELATIVE_RANGE, 0); SetIndexLabel(MODE_RELATIVE_RANGE, "Bar ratio");
    IndicatorDigits(pDigits);
 
    // MODE_CURRENT_RANGE and MODE_AVERAGE_RANGE are not hidden to get legend values
-   SetIndexStyle(MODE_RATIO, DRAW_LINE, EMPTY, 1, Blue);
+   SetIndexStyle(MODE_RELATIVE_RANGE, DRAW_HISTOGRAM, EMPTY, Histogram.Width, Blue);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));

@@ -67,13 +67,13 @@ double bufferSignal[];                                         // direction and 
 double bufferLong  [];                                         // long values:          visible
 double bufferShort [];                                         // short values:         visible
 
-string bfxIndicatorName  = "BFX Core Volume v1.20.0";
-string bfxLibraryName    = "BankersFX Lib";
+string bfxIndicatorName = "BFX Core Volume v1.20.0";
+string bfxLibraryName   = "BankersFX Lib";
 
-bool   signal.sound;
-bool   signal.alert;
-bool   signal.mail;
-bool   signal.telegram;
+bool signal.sound;
+bool signal.alert;
+bool signal.mail;
+bool signal.telegram;
 
 
 /**
