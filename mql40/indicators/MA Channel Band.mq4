@@ -200,13 +200,13 @@ int onTick() {
 
       if (Close[bar] > upperBand && ma > upperBand) {
          bufferMain [bar] = 1;
-         bufferUpper[bar] = bufferMain[bar];
+         bufferUpper[bar] = 1;
          bufferLower[bar] = 0;
       }
       else if (Close[bar] < lowerBand && ma < lowerBand) {
          bufferMain [bar] = -1;
-         bufferUpper[bar] = 0;
-         bufferLower[bar] = bufferMain[bar];
+         bufferUpper[bar] =  0;
+         bufferLower[bar] = -1;
       }
       else {
          bufferMain [bar] = bufferMain [bar+1];
