@@ -125,8 +125,8 @@ name=Trend Bars
 flags=339
 window_num=0
 <inputs>
-Channel.Method=SMA | LWMA* | EMA | SMMA | ALMA
-Channel.Periods=55
+MaChannel.Method=SMA | LWMA* | EMA | SMMA | ALMA
+MaChannel.Periods=55
 Color.UpTrend=16711680
 Color.DownTrend=255
 Color.NoTrend=11119017
