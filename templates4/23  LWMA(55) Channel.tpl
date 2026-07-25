@@ -1,7 +1,9 @@
 <!--
 EMA(144)
 Donchian Channel(50) 
-LWMA(55) Channel + Channel Bars
+LWMA(55) Channel + Trend Bars
+================================
+MA Channel Band(LWMA-55,ALMA-10)
 -->
 
 <chart>
@@ -140,21 +142,6 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MA Channel
-flags=339
-window_num=0
-<inputs>
-Channel.Definition=LWMA(55)
-ShowChartLegend=0
-AutoConfiguration=0
-</inputs>
-</expert>
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=Donchian Channel
 flags=339
 window_num=0
@@ -174,6 +161,21 @@ Sound.onChannelWidening=0
 style_0=2
 style_1=2
 style_2=2
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=MA Channel
+flags=339
+window_num=0
+<inputs>
+Channel.Definition=LWMA(55)
+ShowChartLegend=1
+AutoConfiguration=0
+</inputs>
+</expert>
 show_data=1
 </indicator>
 </window>
