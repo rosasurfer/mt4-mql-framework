@@ -38,9 +38,10 @@ string   spUnit = "";                                             // string repr
 int      Ticks;                                                   // number of times MQL::start() was called (value survives init cycles, also in indicators)
 datetime Tick.time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                             // in indicators, it holds: Bars = ValidBars + ChangedBars (in experts and scripts always -1)
-int      ValidBars;                                               // in indicators: ValidBars = IndicatorCounted()           (in experts and scripts always -1)
-int      ShiftedBars;                                             // in indicators: non-zero in offline charts only          (in experts and scripts always -1)
+
+int      ChangedBars;                                             // in indicators it holds true: Bars = ValidBars + ChangedBars (in experts and scripts always -1)
+int      ValidBars;                                               //                              ValidBars = IndicatorCounted()
+int      ShiftedBars;                                             //                              non-zero in offline charts only
 
 int      last_error;                                              // last error of the current start() call
 int      prev_error;                                              // last error of the previous start() call

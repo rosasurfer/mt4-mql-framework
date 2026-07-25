@@ -360,7 +360,7 @@ bool UpdateSuperBars() {
 
    if (ethEnabled && superTimeframe==PERIOD_D1_ETH) {
       _superTimeframe = PERIOD_D1;                                   // for iPreviousPeriod() which bails on non-standard timeframes
-      // TODO: On isTimeframeChange the following block is obsolete (it holds: changedBars = Bars). However in this case
+      // TODO: On isTimeframeChange the following block is obsolete (it holds true: changedBars = Bars). However in this case
       //       DrawSuperBar() must again detect and handle ERS_HISTORY_UPDATE and ERR_SERIES_NOT_AVAILABLE.
       int changedBarsM15 = iChangedBars(NULL, PERIOD_M15);
       if (changedBarsM15 == -1) return(false);

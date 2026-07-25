@@ -779,7 +779,7 @@ int FindSemaphore(int bar, int &resultType, int skipType = NULL) {
       else if (!upperCrossHigh[bar])                                resultType = MODE_LOW;
       else if (semaphoreOpen [bar] < semaphoreClose[bar]-HalfPoint) resultType = MODE_HIGH;
       else if (semaphoreOpen [bar] > semaphoreClose[bar]+HalfPoint) resultType = MODE_LOW;
-      // from here it holds: semaphoreOpen == semaphoreClose
+      // from here it holds true: semaphoreOpen == semaphoreClose
       else if (semaphoreClose[bar] > upperCrossHigh[bar]-HalfPoint) resultType = MODE_HIGH;
       else                                                          resultType = MODE_LOW;
       return(bar);
@@ -851,7 +851,7 @@ bool ProcessUpperCross(int bar) {
    bool isReversalBar;
 
    // another upper cross of a leg up extension
-   if (lastSemType == MODE_HIGH) {                                      // it holds: lastSemBar != bar
+   if (lastSemType == MODE_HIGH) {                                      // it holds true: lastSemBar != bar
       if (upperCrossHigh[bar] > upperCrossHigh[lastSemBar]) {           // an uptrend continuation
          if (semaphoreOpen[lastSemBar] == semaphoreClose[lastSemBar]) {
             semaphoreOpen[lastSemBar] = 0;                              // update previous semaphore
@@ -979,7 +979,7 @@ bool ProcessLowerCross(int bar) {
    bool isReversalBar;
 
    // another lower cross of a leg down extension
-   if (lastSemType == MODE_LOW) {                                       // it holds: lastSemBar != bar
+   if (lastSemType == MODE_LOW) {                                       // it holds true: lastSemBar != bar
       if (lowerCrossLow[bar] < lowerCrossLow[lastSemBar]) {             // a downtrend continuation
          if (semaphoreOpen[lastSemBar] == semaphoreClose[lastSemBar]) {
             semaphoreOpen[lastSemBar] = 0;                              //update previous semaphore
