@@ -114,9 +114,10 @@
 #define DEBUG_FEATURE_CREATE_OBJECT            16        // option "/rsf:debug-createobject"
 #define DEBUG_FEATURE_CREATE_WINDOW            32        // option "/rsf:debug-createwindow"
 #define DEBUG_FEATURE_EXECUTION_CONTEXT        64        // option "/rsf:debug-ec"
-#define DEBUG_FEATURE_INDICATOR_LIST          128        // option "/rsf:debug-indicatorlist"
-#define DEBUG_FEATURE_SUBCLASS                256        // option "/rsf:debug-subclass"
-#define DEBUG_FEATURE_WM_COMMAND              512        // option "/rsf:debug-wmcommand"
+#define DEBUG_FEATURE_HOOKS                   128        // option "/rsf:debug-hooks"
+#define DEBUG_FEATURE_INDICATOR_LIST          256        // option "/rsf:debug-indicatorlist"
+#define DEBUG_FEATURE_SUBCLASS                512        // option "/rsf:debug-subclass"
+#define DEBUG_FEATURE_WM_COMMAND             1024        // option "/rsf:debug-wmcommand"
 
 
 // window property names
