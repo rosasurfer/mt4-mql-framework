@@ -1,48 +1,42 @@
 /**
- * Return the average true range from the built-in function iATR() and perform additional error handling.
+ * Return the average true range using the built-in function iATR() and perform additional error handling.
  * This function always sets the variable 'last_error' (on success it is reset).
  *
- * @param  string symbol                   - symbol    (NULL = the current symbol)
- * @param  int    timeframe                - timeframe (NULL = the current timeframe)
+ * @param  string symbol                 - symbol (NULL: the current symbol)
+ * @param  int    timeframe              - timeframe (NULL: the current timeframe)
  * @param  int    periods
  * @param  int    offset
- * @param  int    fIgnoreErrors [optional] - flags of errors to ignore (default: none)
- *                                           supported values: F_ERS_HISTORY_UPDATE (see notes)
+ * @param  int    fMuteErrors [optional] - flags of errors which are set silently (default: none)
+ *                                         F_ERS_HISTORY_UPDATE: ERS_HISTORY_UPDATE is a status and not an error
  *
- * @return double - ATR value or NULL in case of errors not covered by the passed fIgnoreErrors flags
- *
- * Note: As ERS_HISTORY_UPDATE is a status and not a regular error the status is set even if the error is ignored
- *       (by passing F_ERS_HISTORY_UPDATE). Thus it is possible to ignore the error and to query a set ERS_HISTORY_UPDATE
- *       status in the calling code.
+ * @return double - ATR value or NULL in case of errors
  */
-double ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreErrors = NULL) {
-   int error = GetLastError();
-   if (error != NO_ERROR) return(!catch("ATR(1)", error));    // catch previously unhandled errors
+double ATR(string symbol, int timeframe, int periods, int offset, int fMuteErrors = NULL) {
+   if (symbol == "0") symbol = Symbol();                       // (string) NULL
 
-   if (symbol == "0")         // (string) NULL
-      symbol = Symbol();
-   double result = iATR(symbol, timeframe, periods, offset);   // throws ERR_SERIES_NOT_AVAILABLE | ERS_HISTORY_UPDATE
+   int error = GetLastError();
+   if (error != NO_ERROR) return(!catch("ATR(1)", error));     // catch previously unhandled errors
+
+   double result = iATR(symbol, timeframe, periods, offset);
 
    error = GetLastError();
-   if (error == NO_ERROR) {
-      SetLastError(NO_ERROR);                                  // reset all errors
+   if (!error) {
+      SetLastError(NO_ERROR);                                  // reset last_error
       return(result);
    }
 
    if (error == ERR_SERIES_NOT_AVAILABLE) {
-      if (IsStandardTimeframe(timeframe)) {                    // On built-in timeframes ERR_SERIES_NOT_AVAILABLE essentially
-         error = ERS_HISTORY_UPDATE;                           // means ERS_HISTORY_UPDATE.
-         debug("ATR(2)  silently converting ERR_SERIES_NOT_AVAILABLE to ERS_HISTORY_UPDATE");
-      }
-      else {
-         return(!catch("ATR(3)  "+ PeriodDescription(timeframe), error));
-      }
+      if (!IsStandardTimeframe(timeframe)) return(!catch("ATR(2)  "+ PeriodDescription(timeframe), error));
+
+      // with built-in timeframes ERR_SERIES_NOT_AVAILABLE (no local history) means ERS_HISTORY_UPDATE
+      logDebug("ATR(3)  converting ERR_SERIES_NOT_AVAILABLE to ERS_HISTORY_UPDATE");
+      error = ERS_HISTORY_UPDATE;
    }
 
    if (error == ERS_HISTORY_UPDATE) {
-      if (fIgnoreErrors & F_ERS_HISTORY_UPDATE && 1) {
-         SetLastError(ERS_HISTORY_UPDATE);                     // set the status
-         return(result);                                       // ignore the error (result may be NULL)
+      if (fMuteErrors & F_ERS_HISTORY_UPDATE && 1) {
+         SetLastError(error);                                  // set status silently
+         return(result);                                       // may/may not be NULL
       }
    }
    return(!catch("ATR(4)  "+ PeriodDescription(timeframe), error));

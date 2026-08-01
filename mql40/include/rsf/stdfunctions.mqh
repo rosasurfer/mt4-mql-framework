@@ -2195,7 +2195,15 @@ bool StrIsInteger(string value) {
       }
       catch("StrIsInteger(1)", error);
    }
-   return(value == StringConcatenate("", StrToInteger(value)));
+
+   int len = StringLen(value);
+   if (!len) return(false);
+
+   int chr = StringGetChar(value, 0);
+   if (chr == '+' || chr == '-') {
+      value = StringSubstr(value, 1);
+   }
+   return(StrIsDigits(value));
 }
 
 
@@ -3092,12 +3100,12 @@ string StrToLower(string value) {
       if (chr > 64) {
          if (chr < 91) {
             result = StringSetChar(result, i, chr+32);                                    // A-Z->a-z
-         }                                                                                
-         else if (chr > 191) {                                                            
-            if (chr < 223) /*&&*/ if (chr != 215) {                                       
+         }
+         else if (chr > 191) {
+            if (chr < 223) /*&&*/ if (chr != 215) {
                result = StringSetChar(result, i, chr+32);                                 // À-Ö->à-ö, Ø-Þ->ø-þ
-            }                                                                             
-         }                                                                                
+            }
+         }
          else if (chr == 138) result = StringSetChar(result, i, 154);                     // Š->š
          else if (chr == 140) result = StringSetChar(result, i, 156);                     // Œ->œ
          else if (chr == 142) result = StringSetChar(result, i, 158);                     // Ž->ž

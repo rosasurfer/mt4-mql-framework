@@ -21,7 +21,7 @@
  *  - EMA calculation:
  *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
  *
- *  - SMMA calculation: The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
+ *  - SMMA calculation: The SMMA is in fact an EMA with a different period. It holds true: SMMA(n) = EMA(2*n-1)
  *    @see https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
  *
  *  - ALMA calculation:
@@ -481,8 +481,6 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return bool - success status
  */
 bool StoreStatus() {
-   //debug("StoreStatus(0.1)    pid="+ __ExecutionContext[EC.pid] +"  legendLabel="+ DoubleQuoteStr(legendLabel));
-
    if (__isChart && MA.Periods.Step) {
       string prefix = "rsf."+ WindowExpertName() +".";
       Chart.StoreInt(prefix +"MA.Periods", MA.Periods);
@@ -497,8 +495,6 @@ bool StoreStatus() {
  * @return bool - success status
  */
 bool RestoreStatus() {
-   //debug("RestoreStatus(0.1)  pid="+ __ExecutionContext[EC.pid] +"  legendLabel="+ DoubleQuoteStr(legendLabel));
-
    if (!__isChart) return(true);
    string prefix = "rsf."+ WindowExpertName() +".";
 

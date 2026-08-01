@@ -1253,7 +1253,9 @@ bool ValidateShowReversals(string &value, bool &showReversals, int &countFrom) {
       showReversals = true;
       countFrom = StrToInteger(sValue);
    }
-   else return(false);
+   else {
+      return(false);
+   }
 
    value = sValue;
    return(true);

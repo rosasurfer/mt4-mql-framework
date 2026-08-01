@@ -13,11 +13,11 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Channel.MA.Method              = "SMA | LWMA* | EMA | SMMA | ALMA";   // required
-extern int    Channel.MA.Periods             = 55;
+extern string Channel.MA.Method              = "SMA* | LWMA | EMA | SMMA | ALMA";   // required
+extern int    Channel.MA.Periods             = 100;
 
-extern string MA.Method                      = "SMA | LWMA | EMA | SMMA | ALMA*";
-extern int    MA.Periods                     = 10;                                  // optional, original EMA(5)
+extern string MA.Method                      = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MA.Periods                     = 26;                                  // optional, original EMA(5)
 
 extern string ___a__________________________ = "=== Display settings ===";
 extern color  Histogram.Color.Upper          = LimeGreen;
@@ -39,7 +39,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MAChannel.mqh>
+#include <rsf/functions/iCustom/MaChannel.mqh>
 #include <rsf/functions/iCustom/MovingAverage.mqh>
 #include <rsf/win32api.mqh>
 
@@ -194,19 +194,19 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      upperBand = GetChannel(MODE_UPPER, bar);
-      lowerBand = GetChannel(MODE_LOWER, bar);
+      upperBand = GetMaChannel(MODE_UPPER, bar);
+      lowerBand = GetMaChannel(MODE_LOWER, bar);
       ma        = GetMovingAverage(bar);
 
       if (Close[bar] > upperBand && ma > upperBand) {
          bufferMain [bar] = 1;
-         bufferUpper[bar] = bufferMain[bar];
+         bufferUpper[bar] = 1;
          bufferLower[bar] = 0;
       }
       else if (Close[bar] < lowerBand && ma < lowerBand) {
          bufferMain [bar] = -1;
-         bufferUpper[bar] = 0;
-         bufferLower[bar] = bufferMain[bar];
+         bufferUpper[bar] =  0;
+         bufferLower[bar] = -1;
       }
       else {
          bufferMain [bar] = bufferMain [bar+1];
@@ -331,7 +331,7 @@ bool onTrendChange(int direction) {
  *
  * @return double - band value or NULL in case of errors
  */
-double GetChannel(int mode, int bar) {
+double GetMaChannel(int mode, int bar) {
    if (channel.method == MODE_ALMA) {
       static int buffers[] = {0, MaChannel.MODE_UPPER_BAND, MaChannel.MODE_LOWER_BAND};
       return(icMaChannel(NULL, channel.definition, buffers[mode], bar));

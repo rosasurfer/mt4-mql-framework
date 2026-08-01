@@ -19,8 +19,8 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a__________________________ = "=== MA Channel settings ===";
-extern string Channel.Method                 = "SMA | LWMA* | EMA | SMMA | ALMA";
-extern int    Channel.Periods                = 55;
+extern string MaChannel.Method               = "SMA* | LWMA | EMA | SMMA | ALMA";
+extern int    MaChannel.Periods              = 100;
 
 extern string ___b__________________________ = "=== Bar settings ===";
 extern color  Color.UpTrend                  = Blue;
@@ -29,7 +29,7 @@ extern color  Color.DownTrend                = Red;
 extern int    BarWidth                       = 2;
 
 extern string ___c__________________________ = "=== Display options ===";
-extern int    MaxBarsBack                    = 10000;       // max. values to calculate (-1: all available)
+extern int    MaxBarsBack                    = 10000;          // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -37,7 +37,7 @@ extern int    MaxBarsBack                    = 10000;       // max. values to ca
 #include <rsf/stdfunctions.mqh>
 #include <rsf/stdlib.mqh>
 #include <rsf/functions/HandleCommands.mqh>
-#include <rsf/functions/iCustom/MAChannel.mqh>
+#include <rsf/functions/iCustom/MaChannel.mqh>
 
 #define BUFFER_TREND_BODY_A      0        // indicator buffer ids
 #define BUFFER_TREND_BODY_B      1
@@ -70,9 +70,9 @@ double noTrendBodyB[];
 double noTrendWickA[];
 double noTrendWickB[];
 
-int    channel.periods;
-int    channel.method;
-string channel.definition = "";
+int    maChannel.method;
+int    maChannel.periods;
+string maChannel.definition = "";
 
 
 /**
@@ -84,21 +84,21 @@ int onInit() {
    string indicator = WindowExpertName();
 
    // validate inputs
-   // Channel.Method
-   if (AutoConfiguration) Channel.Method = GetConfigString(indicator, "Channel.Method", Channel.Method);
-   string sValues[], sValue = Channel.Method;
+   // MaChannel.Method
+   if (AutoConfiguration) MaChannel.Method = GetConfigString(indicator, "MaChannel.Method", MaChannel.Method);
+   string sValues[], sValue = MaChannel.Method;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   channel.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (channel.method == -1) return(catch("onInit(1)  invalid input parameter Channel.Method: "+ DoubleQuoteStr(Channel.Method), ERR_INVALID_INPUT_PARAMETER));
-   Channel.Method = MaMethodDescription(channel.method);
-   // Channel.Periods
-   if (AutoConfiguration) Channel.Periods = GetConfigInt(indicator, "Channel.Periods", Channel.Periods);
-   if (Channel.Periods < 1)  return(catch("onInit(2)  invalid input parameter Channel.Periods: "+ Channel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   channel.periods = Channel.Periods;
-   channel.definition = Channel.Method +"("+ channel.periods+")";
+   maChannel.method = StrToMaMethod(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (maChannel.method == -1) return(catch("onInit(1)  invalid input parameter MaChannel.Method: "+ DoubleQuoteStr(MaChannel.Method), ERR_INVALID_INPUT_PARAMETER));
+   MaChannel.Method = MaMethodDescription(maChannel.method);
+   // MaChannel.Periods
+   if (AutoConfiguration) MaChannel.Periods = GetConfigInt(indicator, "MaChannel.Periods", MaChannel.Periods);
+   if (MaChannel.Periods < 1)  return(catch("onInit(2)  invalid input parameter MaChannel.Periods: "+ MaChannel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   maChannel.periods = MaChannel.Periods;
+   maChannel.definition = MaChannel.Method +"("+ maChannel.periods+")";
    // Color.*: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
    if (AutoConfiguration) Color.NoTrend   = GetConfigColor(indicator, "Color.NoTrend",   Color.NoTrend);
@@ -108,11 +108,11 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // BarWidth
    if (AutoConfiguration) BarWidth = GetConfigInt(indicator, "BarWidth", BarWidth);
-   if (BarWidth < 0)         return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (BarWidth > 13)        return(catch("onInit(4)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (BarWidth < 0)           return(catch("onInit(3)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (BarWidth > 13)          return(catch("onInit(4)  invalid input parameter BarWidth: "+ BarWidth, ERR_INVALID_INPUT_PARAMETER));
    // MaxBarsBack
    if (AutoConfiguration) MaxBarsBack = GetConfigInt(indicator, "MaxBarsBack", MaxBarsBack);
-   if (MaxBarsBack < -1)     return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBarsBack < -1)       return(catch("onInit(5)  invalid input parameter MaxBarsBack: "+ MaxBarsBack, ERR_INVALID_INPUT_PARAMETER));
    if (MaxBarsBack == -1) MaxBarsBack = INT_MAX;
 
    // reset the command handler
@@ -160,7 +160,7 @@ int onTick() {
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-channel.periods);
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maChannel.periods);
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
@@ -174,8 +174,8 @@ int onTick() {
       noTrendWickA[bar] = 0;
       noTrendWickB[bar] = 0;
 
-      double upperBand = GetChannel(MODE_UPPER, bar);
-      double lowerBand = GetChannel(MODE_LOWER, bar);
+      double upperBand = GetMaChannel(MODE_UPPER, bar);
+      double lowerBand = GetMaChannel(MODE_LOWER, bar);
 
       if (Close[bar] > upperBand) {
          if (Open[bar] > Close[bar]) {
@@ -244,13 +244,13 @@ bool onCommand(string cmd, string params, int keys) {
  *
  * @return double - band value or NULL in case of errors
  */
-double GetChannel(int mode, int bar) {
-   if (channel.method == MODE_ALMA) {
+double GetMaChannel(int mode, int bar) {
+   if (maChannel.method == MODE_ALMA) {
       static int buffers[] = {0, MaChannel.MODE_UPPER_BAND, MaChannel.MODE_LOWER_BAND};
-      return(icMaChannel(NULL, channel.definition, buffers[mode], bar));
+      return(icMaChannel(NULL, maChannel.definition, buffers[mode], bar));
    }
    static int priceTypes[] = {0, PRICE_HIGH, PRICE_LOW};
-   return(iMA(NULL, NULL, channel.periods, 0, channel.method, priceTypes[mode], bar));
+   return(iMA(NULL, NULL, maChannel.periods, 0, maChannel.method, priceTypes[mode], bar));
 }
 
 
@@ -306,14 +306,14 @@ bool SetIndicatorOptions(bool redraw = false) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Channel.Method=",  DoubleQuoteStr(Channel.Method), ";", NL,
-                            "Channel.Periods=", Channel.Periods,                ";", NL,
+   return(StringConcatenate("MaChannel.Method=",  DoubleQuoteStr(MaChannel.Method), ";", NL,
+                            "MaChannel.Periods=", MaChannel.Periods,                ";", NL,
 
-                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),      ";", NL,
-                            "Color.NoTrend=",   ColorToStr(Color.NoTrend),      ";", NL,
-                            "Color.DownTrend=", ColorToStr(Color.DownTrend),    ";", NL,
-                            "BarWidth=",        BarWidth,                       ";", NL,
+                            "Color.UpTrend=",     ColorToStr(Color.UpTrend),        ";", NL,
+                            "Color.NoTrend=",     ColorToStr(Color.NoTrend),        ";", NL,
+                            "Color.DownTrend=",   ColorToStr(Color.DownTrend),      ";", NL,
+                            "BarWidth=",          BarWidth,                         ";", NL,
 
-                            "MaxBarsBack=",     MaxBarsBack,                    ";")
+                            "MaxBarsBack=",       MaxBarsBack,                      ";")
    );
 }

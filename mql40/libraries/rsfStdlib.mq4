@@ -421,7 +421,7 @@ int _CheckLocks() {
  * @param  datetime time                - time
  * @param  string   timezone [optional] - timezone of time (default: current server timezone)
  *
- * @return int - offset in seconds, it holds: time = fxt-time + offset (positive values for locations east of FXT);
+ * @return int - offset in seconds, it holds true: time = fxt-time + offset (positive values for locations east of FXT);
  *               EMPTY_VALUE in case of errors
  */
 int GetTimezoneToFxtOffset(datetime time, string timezone = "") {
@@ -458,7 +458,7 @@ int GetTimezoneToFxtOffset(datetime time, string timezone = "") {
  * @param  datetime time                - time
  * @param  string   timezone [optional] - timezone of time (default: current server timezone)
  *
- * @return int - offset in seconds, it holds: time = gmt-time + offset (positive values for locations east of GMT);
+ * @return int - offset in seconds, it holds true: time = gmt-time + offset (positive values for locations east of GMT);
  *               EMPTY_VALUE in case of errors
  */
 int GetTimezoneToGmtOffset(datetime time, string timezone = "") {
@@ -3455,7 +3455,7 @@ string GetHostName() {
  * @param  datetime time                - FXT time
  * @param  string   timezone [optional] - target timezone (default: current server timezone)
  *
- * @return int - offset in seconds, it holds: fxt-time = target-time + offset (positive values for locations west of GMT);
+ * @return int - offset in seconds, it holds true: fxt-time = target-time + offset (positive values for locations west of GMT);
  *               EMPTY_VALUE in case of errors
  */
 int GetFxtToTimezoneOffset(datetime time, string timezone = "") {
@@ -3493,7 +3493,7 @@ int GetFxtToTimezoneOffset(datetime time, string timezone = "") {
  * @param  datetime time                - GMT time
  * @param  string   timezone [optional] - target timezone (default: current server timezone)
  *
- * @return int - offset in seconds, it holds: gmt-time = target-time + offset (positive values for locations west of GMT);
+ * @return int - offset in seconds, it holds true: gmt-time = target-time + offset (positive values for locations west of GMT);
  *               EMPTY_VALUE in case of errors
  */
 int GetGmtToTimezoneOffset(datetime time, string timezone = "") {

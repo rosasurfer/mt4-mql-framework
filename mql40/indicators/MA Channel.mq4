@@ -22,7 +22,7 @@ extern bool   ShowChartLegend                = true;
 extern int    MaxBarsBack                    = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___b__________________________ = "=== Signaling ===";
-extern bool   Signal.onBarCross              = false;                   // on channel crossing of BAR_CLOSE opposite to the last crossing
+extern bool   Signal.onBarCross              = false;                   // on BarClose crossing the opposite side of the channel
 extern string Signal.onBarCross.Types        = "sound* | alert | mail | telegram";
 extern string Signal.Sound.Up                = "Signal Up.wav";
 extern string Signal.Sound.Down              = "Signal Down.wav";
@@ -36,12 +36,12 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 #include <rsf/functions/ConfigureSignals.mqh>
 #include <rsf/functions/IsBarOpen.mqh>
 #include <rsf/functions/ObjectCreateRegister.mqh>
-#include <rsf/functions/iCustom/MAChannel.mqh>
+#include <rsf/functions/iCustom/MaChannel.mqh>
 #include <rsf/win32api.mqh>
 
 #define MODE_UPPER_BAND       MaChannel.MODE_UPPER_BAND  // 0 indicator buffer ids
 #define MODE_LOWER_BAND       MaChannel.MODE_LOWER_BAND  // 1
-#define MODE_TREND            MaChannel.MODE_TREND       // 2 direction/length of the last channel crossing: +1...+n=up, -1...-n=down
+#define MODE_TREND            MaChannel.MODE_TREND       // 2 direction/length of the last channel crossing, up: +1...+n, down: -1...-n
 
 #property indicator_chart_window
 #property indicator_buffers   3                          // visible buffers
@@ -52,7 +52,7 @@ extern string Signal.Sound.Down              = "Signal Down.wav";
 
 double upperBand[];                                      // upper band:      visible
 double lowerBand[];                                      // lower band:      visible
-double barTrend [];                                      // trend direction: invisible, displayed in "Data" window
+double trend    [];                                      // trend direction: invisible, displayed in "Data" window
 
 #define MA_METHOD    0                                   // indexes of ma[]
 #define MA_PERIODS   1
@@ -70,8 +70,8 @@ bool   signal.alert;
 bool   signal.mail;
 bool   signal.telegram;
 
-#define D_LONG    TRADE_DIRECTION_LONG                   // signal direction types
-#define D_SHORT   TRADE_DIRECTION_SHORT                  //
+#define D_LONG  TRADE_DIRECTION_LONG                     // signal direction types
+#define D_SHORT TRADE_DIRECTION_SHORT                    //
 
 
 /**
@@ -163,7 +163,7 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(upperBand, EMPTY_VALUE);
       ArrayInitialize(lowerBand, EMPTY_VALUE);
-      ArrayInitialize(barTrend,            0);
+      ArrayInitialize(trend,               0);
       SetIndicatorOptions();
    }
 
@@ -171,18 +171,18 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(upperBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(lowerBand, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(barTrend,  Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
    }
 
    // calculate start bar
-   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods), prevBarTrend;
+   int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-maxMaPeriods), prevTrend;
    if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    int numberOfMas = ArrayRange(ma, 0);
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      double high=INT_MIN, low=INT_MAX;
+      double high = INT_MIN, low = INT_MAX;
 
       for (int i=0; i < numberOfMas; i++) {
          high = MathMax(high, iMA(NULL, NULL, ma[i][MA_PERIODS], 0, ma[i][MA_METHOD], PRICE_HIGH, bar));
@@ -191,10 +191,10 @@ int onTick() {
       upperBand[bar] = high;
       lowerBand[bar] = low;
 
-      prevBarTrend = barTrend[bar+1];
-      if      (Close[bar] > upperBand[bar]) barTrend[bar] = Max(prevBarTrend, 0) + 1;
-      else if (Close[bar] < lowerBand[bar]) barTrend[bar] = Min(prevBarTrend, 0) - 1;
-      else                                  barTrend[bar] = prevBarTrend + Sign(prevBarTrend);
+      prevTrend = trend[bar+1];
+      if      (Close[bar] > upperBand[bar]) trend[bar] = Max(prevTrend, 0) + 1;
+      else if (Close[bar] < lowerBand[bar]) trend[bar] = Min(prevTrend, 0) - 1;
+      else                                  trend[bar] = prevTrend + Sign(prevTrend);
    }
 
    if (!__isSuperContext) {
@@ -202,8 +202,8 @@ int onTick() {
 
       // monitor signals
       if (Signal.onBarCross) /*&&*/ if (IsBarOpen()) {
-         if      (barTrend[1] ==  1) onCross(D_LONG);
-         else if (barTrend[1] == -1) onCross(D_SHORT);
+         if      (trend[1] ==  1) onCross(D_LONG);
+         else if (trend[1] == -1) onCross(D_SHORT);
       }
    }
    return(last_error);
@@ -306,7 +306,7 @@ bool SetIndicatorOptions(bool redraw = false) {
    IndicatorBuffers(indicator_buffers);
    SetIndexBuffer(MODE_UPPER_BAND, upperBand);
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);
-   SetIndexBuffer(MODE_TREND,      barTrend); SetIndexEmptyValue(MODE_TREND, 0);
+   SetIndexBuffer(MODE_TREND,      trend    ); SetIndexEmptyValue(MODE_TREND, 0);
    IndicatorDigits(Digits);
 
    SetIndexStyle(MODE_UPPER_BAND, DRAW_LINE, EMPTY, EMPTY, Channel.Color);

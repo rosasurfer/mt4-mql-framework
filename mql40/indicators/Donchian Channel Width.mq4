@@ -79,7 +79,7 @@ int onInit() {
    // buffer management and display options
    SetIndicatorOptions();
 
-   // always initialize a chart legend (removed on the first tick if not used)
+   // always initialize a chart legend (if unused it's removed on the first tick)
    legendLabel = CreateChartLegend();
    chartWindow = GetChartWindow(indicatorName);
 
@@ -133,7 +133,7 @@ int onTick() {
 
    // calculate start bar
    int startbar = Min(MaxBarsBack-1, ChangedBars-1, Bars-Periods);
-   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ Periods, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0 && MaxBarsBack) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    if (startbar > 2) {

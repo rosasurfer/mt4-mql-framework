@@ -1,5 +1,5 @@
 /**
- * MQL constants shared with the MT4Expander DLL.
+ * MQL constants shared with the MT4Expander
  */
 
 // special constants
@@ -17,15 +17,13 @@
 #define CHART_TEMPLATES_MAX                   100
 
 
-// string constants in the MT4Expander are defined as ANSI
-#define EOL_MAC                              "\r"        // old MacOS line separator: 0x0D
-#define EOL_NETSCAPE                     "\r\r\n"        // Netscape line separator:  0x0D0D0A
-#define EOL_UNIX                             "\n"        // Unix line separator:      0x0A (MQL/Win32 file functions in text mode auto-convert EOL_UNIX to EOL_WINDOWS)
-#define EOL_WINDOWS                        "\r\n"        // Windows line separator:   0x0D0A
+// string constants in MT4Expander are ANSI strings
+#define EOL_UNIX                             "\n"        // 0x0A (MQL+Win32 file functions in text mode silently auto-convert EOL_UNIX to EOL_WINDOWS)
+#define EOL_WINDOWS                        "\r\n"        // 0x0D0A
 
-#define NL                                   "\n"        // MQL4.0 bug: string constants cannot reference each other
+#define NL                                   "\n"        // missing MQL4.0 feature: string constants cannot reference each other
 #define CRLF                               "\r\n"
-#define TAB                                  "\t"        // tabulator: 0x09
+#define TAB                                  "\t"        // 0x09
 
 
 // log levels
@@ -116,14 +114,15 @@
 #define DEBUG_FEATURE_CREATE_OBJECT            16        // option "/rsf:debug-createobject"
 #define DEBUG_FEATURE_CREATE_WINDOW            32        // option "/rsf:debug-createwindow"
 #define DEBUG_FEATURE_EXECUTION_CONTEXT        64        // option "/rsf:debug-ec"
-#define DEBUG_FEATURE_INDICATOR_LIST          128        // option "/rsf:debug-indicatorlist"
-#define DEBUG_FEATURE_SUBCLASS                256        // option "/rsf:debug-subclass"
-#define DEBUG_FEATURE_WM_COMMAND              512        // option "/rsf:debug-wmcommand"
+#define DEBUG_FEATURE_HOOKS                   128        // option "/rsf:debug-hooks"
+#define DEBUG_FEATURE_INDICATOR_LIST          256        // option "/rsf:debug-indicatorlist"
+#define DEBUG_FEATURE_SUBCLASS                512        // option "/rsf:debug-subclass"
+#define DEBUG_FEATURE_WM_COMMAND             1024        // option "/rsf:debug-wmcommand"
 
 
 // window property names
-#define PROP_STRING_ACCOUNT_SERVER              "rsf.string.accountServer"
-#define PROP_INT_ACCOUNT_NUMBER                 "rsf.int.accountNumber"
+#define PROP_STRING_ACCOUNT_SERVER  "rsf.string.accountServer"
+#define PROP_INT_ACCOUNT_NUMBER     "rsf.int.accountNumber"
 
 
 // timeframe identifiers (can't be combined)
@@ -394,9 +393,9 @@
 #define INIT_TIMEZONE                           1        // ensure a valid timezone configuration
 #define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and tick value)
 #define INIT_BARS_ON_HIST_UPDATE                4        //
-#define INIT_NO_BARS_REQUIRED                   8        // program operates without price history (scripts only)
+#define INIT_NO_BARS_REQUIRED                   8        // scripts only: can operate without price history
 #define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
-#define INIT_AUTO_TRADING                      32        // ensure that auto-trading is enabled
+#define INIT_AUTO_TRADING                      32        // ensure auto-trading is enabled
 
 
 // MT4 internal messages

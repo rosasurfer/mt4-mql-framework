@@ -698,6 +698,6 @@ Fast-EMA: substitutes N = (N-1)/2 + 1              // Matulich: The Length param
           alpha = 4/(N + 3)                        // moving averages. This way the T3 can be used with the same Length parameter as an SMA or EMA.
 equals:   N     = 4/alpha - 3                      // @see  http://unicorn.us.com/trading/el.html#_T3Average
 
-it holds: SMMA(n) = EMA(2*n-1)                     // All three EMAs are identical (length looks different, alpha is the same).
-          EMA(n)  = Fast-EMA(2*n-1)                // e.g. SMMA(10) = EMA(19) = Fast-EMA(37)
+it holds true: SMMA(n) = EMA(2*n-1)                // All three EMAs are identical (length looks different, alpha is the same).
+               EMA(n)  = Fast-EMA(2*n-1)           // e.g. SMMA(10) = EMA(19) = Fast-EMA(37)
 */

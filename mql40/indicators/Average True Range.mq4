@@ -1,5 +1,5 @@
 /**
- * Average Range/Average True Range
+ * Average True Range with option to toggle between traded and "True" range
  */
 #include <rsf/stddefines.mqh>
 int   __InitFlags[];
@@ -11,7 +11,7 @@ extern string ___a__________________________ = "=== MA settings ===";
 extern string MA.Method                      = "SMA | LWMA* | EMA | SMMA"; // averaging type
 extern int    MA.Periods                     = 20;                         // averaging periods
 extern int    MA.Periods.Step                = 0;                          // step size for parameter stepper via hotkey
-extern bool   TrueRange                      = true;                       // whether to evaluate the traded or the true range
+extern bool   TrueRange                      = true;                       // whether to use the traded or the true range
 
 extern string ___b__________________________ = "=== Display settings ===";
 extern int    Line.Width                     = 2;
@@ -83,14 +83,9 @@ int onInit() {
    if (__isChart && MA.Periods.Step) {
       GetChartCommand("ParameterStepper", sValues);
    }
+
    RestoreStatus();
-
-   // buffer management and options
-   IndicatorBuffers(terminal_buffers);
-   SetIndexBuffer(MODE_RANGE, ranges);       // invisible
-   SetIndexBuffer(MODE_MA,    ma);           // visible
    SetIndicatorOptions();
-
    return(catch("onInit(6)"));
 }
 
@@ -205,17 +200,18 @@ bool ParameterStepper(int direction, int keys) {
  */
 bool SetIndicatorOptions(bool redraw = false) {
    redraw = redraw!=0;
-   IndicatorBuffers(terminal_buffers);
-
    string stepSize = ifString(MA.Periods.Step, ":"+ MA.Periods.Step, "");
-   string name     = ifString(TrueRange, "ATR", "AvgRange") +"("+ MA.Periods + stepSize +")";
+   string name = ifString(TrueRange, "ATR", "AvgRange") +"("+ MA.Periods + stepSize +")";
    IndicatorShortName(name);
 
-   int drawType = ifInt(Line.Width, DRAW_LINE, DRAW_NONE);
-
-   SetIndexStyle(MODE_RANGE, DRAW_NONE, EMPTY, EMPTY,      CLR_NONE);
-   SetIndexStyle(MODE_MA,    drawType,  EMPTY, Line.Width, Line.Color); SetIndexLabel(MODE_MA, name);
+   IndicatorBuffers(terminal_buffers);
+   SetIndexBuffer(MODE_RANGE, ranges);
+   SetIndexBuffer(MODE_MA,    ma    ); SetIndexLabel(MODE_MA, name);
    IndicatorDigits(pDigits);
+
+   int drawType = ifInt(Line.Width, DRAW_LINE, DRAW_NONE);
+   SetIndexStyle(MODE_RANGE, DRAW_NONE, EMPTY, EMPTY,      CLR_NONE);
+   SetIndexStyle(MODE_MA,    drawType,  EMPTY, Line.Width, Line.Color);
 
    if (redraw) WindowRedraw();
    return(!catch("SetIndicatorOptions(1)"));

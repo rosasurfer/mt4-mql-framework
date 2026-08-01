@@ -1,8 +1,8 @@
 /**
- * Drop-in replacement for the badly designed built-in function StringSubstr().
- * Fix for StringSubstr(string, start, length = 0) in which case the built-in function returns the whole string.
- *
+ * Drop-in replacement for the flawed built-in function StringSubstr().
  * Additionally this implementation supports negative values for parameters "start" and "length".
+ *
+ * Fixes StringSubstr(string, start, length = 0) which returns the whole string instead of an empty string.
  *
  * @param  string str    - string to process
  * @param  int    start  - start offset; if negative counted from the end of the string

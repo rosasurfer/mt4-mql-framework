@@ -17,7 +17,7 @@
  *    - length: the absolute value is the histogram section length (bars since the last crossing of zero)
  *
  *
- * Notes: The SMMA is in fact an EMA with a different period. It holds: SMMA(n) = EMA(2*n-1)
+ * Notes: The SMMA is in fact an EMA with a different period. It holds true: SMMA(n) = EMA(2*n-1)
  *        @see  https://web.archive.org/web/20221120050520/https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
  */
 #include <rsf/stddefines.mqh>
