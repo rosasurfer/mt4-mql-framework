@@ -2376,7 +2376,7 @@ bool CustomPositions.ReadConfig() {
    string   keys[], values[], iniValue="", sValue="", comment="", confComment="", openComment="", hstComment="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   termType, termValue1, termValue2, termResult1, termResult2, dValue, lotSize, minLotSize=MarketInfo(symbol, MODE_MINLOT), lotStep=MarketInfo(symbol, MODE_LOTSTEP);
    int      filterType, filterValue1, filterValue2;
-   int      valuesSize, termsSize, pos, len, ticket, nextPositionStartOffset;
+   int      valuesSize, termsSize, pos, len, ticket, nextPositionStartOffset = 0;
    datetime from, to;
    bool     isEmptyPosition, isVirtualPosition, isGroupedPosition, isFilteredPosition, hasEquityValue, hasProfitMarker, hasLossMarker, isBemEnabled, isMfaeEnabled, isMfaeSignal, markMfe, isTotal, isPercent;
 
@@ -2736,7 +2736,7 @@ bool CustomPositions.ReadConfig() {
 
                // Konfigurations-Term speichern
                if (termType==TERM_FILTER_EA || termType==TERM_FILTER_SID || termType==TERM_FILTER_MAGIC) {
-                  // a filter condition must be stored first, so all following positions can be filtered
+                  // a filter condition must be stored first, so following positions can see the filter to apply
                   double dFilter[5];
                   dFilter[0] = termType;
                   dFilter[1] = termValue1;
@@ -2757,8 +2757,9 @@ bool CustomPositions.ReadConfig() {
                }
             }
 
-            // config lines not defining any open/closed trades are skipped (nothing to monitor/display)
+            // config lines not defining any open/closed trades are discarded (nothing to monitor/display)
             if (isEmptyPosition) {
+               ArrayResize(confTerms, nextPositionStartOffset);      // truncate confTerms[] to the end of the last line
                continue;                                             // continue with next custom position line
             }
 
