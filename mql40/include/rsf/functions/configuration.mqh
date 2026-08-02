@@ -4,12 +4,17 @@
 
 
 /**
- * Return the full name of an account configuration file.
+ * Return the full name of a trading account configuration file. This configuration file is used only if the terminal is
+ * logged-in to that trading account.
+ *
+ * The file is named "rsf-account-{number}-config.ini" and is located in the terminal's common data folder. No attempt is
+ * made to create the file.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
  *
- * @return string - filename or an empty string in case of errors
+ * @return string - file name or an empty string in case of errors,
+ *                  e.g. "%UserProfile%\AppData\Roaming\MetaQuotes\Terminal\Common\{AccountCompany}\rsf-account-123456-config.ini"
  */
 string GetAccountConfigPath(string company = "", int account = NULL) {
    if (company=="" || company=="0") {
@@ -19,7 +24,7 @@ string GetAccountConfigPath(string company = "", int account = NULL) {
    if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
    if (!account) account = GetAccountNumber();
    if (!account) return("");
-   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", company, "\\", account, "-config.ini"));
+   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", company, "\\rsf-account-", account, "-config.ini"));
 }
 
 
