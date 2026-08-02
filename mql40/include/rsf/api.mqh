@@ -268,32 +268,32 @@ bool     IsConfigKey               (string section, string key);;
 bool     IsAccountConfigKey        (string section, string key);;
 
 bool     GetConfigBool             (string section, string key, bool defaultValue=false);;
-bool     GetGlobalConfigBool       (string section, string key, bool defaultValue=false);;
+bool     GetUserConfigBool         (string section, string key, bool defaultValue=false);;
 bool     GetTerminalConfigBool     (string section, string key, bool defaultValue=false);;
 bool     GetAccountConfigBool      (string section, string key, bool defaultValue=false);;
 
 color    GetConfigColor            (string section, string key, color defaultValue=CLR_NONE);;
-color    GetGlobalConfigColor      (string section, string key, color defaultValue=CLR_NONE);;
+color    GetUserConfigColor        (string section, string key, color defaultValue=CLR_NONE);;
 color    GetTerminalConfigColor    (string section, string key, color defaultValue=CLR_NONE);;
 color    GetAccountConfigColor     (string section, string key, color defaultValue=CLR_NONE);;
 
 int      GetConfigInt              (string section, string key, int defaultValue=0);;
-int      GetGlobalConfigInt        (string section, string key, int defaultValue=0);;
+int      GetUserConfigInt          (string section, string key, int defaultValue=0);;
 int      GetTerminalConfigInt      (string section, string key, int defaultValue=0);;
 int      GetAccountConfigInt       (string section, string key, int defaultValue=0);;
 
 double   GetConfigDouble           (string section, string key, double defaultValue=0);;
-double   GetGlobalConfigDouble     (string section, string key, double defaultValue=0);;
+double   GetUserConfigDouble       (string section, string key, double defaultValue=0);;
 double   GetTerminalConfigDouble   (string section, string key, double defaultValue=0);;
 double   GetAccountConfigDouble    (string section, string key, double defaultValue=0);;
 
 string   GetConfigString           (string section, string key, string defaultValue="");;
-string   GetGlobalConfigString     (string section, string key, string defaultValue="");;
+string   GetUserConfigString       (string section, string key, string defaultValue="");;
 string   GetTerminalConfigString   (string section, string key, string defaultValue="");;
 string   GetAccountConfigString    (string section, string key, string defaultValue="");;
 
 string   GetConfigStringRaw        (string section, string key, string defaultValue="");;
-string   GetGlobalConfigStringRaw  (string section, string key, string defaultValue="");;
+string   GetUserConfigStringRaw    (string section, string key, string defaultValue="");;
 string   GetTerminalConfigStringRaw(string section, string key, string defaultValue="");;
 string   GetAccountConfigStringRaw (string section, string key, string defaultValue="");;
 
@@ -768,7 +768,6 @@ int      GetDoublesAddress(double &values[]);;
 string   GetExpanderFileNameA();;
 string   GetExpanderFileNameW();;
 string   GetFinalPathNameA(string name);;
-string   GetGlobalConfigPathA();;
 datetime GetGmtTime32();;
 datetime GetGmtTime64();;
 string   GetHistoryRootPathA();;
@@ -805,6 +804,7 @@ string   GetTerminalRoamingDataPathA();;
 string   GetTerminalRoamingDataPathW();;
 string   GetTerminalVersion();;
 int      GetUiThreadId();;
+string   GetUserConfigPathA();;
 double   GetWindowDoubleA(int hWnd, string name);;
 int      GetWindowIntegerA(int hWnd, string name);;
 string   GetWindowStringA(int hWnd, string name);;
@@ -826,7 +826,6 @@ bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectoryA(string path, int mode);;
 bool     IsFileA(string path, int mode);;
 bool     IsFileOrDirectoryA(string path);;
-bool     IsGlobalConfigKeyA(string section, string key);;
 bool     IsInfinite(double value);;
 bool     IsIniKeyA(string fileName, string section, string key);;
 bool     IsIniSectionA(string fileName, string section);;
@@ -838,6 +837,7 @@ bool     IsStandardTimeframe(int timeframe);;
 bool     IsSymlinkA(string path);;
 bool     IsTerminalConfigKeyA(string section, string key);;
 bool     IsUiThread(int threadId);;
+bool     IsUserConfigKeyA(string section, string key);;
 bool     IsVirtualKeyDown(int key);;
 bool     IsWindowAreaVisible(int hWnd);;
 int      LeaveMqlModule(int &ec[]);;

@@ -53,11 +53,11 @@
    bool     ReleaseTickTimer(int timerId);
 
    // configuration
-   string   GetGlobalConfigPathA();
+   string   GetUserConfigPathA();
    string   GetTerminalConfigPathA();
 
    bool     IsIniKeyA(string fileName, string section, string key);
-   bool     IsGlobalConfigKeyA(string section, string key);
+   bool     IsUserConfigKeyA(string section, string key);
    bool     IsTerminalConfigKeyA(string section, string key);
 
    //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);   // see notes for array limitations at the top of the file
@@ -76,8 +76,8 @@
    datetime GetLocalTime32();
    string   GmtTimeFormatA(datetime time, string format);
    string   LocalTimeFormatA(datetime time, string format);
- //datetime GmtToLocalTime(datetime time);                     // TODO: finish tests (see ZigZag EA)
- //datetime LocalToGmtTime(datetime time);                     // TODO: finish tests (see ZigZag EA)
+ //datetime GmtToLocalTime(datetime time);
+ //datetime LocalToGmtTime(datetime time);
 
    // file functions
    int      CreateDirectoryA(string path, int flags);

@@ -3588,16 +3588,16 @@ string GetServerTimezone() {
       lastResult[IDX_SERVER ] = GetAccountServer();    if (!StringLen(lastResult[IDX_SERVER ])) return("");
       lastResult[IDX_COMPANY] = GetAccountCompanyId(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
 
-      // prefer a custom company mapping of a full server name (global config only to prevent recursion)
-      string customMapping = GetGlobalConfigString("AccountCompanies", lastResult[IDX_SERVER]);
+      // prefer a custom company mapping of a full server name (user config only to prevent recursion)
+      string customMapping = GetUserConfigString("AccountCompanies", lastResult[IDX_SERVER]);
 
       if (StringLen(customMapping) > 0) {
-         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", customMapping);
+         lastResult[IDX_TIMEZONE] = GetUserConfigString("Timezones", customMapping);
       }
       else {
-         lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_SERVER]);
+         lastResult[IDX_TIMEZONE] = GetUserConfigString("Timezones", lastResult[IDX_SERVER]);
          if (!StringLen(lastResult[IDX_TIMEZONE])) {
-            lastResult[IDX_TIMEZONE] = GetGlobalConfigString("Timezones", lastResult[IDX_COMPANY]);
+            lastResult[IDX_TIMEZONE] = GetUserConfigString("Timezones", lastResult[IDX_COMPANY]);
          }
       }
       if (!StringLen(lastResult[IDX_TIMEZONE])) {

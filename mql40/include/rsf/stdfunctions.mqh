@@ -844,9 +844,9 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
             if (currency == "") currency = GetIniStringA(config, "Account", "Currency", "");
             if (currency == "") return(_EMPTY(catch("GetCommission(1)  cannot resolve account currency (config [Account]->Currency not found)", ERR_INVALID_CONFIG_VALUE)));
 
-            if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
-            else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
-            else if (IsGlobalConfigKeyA(section, company))                              key = company;
+            if      (IsUserConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
+            else if (IsUserConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
+            else if (IsUserConfigKeyA(section, company))                              key = company;
             else if (IsLogInfo()) logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default (no commission)");
          }
 
@@ -4637,7 +4637,7 @@ string GetAccountAlias(string company="", int account=NULL) {
 /**
  * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
  * characters only. By default the identifier matches the first word of the current tradeserver name. It can be mapped to a
- * different identifier via section [AccountCompanies] of the global framework configuration.
+ * different identifier via section [AccountCompanies] of the framework's user configuration.
  *
  * @return string - company identifier or an empty string in case of errors
  *
@@ -4668,7 +4668,7 @@ string GetAccountCompanyId() {
       if (server == lastServer) return(lastId); // in library::deinit() strings are released to early (already a NULL pointer)
    }
 
-   string mapping = GetGlobalConfigString("AccountCompanies", server);
+   string mapping = GetUserConfigString("AccountCompanies", server);
    if (StringLen(mapping) > 0) {
       lastServer = server;
       lastId = mapping;
@@ -4676,7 +4676,7 @@ string GetAccountCompanyId() {
    }
 
    string word1 = StrLeftTo(server, "-");
-   lastId = GetGlobalConfigString("AccountCompanies", word1, word1);
+   lastId = GetUserConfigString("AccountCompanies", word1, word1);
    lastServer = server;
    return(lastId);
 }

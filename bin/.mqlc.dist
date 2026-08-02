@@ -2,7 +2,7 @@
 # Copy this file to "~/.mqlc" and adjust the settings to your system.
 # ----------------------------------------------------------------------------------------------------
 # Configuration for the MQL compiler script. Compiler locations may also be specified via environment.
-# Environment settings have higher priority than settings in this file.
+# Environment settings take precedence over settings in this file.
 #
 # Paths support Unix and Windows notation.
 # Names with spaces must be quoted. Backward slashes must be doubled.
@@ -26,6 +26,6 @@ mql45Sources+=('<source-path3>')
 mql45Sources+=('<source-path4>')
 
 
-# source paths and predefined include directories
+# source paths and predefined MQL include directories
 includeDirs['<source-path1>']='<include-dir1>';
 includeDirs['<source-path3>']='<include-dir2>';
