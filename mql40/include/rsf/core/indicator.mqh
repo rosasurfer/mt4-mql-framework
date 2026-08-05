@@ -316,65 +316,84 @@ int start() {
       }
    }
 
-   // resolve ShiftedBars to speed-up offline chart calculations
-   // ----------------------------------------------------------
-   // On Chart->Refresh IndicatorCounted() reports all bars as changed. This affects user-updated offline charts as standard indicators will recalculate all bars on
-   // every tick. By defining "ShiftedBars" an indicator can use the ShiftIndicatorBuffer() functions to achieve the same calculation performance as in online charts.
-   // "ShiftedBars" will be defined only on an offline refresh, that's when IndicatorCounted() repeatedly reports all bars as changed (prevBars && !ValidBars).
+   // Determine/set var `ShiftedBars` to optimize indicator recalculations in offline charts
+   // --------------------------------------------------------------------------------------
+   // Issue:
+   //  When an offline chart is updated (by manual or automated "Chart -> Refresh") IndicatorCounted() reports all bars as
+   //  changed (ValidBars = 0). That's because such a refresh reloads the entire history from disk and replaces all existing
+   //  bars. The side effect: It causes custom indicators to fully recalculate on every such update (offline tick), which
+   //  badly impacts indicator performance.
    //
-   // The below code works under following assumptions:
-   // - new bars/ticks may only be added to history begin and old bars may only be shifted off from history end
-   // - all updates must include either the begin or the end of the history (no separate updates in the middle)
-   // - if the full history is replaced then either number of Bars, Time[0] or Time[Bars-1] must change (e.g. by modifying the timestamp of Time[Bars-1] by a random second)
-   // - if neither number of Bars, Time[0] nor Time[Bars-1] changed it's assumed that only the newest bar changed (i.e. a new tick was added)
+   // Solution:
+   //  Introduction of var `ShiftedBars`. It's only set on offline updates (offline ticks). When such an offline update
+   //  replaces all bars, var `ShiftedBars` tells how many of the chart bars have simply been shifted to the left (past),
+   //  and how many bars are changed or truely new.
    //
-   if (__isOfflineChart == -1) {                                                    // cannot be initialized in init()
+   //  The indicator only needs to recalculate values for truely new/changed bars. For shifted bars, the indicator can re-use
+   //  existing indicator buffers by shifting them by the offset var `ShiftedBars` tells. To shift indicator buffers, use
+   //  the Shift*IndicatorBuffer() functions of the framework.
+   //
+   //  As a result, indicator performance in offline charts becomes similar to performance in regular charts.
+   //
+   // The below logic is based on the following assumptions:
+   //  - New bars may be added/appear only at the current, most recent chart position (right).
+   //  - Old bars may be removed/disappear only at the oldest chart position (left).
+   //  - Offline updates always include either the beginning or the end of the chart (no updates of bar ranges in the middle).
+   //  - If the full history should be replaced then either var `Bars`, `Time[0]` or `Time[Bars-1]` must change. It can be
+   //    achieved by modifying the timestamp of the oldest bar by a random second.
+   //  - If neither var `Bars`, `Time[0]` nor `Time[Bars-1]` change, then it's assumed that only the most recent bar changed
+   //    (a new tick was added).
+   //
+   if (__isOfflineChart == -1) {                                                    // initialization here, cannot be safely detected in init()
       if      (__isTesting)                 __isOfflineChart = false;
       else if (IsCustomTimeframe(Period())) __isOfflineChart = true;
       else {
          string wndTitle = GetInternalWindowTextA(__ExecutionContext[EC.chartWindow]);
-         if (StringLen(wndTitle) > 0) {
+         if (wndTitle != "") {
             __isOfflineChart = StrEndsWith(wndTitle, "(offline)");
          }
       }
    }
 
-   if (prevBars && !ValidBars) {
-      if (__isOfflineChart==true || !IsConnected()) {
-         bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
-         bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.
+   if (!ValidBars && prevBars) {
+      if (__isOfflineChart == true || !IsConnected()) {
+         bool firstBarIsSame = (Time[0] == prevFirstBarTime);                       // Offline charts replace all bars when reloading data from disk.
+         bool lastBarIsSame = (Time[Bars-1] == prevLastBarTime);                    // Regular charts replace all bars if the trade server changes.
 
-         // if number of bars is the same
+         // if number of bars unchanged
          if (Bars == prevBars) {
-            if (sameFirst && sameLast) {                                            // first and last bar still the same (common use case: a single tick was added)
-               ShiftedBars = 0;
+            if (firstBarIsSame && lastBarIsSame) {                                  // first and last bar still the same (common case: a single tick was added)
                ChangedBars = 1;                                                     // a new tick
+               ShiftedBars = 0;
             }
-            else if (Time[Bars-1] > prevLastBarTime && Time[0] > prevFirstBarTime) {// old bars have been shifted off the end and new bars have been appended (rare use case)
+            else if (Time[Bars-1] > prevLastBarTime && Time[0] > prevFirstBarTime) {// old bars have been shifted off the end, and new bars have been appended (rare case)
                for (int i=1; i < Bars; i++) {
                   if (Time[i] <= prevFirstBarTime) break;                           // look up prevFirstBar
                }
-               if (Time[i] == prevFirstBarTime) {                                   // found (no ERR_ARRAY_INDEX_OUT_OF_RANGE on Times[Bar])
+               if (Time[i] == prevFirstBarTime) {                                   // found (Time[Bars] doesn't trigger an error)
+                  ChangedBars = i + 1;
                   ShiftedBars = i;
-                  ChangedBars = ShiftedBars + 1;
                }
             }
          }
 
          // if number of bars increased
          else if (Bars > prevBars) {
-            if (sameLast && Time[0] > prevFirstBarTime) {                           // last bar still the same and new bars have been appended (common use case: a new bar was added)
+            if (lastBarIsSame && Time[0] > prevFirstBarTime) {                      // last bar still the same and new bars have been appended (common case: a new bar was added)
                if (Time[Bars-prevBars] == prevFirstBarTime) {                       // inspect prevFirstBar
-                  ShiftedBars = Bars-prevBars;                                      // newer bars have been appended only, nothing was inserted
-                  ChangedBars = ShiftedBars + 1;
+                  int newBars = Bars - prevBars;                                    // new bars have been appended, nothing was inserted
+                  ChangedBars = newBars + 1;                                        // emulate a BarOpen event (recalculate the last bar)
+                  ShiftedBars = newBars;
+
+                  if (ShiftedBars == 1) {                                           // if only a single bar was added, the terminal is smart and shifts indicator buffers by itself
+                     ShiftedBars = 0;                                               // (observed in builds 500, 1440)
+                  }
                }
             }
-         }                                                                          // all other cases: all bars stay invalidated
-         //if (1 || Symbol()=="USDLFX") debug("start(0.1)  Tick="+ StrPadRight(Ticks, 3) +" offline refresh:    Bars="+ Bars +"  ChangedBars="+ StrPadRight(ChangedBars, 4) +"  ShiftedBars="+ ShiftedBars);
+         }
+         // number of bars decreased (if that's even possible) => all bars changed, full recalculation
       }
-      //else if (1 || Symbol()=="USDLFX") debug("start(0.2)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    }
-   //else if (1 || Symbol()=="USDLFX") debug("start(0.3)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    prevBars         = Bars;
    prevFirstBarTime = Time[0];
    prevLastBarTime  = Time[Bars-1];
