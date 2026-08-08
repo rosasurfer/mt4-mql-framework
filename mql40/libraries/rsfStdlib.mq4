@@ -101,42 +101,45 @@ bool EditFiles(string &filenames[]) {
    int size = ArraySize(filenames);
    if (!size) return(!catch("EditFiles(1)  invalid parameter filenames: {} (empty)", ERR_INVALID_PARAMETER));
 
+   bool isLogDebug = IsLogDebug();
+
    for (int i=0; i < size; i++) {
-      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: \"\" (empty)", ERR_INVALID_PARAMETER));
-      if (IsLogDebug()) logDebug("EditFiles(3)  loading "+ DoubleQuoteStr(filenames[i]));
+      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
+      if (isLogDebug) logDebug("EditFiles(3)  loading \""+ filenames[i] +"\"");
 
       if (IsFile(filenames[i], MODE_SYSTEM)) {
          while (IsSymlinkA(filenames[i])) {
-            string target = GetReparsePointTargetA(filenames[i]);    // resolve symlinks as some editors cannot write to it (e.g. TextPad)
-            if (!StringLen(target)) break;
+            string target = GetReparsePointTargetA(filenames[i]);    // resolve symlinks as some editors cannot write to it
+            if (target == "") break;
             filenames[i] = target;
          }
       }
       else if (IsDirectory(filenames[i], MODE_SYSTEM)) {
-         logError("EditFiles(4)  filename is a directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
+         logError("EditFiles(4)  filename is a directory \""+ filenames[i] +"\"", ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(filenames, i, 1);
          size--;
          i--;
          continue;
       }
-      else {}                                                        // file doesn't exist, behavior is up to the editor
+      else {
+         // file doesn't exist, behavior is up to the editor
+      }
    }
 
    // check the editor configuration
    string editor = GetConfigString("System", "Editor");
-
-   if (StringLen(editor) > 0) {
-      // use configured editor
+   if (editor != "") {
+      // use editor
       string cmd = editor +" \""+ JoinStrings(filenames, "\" \"") +"\"";
       int result = WinExec(cmd, SW_SHOWNORMAL);
-      if (result < 32) return(!catch("EditFiles(5)->kernel32::WinExec(cmd="+ DoubleQuoteStr(editor) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+      if (result < 32) return(!catch("EditFiles(5)->kernel32::WinExec(cmd=\""+ editor +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result));
    }
    else {
       // use ShellExecute() and the OS default "open" handler
       string sNull;
       for (i=0; i < size; i++) {
          result = ShellExecuteA(NULL, "open", filenames[i], sNull, sNull, SW_SHOWNORMAL);
-         if (result <= 32) return(!catch("EditFiles(6)->shell32::ShellExecuteA(file="+ DoubleQuoteStr(filenames[i]) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+         if (result <= 32) return(!catch("EditFiles(6)->shell32::ShellExecuteA(\""+ filenames[i] +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR + result));
       }
    }
    return(!catch("EditFiles(7)"));
@@ -2378,15 +2381,16 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // @link  http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
    // --------------------------------------------------------------------------
 
-   if (StringLen(lnkFilename) < 4 || StrRight(lnkFilename, 4)!=".lnk")
+   if (StringLen(lnkFilename) < 4 || StrRight(lnkFilename, 4) != ".lnk")
       return(_EMPTY_STR(catch("GetWindowsShortcutTarget(1)  invalid parameter lnkFilename: \""+ lnkFilename +"\"", ERR_INVALID_PARAMETER)));
 
    // --------------------------------------------------------------------------
    // Get the .lnk-file content:
    // --------------------------------------------------------------------------
    int hFile = _lopen(string lnkFilename, OF_READ);
-   if (hFile == HFILE_ERROR)
+   if (hFile == HFILE_ERROR) {
       return(_EMPTY_STR(catch("GetWindowsShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")", ERR_WIN32_ERROR)));
+   }
 
    int iNull[], fileSize=GetFileSize(hFile, iNull);
    if (fileSize == INVALID_FILE_SIZE) {
@@ -2394,7 +2398,8 @@ string GetWindowsShortcutTarget(string lnkFilename) {
       _lclose(hFile);
       return("");
    }
-   int buffer[]; InitializeByteBuffer(buffer, fileSize);
+   int buffer[];
+   InitializeByteBuffer(buffer, fileSize);
 
    int bytes = _lread(hFile, buffer, fileSize);
    if (bytes != fileSize) {
@@ -2406,9 +2411,9 @@ string GetWindowsShortcutTarget(string lnkFilename) {
 
    if (bytes < 24) return(_EMPTY_STR(catch("GetWindowsShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
-   int integers  = ArraySize(buffer);
+   int integers = ArraySize(buffer);
    int charsSize = bytes;
-   int chars[]; ArrayResize(chars, charsSize);     // int-Array in char-Array umwandeln
+   int chars[]; ArrayResize(chars, charsSize);     // convert int array to char array
 
    for (int i, n=0; i < integers; i++) {
       for (int shift=0; shift<32 && n<charsSize; shift+=8, n++) {
@@ -2422,8 +2427,9 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // The GUID is telling the version of the .lnk-file format. We expect the
    // following GUID (hex): 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46.
    // --------------------------------------------------------------------------
-   if (chars[0] != 'L')                            // test the magic value
+   if (chars[0] != 'L') {                          // test the magic value
       return(_EMPTY_STR(catch("GetWindowsShortcutTarget(6)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+   }
 
    if (chars[ 4] != 0x01 ||                        // test the GUID
        chars[ 5] != 0x14 ||
@@ -2477,8 +2483,9 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    int A = -6;
    if (hasShellItemIdList) {
       i = 76;
-      if (charsSize < i+2)
+      if (charsSize < i+2) {
          return(_EMPTY_STR(catch("GetWindowsShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      }
       A  = chars[76];               // little endian format
       A |= chars[77] << 8;
    }
@@ -2490,8 +2497,9 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // followed by 4 byte offset.
    // --------------------------------------------------------------------------
    i = 78 + 4 + A;
-   if (charsSize < i+4)
+   if (charsSize < i+4) {
       return(_EMPTY_STR(catch("GetWindowsShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+   }
 
    int B  = chars[i];       i++;    // little endian format
        B |= chars[i] <<  8; i++;
@@ -2505,8 +2513,9 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // skipping the actual table and moving to the local path string.
    // --------------------------------------------------------------------------
    i = 78 + A + B;
-   if (charsSize < i+4)
+   if (charsSize < i+4) {
       return(_EMPTY_STR(catch("GetWindowsShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+   }
 
    int C  = chars[i];       i++;    // little endian format
        C |= chars[i] <<  8; i++;
@@ -2517,26 +2526,30 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // Local path string (ending with 0x00):
    // --------------------------------------------------------------------------
    i = 78 + A + B + C;
-   if (charsSize < i+1)
+   if (charsSize < i+1) {
       return(_EMPTY_STR(catch("GetWindowsShortcutTarget(12)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+   }
 
    string target = "";
    for (; i < charsSize; i++) {
-      if (chars[i] == 0x00)
-         break;
+      if (chars[i] == 0x00) break;
       target = StringConcatenate(target, CharToStr(chars[i]));
    }
-   if (!StringLen(target))
+   if (target == "") {
       return(_EMPTY_STR(catch("GetWindowsShortcutTarget(13)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+   }
 
    // --------------------------------------------------------------------------
    // Convert the target path into the long filename format:
    // --------------------------------------------------------------------------
    // GetLongPathNameA() fails if the target file doesn't exist!
    // --------------------------------------------------------------------------
-   string lfnBuffer[]; InitializeStringBuffer(lfnBuffer, MAX_PATH);
-   if (GetLongPathNameA(target, lfnBuffer[0], MAX_PATH) != 0)        // file does exist
+   string lfnBuffer[];
+   InitializeStringBuffer(lfnBuffer, MAX_PATH);
+
+   if (GetLongPathNameA(target, lfnBuffer[0], MAX_PATH) != 0) { // file does exist
       target = lfnBuffer[0];
+   }
 
    //debug("GetWindowsShortcutTarget(14)  chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
 
@@ -2547,10 +2560,10 @@ string GetWindowsShortcutTarget(string lnkFilename) {
 
 
 /**
- * Führt eine Anwendung aus und wartet, bis sie beendet ist.
+ * Execute a command and wait for its termination.
  *
- * @param  string cmdLine - Befehlszeile
- * @param  int    cmdShow - ShowWindow()-Konstante
+ * @param  string cmdLine - command
+ * @param  int    cmdShow - ShowWindow() flag
  *
  * @return int - error status
  */
@@ -2560,11 +2573,12 @@ int WinExecWait(string cmdLine, int cmdShow) {
    si_setFlags     (si, STARTF_USESHOWWINDOW);
    si_setShowWindow(si, cmdShow);
 
-   int    iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeByteBuffer(pi, PROCESS_INFORMATION_size);
+   int iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeByteBuffer(pi, PROCESS_INFORMATION_size);
    string sNull;
 
-   if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
+   if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi)) {
       return(catch("WinExecWait(1)->kernel32::CreateProcessA(cmdLine=\""+ cmdLine +"\")", ERR_WIN32_ERROR));
+   }
 
    int result = WaitForSingleObject(pi_hProcess(pi), INFINITE);
 
@@ -3573,10 +3587,10 @@ string GetServerTimezone() {
 
    int tick=__ExecutionContext[EC.ticks], validBars=__ExecutionContext[EC.validBars];
    static int lastTick = -1;
-   static string lastResult[3];                 // cache: {lastServer, lastCompanyId, lastTimezoneId};
+   static string lastResult[3] = {"", "", ""};  // cache: {lastServer, lastCompanyId, lastTimezoneId};
 
    if (tick != lastTick) {
-      if (StringLen(lastResult[IDX_TIMEZONE]) && !validBars) {
+      if (lastResult[IDX_TIMEZONE] != "" && !validBars) {
          string server = GetAccountServer(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
             lastResult[IDX_TIMEZONE] = "";      // invalidate the cache if the server name changes
@@ -3584,9 +3598,9 @@ string GetServerTimezone() {
       }
    }
 
-   if (!StringLen(lastResult[IDX_TIMEZONE])) {
-      lastResult[IDX_SERVER ] = GetAccountServer();    if (!StringLen(lastResult[IDX_SERVER ])) return("");
-      lastResult[IDX_COMPANY] = GetAccountCompanyId(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
+   if (lastResult[IDX_TIMEZONE] == "") {
+      lastResult[IDX_SERVER ] = GetAccountServer();    if (lastResult[IDX_SERVER ] == "") return("");
+      lastResult[IDX_COMPANY] = GetAccountCompanyId(); if (lastResult[IDX_COMPANY] == "") return("");
 
       // prefer a custom company mapping of a full server name (user config only to prevent recursion)
       string customMapping = GetUserConfigString("AccountCompanies", lastResult[IDX_SERVER]);
@@ -3596,12 +3610,12 @@ string GetServerTimezone() {
       }
       else {
          lastResult[IDX_TIMEZONE] = GetUserConfigString("Timezones", lastResult[IDX_SERVER]);
-         if (!StringLen(lastResult[IDX_TIMEZONE])) {
+         if (lastResult[IDX_TIMEZONE] == "") {
             lastResult[IDX_TIMEZONE] = GetUserConfigString("Timezones", lastResult[IDX_COMPANY]);
          }
       }
-      if (!StringLen(lastResult[IDX_TIMEZONE])) {
-         if (IsLogNotice()) logNotice("GetServerTimezone(1)  missing timezone configuration for server "+ DoubleQuoteStr(lastResult[IDX_SERVER]) +" (company id "+ DoubleQuoteStr(lastResult[IDX_COMPANY]) +"), using default timezone \"FXT\"");
+      if (lastResult[IDX_TIMEZONE] == "") {
+         if (IsLogNotice()) logNotice("GetServerTimezone(1)  missing timezone configuration for server \""+ lastResult[IDX_SERVER] +"\" (company id \""+ lastResult[IDX_COMPANY] +"\"), using default timezone \"FXT\"");
          lastResult[IDX_TIMEZONE] = "FXT";
       }
    }
@@ -4730,6 +4744,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    oe.setComment       (oe, comment       );
 
    int ticket, time, time1 = GetTickCount(), requotes, tempErrors;
+   bool isLogDebug = IsLogDebug();
 
    // loop until the trade request succeeded or a permanent error occurred
    while (true) {
@@ -4737,8 +4752,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
       if (IsStopped()) return(!Order.HandleError("OrderSendEx(17)  "+ OrderSendEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe));
 
       if (IsTradeContextBusy()) {
-         if (IsLogDebug()) logDebug("OrderSendEx(18)  trade context busy, retrying...");
-         Sleep(300);
+         if (isLogDebug) logDebug("OrderSendEx(18)  trade context busy, retrying...");
+         Sleep(100);
          continue;
       }
 
@@ -4762,8 +4777,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          OrderPush("OrderSendEx(19)");
          WaitForTicket(ticket, /*select=*/true);
 
-         if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
+         if (!ChartMarker.OrderSent_A(ticket, digits, markerColor)) {
             return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(20)")));
+         }
 
          // On a slow OrderSend() response or in a fast market limits/stops may have already been executed, or the order may
          // have been modified or closed. The returned values must describe the original order, not the current order status.
@@ -4781,7 +4797,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
             else                            dSlippage = 0;
          oe.setSlippage(oe, NormalizeDouble(dSlippage, digits));           // total slippage after requotes
 
-         if (IsLogDebug()) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
+         if (isLogDebug) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
          if (!__isTesting) PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
          OrderPop("OrderSendEx(22)");
@@ -4800,8 +4816,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
-            if (IsLogDebug()) logDebug("OrderSendEx(24)  trade context busy, retrying...");
-            Sleep(300);
+            if (isLogDebug) logDebug("OrderSendEx(24)  trade context busy, retrying...");
+            Sleep(100);
             continue;
 
          case ERR_SERVER_BUSY:
@@ -4830,7 +4846,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
             else if (type == OP_SELL_STOP)  marketViolated = GE(oe.OpenPrice(oe), oe.Bid(oe));
             else if (type == OP_SELL_LIMIT) marketViolated = LE(oe.OpenPrice(oe), oe.Bid(oe));
             if (!marketViolated) {
-               if (IsLogDebug()) logDebug("OrderSendEx(26)  translating returned ERR_INVALID_STOP => ERR_STOP_DISTANCE_VIOLATED");
+               if (isLogDebug) logDebug("OrderSendEx(26)  mapping returned ERR_INVALID_STOP => ERR_STOP_DISTANCE_VIOLATED");
                error = oe.setError(oe, ERR_STOP_DISTANCE_VIOLATED);
             }
             break;
@@ -4872,14 +4888,14 @@ string OrderSendEx.SuccessMsg(int oe[]) {
       spUnit  = "";
    }
 
-   string sType       = OperationTypeDescription(oe.Type(oe));
-   string sLots       = NumberToStr(oe.Lots(oe), ".+");
-   string symbol      = oe.Symbol(oe);
-   string sComment    = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
-   string sPrice      = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string sBid        = NumberToStr(oe.Bid(oe), priceFormat);
-   string sAsk        = NumberToStr(oe.Ask(oe), priceFormat);
-   string sSlippage   = "";
+   string sType     = OperationTypeDescription(oe.Type(oe));
+   string sLots     = NumberToStr(oe.Lots(oe), ".+");
+   string symbol    = oe.Symbol(oe);
+   string sComment  = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
+   string sPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
+   string sBid      = NumberToStr(oe.Bid(oe), priceFormat);
+   string sAsk      = NumberToStr(oe.Ask(oe), priceFormat);
+   string sSlippage = "";
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) {
          sPrice    = sPrice +" instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat);
@@ -4908,8 +4924,7 @@ string OrderSendEx.SuccessMsg(int oe[]) {
  * @return string
  */
 string OrderSendEx.TempErrorMsg(int oe[], int errors) {
-   if (oe.Error(oe) != ERR_OFF_QUOTES)
-      return(Order.TempErrorMsg(oe, errors));
+   if (oe.Error(oe) != ERR_OFF_QUOTES) return(Order.TempErrorMsg(oe, errors));
 
    // temporary error while trying to Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market: Bid/Ask) after 0.345 s and 1 requote, retrying... (1)
 
@@ -4924,8 +4939,7 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
    string sBid     = NumberToStr(oe.Bid(oe), priceFormat);
    string sAsk     = NumberToStr(oe.Ask(oe), priceFormat);
    string sComment = oe.Comment(oe);
-      if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
-
+   if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string message = "temporary error while trying to "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")";
 
    if (!__isTesting) {
@@ -5055,14 +5069,14 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    oe.setProfit        (oe, OrderProfit()    );
    oe.setComment       (oe, OrderComment()   );
 
-   double prevOpenPrice=OrderOpenPrice(), prevStopLoss=OrderStopLoss(), prevTakeProfit=OrderTakeProfit();
+   double prevOpenPrice = OrderOpenPrice(), prevStopLoss = OrderStopLoss(), prevTakeProfit = OrderTakeProfit();
 
    if (EQ(openPrice, prevOpenPrice, digits)) /*&&*/ if (EQ(stopLoss, prevStopLoss, digits)) /*&&*/ if (EQ(takeProfit, prevTakeProfit, digits)) {
       logWarn("OrderModifyEx(24)  nothing to modify for ticket #"+ ticket);
       return(_false(Order.HandleError("OrderModifyEx(25)", ERR_NO_RESULT, oeFlags, oe), OrderPop("OrderModifyEx(26)")));
    }
    int  tempErrors, startTime = GetTickCount();
-   bool success;
+   bool success, isLogDebug = IsLogDebug();
 
    // loop until the order was modified or a permanent error occurred
    while (true) {
@@ -5070,8 +5084,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       if (IsStopped()) return(_false(Order.HandleError("OrderModifyEx(27)  "+ OrderModifyEx.ErrorMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderModifyEx(28)")));
 
       if (IsTradeContextBusy()) {
-         if (IsLogDebug()) logDebug("OrderModifyEx(29)  trade context busy, retrying...");
-         Sleep(300);
+         if (isLogDebug) logDebug("OrderModifyEx(29)  trade context busy, retrying...");
+         Sleep(100);
          continue;
       }
 
@@ -5085,8 +5099,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       if (success) {
          WaitForTicket(ticket, /*select=*/true);
 
-         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, __ExecutionContext[EC.currTick], prevOpenPrice, prevStopLoss, prevTakeProfit))
+         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, __ExecutionContext[EC.currTick], prevOpenPrice, prevStopLoss, prevTakeProfit)) {
             return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(30)")));
+         }
 
          // In a fast market limits may have already been executed or the order status may have changed other-wise.
          // The returned values must describe the original order, not the current status.
@@ -5098,7 +5113,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setCommission(oe, ifDouble(isPendingOrder, 0, OrderCommission()));
          oe.setProfit    (oe, ifDouble(isPendingOrder, 0, OrderProfit()));
 
-         if (IsLogDebug()) logDebug("OrderModifyEx(31)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
+         if (isLogDebug) logDebug("OrderModifyEx(31)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
          if (!__isTesting) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
          return(!_bool(Order.HandleError("OrderModifyEx(32)", GetLastError(), oeFlags, oe), OrderPop("OrderModifyEx(33)")));
       }
@@ -5107,8 +5122,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
-            if (IsLogDebug()) logDebug("OrderModifyEx(34)  trade context busy, retrying...");
-            Sleep(300);
+            if (isLogDebug) logDebug("OrderModifyEx(34)  trade context busy, retrying...");
+            Sleep(100);
             continue;
 
          case ERR_SERVER_BUSY:
@@ -5119,8 +5134,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
             continue;
 
          // map terminal generated errors
-         case ERR_INVALID_TICKET:                // unknown ticket or not an open pending order anymore (client-side)
-            if (IsLogDebug()) logDebug("OrderModifyEx(36)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
+         case ERR_INVALID_TICKET:                // client-side: unknown ticket or not a pending order (anymore)
+            if (isLogDebug) logDebug("OrderModifyEx(36)  mapping returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = oe.setError(oe, ERR_INVALID_TRADE_PARAMETERS);
             break;
 
@@ -5311,7 +5326,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
 
    int    time1, firstTime1 = GetTickCount(), requotes, tempErrors, remainder;
    double price, firstPrice, bid, ask;
-   bool   success;
+   bool   success, isLogDebug = IsLogDebug();
 
    // loop until the order is closed or a non-fixable error occurred
    while (true) {
@@ -5319,8 +5334,8 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
       if (IsStopped()) return(_false(Order.HandleError("OrderCloseEx(19)  "+ OrderCloseEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderCloseEx(20)")));
 
       if (IsTradeContextBusy()) {
-         if (IsLogDebug()) logDebug("OrderCloseEx(21)  trade context busy, retrying...");
-         Sleep(300);
+         if (isLogDebug) logDebug("OrderCloseEx(21)  trade context busy, retrying...");
+         Sleep(100);
          continue;
       }
 
@@ -5338,11 +5353,11 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
       oe.setDuration(oe, GetTickCount()-firstTime1);
 
       if (success) {
-         WaitForTicket(ticket, /*select=*/true);
+         WaitForTicket(ticket, true);
 
-         if (!ChartMarker.PositionClosed_A(ticket, digits, markerColor))
+         if (!ChartMarker.PositionClosed_A(ticket, digits, markerColor)) {
             return(_false(oe.setError(oe, last_error), OrderPop("OrderCloseEx(22)")));
-
+         }
          oe.setCloseTime (oe, OrderCloseTime());
          oe.setClosePrice(oe, OrderClosePrice());
          oe.setSwap      (oe, OrderSwap());
@@ -5367,7 +5382,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
                   OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
                   if (OrderTicket() == ticket)        continue;
                   if (OrderComment() != sValue1)
-                     if (OrderComment() != sValue2)   continue;                     // if current terminal builds fixed the comment issue
+                     if (OrderComment() != sValue2)   continue;      // if current terminal builds fixed the comment issue
                   if (NE(lots+OrderLots(), openLots)) continue;
 
                   remainder = OrderTicket();
@@ -5390,7 +5405,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
             oe.setRemainingTicket(oe, remainder);
             oe.setRemainingLots  (oe, openLots-lots);
          }
-         if (IsLogDebug()) logDebug("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
+         if (isLogDebug) logDebug("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
          if (!__isTesting) PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
@@ -5400,8 +5415,8 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
-            if (IsLogDebug()) logDebug("OrderCloseEx(39)  trade context busy, retrying...");
-            Sleep(300);
+            if (isLogDebug) logDebug("OrderCloseEx(39)  trade context busy, retrying...");
+            Sleep(100);
             continue;
 
          case ERR_SERVER_BUSY:
@@ -5421,13 +5436,13 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
             continue;                                                               // immediately repeat the request
 
          // map terminal generated errors
-         case ERR_INVALID_TICKET:                                                   // unknown ticket or not an open position anymore (client-side)   !!! not yet encountered
-            if (IsLogDebug()) logDebug("OrderCloseEx(41)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
+         case ERR_INVALID_TICKET:                                                   // client-side: unknown ticket or no open position (anymore)
+            if (isLogDebug) logDebug("OrderCloseEx(41)  mapping returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
             break;
 
          case NO_ERROR:
-            if (IsLogNotice()) logNotice("OrderCloseEx(42)  no error returned => ERR_RUNTIME_ERROR");
+            logNotice("OrderCloseEx(42)  no error returned => ERR_RUNTIME_ERROR");
             error = ERR_RUNTIME_ERROR;
             break;
       }
@@ -5667,7 +5682,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
    else                  largerType = oppositeType;
 
    int  error, time1, tempErrors, remainder;
-   bool success, smallerByLarger=!__isTesting, largerBySmaller=!smallerByLarger;
+   bool success, smallerByLarger=!__isTesting, largerBySmaller=!smallerByLarger, isLogDebug = IsLogDebug();
 
    // loop until the positions have been closed or a non-fixable error occurred
    while (true) {
@@ -5675,8 +5690,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
       if (IsStopped()) return(_false(Order.HandleError("OrderCloseByEx(16)  "+ OrderCloseByEx.ErrorMsg(first, second, oe), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderCloseByEx(17)")));
 
       if (IsTradeContextBusy()) {
-         if (IsLogDebug()) logDebug("OrderCloseByEx(18)  trade context busy, retrying...");
-         Sleep(300);
+         if (isLogDebug) logDebug("OrderCloseByEx(18)  trade context busy, retrying...");
+         Sleep(100);
          continue;
       }
 
@@ -5755,7 +5770,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
             oe.setRemainingLots  (oe, remainderLots                 );
          }
 
-         if (IsLogDebug()) logDebug("OrderCloseByEx(26)  "+ OrderCloseByEx.SuccessMsg(first, second, largerType, oe));
+         if (isLogDebug) logDebug("OrderCloseByEx(26)  "+ OrderCloseByEx.SuccessMsg(first, second, largerType, oe));
          if (!__isTesting) PlaySoundEx("OrderOk.wav");
          return(!oe.setError(oe, catch("OrderCloseByEx(27)", NULL, O_RESTORE)));    // regular exit (NO_ERROR)
       }
@@ -5764,8 +5779,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
-            if (IsLogDebug()) logDebug("OrderCloseByEx(28)  trade context busy, retrying...");
-            Sleep(300);
+            if (isLogDebug) logDebug("OrderCloseByEx(28)  trade context busy, retrying...");
+            Sleep(100);
             continue;
 
          case ERR_SERVER_BUSY:
@@ -5776,17 +5791,13 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
             continue;
 
          // map terminal generated errors
-         case ERR_INVALID_TICKET:                 // client-side: unknown tickets or not open positions anymore                        ! not yet encountered
-            if (IsLogDebug()) logDebug("OrderCloseByEx(30)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
+         case ERR_INVALID_TICKET:                 // client-side: unknown tickets or position/s not open (anymore)
+            if (isLogDebug) logDebug("OrderCloseByEx(30)  mapping returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
+            // TODO: improve log message
             break;
 
-         case ERR_OFF_QUOTES:                     // server-side: positions are locked and in processing queue => SL/TP was executed   ! not yet encountered
-            if (IsLogDebug()) logDebug("OrderCloseByEx(31)  translating returned ERR_OFF_QUOTES => ERR_INVALID_TRADE_PARAMETERS");
-            error = ERR_INVALID_TRADE_PARAMETERS;
-            break;
-
-         case ERR_INVALID_TRADE_PARAMETERS:       // server-side: position/s are not open anymore
+         case ERR_INVALID_TRADE_PARAMETERS:       // server-side: position/s not open (anymore)
             // TODO: handle more gracefully as it's typical when 2 programs try to close the same tickets
             // 2 cases:
             //  - one ticket is closed
@@ -5794,7 +5805,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
             break;
 
          case NO_ERROR:
-            if (IsLogNotice()) logNotice("OrderCloseByEx(32)  no error returned => ERR_RUNTIME_ERROR");
+            logNotice("OrderCloseByEx(32)  no error returned => ERR_RUNTIME_ERROR");
             error = oe.setError(oe, ERR_RUNTIME_ERROR);
             break;
       }
@@ -6215,11 +6226,13 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
       if (OrderType() == OP_BUY) { totalLots += OrderLots(); ArrayPushDouble(lots,  OrderLots()); }
       else                       { totalLots -= OrderLots(); ArrayPushDouble(lots, -OrderLots()); }
    }
+
    int newTicket = 0;
+   bool isLogDebug = IsLogDebug();
 
    if (EQ(totalLots, 0)) {
       // total position is already flat
-      if (IsLogDebug()) logDebug("OrdersHedge(13)  "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets) +" are already flat");
+      if (isLogDebug) logDebug("OrdersHedge(13)  "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets) +" are already flat");
 
       // set all CloseTime/ClosePrices to OpenTime/OpenPrice of the ticket opened last
       int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
@@ -6238,7 +6251,7 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
    else {
       // total position is not flat
       OrderPop("OrdersHedge(16)");
-      if (IsLogDebug()) logDebug("OrdersHedge(17)  hedging "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, " ", "s ") + TicketsToStr.Lots(tickets));
+      if (isLogDebug) logDebug("OrdersHedge(17)  hedging "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, " ", "s ") + TicketsToStr.Lots(tickets));
       int closeTicket, totalDir=ifInt(GT(totalLots, 0), OP_LONG, OP_SHORT), oe[];
 
       if (oeFlags & F_OE_HEDGE_NO_CLOSE || oeFlags & F_OE_DONT_CHECK_STATUS) {
@@ -6296,8 +6309,9 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
       }
       else {
          // open a new hedging position/ticket
-         if (!OrderSendEx(symbol, totalDir^1, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, oeFlags, oe))
+         if (!OrderSendEx(symbol, totalDir^1, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, oeFlags, oe)) {
             return(!oes.setError(oes, -1, oe.Error(oe)));
+         }
          newTicket = oe.Ticket(oe);
 
          for (i=0; i < sizeOfTickets; i++) {
@@ -6412,21 +6426,24 @@ bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][
       if (!opposite) return(_false(Order.HandleError("OrdersCloseHedged(19)  cannot find opposite position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_TOTAL_POSITION_NOT_FLAT, oeFlags, oes), OrderPop("OrdersCloseHedged(20)")));
 
       int oe[];
-      if (!OrderCloseByEx(first, opposite, markerColor, oeFlags, oe))   // close first and opposite position
+      if (!OrderCloseByEx(first, opposite, markerColor, oeFlags, oe)) { // close first and opposite position
          return(_false(oes.setError(oes, -1, oe.Error(oe)), OrderPop("OrdersCloseHedged(21)")));
+      }
 
       sizeOfCopy -= ArraySpliceInts(ticketsCopy, 0, 1);                 // drop first and opposite ticket
       sizeOfCopy -= ArrayDropInt(ticketsCopy, opposite);
 
       int newTicket = oe.RemainingTicket(oe);
-      if (newTicket != 0)                                               // add any remaining position
+      if (newTicket != 0) {                                             // add any remaining position
          sizeOfCopy = ArrayPushInt(ticketsCopy, newTicket);
+      }
 
       i = SearchIntArray(tickets, first);                               // resolve the ticket to add trade results to
       if (i == -1) {                                                    // order: first, opposite, last
          i = SearchIntArray(tickets, opposite);
-         if (i == -1)
+         if (i == -1) {
             i = sizeOfTickets-1;
+         }
       }
       oes.addSwap      (oes, i, oe.Swap      (oe));                     // sum-up values
       oes.addCommission(oes, i, oe.Commission(oe));
@@ -6490,7 +6507,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
    +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+---------------+
    */
    int  error, startTime = GetTickCount(), tempErrors;
-   bool success;
+   bool success, isLogDebug = IsLogDebug();
 
    // loop until the order was deleted or a non-fixable error occurred
    while (true) {
@@ -6498,8 +6515,8 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
       if (IsStopped()) return(_false(Order.HandleError("OrderDeleteEx(9)  "+ OrderDeleteEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderDeleteEx(10)")));
 
       if (IsTradeContextBusy()) {
-         if (IsLogDebug()) logDebug("OrderDeleteEx(11)  trade context busy, retrying...");
-         Sleep(300);
+         if (isLogDebug) logDebug("OrderDeleteEx(11)  trade context busy, retrying...");
+         Sleep(100);
          continue;
       }
 
@@ -6513,10 +6530,11 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
       if (success) {
          WaitForTicket(ticket, /*select=*/true);
 
-         if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
+         if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor)) {
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(12)")));
+         }
 
-         if (IsLogDebug()) logDebug("OrderDeleteEx(13)  "+ OrderDeleteEx.SuccessMsg(oe));
+         if (isLogDebug) logDebug("OrderDeleteEx(13)  "+ OrderDeleteEx.SuccessMsg(oe));
          if (!__isTesting) PlaySoundEx("OrderOk.wav");
 
          return(!oe.setError(oe, catch("OrderDeleteEx(14)", NULL, O_RESTORE)));     // regular exit (NO_ERROR)
@@ -6526,8 +6544,8 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
-            if (IsLogDebug()) logDebug("OrderDeleteEx(15)  trade context busy, retrying...");
-            Sleep(300);
+            if (isLogDebug) logDebug("OrderDeleteEx(15)  trade context busy, retrying...");
+            Sleep(100);
             continue;
 
          case ERR_SERVER_BUSY:
@@ -6538,18 +6556,18 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
             continue;
 
          // map terminal generated errors
-         case ERR_INVALID_TICKET:                // unknown ticket or not open pending order anymore (client-side)
-            if (IsLogDebug()) logDebug("OrderDeleteEx(17)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
+         case ERR_INVALID_TICKET:                // client-side: unknown ticket or not open pending order anymore
+            if (isLogDebug) logDebug("OrderDeleteEx(17)  mapping returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
             break;
-         case ERR_OFF_QUOTES:                    // order is locked and in processing queue (server-side)
-            if (IsLogDebug()) logDebug("OrderDeleteEx(18)  translating returned ERR_OFF_QUOTES => ERR_INVALID_TRADE_PARAMETERS");
+         case ERR_OFF_QUOTES:                    // server-side: order is locked and in processing queue
+            if (isLogDebug) logDebug("OrderDeleteEx(18)  mapping returned ERR_OFF_QUOTES => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
             break;
-         case ERR_INVALID_TRADE_PARAMETERS:      // order is processed and not open pending anymore (server-side)
+         case ERR_INVALID_TRADE_PARAMETERS:      // server-side: order is processed and not open pending anymore
             break;
          case NO_ERROR:
-            if (IsLogNotice()) logNotice("OrderDeleteEx(19)  no error returned => ERR_RUNTIME_ERROR");
+            logNotice("OrderDeleteEx(19)  no error returned => ERR_RUNTIME_ERROR");
             error = ERR_RUNTIME_ERROR;
             break;
       }
