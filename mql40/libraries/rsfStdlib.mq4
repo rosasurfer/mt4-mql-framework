@@ -819,7 +819,7 @@ bool IsTemporaryTradeError(int error) {
       case ERR_MARKET_CLOSED:                //      132   market is closed
       case ERR_TRADE_DISABLED:               //      133   trading is disabled
       case ERR_NOT_ENOUGH_MONEY:             //      134   not enough money
-      case ERR_BROKER_BUSY:                  //      137   automated trading disabled (manual trading still enabled)
+      case ERR_BROKER_BUSY:                  //      137   auto-trading disabled (manual trading is not affected)
       case ERR_ORDER_LOCKED:                 //      139   order is locked
       case ERR_LONG_POSITIONS_ONLY_ALLOWED:  //      140   long positions only allowed
       case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests                                         // TODO: temporary
@@ -4590,7 +4590,7 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
       }
    }
 
-   // in tester always add ERS_EXECUTION_STOPPING to the passed flags
+   // tester: pass on the status of IsStopped()
    if (__isTesting && IsStopped()) oeFlags |= F_ERS_EXECUTION_STOPPING;
 
    // filter the flagged errors and log them accordingly

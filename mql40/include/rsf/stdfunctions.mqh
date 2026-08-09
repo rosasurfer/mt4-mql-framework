@@ -84,7 +84,7 @@ string ErrorDescription(int error) {
       case ERR_NOT_ENOUGH_MONEY           : return("not enough money"                                         );     //    134
       case ERR_PRICE_CHANGED              : return("price changed"                                            );     //    135
       case ERR_OFF_QUOTES                 : return("off quotes"                                               );     //    136 atm the broker cannot provide prices
-      case ERR_BROKER_BUSY                : return("broker busy, automated trading disabled"                  );     //    137
+      case ERR_BROKER_BUSY                : return("broker busy, auto-trading disabled"                       );     //    137
       case ERR_REQUOTE                    : return("requote"                                                  );     //    138
       case ERR_ORDER_LOCKED               : return("order locked"                                             );     //    139
       case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                              );     //    140
@@ -170,7 +170,7 @@ string ErrorDescription(int error) {
       case ERR_TERMINAL_AUTOTRADE_DISABLED: return("automated trading disabled in terminal"                   );     //   4109
       case ERR_PROGRAM_LONGS_DISABLED     : return("long trades disabled for program"                         );     //   4110
       case ERR_PROGRAM_SHORTS_DISABLED    : return("short trades disabled for program"                        );     //   4111
-      case ERR_BROKER_AUTOTRADE_DISABLED  : return("automated trading disabled by broker"                     );     //   4112
+      case ERR_SERVER_AUTOTRADE_DISABLED  : return("auto-trading disabled by server"                          );     //   4112
       case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                    );     //   4200
       case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                  );     //   4201
       case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn't exist"                                     );     //   4202
@@ -3683,7 +3683,7 @@ int Tester.GetBarModel() {
 
 
 /**
- * Pause the tester. Can be used only in the tester.
+ * Pause the tester. Must be called only in the tester.
  *
  * @param  string caller [optional] - location identifier of the caller (default: none)
  *
@@ -3767,9 +3767,9 @@ bool Tester.IsStopped() {
 
 
 /**
- * Erzeugt einen neuen String der gewünschten Länge.
+ * Creates a new string of the specified length.
  *
- * @param  int length - Länge
+ * @param  int length
  *
  * @return string
  */
@@ -3777,53 +3777,57 @@ string CreateString(int length) {
    if (length < 0)        return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length: "+ length, ERR_INVALID_PARAMETER)));
    if (length == INT_MAX) return(_EMPTY_STR(catch("CreateString(2)  too large parameter length: INT_MAX", ERR_INVALID_PARAMETER)));
 
-   if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
-                                                                     // Daher wird auch beim Initialisieren der string-Variable StringConcatenate() verwendet (siehe MQL.doc).
-   string newStr = StringConcatenate(MAX_STRING_LITERAL, "");
-   int    strLen = StringLen(newStr);
+   if (!length) return(StringConcatenate("", ""));          // don't return a literal (shared storage)
 
-   while (strLen < length) {
-      newStr = StringConcatenate(newStr, MAX_STRING_LITERAL);
-      strLen = StringLen(newStr);
+   string s = StringConcatenate(MAX_STRING_LITERAL, "");
+   int sLen = StringLen(s);
+
+   while (sLen < length) {
+      s = StringConcatenate(s, MAX_STRING_LITERAL);
+      sLen = StringLen(s);
    }
-
-   if (strLen != length)
-      newStr = StringSubstr(newStr, 0, length);
-   return(newStr);
+   if (sLen > length) {
+      s = StringSubstr(s, 0, length);
+   }
+   return(s);
 }
 
 
 /**
- * Aktiviert bzw. deaktiviert den Aufruf der start()-Funktion von Expert Advisern bei Eintreffen von Ticks.
- * Wird üblicherweise aus der init()-Funktion aufgerufen.
+ * Enable/disable execution of the start() function of EAs.
  *
- * @param  bool enable - gewünschter Status: On/Off
+ * @param  bool enable - activation status
  *
  * @return int - error status
  */
 int Toolbar.Experts(bool enable) {
    enable = enable!=0;
 
-   if (__isTesting) return(debug("Toolbar.Experts(1)  skipping in tester", NO_ERROR));
+   if (__isTesting) return(logDebug("Toolbar.Experts(1)  skipping in tester", NO_ERROR));
 
-   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
-   // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
+   // TODO:
+   //  We can only toggle the current setting.
+   //  Implement lock to prevent multiple programs from overriding each other, if started at the same time.
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (enable) {
-      if (!IsExpertEnabled()) SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
-   }
-   else /*disable*/ {
-      if (IsExpertEnabled())  SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
+   if (enable != IsExpertEnabled()) {                                   // toggle the current status
+      if (!IsExpertEnabled()) {
+         if (!IsStopped()) {
+            SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);        // prefer to wait for command execution
+         }
+         else {
+            PostMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);        // we must not wait (SendMessage UI deadlock)
+         }
+      }
    }
    return(NO_ERROR);
 }
 
 
 /**
- * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
+ * Queue execution of menu command "MarketWatch"->"Symbols".
  *
  * @return int - error status
  */
