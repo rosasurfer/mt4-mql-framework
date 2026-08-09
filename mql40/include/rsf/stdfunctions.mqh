@@ -844,9 +844,9 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
             if (currency == "") currency = GetIniStringA(config, "Account", "Currency", "");
             if (currency == "") return(_EMPTY(catch("GetCommission(1)  cannot resolve account currency (config [Account]->Currency not found)", ERR_INVALID_CONFIG_VALUE)));
 
-            if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
-            else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
-            else if (IsGlobalConfigKeyA(section, company))                              key = company;
+            if      (IsUserConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
+            else if (IsUserConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
+            else if (IsUserConfigKeyA(section, company))                              key = company;
             else if (IsLogInfo()) logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default (no commission)");
          }
 
@@ -1992,7 +1992,7 @@ int CountDecimals(double number) {
  *
  * @param  string value            - initial string
  * @param  string substring        - limiting substring (if empty the entire string is returned)
- * @param  int    count [optional] - Number of occurrences of the limiting substring (default: 1).
+ * @param  int    count [optional] - number of occurrences of the limiting substring (default: 1)
  *                                    positive: counted from the start of the string
  *                                    negative: counted from the end of the string
  *                                    0:        an empty string is returned
@@ -2000,10 +2000,12 @@ int CountDecimals(double number) {
  * @return string
  */
 string StrLeftTo(string value, string substring, int count = 1) {
-   int start=0, pos=-1;
+   int pos, subLen = StringLen(substring);
+   if (!subLen) return(value);
 
-   // positive: count from start
+   // count is positive: count from start
    if (count > 0) {
+      pos = -1;
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
          if (pos == -1) return(value);
@@ -2012,29 +2014,27 @@ string StrLeftTo(string value, string substring, int count = 1) {
       return(StrLeft(value, pos));
    }
 
-   // negative: count from end
+   // count is negative: count from end
    if (count < 0) {
-      /*
-      while(count < 0) {
-         pos = StringFind(value, substring, 0);
-         if (pos == -1) return("");
-         count++;
+      // count total occurrences
+      int total = 0;
+      pos = -1;
+      while (true) {
+         pos = StringFind(value, substring, pos+1);
+         if (pos == -1) break;
+         total++;
       }
-      */
-      pos = StringFind(value, substring, 0);
-      if (pos == -1) return(value);
+      int absCount = -count;
+      if (absCount > total) return(value);
 
-      if (count == -1) {
-         while (pos != -1) {
-            start = pos+1;
-            pos = StringFind(value, substring, start);
-         }
-         return(StrLeft(value, start-1));
+      // walk forward to the (total - absCount + 1)-th occurrence
+      int target = total - absCount + 1;
+      pos = -1;
+      while (target > 0) {
+         pos = StringFind(value, substring, pos+1);
+         target--;
       }
-      return(_EMPTY_STR(catch("StrLeftTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
-
-      //pos = StringFindEx(value, substring, count);
-      //return(StrLeft(value, pos));
+      return(StrLeft(value, pos));
    }
 
    // count == 0
@@ -2068,10 +2068,11 @@ string StrRight(string value, int length) {
  * The result doesn't include the limiting substring.
  *
  * @param  string value            - initial string
- * @param  string substring        - limiting substring
- * @param  int    count [optional] - number of limiting substrings (default: 1 = the first occurrence)
+ * @param  string substring        - limiting substring (if empty the entire string is returned)
+ * @param  int    count [optional] - number of occurrences of the limiting substring (default: 1)
  *                                    positive: occurrences counted from the start of the string
  *                                    negative: occurrences counted from the end of the string
+ *                                    0:        an empty string is returned
  *
  *  If count is 0 (zero) or greater than the number of existing substrings, an empty string is returned.
  *  If count is negative and absolute greater than the number of existing substrings, the initial string is returned.
@@ -2087,41 +2088,44 @@ string StrRight(string value, int length) {
  * </pre>
  */
 string StrRightFrom(string value, string substring, int count = 1) {
-   int start=0, pos=-1;
+   int pos, subLen = StringLen(substring);
+   if (!subLen) return(value);
 
-   // positive: count from start
+   // count is positive: count from start
    if (count > 0) {
+      pos = -1;
       while (count > 0) {
-         pos = StringFind(value, substring, pos+1);
+         pos = StringFind(value, substring, pos + 1);
          if (pos == -1) return("");
          count--;
       }
-      return(StrSubstr(value, pos+StringLen(substring)));
+      return(StrSubstr(value, pos + subLen));
    }
 
-   // negative: count from end
+   // count is negative: count from end
    if (count < 0) {
-      /*
-      while(count < 0) {
-         pos = StringFind(value, substring, 0);
-         if (pos == -1) return("");
-         count++;
-      }
-      */
-      pos = StringFind(value, substring, 0);
-      if (pos == -1) return(value);
-
-      if (count == -1) {
-         while (pos != -1) {
-            start = pos+1;
-            pos = StringFind(value, substring, start);
-         }
-         return(StrSubstr(value, start-1 + StringLen(substring)));
+      // count total occurrences
+      int total = 0;
+      pos = -1;
+      while (true) {
+         pos = StringFind(value, substring, pos + 1);
+         if (pos == -1) break;
+         total++;
       }
 
-      return(_EMPTY_STR(catch("StrRightFrom(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
-      //pos = StringFindEx(value, substring, count);
-      //return(StrSubstr(value, pos + StringLen(substring)));
+      int absCount = -count;
+      if (absCount > total) {
+         return(value);
+      }
+
+      // walk forward to the (total - absCount + 1)-th occurrence
+      int target = total - absCount + 1;
+      pos = -1;
+      while (target > 0) {
+         pos = StringFind(value, substring, pos + 1);
+         target--;
+      }
+      return(StrSubstr(value, pos + subLen));
    }
 
    // count = 0
@@ -4637,7 +4641,7 @@ string GetAccountAlias(string company="", int account=NULL) {
 /**
  * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
  * characters only. By default the identifier matches the first word of the current tradeserver name. It can be mapped to a
- * different identifier via section [AccountCompanies] of the global framework configuration.
+ * different identifier via section [AccountCompanies] of the framework's user configuration.
  *
  * @return string - company identifier or an empty string in case of errors
  *
@@ -4668,7 +4672,7 @@ string GetAccountCompanyId() {
       if (server == lastServer) return(lastId); // in library::deinit() strings are released to early (already a NULL pointer)
    }
 
-   string mapping = GetGlobalConfigString("AccountCompanies", server);
+   string mapping = GetUserConfigString("AccountCompanies", server);
    if (StringLen(mapping) > 0) {
       lastServer = server;
       lastId = mapping;
@@ -4676,7 +4680,7 @@ string GetAccountCompanyId() {
    }
 
    string word1 = StrLeftTo(server, "-");
-   lastId = GetGlobalConfigString("AccountCompanies", word1, word1);
+   lastId = GetUserConfigString("AccountCompanies", word1, word1);
    lastServer = server;
    return(lastId);
 }

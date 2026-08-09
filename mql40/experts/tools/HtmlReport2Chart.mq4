@@ -224,8 +224,8 @@ bool ParseAccountStatement(string content) {
    }
 
    // resolve timezone configurations (optional)
-   string reportCompanyId = GetGlobalConfigString("AccountCompanies", reportCompanyName), serverTimezone="";
-   reportTimezone = GetGlobalConfigString("Timezones", ifString(StringLen(reportCompanyId), reportCompanyId, reportCompanyName));
+   string reportCompanyId = GetUserConfigString("AccountCompanies", reportCompanyName), serverTimezone="";
+   reportTimezone = GetUserConfigString("Timezones", ifString(StringLen(reportCompanyId), reportCompanyId, reportCompanyName));
    logInfo("ParseAccountStatement(4)  company: "+ reportCompanyName + ifString(StringLen(reportTimezone), ", timezone: "+ reportTimezone, ""));
    if (reportTimezone != "") {
       serverTimezone = GetServerTimezone();
