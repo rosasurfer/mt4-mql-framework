@@ -36,9 +36,9 @@ string GetAccountConfigPath(string company = "", int account = NULL) {
          else {
             int error = GetLastWin32Error();
             if (error != ERROR_FILE_NOT_FOUND) {      // another thread may have been faster
-               configPath = legacyPath;               // keep using the legacy file
-               // don't use the logger, it causes recursion
+               // don't use the logger, it may cause recursion
                debug("GetAccountConfigPath(3)  cannot rename \""+ legacyPath +"\" to \""+ configPath +"\"", ERR_WIN32_ERROR + error);
+               configPath = legacyPath;               // keep using the legacy file
             }
          }
       }
