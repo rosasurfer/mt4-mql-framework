@@ -24,7 +24,7 @@ string GetAccountConfigPath(string company = "", int account = NULL) {
       company = GetAccountCompanyId();
       if (company == "") return("");
    }
-   if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+   if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(2)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
    if (!account) account = GetAccountNumber();
    if (!account) return("");
 
@@ -43,7 +43,7 @@ string GetAccountConfigPath(string company = "", int account = NULL) {
          else {
             int error = GetLastWin32Error();
             if (error != ERROR_FILE_NOT_FOUND) {      // another thread may have been faster
-               logWarn("GetAccountConfigPath(2)  cannot rename \""+ legacyPath +"\" to \""+ configPath +"\"", ERR_WIN32_ERROR + error);
+               logWarn("GetAccountConfigPath(3)  cannot rename \""+ legacyPath +"\" to \""+ configPath +"\"", ERR_WIN32_ERROR + error);
                configPath = legacyPath;               // keep using the legacy file
             }
          }
