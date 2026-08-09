@@ -1992,7 +1992,7 @@ int CountDecimals(double number) {
  *
  * @param  string value            - initial string
  * @param  string substring        - limiting substring (if empty the entire string is returned)
- * @param  int    count [optional] - Number of occurrences of the limiting substring (default: 1).
+ * @param  int    count [optional] - number of occurrences of the limiting substring (default: 1)
  *                                    positive: counted from the start of the string
  *                                    negative: counted from the end of the string
  *                                    0:        an empty string is returned
@@ -2069,9 +2069,10 @@ string StrRight(string value, int length) {
  *
  * @param  string value            - initial string
  * @param  string substring        - limiting substring (if empty the entire string is returned)
- * @param  int    count [optional] - number of limiting substrings (default: 1 = the first occurrence)
- *                                   positive: occurrences counted from the start of the string
- *                                   negative: occurrences counted from the end of the string
+ * @param  int    count [optional] - number of occurrences of the limiting substring (default: 1)
+ *                                    positive: occurrences counted from the start of the string
+ *                                    negative: occurrences counted from the end of the string
+ *                                    0:        an empty string is returned
  *
  *  If count is 0 (zero) or greater than the number of existing substrings, an empty string is returned.
  *  If count is negative and absolute greater than the number of existing substrings, the initial string is returned.

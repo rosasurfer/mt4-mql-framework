@@ -13,6 +13,13 @@
  *                  e.g. "%UserProfile%\AppData\Roaming\MetaQuotes\Terminal\Common\{AccountCompany}\rsf-account-123456-config.ini"
  */
 string GetAccountConfigPath(string company = "", int account = NULL) {
+   static string recursion = ""; if (recursion == StringConcatenate(company, account)) {
+      Alert("GetAccountConfigPath(1)  recursion");
+      return("");
+   }
+   recursion = StringConcatenate(company, account);
+   // --- enable recursion guard --------------------------------------------------------------------------------------------
+
    if (company=="" || company=="0") {
       company = GetAccountCompanyId();
       if (company == "") return("");
@@ -42,6 +49,9 @@ string GetAccountConfigPath(string company = "", int account = NULL) {
          }
       }
    }
+
+   // --- disable recursion guard -------------------------------------------------------------------------------------------
+   recursion = "";
    return(configPath);
 }
 
