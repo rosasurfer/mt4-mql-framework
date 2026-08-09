@@ -14,7 +14,7 @@
  *  • PermittedTimeRange: Time range when trading is permitted, format: "00:00-23:59" server time (empty: no restriction).
  *  • DrawdownLimit:      An absolute money amount or a percent value describing the drawdown limit of open positions.
  *  • IgnoreSpread:       Whether to ignore the spread of floating positions when calculating PnL. Enabling this setting
- *                        prevents DDL triggering by spread widening.
+ *                        prevents the DDL to trigger by spread widening.
  *
  *
  * TODO:
@@ -44,7 +44,7 @@
  *  - enable trading if trading is disabled
  */
 #include <rsf/stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
+int   __InitFlags[] = { INIT_TIMEZONE, INIT_BUFFERED_LOG };
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////

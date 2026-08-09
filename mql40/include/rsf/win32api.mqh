@@ -36,8 +36,8 @@
    void GetStartupInfoA(int lpStartupInfo[]);
    int  GetTempFileNameA(string lpPathName, string lpPrefix, int unique, string lpTempFileName);
    int  GetTempPathA(int bufferSize, string lpBuffer);
-   int  LoadLibraryA(string lpLibFileName);
-   bool MoveFileA(string lpOldFileName, string lpNewFileName);
+   int  LoadLibraryA(string lpFileName);
+   bool MoveFileExA(string lpOldName, string lpNewName, int flags);
    bool ReadProcessMemory(int hProcess, int baseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    void RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int  SleepEx(int milliseconds, int alertable);

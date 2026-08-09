@@ -4,9 +4,9 @@
  * Load all current config files into the text editor. Non-existing files are created.
  *
  * Config files:
- *  - the global user configuration (settings applied to all installed MT4 terminals)
- *  - the configuration for the current terminal (settings applied to the MT4 terminal executing this script)
- *  - the configuration for the current account (settings applied to an active MT4 trade account)
+ *  - the global user configuration (settings applied to all terminals installed by the user)
+ *  - the configuration for the current terminal (settings applied to the terminal executing this script)
+ *  - the configuration for the current account (settings applied to the active trade account)
  *
  * If the "Shift" key (VK_SHIFT) is pressed at launch time, only the account configuration is loaded.
  */
@@ -28,8 +28,8 @@ int onStart() {
    bool isVkShift = IsVirtualKeyDown(VK_SHIFT);
 
    if (!isVkShift) {
-      // get the global user config filename
-      ArrayPushString(files, GetGlobalConfigPathA());
+      // get the user config filename
+      ArrayPushString(files, GetUserConfigPathA());
 
       // get the terminal config filename
       ArrayPushString(files, GetTerminalConfigPathA());

@@ -17,7 +17,7 @@
 #define AW_BLEND                          0x00080000
 
 
-// Standard Cursor IDs
+// standard cursor IDs
 #define IDC_APPSTARTING                        32650  // standard arrow and small hourglass (not in win3.1)
 #define IDC_ARROW                              32512  // standard arrow
 #define IDC_CROSS                              32515  // crosshair
@@ -90,7 +90,7 @@
 #define IDCONTINUE                                11
 
 
-// File & I/O constants
+// file system & I/O constants
 #define MAX_PATH                                 260     // e.g. the max. path on drive D is "D:\some-256-chars-path-string<NUL>"
 #define MAX_DRIVE                                  3     // max. length of drive component
 #define MAX_DIR                                  256     // max. length of path component
@@ -104,20 +104,20 @@
 #define AT_ARCHIVE                              0x20
 
 
-// Generic access rights
+// generic access rights
 #define GENERIC_ALL                       0x10000000
 #define GENERIC_EXECUTE                   0x20000000
 #define GENERIC_WRITE                     0x40000000
 #define GENERIC_READ                      0x80000000
 
 
-// File sharing modes
+// file sharing modes
 #define WIN32_FILE_SHARE_READ                      1     // MQL4.0: these constants w/o prefix exist with a different value
 #define WIN32_FILE_SHARE_WRITE                     2
 #define WIN32_FILE_SHARE_DELETE                    4
 
 
-// File attribute flags
+// file attribute flags
 #define FILE_ATTRIBUTE_READONLY                    1
 #define FILE_ATTRIBUTE_HIDDEN                      2
 #define FILE_ATTRIBUTE_SYSTEM                      4
@@ -134,17 +134,17 @@
 #define FILE_ATTRIBUTE_ENCRYPTED               16384
 #define FILE_ATTRIBUTE_VIRTUAL                 65536
 
-#define OF_READ                                 0x00
-#define OF_WRITE                                0x01
-#define OF_READWRITE                            0x02
-#define OF_SHARE_COMPAT                         0x00
-#define OF_SHARE_EXCLUSIVE                      0x10
-#define OF_SHARE_DENY_WRITE                     0x20
-#define OF_SHARE_DENY_READ                      0x30
-#define OF_SHARE_DENY_NONE                      0x40
+#define OF_READ                                    0
+#define OF_WRITE                                   1
+#define OF_READWRITE                               2
+#define OF_SHARE_COMPAT                      OF_READ
+#define OF_SHARE_EXCLUSIVE                        16
+#define OF_SHARE_DENY_WRITE                       32
+#define OF_SHARE_DENY_READ                        48
+#define OF_SHARE_DENY_NONE                        64
 
 
-// File open/creation options
+// file open/creation options
 #define CREATE_NEW                                 1
 #define CREATE_ALWAYS                              2
 #define OPEN_EXISTING                              3
@@ -152,13 +152,22 @@
 #define TRUNCATE_EXISTING                          5
 
 
-// Invalid handle/value
+// MoveFileEx() flags
+#define MOVEFILE_REPLACE_EXISTING                  1
+#define MOVEFILE_COPY_ALLOWED                      2
+#define MOVEFILE_DELAY_UNTIL_REBOOT                4
+#define MOVEFILE_WRITE_THROUGH                     8
+#define MOVEFILE_CREATE_HARDLINK                  16
+#define MOVEFILE_FAIL_IF_NOT_TRACKABLE            32
+
+
+// invalid handles/values
 #define INVALID_FILE_SIZE                 0xFFFFFFFF     // -1
-#define INVALID_FILE_ATTRIBUTES           0xFFFFFFFF     // -1
-#define INVALID_SET_FILE_POINTER          0xFFFFFFFF     // -1
-#define INVALID_HANDLE_VALUE              0xFFFFFFFF     // -1
-#define INVALID_HWND                      0xFFFFFFFF     // -1
-#define HFILE_ERROR                       0xFFFFFFFF     // -1
+#define INVALID_FILE_ATTRIBUTES           0xFFFFFFFF     //
+#define INVALID_SET_FILE_POINTER          0xFFFFFFFF     //
+#define INVALID_HANDLE_VALUE              0xFFFFFFFF     //
+#define INVALID_HWND                      0xFFFFFFFF     //
+#define HFILE_ERROR                       0xFFFFFFFF     //
 
 
 // GDI region codes, see GetClipBox()

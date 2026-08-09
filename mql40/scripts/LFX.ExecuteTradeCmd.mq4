@@ -274,11 +274,11 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    if (!static.leverage) {
       string section = "MoneyManagement";
       string key     = "BasketLeverage";
-      if (!IsGlobalConfigKeyA(section, key)) return(!catch("OpenLfxOrder.Execute(2)  missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-      string sValue = GetGlobalConfigString(section, key);
-      if (!StrIsNumeric(sValue))             return(!catch("OpenLfxOrder.Execute(3)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE));
+      if (!IsUserConfigKeyA(section, key)) return(!catch("OpenLfxOrder.Execute(2)  missing user config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+      string sValue = GetUserConfigString(section, key);
+      if (!StrIsNumeric(sValue))           return(!catch("OpenLfxOrder.Execute(3)  invalid config value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE));
       static.leverage = StrToDouble(sValue);
-      if (static.leverage < 1)               return(!catch("OpenLfxOrder.Execute(4)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(static.leverage, ".+"), ERR_INVALID_CONFIG_VALUE));
+      if (static.leverage < 1)             return(!catch("OpenLfxOrder.Execute(4)  invalid config value ["+ section +"]->"+ key +" = "+ NumberToStr(static.leverage, ".+"), ERR_INVALID_CONFIG_VALUE));
    }
    double leverage = static.leverage;
 

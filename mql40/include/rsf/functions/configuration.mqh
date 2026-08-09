@@ -1,25 +1,49 @@
-//
-// Functions to work with the framework configuration
-//
-
-
 /**
- * Return the full name of an account configuration file.
+ * Return the full name of the framework's trading account configuration file.
+ *
+ * - This configuration file is used if the terminal is logged-in to that trading account.
+ * - The file is named "rsf-account-{number}-config.ini" and is located in the terminal's common data folder.
+ * - No attempt is made to create a non-existing file.
+ * - An existing legacy config file "{number}-config.ini" is renamed to the new name.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
  *
- * @return string - filename or an empty string in case of errors
+ * @return string - file name or an empty string in case of errors,
+ *                  e.g. "%UserProfile%\AppData\Roaming\MetaQuotes\Terminal\Common\{AccountCompany}\rsf-account-123456-config.ini"
  */
 string GetAccountConfigPath(string company = "", int account = NULL) {
    if (company=="" || company=="0") {
       company = GetAccountCompanyId();
       if (company == "") return("");
    }
-   if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
+   if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(2)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
    if (!account) account = GetAccountNumber();
    if (!account) return("");
-   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", company, "\\", account, "-config.ini"));
+
+   string commonDataPath = GetTerminalCommonDataPathA();
+   if (commonDataPath == "") return("");
+
+   string configPath = StringConcatenate(commonDataPath, "\\accounts\\", company, "\\rsf-account-", account, "-config.ini");
+
+   if (!IsFileA(configPath, MODE_SYSTEM)) {
+      string legacyPath = StringConcatenate(commonDataPath, "\\accounts\\", company, "\\", account, "-config.ini");
+
+      if (IsFileA(legacyPath, MODE_SYSTEM)) {         // rename legacy file to new name
+         if (MoveFileExA(legacyPath, configPath, MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH|MOVEFILE_FAIL_IF_NOT_TRACKABLE)) {
+            logInfo("renamed \""+ StrRightFrom(legacyPath, "\\", -3) +"\" to \""+ StrRightFrom(configPath, "\\", -3) +"\"");
+         }
+         else {
+            int error = GetLastWin32Error();
+            if (error != ERROR_FILE_NOT_FOUND) {      // another thread may have been faster
+               // don't use the logger, it may cause recursion
+               debug("GetAccountConfigPath(3)  cannot rename \""+ legacyPath +"\" to \""+ configPath +"\"", ERR_WIN32_ERROR + error);
+               configPath = legacyPath;               // keep using the legacy file
+            }
+         }
+      }
+   }
+   return(configPath);
 }
 
 
@@ -32,7 +56,7 @@ string GetAccountConfigPath(string company = "", int account = NULL) {
  * @return bool
  */
 bool IsConfigKey(string section, string key) {
-   if (IsGlobalConfigKeyA  (section, key)) return(true);
+   if (IsUserConfigKeyA    (section, key)) return(true);
    if (IsTerminalConfigKeyA(section, key)) return(true);
    if (IsAccountConfigKey  (section, key)) return(true);
    return(false);
@@ -68,7 +92,7 @@ bool IsAccountConfigKey(string section, string key) {
 bool GetConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   bool value = GetGlobalConfigBool  (section, key, defaultValue);
+   bool value = GetUserConfigBool    (section, key, defaultValue);
         value = GetTerminalConfigBool(section, key, value);
         value = GetAccountConfigBool (section, key, value);
    return(value);
@@ -76,7 +100,7 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
 
 
 /**
- * Return a global config value as a boolean. Supported boolean representations are "1" and "0", "true" and "false",
+ * Return a user config value as a boolean. Supported boolean representations are "1" and "0", "true" and "false",
  * "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to (value != 0), all other values
  * evaluate to FALSE. Trailing configuration comments are ignored.
  *
@@ -86,12 +110,12 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
  *
  * @return bool - config value or the default value in case of errors
  */
-bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) {
+bool GetUserConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   string globalConfig = GetGlobalConfigPathA();
-   if (globalConfig == "") return(defaultValue);
-   return(GetIniBool(globalConfig, section, key, defaultValue));
+   string userConfig = GetUserConfigPathA();
+   if (userConfig == "") return(defaultValue);
+   return(GetIniBool(userConfig, section, key, defaultValue));
 }
 
 
@@ -151,7 +175,7 @@ bool GetAccountConfigBool(string section, string key, bool defaultValue = false)
  * @return color - config value or the default value in case of errors
  */
 color GetConfigColor(string section, string key, color defaultValue = CLR_NONE) {
-   color value = GetGlobalConfigColor  (section, key, defaultValue);
+   color value = GetUserConfigColor    (section, key, defaultValue);
          value = GetTerminalConfigColor(section, key, value);
          value = GetAccountConfigColor (section, key, value);
    return(value);
@@ -159,7 +183,7 @@ color GetConfigColor(string section, string key, color defaultValue = CLR_NONE) 
 
 
 /**
- * Return a global config value as a color.
+ * Return a user config value as a color.
  *
  * Supported color representations are:
  *  - web color names (case-insensitive, with and without the prefix "clr"), e.g. "DodgerBlue"
@@ -173,10 +197,10 @@ color GetConfigColor(string section, string key, color defaultValue = CLR_NONE) 
  *
  * @return color - config value or the default value in case of errors
  */
-color GetGlobalConfigColor(string section, string key, color defaultValue = CLR_NONE) {
-   string globalConfig = GetGlobalConfigPathA();
-   if (globalConfig == "") return(defaultValue);
-   return(GetIniColor(globalConfig, section, key, defaultValue));
+color GetUserConfigColor(string section, string key, color defaultValue = CLR_NONE) {
+   string userConfig = GetUserConfigPathA();
+   if (userConfig == "") return(defaultValue);
+   return(GetIniColor(userConfig, section, key, defaultValue));
 }
 
 
@@ -235,7 +259,7 @@ color GetAccountConfigColor(string section, string key, color defaultValue = CLR
  * @return int - config value or the default value in case of errors
  */
 int GetConfigInt(string section, string key, int defaultValue = 0) {
-   int value = GetGlobalConfigInt  (section, key, defaultValue);
+   int value = GetUserConfigInt    (section, key, defaultValue);
        value = GetTerminalConfigInt(section, key, value);
        value = GetAccountConfigInt (section, key, value);
    return(value);
@@ -243,7 +267,7 @@ int GetConfigInt(string section, string key, int defaultValue = 0) {
 
 
 /**
- * Return a global config value as an integer. An empty value evaluates to 0 (zero).
+ * Return a user config value as an integer. An empty value evaluates to 0 (zero).
  * Trailing non-digits and configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive config section name
@@ -252,10 +276,10 @@ int GetConfigInt(string section, string key, int defaultValue = 0) {
  *
  * @return int - config value or the default value in case of errors
  */
-int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
-   string globalConfig = GetGlobalConfigPathA();
-   if (globalConfig == "") return(defaultValue);
-   return(GetIniInt(globalConfig, section, key, defaultValue));
+int GetUserConfigInt(string section, string key, int defaultValue = 0) {
+   string userConfig = GetUserConfigPathA();
+   if (userConfig == "") return(defaultValue);
+   return(GetIniInt(userConfig, section, key, defaultValue));
 }
 
 
@@ -304,7 +328,7 @@ int GetAccountConfigInt(string section, string key, int defaultValue = 0) {
  * @return double - config value or the default value in case of errors
  */
 double GetConfigDouble(string section, string key, double defaultValue = 0) {
-   double value = GetGlobalConfigDouble  (section, key, defaultValue);
+   double value = GetUserConfigDouble    (section, key, defaultValue);
           value = GetTerminalConfigDouble(section, key, value);
           value = GetAccountConfigDouble (section, key, value);
    return(value);
@@ -312,7 +336,7 @@ double GetConfigDouble(string section, string key, double defaultValue = 0) {
 
 
 /**
- * Return a global config value as a double. An empty value evaluates to 0 (zero).
+ * Return a user config value as a double. An empty value evaluates to 0 (zero).
  * Trailing non-numeric characters and configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive config section name
@@ -321,10 +345,10 @@ double GetConfigDouble(string section, string key, double defaultValue = 0) {
  *
  * @return double - config value or the default value in case of errors
  */
-double GetGlobalConfigDouble(string section, string key, double defaultValue = 0) {
-   string globalConfig = GetGlobalConfigPathA();
-   if (globalConfig == "") return(defaultValue);
-   return(GetIniDouble(globalConfig, section, key, defaultValue));
+double GetUserConfigDouble(string section, string key, double defaultValue = 0) {
+   string userConfig = GetUserConfigPathA();
+   if (userConfig == "") return(defaultValue);
+   return(GetIniDouble(userConfig, section, key, defaultValue));
 }
 
 
@@ -372,7 +396,7 @@ double GetAccountConfigDouble(string section, string key, double defaultValue = 
  * @return string - config value without trailing white space or the default value in case of errors
  */
 string GetConfigString(string section, string key, string defaultValue = "") {
-   string value = GetGlobalConfigString  (section, key, defaultValue);
+   string value = GetUserConfigString    (section, key, defaultValue);
           value = GetTerminalConfigString(section, key, value);
           value = GetAccountConfigString (section, key, value);
    return(value);
@@ -380,7 +404,7 @@ string GetConfigString(string section, string key, string defaultValue = "") {
 
 
 /**
- * Return a global config value as a string. Trailing configuration comments are ignored.
+ * Return a user config value as a string. Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive config section name
  * @param  string key                     - case-insensitive config key
@@ -388,10 +412,10 @@ string GetConfigString(string section, string key, string defaultValue = "") {
  *
  * @return string - config value without trailing white space or the default value in case of errors
  */
-string GetGlobalConfigString(string section, string key, string defaultValue = "") {
-   string globalConfig = GetGlobalConfigPathA();
-   if (globalConfig == "") return(defaultValue);
-   return(GetIniStringA(globalConfig, section, key, defaultValue));
+string GetUserConfigString(string section, string key, string defaultValue = "") {
+   string userConfig = GetUserConfigPathA();
+   if (userConfig == "") return(defaultValue);
+   return(GetIniStringA(userConfig, section, key, defaultValue));
 }
 
 
@@ -437,7 +461,7 @@ string GetAccountConfigString(string section, string key, string defaultValue = 
  * @return string - config value without trailing white space or the default value in case of errors
  */
 string GetConfigStringRaw(string section, string key, string defaultValue = "") {
-   string value = GetGlobalConfigStringRaw  (section, key, defaultValue);
+   string value = GetUserConfigStringRaw    (section, key, defaultValue);
           value = GetTerminalConfigStringRaw(section, key, value);
           value = GetAccountConfigStringRaw (section, key, value);
    return(value);
@@ -445,7 +469,7 @@ string GetConfigStringRaw(string section, string key, string defaultValue = "") 
 
 
 /**
- * Return a global config value as a raw string. Trailing configuration comments are not ignored.
+ * Return a user config value as a raw string. Trailing configuration comments are not ignored.
  *
  * @param  string section                 - case-insensitive config section name
  * @param  string key                     - case-insensitive config key
@@ -453,10 +477,10 @@ string GetConfigStringRaw(string section, string key, string defaultValue = "") 
  *
  * @return string - config value without trailing white space or the default value in case of errors
  */
-string GetGlobalConfigStringRaw(string section, string key, string defaultValue = "") {
-   string globalConfig = GetGlobalConfigPathA();
-   if (globalConfig == "") return(defaultValue);
-   return(GetIniStringRawA(globalConfig, section, key, defaultValue));
+string GetUserConfigStringRaw(string section, string key, string defaultValue = "") {
+   string userConfig = GetUserConfigPathA();
+   if (userConfig == "") return(defaultValue);
+   return(GetIniStringRawA(userConfig, section, key, defaultValue));
 }
 
 
@@ -618,3 +642,8 @@ bool WriteIniString(string fileName, string section, string key, string value) {
    }
    return(true);
 }
+
+
+#import "kernel32.dll"
+   bool MoveFileExA(string lpOldName, string lpNewName, int flags);
+#import
