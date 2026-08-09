@@ -2070,8 +2070,8 @@ string StrRight(string value, int length) {
  * @param  string value            - initial string
  * @param  string substring        - limiting substring
  * @param  int    count [optional] - number of limiting substrings (default: 1 = the first occurrence)
- *                                    positive: occurrences counted from the start of the string
- *                                    negative: occurrences counted from the end of the string
+ *                                   positive: occurrences counted from the start of the string
+ *                                   negative: occurrences counted from the end of the string
  *
  *  If count is 0 (zero) or greater than the number of existing substrings, an empty string is returned.
  *  If count is negative and absolute greater than the number of existing substrings, the initial string is returned.

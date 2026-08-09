@@ -1,14 +1,10 @@
-//
-// Functions to work with the framework configuration
-//
-
-
 /**
- * Return the full name of a trading account configuration file. This configuration file is used only if the terminal is
- * logged-in to that trading account.
+ * Return the full name of the framework's trading account configuration file.
  *
- * The file is named "rsf-account-{number}-config.ini" and is located in the terminal's common data folder. No attempt is
- * made to create a non-existing file.
+ * - This configuration file is used if the terminal is logged-in to that trading account.
+ * - The file is named "rsf-account-{number}-config.ini" and is located in the terminal's common data folder.
+ * - No attempt is made to create a non-existing file.
+ * - An existing legacy config file "{number}-config.ini" is renamed to the new name.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
@@ -24,7 +20,29 @@ string GetAccountConfigPath(string company = "", int account = NULL) {
    if (account < 0) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter account: "+ account, ERR_INVALID_PARAMETER)));
    if (!account) account = GetAccountNumber();
    if (!account) return("");
-   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", company, "\\rsf-account-", account, "-config.ini"));
+
+   string commonDataPath = GetTerminalCommonDataPathA();
+   if (commonDataPath == "") return("");
+
+   string configPath = StringConcatenate(commonDataPath, "\\accounts\\", company, "\\rsf-account-", account, "-config.ini");
+
+   if (!IsFileA(configPath, MODE_SYSTEM)) {
+      string legacyPath = StringConcatenate(commonDataPath, "\\accounts\\", company, "\\", account, "-config.ini");
+
+      if (IsFileA(legacyPath, MODE_SYSTEM)) {         // rename legacy file to new name
+         if (MoveFileExA(legacyPath, configPath, MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH|MOVEFILE_FAIL_IF_NOT_TRACKABLE)) {
+            logInfo("renamed \""+ StrRightFrom(legacyPath, "\\", -3) +"\" to \""+ StrRightFrom(configPath, "\\", -3) +"\"");
+         }
+         else {
+            int error = GetLastWin32Error();
+            if (error != ERROR_FILE_NOT_FOUND) {      // another thread may have been faster
+               logWarn("GetAccountConfigPath(2)  cannot rename \""+ legacyPath +"\" to \""+ configPath +"\"", ERR_WIN32_ERROR + error);
+               configPath = legacyPath;               // keep using the legacy file
+            }
+         }
+      }
+   }
+   return(configPath);
 }
 
 
@@ -623,3 +641,8 @@ bool WriteIniString(string fileName, string section, string key, string value) {
    }
    return(true);
 }
+
+
+#import "kernel32.dll"
+   bool MoveFileExA(string lpOldName, string lpNewName, int flags);
+#import
