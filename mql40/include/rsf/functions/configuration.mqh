@@ -13,13 +13,6 @@
  *                  e.g. "%UserProfile%\AppData\Roaming\MetaQuotes\Terminal\Common\{AccountCompany}\rsf-account-123456-config.ini"
  */
 string GetAccountConfigPath(string company = "", int account = NULL) {
-   static string recursion = ""; if (recursion == StringConcatenate(company, account)) {
-      Alert("GetAccountConfigPath(1)  recursion");
-      return("");
-   }
-   recursion = StringConcatenate(company, account);
-   // --- enable recursion guard --------------------------------------------------------------------------------------------
-
    if (company=="" || company=="0") {
       company = GetAccountCompanyId();
       if (company == "") return("");
@@ -43,15 +36,13 @@ string GetAccountConfigPath(string company = "", int account = NULL) {
          else {
             int error = GetLastWin32Error();
             if (error != ERROR_FILE_NOT_FOUND) {      // another thread may have been faster
-               logWarn("GetAccountConfigPath(3)  cannot rename \""+ legacyPath +"\" to \""+ configPath +"\"", ERR_WIN32_ERROR + error);
                configPath = legacyPath;               // keep using the legacy file
+               // don't use the logger, it causes recursion
+               debug("GetAccountConfigPath(3)  cannot rename \""+ legacyPath +"\" to \""+ configPath +"\"", ERR_WIN32_ERROR + error);
             }
          }
       }
    }
-
-   // --- disable recursion guard -------------------------------------------------------------------------------------------
-   recursion = "";
    return(configPath);
 }
 
