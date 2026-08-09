@@ -2000,10 +2000,12 @@ int CountDecimals(double number) {
  * @return string
  */
 string StrLeftTo(string value, string substring, int count = 1) {
-   int start=0, pos=-1;
+   int pos, subLen = StringLen(substring);
+   if (!subLen) return(value);
 
-   // positive: count from start
+   // count is positive: count from start
    if (count > 0) {
+      pos = -1;
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
          if (pos == -1) return(value);
@@ -2012,29 +2014,27 @@ string StrLeftTo(string value, string substring, int count = 1) {
       return(StrLeft(value, pos));
    }
 
-   // negative: count from end
+   // count is negative: count from end
    if (count < 0) {
-      /*
-      while(count < 0) {
-         pos = StringFind(value, substring, 0);
-         if (pos == -1) return("");
-         count++;
+      // count total occurrences
+      int total = 0;
+      pos = -1;
+      while (true) {
+         pos = StringFind(value, substring, pos+1);
+         if (pos == -1) break;
+         total++;
       }
-      */
-      pos = StringFind(value, substring, 0);
-      if (pos == -1) return(value);
+      int absCount = -count;
+      if (absCount > total) return(value);
 
-      if (count == -1) {
-         while (pos != -1) {
-            start = pos+1;
-            pos = StringFind(value, substring, start);
-         }
-         return(StrLeft(value, start-1));
+      // walk forward to the (total - absCount + 1)-th occurrence
+      int target = total - absCount + 1;
+      pos = -1;
+      while (target > 0) {
+         pos = StringFind(value, substring, pos+1);
+         target--;
       }
-      return(_EMPTY_STR(catch("StrLeftTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
-
-      //pos = StringFindEx(value, substring, count);
-      //return(StrLeft(value, pos));
+      return(StrLeft(value, pos));
    }
 
    // count == 0
@@ -2068,7 +2068,7 @@ string StrRight(string value, int length) {
  * The result doesn't include the limiting substring.
  *
  * @param  string value            - initial string
- * @param  string substring        - limiting substring
+ * @param  string substring        - limiting substring (if empty the entire string is returned)
  * @param  int    count [optional] - number of limiting substrings (default: 1 = the first occurrence)
  *                                   positive: occurrences counted from the start of the string
  *                                   negative: occurrences counted from the end of the string
@@ -2087,41 +2087,44 @@ string StrRight(string value, int length) {
  * </pre>
  */
 string StrRightFrom(string value, string substring, int count = 1) {
-   int start=0, pos=-1;
+   int pos, subLen = StringLen(substring);
+   if (!subLen) return(value);
 
-   // positive: count from start
+   // count is positive: count from start
    if (count > 0) {
+      pos = -1;
       while (count > 0) {
-         pos = StringFind(value, substring, pos+1);
+         pos = StringFind(value, substring, pos + 1);
          if (pos == -1) return("");
          count--;
       }
-      return(StrSubstr(value, pos+StringLen(substring)));
+      return(StrSubstr(value, pos + subLen));
    }
 
-   // negative: count from end
+   // count is negative: count from end
    if (count < 0) {
-      /*
-      while(count < 0) {
-         pos = StringFind(value, substring, 0);
-         if (pos == -1) return("");
-         count++;
-      }
-      */
-      pos = StringFind(value, substring, 0);
-      if (pos == -1) return(value);
-
-      if (count == -1) {
-         while (pos != -1) {
-            start = pos+1;
-            pos = StringFind(value, substring, start);
-         }
-         return(StrSubstr(value, start-1 + StringLen(substring)));
+      // count total occurrences
+      int total = 0;
+      pos = -1;
+      while (true) {
+         pos = StringFind(value, substring, pos + 1);
+         if (pos == -1) break;
+         total++;
       }
 
-      return(_EMPTY_STR(catch("StrRightFrom(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
-      //pos = StringFindEx(value, substring, count);
-      //return(StrSubstr(value, pos + StringLen(substring)));
+      int absCount = -count;
+      if (absCount > total) {
+         return(value);
+      }
+
+      // walk forward to the (total - absCount + 1)-th occurrence
+      int target = total - absCount + 1;
+      pos = -1;
+      while (target > 0) {
+         pos = StringFind(value, substring, pos + 1);
+         target--;
+      }
+      return(StrSubstr(value, pos + subLen));
    }
 
    // count = 0
