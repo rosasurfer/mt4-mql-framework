@@ -107,14 +107,14 @@ bool EditFiles(string &filenames[]) {
       if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
       if (isLogDebug) logDebug("EditFiles(3)  loading \""+ filenames[i] +"\"");
 
-      if (IsFile(filenames[i], MODE_SYSTEM)) {
+      if (IsFile(filenames[i])) {
          while (IsSymlinkA(filenames[i])) {
             string target = GetReparsePointTargetA(filenames[i]);    // resolve symlinks as some editors cannot write to it
             if (target == "") break;
             filenames[i] = target;
          }
       }
-      else if (IsDirectory(filenames[i], MODE_SYSTEM)) {
+      else if (IsDirectory(filenames[i])) {
          logError("EditFiles(4)  filename is a directory \""+ filenames[i] +"\"", ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(filenames, i, 1);
          size--;
@@ -7141,9 +7141,9 @@ string GetTempPath() {
  * @return string - Dateiname oder Leerstring, falls ein Fehler auftrat
  */
 string CreateTempFile(string path, string prefix = "") {
-   if (path == "")                      return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: "+ DoubleQuoteStr(path) +" (empty)", ERR_INVALID_PARAMETER)));
-   if (StringLen(path) > MAX_PATH-14)   return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" chars)", ERR_INVALID_PARAMETER)));
-   if (!IsDirectory(path, MODE_SYSTEM)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
+   if (path == "")                    return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: \"\" (empty)", ERR_INVALID_PARAMETER)));
+   if (StringLen(path) > MAX_PATH-14) return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: \""+ path +"\" (max "+ (MAX_PATH-14) +" chars)", ERR_INVALID_PARAMETER)));
+   if (!IsDirectory(path))            return(_EMPTY(catch("CreateTempFile(3)  directory not found: \""+ path +"\"", ERR_FILE_NOT_FOUND)));
 
    if (StrIsNull(prefix)) {
       prefix = "";
@@ -7167,7 +7167,7 @@ string CreateTempFile(string path, string prefix = "") {
  * @param  string symbol               - symbol
  * @param  string directory [optional] - history directory, if:
  *                                        empty:         the current trade server directory (default)
- *                                        relative path: relative to the MQL sandbox directory
+ *                                        relative path: relative to the MQL "files" directory
  *                                        absolute path: as is
  *
  * @return bool - success status or FALSE in case of errors
@@ -7182,7 +7182,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
    if (directory == "") {                             // current trade server, use MQL::FileOpenHistory()
       // check "symbols.raw"
       filename = "symbols.raw";                       // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
-      if (!IsFile(GetAccountServerPath() +"/"+ filename, MODE_SYSTEM)) return(false);
+      if (!IsFile(GetAccountServerPath() +"/"+ filename)) return(false);
 
       // open the file
       int hFile = FileOpenHistory(filename, FILE_READ|FILE_BIN);
@@ -7346,7 +7346,7 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string descr, color b
  * @param  _Out_ SYMBOL_GROUP sgs[]                - array receiving the found symbol groups
  * @param  _In_  string       directory [optional] - directory name
  *                                                    if empty:            the current trade server directory (default)
- *                                                    if a relative path:  relative to the MQL sandbox/files directory
+ *                                                    if a relative path:  relative to the MQL "files" directory
  *                                                    if an absolute path: as is
  *
  * @return int - number of found SYMBOL_GROUPs or EMPTY (-1) in case of errors
@@ -7357,11 +7357,11 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int &sgs[], string directory = "") {
 
    if (directory == "") {                                   // current trade server, use MQL::FileOpenHistory()
       // stat "symgroups.raw"
-      string filename = "symgroups.raw";                    // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
-      if (!IsFile(GetAccountServerPath() +"/"+ filename, MODE_SYSTEM)) return(0);
+      string filename = "symgroups.raw";                    // without the additional check FileOpen(READ) logs a warning if the file doesn't exist
+      if (!IsFile(GetAccountServerPath() +"/"+ filename)) return(0);
 
       // open the file
-      int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
+      int hFile = FileOpenHistory(filename, FILE_READ|FILE_BIN);
       int error = GetLastError();
       if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
    }
