@@ -283,7 +283,7 @@
 // file function flags
 #define MODE_SYSTEM                             0        // don't restrict file system operations (default)
 #define MODE_MQL                                1        // restrict file system operations to the MQL sandbox
-#define MODE_TESTER                             2        // with MODE_MQL: apply restrictions to the tester sandbox
+#define MODE_TESTER                             2        // apply operations to the tester sandbox (requires MODE_MQL)
 #define MODE_MKPARENT                           4        // create non-existing parent directories as needed
 
 
