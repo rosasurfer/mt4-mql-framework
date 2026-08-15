@@ -308,16 +308,16 @@ bool FindBfxIndicator() {
    string librariesPath  = mqlPath +"/libraries/";
 
    string indicatorFilepath = indicatorsPath + bfxIndicatorName +".ex4";
-   if (!IsFile(indicatorFilepath, MODE_SYSTEM)) {
+   if (!IsFile(indicatorFilepath)) {
       indicatorFilepath = indicatorsPath +"MQL5/"+ bfxIndicatorName +".ex4";
-      if (!IsFile(indicatorFilepath, MODE_SYSTEM)) {
+      if (!IsFile(indicatorFilepath)) {
          return(!catch("FindBfxIndicator(1)  BankersFX Core Volume indicator not found: "+ DoubleQuoteStr(bfxIndicatorName), ERR_FILE_NOT_FOUND));
       }
       bfxIndicatorName = "MQL5/"+ bfxIndicatorName;
    }
 
    string libraryFilepath = librariesPath + bfxLibraryName +".ex4";
-   if (!IsFile(libraryFilepath, MODE_SYSTEM)) {
+   if (!IsFile(libraryFilepath)) {
       return(!catch("FindBfxIndicator(2)  BankersFX Core Volume library not found: "+ DoubleQuoteStr(bfxLibraryName), ERR_FILE_NOT_FOUND));
    }
    return(true);

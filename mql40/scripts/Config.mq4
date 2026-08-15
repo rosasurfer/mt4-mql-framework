@@ -67,19 +67,19 @@ int onStart() {
    // make sure all files exist
    int size = ArraySize(files);
    for (int i=0; i < size; i++) {
-      if (IsDirectory(files[i], MODE_SYSTEM)) {
+      if (IsDirectory(files[i])) {
          logError("onStart(3)  assumed config file is a directory, skipping \""+ files[i] +"\"", ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(files, i, 1);
          size--; i--;
          continue;
       }
-      if (!IsFile(files[i], MODE_SYSTEM)) {
+      if (!IsFile(files[i])) {
          // make sure the final directory exists
          int pos = Max(StrFindR(files[i], "/"), StrFindR(files[i], "\\"));
          if (pos == 0)          return(catch("onStart(4)  illegal filename in files["+ i +"]: \""+ files[i] +"\"", ERR_ILLEGAL_STATE));
          if (pos > 0) {
             string dir = StrLeft(files[i], pos);
-            int error = CreateDirectoryA(dir, MODE_SYSTEM|MODE_MKPARENT);
+            int error = CreateDirectoryA(dir, MODE_MKPARENT);
             if (IsError(error)) return(catch("onStart(5)  cannot create directory \""+ dir +"\"", ERR_WIN32_ERROR + error));
          }
          // create the file
