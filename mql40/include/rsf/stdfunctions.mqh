@@ -3210,20 +3210,17 @@ string UrlEncode(string value) {
 /**
  * Whether the specified file exists.
  *
- * @param  string path - file path (may be a symbolic link); supports both forward and backward slashes
- * @param  int    mode - MODE_MQL:    restrict the function's operation to the MQL sandbox
- *                       MODE_SYSTEM: allow the function to operate outside of the MQL sandbox
+ * @param  string path - file path (may be a symbolic link), supports forward and backward slashes
+ * @param  int    mode - MODE_SYSTEM: allow operation outside of the MQL sandbox (default)
+ *                       MODE_MQL:    restrict operation to the MQL sandbox
+ *
  * @return bool
  */
-bool IsFile(string path, int mode) {
+bool IsFile(string path, int mode = MODE_SYSTEM) {
    // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
-   if (!(~mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsFile(1)  invalid parameter mode: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
-   if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsFile(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
-
    if (mode & MODE_MQL && 1) {
       string filesDirectory = GetMqlSandboxPath();
-      if (!StringLen(filesDirectory))
-         return(false);
+      if (filesDirectory == "") return(false);
       path = StringConcatenate(filesDirectory, "/", path);
    }
    return(IsFileA(path, MODE_SYSTEM));
@@ -3233,20 +3230,16 @@ bool IsFile(string path, int mode) {
 /**
  * Whether the specified directory exists.
  *
- * @param  string path - directory path (may be a symbolic link or a junction), supports both forward and backward slashes
- * @param  int    mode - MODE_MQL:    restrict the function's operation to the MQL sandbox
- *                       MODE_SYSTEM: allow the function to operate outside of the MQL sandbox
+ * @param  string path - directory path (may be a symbolic link or a junction), supports forward and backward slashes
+ * @param  int    mode - MODE_SYSTEM: allow operation outside of the MQL sandbox (default)
+ *                       MODE_MQL:    restrict operation to the MQL sandbox
  * @return bool
  */
-bool IsDirectory(string path, int mode) {
+bool IsDirectory(string path, int mode = MODE_SYSTEM) {
    // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
-   if (!(~mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsDirectory(1)  invalid parameter mode: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
-   if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsDirectory(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
-
    if (mode & MODE_MQL && 1) {
       string filesDirectory = GetMqlSandboxPath();
-      if (!StringLen(filesDirectory))
-         return(false);
+      if (filesDirectory == "") return(false);
       path = StringConcatenate(filesDirectory, "/", path);
    }
    return(IsDirectoryA(path, MODE_SYSTEM));
@@ -3257,19 +3250,16 @@ bool IsDirectory(string path, int mode) {
  * Create a directory.
  *
  * @param  string path  - directory path
- * @param  int    flags - MODE_MQL:      restrict the function's operation to the MQL sandbox
- *                        MODE_SYSTEM:   allow the function to operate outside of the MQL sandbox
+ * @param  int    flags - MODE_SYSTEM:   allow operation outside of the MQL sandbox (default)
+ *                        MODE_MQL:      restrict operation to the MQL sandbox
  *                        MODE_MKPARENT: create parent directories as needed and report no error on an existing directory;
  *                                       otherwise create only the final directory and report an error if it exists
  * @return bool - success status
  */
-bool CreateDirectory(string path, int flags) {
-   if (!(~flags & (MODE_MQL|MODE_SYSTEM))) return(!catch("CreateDirectory(1)  invalid parameter flag: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
-   if (!( flags & (MODE_MQL|MODE_SYSTEM))) return(!catch("CreateDirectory(2)  invalid parameter flag: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
-
+bool CreateDirectory(string path, int flags = MODE_SYSTEM) {
    if (flags & MODE_MQL && 1) {
       string filesDirectory = GetMqlSandboxPath();
-      if (!StringLen(filesDirectory)) return(false);
+      if (filesDirectory == "") return(false);
 
       path = StringConcatenate(filesDirectory, "/", path);
       flags &= ~MODE_MQL;
@@ -3300,9 +3290,9 @@ string GetMqlSandboxPath() {
  * @return string - Hex-String
  */
 string StrToHexStr(string value) {
-   if (StrIsNull(value))
+   if (StrIsNull(value)) {
       return("(null)");
-
+   }
    string result = "";
    int len = StringLen(value);
 
@@ -3322,8 +3312,9 @@ string StrToHexStr(string value) {
  * @return string
  */
 string StrCapitalize(string value) {
-   if (!StringLen(value))
+   if (!StringLen(value)) {
       return(value);
+   }
    return(StringConcatenate(StrToUpper(StrLeft(value, 1)), StrSubstr(value, 1)));
 }
 
