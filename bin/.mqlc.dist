@@ -1,24 +1,24 @@
 #
 # Copy this file to "~/.mqlc" and adjust the settings to your system.
-# ----------------------------------------------------------------------------------------------------
-# Configuration for the MQL compiler script. Compiler locations may also be specified via environment.
+# ----------------------------------------------------------------------------------------------
+# Configuration for the MQL compiler script. All settings may also be specified via environment.
 # Environment settings take precedence over settings in this file.
 #
 # Paths support Unix and Windows notation.
 # Names with spaces must be quoted. Backward slashes must be doubled.
 #
 
-# path to the MT4 compiler for MQL4.0 (terminal builds <= 509)
+# path to the MQL4.0 compiler (MT4 builds <= 509)
 MT4_METALANG='<drive>:\\<path>\\metalang.exe'
 
-# path to the MT4 MetaEditor for MQL4.5 (terminal builds > 509)
+# path to the MQL4.5 MetaEditor (MT4 builds > 509)
 MT4_METAEDITOR='<drive>:/windows-path/metaeditor.exe'
 
-# path to the MT5 MetaEditor for MQL5 (all MT5 builds)
+# path to the MQL5 MetaEditor (all MT5 builds)
 MT5_METAEDITOR='/c/unix-path/metaeditor64.exe'
 
 
-# source paths and predefined MQL4 versions
+# source paths and predefined versions of ".mq4" files (not needed for ".mq5" files)
 mql40Sources+=('<source-path1>')
 mql40Sources+=('<source-path2>')
 
@@ -26,6 +26,6 @@ mql45Sources+=('<source-path3>')
 mql45Sources+=('<source-path4>')
 
 
-# source paths and predefined MQL include directories
+# source paths and predefined MQL include directory locations
 includeDirs['<source-path1>']='<include-dir1>';
 includeDirs['<source-path3>']='<include-dir2>';
