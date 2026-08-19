@@ -104,7 +104,7 @@ int       framework_buffers = 4;                               // buffers manage
 #define MODE_MID_LINE            Donchian.MODE_MID_LINE        // 2 mid channel line
 #define MODE_REVERSAL_LONG       Donchian.MODE_REVERSAL_LONG   // 3 long reversals
 #define MODE_REVERSAL_SHORT      Donchian.MODE_REVERSAL_SHORT  // 4 short reversals
-#define MODE_REVERSAL_DIMMED     5                             // 5 filtered reversals (dimmed representation)
+#define MODE_REVERSAL_DIMMED     5                             // 5 filtered reversals (dimmed visualization)
 #define MODE_TREND               Donchian.MODE_TREND           // 6 int: direction and length of channel reversals
 #define MODE_REVERSAL_COUNT      Donchian.MODE_REVERSAL_COUNT  // 7 int: number of consecutive winning/losing reversals
 #define MODE_REVERSAL_BALANCE_O  8                             // reversal balance in pUnits: positive/negative or EMPTY_VALUE

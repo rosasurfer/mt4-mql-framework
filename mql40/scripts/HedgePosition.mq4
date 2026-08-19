@@ -73,7 +73,7 @@ int onStart() {
 bool CollectTickets(int &tickets[], bool skipManaged = true) {
    skipManaged = (skipManaged != 0);
 
-   // Processing a large number of orders (potentially a few hundred tickets) is not insignificant.
+   // Processing a large number of orders (potentially a few hundred tickets) can take some time.
    // To improve execution speed and reduce slippage, the results are cached.
    static int lastAllPendingOrders=-1, lastOpenOrders=-1, lastClosedOrders=-1, lastSkipManaged=0, lastTickets[];
 
@@ -99,8 +99,9 @@ bool CollectTickets(int &tickets[], bool skipManaged = true) {
    // or refresh open tickets if status changed
    if (lastAllPendingOrders != -1) logInfo("CollectTickets(2)  open orders changed, refreshing...");
 
-   ArrayResize(tickets, openOrders);
-   ArrayInitialize(tickets, NULL);
+   if (ArrayResize(tickets, openOrders) > 0) {
+      ArrayInitialize(tickets, 0);
+   }
 
    int n = 0;
    for (i=0; i < openOrders; i++) {
