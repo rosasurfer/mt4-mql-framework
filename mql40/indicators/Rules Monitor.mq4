@@ -6,17 +6,19 @@
 #property indicator_chart_window
 
 #include <rsf/stddefines.mqh>
-int   __InitFlags[] = { INIT_TIMEZONE };
+int   __InitFlags[];
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string MaChannel.Method       = "SMA | LWMA | EMA* | SMMA | ALMA";
 extern int    MaChannel.Periods      = 100;
-extern int    Trend.BarsOutOfChannel = 1;
+extern int    TrendChange.MinPeriods = 1;
 
 extern color  Color.UpTrend          = C'55,130,55';
 extern color  Color.DownTrend        = Sienna;
+
+extern bool   CreateStatusWindow     = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,10 +41,10 @@ double systemTrend [];                    // trend according to the system rules
 int    maChannel.method;
 int    maChannel.periods;
 string maChannel.definition = "";
-int    maChannel.trendBars;
 
-int    maxBarsBack = 5000;
+int    maxBarsBack = 1000;
 
+int    hWndPanel;                         // status panel
 int    panel.xPos = 40;
 int    panel.yPos = 390;
 
@@ -74,10 +76,9 @@ int onInit() {
    if (MaChannel.Periods < 1)  return(catch("onInit(2)  invalid input parameter MaChannel.Periods: "+ MaChannel.Periods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
    maChannel.periods = MaChannel.Periods;
    maChannel.definition = MaChannel.Method +"("+ maChannel.periods+")";
-   // Trend.BarsOutOfChannel
-   if (AutoConfiguration) Trend.BarsOutOfChannel = GetConfigInt(indicator, "Trend.BarsOutOfChannel", Trend.BarsOutOfChannel);
-   if (Trend.BarsOutOfChannel < 1) return(catch("onInit(3)  invalid input parameter Trend.BarsOutOfChannel: "+ Trend.BarsOutOfChannel +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-   maChannel.trendBars = Trend.BarsOutOfChannel;
+   // TrendChange.MinPeriods
+   if (AutoConfiguration) TrendChange.MinPeriods = GetConfigInt(indicator, "TrendChange.MinPeriods", TrendChange.MinPeriods);
+   if (TrendChange.MinPeriods < 1) return(catch("onInit(3)  invalid input parameter TrendChange.MinPeriods: "+ TrendChange.MinPeriods +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal may turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
@@ -89,7 +90,11 @@ int onInit() {
    RestoreStatus();
    SetIndicatorOptions();
 
-   return(catch("onInit(3)"));
+   if (CreateStatusWindow) {
+      hWndPanel = RulesMonitor_CreateStatusPanel(__ExecutionContext[EC.pid], clrSnow, Color.UpTrend, Color.DownTrend);
+      if (!hWndPanel) return(catch("onInit(3)", ERR_RUNTIME_ERROR));
+   }
+   return(catch("onInit(4)"));
 }
 
 
@@ -127,7 +132,7 @@ int onTick() {
    int startbar = Min(maxBarsBack-1, ChangedBars-1, Bars-maChannel.periods);
    if (startbar < 0) return(logInfo("onTick(1)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
-   int trendBars = maChannel.trendBars;
+   int trendBars = TrendChange.MinPeriods;
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
@@ -190,7 +195,7 @@ bool CreateStatusPanel(int direction) {
       ObjectSet(label, OBJPROP_XDISTANCE, panel.xPos);
       ObjectSet(label, OBJPROP_YDISTANCE, panel.yPos);
    }
-   ObjectSetText(label, "ggggggggg", fontSize, "Webdings", bgColor);
+   ObjectSetText(label, "ggggggg", fontSize, "Webdings", bgColor);
 
    // get current position
    panel.xPos = ObjectGet(label, OBJPROP_XDISTANCE);
@@ -203,25 +208,34 @@ bool CreateStatusPanel(int direction) {
 /**
  * Update the status panel.
  *
- * @param  int direction - trend direction
+ * @param  int trend - trend direction
  *
  * @return bool - success status
  */
-bool UpdateStatusPanel(int direction) {
-   if (!direction)                    return(false);
-   if (!CreateStatusPanel(direction)) return(false);
+bool UpdateStatusPanel(int trend) {
+   if (!trend) return(false);
+
+   // --- old panel -----------------------------------------------
+   if (!CreateStatusPanel(trend)) return(false);
 
    string label = WindowExpertName() +".msg";
    if (ObjectFind(label) == -1) {
       if (!ObjectCreateRegister(label, OBJ_LABEL)) return(false);
       ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
    }
-   ObjectSet(label, OBJPROP_XDISTANCE, panel.xPos + 4);
+   ObjectSet(label, OBJPROP_XDISTANCE, panel.xPos + 4);     // offset from the left panel border
    ObjectSet(label, OBJPROP_YDISTANCE, panel.yPos);
 
-   string message = ifString(direction > 0, "LONG ONLY", "SHORT ONLY");
+   string message = ifString(trend > 0, "LONG ONLY", "SHORT ONLY");
    ObjectSetText(label, message, 12, "Arial Black", Snow);
 
+
+   // --- new panel -----------------------------------------------
+   if (trend && hWndPanel) {
+      if (!RulesMonitor_UpdateStatusPanel(__ExecutionContext[EC.pid], trend)) {
+         return(!catch("UpdateStatusPanel(1)", ERR_RUNTIME_ERROR));
+      }
+   }
    return(true);
 }
 
@@ -313,16 +327,16 @@ bool SetIndicatorOptions(bool redraw = false) {
 string InputsToStr() {
    return(StringConcatenate("MaChannel.Method=",       DoubleQuoteStr(MaChannel.Method), ";", NL,
                             "MaChannel.Periods=",      MaChannel.Periods,                ";", NL,
-                            "Trend.BarsOutOfChannel=", Trend.BarsOutOfChannel,           ";", NL,
-
+                            "TrendChange.MinPeriods=", TrendChange.MinPeriods,           ";", NL,
                             "Color.UpTrend=",          ColorToStr(Color.UpTrend),        ";", NL,
-                            "Color.DownTrend=",        ColorToStr(Color.DownTrend),      ";")
+                            "Color.DownTrend=",        ColorToStr(Color.DownTrend),      ";", NL,
+                            "CreateStatusWindow=",     BoolToStr(CreateStatusWindow),    ";")
    );
 }
 
 
 #import "rsfMT4Expander.dll"
-   int RulesMonitor_CreateStatusPanel(int pid);
-   int RulesMonitor_UpdateStatusPanel(int pid);
-   int RulesMonitor_RemoveStatusPanel(int pid);
+   int  RulesMonitor_CreateStatusPanel(int pid, color textColor, color upTrendColor, color downTrendColor);
+   bool RulesMonitor_DestroyStatusPanel(int pid);
+   bool RulesMonitor_UpdateStatusPanel(int pid, int trend);
 #import
