@@ -743,6 +743,7 @@ int      ec_SetLoglevelTerminal   (int &ec[], int level);;
 int      ec_SetMqlError           (int &ec[], int error);;
 int      ec_SetProgramCoreFunction(int &ec[], int id);;
 int      ec_SetRecorder           (int &ec[], int mode);;
+int      ec_SetUserData           (int ec[], int offset, int data);;
 int      ec_SuperLoglevel         (int pid);;
 int      ec_SuperLoglevelAlert    (int pid);;
 int      ec_SuperLoglevelDebug    (int pid);;

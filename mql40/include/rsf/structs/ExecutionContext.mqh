@@ -1,7 +1,7 @@
 /**
  * Struct EXECUTION_CONTEXT
  *
- * A storage context for runtime variables, data exchange and communication between MQL modules and MT4Expander DLL.
+ * A storage context for runtime variables, data exchange and communication between MQL modules and MT4Expander.
  *
  *  @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/rsf/ExecutionContext.h
  *
@@ -35,6 +35,7 @@
    int    ec_SetLoglevelFile       (int ec[], int level);
    int    ec_SetLoglevelMail       (int ec[], int level);
    int    ec_SetLoglevelTelegram   (int ec[], int level);
+   int    ec_SetUserData           (int ec[], int offset, int data);
 
    // helpers
    string EXECUTION_CONTEXT_toStr  (int ec[]);
