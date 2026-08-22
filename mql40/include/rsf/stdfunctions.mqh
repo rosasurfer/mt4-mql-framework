@@ -17,21 +17,20 @@
 
 
 /**
- * Set the last error code of the MQL module. If called in a library the error will be propagated to the program's main module.
- * If called in an indicator loaded by iCustom() the error will be propagated to the caller of iCustom().
+ * Set the last error code of the MQL module. If called in a library the error will be propagated to the program's main
+ * module. If called in an indicator loaded by iCustom() the error will be propagated to the caller of iCustom().
  * The error code ERR_NO_ERROR will never be propagated.
  *
- * @param  int error            - error code
- * @param  int param [optional] - any value (ignored)
+ * @param  int error - error code
  *
  * @return int - the same error
  */
-int SetLastError(int error, int param = NULL) {
+int SetLastError(int error) {
    if (__ExecutionContext[EC.pid] != NULL) {
       ec_SetMqlError(__ExecutionContext, error);
    }
    last_error = error;
-   if (error && IsExpert()) HandleErrors("SetLastError(1)");      // immediately update __STATUS_OFF in experts
+   if (error && IsExpert()) HandleErrors("SetLastError(1)");      // in experts immediately update __STATUS_OFF
    return(error);
 }
 
@@ -6793,7 +6792,7 @@ void __DummyCalls() {
    SendEmail(NULL, NULL, NULL, NULL);
    ServerToFxtTime(NULL);
    ServerToGmtTime(NULL);
-   SetLastError(NULL, NULL);
+   SetLastError(NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);
    StdSymbol();

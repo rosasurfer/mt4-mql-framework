@@ -169,6 +169,7 @@ bool     SendEmail(string sender, string receiver, string subject, string messag
 bool     SendTelegramMessage(string channel, string message);;
 datetime ServerToFxtTime(datetime time);;
 datetime ServerToGmtTime(datetime time);;
+int      SetLastError(int error);;
 string   ShellExecuteErrorDescription(int error);;
 int      Sign(double value);;
 string   StdSymbol();;
