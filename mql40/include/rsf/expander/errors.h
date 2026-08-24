@@ -4,7 +4,7 @@
  * @link  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//efine NO_ERROR                                           ERR_NO_ERROR    // in C++ already defined (Win32 API)
+#define NO_ERROR                                           ERR_NO_ERROR
 
 // Trade errors
 #define ERR_NO_RESULT                                                 1
@@ -28,11 +28,11 @@
 #define ERR_INVALID_STOP                                            130    // limits/stops are mis-calculated, not normalized or too close to entry price or market (MODE_STOPLEVEL)
 #define ERR_INVALID_TRADE_VOLUME                                    131    // invalid trade volume or error in volume granularity
 #define ERR_MARKET_CLOSED                                           132    // market is closed (e.g. at weekends)
-#define ERR_TRADE_DISABLED                                          133    // market is not closed but trading is disabled (e.g. 1 min before Midnight)
+#define ERR_TRADE_DISABLED                                          133    // market is not closed but trading is disabled by the server (e.g. investor access or 1 min before Midnight)
 #define ERR_NOT_ENOUGH_MONEY                                        134
 #define ERR_PRICE_CHANGED                                           135    // price has changed and a retry can be made immediately
 #define ERR_OFF_QUOTES                                              136    // broker cannot provide prices (backend or liquidity issue)
-#define ERR_BROKER_BUSY                                             137    // broker's request queue is allegedly full and automated trading is disabled (manual trading is not affected)
+#define ERR_BROKER_BUSY                                             137    // the broker's request queue is temporarily full
 #define ERR_REQUOTE                                                 138    // price has become stale and expired
 #define ERR_ORDER_LOCKED                                            139    // order has been locked and is under processing
 #define ERR_LONG_POSITIONS_ONLY_ALLOWED                             140
@@ -123,10 +123,10 @@
 #define ERR_SYMBOL_NOT_AVAILABLE                                   4106
 #define ERR_INVALID_PRICE_PARAM                                    4107
 #define ERR_INVALID_TICKET                                         4108
-#define ERR_TERMINAL_AUTOTRADE_DISABLED                            4109    // automated trading disabled in the terminal
-#define ERR_PROGRAM_LONGS_DISABLED                                 4110    // long trading disabled for the program
-#define ERR_PROGRAM_SHORTS_DISABLED                                4111    // short trading disabled for the program
-#define ERR_BROKER_AUTOTRADE_DISABLED                              4112    // automated trading disabled by the broker
+#define ERR_TERMINAL_AUTOTRADE_DISABLED                            4109    // auto-trading disabled in the terminal, or life trading disabled for the program
+#define ERR_PROGRAM_LONGS_DISABLED                                 4110    // long trades disabled for the program
+#define ERR_PROGRAM_SHORTS_DISABLED                                4111    // short trades disabled for the program
+#define ERR_SERVER_AUTOTRADE_DISABLED                              4112    // auto-trading disabled by the server (manual trading is not affected)
 #define ERR_OBJECT_ALREADY_EXISTS                                  4200
 #define ERR_UNKNOWN_OBJECT_PROPERTY                                4201
 #define ERR_OBJECT_DOES_NOT_EXIST                                  4202
@@ -212,7 +212,7 @@
 #define ERR_STOP_DISTANCE_VIOLATED                                65559    // stop or limit price violates the broker's stop distance
 #define ERR_MARGIN_STOPOUT                                        65560    // margin stopout
 
-// mapped win32 errors: error = ERR_WIN32_ERROR + actual win32-error
+// mapped Win32 errors: error = ERR_WIN32_ERROR + actual Win32 error
 #define ERR_WIN32_ERROR                                          100000    // win32:0 => ERROR_SUCCESS
 
 // mapped MCI errors: error = ERR_MCI_ERROR + actual mci-error

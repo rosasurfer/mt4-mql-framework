@@ -17,21 +17,20 @@
 
 
 /**
- * Set the last error code of the MQL module. If called in a library the error will be propagated to the program's main module.
- * If called in an indicator loaded by iCustom() the error will be propagated to the caller of iCustom().
+ * Set the last error code of the MQL module. If called in a library the error will be propagated to the program's main
+ * module. If called in an indicator loaded by iCustom() the error will be propagated to the caller of iCustom().
  * The error code ERR_NO_ERROR will never be propagated.
  *
- * @param  int error            - error code
- * @param  int param [optional] - any value (ignored)
+ * @param  int error - error code
  *
  * @return int - the same error
  */
-int SetLastError(int error, int param = NULL) {
+int SetLastError(int error) {
    if (__ExecutionContext[EC.pid] != NULL) {
       ec_SetMqlError(__ExecutionContext, error);
    }
    last_error = error;
-   if (error && IsExpert()) HandleErrors("SetLastError(1)");      // immediately update __STATUS_OFF in experts
+   if (error && IsExpert()) HandleErrors("SetLastError(1)");      // in experts immediately update __STATUS_OFF
    return(error);
 }
 
@@ -84,7 +83,7 @@ string ErrorDescription(int error) {
       case ERR_NOT_ENOUGH_MONEY           : return("not enough money"                                         );     //    134
       case ERR_PRICE_CHANGED              : return("price changed"                                            );     //    135
       case ERR_OFF_QUOTES                 : return("off quotes"                                               );     //    136 atm the broker cannot provide prices
-      case ERR_BROKER_BUSY                : return("broker busy, automated trading disabled"                  );     //    137
+      case ERR_BROKER_BUSY                : return("broker busy, auto-trading disabled"                       );     //    137
       case ERR_REQUOTE                    : return("requote"                                                  );     //    138
       case ERR_ORDER_LOCKED               : return("order locked"                                             );     //    139
       case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                              );     //    140
@@ -170,7 +169,7 @@ string ErrorDescription(int error) {
       case ERR_TERMINAL_AUTOTRADE_DISABLED: return("automated trading disabled in terminal"                   );     //   4109
       case ERR_PROGRAM_LONGS_DISABLED     : return("long trades disabled for program"                         );     //   4110
       case ERR_PROGRAM_SHORTS_DISABLED    : return("short trades disabled for program"                        );     //   4111
-      case ERR_BROKER_AUTOTRADE_DISABLED  : return("automated trading disabled by broker"                     );     //   4112
+      case ERR_SERVER_AUTOTRADE_DISABLED  : return("auto-trading disabled by server"                          );     //   4112
       case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                    );     //   4200
       case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                  );     //   4201
       case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn't exist"                                     );     //   4202
@@ -3210,20 +3209,17 @@ string UrlEncode(string value) {
 /**
  * Whether the specified file exists.
  *
- * @param  string path - file path (may be a symbolic link); supports both forward and backward slashes
- * @param  int    mode - MODE_MQL:    restrict the function's operation to the MQL sandbox
- *                       MODE_SYSTEM: allow the function to operate outside of the MQL sandbox
+ * @param  string path - file path (may be a symbolic link), supports forward and backward slashes
+ * @param  int    mode - MODE_SYSTEM: allow operation outside of the MQL sandbox (default)
+ *                       MODE_MQL:    restrict operation to the MQL sandbox
+ *
  * @return bool
  */
-bool IsFile(string path, int mode) {
+bool IsFile(string path, int mode = MODE_SYSTEM) {
    // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
-   if (!(~mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsFile(1)  invalid parameter mode: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
-   if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsFile(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
-
    if (mode & MODE_MQL && 1) {
       string filesDirectory = GetMqlSandboxPath();
-      if (!StringLen(filesDirectory))
-         return(false);
+      if (filesDirectory == "") return(false);
       path = StringConcatenate(filesDirectory, "/", path);
    }
    return(IsFileA(path, MODE_SYSTEM));
@@ -3233,20 +3229,16 @@ bool IsFile(string path, int mode) {
 /**
  * Whether the specified directory exists.
  *
- * @param  string path - directory path (may be a symbolic link or a junction), supports both forward and backward slashes
- * @param  int    mode - MODE_MQL:    restrict the function's operation to the MQL sandbox
- *                       MODE_SYSTEM: allow the function to operate outside of the MQL sandbox
+ * @param  string path - directory path (may be a symbolic link or a junction), supports forward and backward slashes
+ * @param  int    mode - MODE_SYSTEM: allow operation outside of the MQL sandbox (default)
+ *                       MODE_MQL:    restrict operation to the MQL sandbox
  * @return bool
  */
-bool IsDirectory(string path, int mode) {
+bool IsDirectory(string path, int mode = MODE_SYSTEM) {
    // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
-   if (!(~mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsDirectory(1)  invalid parameter mode: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
-   if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsDirectory(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
-
    if (mode & MODE_MQL && 1) {
       string filesDirectory = GetMqlSandboxPath();
-      if (!StringLen(filesDirectory))
-         return(false);
+      if (filesDirectory == "") return(false);
       path = StringConcatenate(filesDirectory, "/", path);
    }
    return(IsDirectoryA(path, MODE_SYSTEM));
@@ -3257,19 +3249,16 @@ bool IsDirectory(string path, int mode) {
  * Create a directory.
  *
  * @param  string path  - directory path
- * @param  int    flags - MODE_MQL:      restrict the function's operation to the MQL sandbox
- *                        MODE_SYSTEM:   allow the function to operate outside of the MQL sandbox
+ * @param  int    flags - MODE_SYSTEM:   allow operation outside of the MQL sandbox (default)
+ *                        MODE_MQL:      restrict operation to the MQL sandbox
  *                        MODE_MKPARENT: create parent directories as needed and report no error on an existing directory;
  *                                       otherwise create only the final directory and report an error if it exists
  * @return bool - success status
  */
-bool CreateDirectory(string path, int flags) {
-   if (!(~flags & (MODE_MQL|MODE_SYSTEM))) return(!catch("CreateDirectory(1)  invalid parameter flag: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
-   if (!( flags & (MODE_MQL|MODE_SYSTEM))) return(!catch("CreateDirectory(2)  invalid parameter flag: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
-
+bool CreateDirectory(string path, int flags = MODE_SYSTEM) {
    if (flags & MODE_MQL && 1) {
       string filesDirectory = GetMqlSandboxPath();
-      if (!StringLen(filesDirectory)) return(false);
+      if (filesDirectory == "") return(false);
 
       path = StringConcatenate(filesDirectory, "/", path);
       flags &= ~MODE_MQL;
@@ -3300,9 +3289,9 @@ string GetMqlSandboxPath() {
  * @return string - Hex-String
  */
 string StrToHexStr(string value) {
-   if (StrIsNull(value))
+   if (StrIsNull(value)) {
       return("(null)");
-
+   }
    string result = "";
    int len = StringLen(value);
 
@@ -3322,8 +3311,9 @@ string StrToHexStr(string value) {
  * @return string
  */
 string StrCapitalize(string value) {
-   if (!StringLen(value))
+   if (!StringLen(value)) {
       return(value);
+   }
    return(StringConcatenate(StrToUpper(StrLeft(value, 1)), StrSubstr(value, 1)));
 }
 
@@ -3683,7 +3673,7 @@ int Tester.GetBarModel() {
 
 
 /**
- * Pause the tester. Can be used only in the tester.
+ * Pause the tester. Must be called only in the tester.
  *
  * @param  string caller [optional] - location identifier of the caller (default: none)
  *
@@ -3767,9 +3757,9 @@ bool Tester.IsStopped() {
 
 
 /**
- * Erzeugt einen neuen String der gewünschten Länge.
+ * Creates a new string of the specified length.
  *
- * @param  int length - Länge
+ * @param  int length
  *
  * @return string
  */
@@ -3777,53 +3767,55 @@ string CreateString(int length) {
    if (length < 0)        return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length: "+ length, ERR_INVALID_PARAMETER)));
    if (length == INT_MAX) return(_EMPTY_STR(catch("CreateString(2)  too large parameter length: INT_MAX", ERR_INVALID_PARAMETER)));
 
-   if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
-                                                                     // Daher wird auch beim Initialisieren der string-Variable StringConcatenate() verwendet (siehe MQL.doc).
-   string newStr = StringConcatenate(MAX_STRING_LITERAL, "");
-   int    strLen = StringLen(newStr);
+   if (!length) return(StringConcatenate("", ""));          // don't return a literal (shared storage)
 
-   while (strLen < length) {
-      newStr = StringConcatenate(newStr, MAX_STRING_LITERAL);
-      strLen = StringLen(newStr);
+   string s = StringConcatenate(MAX_STRING_LITERAL, "");
+   int sLen = StringLen(s);
+
+   while (sLen < length) {
+      s = StringConcatenate(s, MAX_STRING_LITERAL);
+      sLen = StringLen(s);
    }
-
-   if (strLen != length)
-      newStr = StringSubstr(newStr, 0, length);
-   return(newStr);
+   if (sLen > length) {
+      s = StringSubstr(s, 0, length);
+   }
+   return(s);
 }
 
 
 /**
- * Aktiviert bzw. deaktiviert den Aufruf der start()-Funktion von Expert Advisern bei Eintreffen von Ticks.
- * Wird üblicherweise aus der init()-Funktion aufgerufen.
+ * Enable/disable execution of the start() function of EAs.
  *
- * @param  bool enable - gewünschter Status: On/Off
+ * @param  bool enable - activation status
  *
  * @return int - error status
  */
 int Toolbar.Experts(bool enable) {
    enable = enable!=0;
+   if (__isTesting) return(logDebug("Toolbar.Experts(1)  skipping in tester", NO_ERROR));
+   if (IsStopped()) return(logDebug("Toolbar.Experts(2)  IsStopped() = true", NO_ERROR));
 
-   if (__isTesting) return(debug("Toolbar.Experts(1)  skipping in tester", NO_ERROR));
-
-   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
-   // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
+   // TODO:
+   //  We can only toggle the current state (on/off). Implement a lock to prevent multiple
+   //  EAs from overriding each other, if started at the same time (terminal start).
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (enable) {
-      if (!IsExpertEnabled()) SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
-   }
-   else /*disable*/ {
-      if (IsExpertEnabled())  SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
+   if (enable != IsExpertEnabled()) {                             // toggle the current state
+      if (IsIndicator()) {
+         PostMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);     // we can't send messages to our own thread (UI deadlock)
+      }
+      else {
+         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);     // wait for command execution
+      }
    }
    return(NO_ERROR);
 }
 
 
 /**
- * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
+ * Queue execution of menu command "MarketWatch"->"Symbols".
  *
  * @return int - error status
  */
@@ -4813,172 +4805,6 @@ string ColorToHtmlStr(color value) {
    int iValue = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu können
 
    return(StringConcatenate("#", StrRight(IntToHexStr(iValue), 6)));
-}
-
-
-/**
- * Konvertiert eine Farbe in ihre MQL-String-Repräsentation, z.B. "Red" oder "0,255,255".
- *
- * @param  color value
- *
- * @return string - MQL-Farbcode oder RGB-String, falls der übergebene Wert kein bekannter MQL-Farbcode ist.
- */
-string ColorToStr(color value) {
-   if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
-      value = CLR_NONE;                                              // u.U. 0xFF000000 (entspricht Schwarz)
-   if (value < CLR_NONE || value > C'255,255,255')
-      return(_EMPTY_STR(catch("ColorToStr(1)  invalid parameter value: "+ value +" (not a color)", ERR_INVALID_PARAMETER)));
-
-   if (value == CLR_NONE) return("CLR_NONE"         );
-   if (value == 0xFFF8F0) return("AliceBlue"        );
-   if (value == 0xD7EBFA) return("AntiqueWhite"     );
-   if (value == 0xFFFF00) return("Aqua"             );
-   if (value == 0xD4FF7F) return("Aquamarine"       );
-   if (value == 0xDCF5F5) return("Beige"            );
-   if (value == 0xC4E4FF) return("Bisque"           );
-   if (value == 0x000000) return("Black"            );
-   if (value == 0xCDEBFF) return("BlanchedAlmond"   );
-   if (value == 0xFF0000) return("Blue"             );
-   if (value == 0xE22B8A) return("BlueViolet"       );
-   if (value == 0x2A2AA5) return("Brown"            );
-   if (value == 0x87B8DE) return("BurlyWood"        );
-   if (value == 0xA09E5F) return("CadetBlue"        );
-   if (value == 0x00FF7F) return("Chartreuse"       );
-   if (value == 0x1E69D2) return("Chocolate"        );
-   if (value == 0x507FFF) return("Coral"            );
-   if (value == 0xED9564) return("CornflowerBlue"   );
-   if (value == 0xDCF8FF) return("Cornsilk"         );
-   if (value == 0x3C14DC) return("Crimson"          );
-   if (value == 0x8B0000) return("DarkBlue"         );
-   if (value == 0x0B86B8) return("DarkGoldenrod"    );
-   if (value == 0xA9A9A9) return("DarkGray"         );
-   if (value == 0x006400) return("DarkGreen"        );
-   if (value == 0x6BB7BD) return("DarkKhaki"        );
-   if (value == 0x2F6B55) return("DarkOliveGreen"   );
-   if (value == 0x008CFF) return("DarkOrange"       );
-   if (value == 0xCC3299) return("DarkOrchid"       );
-   if (value == 0x7A96E9) return("DarkSalmon"       );
-   if (value == 0x8BBC8F) return("DarkSeaGreen"     );
-   if (value == 0x8B3D48) return("DarkSlateBlue"    );
-   if (value == 0x4F4F2F) return("DarkSlateGray"    );
-   if (value == 0xD1CE00) return("DarkTurquoise"    );
-   if (value == 0xD30094) return("DarkViolet"       );
-   if (value == 0x9314FF) return("DeepPink"         );
-   if (value == 0xFFBF00) return("DeepSkyBlue"      );
-   if (value == 0x696969) return("DimGray"          );
-   if (value == 0xFF901E) return("DodgerBlue"       );
-   if (value == 0x2222B2) return("FireBrick"        );
-   if (value == 0x228B22) return("ForestGreen"      );
-   if (value == 0xDCDCDC) return("Gainsboro"        );
-   if (value == 0x00D7FF) return("Gold"             );
-   if (value == 0x20A5DA) return("Goldenrod"        );
-   if (value == 0x808080) return("Gray"             );
-   if (value == 0x008000) return("Green"            );
-   if (value == 0x2FFFAD) return("GreenYellow"      );
-   if (value == 0xF0FFF0) return("Honeydew"         );
-   if (value == 0xB469FF) return("HotPink"          );
-   if (value == 0x5C5CCD) return("IndianRed"        );
-   if (value == 0x82004B) return("Indigo"           );
-   if (value == 0xF0FFFF) return("Ivory"            );
-   if (value == 0x8CE6F0) return("Khaki"            );
-   if (value == 0xFAE6E6) return("Lavender"         );
-   if (value == 0xF5F0FF) return("LavenderBlush"    );
-   if (value == 0x00FC7C) return("LawnGreen"        );
-   if (value == 0xCDFAFF) return("LemonChiffon"     );
-   if (value == 0xE6D8AD) return("LightBlue"        );
-   if (value == 0x8080F0) return("LightCoral"       );
-   if (value == 0xFFFFE0) return("LightCyan"        );
-   if (value == 0xD2FAFA) return("LightGoldenrod"   );
-   if (value == 0xD3D3D3) return("LightGray"        );
-   if (value == 0x90EE90) return("LightGreen"       );
-   if (value == 0xC1B6FF) return("LightPink"        );
-   if (value == 0x7AA0FF) return("LightSalmon"      );
-   if (value == 0xAAB220) return("LightSeaGreen"    );
-   if (value == 0xFACE87) return("LightSkyBlue"     );
-   if (value == 0x998877) return("LightSlateGray"   );
-   if (value == 0xDEC4B0) return("LightSteelBlue"   );
-   if (value == 0xE0FFFF) return("LightYellow"      );
-   if (value == 0x00FF00) return("Lime"             );
-   if (value == 0x32CD32) return("LimeGreen"        );
-   if (value == 0xE6F0FA) return("Linen"            );
-   if (value == 0xFF00FF) return("Magenta"          );
-   if (value == 0x000080) return("Maroon"           );
-   if (value == 0xAACD66) return("MediumAquamarine" );
-   if (value == 0xCD0000) return("MediumBlue"       );
-   if (value == 0xD355BA) return("MediumOrchid"     );
-   if (value == 0xDB7093) return("MediumPurple"     );
-   if (value == 0x71B33C) return("MediumSeaGreen"   );
-   if (value == 0xEE687B) return("MediumSlateBlue"  );
-   if (value == 0x9AFA00) return("MediumSpringGreen");
-   if (value == 0xCCD148) return("MediumTurquoise"  );
-   if (value == 0x8515C7) return("MediumVioletRed"  );
-   if (value == 0x701919) return("MidnightBlue"     );
-   if (value == 0xFAFFF5) return("MintCream"        );
-   if (value == 0xE1E4FF) return("MistyRose"        );
-   if (value == 0xB5E4FF) return("Moccasin"         );
-   if (value == 0xADDEFF) return("NavajoWhite"      );
-   if (value == 0x800000) return("Navy"             );
-   if (value == 0xE6F5FD) return("OldLace"          );
-   if (value == 0x008080) return("Olive"            );
-   if (value == 0x238E6B) return("OliveDrab"        );
-   if (value == 0x00A5FF) return("Orange"           );
-   if (value == 0x0045FF) return("OrangeRed"        );
-   if (value == 0xD670DA) return("Orchid"           );
-   if (value == 0xAAE8EE) return("PaleGoldenrod"    );
-   if (value == 0x98FB98) return("PaleGreen"        );
-   if (value == 0xEEEEAF) return("PaleTurquoise"    );
-   if (value == 0x9370DB) return("PaleVioletRed"    );
-   if (value == 0xD5EFFF) return("PapayaWhip"       );
-   if (value == 0xB9DAFF) return("PeachPuff"        );
-   if (value == 0x3F85CD) return("Peru"             );
-   if (value == 0xCBC0FF) return("Pink"             );
-   if (value == 0xDDA0DD) return("Plum"             );
-   if (value == 0xE6E0B0) return("PowderBlue"       );
-   if (value == 0x800080) return("Purple"           );
-   if (value == 0x0000FF) return("Red"              );
-   if (value == 0x8F8FBC) return("RosyBrown"        );
-   if (value == 0xE16941) return("RoyalBlue"        );
-   if (value == 0x13458B) return("SaddleBrown"      );
-   if (value == 0x7280FA) return("Salmon"           );
-   if (value == 0x60A4F4) return("SandyBrown"       );
-   if (value == 0x578B2E) return("SeaGreen"         );
-   if (value == 0xEEF5FF) return("Seashell"         );
-   if (value == 0x2D52A0) return("Sienna"           );
-   if (value == 0xC0C0C0) return("Silver"           );
-   if (value == 0xEBCE87) return("SkyBlue"          );
-   if (value == 0xCD5A6A) return("SlateBlue"        );
-   if (value == 0x908070) return("SlateGray"        );
-   if (value == 0xFAFAFF) return("Snow"             );
-   if (value == 0x7FFF00) return("SpringGreen"      );
-   if (value == 0xB48246) return("SteelBlue"        );
-   if (value == 0x8CB4D2) return("Tan"              );
-   if (value == 0x808000) return("Teal"             );
-   if (value == 0xD8BFD8) return("Thistle"          );
-   if (value == 0x4763FF) return("Tomato"           );
-   if (value == 0xD0E040) return("Turquoise"        );
-   if (value == 0xEE82EE) return("Violet"           );
-   if (value == 0xB3DEF5) return("Wheat"            );
-   if (value == 0xFFFFFF) return("White"            );
-   if (value == 0xF5F5F5) return("WhiteSmoke"       );
-   if (value == 0x00FFFF) return("Yellow"           );
-   if (value == 0x32CD9A) return("YellowGreen"      );
-
-   return(ColorToRGBStr(value));
-}
-
-
-/**
- * Convert a MQL color value to its RGB string representation.
- *
- * @param  color value
- *
- * @return string
- */
-string ColorToRGBStr(color value) {
-   int red   = value       & 0xFF;
-   int green = value >>  8 & 0xFF;
-   int blue  = value >> 16 & 0xFF;
-   return(StringConcatenate(red, ",", green, ",", blue));
 }
 
 
@@ -6645,7 +6471,6 @@ void __DummyCalls() {
    Chart.StoreString(NULL, NULL);
    colorOr(NULL, NULL);
    ColorToHtmlStr(NULL);
-   ColorToStr(NULL);
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
    CountDays(NULL, NULL);
@@ -6798,7 +6623,7 @@ void __DummyCalls() {
    SendEmail(NULL, NULL, NULL, NULL);
    ServerToFxtTime(NULL);
    ServerToGmtTime(NULL);
-   SetLastError(NULL, NULL);
+   SetLastError(NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);
    StdSymbol();

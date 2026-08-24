@@ -571,7 +571,7 @@ bool ValidateInputs() {
       filename = StrTrim(StrSubstr(filename, 1, StringLen(filename)-2));
    }
    if (filename == "")              return(!catch("ValidateInputs(1)  missing input parameter HtmlFilename: \"\" (empty)", ERR_INVALID_PARAMETER));
-   if (!IsFile(filename, MODE_MQL)) return(!catch("ValidateInputs(2)  invalid input parameter HtmlFilename: "+ DoubleQuoteStr(filename) +" (file not found)", ERR_FILE_NOT_FOUND));
+   if (!IsFile(filename, MODE_MQL)) return(!catch("ValidateInputs(2)  invalid input parameter HtmlFilename: \""+ filename +"\" (file not found)", ERR_FILE_NOT_FOUND));
    HtmlFilename = filename;
 
    return(!catch("ValidateInputs(3)"));

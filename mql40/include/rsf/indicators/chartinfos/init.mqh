@@ -141,8 +141,9 @@ int afterInit() {
       // setup a chart ticker
       if (!__virtualTicksTimerId) {
          int hWnd = __ExecutionContext[EC.chart], milliseconds;
+         string accountServer = StrToLower(GetAccountServer());
 
-         if (StrStartsWithI(GetAccountServer(), "XTrade-")) {
+         if (StrStartsWith(accountServer, "rosasurfer-") || StrStartsWith(accountServer, "xtrade-")) {
             // offline ticker to update synthetic charts
             milliseconds = 1000;
             __virtualTicksTimerId = SetupTickTimer(hWnd, milliseconds, TICK_CHART_REFRESH|TICK_IF_WINDOW_VISIBLE);

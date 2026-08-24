@@ -1096,7 +1096,7 @@ bool SaveStatus() {
    else if (IsTestInstance()) return(true);                    // don't modify the status file of a finished test
 
    string section="", separator="", file=GetStatusFileName();
-   bool fileExists = IsFile(file, MODE_SYSTEM);
+   bool fileExists = IsFile(file);
    if (!fileExists) separator = CRLF;                          // an empty line separator
    SS.All();                                                   // update trade stats and global string representations
 
@@ -1165,8 +1165,8 @@ bool ReadStatus() {
    if (!instance.id)  return(!catch("ReadStatus(1)  "+ instance.name +" illegal value of instance.id: "+ instance.id, ERR_ILLEGAL_STATE));
 
    string file = GetStatusFileName(), section = "";
-   if (file == "")                 return(!catch("ReadStatus(2)  "+ instance.name +" error reading the status file", ERR_RUNTIME_ERROR));
-   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(3)  "+ instance.name +" file \""+ file +"\" not found", ERR_FILE_NOT_FOUND));
+   if (file == "")    return(!catch("ReadStatus(2)  "+ instance.name +" error reading the status file", ERR_RUNTIME_ERROR));
+   if (!IsFile(file)) return(!catch("ReadStatus(3)  "+ instance.name +" file \""+ file +"\" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    if (!ReadStatus.General(file)) return(false);

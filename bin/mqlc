@@ -9,13 +9,14 @@
 # - If environment variable ORIG is set the script prints the original compiler output (plus its own messages).
 # - If environment variable TRACE is set the script shows the location of the last error (if any).
 #
+# @see  `mqlc --help` (the help screen following this header) for more documentation
 # @see  "/bin/.mqlc.dist" for more documentation
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 #
 #
 # TODO:
 #  - optimize readSubstedDrives()
-#  - resolveMqlVersion/resolveIncludeDir must process a given directory once instead of processing each found file separately
+#  - resolveMqlVersion/resolveIncludeDir must process a given directory once instead of separately processing each found file
 #  - use original case of filenames
 #  - realWindowsPath '/cygdrive/f/projects/mt4/mql/bin/experts' => '/cygdrive/c/z/F/projects/mt4/mql/mql40'
 #  - realWindowsPath '/cygdrive/c/z/f/projects/mt4/mql/mql40'   => '/cygdrive/c/z/f/projects/mt4/mql/mql40'
@@ -28,7 +29,7 @@
 #  - option --info
 #  - option /log
 #  - test environment for WSL 1+2
-#  - auto-detect MQL version
+#  - auto-detect MQL4 version
 #  - auto-detect include directory
 #  - fix /portable issue without /include option
 #
@@ -75,18 +76,18 @@ Options:
   --color, --no-color  Enforce or disable colored output (default: auto).
   --rc=FILE, --no-rc   Use the specified configuration file, or no file at all (default: see configuration section).
 
-The script exits with 0 (success) or the number of errors of the last failing compilation.
+The script exits either with 0 (success) or the number of errors of the last failing compilation.
 
 Auto-detection of MQL versions:
- ".mq5" files are always processed as MQL5, regardless of a specified MQL4 version.
+ ".mq5" files are always processed as MQL5.
  ".mq4" files: If the MQL directory of the source file resolves to "experts" or "mql40", version MQL4.0 is assumed.
  ".mq4" files: If the MQL directory of the source file resolves to "mql4" or "mql45", version MQL4.5 is assumed.
  Default MQL4 versions and include directories can be predefined in the configuration.
 
 Configuration:
- Unless option --rc/--norc is used the script will look for a file named ".mqlc" in the source directory and each
- parent directory. If no file is found in any of the parent directories, the script will look in the user's home
- directory. Only the first file found will be used. Compiler locations can also be specified using environment vars.
+ Unless option --rc/--norc is used the script will look for a file named ".mqlc" in the first MQL source directory and
+ each parent directory. If no file is found in any of the parent directories, the script will look for ".mqlc" in the
+ user's home directory. Only the first file found will be used. Settings can also be specified using environment vars.
  See "/bin/.mqlc.dist" for more documentation.
 
 HERE_DOC
@@ -376,7 +377,7 @@ function compileMql40() {
 
   # print everything to STDOUT
   printf '%s\n' "${output[@]}"
-  
+
   ((warn2error)) || warnings=0
   ((!errors && !warnings)) && rm -f "$logFile"
   ((retVal = errors + warnings))
@@ -808,34 +809,53 @@ declare includeSource=() includeDirectory=()                # configured include
 #
 # Read the configuration into global vars.
 #
-# @param $1 - the first source file to compile (exists)
+# @param $1 - the first source file to compile (always exists)
 #
 # @todo optimize runtime: 2.036s
 #
 function readConfig() {
-  local srcFile="$1" dir config='' rcFile='.mqlc'
+  local srcFile="$1" dir fileName config='' rcFile='.mqlc'
   readSubstedDrives
 
   # resolve config file location for the source file
+  ((debug)) && {
+    stderr "Config file:"
+  }
   srcFile="${srcFile//\\//}"
   dir="${srcFile%/*}"; [[ "$dir" == "$srcFile" ]] && dir='.'
   dir="$(cd -- "$dir"; echo "$PWD")"
 
   while true; do
     [[ -z "$dir" ]] && break
-    [[ -f "$dir/$rcFile" ]] && config="$dir/$rcFile" && break
+    fileName="$dir/$rcFile"
+    if [[ -f "$fileName" ]]; then
+      config="$fileName"
+      ((debug)) && stderr " $fileName => OK"
+      break
+    else
+      ((debug)) && stderr " $fileName => not found"
+    fi
     dir="${dir%/*}"
   done
   if [[ -z "$config" && -n "${HOME:-}" ]]; then
-    [[ -f "$HOME/$rcFile" ]] && config="$HOME/$rcFile"
+    fileName="$HOME/$rcFile"
+    if [[ -f "$fileName" ]]; then
+      config="$fileName"
+      ((debug)) && stderr " $fileName => OK"
+    else
+      ((debug)) && stderr " $fileName => not found"
+    fi
   fi
   if [[ -z "$config" && -n "${USERPROFILE:-}" ]]; then
-    [[ -f "$USERPROFILE/$rcFile" ]] && config="$USERPROFILE/$rcFile"
+    fileName="$USERPROFILE\\$rcFile"
+    if [[ -f "$fileName" ]]; then
+      config="$fileName"
+      ((debug)) && stderr " $fileName => OK"
+    else
+      ((debug)) && stderr " $fileName => not found"
+    fi
   fi
-  ((debug)) && {
-    stderr "Config file: ${config:--}"
-    stderr ''
-  }
+  ((debug)) && stderr ''
 
   # backup existing environment vars
   local BAK_MT4_METALANG="${MT4_METALANG:-}"
@@ -857,9 +877,9 @@ function readConfig() {
   MT5_METAEDITOR="${BAK_MT5_METAEDITOR:-${MT5_METAEDITOR:-}}"
   ((debug)) && {
     stderr "MQL compilers:"
-    [[ -n "$MT4_METALANG"   ]] && stderr "MT4_METALANG:   $MT4_METALANG"
-    [[ -n "$MT4_METAEDITOR" ]] && stderr "MT4_METAEDITOR: $MT4_METAEDITOR"
-    [[ -n "$MT5_METAEDITOR" ]] && stderr "MT5_METAEDITOR: $MT5_METAEDITOR"
+    [[ -n "$MT4_METALANG"   ]] && stderr " MT4_METALANG:   $MT4_METALANG"
+    [[ -n "$MT4_METAEDITOR" ]] && stderr " MT4_METAEDITOR: $MT4_METAEDITOR"
+    [[ -n "$MT5_METAEDITOR" ]] && stderr " MT5_METAEDITOR: $MT5_METAEDITOR"
     stderr ''
   }
 
@@ -868,10 +888,10 @@ function readConfig() {
   normalizeMQL4Paths 'mql45Sources' 'mql45SourcePaths'
   ((debug)) && {
     stderr "MQL4.0 paths:"
-    ((${#mql40SourcePaths[@]})) && stderr "$(printf '%s\n' "${mql40SourcePaths[@]}")"
+    ((${#mql40SourcePaths[@]})) && stderr "$(printf ' %s\n' "${mql40SourcePaths[@]}")"
     stderr ''
     stderr "MQL4.5 paths:"
-    ((${#mql45SourcePaths[@]})) && stderr "$(printf '%s\n' "${mql45SourcePaths[@]}")"
+    ((${#mql45SourcePaths[@]})) && stderr "$(printf ' %s\n' "${mql45SourcePaths[@]}")"
     stderr ''
   }
 
@@ -881,7 +901,7 @@ function readConfig() {
     local i
     stderr "Include directories:"
     for i in "${!includeSource[@]}"; do
-      stderr "${includeSource[i]} => ${includeDirectory[i]}"
+      stderr " ${includeSource[i]} => ${includeDirectory[i]}"
     done
     stderr ''
   }
@@ -920,7 +940,7 @@ function readSubstedDrives() {
         substedDrives["$driveM"]="$targetM/"
         substedDrives["$driveU"]="$targetU/"
 
-        ((debug)) && stderr "${lines[i]}"
+        ((debug)) && stderr " ${lines[i]}"
       fi
     done
   else

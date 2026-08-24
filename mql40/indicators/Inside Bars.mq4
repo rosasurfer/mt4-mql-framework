@@ -587,7 +587,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
       ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet      (label, OBJPROP_COLOR, Blue);
       ObjectSet      (label, OBJPROP_RAY,   false);
-      ObjectSet      (label, OBJPROP_BACK,  true);
+      ObjectSet      (label, OBJPROP_BACK,  false);// in old builds FALSE, in new builds TRUE (different overlay logic with grid separators)
       ArrayPushString(labels, label);
    }
 

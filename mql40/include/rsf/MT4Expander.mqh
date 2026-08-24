@@ -143,6 +143,8 @@
    string   BarModelDescription(int id);
    string   BarModelToStr(int id);
    string   BoolToStr(int value);
+   string   ColorToStr(int value);
+   string   ColorToRGBStr(int value);
    string   CoreFunctionDescription(int func);
    string   CoreFunctionToStr(int func);
    string   DeinitFlagsToStr(int flags);

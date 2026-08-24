@@ -206,7 +206,7 @@ int HistorySet3.Create(string symbol, string descr, int digits, int format, stri
          basename = StringConcatenate(symbol, periods[i], ".hst");
          filename = StringConcatenate(serverPath, "/", basename);
 
-         if (IsFile(filename, MODE_SYSTEM)) {                           // reset existing file to 0
+         if (IsFile(filename)) {                                        // reset existing file to 0
             hFile = FileOpenHistory(basename, FILE_WRITE|FILE_BIN);
             if (hFile <= 0) return(!catch("HistorySet3.Create(7)->FileOpenHistory(\""+ basename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
@@ -321,7 +321,7 @@ int HistorySet3.Get(string symbol, string directory = "") {
       for (i=0; i < sizeOfPeriods; i++) {
          filename = StringConcatenate(serverPath, "/", symbol, periods[i], ".hst");
 
-         if (IsFile(filename, MODE_SYSTEM)) {                        // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
+         if (IsFile(filename)) {                                     // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
             hFile = FileOpenHistory(filename, FILE_READ|FILE_BIN);   // open the file
             if (hFile <= 0) return(!catch("HistorySet3.Get(4)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
@@ -533,7 +533,7 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
 
       // open the file: read-only
       if (read_only) {
-         if (!IsFile(filename, MODE_SYSTEM)) return(-1);                         // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
+         if (!IsFile(filename)) return(-1);                                      // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
          hFile = FileOpenHistory(filename, mode|FILE_BIN);
          if (hFile <= 0) return(!catch("HistoryFile3.Open(6)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }

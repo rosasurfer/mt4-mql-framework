@@ -22,11 +22,9 @@ bool RunScript(string name, string parameters="") {
       parameters = "";
    string scriptName[]; ArrayResize(scriptName, 1);
 
-
    // (1) Prüfen, ob das Script existiert
    string file = GetMqlDirectoryA() +"/scripts/"+ name +".ex4";
-   if (!IsFile(file, MODE_SYSTEM)) return(!catch("RunScript(3)  file not found: "+ DoubleQuoteStr(file), ERR_FILE_NOT_FOUND));
-
+   if (!IsFile(file)) return(!catch("RunScript(3)  file not found: "+ DoubleQuoteStr(file), ERR_FILE_NOT_FOUND));
 
    // (2) Prüfen, ob bereits ein Script läuft. Eines läuft, wenn auf dem Parameter-Channel ein Receiver aktiv ist oder dort unabgeholte Messages liegen.
    string channel = ScriptRunner.GetChannelName();
@@ -41,10 +39,8 @@ bool RunScript(string name, string parameters="") {
    bool isScriptRunning = isChannelReceiver || !isChannelEmpty;
    if (isScriptRunning) /*&&*/ if (!StrCompareI(name, scriptName[0])) return(!catch("RunScript(7)  cannot run "+ DoubleQuoteStr(name) +" while "+ DoubleQuoteStr(scriptName[0]) +" is running", ERR_RUNTIME_ERROR));
 
-
    // (2) Parameter hinterlegen
    if (!ScriptRunner.SetParameters(parameters)) return(false);
-
 
    // (3) Script starten, falls es noch nicht läuft                  // Der Zeiger auf den Scriptnamen muß auch nach Verlassen der Funktion gültig sein, was ein String-Array
    if (!isScriptRunning) {                                           // für die Variable bedingt. Dieses Array darf bei Verlassen der Funktion nicht zurückgesetzt werden.

@@ -26,10 +26,10 @@ string GetAccountConfigPath(string company = "", int account = NULL) {
 
    string configPath = StringConcatenate(commonDataPath, "\\accounts\\", company, "\\rsf-account-", account, "-config.ini");
 
-   if (!IsFileA(configPath, MODE_SYSTEM)) {
+   if (!IsFile(configPath)) {
       string legacyPath = StringConcatenate(commonDataPath, "\\accounts\\", company, "\\", account, "-config.ini");
 
-      if (IsFileA(legacyPath, MODE_SYSTEM)) {         // rename legacy file to new name
+      if (IsFile(legacyPath)) {                       // rename legacy file to new name
          if (MoveFileExA(legacyPath, configPath, MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH|MOVEFILE_FAIL_IF_NOT_TRACKABLE)) {
             logInfo("renamed \""+ StrRightFrom(legacyPath, "\\", -3) +"\" to \""+ StrRightFrom(configPath, "\\", -3) +"\"");
          }
@@ -632,7 +632,7 @@ bool WriteIniString(string fileName, string section, string key, string value) {
          string name = StrReplace(fileName, "\\", "/");
          string directory = StrLeftTo(name, "/", -1);
 
-         if (directory!=name) /*&&*/ if (!IsDirectory(directory, MODE_SYSTEM)) {
+         if (directory != name) /*&&*/ if (!IsDirectory(directory)) {
             error = CreateDirectoryA(directory, MODE_SYSTEM|MODE_MKPARENT);
             if (IsError(error)) return(!catch("WriteIniString(1)  cannot create directory \""+ directory +"\"", error));
             return(WriteIniString(fileName, section, key, value));
