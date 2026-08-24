@@ -41,8 +41,6 @@ bool     Chart.StoreInt   (string key, int    value);;
 bool     Chart.StoreString(string key, string value);;
 color    colorOr(color value, color altValue);;
 string   ColorToHtmlStr(color value);;
-string   ColorToRGBStr(color value);;
-string   ColorToStr(color value);;
 void     CopyMemory(int destination, int source, int bytes);;
 int      CountDays(datetime from, datetime to);;
 int      CountDecimals(double number);;
@@ -721,6 +719,8 @@ bool     AppendLogMessageA(int ec[], datetime time, string message, int error, i
 string   BarModelDescription(int id);;
 string   BarModelToStr(int id);;
 string   BoolToStr(bool value);;
+string   ColorToRGBStr(color value);;
+string   ColorToStr(color value);;
 string   CoreFunctionDescription(int func);;
 string   CoreFunctionToStr(int func);;
 int      CreateDirectoryA(string path, int flags);;
