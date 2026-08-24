@@ -3792,24 +3792,22 @@ string CreateString(int length) {
  */
 int Toolbar.Experts(bool enable) {
    enable = enable!=0;
-
    if (__isTesting) return(logDebug("Toolbar.Experts(1)  skipping in tester", NO_ERROR));
+   if (IsStopped()) return(logDebug("Toolbar.Experts(2)  IsStopped() = true", NO_ERROR));
 
    // TODO:
-   //  We can only toggle the current setting.
-   //  Implement lock to prevent multiple programs from overriding each other, if started at the same time.
+   //  We can only toggle the current state (on/off). Implement a lock to prevent multiple
+   //  EAs from overriding each other, if started at the same time (terminal start).
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (enable != IsExpertEnabled()) {                                   // toggle the current status
-      if (!IsExpertEnabled()) {
-         if (!IsStopped()) {
-            SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);        // prefer to wait for command execution
-         }
-         else {
-            PostMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);        // we must not wait (SendMessage UI deadlock)
-         }
+   if (enable != IsExpertEnabled()) {                             // toggle the current state
+      if (IsIndicator()) {
+         PostMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);     // we can't send messages to our own thread (UI deadlock)
+      }
+      else {
+         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);     // wait for command execution
       }
    }
    return(NO_ERROR);
