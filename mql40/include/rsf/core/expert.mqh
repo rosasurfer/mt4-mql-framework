@@ -661,7 +661,7 @@ datetime Test.GetEndDate() {
 #import
 
 
-// -- init() event handler templates ----------------------------------------------------------------------------------------
+// -- init() event handlers -------------------------------------------------------------------------------------------------
 
 
 /**
@@ -669,9 +669,7 @@ datetime Test.GetEndDate() {
  *
  * @return int - error status
  *
-int onInit()                                                   // opening curly braces are intentionally missing (UEStudio)
-   return(NO_ERROR);
-}
+int onInit();
 
 
 /**
@@ -680,9 +678,7 @@ int onInit()                                                   // opening curly 
  *
  * @return int - error status
  *
-int onInitUser()
-   return(NO_ERROR);
-}
+int onInitUser();
 
 
 /**
@@ -690,9 +686,7 @@ int onInitUser()
  *
  * @return int - error status
  *
-int onInitTemplate()
-   return(NO_ERROR);
-}
+int onInitTemplate();
 
 
 /**
@@ -700,9 +694,7 @@ int onInitTemplate()
  *
  * @return int - error status
  *
-int onInitParameters()
-   return(NO_ERROR);
-}
+int onInitParameters();
 
 
 /**
@@ -710,9 +702,7 @@ int onInitParameters()
  *
  * @return int - error status
  *
-int onInitTimeframeChange()
-   return(NO_ERROR);
-}
+int onInitTimeframeChange();
 
 
 /**
@@ -720,9 +710,7 @@ int onInitTimeframeChange()
  *
  * @return int - error status
  *
-int onInitSymbolChange()
-   return(NO_ERROR);
-}
+int onInitSymbolChange();
 
 
 /**
@@ -730,9 +718,7 @@ int onInitSymbolChange()
  *
  * @return int - error status
  *
-int onInitRecompile()
-   return(NO_ERROR);
-}
+int onInitRecompile();
 
 
 /**
@@ -740,12 +726,10 @@ int onInitRecompile()
  *
  * @return int - error status
  *
-int afterInit()
-   return(NO_ERROR);
-}
+int afterInit();
 
 
-// -- deinit() event handler templates --------------------------------------------------------------------------------------
+// -- deinit() event handlers -----------------------------------------------------------------------------------------------
 
 
 /**
@@ -753,9 +737,7 @@ int afterInit()
  *
  * @return int - error status
  *
-int onDeinit()                                                 // opening curly braces are intentionally missing (UEStudio)
-   return(NO_ERROR);
-}
+int onDeinit();
 
 
 /**
@@ -763,9 +745,7 @@ int onDeinit()                                                 // opening curly 
  *
  * @return int - error status
  *
-int onDeinitParameters()
-   return(NO_ERROR);
-}
+int onDeinitParameters();
 
 
 /**
@@ -773,9 +753,7 @@ int onDeinitParameters()
  *
  * @return int - error status
  *
-int onDeinitChartChange()
-   return(NO_ERROR);
-}
+int onDeinitChartChange();
 
 
 /**
@@ -783,9 +761,7 @@ int onDeinitChartChange()
  *
  * @return int - error status
  *
-int onDeinitAccountChange()
-   return(NO_ERROR);
-}
+int onDeinitAccountChange();
 
 
 /**
@@ -799,9 +775,7 @@ int onDeinitAccountChange()
  *
  * @return int - error status
  *
-int onDeinitChartClose()
-   return(NO_ERROR);
-}
+int onDeinitChartClose();
 
 
 /**
@@ -810,9 +784,7 @@ int onDeinitChartClose()
  *
  * @return int - error status
  *
-int onDeinitTemplate()
-   return(NO_ERROR);
-}
+int onDeinitTemplate();
 
 
 /**
@@ -821,9 +793,7 @@ int onDeinitTemplate()
  *
  * @return int - error status
  *
-int onDeinitRemove()
-   return(NO_ERROR);
-}
+int onDeinitRemove();
 
 
 /**
@@ -833,9 +803,7 @@ int onDeinitRemove()
  *
  * @return int - error status
  *
-int onDeinitUndefined()
-   return(NO_ERROR);
-}
+int onDeinitUndefined();
 
 
 /**
@@ -844,9 +812,7 @@ int onDeinitUndefined()
  *
  * @return int - error status
  *
-int onDeinitRecompile()
-   return(NO_ERROR);
-}
+int onDeinitRecompile();
 
 
 /**
@@ -854,9 +820,7 @@ int onDeinitRecompile()
  *
  * @return int - error status
  *
-int onDeinitClose()
-   return(NO_ERROR);
-}
+int onDeinitClose();
 
 
 /**
@@ -864,7 +828,5 @@ int onDeinitClose()
  *
  * @return int - error status
  *
-int afterDeinit()
-   return(NO_ERROR);
-}
+int afterDeinit();
 */
