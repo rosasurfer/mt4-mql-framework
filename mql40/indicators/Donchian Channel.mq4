@@ -1123,9 +1123,13 @@ void UpdateChartLegend() {
       string text      = StringConcatenate(indicatorName, sFilter, sReversal, sSignal);
 
       color clr = Reversal.Color;
-      if (clr == CLR_NONE) {
+      if (!ShowChannel && !reversals.show) {
+         clr = Gray;
+      }
+      else if (clr == CLR_NONE) {
          clr = ifInt(trend[0] > 0, Channel.UpperColor, Channel.LowerColor);
       }
+
       if      (clr == Aqua        ) clr = DodgerBlue;
       else if (clr == Gold        ) clr = Orange;
       else if (clr == LightSkyBlue) clr = C'94,174,255';
