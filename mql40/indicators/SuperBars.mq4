@@ -1,8 +1,8 @@
 /**
  * SuperBars
  *
- * Draws rectangles of higher timeframe bars or trading sessions on the chart. The active higher timeframe can be changed by
- * executing the scripts "SuperBars.TimeframeUp" and "SuperBars.TimeframeDown".
+ * Draws rectangles of higher timeframe bars and/or trading sessions in the chart. The active timeframe/session can be changed
+ * by executing the scripts "SuperBars.TimeframeUp" and "SuperBars.TimeframeDown".
  *
  * With input parameter "AutoConfiguration" enabled (default) inputs found in the framework configuration override manual
  * inputs. Additional framework config settings without manual inputs:
@@ -39,7 +39,7 @@ extern color  UnchangedBars.Color     = Lavender;        // unchanged bars
 extern bool   FillBars                = true;            //
 extern color  CloseMarker.Color       = Gray;            // bar close marker
 extern color  ETH.Color               = LemonChiffon;    // ETH sessions
-extern string ETH.Symbols             = "";              // comma-separated list of symbols with RTH/ETH sessions
+extern string ETH.Symbols             = "";              // comma-separated list of symbols with RTH/ETH sessions (supports "*")
 extern string WeekendSessions.Symbols = "";              // comma-separated list of symbols with weekend sessions
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,8 +63,8 @@ extern string WeekendSessions.Symbols = "";              // comma-separated list
 
 int      superTimeframe;                              // the currently active super bar period
 double   maxChangeUnchanged = 0.05;                   // max. price change in % for a SuperBar to be drawn as unchanged
-bool     ethEnabled;                                  // whether CME sessions are enabled
-bool     weekendSessions;                             // whether the symbol has weekend sessions
+bool     ethEnabled;                                  // whether CME RTH/ETH sessions are enabled
+bool     weekendSessionsEnabled;                      // whether weekend sessions are enabled
 datetime serverTime;                                  // most recent server time
 int      maxBarsH1;                                   // max. number of H1 superbars to draw (performance)
 
@@ -103,12 +103,17 @@ int onInit() {
    }
    // ETH.Symbols
    if (AutoConfiguration) ETH.Symbols = GetConfigString(indicator, "ETH.Symbols", ETH.Symbols);
-   string sValues[], sValue=StrToLower(ETH.Symbols), symbol=StrToLower(Symbol()), stdSymbol=StrToLower(StdSymbol());
+   ethEnabled = false;
+   string sValues[], sValue = StrToLower(ETH.Symbols), symbol = StrToLower(Symbol()), stdSymbol = StrToLower(StdSymbol());
    int size = Explode(sValue, ",", sValues, NULL);
    for (int i=0; i < size; i++) {
       sValues[i] = StrTrim(sValues[i]);
+      if (sValues[i] == "*") {
+         ethEnabled = true;
+         break;
+      }
    }
-   ethEnabled = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
+   if (!ethEnabled) ethEnabled = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
    // WeekendSessions.Symbols
    if (AutoConfiguration) WeekendSessions.Symbols = GetConfigString(indicator, "WeekendSessions.Symbols", WeekendSessions.Symbols);
    sValue = StrToLower(WeekendSessions.Symbols);
@@ -116,9 +121,9 @@ int onInit() {
    for (i=0; i < size; i++) {
       sValues[i] = StrTrim(sValues[i]);
    }
-   weekendSessions = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
+   weekendSessionsEnabled = (StringInArray(sValues, symbol) || StringInArray(sValues, stdSymbol));
 
-   // read external configuration
+   // read additional external configuration
    double dValue; int iValue;
    dValue          = GetConfigDouble(indicator, "UnchangedBars.MaxPriceChange");    maxChangeUnchanged = MathAbs(ifDouble(!dValue, maxChangeUnchanged, dValue));
    iValue          = GetConfigInt   (indicator, "MaxBars.H1",       -1);            maxBarsH1          = ifInt(iValue > 0, iValue, NULL);
@@ -389,7 +394,7 @@ bool UpdateSuperBars() {
    // loop over all superbars from young to old
    for (int i=0; i < maxBars; i++) {
       // get start/end times of every previous timeframe period, starting with the current unfinshed one
-      if (!iPreviousPeriod(_superTimeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendSessions)) return(false);
+      if (!iPreviousPeriod(_superTimeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendSessionsEnabled)) return(false);
 
       // In periods >= PERIOD_D1 rate times are set to full days only which yields incorrect bar times in non-FXT timezones. The incorrect timestamp shifts the start of
       // such a period wrongly to the previous/next period. Must be fixed if start of the period falls on a trading day (no need for fixing on a weekend/non-trading day).
